@@ -179,6 +179,80 @@ class TestStrategyPlanStructure(FrappeTestCase):
 		self.assertEqual(by_code[tgt["code"]]["fields"].get("target_numeric"), 99.9)
 		self.assertEqual(by_code[out["code"]]["warnings"], [])
 
+	def test_str_ac_001_hierarchy_with_optional_subprogramme(self):
+		"""STR-AC-001 — Programme → Sub-programme → Outcome; Outcome-without-sub remains valid."""
+		_ensure_user("str.officer.ac001@example.com", ["Strategy Officer"], self.pe)
+		frappe.set_user("str.officer.ac001@example.com")
+		code = f"STR-AC1-{frappe.generate_hash(length=5).upper()}"
+		created = create_plan(
+			{
+				"title": "AC001 optional sub-programme",
+				"plan_type": "Entity Strategic Plan",
+				"procuring_entity": self.pe,
+				"start_date": "2026-07-01",
+				"end_date": "2030-06-30",
+			}
+		)
+		self.assertTrue(created.get("ok"))
+		plan_id = created["plan"]["id"]
+		self.addCleanup(lambda: _delete_plan_cascade(plan_id))
+
+		prog = upsert_structure_node(
+			{
+				"type": "Programme",
+				"plan_version": plan_id,
+				"code": f"{code}-PROG",
+				"title": "Infrastructure Programme",
+				"description": "Programme with optional sub",
+				"responsible_function": "Works",
+			}
+		)
+		self.assertTrue(prog.get("id"))
+		# Outcome directly under Programme (optional Sub-programme omitted) remains valid.
+		direct_out = upsert_structure_node(
+			{
+				"type": "StrategicOutcome",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"code": f"{code}-OUT-D",
+				"title": "Direct outcome",
+				"description": "No sub-programme",
+				"responsible_function": "Works",
+				"executive_owner": "Director",
+			}
+		)
+		self.assertTrue(direct_out.get("id"))
+		sub = upsert_structure_node(
+			{
+				"type": "SubProgramme",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"code": f"{code}-SUB",
+				"title": "Rural roads sub-programme",
+				"description": "Optional layer",
+				"responsible_function": "Works",
+			}
+		)
+		self.assertTrue(sub.get("id"))
+		sub_out = upsert_structure_node(
+			{
+				"type": "StrategicOutcome",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"sub_programme": sub["id"],
+				"code": f"{code}-OUT-S",
+				"title": "Sub outcome",
+				"description": "Under sub-programme",
+				"responsible_function": "Works",
+				"executive_owner": "Director",
+			}
+		)
+		self.assertTrue(sub_out.get("id"))
+		tree = get_strategy_tree(plan_version=plan_id)
+		self.assertEqual(tree["counts"]["programmes"], 1)
+		self.assertEqual(tree["counts"]["sub_programmes"], 1)
+		self.assertEqual(tree["counts"]["outcomes"], 2)
+
 	def test_target_missing_benefit_owner_returns_field_errors(self):
 		"""Structured {ok:false, errors} — no MandatoryError / Message dialog path."""
 		_ensure_user("str.officer.struct.err@example.com", ["Strategy Officer"], self.pe)

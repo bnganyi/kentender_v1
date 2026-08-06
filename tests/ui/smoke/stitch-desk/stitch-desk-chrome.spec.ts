@@ -16,6 +16,7 @@ const SURFACES = [
 		primaryCtaTestId: "kt-bud-register-budget",
 		secondaryCtaTestId: "kt-bud-open-performance",
 		selectSelector: '[data-kt-bud-filter="status"]',
+		assertPrimaryHover: true,
 	},
 	{
 		id: "budget-register",
@@ -25,6 +26,8 @@ const SURFACES = [
 		primaryCtaTestId: "kt-bud-create-draft",
 		secondaryCtaTestId: "kt-bud-register-cancel",
 		selectSelector: '[data-kt-bud-field="fiscal_period"]',
+		assertPrimaryHover: true,
+		assertEditableInputs: true,
 	},
 	{
 		id: "strategy-portfolio",
@@ -33,6 +36,16 @@ const SURFACES = [
 		liveAttr: "data-kt-str-live",
 		primaryCtaTestId: "kt-str-create-plan",
 		selectSelector: '[data-testid="kt-str-pf-filters"] select',
+		assertPrimaryHover: true,
+	},
+	{
+		id: "strategy-plan-create",
+		route: "/desk/strategy-plan-create",
+		rootTestId: "kt-str-create-plan",
+		liveAttr: "data-kt-str-live",
+		primaryCtaTestId: "kt-str-create-plan-submit",
+		selectSelector: '[data-kt-str-field="plan_type"]',
+		assertEditableInputs: true,
 	},
 	{
 		id: "budget-overview",
@@ -41,6 +54,7 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
 		secondaryCtaTestId: "kt-bud-view-performance",
+		assertPrimaryHover: true,
 	},
 	{
 		id: "budget-lines",
@@ -49,6 +63,7 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
 		secondaryCtaTestId: "kt-bud-view-performance",
+		assertPrimaryHover: true,
 	},
 	{
 		id: "budget-funding-activity",
@@ -57,6 +72,7 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
 		secondaryCtaTestId: "kt-bud-view-performance",
+		assertPrimaryHover: true,
 		selectSelector: '[data-kt-bud-activity-filter="activity_type"]',
 	},
 	{
@@ -66,6 +82,7 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
 		secondaryCtaTestId: "kt-bud-view-performance",
+		assertPrimaryHover: true,
 		selectSelector: '[data-kt-bud-downstream-filter="status"]',
 	},
 	{
@@ -75,6 +92,7 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
 		secondaryCtaTestId: "kt-bud-view-performance",
+		assertPrimaryHover: true,
 	},
 	{
 		id: "budget-audit",
@@ -84,6 +102,23 @@ const SURFACES = [
 		primaryCtaTestId: "kt-bud-audit-export",
 		primaryCtaStyle: "bordered" as const,
 		selectSelector: '[data-kt-bud-audit-filter="event_type"]',
+	},
+	{
+		id: "budget-funding-performance",
+		route: "/desk/budget-funding-performance",
+		rootTestId: "kt-bud-performance",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-performance-export",
+		primaryCtaStyle: "bordered" as const,
+		selectSelector: '[data-kt-bud-perf-filter="fiscal_period"]',
+	},
+	{
+		id: "budget-check-reserve",
+		route: "/desk/budget-check-reserve",
+		rootTestId: "kt-bud-check-reserve",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-check-reserve-reserve",
+		selectSelector: '[data-kt-bud-cr-filter="budget_line"]',
 	},
 	{
 		id: "budget-revisions",
@@ -99,6 +134,7 @@ const SURFACES = [
 		rootTestId: "kt-bud-revision-create",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-rev-submit",
+		assertEditableInputs: true,
 	},
 	{
 		id: "budget-revision-review",
@@ -133,6 +169,10 @@ test.describe("Stitch Desk chrome baseline", () => {
 					"secondaryCtaTestId" in surface ? surface.secondaryCtaTestId : undefined,
 				selectSelector:
 					"selectSelector" in surface ? surface.selectSelector : undefined,
+				assertPrimaryHover:
+					"assertPrimaryHover" in surface ? surface.assertPrimaryHover : false,
+				assertEditableInputs:
+					"assertEditableInputs" in surface ? surface.assertEditableInputs : false,
 				headlineSelector:
 					surface.id === "budget-overview" ||
 					surface.id === "budget-lines" ||

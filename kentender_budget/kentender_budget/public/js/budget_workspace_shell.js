@@ -81,9 +81,9 @@ frappe.provide("kentender_budget.workspace");
 			'<button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-body-md hover:bg-surface-container-low transition-colors bg-surface-container-lowest" data-kt-bud-action="open-performance" data-testid="kt-bud-view-performance">' +
 			frappe.utils.escape_html(__("View funding performance")) +
 			"</button>" +
-			'<button type="button" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md hover:opacity-90 transition-opacity" data-kt-bud-action="primary" data-testid="kt-bud-overview-primary">' +
-			frappe.utils.escape_html(__("Request revision")) +
-			"</button>"
+			// Hidden until paintChromeActions supplies an explicit action + label
+			// (Overview/Lines/Revisions). Read-only tabs keep View performance only.
+			'<button type="button" hidden class="hidden px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md" data-kt-bud-action="primary" data-testid="kt-bud-overview-primary"></button>'
 		);
 	}
 
@@ -140,9 +140,124 @@ frappe.provide("kentender_budget.workspace");
 		);
 	}
 
+	/** Cross-tab chrome snapshot — prevents title "—" flash on first visit to a sibling tab. */
+	var budgetChromeCache = {};
+
+	function rememberBudgetChrome(budget) {
+		if (!budget) {
+			return;
+		}
+		var entry = {
+			code: budget.code || "",
+			title: budget.title || budget.name || "",
+			status: budget.status || "",
+			status_label: budget.status_label || budget.status || "",
+		};
+		if (!entry.code && !entry.title) {
+			return;
+		}
+		if (entry.code) {
+			budgetChromeCache[entry.code] = entry;
+		}
+		if (budget.id) {
+			budgetChromeCache[budget.id] = entry;
+		}
+	}
+
+	function harvestBudgetChrome(budgetCode, $exceptChrome) {
+		if (budgetCode && budgetChromeCache[budgetCode]) {
+			return budgetChromeCache[budgetCode];
+		}
+		var found = null;
+		$('[data-testid="kt-bud-workspace-chrome"], .kt-bud-injected-chrome').each(function () {
+			if ($exceptChrome && $exceptChrome.length && this === $exceptChrome[0]) {
+				return;
+			}
+			var $c = $(this);
+			var title = ($c.find("[data-kt-bud-budget-title]").first().text() || "").trim();
+			if (!title || title === "—") {
+				return;
+			}
+			var code = ($c.find("[data-kt-bud-budget-code]").first().text() || "").trim();
+			var $root = $c.closest(".kt-bud-root");
+			var rootCode = ($root.attr("data-kt-bud-budget-code") || "").trim();
+			if (budgetCode && code !== budgetCode && rootCode !== budgetCode) {
+				return;
+			}
+			found = {
+				code: code || budgetCode || "",
+				title: title,
+				status: "",
+				status_label: ($c.find("[data-kt-bud-budget-status]").first().text() || "").trim(),
+			};
+			/* Infer status key from pill classes when possible. */
+			var $pill = $c.find("[data-kt-bud-status-pill]").first();
+			if ($pill.hasClass("text-status-available")) {
+				found.status = "Active";
+			} else if ($pill.hasClass("text-status-reserved")) {
+				found.status = "Submitted";
+			}
+			if (!found.status && found.status_label && found.status_label !== "—") {
+				found.status = found.status_label;
+			}
+			if (found.code) {
+				budgetChromeCache[found.code] = found;
+			}
+			return false;
+		});
+		return found;
+	}
+
+	function paintCachedStatusPill($chrome, status, statusLabel) {
+		var st = status || "";
+		var label = statusLabel || st || "—";
+		var $pill = $chrome.find("[data-kt-bud-status-pill]");
+		var $icon = $chrome.find("[data-kt-bud-status-icon]");
+		$chrome.find("[data-kt-bud-budget-status]").text(label);
+		$pill
+			.removeClass(
+				"bg-status-available/10 text-status-available border-status-available/20 bg-status-reserved/10 text-status-reserved border-status-reserved/20 bg-surface-variant text-on-surface-variant border-outline-variant/20"
+			)
+			.addClass("border");
+		if (st === "Active") {
+			$pill.addClass(
+				"bg-status-available/10 text-status-available border-status-available/20"
+			);
+			$icon.text("check_circle");
+		} else if (st === "Submitted") {
+			$pill.addClass("bg-status-reserved/10 text-status-reserved border-status-reserved/20");
+			$icon.text("pending");
+		} else {
+			$pill.addClass("bg-surface-variant text-on-surface-variant border-outline-variant/20");
+			$icon.text("radio_button_unchecked");
+		}
+	}
+
+	function hydrateBudgetChrome($root, budgetCode) {
+		var $chrome = $root
+			.find('[data-testid="kt-bud-workspace-chrome"], .kt-bud-injected-chrome')
+			.first();
+		if (!$chrome.length) {
+			return false;
+		}
+		var snap = harvestBudgetChrome(budgetCode, $chrome);
+		if (!snap || !snap.title) {
+			return false;
+		}
+		$chrome.find("[data-kt-bud-budget-title]").first().text(snap.title);
+		if (snap.code) {
+			$chrome.find("[data-kt-bud-budget-code]").first().text(snap.code);
+		}
+		paintCachedStatusPill($chrome, snap.status || "", snap.status_label || "");
+		$chrome.attr("data-kt-bud-chrome-hydrated", "1");
+		return true;
+	}
+
 	function annotateChrome($root, pageSlug, budgetCode) {
 		$root.find('[data-testid="kt-bud-workspace-chrome"]').remove();
 		$root.prepend(budgetChromeHtml(budgetCode, pageSlug));
+		/* Fill from sibling tab / cache before first paint of empty placeholders. */
+		hydrateBudgetChrome($root, budgetCode);
 	}
 
 	function bindTabs($root, budgetCode) {
@@ -213,7 +328,7 @@ frappe.provide("kentender_budget.workspace");
 
 	function enterShell() {
 		var sh = shell();
-		if (sh && typeof sh.enterNative === "function") {
+		if (sh && typeof sh.enterNative === "function" && !sh.isNativeActive()) {
 			sh.enterNative({
 				sidebarWorkspaceKey: "procurement",
 				toolbar: {
@@ -279,19 +394,17 @@ frappe.provide("kentender_budget.workspace");
 		var budgetCode = ensureBudgetRoute(pageSlug, budgetCodeFromRoute(FIXTURE_BUDGET));
 		var nextMountKey = budgetMountKey(pageSlug, budgetCode);
 		var $existing = existingRoot(page);
+		/*
+		 * Soft tab navigation: Frappe keeps page DOM and re-fires on_page_show.
+		 * Remounting chrome / rebinding live every show flashes title to "—" then
+		 * back. Skip wipe when the same route/budget is already mounted.
+		 */
 		if (
 			softShow &&
 			$existing.length &&
 			$existing.attr("data-kt-bud-mounted") === "1" &&
 			$existing.attr("data-kt-bud-mount-key") === nextMountKey
 		) {
-			// Keep shell DOM; refresh live list/status (e.g. after Apply/Reject on review page).
-			annotateChrome($existing, pageSlug, budgetCode);
-			bindTabs($existing, budgetCode);
-			bindChromeActions($existing, budgetCode);
-			bindLiveTab($existing, pageSlug, budgetCode).catch(function (err) {
-				console.warn("Budget soft-show rebind failed", pageSlug, err);
-			});
 			return;
 		}
 
@@ -381,5 +494,7 @@ frappe.provide("kentender_budget.workspace");
 		ensureBudgetRoute: ensureBudgetRoute,
 		registerPage: registerPage,
 		mountBudgetPage: mountBudgetPage,
+		rememberBudgetChrome: rememberBudgetChrome,
+		hydrateBudgetChrome: hydrateBudgetChrome,
 	};
 })();

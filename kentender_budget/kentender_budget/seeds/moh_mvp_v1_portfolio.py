@@ -374,21 +374,30 @@ BUDGETS = (
 
 
 def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
-	"""Prefer live Active Performance Target; fall back to pack snapshot fields."""
-	row = frappe.db.get_value(
-		"Performance Target",
-		{"target_code": code, "status": "Active"},
-		["name", "title", "plan_version"],
-		as_dict=True,
-	)
-	if row:
-		return {
-			"id": row.name,
-			"code": code,
-			"name": row.title or fallback_name,
-			"plan_version_id": row.plan_version or "",
-			"snapshot_label": row.title or fallback_name,
-		}
+	"""Prefer live Active Performance Target on an Active plan; fall back to pack snapshot."""
+	try:
+		from kentender_strategy.services.strategy_consumer import resolve_performance_target_id
+
+		target_id = resolve_performance_target_id(target_code=code)
+	except ImportError:
+		target_id = frappe.db.get_value(
+			"Performance Target", {"target_code": code, "status": "Active"}, "name"
+		)
+	if target_id:
+		row = frappe.db.get_value(
+			"Performance Target",
+			target_id,
+			["name", "title", "plan_version", "target_code"],
+			as_dict=True,
+		)
+		if row:
+			return {
+				"id": row.name,
+				"code": code,
+				"name": row.title or fallback_name,
+				"plan_version_id": row.plan_version or "",
+				"snapshot_label": row.title or fallback_name,
+			}
 	return {
 		"id": "",
 		"code": code,
@@ -563,6 +572,8 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 				"fixture_namespace": FIXTURE_NS,
 			}
 		)
+		# Fixture may snapshot historical / non-selectable-for-new targets; API save enforces Active.
+		line_doc.flags.skip_budget_strategy_validate = True
 		line_doc.insert(ignore_permissions=True)
 		_seed_line_activity(budget_name, line_doc.name, line.get("funding_activity"))
 
@@ -923,3 +934,43 @@ def upsert_moh_mvp_v1_portfolio() -> dict[str, Any]:
 		"budgets": created,
 		"codes": [b["generated_reference"] for b in BUDGETS],
 	}
+
+
+def clear_moh_bl_0006_primary_for_e2e() -> dict[str, Any]:
+	"""XMOD-STR-001 Playwright — restore MOH-BL-0006 missing-primary fixture state."""
+	frappe.only_for(("System Manager", "Administrator"))
+	name = frappe.db.get_value("Budget Line", {"generated_reference": "MOH-BL-0006"}, "name")
+	if not name:
+		return {"ok": False, "error": "MOH-BL-0006 not found"}
+	frappe.db.set_value(
+		"Budget Line",
+		name,
+		{
+			"primary_target_id": "",
+			"primary_target_code": "",
+			"primary_target_name": "",
+			"primary_plan_version_id": "",
+			"primary_snapshot_label": "",
+			"primary_strategy_linked": 0,
+		},
+		update_modified=False,
+	)
+	frappe.db.commit()
+	return {"ok": True, "line": name}
+
+
+def set_budget_line_allocation_by_code(line_code: str, amount: float) -> dict[str, Any]:
+	"""Playwright helper — set amount_allocated by Budget Line.generated_reference when present."""
+	frappe.only_for(("System Manager", "Administrator"))
+	code = (line_code or "").strip()
+	name = frappe.db.get_value("Budget Line", {"generated_reference": code}, "name")
+	if not name and frappe.db.exists("Budget Line", code):
+		name = code
+	if not name:
+		return {"ok": False, "error": f"Budget Line {code} not found"}
+	meta = frappe.get_meta("Budget Line")
+	if not meta.has_field("amount_allocated"):
+		return {"ok": False, "error": "amount_allocated field not on Budget Line", "skipped": True}
+	frappe.db.set_value("Budget Line", name, "amount_allocated", amount, update_modified=False)
+	frappe.db.commit()
+	return {"ok": True, "line": name, "amount_allocated": amount}

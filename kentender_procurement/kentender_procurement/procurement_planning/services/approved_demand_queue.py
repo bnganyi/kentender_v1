@@ -199,16 +199,26 @@ def _budget_line_ref(budget_line_name: str | None) -> dict[str, str]:
 	bl_name = (budget_line_name or "").strip()
 	if not bl_name or not frappe.db.exists("Budget Line", bl_name):
 		return {"id": "", "code": "", "name": ""}
-	row = frappe.db.get_value(
-		"Budget Line",
-		bl_name,
-		("name", "budget_line_code", "budget_line_name"),
-		as_dict=True,
-	) or {}
+	# MVP-1 Budget Line: generated_reference + title (legacy budget_line_code removed).
+	meta_fields = {df.fieldname for df in frappe.get_meta("Budget Line").fields}
+	fields = ["name"]
+	if "generated_reference" in meta_fields:
+		fields.append("generated_reference")
+	if "title" in meta_fields:
+		fields.append("title")
+	if "budget_line_code" in meta_fields:
+		fields.append("budget_line_code")
+	if "budget_line_name" in meta_fields:
+		fields.append("budget_line_name")
+	row = frappe.db.get_value("Budget Line", bl_name, tuple(fields), as_dict=True) or {}
+	code = (
+		(row.get("generated_reference") or row.get("budget_line_code") or row.get("name") or "")
+	).strip()
+	name = (row.get("title") or row.get("budget_line_name") or code).strip()
 	return {
 		"id": row.get("name") or "",
-		"code": (row.get("budget_line_code") or row.get("name") or "").strip(),
-		"name": (row.get("budget_line_name") or row.get("budget_line_code") or "").strip(),
+		"code": code,
+		"name": name,
 	}
 
 

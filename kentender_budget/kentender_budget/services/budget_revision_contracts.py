@@ -385,6 +385,15 @@ def submit_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 	rev.review_comment = ""
 	rev.save()
 
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_REVISION_SUBMITTED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(
+		EVENT_REVISION_SUBMITTED, budget_doc=budget, revision_doc=rev
+	)
+
 	return {
 		"ok": True,
 		"revision": _revision_dto(rev, budget.currency or "KES", impact),
@@ -501,6 +510,14 @@ def return_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 	rev.status = "Returned"
 	rev.review_comment = comment
 	rev.save(ignore_permissions=True)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_REVISION_RETURNED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(
+		EVENT_REVISION_RETURNED, budget_doc=budget, revision_doc=rev
+	)
 	return {
 		"ok": True,
 		"revision": _revision_dto(rev, budget.currency or "KES"),
@@ -532,6 +549,14 @@ def reject_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 	rev.status = "Rejected"
 	rev.review_comment = comment
 	rev.save(ignore_permissions=True)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_REVISION_REJECTED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(
+		EVENT_REVISION_REJECTED, budget_doc=budget, revision_doc=rev
+	)
 	return {
 		"ok": True,
 		"revision": _revision_dto(rev, budget.currency or "KES"),
@@ -641,6 +666,14 @@ def apply_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 		change_summary=f"Net Change: {_signed_money(net, currency)}",
 		source_reference=rev.external_approval_reference or "",
 		reason=rev.reason or "",
+	)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_REVISION_APPLIED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(
+		EVENT_REVISION_APPLIED, budget_doc=budget, revision_doc=rev
 	)
 
 	return {

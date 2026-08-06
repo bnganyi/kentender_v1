@@ -55,10 +55,21 @@ def _demand_name(demand_code: str) -> str | None:
 	return name or (demand_code if frappe.db.exists("Demand", demand_code) else None)
 
 
-def _strategy_label(strategic_plan: str | None = None) -> str:
-	"""Neutralized (MVP-1 strategy teardown)."""
-	_ = strategic_plan
-	return ""
+def _strategy_label_for_demand(demand_name: str | None = None) -> str:
+	"""XMOD-STR-004 — Name (CODE) from Demand Strategy Reference."""
+	if not demand_name or not frappe.db.exists("Demand", demand_name):
+		return ""
+	try:
+		from kentender_strategy.services.strategy_consumer import strategy_fields_from_doc
+	except ImportError:
+		return ""
+	doc = frappe.get_doc("Demand", demand_name)
+	sf = strategy_fields_from_doc(doc) or {}
+	name = (sf.get("performance_target_label") or "").strip()
+	code = (sf.get("performance_target_code") or "").strip()
+	if name and code:
+		return f"{name} ({code})"
+	return name or code or (getattr(doc, "strategy_snapshot_label", None) or "").strip()
 
 
 def _documents_count(demand_name: str | None) -> int:
@@ -97,7 +108,7 @@ def _demand_card_fields(demand_code: str) -> dict[str, Any]:
 	return {
 		"demand_name": demand_name,
 		"needed_by": str(row.get("required_by_date") or ""),
-		"strategy_label": _strategy_label(),
+		"strategy_label": _strategy_label_for_demand(demand_name),
 		"documents_count": _documents_count(demand_name),
 		"funding_label": _funding_label(demand_name),
 	}
@@ -304,7 +315,11 @@ def _budget_line_business_code_safe(budget_line_name: str | None) -> str:
 	# MVP-1 Budget teardown: field is free-text / code; DocType may be absent.
 	if not frappe.db.exists("DocType", "Budget Line"):
 		return (budget_line_name or "").strip()
-	return (frappe.db.get_value("Budget Line", budget_line_name, "budget_line_code") or budget_line_name or "").strip()
+	return (
+		frappe.db.get_value("Budget Line", budget_line_name, "generated_reference")
+		or budget_line_name
+		or ""
+	).strip()
 
 
 def _funding_preview(inclusions: list[dict[str, Any]]) -> dict[str, Any]:

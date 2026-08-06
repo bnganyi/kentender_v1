@@ -607,13 +607,53 @@ frappe.provide("kentender_budget.live");
 		}
 	}
 
+	/** Seed sibling-tab chrome cache so soft-nav never flashes placeholder title. */
+	function rememberPaintedBudgetChrome(budget) {
+		if (
+			kentender_budget.workspace &&
+			typeof kentender_budget.workspace.rememberBudgetChrome === "function"
+		) {
+			kentender_budget.workspace.rememberBudgetChrome(budget);
+		}
+	}
+
+	function paintBudgetWorkspaceChrome($root, budget, caps) {
+		budget = budget || {};
+		$root.find("[data-kt-bud-budget-code]").text(budget.code || "");
+		$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
+		paintStatusPill($root, budget.status, budget.status_label);
+		if (caps !== undefined) {
+			paintChromeActions($root, caps);
+		}
+		rememberPaintedBudgetChrome(budget);
+	}
+
 	function paintChromeActions($root, caps) {
 		caps = caps || {};
-		$root.attr("data-kt-bud-primary-action", caps.primary_action || "");
-		var $primary = $root.find('[data-testid="kt-bud-overview-primary"]');
-		if ($primary.length) {
-			$primary.text(caps.primary_label || __("Open"));
+		var action = String(caps.primary_action || "").trim();
+		var label = String(caps.primary_label || "").trim();
+		// Known actions get a proper label when the DTO omits primary_label.
+		// Never invent a bare "Open" fallback.
+		if (!label && action) {
+			var defaults = {
+				request_revision: __("Request revision"),
+				open_lines: __("Budget lines"),
+				add_line: __("Add budget line"),
+				view_funding_performance: __("View funding performance"),
+				apply_revision: __("Apply revision"),
+			};
+			label = defaults[action] || "";
 		}
+		$root.attr("data-kt-bud-primary-action", action);
+		var $primary = $root.find('[data-testid="kt-bud-overview-primary"]');
+		if (!$primary.length) {
+			return;
+		}
+		if (!action || !label) {
+			$primary.addClass("hidden").attr("hidden", "hidden").text("");
+			return;
+		}
+		$primary.removeClass("hidden").removeAttr("hidden").text(label);
 	}
 
 	function bindOverview($root, budgetCode) {
@@ -636,10 +676,11 @@ frappe.provide("kentender_budget.live");
 				var strategy = ov.strategy || {};
 				var attn = ov.attention || {};
 
-				$root.find("[data-kt-bud-budget-code]").text(ov.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(ov.title || ov.name || "—");
-				paintStatusPill($root, ov.status, ov.status_label);
-				paintChromeActions($root, ov.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, ov, { code: ov.code || budgetCode || "" }),
+					ov.capabilities
+				);
 
 				setOv($root, "entity", pe.name || pe.code || "—");
 				setOv($root, "fiscal_period", ov.fiscal_period_label || ov.fiscal_period || "—");
@@ -899,6 +940,7 @@ frappe.provide("kentender_budget.live");
 		var readOnly = !!(lineDto.capabilities && lineDto.capabilities.read_only);
 		var $drawer = $root.find("[data-kt-bud-line-drawer]");
 		var $scrim = $root.find("[data-kt-bud-line-drawer-scrim]");
+		clearLineDrawerFieldErrors($drawer);
 		$drawer.attr("data-kt-bud-line-readonly", readOnly ? "1" : "0");
 		$drawer.attr("data-line-code", lineDto.code || "");
 		$drawer.find("[data-kt-bud-line-drawer-title]").text(
@@ -1050,11 +1092,14 @@ frappe.provide("kentender_budget.live");
 		);
 		$root.on("click.ktBudLineDrawer", "[data-kt-bud-line-save]", function (e) {
 			e.preventDefault();
+			var $drawer = $root.find("[data-kt-bud-line-drawer]");
+			clearLineDrawerFieldErrors($drawer);
 			var payload = collectDrawerPayload($root, budgetCode);
 			call("save_budget_line", { payload: payload })
 				.then(function (res) {
 					if (!res || !res.ok) {
 						var errs = (res && res.errors) || {};
+						showLineDrawerFieldErrors($drawer, errs);
 						var msg = Object.keys(errs)
 							.map(function (k) {
 								return errs[k];
@@ -1080,7 +1125,44 @@ frappe.provide("kentender_budget.live");
 			$root
 				.find('[data-kt-bud-line-field="primary_target_code"]')
 				.text($(this).val() || "—");
+			clearLineDrawerFieldErrors($root.find("[data-kt-bud-line-drawer]"));
 		});
+	}
+
+	function clearLineDrawerFieldErrors($drawer) {
+		if (!$drawer || !$drawer.length) {
+			return;
+		}
+		$drawer.find("[data-kt-bud-error]").addClass("hidden").text("");
+		$drawer.find(".kt-field-invalid").removeClass("kt-field-invalid");
+		if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
+			window.ktFormErrors.clear($drawer, {
+				errorAttr: "data-kt-bud-error",
+				fieldAttr: "data-kt-bud-field",
+				invalidClass: "kt-field-invalid",
+			});
+		}
+	}
+
+	function showLineDrawerFieldErrors($drawer, errors) {
+		if (!$drawer || !$drawer.length || !errors) {
+			return;
+		}
+		Object.keys(errors).forEach(function (key) {
+			var $el = $drawer.find('[data-kt-bud-error="' + key + '"]');
+			if ($el.length) {
+				$el.text(errors[key] || "").removeClass("hidden");
+			}
+		});
+		if (window.ktFormErrors) {
+			window.ktFormErrors.show($drawer, errors, {
+				errorAttr: "data-kt-bud-error",
+				errorAttrAliases: [],
+				fieldAttr: "data-kt-bud-field",
+				fieldAttrAliases: [],
+				invalidClass: "kt-field-invalid",
+			});
+		}
 	}
 
 	function hideLinesNotice($root) {
@@ -1131,10 +1213,11 @@ frappe.provide("kentender_budget.live");
 					return dto;
 				}
 				var budget = dto.budget || {};
-				$root.find("[data-kt-bud-budget-code]").text(budget.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-				paintStatusPill($root, budget.status, budget.status_label);
-				paintChromeActions($root, dto.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, budget, { code: budget.code || budgetCode || "" }),
+					dto.capabilities
+				);
 
 				// New Line stays visible (Stitch toolbar); Active blocks create with guidance.
 				var $newBtn = $root.find("[data-kt-bud-lines-new]");
@@ -1476,10 +1559,11 @@ frappe.provide("kentender_budget.live");
 				}
 				var budget = dto.budget || {};
 				var bal = dto.balances || {};
-				$root.find("[data-kt-bud-budget-code]").text(budget.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-				paintStatusPill($root, budget.status, budget.status_label);
-				paintChromeActions($root, dto.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, budget, { code: budget.code || budgetCode || "" }),
+					dto.capabilities
+				);
 
 				$root.find('[data-kt-bud-activity-bal="reserved"]').text(bal.reserved_display || "—");
 				$root.find('[data-kt-bud-activity-bal="committed"]').text(bal.committed_display || "—");
@@ -1984,10 +2068,11 @@ frappe.provide("kentender_budget.live");
 					return dto;
 				}
 				var budget = dto.budget || {};
-				$root.find("[data-kt-bud-budget-code]").text(budget.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-				paintStatusPill($root, budget.status, budget.status_label);
-				paintChromeActions($root, dto.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, budget, { code: budget.code || budgetCode || "" }),
+					dto.capabilities
+				);
 
 				var rows = dto.rows || [];
 				var $tbody = $root.find("[data-kt-bud-revisions-tbody]");
@@ -2690,10 +2775,11 @@ frappe.provide("kentender_budget.live");
 					return dto;
 				}
 				var budget = dto.budget || {};
-				$root.find("[data-kt-bud-budget-code]").text(budget.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-				paintStatusPill($root, budget.status, budget.status_label);
-				paintChromeActions($root, dto.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, budget, { code: budget.code || budgetCode || "" }),
+					dto.capabilities
+				);
 
 				var rows = dto.rows || [];
 				$root.data("ktBudDownstreamCache", rows);
@@ -2914,10 +3000,11 @@ frappe.provide("kentender_budget.live");
 		var gov = dto.governance || {};
 		var status = budget.status || "";
 
-		$root.find("[data-kt-bud-budget-code]").text(budget.code || "");
-		$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-		paintStatusPill($root, status, budget.status_label);
-		paintChromeActions($root, caps);
+		paintBudgetWorkspaceChrome(
+			$root,
+			Object.assign({}, budget, { status: status }),
+			caps
+		);
 
 		$root
 			.find("[data-kt-bud-review-status-chip]")
@@ -3368,10 +3455,11 @@ frappe.provide("kentender_budget.live");
 					throw new Error("Empty audit payload");
 				}
 				var budget = dto.budget || {};
-				$root.find("[data-kt-bud-budget-code]").text(budget.code || budgetCode || "");
-				$root.find("[data-kt-bud-budget-title]").text(budget.title || budget.name || "—");
-				paintStatusPill($root, budget.status, budget.status_label);
-				paintChromeActions($root, dto.capabilities);
+				paintBudgetWorkspaceChrome(
+					$root,
+					Object.assign({}, budget, { code: budget.code || budgetCode || "" }),
+					dto.capabilities
+				);
 
 				var filters = dto.filters || {};
 				fillAuditSelect(
@@ -3486,6 +3574,664 @@ frappe.provide("kentender_budget.live");
 			});
 	}
 
+	function showPerfNotice($root, opts) {
+		var $n = $root.find("[data-kt-bud-perf-notice]");
+		$n.removeClass("hidden").removeAttr("hidden");
+		$n.find("[data-kt-bud-perf-notice-title]").text(opts.title || "");
+		$n.find("[data-kt-bud-perf-notice-msg]").text(opts.message || "");
+	}
+
+	function hidePerfNotice($root) {
+		$root.find("[data-kt-bud-perf-notice]").addClass("hidden").attr("hidden", "hidden");
+	}
+
+	function fillPerfSelect($sel, values, allLabel, mapLabel) {
+		var cur = $sel.val() || "";
+		var opts = ['<option value="">' + esc(allLabel) + "</option>"];
+		(values || []).forEach(function (v) {
+			var value = typeof v === "object" ? v.code || v.id || "" : v;
+			var label =
+				typeof mapLabel === "function"
+					? mapLabel(v)
+					: typeof v === "object"
+						? v.name
+							? v.name + (v.code ? " (" + v.code + ")" : "")
+							: value
+						: v;
+			if (!value && typeof v !== "object") {
+				return;
+			}
+			if (!value) {
+				return;
+			}
+			opts.push(
+				'<option value="' +
+					esc(value) +
+					'"' +
+					(value === cur ? " selected" : "") +
+					">" +
+					esc(label) +
+					"</option>"
+			);
+		});
+		$sel.html(opts.join(""));
+		if (cur) {
+			$sel.val(cur);
+		}
+	}
+
+	function coverageRowHtml(r) {
+		return (
+			'<tr data-testid="kt-bud-performance-coverage-row" data-target-code="' +
+			esc(r.target_code || "") +
+			'" data-budget-code="' +
+			esc(r.budget_code || "") +
+			'">' +
+			"<td><div class=\"kt-bud-perf-target-name\">" +
+			esc(r.target_name || "—") +
+			'</div><div class="kt-bud-perf-target-code">' +
+			esc(r.target_code || "") +
+			"</div></td>" +
+			'<td class="text-right kt-bud-perf-mono">' +
+			esc(String(r.line_count || 0)) +
+			"</td>" +
+			'<td class="text-right kt-bud-perf-mono">' +
+			esc(r.approved_display || "—") +
+			"</td>" +
+			'<td class="text-right kt-bud-perf-mono text-status-reserved">' +
+			esc(r.reserved_display || "—") +
+			"</td>" +
+			'<td class="text-right kt-bud-perf-mono text-status-committed">' +
+			esc(r.committed_display || "—") +
+			"</td>" +
+			'<td class="text-right kt-bud-perf-mono text-status-available">' +
+			esc(r.available_display || "—") +
+			"</td>" +
+			'<td><span class="kt-bud-perf-treatment">' +
+			esc(r.value_treatment || "—") +
+			"</span></td>" +
+			'<td class="text-center">' +
+			esc(r.attention_label || "—") +
+			"</td>" +
+			'<td class="text-right">' +
+			'<button type="button" class="kt-bud-perf-action" data-testid="kt-bud-performance-coverage-action" data-kt-bud-perf-action="view_details" data-budget-code="' +
+			esc(r.budget_code || "") +
+			'">' +
+			esc(r.action_label || __("View Details")) +
+			"</button></td></tr>"
+		);
+	}
+
+	function exceptionRowHtml(r) {
+		return (
+			'<tr data-testid="kt-bud-performance-exception-row" data-exception-kind="' +
+			esc(r.exception_kind || "") +
+			'">' +
+			"<td><span class=\"inline-flex items-center gap-2\"><span class=\"material-symbols-outlined text-status-exhausted text-sm\" aria-hidden=\"true\">error</span>" +
+			esc(r.exception || "—") +
+			"</span></td>" +
+			"<td>" +
+			esc(r.budget_line || "—") +
+			"</td>" +
+			"<td>" +
+			esc(r.owner || "—") +
+			"</td>" +
+			"<td>" +
+			esc(r.age_label || "—") +
+			"</td>" +
+			'<td class="text-right">' +
+			'<button type="button" class="kt-bud-perf-exc-action" data-testid="kt-bud-performance-exception-action" data-kt-bud-perf-action="review_finance_sync" data-line-code="' +
+			esc(r.budget_line_code || "") +
+			'">' +
+			esc(r.action_label || __("Review finance sync")) +
+			"</button></td></tr>"
+		);
+	}
+
+	function bindPerformance($root) {
+		if (!$root || !$root.length) {
+			return Promise.resolve(null);
+		}
+		var token = Number($root.attr("data-kt-bud-bind-token") || 0) + 1;
+		$root.attr("data-kt-bud-bind-token", String(token));
+		$root.attr("data-kt-bud-live", "0");
+		hidePerfNotice($root);
+		var lastExport = null;
+
+		function readFilters() {
+			return {
+				fiscal_period: $root.find('[data-kt-bud-perf-filter="fiscal_period"]').val() || "",
+				programme: $root.find('[data-kt-bud-perf-filter="programme"]').val() || "",
+				primary_target: $root.find('[data-kt-bud-perf-filter="primary_target"]').val() || "",
+				funding_status: $root.find('[data-kt-bud-perf-filter="funding_status"]').val() || "",
+			};
+		}
+
+		function paintDto(dto) {
+			var entity = dto.entity || {};
+			var kpis = dto.kpis || {};
+			var filters = dto.filters || {};
+			$root.find("[data-kt-bud-perf-entity]").text(entity.name || entity.code || "—");
+			$root.find("[data-kt-bud-perf-as-at]").text(
+				dto.as_at_display ? __("As at") + " " + dto.as_at_display : "—"
+			);
+			$root.find('[data-kt-bud-perf-kpi-value="approved"]').text(kpis.approved_display || "—");
+			$root.find('[data-kt-bud-perf-kpi-value="reserved"]').text(kpis.reserved_display || "—");
+			$root.find('[data-kt-bud-perf-kpi-value="committed"]').text(kpis.committed_display || "—");
+			$root.find('[data-kt-bud-perf-kpi-value="available"]').text(kpis.available_display || "—");
+			$root.find('[data-kt-bud-perf-kpi-value="actual"]').text(kpis.actual_display || "—");
+			$root.find('[data-kt-bud-perf-kpi-value="attention"]').text(kpis.attention_display || "0");
+			$root.find("[data-kt-bud-perf-disclaimer-text]").text(dto.disclaimer || "");
+
+			fillPerfSelect(
+				$root.find('[data-kt-bud-perf-filter="fiscal_period"]'),
+				filters.fiscal_periods || [],
+				__("All fiscal periods"),
+				function (v) {
+					return "FY " + v;
+				}
+			);
+			fillPerfSelect(
+				$root.find('[data-kt-bud-perf-filter="programme"]'),
+				filters.programmes || [],
+				__("All programmes")
+			);
+			fillPerfSelect(
+				$root.find('[data-kt-bud-perf-filter="primary_target"]'),
+				filters.targets || [],
+				__("All strategic targets")
+			);
+			fillPerfSelect(
+				$root.find('[data-kt-bud-perf-filter="funding_status"]'),
+				filters.funding_statuses || [],
+				__("All funding statuses")
+			);
+
+			var $ct = $root.find("[data-kt-bud-perf-coverage-tbody]");
+			var coverage = dto.coverage_rows || [];
+			if (!coverage.length) {
+				$ct.html(
+					'<tr><td colspan="9" class="px-4 py-8 text-center text-on-surface-variant">No strategy funding coverage for the current filters.</td></tr>'
+				);
+			} else {
+				$ct.html(coverage.map(coverageRowHtml).join(""));
+			}
+
+			var $et = $root.find("[data-kt-bud-perf-exceptions-tbody]");
+			var exceptions = dto.exception_rows || [];
+			if (!exceptions.length) {
+				$et.html(
+					'<tr><td colspan="5" class="px-4 py-8 text-center text-on-surface-variant">No funding exceptions.</td></tr>'
+				);
+			} else {
+				$et.html(exceptions.map(exceptionRowHtml).join(""));
+			}
+
+			var caps = dto.capabilities || {};
+			var $exportBtn = $root.find("[data-kt-bud-perf-export]");
+			if (caps.can_export) {
+				$exportBtn.removeClass("hidden").prop("disabled", false).attr("aria-hidden", "false");
+			} else {
+				$exportBtn.addClass("hidden").prop("disabled", true).attr("aria-hidden", "true");
+			}
+		}
+
+		function reload() {
+			return call("get_funding_performance", readFilters()).then(function (dto) {
+				if (String($root.attr("data-kt-bud-bind-token")) !== String(token)) {
+					return dto;
+				}
+				if (!dto) {
+					throw new Error("Empty performance payload");
+				}
+				paintDto(dto);
+				lastExport = null;
+				$root.attr("data-kt-bud-live", "1");
+				$root.attr("data-kt-bud-error", "0");
+				return dto;
+			});
+		}
+
+		function downloadExport() {
+			return call("export_funding_performance", readFilters()).then(function (payload) {
+				lastExport = payload;
+				var lineage = (payload && payload.lineage) || {};
+				var headers = [
+					"Section",
+					"Strategic target",
+					"Target code",
+					"Budget lines",
+					"Approved",
+					"Reserved",
+					"Committed",
+					"Available",
+					"Value treatment",
+					"Attention",
+					"Exception",
+					"Budget line",
+					"Owner",
+					"Age",
+				];
+				function csvEscape(val) {
+					var s = val == null ? "" : String(val);
+					if (/^[=+\-@]/.test(s)) {
+						s = "'" + s;
+					}
+					if (/[",\n\r]/.test(s)) {
+						return '"' + s.replace(/"/g, '""') + '"';
+					}
+					return s;
+				}
+				var lines = [
+					["Lineage", "Entity", lineage.entity_name || "", lineage.entity_code || ""]
+						.map(csvEscape)
+						.join(","),
+					["Lineage", "As at", lineage.as_at_display || "", ""]
+						.map(csvEscape)
+						.join(","),
+					["Lineage", "Source coverage", lineage.source_coverage || "", ""]
+						.map(csvEscape)
+						.join(","),
+					["Lineage", "Disclaimer", lineage.disclaimer || "", ""]
+						.map(csvEscape)
+						.join(","),
+					headers.map(csvEscape).join(","),
+				];
+				(payload.coverage_rows || []).forEach(function (r) {
+					lines.push(
+						[
+							"Coverage",
+							r.target_name,
+							r.target_code,
+							r.line_count,
+							r.approved_display,
+							r.reserved_display,
+							r.committed_display,
+							r.available_display,
+							r.value_treatment,
+							r.attention_label,
+							"",
+							"",
+							"",
+							"",
+						]
+							.map(csvEscape)
+							.join(",")
+					);
+				});
+				(payload.exception_rows || []).forEach(function (r) {
+					lines.push(
+						[
+							"Exception",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							r.exception,
+							r.budget_line,
+							r.owner,
+							r.age_label,
+						]
+							.map(csvEscape)
+							.join(",")
+					);
+				});
+				var blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+				var url = URL.createObjectURL(blob);
+				var a = document.createElement("a");
+				a.href = url;
+				a.download = "funding-performance-export.csv";
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+				showPerfNotice($root, {
+					title: __("Export ready"),
+					message: __("Downloaded the filtered Funding Performance report with lineage metadata."),
+				});
+				return payload;
+			});
+		}
+
+		return reload()
+			.then(function (dto) {
+				$root.off(".ktBudPerf");
+				$root.on("change.ktBudPerf", "[data-kt-bud-perf-filter]", function () {
+					reload().catch(function (err) {
+						console.warn("Funding performance filter failed", err);
+					});
+				});
+				$root.on("click.ktBudPerf", "[data-kt-bud-perf-notice-dismiss]", function (e) {
+					e.preventDefault();
+					hidePerfNotice($root);
+				});
+				$root.on("click.ktBudPerf", "[data-kt-bud-perf-export]", function (e) {
+					e.preventDefault();
+					downloadExport().catch(function (err) {
+						showPerfNotice($root, {
+							title: __("Export failed"),
+							message: __("Could not export the current view. Refresh and try again."),
+						});
+						console.warn("Funding performance export failed", err);
+					});
+				});
+				$root.on("click.ktBudPerf", "[data-kt-bud-perf-action]", function (e) {
+					e.preventDefault();
+					var action = $(this).attr("data-kt-bud-perf-action");
+					if (action === "view_details") {
+						var code = $(this).attr("data-budget-code");
+						if (code) {
+							frappe.set_route("budget-lines", code);
+							return;
+						}
+						showPerfNotice($root, {
+							title: __("View details"),
+							message: __("Open a Budget from the portfolio to inspect line-level funding."),
+						});
+						return;
+					}
+					if (action === "review_finance_sync") {
+						showPerfNotice($root, {
+							title: __("Review finance sync"),
+							message: __(
+								"Actual expenditure on this line is stale. Ask Finance Integration to re-sync expenditure; live sync is not available from this screen."
+							),
+						});
+					}
+				});
+				return dto;
+			})
+			.catch(function (err) {
+				$root.attr("data-kt-bud-live", "0");
+				$root.attr("data-kt-bud-error", "1");
+				showPerfNotice($root, {
+					title: __("Could not load Funding Performance"),
+					message: __("Refresh and try again. If the problem continues, contact support."),
+				});
+				throw err;
+			});
+	}
+
+	function ensureCheckReserveHost() {
+		var $host = $("body > [data-testid='kt-bud-check-reserve-host']");
+		if ($host.length) {
+			return $host;
+		}
+		var html =
+			kentender_budget.ui_fixtures &&
+			typeof kentender_budget.ui_fixtures.check_reserve === "function"
+				? kentender_budget.ui_fixtures.check_reserve()
+				: "";
+		if (!html) {
+			return $();
+		}
+		$host = $(html);
+		$("body").append($host);
+		return $host;
+	}
+
+	function showCrNotice($root, opts) {
+		var $n = $root.find("[data-kt-bud-cr-notice]");
+		$n.removeClass("hidden").removeAttr("hidden");
+		$n.find("[data-kt-bud-cr-notice-title]").text(opts.title || "");
+		$n.find("[data-kt-bud-cr-notice-msg]").text(opts.message || "");
+	}
+
+	function hideCrNotice($root) {
+		$root.find("[data-kt-bud-cr-notice]").addClass("hidden").attr("hidden", "hidden");
+	}
+
+	function closeCheckReserve() {
+		var $host = $("body > [data-testid='kt-bud-check-reserve-host']");
+		if ($host.length) {
+			$host.attr("hidden", "hidden");
+			$host.find("[data-testid='kt-bud-check-reserve']").attr("data-kt-bud-live", "0");
+		}
+	}
+
+	function openCheckReserve(opts) {
+		opts = opts || {};
+		var $host = ensureCheckReserveHost();
+		if (!$host.length) {
+			return Promise.reject(new Error("Check/Reserve fixture missing"));
+		}
+		var $root = $host.find("[data-testid='kt-bud-check-reserve']");
+		$host.removeAttr("hidden");
+		hideCrNotice($root);
+		$root.data("ktBudCrOpts", opts);
+		$root.attr("data-kt-bud-live", "0");
+
+		var state = {
+			demand: opts.demandName || opts.demandCode || "",
+			demandTitle: opts.demandTitle || "",
+			department: opts.department || "",
+			requested: Number(opts.requestedAmount || 0),
+			budgetLine: opts.budgetLine || opts.budgetLineCode || "",
+			lines: [],
+			dto: null,
+		};
+
+		function paintContext(dto) {
+			var demand = (dto && dto.demand) || {};
+			var line = (dto && dto.budget_line) || {};
+			$root
+				.find("[data-kt-bud-cr-demand-title]")
+				.text(state.demandTitle || demand.demand_title || state.demand || "—");
+			$root
+				.find("[data-kt-bud-cr-demand-code]")
+				.text(demand.demand_code || state.demand || "");
+			$root
+				.find("[data-kt-bud-cr-department]")
+				.text(state.department || demand.department || "—");
+			$root
+				.find("[data-kt-bud-cr-requested]")
+				.text((dto && dto.requested_display) || "—");
+			$root
+				.find("[data-kt-bud-cr-target-name]")
+				.text(line.primary_target_name || "—");
+			$root
+				.find("[data-kt-bud-cr-target-code]")
+				.text(line.primary_target_code || "");
+		}
+
+		function paintDecision(dto) {
+			var available = dto && dto.decision_kind === "available";
+			var $ok = $root.find('[data-kt-bud-cr-decision="available"]');
+			var $bad = $root.find('[data-kt-bud-cr-decision="insufficient"]');
+			if (available) {
+				$ok.removeClass("hidden").removeAttr("hidden");
+				$bad.addClass("hidden").attr("hidden", "hidden");
+				$root.find("[data-kt-bud-cr-available-before]").text(dto.available_before_display || "—");
+				$root
+					.find("[data-kt-bud-cr-requested-row]")
+					.text("- " + (dto.requested_display || "—"));
+				$root.find("[data-kt-bud-cr-available-after]").text(dto.available_after_display || "—");
+				$root.find("[data-kt-bud-cr-lineage]").text(dto.lineage_note || "");
+				var before = Number(dto.available_before || 0);
+				var req = Number(dto.requested_amount || 0);
+				var usedPct = before > 0 ? Math.min(100, Math.round((req / before) * 100)) : 0;
+				$root.find("[data-kt-bud-cr-bar-available] .kt-bud-cr-bar-used").css("width", usedPct + "%");
+				$root
+					.find("[data-kt-bud-cr-bar-available] .kt-bud-cr-bar-free")
+					.css("width", Math.max(0, 100 - usedPct) + "%");
+			} else {
+				$bad.removeClass("hidden").removeAttr("hidden");
+				$ok.addClass("hidden").attr("hidden", "hidden");
+				$root.find("[data-kt-bud-cr-insuff-requested]").text(dto.requested_display || "—");
+				$root.find("[data-kt-bud-cr-insuff-before]").text(dto.available_before_display || "—");
+				$root.find("[data-kt-bud-cr-shortfall]").text(dto.shortfall_display || "—");
+				var before2 = Number(dto.available_before || 0);
+				var req2 = Number(dto.requested_amount || 0);
+				var used2 = req2 > 0 ? Math.min(100, Math.round((before2 / req2) * 100)) : 0;
+				$root.find("[data-kt-bud-cr-bar-insufficient] .kt-bud-cr-bar-used").css("width", used2 + "%");
+				$root
+					.find("[data-kt-bud-cr-bar-insufficient] .kt-bud-cr-bar-short")
+					.css("width", Math.max(0, 100 - used2) + "%");
+			}
+		}
+
+		function fillLines(rows) {
+			state.lines = rows || [];
+			var $sel = $root.find("[data-kt-bud-cr-line]");
+			var cur = state.budgetLine || $sel.val() || "";
+			var optsHtml = ['<option value="">' + esc(__("Select a budget line")) + "</option>"];
+			state.lines.forEach(function (r) {
+				var value = r.code || r.id;
+				var label = (r.name || value) + (r.code ? " (" + r.code + ")" : "");
+				var selected = value === cur || r.id === cur || r.code === cur;
+				optsHtml.push(
+					'<option value="' +
+						esc(value) +
+						'" data-line-id="' +
+						esc(r.id || "") +
+						'"' +
+						(selected ? " selected" : "") +
+						">" +
+						esc(label) +
+						"</option>"
+				);
+				if (selected) {
+					cur = value;
+					state.budgetLine = value;
+				}
+			});
+			$sel.html(optsHtml.join(""));
+			if (cur) {
+				$sel.val(cur);
+			}
+			var selectedRow = state.lines.find(function (r) {
+				return r.code === cur || r.id === cur;
+			});
+			$root
+				.find("[data-kt-bud-cr-line-available]")
+				.text((selectedRow && selectedRow.available_before_display) || "—");
+		}
+
+		function runCheck() {
+			if (!state.budgetLine || !state.requested) {
+				return Promise.resolve(null);
+			}
+			return call("check_funding", {
+				budget_line: state.budgetLine,
+				requested_amount: state.requested,
+				demand: state.demand,
+			}).then(function (dto) {
+				state.dto = dto;
+				paintContext(dto);
+				paintDecision(dto);
+				$root.find("[data-kt-bud-cr-line-available]").text(dto.available_before_display || "—");
+				$root.attr("data-kt-bud-live", "1");
+				$root.attr("data-kt-bud-decision", dto.decision_kind || "");
+				return dto;
+			});
+		}
+
+		function doReserve() {
+			var mode = opts.mode || "standalone";
+			if (mode === "approve_finance" && typeof opts.onConfirmApprove === "function") {
+				return Promise.resolve(opts.onConfirmApprove(state.dto)).then(function (result) {
+					closeCheckReserve();
+					if (typeof opts.onReserved === "function") {
+						opts.onReserved(result);
+					}
+					return result;
+				});
+			}
+			return call("reserve_funding", {
+				budget_line: state.budgetLine,
+				demand_name: state.demand,
+				requested_amount: state.requested,
+				idempotency_key: opts.idempotencyKey || "",
+			}).then(function (result) {
+				showCrNotice($root, {
+					title: __("Funding reserved"),
+					message:
+						__("Reservation") +
+						" " +
+						((result && result.reservation_code) || "") +
+						" " +
+						__("created for") +
+						" " +
+						((result && result.original_amount_display) || "") +
+						".",
+				});
+				if (typeof opts.onReserved === "function") {
+					opts.onReserved(result);
+				}
+				return result;
+			});
+		}
+
+		$root.off(".ktBudCr");
+		$root.on("click.ktBudCr", "[data-kt-bud-cr-close], [data-kt-bud-cr-cancel], [data-kt-bud-cr-return]", function (e) {
+			e.preventDefault();
+			closeCheckReserve();
+			if (typeof opts.onCancel === "function") {
+				opts.onCancel();
+			}
+		});
+		$host.off("click.ktBudCrScrim").on("click.ktBudCrScrim", "[data-kt-bud-cr-scrim]", function () {
+			closeCheckReserve();
+			if (typeof opts.onCancel === "function") {
+				opts.onCancel();
+			}
+		});
+		$root.on("click.ktBudCr", "[data-kt-bud-cr-notice-dismiss]", function (e) {
+			e.preventDefault();
+			hideCrNotice($root);
+		});
+		$root.on("click.ktBudCr", "[data-kt-bud-cr-select-line]", function (e) {
+			e.preventDefault();
+			$root.find("[data-kt-bud-cr-line]").trigger("focus");
+		});
+		$root.on("change.ktBudCr", "[data-kt-bud-cr-line]", function () {
+			state.budgetLine = $(this).val() || "";
+			runCheck().catch(function (err) {
+				console.warn("Check funding failed", err);
+				showCrNotice($root, {
+					title: __("Could not check funding"),
+					message: __("Refresh and try again."),
+				});
+			});
+		});
+		$root.on("click.ktBudCr", "[data-kt-bud-cr-reserve]", function (e) {
+			e.preventDefault();
+			if (!state.dto || !state.dto.sufficient) {
+				return;
+			}
+			doReserve().catch(function (err) {
+				showCrNotice($root, {
+					title: __("Reservation failed"),
+					message: __("Could not reserve funding. Refresh and try again."),
+				});
+				console.warn("Reserve funding failed", err);
+			});
+		});
+
+		return call("list_active_lines_for_check", {})
+			.then(function (rows) {
+				fillLines(rows || []);
+				if (!state.budgetLine && state.lines.length) {
+					state.budgetLine = state.lines[0].code || state.lines[0].id;
+					$root.find("[data-kt-bud-cr-line]").val(state.budgetLine);
+				}
+				return runCheck();
+			})
+			.catch(function (err) {
+				$root.attr("data-kt-bud-live", "0");
+				showCrNotice($root, {
+					title: __("Could not load funding check"),
+					message: __("Refresh and try again."),
+				});
+				throw err;
+			});
+	}
+
 	kentender_budget.live.bindPortfolio = bindPortfolio;
 	kentender_budget.live.bindRegister = bindRegister;
 	kentender_budget.live.bindOverview = bindOverview;
@@ -3494,6 +4240,9 @@ frappe.provide("kentender_budget.live");
 	kentender_budget.live.bindDownstream = bindDownstream;
 	kentender_budget.live.bindReview = bindReview;
 	kentender_budget.live.bindAudit = bindAudit;
+	kentender_budget.live.bindPerformance = bindPerformance;
+	kentender_budget.live.openCheckReserve = openCheckReserve;
+	kentender_budget.live.closeCheckReserve = closeCheckReserve;
 	kentender_budget.live.bindRevisions = bindRevisions;
 	kentender_budget.live.bindRevisionCreate = bindRevisionCreate;
 	kentender_budget.live.bindRevisionReview = bindRevisionReview;

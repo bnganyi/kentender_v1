@@ -89,6 +89,8 @@ class TestBudgetReadiness(FrappeTestCase):
 		self.assertTrue(dto["capabilities"]["show_activation_record"])
 		self.assertFalse(dto["capabilities"]["can_activate"])
 		self.assertFalse(dto["capabilities"]["can_submit"])
+		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
+		self.assertEqual(dto["capabilities"]["primary_label"], "Request revision")
 		self.assertTrue(dto["governance"]["activated_by"])
 		self.assertTrue(dto["governance"]["activated_at"])
 

@@ -143,14 +143,26 @@ _REQUISITION_TYPES = ("Goods", "Works", "Services")
 
 
 def _compute_alignment_for_entity(entity: str) -> int:
-	"""Strategy alignment % — neutralized (MVP-1 strategy teardown). Always 0."""
-	_ = entity
-	return 0
+	"""Share of active Demands for entity with primary strategy_target set (XMOD-STR-002)."""
+	entity = (entity or "").strip()
+	if not entity:
+		return 0
+	filters = {"status": _ACTIVE_STATUSES, "procuring_entity": entity}
+	total = _count_demands(filters)
+	if not total:
+		return 0
+	aligned = _count_demands({**filters, "strategy_target": ("is", "set")})
+	return int(round(100.0 * aligned / total))
 
 
 def compute_strategic_alignment_pct() -> int:
-	"""Strategy alignment % — neutralized (MVP-1 strategy teardown). Always 0."""
-	return 0
+	"""Permission-aware alignment % across Demands visible to the caller."""
+	filters = {"status": _ACTIVE_STATUSES}
+	total = _count_demands(filters)
+	if not total:
+		return 0
+	aligned = _count_demands({**filters, "strategy_target": ("is", "set")})
+	return int(round(100.0 * aligned / total))
 
 
 def _build_category_breakdown() -> dict:

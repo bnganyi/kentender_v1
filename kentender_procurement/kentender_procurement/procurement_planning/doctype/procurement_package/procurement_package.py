@@ -165,6 +165,22 @@ class ProcurementPackage(Document):
 		self._enforce_lock_on_terminal_states()
 		self._sync_release_lock_flags()
 		self._sync_approval_metadata()
+		self._apply_strategy_reference()
+
+	def _apply_strategy_reference(self):
+		"""XMOD-STR-004 — Active-only when planner re-selects; historical inherit OK on create."""
+		if not self.meta.has_field("strategy_target"):
+			return
+		target = (self.strategy_target or "").strip()
+		if not target:
+			return
+		try:
+			from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+		except ImportError:
+			return
+		# Create / inherit: resolve historically. Re-select on existing package: Active-only.
+		require_active = (not self.is_new()) and self.has_value_changed("strategy_target")
+		apply_strategy_reference_to_doc(self, target, require_active=require_active)
 
 	def after_insert(self):
 		if self.plan_id:

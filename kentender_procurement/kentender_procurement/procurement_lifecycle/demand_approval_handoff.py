@@ -137,11 +137,15 @@ def _get_budget_line_currency(budget_line_frappe_name: str) -> str:
 
 
 def _get_budget_line_code(budget_line_frappe_name: str) -> str:
-    """Return the budget_line_code from a Budget Line record."""
+    """Return the business code from a Budget Line record (generated_reference)."""
     if not budget_line_frappe_name:
         return ""
-    # Budget Line.name == budget_line_code in most cases; also check the field
-    val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+    val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "generated_reference")
+    if not val:
+        try:
+            val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+        except Exception:
+            val = None
     return str(val or budget_line_frappe_name)
 
 

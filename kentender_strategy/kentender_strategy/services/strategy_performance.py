@@ -92,6 +92,76 @@ def _fmt_kes(n: float) -> str:
 	return f"KES {abs_n:,.0f}"
 
 
+def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
+	"""XMOD-STR-007 / STR-AC-028 — treated Value Cases per PVC id/code for an aligned plan.
+
+	Returns (aligned_demand_count, treated_counts) where treated_counts is keyed by
+	pvc_id and pvc_code. A Demand counts as treated for a PVC when treatment is
+	Included, or Not applicable with a non-empty rationale.
+	"""
+	if not plan_name or not frappe.db.exists("DocType", "Demand"):
+		return 0, {}
+	if not frappe.db.has_column("Demand", "strategy_plan_version"):
+		return 0, {}
+
+	demand_names = frappe.get_all(
+		"Demand",
+		filters={"strategy_plan_version": plan_name},
+		pluck="name",
+		limit=200,
+	)
+	aligned = len(demand_names)
+	if not demand_names or not frappe.db.exists("DocType", "Demand Value Treatment"):
+		return aligned, {}
+
+	rows = frappe.get_all(
+		"Demand Value Treatment",
+		filters={"parent": ["in", demand_names], "parenttype": "Demand"},
+		fields=["parent", "pvc_id", "pvc_code", "treatment", "rationale"],
+		limit=2000,
+	)
+	by_key: dict[str, set[str]] = defaultdict(set)
+	for r in rows:
+		treatment = (r.treatment or "").strip()
+		if treatment == "Included":
+			ok = True
+		elif treatment == "Not applicable":
+			ok = bool((r.rationale or "").strip())
+		else:
+			ok = False
+		if not ok:
+			continue
+		parent = r.parent
+		pvc_id = (r.pvc_id or "").strip()
+		pvc_code = (r.pvc_code or "").strip()
+		if pvc_id:
+			by_key[pvc_id].add(parent)
+		if pvc_code:
+			by_key[pvc_code].add(parent)
+	return aligned, {k: len(v) for k, v in by_key.items()}
+
+
+def _planning_package_contribution(plan_name: str) -> tuple[int, float]:
+	"""XMOD-STR-007 — aligned Procurement Package count + sum(estimated_value)."""
+	if not plan_name or not frappe.db.exists("DocType", "Procurement Package"):
+		return 0, 0.0
+	if not frappe.db.has_column("Procurement Package", "strategy_plan_version"):
+		return 0, 0.0
+	fields = ["name"]
+	if frappe.db.has_column("Procurement Package", "estimated_value"):
+		fields.append("estimated_value")
+	rows = frappe.get_all(
+		"Procurement Package",
+		filters={"strategy_plan_version": plan_name},
+		fields=fields,
+		limit=200,
+	)
+	total = 0.0
+	for p in rows:
+		total += _money(getattr(p, "estimated_value", None))
+	return len(rows), total
+
+
 def _safe_csv_cell(value) -> str:
 	s = "" if value is None else str(value)
 	if s and s[0] in ("=", "+", "-", "@"):
@@ -484,18 +554,21 @@ def get_strategy_performance(
 			}
 		)
 
-	# PVC / public value
+	# PVC / public value — STR-AC-028 treatment vs achievement (XMOD-STR-007).
 	pvc = list_plan_value_commitments(plan_version=plan.name)
 	commitments_out = []
-	demand_rows = usage_groups.get("Demand") or []
+	aligned_demands, treated_by_key = _demand_pvc_treatment_counts(plan.name)
 	for row in pvc.get("rows") or []:
 		obj = row.get("objective") or {}
 		level = row.get("consideration_level") or ""
-		# Downstream treatment: count demands as addressed proxies when any demand exists for plan
-		addressed = len(demand_rows)
-		applicable = max(addressed, 1)
-		treatment = f"{min(addressed, applicable)} of {applicable} aligned Value Cases addressed"
-		# Verified evidence from linked targets
+		pvc_id = (row.get("id") or "").strip()
+		pvc_code = (obj.get("code") or "").strip()
+		treated = treated_by_key.get(pvc_id) or treated_by_key.get(pvc_code) or 0
+		if aligned_demands == 0:
+			treatment = "No aligned Value Cases"
+		else:
+			treatment = f"{treated} of {aligned_demands} aligned Value Cases addressed"
+		# Verified evidence from linked targets (achievement — not treatment)
 		evidence = "No verified outcome measure"
 		attention = "None"
 		linked_tids = [
@@ -511,7 +584,7 @@ def get_strategy_performance(
 				if m.result_status in ("At risk", "Off track"):
 					attention = "Corrective action open" if ca_by_target.get(tid) else m.result_status
 				break
-		if level.startswith("Required") and addressed == 0:
+		if level.startswith("Required") and aligned_demands > 0 and treated == 0:
 			attention = "1 treatment outstanding"
 			exceptions.append(
 				{
@@ -550,29 +623,51 @@ def get_strategy_performance(
 			}
 		)
 
-	# Procurement funding from Budget Lines
+	# Procurement funding from Budget Lines (STR-SUP-001 — dual-read primary_*).
 	budget_allocated = reserved = committed = consumed = available = 0.0
 	budget_n = 0
 	source_unavailable = []
 	sources_available = ["Strategy"]
 	try:
-		if frappe.db.exists("DocType", "Budget Line") and frappe.db.has_column(
-			"Budget Line", "strategy_plan_version"
-		):
-			bl_fields = ["name", "amount_allocated", "amount_reserved", "amount_committed", "amount_consumed", "amount_available"]
+		bl_ok = frappe.db.exists("DocType", "Budget Line")
+		use_primary = bl_ok and frappe.db.has_column("Budget Line", "primary_plan_version_id")
+		use_legacy = bl_ok and frappe.db.has_column("Budget Line", "strategy_plan_version")
+		if use_primary or use_legacy:
+			plan_filter_field = "primary_plan_version_id" if use_primary else "strategy_plan_version"
+			bl_fields = [
+				"name",
+				"amount_reserved",
+				"amount_committed",
+			]
+			if frappe.db.has_column("Budget Line", "approved_amount"):
+				bl_fields.append("approved_amount")
+			elif frappe.db.has_column("Budget Line", "amount_allocated"):
+				bl_fields.append("amount_allocated")
+			if frappe.db.has_column("Budget Line", "amount_actual"):
+				bl_fields.append("amount_actual")
+			elif frappe.db.has_column("Budget Line", "amount_consumed"):
+				bl_fields.append("amount_consumed")
 			for b in frappe.get_all(
 				"Budget Line",
-				filters={"strategy_plan_version": plan.name},
+				filters={plan_filter_field: plan.name},
 				fields=bl_fields,
 				limit_page_length=200,
 			):
 				budget_n += 1
-				budget_allocated += _money(b.amount_allocated)
-				reserved += _money(b.amount_reserved)
-				committed += _money(b.amount_committed)
-				consumed += _money(b.amount_consumed)
-				available += _money(b.amount_available)
-			sources_available.append("Budget & Funding")
+				alloc = _money(getattr(b, "approved_amount", None) or getattr(b, "amount_allocated", None))
+				res = _money(b.amount_reserved)
+				com = _money(b.amount_committed)
+				cons = _money(getattr(b, "amount_actual", None) or getattr(b, "amount_consumed", None))
+				budget_allocated += alloc
+				reserved += res
+				committed += com
+				consumed += cons
+				available += max(0.0, alloc - res - com)
+			if budget_n:
+				sources_available.append("Budget & Funding")
+			else:
+				# DocType present but no aligned lines for this plan — not an unavailable source.
+				sources_available.append("Budget & Funding")
 		else:
 			source_unavailable.append("Budget")
 	except Exception:
@@ -601,12 +696,12 @@ def get_strategy_performance(
 			"route": ["strategy-plan-downstream-usage", plan.plan_code],
 		}
 
-	# Demand values — best-effort estimated_cost / total_estimate if present
+	# Demand values — prefer total_amount (XMOD-STR-007), then legacy estimate fields.
 	demand_value = 0.0
 	demand_count = len(usage_groups.get("Demand") or [])
 	if frappe.db.exists("DocType", "Demand") and frappe.db.has_column("Demand", "strategy_plan_version"):
 		dfields = ["name"]
-		for cand in ("estimated_cost", "total_estimate", "estimated_value", "amount"):
+		for cand in ("total_amount", "estimated_cost", "total_estimate", "estimated_value", "amount"):
 			if frappe.db.has_column("Demand", cand):
 				dfields.append(cand)
 				break
@@ -619,6 +714,11 @@ def get_strategy_performance(
 			for k in d:
 				if k != "name" and d.get(k) is not None:
 					demand_value += _money(d.get(k))
+
+	# Planning stage — package estimated_value when strategy_* linked (XMOD-STR-006/007).
+	planning_count, planning_value = _planning_package_contribution(plan.name)
+	if not planning_count:
+		planning_count = len(usage_groups.get("Planning") or [])
 
 	stages = [
 		stage(
@@ -637,8 +737,8 @@ def get_strategy_performance(
 		),
 		stage(
 			"Procurement plan",
-			len(usage_groups.get("Planning") or []),
-			0,
+			planning_count,
+			planning_value,
 			"Approved planned value",
 			"View plan items",
 		),

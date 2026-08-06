@@ -72,7 +72,7 @@ def validate_upstream_for_checkpoint(checkpoint: str) -> dict[str, Any]:
 		else:
 			links["demand_item"] = DEMAND_ITEM_CODE
 
-	if not frappe.db.get_value("Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "name"):
+	if not frappe.db.get_value("Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name"):
 		missing.append(
 			{
 				"code": "MISSING_BUDGET_LINE",

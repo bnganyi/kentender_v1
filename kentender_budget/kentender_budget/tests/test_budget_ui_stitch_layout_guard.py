@@ -19,6 +19,8 @@ ACTIVITY_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "activity.js"
 DOWNSTREAM_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "downstream.js"
 REVIEW_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "review.js"
 AUDIT_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "audit.js"
+PERFORMANCE_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "performance.js"
+CHECK_RESERVE_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "check_reserve.js"
 REVISIONS_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revisions.js"
 REVISION_CREATE_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revision_create.js"
 REVISION_REVIEW_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revision_review.js"
@@ -34,6 +36,8 @@ ACTIVITY_CSS = APP_PUBLIC / "css" / "budget_funding_activity.css"
 DOWNSTREAM_CSS = APP_PUBLIC / "css" / "budget_funding_downstream.css"
 REVIEW_CSS = APP_PUBLIC / "css" / "budget_funding_review.css"
 AUDIT_CSS = APP_PUBLIC / "css" / "budget_funding_audit.css"
+PERFORMANCE_CSS = APP_PUBLIC / "css" / "budget_funding_performance.css"
+CHECK_RESERVE_CSS = APP_PUBLIC / "css" / "budget_funding_check_reserve.css"
 REVISIONS_CSS = APP_PUBLIC / "css" / "budget_funding_revisions.css"
 PORTFOLIO_JS = APP_PUBLIC / "js" / "budget_funding_portfolio_page.js"
 REGISTER_JS = APP_PUBLIC / "js" / "budget_funding_register_page.js"
@@ -43,6 +47,8 @@ ACTIVITY_JS = APP_PUBLIC / "js" / "budget_funding_activity_page.js"
 DOWNSTREAM_JS = APP_PUBLIC / "js" / "budget_funding_downstream_page.js"
 REVIEW_JS = APP_PUBLIC / "js" / "budget_funding_review_page.js"
 AUDIT_JS = APP_PUBLIC / "js" / "budget_funding_audit_page.js"
+PERFORMANCE_JS = APP_PUBLIC / "js" / "budget_funding_performance_page.js"
+CHECK_RESERVE_JS = APP_PUBLIC / "js" / "budget_funding_check_reserve_page.js"
 REVISIONS_JS = APP_PUBLIC / "js" / "budget_funding_revisions_page.js"
 REVISION_CREATE_JS = APP_PUBLIC / "js" / "budget_funding_revision_create_page.js"
 REVISION_REVIEW_JS = APP_PUBLIC / "js" / "budget_funding_revision_review_page.js"
@@ -108,6 +114,18 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		# Hard-pin primary CTA navy (var() alone was insufficient after Desk bleed).
 		self.assertIn("background-color: #001f48", portfolio_css)
 		self.assertIn("kt-bud-register-budget", portfolio_css)
+		# Filled primary hover: white on lifted navy — never inky #7b9ee0.
+		self.assertIn("Filled primary hover: lifted navy + white", portfolio_css)
+		self.assertIn("background-color: #00346f", portfolio_css)
+		self.assertIn("#001536", portfolio_css)
+		hover_idx = portfolio_css.find("Filled primary hover: lifted navy + white")
+		self.assertGreaterEqual(hover_idx, 0)
+		# Long selector list precedes the declarations — take enough of the block.
+		hover_end = portfolio_css.find("/* Bordered secondary CTA", hover_idx)
+		hover_slice = portfolio_css[hover_idx:hover_end] if hover_end > hover_idx else portfolio_css[hover_idx:]
+		self.assertIn("background-color: #00346f", hover_slice)
+		self.assertIn("color: #ffffff", hover_slice)
+		self.assertNotIn("color: #7b9ee0", hover_slice)
 		self.assertIn("Win98", portfolio_css)  # comment documents the Desk bleed we pin against
 		self.assertIn("data:image/svg+xml", portfolio_css)
 		self.assertIn("Manrope", portfolio_css)
@@ -127,6 +145,7 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 			"budget-funding",
 			"budget-register",
 			"budget-funding-performance",
+			"budget-check-reserve",
 			"budget-overview",
 			"budget-lines",
 			"budget-funding-activity",
@@ -151,6 +170,7 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 			"budget-funding",
 			"budget-register",
 			"budget-funding-performance",
+			"budget-check-reserve",
 			"budget-overview",
 			"budget-lines",
 			"budget-funding-activity",
@@ -191,7 +211,12 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("registerPage", shell)
 		self.assertIn("softShow", shell)
 		self.assertIn("bindLiveTab", shell)
-		self.assertIn("soft-show rebind", shell)
+		# Soft-show must skip chrome wipe / live rebind (title "—" flash regression).
+		self.assertIn("Skip wipe when the same route/budget is already mounted", shell)
+		self.assertNotIn("soft-show rebind", shell)
+		self.assertIn("rememberBudgetChrome", shell)
+		self.assertIn("hydrateBudgetChrome", shell)
+		self.assertIn("isNativeActive", shell)
 		self.assertIn("kt-bud-workspace-chrome", shell)
 		self.assertIn("data-kt-bud-mount-key", shell)
 		# Active tab must not use text-primary (Desk chrome zeros padding/border).
@@ -202,6 +227,13 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("bindOverview", live)
 		self.assertIn("get_budget_overview", live)
 		self.assertIn("approved_display", live)
+		self.assertIn("function paintChromeActions", live)
+		self.assertIn("paintBudgetWorkspaceChrome", live)
+		self.assertIn("rememberBudgetChrome", live)
+		# Never invent a bare "Open" chrome label when primary_label is omitted.
+		self.assertNotIn('__("Open")', live)
+		shell = _read(WORKSPACE_SHELL)
+		self.assertIn("Hidden until paintChromeActions", shell)
 
 		page_js = _read(OVERVIEW_JS)
 		self.assertIn('registerPage("budget-overview"', page_js)
@@ -566,15 +598,15 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("Win98", css)
 
 		live = _read(LIVE_BIND)
-		self.assertIn("paintStatusPill($root, budget.status, budget.status_label)", live)
+		self.assertIn("paintBudgetWorkspaceChrome", live)
 		self.assertIn("[data-kt-bud-budget-title]", live)
 		# Review chrome title must be painted from readiness DTO (BUD-UI-11/12 regression).
 		review_live = live
 		self.assertIn("function applyReviewDto", review_live)
 		idx = review_live.index("function applyReviewDto")
 		chunk = review_live[idx : idx + 800]
-		self.assertIn("[data-kt-bud-budget-title]", chunk)
-		self.assertIn("paintStatusPill", chunk)
+		self.assertIn("paintBudgetWorkspaceChrome", chunk)
+		self.assertIn("status: status", chunk)
 
 		from kentender_budget import hooks as bud_hooks
 
@@ -586,6 +618,150 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("budget_ui_fixtures/audit.js", includes)
 		css_includes = "\n".join(bud_hooks.app_include_css or [])
 		self.assertIn("budget_funding_audit.css", css_includes)
+
+	def test_performance_fixture_shell_and_bind(self):
+		for path in (PERFORMANCE_FIXTURE, PERFORMANCE_JS, PERFORMANCE_CSS, LIVE_BIND):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(PERFORMANCE_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-performance"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-header"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-export"', fixture)
+		self.assertIn("Export report", fixture)
+		self.assertIn('data-testid="kt-bud-performance-filters"', fixture)
+		self.assertIn('data-kt-bud-perf-filter="fiscal_period"', fixture)
+		self.assertIn('data-kt-bud-perf-filter="programme"', fixture)
+		self.assertIn('data-kt-bud-perf-filter="primary_target"', fixture)
+		self.assertIn('data-kt-bud-perf-filter="funding_status"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-kpis"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-coverage-table"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-exceptions-table"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-disclaimer"', fixture)
+		self.assertIn('data-testid="kt-bud-performance-notice"', fixture)
+		self.assertIn("Strategy Funding Coverage", fixture)
+		self.assertIn("Funding Exceptions", fixture)
+		self.assertIn("expand_more", fixture)
+		self.assertIn(
+			"Strategy alignment shows intended support",
+			fixture,
+		)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("560M", fixture)
+		self.assertNotIn("MOH-ST-04", fixture)
+		self.assertNotIn("kt-bud-stub", fixture)
+		self.assertNotIn("ProcureSystem", fixture)
+
+		page_js = _read(PERFORMANCE_JS)
+		self.assertIn("budget-funding-performance", page_js)
+		self.assertIn("enterNative", page_js)
+		self.assertIn("bindPerformance", page_js)
+		self.assertIn("ui_fixtures.performance", page_js)
+		# Soft-show rebind on return (Portfolio twin).
+		self.assertIn("on_page_show", page_js)
+		self.assertIn("_ktBudPerfMounted", page_js)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindPerformance", live)
+		self.assertIn("get_funding_performance", live)
+		self.assertIn("export_funding_performance", live)
+		self.assertIn("showPerfNotice", live)
+		self.assertIn("csvEscape", live)
+		self.assertIn("review_finance_sync", live)
+		self.assertIn("view_details", live)
+
+		css = _read(PERFORMANCE_CSS)
+		self.assertIn("kt-bud-perf-select-wrap", css)
+		self.assertIn("appearance: none", css)
+		self.assertIn("Win98", css)
+		self.assertIn("kt-bud-perf-export", css)
+		self.assertIn("kt-bud-perf-kpi", css)
+
+		reg = (
+			Path(frappe.get_app_path("kentender_core"))
+			/ "public"
+			/ "js"
+			/ "kt_cl_surface_registry.js"
+		).read_text(encoding="utf-8")
+		# BUD-UI-02 must map to Funding Performance route (not Register).
+		idx = reg.index('"BUD-UI-02"')
+		chunk = reg[idx : idx + 400]
+		self.assertIn("budget-funding-performance", chunk)
+		self.assertNotIn("budget-register", chunk)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-funding-performance"),
+			"public/js/budget_funding_performance_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/performance.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_performance.css", css_includes)
+
+	def test_check_reserve_fixture_shell_and_bind(self):
+		for path in (CHECK_RESERVE_FIXTURE, CHECK_RESERVE_JS, CHECK_RESERVE_CSS, LIVE_BIND):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(CHECK_RESERVE_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve"', fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve-scrim"', fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve-context"', fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve-line"', fixture)
+		self.assertIn('data-kt-bud-cr-filter="budget_line"', fixture)
+		self.assertIn("expand_more", fixture)
+		self.assertIn("Funding available", fixture)
+		self.assertIn("Insufficient funding", fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve-reserve"', fixture)
+		self.assertIn('data-testid="kt-bud-check-reserve-reserve-disabled"', fixture)
+		self.assertIn("Select another budget line", fixture)
+		self.assertIn("Return to demand", fixture)
+		self.assertIn("will not create additional funding holds", fixture)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("455M", fixture)
+		self.assertNotIn("reservation reference", fixture.lower())
+
+		page_js = _read(CHECK_RESERVE_JS)
+		self.assertIn("budget-check-reserve", page_js)
+		self.assertIn("openCheckReserve", page_js)
+		self.assertIn("MOH-BL-0002", page_js)
+		self.assertIn("MOH-BL-0001", page_js)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("openCheckReserve", live)
+		self.assertIn("check_funding", live)
+		self.assertIn("reserve_funding", live)
+		self.assertIn("list_active_lines_for_check", live)
+		self.assertIn("showCrNotice", live)
+
+		css = _read(CHECK_RESERVE_CSS)
+		self.assertIn("kt-bud-cr-select-wrap", css)
+		self.assertIn("appearance: none", css)
+		self.assertIn("Win98", css)
+		self.assertIn("background-color: #001f48", css)
+
+		reg = (
+			Path(frappe.get_app_path("kentender_core"))
+			/ "public"
+			/ "js"
+			/ "kt_cl_surface_registry.js"
+		).read_text(encoding="utf-8")
+		idx = reg.index('"BUD-UI-06"')
+		chunk = reg[idx : idx + 400]
+		self.assertIn("budget-check-reserve", chunk)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-check-reserve"),
+			"public/js/budget_funding_check_reserve_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/check_reserve.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_check_reserve.css", css_includes)
 
 	def test_revisions_fixture_shell_and_bind(self):
 		for path in (
@@ -662,6 +838,17 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		css = _read(REVISIONS_CSS)
 		self.assertIn("kt-bud-rev-footer", css)
 		self.assertIn("kt-bud-rev-change-input", css)
+		# Editable revision fields: white fill — never surface gray (#f9f9fe / #f4f3f9).
+		field_idx = css.find(".kt-bud-rev-field input[type=\"text\"]")
+		self.assertGreaterEqual(field_idx, 0)
+		field_slice = css[field_idx : field_idx + 450]
+		self.assertIn("background: #ffffff", field_slice)
+		self.assertNotIn("background: #f9f9fe", field_slice)
+		change_idx = css.find(".kt-bud-rev-change-input {")
+		self.assertGreaterEqual(change_idx, 0)
+		change_slice = css[change_idx : change_idx + 350]
+		self.assertIn("background: #ffffff", change_slice)
+		self.assertNotIn("background: #f4f3f9", change_slice)
 		self.assertIn("kt-bud-rev-impact", css)
 		self.assertIn("kt-bud-rev-main-grid", css)
 		self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important", css)

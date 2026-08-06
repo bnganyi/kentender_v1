@@ -153,10 +153,15 @@ def _get_demand_category(demand_frappe_name: str) -> str:
 
 
 def _get_budget_line_code(budget_line_frappe_name: str) -> str:
-    """Return the budget_line_code from a Budget Line record (name == code in WORKS scenario)."""
+    """Return Budget Line business code (generated_reference; legacy budget_line_code fallback)."""
     if not budget_line_frappe_name:
         return ""
-    val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+    val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "generated_reference")
+    if not val:
+        try:
+            val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+        except Exception:
+            val = None
     return str(val or budget_line_frappe_name)
 
 

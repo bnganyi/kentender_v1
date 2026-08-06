@@ -22,10 +22,64 @@ _LINK_LABEL_FIELDS: dict[str, tuple[str, ...]] = {
 	"Procuring Department": ("department_name",),
 	"Procuring Entity": ("entity_name",),
 	"User": ("full_name",),
-	"Budget Line": ("budget_line_name", "budget_line_code"),
+	"Budget Line": ("title", "generated_reference"),
 	"Budget": ("budget_name",),
 	"Funding Source": ("title",),
 }
+
+
+def _display_name_code(name: str | None, code: str | None) -> str:
+	name = (name or "").strip()
+	code = (code or "").strip()
+	if name and code:
+		return f"{name} ({code})"
+	return name or code or ""
+
+
+def _detail_strategy_block(doc) -> dict:
+	"""XMOD-STR-002 — Strategy Reference slice for DIA detail (id/code/name, no raw-only UI)."""
+	empty = {
+		"strategy_plan_version": None,
+		"strategy_target": None,
+		"strategy_snapshot_label": "",
+		"strategic_plan": None,
+		"strategic_plan_label": "",
+		"program": None,
+		"program_label": "",
+		"sub_program": None,
+		"sub_program_label": "",
+		"output_indicator": None,
+		"output_indicator_label": "",
+		"performance_target": None,
+		"performance_target_label": "",
+		"performance_target_code": "",
+	}
+	try:
+		from kentender_strategy.services.strategy_consumer import strategy_fields_from_doc
+	except ImportError:
+		return empty
+	sf = strategy_fields_from_doc(doc) or {}
+	ref = sf.get("strategy_reference") or {}
+	pt_label = _display_name_code(sf.get("performance_target_label"), sf.get("performance_target_code"))
+	return {
+		"strategy_plan_version": sf.get("strategy_plan_version"),
+		"strategy_target": sf.get("strategy_target"),
+		"strategy_snapshot_label": getattr(doc, "strategy_snapshot_label", None) or "",
+		"strategic_plan": sf.get("strategic_plan"),
+		"strategic_plan_label": ref.get("plan_code")
+		or _link_label("Strategic Plan", sf.get("strategic_plan")),
+		"program": sf.get("program"),
+		"program_label": _display_name_code(sf.get("program_label"), sf.get("program_code")),
+		"sub_program": sf.get("sub_program"),
+		"sub_program_label": _display_name_code(sf.get("sub_program_label"), sf.get("sub_program_code")),
+		"output_indicator": sf.get("output_indicator"),
+		"output_indicator_label": _display_name_code(
+			sf.get("output_indicator_label"), sf.get("output_indicator_code")
+		),
+		"performance_target": sf.get("performance_target"),
+		"performance_target_label": pt_label,
+		"performance_target_code": sf.get("performance_target_code") or "",
+	}
 
 
 def _link_label(doctype: str, name: str | None) -> str:
@@ -467,6 +521,7 @@ def get_dia_demand_detail(name: str | None = None):
 			"specification_summary": doc.specification_summary or None,
 		},
 		"b": {
+			**_detail_strategy_block(doc),
 			"budget_line": doc.budget_line,
 			"budget_line_label": _link_label("Budget Line", doc.budget_line),
 			"budget": doc.budget,
@@ -474,16 +529,6 @@ def get_dia_demand_detail(name: str | None = None):
 			"funding_source": doc.funding_source,
 			"funding_source_label": _link_label("Funding Source", doc.funding_source),
 			"reservation_status": doc.reservation_status,
-			"strategic_plan": None,
-			"strategic_plan_label": "",
-			"program": None,
-			"program_label": "",
-			"sub_program": None,
-			"sub_program_label": "",
-			"output_indicator": None,
-			"output_indicator_label": "",
-			"performance_target": None,
-			"performance_target_label": "",
 		},
 		"c": {
 			"total_amount": flt(doc.total_amount),

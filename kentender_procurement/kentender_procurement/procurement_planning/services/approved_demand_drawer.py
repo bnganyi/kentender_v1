@@ -89,10 +89,22 @@ def _plan_ref(plan_row: dict[str, Any] | None) -> dict[str, str] | None:
 	}
 
 
-def _strategy_objective_ref(budget_context: dict[str, Any] | None) -> dict[str, str]:
-	"""Neutralized (MVP-1 strategy teardown)."""
-	_ = budget_context
-	return {"id": "", "code": "", "name": ""}
+def _strategy_objective_ref_from_demand(demand_name: str | None) -> dict[str, str]:
+	"""XMOD-STR-004 — Demand Strategy Reference as id/code/name (no raw-only display)."""
+	empty = {"id": "", "code": "", "name": ""}
+	if not demand_name or not frappe.db.exists("Demand", demand_name):
+		return empty
+	try:
+		from kentender_strategy.services.strategy_consumer import strategy_fields_from_doc
+	except ImportError:
+		return empty
+	doc = frappe.get_doc("Demand", demand_name)
+	sf = strategy_fields_from_doc(doc) or {}
+	return {
+		"id": (sf.get("performance_target") or sf.get("strategy_target") or "") or "",
+		"code": (sf.get("performance_target_code") or "") or "",
+		"name": (sf.get("performance_target_label") or "") or "",
+	}
 
 
 def _default_item_codes(demand_name: str, demand_code: str) -> list[str]:
@@ -251,11 +263,9 @@ def get_approved_demand_planning_drawer(
 
 	budget_line_ref = _budget_line_ref(header.get("budget_line"))
 	budget_context_payload: dict[str, Any] | None = None
-	strategy_objective = {"id": "", "code": "", "name": ""}
+	strategy_objective = _strategy_objective_ref_from_demand(demand_name)
 	if budget_line_ref.get("id"):
 		budget_context_payload = get_budget_line_context(budget_line_ref["id"])
-		if budget_context_payload.get("ok"):
-			strategy_objective = _strategy_objective_ref(budget_context_payload)
 
 	journey_payload = build_demand_planning_status_payload(demand_name)
 	approval_cert = journey_payload.get("demand_approval_certificate") if journey_payload.get("ok") else None

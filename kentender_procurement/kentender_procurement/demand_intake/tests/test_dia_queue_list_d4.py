@@ -85,6 +85,12 @@ class TestDiaQueueListD4(IntegrationTestCase):
 		):
 			self.assertIn(key, out)
 		self.assertIsInstance(out.get("departments"), list)
+		self.assertIsInstance(out.get("budget_lines"), list)
+		# Budget Line labels use title / generated_reference (not removed budget_line_* columns).
+		for row in out.get("budget_lines") or []:
+			self.assertIn("value", row)
+			self.assertIn("label", row)
+			self.assertTrue(str(row.get("label") or "").strip())
 
 	def test_search_on_title_requisitioner_queue(self):
 		if getattr(self, "_skipped_no_demand", False):

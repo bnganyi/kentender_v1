@@ -42,10 +42,11 @@ test.describe("Budget Funding readiness review (BUD-UI-11)", () => {
 		await expect(notice).toContainText(/Readiness check complete|Checklist/i);
 		await expect(page.locator(".msgprint")).toHaveCount(0);
 
+		await expect(root.getByTestId("kt-bud-overview-primary")).toBeHidden();
 		await assertStitchDeskChrome(page, {
 			rootTestId: "kt-bud-review",
-			primaryCtaTestId: "kt-bud-overview-primary",
-			secondaryCtaTestId: "kt-bud-view-performance",
+			primaryCtaTestId: "kt-bud-view-performance",
+			primaryCtaStyle: "bordered",
 			headlineSelector: "[data-kt-bud-budget-title]",
 		});
 	});
@@ -94,6 +95,14 @@ test.describe("Budget Funding readiness review (BUD-UI-11)", () => {
 		await expect(root.getByTestId("kt-bud-review-activation")).toContainText(/Activated by/i);
 		await expect(root.getByTestId("kt-bud-review-activate")).toBeHidden();
 		await expect(root.getByTestId("kt-bud-review-submit")).toBeHidden();
+		await expect(root.getByTestId("kt-bud-overview-primary")).toHaveText(/Request revision/i);
+		await assertStitchDeskChrome(page, {
+			rootTestId: "kt-bud-review",
+			primaryCtaTestId: "kt-bud-overview-primary",
+			secondaryCtaTestId: "kt-bud-view-performance",
+			assertPrimaryHover: true,
+			headlineSelector: "[data-kt-bud-budget-title]",
+		});
 	});
 
 	test("soft-show rebind keeps live checklist after tab hop", async ({ page }) => {

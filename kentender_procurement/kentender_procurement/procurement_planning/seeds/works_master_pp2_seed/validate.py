@@ -173,7 +173,7 @@ def _demand_doc_name() -> str | None:
 
 
 def _budget_line_doc_name() -> str | None:
-	return frappe.db.get_value("Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "name")
+	return frappe.db.get_value("Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name")
 
 
 def _role_has_read(doctype: str, role: str) -> bool:

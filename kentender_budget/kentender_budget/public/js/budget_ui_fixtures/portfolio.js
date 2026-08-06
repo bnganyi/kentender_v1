@@ -25,7 +25,7 @@ kentender_budget.ui_fixtures.portfolio = function () {
 <span class="material-symbols-outlined text-sm">monitoring</span>
 View funding performance
 </button>
-<button type="button" data-kt-bud-action="register-budget" data-testid="kt-bud-register-budget" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm flex items-center justify-center gap-2">
+<button type="button" data-kt-bud-action="register-budget" data-testid="kt-bud-register-budget" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-sm">add</span>
 Register approved budget
 </button>
@@ -115,7 +115,7 @@ ${footerHtml}
 </div>
 <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">No budgets found</h3>
 <p class="font-body-md text-body-md text-on-surface-variant max-w-md mb-6">No procurement budget has been registered for this fiscal period or matches your search criteria.</p>
-<button type="button" data-kt-bud-action="register-budget" data-testid="kt-bud-empty-register" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm flex items-center gap-2">
+<button type="button" data-kt-bud-action="register-budget" data-testid="kt-bud-empty-register" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container transition-colors shadow-sm flex items-center gap-2">
 <span class="material-symbols-outlined text-sm">add</span>
 Register approved budget
 </button>

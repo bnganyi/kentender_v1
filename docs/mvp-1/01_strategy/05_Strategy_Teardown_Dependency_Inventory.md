@@ -1,9 +1,9 @@
 # Strategy Teardown — Dependency Inventory
 
 **Document ID:** STRATEGY-MVP1-TEARDOWN-INV-1.0  
-**Branch:** `mvp1/strategy-teardown`  
-**Date:** 2 August 2026  
-**Scope:** Preparatory Steps 1–3 only (delete old Strategy; no new domain yet)  
+**Branch:** `mvp1/strategy-teardown` (historical)  
+**Date:** 2 August 2026 (inventory); status refreshed 6 August 2026 (STR-SUP-004)  
+**Scope:** Historical Steps 1–3 inventory (delete old Strategy). MVP-1 Strategy Alignment is now shipped — see §6.  
 **Authority:** STRATEGY-MVP1-REQ-1.0 §20  
 
 App boundary: `apps/kentender_v1/kentender_strategy/` (bench symlink `apps/kentender_strategy`).
@@ -62,22 +62,22 @@ App boundary: `apps/kentender_v1/kentender_strategy/` (bench symlink `apps/kente
 
 ---
 
-## 2. Files to replace (later rebuild — not built in this pass)
+## 2. Files to replace (planned at teardown; **now implemented**)
 
-| Planned MVP-1 artifact (§9 / STR-UI) | Replaces |
-|---|---|
-| Versioned Strategic Plan (`plan_code`, versions) | Old Strategic Plan |
-| Programme / Sub-programme | Strategy Program / Sub Program |
-| Strategic Outcome | *(new; not Strategy Objective)* |
-| Performance Indicator | Strategy Objective-as-indicator |
-| Performance Target (definition only) | Strategy Target |
-| Public Value Objective + Applicability Trigger | *(new catalogue)* |
-| Plan Value Commitment (+ Link) | *(new)* |
-| Performance Measurement | Embedded actuals on Target |
-| Strategy Corrective Action | *(new)* |
-| Strategy Reference DTO + selector services (§16) | `get_active_strategy_*` + five-field Links |
-| STR-UI-01…14 Desk surfaces | strategy-management / strategy-builder |
-| MOH fixture `MOH-SP-0001` + PVOs | `STRAT-MOH-2026` / `PROG-MOH-*` / `OBJ-MOH-*` |
+| MVP-1 artifact (§9 / STR-UI) | Replaces | Status |
+|---|---|---|
+| Versioned Strategic Plan (`plan_code`, versions) | Old Strategic Plan | Implemented |
+| Programme / Sub-programme | Strategy Program / Sub Program | Implemented |
+| Strategic Outcome | *(new; not Strategy Objective)* | Implemented |
+| Performance Indicator | Strategy Objective-as-indicator | Implemented |
+| Performance Target (definition only) | Strategy Target | Implemented |
+| Public Value Objective + Applicability Trigger | *(new catalogue)* | Implemented |
+| Plan Value Commitment (+ Link) | *(new)* | Implemented |
+| Performance Measurement | Embedded actuals on Target | Implemented |
+| Strategy Corrective Action | *(new)* | Implemented |
+| Strategy Reference DTO + selector services (§16) | `get_active_strategy_*` + five-field Links | Implemented |
+| STR-UI Desk surfaces (Alignment portfolio + plan tabs) | strategy-management / strategy-builder | Implemented |
+| MOH fixture `MOH-SP-0001` + PVOs | `STRAT-MOH-2026` / `PROG-MOH-*` / `OBJ-MOH-*` | Implemented (`works_master_strategy_hierarchy`) |
 
 ---
 
@@ -111,15 +111,15 @@ App boundary: `apps/kentender_v1/kentender_strategy/` (bench symlink `apps/kente
 | `procurement_lifecycle/seeds/works_master_full_seed.py`, `purge_non_works_master_seed.py` | Skip strategy upsert/purge |
 | `kentender_core/seeds/stable_platform_seed/{load,it_strategy,validate,clear,purge}.py` | Skip/remove Strategy load |
 | `kentender_core/seeds/seed_strategy_*.py`, `reset_strategy_seed.py` | Delete or neutralize |
-| `docs/data/DEMO_PLATFORM_SEED.md` | Note Strategy gate removed pending rebuild |
+| `docs/data/DEMO_PLATFORM_SEED.md` | Note Strategy gate removed in teardown; MVP-1 seed is `works_master_strategy_hierarchy` / `MOH-SP-0001` |
 
 ### 3.4 Registry / nav / Makefile
 
-| Path | Action |
-|---|---|
-| `kentender_core/.../module_registry.py`, `kt_module_registry.js` | Point strategy module to retired/placeholder |
-| Procurement sidebar / shell routes to `strategy-management` | Keep nav label; route must not 500 |
-| `Makefile` `ui-workspace-pattern-gate` | Drop strategy-pattern-lock until rebuild |
+| Path | Action (teardown intent) | Current status |
+|---|---|---|
+| `kentender_core/.../module_registry.py`, `kt_module_registry.js` | Hollow strategy routes during teardown | Restored — all Strategy `page_js` slugs (STR-SUP-003) |
+| Procurement sidebar / shell routes | Keep nav label; route must not 500 | Live Alignment routes (`strategy-alignment`, plan tabs, …) |
+| `Makefile` `ui-workspace-pattern-gate` | Drop strategy-pattern-lock until rebuild | Strategy Alignment UI gate: `make ui-strategy-alignment-ui-gate` |
 
 ---
 
@@ -145,6 +145,11 @@ Before DocType deletion on `kentender.midas.com`:
 
 ---
 
-## 6. Status after Steps 1–3
+## 6. Status (post-rebuild refresh — STR-SUP-004)
 
-**partial / preparatory** — old Strategy domain removed; new Strategy Alignment not yet implemented. Downstream strategy selection/alignment is intentionally non-functional until the rebuild plan.
+**Teardown complete + MVP-1 Alignment shipped.**
+
+- Steps 1–3 destructive inventory above remains the historical record of what was removed.
+- Strategy Alignment DocTypes, services (`strategy_reference`, usage, performance), Desk pages, and MOH seed `MOH-SP-0001` are live under `kentender_strategy`.
+- Downstream Budget / Demand / Planning Strategy Reference wiring is tracked in `08_Strategy_Cross_Module_Lifecycle_Tracker.md` (multiple XMOD-STR items end-to-end complete).
+- Remaining gaps (notifications, Tender/Award carry, full AC evidence matrix, etc.) live in that tracker — not “downstream non-functional until rebuild.”

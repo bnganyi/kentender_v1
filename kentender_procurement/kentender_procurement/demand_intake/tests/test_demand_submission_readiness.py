@@ -11,9 +11,16 @@ from kentender_procurement.demand_intake.services.readiness import (
 	assert_submission_ready,
 	evaluate_submission_readiness,
 )
+from kentender_strategy.seeds.works_master_strategy_hierarchy import upsert_works_master_strategy_hierarchy
 
 
 class TestDemandSubmissionReadiness(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		frappe.set_user("Administrator")
+		cls.seed = upsert_works_master_strategy_hierarchy()
+
 	def setUp(self):
 		frappe.set_user("Administrator")
 		if not frappe.db.exists("DocType", "Demand"):
@@ -21,9 +28,8 @@ class TestDemandSubmissionReadiness(IntegrationTestCase):
 			return
 		self._skipped_no_demand = False
 		ensure_currency_kes()
-		h = frappe.generate_hash(length=6)
-		self.entity = ensure_procuring_entity(f"MOH_SUB_{h}", f"Entity Sub {h}")
-		self.dept = ensure_department(f"Dept Sub {h}", self.entity)
+		self.entity = self.seed["procuring_entity"]
+		self.dept = ensure_department(f"Dept Sub {frappe.generate_hash(length=6)}", self.entity)
 		self._demand_names: list[str] = []
 
 	def tearDown(self):
@@ -36,11 +42,12 @@ class TestDemandSubmissionReadiness(IntegrationTestCase):
 		dept = getattr(self, "dept", None)
 		if dept and frappe.db.exists("Procuring Department", dept):
 			frappe.delete_doc("Procuring Department", dept, force=True, ignore_permissions=True)
-		ent = getattr(self, "entity", None)
-		if ent and frappe.db.exists("Procuring Entity", ent):
-			frappe.delete_doc("Procuring Entity", ent, force=True, ignore_permissions=True)
+		# Do not delete seeded MOH procuring entity
 
 	def _mk_demand(self, **kwargs):
+		# Goods + strategy target: Required PVCs are category-filtered out on MOH seed
+		if "strategy_target" not in kwargs:
+			kwargs["strategy_target"] = self.seed["target"]
 		doc = frappe.get_doc(
 			{
 				"doctype": "Demand",

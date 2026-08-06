@@ -11,9 +11,11 @@ from frappe.tests.utils import FrappeTestCase
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_audit_contracts import (
 	EVENT_ACTIVATED,
+	EVENT_RESERVED,
 	get_budget_audit,
 	record_event,
 )
+from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_budget.services.budget_readiness_contracts import (
 	activate_budget,
@@ -125,3 +127,26 @@ class TestBudgetAudit(FrappeTestCase):
 		)
 		self.assertTrue(ev)
 		self.assertTrue(frappe.db.exists("Budget Audit Event", ev))
+
+	def test_reserve_path_creates_event_reserved(self):
+		"""BUD-SUP-005 — live reserve_funding emits Funding reserved audit evidence."""
+		line = frappe.db.get_value("Budget Line", {"generated_reference": "MOH-BL-0002"}, "name")
+		key = "TEST:AUDIT-RSV:MOH-BL-0002:11000000.00"
+		result = reserve_funding(
+			budget_line=line,
+			demand_name="DMD-TEST-AUDIT-RSV",
+			requested_amount=11_000_000,
+			idempotency_key=key,
+		)
+		self.assertTrue(result["ok"])
+		name = frappe.db.get_value(
+			"Budget Audit Event",
+			{
+				"record_code": result["reservation_code"],
+				"event_type": EVENT_RESERVED,
+			},
+			"name",
+		)
+		self.assertTrue(name)
+		dto = get_budget_audit("MOH-BUD-0001", event_type=EVENT_RESERVED)
+		self.assertTrue(any(r["record_code"] == result["reservation_code"] for r in dto["rows"]))

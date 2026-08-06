@@ -13,9 +13,16 @@ from kentender_procurement.demand_intake.services.readiness import (
 	evaluate_planning_panel_checks,
 	evaluate_planning_readiness,
 )
+from kentender_strategy.seeds.works_master_strategy_hierarchy import upsert_works_master_strategy_hierarchy
 
 
 class TestDemandPlanningReadiness(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		frappe.set_user("Administrator")
+		cls.seed = upsert_works_master_strategy_hierarchy()
+
 	def setUp(self):
 		frappe.set_user("Administrator")
 		if not frappe.db.exists("DocType", "Demand"):
@@ -34,17 +41,26 @@ class TestDemandPlanningReadiness(IntegrationTestCase):
 				frappe.delete_doc("Demand", name, force=True, ignore_permissions=True)
 
 	def _seed_budget_line(self):
-		bl_name = frappe.db.get_value("Budget Line", {"budget_line_code": "BL-MOH-2026-001"}, "name")
+		bl_name = frappe.db.get_value(
+			"Budget Line", {"generated_reference": "MOH-BL-0001"}, "name"
+		) or (self.seed.get("downstream") or {}).get("linked", {}).get("budget_line")
 		if not bl_name:
 			return None, None, None
 		ctx = get_budget_line_context(bl_name)
 		if not ctx.get("ok"):
-			return None, None, None
-		ent = (ctx.get("data") or {}).get("procuring_entity")
+			# Fallback: organisational owner on Budget Line / Budget
+			ent = self.seed.get("procuring_entity")
+			if not ent:
+				return None, None, None
+			dept = ensure_department(f"Dept Plan {frappe.generate_hash(length=4)}", ent)
+			return bl_name, ent, dept
+		ent = (ctx.get("data") or {}).get("procuring_entity") or self.seed.get("procuring_entity")
 		dept = ensure_department(f"Dept Plan {frappe.generate_hash(length=4)}", ent)
 		return bl_name, ent, dept
 
 	def _mk_demand(self, bl_name, entity, dept, **kwargs):
+		if "strategy_target" not in kwargs:
+			kwargs["strategy_target"] = self.seed["target"]
 		doc = frappe.get_doc(
 			{
 				"doctype": "Demand",

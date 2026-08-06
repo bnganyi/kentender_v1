@@ -60,6 +60,15 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 
 		await expect(page.locator("body")).toHaveClass(/kt-cl-shell/);
 
+		const first = await root.evaluate((el) => ({
+			key: el.getAttribute("data-kt-bud-mount-key") || "",
+			gen: el.getAttribute("data-kt-bud-mount-gen") || "",
+			live: el.getAttribute("data-kt-bud-live") || "",
+		}));
+		expect(first.key).toContain("budget-overview");
+		expect(Number(first.gen)).toBeGreaterThanOrEqual(1);
+		expect(first.live).toBe("1");
+
 		await page
 			.locator('[data-testid="kt-bud-tab-budget-lines"]')
 			.filter({ visible: true })
@@ -72,6 +81,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 		await expect(linesPage.getByTestId("kt-bud-workspace-chrome")).toBeVisible();
 		await expect(linesPage.getByTestId("kt-bud-lines-table")).toBeVisible();
 		await expect(page.locator("body")).toHaveClass(/kt-cl-shell/);
+		await expect(linesPage.locator("[data-kt-bud-budget-title]")).not.toHaveText("—");
 
 		await linesPage.getByTestId("kt-bud-tab-budget-overview").click();
 		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-0001/, { timeout: 20_000 });
@@ -81,6 +91,66 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 		await expect(overview).toBeVisible({ timeout: 45_000 });
 		await expect(page.locator("body")).toHaveClass(/kt-cl-shell/);
 		await expect(overview.locator('[data-kt-bud-ov="approved"]')).toHaveText("KES 560M");
+
+		const again = await overview.evaluate((el) => ({
+			key: el.getAttribute("data-kt-bud-mount-key") || "",
+			gen: el.getAttribute("data-kt-bud-mount-gen") || "",
+			live: el.getAttribute("data-kt-bud-live") || "",
+		}));
+		expect(again.key).toBe(first.key);
+		expect(again.gen).toBe(first.gen);
+		expect(again.live).toBe("1");
+	});
+
+	test("budget tab hop never flashes empty chrome title placeholders", async ({ page }) => {
+		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		const overview = page
+			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
+			.filter({ visible: true });
+		await expect(overview).toBeVisible({ timeout: 45_000 });
+		const seedTitle = (
+			await overview.locator("[data-kt-bud-budget-title]").first().textContent()
+		)?.trim();
+		expect(seedTitle && seedTitle !== "—").toBeTruthy();
+
+		const titles = await page.evaluate(async () => {
+			const samples: string[] = [];
+			const push = () => {
+				const visible = [...document.querySelectorAll('[data-testid="kt-bud-workspace-chrome"]')].find(
+					(node) => {
+						const pc = node.closest(".page-container");
+						if (!pc) return false;
+						return getComputedStyle(pc).display !== "none";
+					},
+				);
+				const title = (
+					(visible &&
+						(visible.querySelector("[data-kt-bud-budget-title]") as HTMLElement | null)
+							?.textContent) ||
+					""
+				).trim();
+				samples.push(title);
+			};
+			const tab = document.querySelector(
+				'[data-testid="kt-bud-overview"]:not([style*="display: none"]) [data-kt-bud-tab="budget-lines"]',
+			);
+			if (!tab) return { samples, err: "no-tab" };
+			(tab as HTMLElement).click();
+			push();
+			await new Promise((r) => requestAnimationFrame(() => r(null)));
+			push();
+			for (let i = 0; i < 8; i++) {
+				await new Promise((r) => setTimeout(r, 40));
+				push();
+			}
+			return { samples, err: null };
+		});
+
+		expect(titles.err).toBeNull();
+		expect(titles.samples.length).toBeGreaterThan(3);
+		const afterSwap = titles.samples.slice(1);
+		expect(afterSwap.some((t) => t && t !== "—")).toBe(true);
+		expect(afterSwap.every((t) => !t || t !== "—")).toBe(true);
 	});
 
 	test("Active primary CTA routes to revision create page", async ({ page }) => {

@@ -62,6 +62,7 @@
 			targetPlanName: String(
 				s.target_plan_name || s.targetPlanName || s.active_plan_name || "",
 			).trim(),
+			strategyLabel: String(s.strategy_label || s.strategyLabel || "").trim(),
 			showEvidenceAction:
 				s.show_evidence_action !== false && s.showEvidenceAction !== false,
 		};
@@ -84,6 +85,7 @@
 			blockers: it.blockers,
 			primary_action: it.primary_action,
 			secondary_actions: it.secondary_actions,
+			strategy_label: it.strategy_label,
 			show_evidence_action: it.show_evidence_action,
 		});
 	}
@@ -316,6 +318,14 @@
 			body +=
 				'<p class="pp3-selected-work-summary__detail">' +
 				esc(detailLine) +
+				"</p>";
+		}
+		if (summary.strategyLabel) {
+			body +=
+				'<p class="pp3-selected-work-summary__strategy text-muted small" data-testid="pp2-selected-summary-strategy">' +
+				esc(__("Strategy")) +
+				": " +
+				esc(summary.strategyLabel) +
 				"</p>";
 		}
 		if (statusHeadline || statusDetail) {

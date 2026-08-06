@@ -92,3 +92,15 @@ def allocate_budget_revision_reference(procuring_entity: str) -> str:
 		if not frappe.db.exists("Budget Revision", {"generated_reference": candidate}):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Budget Revision reference"))
+
+
+def allocate_reservation_reference(procuring_entity: str) -> str:
+	"""Allocate next never-reuse `RSV-{PE}-####` (BUD-UI-06 / Phase 5)."""
+	slug = pe_slug(procuring_entity)
+	prefix = f"RSV-{slug}-"
+	_sync_series(prefix, _max_seq("Funding Reservation", "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists("Funding Reservation", {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique Funding Reservation reference"))

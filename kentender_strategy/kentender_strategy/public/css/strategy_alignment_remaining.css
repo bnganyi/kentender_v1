@@ -328,7 +328,9 @@
 .kt-cl-shell .kt-str-root .hover\:bg-surface-variant:hover{background-color:#e2e2e8 !important}
 .kt-cl-shell .kt-str-root .hover\:opacity-90:hover{opacity:0.9 !important}
 .kt-cl-shell .kt-str-root .hover\:text-error:hover{color:#ba1a1a !important}
-.kt-cl-shell .kt-str-root .hover\:text-on-primary-container:hover{color:#7b9ee0 !important}
+/* Tonal surfaces only — filled bg-primary buttons keep white via shared chrome / portfolio. */
+.kt-cl-shell .kt-str-root :not(button.bg-primary).hover\:text-on-primary-container:hover{color:#7b9ee0 !important}
+.kt-cl-shell .kt-str-root button.bg-primary.hover\:text-on-primary-container:hover{color:#ffffff !important}
 .kt-cl-shell .kt-str-root .hover\:text-on-surface:hover{color:#1a1b20 !important}
 .kt-cl-shell .kt-str-root .hover\:text-primary:hover{color:#001f48 !important}
 .kt-cl-shell .kt-str-root .hover\:text-primary-container:hover{color:#00346f !important}

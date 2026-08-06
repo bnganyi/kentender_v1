@@ -31,6 +31,7 @@
   "strategy_plan_version",
   "strategy_target",
   "strategy_snapshot_label",
+  "value_treatments",
   "funding_source",
   "reservation_status",
   "reservation_reference",
@@ -223,6 +224,13 @@
    "fieldtype": "Data",
    "label": "Strategy Snapshot Label",
    "read_only": 1
+  },
+  {
+   "fieldname": "value_treatments",
+   "fieldtype": "Table",
+   "label": "Value Treatments",
+   "options": "Demand Value Treatment",
+   "description": "XMOD-STR-003 — include or record approved not-applicable for applicable Plan Value Commitments. Not tender criteria."
   },
   {
    "fieldname": "budget",

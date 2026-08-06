@@ -2,7 +2,7 @@
 // Stitch classes preserved byte-for-byte; only surgical data-testid / data-kt-str-* hooks.
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.create_plan = function () {
-	return `<div class="kt-str-root" data-testid="kt-str-create-plan">
+	return `<div class="kt-str-root kt-stitch-canvas" data-testid="kt-str-create-plan">
 <main class="flex-1 bg-surface-container-low p-section-gap overflow-y-auto" data-testid="kt-str-create-main-surface">
 <div class="max-w-5xl mx-auto space-y-section-gap">
 <!-- Page Header -->

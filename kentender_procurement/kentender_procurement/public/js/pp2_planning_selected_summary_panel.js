@@ -172,6 +172,7 @@
 		const title = String(summary.title || "").trim();
 		const keyFacts = String(summary.key_facts || "").trim();
 		const funding = String(summary.funding_label || "").trim();
+		const strategy = String(summary.strategy_label || "").trim();
 		const nextAction = String(summary.next_action_label || "").trim();
 		let body =
 			'<section class="pp2-selected-summary-panel" data-testid="pp2-selected-summary-panel">' +
@@ -195,6 +196,14 @@
 				esc(__("Funding")) +
 				": " +
 				esc(funding) +
+				"</div>";
+		}
+		if (strategy) {
+			body +=
+				'<div class="pp2-selected-summary-panel__strategy text-muted small mb-1" data-testid="pp2-selected-summary-strategy">' +
+				esc(__("Strategy")) +
+				": " +
+				esc(strategy) +
 				"</div>";
 		}
 		body += blockersHtml(summary);

@@ -116,7 +116,12 @@ def _find_existing_consumption(release_code: str, tender_code: str) -> str | Non
 def _get_budget_line_code(budget_line_frappe_name: str) -> str:
 	if not budget_line_frappe_name:
 		return ""
-	val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+	val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "generated_reference")
+	if not val:
+		try:
+			val = frappe.db.get_value("Budget Line", budget_line_frappe_name, "budget_line_code")
+		except Exception:
+			val = None
 	return str(val or budget_line_frappe_name or "").strip()
 
 

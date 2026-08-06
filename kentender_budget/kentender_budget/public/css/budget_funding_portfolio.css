@@ -71,16 +71,40 @@
 	color: #ffffff !important;
 }
 
+/* Filled primary hover: lifted navy + white (never on-primary-container ink / Desk black). */
 .kt-cl-shell .kt-bud-root button.bg-primary:hover,
+.kt-cl-shell .kt-bud-root button.bg-primary:focus,
+.kt-cl-shell .kt-bud-root button.bg-primary:focus-visible,
 .kt-cl-shell .kt-bud-root button.bg-primary.hover\:bg-primary-container:hover,
-.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover {
+.kt-cl-shell .kt-bud-root button.bg-primary.hover\:opacity-90:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:focus,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:focus-visible,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-primary"]:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-primary"]:focus,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-primary"]:focus-visible {
 	background-color: #00346f !important;
-	color: #7b9ee0 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
 }
 
 .kt-cl-shell .kt-bud-root button.bg-primary:hover .material-symbols-outlined,
-.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover .material-symbols-outlined {
-	color: #7b9ee0 !important;
+.kt-cl-shell .kt-bud-root button.bg-primary:focus .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root button.bg-primary:focus-visible .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:focus .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:focus-visible .material-symbols-outlined {
+	color: #ffffff !important;
+}
+
+.kt-cl-shell .kt-bud-root button.bg-primary:active,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:active,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-primary"]:active {
+	background-color: #001536 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
 }
 
 /* Bordered secondary CTA (View funding performance). */
@@ -126,14 +150,22 @@
 	appearance: none !important;
 	-webkit-appearance: none !important;
 	font: inherit;
-	color: inherit;
+	color: #1a1b20 !important;
 	margin: 0;
 	outline: none;
 	border-width: 1px !important;
 	border-style: solid !important;
-	border-color: var(--kt-bud-outline-variant) !important;
-	background-color: var(--kt-bud-surface) !important;
+	border-color: #737781 !important;
+	background-color: #ffffff !important;
 	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root select:disabled,
+.kt-cl-shell .kt-bud-root input[type="text"]:disabled,
+.kt-cl-shell .kt-bud-root input[type="text"][readonly] {
+	background-color: #e2e2e8 !important;
+	border-color: #c3c6d1 !important;
+	color: #737781 !important;
+	cursor: not-allowed !important;
 }
 
 /* Tailwind Forms select chevron stand-in (Stitch CDN provides this; Desk does not). */

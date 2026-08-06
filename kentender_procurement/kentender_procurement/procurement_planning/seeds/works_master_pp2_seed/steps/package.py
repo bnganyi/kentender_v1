@@ -112,7 +112,7 @@ _REPAIRABLE_PACKAGE_LINE_FIELDS = (
 
 
 def _resolve_budget_line_name() -> str:
-	name = frappe.db.get_value("Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "name")
+	name = frappe.db.get_value("Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name")
 	if name:
 		return name
 	if frappe.db.exists("Budget Line", BUDGET_LINE_CODE):
@@ -286,6 +286,17 @@ def _ensure_master_package_line(*, demand_name: str, budget_line_name: str) -> d
 			finally:
 				frappe.flags.pop("skip_package_line_rollup", None)
 		else:
+			# Seed hygiene: Budget Line docnames change when fixtures reload.
+			if (doc.budget_line_id or "") != budget_line_name or (doc.demand_id or "") != demand_name:
+				frappe.db.set_value(
+					"Procurement Package Line",
+					line_name,
+					{
+						"budget_line_id": budget_line_name,
+						"demand_id": demand_name,
+					},
+					update_modified=False,
+				)
 			action = "existing"
 	else:
 		frappe.flags.skip_package_line_rollup = True
@@ -386,6 +397,17 @@ def _ensure_procurement_package(*, actor: str = SEED_ACTOR) -> dict[str, Any]:
 			doc.save(ignore_permissions=True)
 			action = "repaired"
 		else:
+			# Seed hygiene: keep Demand/Budget Line links aligned after fixture recreate.
+			if (doc.budget_line_id or "") != budget_line_name or (doc.demand_id or "") != demand_name:
+				frappe.db.set_value(
+					"Procurement Package",
+					PKG_CODE,
+					{
+						"budget_line_id": budget_line_name,
+						"demand_id": demand_name,
+					},
+					update_modified=False,
+				)
 			action = "existing"
 	else:
 		doc = frappe.get_doc({"doctype": "Procurement Package", **values})

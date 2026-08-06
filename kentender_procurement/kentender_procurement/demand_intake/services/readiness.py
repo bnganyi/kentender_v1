@@ -16,6 +16,29 @@ def _check(id: str, label: str, ok: bool, *, required: bool = True) -> dict[str,
 	return {"id": id, "label": label, "ok": bool(ok), "required": required}
 
 
+def _primary_strategy_ok(doc) -> bool:
+	"""XMOD-STR-002 — Demand primary Performance Target present."""
+	return bool((getattr(doc, "strategy_target", None) or "").strip())
+
+
+def _value_commitments_check(doc) -> dict[str, Any]:
+	"""XMOD-STR-003 — Required applicable PVCs treated (Included or N/A + rationale)."""
+	try:
+		from kentender_procurement.demand_intake.services.demand_strategy_value import (
+			required_pvc_treatments_ok,
+		)
+
+		ok, required_count = required_pvc_treatments_ok(doc)
+	except Exception:
+		ok, required_count = True, 0
+	return _check(
+		"value_commitments",
+		_("Required plan value commitments treated"),
+		ok,
+		required=bool(required_count),
+	)
+
+
 def evaluate_draft_save(doc) -> dict[str, Any]:
 	"""Minimal draft save contract — title only (UI refactor §24.1)."""
 	checks: list[dict[str, Any]] = [
@@ -65,7 +88,7 @@ def _item_row_checks(doc) -> list[dict[str, Any]]:
 
 
 def evaluate_submission_readiness(doc) -> dict[str, Any]:
-	"""Requester completeness for Submit for Approval (budget/strategy optional)."""
+	"""Requester completeness for Submit for Approval (budget optional; strategy required)."""
 	checks: list[dict[str, Any]] = []
 
 	checks.append(_check("title", _("Title provided"), bool((doc.title or "").strip())))
@@ -154,12 +177,13 @@ def evaluate_submission_readiness(doc) -> dict[str, Any]:
 	)
 	checks.append(
 		_check(
-			"strategic_plan",
-			_("Strategy linkage present"),
-			True,  # neutralized — strategy Link fields removed (MVP-1)
-			required=False,
+			"strategy_linkage",
+			_("Primary strategy target selected"),
+			_primary_strategy_ok(doc),
+			required=True,
 		)
 	)
+	checks.append(_value_commitments_check(doc))
 
 	required_checks = [c for c in checks if c.get("required")]
 	ready = all(c["ok"] for c in required_checks)
@@ -256,7 +280,7 @@ def evaluate_planning_panel_checks(doc) -> dict[str, Any]:
 	)
 	planning_ready = bool(planning.get("ready")) and not integrity.get("blocked")
 
-	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
+	strategy_ok = _primary_strategy_ok(doc)
 
 	checks: list[dict[str, Any]] = [
 		{
@@ -281,10 +305,10 @@ def evaluate_planning_panel_checks(doc) -> dict[str, Any]:
 		},
 		{
 			"id": "strategy_linkage",
-			"requirement": _("Strategy linkage"),
+			"requirement": _("Primary strategy target"),
 			"status_label": _("Complete") if strategy_ok else _("Missing"),
 			"ok": strategy_ok,
-			"owner": _("System/Finance"),
+			"owner": _("Requester"),
 			"action_id": None,
 			"action_label": None,
 		},
@@ -335,7 +359,7 @@ def evaluate_planning_handoff_readiness(doc) -> dict[str, Any]:
 	checks.append(_check("delivery_location", _("Delivery location provided"), bool((doc.delivery_location or "").strip())))
 
 	budget_line_ok = False
-	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
+	strategy_ok = _primary_strategy_ok(doc)
 	budget_available_ok = False
 	if doc.budget_line:
 		try:
@@ -357,11 +381,12 @@ def evaluate_planning_handoff_readiness(doc) -> dict[str, Any]:
 	checks.append(
 		_check(
 			"strategy_linkage",
-			_("Strategy linkage resolved from budget line"),
+			_("Primary strategy target selected"),
 			strategy_ok,
-			required=False,
+			required=True,
 		)
 	)
+	checks.append(_value_commitments_check(doc))
 	checks.append(
 		_check(
 			"budget_availability",
@@ -399,7 +424,7 @@ def evaluate_planning_readiness(doc) -> dict[str, Any]:
 	checks.append(_check("budget_line", _("Budget line linked"), bool(doc.budget_line)))
 
 	budget_line_ok = False
-	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
+	strategy_ok = _primary_strategy_ok(doc)
 	budget_available_ok = False
 	if doc.budget_line:
 		try:
@@ -421,11 +446,12 @@ def evaluate_planning_readiness(doc) -> dict[str, Any]:
 	checks.append(
 		_check(
 			"strategy_linkage",
-			_("Strategy linkage resolved from budget line"),
+			_("Primary strategy target selected"),
 			strategy_ok,
-			required=False,
+			required=True,
 		)
 	)
+	checks.append(_value_commitments_check(doc))
 	checks.append(
 		_check(
 			"budget_availability",

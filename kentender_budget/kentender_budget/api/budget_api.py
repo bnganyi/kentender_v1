@@ -82,6 +82,15 @@ def save_budget_line(payload: dict | str | None = None):
 
 
 @frappe.whitelist()
+def list_funding_lifecycle(budget: str | None = None, filters: dict | str | None = None):
+	"""BUD-SUP-005 shared Funding Lifecycle read model."""
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_lifecycle as lifecycle
+
+	return lifecycle.list_funding_lifecycle(budget or "", filters=filters)
+
+
+@frappe.whitelist()
 def list_funding_activity(budget: str | None = None):
 	ensure_budget_roles()
 	from kentender_budget.services import budget_funding_activity as activity
@@ -256,4 +265,98 @@ def get_budget_audit(
 		actor=actor or None,
 		date_from=date_from or None,
 		date_to=date_to or None,
+	)
+
+
+@frappe.whitelist()
+def get_funding_performance(
+	fiscal_period: str | None = None,
+	programme: str | None = None,
+	primary_target: str | None = None,
+	funding_status: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_performance_contracts as perf
+
+	return perf.get_funding_performance(
+		fiscal_period=fiscal_period or None,
+		programme=programme or None,
+		primary_target=primary_target or None,
+		funding_status=funding_status or None,
+		procuring_entity=procuring_entity or None,
+	)
+
+
+@frappe.whitelist()
+def export_funding_performance(
+	fiscal_period: str | None = None,
+	programme: str | None = None,
+	primary_target: str | None = None,
+	funding_status: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_performance_contracts as perf
+
+	return perf.export_funding_performance(
+		fiscal_period=fiscal_period or None,
+		programme=programme or None,
+		primary_target=primary_target or None,
+		funding_status=funding_status or None,
+		procuring_entity=procuring_entity or None,
+	)
+
+
+@frappe.whitelist()
+def check_funding(
+	budget_line: str | None = None,
+	requested_amount: float | None = None,
+	demand: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.check_funding(
+		budget_line=budget_line,
+		requested_amount=requested_amount,
+		demand=demand,
+		procuring_entity=procuring_entity,
+	)
+
+
+@frappe.whitelist()
+def reserve_funding(
+	budget_line: str | None = None,
+	demand_name: str | None = None,
+	requested_amount: float | None = None,
+	idempotency_key: str | None = None,
+	actor: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.reserve_funding(
+		budget_line=budget_line,
+		demand_name=demand_name,
+		requested_amount=requested_amount,
+		idempotency_key=idempotency_key,
+		actor=actor,
+		procuring_entity=procuring_entity,
+	)
+
+
+@frappe.whitelist()
+def list_active_lines_for_check(
+	procuring_entity: str | None = None,
+	fiscal_period: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.list_active_lines_for_check(
+		procuring_entity=procuring_entity,
+		fiscal_period=fiscal_period,
 	)

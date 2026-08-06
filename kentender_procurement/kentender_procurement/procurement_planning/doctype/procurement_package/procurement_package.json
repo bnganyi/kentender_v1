@@ -57,6 +57,9 @@
   "planning_inclusion_code",
   "demand_id",
   "budget_line_id",
+  "strategy_plan_version",
+  "strategy_target",
+  "strategy_snapshot_label",
   "procurement_category",
   "required_std_category",
   "required_std_type",
@@ -410,6 +413,26 @@
    "fieldtype": "Data",
    "label": "Budget Line",
    "search_index": 1
+  },
+  {
+   "fieldname": "strategy_plan_version",
+   "fieldtype": "Link",
+   "label": "Strategy Plan Version",
+   "options": "Strategic Plan",
+   "description": "XMOD-STR-004 — inherited from primary Demand Strategy Reference"
+  },
+  {
+   "fieldname": "strategy_target",
+   "fieldtype": "Link",
+   "label": "Strategy Target",
+   "options": "Performance Target",
+   "description": "Inherited from Demand; Active-only when planner re-selects."
+  },
+  {
+   "fieldname": "strategy_snapshot_label",
+   "fieldtype": "Data",
+   "label": "Strategy Snapshot Label",
+   "read_only": 1
   },
   {
    "fieldname": "procurement_category",

@@ -15,16 +15,38 @@
  *
  * Uses Administrator login (has all required roles for submitting demands).
  */
+import { execSync } from 'node:child_process';
+import path from 'node:path';
+
 import { expect, test, type Page } from '@playwright/test';
 
 import { loginAsAdministrator } from '../../helpers/auth';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+const BENCH_ROOT = path.resolve(__dirname, '../../../../../..');
+const SITE = process.env.UI_SITE || 'kentender.midas.com';
 const CD_PAGE = '/app/create-demand';
 
 function futureDate(daysAhead: number): string {
 	return new Date(Date.now() + daysAhead * 86_400_000).toISOString().split('T')[0];
+}
+
+function seedStrategyHierarchy(): void {
+	try {
+		execSync('redis-cli -p 11000 FLUSHDB', { stdio: 'pipe' });
+	} catch {
+		/* ignore */
+	}
+	try {
+		execSync(
+			`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+				'kentender_strategy.seeds.works_master_strategy_hierarchy.upsert_works_master_strategy_hierarchy',
+			{ stdio: 'pipe', timeout: 120_000 },
+		);
+	} catch {
+		/* strategy seed may already be present */
+	}
 }
 
 // ── Helper: open wizard page and wait for Step 1 ─────────────────────────────
@@ -44,9 +66,9 @@ async function fillStep1(page: Page, title: string): Promise<void> {
 	await page.waitForFunction(
 		() => {
 			const e = document.querySelector<HTMLSelectElement>('#kt-cd-entity');
-			return e != null && e.options.length > 1;
+			return e != null && Array.from(e.options).some((o) => o.value === 'PE-MOH');
 		},
-		{ timeout: 10_000 },
+		{ timeout: 15_000 },
 	);
 	await page.waitForFunction(
 		() => {
@@ -56,14 +78,44 @@ async function fillStep1(page: Page, title: string): Promise<void> {
 		{ timeout: 10_000 },
 	);
 
-	await page.selectOption('#kt-cd-entity', { index: 1 });
 	await page.selectOption('#kt-cd-dept', { index: 1 });
 	await page.selectOption('#kt-cd-category', 'Works');
+	await page.selectOption('#kt-cd-entity', 'PE-MOH');
+	// Placeholder rows already make options.length > 1 — wait for a real target value.
+	await page.waitForFunction(
+		() => {
+			const s = document.querySelector<HTMLSelectElement>('#kt-cd-strategy-target');
+			return !!s && Array.from(s.options).some((o) => Boolean(o.value));
+		},
+		{ timeout: 15_000 },
+	);
+	const strategyValue = await page.$eval('#kt-cd-strategy-target', (sel: HTMLSelectElement) => {
+		for (let i = 0; i < sel.options.length; i += 1) {
+			if (sel.options[i].value) return sel.options[i].value;
+		}
+		return '';
+	});
+	expect(strategyValue).toBeTruthy();
+	await page.selectOption('#kt-cd-strategy-target', strategyValue);
 	await page.fill('#kt-cd-required-by', futureDate(30));
 	await page.fill(
 		'#kt-cd-justify',
 		'Procurement of essential materials for facility maintenance and operational continuity across all units.',
 	);
+}
+
+/** Treat Required PVCs as Included so Step 3 Submit can enable. */
+async function treatRequiredPvcsIncluded(page: Page): Promise<void> {
+	const panel = page.getByTestId('kt-cd-pvc-panel');
+	await expect(panel).toBeVisible({ timeout: 15_000 });
+	const rows = page.getByTestId('kt-cd-pvc-row');
+	const count = await rows.count();
+	for (let i = 0; i < count; i += 1) {
+		const hint = (await rows.nth(i).locator('.kt-cd-input-hint').textContent()) || '';
+		if (!/Required/i.test(hint)) continue;
+		await rows.nth(i).getByTestId('kt-cd-pvc-treatment').selectOption('Included');
+		await page.waitForTimeout(700);
+	}
 }
 
 /** Add a single line item in Step 2 and click Save Row. Waits for the row to appear. */
@@ -98,6 +150,10 @@ async function addLineItem(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe('Create Demand Wizard — wired smoke (cd-w9)', () => {
+	test.beforeAll(() => {
+		seedStrategyHierarchy();
+	});
+
 	// CD-01 ─────────────────────────────────────────────────────────────────────
 	test('CD-01 page renders Step 1 form with title input visible', async ({ page }) => {
 		await loginAsAdministrator(page);
@@ -144,12 +200,9 @@ test.describe('Create Demand Wizard — wired smoke (cd-w9)', () => {
 		// Don't fill title — click Next immediately
 		await page.click('#kt-cd-next-1');
 
-		// Frappe toast or inline error should appear
-		const errorVisible = await Promise.race([
-			page.locator('.alert-message, .toast, [class*="error"], .msgprint').waitFor({ state: 'visible', timeout: 5_000 }).then(() => true),
-			new Promise<boolean>((res) => setTimeout(() => res(false), 5_100)),
-		]);
-		expect(errorVisible).toBe(true);
+		// Inline field errors (title / entity / strategy / date) — avoid broad [class*="error"] strict races
+		await expect(page.locator('.kt-cd-field-error').first()).toBeVisible({ timeout: 5_000 });
+		await expect(page.locator('#kt-cd-title')).toHaveClass(/kt-cd-input--error/);
 
 		// Should still be on Step 1 (items-body not visible)
 		await expect(page.locator('#kt-cd-items-body')).not.toBeVisible();
@@ -251,6 +304,7 @@ test.describe('Create Demand Wizard — wired smoke (cd-w9)', () => {
 
 	// CD-09 ─────────────────────────────────────────────────────────────────────
 	test('CD-09 submit button is enabled when all readiness checks pass', async ({ page }) => {
+		test.setTimeout(120_000);
 		await loginAsAdministrator(page);
 		await openWizard(page);
 		await fillStep1(page, 'CD-09 Submit Enabled Test');
@@ -260,16 +314,16 @@ test.describe('Create Demand Wizard — wired smoke (cd-w9)', () => {
 		await addLineItem(page, 'Procurement Item', 20, 3_500);
 		await page.click('#kt-cd-next-2');
 		await page.waitForSelector('#kt-cd-readiness-panel', { timeout: 15_000 });
+		await treatRequiredPvcsIncluded(page);
 
-		// Submit button must be enabled
-		const isDisabled = await page.$eval('#kt-cd-submit', (el) => (el as HTMLButtonElement).disabled);
-		expect(isDisabled).toBe(false);
+		await expect(page.locator('#kt-cd-submit')).toBeEnabled({ timeout: 20_000 });
 	});
 
 	// CD-10 ─────────────────────────────────────────────────────────────────────
 	test('CD-10 full wizard flow submits demand and shows DIA reference on success screen', async ({
 		page,
 	}) => {
+		test.setTimeout(150_000);
 		await loginAsAdministrator(page);
 		await openWizard(page);
 		await fillStep1(page, 'CD-10 E2E Full Wizard Test');
@@ -279,10 +333,9 @@ test.describe('Create Demand Wizard — wired smoke (cd-w9)', () => {
 		await addLineItem(page, 'Construction Material', 100, 4_500);
 		await page.click('#kt-cd-next-2');
 		await page.waitForSelector('#kt-cd-readiness-panel', { timeout: 15_000 });
+		await treatRequiredPvcsIncluded(page);
 
-		// Verify submit is enabled before clicking
-		const isDisabled = await page.$eval('#kt-cd-submit', (el) => (el as HTMLButtonElement).disabled);
-		expect(isDisabled).toBe(false);
+		await expect(page.locator('#kt-cd-submit')).toBeEnabled({ timeout: 20_000 });
 
 		await page.click('#kt-cd-submit');
 

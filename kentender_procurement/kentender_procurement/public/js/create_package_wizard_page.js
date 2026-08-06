@@ -177,6 +177,15 @@
     var code = row.inclusion_code;
     var isSelected = !!_state.selected[code];
     var cat = _categoryMeta(row.category);
+    var strategyLabel = String(row.strategy_label || "").trim();
+    var strategyHtml = strategyLabel
+      ? (
+          '<div class="kt-pw-demand-strategy" data-testid="kt-pw-demand-strategy">' +
+            '<div class="kt-pw-demand-meta-label">Strategy alignment</div>' +
+            '<div class="kt-pw-demand-meta-value">' + _esc(strategyLabel) + "</div>" +
+          "</div>"
+        )
+      : "";
     return (
       '<div class="kt-pw-demand-card' + (isSelected ? " kt-pw-demand-card--selected" : "") + '" data-testid="kt-pw-demand-card" data-inclusion-code="' + _esc(code) + '">' +
         '<div class="kt-pw-demand-card-accent kt-pw-accent--' + cat.css + '"></div>' +
@@ -186,6 +195,7 @@
             '<span class="kt-pw-demand-ref">' + _esc(row.ref || row.demand.code) + "</span>" +
           "</div>" +
           '<h3 class="kt-pw-demand-title" data-testid="kt-pw-demand-title">' + _esc(row.demand.name) + "</h3>" +
+          strategyHtml +
           '<div class="kt-pw-demand-meta">' +
             '<div><div class="kt-pw-demand-meta-label">Est. Value</div><div class="kt-pw-demand-meta-value">' + _fmtMoney(row.estimated_value, row.currency) + "</div></div>" +
             '<div><div class="kt-pw-demand-meta-label">Department</div><div class="kt-pw-demand-meta-value">' + _esc(row.department || "—") + "</div></div>" +

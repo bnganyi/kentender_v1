@@ -24,7 +24,7 @@ from frappe import _
 from kentender_core.seeds._common import ensure_department
 
 DEMAND_ID = "DEM-MOH-2026-001"
-BUDGET_LINE_CODE = "BUD-MOH-INFRA-2026-001"
+BUDGET_LINE_CODE = "MOH-BL-0001"  # Budget Line.generated_reference (MVP-1)
 DEPT_INFRA = "Infrastructure and Facilities Directorate"
 DEMAND_TITLE = "District Hospital Renovation Works"
 ESTIMATED_UNIT_COST = 98_000_000.0
@@ -50,8 +50,21 @@ def resolve_procuring_entity_moh() -> str | None:
 
 
 def _resolve_budget_line() -> str | None:
-    """Return the Frappe docname of BUD-MOH-INFRA-2026-001."""
-    return frappe.db.get_value("Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "name")
+    """Return the Frappe docname of MOH-BL-0001 (generated_reference)."""
+    return frappe.db.get_value("Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name")
+
+
+def _budget_line_procuring_entity(budget_line: str) -> str | None:
+    """Resolve entity from parent Budget (Budget Line no longer stores procuring_entity)."""
+    budget = frappe.db.get_value("Budget Line", budget_line, "budget")
+    if not budget:
+        return None
+    return frappe.db.get_value("Budget", budget, "procuring_entity")
+
+
+def _budget_line_primary_target(budget_line: str) -> str | None:
+    """Primary Performance Target id from Budget Line (MVP-1 primary_*)."""
+    return (frappe.db.get_value("Budget Line", budget_line, "primary_target_id") or "").strip() or None
 
 
 def _ensure_infra_department(entity: str) -> str:
@@ -108,6 +121,26 @@ def _insert_demand(entity: str, dept: str, budget_line: str) -> frappe.model.doc
     # pre-set, but we pre-set it. Force an explicit set_value as a safety net.
     if frappe.db.get_value("Demand", d.name, "demand_id") != DEMAND_ID:
         frappe.db.set_value("Demand", d.name, "demand_id", DEMAND_ID, update_modified=False)
+    # XMOD-STR-002 — inherit Budget Line primary Performance Target (historical resolve OK).
+    primary_target = _budget_line_primary_target(budget_line)
+    if primary_target:
+        try:
+            from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+
+            dem = frappe.get_doc("Demand", d.name)
+            apply_strategy_reference_to_doc(dem, primary_target, require_active=False)
+            dem.db_set(
+                {
+                    "strategy_target": dem.strategy_target,
+                    "strategy_plan_version": dem.strategy_plan_version,
+                    "strategy_snapshot_label": dem.strategy_snapshot_label,
+                },
+                update_modified=False,
+            )
+        except Exception:
+            frappe.db.set_value(
+                "Demand", d.name, "strategy_target", primary_target, update_modified=False
+            )
     return frappe.get_doc("Demand", d.name)
 
 
@@ -164,15 +197,45 @@ def upsert_works_master_demand() -> dict:
             ),
         }
 
-    # Derive the entity from the budget line itself — entity code variants PE-MOH / MOH must match
-    # what the budget line stores, or the Demand controller's _apply_budget_line_strategy will
-    # throw "Selected budget line belongs to a different procuring entity."
-    budget_line_entity = frappe.db.get_value("Budget Line", budget_line, "procuring_entity")
+    # Entity on parent Budget (Budget Line no longer stores procuring_entity).
+    budget_line_entity = _budget_line_procuring_entity(budget_line)
     if budget_line_entity:
         entity = budget_line_entity
 
     existing_name = frappe.db.get_value("Demand", {"demand_id": DEMAND_ID}, "name")
     if existing_name:
+        # Re-link Budget Line + Strategy when seed fixtures are recreated (new docnames).
+        current_bl = (frappe.db.get_value("Demand", existing_name, "budget_line") or "").strip()
+        if current_bl != budget_line:
+            frappe.db.set_value(
+                "Demand", existing_name, "budget_line", budget_line, update_modified=False
+            )
+        primary_target = _budget_line_primary_target(budget_line)
+        current_target = (
+            frappe.db.get_value("Demand", existing_name, "strategy_target") or ""
+        ).strip()
+        if primary_target and current_target != primary_target:
+            try:
+                from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+
+                dem = frappe.get_doc("Demand", existing_name)
+                apply_strategy_reference_to_doc(dem, primary_target, require_active=False)
+                dem.db_set(
+                    {
+                        "strategy_target": dem.strategy_target,
+                        "strategy_plan_version": dem.strategy_plan_version,
+                        "strategy_snapshot_label": dem.strategy_snapshot_label,
+                    },
+                    update_modified=False,
+                )
+            except Exception:
+                frappe.db.set_value(
+                    "Demand",
+                    existing_name,
+                    "strategy_target",
+                    primary_target,
+                    update_modified=False,
+                )
         status = frappe.db.get_value("Demand", existing_name, "status") or ""
         return {
             "ok": True,

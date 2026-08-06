@@ -17,6 +17,7 @@ frappe.provide("kentender_core.module_registry");
 			routePrefixes: [
 				"strategy-alignment",
 				"strategy-performance",
+				"strategy-plan-create",
 				"strategy-plan-overview",
 				"strategy-plan-structure",
 				"strategy-plan-value-commitments",
@@ -36,7 +37,7 @@ frappe.provide("kentender_core.module_registry");
 			},
 		},
 		budget: {
-			// MVP-1 Budget & Funding — portfolio entry (BUD-UI-01).
+			// MVP-1 Budget & Funding — keep in sync with module_registry.py + hooks.page_js.
 			id: "budget",
 			workspaceRoute: ["Workspaces", "Budget Management"],
 			workspaceSlug: "budget-management",
@@ -52,12 +53,21 @@ frappe.provide("kentender_core.module_registry");
 				"budget-funding",
 				"budget-register",
 				"budget-funding-performance",
+				"budget-check-reserve",
 				"budget-overview",
+				"budget-lines",
+				"budget-funding-activity",
+				"budget-revisions",
+				"budget-revision-create",
+				"budget-revision-review",
+				"budget-downstream",
+				"budget-review",
+				"budget-audit",
 				"Form/Budget",
 			],
 			taskLabels: {
-				builder: __("Manage Allocations"),
-				form: __("Edit Budget"),
+				builder: __("Budget & Funding"),
+				form: __("Register approved budget"),
 			},
 		},
 		dia: {

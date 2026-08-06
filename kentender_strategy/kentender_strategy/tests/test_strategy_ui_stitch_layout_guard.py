@@ -70,6 +70,13 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("kt-str-root", portfolio_css)
 		self.assertIn("lg\\:col-span-9", portfolio_css)
 		self.assertIn("grid-cols-12", portfolio_css)
+		# Filled primary hover: white on lifted navy — never inky #7b9ee0.
+		self.assertIn("Filled primary hover: lifted navy + white", portfolio_css)
+		hover_idx = portfolio_css.find("button.bg-primary:hover")
+		self.assertGreaterEqual(hover_idx, 0)
+		hover_slice = portfolio_css[hover_idx : hover_idx + 400]
+		self.assertIn("color: #ffffff", hover_slice)
+		self.assertNotIn("color: #7b9ee0", hover_slice)
 		self.assertNotIn("cdn.tailwindcss.com", portfolio_css)
 		portfolio_js = _read(PORTFOLIO_JS)
 		self.assertIn("ui_fixtures.portfolio", portfolio_js)
@@ -107,6 +114,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("bindCreatePlan", live)
 		create_fx = _read(FIXTURES / "create_plan.js")
 		self.assertIn("kt-str-create-plan", create_fx)
+		self.assertIn("kt-stitch-canvas", create_fx)
 		# System-assigned reference — never a required user plan_code input.
 		self.assertNotIn('data-kt-str-field="plan_code"', create_fx)
 		self.assertIn("kt-str-create-plan-reference", create_fx)

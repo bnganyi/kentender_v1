@@ -91,10 +91,12 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 			"none",
 		);
 
+		await expect(root.getByTestId("kt-bud-overview-primary")).toHaveText(/Request revision/i);
 		await assertStitchDeskChrome(page, {
 			rootTestId: "kt-bud-activity",
 			primaryCtaTestId: "kt-bud-overview-primary",
 			secondaryCtaTestId: "kt-bud-view-performance",
+			assertPrimaryHover: true,
 			selectSelector: '[data-kt-bud-activity-filter="activity_type"]',
 			headlineSelector: "[data-kt-bud-budget-title]",
 		});

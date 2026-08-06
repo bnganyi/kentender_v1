@@ -38,6 +38,13 @@ body.kt-str-create-active .kt-str-field-invalid {
 }
 
 /* ---- Tailwind Forms select chevron (Stitch CDN forms plugin glyph) ---- */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] select,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] input,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] textarea {
+	background-color: #ffffff !important;
+	border-color: #737781 !important;
+	color: #1a1b20 !important;
+}
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] select {
 	appearance: none !important;
 	-webkit-appearance: none !important;
@@ -49,8 +56,11 @@ body.kt-str-create-active .kt-str-field-invalid {
 	cursor: pointer !important;
 }
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] select:disabled {
-	cursor: default !important;
+	cursor: not-allowed !important;
 	opacity: 1 !important;
+	background-color: #e2e2e8 !important;
+	border-color: #c3c6d1 !important;
+	color: #737781 !important;
 }
 
 /* Date fields: hide native picker chrome; Stitch calendar_today icon is the glyph */

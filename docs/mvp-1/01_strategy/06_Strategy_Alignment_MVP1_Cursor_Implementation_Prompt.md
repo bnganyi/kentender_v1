@@ -636,6 +636,16 @@ Perform these checks before accepting the implementation:
 23. Compare all fifteen screens with the approved Stitch outputs.
 24. Review Cursor’s changed-file and legacy-absence reports before merging.
 
-## 3. Change-control rule
+## 3. Cross-module lifecycle tracking
+
+Cross-module Strategy Reference / usage / performance / notification events are tracked in:
+
+`docs/mvp-1/01_strategy/08_Strategy_Cross_Module_Lifecycle_Tracker.md`
+
+Companion requirements audit canvas: `strategy-mvp1-requirements-audit.canvas.tsx` (workspace canvases + copy in this pack).
+
+Use that tracker’s delivery statuses (never a single “Implemented” flag). Distinguish Strategy-owned provider gaps, provider-present/consumer-pending gaps, and out-of-scope exclusions. Working fixture identity: `MOH-SP-0001` / `upsert_works_master_strategy_hierarchy()`.
+
+## 4. Change-control rule
 
 Cursor may implement, test and correct the locked Strategy MVP 1 scope. It may not add a new domain concept, status, workflow step, role, configurable rule type, screen, tab, integration responsibility or compatibility layer without an approved requirements change. Repository discoveries that affect technical implementation should be resolved within the locked behaviour; discoveries that materially change product behaviour must be reported as blockers rather than implemented by assumption.

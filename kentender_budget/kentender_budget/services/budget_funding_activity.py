@@ -1,7 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Funding Activity list contract — BUD-UI-07 / BUD-FR-107 / pack Phase 6."""
+"""Funding Activity list contract — BUD-UI-07 / BUD-FR-107 / pack Phase 6.
+
+Rows project from the shared Funding Lifecycle read model (BUD-SUP-005).
+"""
 
 from __future__ import annotations
 
@@ -11,6 +14,7 @@ import frappe
 from frappe.utils import flt, formatdate, getdate
 
 from kentender_budget.services.budget_contracts import _line_totals, _resolve_budget, resolve_scoped_entity
+from kentender_budget.services.budget_funding_lifecycle import list_funding_lifecycle
 from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
@@ -22,6 +26,7 @@ from kentender_budget.services.budget_permissions import (
 )
 
 _ACTIVITY_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+_ACTIVITY_TYPES = frozenset({"reservation", "commitment", "actual"})
 
 
 def list_funding_activity(budget: str) -> dict[str, Any]:
@@ -45,7 +50,12 @@ def list_funding_activity(budget: str) -> dict[str, Any]:
 
 	outstanding = max(0.0, totals["committed"] - flt(actual_amount or 0))
 
-	rows = _activity_rows(doc.name, currency)
+	life = list_funding_lifecycle(doc.name)
+	rows = [
+		_row_from_lifecycle(ev, currency)
+		for ev in life["events"]
+		if (ev.get("kind") == "domain" and (ev.get("activity_type") or "") in _ACTIVITY_TYPES)
+	]
 	rows.sort(key=lambda r: (r.get("event_date_sort") or "", r.get("code") or ""), reverse=True)
 
 	return {
@@ -80,6 +90,7 @@ def list_funding_activity(budget: str) -> dict[str, Any]:
 		},
 		"capabilities": {
 			"primary_action": "request_revision" if doc.status == "Active" else "",
+			"primary_label": "Request revision" if doc.status == "Active" else "",
 			"view_funding_performance": True,
 			"read_only": True,
 		},
@@ -97,7 +108,6 @@ def _budget_actual_from_snapshots(budget_name: str) -> tuple[float | None, str |
 	)
 	if not snaps:
 		return None, None
-	# Aggregate known amounts; Unavailable with no amount → Unknown display.
 	total = 0.0
 	has_value = False
 	statuses = {s.reconciliation_status for s in snaps}
@@ -112,150 +122,110 @@ def _budget_actual_from_snapshots(budget_name: str) -> tuple[float | None, str |
 	return total, status
 
 
-def _activity_rows(budget_name: str, currency: str) -> list[dict[str, Any]]:
-	rows: list[dict[str, Any]] = []
-	if frappe.db.exists("DocType", "Funding Reservation"):
-		for r in frappe.get_all(
-			"Funding Reservation",
-			filters={"budget": budget_name},
-			fields=[
-				"name",
-				"generated_reference",
-				"demand_code",
-				"demand_title",
-				"original_amount",
-				"remaining_reserved",
-				"status",
-				"event_date",
-				"current_downstream_reference",
-			],
-		):
-			rows.append(
-				{
-					"id": r.name,
-					"code": r.generated_reference,
-					"activity_type": "reservation",
-					"activity_label": "Funding reservation",
-					"source_code": r.demand_code,
-					"source_name": r.demand_title,
-					"amount": flt(r.original_amount),
-					"amount_display": format_kes_full(r.original_amount, currency=currency),
-					"status": r.status,
-					"status_kind": "neutral",
-					"event_date": formatdate(r.event_date) if r.event_date else "",
-					"event_date_sort": str(getdate(r.event_date)) if r.event_date else "",
-					"related_label": "Reserved balance:",
-					"related_value": format_kes_full(r.remaining_reserved, currency=currency),
-					"related_kind": "reserved",
-					"action": "view_reservation",
-					"action_label": "View reservation",
-					"detail": {
-						"title": r.demand_title,
-						"code": r.generated_reference,
-						"demand_code": r.demand_code,
-						"original_amount_display": format_kes_full(r.original_amount, currency=currency),
-						"remaining_display": format_kes_full(r.remaining_reserved, currency=currency),
-						"status": r.status,
-						"downstream": r.current_downstream_reference or "",
-					},
-				}
-			)
+def _row_from_lifecycle(ev: dict[str, Any], currency: str) -> dict[str, Any]:
+	payload = ev.get("domain_payload") or {}
+	atype = ev.get("activity_type") or ""
+	if atype == "reservation":
+		event_date = payload.get("event_date")
+		return {
+			"id": payload.get("name") or ev.get("source_name"),
+			"code": ev.get("source_code") or payload.get("generated_reference"),
+			"activity_type": "reservation",
+			"activity_label": "Funding reservation",
+			"source_code": payload.get("demand_code") or "",
+			"source_name": payload.get("demand_title") or "",
+			"amount": flt(payload.get("original_amount")),
+			"amount_display": format_kes_full(payload.get("original_amount"), currency=currency),
+			"status": payload.get("status") or ev.get("status") or "",
+			"status_kind": "neutral",
+			"event_date": formatdate(event_date) if event_date else "",
+			"event_date_sort": str(getdate(event_date)) if event_date else "",
+			"related_label": "Reserved balance:",
+			"related_value": format_kes_full(payload.get("remaining_reserved"), currency=currency),
+			"related_kind": "reserved",
+			"action": "view_reservation",
+			"action_label": "View reservation",
+			"detail": {
+				"title": payload.get("demand_title"),
+				"code": payload.get("generated_reference"),
+				"demand_code": payload.get("demand_code"),
+				"original_amount_display": format_kes_full(
+					payload.get("original_amount"), currency=currency
+				),
+				"remaining_display": format_kes_full(
+					payload.get("remaining_reserved"), currency=currency
+				),
+				"status": payload.get("status"),
+				"downstream": payload.get("current_downstream_reference") or "",
+			},
+		}
 
-	if frappe.db.exists("DocType", "Procurement Commitment"):
-		for r in frappe.get_all(
-			"Procurement Commitment",
-			filters={"budget": budget_name},
-			fields=[
-				"name",
-				"generated_reference",
-				"contract_code",
-				"contract_title",
-				"current_amount",
-				"status",
-				"event_date",
-				"outstanding_amount",
-			],
-		):
-			rows.append(
-				{
-					"id": r.name,
-					"code": r.generated_reference,
-					"activity_type": "commitment",
-					"activity_label": "Contract commitment",
-					"source_code": r.contract_code,
-					"source_name": r.contract_title,
-					"amount": flt(r.current_amount),
-					"amount_display": format_kes_full(r.current_amount, currency=currency),
-					"amount_kind": "committed",
-					"status": r.status,
-					"status_kind": "active",
-					"event_date": formatdate(r.event_date) if r.event_date else "",
-					"event_date_sort": str(getdate(r.event_date)) if r.event_date else "",
-					"related_label": "",
-					"related_value": "—",
-					"related_kind": "",
-					"action": "view_commitment",
-					"action_label": "View contract",
-					"detail": {
-						"title": r.contract_title,
-						"code": r.generated_reference,
-						"contract_code": r.contract_code,
-						"amount_display": format_kes_full(r.current_amount, currency=currency),
-						"outstanding_display": format_kes_full(r.outstanding_amount, currency=currency),
-						"status": r.status,
-					},
-				}
-			)
+	if atype == "commitment":
+		event_date = payload.get("event_date")
+		return {
+			"id": payload.get("name") or ev.get("source_name"),
+			"code": ev.get("source_code") or payload.get("generated_reference"),
+			"activity_type": "commitment",
+			"activity_label": "Contract commitment",
+			"source_code": payload.get("contract_code") or "",
+			"source_name": payload.get("contract_title") or "",
+			"amount": flt(payload.get("current_amount")),
+			"amount_display": format_kes_full(payload.get("current_amount"), currency=currency),
+			"amount_kind": "committed",
+			"status": payload.get("status") or "",
+			"status_kind": "active",
+			"event_date": formatdate(event_date) if event_date else "",
+			"event_date_sort": str(getdate(event_date)) if event_date else "",
+			"related_label": "",
+			"related_value": "—",
+			"related_kind": "",
+			"action": "view_commitment",
+			"action_label": "View contract",
+			"detail": {
+				"title": payload.get("contract_title"),
+				"code": payload.get("generated_reference"),
+				"contract_code": payload.get("contract_code"),
+				"amount_display": format_kes_full(payload.get("current_amount"), currency=currency),
+				"outstanding_display": format_kes_full(
+					payload.get("outstanding_amount"), currency=currency
+				),
+				"status": payload.get("status"),
+			},
+		}
 
-	if frappe.db.exists("DocType", "Expenditure Snapshot"):
-		for r in frappe.get_all(
-			"Expenditure Snapshot",
-			filters={"budget": budget_name},
-			fields=[
-				"name",
-				"generated_reference",
-				"source_system",
-				"source_reference",
-				"amount",
-				"reconciliation_status",
-				"source_as_at",
-				"contract_code",
-			],
-		):
-			status = r.reconciliation_status or "Matched"
-			has_amount = status != "Unavailable"
-			rows.append(
-				{
-					"id": r.name,
-					"code": r.generated_reference,
-					"activity_type": "actual",
-					"activity_label": "Actual expenditure snapshot",
-					"source_code": r.source_reference or "",
-					"source_name": r.source_system or "Finance system",
-					"amount": flt(r.amount) if has_amount else None,
-					"amount_display": format_kes_full(r.amount, currency=currency)
-					if has_amount
-					else "Unknown",
-					"amount_kind": "actual",
-					"status": status,
-					"status_kind": "stale" if status == "Stale" else ("available" if status == "Matched" else "neutral"),
-					"event_date": formatdate(r.source_as_at) if r.source_as_at else "",
-					"event_date_sort": str(getdate(r.source_as_at)) if r.source_as_at else "",
-					"related_label": "",
-					"related_value": "—",
-					"related_kind": "",
-					"action": "view_reconciliation",
-					"action_label": "View reconciliation",
-					"detail": {
-						"title": r.source_system or "Finance system",
-						"code": r.generated_reference,
-						"amount_display": format_kes_full(r.amount, currency=currency)
-						if has_amount
-						else "Unknown",
-						"status": status,
-						"source_as_at": formatdate(r.source_as_at) if r.source_as_at else "",
-						"contract_code": r.contract_code or "",
-					},
-				}
-			)
-	return rows
+	# actual / expenditure
+	event_date = payload.get("source_as_at")
+	status = payload.get("reconciliation_status") or "Matched"
+	has_amount = status != "Unavailable"
+	return {
+		"id": payload.get("name") or ev.get("source_name"),
+		"code": ev.get("source_code") or payload.get("generated_reference"),
+		"activity_type": "actual",
+		"activity_label": "Actual expenditure snapshot",
+		"source_code": payload.get("source_reference") or "",
+		"source_name": payload.get("source_system") or "Finance system",
+		"amount": flt(payload.get("amount")) if has_amount else None,
+		"amount_display": format_kes_full(payload.get("amount"), currency=currency)
+		if has_amount
+		else "Unknown",
+		"amount_kind": "actual",
+		"status": status,
+		"status_kind": "stale" if status == "Stale" else ("available" if status == "Matched" else "neutral"),
+		"event_date": formatdate(event_date) if event_date else "",
+		"event_date_sort": str(getdate(event_date)) if event_date else "",
+		"related_label": "",
+		"related_value": "—",
+		"related_kind": "",
+		"action": "view_reconciliation",
+		"action_label": "View reconciliation",
+		"detail": {
+			"title": payload.get("source_system") or "Finance system",
+			"code": payload.get("generated_reference"),
+			"amount_display": format_kes_full(payload.get("amount"), currency=currency)
+			if has_amount
+			else "Unknown",
+			"status": status,
+			"source_as_at": formatdate(event_date) if event_date else "",
+			"contract_code": payload.get("contract_code") or "",
+		},
+	}

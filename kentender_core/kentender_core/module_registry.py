@@ -9,19 +9,35 @@ from typing import Any
 # Canonical module definitions — keep in sync with public/js/kt_module_registry.js
 KT_MODULES: dict[str, dict[str, Any]] = {
 	"strategy": {
-		# MVP-1 preparatory teardown: domain removed; rebuild will restore routes.
+		# MVP-1 Strategy Alignment — keep in sync with kt_module_registry.js + hooks.page_js.
 		"workspace_label": "Strategy Alignment",
-		"sidebar_workspace_key": "strategy",
-		"builder_page": "",
-		"desk_page": "",
+		"sidebar_workspace_key": "procurement",
+		"builder_page": "strategy-plan-structure",
+		"desk_page": "strategy-alignment",
 		"form_doctype": "",
 		"state_key": "kt_strategy_workbench_state",
 		"select_key": "kt_strategy_workspace_select",
-		"route_prefixes": (),
+		"route_prefixes": (
+			"strategy-alignment",
+			"strategy-performance",
+			"strategy-plan-create",
+			"strategy-plan-overview",
+			"strategy-plan-structure",
+			"strategy-plan-value-commitments",
+			"strategy-plan-measurements",
+			"strategy-plan-downstream-usage",
+			"strategy-plan-review",
+			"strategy-plan-audit",
+			"strategy-pvo-catalogue",
+			"strategy-pvo-editor",
+			"strategy-measurement-submit",
+			"strategy-measurement-verify",
+			"strategy-corrective-actions",
+		),
 		"sidebar_parent": "Procurement",
 	},
 	"budget": {
-		# MVP-1 Budget & Funding — portfolio entry (BUD-UI-01).
+		# MVP-1 Budget & Funding — keep in sync with kt_module_registry.js + hooks.page_js.
 		"workspace_label": "Budget Management",
 		"sidebar_workspace_key": "budget management",
 		"builder_page": "",
@@ -33,7 +49,16 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 			"budget-funding",
 			"budget-register",
 			"budget-funding-performance",
+			"budget-check-reserve",
 			"budget-overview",
+			"budget-lines",
+			"budget-funding-activity",
+			"budget-revisions",
+			"budget-revision-create",
+			"budget-revision-review",
+			"budget-downstream",
+			"budget-review",
+			"budget-audit",
 			"Form/Budget",
 		),
 		"sidebar_parent": "Procurement",

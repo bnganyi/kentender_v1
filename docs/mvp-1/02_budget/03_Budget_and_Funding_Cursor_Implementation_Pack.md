@@ -909,3 +909,11 @@ Return:
 - Any deliberate deviation from this pack or the approved designs
 
 Do not report completion while any required phase is omitted, any canonical fixture total is inconsistent, or any Active Budget remains directly editable.
+
+## 13. Cross-module lifecycle tracking
+
+Cross-module reservation / commitment / expenditure events are tracked in:
+
+`docs/mvp-1/02_budget/04_Budget_Cross_Module_Lifecycle_Tracker.md`
+
+Use that tracker’s delivery statuses (never a single “Implemented” flag). Distinguish Budget-owned provider gaps, provider-present/consumer-pending gaps, and future external integration. Working fixture identity: `MOH-BUD-0001` / `MOH_MVP_V1`.

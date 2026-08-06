@@ -9,9 +9,8 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import format_datetime, get_datetime, getdate, now_datetime
+from frappe.utils import format_datetime, get_datetime, now_datetime
 
-from kentender_budget.services.budget_contracts import _resolve_budget, resolve_scoped_entity
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
 	ROLE_AUTHORITY,
@@ -109,80 +108,63 @@ def get_budget_audit(
 	date_from: str | None = None,
 	date_to: str | None = None,
 ) -> dict[str, Any]:
-	"""Return filtered read-only audit ledger for a Budget."""
+	"""Return filtered read-only audit ledger projected from Funding Lifecycle (BUD-SUP-005)."""
 	require_any_role(*_READ_ROLES)
-	doc = _resolve_budget(budget)
-	resolve_scoped_entity(doc.procuring_entity)
+	from kentender_budget.services.budget_funding_lifecycle import list_funding_lifecycle
 
-	if not frappe.db.exists("DocType", "Budget Audit Event"):
-		return _empty_dto(doc)
-
-	filters: dict[str, Any] = {"budget": doc.name}
+	life_filters: dict[str, Any] = {}
 	if (event_type or "").strip():
-		filters["event_type"] = event_type.strip()
-	if (actor or "").strip():
-		filters["actor"] = ["like", f"%{actor.strip()}%"]
+		life_filters["event_types"] = [event_type.strip()]
+	if date_from:
+		life_filters["date_from"] = date_from
+	if date_to:
+		life_filters["date_to"] = date_to
 
-	rows = frappe.get_all(
-		"Budget Audit Event",
-		filters=filters,
-		fields=[
-			"name",
-			"event_type",
-			"event_at",
-			"actor",
-			"actor_kind",
-			"record_code",
-			"record_doctype",
-			"before_summary",
-			"after_summary",
-			"change_summary",
-			"source_reference",
-			"reason",
-		],
-		order_by="event_at desc, creation desc",
-	)
+	life = list_funding_lifecycle(budget, life_filters or None)
+	bud = life["budget"]
+	actor_q = (actor or "").strip().lower()
 
-	# Date range filter in Python (Datetime compare).
-	df = getdate(date_from) if date_from else None
-	dt = getdate(date_to) if date_to else None
 	out_rows = []
-	for r in rows:
-		ea = get_datetime(r.event_at) if r.event_at else None
-		if df and ea and ea.date() < df:
+	for ev in life["events"]:
+		if ev.get("kind") != "audit":
 			continue
-		if dt and ea and ea.date() > dt:
+		payload = ev.get("audit_payload")
+		if not payload:
 			continue
-		out_rows.append(_row_dto(r))
+		if actor_q and actor_q not in (payload.get("actor") or "").lower():
+			continue
+		out_rows.append(_row_dto(payload))
 
 	actors = sorted({(r.get("actor") or "").strip() for r in out_rows if (r.get("actor") or "").strip()})
 	event_types = sorted(
 		{(r.get("event_type") or "").strip() for r in out_rows if (r.get("event_type") or "").strip()}
 	)
-	# Prefer full filter option lists from unfiltered set when filters applied.
-	all_types = frappe.get_all(
-		"Budget Audit Event",
-		filters={"budget": doc.name},
-		pluck="event_type",
-		distinct=True,
-	)
-	all_actors = frappe.get_all(
-		"Budget Audit Event",
-		filters={"budget": doc.name},
-		pluck="actor",
-		distinct=True,
-	)
+	all_types: list[str] = []
+	all_actors: list[str] = []
+	if frappe.db.exists("DocType", "Budget Audit Event"):
+		all_types = frappe.get_all(
+			"Budget Audit Event",
+			filters={"budget": bud["id"]},
+			pluck="event_type",
+			distinct=True,
+		)
+		all_actors = frappe.get_all(
+			"Budget Audit Event",
+			filters={"budget": bud["id"]},
+			pluck="actor",
+			distinct=True,
+		)
 
 	return {
 		"budget": {
-			"id": doc.name,
-			"code": doc.generated_reference,
-			"name": doc.title,
-			"title": doc.title,
-			"status": doc.status,
-			"status_label": "Under review" if doc.status == "Submitted" else doc.status,
-			"currency": doc.currency or "KES",
-			"procuring_entity": doc.procuring_entity,
+			"id": bud["id"],
+			"code": bud["code"],
+			"name": bud["name"],
+			"title": bud["title"],
+			"status": bud["status"],
+			"status_label": bud["status_label"],
+			"currency": bud.get("currency") or "KES",
+			"procuring_entity": bud["procuring_entity"],
 		},
 		"rows": out_rows,
 		"row_count": len(out_rows),
@@ -204,8 +186,8 @@ def get_budget_audit(
 			"read_only": True,
 			"can_export": True,
 			"view_funding_performance": True,
-			"primary_action": "request_revision" if doc.status == "Active" else "",
-			"primary_label": "Request revision" if doc.status == "Active" else "",
+			"primary_action": "request_revision" if bud["status"] == "Active" else "",
+			"primary_label": "Request revision" if bud["status"] == "Active" else "",
 		},
 	}
 
@@ -236,24 +218,36 @@ def _empty_dto(doc) -> dict[str, Any]:
 
 
 def _row_dto(r) -> dict[str, Any]:
-	ea = get_datetime(r.event_at) if r.event_at else None
-	change = (r.change_summary or "").strip()
-	if not change and (r.before_summary or r.after_summary):
-		change = f"{r.before_summary or '—'} → {r.after_summary or '—'}"
+	"""Map audit row (frappe._dict or plain dict from lifecycle) to UI DTO."""
+
+	def g(key, default=""):
+		if isinstance(r, dict):
+			val = r.get(key)
+		else:
+			val = r.get(key) if hasattr(r, "get") else getattr(r, key, None)
+		return default if val is None else val
+
+	event_at = g("event_at", None)
+	ea = get_datetime(event_at) if event_at else None
+	change = str(g("change_summary") or "").strip()
+	before = g("before_summary") or ""
+	after = g("after_summary") or ""
+	if not change and (before or after):
+		change = f"{before or '—'} → {after or '—'}"
 	return {
-		"id": r.name,
-		"event_type": r.event_type or "",
-		"event_at": str(r.event_at) if r.event_at else "",
+		"id": g("name") or "",
+		"event_type": g("event_type") or "",
+		"event_at": str(event_at) if event_at else "",
 		"event_at_display": format_datetime(ea) if ea else "—",
-		"actor": r.actor or "",
-		"actor_kind": r.actor_kind or "user",
-		"record_code": r.record_code or "",
-		"record_doctype": r.record_doctype or "",
-		"before_summary": r.before_summary or "",
-		"after_summary": r.after_summary or "",
+		"actor": g("actor") or "",
+		"actor_kind": g("actor_kind") or "user",
+		"record_code": g("record_code") or "",
+		"record_doctype": g("record_doctype") or "",
+		"before_summary": before,
+		"after_summary": after,
 		"change_summary": change,
 		"change_summary_display": change,
-		"source_reference": r.source_reference or "",
-		"reason": r.reason or "",
+		"source_reference": g("source_reference") or "",
+		"reason": g("reason") or "",
 		"action_label": "View",
 	}

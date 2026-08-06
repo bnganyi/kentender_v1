@@ -203,13 +203,7 @@ class TestBudgetLines(FrappeTestCase):
 					"code": "MOH-TGT-0001",
 					"name": "Availability target",
 				},
-				"supporting_targets": [
-					{
-						"code": "MOH-TGT-0002",
-						"name": "Restore services",
-						"reason": "Supports continuity.",
-					}
-				],
+				"supporting_targets": [],
 				"value_treatments": [
 					{
 						"code": "PVO-EFT-01",
@@ -235,7 +229,8 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertTrue(line["code"].startswith("MOH-BL-"))
 		self.assertNotEqual(line["code"], "MOH-BL-0001")
 		self.assertEqual(line["title"], "Editable draft line")
-		self.assertEqual(len(line["supporting_targets"]), 1)
+		self.assertEqual(len(line["supporting_targets"]), 0)
+		self.assertEqual(line.get("primary_target_code") or (line.get("primary_target") or {}).get("code"), "MOH-TGT-0001")
 		self.assertEqual(flt(line["dedicated_total"]), 10_000_000)
 		self.assertTrue(line["capabilities"]["can_save"])
 

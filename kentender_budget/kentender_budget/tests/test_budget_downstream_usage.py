@@ -28,6 +28,8 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		dto = list_downstream_usage("MOH-BUD-0001")
 		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
 		self.assertTrue(dto["capabilities"]["read_only"])
+		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
+		self.assertEqual(dto["capabilities"]["primary_label"], "Request revision")
 		self.assertEqual(dto["row_count"], 1)
 
 		row = dto["rows"][0]

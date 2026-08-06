@@ -528,10 +528,15 @@ def _enrich_demand_queue_rows(rows: list[dict]) -> None:
 		for b in frappe.get_all(
 			"Budget Line",
 			filters={"name": ("in", list(bl_ids))},
-			fields=["name", "budget_line_name", "budget_line_code"],
+			fields=["name", "title", "generated_reference"],
 			limit_page_length=len(bl_ids) + 10,
 		):
-			lbl = b.get("budget_line_name") or b.get("budget_line_code") or b.get("name")
+			code = (b.get("generated_reference") or "").strip()
+			name = (b.get("title") or "").strip()
+			if name and code:
+				lbl = f"{name} ({code})"
+			else:
+				lbl = name or code or b.get("name")
 			bl_map[b.name] = str(lbl).strip() if lbl else b.name
 
 	user_ids = {r.get("requested_by") for r in rows if r.get("requested_by")}
@@ -624,12 +629,17 @@ def get_dia_queue_filter_meta():
 		bl_rows = frappe.get_all(
 			"Budget Line",
 			filters={"is_active": 1},
-			fields=["name", "budget_line_name", "budget_line_code"],
-			order_by="budget_line_code asc",
+			fields=["name", "title", "generated_reference"],
+			order_by="generated_reference asc",
 			limit_page_length=400,
 		)
 		for r in bl_rows:
-			lbl = r.get("budget_line_name") or r.get("budget_line_code") or r.get("name")
+			code = (r.get("generated_reference") or "").strip()
+			name = (r.get("title") or "").strip()
+			if name and code:
+				lbl = f"{name} ({code})"
+			else:
+				lbl = name or code or r.get("name")
 			budget_lines.append({"value": r.name, "label": str(lbl)})
 
 	return {

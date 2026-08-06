@@ -19,6 +19,7 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_REVIEWER,
 	ROLE_VIEWER,
 	can_register_budget,
+	visible_statuses_for_user,
 	can_review_budget,
 	require_any_role,
 	user_roles,
@@ -473,11 +474,9 @@ def _capabilities(doc, blockers: list[dict[str, Any]]) -> dict[str, Any]:
 		"activate_lock_reason": activate_lock,
 		"read_only": status in ("Active", "Closed", "Cancelled"),
 		"show_activation_record": status == "Active",
-		"primary_action": (
-			"submit"
-			if status in ("Draft", "Returned")
-			else ("activate" if status == "Submitted" else "")
-		),
+		# Active: same chrome Request revision as Overview/Lines. Draft/Submitted use in-tab actions.
+		"primary_action": "request_revision" if status == "Active" else "",
+		"primary_label": "Request revision" if status == "Active" else "",
 	}
 
 
@@ -486,6 +485,12 @@ def get_budget_readiness(budget: str) -> dict[str, Any]:
 	require_any_role(*_READ_ROLES)
 	doc = _resolve_budget(budget)
 	resolve_scoped_entity(doc.procuring_entity)
+	allowed = visible_statuses_for_user()
+	if allowed is not None and doc.status not in allowed:
+		frappe.throw(
+			_("Not permitted to view {0} budgets").format(doc.status),
+			frappe.PermissionError,
+		)
 
 	groups, blockers = _evaluate_readiness(doc)
 	caps = _capabilities(doc, blockers)
@@ -589,6 +594,12 @@ def submit_budget(payload: dict | str | None = None) -> dict[str, Any]:
 		change_summary=f"Status: {prior} → Submitted",
 		source_reference=doc.authoritative_reference or "",
 	)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_BUDGET_SUBMITTED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(EVENT_BUDGET_SUBMITTED, budget_doc=doc)
 	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
 
 
@@ -638,6 +649,12 @@ def return_budget(payload: dict | str | None = None) -> dict[str, Any]:
 		source_reference=doc.authoritative_reference or "",
 		reason=comment,
 	)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_BUDGET_RETURNED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(EVENT_BUDGET_RETURNED, budget_doc=doc)
 	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
 
 
@@ -685,6 +702,12 @@ def mark_budget_reviewed(payload: dict | str | None = None) -> dict[str, Any]:
 		change_summary="Reviewer completion recorded (status remains Submitted)",
 		source_reference=doc.authoritative_reference or "",
 	)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_BUDGET_REVIEWED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(EVENT_BUDGET_REVIEWED, budget_doc=doc)
 	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
 
 
@@ -758,4 +781,10 @@ def activate_budget(payload: dict | str | None = None) -> dict[str, Any]:
 		change_summary="Status: Submitted → Active",
 		source_reference=doc.authoritative_reference or "",
 	)
+	from kentender_budget.services.budget_notification_service import (
+		EVENT_BUDGET_ACTIVATED,
+		notify_budget_users,
+	)
+
+	notify_budget_users(EVENT_BUDGET_ACTIVATED, budget_doc=doc)
 	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}

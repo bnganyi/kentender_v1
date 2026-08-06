@@ -94,14 +94,17 @@ test.describe("Budget Funding portfolio (BUD-UI-01)", () => {
 		await expect(page.getByRole("heading", { name: "Register approved budget" })).toBeVisible();
 	});
 
-	test("Funding Performance CTA navigates to stub", async ({ page }) => {
+	test("Funding Performance CTA navigates to live performance page", async ({ page }) => {
 		await page.goto("/desk/budget-funding", { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-bud-portfolio"][data-kt-bud-live="1"]')).toBeVisible({
 			timeout: 30_000,
 		});
 		await page.getByTestId("kt-bud-open-performance").click();
 		await page.waitForURL(/\/desk\/budget-funding-performance/, { timeout: 20_000 });
-		await expect(page.getByTestId("kt-bud-stub")).toBeVisible({ timeout: 20_000 });
+		await expect(
+			page.locator('[data-testid="kt-bud-performance"][data-kt-bud-live="1"]'),
+		).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId("kt-bud-stub")).toHaveCount(0);
 	});
 
 	test("status filter reduces visible budget rows", async ({ page }) => {

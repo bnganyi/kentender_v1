@@ -5035,17 +5035,24 @@ frappe.provide("kentender_strategy.live");
 					.map(function (s, idx) {
 						var route = (s.route || []).join("/");
 						var indent = idx > 0 ? " text-on-surface-variant pl-6" : "";
+						var stageKey = String(s.stage || "")
+							.toLowerCase()
+							.replace(/\s+/g, "-");
 						return (
-							"<tr>" +
+							'<tr data-kt-str-perf-stage="' +
+							esc(stageKey) +
+							'" data-kt-str-perf-stage-count="' +
+							esc(String(s.aligned_records != null ? s.aligned_records : "0")) +
+							'">' +
 							'<td class="text-xs font-semibold' +
 							indent +
 							'">' +
 							esc(s.stage || "") +
 							"</td>" +
-							'<td class="text-xs text-left">' +
+							'<td class="text-xs text-left" data-kt-str-perf-stage-records>' +
 							esc(String(s.aligned_records != null ? s.aligned_records : "—")) +
 							"</td>" +
-							'<td class="font-data-mono text-data-mono text-right">' +
+							'<td class="font-data-mono text-data-mono text-right" data-kt-str-perf-stage-value>' +
 							esc(s.current_value_label || "—") +
 							"</td>" +
 							'<td class="text-right"><button type="button" class="text-primary hover:underline font-label-caps text-label-caps" data-kt-str-action="drill" data-kt-str-route="' +
@@ -5098,7 +5105,9 @@ frappe.provide("kentender_strategy.live");
 								'<td class="text-xs">' +
 								esc(row.funding_treatment || "—") +
 								"</td>" +
-								'<td class="text-xs">' +
+								'<td class="text-xs" data-kt-str-perf-adoption="' +
+								esc(obj.code || "") +
+								'">' +
 								esc(adoption) +
 								"</td>" +
 								'<td class="text-xs">' +

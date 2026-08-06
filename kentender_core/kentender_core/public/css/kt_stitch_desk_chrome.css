@@ -74,9 +74,30 @@
 	padding: 0.5rem 1rem !important;
 }
 
-.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover {
-	background-color: var(--kt-stitch-primary-container) !important;
-	color: var(--kt-stitch-on-primary-container) !important;
+/* Filled primary hover: keep on-primary white (never on-primary-container ink).
+ * Also defeat Desk `button.bg-primary:hover { background: black }` and opacity washes. */
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus-visible,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary.hover\:opacity-90:hover {
+	background-color: #00346f !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover .material-symbols-outlined,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus .material-symbols-outlined,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus-visible .material-symbols-outlined {
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:active {
+	background-color: #001536 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:active .material-symbols-outlined {
+	color: #ffffff !important;
 }
 
 .kt-cl-shell .kt-stitch-canvas button.border {
@@ -106,21 +127,67 @@
 	border-radius: 0 !important;
 }
 
+/* Editable inputs: white fill (never surface #f9f9fe — that reads as disabled). */
 .kt-cl-shell .kt-stitch-canvas select,
 .kt-cl-shell .kt-stitch-canvas input[type="text"],
+.kt-cl-shell .kt-stitch-canvas input[type="number"],
+.kt-cl-shell .kt-stitch-canvas input[type="date"],
+.kt-cl-shell .kt-stitch-canvas input[type="email"],
+.kt-cl-shell .kt-stitch-canvas input[type="search"],
 .kt-cl-shell .kt-stitch-canvas input:not([type]),
 .kt-cl-shell .kt-stitch-canvas textarea {
 	appearance: none !important;
 	-webkit-appearance: none !important;
 	font: inherit;
-	color: inherit;
+	color: #1a1b20 !important;
+	caret-color: #001f48 !important;
 	margin: 0;
 	outline: none;
 	border-width: 1px !important;
 	border-style: solid !important;
-	border-color: var(--kt-stitch-outline-variant) !important;
-	background-color: var(--kt-stitch-surface) !important;
+	border-color: #737781 !important;
+	background-color: #ffffff !important;
 	border-radius: 0.5rem !important;
+	box-shadow: none !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas select::placeholder,
+.kt-cl-shell .kt-stitch-canvas input::placeholder,
+.kt-cl-shell .kt-stitch-canvas textarea::placeholder {
+	color: #737781 !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:hover:not(:disabled):not([readonly]),
+.kt-cl-shell .kt-stitch-canvas input:hover:not(:disabled):not([readonly]),
+.kt-cl-shell .kt-stitch-canvas textarea:hover:not(:disabled):not([readonly]) {
+	border-color: #434750 !important;
+	background-color: #ffffff !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:focus,
+.kt-cl-shell .kt-stitch-canvas select:focus-visible,
+.kt-cl-shell .kt-stitch-canvas input:focus,
+.kt-cl-shell .kt-stitch-canvas input:focus-visible,
+.kt-cl-shell .kt-stitch-canvas textarea:focus,
+.kt-cl-shell .kt-stitch-canvas textarea:focus-visible {
+	border-color: #001f48 !important;
+	background-color: #ffffff !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
+	outline: none !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:disabled,
+.kt-cl-shell .kt-stitch-canvas select[readonly],
+.kt-cl-shell .kt-stitch-canvas select[aria-disabled="true"],
+.kt-cl-shell .kt-stitch-canvas input:disabled,
+.kt-cl-shell .kt-stitch-canvas input[readonly],
+.kt-cl-shell .kt-stitch-canvas input[aria-disabled="true"],
+.kt-cl-shell .kt-stitch-canvas textarea:disabled,
+.kt-cl-shell .kt-stitch-canvas textarea[readonly],
+.kt-cl-shell .kt-stitch-canvas textarea[aria-disabled="true"] {
+	background-color: #e2e2e8 !important;
+	border-color: #c3c6d1 !important;
+	color: #737781 !important;
+	cursor: not-allowed !important;
+	box-shadow: none !important;
 }
 
 /*

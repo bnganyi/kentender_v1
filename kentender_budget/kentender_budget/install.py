@@ -38,6 +38,13 @@ def after_migrate():
 	"""Ensure Budget Desk pages + Procurement rail Workspace resolve after migrate."""
 	_sync_pages()
 
+	try:
+		from kentender_budget.seeds.budget_role_users import upsert_budget_role_users
+
+		upsert_budget_role_users()
+	except Exception:
+		frappe.log_error(title="BUD-SUP-002 budget role users seed failed")
+
 	path = os.path.join(
 		frappe.get_app_path("kentender_budget"),
 		"kentender_budget",

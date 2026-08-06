@@ -1151,6 +1151,34 @@
             return;
           }
 
+          // BUD-UI-06 — Stitch Check and Reserve modal (not generic confirm).
+          if (
+            window.kentender_budget &&
+            kentender_budget.live &&
+            typeof kentender_budget.live.openCheckReserve === "function"
+          ) {
+            kentender_budget.live.openCheckReserve({
+              mode: "approve_finance",
+              demandName: name,
+              demandTitle: afA.title || name,
+              department: afA.requesting_department || afA.department || "",
+              requestedAmount: afC.total_amount,
+              budgetLine: afB.budget_line_code || afB.budget_line,
+              onConfirmApprove: function () {
+                return new Promise(function (resolve) {
+                  _callLifecycle(method, { demand_name: name }, function (msg) {
+                    _reload();
+                    resolve(msg || { ok: true });
+                  });
+                });
+              },
+              onReserved: function () {
+                _reload();
+              },
+            });
+            return;
+          }
+
           _showConfirmDialog({
             icon: "savings",
             iconClass: "kt-wbx-dlg-icon--success",

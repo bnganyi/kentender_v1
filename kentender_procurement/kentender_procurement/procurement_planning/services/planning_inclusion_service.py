@@ -95,7 +95,8 @@ def _budget_line_business_code(budget_line_name: str | None) -> str:
 	bl = (budget_line_name or "").strip()
 	if not bl:
 		return ""
-	code = frappe.db.get_value("Budget Line", bl, "budget_line_code")
+	# Budget Line MVP-1 uses generated_reference (legacy budget_line_code removed).
+	code = frappe.db.get_value("Budget Line", bl, "generated_reference")
 	return (code or bl).strip()
 
 

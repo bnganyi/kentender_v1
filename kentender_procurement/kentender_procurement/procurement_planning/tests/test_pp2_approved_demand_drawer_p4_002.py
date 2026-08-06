@@ -34,7 +34,7 @@ from kentender_procurement.procurement_planning.services.approved_demand_drawer 
 	get_approved_demand_planning_drawer,
 )
 from kentender_strategy.seeds.works_master_strategy_hierarchy import (
-	OBJECTIVE_CODE,
+	TARGET_CODE,
 	upsert_works_master_strategy_hierarchy,
 )
 
@@ -181,9 +181,10 @@ class TestPP2ApprovedDemandDrawerP4002(IntegrationTestCase):
 
 		budget_context = out.get("budget_context") or {}
 		self.assertEqual((budget_context.get("budget_line") or {}).get("code"), BUDGET_LINE_CODE)
+		# XMOD-STR-004 — drawer surfaces Demand primary Performance Target (Name/code), not outcome.
 		self.assertEqual(
 			(budget_context.get("strategy_objective") or {}).get("code"),
-			OBJECTIVE_CODE,
+			TARGET_CODE,
 		)
 
 		item_codes = {it.get("code") for it in (out.get("demand_items") or [])}

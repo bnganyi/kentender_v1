@@ -1,3 +1,6 @@
+import { execSync } from "node:child_process";
+import path from "node:path";
+
 import { test, expect, type Page } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 
@@ -6,10 +9,40 @@ import { loginAsAdministrator } from "../../helpers/auth";
  * Requires MOH-SP-0001 seed (works_master_strategy_hierarchy).
  */
 
+const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
+const SITE = process.env.UI_SITE || "kentender.midas.com";
 const PLAN = "MOH-SP-0001";
 const REVIEW_BLOCKERS_PLAN = "MOH-SP-9001";
 const REVIEW_TX_PLAN = "MOH-SP-9002";
 const TARGET = "MOH-TGT-0001";
+
+function seedStrategyDownstreamFixtures(): void {
+	try {
+		execSync("redis-cli -p 11000 FLUSHDB", { stdio: "pipe" });
+	} catch {
+		/* ignore */
+	}
+	let lastErr: unknown;
+	for (let attempt = 1; attempt <= 3; attempt += 1) {
+		try {
+			execSync(
+				`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+					"kentender_strategy.seeds.works_master_strategy_hierarchy.upsert_works_master_strategy_hierarchy",
+				{ stdio: "pipe", timeout: 180_000 },
+			);
+			execSync(
+				`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+					"kentender_strategy.seeds.moh_downstream_usage.seed_moh_downstream_usage_refs",
+				{ stdio: "pipe", timeout: 180_000 },
+			);
+			return;
+		} catch (e) {
+			lastErr = e;
+			execSync("sleep 2");
+		}
+	}
+	throw lastErr;
+}
 
 test.describe.configure({ mode: "serial" });
 
@@ -79,6 +112,43 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-create-plan")).toHaveCount(0);
 		await expect(page.getByRole("heading", { name: "Strategy Performance" })).toBeVisible();
 		await expect(page.locator('[data-kt-str-strip="active_targets"]')).not.toHaveText("—");
+	});
+
+	test("Strategy Performance shows Planning stage and PVC adoption depth (XMOD-STR-007)", async ({
+		page,
+	}) => {
+		test.setTimeout(240_000);
+		try {
+			execSync("redis-cli -p 11000 FLUSHDB", { stdio: "pipe" });
+		} catch {
+			/* ignore */
+		}
+		execSync(
+			`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+				"kentender_strategy.seeds.works_master_strategy_hierarchy.upsert_works_master_strategy_hierarchy",
+			{ stdio: "pipe", timeout: 180_000 },
+		);
+		execSync(
+			`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+				"kentender_strategy.seeds.moh_downstream_usage.seed_moh_performance_contribution_depth",
+			{ stdio: "pipe", timeout: 180_000 },
+		);
+		await page.goto("/desk/strategy-performance", { waitUntil: "domcontentloaded" });
+		const root = page.locator('[data-testid="kt-str-performance"][data-kt-str-live="1"]');
+		await expect(root).toBeVisible({ timeout: 30_000 });
+
+		const planningRow = root.locator('[data-kt-str-perf-stage="procurement-plan"]');
+		await expect(planningRow).toBeVisible({ timeout: 15_000 });
+		const planningCount = Number(
+			(await planningRow.getAttribute("data-kt-str-perf-stage-count")) || "0",
+		);
+		expect(planningCount).toBeGreaterThan(0);
+		await expect(planningRow.locator("[data-kt-str-perf-stage-value]")).not.toHaveText("—");
+
+		const adoption = root.locator('[data-kt-str-perf-adoption="PVO-EFT-01"]').first();
+		await expect(adoption).toBeVisible({ timeout: 15_000 });
+		await expect(adoption).toContainText(/aligned Value Cases addressed/i);
+		await expect(adoption).not.toHaveText(/^0 of /);
 	});
 
 	test("portfolio opens from Desk route with Stitch regions", async ({ page }) => {
@@ -1573,7 +1643,11 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(page.url().split("?")[0]).toBe(before.split("?")[0]);
 	});
 
-	test("downstream usage is live with derived Budget and Demand rows", async ({ page }) => {
+	test("downstream usage is live with derived Budget, Demand, and Planning rows", async ({
+		page,
+	}) => {
+		test.setTimeout(240_000);
+		seedStrategyDownstreamFixtures();
 		await page.goto(`/desk/strategy-plan-downstream-usage/${PLAN}`, {
 			waitUntil: "domcontentloaded",
 		});
@@ -1584,8 +1658,11 @@ test.describe("Strategy Alignment UI shell", () => {
 			timeout: 15_000,
 		});
 		await expect(down.locator('[data-kt-str-down-count="Budget"]')).not.toHaveText("0");
-		await expect(down.locator('[data-kt-str-down-count="Planning"]')).toHaveText("0");
+		await expect(down.locator('[data-kt-str-down-count="Planning"]')).not.toHaveText("0", {
+			timeout: 15_000,
+		});
 		await expect(down.locator("[data-kt-str-down-tbody] [data-kt-str-down-row]")).not.toHaveCount(0);
+		await expect(down.getByText("PKG-MOH-2026-001")).toBeVisible();
 		await expect(down.getByText("DEM-MOH-2027-014")).toHaveCount(0);
 		await expect(down.locator("[data-kt-str-plan-code]")).toContainText(PLAN);
 

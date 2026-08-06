@@ -115,9 +115,10 @@
 	max-width: 100% !important;
 	height: 2.5rem !important;
 	padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
-	border: 1px solid #c3c6d1 !important;
+	border: 1px solid #737781 !important;
 	border-radius: 0.5rem !important;
-	background-color: #f9f9fe !important;
+	background-color: #ffffff !important;
+	color: #1a1b20 !important;
 	/* Material expand_more owns the glyph — kill portfolio SVG Forms chevron */
 	background-image: none !important;
 	appearance: none !important;

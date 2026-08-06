@@ -418,30 +418,47 @@ def _validate_save_payload(payload: dict[str, Any], *, is_create: bool) -> dict[
 
 
 def _apply_strategy_fields(doc, payload: dict[str, Any]) -> None:
-	primary = payload.get("primary_target") or {}
-	doc.primary_target_id = (primary.get("id") or "").strip()
-	doc.primary_target_code = (primary.get("code") or "").strip()
-	doc.primary_target_name = (primary.get("name") or "").strip()
-	doc.primary_plan_version_id = (primary.get("plan_version_id") or "").strip()
-	doc.primary_snapshot_label = (primary.get("snapshot_label") or "").strip()
-	doc.primary_strategy_linked = 1 if doc.primary_target_code else 0
+	"""XMOD-STR-001 — resolve + validate Strategy Reference; write authoritative primary_*."""
+	from kentender_strategy.services.strategy_consumer import (
+		apply_budget_primary_strategy_reference,
+		resolve_performance_target_id,
+		validated_supporting_target_row,
+	)
 
+	primary = payload.get("primary_target") or {}
+	resolved_primary = resolve_performance_target_id(
+		target_id=(primary.get("id") or "").strip() or None,
+		target_code=(primary.get("code") or "").strip() or None,
+	)
+	if not resolved_primary:
+		frappe.throw(_("Unknown or missing primary Performance Target"), frappe.ValidationError)
+
+	prior_primary = (getattr(doc, "primary_target_id", None) or "").strip()
+	require_active = doc.is_new() or resolved_primary != prior_primary
+	# Avoid double Active enforcement inside BudgetLine.validate after this apply.
+	doc.flags.skip_budget_strategy_validate = True
+	apply_budget_primary_strategy_reference(doc, resolved_primary, require_active=require_active)
+
+	prior_supporting = {
+		(getattr(row, "target_id", None) or "").strip()
+		for row in (doc.get("supporting_targets") or [])
+		if (getattr(row, "target_id", None) or "").strip()
+	}
 	doc.set("supporting_targets", [])
 	for st in payload.get("supporting_targets") or []:
 		code = (st.get("code") or "").strip()
-		if not code:
+		sid = (st.get("id") or "").strip()
+		if not code and not sid:
 			continue
-		doc.append(
-			"supporting_targets",
-			{
-				"target_id": (st.get("id") or "").strip(),
-				"target_code": code,
-				"target_name": (st.get("name") or "").strip() or code,
-				"plan_version_id": (st.get("plan_version_id") or "").strip(),
-				"snapshot_label": (st.get("snapshot_label") or "").strip(),
-				"reason": (st.get("reason") or "").strip(),
-			},
+		resolved_st = resolve_performance_target_id(target_id=sid or None, target_code=code or None)
+		st_require_active = doc.is_new() or not resolved_st or resolved_st not in prior_supporting
+		row = validated_supporting_target_row(
+			target_id=resolved_st,
+			target_code=code or None,
+			reason=(st.get("reason") or "").strip(),
+			require_active=st_require_active,
 		)
+		doc.append("supporting_targets", row)
 
 	doc.set("value_treatments", [])
 	for tr in payload.get("value_treatments") or []:
@@ -542,7 +559,16 @@ def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
 		doc.amount_actual = 0
 		doc.actual_as_at = None
 
-	_apply_strategy_fields(doc, payload)
+	try:
+		_apply_strategy_fields(doc, payload)
+	except frappe.ValidationError as exc:
+		msg = str(exc).strip() or _("Invalid strategy reference")
+		# Prefer primary_target key; supporting failures still block save via same envelope.
+		key = "primary_target"
+		low = msg.lower()
+		if "supporting" in low:
+			key = "supporting_targets"
+		return {"ok": False, "errors": {key: msg}}
 
 	if is_create:
 		doc.insert()

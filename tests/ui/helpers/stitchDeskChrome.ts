@@ -28,7 +28,52 @@ export type StitchDeskChromeOptions = {
 	headlineSelector?: string;
 	/** Expect Manrope 28/700 on headline (default true). */
 	assertHeadline?: boolean;
+	/**
+	 * Hover filled primary and require white label on lifted navy (#00346f).
+	 * Opt-in — wire for Budget Lines + Strategy portfolio (and later modules).
+	 */
+	assertPrimaryHover?: boolean;
+	/**
+	 * Assert enabled text inputs / textareas use white fill (not surface gray).
+	 * Opt-in for data-entry forms (revision create, register, strategy create).
+	 */
+	assertEditableInputs?: boolean;
 };
+
+/** Editable form controls must look active — white fill, never #f9f9fe surface. */
+export async function assertEditableInputs(page: Page, rootTestId?: string) {
+	const scope = rootTestId
+		? page.getByTestId(rootTestId).filter({ visible: true }).first()
+		: page.locator(".kt-stitch-canvas").filter({ visible: true }).first();
+	await expect(scope).toBeVisible({ timeout: 30_000 });
+	const control = scope
+		.locator(
+			'input[type="text"]:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])',
+		)
+		.filter({ visible: true })
+		.first();
+	await expect(control).toBeVisible({ timeout: 15_000 });
+	const bg = await control.evaluate((el) => getComputedStyle(el).backgroundColor);
+	expect(bg, "editable control must be white (not surface gray)").toBe("rgb(255, 255, 255)");
+}
+
+/** Filled primary hover contract — white on lifted navy, never inky #7b9ee0. */
+export async function assertFilledPrimaryCtaHover(page: Page, primaryCtaTestId: string) {
+	const primary = page.getByTestId(primaryCtaTestId).filter({ visible: true }).first();
+	await expect(primary).toBeVisible({ timeout: 15_000 });
+	await primary.hover();
+	// Wait out transition-colors mid-frames (e.g. rgb(0,41,90) between #001f48 and #00346f).
+	await expect
+		.poll(
+			async () =>
+				primary.evaluate((el) => {
+					const cs = getComputedStyle(el);
+					return `${cs.color}|${cs.backgroundColor}`;
+				}),
+			{ timeout: 5_000 },
+		)
+		.toBe("rgb(255, 255, 255)|rgb(0, 52, 111)");
+}
 
 export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeOptions) {
 	if (opts.rootTestId) {
@@ -118,5 +163,13 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 		expect(chrome.titleFamily).toMatch(/Manrope/i);
 		expect(chrome.titleWeight).toBe("700");
 		expect(chrome.titleSize).toBe("28px");
+	}
+
+	if (opts.assertPrimaryHover && opts.primaryCtaStyle !== "bordered") {
+		await assertFilledPrimaryCtaHover(page, opts.primaryCtaTestId);
+	}
+
+	if (opts.assertEditableInputs) {
+		await assertEditableInputs(page, opts.rootTestId);
 	}
 }

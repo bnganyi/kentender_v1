@@ -347,15 +347,25 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] select {
 	width: 100% !important;
 	box-sizing: border-box !important;
-	border: 1px solid #c3c6d1 !important;
+	border: 1px solid #737781 !important;
 	border-radius: 0.5rem !important;
 	background: #ffffff !important;
 	color: #1a1b20 !important;
 	font: inherit !important;
 }
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input:focus,
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input:focus-visible,
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] select:focus,
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] select:focus-visible {
+	border-color: #001f48 !important;
+	background: #ffffff !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
+	outline: none !important;
+}
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input:disabled {
-	background: #f4f3f9 !important;
-	color: #434750 !important;
+	background: #e2e2e8 !important;
+	border-color: #c3c6d1 !important;
+	color: #737781 !important;
 	cursor: not-allowed !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input[type="date"] {

@@ -21,172 +21,218 @@ from frappe.utils import today
 
 from kentender_procurement.demand_intake.api.dia_access import require_dia_workspace_user
 from kentender_core.procuring_entity_canonical import normalize_procuring_entity
+from kentender_procurement.demand_intake.services.demand_strategy_value import apply_value_treatments_to_doc
 
 
 def _parse_items(items_json: str | None, requisition_type: str | None) -> list[dict]:
-    """Parse JSON item rows from the wizard into Demand Item dicts."""
-    if not items_json:
-        return []
-    try:
-        rows = json.loads(items_json)
-    except (json.JSONDecodeError, TypeError):
-        frappe.throw(_("Invalid items format."))
-    result = []
-    for row in rows:
-        desc = (row.get("desc") or row.get("item_description") or "").strip()
-        if not desc:
-            continue
-        result.append(
-            {
-                "item_description": desc,
-                "quantity": float(row.get("qty") or row.get("quantity") or 0),
-                "estimated_unit_cost": float(
-                    row.get("unit_price") or row.get("estimated_unit_cost") or 0
-                ),
-                "uom": row.get("uom") or "Units",
-                "category": row.get("category") or requisition_type or "",
-            }
-        )
-    return result
+	"""Parse JSON item rows from the wizard into Demand Item dicts."""
+	if not items_json:
+		return []
+	try:
+		rows = json.loads(items_json)
+	except (json.JSONDecodeError, TypeError):
+		frappe.throw(_("Invalid items format."))
+	result = []
+	for row in rows:
+		desc = (row.get("desc") or row.get("item_description") or "").strip()
+		if not desc:
+			continue
+		result.append(
+			{
+				"item_description": desc,
+				"quantity": float(row.get("qty") or row.get("quantity") or 0),
+				"estimated_unit_cost": float(
+					row.get("unit_price") or row.get("estimated_unit_cost") or 0
+				),
+				"uom": row.get("uom") or "Units",
+				"category": row.get("category") or requisition_type or "",
+			}
+		)
+	return result
+
+
+def _parse_json_list(raw: str | None) -> list | None:
+	if raw is None:
+		return None
+	if isinstance(raw, list):
+		return raw
+	try:
+		parsed = json.loads(raw or "[]")
+	except (json.JSONDecodeError, TypeError):
+		frappe.throw(_("Invalid value treatments format."))
+	if not isinstance(parsed, list):
+		frappe.throw(_("Invalid value treatments format."))
+	return parsed
+
+
+def _apply_strategy_target(doc, strategy_target: str | None) -> None:
+	"""Persist primary Performance Target (XMOD-STR-002)."""
+	if strategy_target is None:
+		return
+	target = (strategy_target or "").strip()
+	if not target:
+		doc.strategy_target = None
+		doc.strategy_plan_version = None
+		doc.strategy_snapshot_label = None
+		return
+	doc.strategy_target = target
+	# demand.validate → apply_strategy_reference_to_doc(require_active=…)
 
 
 @frappe.whitelist()
 def save_demand_draft(
-    title: str | None = None,
-    requesting_department: str | None = None,
-    requisition_type: str | None = None,
-    procuring_entity: str | None = None,
-    required_by_date: str | None = None,
-    priority_level: str | None = None,
-    beneficiary_summary: str | None = None,
-    items: str | None = None,
-    demand_name: str | None = None,
+	title: str | None = None,
+	requesting_department: str | None = None,
+	requisition_type: str | None = None,
+	procuring_entity: str | None = None,
+	required_by_date: str | None = None,
+	priority_level: str | None = None,
+	beneficiary_summary: str | None = None,
+	items: str | None = None,
+	demand_name: str | None = None,
+	strategy_target: str | None = None,
+	value_treatments: str | None = None,
 ) -> dict:
-    """Create (or update) a Draft Demand from the Create Demand wizard.
+	"""Create (or update) a Draft Demand from the Create Demand wizard.
 
-    Returns:
-        { ok: True, demand_name: str, demand_id: str | None }
+	Returns:
+	    { ok: True, demand_name: str, demand_id: str | None }
 
-    Raises:
-        frappe.ValidationError — title missing, or demand not in Draft status.
-        frappe.PermissionError — caller lacks DIA workspace access or write permission.
-    """
-    require_dia_workspace_user()
+	Raises:
+	    frappe.ValidationError — title missing, or demand not in Draft status.
+	    frappe.PermissionError — caller lacks DIA workspace access or write permission.
+	"""
+	require_dia_workspace_user()
 
-    demand_name = (demand_name or "").strip() or None
+	demand_name = (demand_name or "").strip() or None
+	treatments = _parse_json_list(value_treatments)
 
-    if demand_name:
-        return _update_existing_draft(
-            demand_name=demand_name,
-            title=title,
-            requesting_department=requesting_department,
-            requisition_type=requisition_type,
-            procuring_entity=procuring_entity,
-            required_by_date=required_by_date,
-            priority_level=priority_level,
-            beneficiary_summary=beneficiary_summary,
-            items=items,
-        )
+	if demand_name:
+		return _update_existing_draft(
+			demand_name=demand_name,
+			title=title,
+			requesting_department=requesting_department,
+			requisition_type=requisition_type,
+			procuring_entity=procuring_entity,
+			required_by_date=required_by_date,
+			priority_level=priority_level,
+			beneficiary_summary=beneficiary_summary,
+			items=items,
+			strategy_target=strategy_target,
+			value_treatments=treatments,
+		)
 
-    # New demand creation path
-    title_clean = (title or "").strip()
-    if not title_clean:
-        frappe.throw(_("Title is required."), frappe.ValidationError)
+	# New demand creation path
+	title_clean = (title or "").strip()
+	if not title_clean:
+		frappe.throw(_("Title is required."), frappe.ValidationError)
 
-    if not frappe.has_permission("Demand", "create"):
-        frappe.throw(_("You do not have permission to create a Demand."), frappe.PermissionError)
+	if not frappe.has_permission("Demand", "create"):
+		frappe.throw(_("You do not have permission to create a Demand."), frappe.PermissionError)
 
-    doc = frappe.new_doc("Demand")
-    doc.title = title_clean
-    if requesting_department:
-        doc.requesting_department = requesting_department
-    if requisition_type:
-        doc.requisition_type = requisition_type
-    if procuring_entity:
-        doc.procuring_entity = normalize_procuring_entity(procuring_entity)
-    if required_by_date:
-        doc.required_by_date = required_by_date
-    if priority_level:
-        doc.priority_level = priority_level
-    if beneficiary_summary:
-        doc.beneficiary_summary = beneficiary_summary
-        # Single wizard justification field covers both summary fields
-        if not doc.specification_summary:
-            doc.specification_summary = beneficiary_summary
-    if not doc.request_date:
-        doc.request_date = today()
+	doc = frappe.new_doc("Demand")
+	doc.title = title_clean
+	if requesting_department:
+		doc.requesting_department = requesting_department
+	if requisition_type:
+		doc.requisition_type = requisition_type
+	if procuring_entity:
+		doc.procuring_entity = normalize_procuring_entity(procuring_entity)
+	if required_by_date:
+		doc.required_by_date = required_by_date
+	if priority_level:
+		doc.priority_level = priority_level
+	if beneficiary_summary:
+		doc.beneficiary_summary = beneficiary_summary
+		# Single wizard justification field covers both summary fields
+		if not doc.specification_summary:
+			doc.specification_summary = beneficiary_summary
+	if not doc.request_date:
+		doc.request_date = today()
 
-    parsed_items = _parse_items(items, requisition_type or doc.requisition_type)
-    for item_data in parsed_items:
-        doc.append("items", item_data)
+	_apply_strategy_target(doc, strategy_target)
 
-    doc.insert(ignore_permissions=True)
+	parsed_items = _parse_items(items, requisition_type or doc.requisition_type)
+	for item_data in parsed_items:
+		doc.append("items", item_data)
 
-    return {
-        "ok": True,
-        "demand_name": doc.name,
-        "demand_id": doc.demand_id or None,
-    }
+	if treatments is not None:
+		apply_value_treatments_to_doc(doc, treatments)
+
+	doc.insert(ignore_permissions=True)
+
+	return {
+		"ok": True,
+		"demand_name": doc.name,
+		"demand_id": doc.demand_id or None,
+	}
 
 
 def _update_existing_draft(
-    demand_name: str,
-    title: str | None,
-    requesting_department: str | None,
-    requisition_type: str | None,
-    procuring_entity: str | None,
-    required_by_date: str | None,
-    priority_level: str | None,
-    beneficiary_summary: str | None,
-    items: str | None,
+	demand_name: str,
+	title: str | None,
+	requesting_department: str | None,
+	requisition_type: str | None,
+	procuring_entity: str | None,
+	required_by_date: str | None,
+	priority_level: str | None,
+	beneficiary_summary: str | None,
+	items: str | None,
+	strategy_target: str | None = None,
+	value_treatments: list | None = None,
 ) -> dict:
-    """Update scalar fields and/or items on an existing Draft demand."""
-    if not frappe.db.exists("Demand", demand_name):
-        frappe.throw(_("Demand {0} not found.").format(demand_name))
+	"""Update scalar fields and/or items on an existing Draft demand."""
+	if not frappe.db.exists("Demand", demand_name):
+		frappe.throw(_("Demand {0} not found.").format(demand_name))
 
-    if not frappe.has_permission("Demand", "write", doc=demand_name):
-        frappe.throw(_("You do not have permission to update this demand."), frappe.PermissionError)
+	if not frappe.has_permission("Demand", "write", doc=demand_name):
+		frappe.throw(_("You do not have permission to update this demand."), frappe.PermissionError)
 
-    doc = frappe.get_doc("Demand", demand_name)
+	doc = frappe.get_doc("Demand", demand_name)
 
-    if doc.status not in ("Draft", "Rejected"):
-        frappe.throw(
-            _("Only Draft or Rejected demands can be updated through the wizard."),
-            frappe.ValidationError,
-        )
+	if doc.status not in ("Draft", "Rejected"):
+		frappe.throw(
+			_("Only Draft or Rejected demands can be updated through the wizard."),
+			frappe.ValidationError,
+		)
 
-    if title is not None:
-        title_clean = title.strip()
-        if not title_clean:
-            frappe.throw(_("Title is required."), frappe.ValidationError)
-        doc.title = title_clean
+	if title is not None:
+		title_clean = title.strip()
+		if not title_clean:
+			frappe.throw(_("Title is required."), frappe.ValidationError)
+		doc.title = title_clean
 
-    if requesting_department is not None:
-        doc.requesting_department = requesting_department
-    if requisition_type is not None:
-        doc.requisition_type = requisition_type
-    if procuring_entity is not None:
-        doc.procuring_entity = normalize_procuring_entity(procuring_entity)
-    if required_by_date is not None:
-        doc.required_by_date = required_by_date
-    if priority_level is not None:
-        doc.priority_level = priority_level
-    if beneficiary_summary is not None:
-        doc.beneficiary_summary = beneficiary_summary
-        # Single wizard justification field satisfies both summary checks
-        if beneficiary_summary and not doc.specification_summary:
-            doc.specification_summary = beneficiary_summary
+	if requesting_department is not None:
+		doc.requesting_department = requesting_department
+	if requisition_type is not None:
+		doc.requisition_type = requisition_type
+	if procuring_entity is not None:
+		doc.procuring_entity = normalize_procuring_entity(procuring_entity)
+	if required_by_date is not None:
+		doc.required_by_date = required_by_date
+	if priority_level is not None:
+		doc.priority_level = priority_level
+	if beneficiary_summary is not None:
+		doc.beneficiary_summary = beneficiary_summary
+		# Single wizard justification field satisfies both summary checks
+		if beneficiary_summary and not doc.specification_summary:
+			doc.specification_summary = beneficiary_summary
 
-    if items is not None:
-        parsed_items = _parse_items(items, requisition_type or doc.requisition_type)
-        doc.set("items", [])
-        for item_data in parsed_items:
-            doc.append("items", item_data)
+	_apply_strategy_target(doc, strategy_target)
 
-    doc.save(ignore_permissions=True)
+	if items is not None:
+		parsed_items = _parse_items(items, requisition_type or doc.requisition_type)
+		doc.set("items", [])
+		for item_data in parsed_items:
+			doc.append("items", item_data)
 
-    return {
-        "ok": True,
-        "demand_name": doc.name,
-        "demand_id": doc.demand_id or None,
-    }
+	if value_treatments is not None:
+		apply_value_treatments_to_doc(doc, value_treatments)
+
+	doc.save(ignore_permissions=True)
+
+	return {
+		"ok": True,
+		"demand_name": doc.name,
+		"demand_id": doc.demand_id or None,
+	}

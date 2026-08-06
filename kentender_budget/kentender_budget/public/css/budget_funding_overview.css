@@ -125,8 +125,24 @@
 	min-height: 0 !important;
 }
 
-.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:hover {
-	opacity: 0.9;
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:hover,
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:focus,
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:focus-visible,
+.kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:hover,
+.kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:focus,
+.kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:focus-visible {
+	background-color: #00346f !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
+}
+
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:active,
+.kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:active {
+	background-color: #001536 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
 }
 
 .kt-cl-shell .kt-bud-root button[data-testid="kt-bud-view-performance"] {

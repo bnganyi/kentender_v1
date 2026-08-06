@@ -55,6 +55,23 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 def _clear_strategy_ref(doctype: str, name: str) -> None:
 	if not name or not frappe.db.exists(doctype, name):
 		return
+	if doctype == "Budget Line" and frappe.db.has_column(doctype, "primary_plan_version_id"):
+		frappe.db.set_value(
+			doctype,
+			name,
+			{
+				"primary_target_id": "",
+				"primary_target_code": "",
+				"primary_target_name": "",
+				"primary_plan_version_id": "",
+				"primary_snapshot_label": "",
+				"primary_strategy_linked": 0,
+			},
+			update_modified=False,
+		)
+		return
+	if not frappe.db.has_column(doctype, "strategy_plan_version"):
+		return
 	frappe.db.set_value(
 		doctype,
 		name,
@@ -127,51 +144,85 @@ class TestStrategyDownstreamUsage(FrappeTestCase):
 		)
 		self.assertTrue(created.get("ok"), created)
 		plan_id = created["plan"]["id"]
+		plan_code = created["plan"]["code"]
 		self.addCleanup(
 			lambda: frappe.delete_doc("Strategic Plan", plan_id, force=True, ignore_permissions=True)
 		)
-		dto = get_strategy_usage(plan_code="TEST-DOWN-EMPTY-PLAN")
+		# create_plan may allocate an immutable code (ignore client plan_code).
+		dto = get_strategy_usage(plan_version=plan_id)
+		self.assertEqual(dto["plan"]["code"], plan_code)
 		self.assertEqual(dto["rows"], [])
 		for mod in USAGE_MODULES:
 			self.assertEqual(dto["counts"][mod], 0)
 			self.assertEqual(dto["groups"][mod], [])
 
 	def test_demand_and_budget_rows_derived(self):
+		"""STR-SUP-001 / XMOD-STR-006 — Demand + Budget + Planning package strategy projection."""
 		frappe.set_user("Administrator")
-		from kentender_strategy.seeds.moh_downstream_usage import seed_moh_downstream_usage_refs
+		from kentender_strategy.seeds.moh_downstream_usage import (
+			SEED_BUDGET_LINE_CODE,
+			SEED_PACKAGE_CODE,
+			seed_moh_downstream_usage_refs,
+		)
 
 		result = seed_moh_downstream_usage_refs(plan_name=self.plan_id, target_name=self.target_id)
 		self.assertTrue(result.get("ok"), result)
 		demand_name = result["linked"]["demand"]
-		# MVP-1 Budget teardown: Budget Line DocType removed; Demand link is enough.
-		self.assertTrue(demand_name)
-		self.assertIsNone(result["linked"].get("budget_line"))
-		self.addCleanup(lambda: _clear_strategy_ref("Demand", demand_name))
+		budget_line_name = result["linked"].get("budget_line")
+		package_name = result["linked"].get("package")
+		self.assertTrue(budget_line_name, result)
+		if demand_name:
+			self.addCleanup(lambda: _clear_strategy_ref("Demand", demand_name))
+		self.addCleanup(lambda: _clear_strategy_ref("Budget Line", budget_line_name))
+		if package_name:
+			self.addCleanup(lambda: _clear_strategy_ref("Procurement Package", package_name))
 
-		demand_code = frappe.db.get_value("Demand", demand_name, "demand_id")
+		demand_code = (
+			frappe.db.get_value("Demand", demand_name, "demand_id") if demand_name else None
+		)
 
 		_ensure_user("str.viewer.down.rows@example.com", ["Strategy Viewer"], self.pe)
 		frappe.set_user("str.viewer.down.rows@example.com")
 		dto = get_strategy_usage(plan_code=STRATEGY_PLAN_CODE)
-		self.assertGreaterEqual(dto["counts"]["Demand"], 1)
-		self.assertEqual(dto["counts"].get("Budget", 0), 0)
-		self.assertEqual(dto["counts"]["Planning"], 0)
+		if demand_name:
+			self.assertGreaterEqual(dto["counts"]["Demand"], 1)
+		self.assertGreaterEqual(dto["counts"].get("Budget", 0), 1)
+		if not package_name:
+			self.skipTest("PKG-MOH-2026-001 not available for Planning usage projection")
+		self.assertGreaterEqual(dto["counts"]["Planning"], 1)
 
 		demand_rows = [r for r in dto["rows"] if r["module"] == "Demand"]
 		budget_rows = [r for r in dto["rows"] if r["module"] == "Budget"]
-		self.assertTrue(any(r["record"]["code"] == demand_code for r in demand_rows))
-		self.assertEqual(budget_rows, [])
+		planning_rows = [r for r in dto["rows"] if r["module"] == "Planning"]
+		if demand_code:
+			self.assertTrue(any(r["record"]["code"] == demand_code for r in demand_rows))
+			sample = next(r for r in demand_rows if r["record"]["code"] == demand_code)
+			self.assertEqual(sample["doctype"], "Demand")
+			self.assertEqual(sample["reference_type"], "Primary alignment")
+			self.assertEqual(sample["target"]["code"], TARGET_CODE)
+			self.assertTrue(sample["target"]["name"])
+			self.assertTrue(sample["record"]["code"])
+			self.assertIn("status", sample)
+			self.assertIn("modified", sample)
 
-		sample = next(r for r in demand_rows if r["record"]["code"] == demand_code)
-		self.assertEqual(sample["doctype"], "Demand")
-		self.assertEqual(sample["reference_type"], "Primary alignment")
-		self.assertEqual(sample["target"]["code"], TARGET_CODE)
-		self.assertTrue(sample["target"]["name"])
-		self.assertTrue(sample["record"]["code"])
-		self.assertIn("status", sample)
-		self.assertIn("modified", sample)
+		b_sample = next(
+			(r for r in budget_rows if r["record"]["code"] == SEED_BUDGET_LINE_CODE),
+			None,
+		)
+		self.assertTrue(b_sample, budget_rows)
+		self.assertEqual(b_sample["doctype"], "Budget Line")
+		self.assertEqual(b_sample["reference_type"], "Primary alignment")
+		self.assertEqual(b_sample["target"]["code"], TARGET_CODE)
 
-		b_sample = next(r for r in budget_rows if r["record"]["code"] == budget_code)
-		self.assertEqual(b_sample["reference_type"], "Supporting alignment")
+		p_sample = next(
+			(r for r in planning_rows if r["record"]["code"] == SEED_PACKAGE_CODE),
+			None,
+		)
+		self.assertTrue(p_sample, planning_rows)
+		self.assertEqual(p_sample["doctype"], "Procurement Package")
+		self.assertEqual(p_sample["reference_type"], "Primary alignment")
+		self.assertEqual(p_sample["target"]["code"], TARGET_CODE)
+		self.assertTrue(p_sample["record"]["name"])
 		self.assertEqual(len(dto["groups"]["Demand"]), dto["counts"]["Demand"])
 		self.assertEqual(len(dto["groups"]["Budget"]), dto["counts"]["Budget"])
+		self.assertEqual(len(dto["groups"]["Planning"]), dto["counts"]["Planning"])

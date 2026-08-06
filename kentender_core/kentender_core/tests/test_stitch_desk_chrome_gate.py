@@ -51,6 +51,27 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		for marker in REQUIRED_SHARED_CSS_MARKERS:
 			self.assertIn(marker, css, f"shared chrome CSS missing marker: {marker}")
 
+		# Filled primary hover must keep white — never on-primary-container ink / Desk black.
+		hover_idx = css.find("button.bg-primary:hover")
+		self.assertGreaterEqual(hover_idx, 0)
+		hover_slice = css[hover_idx : hover_idx + 500]
+		self.assertIn("#ffffff", hover_slice)
+		self.assertIn("#00346f", hover_slice)
+		self.assertNotIn("var(--kt-stitch-on-primary-container)", hover_slice)
+		self.assertNotIn("color: #7b9ee0", hover_slice)
+
+		# Editable inputs must default to white — never surface tint #f9f9fe.
+		input_idx = css.find("Editable inputs: white fill")
+		self.assertGreaterEqual(input_idx, 0)
+		# Block ends at Tailwind Forms select chevron (next major section).
+		input_end = css.find("Tailwind Forms select chevron", input_idx)
+		self.assertGreater(input_end, input_idx)
+		input_slice = css[input_idx:input_end]
+		self.assertIn("background-color: #ffffff !important", input_slice)
+		self.assertIn("background-color: #e2e2e8 !important", input_slice)
+		self.assertIn("cursor: not-allowed", input_slice)
+		self.assertNotIn("var(--kt-stitch-surface)", input_slice)
+
 		from kentender_core import hooks as core_hooks
 
 		includes = "\n".join(core_hooks.app_include_css or [])
@@ -78,13 +99,22 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertTrue(helper.is_file(), helper)
 		helper_src = _read(helper)
 		self.assertIn("assertStitchDeskChrome", helper_src)
+		self.assertIn("assertFilledPrimaryCtaHover", helper_src)
+		self.assertIn("assertEditableInputs", helper_src)
 		self.assertIn("rgb(0, 31, 72)", helper_src)
+		self.assertIn("rgb(0, 52, 111)", helper_src)
+		self.assertIn("rgb(255, 255, 255)", helper_src)
 		self.assertIn("outset", helper_src)
 
 		cross = v1 / "tests" / "ui" / "smoke" / "stitch-desk" / "stitch-desk-chrome.spec.ts"
 		self.assertTrue(cross.is_file(), cross)
 		spec = _read(cross)
 		self.assertIn("assertStitchDeskChrome", spec)
+		self.assertIn("budget-lines", spec)
+		self.assertIn("strategy-portfolio", spec)
+		self.assertIn("budget-revision-create", spec)
+		self.assertIn("strategy-plan-create", spec)
+		self.assertIn("assertEditableInputs", spec)
 		for surface in STITCH_DESK_SURFACES:
 			self.assertIn(surface["desk_route"], spec, surface["id"])
 			self.assertIn(surface["primary_cta_testid"], spec, surface["id"])

@@ -40,10 +40,12 @@ test.describe("Budget Funding downstream usage (BUD-UI-10)", () => {
 		await expect(row).not.toContainText("DM-MOH-2027-042");
 		await expect(row.getByTestId("kt-bud-downstream-action")).toContainText(/View reservation/i);
 
+		await expect(root.getByTestId("kt-bud-overview-primary")).toHaveText(/Request revision/i);
 		await assertStitchDeskChrome(page, {
 			rootTestId: "kt-bud-downstream",
 			primaryCtaTestId: "kt-bud-overview-primary",
 			secondaryCtaTestId: "kt-bud-view-performance",
+			assertPrimaryHover: true,
 			selectSelector: '[data-kt-bud-downstream-filter="status"]',
 			headlineSelector: "[data-kt-bud-budget-title]",
 		});

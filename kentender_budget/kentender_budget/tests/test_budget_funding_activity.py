@@ -26,6 +26,8 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
 		self.assertEqual(dto["budget"]["status"], "Active")
 		self.assertTrue(dto["capabilities"]["read_only"])
+		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
+		self.assertEqual(dto["capabilities"]["primary_label"], "Request revision")
 
 		bal = dto["balances"]
 		self.assertEqual(flt(bal["reserved"]), 145_000_000)
@@ -38,7 +40,8 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertEqual(bal["outstanding_display"], "KES 130,000,000")
 		self.assertEqual(bal["actual_status"], "Stale")
 
-		self.assertEqual(dto["row_count"], 3)
+		# Shared site may retain non-fixture test reservations; pack rows must still be present.
+		self.assertGreaterEqual(dto["row_count"], 3)
 		by_code = {r["code"]: r for r in dto["rows"]}
 
 		rsv = by_code["RSV-MOH-0001"]
@@ -78,6 +81,13 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		# Pack §9.3: remaining reserved + commitment = original reservation.
 		self.assertEqual(remaining + committed, original)
 		self.assertEqual(remaining + committed, 455_000_000)
+
+	def test_no_duplicate_rsv_codes_in_activity_rows(self):
+		"""BUD-SUP-005 — Activity projects domain rows only (no audit double-count)."""
+		dto = list_funding_activity("MOH-BUD-0001")
+		codes = [r["code"] for r in dto["rows"]]
+		self.assertEqual(len(codes), len(set(codes)))
+		self.assertEqual(codes.count("RSV-MOH-0001"), 1)
 
 	def test_pe_scope_denial(self):
 		email = "budget.activity.pe.deny@example.com"

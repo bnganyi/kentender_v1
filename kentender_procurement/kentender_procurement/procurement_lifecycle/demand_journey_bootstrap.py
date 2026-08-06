@@ -61,7 +61,12 @@ def _budget_line_business_code(budget_line_name: str | None) -> str:
 	bl = (budget_line_name or "").strip()
 	if not bl:
 		return ""
-	code = frappe.db.get_value("Budget Line", bl, "budget_line_code")
+	code = frappe.db.get_value("Budget Line", bl, "generated_reference")
+	if not code:
+		try:
+			code = frappe.db.get_value("Budget Line", bl, "budget_line_code")
+		except Exception:
+			code = None
 	return (code or bl).strip()
 
 

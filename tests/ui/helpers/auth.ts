@@ -56,6 +56,33 @@ export async function loginAsStrategyManager(page: Page) {
 	);
 }
 
+/** STR-SUP-005 — Strategy Viewer (see strategy_role_users seed). */
+export async function loginAsStrategyViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_VIEWER_USER || 'strategy.viewer@moh.test',
+		process.env.UI_STRATEGY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** STR-SUP-005 — Strategy Officer (MOH). */
+export async function loginAsStrategyOfficer(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_OFFICER_USER || 'strategy.officer@moh.test',
+		process.env.UI_STRATEGY_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
+export async function loginAsStrategyViewerOtherPe(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'strategy.viewer@moe.test',
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 export async function loginAsPlanningAuthority(page: Page) {
 	await login(
 		page,
@@ -119,6 +146,60 @@ export async function loginAsAuditor(page: Page) {
 		page,
 		process.env.UI_AUDITOR_USER || 'auditor@moh.test',
 		process.env.UI_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Viewer (PE-MOH). */
+export async function loginAsBudgetViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_VIEWER_USER || 'budget.viewer@moh.test',
+		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Officer (PE-MOH). */
+export async function loginAsBudgetOfficer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OFFICER_USER || 'budget.officer@moh.test',
+		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Reviewer (PE-MOH). */
+export async function loginAsBudgetReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_REVIEWER_USER || 'budget.reviewer@moh.test',
+		process.env.UI_BUDGET_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Authority (PE-MOH). */
+export async function loginAsBudgetAuthority(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_AUTHORITY_USER || 'budget.authority@moh.test',
+		process.env.UI_BUDGET_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — dual Officer+Authority for AC-018 SoD (PE-MOH). */
+export async function loginAsBudgetOfficerAuthority(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'budget.officer.authority@moh.test',
+		process.env.UI_BUDGET_OFFICER_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Officer scoped to PE-MOE (cross-entity denial vs PE-MOH). */
+export async function loginAsBudgetOtherEntity(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'budget.officer@moe.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

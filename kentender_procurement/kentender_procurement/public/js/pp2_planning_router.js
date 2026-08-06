@@ -2375,6 +2375,18 @@
 		);
 		const budgetLine = (drawer.budget_context && drawer.budget_context.budget_line) || {};
 		const budgetLinked = String(budgetLine.id || budgetLine.code || "").trim().length > 0;
+		const strategyObjective =
+			(drawer.budget_context && drawer.budget_context.strategy_objective) || {};
+		const strategyName = String(strategyObjective.name || "").trim();
+		const strategyCode = String(strategyObjective.code || "").trim();
+		let strategyLabel = "";
+		if (strategyName && strategyCode) {
+			strategyLabel = strategyName + " (" + strategyCode + ")";
+		} else if (strategyName) {
+			strategyLabel = strategyName;
+		} else if (strategyCode) {
+			strategyLabel = strategyCode;
+		}
 		const eligibility = drawer.eligibility || {};
 		const includeAllowed = eligibility.allowed !== false;
 		const blockers = Array.isArray(eligibility.blockers)
@@ -2409,6 +2421,7 @@
 			key_facts: [categoryLabel, valueLabel].filter(Boolean).join(" · "),
 			value_label: valueLabel,
 			funding_label: budgetLinked ? __("Budget linked") : __("Budget not linked"),
+			strategy_label: strategyLabel,
 			blockers: blockers,
 			blocker_count: blockers.length,
 			include_allowed: includeAllowed,

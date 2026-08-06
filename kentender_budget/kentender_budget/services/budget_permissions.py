@@ -80,6 +80,20 @@ def can_review_budget() -> bool:
 	return bool(user_roles().intersection({ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager"}))
 
 
+def can_export_funding_performance(user: str | None = None) -> bool:
+	"""REQ §9 — Officer may not export; Viewer/Reviewer/Authority/Auditor may."""
+	roles = user_roles(user)
+	if "System Manager" in roles or (user or frappe.session.user) == "Administrator":
+		return True
+	if ROLE_OFFICER in roles and not roles.intersection(
+		{ROLE_VIEWER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR}
+	):
+		return False
+	return bool(
+		roles.intersection({ROLE_VIEWER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR})
+	)
+
+
 def entity_for_user(user: str | None = None) -> str | None:
 	"""Best-effort procuring entity from User Permission."""
 	user = user or frappe.session.user

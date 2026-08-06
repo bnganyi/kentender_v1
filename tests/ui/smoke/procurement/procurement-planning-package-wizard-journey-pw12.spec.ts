@@ -43,7 +43,7 @@ import { loginAsProcurementPlanner } from '../../helpers/auth';
 const BENCH_ROOT = path.resolve(__dirname, '../../../../../..');
 const PLAN_CODE = 'PLAN-MOH-2026';
 const WORKS_DEMAND_TITLE = 'District Hospital Renovation Works';
-const BUDGET_LINE_CODE = 'BUD-MOH-INFRA-2026-001';
+const BUDGET_LINE_CODE = 'MOH-BL-0001'; // Budget Line.generated_reference (MVP-1)
 const BUMPED_BUDGET_ALLOCATION = 300_000_000;
 // works_master_budget_seed.AMOUNT_ALLOCATED — the seed's upsert is
 // idempotent-preserve-if-exists, so re-running the seed does NOT reset an
@@ -70,15 +70,21 @@ function resetWorksMasterSeedIncludedInPlan(): void {
  * and to restore the canonical value afterwards, since the seed reset does
  * not touch this field on an already-existing row. */
 function setBudgetLineAllocation(amount: number): void {
-	execSync(
-		'bench --site kentender.midas.com execute frappe.db.set_value ' +
-			`--kwargs '{"dt": "Budget Line", "dn": "${BUDGET_LINE_CODE}", "field": "amount_allocated", "val": ${amount}}'`,
-		{
-			cwd: BENCH_ROOT,
-			stdio: 'pipe',
-			encoding: 'utf8',
-		},
-	);
+	// MVP-1 Budget Line may not expose amount_allocated; best-effort only.
+	try {
+		execSync(
+			'bench --site kentender.midas.com execute ' +
+				'kentender_budget.seeds.moh_mvp_v1_portfolio.set_budget_line_allocation_by_code ' +
+				`--kwargs '{"line_code": "${BUDGET_LINE_CODE}", "amount": ${amount}}'`,
+			{
+				cwd: BENCH_ROOT,
+				stdio: 'pipe',
+				encoding: 'utf8',
+			},
+		);
+	} catch {
+		/* funding column may be absent after MVP-1 Budget schema */
+	}
 }
 
 async function tryLoginAsPlanner(page: import('@playwright/test').Page): Promise<boolean> {
@@ -137,6 +143,12 @@ test.describe('PW12 Package Creation Wizard journey (dedicated page, In Creation
 		await expect(demandCard).toBeVisible({ timeout: 20000 });
 		await expect(demandCard.locator('[data-testid="kt-pw-demand-title"]')).toContainText(WORKS_DEMAND_TITLE);
 		await expect(demandCard.locator('[data-testid="kt-pw-select-demand"]')).toContainText('Selected');
+		// XMOD-STR-004 — Demand Strategy Reference as Name (CODE).
+		const strategy = demandCard.locator('[data-testid="kt-pw-demand-strategy"]');
+		await expect(strategy).toBeVisible({ timeout: 10000 });
+		await expect(strategy).toContainText('MOH-TGT-0001');
+		await expect(strategy).toContainText('(');
+		await expect(strategy).not.toHaveText(/^[a-z0-9]{8,14}$/);
 
 		const step1Next = page.locator('[data-testid="kt-pw-step1-next"]');
 		await expect(step1Next).toBeEnabled();

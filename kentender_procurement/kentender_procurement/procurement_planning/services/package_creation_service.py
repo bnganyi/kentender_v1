@@ -97,7 +97,14 @@ def _resolve_budget_line_name(budget_line_code: str) -> str | None:
 		return None
 	if frappe.db.exists("Budget Line", code):
 		return code
-	return frappe.db.get_value("Budget Line", {"budget_line_code": code}, "name")
+	# Prefer generated_reference (MVP-1); fall back to legacy column if present.
+	name = frappe.db.get_value("Budget Line", {"generated_reference": code}, "name")
+	if name:
+		return name
+	try:
+		return frappe.db.get_value("Budget Line", {"budget_line_code": code}, "name")
+	except Exception:
+		return None
 
 
 def _resolve_template_for_demand(demand_name: str) -> dict[str, Any] | None:
@@ -355,7 +362,17 @@ def _demand_fields_for_package(demand_name: str) -> dict[str, Any]:
 	return frappe.db.get_value(
 		"Demand",
 		demand_name,
-		("title", "requisition_type", "total_amount", "budget_line", "requesting_department", "priority_level"),
+		(
+			"title",
+			"requisition_type",
+			"total_amount",
+			"budget_line",
+			"requesting_department",
+			"priority_level",
+			"strategy_plan_version",
+			"strategy_target",
+			"strategy_snapshot_label",
+		),
 		as_dict=True,
 	) or {}
 
@@ -465,8 +482,20 @@ def create_package_with_lines(
 			"decision_criteria_profile_id": template.get("decision_criteria_profile_id"),
 			"vendor_management_profile_id": template.get("vendor_management_profile_id"),
 			"created_by": actor,
+			# XMOD-STR-004 — inherit primary Demand Strategy Reference (historical OK).
+			"strategy_plan_version": (primary_demand.get("strategy_plan_version") or "").strip() or None,
+			"strategy_target": (primary_demand.get("strategy_target") or "").strip() or None,
+			"strategy_snapshot_label": (primary_demand.get("strategy_snapshot_label") or "").strip() or None,
 		}
 	)
+	target = (primary_demand.get("strategy_target") or "").strip()
+	if target and pkg.meta.has_field("strategy_target"):
+		try:
+			from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+
+			apply_strategy_reference_to_doc(pkg, target, require_active=False)
+		except ImportError:
+			pass
 	pkg.insert(ignore_permissions=True)
 	package_code = pkg.package_code or pkg.name
 

@@ -31,6 +31,7 @@
       justification: "",
       entity: "",
       requiredBy: "",
+      strategyTarget: "",
     },
     // Step 2 items: [{ desc, qty, unitPrice }]
     items: [],
@@ -48,6 +49,10 @@
     // Live meta for dropdowns
     departments: [],
     procuringEntities: [],
+    strategyTargets: [],
+    // XMOD-STR-003 — applicable PVCs + treatments (Review step)
+    applicablePvcs: [],
+    valueTreatments: {},
     _wrapper: null,
   };
 
@@ -153,6 +158,184 @@
     return html;
   }
 
+  function _targetOptionLabel(t) {
+    var name = t.node_name || t.name || "";
+    var code = t.node_code || t.code || "";
+    if (name && code) return name + " (" + code + ")";
+    return name || code || t.node_id || "";
+  }
+
+  function _strategyTargetOptions() {
+    var html = '<option value="">Select performance target</option>';
+    if (!_state.strategyTargets.length) {
+      html +=
+        '<option value="" disabled>' +
+        (_state.form1.entity
+          ? "No active targets for this entity"
+          : "Select a procuring entity first") +
+        "</option>";
+      return html;
+    }
+    _state.strategyTargets.forEach(function (t) {
+      var id = t.node_id || t.id || "";
+      var sel = id === _state.form1.strategyTarget ? " selected" : "";
+      html +=
+        '<option value="' +
+        _esc(id) +
+        '"' +
+        sel +
+        ">" +
+        _esc(_targetOptionLabel(t)) +
+        "</option>";
+    });
+    return html;
+  }
+
+  function _loadStrategyTargets(entity, done) {
+    if (!entity) {
+      _state.strategyTargets = [];
+      if (done) done();
+      return;
+    }
+    frappe.call({
+      method:
+        "kentender_procurement.demand_intake.api.demand_strategy.list_active_targets_for_demand",
+      args: { procuring_entity: entity },
+      callback: function (r) {
+        _state.strategyTargets = r.message || [];
+        if (done) done();
+      },
+      error: function () {
+        _state.strategyTargets = [];
+        if (done) done();
+      },
+    });
+  }
+
+  function _loadApplicablePvcs(done) {
+    if (!_state.demandName) {
+      _state.applicablePvcs = [];
+      if (done) done();
+      return;
+    }
+    frappe.call({
+      method:
+        "kentender_procurement.demand_intake.api.demand_strategy.list_applicable_pvcs_for_demand",
+      args: { demand_name: _state.demandName },
+      callback: function (r) {
+        _state.applicablePvcs = r.message || [];
+        (_state.applicablePvcs || []).forEach(function (p) {
+          var key = p.pvc_id || p.pvc_code;
+          if (!_state.valueTreatments[key]) {
+            _state.valueTreatments[key] = {
+              pvc_id: p.pvc_id || "",
+              pvc_code: p.pvc_code || "",
+              pvc_name: p.pvc_name || "",
+              requirement_level: p.requirement_level || "",
+              treatment: "",
+              rationale: "",
+            };
+          } else {
+            _state.valueTreatments[key].requirement_level =
+              p.requirement_level || _state.valueTreatments[key].requirement_level;
+            _state.valueTreatments[key].pvc_name =
+              p.pvc_name || _state.valueTreatments[key].pvc_name;
+          }
+        });
+        if (done) done();
+      },
+      error: function () {
+        _state.applicablePvcs = [];
+        if (done) done();
+      },
+    });
+  }
+
+  function _collectValueTreatmentsPayload() {
+    return Object.keys(_state.valueTreatments)
+      .map(function (k) {
+        return _state.valueTreatments[k];
+      })
+      .filter(function (t) {
+        return t && t.treatment;
+      });
+  }
+
+  function _pvcTreatmentsPanel() {
+    var rows = _state.applicablePvcs || [];
+    if (!rows.length) {
+      return (
+        '<div class="kt-cd-review-card" data-testid="kt-cd-pvc-panel">' +
+          '<div class="kt-cd-review-card-head"><div>' +
+            '<div class="kt-cd-review-meta-label">Strategy Value Case</div>' +
+            '<h2 class="kt-cd-review-card-title">Plan Value Commitments</h2>' +
+          "</div></div>" +
+          '<p class="kt-cd-input-hint" style="padding:12px 16px">No applicable value commitments for this demand.</p>' +
+        "</div>"
+      );
+    }
+    var body = rows
+      .map(function (p) {
+        var key = p.pvc_id || p.pvc_code;
+        var cur = _state.valueTreatments[key] || {};
+        var required = String(p.requirement_level || "").indexOf("Required") === 0;
+        var display =
+          (p.pvc_name || "") + (p.pvc_code ? " (" + p.pvc_code + ")" : "");
+        return (
+          '<div class="kt-cd-pvc-row" data-pvc-key="' +
+          _esc(key) +
+          '" data-testid="kt-cd-pvc-row">' +
+            "<div><strong>" +
+            _esc(display) +
+            "</strong>" +
+            '<div class="kt-cd-input-hint">' +
+            _esc(p.requirement_level || "") +
+            (required ? " — treatment required" : "") +
+            "</div></div>" +
+            '<div class="kt-cd-grid-2" style="margin-top:8px">' +
+              "<div>" +
+                '<label class="kt-cd-field-label">Treatment</label>' +
+                '<div class="kt-cd-select-wrap">' +
+                  '<select class="kt-cd-select kt-cd-pvc-treatment" data-testid="kt-cd-pvc-treatment" data-pvc-key="' +
+                  _esc(key) +
+                  '">' +
+                    '<option value="">Select…</option>' +
+                    '<option value="Included"' +
+                    (cur.treatment === "Included" ? " selected" : "") +
+                    ">Included</option>" +
+                    '<option value="Not applicable"' +
+                    (cur.treatment === "Not applicable" ? " selected" : "") +
+                    ">Not applicable</option>" +
+                  "</select>" +
+                  _ico("expand_more") +
+                "</div>" +
+              "</div>" +
+              "<div>" +
+                '<label class="kt-cd-field-label">Reason (if not applicable)</label>' +
+                '<input class="kt-cd-input kt-cd-pvc-rationale" type="text" data-testid="kt-cd-pvc-rationale" data-pvc-key="' +
+                _esc(key) +
+                '" value="' +
+                _esc(cur.rationale || "") +
+                '" placeholder="Required when Not applicable"/>' +
+              "</div>" +
+            "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+    return (
+      '<div class="kt-cd-review-card" data-testid="kt-cd-pvc-panel">' +
+        '<div class="kt-cd-review-card-head"><div>' +
+          '<div class="kt-cd-review-meta-label">Strategy Value Case</div>' +
+          '<h2 class="kt-cd-review-card-title">Plan Value Commitments</h2>' +
+        "</div></div>" +
+        '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:14px">' +
+        body +
+        "</div>" +
+      "</div>"
+    );
+  }
+
   // ── STEP 1 HTML ──────────────────────────────────────────────────────────
   function _renderStep1() {
     var charCount = (_state.form1.justification || "").length;
@@ -223,6 +406,23 @@
                   (_state.step1Errors.entity
                     ? '<p class="kt-cd-field-error">' + _ico("error") + _esc(_state.step1Errors.entity) + "</p>"
                     : "") +
+                "</div>" +
+
+                // primary strategy target (XMOD-STR-002)
+                '<div class="kt-cd-full-col">' +
+                  '<label class="kt-cd-field-label">Primary Strategy Target <span style="color:var(--kt-red,#ef4444)">*</span></label>' +
+                  '<div class="kt-cd-select-wrap' + (_state.step1Errors.strategyTarget ? " kt-cd-select-wrap--error" : "") + '">' +
+                    '<select class="kt-cd-select" id="kt-cd-strategy-target" data-testid="kt-cd-strategy-target">' +
+                      _strategyTargetOptions() +
+                    "</select>" +
+                    _ico("expand_more") +
+                  "</div>" +
+                  (_state.step1Errors.strategyTarget
+                    ? '<p class="kt-cd-field-error" data-testid="kt-cd-strategy-target-error" role="alert">' +
+                      _ico("error") +
+                      _esc(_state.step1Errors.strategyTarget) +
+                      "</p>"
+                    : '<p class="kt-cd-input-hint">Select an Active performance target for this Value Case (Name + code).</p>') +
                 "</div>" +
 
                 // required by date
@@ -480,12 +680,22 @@
                 "<div><div class=\"kt-cd-review-field-label\">Procuring Entity</div><div class=\"kt-cd-review-field-value\">" + _esc(f.entity || "—") + "</div></div>" +
                 "<div><div class=\"kt-cd-review-field-label\">Required By</div><div class=\"kt-cd-review-field-value\">" + _esc(f.requiredBy || "—") + "</div></div>" +
                 "<div><div class=\"kt-cd-review-field-label\">Priority</div><div class=\"kt-cd-review-field-value\">" + (f.priority ? "High" : "Normal") + "</div></div>" +
+                "<div><div class=\"kt-cd-review-field-label\">Strategy Target</div><div class=\"kt-cd-review-field-value\">" +
+                  (function () {
+                    var t = (_state.strategyTargets || []).find(function (x) {
+                      return (x.node_id || x.id) === f.strategyTarget;
+                    });
+                    return _esc(t ? _targetOptionLabel(t) : f.strategyTarget || "—");
+                  })() +
+                "</div></div>" +
                 (f.justification
                   ? '<div class="kt-cd-full"><div class="kt-cd-review-field-label">Justification</div>' +
                     '<div class="kt-cd-review-field-body">' + _esc(f.justification) + "</div></div>"
                   : "") +
               "</div>" +
             "</div>" +
+
+            _pvcTreatmentsPanel() +
 
             // itemized list card
             '<div class="kt-cd-review-card">' +
@@ -751,9 +961,30 @@
     var entityEl = wrapper.querySelector("#kt-cd-entity");
     if (entityEl) {
       entityEl.addEventListener("change", function () {
+        _state.form1.entity = entityEl.value || "";
+        _state.form1.strategyTarget = "";
         if (_state.step1Errors.entity && entityEl.value) {
           delete _state.step1Errors.entity;
           var wrap = entityEl.closest(".kt-cd-select-wrap");
+          if (wrap) {
+            wrap.classList.remove("kt-cd-select-wrap--error");
+            var errP = wrap.parentNode && wrap.parentNode.querySelector(".kt-cd-field-error");
+            if (errP) errP.remove();
+          }
+        }
+        _loadStrategyTargets(_state.form1.entity, function () {
+          var tsel = wrapper.querySelector("#kt-cd-strategy-target");
+          if (tsel) tsel.innerHTML = _strategyTargetOptions();
+        });
+      });
+    }
+    var stratEl = wrapper.querySelector("#kt-cd-strategy-target");
+    if (stratEl) {
+      stratEl.addEventListener("change", function () {
+        _state.form1.strategyTarget = stratEl.value || "";
+        if (_state.step1Errors.strategyTarget && stratEl.value) {
+          delete _state.step1Errors.strategyTarget;
+          var wrap = stratEl.closest(".kt-cd-select-wrap");
           if (wrap) {
             wrap.classList.remove("kt-cd-select-wrap--error");
             var errP = wrap.parentNode && wrap.parentNode.querySelector(".kt-cd-field-error");
@@ -794,29 +1025,20 @@
         var justEl = wrapper.querySelector("#kt-cd-justify");
         var priorityEl = wrapper.querySelector("#kt-cd-priority");
 
+        var stratEl = wrapper.querySelector("#kt-cd-strategy-target");
         var title = (titleEl ? titleEl.value : "").trim();
         var entity = entityEl ? entityEl.value : "";
         var requiredBy = rbyEl ? rbyEl.value : "";
+        var strategyTarget = stratEl ? stratEl.value : "";
 
         // Collect all errors at once — no modal dialogs
         var errs = {};
         if (!title) errs.title = "Demand title is required.";
         if (!entity) errs.entity = "Please select a procuring entity.";
         if (!requiredBy) errs.requiredBy = "Required by date must be set.";
+        if (!strategyTarget) errs.strategyTarget = "Select a primary strategy target.";
 
-        if (Object.keys(errs).length) {
-          _state.step1Errors = errs;
-          _render(wrapper);
-          // Focus the first errored field
-          var firstErrField = wrapper.querySelector(
-            errs.title ? "#kt-cd-title" : errs.entity ? "#kt-cd-entity" : "#kt-cd-required-by"
-          );
-          if (firstErrField) firstErrField.focus();
-          return;
-        }
-        _state.step1Errors = {};
-
-        // Persist form values in state
+        // Always snapshot DOM into state before any error re-render so filled values are not wiped.
         _state.form1.title = title;
         _state.form1.dept = deptEl ? deptEl.value : "";
         _state.form1.category = catEl ? catEl.value : "";
@@ -824,6 +1046,25 @@
         _state.form1.requiredBy = requiredBy;
         _state.form1.justification = justEl ? justEl.value : "";
         _state.form1.priority = priorityEl ? priorityEl.checked : false;
+        _state.form1.strategyTarget = strategyTarget;
+
+        if (Object.keys(errs).length) {
+          _state.step1Errors = errs;
+          _render(wrapper);
+          // Focus the first errored field
+          var firstErrField = wrapper.querySelector(
+            errs.title
+              ? "#kt-cd-title"
+              : errs.entity
+                ? "#kt-cd-entity"
+                : errs.strategyTarget
+                  ? "#kt-cd-strategy-target"
+                  : "#kt-cd-required-by"
+          );
+          if (firstErrField) firstErrField.focus();
+          return;
+        }
+        _state.step1Errors = {};
 
         _state.saving = true;
         _render(wrapper);
@@ -839,6 +1080,7 @@
             required_by_date: _state.form1.requiredBy || null,
             priority_level: _state.form1.priority ? "High" : "Normal",
             beneficiary_summary: _state.form1.justification || null,
+            strategy_target: _state.form1.strategyTarget || null,
             demand_name: _state.demandName || null,
           },
           callback: function (r) {
@@ -989,22 +1231,24 @@
               if (r.message.demand_id) {
                 _state.demandId = r.message.demand_id;
               }
-              // Fetch submission readiness before showing step 3
-              frappe.call({
-                method:
-                  "kentender_procurement.demand_intake.api.review.get_demand_submission_readiness",
-                args: { demand_name: _state.demandName },
-                callback: function (rr) {
-                  _state.readiness =
-                    rr && rr.message ? rr.message : null;
-                  _state.step = 3;
-                  _render(wrapper);
-                },
-                error: function () {
-                  _state.readiness = null;
-                  _state.step = 3;
-                  _render(wrapper);
-                },
+              // Load applicable PVCs then submission readiness for Review
+              _loadApplicablePvcs(function () {
+                frappe.call({
+                  method:
+                    "kentender_procurement.demand_intake.api.review.get_demand_submission_readiness",
+                  args: { demand_name: _state.demandName },
+                  callback: function (rr) {
+                    _state.readiness =
+                      rr && rr.message ? rr.message : null;
+                    _state.step = 3;
+                    _render(wrapper);
+                  },
+                  error: function () {
+                    _state.readiness = null;
+                    _state.step = 3;
+                    _render(wrapper);
+                  },
+                });
               });
             } else {
               _render(wrapper);
@@ -1042,6 +1286,131 @@
     var back = wrapper.querySelector("#kt-cd-back-3");
     if (back) back.addEventListener("click", function () { _state.step = 2; _render(wrapper); });
 
+    function _persistPvcTreatmentsAndRefreshReadiness() {
+      if (!_state.demandName) return;
+      if (_state.savingPvcTreatments) {
+        _state.pvcTreatmentsDirty = true;
+        return;
+      }
+      _state.savingPvcTreatments = true;
+      _state.pvcTreatmentsDirty = false;
+      var treatments = _collectValueTreatmentsPayload();
+      frappe.call({
+        method:
+          "kentender_procurement.demand_intake.api.create_demand.save_demand_draft",
+        args: {
+          demand_name: _state.demandName,
+          value_treatments: JSON.stringify(treatments),
+        },
+        callback: function (sr) {
+          if (!(sr && sr.message && sr.message.ok)) {
+            _state.savingPvcTreatments = false;
+            if (_state.pvcTreatmentsDirty) {
+              _persistPvcTreatmentsAndRefreshReadiness();
+            }
+            return;
+          }
+          frappe.call({
+            method:
+              "kentender_procurement.demand_intake.api.review.get_demand_submission_readiness",
+            args: { demand_name: _state.demandName },
+            callback: function (rr) {
+              _state.readiness = rr && rr.message ? rr.message : null;
+              _state.savingPvcTreatments = false;
+              if (_state.pvcTreatmentsDirty) {
+                _persistPvcTreatmentsAndRefreshReadiness();
+                return;
+              }
+              _render(wrapper);
+            },
+            error: function () {
+              _state.savingPvcTreatments = false;
+              if (_state.pvcTreatmentsDirty) {
+                _persistPvcTreatmentsAndRefreshReadiness();
+              }
+            },
+          });
+        },
+        error: function () {
+          _state.savingPvcTreatments = false;
+          if (_state.pvcTreatmentsDirty) {
+            _persistPvcTreatmentsAndRefreshReadiness();
+          }
+        },
+      });
+    }
+
+    wrapper.querySelectorAll(".kt-cd-pvc-treatment").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var key = sel.getAttribute("data-pvc-key");
+        if (!_state.valueTreatments[key]) {
+          _state.valueTreatments[key] = { pvc_id: key, pvc_code: "", pvc_name: "", treatment: "", rationale: "" };
+        }
+        _state.valueTreatments[key].treatment = sel.value || "";
+        // Enrich from applicable row when present.
+        var row = (_state.applicablePvcs || []).find(function (p) {
+          return (p.pvc_id || p.pvc_code) === key;
+        });
+        if (row) {
+          _state.valueTreatments[key].pvc_id = row.pvc_id || key;
+          _state.valueTreatments[key].pvc_code = row.pvc_code || "";
+          _state.valueTreatments[key].pvc_name = row.pvc_name || "";
+          _state.valueTreatments[key].requirement_level = row.requirement_level || "";
+        }
+        _persistPvcTreatmentsAndRefreshReadiness();
+      });
+    });
+    var pvcRationaleTimer = null;
+    wrapper.querySelectorAll(".kt-cd-pvc-rationale").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var key = inp.getAttribute("data-pvc-key");
+        if (!_state.valueTreatments[key]) {
+          _state.valueTreatments[key] = { pvc_id: key, pvc_code: "", pvc_name: "", treatment: "", rationale: "" };
+        }
+        _state.valueTreatments[key].rationale = inp.value || "";
+        if (pvcRationaleTimer) clearTimeout(pvcRationaleTimer);
+        pvcRationaleTimer = setTimeout(function () {
+          _persistPvcTreatmentsAndRefreshReadiness();
+        }, 400);
+      });
+    });
+
+    function _doSubmit(overlay) {
+      frappe.call({
+        method:
+          "kentender_procurement.demand_intake.api.lifecycle.submit_demand",
+        args: { demand_name: _state.demandName },
+        callback: function (r) {
+          _state.submitting = false;
+          if (overlay) overlay.classList.remove("active");
+          if (r && r.message && r.message.status) {
+            if (!_state.demandId) {
+              _state.demandId = r.message.name || _state.demandName;
+            }
+            _state.step = 4;
+            _render(wrapper);
+          } else {
+            frappe.msgprint({
+              title: "Submit Failed",
+              message:
+                (r && r.message) || "Could not submit demand. Please try again.",
+              indicator: "red",
+            });
+          }
+        },
+        error: function (r) {
+          _state.submitting = false;
+          if (overlay) overlay.classList.remove("active");
+          frappe.msgprint({
+            title: "Submit Failed",
+            message:
+              (r && r.message) || "An error occurred during submission.",
+            indicator: "red",
+          });
+        },
+      });
+    }
+
     var submit = wrapper.querySelector("#kt-cd-submit");
     if (submit) {
       submit.addEventListener("click", function () {
@@ -1059,36 +1428,55 @@
         if (overlay) overlay.classList.add("active");
         _state.submitting = true;
 
+        var treatments = _collectValueTreatmentsPayload();
         frappe.call({
           method:
-            "kentender_procurement.demand_intake.api.lifecycle.submit_demand",
-          args: { demand_name: _state.demandName },
-          callback: function (r) {
-            _state.submitting = false;
-            if (overlay) overlay.classList.remove("active");
-            if (r && r.message && r.message.status) {
-              // Update demandId if not yet set
-              if (!_state.demandId) {
-                _state.demandId = r.message.name || _state.demandName;
-              }
-              _state.step = 4;
-              _render(wrapper);
-            } else {
+            "kentender_procurement.demand_intake.api.create_demand.save_demand_draft",
+          args: {
+            demand_name: _state.demandName,
+            value_treatments: JSON.stringify(treatments),
+          },
+          callback: function (sr) {
+            if (!(sr && sr.message && sr.message.ok)) {
+              _state.submitting = false;
+              if (overlay) overlay.classList.remove("active");
               frappe.msgprint({
-                title: "Submit Failed",
-                message:
-                  (r && r.message) || "Could not submit demand. Please try again.",
+                title: "Save Failed",
+                message: "Could not save value commitment treatments.",
                 indicator: "red",
               });
+              return;
             }
+            frappe.call({
+              method:
+                "kentender_procurement.demand_intake.api.review.get_demand_submission_readiness",
+              args: { demand_name: _state.demandName },
+              callback: function (rr) {
+                _state.readiness = rr && rr.message ? rr.message : null;
+                if (_state.readiness && !_state.readiness.ready) {
+                  _state.submitting = false;
+                  if (overlay) overlay.classList.remove("active");
+                  _render(wrapper);
+                  frappe.msgprint({
+                    title: "Not ready",
+                    message: "Resolve readiness checks before submitting.",
+                    indicator: "orange",
+                  });
+                  return;
+                }
+                _doSubmit(overlay);
+              },
+              error: function () {
+                _doSubmit(overlay);
+              },
+            });
           },
           error: function (r) {
             _state.submitting = false;
             if (overlay) overlay.classList.remove("active");
             frappe.msgprint({
-              title: "Submit Failed",
-              message:
-                (r && r.message) || "An error occurred during submission.",
+              title: "Save Failed",
+              message: (r && r.message) || "Could not save treatments.",
               indicator: "red",
             });
           },
@@ -1135,12 +1523,35 @@
         _state.form1.priority = (d.priority_level || "").toLowerCase() === "high";
         _state.form1.justification = d.beneficiary_summary || d.specification_summary || "";
         _state.form1.requiredBy = d.required_by_date || "";
-        _state.items = (d.demand_items || []).map(function (it) {
+        _state.form1.strategyTarget = d.strategy_target || "";
+        _state.items = (d.demand_items || d.items || []).map(function (it) {
           return { desc: it.item_description || "", qty: it.quantity || 0, unitPrice: it.estimated_unit_cost || 0 };
+        });
+        _state.valueTreatments = {};
+        (d.value_treatments || []).forEach(function (tr) {
+          var key = tr.pvc_id || tr.pvc_code;
+          if (!key) return;
+          _state.valueTreatments[key] = {
+            pvc_id: tr.pvc_id || "",
+            pvc_code: tr.pvc_code || "",
+            pvc_name: tr.pvc_name || "",
+            requirement_level: tr.requirement_level || "",
+            treatment: tr.treatment || "",
+            rationale: tr.rationale || "",
+          };
         });
         _state.step = 1;
         _render(wrapper);
         _loadMeta(wrapper);
+        if (_state.form1.entity) {
+          _loadStrategyTargets(_state.form1.entity, function () {
+            var tsel = wrapper.querySelector("#kt-cd-strategy-target");
+            if (tsel) {
+              tsel.innerHTML = _strategyTargetOptions();
+              tsel.value = _state.form1.strategyTarget || "";
+            }
+          });
+        }
       },
       error: function () {
         frappe.msgprint({ title: "Error", message: "Could not load demand for editing.", indicator: "red" });
@@ -1153,7 +1564,7 @@
     _state.step = 1;
     _state.form1 = {
       title: "", dept: "", category: "", priority: false,
-      justification: "", entity: "", requiredBy: "",
+      justification: "", entity: "", requiredBy: "", strategyTarget: "",
     };
     _state.items = [];
     _state.demandName = null;
@@ -1163,6 +1574,9 @@
     _state.readiness = null;
     _state.step1Errors = {};
     _state.step2Error = null;
+    _state.strategyTargets = [];
+    _state.applicablePvcs = [];
+    _state.valueTreatments = {};
   }
 
   // ── Frappe page registration ─────────────────────────────────────────────

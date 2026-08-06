@@ -48,7 +48,7 @@ Approve
 <button type="button" class="hidden w-full sm:w-auto px-6 py-3 rounded-lg bg-primary text-on-primary font-body-md font-semibold shadow-sm" data-kt-str-action="activate-plan">
 Activate
 </button>
-<button type="button" class="hidden w-full sm:w-auto px-6 py-3 rounded-lg bg-primary text-on-primary font-body-md font-semibold hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm flex items-center justify-center gap-2" data-kt-str-action="submit-for-review" hidden>
+<button type="button" class="hidden w-full sm:w-auto px-6 py-3 rounded-lg bg-primary text-on-primary font-body-md font-semibold hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2" data-kt-str-action="submit-for-review" hidden>
 <span data-kt-str-submit-label>Submit for review</span>
 <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>

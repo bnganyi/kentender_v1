@@ -72,13 +72,16 @@ class TestR2006WorksMasterDemandSeed(IntegrationTestCase):
         budget = upsert_works_master_budget()
         assert budget.get("ok"), f"Budget prerequisite failed: {budget}"
         cls.budget_line_name = frappe.db.get_value(
-            "Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "name"
+            "Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name"
         )
-        # The budget line's procuring_entity is the canonical entity for the demand —
-        # entity code variants (PE-MOH / MOH) are resolved from the budget line at seed time.
-        cls.budget_line_entity = frappe.db.get_value(
-            "Budget Line", {"budget_line_code": BUDGET_LINE_CODE}, "procuring_entity"
-        )
+        # Entity lives on parent Budget (Budget Line no longer stores procuring_entity).
+        budget_name = frappe.db.get_value("Budget Line", cls.budget_line_name, "budget")
+        cls.budget_line_entity = frappe.db.get_value("Budget", budget_name, "procuring_entity")
+
+    def setUp(self):
+        super().setUp()
+        frappe.set_user("Administrator")
+        _clean_demand()
 
     def tearDown(self):
         _clean_demand()
@@ -178,10 +181,12 @@ class TestR2006WorksMasterDemandSeed(IntegrationTestCase):
         self.assertEqual(doc.status, "Approved",
                          "VAL-SEED-006: Demand status must be Approved")
 
-        # Strategy derivation via budget line context must populate key fields
-        self.assertIsNotNone(doc.strategic_plan,
-                             "Strategic plan should be derived from budget line context")
-        self.assertIsNotNone(doc.program,
-                             "Program should be derived from budget line context")
-        self.assertIsNotNone(doc.output_indicator,
-                             "Output indicator (objective) should be derived from budget line context")
+        # XMOD-STR-002 — primary Strategy Reference (not legacy strategic_plan derive)
+        self.assertTrue(
+            (getattr(doc, "strategy_target", None) or "").strip(),
+            "Demand seed should carry primary strategy_target",
+        )
+        self.assertTrue(
+            (getattr(doc, "strategy_plan_version", None) or "").strip(),
+            "Demand seed should carry strategy_plan_version",
+        )

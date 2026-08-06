@@ -113,6 +113,9 @@ def transition_plan(plan_name: str, action: str, reason: str | None = None) -> d
 		reason=reason,
 		plan_version=doc.name,
 	)
+	from kentender_strategy.services.strategy_notification_service import notify_plan_transition
+
+	notify_plan_transition(doc, action)
 	return {"name": doc.name, "status": doc.status, "plan_code": doc.plan_code}
 
 
@@ -136,6 +139,8 @@ def _activate_plan(doc) -> None:
 		},
 		pluck="name",
 	)
+	from kentender_strategy.services.strategy_notification_service import notify_plan_transition
+
 	for name in others:
 		other = frappe.get_doc("Strategic Plan", name)
 		other.status = "Superseded"
@@ -149,6 +154,7 @@ def _activate_plan(doc) -> None:
 			plan_version=other.name,
 			summary=f"Superseded by {doc.name}",
 		)
+		notify_plan_transition(other, "Supersede")
 	doc.status = "Active"
 	doc.activated_by = frappe.session.user
 	doc.activated_at = frappe.utils.now_datetime()
@@ -186,6 +192,9 @@ def transition_pvo(name: str, action: str, reason: str | None = None) -> dict:
 		new_state=doc.status,
 		reason=reason,
 	)
+	from kentender_strategy.services.strategy_notification_service import notify_pvo_transition
+
+	notify_pvo_transition(doc, action)
 	return {"name": doc.name, "status": doc.status, "objective_code": doc.objective_code}
 
 
@@ -259,6 +268,11 @@ def transition_measurement(
 		reason=reason,
 		plan_version=doc.plan_version,
 	)
+	from kentender_strategy.services.strategy_notification_service import (
+		notify_measurement_transition,
+	)
+
+	notify_measurement_transition(doc, action)
 	return {"name": doc.name, "workflow_status": doc.workflow_status, "result_status": doc.result_status}
 
 
@@ -276,19 +290,24 @@ def _ensure_corrective_or_exception(doc) -> None:
 	if existing:
 		return
 	# Auto-open corrective action shell when verifying Off track without authorised exception
-	frappe.get_doc(
+	assignee = doc.submitted_by or frappe.session.user
+	ca = frappe.get_doc(
 		{
 			"doctype": "Strategy Corrective Action",
 			"performance_measurement": doc.name,
 			"performance_target": doc.performance_target,
 			"plan_version": doc.plan_version,
 			"action": "Address verified underperformance",
-			"owner": doc.submitted_by or frappe.session.user,
+			"owner": assignee,
 			"due_date": frappe.utils.add_days(frappe.utils.today(), 30),
 			"expected_result": "Return to On track performance",
 			"status": "Open",
 		}
-	).insert(ignore_permissions=True)
+	)
+	ca.insert(ignore_permissions=True)
+	from kentender_strategy.services.strategy_notification_service import notify_ca_assigned
+
+	notify_ca_assigned(ca, assignee=assignee)
 
 
 def transition_corrective_action(name: str, action: str, reason: str | None = None) -> dict:
@@ -323,4 +342,7 @@ def transition_corrective_action(name: str, action: str, reason: str | None = No
 		reason=reason,
 		plan_version=doc.plan_version,
 	)
+	from kentender_strategy.services.strategy_notification_service import notify_ca_transition
+
+	notify_ca_transition(doc, action)
 	return {"name": doc.name, "status": doc.status}

@@ -64,7 +64,12 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 	def test_active_targets_and_reference_validation(self):
 		targets = list_active_targets(procuring_entity=self.seed["procuring_entity"])
 		self.assertTrue(any(t["node_code"] == TARGET_CODE for t in targets))
-		tgt = frappe.db.get_value("Performance Target", {"target_code": TARGET_CODE}, "name")
+		# Prefer seed plan target id — target_code alone can collide across fixture plans.
+		tgt = self.seed.get("target") or frappe.db.get_value(
+			"Performance Target",
+			{"target_code": TARGET_CODE, "plan_version": self.seed["plan"]},
+			"name",
+		)
 		ref = validate_strategy_reference(
 			{"plan_version_id": self.seed["plan"], "node_id": tgt, "node_type": "PerformanceTarget"}
 		)
@@ -173,8 +178,9 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 			plan.save(ignore_permissions=True)
 
 	def test_legacy_absence_active_path(self):
-		# Active MVP path must not rely on removed builder APIs
+		# Active MVP path must not rely on removed builder APIs (STR-AC-022)
 		self.assertFalse(frappe.db.exists("DocType", "Strategy Objective"))
+		self.assertFalse(frappe.db.exists("DocType", "Strategy Target"))
 		# Legacy tables may linger historically; DocType must not be active
 		# (teardown patch may leave orphan tables — DocType registry is the contract)
 		for name in ("Strategy Builder",):

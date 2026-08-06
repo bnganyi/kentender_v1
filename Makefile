@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 
 help:
 	@echo "Targets:"
@@ -33,6 +33,7 @@ help:
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
 	@echo "  make ui-strategy-typography-gate — Strategy typography + shared plan chrome (Espresso bleed, Manrope/Inter pins)"
 	@echo "  make ui-strategy-alignment-ui-gate — Strategy Alignment Stitch UI shell (includes typography gate + full nav)"
+	@echo "  make ui-strategy-role-gate — STR-SUP-005 wave 2 (AC matrix + role Playwright)"
 	@echo "  make ui-stitch-desk-chrome-gate — Shared Stitch Desk chrome baseline (Win98/select/Espresso) — required before Stitch Desk UI Done"
 	@echo "  make ui-budget-funding-portfolio-gate — Budget & Funding portfolio (BUD-UI-01) chrome + layout + Playwright"
 	@echo "  make ui-budget-funding-register-gate — Register approved budget (Prompt 2) chrome + domain + Playwright"
@@ -44,6 +45,10 @@ help:
 	@echo "  make ui-budget-funding-downstream-gate — Budget Downstream Usage (BUD-UI-10) chrome + domain + Playwright"
 	@echo "  make ui-budget-funding-review-gate — Budget Readiness/Review (BUD-UI-11) chrome + domain + Playwright"
 	@echo "  make ui-budget-funding-audit-gate — Budget Audit History (BUD-UI-12) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-performance-gate — Funding Performance (BUD-UI-02) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-check-reserve-gate — Check and Reserve (BUD-UI-06) chrome + domain + Playwright"
+	@echo "  make ui-budget-role-gate — BUD-SUP-002 role matrix (API + Playwright capability gating)"
+	@echo "  make ui-create-demand-strategy-gate — XMOD-STR-002/003 create-demand strategy + PVC (domain + Playwright)"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
 	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
 	@echo "  make ui-civic-ledger-cfg01-gate — CFG-01 Tender Profile strip/form/Continue gate"
@@ -189,6 +194,16 @@ ui-strategy-alignment-ui-gate: ui-strategy-typography-gate ui-stitch-desk-chrome
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/strategy-alignment/strategy-alignment-nav.spec.ts
 
+# STR-SUP-005 first wave — AC matrix domain + thin Viewer/Manager Desk evidence.
+ui-strategy-role-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_strategy.seeds.strategy_role_users.upsert_strategy_role_users
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_strategy.tests.test_strategy_mvp1_ac_matrix
+	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/strategy-alignment/strategy-role-matrix.spec.ts
+
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
@@ -228,7 +243,8 @@ ui-budget-funding-lines-gate: ui-stitch-desk-chrome-gate
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-lines.spec.ts
+		tests/ui/smoke/budget-funding/budget-funding-lines.spec.ts \
+		tests/ui/smoke/budget-funding/budget-funding-line-strategy-xmod-str-001.spec.ts
 
 # BUD-UI-07 Funding Activity — domain + layout/chrome + Playwright.
 ui-budget-funding-activity-gate: ui-stitch-desk-chrome-gate
@@ -291,6 +307,53 @@ ui-budget-funding-audit-gate: ui-stitch-desk-chrome-gate
 		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/budget-funding/budget-funding-audit.spec.ts
+
+# BUD-UI-02 Funding Performance — domain + layout/chrome + Playwright.
+ui-budget-funding-performance-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_funding_performance
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-performance.spec.ts
+
+# BUD-UI-06 Check and Reserve — domain + layout/chrome + Playwright.
+ui-budget-funding-check-reserve-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_check_reserve
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-check-reserve.spec.ts
+
+# BUD-SUP-002 — role matrix API + Playwright (Admin chrome smokes unchanged).
+ui-budget-role-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.budget_role_users.upsert_budget_role_users
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_role_matrix
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.budget_role_matrix_ui_prep.prepare_budget_role_matrix_ui
+	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-role-matrix.spec.ts
+
+
+# XMOD-STR-002 / 003 — create-demand Strategy target + PVC Review E2E.
+ui-create-demand-strategy-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demand_intake.tests.test_demand_strategy_readiness
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_strategy.tests.test_strategy_mvp1_ac_matrix
+	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/create-demand/create-demand-strategy-xmod-str-002.spec.ts \
+		tests/ui/smoke/create-demand/create-demand-pvc-xmod-str-003.spec.ts \
+		tests/ui/smoke/create-demand/create-demand-wizard.spec.ts
 
 ui-civic-ledger-queue-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

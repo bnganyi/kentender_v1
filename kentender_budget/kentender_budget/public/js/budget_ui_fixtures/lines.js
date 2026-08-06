@@ -176,12 +176,13 @@ ${footerHtml}
 <div class="space-y-1">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Primary strategic target</label>
 <div class="relative">
-<select class="w-full bg-surface border border-outline-variant rounded-lg py-2 px-3 text-body-lg text-on-surface font-medium focus:ring-2 focus:ring-primary focus:outline-none appearance-none" data-kt-bud-line-input="primary_target" data-testid="kt-bud-line-primary-target">
+<select class="w-full bg-surface border border-outline-variant rounded-lg py-2 px-3 text-body-lg text-on-surface font-medium focus:ring-2 focus:ring-primary focus:outline-none appearance-none" data-kt-bud-line-input="primary_target" data-testid="kt-bud-line-primary-target" data-kt-bud-field="primary_target">
 <option value="">Select Active target…</option>
 </select>
 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
 </div>
 <div class="font-data-mono text-[12px] text-on-surface-variant px-1" data-kt-bud-line-field="primary_target_code">—</div>
+<p class="hidden text-body-sm text-error px-1" data-kt-bud-error="primary_target" data-testid="kt-bud-line-primary-target-error" role="alert"></p>
 </div>
 <div data-testid="kt-bud-line-supporting-list" data-kt-bud-line-supporting-list class="space-y-3"></div>
 <button type="button" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant font-label-caps text-label-caps text-primary hover:bg-surface-container transition-colors" data-testid="kt-bud-line-add-supporting" data-kt-bud-line-add-supporting>

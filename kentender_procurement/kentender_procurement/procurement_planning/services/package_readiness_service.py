@@ -134,7 +134,13 @@ def _demand_code_from_ref(demand_ref: str) -> str:
 def _budget_line_code_from_ref(budget_ref: str) -> str:
 	if not budget_ref:
 		return ""
-	code = frappe.db.get_value("Budget Line", budget_ref, "budget_line_code")
+	# MVP-1: generated_reference; legacy budget_line_code may be absent.
+	code = frappe.db.get_value("Budget Line", budget_ref, "generated_reference")
+	if not code:
+		try:
+			code = frappe.db.get_value("Budget Line", budget_ref, "budget_line_code")
+		except Exception:
+			code = None
 	return (code or budget_ref).strip()
 
 

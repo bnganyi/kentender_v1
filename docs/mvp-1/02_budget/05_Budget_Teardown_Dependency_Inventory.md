@@ -5,6 +5,7 @@
 **Date:** 4 August 2026  
 **Scope:** Preparatory teardown only (delete legacy Budget & Funding; no new domain yet)  
 **Authority:** BUDGET-MVP1-REQ-1.1 §16  
+**Current status:** §§1–5 are historical preparatory teardown records. Delivery truth for the MVP-1 rebuild and remaining gaps is [`04_Budget_Cross_Module_Lifecycle_Tracker.md`](04_Budget_Cross_Module_Lifecycle_Tracker.md) (see also §6).
 
 App boundary: `apps/kentender_v1/kentender_budget/` (bench symlink `apps/kentender_budget`).
 
@@ -150,4 +151,10 @@ Before DocType deletion on `kentender.midas.com`:
 
 ## 6. Status after preparatory teardown
 
-**partial / preparatory** — legacy Budget & Funding domain removed; new MVP-1 Budget not yet implemented. Funding check/reservation/alignment is intentionally non-functional until the rebuild.
+**Preparatory teardown completed** — legacy Budget & Funding domain removed.
+
+**MVP-1 Budget core rebuild is in place** — DocTypes, services, Desk portfolio screens, and the working fixture `MOH_MVP_V1` / `MOH-BUD-0001` have been restored under the implementation pack.
+
+**Completion level:** approaching **Budget Core Complete**. This is **not** Integration Ready or End-to-End Complete.
+
+Remaining funding lifecycle provider work, consumer wiring, and support gaps are tracked only in [`04_Budget_Cross_Module_Lifecycle_Tracker.md`](04_Budget_Cross_Module_Lifecycle_Tracker.md) (`XMOD-BUD-*`, `BUD-SUP-*`). Do not treat this inventory as a live Done claim for those rows.

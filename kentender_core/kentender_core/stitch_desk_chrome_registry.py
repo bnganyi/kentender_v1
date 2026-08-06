@@ -36,6 +36,15 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"headline_selector": '.kt-str-root h1, [data-testid="kt-str-portfolio"] h1',
 	},
 	{
+		"id": "strategy-plan-create",
+		"app": "kentender_strategy",
+		"fixture_rel": "public/js/strategy_ui_fixtures/create_plan.js",
+		"desk_route": "strategy-plan-create",
+		"primary_cta_testid": "kt-str-create-plan-submit",
+		"select_filter_attr": "data-kt-str-field",
+		"headline_selector": '.kt-str-root h1, [data-testid="kt-str-create-plan"] h1',
+	},
+	{
 		"id": "budget-portfolio",
 		"app": "kentender_budget",
 		"fixture_rel": "public/js/budget_ui_fixtures/portfolio.js",
@@ -109,6 +118,24 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-audit'] h1, [data-kt-bud-budget-title]",
 	},
 	{
+		"id": "budget-funding-performance",
+		"app": "kentender_budget",
+		"fixture_rel": "public/js/budget_ui_fixtures/performance.js",
+		"desk_route": "budget-funding-performance",
+		"primary_cta_testid": "kt-bud-performance-export",
+		"select_filter_attr": "data-kt-bud-perf-filter",
+		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-performance'] h1",
+	},
+	{
+		"id": "budget-check-reserve",
+		"app": "kentender_budget",
+		"fixture_rel": "public/js/budget_ui_fixtures/check_reserve.js",
+		"desk_route": "budget-check-reserve",
+		"primary_cta_testid": "kt-bud-check-reserve-reserve",
+		"select_filter_attr": "data-kt-bud-cr-filter",
+		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-check-reserve'] h1",
+	},
+	{
 		"id": "budget-revisions",
 		"app": "kentender_budget",
 		"fixture_rel": "public/js/budget_ui_fixtures/revisions.js",
@@ -154,4 +181,14 @@ REQUIRED_SHARED_CSS_MARKERS: tuple[str, ...] = (
 	# Permanent double-chevron kill (SVG Forms + Material expand_more).
 	"select:has(+ .material-symbols-outlined)",
 	"background-image: none !important",
+	# Filled primary hover must stay white on lifted navy — never #7b9ee0 ink.
+	"Filled primary hover: keep on-primary white",
+	"button.bg-primary:hover",
+	"#001536",
+	# Editable inputs: white fill — never surface #f9f9fe (reads as disabled).
+	"Editable inputs: white fill",
+	"input[type=\"number\"]",
+	"input[type=\"date\"]",
+	"background-color: #ffffff !important",
+	"background-color: #e2e2e8 !important",
 )

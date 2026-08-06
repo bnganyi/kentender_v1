@@ -655,6 +655,30 @@ frappe.provide("kentender_core.cl_surface_registry");
 		},
 		"BUD-UI-02": {
 			id: "BUD-UI-02",
+			label: "Funding Performance",
+			routePrefixes: ["budget-funding-performance"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Funding Performance"),
+				__("Monitor procurement funding coverage, commitments and exceptions."),
+				trailBudgetLeaf(__("Funding Performance")),
+				[]
+			),
+		},
+		"BUD-UI-06": {
+			id: "BUD-UI-06",
+			label: "Check and Reserve Funding",
+			routePrefixes: ["budget-check-reserve"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Check and reserve funding"),
+				__("Confirm that approved procurement funding is available before this requirement proceeds."),
+				trailBudgetLeaf(__("Check and reserve funding")),
+				[]
+			),
+		},
+		"BUD-REGISTER": {
+			id: "BUD-REGISTER",
 			label: "Register Approved Budget",
 			routePrefixes: ["budget-register"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
@@ -686,18 +710,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 				__("Review budget revision"),
 				__("Review financial, Strategy and downstream impact before applying an externally approved revision."),
 				trailBudgetLeaf(__("Review budget revision")),
-				[]
-			),
-		},
-		"BUD-UI-03": {
-			id: "BUD-UI-03",
-			label: "Budget Funding Performance",
-			routePrefixes: ["budget-funding-performance"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Funding performance"),
-				"",
-				trailBudgetLeaf(__("Funding performance")),
 				[]
 			),
 		},

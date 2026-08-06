@@ -238,14 +238,22 @@
 	max-width: 100% !important;
 	min-width: 0 !important;
 	box-sizing: border-box !important;
-	background: #f9f9fe !important;
-	border: 1px solid #c3c6d1 !important;
+	background: #ffffff !important;
+	border: 1px solid #737781 !important;
 	border-radius: 0.25rem !important;
 	padding: 0.5rem 0.75rem !important;
 	font-family: Inter, sans-serif !important;
 	font-size: 0.875rem !important;
 	color: #1a1b20 !important;
 	outline: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field input:focus,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field input:focus-visible,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field textarea:focus,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field textarea:focus-visible {
+	border-color: #001f48 !important;
+	background: #ffffff !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-rev-field input[type="date"] {
 	display: block !important;
@@ -296,9 +304,9 @@
 
 /* Evidence dropzone */
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-evidence-dropzone"] {
-	border: 2px dashed #c3c6d1 !important;
+	border: 2px dashed #737781 !important;
 	border-radius: 0.25rem !important;
-	background: #f9f9fe !important;
+	background: #ffffff !important;
 	padding: 1rem !important;
 	display: flex !important;
 	flex-direction: column !important;
@@ -533,13 +541,20 @@
 .kt-cl-shell .kt-bud-root .kt-bud-rev-change-input {
 	width: 6.5rem !important;
 	text-align: right !important;
-	background: #f4f3f9 !important;
-	border: 1px solid #c3c6d1 !important;
+	background: #ffffff !important;
+	border: 1px solid #737781 !important;
 	border-radius: 0.25rem !important;
 	padding: 0.25rem 0.5rem !important;
 	font-family: "JetBrains Mono", ui-monospace, monospace !important;
 	font-size: 0.875rem !important;
 	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-change-input:focus,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-change-input:focus-visible {
+	border-color: #001f48 !important;
+	background: #ffffff !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
+	outline: none !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-rev-change-input.is-error {
 	border-color: #ba1a1a !important;
@@ -1085,10 +1100,11 @@
 	width: 100% !important;
 	min-width: 0 !important;
 	box-sizing: border-box !important;
-	border: 1px solid #c3c6d1 !important;
+	border: 1px solid #737781 !important;
 	border-radius: 0.5rem !important;
 	padding: 0.5rem 0.75rem !important;
-	background: #f4f3f9 !important;
+	background: #ffffff !important;
+	color: #1a1b20 !important;
 	font-family: Inter, sans-serif !important;
 	font-size: 0.875rem !important;
 	resize: vertical !important;
@@ -1097,6 +1113,7 @@
 .kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-textarea:focus {
 	outline: none !important;
 	border-color: #001f48 !important;
+	background: #ffffff !important;
 	box-shadow: 0 0 0 1px #001f48 !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-footer {

@@ -1087,6 +1087,179 @@ def _usage_row(
 	}
 
 
+def _append_budget_line_usage(plan_name: str, groups: dict, rows: list[dict]) -> None:
+	"""STR-SUP-001 — dual-read Budget Line primary_* (preferred) or legacy strategy_*."""
+	if not frappe.db.exists("DocType", "Budget Line"):
+		return
+
+	seen: set[tuple[str, str]] = set()  # (line_name, target_id)
+
+	def _emit(
+		*,
+		line_name: str,
+		code: str | None,
+		title: str | None,
+		target_id: str | None,
+		snapshot_label: str | None,
+		reference_type: str,
+		status: str | None,
+		modified,
+	) -> None:
+		tid = (target_id or "").strip()
+		key = (line_name, tid or "__none__")
+		if key in seen:
+			return
+		seen.add(key)
+		row = _usage_row(
+			module="Budget",
+			doctype="Budget Line",
+			record_id=line_name,
+			code=code,
+			name=title,
+			target_id=tid or None,
+			snapshot_label=snapshot_label,
+			reference_type=reference_type,
+			status=status,
+			modified=modified,
+		)
+		groups["Budget"].append(row)
+		rows.append(row)
+
+	if frappe.db.has_column("Budget Line", "primary_plan_version_id"):
+		for b in frappe.get_all(
+			"Budget Line",
+			filters={"primary_plan_version_id": plan_name},
+			fields=[
+				"name",
+				"generated_reference",
+				"title",
+				"is_active",
+				"modified",
+				"primary_target_id",
+				"primary_snapshot_label",
+			],
+			limit=100,
+			order_by="modified desc",
+		):
+			status = "Active" if b.is_active else "Inactive"
+			_emit(
+				line_name=b.name,
+				code=b.generated_reference,
+				title=b.title,
+				target_id=b.primary_target_id,
+				snapshot_label=b.primary_snapshot_label,
+				reference_type="Primary alignment",
+				status=status,
+				modified=b.modified,
+			)
+
+		# Supporting alignments whose plan_version_id matches this plan.
+		if frappe.db.exists("DocType", "Budget Line Supporting Target"):
+			line_meta: dict[str, Any] = {}
+			for st in frappe.get_all(
+				"Budget Line Supporting Target",
+				filters={"plan_version_id": plan_name},
+				fields=[
+					"parent",
+					"target_id",
+					"snapshot_label",
+					"target_code",
+					"target_name",
+				],
+				limit=200,
+			):
+				parent = st.parent
+				if parent not in line_meta:
+					meta = frappe.db.get_value(
+						"Budget Line",
+						parent,
+						["name", "generated_reference", "title", "is_active", "modified"],
+						as_dict=True,
+					)
+					if not meta:
+						continue
+					line_meta[parent] = meta
+				meta = line_meta[parent]
+				_emit(
+					line_name=meta.name,
+					code=meta.generated_reference,
+					title=meta.title,
+					target_id=st.target_id,
+					snapshot_label=st.snapshot_label
+					or f"{st.target_code or ''} — {st.target_name or ''}".strip(" —"),
+					reference_type="Supporting alignment",
+					status="Active" if meta.is_active else "Inactive",
+					modified=meta.modified,
+				)
+		return
+
+	# Legacy Demand-shaped columns on Budget Line (pre-MVP-1 Budget rebuild).
+	if frappe.db.has_column("Budget Line", "strategy_plan_version"):
+		for b in frappe.get_all(
+			"Budget Line",
+			filters={"strategy_plan_version": plan_name},
+			fields=[
+				"name",
+				"generated_reference",
+				"title",
+				"is_active",
+				"modified",
+				"strategy_target",
+				"strategy_snapshot_label",
+			],
+			limit=100,
+			order_by="modified desc",
+		):
+			_emit(
+				line_name=b.name,
+				code=getattr(b, "generated_reference", None) or getattr(b, "budget_line_code", None),
+				title=getattr(b, "title", None) or getattr(b, "budget_line_name", None),
+				target_id=b.strategy_target,
+				snapshot_label=b.strategy_snapshot_label,
+				reference_type="Primary alignment",
+				status="Active" if getattr(b, "is_active", 1) else "Inactive",
+				modified=b.modified,
+			)
+
+
+def _append_planning_package_usage(plan_name: str, groups: dict, rows: list[dict]) -> None:
+	"""XMOD-STR-006 — Procurement Package strategy_* primary alignment rows."""
+	if not frappe.db.exists("DocType", "Procurement Package"):
+		return
+	if not frappe.db.has_column("Procurement Package", "strategy_plan_version"):
+		return
+
+	for p in frappe.get_all(
+		"Procurement Package",
+		filters={"strategy_plan_version": plan_name},
+		fields=[
+			"name",
+			"package_code",
+			"package_name",
+			"status",
+			"modified",
+			"strategy_target",
+			"strategy_snapshot_label",
+		],
+		limit=100,
+		order_by="modified desc",
+	):
+		row = _usage_row(
+			module="Planning",
+			doctype="Procurement Package",
+			record_id=p.name,
+			code=p.package_code,
+			name=p.package_name,
+			target_id=p.strategy_target,
+			snapshot_label=p.strategy_snapshot_label,
+			reference_type="Primary alignment",
+			status=p.status,
+			modified=p.modified,
+		)
+		groups["Planning"].append(row)
+		rows.append(row)
+
+
 def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = None) -> dict:
 	"""STR-UI-12 / STR-AC-017 — derived read-only downstream references."""
 	plan = _resolve_plan(plan_version, plan_code)
@@ -1132,38 +1305,10 @@ def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = 
 			groups["Demand"].append(row)
 			rows.append(row)
 
-	if frappe.db.has_column("Budget Line", "strategy_plan_version"):
-		for b in frappe.get_all(
-			"Budget Line",
-			filters={"strategy_plan_version": plan.name},
-			fields=[
-				"name",
-				"budget_line_code",
-				"budget_line_name",
-				"line_status",
-				"modified",
-				"strategy_target",
-				"strategy_snapshot_label",
-			],
-			limit=100,
-			order_by="modified desc",
-		):
-			row = _usage_row(
-				module="Budget",
-				doctype="Budget Line",
-				record_id=b.name,
-				code=b.budget_line_code,
-				name=b.budget_line_name,
-				target_id=b.strategy_target,
-				snapshot_label=b.strategy_snapshot_label,
-				reference_type="Supporting alignment",
-				status=b.line_status,
-				modified=b.modified,
-			)
-			groups["Budget"].append(row)
-			rows.append(row)
+	_append_budget_line_usage(plan.name, groups, rows)
+	_append_planning_package_usage(plan.name, groups, rows)
 
-	# Stable table order: module then modified desc already applied per query; merge Demand then Budget.
+	# Stable table order: module then modified desc already applied per query.
 	counts = {mod: len(groups[mod]) for mod in groups}
 	return {
 		"plan": {
@@ -1256,6 +1401,7 @@ def list_measurements(
 	workflow_status: str | None = None,
 ) -> dict:
 	plan = _resolve_plan(plan_version, plan_code)
+	assert_entity_in_scope(plan.procuring_entity)
 	filters: dict[str, Any] = {"plan_version": plan.name}
 	if workflow_status:
 		filters["workflow_status"] = workflow_status
