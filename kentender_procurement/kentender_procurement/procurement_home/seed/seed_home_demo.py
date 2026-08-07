@@ -11,6 +11,7 @@ Does not seed Home-specific totals — figures are computed by Home services.
 from __future__ import annotations
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import add_days, now_datetime
 
 
@@ -30,7 +31,7 @@ def seed_procurement_home_demo() -> dict:
 	summary: dict = {"procuring_entity": pe, "demands": [], "notes": []}
 
 	# DIA Demand domain retired — Home demo no longer seeds or queries Demand rows.
-	if frappe.db.exists("DocType", "Demand"):
+	if demand_consumers_live():
 		pending = frappe.get_all(
 			"Demand",
 			filters={

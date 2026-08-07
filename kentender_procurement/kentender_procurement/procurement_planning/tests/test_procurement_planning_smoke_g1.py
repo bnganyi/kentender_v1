@@ -15,6 +15,7 @@ Run (example)::
 from __future__ import annotations
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase
 from frappe.utils import cint, flt
 
@@ -62,7 +63,7 @@ def _pp_ok() -> bool:
 def _ensure_f1() -> bool:
 	if not _pp_ok():
 		return False
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return False
 	if not verify_prerequisites_for_dia().get("ok"):
 		return False

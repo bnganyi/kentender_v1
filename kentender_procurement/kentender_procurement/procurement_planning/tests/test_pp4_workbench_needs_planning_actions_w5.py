@@ -25,6 +25,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase, UnitTestCase
 
 
@@ -165,7 +166,7 @@ class TestPP4WorkbenchNeedsPlanningActionsW5FieldContract(IntegrationTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		self._skip = not (
-			frappe.db.exists("DocType", "Procurement Plan") and frappe.db.exists("DocType", "Demand")
+			frappe.db.exists("DocType", "Procurement Plan") and demand_consumers_live()
 		)
 
 	def test_include_demand_response_exposes_ok_and_inclusion_code_on_success_shape(self) -> None:

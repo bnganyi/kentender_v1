@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import flt, getdate
 
 from kentender_budget.api.dia_budget_control import get_budget_line_context
@@ -199,10 +200,8 @@ def get_approved_demand_planning_drawer(
 	if not demand_code:
 		return _fail(code="MISSING_DEMAND", message="Demand code is required.", role_key=role_key)
 
-	if not frappe.db.exists("DocType", "Demand"):
-		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-			RETIRED_MESSAGE,
-		)
+	if not demand_consumers_live():
+		from kentender_procurement.procurement_lifecycle.demand_module_gate import RETIRED_MESSAGE
 
 		return _fail(
 			code="DEMAND_MODULE_RETIRED",

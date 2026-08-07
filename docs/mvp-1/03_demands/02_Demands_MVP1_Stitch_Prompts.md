@@ -1,6 +1,6 @@
 # Demands — MVP 1 Stitch Prompts
 
-**Document ID:** DEMAND-MVP1-STITCH-1.1  
+**Document ID:** DEMAND-MVP1-STITCH-1.2  
 **Status:** Design input  
 **Date:** 7 August 2026  
 **Requirements baseline:** `DEMAND-MVP1-REQ-1.1`  
@@ -631,35 +631,187 @@ Header:
 
 Show a quiet message: “The approved Demand baseline is locked. Material change requires cancellation and a linked replacement Demand.”
 
-Use compact tabs or anchor sections:
+Use five compact tabs:
 - Overview
-- Items
+- Approved scope
 - Strategy and value
 - Funding
-- Downstream usage
-- Decisions and audit
+- Lifecycle
 
 Overview is selected.
 
 Overview content:
-1. Need — concise description, expected outcome, beneficiaries, owning unit, location and required date.
-2. Approval chain — Requester, Business Approver, Budget Officer and Procurement Approval Authority with decision dates.
-3. Funding — confirmed KES 455,000,000, reservation RSV-MOH-0001, and current condition Partially converted.
-4. Downstream usage — compact table:
-   - Procurement Plan Item PPI-MOH-2027-021 | KES 455,000,000 | Fully planned | View
-   - Tender TND-MOH-2027-008 | KES 455,000,000 | Reservation carried forward | View
-   - Contract CTR-MOH-2027-005 | KES 310,000,000 | Committed | View
-5. Current funding position:
-   - Original reservation: KES 455,000,000
-   - Converted to commitment: KES 310,000,000
-   - Remaining reserved: KES 145,000,000
+1. Demand summary
+   - One concise paragraph describing the approved need and expected outcome.
+   - Owning unit: Directorate of Digital Health and Policy
+   - Required by: 30 September 2027
+
+2. Approved position
+Use one compact summary strip, not large KPI cards:
+   - Approved amount: KES 455,000,000
+   - Funding: Reserved · Partially converted
+   - Planning usage: Fully planned
+   - Downstream records: 1 Plan Item · 1 Tender · 1 Contract
+
+3. Control summary
+Use three concise rows with quiet links to the relevant tabs:
+   - Approved scope — 2 Need Items · View approved scope
+   - Strategy and value — 1 primary target · 4 value commitments · View alignment
+   - Decisions — 4 approval controls complete · View lifecycle
+
+Do not repeat the Need Item table, Strategy hierarchy, funding breakdown, downstream table or full approval chain in Overview. Those belong in the dedicated tab states below.
 
 Use View actions only. Do not make approved fields editable and do not provide a manual Planning Ready action.
 
-Keep Cancel remaining Demand as a quiet authorised action only if it can be placed without competing with the primary read-only purpose. Do not add change-order or contract-management controls.
+Do not show Cancel remaining Demand for this fixture because its Planning usage is Fully planned. Do not add change-order or contract-management controls.
 ```
 
-**Acceptance check:** The screen clearly separates the locked approved baseline from downstream usage and preserves one funding-reservation story.
+**Acceptance check:** Overview provides a concise orientation to the approved record without duplicating the detailed content of the other tabs.
+
+---
+
+## Prompt 09A — DEM-UI-09A Approved scope tab
+
+```text
+Design the Approved scope tab state of DEM-UI-09 for DMD-MOH-2027-014.
+
+Retain the same Approved Demand header, locked-baseline message and five-tab navigation. Approved scope is selected.
+
+Show the immutable approved business and procurement baseline in three compact sections.
+
+Section 1 — Approved need
+- What is needed: Upgrade resilient compute, storage, network and monitoring infrastructure supporting national digital health services.
+- Why it is needed: Existing infrastructure is approaching capacity and has recurring controller instability affecting service continuity.
+- Expected outcome: Reliable and accessible digital clinical services with reduced interruption and faster restoration.
+- Beneficiaries: Public health facilities, clinical users and patients using national digital health services.
+
+Section 2 — Delivery and classification
+Use a compact two-column definition layout:
+- Owning unit: Directorate of Digital Health and Policy
+- Required by: 30 September 2027
+- Delivery location: National Data Centre and designated health facilities
+- Route: Standard
+- Procurement category: ICT infrastructure and services
+- Confirmed estimate: KES 455,000,000
+- Estimate basis: Market research and infrastructure assessment
+
+Section 3 — Approved Need Items
+Use a compact read-only table with columns Item, Quantity, Unit and Approved estimate.
+Rows:
+- Resilient compute and storage platform | 1 | Lot | KES 300,000,000
+- Network, monitoring and implementation services | 1 | Lot | KES 155,000,000
+
+Show “Total: KES 455,000,000” below the table.
+
+Do not show Strategy, value commitments, funding activity, approval history or downstream records in this tab. Do not provide Edit, Save or Add item actions.
+```
+
+**Acceptance check:** The tab shows exactly what scope and amount were approved, without mixing in Strategy, funding or downstream lifecycle information.
+
+---
+
+## Prompt 09B — DEM-UI-09B Strategy and value tab
+
+```text
+Design the Strategy and value tab state of DEM-UI-09 for DMD-MOH-2027-014.
+
+Retain the same Approved Demand header, locked-baseline message and five-tab navigation. Strategy and value is selected.
+
+Section 1 — Strategy alignment
+Show the immutable alignment snapshot:
+- Plan: Ministry of Health Strategic Plan 2026–2030
+- Plan version: 1
+- Outcome: Reliable and accessible digital clinical services
+- Primary target: At least 99.9% annual availability by 30 June 2028
+- Supporting target: Restore critical services within four hours by 30 June 2028
+- Supporting reason: Resilient infrastructure and monitoring support faster restoration of critical services.
+
+Show the hierarchy as readable context, not technical codes. Label the state Confirmed at approval.
+
+Section 2 — Public-value treatments
+Use a compact read-only table with columns Commitment, Approved treatment and Rationale.
+Rows:
+- Effective public services | Embedded in specification | Infrastructure supports reliable critical health services
+- Economy and efficiency | To be determined in Planning | Whole-life costing, energy use and lifecycle optimisation must be resolved during plan preparation
+- Operational resilience | Contract obligation | Redundancy, continuity and support requirements must carry forward
+- Sustainable asset lifecycle | Delivery or disposal obligation | Replaced ICT equipment requires controlled end-of-life handling
+
+Add a quiet note: “Alignment records planned support for Strategy and public value. It does not prove that an outcome has been achieved.”
+
+Do not provide Assign, Change, Remove, Edit or treatment controls on the Approved record. Do not show funding or downstream records.
+```
+
+**Acceptance check:** The tab makes the approved Strategy and public-value context traceable without implying realised outcomes or allowing retrospective changes.
+
+---
+
+## Prompt 09C — DEM-UI-09C Funding tab
+
+```text
+Design the Funding tab state of DEM-UI-09 for DMD-MOH-2027-014.
+
+Retain the same Approved Demand header, locked-baseline message and five-tab navigation. Funding is selected.
+
+Section 1 — Confirmed allocation
+Show one compact read-only allocation row:
+- Budget: Ministry of Health Procurement Budget FY 2027/28
+- Budget line: Digital clinical systems infrastructure
+- Confirmed allocation: KES 455,000,000
+- Budget Officer: Peter Otieno
+- Confirmed on: 15 August 2027
+- Strategy consistency: Aligned
+
+Section 2 — Reservation position
+Use a compact financial summary or table:
+- Reservation: RSV-MOH-0001
+- Original reservation: KES 455,000,000
+- Converted to commitment: KES 310,000,000
+- Remaining reserved: KES 145,000,000
+- Condition: Partially converted
+
+Show the equation plainly:
+“KES 455,000,000 original = KES 310,000,000 committed + KES 145,000,000 remaining reserved.”
+
+Add a quiet note: “The reservation identity carries forward through Planning and Tendering. Contract and downstream record details are shown under Lifecycle.”
+
+Do not show editable allocations, Adjust allocation, Confirm funding, general-ledger data, expenditure controls or a second Budget dashboard.
+```
+
+**Acceptance check:** The tab explains the confirmed allocation and current reservation position without duplicating downstream lifecycle details or enabling financial mutation.
+
+---
+
+## Prompt 09D — DEM-UI-09D Lifecycle tab
+
+```text
+Design the Lifecycle tab state of DEM-UI-09 for DMD-MOH-2027-014.
+
+Retain the same Approved Demand header, locked-baseline message and five-tab navigation. Lifecycle is selected.
+
+Section 1 — Downstream usage
+Use a compact table with columns Record, Value, Relationship, Status and Action.
+Rows:
+- Procurement Plan Item PPI-MOH-2027-021 | KES 455,000,000 | Consumes approved Demand | Fully planned | View
+- Tender TND-MOH-2027-008 | KES 455,000,000 | Carries reservation RSV-MOH-0001 | Reservation carried forward | View
+- Contract CTR-MOH-2027-005 | KES 310,000,000 | Converts part of reservation | Committed | View
+
+Section 2 — Decisions
+Use a compact chronological timeline:
+- Request submitted — Dr Miriam Njeri
+- Business supported — James Mwangi — 12 August 2027
+- Procurement enrichment completed — Grace Wanjiku — 14 August 2027
+- Funding confirmed — Peter Otieno — 15 August 2027
+- Demand approved and funds reserved — Grace Wanjiku — 16 August 2027
+
+Section 3 — Audit history
+Show a compact recent-history list with Date and time, Actor, Action and Reason or result. Provide View full audit as a quiet action if more events exist.
+
+Keep Planning usage separate from Demand status: the Demand remains Approved while usage is Fully planned.
+
+Use View actions only. Do not add Planning, Tender, Contract or audit mutation controls.
+```
+
+**Acceptance check:** The tab presents one traceable lifecycle from approval decisions through Planning, Tender and Contract while preserving the original Demand and reservation identities.
 
 ---
 
@@ -750,10 +902,11 @@ Before accepting the Stitch designs, confirm that:
 13. Approved and Planning usage are shown as separate concepts.
 14. Emergency is a route, not an approval status or procurement method.
 15. The approved Demand detail is read-only.
-16. No screen creates a duplicate reservation or implies that Demand approval creates a commitment.
-17. No screen claims realised savings, compliance, qualification or Strategy achievement without evidence.
-18. Ministry-only views do not expose the County fixture.
-19. The designs are compact, accessible and practical at 1440 px and tablet widths.
+16. The approved Demand detail uses five distinct tabs; Overview summarises but does not duplicate their detailed content.
+17. No screen creates a duplicate reservation or implies that Demand approval creates a commitment.
+18. No screen claims realised savings, compliance, qualification or Strategy achievement without evidence.
+19. Ministry-only views do not expose the County fixture.
+20. The designs are compact, accessible and practical at 1440 px and tablet widths.
 
 ## 4. Explicit exclusions for Stitch
 

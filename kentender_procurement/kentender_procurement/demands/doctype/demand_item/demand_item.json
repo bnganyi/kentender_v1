@@ -1,0 +1,271 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-07 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "demand",
+  "item_code",
+  "description",
+  "col_a",
+  "quantity",
+  "uom",
+  "requester_estimate",
+  "section_confirmed",
+  "confirmed_quantity",
+  "confirmed_uom",
+  "confirmed_estimate",
+  "col_b",
+  "required_by_date",
+  "delivery_location",
+  "section_planning",
+  "consumed_quantity",
+  "consumed_amount",
+  "remaining_quantity",
+  "remaining_amount",
+  "currency",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "demand",
+   "fieldtype": "Link",
+   "label": "Demand",
+   "options": "Demand",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "label": "Item Code",
+   "unique": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": "Col A"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "Unit of Measure"
+  },
+  {
+   "fieldname": "requester_estimate",
+   "fieldtype": "Currency",
+   "label": "Requester Estimate",
+   "options": "currency"
+  },
+  {
+   "fieldname": "section_confirmed",
+   "fieldtype": "Section Break",
+   "label": "Confirmed Values"
+  },
+  {
+   "fieldname": "confirmed_quantity",
+   "fieldtype": "Float",
+   "label": "Confirmed Quantity"
+  },
+  {
+   "fieldname": "confirmed_uom",
+   "fieldtype": "Data",
+   "label": "Confirmed Unit of Measure"
+  },
+  {
+   "fieldname": "confirmed_estimate",
+   "fieldtype": "Currency",
+   "label": "Confirmed Estimate",
+   "options": "currency"
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break",
+   "label": "Col B"
+  },
+  {
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "label": "Required By Date Override"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Data",
+   "label": "Delivery Location Override"
+  },
+  {
+   "fieldname": "section_planning",
+   "fieldtype": "Section Break",
+   "label": "Planning Derived"
+  },
+  {
+   "fieldname": "consumed_quantity",
+   "fieldtype": "Float",
+   "label": "Consumed Quantity",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "consumed_amount",
+   "fieldtype": "Currency",
+   "label": "Consumed Amount",
+   "options": "currency",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "remaining_quantity",
+   "fieldtype": "Float",
+   "label": "Remaining Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remaining_amount",
+   "fieldtype": "Currency",
+   "label": "Remaining Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "KES"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Demands",
+ "name": "Demand Item",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requester",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Business Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Approval Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Demand Viewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "description",
+ "search_fields": "item_code,description"
+}

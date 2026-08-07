@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import get_datetime, now_datetime
 
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
@@ -39,7 +40,7 @@ _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
 def _count_demands_under_review(pe: str) -> int:
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return 0
 	return int(
 		frappe.db.count(
@@ -53,7 +54,7 @@ def _count_demands_under_review(pe: str) -> int:
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return 0
 	try:
 		from kentender_procurement.procurement_planning.services.approved_demand_queue import (

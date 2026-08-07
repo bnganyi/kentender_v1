@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import cint, flt, getdate
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
@@ -496,10 +497,8 @@ def get_approved_demands_for_queue(
 	queue_key = _normalize_queue_key(filters)
 	filters["queue"] = queue_key
 
-	if not frappe.db.exists("DocType", "Demand"):
-		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-			RETIRED_MESSAGE,
-		)
+	if not demand_consumers_live():
+		from kentender_procurement.procurement_lifecycle.demand_module_gate import RETIRED_MESSAGE
 
 		return {
 			"ok": True,

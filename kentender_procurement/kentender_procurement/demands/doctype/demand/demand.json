@@ -1,0 +1,476 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-07 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "demand_code",
+  "title",
+  "col_identity",
+  "procuring_entity",
+  "owner_org_unit",
+  "delivery_org_unit",
+  "section_contacts",
+  "requester",
+  "technical_contact",
+  "current_owner",
+  "section_need",
+  "need_statement",
+  "expected_outcome",
+  "beneficiaries",
+  "col_need",
+  "delivery_location",
+  "required_by_date",
+  "section_route",
+  "demand_route",
+  "urgency",
+  "route_justification",
+  "section_estimates",
+  "requester_estimate",
+  "estimate_source",
+  "estimate_confidence",
+  "col_est",
+  "confirmed_estimate",
+  "currency",
+  "estimate_basis",
+  "procurement_category",
+  "section_workflow",
+  "status",
+  "current_stage",
+  "col_wf",
+  "planning_ready",
+  "planning_usage",
+  "section_baseline",
+  "approved_baseline_version",
+  "approved_baseline_snapshot",
+  "section_links",
+  "original_demand",
+  "replacement_demand",
+  "section_dates",
+  "submitted_at",
+  "approved_at",
+  "col_dates",
+  "rejected_at",
+  "cancelled_at",
+  "section_fixture",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "demand_code",
+   "fieldtype": "Data",
+   "label": "Demand Reference",
+   "unique": 1,
+   "in_list_view": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break",
+   "label": "Col Identity"
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "delivery_org_unit",
+   "fieldtype": "Link",
+   "label": "Delivery Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "section_contacts",
+   "fieldtype": "Section Break",
+   "label": "Contacts"
+  },
+  {
+   "fieldname": "requester",
+   "fieldtype": "Link",
+   "label": "Requester",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "technical_contact",
+   "fieldtype": "Data",
+   "label": "Technical Contact"
+  },
+  {
+   "fieldname": "current_owner",
+   "fieldtype": "Link",
+   "label": "Current Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_need",
+   "fieldtype": "Section Break",
+   "label": "Business Need"
+  },
+  {
+   "fieldname": "need_statement",
+   "fieldtype": "Text",
+   "label": "Need Statement"
+  },
+  {
+   "fieldname": "expected_outcome",
+   "fieldtype": "Text",
+   "label": "Expected Outcome"
+  },
+  {
+   "fieldname": "beneficiaries",
+   "fieldtype": "Small Text",
+   "label": "Beneficiaries"
+  },
+  {
+   "fieldname": "col_need",
+   "fieldtype": "Column Break",
+   "label": "Col Need"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Data",
+   "label": "Delivery Location"
+  },
+  {
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "label": "Required By Date"
+  },
+  {
+   "fieldname": "section_route",
+   "fieldtype": "Section Break",
+   "label": "Route And Urgency"
+  },
+  {
+   "fieldname": "demand_route",
+   "fieldtype": "Select",
+   "label": "Demand Route",
+   "options": "Standard\nAdditional\nEmergency",
+   "default": "Standard",
+   "reqd": 1
+  },
+  {
+   "fieldname": "urgency",
+   "fieldtype": "Select",
+   "label": "Urgency",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "default": "Medium"
+  },
+  {
+   "fieldname": "route_justification",
+   "fieldtype": "Small Text",
+   "label": "Route Justification"
+  },
+  {
+   "fieldname": "section_estimates",
+   "fieldtype": "Section Break",
+   "label": "Estimates"
+  },
+  {
+   "fieldname": "requester_estimate",
+   "fieldtype": "Currency",
+   "label": "Requester Estimate",
+   "options": "currency"
+  },
+  {
+   "fieldname": "estimate_source",
+   "fieldtype": "Data",
+   "label": "Estimate Source"
+  },
+  {
+   "fieldname": "estimate_confidence",
+   "fieldtype": "Select",
+   "label": "Estimate Confidence",
+   "options": "Low\nMedium\nHigh"
+  },
+  {
+   "fieldname": "col_est",
+   "fieldtype": "Column Break",
+   "label": "Col Est"
+  },
+  {
+   "fieldname": "confirmed_estimate",
+   "fieldtype": "Currency",
+   "label": "Confirmed Estimate",
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "KES",
+   "reqd": 1
+  },
+  {
+   "fieldname": "estimate_basis",
+   "fieldtype": "Small Text",
+   "label": "Estimate Basis"
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Data",
+   "label": "Procurement Category"
+  },
+  {
+   "fieldname": "section_workflow",
+   "fieldtype": "Section Break",
+   "label": "Workflow"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nIn Review\nReturned\nApproved\nRejected\nCancelled",
+   "default": "Draft",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_stage",
+   "fieldtype": "Select",
+   "label": "Current Stage",
+   "options": "Request Preparation\nBusiness Review\nProcurement Enrichment\nBudget Confirmation\nFinal Approval\nComplete",
+   "default": "Request Preparation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_wf",
+   "fieldtype": "Column Break",
+   "label": "Col Wf"
+  },
+  {
+   "fieldname": "planning_ready",
+   "fieldtype": "Check",
+   "label": "Planning Ready",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planning_usage",
+   "fieldtype": "Select",
+   "label": "Planning Usage",
+   "options": "Not taken up\nPartially planned\nFully planned",
+   "default": "Not taken up",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_baseline",
+   "fieldtype": "Section Break",
+   "label": "Approved Baseline"
+  },
+  {
+   "fieldname": "approved_baseline_version",
+   "fieldtype": "Int",
+   "label": "Approved Baseline Version",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_baseline_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Approved Baseline Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_links",
+   "fieldtype": "Section Break",
+   "label": "Linked Demands"
+  },
+  {
+   "fieldname": "original_demand",
+   "fieldtype": "Link",
+   "label": "Original Demand",
+   "options": "Demand"
+  },
+  {
+   "fieldname": "replacement_demand",
+   "fieldtype": "Link",
+   "label": "Replacement Demand",
+   "options": "Demand"
+  },
+  {
+   "fieldname": "section_dates",
+   "fieldtype": "Section Break",
+   "label": "Lifecycle Dates"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_dates",
+   "fieldtype": "Column Break",
+   "label": "Col Dates"
+  },
+  {
+   "fieldname": "rejected_at",
+   "fieldtype": "Datetime",
+   "label": "Rejected At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_fixture",
+   "fieldtype": "Section Break",
+   "label": "Fixture Ownership",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Demands",
+ "name": "Demand",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requester",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Business Approver",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Approval Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Demand Viewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "title",
+ "search_fields": "demand_code,title,status"
+}

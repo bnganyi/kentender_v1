@@ -1,0 +1,278 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-07 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "demand",
+  "budget",
+  "budget_line",
+  "col_a",
+  "allocation_amount",
+  "currency",
+  "matching_source",
+  "section_check",
+  "funds_check_result",
+  "funds_check_at",
+  "section_confirm",
+  "bo_confirmation_status",
+  "bo_confirmed_by",
+  "bo_confirmed_at",
+  "adjustment_reason",
+  "section_reservation",
+  "funding_reservation",
+  "reservation_status",
+  "availability_before",
+  "availability_after",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "demand",
+   "fieldtype": "Link",
+   "label": "Demand",
+   "options": "Demand",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": "Col A"
+  },
+  {
+   "fieldname": "allocation_amount",
+   "fieldtype": "Currency",
+   "label": "Allocation Amount",
+   "options": "currency",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "KES",
+   "reqd": 1
+  },
+  {
+   "fieldname": "matching_source",
+   "fieldtype": "Select",
+   "label": "Matching Source",
+   "options": "Automatic\nBudget Officer",
+   "default": "Automatic",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_check",
+   "fieldtype": "Section Break",
+   "label": "Funds Check"
+  },
+  {
+   "fieldname": "funds_check_result",
+   "fieldtype": "Data",
+   "label": "Funds Check Result"
+  },
+  {
+   "fieldname": "funds_check_at",
+   "fieldtype": "Datetime",
+   "label": "Funds Check At"
+  },
+  {
+   "fieldname": "section_confirm",
+   "fieldtype": "Section Break",
+   "label": "Budget Officer Confirmation"
+  },
+  {
+   "fieldname": "bo_confirmation_status",
+   "fieldtype": "Select",
+   "label": "BO Confirmation Status",
+   "options": "Pending\nConfirmed\nAdjusted\nReturned",
+   "default": "Pending"
+  },
+  {
+   "fieldname": "bo_confirmed_by",
+   "fieldtype": "Link",
+   "label": "Confirmed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "bo_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Confirmed At"
+  },
+  {
+   "fieldname": "adjustment_reason",
+   "fieldtype": "Small Text",
+   "label": "Recommendation Adjustment Reason"
+  },
+  {
+   "fieldname": "section_reservation",
+   "fieldtype": "Section Break",
+   "label": "Reservation"
+  },
+  {
+   "fieldname": "funding_reservation",
+   "fieldtype": "Link",
+   "label": "Funding Reservation",
+   "options": "Funding Reservation"
+  },
+  {
+   "fieldname": "reservation_status",
+   "fieldtype": "Data",
+   "label": "Reservation Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "availability_before",
+   "fieldtype": "Currency",
+   "label": "Availability Before Reservation",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "availability_after",
+   "fieldtype": "Currency",
+   "label": "Availability After Reservation",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Demands",
+ "name": "Demand Funding Allocation",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requester",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Business Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Approval Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Demand Viewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "budget_line"
+}

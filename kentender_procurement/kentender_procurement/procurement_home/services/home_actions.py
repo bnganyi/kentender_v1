@@ -9,6 +9,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import getdate
 
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
@@ -64,7 +65,7 @@ def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[
 		"finance_approved_at",
 	]
 
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return items
 
 	if "Department Approver" in roles or "System Manager" in roles or user == "Administrator":

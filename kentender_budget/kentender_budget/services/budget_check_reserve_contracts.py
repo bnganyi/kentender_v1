@@ -89,14 +89,27 @@ def _demand_context(demand: str | None) -> dict[str, str]:
 	# Prefer Demand DocType when present; else treat key as business code.
 	name = key
 	if not frappe.db.exists("Demand", name):
-		name = frappe.db.get_value("Demand", {"demand_id": key}, "name") or ""
+		name = (
+			frappe.db.get_value("Demand", {"demand_code": key}, "name")
+			or frappe.db.get_value("Demand", {"demand_id": key}, "name")
+			or ""
+		)
 	if name and frappe.db.exists("Demand", name):
 		doc = frappe.get_doc("Demand", name)
 		return {
 			"demand_id": name,
-			"demand_code": (getattr(doc, "demand_id", None) or name),
+			"demand_code": (
+				getattr(doc, "demand_code", None)
+				or getattr(doc, "demand_id", None)
+				or name
+			),
 			"demand_title": (doc.title or doc.name or ""),
-			"department": (getattr(doc, "requesting_department", None) or getattr(doc, "department", None) or ""),
+			"department": (
+				getattr(doc, "owner_org_unit", None)
+				or getattr(doc, "requesting_department", None)
+				or getattr(doc, "department", None)
+				or ""
+			),
 		}
 	return {
 		"demand_id": "",
@@ -114,7 +127,13 @@ def check_funding(
 ) -> dict[str, Any]:
 	"""Read-only funding check (BUD-FR-060/061 / BUD-AC-008). Does not mutate balances."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER,
+		ROLE_OFFICER,
+		ROLE_REVIEWER,
+		ROLE_AUTHORITY,
+		ROLE_AUDITOR,
+		"System Manager",
+		"Procurement Approval Authority",
 	)
 	line = _resolve_line(budget_line or "")
 	bud = _active_budget(line.budget)
@@ -187,7 +206,14 @@ def reserve_funding(
 	procuring_entity: str | None = None,
 ) -> dict[str, Any]:
 	"""Create a Funding Reservation from an authorised Demand event (BUD-FR-062–066)."""
-	require_any_role(ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager")
+	# PAA final-approval path triggers reservation (Demands MVP-1 DEM-SVC-010).
+	require_any_role(
+		ROLE_OFFICER,
+		ROLE_REVIEWER,
+		ROLE_AUTHORITY,
+		"System Manager",
+		"Procurement Approval Authority",
+	)
 	key = (idempotency_key or "").strip()
 	if key:
 		existing = frappe.db.get_value(
@@ -335,7 +361,13 @@ def list_active_lines_for_check(
 ) -> list[dict[str, Any]]:
 	"""Active Budget Lines for the Check/Reserve line selector."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER,
+		ROLE_OFFICER,
+		ROLE_REVIEWER,
+		ROLE_AUTHORITY,
+		ROLE_AUDITOR,
+		"System Manager",
+		"Procurement Approval Authority",
 	)
 	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
 	if not pe and frappe.session.user != "Administrator":

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Approved Demand: Strategy and value</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#1d4681",
+                        "surface-tint": "#395e9b",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#004c7c",
+                        "primary-container": "#00346f",
+                        "on-primary-container": "#7b9ee0",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "background": "#f9f9fe",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#737781",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#26364b",
+                        "surface-variant": "#e2e2e8",
+                        "status-available": "#10B981",
+                        "surface-container-high": "#e8e7ed",
+                        "outline-variant": "#c3c6d1",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eceef0",
+                        "border-subtle": "#E2E8F0",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#7bbeff",
+                        "secondary-fixed": "#cfe5ff",
+                        "surface-container-low": "#f4f3f9",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#01629d",
+                        "on-background": "#1a1b20",
+                        "data-block-bg": "#FFFFFF",
+                        "surface-dim": "#dad9df",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1b20",
+                        "inverse-primary": "#abc7ff",
+                        "tertiary": "#102135",
+                        "tertiary-fixed": "#d3e4ff",
+                        "inverse-surface": "#2f3035",
+                        "status-reserved": "#F59E0B",
+                        "on-primary-fixed": "#001b3f",
+                        "on-tertiary-container": "#8f9fb8",
+                        "primary-fixed": "#d7e2ff",
+                        "primary-fixed-dim": "#abc7ff",
+                        "secondary-fixed-dim": "#99cbff",
+                        "status-exhausted": "#EF4444",
+                        "surface-bright": "#f9f9fe",
+                        "primary": "#001f48",
+                        "on-secondary-fixed": "#001d34",
+                        "surface": "#f9f9fe",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-surface-variant": "#434750",
+                        "status-committed": "#6366F1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-padding": "16px",
+                        "card-padding": "20px",
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "base-unit": "4px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- Side Navigation Shell (Hidden on Mobile) -->
+<nav class="hidden md:flex flex-col h-screen w-64 py-6 px-4 space-y-2 bg-surface-container-low border-r border-border-subtle sticky top-0 shrink-0">
+<div class="mb-8 px-2">
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">KenTender</h1>
+<p class="text-label-caps font-label-caps text-on-surface-variant mt-1">Procurement Portal</p>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center px-3 py-2.5 bg-primary-container text-on-primary-container font-bold rounded-lg group transition-all scale-[0.99]" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">event_note</span>
+<span class="text-label-caps font-label-caps">Planning</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">assignment_turned_in</span>
+<span class="text-label-caps font-label-caps">Requisition</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">gavel</span>
+<span class="text-label-caps font-label-caps">Tendering</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">analytics</span>
+<span class="text-label-caps font-label-caps">Evaluation</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">verified_user</span>
+<span class="text-label-caps font-label-caps">Award</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">history_edu</span>
+<span class="text-label-caps font-label-caps">Contract Management</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg group transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">archive</span>
+<span class="text-label-caps font-label-caps">Closeout</span>
+</a>
+</div>
+<div class="mt-auto space-y-1 pt-4 border-t border-border-subtle">
+<a class="flex items-center px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">settings</span>
+<span class="text-label-caps font-label-caps">Settings</span>
+</a>
+<a class="flex items-center px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">receipt_long</span>
+<span class="text-label-caps font-label-caps">Audit Log</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar (Mobile & Global Actions) -->
+<header class="bg-surface-container-lowest border-b border-border-subtle flex justify-between items-center w-full px-6 py-3 z-50 sticky top-0 shrink-0">
+<div class="flex items-center gap-4 md:hidden">
+<span class="material-symbols-outlined text-primary cursor-pointer text-[24px]">menu</span>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">KenTender</h1>
+</div>
+<div class="hidden md:flex flex-1">
+<!-- Spacer for desktop -->
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 transition-all" placeholder="Search..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors hidden sm:block">
+<span class="material-symbols-outlined text-[24px]">help</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm ml-2 shrink-0">
+                    JD
+                </div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+<div class="max-w-[1200px] mx-auto space-y-6">
+<!-- Header Section -->
+<div class="space-y-4">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-data-mono font-data-mono text-on-surface-variant">DMD-MOH-2027-014</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface text-[11px] font-bold uppercase tracking-wider">Standard Route</span>
+</div>
+<h2 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-surface">Data Centre Modernisation – Phase II</h2>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-end">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Confirmed Estimate</span>
+<span class="text-headline-md font-headline-md text-on-surface">KES 455,000,000</span>
+</div>
+</div>
+</div>
+<!-- Status Bar -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding flex flex-wrap items-center gap-y-4 gap-x-8">
+<div class="flex items-center gap-2">
+<span class="h-3 w-3 rounded-full bg-status-available"></span>
+<span class="text-label-caps font-label-caps text-on-surface">Status: Approved</span>
+</div>
+<div class="h-4 w-px bg-border-subtle hidden sm:block"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-committed text-[18px]">verified</span>
+<span class="text-body-md font-body-md text-on-surface">Planning usage: Fully planned</span>
+</div>
+</div>
+<!-- Info Message -->
+<div class="bg-secondary-fixed/50 border border-secondary-fixed-dim rounded-lg p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">lock</span>
+<p class="text-body-md font-body-md text-on-surface">
+<strong class="font-semibold text-secondary">Locked Baseline:</strong> This demand is approved. Strategy and value definitions are locked to preserve the approval baseline.
+                        </p>
+</div>
+</div>
+<!-- Tabs -->
+<div class="border-b border-border-subtle overflow-x-auto no-scrollbar">
+<nav class="-mb-px flex space-x-6 min-w-max">
+<a class="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface text-label-caps font-label-caps transition-colors" href="#">Overview</a>
+<a class="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface text-label-caps font-label-caps transition-colors" href="#">Approved scope</a>
+<a class="whitespace-nowrap pb-3 px-1 border-b-2 border-primary text-primary text-label-caps font-label-caps" href="#">Strategy and value</a>
+<a class="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface text-label-caps font-label-caps transition-colors" href="#">Funding</a>
+<a class="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface text-label-caps font-label-caps transition-colors" href="#">Lifecycle</a>
+</nav>
+</div>
+<!-- Tab Content: Strategy and value -->
+<div class="space-y-section-gap pt-4">
+<!-- Section 1: Strategy Alignment -->
+<section class="space-y-4">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Strategy alignment <span class="text-body-md font-body-md font-normal text-on-surface-variant ml-2">(Confirmed at approval)</span></h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Plan Details Card -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding">
+<div class="flex items-center gap-2 mb-4 text-on-surface-variant pb-3 border-b border-border-subtle">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+<h4 class="text-label-caps font-label-caps">Strategic Framework</h4>
+</div>
+<div class="space-y-4">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Plan</div>
+<div class="text-body-lg font-body-lg text-on-surface font-medium">Ministry of Health Strategic Plan 2026–2030</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Plan Version</div>
+<div class="text-data-mono font-data-mono text-on-surface">v1.0</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Strategic Outcome</div>
+<div class="text-body-md font-body-md text-on-surface bg-surface p-3 rounded border border-border-subtle">Reliable and accessible digital clinical services</div>
+</div>
+</div>
+</div>
+<!-- Targets Card -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding">
+<div class="flex items-center gap-2 mb-4 text-on-surface-variant pb-3 border-b border-border-subtle">
+<span class="material-symbols-outlined text-[20px]">track_changes</span>
+<h4 class="text-label-caps font-label-caps">Target Contributions</h4>
+</div>
+<div class="space-y-5">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary block"></span> Primary target</div>
+<div class="text-body-md font-body-md text-on-surface">At least 99.9% annual availability by 30 June 2028</div>
+</div>
+<div class="pl-3 border-l-2 border-border-subtle space-y-4">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Supporting target</div>
+<div class="text-body-md font-body-md text-on-surface">Restore critical services within four hours by 30 June 2028</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Supporting reason</div>
+<div class="text-body-md font-body-md text-on-surface italic text-on-surface-variant">Resilient infrastructure and monitoring support faster restoration of critical services.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Public-value treatments -->
+<section class="space-y-4">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Public-value treatments</h3>
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-border-subtle">
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Commitment</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Approved treatment</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Rationale</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface font-medium">Effective public services</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary-fixed text-on-secondary-fixed-variant">Embedded in specification</span>
+</td>
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface-variant">Infrastructure supports reliable critical health services</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface font-medium">Economy and efficiency</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-variant text-on-surface-variant">To be determined in Planning</span>
+</td>
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface-variant">Whole-life costing, energy use and lifecycle optimisation must be resolved during plan preparation</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface font-medium">Operational resilience</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-fixed text-on-primary-fixed">Contract obligation</span>
+</td>
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface-variant">Redundancy, continuity and support requirements must carry forward</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface font-medium">Sustainable asset lifecycle</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-tertiary-fixed text-on-tertiary-fixed">Delivery or disposal obligation</span>
+</td>
+<td class="py-3 px-4 text-body-md font-body-md text-on-surface-variant">Replaced ICT equipment requires controlled end-of-life handling</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Section 3: Governance Note -->
+<div class="pt-2">
+<p class="text-body-md font-body-md text-on-surface-variant text-sm flex items-center gap-2 italic">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                            Alignment records planned support for Strategy and public value. It does not prove that an outcome has been achieved.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell (Mobile Only) -->
+<nav class="md:hidden flex justify-between items-center w-full px-2 py-2 bg-surface-container-lowest border-t border-border-subtle sticky bottom-0 z-50">
+<a class="flex flex-col items-center justify-center p-2 text-primary" href="#">
+<div class="px-4 py-1 rounded-full bg-primary-container mb-1">
+<span class="material-symbols-outlined text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">event_note</span>
+</div>
+<span class="text-[10px] font-label-caps font-bold">Planning</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">assignment_turned_in</span>
+<span class="text-[10px] font-label-caps">Requisition</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">gavel</span>
+<span class="text-[10px] font-label-caps">Tendering</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">more_horiz</span>
+<span class="text-[10px] font-label-caps">More</span>
+</a>
+</nav>
+</body></html>

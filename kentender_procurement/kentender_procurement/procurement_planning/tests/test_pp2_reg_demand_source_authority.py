@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_lifecycle.demand_journey_bootstrap import (
@@ -30,7 +31,7 @@ class TestPP2RegDemandSourceAuthority(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
-		if not frappe.db.exists("DocType", "Demand") or not frappe.db.exists("DocType", "Procurement Plan"):
+		if not demand_consumers_live() or not frappe.db.exists("DocType", "Procurement Plan"):
 			self._skip = True
 			return
 		self._skip = False

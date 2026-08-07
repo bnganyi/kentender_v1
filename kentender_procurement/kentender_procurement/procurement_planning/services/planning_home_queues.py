@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import add_days, cint, flt, fmt_money, getdate, nowdate
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
@@ -382,7 +383,7 @@ def _released_recently_rows(actor: str, *, limit: int) -> tuple[list[dict[str, A
 
 
 def _blocked_demand_rows(actor: str) -> list[dict[str, Any]]:
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return []
 	clauses = _base_demand_filters({})
 	allowed_entities = pp_scope.get_user_allowed_entities(actor)

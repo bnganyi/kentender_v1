@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-07 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "demand",
+  "plan_value_commitment",
+  "pvc_version_id",
+  "pvc_snapshot",
+  "col_a",
+  "applicability",
+  "treatment",
+  "rationale",
+  "section_confirm",
+  "confirmed_by",
+  "confirmed_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "demand",
+   "fieldtype": "Link",
+   "label": "Demand",
+   "options": "Demand",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plan_value_commitment",
+   "fieldtype": "Link",
+   "label": "Plan Value Commitment",
+   "options": "Plan Value Commitment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pvc_version_id",
+   "fieldtype": "Data",
+   "label": "PVC Version Identifier"
+  },
+  {
+   "fieldname": "pvc_snapshot",
+   "fieldtype": "Small Text",
+   "label": "PVC Snapshot"
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": "Col A"
+  },
+  {
+   "fieldname": "applicability",
+   "fieldtype": "Data",
+   "label": "Applicability"
+  },
+  {
+   "fieldname": "treatment",
+   "fieldtype": "Small Text",
+   "label": "Proposed Downstream Treatment",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rationale",
+   "fieldtype": "Small Text",
+   "label": "Rationale"
+  },
+  {
+   "fieldname": "section_confirm",
+   "fieldtype": "Section Break",
+   "label": "Confirmation"
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Link",
+   "label": "Confirmed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Confirmed At"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Demands",
+ "name": "Demand Value Treatment",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requester",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Business Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Approval Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Demand Viewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "treatment"
+}

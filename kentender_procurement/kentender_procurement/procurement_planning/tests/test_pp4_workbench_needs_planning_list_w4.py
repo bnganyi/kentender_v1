@@ -29,6 +29,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase, UnitTestCase
 
 from kentender_procurement.procurement_planning.services.approved_demand_queue import (
@@ -41,7 +42,7 @@ def _router_path() -> Path:
 
 
 def _pp_ok() -> bool:
-	return bool(frappe.db.exists("DocType", "Procurement Plan")) and bool(frappe.db.exists("DocType", "Demand"))
+	return bool(frappe.db.exists("DocType", "Procurement Plan")) and bool(demand_consumers_live())
 
 
 class TestPP4WorkbenchNeedsPlanningListW4Source(UnitTestCase):

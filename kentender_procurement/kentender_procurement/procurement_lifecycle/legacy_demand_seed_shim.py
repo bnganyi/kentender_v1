@@ -13,6 +13,7 @@ from __future__ import annotations
 from unittest import SkipTest
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 
 from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
 	WORKS_DEMAND_CODE,
@@ -28,7 +29,7 @@ DEMAND_TITLE = WORKS_DEMAND_TITLE
 
 def upsert_works_master_demand() -> dict:
 	"""Former DIA WORKS demand seed — retired; tests must skip."""
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		raise SkipTest(
 			"Demand Intake retired pending Demands MVP-1 rebuild "
 			"(docs/mvp-1/03_demands/05_Demands_Teardown_Dependency_Inventory.md)."

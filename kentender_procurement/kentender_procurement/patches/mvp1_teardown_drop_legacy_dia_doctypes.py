@@ -51,6 +51,10 @@ def _delete_all_rows(doctype: str) -> None:
 
 
 def execute() -> None:
+	# Demands MVP-1 rebuild owns Demand DocTypes under Module Def "Demands".
+	if frappe.db.exists("Module Def", "Demands"):
+		return
+
 	# Children before parents.
 	for name in LEGACY_DOCTYPES:
 		_delete_all_rows(name)

@@ -9,6 +9,7 @@ import json
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import cint, flt, now_datetime
 
@@ -125,7 +126,7 @@ def _load_active_lines(package_code: str) -> list[dict[str, Any]]:
 def _demand_code_from_ref(demand_ref: str) -> str:
 	if not demand_ref:
 		return ""
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return demand_ref
 	row = frappe.db.get_value("Demand", demand_ref, ("demand_id", "name"), as_dict=True)
 	if not row:

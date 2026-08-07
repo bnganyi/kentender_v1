@@ -61,6 +61,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 
 from kentender_procurement.procurement_lifecycle.handoff_card_service import (
     create_or_update_handoff_card,
@@ -184,10 +185,8 @@ def create_demand_approval_certificate(
     dem_code = demand_code.strip()
     jrn_code = journey_code.strip()
 
-    if not frappe.db.exists("DocType", "Demand"):
-        from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-            RETIRED_MESSAGE,
-        )
+    if not demand_consumers_live():
+        from kentender_procurement.procurement_lifecycle.demand_module_gate import RETIRED_MESSAGE
 
         raise ValueError(f"DEMAND_MODULE_RETIRED: {RETIRED_MESSAGE}")
 

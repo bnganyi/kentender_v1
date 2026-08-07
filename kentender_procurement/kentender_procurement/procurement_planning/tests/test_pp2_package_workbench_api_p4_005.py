@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase
 from frappe.utils import flt
 
@@ -181,7 +182,7 @@ class TestPP2PackageWorkbenchApiP4005(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		frappe.set_user("Administrator")
-		if not _pp_ok() or not frappe.db.exists("DocType", "Demand"):
+		if not _pp_ok() or not demand_consumers_live():
 			cls._skip = True
 			return
 		cls._skip = False

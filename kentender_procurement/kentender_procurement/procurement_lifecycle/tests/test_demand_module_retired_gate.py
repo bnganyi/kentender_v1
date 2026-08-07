@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""DIA preparatory teardown — Demand module gate + Planning queue fail-closed."""
+"""Demands MVP-1 — consumers stay fail-closed until CONSUMERS_LIVE."""
 
 from __future__ import annotations
 
@@ -10,21 +10,25 @@ from frappe.tests import IntegrationTestCase
 
 
 class TestDemandModuleRetiredGate(IntegrationTestCase):
-	def test_demand_doctype_absent_after_teardown(self) -> None:
+	def test_consumers_gated_while_schema_exists(self) -> None:
 		frappe.set_user("Administrator")
+		from kentender_procurement.demands import CONSUMERS_LIVE
 		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 			RETIRED_MESSAGE,
+			demand_consumers_live,
 			demand_doctype_available,
 			retired_payload,
 		)
 
-		self.assertFalse(demand_doctype_available())
+		self.assertTrue(demand_doctype_available())
+		self.assertFalse(CONSUMERS_LIVE)
+		self.assertFalse(demand_consumers_live())
 		payload = retired_payload()
 		self.assertFalse(payload["ok"])
 		self.assertEqual(payload["error_code"], "DEMAND_MODULE_RETIRED")
 		self.assertIn("retired", RETIRED_MESSAGE.lower())
 
-	def test_approved_demand_queue_returns_empty_when_retired(self) -> None:
+	def test_approved_demand_queue_returns_empty_when_consumers_not_live(self) -> None:
 		frappe.set_user("Administrator")
 		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
 			get_approved_demands_for_queue,

@@ -82,7 +82,8 @@ class TestModuleRegistry(IntegrationTestCase):
 	def test_modules_defined(self):
 		self.assertIn("strategy", KT_MODULES)
 		self.assertIn("budget", KT_MODULES)
-		self.assertIn("dia", KT_MODULES)
+		self.assertIn("demands", KT_MODULES)
+		self.assertNotIn("dia", KT_MODULES)
 
 	def test_get_module(self):
 		mod = get_module("budget")

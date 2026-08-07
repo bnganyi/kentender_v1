@@ -1,10 +1,10 @@
 # Demands — MVP 1 Cursor Implementation Prompt
 
-**Document ID:** DEMAND-MVP1-CURSOR-1.1  
+**Document ID:** DEMAND-MVP1-CURSOR-1.2  
 **Status:** Implementation input  
 **Date:** 7 August 2026  
 **Requirements baseline:** `DEMAND-MVP1-REQ-1.1` — locked and approved  
-**Design baseline:** Approved Stitch outputs for `DEM-UI-01` through `DEM-UI-10`, including `DEM-UI-05A`  
+**Design baseline:** Approved Stitch outputs for `DEM-UI-01` through `DEM-UI-10`, including `DEM-UI-05A` and `DEM-UI-09A` through `DEM-UI-09D`  
 **Seed baseline:** `KENTENDER_MVP_V1`, Canonical Demo Data Contract version 2.1 — approved  
 **Application:** KenTender  
 **Module label:** Demands  
@@ -22,7 +22,7 @@ Do not combine the two passes. The first pass is the safety and scope-control ga
 Make these inputs available to Cursor:
 
 - `Demands_MVP1_Requirements.md`
-- approved Stitch outputs for `DEM-UI-01` through `DEM-UI-10`, including `DEM-UI-05A`
+- approved Stitch outputs for `DEM-UI-01` through `DEM-UI-10`, including `DEM-UI-05A` and `DEM-UI-09A` through `DEM-UI-09D`
 - `Demands_MVP1_Stitch_Prompts.md` as design rationale
 - `KenTender_MVP_Canonical_Demo_Data_Contract_v2.1.md`
 - `KenTender_Procuring_Entity_and_Organisation_Scope_Model.md`
@@ -45,9 +45,9 @@ Read completely before planning:
 1. Demands_MVP1_Requirements.md
    - Document ID: DEMAND-MVP1-REQ-1.1
    - Status: Locked and approved
-2. Approved Stitch outputs for DEM-UI-01 through DEM-UI-10, including DEM-UI-05A
+2. Approved Stitch outputs for DEM-UI-01 through DEM-UI-10, including DEM-UI-05A and DEM-UI-09A through DEM-UI-09D
 3. Demands_MVP1_Stitch_Prompts.md
-   - Document ID: DEMAND-MVP1-STITCH-1.1
+   - Document ID: DEMAND-MVP1-STITCH-1.2
 4. KenTender_MVP_Canonical_Demo_Data_Contract_v2.1.md
    - Fixture bundle: KENTENDER_MVP_V1
    - Version: 2.1
@@ -190,6 +190,10 @@ Map each approved screen to exact files/components/controllers/services:
 - DEM-UI-07 Budget exception
 - DEM-UI-08 Final approval
 - DEM-UI-09 Approved Demand detail
+- DEM-UI-09A Approved scope tab
+- DEM-UI-09B Strategy and value tab
+- DEM-UI-09C Funding tab
+- DEM-UI-09D Lifecycle tab
 - DEM-UI-10 Demand performance
 
 Confirm that DEM-UI-03 through DEM-UI-08 reuse shared form/review components rather than becoming unrelated pages.
@@ -247,7 +251,7 @@ Do not reopen the architecture decision or ask whether disposable legacy Demand 
 AUTHORITATIVE PRECEDENCE
 
 1. DEMAND-MVP1-REQ-1.1 locked requirements
-2. Approved Stitch outputs for DEM-UI-01 through DEM-UI-10, including DEM-UI-05A
+2. Approved Stitch outputs for DEM-UI-01 through DEM-UI-10, including DEM-UI-05A and DEM-UI-09A through DEM-UI-09D
 3. Approved Prompt A impact and deletion plan
 4. KENTENDER_MVP_V1 Canonical Demo Data Contract version 2.1
 5. KenTender Procuring Entity and Organisation Scope Model
@@ -481,7 +485,8 @@ Keep the real KenTender shell. Implement the approved main content only.
 - DEM-UI-02 and DEM-UI-03: one compact Create/Edit form with a Returned correction state.
 - DEM-UI-04 through DEM-UI-08: one shared Demand Review framework with stage-specific editable/read-only sections and actions.
 - DEM-UI-05A: focused Strategy target drawer or modal using live Strategy search.
-- DEM-UI-09: read-only approved/terminal detail with funding, Strategy, Planning usage and audit.
+- DEM-UI-09: read-only approved/terminal detail Overview with concise orientation only.
+- DEM-UI-09A through DEM-UI-09D: distinct Approved scope, Strategy and value, Funding and Lifecycle tab states without Overview duplication.
 - DEM-UI-10: manager performance view backed by traceable queries and drill-down.
 
 Do not reproduce Stitch's navigation, branding, static data or inactive fake controls. Use API-driven data, loading, permission, empty, error, returned and concurrency-conflict states.

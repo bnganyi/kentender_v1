@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase
 from frappe.utils import today
 
@@ -59,7 +60,7 @@ class TestPP3WorkbenchItemViewModelP2002(IntegrationTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		self._cleanup: list[tuple[str, str]] = []
-		if not _pp_ok() or not frappe.db.exists("DocType", "Demand"):
+		if not _pp_ok() or not demand_consumers_live():
 			self._skip = True
 			return
 		self._skip = False

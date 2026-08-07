@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.tests import IntegrationTestCase
 from frappe.utils import today
 
@@ -24,7 +25,7 @@ class TestDemandJourneyBootstrapInclude(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
-		if not frappe.db.exists("DocType", "Procurement Plan") or not frappe.db.exists("DocType", "Demand"):
+		if not frappe.db.exists("DocType", "Procurement Plan") or not demand_consumers_live():
 			self._skip = True
 			return
 		self._skip = False

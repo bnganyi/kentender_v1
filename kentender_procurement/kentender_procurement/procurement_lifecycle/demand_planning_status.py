@@ -121,6 +121,7 @@ def build_demand_planning_status_payload(demand_name: str) -> dict[str, Any]:
 	Caller enforces authentication / journey read permission.
 	"""
 	from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+		demand_consumers_live,
 		RETIRED_MESSAGE,
 		demand_doctype_available,
 	)
@@ -132,7 +133,7 @@ def build_demand_planning_status_payload(demand_name: str) -> dict[str, Any]:
 			"error": "MISSING_PARAMS",
 			"message": "demand_name is required.",
 		}
-	if not demand_doctype_available():
+	if not demand_consumers_live():
 		return {
 			"ok": False,
 			"error": "DEMAND_MODULE_RETIRED",

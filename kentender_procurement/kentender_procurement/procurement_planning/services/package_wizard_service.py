@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import date_diff, flt, getdate
 
@@ -49,7 +50,7 @@ _STATUS_ADDED_TO_PLAN = "Added to Active Plan"
 
 def _demand_name(demand_code: str) -> str | None:
 	demand_code = (demand_code or "").strip()
-	if not demand_code or not frappe.db.exists("DocType", "Demand"):
+	if not demand_code or not demand_consumers_live():
 		return None
 	name = frappe.db.get_value("Demand", {"demand_id": demand_code}, "name")
 	return name or (demand_code if frappe.db.exists("Demand", demand_code) else None)
@@ -136,7 +137,7 @@ def list_wizard_eligible_demands(plan_code: str, search: str | None = None) -> l
 	set as the Workbench's "In Creation" placeholder rows
 	(`list_unpackaged_planning_inclusions`), enriched with the §8.3 demand
 	card fields. No technical codes are exposed (§15/§17)."""
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return []
 	base_rows = list_unpackaged_planning_inclusions(plan_code)
 	out: list[dict[str, Any]] = []

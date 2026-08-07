@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import flt
 
 from kentender_procurement.procurement_home.services.home_context import year_from_fiscal_period
@@ -111,7 +112,7 @@ def _finance_sums_for_context(
 
 def _unfunded_approved_demand(pe: str) -> float:
 	"""Sum shortfall on approved demands without sufficient funding (best-effort)."""
-	if not frappe.db.exists("DocType", "Demand"):
+	if not demand_consumers_live():
 		return 0.0
 	rows = frappe.get_all(
 		"Demand",

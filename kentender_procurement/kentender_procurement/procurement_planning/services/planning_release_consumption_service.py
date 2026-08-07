@@ -9,6 +9,7 @@ import json
 from typing import Any
 
 import frappe
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import flt, now_datetime
 
@@ -126,7 +127,7 @@ def _get_budget_line_code(budget_line_frappe_name: str) -> str:
 
 
 def _get_demand_category(demand_frappe_name: str) -> str:
-	if not demand_frappe_name or not frappe.db.exists("DocType", "Demand"):
+	if not demand_frappe_name or not demand_consumers_live():
 		return ""
 	val = frappe.db.get_value("Demand", demand_frappe_name, "requisition_type")
 	return str(val or "").strip()
