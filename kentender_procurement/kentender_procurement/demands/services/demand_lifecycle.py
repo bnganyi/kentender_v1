@@ -10,7 +10,7 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, now_datetime
+from frappe.utils import cstr, flt, getdate, now_datetime
 
 from kentender_procurement.demands.services.demand_codes import (
 	allocate_demand_code,
@@ -440,6 +440,7 @@ def enrich_demand(
 		"related_demands_note",
 		"aggregation_treatment",
 		"aggregation_rationale",
+		"strategy_no_alignment_reason",
 	):
 		if field in values:
 			doc.set(field, values[field])
@@ -450,6 +451,9 @@ def enrich_demand(
 
 	if strategy_references is not None:
 		_replace_strategy_refs(doc, strategy_references, actor)
+		# Assigning a Primary clears any prior no-alignment declaration.
+		if any((r.get("reference_type") or "Primary") == "Primary" for r in (strategy_references or [])):
+			doc.db_set("strategy_no_alignment_reason", "", update_modified=False)
 	if value_treatments is not None:
 		_replace_value_treatments(doc, value_treatments, actor)
 
@@ -600,8 +604,15 @@ def _assert_enrichment_ready(doc: frappe.Document) -> None:
 		filters={"demand": doc.name, "reference_type": "Primary"},
 		pluck="name",
 	)
-	if len(primaries) != 1:
-		throw_demand_error(ERR_VALIDATION, "exactly one Primary Strategy reference is required")
+	no_align = cstr(doc.get("strategy_no_alignment_reason") or "").strip()
+	if len(primaries) == 1:
+		return
+	if no_align and len(primaries) == 0:
+		return
+	throw_demand_error(
+		ERR_VALIDATION,
+		"exactly one Primary Strategy reference is required (or a no-alignment reason)",
+	)
 
 
 def _replace_strategy_refs(
@@ -664,12 +675,139 @@ def _replace_value_treatments(
 		).insert(ignore_permissions=True)
 
 
+def _ou_label(ou: str | None) -> str:
+	if not ou:
+		return ""
+	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou)
+
+
+def _plan_period_label(start_date, end_date) -> str:
+	def _fmt(d) -> str:
+		if not d:
+			return ""
+		try:
+			return frappe.utils.formatdate(d, "MMM yyyy")
+		except Exception:
+			return cstr(d)[:10]
+
+	a, b = _fmt(start_date), _fmt(end_date)
+	if a and b:
+		return f"{a} – {b}"
+	return a or b or ""
+
+
+def _rank_strategy_suggestions(doc: frappe.Document, targets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""Deterministic suggestion rank + Why suggested (DIA-FR-061 / DEM-SVC-005).
+
+	Never auto-confirms. Reasons are rule evidence only (no generative text).
+	"""
+	import re
+
+	category = cstr(doc.get("procurement_category") or "").strip()
+	ou = cstr(doc.get("owner_org_unit") or "").strip()
+	ou_name = _ou_label(ou)
+	need = " ".join(
+		[
+			cstr(doc.get("need_statement") or ""),
+			cstr(doc.get("title") or ""),
+			cstr(doc.get("expected_outcome") or ""),
+		]
+	).lower()
+	cat_tokens = [t for t in re.split(r"[^a-z0-9]+", category.lower()) if len(t) >= 4]
+	need_tokens = [t for t in re.split(r"[^a-z0-9]+", need) if len(t) >= 5]
+	# Drop ultra-common tokens that create false matches.
+	stop = {"health", "digital", "services", "service", "national", "ministry", "system", "systems"}
+	need_tokens = [t for t in need_tokens if t not in stop]
+
+	plan_ids = list({cstr(t.get("plan_version_id") or "") for t in targets if t.get("plan_version_id")})
+	plan_meta: dict[str, dict[str, Any]] = {}
+	if plan_ids:
+		for row in frappe.get_all(
+			"Strategic Plan",
+			filters={"name": ["in", plan_ids]},
+			fields=["name", "title", "plan_code", "owner_org_unit", "start_date", "end_date"],
+		):
+			plan_meta[row.name] = row
+
+	ranked: list[dict[str, Any]] = []
+	for t in targets:
+		plan = plan_meta.get(cstr(t.get("plan_version_id") or ""), {})
+		path = list(t.get("path") or [])
+		path_names = [cstr(p.get("name") or "") for p in path]
+		plan_title = cstr(plan.get("title") or t.get("plan_code") or "")
+		hierarchy = " > ".join([p for p in [plan_title, *path_names] if p])
+		hay = " ".join(
+			[
+				cstr(t.get("node_name") or ""),
+				cstr(t.get("snapshot_label") or ""),
+				hierarchy,
+				" ".join(path_names),
+			]
+		).lower()
+
+		score = 0
+		reason_bits: list[str] = []
+		plan_ou = cstr(plan.get("owner_org_unit") or "")
+		if ou and plan_ou and plan_ou == ou:
+			score += 100
+			label = ou_name or plan_ou
+			reason_bits.append(f"Owned by the {label}" if label else "Owned by the Demand owning unit")
+
+		if category and any(tok in hay for tok in cat_tokens):
+			score += 40
+			reason_bits.append(f"relevant to {category}")
+
+		matched_need = [tok for tok in need_tokens if tok in hay]
+		if matched_need and score < 40:
+			# Softer signal when ownership/category did not fire.
+			score += 15
+			sample = matched_need[0].replace("-", " ")
+			reason_bits.append(f"Related to {sample}")
+		elif matched_need and score >= 40:
+			score += 10
+
+		why = ""
+		if reason_bits:
+			if len(reason_bits) == 1:
+				why = reason_bits[0] + "."
+			elif reason_bits[0].startswith("Owned by") and any(
+				b.startswith("relevant to") for b in reason_bits[1:]
+			):
+				rel = next(b for b in reason_bits[1:] if b.startswith("relevant to"))
+				why = f"{reason_bits[0]} and {rel}."
+			else:
+				why = "; ".join(reason_bits) + "."
+
+		row = dict(t)
+		row.update(
+			{
+				"plan_title": plan_title,
+				"plan_owner_org_unit": plan_ou,
+				"effective_period": _plan_period_label(plan.get("start_date"), plan.get("end_date")),
+				"hierarchy_path": hierarchy or cstr(t.get("snapshot_label") or ""),
+				"suggestion_score": score,
+				"is_suggested": score >= 40,
+				"why_suggested": why,
+			}
+		)
+		ranked.append(row)
+
+	ranked.sort(
+		key=lambda r: (
+			0 if r.get("is_suggested") else 1,
+			-(int(r.get("suggestion_score") or 0)),
+			cstr(r.get("node_name") or "").lower(),
+		)
+	)
+	return ranked
+
+
 def suggest_strategy_context(
 	*,
 	demand: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""DEM-SVC-005 — scoped active Strategy targets (not auto-confirmed)."""
+	"""DEM-SVC-005 — scoped active Strategy targets with deterministic suggestion rank."""
 	actor = _actor(user)
 	require_operational_roles(ROLE_PAA, user=actor)
 	doc = get_demand(demand)
@@ -682,11 +820,34 @@ def suggest_strategy_context(
 	from kentender_strategy.services.strategy_contracts import list_active_targets
 
 	targets = list_active_targets(procuring_entity=doc.procuring_entity)
+	ranked = _rank_strategy_suggestions(doc, targets)
+	plans = []
+	seen_plans: set[str] = set()
+	periods = []
+	seen_periods: set[str] = set()
+	for s in ranked:
+		pc = cstr(s.get("plan_code") or "")
+		if pc and pc not in seen_plans:
+			seen_plans.add(pc)
+			plans.append(
+				{
+					"plan_code": pc,
+					"plan_title": s.get("plan_title") or pc,
+					"id": s.get("plan_version_id"),
+					"code": pc,
+					"name": s.get("plan_title") or pc,
+				}
+			)
+		per = cstr(s.get("effective_period") or "")
+		if per and per not in seen_periods:
+			seen_periods.add(per)
+			periods.append(per)
 	return {
 		"ok": True,
 		"demand_code": doc.demand_code,
 		"strategy_alignment": "Not assigned",
-		"suggestions": targets,
+		"suggestions": ranked,
+		"filters": {"plans": plans, "effective_periods": periods},
 	}
 
 
@@ -730,6 +891,7 @@ def suggest_funding_allocations(
 
 	lines = list_active_lines_for_check(procuring_entity=doc.procuring_entity)
 	chosen = None
+	match_basis = None  # single_line | strategy_target | explicit
 	if budget_line:
 		chosen = next(
 			(
@@ -739,8 +901,36 @@ def suggest_funding_allocations(
 			),
 			None,
 		)
+		match_basis = "explicit" if chosen else None
 	elif len(lines) == 1:
 		chosen = lines[0]
+		match_basis = "single_line"
+	elif len(lines) > 1:
+		# DIA-FR-076 — use Demand Primary Strategy target to auto-pick when unique.
+		primary = frappe.db.get_value(
+			"Demand Strategy Reference",
+			{"demand": doc.name, "reference_type": "Primary"},
+			["target_code", "target_name"],
+			as_dict=True,
+		)
+		t_code = ((primary or {}).get("target_code") or "").strip()
+		t_name = ((primary or {}).get("target_name") or "").strip()
+		matched: list[dict[str, Any]] = []
+		if t_code:
+			matched = [
+				ln
+				for ln in lines
+				if (ln.get("primary_target_code") or "").strip() == t_code
+			]
+		if not matched and t_name:
+			matched = [
+				ln
+				for ln in lines
+				if (ln.get("primary_target_name") or "").strip() == t_name
+			]
+		if len(matched) == 1:
+			chosen = matched[0]
+			match_basis = "strategy_target"
 
 	# Clear prior automatic suggestions still Pending.
 	for name in frappe.get_all(
@@ -794,11 +984,38 @@ def suggest_funding_allocations(
 				"current_owner": actor,
 				"candidate_budget_lines": json.dumps(lines, default=str),
 				"diagnostic_context": json.dumps(
-					{"requested_amount": amount, "check": check}, default=str
+					{
+						"requested_amount": amount,
+						"check": check,
+						"match_basis": match_basis,
+						"active_line_count": len(lines),
+					},
+					default=str,
 				),
 			}
 		)
 		exception.insert(ignore_permissions=True)
+	elif allocation:
+		# Successful auto/explicit match supersedes prior open funding exceptions
+		# (including Insufficient Funding from an earlier shortfall).
+		for exc_name in frappe.get_all(
+			"Funding Exception",
+			filters={
+				"demand": doc.name,
+				"status": ["in", ["Open", "In Progress"]],
+			},
+			pluck="name",
+		):
+			frappe.db.set_value(
+				"Funding Exception",
+				exc_name,
+				{
+					"status": "Resolved",
+					"resolution": f"Superseded by {match_basis or 'automatic'} recommendation",
+					"resolved_by": actor,
+					"resolved_at": _now(),
+				},
+			)
 
 	return {
 		"ok": True,
@@ -806,6 +1023,7 @@ def suggest_funding_allocations(
 		"allocation": allocation.name if allocation else None,
 		"exception": exception.name if exception else None,
 		"exception_type": exception_type,
+		"match_basis": match_basis,
 		"candidates": lines,
 		"check": check,
 	}
@@ -933,6 +1151,184 @@ def confirm_demand_funding(
 	_record_decision(doc, stage="Budget Confirmation", decision="Confirm funding", actor=actor)
 	doc.reload()
 	return {"ok": True, "demand": project_demand(doc)}
+
+
+def return_budget_confirmation(
+	*,
+	demand: str,
+	reason: str | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-06 — Budget Officer Return to Procurement Enrichment (reason required)."""
+	actor = _actor(user)
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	doc = get_demand(demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	if doc.current_stage != "Budget Confirmation" or doc.status != "In Review":
+		throw_demand_error(ERR_CONFLICT, "Demand is not in Budget Confirmation")
+	if not (reason or "").strip():
+		throw_demand_error(ERR_VALIDATION, "A reason is required")
+
+	result = preview_transition(
+		status=doc.status,
+		stage=doc.current_stage,
+		action="Return",
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+	)
+	doc.status = result.status
+	doc.current_stage = result.stage
+	doc.save(ignore_permissions=True)
+
+	# Close open exceptions so enrichment can re-send cleanly.
+	for exc_name in frappe.get_all(
+		"Funding Exception",
+		filters={"demand": doc.name, "status": ["in", ["Open", "In Progress"]]},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Funding Exception",
+			exc_name,
+			{
+				"status": "Resolved",
+				"resolution": "Returned to Procurement",
+				"resolution_reason": (reason or "").strip(),
+				"resolved_by": actor,
+				"resolved_at": _now(),
+			},
+		)
+
+	_record_decision(
+		doc,
+		stage="Budget Confirmation",
+		decision="Return",
+		actor=actor,
+		reason=(reason or "").strip(),
+	)
+	doc.reload()
+	return {"ok": True, "demand": project_demand(doc)}
+
+
+def adjust_funding_allocation(
+	*,
+	demand: str,
+	budget_line: str | None = None,
+	allocation_amount: float | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-06 — Replace/update Pending allocation without confirming (BO Adjust)."""
+	actor = _actor(user)
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	doc = get_demand(demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	if doc.current_stage != "Budget Confirmation" or doc.status != "In Review":
+		throw_demand_error(ERR_CONFLICT, "Demand is not in Budget Confirmation")
+
+	line_key = (budget_line or "").strip() or None
+	amount = flt(allocation_amount) if allocation_amount is not None else None
+
+	if line_key:
+		suggestion = suggest_funding_allocations(
+			demand=doc.name, budget_line=line_key, user=actor
+		)
+		if suggestion.get("exception_type") and not suggestion.get("allocation"):
+			return {
+				"ok": True,
+				"demand": project_demand(doc),
+				"suggestion": suggestion,
+			}
+
+	pending = frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": doc.name, "bo_confirmation_status": "Pending"},
+		fields=["name", "budget_line", "allocation_amount"],
+		order_by="creation desc",
+		limit=1,
+	)
+	if not pending:
+		throw_demand_error(ERR_FUNDING, "No Pending funding allocation to adjust")
+
+	row = pending[0]
+	new_amount = amount if amount is not None and amount > 0 else flt(row.allocation_amount)
+	from kentender_budget.services.budget_check_reserve_contracts import check_funding
+
+	check = check_funding(
+		budget_line=row.budget_line,
+		requested_amount=new_amount,
+		demand=doc.demand_code,
+		procuring_entity=doc.procuring_entity,
+	)
+	frappe.db.set_value(
+		"Demand Funding Allocation",
+		row.name,
+		{
+			"allocation_amount": new_amount,
+			"matching_source": "Budget Officer",
+			"funds_check_result": check.get("decision"),
+			"funds_check_at": _now(),
+		},
+	)
+	# Adjust clears open funding exceptions (incl. Insufficient Funding) when funding is OK.
+	if check.get("sufficient"):
+		for exc_name in frappe.get_all(
+			"Funding Exception",
+			filters={
+				"demand": doc.name,
+				"status": ["in", ["Open", "In Progress"]],
+			},
+			pluck="name",
+		):
+			frappe.db.set_value(
+				"Funding Exception",
+				exc_name,
+				{
+					"status": "Resolved",
+					"resolution": "Adjusted by Budget Officer",
+					"resolved_by": actor,
+					"resolved_at": _now(),
+				},
+			)
+	elif check.get("sufficient") is False:
+		# Ensure Insufficient Funding exception exists when adjust creates shortfall.
+		open_insuff = frappe.db.exists(
+			"Funding Exception",
+			{
+				"demand": doc.name,
+				"status": ["in", ["Open", "In Progress"]],
+				"exception_type": "Insufficient Funding",
+			},
+		)
+		if not open_insuff:
+			frappe.get_doc(
+				{
+					"doctype": "Funding Exception",
+					"demand": doc.name,
+					"demand_code": doc.demand_code,
+					"exception_type": "Insufficient Funding",
+					"status": "Open",
+					"current_owner": actor,
+					"diagnostic_context": json.dumps({"check": check}, default=str),
+				}
+			).insert(ignore_permissions=True)
+
+	doc.reload()
+	return {
+		"ok": True,
+		"demand": project_demand(doc),
+		"allocation": row.name,
+		"check": check,
+	}
 
 
 def resolve_funding_exception(

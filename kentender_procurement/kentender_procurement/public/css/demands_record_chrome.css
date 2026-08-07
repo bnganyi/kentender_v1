@@ -7,12 +7,59 @@
 	width: 100%;
 }
 
+.kt-cl-shell .kt-dem-root [data-testid="kt-dem-record-title-row"] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 0.75rem 1.25rem !important;
+	margin: 0 0 0.5rem !important;
+}
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-record-header"] h1,
 .kt-cl-shell .kt-dem-root [data-kt-dem-record-header] h1 {
 	font-family: Manrope, sans-serif !important;
 	font-weight: 700 !important;
 	line-height: 1.25 !important;
-	margin: 0 0 0.5rem !important;
+	margin: 0 !important;
+	flex: 1 1 12rem !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-dem-root .kt-dem-view-details,
+.kt-cl-shell .kt-dem-root [data-testid="kt-dem-view-details"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.15rem !important;
+	flex-shrink: 0 !important;
+	margin: 0.2rem 0 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+	color: #001f48 !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+	line-height: 1.25 !important;
+	cursor: pointer !important;
+	text-decoration: none !important;
+}
+.kt-cl-shell .kt-dem-root .kt-dem-view-details:hover,
+.kt-cl-shell .kt-dem-root .kt-dem-view-details:focus,
+.kt-cl-shell .kt-dem-root .kt-dem-view-details:focus-visible {
+	text-decoration: none !important;
+}
+.kt-cl-shell .kt-dem-root .kt-dem-view-details:hover .kt-dem-view-details-text,
+.kt-cl-shell .kt-dem-root .kt-dem-view-details:focus .kt-dem-view-details-text {
+	text-decoration: underline !important;
+	text-underline-offset: 2px !important;
+}
+.kt-cl-shell .kt-dem-root .kt-dem-view-details .material-symbols-outlined {
+	font-size: 18px !important;
+	text-decoration: none !important;
+	line-height: 1 !important;
+}
+.kt-cl-shell .kt-dem-root .kt-dem-view-details.hidden,
+.kt-cl-shell .kt-dem-root .kt-dem-view-details[hidden] {
+	display: none !important;
 }
 
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-record-meta-top"] {
@@ -150,6 +197,18 @@
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Complete"] .text-xs {
 	color: #0f766e;
+}
+
+/* Stitch uses sentence case on stage labels — defeat workspace .font-label-caps uppercase. */
+.kt-cl-shell .kt-dem-root [data-kt-dem-stage-label],
+.kt-cl-shell .kt-dem-root [data-kt-dem-stage-item] .text-xs {
+	text-transform: none !important;
+	letter-spacing: 0.01em !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-dem-root [data-kt-dem-stage-item] .text-xs {
+	font-weight: 500 !important;
 }
 
 @media (min-width: 768px) {

@@ -18,7 +18,9 @@ from kentender_procurement.demands.services.demand_creation_scope import (
 	resolve_demand_creation_scope,
 )
 from kentender_procurement.demands.services.demand_lifecycle import (
+	adjust_funding_allocation,
 	cancel_and_release_demand,
+	confirm_demand_funding,
 	create_or_update_demand,
 	enrich_demand,
 	get_demand,
@@ -26,16 +28,20 @@ from kentender_procurement.demands.services.demand_lifecycle import (
 	project_demand,
 	record_business_decision,
 	record_procurement_decision,
+	return_budget_confirmation,
 	submit_demand,
+	suggest_funding_allocations,
 	suggest_strategy_context,
 )
 from kentender_procurement.demands.services.demand_permissions import (
+	ROLE_BUDGET,
 	ROLE_BUSINESS,
 	ROLE_PAA,
 	ROLE_REQUESTER,
 	assert_business_approver_segregation,
 	assert_demand_scope,
 	can_business_decide,
+	can_confirm_funding,
 	can_edit_requester_fields,
 	can_procurement_enrich,
 	can_read_demand,
@@ -46,6 +52,16 @@ from kentender_procurement.demands.services.demand_permissions import (
 
 def _money(amount: float, currency: str = "KES") -> str:
 	return f"{currency} {flt(amount):,.2f}"
+
+
+def _money_compact_m(amount: float, currency: str = "KES") -> str:
+	"""Stitch DEM-UI-06 recommendation tiles: KES 480M (not full thousands)."""
+	n = flt(amount)
+	if abs(n) >= 1_000_000:
+		return f"{currency} {int(round(n / 1_000_000))}M"
+	if abs(n) >= 1_000:
+		return f"{currency} {int(round(n / 1_000))}K"
+	return f"{currency} {int(round(n))}"
 
 
 def _action_for(row: dict[str, Any]) -> tuple[str, str]:
@@ -775,21 +791,48 @@ def _review_demand_dto(doc) -> dict[str, Any]:
 			item["quantity_display"] = f"{qty_s} {uom}".strip() if uom else qty_s
 		else:
 			item["quantity_display"] = uom or "—"
-		cq = item.get("confirmed_quantity")
-		if cq is None or cq == "":
-			item["confirmed_quantity"] = item.get("quantity")
+		# Float/Currency defaults are 0.0 in Frappe — treat <=0 as unset and
+		# fall back to requester quantity / line estimate so enrichment UI
+		# does not paint empty/zero controls over real Need Item data.
+		cq = flt(item.get("confirmed_quantity"))
+		if cq <= 0:
+			item["confirmed_quantity"] = flt(item.get("quantity")) or 1
 		cu = (item.get("confirmed_uom") or "").strip()
 		if not cu:
 			item["confirmed_uom"] = item.get("uom") or ""
-		ce = item.get("confirmed_estimate")
-		if ce is None or ce == "":
-			item["confirmed_estimate"] = item.get("requester_estimate")
+		ce = flt(item.get("confirmed_estimate"))
+		if ce <= 0:
+			item["confirmed_estimate"] = flt(item.get("requester_estimate"))
 		ce_n = flt(item.get("confirmed_estimate"))
 		item["confirmed_estimate_display"] = f"{ce_n:,.2f}" if ce_n else ""
+		cq_n = flt(item.get("confirmed_quantity")) or 1
+		unit_n = (ce_n / cq_n) if cq_n else ce_n
+		item["unit_estimate"] = unit_n
+		item["unit_estimate_display"] = f"{unit_n:,.2f}" if unit_n else ""
+		item["total_estimate_display"] = item["confirmed_estimate_display"]
 	# Strip abs-forbidden keys if ever present on projection.
 	for key in _FORBIDDEN_ENRICHMENT_KEYS:
 		base.pop(key, None)
 	return base
+
+
+def _plan_display_fields(plan_id: str | None) -> dict[str, str]:
+	"""Resolve Strategic Plan id → display name/code (never expose raw hash in UI)."""
+	pid = (plan_id or "").strip()
+	if not pid:
+		return {"plan_name": "", "plan_code": "", "plan_display": ""}
+	meta = frappe.db.get_value(
+		"Strategic Plan", pid, ["title", "plan_code"], as_dict=True
+	)
+	if not meta:
+		return {"plan_name": "", "plan_code": "", "plan_display": ""}
+	name = (meta.title or "").strip()
+	code = (meta.plan_code or "").strip()
+	if name and code:
+		display = f"{name} ({code})"
+	else:
+		display = name or code
+	return {"plan_name": name, "plan_code": code, "plan_display": display}
 
 
 def _strategy_refs_dto(demand_name: str) -> list[dict[str, Any]]:
@@ -811,7 +854,18 @@ def _strategy_refs_dto(demand_name: str) -> list[dict[str, Any]]:
 		],
 		order_by="creation asc",
 	)
-	return list(rows or [])
+	out: list[dict[str, Any]] = []
+	for row in rows or []:
+		item = dict(row)
+		plan_id = (item.get("plan_version_id") or item.get("plan") or "").strip()
+		display = _plan_display_fields(plan_id)
+		item["plan_id"] = plan_id
+		item["plan_name"] = display["plan_name"]
+		item["plan_code"] = display["plan_code"]
+		item["plan_display"] = display["plan_display"]
+		# Keep ids for persistence/clients that need them — UI must use *_display / name+code.
+		out.append(item)
+	return out
 
 
 def _value_treatments_dto(demand_name: str) -> list[dict[str, Any]]:
@@ -829,7 +883,14 @@ def _value_treatments_dto(demand_name: str) -> list[dict[str, Any]]:
 		],
 		order_by="creation asc",
 	)
-	return list(rows or [])
+	out: list[dict[str, Any]] = []
+	for row in rows or []:
+		item = dict(row)
+		snap = (item.get("pvc_snapshot") or "").strip()
+		# Never fall back to raw PVC document name (hash) in display DTO.
+		item["commitment_display"] = snap or "—"
+		out.append(item)
+	return out
 
 
 def _business_support_summary(demand_name: str) -> dict[str, Any] | None:
@@ -866,7 +927,8 @@ def _enrichment_readiness(doc) -> tuple[bool, list[str]]:
 		filters={"demand": doc.name, "reference_type": "Primary"},
 		pluck="name",
 	)
-	if len(primaries) != 1:
+	no_align = (doc.get("strategy_no_alignment_reason") or "").strip()
+	if len(primaries) != 1 and not (no_align and len(primaries) == 0):
 		blockers.append("exactly one Primary Strategy reference is required")
 	return (len(blockers) == 0, blockers)
 
@@ -875,12 +937,20 @@ def _enrichment_projection(doc) -> dict[str, Any]:
 	refs = _strategy_refs_dto(doc.name)
 	primaries = [r for r in refs if (r.get("reference_type") or "") == "Primary"]
 	supporting = [r for r in refs if (r.get("reference_type") or "") == "Supporting"]
+	no_align = (doc.get("strategy_no_alignment_reason") or "").strip()
+	if primaries:
+		alignment = "Assigned"
+	elif no_align:
+		alignment = "No direct alignment"
+	else:
+		alignment = "Not assigned"
 	ready, blockers = _enrichment_readiness(doc)
 	return {
 		"categories": list(_ENRICHMENT_CATEGORIES),
 		"aggregation_treatments": list(_AGGREGATION_TREATMENTS),
 		"demand_routes": ["Standard", "Additional", "Emergency"],
-		"strategy_alignment": "Assigned" if primaries else "Not assigned",
+		"strategy_alignment": alignment,
+		"strategy_no_alignment_reason": no_align,
 		"strategy_references": refs,
 		"primary_strategy": primaries[0] if primaries else None,
 		"supporting_strategies": supporting,
@@ -895,9 +965,375 @@ def _enrichment_projection(doc) -> dict[str, Any]:
 	}
 
 
+_NO_RESERVE_DISCLAIMER = (
+	"Confirmation does not reserve funds or approve the Demand. "
+	"Funding is rechecked and reserved during Final approval."
+)
+
+
+def _name_code_display(name: str | None, code: str | None) -> str:
+	n = (name or "").strip()
+	c = (code or "").strip()
+	if n and c:
+		return f"{n} ({c})"
+	return n or c or ""
+
+
+def _org_unit_display(ou: str | None) -> dict[str, str]:
+	key = (ou or "").strip()
+	if not key:
+		return {"id": "", "code": "", "name": "", "display": ""}
+	meta = frappe.db.get_value(
+		"Organisation Unit",
+		key,
+		["name", "unit_name", "unit_code"],
+		as_dict=True,
+	)
+	if not meta:
+		# Budget Line may store organisational_owner as free text.
+		return {"id": key, "code": "", "name": key, "display": key}
+	name = (meta.unit_name or "").strip() or key
+	code = (meta.unit_code or "").strip() or key
+	return {
+		"id": meta.name,
+		"code": code,
+		"name": name,
+		"display": _name_code_display(name, code),
+	}
+
+
+def _funding_projection(doc) -> dict[str, Any]:
+	"""DEM-UI-06 funding summary + recommendation for Budget Confirmation."""
+	from kentender_budget.services.budget_check_reserve_contracts import (
+		check_funding,
+		list_active_lines_for_check,
+	)
+	from kentender_budget.services.budget_line_contracts import format_kes_full
+
+	cur = doc.currency or "KES"
+	estimate = flt(doc.confirmed_estimate) or flt(doc.requester_estimate)
+	allocs = frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": doc.name},
+		fields=[
+			"name",
+			"budget",
+			"budget_line",
+			"allocation_amount",
+			"currency",
+			"matching_source",
+			"funds_check_result",
+			"bo_confirmation_status",
+		],
+		order_by="creation asc",
+	)
+	pending = [a for a in allocs if (a.bo_confirmation_status or "") == "Pending"]
+	proposed_total = sum(flt(a.allocation_amount) for a in (pending or allocs))
+	difference = proposed_total - estimate
+
+	open_exc = frappe.get_all(
+		"Funding Exception",
+		filters={"demand": doc.name, "status": ["in", ["Open", "In Progress"]]},
+		fields=["name", "exception_type", "status", "candidate_budget_lines", "diagnostic_context"],
+		order_by="creation desc",
+		limit=1,
+	)
+	exception = None
+	exception_candidates: list[dict[str, Any]] = []
+	if open_exc:
+		exc_type = open_exc[0].exception_type or ""
+		try:
+			raw_cands = json.loads(open_exc[0].candidate_budget_lines or "[]")
+		except Exception:
+			raw_cands = []
+		for ln in raw_cands or []:
+			if not isinstance(ln, dict):
+				continue
+			exception_candidates.append(
+				{
+					"id": ln.get("id") or ln.get("name") or "",
+					"code": ln.get("code") or ln.get("generated_reference") or "",
+					"name": ln.get("name") or ln.get("title") or "",
+					"display": _name_code_display(
+						ln.get("name") or ln.get("title"),
+						ln.get("code") or ln.get("generated_reference"),
+					),
+					"available_before": flt(ln.get("available_before")),
+					"available_before_display": ln.get("available_before_display") or "",
+					"primary_target_code": ln.get("primary_target_code") or "",
+					"primary_target_name": ln.get("primary_target_name") or "",
+				}
+			)
+		if exc_type == "Multiple Matches":
+			n = len(exception_candidates) or "several"
+			summary = (
+				f"More than one active Budget Line is eligible for this Demand "
+				f"({n} candidates). The system could not auto-select a single "
+				f"recommendation from Strategy context. Use Adjust allocation to "
+				f"choose a line, or Return to Procurement."
+			)
+		elif exc_type == "No Match":
+			summary = (
+				"No active Budget Line matched this Demand for the procuring entity. "
+				"Return to Procurement or resolve via the exception flow."
+			)
+		elif exc_type == "Insufficient Funding":
+			summary = (
+				"The recommended Budget Line does not have enough available funding "
+				"for the confirmed estimate. Adjust the allocation, Return to "
+				"Procurement, or resolve via the exception flow."
+			)
+		else:
+			summary = (
+				f"Open funding exception ({exc_type or 'Unknown'}). Confirm is "
+				f"unavailable until it is resolved or the Demand is returned."
+			)
+		exception = {
+			"id": open_exc[0].name,
+			"type": exc_type,
+			"name": exc_type or open_exc[0].name,
+			"summary": summary,
+			"candidate_count": len(exception_candidates),
+		}
+
+	primary = None
+	for ref in _strategy_refs_dto(doc.name):
+		if (ref.get("reference_type") or "") == "Primary":
+			primary = ref
+			break
+	demand_target = ""
+	if primary:
+		demand_target = (
+			(primary.get("snapshot_label") or "").strip()
+			or _name_code_display(primary.get("target_name"), primary.get("target_code"))
+		)
+
+	recommendation = None
+	strategy_result = "Needs attention"
+	budget_line_target = ""
+	focus = pending[0] if pending else (allocs[0] if allocs else None)
+	if focus and focus.budget_line:
+		line_meta = frappe.db.get_value(
+			"Budget Line",
+			focus.budget_line,
+			[
+				"name",
+				"title",
+				"generated_reference",
+				"budget",
+				"approved_amount",
+				"amount_reserved",
+				"amount_committed",
+				"primary_target_code",
+				"primary_target_name",
+				"organisational_owner",
+				"owner_org_unit",
+			],
+			as_dict=True,
+		)
+		bud_meta = None
+		if line_meta and line_meta.budget:
+			bud_meta = frappe.db.get_value(
+				"Budget",
+				line_meta.budget,
+				["name", "title", "generated_reference", "currency"],
+				as_dict=True,
+			)
+		ou_key = ""
+		if line_meta:
+			ou_key = (line_meta.owner_org_unit or "").strip()
+		ou_disp = _org_unit_display(ou_key or doc.owner_org_unit)
+		if not ou_key and line_meta and (line_meta.organisational_owner or "").strip():
+			ou_disp = {
+				"id": "",
+				"code": "",
+				"name": line_meta.organisational_owner.strip(),
+				"display": line_meta.organisational_owner.strip(),
+			}
+		allocate = flt(focus.allocation_amount)
+		check = None
+		try:
+			check = check_funding(
+				budget_line=focus.budget_line,
+				requested_amount=allocate or estimate,
+				demand=doc.demand_code,
+				procuring_entity=doc.procuring_entity,
+			)
+		except Exception:
+			check = None
+		available_before = (
+			flt(check.get("available_before"))
+			if check
+			else (
+				flt(line_meta.approved_amount)
+				- flt(line_meta.amount_reserved)
+				- flt(line_meta.amount_committed)
+				if line_meta
+				else 0
+			)
+		)
+		available_after = (
+			flt(check.get("available_after"))
+			if check
+			else available_before - allocate
+		)
+		bl_name = (line_meta.title if line_meta else "") or ""
+		bl_code = (line_meta.generated_reference if line_meta else "") or ""
+		bud_name = (bud_meta.title if bud_meta else "") or ""
+		bud_code = (bud_meta.generated_reference if bud_meta else "") or ""
+		budget_line_target = _name_code_display(
+			(line_meta.primary_target_name if line_meta else "") or "",
+			(line_meta.primary_target_code if line_meta else "") or "",
+		) or ((line_meta.primary_target_name if line_meta else "") or "")
+		demand_code = (primary.get("target_code") if primary else "") or ""
+		line_code = (line_meta.primary_target_code if line_meta else "") or ""
+		if demand_code and line_code and demand_code == line_code:
+			strategy_result = "Aligned"
+		elif (
+			primary
+			and line_meta
+			and (primary.get("target_name") or "").strip()
+			and (line_meta.primary_target_name or "").strip()
+			and (primary.get("target_name") or "").strip()
+			== (line_meta.primary_target_name or "").strip()
+		):
+			strategy_result = "Aligned"
+		elif not demand_target and not budget_line_target:
+			strategy_result = "Needs attention"
+		elif demand_target and budget_line_target and demand_target == budget_line_target:
+			strategy_result = "Aligned"
+		# When Demand has a target but line has none (or mismatch), Needs attention.
+		# Stitch DEM-UI-06 recommendation: name-only meta + compact tile money (KES 480M).
+		recommendation = {
+			"allocation_id": focus.name,
+			"budget": (bud_meta.name if bud_meta else focus.budget) or "",
+			"budget_code": bud_code,
+			"budget_name": bud_name,
+			"budget_display": bud_name or bud_code,
+			"budget_line": focus.budget_line,
+			"budget_line_code": bl_code,
+			"budget_line_name": bl_name,
+			"budget_line_display": bl_name or bl_code,
+			"owning_unit": ou_disp.get("id") or "",
+			"owning_unit_code": ou_disp.get("code") or "",
+			"owning_unit_name": ou_disp.get("name") or "",
+			"owning_unit_display": ou_disp.get("name") or ou_disp.get("display") or "",
+			"status": focus.bo_confirmation_status or "Pending",
+			"approved_amount": flt(line_meta.approved_amount) if line_meta else 0,
+			"approved_amount_display": _money_compact_m(
+				flt(line_meta.approved_amount) if line_meta else 0, currency=cur
+			),
+			"amount_committed": flt(line_meta.amount_committed) if line_meta else 0,
+			"amount_reserved": flt(line_meta.amount_reserved) if line_meta else 0,
+			"available_before": available_before,
+			"available_before_display": _money_compact_m(available_before, currency=cur),
+			"allocate": allocate,
+			"allocate_display": _money_compact_m(allocate, currency=cur),
+			"available_after": available_after,
+			"available_after_display": _money_compact_m(available_after, currency=cur),
+			"funds_check_result": (check or {}).get("decision")
+			or focus.funds_check_result
+			or "",
+			"sufficient": bool((check or {}).get("sufficient"))
+			if check is not None
+			else abs(difference) <= 0.009,
+		}
+		# ACTIVE only when the recommendation can fund the estimate — never with shortfall.
+		if recommendation["sufficient"] and not open_exc:
+			recommendation["display_status"] = "Active"
+		elif not recommendation["sufficient"]:
+			recommendation["display_status"] = "Needs attention"
+		else:
+			recommendation["display_status"] = "Pending"
+
+	candidates = []
+	try:
+		for ln in list_active_lines_for_check(procuring_entity=doc.procuring_entity):
+			candidates.append(
+				{
+					"id": ln.get("id"),
+					"code": ln.get("code") or "",
+					"name": ln.get("name") or "",
+					"display": _name_code_display(ln.get("name"), ln.get("code")),
+					"available_before": flt(ln.get("available_before")),
+					"available_before_display": ln.get("available_before_display")
+					or format_kes_full(flt(ln.get("available_before")), currency=cur),
+					"primary_target_code": ln.get("primary_target_code") or "",
+					"primary_target_name": ln.get("primary_target_name") or "",
+				}
+			)
+	except Exception:
+		candidates = []
+	if not candidates and exception_candidates:
+		candidates = exception_candidates
+
+	blockers: list[str] = []
+	if exception:
+		blockers.append(exception.get("summary") or f"Open funding exception: {exception['type']}")
+	if abs(difference) > 0.009:
+		blockers.append("Proposed funding must equal the confirmed estimate")
+	if not recommendation:
+		blockers.append("No system-recommended allocation")
+	elif recommendation and not recommendation.get("sufficient"):
+		blockers.append("Selected Budget Line has insufficient available funding")
+	if strategy_result != "Aligned":
+		blockers.append("Strategy consistency needs attention")
+
+	if exception:
+		condition = "Exception"
+	elif blockers:
+		condition = "Needs attention"
+	else:
+		condition = "Sufficient"
+
+	confirm_ready = (
+		not exception
+		and abs(difference) <= 0.009
+		and recommendation is not None
+		and bool(recommendation.get("sufficient"))
+		and strategy_result == "Aligned"
+	)
+	# Soften strategy gate when Demand has no Primary target snapshot yet —
+	# still allow confirm if funding numbers are clean (enrichment may use No alignment).
+	if (
+		not confirm_ready
+		and not exception
+		and abs(difference) <= 0.009
+		and recommendation
+		and recommendation.get("sufficient")
+		and not demand_target
+		and "Strategy consistency needs attention" in blockers
+	):
+		blockers = [b for b in blockers if "Strategy" not in b]
+		confirm_ready = not blockers
+		if confirm_ready and condition == "Needs attention":
+			condition = "Sufficient"
+
+	return {
+		"condition": condition,
+		"estimate": estimate,
+		"estimate_display": format_kes_full(estimate, currency=cur),
+		"proposed_total": proposed_total,
+		"proposed_total_display": format_kes_full(proposed_total, currency=cur),
+		"difference": difference,
+		"difference_display": format_kes_full(difference, currency=cur),
+		"strategy_consistency": {
+			"demand_target": demand_target or "—",
+			"budget_line_target": budget_line_target or "—",
+			"result": strategy_result,
+		},
+		"recommendation": recommendation,
+		"candidates": candidates,
+		"exception": exception,
+		"confirm_ready": confirm_ready,
+		"confirm_blockers": blockers,
+		"no_reserve_disclaimer": _NO_RESERVE_DISCLAIMER,
+	}
+
+
 @frappe.whitelist()
 def get_demand_review(demand: str) -> dict[str, Any]:
-	"""DEM-UI-04…08 shared review load projection (Business + Enrichment stages)."""
+	"""DEM-UI-04…08 shared review load projection (Business + Enrichment + Budget)."""
 	actor = frappe.session.user
 	if not can_read_demand(user=actor):
 		frappe.throw("Not permitted to open Demand review", frappe.PermissionError)
@@ -913,8 +1349,10 @@ def get_demand_review(demand: str) -> dict[str, Any]:
 	stage = (doc.current_stage or "").strip()
 	is_business = stage == "Business Review" and doc.status == "In Review"
 	is_enrichment = stage == "Procurement Enrichment" and doc.status == "In Review"
+	is_budget = stage == "Budget Confirmation" and doc.status == "In Review"
 	can_decide = False
 	can_enrich = False
+	can_confirm = False
 	allowed: list[str] = []
 	if is_business and can_business_decide(user=actor):
 		try:
@@ -932,12 +1370,20 @@ def get_demand_review(demand: str) -> dict[str, Any]:
 			"Return",
 			"Reject",
 		]
-	enrichment = _enrichment_projection(doc) if is_enrichment else None
+	if is_budget and can_confirm_funding(user=actor):
+		can_confirm = True
+		allowed = ["Confirm funding", "Return", "Adjust"]
+	# Enrichment projection also feeds Budget "View Details" drawer (strategy/PVC/approver).
+	enrichment = (
+		_enrichment_projection(doc) if (is_enrichment or is_budget) else None
+	)
+	funding = _funding_projection(doc) if is_budget else None
 	return {
 		"ok": True,
 		"stage": stage,
 		"can_decide": can_decide,
 		"can_enrich": can_enrich,
+		"can_confirm_funding": can_confirm,
 		"allowed_actions": allowed,
 		"show_non_final_disclaimer": is_business,
 		"non_final_disclaimer": _NON_FINAL_DISCLAIMER if is_business else "",
@@ -945,6 +1391,7 @@ def get_demand_review(demand: str) -> dict[str, Any]:
 		"stage_indicator": _stage_indicator(stage, doc.status),
 		"demand": _review_demand_dto(doc),
 		"enrichment": enrichment,
+		"funding": funding,
 	}
 
 
@@ -1177,6 +1624,8 @@ def enrich_demand_form(
 def suggest_strategy_context_form(
 	demand: str,
 	q: str | None = None,
+	plan_code: str | None = None,
+	effective_period: str | None = None,
 ) -> dict[str, Any]:
 	"""DEM-UI-05A — scoped Strategy suggestions for Assign drawer."""
 	actor = frappe.session.user
@@ -1185,6 +1634,14 @@ def suggest_strategy_context_form(
 		frappe.throw("Demand is required", frappe.ValidationError)
 	raw = suggest_strategy_context(demand=demand, user=actor)
 	suggestions = list(raw.get("suggestions") or [])
+	plan_filter = (plan_code or "").strip()
+	period_filter = (effective_period or "").strip()
+	if plan_filter:
+		suggestions = [s for s in suggestions if str(s.get("plan_code") or "") == plan_filter]
+	if period_filter:
+		suggestions = [
+			s for s in suggestions if str(s.get("effective_period") or "") == period_filter
+		]
 	needle = (q or "").strip().lower()
 	if needle:
 		filtered = []
@@ -1194,29 +1651,37 @@ def suggest_strategy_context_form(
 					str(s.get("node_name") or ""),
 					str(s.get("node_code") or ""),
 					str(s.get("plan_code") or ""),
+					str(s.get("plan_title") or ""),
+					str(s.get("hierarchy_path") or ""),
+					str(s.get("why_suggested") or ""),
 					str(s.get("snapshot_label") or ""),
 				]
 			).lower()
 			if needle in hay:
 				filtered.append(s)
 		suggestions = filtered
-	# Display DTO: name + code only (never raw id as primary label).
+	# Display DTO: name + code (never raw id as primary label).
 	out = []
 	for s in suggestions:
 		out.append(
 			{
 				"plan_version_id": s.get("plan_version_id"),
 				"plan_code": s.get("plan_code"),
+				"plan_title": s.get("plan_title") or "",
 				"plan_version": s.get("plan_version"),
+				"effective_period": s.get("effective_period") or "",
 				"target_id": s.get("node_id"),
 				"target_code": s.get("node_code"),
 				"target_name": s.get("node_name"),
 				"snapshot_label": s.get("snapshot_label")
 				or f"{s.get('node_name')} ({s.get('node_code')})",
-				"hierarchy_path": s.get("snapshot_label") or "",
+				"hierarchy_path": s.get("hierarchy_path") or s.get("snapshot_label") or "",
 				"path": s.get("path") or [],
 				"display_name": s.get("node_name") or "",
 				"display_code": s.get("node_code") or "",
+				"is_suggested": bool(s.get("is_suggested")),
+				"why_suggested": s.get("why_suggested") or "",
+				"suggestion_score": int(s.get("suggestion_score") or 0),
 			}
 		)
 	return {
@@ -1224,6 +1689,7 @@ def suggest_strategy_context_form(
 		"demand_code": raw.get("demand_code"),
 		"strategy_alignment": raw.get("strategy_alignment") or "Not assigned",
 		"suggestions": out,
+		"filters": raw.get("filters") or {"plans": [], "effective_periods": []},
 	}
 
 
@@ -1397,4 +1863,319 @@ def prepare_enrichment_ui05(
 		"procurement_approver": paa,
 		"review": _review_demand_dto(doc),
 		"enrichment": _enrichment_projection(doc),
+	}
+
+
+def _ensure_ui06_bo(pe: str, ou: str) -> str:
+	"""Canonical Budget Officer for DEM-UI-06 factory / Playwright."""
+	email = "moh.budget.officer@example.test"
+	ensure_demand_roles()
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds import constants as CoreC
+
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Grace",
+				"last_name": "Wanjiku",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	update_password(email, CoreC.TEST_PASSWORD)
+	user = frappe.get_doc("User", email)
+	have = {r.role for r in user.roles}
+	changed = False
+	if ROLE_BUDGET not in have:
+		user.append("roles", {"role": ROLE_BUDGET})
+		changed = True
+	if "Desk User" not in have:
+		user.append("roles", {"role": "Desk User"})
+		changed = True
+	if changed:
+		user.save(ignore_permissions=True)
+	existing = frappe.db.exists(
+		"User Scope Assignment",
+		{
+			"user": email,
+			"procuring_entity": pe,
+			"organisation_unit": ou,
+			"role": ROLE_BUDGET,
+		},
+	)
+	if not existing:
+		frappe.get_doc(
+			{
+				"doctype": "User Scope Assignment",
+				"user": email,
+				"role": ROLE_BUDGET,
+				"procuring_entity": pe,
+				"organisation_unit": ou,
+				"include_descendants": 1,
+				"fixture_namespace": "DEMANDS_UI06_FACTORY",
+			}
+		).insert(ignore_permissions=True)
+	return email
+
+
+@frappe.whitelist()
+def confirm_demand_funding_form(demand: str) -> dict[str, Any]:
+	"""DEM-UI-06 — Budget Officer Confirm funding (no reservation)."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	result = confirm_demand_funding(demand=demand, user=actor)
+	fresh = get_demand(result["demand"]["name"])
+	return {
+		"ok": True,
+		"demand": _review_demand_dto(fresh),
+		"stage": fresh.current_stage,
+		"funding": None,
+	}
+
+
+@frappe.whitelist()
+def return_budget_confirmation_form(
+	demand: str,
+	reason: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-06 — Budget Officer Return to Procurement."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	result = return_budget_confirmation(demand=demand, reason=reason, user=actor)
+	fresh = get_demand(result["demand"]["name"])
+	return {
+		"ok": True,
+		"demand": _review_demand_dto(fresh),
+		"stage": fresh.current_stage,
+	}
+
+
+@frappe.whitelist()
+def adjust_funding_allocation_form(
+	demand: str,
+	budget_line: str | None = None,
+	allocation_amount: float | str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-06 — Adjust Pending recommendation; stay on Budget Confirmation."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	amt = None
+	if allocation_amount is not None and allocation_amount != "":
+		amt = flt(allocation_amount)
+	result = adjust_funding_allocation(
+		demand=demand,
+		budget_line=(budget_line or "").strip() or None,
+		allocation_amount=amt,
+		user=actor,
+	)
+	fresh = get_demand(result["demand"]["name"])
+	return {
+		"ok": True,
+		"demand": _review_demand_dto(fresh),
+		"stage": fresh.current_stage,
+		"funding": _funding_projection(fresh),
+		"check": result.get("check"),
+	}
+
+
+@frappe.whitelist()
+def prepare_budget_confirmation_ui06(
+	requester: str | None = None,
+	procuring_entity: str | None = None,
+	owner_org_unit: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-06 Playwright factory — Enrich → send → Budget Confirmation + suggest.
+
+	Restricted to System Manager / Administrator.
+	"""
+	actor = frappe.session.user
+	if actor != "Administrator" and "System Manager" not in frappe.get_roles(actor):
+		frappe.throw("Not permitted", frappe.PermissionError)
+
+	req = (requester or "").strip() or "moh.medicalservices.officer@example.test"
+	pe = (procuring_entity or "").strip() or "PE-MOH"
+	ou = (owner_org_unit or "").strip() or "MOH-DIR-DHP"
+	if not frappe.db.exists("User", req):
+		frappe.throw(f"Requester {req} is missing", frappe.ValidationError)
+
+	from frappe.utils import add_days, today
+
+	ba = _ensure_ui04_ba(pe, ou)
+	paa = _ensure_ui05_paa(pe, ou)
+	bo = _ensure_ui06_bo(pe, ou)
+
+	line_name = frappe.db.get_value(
+		"Budget Line", {"generated_reference": "MOH-BL-DHI-2027"}, "name"
+	)
+	if not line_name:
+		line_name = frappe.db.get_value(
+			"Budget Line", {"fixture_namespace": "KENTENDER_MVP_V1"}, "name"
+		)
+	if not line_name:
+		frappe.throw("No Budget Line fixture for DEM-UI-06 factory", frappe.ValidationError)
+
+	line_meta = frappe.db.get_value(
+		"Budget Line",
+		line_name,
+		[
+			"primary_target_code",
+			"primary_target_name",
+			"approved_amount",
+			"amount_reserved",
+			"amount_committed",
+		],
+		as_dict=True,
+	) or {}
+	t_code = (line_meta.get("primary_target_code") or "T-DIGITAL-AVAIL").strip()
+	t_name = (
+		line_meta.get("primary_target_name")
+		or "At least 99.9% annual availability by 30 June 2028"
+	).strip()
+	# Ensure Stitch demo headroom (KES 455M) without depending on live reserve state.
+	estimate = 455_000_000
+	avail = (
+		flt(line_meta.get("approved_amount"))
+		- flt(line_meta.get("amount_reserved"))
+		- flt(line_meta.get("amount_committed"))
+	)
+	if avail < estimate:
+		frappe.db.set_value(
+			"Budget Line",
+			line_name,
+			"approved_amount",
+			flt(line_meta.get("amount_reserved"))
+			+ flt(line_meta.get("amount_committed"))
+			+ estimate
+			+ 25_000_000,
+			update_modified=False,
+		)
+
+	created = create_or_update_demand(
+		values={
+			"procuring_entity": pe,
+			"owner_org_unit": ou,
+			"title": "National digital health infrastructure upgrade",
+			"need_statement": (
+				"Urgent upgrade of core server infrastructure to support the new "
+				"National EMR system rollout."
+			),
+			"need_rationale": "Clinical data continuity requires resilient national infrastructure",
+			"expected_outcome": "Resilient compute and network services for district hospitals",
+			"beneficiaries": "National hospitals, 50M+ citizens",
+			"delivery_location": "National Data Centre, Nairobi",
+			"required_by_date": add_days(today(), 90),
+			"demand_route": "Standard",
+			"urgency": "Medium",
+			"estimate_confidence": "Medium",
+			"estimate_basis": "Market research and infrastructure assessment",
+			"currency": "KES",
+			"fixture_namespace": "DEMANDS_UI06_FACTORY",
+		},
+		items=[
+			{
+				"description": "High-performance compute cluster",
+				"quantity": 2,
+				"uom": "units",
+				"requester_estimate": 200000000,
+			},
+			{
+				"description": "Scalable storage arrays (10 PB)",
+				"quantity": 1,
+				"uom": "set",
+				"requester_estimate": 255000000,
+			},
+		],
+		user=req,
+	)
+	name = created["demand"]["name"]
+	frappe.db.set_value("Demand", name, "requester_estimate", 455000000, update_modified=False)
+	submit_demand(demand=name, user=req)
+	record_business_decision(
+		demand=name,
+		decision="Support",
+		comment="Aligned with unit digital health responsibilities",
+		user=ba,
+	)
+	enrich_demand(
+		demand=name,
+		values={
+			"confirmed_estimate": 455000000,
+			"procurement_category": "ICT infrastructure and services",
+			"estimate_basis": "Market research and infrastructure assessment",
+			"duplicate_assessment": "None found",
+			"aggregation_treatment": "Proceed independently",
+			"aggregation_rationale": "Distinct national infrastructure programme",
+		},
+		strategy_references=[
+			{
+				"reference_type": "Primary",
+				"target_code": t_code,
+				"target_name": t_name,
+				"snapshot_label": f"{t_name} ({t_code})" if t_code else t_name,
+				"hierarchy_path": "Digital Health > Availability",
+				"selection_source": "Manual",
+				"confirmation_reason": "Directly funds the digital availability target",
+			}
+		],
+		value_treatments=[],
+		send_for_budget=True,
+		user=paa,
+	)
+	# send_for_budget auto-suggests without a line → Multiple Matches when PE has many lines.
+	# Force the routine single-line recommendation for UI-06 happy path.
+	suggest_funding_allocations(demand=name, budget_line=line_name, user=paa)
+	pending = frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": name, "bo_confirmation_status": "Pending"},
+		pluck="name",
+	)
+	if not pending:
+		adjust_funding_allocation(
+			demand=name,
+			budget_line=line_name,
+			allocation_amount=estimate,
+			user=bo,
+		)
+	for exc in frappe.get_all(
+		"Funding Exception",
+		filters={"demand": name, "status": ["in", ["Open", "In Progress"]]},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Funding Exception",
+			exc,
+			{
+				"status": "Resolved",
+				"resolution": "Routine UI-06 prepare — single-line recommendation",
+				"resolved_by": bo,
+			},
+		)
+	frappe.db.commit()
+	doc = get_demand(name)
+	funding = _funding_projection(doc)
+	if not funding.get("recommendation"):
+		frappe.throw(
+			"DEM-UI-06 factory could not create a Pending funding recommendation",
+			frappe.ValidationError,
+		)
+	return {
+		"ok": True,
+		"demand": doc.name,
+		"demand_code": doc.demand_code,
+		"status": doc.status,
+		"current_stage": doc.current_stage,
+		"business_approver": ba,
+		"procurement_approver": paa,
+		"budget_officer": bo,
+		"review": _review_demand_dto(doc),
+		"funding": funding,
 	}

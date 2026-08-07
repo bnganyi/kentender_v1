@@ -29,15 +29,26 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
 		await expect(page.locator(`${ROOT}.kt-stitch-canvas`)).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Create demand" })).toBeVisible();
+		await expect(page.getByTestId("kt-dem-create-lead")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-create-lead")).toContainText(
+			/Describe what is needed/i,
+		);
 		// Single-scope: PE lives under shared title (not the old top context row).
 		await expect(page.getByTestId("kt-dem-ui02-context")).toBeHidden();
 		await expect(page.getByTestId("kt-dem-record-header")).toBeVisible();
-		await expect(page.getByTestId("kt-dem-record-meta-top")).toBeVisible();
+		// Create: no demand code / status / route row until the Demand exists.
+		await expect(page.getByTestId("kt-dem-record-meta-top")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-code")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-status-pill")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-route-pill")).toBeHidden();
 		await expect(page.getByTestId("kt-dem-record-pe")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-record-pe")).toContainText(/Ministry of Health/i);
 		await expect(page.getByTestId("kt-dem-stage")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Request preparation/i);
 		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Current/i);
+		// Stage labels stay sentence case (not SCREAMING CAPS).
+		const stageText = await page.getByTestId("kt-dem-stage").innerText();
+		expect(stageText).not.toMatch(/REQUEST PREPARATION/);
 		await expect(page.getByText(/Current stage:/i)).toHaveCount(0);
 		await expect(page.getByTestId("kt-dem-ui02-section-need")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui02-section-delivery")).toBeVisible();

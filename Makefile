@@ -67,7 +67,7 @@ help:
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
 	@echo "  make ui-demands-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
-	@echo "  make ui-demands-review-gate — Demand review (DEM-UI-04/05) API + Playwright"
+	@echo "  make ui-demands-review-gate — Demand review chrome gate + DEM-UI-04/05/06 API + Playwright"
 	@echo "  make bw-domain-gate SITE=$(SITE) — Bidder workspace A1 domain API tests"
 	@echo "  make bw-a0-domain-gate SITE=$(SITE) — Available Tenders (A0) domain tests"
 	@echo "  make bw-a2-domain-gate SITE=$(SITE) — Submission Checklist (A2) domain + web route tests"
@@ -439,12 +439,17 @@ ui-demands-form-gate:
 
 ui-demands-review-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.demands.tests.test_demands_review_chrome_gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.demands.tests.test_demands_review_api
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.demands.tests.test_demands_enrichment_api
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.demands.tests.test_demands_budget_api
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/business-review.spec.ts \
-		tests/ui/smoke/demands/procurement-enrichment.spec.ts
+		tests/ui/smoke/demands/procurement-enrichment.spec.ts \
+		tests/ui/smoke/demands/budget-confirm.spec.ts
 
 bid-submissions-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

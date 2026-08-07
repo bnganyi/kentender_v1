@@ -9,7 +9,12 @@ def _asset_version(rel_path: str) -> int:
 
 
 def _desk_asset_v(rel_path: str) -> int:
-	"""Cache-bust string for app_include: combine asset + hooks mtime so any edit rebusts; clear-cache + restart still required for Redis hook cache in prod."""
+	"""Cache-bust string for app_include: combine asset + hooks mtime so any edit rebusts.
+
+	Editing only JS/CSS does not reload this module — touch hooks.py (or restart)
+	so Desk boot emits a new ?v= and browsers drop stale fixture functions.
+	clear-cache alone is not enough while the worker still holds the old import.
+	"""
 	try:
 		base = Path(__file__).resolve().parent
 		a = (base / rel_path).stat()
@@ -545,4 +550,20 @@ fixtures = [
 		"filters": [["name", "in", ["Procurement", "Tenders"]]],
 	},
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

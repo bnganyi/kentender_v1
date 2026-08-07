@@ -37,6 +37,7 @@
   "currency",
   "estimate_basis",
   "procurement_category",
+  "strategy_no_alignment_reason",
   "section_duplication",
   "duplicate_assessment",
   "related_demands_note",
@@ -246,6 +247,12 @@
    "fieldname": "procurement_category",
    "fieldtype": "Data",
    "label": "Procurement Category"
+  },
+  {
+   "fieldname": "strategy_no_alignment_reason",
+   "fieldtype": "Small Text",
+   "label": "No Direct Strategy Alignment Reason",
+   "description": "DIA-FR-063 controlled reason when no Primary target applies"
   },
   {
    "fieldname": "section_duplication",

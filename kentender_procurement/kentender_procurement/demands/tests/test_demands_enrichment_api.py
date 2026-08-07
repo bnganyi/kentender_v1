@@ -196,6 +196,26 @@ class TestDemandsEnrichmentApi(IntegrationTestCase):
 		name = _to_enrichment(req, ba)
 		frappe.set_user(paa)
 
+		# Prefer a real Strategic Plan so plan_display resolves to title+code (not hash).
+		plan = frappe.db.get_value(
+			"Strategic Plan",
+			{"status": "Active"},
+			["name", "title", "plan_code"],
+			as_dict=True,
+		)
+		ref = {
+			"reference_type": "Primary",
+			"target_code": "T-UI05",
+			"target_name": "UI05 Primary Target",
+			"snapshot_label": "UI05 Primary Target (T-UI05)",
+			"hierarchy_path": "Outcome > Target",
+			"selection_source": "Manual",
+			"confirmation_reason": "Best fit",
+		}
+		if plan:
+			ref["plan"] = plan.name
+			ref["plan_version_id"] = plan.name
+
 		sent = enrich_demand_form(
 			demand=name,
 			values={
@@ -204,23 +224,57 @@ class TestDemandsEnrichmentApi(IntegrationTestCase):
 				"estimate_basis": "Market check",
 			},
 			items=None,
-			strategy_references=[
-				{
-					"reference_type": "Primary",
-					"target_code": "T-UI05",
-					"target_name": "UI05 Primary Target",
-					"snapshot_label": "UI05 Primary Target (T-UI05)",
-					"hierarchy_path": "Outcome > Target",
-					"selection_source": "Manual",
-					"confirmation_reason": "Best fit",
-				}
-			],
+			strategy_references=[ref],
 			value_treatments=[],
 			send_for_budget=1,
 		)
 		self.assertTrue(sent["ok"])
 		self.assertEqual(sent["stage"], "Budget Confirmation")
 		self.assertEqual(sent["demand"]["current_stage"], "Budget Confirmation")
+
+	def test_strategy_ref_dto_exposes_plan_display_not_hash(self) -> None:
+		req = _ensure_user("dem-enrich-req-plan@example.com", [ROLE_REQUESTER])
+		ba = _ensure_user("dem-enrich-ba@example.com", [ROLE_BUSINESS])
+		paa = _ensure_user("dem-enrich-paa@example.com", [ROLE_PAA])
+		name = _to_enrichment(req, ba)
+		plan = frappe.db.get_value(
+			"Strategic Plan",
+			{"status": "Active"},
+			["name", "title", "plan_code"],
+			as_dict=True,
+		)
+		self.assertTrue(plan, "Need an Active Strategic Plan fixture for display DTO coverage")
+		frappe.set_user(paa)
+		enrich_demand_form(
+			demand=name,
+			values={
+				"confirmed_estimate": 1000,
+				"procurement_category": "ICT infrastructure and services",
+			},
+			strategy_references=[
+				{
+					"reference_type": "Primary",
+					"plan": plan.name,
+					"plan_version_id": plan.name,
+					"target_code": "T-DISP",
+					"target_name": "Display Target",
+					"snapshot_label": "Display Target (T-DISP)",
+					"hierarchy_path": "Programme > Target",
+					"confirmation_reason": "Display check",
+				}
+			],
+			value_treatments=[],
+			send_for_budget=0,
+		)
+		payload = get_demand_review(demand=name)
+		primary = payload["enrichment"]["primary_strategy"]
+		self.assertIsNotNone(primary)
+		self.assertEqual(primary["plan_name"], plan.title)
+		self.assertEqual(primary["plan_code"], plan.plan_code)
+		self.assertIn(plan.title, primary["plan_display"])
+		self.assertIn(plan.plan_code, primary["plan_display"])
+		self.assertNotEqual(primary["plan_display"], plan.name)
+		self.assertNotIn(plan.name, primary["plan_display"])
 
 	def test_send_blocked_without_primary(self) -> None:
 		req = _ensure_user("dem-enrich-req3@example.com", [ROLE_REQUESTER])
@@ -274,10 +328,21 @@ class TestDemandsEnrichmentApi(IntegrationTestCase):
 		payload = suggest_strategy_context_form(demand=name)
 		self.assertTrue(payload["ok"])
 		self.assertIsInstance(payload.get("suggestions"), list)
+		self.assertIn("filters", payload)
+		self.assertIn("plans", payload["filters"])
+		self.assertIn("effective_periods", payload["filters"])
 		for s in payload["suggestions"][:3]:
 			self.assertIn("display_name", s)
 			self.assertIn("display_code", s)
 			self.assertIn("target_id", s)
+			self.assertIn("is_suggested", s)
+			self.assertIn("why_suggested", s)
+			self.assertIn("hierarchy_path", s)
+		# Suggested rows (if any) sort ahead of non-suggested.
+		flags = [bool(s.get("is_suggested")) for s in payload["suggestions"]]
+		if any(flags) and not all(flags):
+			first_false = flags.index(False)
+			self.assertTrue(all(flags[:first_false]))
 
 	def test_prepare_enrichment_ui05_factory(self) -> None:
 		frappe.set_user("Administrator")
@@ -288,6 +353,26 @@ class TestDemandsEnrichmentApi(IntegrationTestCase):
 		self.assertEqual(payload["current_stage"], "Procurement Enrichment")
 		self.assertEqual(payload["enrichment"]["strategy_alignment"], "Not assigned")
 		self.assertTrue(payload["procurement_approver"])
+
+	def test_review_dto_falls_back_when_confirmed_item_fields_are_zero(self) -> None:
+		"""Unset confirmed_* floats are 0.0 — DTO must surface requester qty/estimate."""
+		frappe.set_user("Administrator")
+		payload = prepare_enrichment_ui05(
+			requester=_ensure_user("dem-enrich-zero-fallback@example.com", [ROLE_REQUESTER])
+		)
+		items = (payload.get("review") or {}).get("items") or []
+		self.assertGreaterEqual(len(items), 2)
+		first = items[0]
+		self.assertEqual(flt_safe(first.get("quantity")), 2)
+		self.assertEqual(flt_safe(first.get("requester_estimate")), 200000000)
+		# DB confirmed_* stay 0 until PAA saves; projection must still paint usable values.
+		self.assertGreater(flt_safe(first.get("confirmed_quantity")), 0)
+		self.assertEqual(flt_safe(first.get("confirmed_quantity")), 2)
+		self.assertGreater(flt_safe(first.get("confirmed_estimate")), 0)
+		self.assertEqual(flt_safe(first.get("confirmed_estimate")), 200000000)
+		self.assertEqual(flt_safe(first.get("unit_estimate")), 100000000)
+		self.assertTrue(first.get("unit_estimate_display"))
+		self.assertTrue(first.get("total_estimate_display"))
 
 
 def flt_safe(v) -> float:
