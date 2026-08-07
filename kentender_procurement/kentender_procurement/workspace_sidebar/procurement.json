@@ -60,19 +60,6 @@
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "clipboard",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Demands",
-   "link_to": "Demand Intake and Approval",
-   "link_type": "Workspace",
-   "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/demand-hub"
-  },
-  {
-   "child": 0,
-   "collapsible": 0,
    "icon": "kanban",
    "indent": 0,
    "keep_closed": 0,
@@ -233,7 +220,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-06 21:56:45.394165",
+ "modified": "2026-08-06 23:04:45.613307",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

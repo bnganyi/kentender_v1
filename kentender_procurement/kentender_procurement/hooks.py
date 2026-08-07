@@ -48,10 +48,7 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
-	f"/assets/kentender_procurement/css/demand_hub_page.css?v={_desk_asset_v('public/css/demand_hub_page.css')}",
 	f"/assets/kentender_procurement/css/planning_hub_page.css?v={_desk_asset_v('public/css/planning_hub_page.css')}",
-	f"/assets/kentender_procurement/css/demand_workbench_page.css?v={_desk_asset_v('public/css/demand_workbench_page.css')}",
-	f"/assets/kentender_procurement/css/create_demand_page.css?v={_desk_asset_v('public/css/create_demand_page.css')}",
 	f"/assets/kentender_procurement/css/create_package_wizard_page.css?v={_desk_asset_v('public/css/create_package_wizard_page.css')}",
 	f"/assets/kentender_procurement/css/package_detail_page.css?v={_desk_asset_v('public/css/package_detail_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
@@ -227,10 +224,7 @@ doctype_js = {
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
 	"kt-procurement-home": "public/js/procurement_home_page.js",
-	"demand-hub": "public/js/demand_hub_page.js",
 	"planning-hub": "public/js/planning_hub_page.js",
-	"demand-workbench": "public/js/demand_workbench_page.js",
-	"create-demand": "public/js/create_demand_page.js",
 	"create-package-wizard": "public/js/create_package_wizard_page.js",
 	"package-detail": "public/js/package_detail_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
@@ -362,14 +356,12 @@ page_js = {
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.get_permission_query_conditions_for_demand",
 	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_plan",
 	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_package",
 	"Package Review Decision": "kentender_procurement.procurement_planning.permissions.pp_scope.get_permission_query_conditions_for_package_review_decision",
 }
 
 has_permission = {
-	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.demand_has_permission",
 	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_plan_has_permission",
 	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_package_has_permission",
 	"Package Review Decision": "kentender_procurement.procurement_planning.permissions.pp_scope.package_review_decision_has_permission",
@@ -517,7 +509,6 @@ fixtures = [
 				"name",
 				"in",
 				[
-					"Demand Intake and Approval",
 					"Governance & Configuration",
 					"Procurement Home",
 					"Procurement Planning",
@@ -531,7 +522,7 @@ fixtures = [
 			[
 				"name",
 				"in",
-				["Procurement", "Demand Intake", "Planning module navigation"],
+				["Procurement", "Planning module navigation"],
 			]
 		],
 	},

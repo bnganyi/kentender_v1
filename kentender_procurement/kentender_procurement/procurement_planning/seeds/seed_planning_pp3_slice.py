@@ -25,16 +25,6 @@ from frappe import _
 from frappe.utils import flt
 
 from kentender_core.seeds import constants as C
-from kentender_procurement.demand_intake.seeds.dia_seed_common import (
-	U_REQ,
-	_fin_approve,
-	_hod_approve,
-	_insert_demand,
-	_new_demand_dict,
-	_submit,
-	ensure_budget_line_prerequisites,
-	ensure_core_prerequisites,
-)
 from kentender_procurement.procurement_planning.services.planning_references import (
 	resolve_demand_name,
 	resolve_procurement_plan_name,
@@ -230,18 +220,24 @@ def _ensure_core_if_needed() -> None:
 	"""Avoid re-running full core seed on every call (reduces races in parallel tests)."""
 	if frappe.db.exists("Procuring Entity", C.ENTITY_MOH) and frappe.db.exists("Currency", "KES"):
 		return
-	ensure_core_prerequisites()
 
 
 def run():
 	"""Idempotent PP3 slice: seed prerequisites, ensure data, apply template once."""
 	frappe.only_for(("System Manager", "Administrator"))
+	if not frappe.db.exists("DocType", "Demand"):
+		return {
+			"ok": False,
+			"skipped": True,
+			"reason": "DEMAND_MODULE_RETIRED",
+			"pack": "seed_planning_pp3_slice",
+			"message": "PP3 slice skipped — Demand Intake retired pending Demands MVP-1.",
+		}
 	_ensure_core_if_needed()
-	ensure_budget_line_prerequisites()
 
 	if not frappe.db.exists("Demand", {"demand_id": DEMAND_0004}):
 		frappe.throw(
-			_("Demand {0} is missing. Run seed_dia_basic first.").format(DEMAND_0004),
+			_("Demand {0} is missing. Demand Intake seed helpers were retired.").format(DEMAND_0004),
 			title=_("Missing prerequisite"),
 		)
 

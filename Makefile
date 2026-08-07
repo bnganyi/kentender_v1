@@ -48,7 +48,7 @@ help:
 	@echo "  make ui-budget-funding-performance-gate — Funding Performance (BUD-UI-02) chrome + domain + Playwright"
 	@echo "  make ui-budget-funding-check-reserve-gate — Check and Reserve (BUD-UI-06) chrome + domain + Playwright"
 	@echo "  make ui-budget-role-gate — BUD-SUP-002 role matrix (API + Playwright capability gating)"
-	@echo "  make ui-create-demand-strategy-gate — XMOD-STR-002/003 create-demand strategy + PVC (domain + Playwright)"
+	@echo "  make ui-create-demand-strategy-gate — (retired) DIA create-demand gate; no-op until Demands MVP-1"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
 	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
 	@echo "  make ui-civic-ledger-cfg01-gate — CFG-01 Tender Profile strip/form/Continue gate"
@@ -180,9 +180,10 @@ smoke:
 ui-smoke:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke
 
+# DIA workspace pattern lock retired with Demand Intake teardown (Demands MVP-1 pending).
+# Civic Ledger queue pattern is covered by ui-civic-ledger-queue-gate.
 ui-workspace-pattern-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test \
-		tests/ui/smoke/dia-landing/dia-pattern-lock.spec.ts
+	@echo "ui-workspace-pattern-gate: DIA pattern lock retired — no-op (see Demands MVP-1 teardown inventory)."
 
 # Fast gate for Strategy CSS/chrome/typography work (Desk Espresso bleed, shared plan header).
 ui-strategy-typography-gate:
@@ -347,16 +348,9 @@ ui-budget-role-gate:
 
 
 # XMOD-STR-002 / 003 — create-demand Strategy target + PVC Review E2E.
+# Retired with DIA preparatory teardown; Demands MVP-1 will restore a successor gate.
 ui-create-demand-strategy-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.demand_intake.tests.test_demand_strategy_readiness
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_strategy.tests.test_strategy_mvp1_ac_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/create-demand/create-demand-strategy-xmod-str-002.spec.ts \
-		tests/ui/smoke/create-demand/create-demand-pvc-xmod-str-003.spec.ts \
-		tests/ui/smoke/create-demand/create-demand-wizard.spec.ts
+	@echo "ui-create-demand-strategy-gate: create-demand / DIA retired — no-op (Demands MVP-1 pending)."
 
 ui-civic-ledger-queue-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

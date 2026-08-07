@@ -31,7 +31,7 @@ class TestKtClShellPocDeskWiring(UnitTestCase):
 		self.assertIn('frappe.pages["kt-cl-shell-poc"]', source)
 		self.assertIn("kentender_core.cl_shell.enter", source)
 		self.assertIn("kentender_core.cl_shell.mountPageChrome", source)
-		self.assertIn("Procurement Home", source)
+		self.assertIn("Procurement Portal", source)
 		self.assertIn("Export APP", source)
 		self.assertIn("Submit Draft", source)
 		# Content area is composed from the kentender_core.cl component library
@@ -40,8 +40,8 @@ class TestKtClShellPocDeskWiring(UnitTestCase):
 			self.assertIn(call, source)
 
 	def test_side_menu_module_links_are_wired(self) -> None:
-		"""Strategy Alignment, Budget & Funding, and Demand Intake & Approval
-		must route to their real Desk destinations, not the placeholder '#'."""
+		"""Strategy Alignment and Budget & Funding route to real Desk destinations.
+		Demands rail is retired pending Demands MVP-1 (placeholder '#')."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"public",
@@ -53,11 +53,12 @@ class TestKtClShellPocDeskWiring(UnitTestCase):
 			('Strategy Alignment', '["strategy-management"]'),
 			# MVP-1 Budget teardown: hub page removed; rail uses Workspace placeholder.
 			('Budget & Funding', '["Workspaces", "Budget Management"]'),
-			('Demand Intake & Approval', '["demand-hub"]'),
 		)
 		for label, route in expected:
 			self.assertIn(label, source)
 			self.assertIn(route, source, f"{label} must be wired to {route}")
+		self.assertIn("Demands (retired)", source)
+		self.assertNotIn('["demand-hub"]', source)
 
 	def test_poc_page_fixture_exists(self) -> None:
 		path = os.path.join(

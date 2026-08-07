@@ -27,12 +27,10 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	SUPPORTED_PLANNING_CHECKPOINTS,
 )
 from kentender_core.seeds.stable_platform_seed.it_budget import upsert_it_budget_supplement
-from kentender_core.seeds.stable_platform_seed.it_demand import upsert_it_demand_supplement
 from kentender_core.seeds.stable_platform_seed.it_planning import upsert_it_planning_supplement
 from kentender_core.seeds.stable_platform_seed.it_strategy import upsert_it_strategy_supplement
 from kentender_core.seeds.stable_platform_seed.std_it import import_it_std_v1_1
 from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import upsert_works_master_demand
 from kentender_procurement.procurement_lifecycle.seeds.works_master_journey_seed import (
 	upsert_works_master_journey,
 )
@@ -128,16 +126,21 @@ def load_stable_platform_seed(
 		return {**journey, "stage_failed": "journey", "warnings": warnings}
 	warnings.extend(journey.get("warnings") or [])
 
-	demand = upsert_works_master_demand()
-	stages["demand_works"] = demand
-	if not demand.get("ok"):
-		return {**demand, "stage_failed": "demand_works", "warnings": warnings}
-
+	# DIA Demand domain retired pending Demands MVP-1 rebuild.
+	stages["demand_works"] = {
+		"ok": True,
+		"skipped": True,
+		"reason": "DEMAND_MODULE_RETIRED",
+	}
 	if include_it_supplement:
-		it_demand = upsert_it_demand_supplement()
-		stages["demand_it"] = it_demand
-		if not it_demand.get("ok"):
-			return {**it_demand, "stage_failed": "demand_it", "warnings": warnings}
+		stages["demand_it"] = {
+			"ok": True,
+			"skipped": True,
+			"reason": "DEMAND_MODULE_RETIRED",
+		}
+	warnings.append(
+		"Demand Intake retired — WORKS/IT Demand seed skipped (Demands MVP-1 pending)."
+	)
 
 	planning = load_works_planning_checkpoint(
 		checkpoint=checkpoint,

@@ -54,10 +54,12 @@ def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
 	if allowed is None:
 		# Unrestricted users: prefer operational entities over demo PE clutter.
 		preferred = ["PE-MOH", "PE-MOE"]
-		active = set(
-			frappe.get_all("Demand", pluck="procuring_entity", distinct=True, limit=50)
-			or []
-		)
+		active: set[str] = set()
+		if frappe.db.exists("DocType", "Demand"):
+			active = set(
+				frappe.get_all("Demand", pluck="procuring_entity", distinct=True, limit=50)
+				or []
+			)
 		if frappe.db.exists("DocType", "Budget") and frappe.db.has_column("Budget", "procuring_entity"):
 			active |= set(
 				frappe.get_all("Budget", pluck="procuring_entity", distinct=True, limit=50) or []

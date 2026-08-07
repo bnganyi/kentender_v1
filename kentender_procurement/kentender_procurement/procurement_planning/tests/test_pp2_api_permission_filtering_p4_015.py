@@ -108,7 +108,7 @@ def _bootstrap_upstream_only() -> None:
 	ensure_procuring_entity(_PE_CODE, _PE_NAME)
 	ensure_procuring_entity(C.ENTITY_MOE, "Ministry of Education")
 	from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-	from kentender_procurement.demand_intake.seeds.works_master_demand_seed import upsert_works_master_demand
+	from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import upsert_works_master_demand
 	from kentender_procurement.procurement_lifecycle.seeds.works_master_journey_seed import upsert_works_master_journey
 
 	assert upsert_works_master_strategy_hierarchy().get("ok")
@@ -390,7 +390,7 @@ class TestPP2ApiPermissionFilteringP4015(IntegrationTestCase):
 		clear_master_planning_seed()
 		frappe.db.commit()
 		from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-		from kentender_procurement.demand_intake.seeds.works_master_demand_seed import (
+		from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import (
 			upsert_works_master_demand,
 		)
 

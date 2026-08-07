@@ -111,6 +111,8 @@ def _finance_sums_for_context(
 
 def _unfunded_approved_demand(pe: str) -> float:
 	"""Sum shortfall on approved demands without sufficient funding (best-effort)."""
+	if not frappe.db.exists("DocType", "Demand"):
+		return 0.0
 	rows = frappe.get_all(
 		"Demand",
 		filters={"procuring_entity": ["in", pe_aliases(pe)], "status": "Approved"},

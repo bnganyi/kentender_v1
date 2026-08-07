@@ -497,15 +497,20 @@ def get_approved_demands_for_queue(
 	filters["queue"] = queue_key
 
 	if not frappe.db.exists("DocType", "Demand"):
+		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+			RETIRED_MESSAGE,
+		)
+
 		return {
-			"ok": False,
-			"error_code": "PP_NOT_INSTALLED",
-			"message": "Demand Intake is not installed on this site.",
+			"ok": True,
+			"error_code": "DEMAND_MODULE_RETIRED",
+			"message": RETIRED_MESSAGE,
 			"role_key": role_key,
 			"queue_key": queue_key,
 			"total": 0,
 			"rows": [],
 			"filters_applied": filters,
+			"skipped": True,
 		}
 
 	allowed_entities = pp_scope.get_user_allowed_entities(actor)

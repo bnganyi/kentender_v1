@@ -99,8 +99,14 @@ def _resolve_existing_journey_code(demand_code: str, demand_row: dict[str, Any])
 
 def ensure_procurement_journey_for_demand_code(demand_code: str) -> str | None:
 	"""Create or return the journey code linked to an approved demand."""
+	from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+		demand_doctype_available,
+	)
+
 	demand_code = (demand_code or "").strip()
 	if not demand_code:
+		return None
+	if not demand_doctype_available():
 		return None
 
 	demand = _load_demand(demand_code)

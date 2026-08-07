@@ -166,45 +166,8 @@ def seed_moh_performance_contribution_depth(
 	"""XMOD-STR-007 — link downstream refs + apply Included treatments for Required PVCs."""
 	base = seed_moh_downstream_usage_refs(plan_name=plan_name, target_name=target_name)
 	linked = dict(base.get("linked") or {})
-	demand_name = linked.get("demand")
-	plan = linked.get("plan") or plan_name
+	# DIA Demand Value Treatment wiring retired with Demand Intake teardown.
 	treated = 0
-	if (
-		demand_name
-		and plan
-		and frappe.db.exists("DocType", "Demand Value Treatment")
-		and frappe.db.exists("Demand", demand_name)
-	):
-		try:
-			from kentender_procurement.demand_intake.services.demand_strategy_value import (
-				TREATMENT_INCLUDED,
-				apply_value_treatments_to_doc,
-			)
-			from kentender_strategy.services.strategy_contracts import list_plan_value_commitments
-
-			rows = (list_plan_value_commitments(plan_version=plan) or {}).get("rows") or []
-			required = [
-				r for r in rows if str(r.get("consideration_level") or "").startswith("Required")
-			]
-			payload = []
-			for r in required:
-				obj = r.get("objective") or {}
-				payload.append(
-					{
-						"pvc_id": r.get("id"),
-						"pvc_code": obj.get("code") or "",
-						"pvc_name": obj.get("name") or obj.get("code") or "",
-						"requirement_level": r.get("consideration_level"),
-						"treatment": TREATMENT_INCLUDED,
-					}
-				)
-			if payload:
-				doc = frappe.get_doc("Demand", demand_name)
-				apply_value_treatments_to_doc(doc, payload)
-				doc.save(ignore_permissions=True)
-				treated = len(payload)
-		except Exception:
-			frappe.log_error(title="moh_downstream_usage: performance PVC treatments skipped")
 
 	package_name = linked.get("package")
 	if package_name and frappe.db.has_column("Procurement Package", "estimated_value"):

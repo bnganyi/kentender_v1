@@ -15,7 +15,7 @@
 			{ kind: "link", label: "Analytics", icon: "bar_chart", url: "#" },
 			{ kind: "link", label: "Strategy Alignment", icon: "ads_click", route: ["strategy-management"] },
 			{ kind: "link", label: "Budget & Funding", icon: "account_balance_wallet", route: ["Workspaces", "Budget Management"] },
-			{ kind: "link", label: "Demands", icon: "assignment_ind", route: ["demand-hub"] },
+			{ kind: "link", label: "Demands (retired)", icon: "assignment_ind", url: "#" },
 			{ kind: "link", label: "Procurement Plans", icon: "checklist", route: ["planning-hub"] },
 			{
 				kind: "group",

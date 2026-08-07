@@ -184,6 +184,13 @@ def create_demand_approval_certificate(
     dem_code = demand_code.strip()
     jrn_code = journey_code.strip()
 
+    if not frappe.db.exists("DocType", "Demand"):
+        from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+            RETIRED_MESSAGE,
+        )
+
+        raise ValueError(f"DEMAND_MODULE_RETIRED: {RETIRED_MESSAGE}")
+
     demand = _find_demand(dem_code)
     if demand is None:
         raise ValueError(

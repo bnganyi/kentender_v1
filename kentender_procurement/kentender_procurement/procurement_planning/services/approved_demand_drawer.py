@@ -200,9 +200,13 @@ def get_approved_demand_planning_drawer(
 		return _fail(code="MISSING_DEMAND", message="Demand code is required.", role_key=role_key)
 
 	if not frappe.db.exists("DocType", "Demand"):
+		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+			RETIRED_MESSAGE,
+		)
+
 		return _fail(
-			code="PP_NOT_INSTALLED",
-			message="Demand Intake is not installed on this site.",
+			code="DEMAND_MODULE_RETIRED",
+			message=RETIRED_MESSAGE,
 			role_key=role_key,
 		)
 

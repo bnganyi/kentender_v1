@@ -126,7 +126,7 @@ def _get_budget_line_code(budget_line_frappe_name: str) -> str:
 
 
 def _get_demand_category(demand_frappe_name: str) -> str:
-	if not demand_frappe_name:
+	if not demand_frappe_name or not frappe.db.exists("DocType", "Demand"):
 		return ""
 	val = frappe.db.get_value("Demand", demand_frappe_name, "requisition_type")
 	return str(val or "").strip()

@@ -48,7 +48,7 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
     upsert_works_master_strategy_hierarchy,
 )
 from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import (
+from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import (
     upsert_works_master_demand,
 )
 from kentender_procurement.procurement_planning.seeds.works_master_planning_seed import (

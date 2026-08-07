@@ -64,6 +64,9 @@ def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[
 		"finance_approved_at",
 	]
 
+	if not frappe.db.exists("DocType", "Demand"):
+		return items
+
 	if "Department Approver" in roles or "System Manager" in roles or user == "Administrator":
 		rows = frappe.get_all(
 			"Demand",

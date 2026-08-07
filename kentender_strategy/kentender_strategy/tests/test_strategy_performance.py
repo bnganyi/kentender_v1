@@ -134,6 +134,11 @@ class TestStrategyPerformance(FrappeTestCase):
 	def test_pvc_adoption_uses_demand_value_treatments(self):
 		"""XMOD-STR-007 / STR-AC-028 — adoption from Demand Value Treatment, not Demand count proxy."""
 		frappe.set_user("Administrator")
+		if not frappe.db.exists("DocType", "Demand Value Treatment"):
+			self.skipTest(
+				"Demand Value Treatment retired with DIA preparatory teardown "
+				"(Demands MVP-1 pending)."
+			)
 		from kentender_procurement.demand_intake.services.demand_strategy_value import (
 			TREATMENT_INCLUDED,
 			apply_value_treatments_to_doc,

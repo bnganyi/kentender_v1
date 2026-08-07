@@ -12,7 +12,7 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
 from kentender_core.seeds import constants as C
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_TITLE
+from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import DEMAND_TITLE
 from kentender_procurement.procurement_planning.pp2_constants import PLAN_ACTIVE
 from kentender_procurement.procurement_planning.api.workbench_item import (
 	get_pp_workbench_item_view_model,

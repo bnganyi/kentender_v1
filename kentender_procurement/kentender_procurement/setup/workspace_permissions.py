@@ -52,7 +52,6 @@ import frappe
 _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 	"Procurement",
 	"Planning module navigation",
-	"Demand Intake",
 )
 
 # Maps workspace page name → sidebar name that should be shown for that page.
@@ -157,8 +156,6 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"publications": "Procurement",
 		"bid-submissions": "Procurement",
 		# Hub pages linked from the Procurement rail (Civic Ledger IA).
-		"demand-hub": "Procurement",
-		"create-demand": "Procurement",
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",
 		"planning-hub": "Procurement",

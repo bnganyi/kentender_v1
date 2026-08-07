@@ -23,7 +23,6 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	WORKS_PKG_CODE,
 	WORKS_PLAN_CODE,
 )
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_ID as WORKS_DEMAND_ID
 from kentender_procurement.procurement_lifecycle.seeds.works_master_handoff_payloads import (
 	BASE_HANDOFF_CODES,
 	JOURNEY_CODE,
@@ -36,7 +35,7 @@ from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.cons
 from kentender_procurement.tender_management.seeds.purge_smoke_test_tenders import run as purge_smoke_tenders
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
 
-_KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, WORKS_DEMAND_ID, IT_DEMAND_CODE})
+_KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, IT_DEMAND_CODE})
 _KEEP_BUDGET_NAMES: Final[frozenset[str]] = frozenset({BUDGET_NAME})
 _KEEP_BUDGET_LINE_CODES: Final[frozenset[str]] = frozenset({WORKS_BUDGET_LINE_CODE, IT_BUDGET_LINE_CODE})
 _KEEP_PLAN_CODES: Final[frozenset[str]] = frozenset({WORKS_PLAN_CODE, PLAN_CODE})

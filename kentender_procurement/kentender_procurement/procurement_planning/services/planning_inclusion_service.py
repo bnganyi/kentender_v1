@@ -62,7 +62,7 @@ def _normalize_item_codes(demand_item_codes: list[str] | None) -> list[str]:
 
 def _resolve_demand_row(demand_code: str) -> dict[str, Any] | None:
 	demand_code = (demand_code or "").strip()
-	if not demand_code:
+	if not demand_code or not frappe.db.exists("DocType", "Demand"):
 		return None
 	row = frappe.db.get_value("Demand", {"demand_id": demand_code}, _DEMAND_FIELDS, as_dict=True)
 	if not row:
@@ -72,7 +72,7 @@ def _resolve_demand_row(demand_code: str) -> dict[str, Any] | None:
 
 def _load_demand_for_inclusion(demand_code: str) -> dict[str, Any] | None:
 	demand_code = (demand_code or "").strip()
-	if not demand_code:
+	if not demand_code or not frappe.db.exists("DocType", "Demand"):
 		return None
 	row = frappe.db.get_value(
 		"Demand", {"demand_id": demand_code}, _DEMAND_INCLUSION_FIELDS, as_dict=True

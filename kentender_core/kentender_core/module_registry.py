@@ -64,14 +64,19 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"sidebar_parent": "Procurement",
 	},
 	"dia": {
-		"workspace_label": "Demand Intake and Approval",
-		"sidebar_workspace_key": "demand intake and approval",
-		"desk_page": "demand-hub",
-		"form_doctype": "Demand",
+		"workspace_label": "Demands (retired)",
+		"sidebar_workspace_key": "",
+		"desk_page": "",
+		"form_doctype": "",
 		"state_key": "kt_dia_workbench_state",
 		"select_key": "kt_dia_workspace_select",
-		"route_prefixes": ("demand-hub", "create-demand", "Form/Demand"),
+		"route_prefixes": (),
 		"sidebar_parent": "Procurement",
+		"retired": True,
+		"retired_message": (
+			"Demand Intake and Approval retired pending Demands MVP-1 rebuild "
+			"(docs/mvp-1/03_demands/05_Demands_Teardown_Dependency_Inventory.md)."
+		),
 	},
 	"procurement_planning": {
 		"workspace_label": "Procurement Planning",

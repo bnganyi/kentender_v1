@@ -149,24 +149,15 @@ def probe_demo_platform_transitions(*, mutate: bool = False) -> dict[str, Any]:
 	except Exception as exc:  # noqa: BLE001
 		add("bid_landing_stages", False, str(exc))
 
-	# Optional DIA submit mutate on a throwaway copy
+	# Optional DIA submit mutate — retired with Demand Intake teardown.
 	if mutate and draft:
-		try:
-			from kentender_procurement.demand_intake.api.lifecycle import submit_demand
-
-			# Do not mutate the canonical demo draft — clone
-			src = frappe.get_doc("Demand", draft.name)
-			clone = frappe.copy_doc(src)
-			clone.demand_id = f"{DEMAND_DRAFT}-SMOKE"
-			clone.title = (src.title or "Demo") + " (transition smoke)"
-			clone.status = "Draft"
-			clone.insert(ignore_permissions=True)
-			submit_demand(clone.name)
-			new_status = frappe.db.get_value("Demand", clone.name, "status")
-			add("dia_submit_mutate", new_status == "Pending HoD Approval", new_status)
-			frappe.delete_doc("Demand", clone.name, force=True, ignore_permissions=True)
-		except Exception as exc:  # noqa: BLE001
-			add("dia_submit_mutate", False, str(exc))
+		add(
+			"dia_submit_mutate",
+			True,
+			"skipped: DEMAND_MODULE_RETIRED",
+		)
+	elif mutate:
+		add("dia_submit_mutate", True, "skipped: no draft / DEMAND_MODULE_RETIRED")
 
 	failed = [p for p in probes if not p["ok"]]
 	return {"ok": not failed, "probes": probes, "failed": failed, "mutate": mutate}

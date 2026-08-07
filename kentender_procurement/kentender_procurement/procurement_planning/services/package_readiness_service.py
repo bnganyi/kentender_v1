@@ -125,6 +125,8 @@ def _load_active_lines(package_code: str) -> list[dict[str, Any]]:
 def _demand_code_from_ref(demand_ref: str) -> str:
 	if not demand_ref:
 		return ""
+	if not frappe.db.exists("DocType", "Demand"):
+		return demand_ref
 	row = frappe.db.get_value("Demand", demand_ref, ("demand_id", "name"), as_dict=True)
 	if not row:
 		return demand_ref

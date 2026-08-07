@@ -20,7 +20,6 @@ from frappe.utils import cint, flt
 
 from kentender_core.seeds import constants as C
 from kentender_core.seeds.seed_budget_line_dia import verify_prerequisites_for_dia
-from kentender_procurement.demand_intake.seeds.seed_dia_basic import run as run_seed_dia_basic
 from kentender_procurement.procurement_planning.api import package_detail, package_list, workflow
 from kentender_procurement.procurement_planning.api.landing import get_pp_landing_shell_data
 from kentender_procurement.procurement_planning.api.template_selector import get_pp_template_preview, list_pp_templates
@@ -63,15 +62,15 @@ def _pp_ok() -> bool:
 def _ensure_f1() -> bool:
 	if not _pp_ok():
 		return False
+	if not frappe.db.exists("DocType", "Demand"):
+		return False
 	if not verify_prerequisites_for_dia().get("ok"):
 		return False
 	if not frappe.db.exists("Demand", {"demand_id": BID_0004}):
-		try:
-			run_seed_dia_basic()
-		except Exception:
-			return False
+		# DIA seed helpers retired with Demand Intake preparatory teardown.
+		return False
 	try:
-		run_f1(ensure_dia=True)
+		run_f1(ensure_dia=False)
 		frappe.db.commit()
 		return bool(frappe.db.get_value("Procurement Plan", {"plan_code": PLAN_CODE}, "name"))
 	except Exception:

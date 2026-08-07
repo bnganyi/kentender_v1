@@ -10,7 +10,7 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import flt
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_TITLE
+from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import DEMAND_TITLE
 from kentender_procurement.procurement_planning.api.approved_demands import (
 	get_pp_approved_demand_planning_drawer,
 )
@@ -81,7 +81,7 @@ def _bootstrap_upstream_only() -> None:
 	ensure_currency_kes()
 	ensure_procuring_entity(_PE_CODE, _PE_NAME)
 	from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-	from kentender_procurement.demand_intake.seeds.works_master_demand_seed import upsert_works_master_demand
+	from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import upsert_works_master_demand
 	from kentender_procurement.procurement_lifecycle.seeds.works_master_journey_seed import upsert_works_master_journey
 
 	assert upsert_works_master_strategy_hierarchy().get("ok")

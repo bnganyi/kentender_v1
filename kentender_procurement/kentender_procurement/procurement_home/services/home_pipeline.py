@@ -39,6 +39,8 @@ _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
 def _count_demands_under_review(pe: str) -> int:
+	if not frappe.db.exists("DocType", "Demand"):
+		return 0
 	return int(
 		frappe.db.count(
 			"Demand",
@@ -51,6 +53,8 @@ def _count_demands_under_review(pe: str) -> int:
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
+	if not frappe.db.exists("DocType", "Demand"):
+		return 0
 	try:
 		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
 			get_approved_demands_awaiting_planning,

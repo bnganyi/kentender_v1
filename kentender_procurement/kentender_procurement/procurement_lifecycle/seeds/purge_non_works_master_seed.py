@@ -25,7 +25,9 @@ from typing import Any, Final
 import frappe
 
 from kentender_budget.seeds.works_master_budget_seed import BUDGET_LINE_CODE, BUDGET_NAME
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_ID
+from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
+	WORKS_DEMAND_ID as DEMAND_ID,
+)
 from kentender_procurement.procurement_lifecycle.seeds.purge_plc_outside_works_master_registry import (
 	purge_procurement_lifecycle_plc_outside_works_master_registry,
 )
@@ -78,6 +80,8 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 
 def _purge_demands(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
+	if not frappe.db.exists("DocType", "Demand"):
+		return removed
 	for row in frappe.get_all("Demand", fields=["name", "demand_id"]):
 		if (row.get("demand_id") or "").strip() == DEMAND_ID:
 			continue

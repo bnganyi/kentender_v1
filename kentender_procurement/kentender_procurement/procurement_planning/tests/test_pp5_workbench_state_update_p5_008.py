@@ -10,7 +10,7 @@ from pathlib import Path
 import frappe
 from frappe.tests import IntegrationTestCase, UnitTestCase
 
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_TITLE
+from kentender_procurement.procurement_lifecycle.legacy_demand_seed_shim import DEMAND_TITLE
 from kentender_procurement.procurement_planning.api.approved_demands import (
 	include_pp_demand_in_procurement_plan,
 )

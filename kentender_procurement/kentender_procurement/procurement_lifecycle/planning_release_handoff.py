@@ -146,7 +146,7 @@ def _find_first_package_line(package_code: str) -> dict[str, Any] | None:
 
 def _get_demand_category(demand_frappe_name: str) -> str:
     """Return ``Demand.requisition_type`` as a proxy for procurement category."""
-    if not demand_frappe_name:
+    if not demand_frappe_name or not frappe.db.exists("DocType", "Demand"):
         return ""
     val = frappe.db.get_value("Demand", demand_frappe_name, "requisition_type")
     return str(val or "")

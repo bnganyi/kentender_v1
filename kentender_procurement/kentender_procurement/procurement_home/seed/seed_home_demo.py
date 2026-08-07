@@ -29,17 +29,26 @@ def seed_procurement_home_demo() -> dict:
 	pe = _ensure_pe()
 	summary: dict = {"procuring_entity": pe, "demands": [], "notes": []}
 
-	# Prefer existing seeded demands rather than inventing full workflows.
-	pending = frappe.get_all(
-		"Demand",
-		filters={"procuring_entity": ["in", [pe, "MOH", "PE-MOH"]], "status": "Pending HoD Approval"},
-		pluck="demand_id",
-		limit=3,
-	)
-	summary["demands"] = pending
-	if not pending:
+	# DIA Demand domain retired — Home demo no longer seeds or queries Demand rows.
+	if frappe.db.exists("DocType", "Demand"):
+		pending = frappe.get_all(
+			"Demand",
+			filters={
+				"procuring_entity": ["in", [pe, "MOH", "PE-MOH"]],
+				"status": "Pending HoD Approval",
+			},
+			pluck="demand_id",
+			limit=3,
+		)
+		summary["demands"] = pending
+		if not pending:
+			summary["notes"].append(
+				"No Pending HoD demands found — Home actions may be empty."
+			)
+	else:
+		summary["demands"] = []
 		summary["notes"].append(
-			"No Pending HoD demands found — Home actions may be empty until DIA seed is loaded."
+			"Demand Intake retired — Demands MVP-1 rebuild pending; Home demand actions empty."
 		)
 
 	tm_count = 0

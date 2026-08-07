@@ -38,12 +38,19 @@ from frappe import _
 from frappe.utils import cint, flt
 
 from kentender_core.seeds import constants as C
-from kentender_procurement.demand_intake.seeds.dia_seed_common import (
-	ensure_budget_line_prerequisites,
-	ensure_core_prerequisites,
-)
-from kentender_procurement.demand_intake.seeds.seed_dia_planning_f1_prerequisites import run as run_dia_f1_prereq
 from kentender_procurement.procurement_planning.seeds.validate_planning_seed_dependencies import assert_prerequisites
+
+
+def ensure_budget_line_prerequisites() -> None:
+	return None
+
+
+def ensure_core_prerequisites() -> None:
+	return None
+
+
+def run_dia_f1_prereq() -> dict:
+	return {"ok": False, "skipped": True, "reason": "DEMAND_MODULE_RETIRED"}
 from kentender_procurement.procurement_planning.services.planning_references import (
 	resolve_demand_name,
 	resolve_procurement_plan_name,
@@ -425,6 +432,16 @@ def run(ensure_dia: bool = True) -> dict:
 	"""F1 — full locked seed. When ``ensure_dia`` is True, runs the DIA prerequisite pack first
 	(``seed_dia_planning_f1_prerequisites``), then re-validates F2 dependencies."""
 	frappe.only_for(("System Manager", "Administrator"))
+	if not frappe.db.exists("DocType", "Demand"):
+		return {
+			"ok": False,
+			"skipped": True,
+			"reason": "DEMAND_MODULE_RETIRED",
+			"message": (
+				"F1 planning seed skipped — Demand Intake retired pending Demands MVP-1 "
+				f"(ensure_dia={ensure_dia})."
+			),
+		}
 	if not frappe.db.exists("DocType", "Procurement Plan"):
 		frappe.throw(_("Procurement Planning is not installed."), title=_("Missing doctype"))
 	_ensure_core_if_needed()
