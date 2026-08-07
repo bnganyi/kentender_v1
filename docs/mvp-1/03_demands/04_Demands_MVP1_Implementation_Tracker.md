@@ -55,10 +55,10 @@ Track Demands MVP-1 delivery **atomically** (schema, services, each screen, seed
 | [03_Demands_MVP1_Cursor_Implementation_Prompt.md](03_Demands_MVP1_Cursor_Implementation_Prompt.md) | Prompt A/B |
 | [05_Demands_Teardown_Dependency_Inventory.md](05_Demands_Teardown_Dependency_Inventory.md) | Legacy deletes done |
 | [ui_design/](ui_design/) | Approved Stitch HTML |
-| [Contract v2.1](../00_common/01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.1.md) | Fixture identities |
+| [Contract v2.2](../00_common/01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.2.md) | Fixture identities + §7.5 creation-scope states |
 | [Org scope model](../00_common/00_KenTender_Procuring_Entity_and_Organisation_Scope_Model.md) | PE + Organisation Unit |
 
-**Precedence:** Requirements > Stitch > this tracker > Contract v2.1 > org scope > repo conventions > legacy evidence.
+**Precedence:** Requirements > Stitch > this tracker > Contract v2.2 > org scope > repo conventions > legacy evidence.
 
 ---
 
@@ -180,9 +180,9 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | ID | Screen | Stitch | Route / page | Primary services | Depends on | Status | Evidence |
 |---|---|---|---|---|---|---|---|
 | DEM-UI-01 | Demands workspace | [ui_design/DEM-UI-01.html](ui_design/DEM-UI-01.html) | `demands-workspace` | DEM-SVC-014 | DEM-SCH-012, DEM-SVC-014 | Partial | Stitch Desk hand-port (`kt-stitch-canvas`) + live bind; gate green after typography/chrome rework |
-| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Partial | Stitch Desk hand-port + live create/edit/submit bind; `need_rationale` field; gate `ui-demands-form-gate`; supporting-docs upload not persisted yet |
-| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Partial | Return notice region + Resubmit labels wired in shared form shell; dedicated Returned Playwright + correction highlighting still open |
-| DEM-UI-04 | Business review | [DEM-UI-04.html](ui_design/DEM-UI-04.html) | `demand-review` | DEM-SVC-003 | DEM-SVC-003, DEM-UI-02 | Not started | |
+| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Partial | Creation-scope §7.5 (single RO / multi pair select / blocked); Stitch hand-port + live bind; gate `ui-demands-form-gate`; supporting-docs upload not persisted yet |
+| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Done | Return notice (by+role, date, reason) + correction list + section/field highlights + RO available funding; Cancel demand API; `test_returned_form_notice_hints_funding_and_cancel`; Playwright DEM-UI-03 in `demand-form.spec.ts`; gate `ui-demands-form-gate` |
+| DEM-UI-04 | Business review | [DEM-UI-04.html](ui_design/DEM-UI-04.html) | `demand-review` | DEM-SVC-003 | DEM-SVC-003, DEM-UI-02 | Done | Stitch hand-port + DEM-UIC-002 shell; `get_demand_review` / `record_business_decision_form`; statement prompts + non-final disclaimer; Support/Return/Reject; `test_demands_review_api` + `business-review.spec.ts`; gate `ui-demands-review-gate` |
 | DEM-UI-05 | Procurement enrichment | [DEM-UI-05.html](ui_design/DEM-UI-05.html) | `demand-review` | DEM-SVC-004, DEM-SVC-006 | DEM-SVC-004 | Not started | |
 | DEM-UI-05A | Strategy target selector | [DEM-UI-05A.html](ui_design/DEM-UI-05A.html) | drawer on `demand-review` | DEM-SVC-005 | DEM-UI-05, DEM-SVC-005 | Not started | |
 | DEM-UI-06 | Routine Budget confirmation | [DEM-UI-06.html](ui_design/DEM-UI-06.html) | `demand-review` | DEM-SVC-007, DEM-SVC-008 | DEM-SVC-008 | Not started | |
@@ -199,8 +199,8 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 
 | ID | Component | Used by | Status | Evidence |
 |---|---|---|---|---|
-| DEM-UIC-001 | Shared Demand form shell | DEM-UI-02, DEM-UI-03 | Partial | Same `demand-form` page + fixture; create vs returned mode toggles |
-| DEM-UIC-002 | Shared Demand review framework (stage sections/actions) | DEM-UI-04…08 | Not started | |
+| DEM-UIC-001 | Shared Demand form shell | DEM-UI-02, DEM-UI-03 | Done | Same `demand-form` page + fixture; create / edit / returned mode toggles (notice, highlights, Cancel demand vs Cancel) |
+| DEM-UIC-002 | Shared Demand review framework (stage sections/actions) | DEM-UI-04…08 | Partial | Shared `demand-review` page + fixture/bind/stage indicator live for Business Review; enrichment/budget/final stage panels still open |
 | DEM-UIC-003 | Strategy selector drawer | DEM-UI-05A | Not started | |
 | DEM-UIC-004 | Detail tab host | DEM-UI-09A…09D | Not started | |
 
@@ -244,7 +244,7 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 |---|---|---|---|---|---|---|
 | DEM-AC-001 | DIA-AC-001 | Submit without Strategy/Budget/method | `test_demand_submit.py`; `demands-requester-submit.spec.ts` | DEM-UI-02, DEM-SVC-002 | Not started | |
 | DEM-AC-002 | DIA-AC-002 | Business Approver by entity/OU | `test_demand_assignment.py` | DEM-PERM-002, DEM-SVC-002 | Not started | |
-| DEM-AC-003 | DIA-AC-003 | Support → Enrichment | `test_demand_business_decision.py`; business-review spec | DEM-UI-04 | Not started | |
+| DEM-AC-003 | DIA-AC-003 | Support → Enrichment | `test_get_review_and_support`; business-review Playwright Support path | DEM-UI-04 | Done | Support → Procurement Enrichment; disclaimer asserted in UI; dedicated `test_demand_business_decision.py` module name deferred |
 | DEM-AC-004 | DIA-AC-004 | Enrich + Strategy/value | `test_demand_enrich.py`; enrich + 05A specs | DEM-UI-05, DEM-UI-05A | Not started | |
 | DEM-AC-005 | DIA-AC-005 | Auto-match + BO confirm; exceptions | `test_demand_funding.py`; budget-confirm / exception specs | DEM-UI-06, DEM-UI-07 | Not started | |
 | DEM-AC-006 | DIA-AC-006 | Atomic approve+reserve; Planning Ready | `test_demand_approve_reserve.py`; final-approval spec | DEM-UI-08 | Not started | |
@@ -258,7 +258,7 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | DEM-AC-015 | DIA-AC-015 | Approved baseline immutable | `test_demand_immutability.py` | DEM-SCH-010 | Not started | |
 | DEM-AC-016 | DIA-AC-016 | Cancel releases unconsumed only | `test_demand_cancel_release.py` | DEM-SVC-011 | Not started | |
 | DEM-AC-017 | DIA-AC-017 | Emergency retains controls; no method | `test_demand_route.py` | DEM-SVC-004 | Not started | |
-| DEM-AC-018 | DIA-AC-018 | Return owns correction; history kept | `test_demand_return.py`; returned spec | DEM-UI-03 | Not started | |
+| DEM-AC-018 | DIA-AC-018 | Return owns correction; history kept | `test_returned_form_notice_hints_funding_and_cancel`; DEM-UI-03 Playwright | DEM-UI-03 | Partial | Form return notice + decision snapshot hints proven; dedicated `test_demand_return.py` / seed `DMD-MOH-2027-019` still open |
 | DEM-AC-019 | DIA-AC-019 | Material change invalidates BO sign-off | `test_demand_funding.py` | DEM-SVC-008 | Not started | |
 | DEM-AC-020 | DIA-AC-020 | Strategy snapshot after supersession | `test_demand_strategy_snapshot.py` | DEM-SVC-005 | Not started | |
 | DEM-AC-021 | DIA-AC-021 | Allocations = approved estimate | `test_demand_funding.py` | DEM-SVC-008 | Not started | |
@@ -314,7 +314,7 @@ Run after migrate + tests. Exclude archive/docs from runtime claims.
 |---|---|---|---|---|---|
 | DEM-GATE-001 | `ui-demands-workspace-gate` | DEM-UI-01 Stitch Desk pattern | DEM-UI-01 | Partial | Gate green (API + Playwright 3/3 incl. `assertStitchDeskChrome`); registered in stitch desk chrome registry |
 | DEM-GATE-001A | `ui-demands-form-gate` | DEM-UI-02 form Stitch + API | DEM-UI-02, DEM-UIC-001 | Partial | Form API + Playwright regions/chrome; docs upload persistence open |
-| DEM-GATE-002 | `ui-demands-review-gate` | Shared review 04–08 + 05A | DEM-UI-04…08, 05A | Not started | |
+| DEM-GATE-002 | `ui-demands-review-gate` | Shared review 04–08 + 05A | DEM-UI-04…08, 05A | Partial | Gate wired for DEM-UI-04 API + Playwright; expand when 05–08 / 05A land |
 | DEM-GATE-003 | `ui-demands-detail-gate` | 09 + tabs | DEM-UI-09…09D | Not started | |
 | DEM-GATE-004 | Replace retired DIA no-op gates | Makefile help + targets | DEM-GATE-001…003 | Not started | |
 

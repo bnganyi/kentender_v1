@@ -180,6 +180,15 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"select_filter_attr": "data-kt-dem-field",
 		"headline_selector": ".kt-dem-form h1, [data-testid='kt-dem-ui02-root'] h1",
 	},
+	{
+		"id": "demand-review",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/demands_ui_fixtures/review.js",
+		"desk_route": "demand-review",
+		"primary_cta_testid": "kt-dem-ui04-support",
+		"select_filter_attr": "",
+		"headline_selector": ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1",
+	},
 )
 
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"
@@ -215,4 +224,8 @@ REQUIRED_SHARED_CSS_MARKERS: tuple[str, ...] = (
 	"#d7e2ff",
 	"thead tr.bg-surface-container-low",
 	"border-radius: 0 !important",
+	# Softened card strokes — outline-variant, not outline #737781.
+	"Card borders use outline-variant",
+	"--kt-stitch-outline-variant, #c3c6d1",
+	".rounded-xl.border",
 )

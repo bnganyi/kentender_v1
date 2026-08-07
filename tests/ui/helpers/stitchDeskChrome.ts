@@ -56,6 +56,8 @@ export async function assertStitchSectionTableChrome(
 	},
 ) {
 	const PRIMARY_FIXED = "rgb(215, 226, 255)";
+	/** outline-variant #c3c6d1 — softened card stroke (not outline #737781). */
+	const CARD_BORDER = "rgb(195, 198, 209)";
 
 	if (opts.sectionTestId) {
 		const section = page.getByTestId(opts.sectionTestId).filter({ visible: true }).first();
@@ -66,11 +68,16 @@ export async function assertStitchSectionTableChrome(
 			const hcs = header ? getComputedStyle(header) : null;
 			return {
 				cardRadius: cs.borderRadius,
+				borderColor: cs.borderColor,
+				borderWidth: cs.borderWidth,
 				headerBg: hcs?.backgroundColor || "",
 			};
 		});
 		expect(styles.cardRadius, "section card must be square").toBe("0px");
 		expect(styles.headerBg, "section header must be primary-fixed").toBe(PRIMARY_FIXED);
+		if (parseFloat(styles.borderWidth) > 0) {
+			expect(styles.borderColor, "section card border must be outline-variant").toBe(CARD_BORDER);
+		}
 	}
 
 	if (opts.tableWrapTestId) {
@@ -85,11 +92,16 @@ export async function assertStitchSectionTableChrome(
 			const hcs = headerRow ? getComputedStyle(headerRow) : null;
 			return {
 				cardRadius: cs.borderRadius,
+				borderColor: cs.borderColor,
+				borderWidth: cs.borderWidth,
 				headerBg: hcs?.backgroundColor || "",
 			};
 		});
 		expect(styles.cardRadius, "table card must be square").toBe("0px");
 		expect(styles.headerBg, "table thead must be primary-fixed").toBe(PRIMARY_FIXED);
+		if (parseFloat(styles.borderWidth) > 0) {
+			expect(styles.borderColor, "table card border must be outline-variant").toBe(CARD_BORDER);
+		}
 	}
 
 	if (opts.roundedControlTestId) {

@@ -4,11 +4,6 @@
 
 	var STUBS = [
 		{
-			slug: "demand-review",
-			title: __("Demand Review"),
-			blurb: __("Business, enrichment, funding, and approval reviews — DEM-UI-04…08."),
-		},
-		{
 			slug: "demand-detail",
 			title: __("Demand Detail"),
 			blurb: __("Approved Demand detail tabs — DEM-UI-09 / 09A–D."),

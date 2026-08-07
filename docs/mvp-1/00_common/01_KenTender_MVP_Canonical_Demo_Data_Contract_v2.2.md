@@ -2,9 +2,9 @@
 
 **Fixture bundle:** `KENTENDER_MVP_V1`  
 **Status:** Living contract — approved baseline for implementation  
-**Version:** 2.1  
-**Supersedes:** Version 2.0 and all Ministry-specific seed contracts  
-**Compatibility:** Breaking change — do not retain or dual-write legacy ownership fields  
+**Version:** 2.2  
+**Supersedes:** Version 2.1 and all Ministry-specific seed contracts  
+**Compatibility:** Compatible fixture extension of version 2.1; legacy ownership fields remain prohibited  
 **Fixture clock:** `2027-11-03T12:00:00+03:00`  
 **Primary story:** Ministry of Health  
 **Secondary entity:** County Government of Kisumu  
@@ -97,6 +97,7 @@ The organisation-unit name reflects the County Government's published naming. Th
 8. No user receives cross-entity access by default.
 9. Organisational ownership shall be enforced server-side. Filtering or hiding controls in the UI is insufficient.
 10. Downstream records inherit the originating entity and organisation unit unless an authorised transfer is explicitly recorded.
+11. Demand creation uses explicit active Demand Requester assignment pairs. A user with several pairs must choose one; Administrator status, assignment order and current list filters shall not supply a default.
 
 ### 4.6 Seeded access profiles
 
@@ -115,6 +116,10 @@ Use the repository's shared test-user and credential mechanism. Do not hardcode 
 | `moh.viewer@example.test` | `PE-MOH`, read-only Active data | Demonstrates consolidated entity access |
 | `kisumu.health.officer@example.test` | `PE-CGKIS` / `CGK-DEPT-HEALTH` | Maintains the minimal county-health data and proves cross-entity denial |
 | `kisumu.viewer@example.test` | `PE-CGKIS`, read-only Active data | Demonstrates county-level management access |
+| `kentender.multiscope.admin@example.test` | Explicit Demand Requester assignments for `PE-MOH` / `MOH-DIR-DHP` and `PE-CGKIS` / `CGK-DEPT-HEALTH`; System Administrator role | Demonstrates explicit multi-entity creation selection; administration alone grants neither pair |
+| `kentender.system.admin@example.test` | No operational Demand Requester assignment; System Administrator role only | Proves that administration does not authorise Demand creation or supply a fallback owner |
+
+The multi-scope fixture is a deliberate exception created through two explicit operational assignments. It does not weaken the default cross-entity isolation rule.
 
 ## 5. Canonical Strategy data
 
@@ -539,6 +544,18 @@ No reservation, Tender or Contract exists for `DMD-MOH-2027-019`. The related KE
 
 At a Demands-only seed boundary, `DMD-MOH-2027-014` has Planning usage **Not taken up**. A full canonical bundle run derives its later Planning usage from `PPI-MOH-2027-021` and other downstream records. It shall never hardcode or duplicate that usage on the Demand.
 
+### 7.5 Demand-creation scope states
+
+The seed shall support three deterministic creation states without creating extra Demand records:
+
+| User | Eligible Demand Requester pairs | Expected create state |
+|---|---|---|
+| `moh.medicalservices.officer@example.test` | `PE-MOH` / `MOH-DIR-DHP` | The single pair is visibly preselected and read-only |
+| `kentender.multiscope.admin@example.test` | `PE-MOH` / `MOH-DIR-DHP`; `PE-CGKIS` / `CGK-DEPT-HEALTH` | No default; the user must explicitly select one exact pair |
+| `kentender.system.admin@example.test` | None | Demand creation is blocked; no Administrator or local-development fallback |
+
+The creator identity remains separate from the selected Demand owner. The multi-scope user may create for either listed pair only; any omitted, mixed or third pair shall be rejected server-side.
+
 ## 8. Seed implementation contract
 
 ### 8.1 Orchestration
@@ -637,6 +654,10 @@ Verify at minimum:
 - the Budget Officer is required for routine and exception funding assignments;
 - a Demands-only seed run shows the principal Demand as Not taken up; a full bundle derives downstream usage from actual Planning records;
 - rerunning the seed creates no duplicate Demands, decisions, allocations, exceptions, reservations or audit events.
+- the single-scope Requester resolves exactly one visible creation pair;
+- the multi-scope Administrator resolves exactly two eligible Demand Requester pairs and no default pair;
+- the no-scope Administrator resolves no eligible creation pair and cannot create a Demand;
+- an omitted, mixed or unauthorised PE/OU pair is rejected server-side.
 
 ### Organisation ownership and isolation
 
@@ -664,16 +685,18 @@ Verify at minimum:
 
 ## 10. Demonstration path
 
-1. Sign in as Dr Miriam Njeri and show that Request preparation asks for the business need but not Strategy, Budget, Planning or procurement-method codes.
-2. Trace `DMD-MOH-2027-014` through Business support, Procurement Strategy assignment, mandatory Budget Officer confirmation and final approval/reservation.
-3. Open the approved Demand and trace `MOH-TGT-AVAIL-2028`, the value treatments, `MOH-BL-DHI-2027` and `RSV-MOH-0001`.
-4. Open `DMD-MOH-2027-019` and show the KES 15 million shortfall, named correction owner and controlled return without a reservation.
-5. Open the consolidated Ministry Budget and show the principal infrastructure line and the separate workforce-capability line owned by different Organisation Units.
-6. Trace the principal reservation into Planning, Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
-7. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
-8. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
-9. Attempt to open a Ministry Demand from the county account and show that access is denied.
-10. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
+1. Sign in as `kentender.multiscope.admin@example.test`, start Create demand and show that no Procuring Entity / Organisation Unit pair is silently selected; choose the Ministry pair explicitly.
+2. Sign in as Dr Miriam Njeri and show her single authorised ownership pair, then show that Request preparation asks for the business need but not Strategy, Budget, Planning or procurement-method codes.
+3. Trace `DMD-MOH-2027-014` through Business support, Procurement Strategy assignment, mandatory Budget Officer confirmation and final approval/reservation.
+4. Open the approved Demand and trace `MOH-TGT-AVAIL-2028`, the value treatments, `MOH-BL-DHI-2027` and `RSV-MOH-0001`.
+5. Open `DMD-MOH-2027-019` and show the KES 15 million shortfall, named correction owner and controlled return without a reservation.
+6. Open the consolidated Ministry Budget and show the principal infrastructure line and the separate workforce-capability line owned by different Organisation Units.
+7. Trace the principal reservation into Planning, Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
+8. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
+9. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
+10. Attempt to open a Ministry Demand from the county account and show that access is denied.
+11. Sign in as `kentender.system.admin@example.test` and show that Demand creation is blocked because no operational Requester assignment exists.
+12. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
 
 ## 11. Extension rules for subsequent modules
 
@@ -694,3 +717,4 @@ When Planning, Tender, Evaluation, Award, Contract, Stores, Assets, Disposal or 
 | 1.1 | 6 August 2026 | Strategy Alignment; Budget & Funding | Replaced illustrative department names with the State Department for Medical Services and the State Department for Public Health and Professional Standards, with realistic operational ownership functions |
 | 2.0 | 6 August 2026 | Cross-module foundation; Strategy Alignment; Budget & Funding | Breaking replacement of Ministry-specific ownership with generic Procuring Entity and Organisation Unit scope; added explicit Strategy Scope Assignments and a minimal County Government of Kisumu fixture |
 | 2.1 | 7 August 2026 | Demands | Added the principal approved Ministry Demand, a returned Ministry funding-shortfall Demand, a minimal County Draft Demand, named Demand actors, lifecycle decisions and Demand-specific repeatability and isolation invariants |
+| 2.2 | 7 August 2026 | Demands; access scope | Added deterministic zero-, single- and multi-scope Demand-creation fixtures; prohibited assignment-order, workspace-filter and Administrator ownership fallbacks; added verification and demonstration steps |

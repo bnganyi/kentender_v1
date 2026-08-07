@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-08-07 14:22:18.434279",
+ "creation": "2026-08-07 18:27:40.161633",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -233,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-07 15:13:05.618691",
+ "modified": "2026-08-07 18:27:40.161633",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdministrator } from "../../helpers/auth";
+import {
+	loginAsAdministrator,
+	loginAsBusinessApprover,
+	loginAsDemandRequester,
+} from "../../helpers/auth";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 /**
@@ -159,6 +163,13 @@ const SURFACES = [
 		primaryCtaTestId: "kt-dem-ui02-submit",
 		selectSelector: '[data-kt-dem-field="demand_route"]',
 	},
+	{
+		id: "demand-review",
+		route: "/desk/demand-review",
+		rootTestId: "kt-dem-ui04-root",
+		liveAttr: "data-kt-dem-live",
+		primaryCtaTestId: "kt-dem-ui04-support",
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -171,7 +182,34 @@ test.describe("Stitch Desk chrome baseline", () => {
 
 	for (const surface of SURFACES) {
 		test(`${surface.id} resists Desk button/select bleed`, async ({ page }) => {
-			await page.goto(surface.route, { waitUntil: "domcontentloaded" });
+			// Demands create ownership is Requester-pair scoped — Admin alone is blocked.
+			if (surface.id === "demand-form" || surface.id === "demands-workspace") {
+				await page.context().clearCookies();
+				await loginAsDemandRequester(page);
+			}
+			let route = surface.route;
+			if (surface.id === "demand-review") {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const demandName = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: { method: string }) => Promise<{
+									message?: { demand?: string };
+								}>;
+							};
+						}
+					).frappe.call({
+						method: "kentender_procurement.demands.api.prepare_business_review_ui04",
+					});
+					return r.message?.demand || "";
+				});
+				expect(demandName).toBeTruthy();
+				await page.context().clearCookies();
+				await loginAsBusinessApprover(page);
+				route = `/desk/demand-review/${demandName}`;
+			}
+			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(
 				`[data-testid="${surface.rootTestId}"][${surface.liveAttr}="1"]`,
 			);
@@ -202,7 +240,9 @@ test.describe("Stitch Desk chrome baseline", () => {
 							? ".kt-bud-rev-create-title"
 							: surface.id === "budget-revision-review"
 								? ".kt-bud-rev-review-title"
-								: undefined,
+								: surface.id === "demand-review"
+									? ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1"
+									: undefined,
 			});
 		});
 	}

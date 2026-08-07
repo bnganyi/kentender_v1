@@ -22,7 +22,12 @@
   {"role": "Planning Authority"},
   {"role": "Procurement Officer"},
   {"role": "Tender Manager"},
-  {"role": "Auditor"}
+  {"role": "Auditor"},
+  {"role": "Requester"},
+  {"role": "Business Approver"},
+  {"role": "Procurement Approval Authority"},
+  {"role": "Planning Officer"},
+  {"role": "Demand Viewer"}
  ],
  "script": null,
  "standard": "Yes",

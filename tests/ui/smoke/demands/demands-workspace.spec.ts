@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdministrator } from "../../helpers/auth";
+import {
+	loginAsDemandNoScopeAdmin,
+	loginAsDemandRequester,
+} from "../../helpers/auth";
 import {
 	assertStitchDeskChrome,
 	assertStitchSectionTableChrome,
@@ -15,7 +18,7 @@ const ROOT = '[data-testid="kt-dem-ui01-root"]';
 test.describe("DEM-UI-01 Demands Workspace", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.setViewportSize({ width: 1400, height: 900 });
-		await loginAsAdministrator(page);
+		await loginAsDemandRequester(page);
 	});
 
 	test("Stitch regions, summary, filters, and live table render", async ({ page }) => {
@@ -76,5 +79,27 @@ test.describe("DEM-UI-01 Demands Workspace", () => {
 			timeout: 30_000,
 		});
 		await expect(page.getByRole("heading", { name: "Create demand" })).toBeVisible();
+	});
+
+});
+
+test.describe("DEM-UI-01 creation-scope (no Requester assignment)", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+		await page.context().clearCookies();
+		await loginAsDemandNoScopeAdmin(page);
+	});
+
+	test("Create demand opens blocked form (not a dead control)", async ({ page }) => {
+		await page.goto("/desk/demands-workspace", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId("kt-dem-ui01-create")).toBeEnabled();
+		await page.getByTestId("kt-dem-ui01-create").click();
+		await expect(page).toHaveURL(/demand-form/, { timeout: 15_000 });
+		await expect(page.locator('[data-testid="kt-dem-ui02-root"][data-kt-dem-live="1"]')).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId("kt-dem-ui02-scope-blocked")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-save")).toBeDisabled();
 	});
 });

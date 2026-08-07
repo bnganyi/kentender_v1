@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 17:37:05.649565",
+ "creation": "2026-08-07 18:27:39.965038",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "kanban",
@@ -20,7 +20,7 @@
    "url": "/desk/planning-hub"
   }
  ],
- "modified": "2026-08-07 15:13:05.556835",
+ "modified": "2026-08-07 18:27:39.965038",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Planning module navigation",

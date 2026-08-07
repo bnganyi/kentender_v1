@@ -14,14 +14,19 @@ from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_core.seeds import constants as CoreC
 from kentender_core.seeds._common import ensure_user_permission
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_procurement.demands.services.demand_permissions import (
+	ROLE_REQUESTER,
+	ensure_demand_roles,
+)
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 
 # (email, full_name, roles, pe, org_unit|None, include_descendants)
+# Miriam also carries Demand Requester for Contract v2.2 §7.5 single-scope create.
 _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_MEDICAL,
-		"MOH Medical Services Officer",
-		("Strategy Officer", "Budget Officer"),
+		"Dr Miriam Njeri",
+		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
 		C.PE_MOH,
 		C.OU_DIR_DHP,
 		1,
@@ -29,7 +34,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_PUBLIC,
 		"MOH Public Health Officer",
-		("Strategy Officer", "Budget Officer"),
+		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
 		1,
@@ -69,7 +74,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_OFFICER,
 		"Kisumu Health Officer",
-		("Strategy Officer", "Budget Officer"),
+		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
 		C.PE_CGKIS,
 		C.OU_CGK_HEALTH,
 		1,
@@ -167,9 +172,89 @@ def _upsert_user(
 	return email
 
 
+def _upsert_multiscope_admin() -> str:
+	"""Contract §4.6 — System Manager + two explicit Demand Requester pairs; no silent default."""
+	ensure_demand_roles()
+	email = C.USER_MULTISCOPE
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Multi",
+				"last_name": "Scope Admin",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", email)
+	user.enabled = 1
+	user.first_name = "Multi"
+	user.last_name = "Scope Admin"
+	user.save(ignore_permissions=True)
+	user.add_roles("Desk User", "System Manager", ROLE_REQUESTER)
+	update_password(email, CoreC.TEST_PASSWORD)
+	ensure_user_permission(email, C.PE_MOH)
+	ensure_user_permission(email, C.PE_CGKIS)
+	_clear_fixture_assignments(email)
+	_upsert_scope(
+		user=email,
+		role=ROLE_REQUESTER,
+		pe=C.PE_MOH,
+		org_unit=C.OU_DIR_DHP,
+		include_descendants=1,
+	)
+	_upsert_scope(
+		user=email,
+		role=ROLE_REQUESTER,
+		pe=C.PE_CGKIS,
+		org_unit=C.OU_CGK_HEALTH,
+		include_descendants=1,
+	)
+	return email
+
+
+def _upsert_system_admin_no_requester() -> str:
+	"""Contract §4.6 — System Manager only; proves admin alone cannot create Demands."""
+	email = C.USER_SYSTEM_ADMIN
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "System",
+				"last_name": "Admin",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", email)
+	user.enabled = 1
+	user.first_name = "System"
+	user.last_name = "Admin"
+	user.save(ignore_permissions=True)
+	user.add_roles("Desk User", "System Manager")
+	# Strip accidental Requester role from prior seeds.
+	have = {r.role for r in user.roles}
+	if ROLE_REQUESTER in have:
+		user.roles = [r for r in user.roles if r.role != ROLE_REQUESTER]
+		user.save(ignore_permissions=True)
+	update_password(email, CoreC.TEST_PASSWORD)
+	_clear_fixture_assignments(email)
+	# Remove any non-fixture Requester USA that would defeat the blocked demo.
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": email, "role": ROLE_REQUESTER},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	return email
+
+
 def upsert_canonical_users() -> dict[str, Any]:
 	ensure_strategy_roles()
 	ensure_budget_roles()
+	ensure_demand_roles()
 	# Skip User→Contact sync (avoids RetryBackgroundJobError under tests / reseed).
 	prev_import = frappe.flags.in_import
 	frappe.flags.in_import = True
@@ -177,6 +262,8 @@ def upsert_canonical_users() -> dict[str, Any]:
 	try:
 		for spec in _USER_SPECS:
 			created.append(_upsert_user(*spec))
+		created.append(_upsert_multiscope_admin())
+		created.append(_upsert_system_admin_no_requester())
 		disabled: list[str] = []
 		for email in C.RETIRED_DEMO_USERS:
 			if frappe.db.exists("User", email):

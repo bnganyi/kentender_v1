@@ -74,6 +74,42 @@ export async function loginAsStrategyOfficer(page: Page) {
 	);
 }
 
+/** Contract v2.2 §7.5 — single-scope Demand Requester (Dr Miriam Njeri). */
+export async function loginAsDemandRequester(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_REQUESTER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_DEMAND_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.5 — multi-scope System Manager + two Requester pairs. */
+export async function loginAsDemandMultiscopeAdmin(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_MULTISCOPE_USER || 'kentender.multiscope.admin@example.test',
+		process.env.UI_DEMAND_MULTISCOPE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.5 — System Manager with no Demand Requester assignment. */
+export async function loginAsDemandNoScopeAdmin(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_NOSCOPE_USER || 'kentender.system.admin@example.test',
+		process.env.UI_DEMAND_NOSCOPE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.1 — Business Approver (James Mwangi). */
+export async function loginAsBusinessApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUSINESS_USER || 'moh.business.approver@example.test',
+		process.env.UI_BUSINESS_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 /** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
 export async function loginAsStrategyViewerOtherPe(page: Page) {
 	await login(

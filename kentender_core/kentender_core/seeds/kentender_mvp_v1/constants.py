@@ -104,6 +104,9 @@ USER_VIEWER: Final[str] = "moh.viewer@example.test"
 USER_KISUMU_OFFICER: Final[str] = "kisumu.health.officer@example.test"
 USER_KISUMU_VIEWER: Final[str] = "kisumu.viewer@example.test"
 USER_BUD_DUAL: Final[str] = "moh.budget.officer.authority@example.test"
+# Contract v2.2 §4.6 / §7.5 — Demand creation-scope demonstration personas.
+USER_MULTISCOPE: Final[str] = "kentender.multiscope.admin@example.test"
+USER_SYSTEM_ADMIN: Final[str] = "kentender.system.admin@example.test"
 # Retired primary denial persona (kept disabled).
 USER_OTHER_ENTITY: Final[str] = "other.entity.officer@example.test"
 
@@ -117,6 +120,8 @@ CANONICAL_USERS: Final[tuple[str, ...]] = (
 	USER_KISUMU_OFFICER,
 	USER_KISUMU_VIEWER,
 	USER_BUD_DUAL,
+	USER_MULTISCOPE,
+	USER_SYSTEM_ADMIN,
 )
 
 RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (

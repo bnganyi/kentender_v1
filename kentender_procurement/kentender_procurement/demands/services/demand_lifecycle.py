@@ -115,6 +115,25 @@ def project_demand(doc: frappe.Document) -> dict[str, Any]:
 	}
 
 
+_ROLE_DISPLAY = {
+	ROLE_REQUESTER: "Requester",
+	ROLE_BUSINESS: "Business Approver",
+	ROLE_PAA: "Procurement Approval Authority",
+	ROLE_BUDGET: "Budget Officer",
+	ROLE_PLANNING: "Planning Officer",
+}
+
+
+def _actor_role_label(actor: str) -> str:
+	roles = set(frappe.get_roles(actor))
+	for role, label in _ROLE_DISPLAY.items():
+		if role in roles:
+			return label
+	if "System Manager" in roles:
+		return "System Manager"
+	return ""
+
+
 def _record_decision(
 	doc: frappe.Document,
 	*,
@@ -132,7 +151,8 @@ def _record_decision(
 			"stage": stage,
 			"decision": decision,
 			"actor": actor,
-			"actor_role": ",".join(sorted(frappe.get_roles(actor)[:5])),
+			"actor_role": _actor_role_label(actor)
+			or ",".join(sorted(frappe.get_roles(actor)[:5])),
 			"decided_at": _now(),
 			"comment": comment or "",
 			"reason": reason or "",
@@ -324,8 +344,14 @@ def record_business_decision(
 	comment: str | None = None,
 	user: str | None = None,
 	small_entity_exception: bool = False,
+	correction_hints: list[dict[str, Any]] | None = None,
+	available_funding: float | None = None,
 ) -> dict[str, Any]:
-	"""DEM-SVC-003 — Support | Return | Reject."""
+	"""DEM-SVC-003 — Support | Return | Reject.
+
+	On Return, optional ``correction_hints`` (``[{key, label}, ...]``) and
+	``available_funding`` are stored in the decision snapshot for DEM-UI-03.
+	"""
 	actor = _actor(user)
 	action = (decision or "").strip()
 	if action not in ("Support", "Return", "Reject"):
@@ -356,6 +382,13 @@ def record_business_decision(
 	if action == "Return":
 		doc.current_owner = doc.requester
 	doc.save(ignore_permissions=True)
+	snap: dict[str, Any] | None = None
+	if action == "Return":
+		snap = {
+			"demand": project_demand(doc),
+			"correction_hints": list(correction_hints or []),
+			"available_funding": available_funding,
+		}
 	_record_decision(
 		doc,
 		stage="Business Review",
@@ -363,6 +396,7 @@ def record_business_decision(
 		actor=actor,
 		comment=comment,
 		reason=reason,
+		snapshot=snap,
 	)
 	doc.reload()
 	return {"ok": True, "demand": project_demand(doc)}

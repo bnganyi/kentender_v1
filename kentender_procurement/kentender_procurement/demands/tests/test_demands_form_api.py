@@ -10,12 +10,16 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, today
 
 from kentender_procurement.demands.api import (
+	cancel_demand_form,
 	get_demand_form,
 	get_demand_form_context,
+	prepare_returned_demand_ui03,
 	save_demand_form,
 	submit_demand_form,
 )
+from kentender_procurement.demands.services.demand_lifecycle import record_business_decision
 from kentender_procurement.demands.services.demand_permissions import (
+	ROLE_BUSINESS,
 	ROLE_REQUESTER,
 	ensure_demand_roles,
 )
@@ -78,9 +82,11 @@ class TestDemandsFormApi(IntegrationTestCase):
 
 		ctx = get_demand_form_context()
 		self.assertTrue(ctx["ok"])
+		self.assertEqual(ctx["selection_mode"], "single_readonly")
 		self.assertEqual(ctx["procuring_entity"], PE)
 		self.assertEqual(ctx["owner_org_unit"], OU)
 		self.assertTrue(ctx["can_edit"])
+		self.assertEqual(ctx["selected_pair"]["procuring_entity"], PE)
 
 		blank = get_demand_form()
 		self.assertEqual(blank["mode"], "create")
@@ -145,3 +151,253 @@ class TestDemandsFormApi(IntegrationTestCase):
 		self.assertTrue(submitted["ok"])
 		self.assertEqual(submitted["demand"]["status"], "In Review")
 		self.assertEqual(submitted["demand"]["current_stage"], "Business Review")
+
+	def test_create_context_blocked_without_requester_pair(self) -> None:
+		email = "dem-form-noscope@example.com"
+		ensure_demand_roles()
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": "No",
+					"last_name": "Scope",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		user = frappe.get_doc("User", email)
+		user.add_roles("System Manager")
+		user.roles = [r for r in user.roles if r.role != ROLE_REQUESTER]
+		user.save(ignore_permissions=True)
+		for name in frappe.get_all(
+			"User Scope Assignment",
+			filters={"user": email, "role": ROLE_REQUESTER},
+			pluck="name",
+		):
+			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		frappe.db.commit()
+		frappe.set_user(email)
+		ctx = get_demand_form_context()
+		self.assertEqual(ctx["selection_mode"], "blocked")
+		self.assertFalse(ctx["can_edit"])
+		self.assertIsNone(ctx["procuring_entity"])
+		with self.assertRaises(Exception):
+			save_demand_form(
+				values={"title": "Should fail", "fixture_namespace": "DEMANDS_UI02_TEST"},
+				items=[],
+			)
+
+	def test_multi_scope_requires_explicit_pair(self) -> None:
+		email = "dem-form-multi@example.com"
+		ensure_demand_roles()
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": "Multi",
+					"last_name": "Form",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		user = frappe.get_doc("User", email)
+		have = {r.role for r in user.roles}
+		if ROLE_REQUESTER not in have:
+			user.append("roles", {"role": ROLE_REQUESTER})
+			user.save(ignore_permissions=True)
+		for pe, ou in ((PE, OU), ("PE-CGKIS", "CGK-DEPT-HEALTH")):
+			if not frappe.db.exists("Procuring Entity", pe):
+				continue
+			if not frappe.db.exists("Organisation Unit", ou):
+				continue
+			exists = frappe.db.exists(
+				"User Scope Assignment",
+				{
+					"user": email,
+					"procuring_entity": pe,
+					"organisation_unit": ou,
+					"role": ROLE_REQUESTER,
+				},
+			)
+			if not exists:
+				frappe.get_doc(
+					{
+						"doctype": "User Scope Assignment",
+						"user": email,
+						"role": ROLE_REQUESTER,
+						"procuring_entity": pe,
+						"organisation_unit": ou,
+						"include_descendants": 1,
+						"fixture_namespace": "DEMANDS_UI02_TEST",
+					}
+				).insert(ignore_permissions=True)
+		frappe.db.commit()
+		frappe.set_user(email)
+		ctx = get_demand_form_context()
+		if len(ctx.get("pairs") or []) < 2:
+			self.skipTest("PE-CGKIS / CGK-DEPT-HEALTH required for multi-scope form API test")
+		self.assertEqual(ctx["selection_mode"], "multi_required")
+		self.assertIsNone(ctx["selected_pair"])
+		with self.assertRaises(Exception):
+			save_demand_form(
+				values={
+					"title": "Multi without pair",
+					"fixture_namespace": "DEMANDS_UI02_TEST",
+				},
+				items=[],
+			)
+		saved = save_demand_form(
+			values={
+				"title": "Multi with pair",
+				"need_statement": "Need",
+				"need_rationale": "Why",
+				"expected_outcome": "Outcome",
+				"beneficiaries": "People",
+				"delivery_location": "Nairobi",
+				"required_by_date": add_days(today(), 30),
+				"demand_route": "Standard",
+				"procuring_entity": PE,
+				"owner_org_unit": OU,
+				"fixture_namespace": "DEMANDS_UI02_TEST",
+			},
+			items=[{"description": "Lot", "quantity": 1, "uom": "Lot", "requester_estimate": 1}],
+		)
+		self.assertTrue(saved["ok"])
+		self.assertEqual(saved["demand"]["procuring_entity"], PE)
+
+	def test_returned_form_notice_hints_funding_and_cancel(self) -> None:
+		"""DEM-UI-03 — return_notice carries Stitch correction hints + available funding."""
+		req = _ensure_requester("dem-form-ui03-req@example.com")
+		ba_email = "dem-form-ui03-ba@example.com"
+		ensure_demand_roles()
+		if not frappe.db.exists("User", ba_email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": ba_email,
+					"first_name": "Form",
+					"last_name": "BA",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		ba = frappe.get_doc("User", ba_email)
+		have = {r.role for r in ba.roles}
+		if ROLE_BUSINESS not in have:
+			ba.append("roles", {"role": ROLE_BUSINESS})
+			ba.save(ignore_permissions=True)
+		if not frappe.db.exists(
+			"User Scope Assignment",
+			{
+				"user": ba_email,
+				"procuring_entity": PE,
+				"organisation_unit": OU,
+				"role": ROLE_BUSINESS,
+			},
+		):
+			frappe.get_doc(
+				{
+					"doctype": "User Scope Assignment",
+					"user": ba_email,
+					"role": ROLE_BUSINESS,
+					"procuring_entity": PE,
+					"organisation_unit": OU,
+					"include_descendants": 1,
+					"fixture_namespace": "DEMANDS_UI03_TEST",
+				}
+			).insert(ignore_permissions=True)
+		frappe.db.commit()
+
+		frappe.set_user(req)
+		saved = save_demand_form(
+			values={
+				"title": "UI03 returned form demand",
+				"need_statement": "Need certification seats",
+				"need_rationale": "Skills gap",
+				"expected_outcome": "Certified cohort",
+				"beneficiaries": "County teams",
+				"delivery_location": "Nairobi",
+				"required_by_date": add_days(today(), 90),
+				"demand_route": "Standard",
+				"estimate_confidence": "Medium",
+				"estimate_basis": "Unit cost",
+				"fixture_namespace": "DEMANDS_UI03_TEST",
+			},
+			items=[
+				{
+					"description": "Seats",
+					"quantity": 100,
+					"uom": "Pieces",
+					"requester_estimate": 95000000,
+				}
+			],
+		)
+		name = saved["demand"]["name"]
+		submit_demand_form(
+			demand=name,
+			values={
+				"title": "UI03 returned form demand",
+				"need_statement": "Need certification seats",
+				"need_rationale": "Skills gap",
+				"expected_outcome": "Certified cohort",
+				"beneficiaries": "County teams",
+				"delivery_location": "Nairobi",
+				"required_by_date": add_days(today(), 90),
+				"demand_route": "Standard",
+				"estimate_confidence": "Medium",
+				"estimate_basis": "Unit cost",
+			},
+			items=[
+				{
+					"description": "Seats",
+					"quantity": 100,
+					"uom": "Pieces",
+					"requester_estimate": 95000000,
+				}
+			],
+		)
+
+		frappe.set_user(ba_email)
+		record_business_decision(
+			demand=name,
+			decision="Return",
+			reason=(
+				"The proposed scope exceeds available funding by KES 15,000,000. "
+				"Revise the number of participants or provide a phased delivery approach."
+			),
+			user=ba_email,
+			correction_hints=[
+				{"key": "items", "label": "Need items and participant quantities"},
+				{"key": "expected_outcome", "label": "Expected outcome for the revised scope"},
+				{"key": "requester_estimate", "label": "Requester estimate"},
+			],
+			available_funding=80000000,
+		)
+
+		frappe.set_user(req)
+		loaded = get_demand_form(demand=name)
+		self.assertEqual(loaded["demand"]["status"], "Returned")
+		notice = loaded["demand"]["return_notice"]
+		self.assertIsNotNone(notice)
+		self.assertIn("Business Approver", notice["returned_by"])
+		self.assertIn("15,000,000", notice["reason"])
+		keys = {h["key"] for h in notice["correction_hints"]}
+		self.assertEqual(keys, {"items", "expected_outcome", "requester_estimate"})
+		self.assertEqual(notice["available_funding"], 80000000)
+		self.assertEqual(notice["available_funding_display"], "80,000,000.00")
+		self.assertEqual(loaded["demand"]["available_funding_display"], "80,000,000.00")
+
+		cancelled = cancel_demand_form(demand=name, reason="No longer required")
+		self.assertTrue(cancelled["ok"])
+		self.assertEqual(cancelled["demand"]["status"], "Cancelled")
+
+	def test_prepare_returned_demand_ui03_factory(self) -> None:
+		frappe.set_user("Administrator")
+		payload = prepare_returned_demand_ui03(requester=_ensure_requester())
+		self.assertTrue(payload["ok"])
+		self.assertEqual(payload["status"], "Returned")
+		form = payload["form"]
+		self.assertEqual(len(form["return_notice"]["correction_hints"]), 3)
+		self.assertEqual(form["available_funding_display"], "80,000,000.00")

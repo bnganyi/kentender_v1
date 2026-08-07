@@ -1,0 +1,475 @@
+/* DEM-UIC-002 / DEM-UI-04 — Demand review Stitch pins (defeat Desk/Bootstrap). */
+
+body.kt-dem-review-active .kt-cl-native-canvas > main {
+	padding: 0 !important;
+	padding-bottom: 2rem !important;
+	background: #f9f9fe !important;
+}
+body.kt-dem-review-active .kt-cl-native-canvas > main > .max-w-\[1280px\],
+body.kt-dem-review-active .kt-cl-native-canvas > main > .max-w-\[1280px\] > [data-testid="kt-cl-page-body"],
+body.kt-dem-review-active [data-testid="kt-cl-page-body"] {
+	max-width: none !important;
+	width: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	background: transparent !important;
+}
+
+.kt-cl-shell .kt-dem-review {
+	--kt-dem-primary: #001f48;
+	--kt-dem-outline-variant: #c3c6d1;
+	--kt-dem-surface: #f9f9fe;
+	--kt-dem-focus-border: #7bbeff;
+	--kt-dem-focus-ring: rgba(123, 190, 255, 0.55);
+	--kt-dem-status-reserved: #f59e0b;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	background: #f9f9fe !important;
+	min-height: calc(100vh - 7rem);
+	color: #1a1b20;
+}
+
+.kt-cl-shell .kt-dem-review .bg-surface-container-lowest {
+	background-color: #ffffff !important;
+}
+.kt-cl-shell .kt-dem-review .bg-surface-container-low,
+.kt-cl-shell .kt-dem-review .bg-surface-container-high {
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-dem-review .bg-surface {
+	background-color: #f9f9fe !important;
+}
+.kt-cl-shell .kt-dem-review .border-outline-variant {
+	border-color: var(--kt-dem-outline-variant, #c3c6d1) !important;
+}
+.kt-cl-shell .kt-dem-review .text-primary {
+	color: var(--kt-dem-primary, #001f48) !important;
+}
+.kt-cl-shell .kt-dem-review .text-on-primary {
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-dem-review .text-on-surface {
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-dem-review .text-on-surface-variant,
+.kt-cl-shell .kt-dem-review .text-outline {
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-dem-review .text-error {
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-dem-review .bg-primary {
+	background-color: var(--kt-dem-primary, #001f48) !important;
+}
+.kt-cl-shell .kt-dem-review .bg-status-reserved\/10 {
+	background-color: rgb(245 158 11 / 0.1) !important;
+}
+.kt-cl-shell .kt-dem-review .text-status-reserved {
+	color: var(--kt-dem-status-reserved, #f59e0b) !important;
+}
+.kt-cl-shell .kt-dem-review .border-status-reserved\/20 {
+	border-color: rgb(245 158 11 / 0.2) !important;
+}
+
+/* Section chrome — app-wide primary-fixed blue headers + square cards. */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review section > .bg-surface-container-low {
+	background-color: #d7e2ff !important;
+}
+/* App-wide Stitch card lock: square corners (class name rounded-xl is historical). */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review section.rounded-xl,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .rounded-xl {
+	border-radius: 0 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review thead tr {
+	background-color: #d7e2ff !important;
+}
+
+/*
+ * Decision card must NOT inherit section-header chrome.
+ * Shared rule: `.kt-stitch-canvas .rounded-xl > .bg-surface-container-low`
+ * paints primary-fixed + navy left inset — correct for section titles, wrong for
+ * the sticky decision footer / muted bars.
+ */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision"] > .kt-dem-ui04-decision-card {
+	border-radius: 0.75rem !important; /* Stitch decision card is rounded-lg, not square section */
+	overflow: hidden;
+	background: #ffffff !important;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision"] > .kt-dem-ui04-decision-card > .bg-surface-container-low,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-actions"],
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision"] .bg-surface-container-low {
+	background-color: #f4f3f9 !important;
+	box-shadow: none !important;
+}
+/* Stitch spacing.card-padding = 20px on decision regions */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-decision-pad],
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-actions"] {
+	padding: 20px !important;
+	box-sizing: border-box !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-comment"] {
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+	display: block !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-actions"] > .flex {
+	display: flex !important;
+	flex-direction: row !important;
+	gap: 0.75rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-actions"] > .flex > button {
+	flex: 1 1 0% !important;
+	min-width: 0 !important;
+}
+/* Main column rhythm: section-gap 24px between cards; gutter 12px in delivery grid */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-main"] {
+	gap: 12px !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-main"] > .grid {
+	display: grid !important;
+	gap: 12px !important;
+}
+@media (min-width: 1024px) {
+	/* Keep 3-col track so lg:col-span-2 (main) + lg:col-span-1 (decision) stay side-by-side. */
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-review-grid {
+		display: grid !important;
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+		gap: 24px !important;
+		align-items: start !important;
+	}
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-main"] {
+		grid-column: span 2 / span 2 !important;
+	}
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision"] {
+		grid-column: span 1 / span 1 !important;
+		min-width: 0 !important;
+	}
+}
+
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus-visible {
+	outline: none !important;
+	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
+	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
+}
+
+/*
+ * Stage indicator — horizontal stepper on desktop.
+ * demands_workspace.css pins `.kt-dem-root .flex-col { flex-direction: column !important }`
+ * which otherwise traps md:flex-row utilities and stacks steps into a tall broken column.
+ */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list] {
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: flex-start !important;
+	align-items: stretch !important;
+	gap: 1rem !important;
+	position: relative;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item] {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	flex: 1 1 auto !important;
+	min-width: 0;
+	position: relative;
+	z-index: 1;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-dot] {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 9999px;
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.75rem;
+	font-weight: 600;
+	flex-shrink: 0;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Complete"] [data-kt-dem-stage-dot] {
+	background: #0f766e;
+	color: #fff;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-dot] {
+	background: #d7e2ff;
+	color: #001f48;
+	box-shadow: 0 0 0 4px rgb(215 226 255 / 0.45);
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Not started"] [data-kt-dem-stage-dot] {
+	background: #e8e7ef;
+	color: #434750;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Not started"] {
+	opacity: 0.65;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-label] {
+	color: var(--kt-dem-primary, #001f48);
+	font-weight: 600;
+}
+
+.kt-cl-shell .kt-dem-review button[disabled] {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+/* Stitch DEM-UI-04 — Review Criteria acknowledgement checkboxes */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-box {
+	width: 1.25rem;
+	height: 1.25rem;
+	position: relative;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 1.25rem !important;
+	height: 1.25rem !important;
+	margin: 0 !important;
+	border: 2px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+	border-radius: 0.25rem !important;
+	background: #fff !important;
+	cursor: pointer;
+	display: block;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked {
+	background: var(--kt-dem-primary, #001f48) !important;
+	border-color: var(--kt-dem-primary, #001f48) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-check {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px !important;
+	line-height: 1;
+	color: #fff;
+	opacity: 0;
+	pointer-events: none;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked + .kt-dem-ui04-criterion-check {
+	opacity: 1;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion:hover .text-sm {
+	color: #0b0e14;
+}
+
+@media (min-width: 768px) {
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list],
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list].flex-col {
+		flex-direction: row !important;
+		justify-content: space-between !important;
+		align-items: flex-start !important;
+		gap: 0.5rem !important;
+	}
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item],
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item].flex-col {
+		flex-direction: column !important;
+		align-items: center !important;
+		text-align: center;
+		gap: 0.35rem !important;
+	}
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item]:first-child {
+		align-items: flex-start !important;
+		text-align: left;
+	}
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item]:last-child {
+		align-items: flex-end !important;
+		text-align: right;
+	}
+	/* Soft connector under the dots */
+	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list]::before {
+		content: "";
+		position: absolute;
+		top: 1rem;
+		left: 1rem;
+		right: 1rem;
+		height: 2px;
+		background: #e8e7ef;
+		z-index: 0;
+	}
+}
+
+/* Stitch DEM-UI-04 — Return / Reject reason modal (Budget reason-modal pattern) */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 60 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 1rem !important;
+	background: rgba(26, 27, 32, 0.4) !important;
+	backdrop-filter: blur(4px) !important;
+	box-sizing: border-box !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal.hidden,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal[hidden] {
+	display: none !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-card {
+	background: #fff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+	width: 100% !important;
+	max-width: 28rem !important;
+	overflow: hidden !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-header {
+	padding: 1rem 1.5rem !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-title {
+	margin: 0 !important;
+	font-family: Manrope, sans-serif !important;
+	font-size: 1.125rem !important;
+	font-weight: 600 !important;
+	color: #1a1b20 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-close {
+	border: none !important;
+	background: transparent !important;
+	border-radius: 9999px !important;
+	padding: 0.25rem !important;
+	cursor: pointer !important;
+	color: #434750 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-close:hover {
+	background: #eceef0 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-body {
+	padding: 1.25rem 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-lead {
+	margin: 0 !important;
+	color: #434750 !important;
+	font-size: 0.875rem !important;
+	line-height: 1.4 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-label {
+	display: block !important;
+	margin: 0 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.6875rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textarea {
+	display: block !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+	border: 1px solid #737781 !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 0.75rem !important;
+	background: #ffffff !important;
+	color: #1a1b20 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	resize: vertical !important;
+	min-height: 5.5rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textarea:focus {
+	outline: none !important;
+	border-color: #001f48 !important;
+	background: #ffffff !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textarea.is-invalid {
+	border-color: #ba1a1a !important;
+	box-shadow: 0 0 0 1px #ba1a1a !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-error {
+	margin: 0 !important;
+	color: #ba1a1a !important;
+	font-size: 0.75rem !important;
+	line-height: 1.3 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-error.hidden {
+	display: none !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-hints {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+	margin-top: 0.25rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-hints[hidden] {
+	display: none !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-hints-label {
+	font-family: Inter, sans-serif !important;
+	font-size: 0.6875rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-hint {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	cursor: pointer !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+	line-height: 1.35 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-footer {
+	padding: 1rem 1.5rem !important;
+	background: #f4f3f9 !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+	gap: 0.75rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-cancel {
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #737781 !important;
+	background: transparent !important;
+	color: #434750 !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm {
+	padding: 0.5rem 1rem !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	color: #fff !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm.is-return {
+	background: #001f48 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm.is-reject {
+	background: #ba1a1a !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm[disabled] {
+	opacity: 0.55 !important;
+	cursor: not-allowed !important;
+}

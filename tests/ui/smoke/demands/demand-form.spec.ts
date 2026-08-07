@@ -1,5 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdministrator } from "../../helpers/auth";
+import {
+	loginAsAdministrator,
+	loginAsDemandMultiscopeAdmin,
+	loginAsDemandNoScopeAdmin,
+	loginAsDemandRequester,
+} from "../../helpers/auth";
 import {
 	assertStitchDeskChrome,
 	assertStitchSectionTableChrome,
@@ -8,6 +13,7 @@ import {
 /**
  * DEM-UI-02 Create/Edit Demand — Stitch Desk canvas + live bind.
  * Route: /desk/demand-form
+ * Creation-scope: Contract v2.2 §7.5 (single / multi / blocked).
  */
 
 const ROOT = '[data-testid="kt-dem-ui02-root"]';
@@ -15,7 +21,7 @@ const ROOT = '[data-testid="kt-dem-ui02-root"]';
 test.describe("DEM-UI-02 Demand Form", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.setViewportSize({ width: 1400, height: 900 });
-		await loginAsAdministrator(page);
+		await loginAsDemandRequester(page);
 	});
 
 	test("Stitch regions, sections, footer, and live bind render", async ({ page }) => {
@@ -38,6 +44,13 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		await expect(page.locator("cdn.tailwindcss.com")).toHaveCount(0);
 		// Returned banner hidden on create.
 		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toBeHidden();
+		// Single-scope: read-only PE · OU context (no pair select).
+		await expect(page.getByTestId("kt-dem-ui02-scope-pair")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-ui02-scope-blocked")).toBeHidden();
+		await expect(page.locator(`${ROOT}`)).toHaveAttribute(
+			"data-kt-dem-selection-mode",
+			"single_readonly",
+		);
 		// Form Stitch places PE/OU context above the H1 — measure to header top (not H1).
 		const gap = await page.evaluate(() => {
 			const header = document.querySelector('[data-testid="kt-dem-ui02-header"]');
@@ -198,5 +211,139 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		await expect(page.locator("[data-kt-dem-item-row]")).toHaveCount(rowsBefore + 1);
 		await page.getByTestId("kt-dem-ui02-cancel").click();
 		await expect(page).toHaveURL(/demands-workspace/, { timeout: 15_000 });
+	});
+});
+
+test.describe("DEM-UI-02 creation-scope states", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+	});
+
+	test("Multi-scope: no silent PE/OU; pair select enables save", async ({ page }) => {
+		await loginAsDemandMultiscopeAdmin(page);
+		await page.goto("/desk/demand-form", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+		await expect(page.locator(ROOT)).toHaveAttribute(
+			"data-kt-dem-selection-mode",
+			"multi_required",
+		);
+		await expect(page.getByTestId("kt-dem-ui02-scope-pair")).toBeVisible();
+		const selected = await page.getByTestId("kt-dem-ui02-scope-pair").inputValue();
+		expect(selected).toBe("");
+		await expect(page.getByTestId("kt-dem-ui02-save")).toBeDisabled();
+		await page.getByTestId("kt-dem-ui02-scope-pair").selectOption({ index: 1 });
+		await expect(page.getByTestId("kt-dem-ui02-save")).toBeEnabled({ timeout: 5_000 });
+	});
+
+	test("No-scope admin: creation blocked with no PE fallback", async ({ page }) => {
+		await loginAsDemandNoScopeAdmin(page);
+		await page.goto("/desk/demand-form", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-dem-selection-mode", "blocked");
+		await expect(page.getByTestId("kt-dem-ui02-scope-blocked")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-scope-blocked")).toContainText(/Requester/i);
+		await expect(page.getByTestId("kt-dem-ui02-save")).toBeDisabled();
+		await expect(page.getByTestId("kt-dem-ui02-submit")).toBeDisabled();
+	});
+});
+
+test.describe("DEM-UI-03 Returned correction state", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+	});
+
+	test("Return notice, correction list, highlights, funding, footer actions", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		await page.goto("/desk", { waitUntil: "domcontentloaded" });
+		const demandName = await page.evaluate(async () => {
+			const r = await (window as unknown as {
+				frappe: {
+					call: (o: {
+						method: string;
+					}) => Promise<{ message?: { demand?: string; ok?: boolean } }>;
+				};
+			}).frappe.call({
+				method: "kentender_procurement.demands.api.prepare_returned_demand_ui03",
+			});
+			return r.message?.demand || "";
+		});
+		expect(demandName).toBeTruthy();
+
+		await loginAsDemandRequester(page);
+		await page.goto(`/desk/demand-form/${demandName}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+		await expect(page.locator(ROOT)).toHaveClass(/kt-dem-form-returned/);
+		await expect(page.getByTestId("kt-dem-ui02-status-pill")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-status-pill")).toHaveText(/Returned/i);
+		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toContainText(
+			/Business Approver|Procurement Approval Authority/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toContainText(/15,000,000/);
+		// Contained card — same column width as Need section, not a full-bleed band.
+		const noticeWidths = await page.evaluate(() => {
+			const notice = document.querySelector('[data-testid="kt-dem-ui02-return-notice"]');
+			const section = document.querySelector('[data-testid="kt-dem-ui02-section-need"]');
+			const root = document.querySelector('[data-testid="kt-dem-ui02-root"]');
+			return {
+				notice: notice?.getBoundingClientRect().width || 0,
+				section: section?.getBoundingClientRect().width || 0,
+				root: root?.getBoundingClientRect().width || 0,
+			};
+		});
+		expect(Math.abs(noticeWidths.notice - noticeWidths.section)).toBeLessThan(4);
+		expect(noticeWidths.notice).toBeLessThan(noticeWidths.root * 0.85);
+		await expect(page.getByTestId("kt-dem-ui02-correction-list")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-correction-list")).toContainText(
+			/Need items and participant quantities/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-correction-list")).toContainText(
+			/Expected outcome for the revised scope/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-correction-list")).toContainText(
+			/Requester estimate/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-available-funding")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-available-funding")).toContainText(
+			/80,000,000/,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-section-items")).toHaveClass(
+			/kt-dem-correction-highlight/,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-outcome")).toHaveClass(
+			/kt-dem-correction-highlight/,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-section-estimate")).toHaveClass(
+			/kt-dem-correction-highlight/,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-section-need")).not.toHaveClass(
+			/kt-dem-correction-highlight/,
+		);
+		await expect(page.getByTestId("kt-dem-ui02-cancel")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-ui02-cancel-demand")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-save")).toHaveText(/Save changes/i);
+		await expect(page.getByTestId("kt-dem-ui02-submit")).toContainText(/Resubmit/i);
+
+		// Cancel demand uses Stitch reason modal — never frappe.prompt / Desk dialog.
+		const cancelModal = page.getByTestId("kt-dem-ui02-cancel-modal");
+		await expect(cancelModal).toBeAttached();
+		await expect(cancelModal).toBeHidden();
+		await page.getByTestId("kt-dem-ui02-cancel-demand").click();
+		await expect(cancelModal).toBeVisible({ timeout: 10_000 });
+		await expect(cancelModal).not.toHaveAttribute("hidden", "");
+		await expect(page.getByTestId("kt-dem-ui02-cancel-modal-comment")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-cancel-modal-confirm")).toBeVisible();
+		await expect(page.locator(".frappe-dialog:visible, .modal-dialog:visible")).toHaveCount(0);
+		const modalBorder = await cancelModal
+			.locator(".kt-dem-reason-modal-card")
+			.evaluate((el) => getComputedStyle(el).borderColor);
+		expect(modalBorder).toBe("rgb(195, 198, 209)");
+		await page.getByTestId("kt-dem-ui02-cancel-modal-confirm").click();
+		await expect(page.getByTestId("kt-dem-ui02-cancel-modal-error")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-cancel-modal-error")).toContainText(/required/i);
+		await page.getByTestId("kt-dem-ui02-cancel-modal-dismiss").click();
+		await expect(cancelModal).toBeHidden();
 	});
 });
