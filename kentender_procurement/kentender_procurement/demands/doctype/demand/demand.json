@@ -37,6 +37,11 @@
   "currency",
   "estimate_basis",
   "procurement_category",
+  "section_duplication",
+  "duplicate_assessment",
+  "related_demands_note",
+  "aggregation_treatment",
+  "aggregation_rationale",
   "section_workflow",
   "status",
   "current_stage",
@@ -241,6 +246,32 @@
    "fieldname": "procurement_category",
    "fieldtype": "Data",
    "label": "Procurement Category"
+  },
+  {
+   "fieldname": "section_duplication",
+   "fieldtype": "Section Break",
+   "label": "Duplication And Aggregation"
+  },
+  {
+   "fieldname": "duplicate_assessment",
+   "fieldtype": "Data",
+   "label": "Potential Duplicate Assessment",
+   "description": "e.g. None found"
+  },
+  {
+   "fieldname": "related_demands_note",
+   "fieldtype": "Small Text",
+   "label": "Related Demands Note"
+  },
+  {
+   "fieldname": "aggregation_treatment",
+   "fieldtype": "Data",
+   "label": "Aggregation Treatment"
+  },
+  {
+   "fieldname": "aggregation_rationale",
+   "fieldtype": "Small Text",
+   "label": "Aggregation Rationale"
   },
   {
    "fieldname": "section_workflow",

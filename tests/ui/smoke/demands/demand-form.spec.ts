@@ -29,7 +29,16 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
 		await expect(page.locator(`${ROOT}.kt-stitch-canvas`)).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Create demand" })).toBeVisible();
-		await expect(page.getByTestId("kt-dem-ui02-context")).toBeVisible();
+		// Single-scope: PE lives under shared title (not the old top context row).
+		await expect(page.getByTestId("kt-dem-ui02-context")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-record-header")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-record-meta-top")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-record-pe")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-record-pe")).toContainText(/Ministry of Health/i);
+		await expect(page.getByTestId("kt-dem-stage")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Request preparation/i);
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Current/i);
+		await expect(page.getByText(/Current stage:/i)).toHaveCount(0);
 		await expect(page.getByTestId("kt-dem-ui02-section-need")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui02-section-delivery")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui02-section-items")).toBeVisible();
@@ -128,31 +137,31 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		expect(focusChrome.borderColor).not.toBe("rgb(0, 31, 72)");
 	});
 
-	test("Stitch surface layout: full-bleed header over surface canvas", async ({ page }) => {
+	test("Stitch surface layout: shared record chrome on surface canvas", async ({ page }) => {
 		await page.goto("/desk/demand-form", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
 		const layout = await page.evaluate(() => {
 			const root = document.querySelector('[data-testid="kt-dem-ui02-root"]') as HTMLElement;
-			const header = document.querySelector('[data-testid="kt-dem-ui02-header"]') as HTMLElement;
-			const canvas = document.querySelector('[data-testid="kt-dem-ui02-form-canvas"]') as HTMLElement;
-			const main = document.querySelector(".kt-cl-native-canvas > main") as HTMLElement;
-			if (!root || !header || !canvas || !main) return null;
-			const hr = header.getBoundingClientRect();
-			const mr = main.getBoundingClientRect();
+			const chrome = document.querySelector(
+				'[data-testid="kt-dem-record-chrome"]',
+			) as HTMLElement;
+			const stage = document.querySelector('[data-testid="kt-dem-stage"]') as HTMLElement;
+			const canvas = document.querySelector(
+				'[data-testid="kt-dem-ui02-form-canvas"]',
+			) as HTMLElement;
+			if (!root || !chrome || !stage || !canvas) return null;
 			return {
 				rootBg: getComputedStyle(root).backgroundColor,
 				canvasBg: getComputedStyle(canvas).backgroundColor,
-				headerBg: getComputedStyle(header).backgroundColor,
-				headerInset: Math.round(hr.left - mr.left),
-				headerWidthRatio: hr.width / mr.width,
+				stageBorder: getComputedStyle(stage).borderColor,
+				hasHeader: !!document.querySelector('[data-testid="kt-dem-record-header"]'),
 			};
 		});
 		expect(layout).not.toBeNull();
 		expect(layout!.rootBg).toBe("rgb(249, 249, 254)");
 		expect(layout!.canvasBg).toBe("rgb(249, 249, 254)");
-		expect(layout!.headerBg).toBe("rgb(255, 255, 255)");
-		expect(layout!.headerInset).toBeLessThanOrEqual(2);
-		expect(layout!.headerWidthRatio).toBeGreaterThan(0.98);
+		expect(layout!.hasHeader).toBe(true);
+		expect(layout!.stageBorder).toBe("rgb(195, 198, 209)");
 	});
 
 	test("Required-by date shows one Material calendar (native date is invisible overlay)", async ({
@@ -275,8 +284,21 @@ test.describe("DEM-UI-03 Returned correction state", () => {
 		await page.goto(`/desk/demand-form/${demandName}`, { waitUntil: "domcontentloaded" });
 		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
 		await expect(page.locator(ROOT)).toHaveClass(/kt-dem-form-returned/);
-		await expect(page.getByTestId("kt-dem-ui02-status-pill")).toBeVisible();
-		await expect(page.getByTestId("kt-dem-ui02-status-pill")).toHaveText(/Returned/i);
+		await expect(page.getByTestId("kt-dem-status-pill")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-status-pill")).toHaveText(/Returned/i);
+		await expect(page.getByTestId("kt-dem-record-header")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-stage")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Request preparation/i);
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Current/i);
+		await expect(page.getByText(/Current stage:/i)).toHaveCount(0);
+		// Return notice stays below the shared stage indicator.
+		const stackOrder = await page.evaluate(() => {
+			const stage = document.querySelector('[data-testid="kt-dem-stage"]');
+			const notice = document.querySelector('[data-testid="kt-dem-ui02-return-notice"]');
+			if (!stage || !notice) return null;
+			return stage.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING;
+		});
+		expect(stackOrder).toBeTruthy();
 		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui02-return-notice")).toContainText(
 			/Business Approver|Procurement Approval Authority/i,

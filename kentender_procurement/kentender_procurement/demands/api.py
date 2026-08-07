@@ -20,19 +20,24 @@ from kentender_procurement.demands.services.demand_creation_scope import (
 from kentender_procurement.demands.services.demand_lifecycle import (
 	cancel_and_release_demand,
 	create_or_update_demand,
+	enrich_demand,
 	get_demand,
 	list_demands_for_workspace,
 	project_demand,
 	record_business_decision,
+	record_procurement_decision,
 	submit_demand,
+	suggest_strategy_context,
 )
 from kentender_procurement.demands.services.demand_permissions import (
 	ROLE_BUSINESS,
+	ROLE_PAA,
 	ROLE_REQUESTER,
 	assert_business_approver_segregation,
 	assert_demand_scope,
 	can_business_decide,
 	can_edit_requester_fields,
+	can_procurement_enrich,
 	can_read_demand,
 	ensure_demand_roles,
 	require_operational_roles,
@@ -355,6 +360,16 @@ def _return_notice(demand_name: str) -> dict[str, Any] | None:
 	}
 
 
+_STATUS_DISPLAY = {
+	"In Review": "In review",
+	"Returned": "Returned",
+	"Draft": "Draft",
+	"Approved": "Approved",
+	"Rejected": "Rejected",
+	"Cancelled": "Cancelled",
+}
+
+
 def _form_demand_dto(doc) -> dict[str, Any]:
 	base = project_demand(doc)
 	base["procuring_entity_label"] = _entity_label(doc.procuring_entity)
@@ -363,6 +378,10 @@ def _form_demand_dto(doc) -> dict[str, Any]:
 		flt(doc.requester_estimate), doc.currency or "KES"
 	).replace((doc.currency or "KES") + " ", "")
 	base["required_by_display"] = _required_by_display(doc.required_by_date)
+	base["status_display"] = _STATUS_DISPLAY.get(doc.status, doc.status or "")
+	est = flt(doc.requester_estimate)
+	cur = doc.currency or "KES"
+	base["estimate_header_display"] = f"{cur} {est:,.0f}" if est else f"{cur} 0"
 	if doc.required_by_date:
 		try:
 			base["required_by_date"] = str(getdate(doc.required_by_date))
@@ -432,6 +451,8 @@ def get_demand_form_context(
 		"demand_routes": ["Standard", "Additional", "Emergency"],
 		"confidence_levels": ["High", "Medium", "Low"],
 		"uom_options": ["Lot", "Pieces", "Months"],
+		# Create shell: Request Preparation is Current (shared record chrome).
+		"stage_indicator": _stage_indicator("Request Preparation", "Draft"),
 	}
 
 
@@ -443,7 +464,14 @@ def get_demand_form(demand: str | None = None) -> dict[str, Any]:
 		frappe.throw("Not permitted to open Demand form", frappe.PermissionError)
 	ctx = get_demand_form_context()
 	if not demand:
-		return {"ok": True, "mode": "create", "context": ctx, "demand": None}
+		return {
+			"ok": True,
+			"mode": "create",
+			"context": ctx,
+			"demand": None,
+			"stage_indicator": ctx.get("stage_indicator")
+			or _stage_indicator("Request Preparation", "Draft"),
+		}
 	doc = get_demand(demand)
 	assert_demand_scope(
 		procuring_entity=doc.procuring_entity,
@@ -456,6 +484,7 @@ def get_demand_form(demand: str | None = None) -> dict[str, Any]:
 		"mode": "edit",
 		"context": ctx,
 		"demand": _form_demand_dto(doc),
+		"stage_indicator": _stage_indicator(doc.current_stage or "", doc.status or ""),
 	}
 
 
@@ -695,6 +724,32 @@ def _stage_indicator(current_stage: str, status: str) -> list[dict[str, str]]:
 	return out
 
 
+_ENRICHMENT_CATEGORIES = (
+	"ICT infrastructure and services",
+	"Medical Equipment",
+	"Software Licensing",
+	"Works",
+	"Goods",
+	"Services",
+)
+
+_AGGREGATION_TREATMENTS = (
+	"Retain as one aggregation candidate for Planning",
+	"Merge with existing demand",
+	"Proceed independently",
+)
+
+# DEM-ABS — never surface procurement-method / tender chrome on enrichment.
+_FORBIDDEN_ENRICHMENT_KEYS = frozenset(
+	{
+		"procurement_method",
+		"tender_method",
+		"method_of_procurement",
+		"evaluation_method",
+	}
+)
+
+
 def _review_demand_dto(doc) -> dict[str, Any]:
 	base = _form_demand_dto(doc)
 	base["technical_contact_label"] = (
@@ -703,17 +758,11 @@ def _review_demand_dto(doc) -> dict[str, Any]:
 	base["requester_label"] = (
 		frappe.utils.get_fullname(doc.requester) if doc.requester else "—"
 	)
-	base["status_display"] = {
-		"In Review": "In review",
-		"Returned": "Returned",
-		"Draft": "Draft",
-		"Approved": "Approved",
-		"Rejected": "Rejected",
-		"Cancelled": "Cancelled",
-	}.get(doc.status, doc.status or "")
-	est = flt(doc.requester_estimate)
+	# status_display + estimate_header_display already on _form_demand_dto
 	cur = doc.currency or "KES"
-	base["estimate_header_display"] = f"{cur} {est:,.0f}" if est else f"{cur} 0"
+	conf = flt(doc.confirmed_estimate)
+	base["confirmed_estimate_display"] = f"{conf:,.2f}" if conf else ""
+	base["confirmed_estimate_header"] = f"{cur} {conf:,.0f}" if conf else f"{cur} 0"
 	for item in base.get("items") or []:
 		qty = item.get("quantity")
 		uom = (item.get("uom") or "").strip()
@@ -726,12 +775,129 @@ def _review_demand_dto(doc) -> dict[str, Any]:
 			item["quantity_display"] = f"{qty_s} {uom}".strip() if uom else qty_s
 		else:
 			item["quantity_display"] = uom or "—"
+		cq = item.get("confirmed_quantity")
+		if cq is None or cq == "":
+			item["confirmed_quantity"] = item.get("quantity")
+		cu = (item.get("confirmed_uom") or "").strip()
+		if not cu:
+			item["confirmed_uom"] = item.get("uom") or ""
+		ce = item.get("confirmed_estimate")
+		if ce is None or ce == "":
+			item["confirmed_estimate"] = item.get("requester_estimate")
+		ce_n = flt(item.get("confirmed_estimate"))
+		item["confirmed_estimate_display"] = f"{ce_n:,.2f}" if ce_n else ""
+	# Strip abs-forbidden keys if ever present on projection.
+	for key in _FORBIDDEN_ENRICHMENT_KEYS:
+		base.pop(key, None)
 	return base
+
+
+def _strategy_refs_dto(demand_name: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Demand Strategy Reference",
+		filters={"demand": demand_name},
+		fields=[
+			"name",
+			"reference_type",
+			"plan",
+			"plan_version_id",
+			"target_id",
+			"target_code",
+			"target_name",
+			"hierarchy_path",
+			"snapshot_label",
+			"selection_source",
+			"confirmation_reason",
+		],
+		order_by="creation asc",
+	)
+	return list(rows or [])
+
+
+def _value_treatments_dto(demand_name: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Demand Value Treatment",
+		filters={"demand": demand_name},
+		fields=[
+			"name",
+			"plan_value_commitment",
+			"pvc_version_id",
+			"pvc_snapshot",
+			"applicability",
+			"treatment",
+			"rationale",
+		],
+		order_by="creation asc",
+	)
+	return list(rows or [])
+
+
+def _business_support_summary(demand_name: str) -> dict[str, Any] | None:
+	rows = frappe.get_all(
+		"Demand Decision",
+		filters={
+			"demand": demand_name,
+			"stage": "Business Review",
+			"decision": "Support",
+		},
+		fields=["actor", "comment", "decided_at"],
+		order_by="decided_at desc",
+		limit=1,
+	)
+	if not rows:
+		return None
+	row = rows[0]
+	return {
+		"actor": row.actor,
+		"actor_label": frappe.utils.get_fullname(row.actor) if row.actor else "—",
+		"comment": row.comment or "",
+		"decided_at": str(row.decided_at) if row.decided_at else None,
+	}
+
+
+def _enrichment_readiness(doc) -> tuple[bool, list[str]]:
+	blockers: list[str] = []
+	if flt(doc.confirmed_estimate) <= 0:
+		blockers.append("confirmed estimate is required")
+	if not (doc.procurement_category or "").strip():
+		blockers.append("procurement category is required")
+	primaries = frappe.get_all(
+		"Demand Strategy Reference",
+		filters={"demand": doc.name, "reference_type": "Primary"},
+		pluck="name",
+	)
+	if len(primaries) != 1:
+		blockers.append("exactly one Primary Strategy reference is required")
+	return (len(blockers) == 0, blockers)
+
+
+def _enrichment_projection(doc) -> dict[str, Any]:
+	refs = _strategy_refs_dto(doc.name)
+	primaries = [r for r in refs if (r.get("reference_type") or "") == "Primary"]
+	supporting = [r for r in refs if (r.get("reference_type") or "") == "Supporting"]
+	ready, blockers = _enrichment_readiness(doc)
+	return {
+		"categories": list(_ENRICHMENT_CATEGORIES),
+		"aggregation_treatments": list(_AGGREGATION_TREATMENTS),
+		"demand_routes": ["Standard", "Additional", "Emergency"],
+		"strategy_alignment": "Assigned" if primaries else "Not assigned",
+		"strategy_references": refs,
+		"primary_strategy": primaries[0] if primaries else None,
+		"supporting_strategies": supporting,
+		"value_treatments": _value_treatments_dto(doc.name),
+		"business_decision_summary": _business_support_summary(doc.name),
+		"send_ready": ready,
+		"send_blockers": blockers,
+		"duplicate_assessment": doc.get("duplicate_assessment") or "None found",
+		"related_demands_note": doc.get("related_demands_note") or "",
+		"aggregation_treatment": doc.get("aggregation_treatment") or "",
+		"aggregation_rationale": doc.get("aggregation_rationale") or "",
+	}
 
 
 @frappe.whitelist()
 def get_demand_review(demand: str) -> dict[str, Any]:
-	"""DEM-UI-04…08 shared review load projection (Business stage first)."""
+	"""DEM-UI-04…08 shared review load projection (Business + Enrichment stages)."""
 	actor = frappe.session.user
 	if not can_read_demand(user=actor):
 		frappe.throw("Not permitted to open Demand review", frappe.PermissionError)
@@ -746,7 +912,9 @@ def get_demand_review(demand: str) -> dict[str, Any]:
 	)
 	stage = (doc.current_stage or "").strip()
 	is_business = stage == "Business Review" and doc.status == "In Review"
+	is_enrichment = stage == "Procurement Enrichment" and doc.status == "In Review"
 	can_decide = False
+	can_enrich = False
 	allowed: list[str] = []
 	if is_business and can_business_decide(user=actor):
 		try:
@@ -756,16 +924,27 @@ def get_demand_review(demand: str) -> dict[str, Any]:
 		except Exception:
 			can_decide = False
 			allowed = []
+	if is_enrichment and can_procurement_enrich(user=actor):
+		can_enrich = True
+		allowed = [
+			"Save enrichment",
+			"Send for budget confirmation",
+			"Return",
+			"Reject",
+		]
+	enrichment = _enrichment_projection(doc) if is_enrichment else None
 	return {
 		"ok": True,
 		"stage": stage,
 		"can_decide": can_decide,
+		"can_enrich": can_enrich,
 		"allowed_actions": allowed,
 		"show_non_final_disclaimer": is_business,
 		"non_final_disclaimer": _NON_FINAL_DISCLAIMER if is_business else "",
 		"review_prompts": list(_BUSINESS_REVIEW_PROMPTS) if is_business else [],
 		"stage_indicator": _stage_indicator(stage, doc.status),
 		"demand": _review_demand_dto(doc),
+		"enrichment": enrichment,
 	}
 
 
@@ -941,4 +1120,281 @@ def prepare_business_review_ui04(
 		"current_stage": doc.current_stage,
 		"business_approver": ba,
 		"review": _review_demand_dto(doc),
+	}
+
+
+@frappe.whitelist()
+def enrich_demand_form(
+	demand: str,
+	values: str | dict | None = None,
+	items: str | list | None = None,
+	strategy_references: str | list | None = None,
+	value_treatments: str | list | None = None,
+	send_for_budget: int | str | bool | None = 0,
+) -> dict[str, Any]:
+	"""DEM-UI-05 — Save enrichment / Send for Budget confirmation."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_PAA, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	vals = _parse_json_arg(values) or {}
+	if not isinstance(vals, dict):
+		vals = {}
+	for key in _FORBIDDEN_ENRICHMENT_KEYS:
+		vals.pop(key, None)
+
+	def _optional_list(raw: Any) -> list | None:
+		"""None / blank means 'leave unchanged'; [] means explicit clear."""
+		parsed = _parse_json_arg(raw)
+		if parsed is None or parsed == "":
+			return None
+		if not isinstance(parsed, list):
+			frappe.throw("Expected a list payload", frappe.ValidationError)
+		return parsed
+
+	item_rows = _optional_list(items)
+	refs = _optional_list(strategy_references)
+	treatments = _optional_list(value_treatments)
+	result = enrich_demand(
+		demand=demand,
+		values=vals,
+		items=item_rows,
+		strategy_references=refs,
+		value_treatments=treatments,
+		send_for_budget=bool(cint(send_for_budget)),
+		user=actor,
+	)
+	fresh = get_demand(result["demand"]["name"])
+	return {
+		"ok": True,
+		"demand": _review_demand_dto(fresh),
+		"enrichment": _enrichment_projection(fresh),
+		"stage": fresh.current_stage,
+	}
+
+
+@frappe.whitelist()
+def suggest_strategy_context_form(
+	demand: str,
+	q: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-05A — scoped Strategy suggestions for Assign drawer."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_PAA, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	raw = suggest_strategy_context(demand=demand, user=actor)
+	suggestions = list(raw.get("suggestions") or [])
+	needle = (q or "").strip().lower()
+	if needle:
+		filtered = []
+		for s in suggestions:
+			hay = " ".join(
+				[
+					str(s.get("node_name") or ""),
+					str(s.get("node_code") or ""),
+					str(s.get("plan_code") or ""),
+					str(s.get("snapshot_label") or ""),
+				]
+			).lower()
+			if needle in hay:
+				filtered.append(s)
+		suggestions = filtered
+	# Display DTO: name + code only (never raw id as primary label).
+	out = []
+	for s in suggestions:
+		out.append(
+			{
+				"plan_version_id": s.get("plan_version_id"),
+				"plan_code": s.get("plan_code"),
+				"plan_version": s.get("plan_version"),
+				"target_id": s.get("node_id"),
+				"target_code": s.get("node_code"),
+				"target_name": s.get("node_name"),
+				"snapshot_label": s.get("snapshot_label")
+				or f"{s.get('node_name')} ({s.get('node_code')})",
+				"hierarchy_path": s.get("snapshot_label") or "",
+				"path": s.get("path") or [],
+				"display_name": s.get("node_name") or "",
+				"display_code": s.get("node_code") or "",
+			}
+		)
+	return {
+		"ok": True,
+		"demand_code": raw.get("demand_code"),
+		"strategy_alignment": raw.get("strategy_alignment") or "Not assigned",
+		"suggestions": out,
+	}
+
+
+@frappe.whitelist()
+def record_procurement_decision_form(
+	demand: str,
+	decision: str,
+	reason: str | None = None,
+	comment: str | None = None,
+	correction_hints: str | list | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-05 — PAA Return / Reject from Procurement Enrichment."""
+	actor = frappe.session.user
+	require_operational_roles(ROLE_PAA, user=actor)
+	if not (demand or "").strip():
+		frappe.throw("Demand is required", frappe.ValidationError)
+	action = (decision or "").strip()
+	if action not in ("Return", "Reject"):
+		frappe.throw("decision must be Return or Reject", frappe.ValidationError)
+	if not (reason or "").strip():
+		frappe.throw("A reason is required", frappe.ValidationError)
+	hints = _parse_json_arg(correction_hints)
+	if hints is not None and not isinstance(hints, list):
+		hints = []
+	result = record_procurement_decision(
+		demand=demand,
+		decision=action,
+		reason=reason,
+		comment=comment,
+		user=actor,
+		correction_hints=hints if action == "Return" else None,
+	)
+	fresh = get_demand(result["demand"]["name"])
+	return {"ok": True, "demand": _review_demand_dto(fresh), "stage": fresh.current_stage}
+
+
+def _ensure_ui05_paa(pe: str, ou: str) -> str:
+	"""Canonical Procurement Approval Authority for DEM-UI-05 factory."""
+	email = "moh.procurement.approver@example.test"
+	ensure_demand_roles()
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds import constants as CoreC
+
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Amina",
+				"last_name": "Otieno",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	update_password(email, CoreC.TEST_PASSWORD)
+	user = frappe.get_doc("User", email)
+	have = {r.role for r in user.roles}
+	changed = False
+	if ROLE_PAA not in have:
+		user.append("roles", {"role": ROLE_PAA})
+		changed = True
+	if "Desk User" not in have:
+		user.append("roles", {"role": "Desk User"})
+		changed = True
+	if changed:
+		user.save(ignore_permissions=True)
+	existing = frappe.db.exists(
+		"User Scope Assignment",
+		{
+			"user": email,
+			"procuring_entity": pe,
+			"organisation_unit": ou,
+			"role": ROLE_PAA,
+		},
+	)
+	if not existing:
+		frappe.get_doc(
+			{
+				"doctype": "User Scope Assignment",
+				"user": email,
+				"role": ROLE_PAA,
+				"procuring_entity": pe,
+				"organisation_unit": ou,
+				"include_descendants": 1,
+				"fixture_namespace": "DEMANDS_UI05_FACTORY",
+			}
+		).insert(ignore_permissions=True)
+	return email
+
+
+@frappe.whitelist()
+def prepare_enrichment_ui05(
+	requester: str | None = None,
+	procuring_entity: str | None = None,
+	owner_org_unit: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-05 Playwright factory — create → submit → Support → Enrichment.
+
+	Restricted to System Manager / Administrator.
+	"""
+	actor = frappe.session.user
+	if actor != "Administrator" and "System Manager" not in frappe.get_roles(actor):
+		frappe.throw("Not permitted", frappe.PermissionError)
+
+	req = (requester or "").strip() or "moh.medicalservices.officer@example.test"
+	pe = (procuring_entity or "").strip() or "PE-MOH"
+	ou = (owner_org_unit or "").strip() or "MOH-DIR-DHP"
+	if not frappe.db.exists("User", req):
+		frappe.throw(f"Requester {req} is missing", frappe.ValidationError)
+
+	from frappe.utils import add_days, today
+
+	ba = _ensure_ui04_ba(pe, ou)
+	paa = _ensure_ui05_paa(pe, ou)
+	created = create_or_update_demand(
+		values={
+			"procuring_entity": pe,
+			"owner_org_unit": ou,
+			"title": "National digital health infrastructure upgrade",
+			"need_statement": (
+				"Urgent upgrade of core server infrastructure to support the new "
+				"National EMR system rollout."
+			),
+			"need_rationale": "Clinical data continuity requires resilient national infrastructure",
+			"expected_outcome": "Resilient compute and network services for district hospitals",
+			"beneficiaries": "National hospitals, 50M+ citizens",
+			"delivery_location": "National Data Centre, Nairobi",
+			"required_by_date": add_days(today(), 90),
+			"demand_route": "Standard",
+			"urgency": "Medium",
+			"estimate_confidence": "Medium",
+			"estimate_basis": "Market research and infrastructure assessment",
+			"currency": "KES",
+			"fixture_namespace": "DEMANDS_UI05_FACTORY",
+		},
+		items=[
+			{
+				"description": "High-performance compute cluster",
+				"quantity": 2,
+				"uom": "units",
+				"requester_estimate": 200000000,
+			},
+			{
+				"description": "Scalable storage arrays (10 PB)",
+				"quantity": 1,
+				"uom": "set",
+				"requester_estimate": 255000000,
+			},
+		],
+		user=req,
+	)
+	name = created["demand"]["name"]
+	frappe.db.set_value("Demand", name, "requester_estimate", 455000000, update_modified=False)
+	submit_demand(demand=name, user=req)
+	record_business_decision(
+		demand=name,
+		decision="Support",
+		comment="Aligned with unit digital health responsibilities",
+		user=ba,
+	)
+	frappe.db.commit()
+	doc = get_demand(name)
+	return {
+		"ok": True,
+		"demand": doc.name,
+		"demand_code": doc.demand_code,
+		"status": doc.status,
+		"current_stage": doc.current_stage,
+		"business_approver": ba,
+		"procurement_approver": paa,
+		"review": _review_demand_dto(doc),
+		"enrichment": _enrichment_projection(doc),
 	}

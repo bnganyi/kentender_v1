@@ -522,20 +522,106 @@ frappe.provide("kentender_procurement.live");
 		}
 	}
 
-	function applyMode($root, demand) {
+	function formatRoutePill(route) {
+		var r = String(route || "").trim();
+		if (!r || r === "—") {
+			return "";
+		}
+		return /route$/i.test(r) ? r : r + " Route";
+	}
+
+	function formatPeOuDisplay(peLabel, ouLabel) {
+		var pe = String(peLabel || "").trim();
+		var ou = String(ouLabel || "").trim();
+		if ((!pe || pe === "—") && (!ou || ou === "—")) {
+			return "—";
+		}
+		if (pe && pe !== "—" && ou && ou !== "—") {
+			return pe + " · " + ou;
+		}
+		return pe && pe !== "—" ? pe : ou;
+	}
+
+	function paintRecordHeaderFields($root, opts) {
+		opts = opts || {};
+		setLabel($root, "title", opts.title || "—");
+		setLabel($root, "demand_code", opts.demand_code || "—");
+		var statusDisp = opts.status_display || "";
+		setLabel($root, "status_display", statusDisp || "—");
+		$root.find("[data-testid='kt-dem-status-pill']").toggleClass("hidden", !statusDisp);
+		var routeDisp = formatRoutePill(opts.demand_route);
+		setLabel($root, "demand_route_display", routeDisp || "—");
+		$root.find("[data-testid='kt-dem-route-pill']").toggleClass("hidden", !routeDisp);
+		setLabel(
+			$root,
+			"pe_ou_display",
+			formatPeOuDisplay(opts.procuring_entity_label, opts.owner_org_unit_label)
+		);
+	}
+
+	function paintFormRecordChrome($root, demand, stageIndicator) {
+		var returned = demand && demand.status === "Returned";
+		var editing = !!(demand && demand.name);
+		var title = __("Create demand");
+		if (returned) {
+			title = (demand && demand.title) || __("Demand");
+		} else if (editing) {
+			title = (demand && demand.title) || __("Edit demand");
+		}
+		var statusDisp =
+			(demand && demand.status_display) ||
+			(returned ? __("Returned") : editing ? __("Draft") : "");
+		var peLabel =
+			(demand && demand.procuring_entity_label) ||
+			$root.find('[data-kt-dem-label="procuring_entity"]').first().text() ||
+			"";
+		var ouLabel =
+			(demand && demand.owner_org_unit_label) ||
+			$root.find('[data-kt-dem-label="owner_org_unit"]').first().text() ||
+			"";
+		// Prefer hidden field-driven labels already painted by applyContext.
+		if (!demand) {
+			peLabel =
+				$root.find('[data-kt-dem-scope-ro][data-kt-dem-label="procuring_entity"]').text() ||
+				peLabel;
+			ouLabel =
+				$root.find('[data-kt-dem-scope-ro][data-kt-dem-label="owner_org_unit"]').text() ||
+				ouLabel;
+		}
+		paintRecordHeaderFields($root, {
+			title: title,
+			demand_code: (demand && demand.demand_code) || "—",
+			status_display: statusDisp,
+			demand_route: (demand && demand.demand_route) || "",
+			procuring_entity_label: peLabel,
+			owner_org_unit_label: ouLabel,
+		});
+		var stages =
+			stageIndicator ||
+			(demand && demand.stage_indicator) ||
+			[
+				{ key: "Request Preparation", label: "Request Preparation", state: "Current" },
+				{ key: "Business Review", label: "Business Review", state: "Not started" },
+				{
+					key: "Procurement Enrichment",
+					label: "Procurement Enrichment",
+					state: "Not started",
+				},
+				{ key: "Budget Confirmation", label: "Budget Confirmation", state: "Not started" },
+				{ key: "Final Approval", label: "Final Approval", state: "Not started" },
+			];
+		paintStageIndicator($root, stages);
+	}
+
+	function applyMode($root, demand, stageIndicator) {
 		var returned = demand && demand.status === "Returned";
 		var editing = !!(demand && demand.name);
 		$root.toggleClass("kt-dem-form-returned", returned);
 		$root.find("[data-kt-dem-returned-only]").toggleClass("hidden", !returned);
 		$root.find("[data-kt-dem-edit-only]").toggleClass("hidden", !editing);
 		$root.find("[data-kt-dem-cancel-create]").toggleClass("hidden", !!returned);
+		paintFormRecordChrome($root, demand, stageIndicator);
 		if (returned) {
-			setLabel($root, "page_title", demand.title || __("Demand"));
-			setLabel(
-				$root,
-				"page_subtitle",
-				__("Current stage:") + " " + (demand.current_stage || __("Request preparation"))
-			);
 			setLabel($root, "submit_label", __("Resubmit"));
 			$root.find('[data-kt-dem-action="save"]').text(__("Save changes"));
 			var notice = demand.return_notice || {};
@@ -544,23 +630,11 @@ frappe.provide("kentender_procurement.live");
 			setLabel($root, "return_reason", notice.reason || "—");
 			applyReturnChrome($root, demand);
 		} else if (editing) {
-			setLabel($root, "page_title", __("Edit demand"));
-			setLabel(
-				$root,
-				"page_subtitle",
-				__("Describe what is needed, why it is needed and when it is required.")
-			);
 			setLabel($root, "submit_label", __("Submit for business review"));
 			$root.find('[data-kt-dem-action="save"]').text(__("Save draft"));
 			$root.find('[data-kt-dem-action="cancel"]').text(__("Cancel"));
 			applyReturnChrome($root, null);
 		} else {
-			setLabel($root, "page_title", __("Create demand"));
-			setLabel(
-				$root,
-				"page_subtitle",
-				__("Describe what is needed, why it is needed and when it is required.")
-			);
 			setLabel($root, "submit_label", __("Submit for business review"));
 			$root.find('[data-kt-dem-action="save"]').text(__("Save draft"));
 			$root.find('[data-kt-dem-action="cancel"]').text(__("Cancel"));
@@ -599,9 +673,13 @@ frappe.provide("kentender_procurement.live");
 		var $ro = $root.find("[data-kt-dem-scope-ro]");
 		var $multi = $root.find("[data-kt-dem-scope-multi]");
 		var $blocked = $root.find("[data-kt-dem-scope-blocked]");
-		$ro.toggleClass("hidden", mode === "multi_required" || mode === "blocked");
+		// PE · OU lives under the shared record title — keep RO context hidden.
+		$ro.addClass("hidden");
 		$multi.toggleClass("hidden", mode !== "multi_required");
 		$blocked.toggleClass("hidden", mode !== "blocked");
+		$root
+			.find("[data-testid='kt-dem-ui02-context']")
+			.toggleClass("hidden", mode !== "multi_required" && mode !== "blocked");
 		if (mode === "blocked") {
 			setLabel(
 				$root,
@@ -644,29 +722,28 @@ frappe.provide("kentender_procurement.live");
 	function applyContext($root, ctx, demand) {
 		ctx = ctx || {};
 		applyCreationScope($root, ctx, demand);
+		var peLabel = "—";
+		var ouLabel = "—";
 		if ((ctx.selection_mode || "single_readonly") !== "multi_required" || (demand && demand.name)) {
 			setField($root, "procuring_entity", ctx.procuring_entity || (demand && demand.procuring_entity) || "");
 			setField($root, "owner_org_unit", ctx.owner_org_unit || (demand && demand.owner_org_unit) || "");
-			setLabel(
-				$root,
-				"procuring_entity",
+			peLabel =
 				ctx.procuring_entity_label ||
-					(demand && demand.procuring_entity_label) ||
-					ctx.procuring_entity ||
-					"—"
-			);
-			setLabel(
-				$root,
-				"owner_org_unit",
+				(demand && demand.procuring_entity_label) ||
+				ctx.procuring_entity ||
+				"—";
+			ouLabel =
 				ctx.owner_org_unit_label ||
-					(demand && demand.owner_org_unit_label) ||
-					ctx.owner_org_unit ||
-					"—"
-			);
+				(demand && demand.owner_org_unit_label) ||
+				ctx.owner_org_unit ||
+				"—";
+			setLabel($root, "procuring_entity", peLabel);
+			setLabel($root, "owner_org_unit", ouLabel);
 		} else {
 			setLabel($root, "procuring_entity", "—");
 			setLabel($root, "owner_org_unit", "—");
 		}
+		setLabel($root, "pe_ou_display", formatPeOuDisplay(peLabel, ouLabel));
 		setLabel($root, "currency", ctx.currency || "KES");
 		var $contact = $root.find('[data-kt-dem-field="technical_contact"]');
 		var contacts = ctx.contacts || [];
@@ -683,14 +760,14 @@ frappe.provide("kentender_procurement.live");
 		syncCreateActionsEnabled($root);
 	}
 
-	function applyDemand($root, demand) {
+	function applyDemand($root, demand, stageIndicator) {
 		if (!demand) {
 			setField($root, "demand_name", "");
 			setField($root, "required_by_date", "");
 			$root.find("[data-kt-dem-items-tbody]").empty();
 			addItemRow($root, {});
 			recalcEstimate($root);
-			applyMode($root, null);
+			applyMode($root, null, stageIndicator);
 			toggleRouteJustification($root);
 			syncRequiredByDisplay($root, "");
 			return;
@@ -708,7 +785,6 @@ frappe.provide("kentender_procurement.live");
 			"owner_org_unit",
 			demand.owner_org_unit_label || demand.owner_org_unit || "—"
 		);
-		setLabel($root, "demand_code", demand.demand_code || "");
 		setLabel($root, "currency", demand.currency || "KES");
 		[
 			"title",
@@ -736,7 +812,7 @@ frappe.provide("kentender_procurement.live");
 			});
 		}
 		recalcEstimate($root);
-		applyMode($root, demand);
+		applyMode($root, demand, stageIndicator);
 		toggleRouteJustification($root);
 	}
 
@@ -991,7 +1067,13 @@ frappe.provide("kentender_procurement.live");
 					throw new Error("Empty form payload");
 				}
 				applyContext($root, payload.context || {}, payload.demand || null);
-				applyDemand($root, payload.demand || null);
+				applyDemand(
+					$root,
+					payload.demand || null,
+					payload.stage_indicator ||
+						(payload.context && payload.context.stage_indicator) ||
+						null
+				);
 				syncCreateActionsEnabled($root);
 				$root.attr("data-kt-dem-live", "1");
 				return payload;
@@ -1013,12 +1095,279 @@ frappe.provide("kentender_procurement.live");
 
 	var REVIEW_GET = "kentender_procurement.demands.api.get_demand_review";
 	var REVIEW_DECIDE = "kentender_procurement.demands.api.record_business_decision_form";
+	var ENRICH_SAVE = "kentender_procurement.demands.api.enrich_demand_form";
+	var ENRICH_SUGGEST = "kentender_procurement.demands.api.suggest_strategy_context_form";
+	var PROC_DECIDE = "kentender_procurement.demands.api.record_procurement_decision_form";
 
 	var CORRECTION_HINT_OPTIONS = [
 		{ key: "items", label: __("Need items and participant quantities") },
 		{ key: "expected_outcome", label: __("Expected outcome for the revised scope") },
 		{ key: "requester_estimate", label: __("Requester estimate") },
 	];
+
+	function parseMoneyInput(raw) {
+		var s = String(raw == null ? "" : raw).replace(/,/g, "").trim();
+		if (!s) {
+			return 0;
+		}
+		var n = Number(s);
+		return isNaN(n) ? 0 : n;
+	}
+
+	function formatMoneyInput(n) {
+		var v = Number(n) || 0;
+		if (!v) {
+			return "";
+		}
+		return v.toLocaleString("en-US", { maximumFractionDigits: 2 });
+	}
+
+	function fillSelect($el, options, selected) {
+		$el.empty();
+		$el.append($("<option></option>").val("").text("—"));
+		(options || []).forEach(function (opt) {
+			var val = typeof opt === "string" ? opt : opt.value;
+			var label = typeof opt === "string" ? opt : opt.label || opt.value;
+			$el.append($("<option></option>").val(val).text(label));
+		});
+		if (selected) {
+			$el.val(selected);
+		}
+	}
+
+	function showStageHosts($root, stage) {
+		var isEnrich = stage === "Procurement Enrichment";
+		var $biz = $root.find("[data-kt-dem-business-host]");
+		var $enr = $root.find("[data-kt-dem-enrichment-host]");
+		var $foot = $root.find("[data-kt-dem-enrichment-footer]");
+		if (isEnrich) {
+			$biz.addClass("hidden").attr("hidden", "hidden");
+			$enr.removeClass("hidden").removeAttr("hidden");
+			$foot.removeClass("hidden").removeAttr("hidden");
+			$root.addClass("kt-dem-enrichment-active");
+			document.body.classList.add("kt-dem-enrichment-active");
+		} else {
+			$biz.removeClass("hidden").removeAttr("hidden");
+			$enr.addClass("hidden").attr("hidden", "hidden");
+			$foot.addClass("hidden").attr("hidden", "hidden");
+			$root.removeClass("kt-dem-enrichment-active");
+			document.body.classList.remove("kt-dem-enrichment-active");
+		}
+	}
+
+	function paintEnrichItems($root, items) {
+		var $tbody = $root.find("[data-kt-dem-enrich-items-tbody]");
+		$tbody.empty();
+		(items || []).forEach(function (it) {
+			var qty = it.confirmed_quantity != null ? it.confirmed_quantity : it.quantity;
+			var uom = it.confirmed_uom || it.uom || "";
+			var est =
+				it.confirmed_estimate != null ? it.confirmed_estimate : it.requester_estimate;
+			$tbody.append(
+				'<tr class="border-b border-outline-variant" data-kt-dem-enrich-item-row data-item-name="' +
+					esc(it.name || "") +
+					'">' +
+					'<td class="p-3"><input class="w-full border border-outline-variant rounded px-2 py-1 font-body-md" type="text" data-kt-dem-enrich-item="description" value="' +
+					esc(it.description || "") +
+					'"/></td>' +
+					'<td class="p-3"><input class="w-20 border border-outline-variant rounded px-2 py-1 font-data-mono text-right" type="number" data-kt-dem-enrich-item="confirmed_quantity" value="' +
+					esc(qty != null ? qty : "") +
+					'"/></td>' +
+					'<td class="p-3"><input class="w-20 border border-outline-variant rounded px-2 py-1 font-body-md" type="text" data-kt-dem-enrich-item="confirmed_uom" value="' +
+					esc(uom) +
+					'"/></td>' +
+					'<td class="p-3"><input class="w-36 border border-outline-variant rounded px-2 py-1 font-data-mono text-right" type="text" data-kt-dem-enrich-item="confirmed_estimate" value="' +
+					esc(formatMoneyInput(est)) +
+					'"/></td>' +
+					'<td class="p-3 text-right"><button type="button" class="p-2 rounded-full text-on-surface-variant border-0 bg-transparent" data-kt-dem-action="enrich-remove-item" aria-label="Remove item"><span class="material-symbols-outlined text-[20px]">delete</span></button></td>' +
+					"</tr>"
+			);
+		});
+	}
+
+	function collectEnrichItems($root) {
+		var rows = [];
+		$root.find("[data-kt-dem-enrich-item-row]").each(function () {
+			var $row = $(this);
+			var desc = String($row.find('[data-kt-dem-enrich-item="description"]').val() || "").trim();
+			if (!desc) {
+				return;
+			}
+			rows.push({
+				name: $row.attr("data-item-name") || "",
+				description: desc,
+				confirmed_quantity: parseMoneyInput(
+					$row.find('[data-kt-dem-enrich-item="confirmed_quantity"]').val()
+				),
+				confirmed_uom: String(
+					$row.find('[data-kt-dem-enrich-item="confirmed_uom"]').val() || ""
+				).trim(),
+				confirmed_estimate: parseMoneyInput(
+					$row.find('[data-kt-dem-enrich-item="confirmed_estimate"]').val()
+				),
+			});
+		});
+		return rows;
+	}
+
+	function paintStrategyCard($root, enrichment) {
+		var primary = (enrichment && enrichment.primary_strategy) || null;
+		var alignment =
+			(enrichment && enrichment.strategy_alignment) ||
+			(primary ? "Assigned" : "Not assigned");
+		setLabel($root, "strategy_alignment_pill", alignment);
+		var $pill = $root.find('[data-kt-dem-label="strategy_alignment_pill"]');
+		$pill.toggleClass("bg-status-available/10 text-status-available", alignment === "Assigned");
+		$pill.toggleClass(
+			"bg-surface-container-high text-on-surface-variant",
+			alignment !== "Assigned"
+		);
+		var $empty = $root.find("[data-kt-dem-strategy-empty]");
+		var $assigned = $root.find("[data-kt-dem-strategy-assigned]");
+		if (primary) {
+			$empty.addClass("hidden").attr("hidden", "hidden");
+			$assigned.removeClass("hidden").removeAttr("hidden");
+			setLabel($root, "primary_target_name", primary.target_name || "—");
+			setLabel(
+				$root,
+				"primary_target_code",
+				primary.target_code ? "(" + primary.target_code + ")" : ""
+			);
+			setLabel(
+				$root,
+				"primary_plan_label",
+				primary.plan || primary.plan_version_id || "—"
+			);
+			setLabel(
+				$root,
+				"primary_hierarchy_path",
+				primary.hierarchy_path || primary.snapshot_label || "—"
+			);
+		} else {
+			$assigned.addClass("hidden").attr("hidden", "hidden");
+			$empty.removeClass("hidden").removeAttr("hidden");
+		}
+	}
+
+	function paintPvc($root, treatments) {
+		var rows = treatments || [];
+		var $empty = $root.find("[data-kt-dem-pvc-empty]");
+		var $table = $root.find("[data-kt-dem-pvc-table]");
+		var $tbody = $root.find("[data-kt-dem-pvc-tbody]");
+		$tbody.empty();
+		if (!rows.length) {
+			$empty.removeClass("hidden");
+			$table.addClass("hidden").attr("hidden", "hidden");
+			return;
+		}
+		$empty.addClass("hidden");
+		$table.removeClass("hidden").removeAttr("hidden");
+		rows.forEach(function (t) {
+			$tbody.append(
+				"<tr class='border-b border-outline-variant'>" +
+					'<td class="p-2 font-medium">' +
+					esc(t.pvc_snapshot || t.plan_value_commitment || "—") +
+					"</td>" +
+					'<td class="p-2">' +
+					esc(t.treatment || "—") +
+					"</td>" +
+					'<td class="p-2 text-on-surface-variant">' +
+					esc(t.rationale || "") +
+					"</td></tr>"
+			);
+		});
+	}
+
+	function closeStrategyDrawer($root) {
+		$root
+			.find("[data-kt-dem-strategy-drawer]")
+			.addClass("hidden")
+			.attr("hidden", "hidden");
+	}
+
+	function openStrategyDrawer($root, demandId) {
+		var $drawer = $root.find("[data-kt-dem-strategy-drawer]");
+		$drawer.removeClass("hidden").removeAttr("hidden");
+		setField($root, "strategy_search", "");
+		setField($root, "strategy_reason", "");
+		$root.find("[data-kt-dem-strategy-reason-host]").removeClass("hidden").removeAttr("hidden");
+		loadStrategySuggestions($root, demandId, "");
+	}
+
+	function loadStrategySuggestions($root, demandId, q) {
+		var $host = $root.find("[data-kt-dem-strategy-suggestions]");
+		$host.html(
+			'<p class="text-sm text-on-surface-variant p-2">' + esc(__("Loading…")) + "</p>"
+		);
+		return callMethod(ENRICH_SUGGEST, { demand: demandId, q: q || "" }).then(function (res) {
+			$host.empty();
+			var suggestions = (res && res.suggestions) || [];
+			if (!suggestions.length) {
+				$host.append(
+					'<p class="text-sm text-on-surface-variant p-2">' +
+						esc(__("No active Strategy targets found for this entity.")) +
+						"</p>"
+				);
+				return res;
+			}
+			suggestions.forEach(function (s, idx) {
+				var id = "kt-dem-ui05a-opt-" + idx;
+				var payload = encodeURIComponent(JSON.stringify(s));
+				$host.append(
+					'<label class="kt-dem-strategy-option relative flex flex-col gap-2 p-4 rounded-xl border border-outline-variant cursor-pointer" for="' +
+						id +
+						'">' +
+						'<div class="flex justify-between items-start gap-3">' +
+						'<div class="flex-grow pr-2">' +
+						'<h3 class="font-body-lg font-semibold text-on-surface leading-tight mb-1">' +
+						esc(s.display_name || s.target_name || "—") +
+						"</h3>" +
+						'<div class="font-data-mono text-data-mono text-on-surface-variant text-xs">' +
+						esc(s.display_code || s.target_code || "") +
+						"</div>" +
+						'<p class="text-xs text-on-surface-variant mt-2 mb-0">' +
+						esc(s.hierarchy_path || s.snapshot_label || "") +
+						"</p></div>" +
+						'<input id="' +
+						id +
+						'" class="mt-1" type="radio" name="kt-dem-strategy-target" data-kt-dem-strategy-option="' +
+						payload +
+						'" data-testid="kt-dem-ui05a-option-' +
+						idx +
+						'"/>' +
+						"</div></label>"
+				);
+			});
+			return res;
+		});
+	}
+
+	function selectedStrategyOption($root) {
+		var $checked = $root.find('input[name="kt-dem-strategy-target"]:checked');
+		if (!$checked.length) {
+			return null;
+		}
+		try {
+			return JSON.parse(decodeURIComponent($checked.attr("data-kt-dem-strategy-option") || ""));
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function collectEnrichValues($root) {
+		return {
+			procurement_category: fieldVal($root, "procurement_category"),
+			demand_route: fieldVal($root, "demand_route"),
+			estimate_basis: fieldVal($root, "estimate_basis"),
+			confirmed_estimate: parseMoneyInput(fieldVal($root, "confirmed_estimate")),
+			duplicate_assessment:
+				($root.find('[data-kt-dem-label="duplicate_assessment"]').text() || "").trim() ||
+				"None found",
+			related_demands_note: fieldVal($root, "related_demands_note"),
+			aggregation_treatment: fieldVal($root, "aggregation_treatment"),
+			aggregation_rationale: fieldVal($root, "aggregation_rationale"),
+		};
+	}
 
 	function paintStageIndicator($root, stages) {
 		var $list = $root.find("[data-kt-dem-stage-list]");
@@ -1114,15 +1463,23 @@ frappe.provide("kentender_procurement.live");
 
 	function applyReviewPayload($root, payload) {
 		var demand = (payload && payload.demand) || {};
-		$root.attr("data-kt-dem-review-stage", payload.stage || "");
+		var stage = payload.stage || "";
+		var enrichment = (payload && payload.enrichment) || null;
+		$root.attr("data-kt-dem-review-stage", stage);
 		$root.attr("data-kt-dem-can-decide", payload.can_decide ? "1" : "0");
+		$root.attr("data-kt-dem-can-enrich", payload.can_enrich ? "1" : "0");
+		showStageHosts($root, stage);
+		paintRecordHeaderFields($root, {
+			title: demand.title || "—",
+			demand_code: demand.demand_code || "—",
+			status_display: demand.status_display || "",
+			demand_route: demand.demand_route || "",
+			procuring_entity_label:
+				demand.procuring_entity_label || demand.procuring_entity || "",
+			owner_org_unit_label:
+				demand.owner_org_unit_label || demand.owner_org_unit || "",
+		});
 		[
-			"title",
-			"demand_code",
-			"status_display",
-			"estimate_header_display",
-			"required_by_display",
-			"demand_route",
 			"need_statement",
 			"need_rationale",
 			"expected_outcome",
@@ -1131,9 +1488,18 @@ frappe.provide("kentender_procurement.live");
 			"delivery_location",
 			"technical_contact_label",
 			"estimate_basis",
+			"required_by_display",
+			"estimate_header_display",
+			"currency",
 		].forEach(function (k) {
 			setLabel($root, k, demand[k] || "—");
 		});
+		var baSummary = (enrichment && enrichment.business_decision_summary) || null;
+		setLabel(
+			$root,
+			"business_approver_label",
+			(baSummary && baSummary.actor_label) || "—"
+		);
 		setLabel(
 			$root,
 			"non_final_disclaimer",
@@ -1152,6 +1518,56 @@ frappe.provide("kentender_procurement.live");
 			)
 			.prop("disabled", !can);
 		$root.find("[data-kt-dem-business-decision]").toggleClass("kt-dem-review-readonly", !can);
+
+		if (stage === "Procurement Enrichment" && enrichment) {
+			fillSelect(
+				$root.find('[data-kt-dem-field="procurement_category"]'),
+				enrichment.categories || [],
+				demand.procurement_category || ""
+			);
+			fillSelect(
+				$root.find('[data-kt-dem-field="demand_route"]'),
+				enrichment.demand_routes || [],
+				demand.demand_route || ""
+			);
+			fillSelect(
+				$root.find('[data-kt-dem-field="aggregation_treatment"]'),
+				enrichment.aggregation_treatments || [],
+				demand.aggregation_treatment || enrichment.aggregation_treatment || ""
+			);
+			setField($root, "estimate_basis", demand.estimate_basis || "");
+			setField(
+				$root,
+				"confirmed_estimate",
+				formatMoneyInput(demand.confirmed_estimate || demand.requester_estimate)
+			);
+			setField($root, "related_demands_note", demand.related_demands_note || "");
+			setField(
+				$root,
+				"aggregation_rationale",
+				demand.aggregation_rationale || ""
+			);
+			setLabel(
+				$root,
+				"duplicate_assessment",
+				demand.duplicate_assessment || enrichment.duplicate_assessment || "None found"
+			);
+			paintEnrichItems($root, demand.items || []);
+			paintStrategyCard($root, enrichment);
+			paintPvc($root, enrichment.value_treatments || []);
+			var canEnrich = !!payload.can_enrich;
+			$root
+				.find(
+					'[data-kt-dem-action="enrich-save"], [data-kt-dem-action="enrich-return"], [data-kt-dem-action="assign-strategy"], [data-kt-dem-action="change-strategy"], [data-kt-dem-action="remove-strategy"], [data-kt-dem-action="enrich-add-item"]'
+				)
+				.prop("disabled", !canEnrich);
+			$root
+				.find('[data-kt-dem-action="enrich-send"]')
+				.prop("disabled", !(canEnrich && enrichment.send_ready));
+			$root
+				.find("[data-kt-dem-enrichment-host]")
+				.toggleClass("kt-dem-review-readonly", !canEnrich);
+		}
 	}
 
 	function clearReasonModalError($root) {
@@ -1310,6 +1726,8 @@ frappe.provide("kentender_procurement.live");
 			}
 			clearReasonModalError($root);
 			$btn.prop("disabled", true);
+			var stage = $root.attr("data-kt-dem-review-stage") || "";
+			var isEnrich = stage === "Procurement Enrichment";
 			var payload = {
 				demand: demandId,
 				decision: vals.decision,
@@ -1319,7 +1737,7 @@ frappe.provide("kentender_procurement.live");
 			if (vals.decision === "Return") {
 				payload.correction_hints = vals.correction_hints;
 			}
-			callMethod(REVIEW_DECIDE, payload)
+			callMethod(isEnrich ? PROC_DECIDE : REVIEW_DECIDE, payload)
 				.then(function (res) {
 					if (!res || !res.ok) {
 						throw new Error((vals.decision || "Decision") + " failed");
@@ -1335,7 +1753,7 @@ frappe.provide("kentender_procurement.live");
 					frappe.set_route("demands-workspace");
 				})
 				.catch(function (err) {
-					console.warn("record_business_decision_form decision failed", err);
+					console.warn("review decision failed", err);
 					frappe.show_alert({
 						message:
 							vals.decision === "Return"
@@ -1349,8 +1767,8 @@ frappe.provide("kentender_procurement.live");
 				});
 		});
 
-		return callMethod(REVIEW_GET, { demand: demandId })
-			.then(function (payload) {
+		function reloadReview() {
+			return callMethod(REVIEW_GET, { demand: demandId }).then(function (payload) {
 				if (String($root.attr("data-kt-dem-bind-token")) !== String(token)) {
 					return payload;
 				}
@@ -1360,16 +1778,248 @@ frappe.provide("kentender_procurement.live");
 				applyReviewPayload($root, payload);
 				$root.attr("data-kt-dem-live", "1");
 				return payload;
-			})
-			.catch(function (err) {
-				$root.attr("data-kt-dem-live", "0");
-				$root.attr("data-kt-dem-error", "1");
-				console.warn("Demand review bind failed", err);
-				frappe.show_alert({
-					message: __("Could not load demand review"),
-					indicator: "red",
-				});
 			});
+		}
+
+		function persistEnrichment(sendForBudget) {
+			var values = collectEnrichValues($root);
+			var items = collectEnrichItems($root);
+			// Omit strategy_references so existing Primary/Supporting refs are preserved.
+			return callMethod(ENRICH_SAVE, {
+				demand: demandId,
+				values: values,
+				items: items,
+				value_treatments: [],
+				send_for_budget: sendForBudget ? 1 : 0,
+			});
+		}
+
+		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-return"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			openReasonModal($root, "Return");
+		});
+		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-save"]', function (e) {
+			e.preventDefault();
+			var $btn = $(this);
+			if ($btn.prop("disabled")) {
+				return;
+			}
+			$btn.prop("disabled", true);
+			persistEnrichment(false)
+				.then(function (res) {
+					if (!res || !res.ok) {
+						throw new Error("Save failed");
+					}
+					frappe.show_alert({
+						message: __("Enrichment saved"),
+						indicator: "green",
+					});
+					return reloadReview();
+				})
+				.catch(function (err) {
+					console.warn("enrich_demand_form save failed", err);
+					frappe.show_alert({
+						message: __("Could not save enrichment"),
+						indicator: "red",
+					});
+				})
+				.finally(function () {
+					$btn.prop("disabled", false);
+				});
+		});
+		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-send"]', function (e) {
+			e.preventDefault();
+			var $btn = $(this);
+			if ($btn.prop("disabled")) {
+				return;
+			}
+			$btn.prop("disabled", true);
+			persistEnrichment(true)
+				.then(function (res) {
+					if (!res || !res.ok) {
+						throw new Error("Send failed");
+					}
+					frappe.show_alert({
+						message: __("Sent for Budget confirmation"),
+						indicator: "green",
+					});
+					frappe.set_route("demands-workspace");
+				})
+				.catch(function (err) {
+					console.warn("enrich_demand_form send failed", err);
+					frappe.show_alert({
+						message: __("Could not send for Budget confirmation"),
+						indicator: "red",
+					});
+					$btn.prop("disabled", false);
+					return reloadReview();
+				});
+		});
+		$root.on(
+			"click.ktDemReview",
+			'[data-kt-dem-action="assign-strategy"], [data-kt-dem-action="change-strategy"]',
+			function (e) {
+				e.preventDefault();
+				if ($(this).prop("disabled")) {
+					return;
+				}
+				openStrategyDrawer($root, demandId);
+			}
+		);
+		$root.on("click.ktDemReview", '[data-kt-dem-action="remove-strategy"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			callMethod(ENRICH_SAVE, {
+				demand: demandId,
+				values: collectEnrichValues($root),
+				items: collectEnrichItems($root),
+				strategy_references: [],
+				value_treatments: [],
+				send_for_budget: 0,
+			})
+				.then(function (res) {
+					if (!res || !res.ok) {
+						throw new Error("Remove failed");
+					}
+					frappe.show_alert({
+						message: __("Strategy assignment removed"),
+						indicator: "orange",
+					});
+					return reloadReview();
+				})
+				.catch(function (err) {
+					console.warn("remove strategy failed", err);
+					frappe.show_alert({
+						message: __("Could not remove Strategy assignment"),
+						indicator: "red",
+					});
+				});
+		});
+		$root.on(
+			"click.ktDemReview",
+			'[data-kt-dem-action="close-strategy-drawer"], [data-kt-dem-action="close-strategy-drawer"]',
+			function (e) {
+				e.preventDefault();
+				closeStrategyDrawer($root);
+			}
+		);
+		$root.on("click.ktDemReview", "[data-kt-dem-strategy-drawer]", function (e) {
+			if (e.target === this) {
+				closeStrategyDrawer($root);
+			}
+		});
+		var suggestTimer = null;
+		$root.on("input.ktDemReview", '[data-kt-dem-field="strategy_search"]', function () {
+			var q = $(this).val() || "";
+			if (suggestTimer) {
+				clearTimeout(suggestTimer);
+			}
+			suggestTimer = setTimeout(function () {
+				loadStrategySuggestions($root, demandId, q);
+			}, 250);
+		});
+		$root.on("click.ktDemReview", '[data-kt-dem-action="confirm-strategy"]', function (e) {
+			e.preventDefault();
+			var $btn = $(this);
+			if ($btn.prop("disabled")) {
+				return;
+			}
+			var opt = selectedStrategyOption($root);
+			if (!opt) {
+				frappe.show_alert({
+					message: __("Select a Primary Strategy target"),
+					indicator: "orange",
+				});
+				return;
+			}
+			var reason = fieldVal($root, "strategy_reason");
+			if (!reason) {
+				frappe.show_alert({
+					message: __("Confirmation reason is required"),
+					indicator: "orange",
+				});
+				return;
+			}
+			$btn.prop("disabled", true);
+			var refs = [
+				{
+					reference_type: "Primary",
+					plan: opt.plan_version_id || opt.plan_code,
+					plan_version_id: opt.plan_version_id,
+					target_id: opt.target_id,
+					target_code: opt.target_code,
+					target_name: opt.target_name,
+					hierarchy_path: opt.hierarchy_path || opt.snapshot_label,
+					snapshot_label: opt.snapshot_label,
+					selection_source: "Suggested",
+					confirmation_reason: reason,
+				},
+			];
+			callMethod(ENRICH_SAVE, {
+				demand: demandId,
+				values: collectEnrichValues($root),
+				items: collectEnrichItems($root),
+				strategy_references: refs,
+				value_treatments: [],
+				send_for_budget: 0,
+			})
+				.then(function (res) {
+					if (!res || !res.ok) {
+						throw new Error("Assign failed");
+					}
+					closeStrategyDrawer($root);
+					frappe.show_alert({
+						message: __("Strategy target assigned"),
+						indicator: "green",
+					});
+					return reloadReview();
+				})
+				.catch(function (err) {
+					console.warn("assign strategy failed", err);
+					frappe.show_alert({
+						message: __("Could not assign Strategy target"),
+						indicator: "red",
+					});
+				})
+				.finally(function () {
+					$btn.prop("disabled", false);
+				});
+		});
+		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-add-item"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			var $tbody = $root.find("[data-kt-dem-enrich-items-tbody]");
+			$tbody.append(
+				'<tr class="border-b border-outline-variant" data-kt-dem-enrich-item-row data-item-name="">' +
+					'<td class="p-3"><input class="w-full border border-outline-variant rounded px-2 py-1 font-body-md" type="text" data-kt-dem-enrich-item="description" value=""/></td>' +
+					'<td class="p-3"><input class="w-20 border border-outline-variant rounded px-2 py-1 font-data-mono text-right" type="number" data-kt-dem-enrich-item="confirmed_quantity" value="1"/></td>' +
+					'<td class="p-3"><input class="w-20 border border-outline-variant rounded px-2 py-1 font-body-md" type="text" data-kt-dem-enrich-item="confirmed_uom" value="Lot"/></td>' +
+					'<td class="p-3"><input class="w-36 border border-outline-variant rounded px-2 py-1 font-data-mono text-right" type="text" data-kt-dem-enrich-item="confirmed_estimate" value=""/></td>' +
+					'<td class="p-3 text-right"><button type="button" class="p-2 rounded-full text-on-surface-variant border-0 bg-transparent" data-kt-dem-action="enrich-remove-item" aria-label="Remove item"><span class="material-symbols-outlined text-[20px]">delete</span></button></td>' +
+					"</tr>"
+			);
+		});
+		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-remove-item"]', function (e) {
+			e.preventDefault();
+			$(this).closest("[data-kt-dem-enrich-item-row]").remove();
+		});
+
+		return reloadReview().catch(function (err) {
+			$root.attr("data-kt-dem-live", "0");
+			$root.attr("data-kt-dem-error", "1");
+			console.warn("Demand review bind failed", err);
+			frappe.show_alert({
+				message: __("Could not load demand review"),
+				indicator: "red",
+			});
+		});
 	}
 
 	kentender_procurement.live.bindDemandReview = bindDemandReview;

@@ -71,6 +71,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
 	f"/assets/kentender_procurement/css/demands_workspace.css?v={_desk_asset_v('public/css/demands_workspace.css')}",
+	f"/assets/kentender_procurement/css/demands_record_chrome.css?v={_desk_asset_v('public/css/demands_record_chrome.css')}",
 	f"/assets/kentender_procurement/css/demands_form.css?v={_desk_asset_v('public/css/demands_form.css')}",
 	f"/assets/kentender_procurement/css/demands_review.css?v={_desk_asset_v('public/css/demands_review.css')}",
 ]
@@ -78,6 +79,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
 	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/workspace.js?v={_desk_asset_v('public/js/demands_ui_fixtures/workspace.js')}",
+	f"/assets/kentender_procurement/js/demands_ui_fixtures/record_chrome.js?v={_desk_asset_v('public/js/demands_ui_fixtures/record_chrome.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/form.js?v={_desk_asset_v('public/js/demands_ui_fixtures/form.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/review.js?v={_desk_asset_v('public/js/demands_ui_fixtures/review.js')}",
 	f"/assets/kentender_procurement/js/demands_live_bind.js?v={_desk_asset_v('public/js/demands_live_bind.js')}",

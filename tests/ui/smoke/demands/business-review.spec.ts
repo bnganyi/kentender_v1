@@ -54,12 +54,16 @@ test.describe("DEM-UI-04 Business Review", () => {
 			timeout: 30_000,
 		});
 		await expect(page.locator(`${ROOT}.kt-stitch-canvas`)).toBeVisible();
-		await expect(page.getByTestId("kt-dem-ui04-header")).toBeVisible();
-		await expect(page.getByTestId("kt-dem-ui04-code")).not.toHaveText("—");
-		await expect(page.getByTestId("kt-dem-ui04-status-pill")).toContainText(/In review/i);
-		await expect(page.getByTestId("kt-dem-ui04-stage")).toBeVisible();
-		await expect(page.getByTestId("kt-dem-ui04-stage")).toContainText(/Business review/i);
-		await expect(page.getByTestId("kt-dem-ui04-stage")).toContainText(/Current/i);
+		await expect(page.getByTestId("kt-dem-record-header")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-record-meta-top")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-code")).not.toHaveText("—");
+		await expect(page.getByTestId("kt-dem-status-pill")).toContainText(/In review/i);
+		await expect(page.getByTestId("kt-dem-route-pill")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-route-pill")).toContainText(/Route/i);
+		await expect(page.getByTestId("kt-dem-record-pe")).toContainText(/Ministry of Health/i);
+		await expect(page.getByTestId("kt-dem-stage")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Business review/i);
+		await expect(page.getByTestId("kt-dem-stage")).toContainText(/Current/i);
 		// Desktop stepper must stay horizontal (workspace .flex-col !important used to stack it ~400px tall).
 		const stageLayout = await page.locator("[data-kt-dem-stage-list]").evaluate((el) => {
 			const cs = getComputedStyle(el);
@@ -95,9 +99,13 @@ test.describe("DEM-UI-04 Business Review", () => {
 		await expect(page.getByTestId("kt-dem-ui04-reason-modal")).toBeAttached();
 		await expect(page.getByTestId("kt-dem-ui04-reason-modal")).toBeHidden();
 		await expect(page.locator("cdn.tailwindcss.com")).toHaveCount(0);
-		// No specialist mutation controls on Business stage.
-		await expect(page.getByText(/Budget Line/i)).toHaveCount(0);
-		await expect(page.getByText(/Strategy target/i)).toHaveCount(0);
+		// No specialist mutation controls on Business stage (enrichment drawer markup stays in DOM but hidden).
+		const businessHost = page.getByTestId("kt-dem-business-host");
+		await expect(businessHost).toBeVisible();
+		await expect(businessHost.getByText(/Budget Line/i)).toHaveCount(0);
+		await expect(businessHost.getByText(/Strategy target/i)).toHaveCount(0);
+		await expect(page.getByTestId("kt-dem-ui05-root")).toBeHidden();
+		await expect(page.getByTestId("kt-dem-ui05a-drawer")).toBeHidden();
 
 		await page.getByTestId("kt-dem-ui04-comment").fill("Aligned with unit mandate");
 		await page.getByTestId("kt-dem-ui04-support").click();

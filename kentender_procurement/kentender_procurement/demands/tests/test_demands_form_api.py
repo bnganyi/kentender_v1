@@ -91,6 +91,11 @@ class TestDemandsFormApi(IntegrationTestCase):
 		blank = get_demand_form()
 		self.assertEqual(blank["mode"], "create")
 		self.assertIsNone(blank["demand"])
+		blank_stages = {s["key"]: s["state"] for s in blank["stage_indicator"]}
+		self.assertEqual(blank_stages.get("Request Preparation"), "Current")
+		self.assertEqual(blank_stages.get("Business Review"), "Not started")
+		ctx_stages = {s["key"]: s["state"] for s in ctx["stage_indicator"]}
+		self.assertEqual(ctx_stages.get("Request Preparation"), "Current")
 
 		saved = save_demand_form(
 			values={
@@ -124,6 +129,10 @@ class TestDemandsFormApi(IntegrationTestCase):
 		self.assertEqual(loaded["mode"], "edit")
 		self.assertEqual(loaded["demand"]["name"], name)
 		self.assertGreaterEqual(len(loaded["demand"]["items"]), 1)
+		self.assertEqual(loaded["demand"]["status_display"], "Draft")
+		self.assertIn("estimate_header_display", loaded["demand"])
+		edit_stages = {s["key"]: s["state"] for s in loaded["stage_indicator"]}
+		self.assertEqual(edit_stages.get("Request Preparation"), "Current")
 
 		submitted = submit_demand_form(
 			demand=name,

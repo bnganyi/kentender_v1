@@ -3,20 +3,22 @@
 frappe.provide("kentender_procurement.ui_fixtures");
 
 kentender_procurement.ui_fixtures.demand_form = function () {
+	var recordChrome =
+		(kentender_procurement.ui_fixtures.demand_record_chrome &&
+			kentender_procurement.ui_fixtures.demand_record_chrome()) ||
+		"";
 	// Select chevron: shared kt_stitch_desk_chrome.css data-URI (no sibling SVG / expand_more stack).
 	return `<div class="kt-dem-root kt-dem-form kt-stitch-canvas" data-testid="kt-dem-ui02-root" data-kt-dem-live="0">
 <input type="hidden" data-kt-dem-field="procuring_entity" value="">
 <input type="hidden" data-kt-dem-field="owner_org_unit" value="">
 <input type="hidden" data-kt-dem-field="demand_name" value="">
-<div class="bg-surface-container-lowest border-b border-outline-variant px-6 py-8" data-testid="kt-dem-ui02-header">
+<div class="px-6 pt-6" data-testid="kt-dem-ui02-header">
 <div class="max-w-4xl mx-auto">
-<div class="flex items-center gap-2 text-on-surface-variant font-body-md mb-2" data-testid="kt-dem-ui02-context" data-kt-dem-scope-mode="single_readonly">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-md mb-4" data-testid="kt-dem-ui02-context" data-kt-dem-scope-mode="single_readonly">
 <span class="material-symbols-outlined text-sm" data-kt-dem-scope-ro>account_balance</span>
 <span data-kt-dem-scope-ro data-kt-dem-label="procuring_entity">—</span>
 <span data-kt-dem-scope-ro>·</span>
 <span data-kt-dem-scope-ro data-kt-dem-label="owner_org_unit">—</span>
-<span class="hidden" data-kt-dem-edit-only>·</span>
-<span class="hidden font-data-mono" data-kt-dem-edit-only data-kt-dem-label="demand_code"></span>
 <div class="hidden w-full max-w-xl" data-kt-dem-scope-multi data-testid="kt-dem-ui02-scope-select-wrap">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1" for="kt-dem-ui02-scope-pair">Owning entity and unit</label>
 <select id="kt-dem-ui02-scope-pair" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md appearance-none outline-none" data-kt-dem-scope-pair data-testid="kt-dem-ui02-scope-pair">
@@ -28,11 +30,7 @@ kentender_procurement.ui_fixtures.demand_form = function () {
 <div class="font-headline-sm text-headline-sm text-on-surface mb-1">Demand creation blocked</div>
 <p class="font-body-md text-body-md text-on-surface-variant mb-0" data-kt-dem-label="blocked_reason">No operational Demand Requester assignment exists.</p>
 </div>
-<div class="flex items-center gap-4 mb-2">
-<h1 class="font-headline-lg text-headline-lg text-on-surface" data-kt-dem-label="page_title">Create demand</h1>
-<span class="hidden bg-status-reserved/20 text-status-reserved px-3 py-1 rounded-full text-label-caps font-bold" data-kt-dem-returned-only data-testid="kt-dem-ui02-status-pill">Returned</span>
-</div>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl" data-kt-dem-label="page_subtitle">Describe what is needed, why it is needed and when it is required.</p>
+${recordChrome}
 </div>
 </div>
 <div class="flex-1 p-6" data-testid="kt-dem-ui02-form-canvas">

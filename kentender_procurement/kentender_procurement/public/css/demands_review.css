@@ -159,60 +159,7 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea
 	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
 }
 
-/*
- * Stage indicator — horizontal stepper on desktop.
- * demands_workspace.css pins `.kt-dem-root .flex-col { flex-direction: column !important }`
- * which otherwise traps md:flex-row utilities and stacks steps into a tall broken column.
- */
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list] {
-	display: flex !important;
-	flex-direction: column !important;
-	justify-content: flex-start !important;
-	align-items: stretch !important;
-	gap: 1rem !important;
-	position: relative;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item] {
-	display: flex !important;
-	flex-direction: row !important;
-	align-items: center !important;
-	gap: 0.75rem !important;
-	flex: 1 1 auto !important;
-	min-width: 0;
-	position: relative;
-	z-index: 1;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-dot] {
-	width: 2rem;
-	height: 2rem;
-	border-radius: 9999px;
-	display: flex !important;
-	align-items: center;
-	justify-content: center;
-	font-size: 0.75rem;
-	font-weight: 600;
-	flex-shrink: 0;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Complete"] [data-kt-dem-stage-dot] {
-	background: #0f766e;
-	color: #fff;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-dot] {
-	background: #d7e2ff;
-	color: #001f48;
-	box-shadow: 0 0 0 4px rgb(215 226 255 / 0.45);
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Not started"] [data-kt-dem-stage-dot] {
-	background: #e8e7ef;
-	color: #434750;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Not started"] {
-	opacity: 0.65;
-}
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-label] {
-	color: var(--kt-dem-primary, #001f48);
-	font-weight: 600;
-}
+/* Stage indicator styles live in demands_record_chrome.css (DEM-UIC-002 shared). */
 
 .kt-cl-shell .kt-dem-review button[disabled] {
 	opacity: 0.45;
@@ -258,42 +205,6 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-inpu
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion:hover .text-sm {
 	color: #0b0e14;
-}
-
-@media (min-width: 768px) {
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list],
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list].flex-col {
-		flex-direction: row !important;
-		justify-content: space-between !important;
-		align-items: flex-start !important;
-		gap: 0.5rem !important;
-	}
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item],
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item].flex-col {
-		flex-direction: column !important;
-		align-items: center !important;
-		text-align: center;
-		gap: 0.35rem !important;
-	}
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item]:first-child {
-		align-items: flex-start !important;
-		text-align: left;
-	}
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-item]:last-child {
-		align-items: flex-end !important;
-		text-align: right;
-	}
-	/* Soft connector under the dots */
-	body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-stage-list]::before {
-		content: "";
-		position: absolute;
-		top: 1rem;
-		left: 1rem;
-		right: 1rem;
-		height: 2px;
-		background: #e8e7ef;
-		z-index: 0;
-	}
 }
 
 /* Stitch DEM-UI-04 — Return / Reject reason modal (Budget reason-modal pattern) */
@@ -472,4 +383,91 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm.is-r
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm[disabled] {
 	opacity: 0.55 !important;
 	cursor: not-allowed !important;
+}
+
+/* ---------- DEM-UI-05 Procurement enrichment ---------- */
+body.kt-dem-review-active.kt-dem-enrichment-active .kt-cl-native-canvas > main {
+	padding-bottom: 6.5rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrichment-stack {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	padding-bottom: 1rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrichment-footer {
+	position: fixed !important;
+	left: var(--kt-a2-sidebar, 0) !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	z-index: 40 !important;
+	background: #ffffff !important;
+	border-top: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+	padding: 1rem !important;
+	box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrichment-footer-inner {
+	width: 100% !important;
+	max-width: 56rem !important;
+	margin: 0 auto !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 50 !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+	background: rgb(26 27 32 / 0.2) !important;
+	backdrop-filter: blur(2px);
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer.hidden,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer[hidden] {
+	display: none !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-panel {
+	width: 100% !important;
+	max-width: 28rem !important;
+	height: 100% !important;
+	background: #ffffff !important;
+	border-left: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+	box-shadow: -8px 0 24px rgb(0 0 0 / 0.08) !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-header {
+	padding: 1.5rem !important;
+	border-bottom: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-filters {
+	padding: 1rem !important;
+	background: #f4f3f9 !important;
+	border-bottom: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-list {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-reason {
+	padding: 0 1rem 1rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-drawer-footer {
+	padding: 1rem !important;
+	border-top: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+	display: flex !important;
+	gap: 0.75rem !important;
+	background: #ffffff !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-option:has(input:checked) {
+	border-color: var(--kt-dem-primary, #001f48) !important;
+	background: rgb(0 31 72 / 0.04) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui05-section-classify"] > .bg-surface-container-low,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui05-section-items"] > .bg-surface-container-low {
+	/* Keep estimate/item toolbars muted — not section-header primary-fixed. */
+	background-color: #f4f3f9 !important;
+	box-shadow: none !important;
 }

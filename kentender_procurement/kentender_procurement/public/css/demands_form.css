@@ -45,12 +45,12 @@ body.kt-dem-form-active [data-testid="kt-cl-page-body"] {
 	max-width: 36rem;
 }
 
-/* Full-bleed header bar (Stitch: bg-surface-container-lowest + border-b + py-8). */
+/* Form top: scope context + shared record chrome (DEM-UIC-002). */
 body.kt-dem-form-active .kt-dem-form > [data-testid="kt-dem-ui02-header"] {
 	width: 100% !important;
-	background: #ffffff !important;
-	border-bottom: 1px solid #c3c6d1 !important;
-	padding: 2rem 1.5rem !important;
+	background: #f9f9fe !important;
+	border-bottom: none !important;
+	padding: 1.5rem 1.5rem 0 !important;
 }
 body.kt-dem-form-active .kt-dem-form > [data-testid="kt-dem-ui02-form-canvas"] {
 	width: 100% !important;

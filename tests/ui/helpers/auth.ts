@@ -110,6 +110,15 @@ export async function loginAsBusinessApprover(page: Page) {
 	);
 }
 
+/** DEM-UI-05 — Procurement Approval Authority (Amina Otieno). */
+export async function loginAsProcurementApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_PROCUREMENT_APPROVER_USER || 'moh.procurement.approver@example.test',
+		process.env.UI_PROCUREMENT_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 /** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
 export async function loginAsStrategyViewerOtherPe(page: Page) {
 	await login(

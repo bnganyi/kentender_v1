@@ -180,11 +180,11 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | ID | Screen | Stitch | Route / page | Primary services | Depends on | Status | Evidence |
 |---|---|---|---|---|---|---|---|
 | DEM-UI-01 | Demands workspace | [ui_design/DEM-UI-01.html](ui_design/DEM-UI-01.html) | `demands-workspace` | DEM-SVC-014 | DEM-SCH-012, DEM-SVC-014 | Partial | Stitch Desk hand-port (`kt-stitch-canvas`) + live bind; gate green after typography/chrome rework |
-| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Partial | Creation-scope §7.5 (single RO / multi pair select / blocked); Stitch hand-port + live bind; gate `ui-demands-form-gate`; supporting-docs upload not persisted yet |
-| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Done | Return notice (by+role, date, reason) + correction list + section/field highlights + RO available funding; Cancel demand API; `test_returned_form_notice_hints_funding_and_cancel`; Playwright DEM-UI-03 in `demand-form.spec.ts`; gate `ui-demands-form-gate` |
-| DEM-UI-04 | Business review | [DEM-UI-04.html](ui_design/DEM-UI-04.html) | `demand-review` | DEM-SVC-003 | DEM-SVC-003, DEM-UI-02 | Done | Stitch hand-port + DEM-UIC-002 shell; `get_demand_review` / `record_business_decision_form`; statement prompts + non-final disclaimer; Support/Return/Reject; `test_demands_review_api` + `business-review.spec.ts`; gate `ui-demands-review-gate` |
-| DEM-UI-05 | Procurement enrichment | [DEM-UI-05.html](ui_design/DEM-UI-05.html) | `demand-review` | DEM-SVC-004, DEM-SVC-006 | DEM-SVC-004 | Not started | |
-| DEM-UI-05A | Strategy target selector | [DEM-UI-05A.html](ui_design/DEM-UI-05A.html) | drawer on `demand-review` | DEM-SVC-005 | DEM-UI-05, DEM-SVC-005 | Not started | |
+| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Partial | Creation-scope §7.5; shared record header + stage (DEM-UIC-002); gate `ui-demands-form-gate`; supporting-docs upload not persisted yet |
+| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Done | Return notice below shared stage chrome; correction list + highlights + funding; Cancel demand Stitch modal; Playwright DEM-UI-03; gate `ui-demands-form-gate` |
+| DEM-UI-04 | Business review | [DEM-UI-04.html](ui_design/DEM-UI-04.html) | `demand-review` | DEM-SVC-003 | DEM-SVC-003, DEM-UI-02 | Done | Shared record chrome + stage; `get_demand_review` / `record_business_decision_form`; Support/Return/Reject; `business-review.spec.ts`; gate `ui-demands-review-gate` |
+| DEM-UI-05 | Procurement enrichment | [DEM-UI-05.html](ui_design/DEM-UI-05.html) | `demand-review` | DEM-SVC-004, DEM-SVC-006 | DEM-SVC-004 | Done | Stage-switched enrichment body + sticky footer on `demand-review`; duplication fields; `enrich_demand_form` / `record_procurement_decision_form`; `procurement-enrichment.spec.ts`; gate `ui-demands-review-gate` |
+| DEM-UI-05A | Strategy target selector | [DEM-UI-05A.html](ui_design/DEM-UI-05A.html) | drawer on `demand-review` | DEM-SVC-005 | DEM-UI-05, DEM-SVC-005 | Done | Stitch right drawer first pass; search + Primary radio + reason; `suggest_strategy_context_form`; Assign/Change/Remove wired |
 | DEM-UI-06 | Routine Budget confirmation | [DEM-UI-06.html](ui_design/DEM-UI-06.html) | `demand-review` | DEM-SVC-007, DEM-SVC-008 | DEM-SVC-008 | Not started | |
 | DEM-UI-07 | Budget exception | [DEM-UI-07.html](ui_design/DEM-UI-07.html) | `demand-review` | DEM-SVC-009 | DEM-SVC-009 | Not started | |
 | DEM-UI-08 | Final approval | [DEM-UI-08.html](ui_design/DEM-UI-08.html) | `demand-review` | DEM-SVC-010 | DEM-SVC-010 | Not started | |
@@ -200,8 +200,8 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | ID | Component | Used by | Status | Evidence |
 |---|---|---|---|---|
 | DEM-UIC-001 | Shared Demand form shell | DEM-UI-02, DEM-UI-03 | Done | Same `demand-form` page + fixture; create / edit / returned mode toggles (notice, highlights, Cancel demand vs Cancel) |
-| DEM-UIC-002 | Shared Demand review framework (stage sections/actions) | DEM-UI-04…08 | Partial | Shared `demand-review` page + fixture/bind/stage indicator live for Business Review; enrichment/budget/final stage panels still open |
-| DEM-UIC-003 | Strategy selector drawer | DEM-UI-05A | Not started | |
+| DEM-UIC-002 | Shared Demand record chrome (header + stage) + review framework | DEM-UI-02/03, DEM-UI-04…08 | Partial | Shared chrome + stage on form + review; Business Review + Procurement Enrichment bodies live; Budget/Final stage panels still open |
+| DEM-UIC-003 | Strategy selector drawer | DEM-UI-05A | Done | DEM-UI-05A drawer first pass on enrichment (search/Primary/reason; no Strategy create) |
 | DEM-UIC-004 | Detail tab host | DEM-UI-09A…09D | Not started | |
 
 ---
@@ -245,7 +245,7 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | DEM-AC-001 | DIA-AC-001 | Submit without Strategy/Budget/method | `test_demand_submit.py`; `demands-requester-submit.spec.ts` | DEM-UI-02, DEM-SVC-002 | Not started | |
 | DEM-AC-002 | DIA-AC-002 | Business Approver by entity/OU | `test_demand_assignment.py` | DEM-PERM-002, DEM-SVC-002 | Not started | |
 | DEM-AC-003 | DIA-AC-003 | Support → Enrichment | `test_get_review_and_support`; business-review Playwright Support path | DEM-UI-04 | Done | Support → Procurement Enrichment; disclaimer asserted in UI; dedicated `test_demand_business_decision.py` module name deferred |
-| DEM-AC-004 | DIA-AC-004 | Enrich + Strategy/value | `test_demand_enrich.py`; enrich + 05A specs | DEM-UI-05, DEM-UI-05A | Not started | |
+| DEM-AC-004 | DIA-AC-004 | Enrich + Strategy/value | `test_demands_enrichment_api.py`; `procurement-enrichment.spec.ts` | DEM-UI-05, DEM-UI-05A | Done | Save enrichment, Primary assign via 05A, Send → Budget Confirmation; Return with Enrichment-stage decision; PVC table empty-state first pass |
 | DEM-AC-005 | DIA-AC-005 | Auto-match + BO confirm; exceptions | `test_demand_funding.py`; budget-confirm / exception specs | DEM-UI-06, DEM-UI-07 | Not started | |
 | DEM-AC-006 | DIA-AC-006 | Atomic approve+reserve; Planning Ready | `test_demand_approve_reserve.py`; final-approval spec | DEM-UI-08 | Not started | |
 | DEM-AC-007 | DIA-AC-007 | Idempotent approval / one RSV | `test_demand_approve_reserve.py` | DEM-SVC-010 | Not started | |
@@ -314,7 +314,7 @@ Run after migrate + tests. Exclude archive/docs from runtime claims.
 |---|---|---|---|---|---|
 | DEM-GATE-001 | `ui-demands-workspace-gate` | DEM-UI-01 Stitch Desk pattern | DEM-UI-01 | Partial | Gate green (API + Playwright 3/3 incl. `assertStitchDeskChrome`); registered in stitch desk chrome registry |
 | DEM-GATE-001A | `ui-demands-form-gate` | DEM-UI-02 form Stitch + API | DEM-UI-02, DEM-UIC-001 | Partial | Form API + Playwright regions/chrome; docs upload persistence open |
-| DEM-GATE-002 | `ui-demands-review-gate` | Shared review 04–08 + 05A | DEM-UI-04…08, 05A | Partial | Gate wired for DEM-UI-04 API + Playwright; expand when 05–08 / 05A land |
+| DEM-GATE-002 | `ui-demands-review-gate` | Shared review 04–08 + 05A | DEM-UI-04…08, 05A | Partial | Gate runs DEM-UI-04 + DEM-UI-05 API modules and Playwright (`business-review` + `procurement-enrichment`); expand when 06–08 land |
 | DEM-GATE-003 | `ui-demands-detail-gate` | 09 + tabs | DEM-UI-09…09D | Not started | |
 | DEM-GATE-004 | Replace retired DIA no-op gates | Makefile help + targets | DEM-GATE-001…003 | Not started | |
 

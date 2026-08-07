@@ -107,6 +107,10 @@ def project_demand(doc: frappe.Document) -> dict[str, Any]:
 		"estimate_basis": doc.estimate_basis,
 		"currency": doc.currency or "KES",
 		"procurement_category": doc.procurement_category,
+		"duplicate_assessment": doc.get("duplicate_assessment") or "",
+		"related_demands_note": doc.get("related_demands_note") or "",
+		"aggregation_treatment": doc.get("aggregation_treatment") or "",
+		"aggregation_rationale": doc.get("aggregation_rationale") or "",
 		"planning_ready": int(doc.planning_ready or 0),
 		"planning_usage": doc.planning_usage,
 		"approved_baseline_version": int(doc.approved_baseline_version or 0),
@@ -406,6 +410,7 @@ def enrich_demand(
 	*,
 	demand: str,
 	values: dict[str, Any] | None = None,
+	items: list[dict[str, Any]] | None = None,
 	strategy_references: list[dict[str, Any]] | None = None,
 	value_treatments: list[dict[str, Any]] | None = None,
 	send_for_budget: bool = False,
@@ -431,10 +436,17 @@ def enrich_demand(
 		"demand_route",
 		"route_justification",
 		"currency",
+		"duplicate_assessment",
+		"related_demands_note",
+		"aggregation_treatment",
+		"aggregation_rationale",
 	):
 		if field in values:
 			doc.set(field, values[field])
 	doc.save(ignore_permissions=True)
+
+	if items is not None:
+		_apply_enrichment_items(doc, items)
 
 	if strategy_references is not None:
 		_replace_strategy_refs(doc, strategy_references, actor)
@@ -459,6 +471,121 @@ def enrich_demand(
 		)
 		suggest_funding_allocations(demand=doc.name, user=actor)
 
+	doc.reload()
+	return {"ok": True, "demand": project_demand(doc)}
+
+
+def _apply_enrichment_items(doc: frappe.Document, items: list[dict[str, Any]]) -> None:
+	"""Update confirmed item fields; create rows for new descriptions."""
+	from kentender_procurement.demands.services.demand_codes import allocate_item_code
+
+	kept: set[str] = set()
+	for idx, raw in enumerate(items or [], start=1):
+		desc = (raw.get("description") or "").strip()
+		name = (raw.get("name") or "").strip()
+		if name and frappe.db.exists("Demand Item", name):
+			item = frappe.get_doc("Demand Item", name)
+			if item.demand != doc.name:
+				continue
+			if desc:
+				item.description = desc
+			for field in (
+				"quantity",
+				"uom",
+				"requester_estimate",
+				"confirmed_quantity",
+				"confirmed_uom",
+				"confirmed_estimate",
+			):
+				if field in raw:
+					item.set(field, raw[field])
+			item.save(ignore_permissions=True)
+			kept.add(item.name)
+			continue
+		if not desc:
+			continue
+		created = frappe.get_doc(
+			{
+				"doctype": "Demand Item",
+				"demand": doc.name,
+				"item_code": allocate_item_code(doc.demand_code, idx),
+				"description": desc,
+				"quantity": raw.get("quantity"),
+				"uom": raw.get("uom"),
+				"requester_estimate": raw.get("requester_estimate"),
+				"confirmed_quantity": raw.get("confirmed_quantity"),
+				"confirmed_uom": raw.get("confirmed_uom"),
+				"confirmed_estimate": raw.get("confirmed_estimate"),
+				"currency": doc.currency or "KES",
+			}
+		).insert(ignore_permissions=True)
+		kept.add(created.name)
+	# Soft-delete omitted rows only when caller sent a full replacement list.
+	if items is not None:
+		for existing in frappe.get_all(
+			"Demand Item", filters={"demand": doc.name}, pluck="name"
+		):
+			if existing not in kept:
+				frappe.delete_doc("Demand Item", existing, ignore_permissions=True, force=1)
+
+
+def record_procurement_decision(
+	*,
+	demand: str,
+	decision: str,
+	reason: str | None = None,
+	comment: str | None = None,
+	user: str | None = None,
+	correction_hints: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-05 — PAA Return | Reject from Procurement Enrichment."""
+	actor = _actor(user)
+	action = (decision or "").strip()
+	if action not in ("Return", "Reject"):
+		throw_demand_error(ERR_VALIDATION, "decision must be Return or Reject")
+	require_operational_roles(ROLE_PAA, user=actor)
+	doc = get_demand(demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	if doc.current_stage != "Procurement Enrichment" or doc.status != "In Review":
+		throw_demand_error(ERR_CONFLICT, "Demand is not in Procurement Enrichment")
+	if not (reason or "").strip():
+		throw_demand_error(ERR_VALIDATION, "reason is required")
+	result = preview_transition(
+		status=doc.status,
+		stage=doc.current_stage,
+		action=action,
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		requester=doc.requester,
+		user=actor,
+	)
+	doc.status = result.status
+	doc.current_stage = result.stage
+	if action == "Reject":
+		doc.rejected_at = _now()
+	if action == "Return":
+		doc.current_owner = doc.requester
+	doc.save(ignore_permissions=True)
+	snap = None
+	if action == "Return":
+		snap = {
+			"demand": project_demand(doc),
+			"correction_hints": list(correction_hints or []),
+		}
+	_record_decision(
+		doc,
+		stage="Procurement Enrichment",
+		decision=action,
+		actor=actor,
+		comment=comment,
+		reason=reason,
+		snapshot=snap,
+	)
 	doc.reload()
 	return {"ok": True, "demand": project_demand(doc)}
 
