@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 17:37:05.971862",
+ "creation": "2026-08-07 14:22:18.434279",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -56,6 +56,19 @@
    "show_arrow": 0,
    "type": "Link",
    "url": "/desk/budget-management"
+  },
+  {
+   "child": 0,
+   "collapsible": 0,
+   "icon": "file",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Demands",
+   "link_to": "demands-workspace",
+   "link_type": "Page",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "/desk/demands-workspace"
   },
   {
    "child": 0,
@@ -220,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-06 23:04:45.613307",
+ "modified": "2026-08-07 15:13:05.618691",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

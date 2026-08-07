@@ -143,6 +143,22 @@ const SURFACES = [
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-rev-review-apply",
 	},
+	{
+		id: "demands-workspace",
+		route: "/desk/demands-workspace",
+		rootTestId: "kt-dem-ui01-root",
+		liveAttr: "data-kt-dem-live",
+		primaryCtaTestId: "kt-dem-ui01-create",
+		selectSelector: '[data-kt-dem-filter="status"]',
+	},
+	{
+		id: "demand-form",
+		route: "/desk/demand-form",
+		rootTestId: "kt-dem-ui02-root",
+		liveAttr: "data-kt-dem-live",
+		primaryCtaTestId: "kt-dem-ui02-submit",
+		selectSelector: '[data-kt-dem-field="demand_route"]',
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });

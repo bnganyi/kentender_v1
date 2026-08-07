@@ -162,6 +162,24 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"select_filter_attr": "",
 		"headline_selector": ".kt-bud-rev-review-title, [data-testid='kt-bud-revision-review'] h1",
 	},
+	{
+		"id": "demands-workspace",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/demands_ui_fixtures/workspace.js",
+		"desk_route": "demands-workspace",
+		"primary_cta_testid": "kt-dem-ui01-create",
+		"select_filter_attr": "data-kt-dem-filter",
+		"headline_selector": ".kt-dem-root h1, [data-testid='kt-dem-ui01-root'] h1",
+	},
+	{
+		"id": "demand-form",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/demands_ui_fixtures/form.js",
+		"desk_route": "demand-form",
+		"primary_cta_testid": "kt-dem-ui02-submit",
+		"select_filter_attr": "data-kt-dem-field",
+		"headline_selector": ".kt-dem-form h1, [data-testid='kt-dem-ui02-root'] h1",
+	},
 )
 
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"
@@ -191,4 +209,10 @@ REQUIRED_SHARED_CSS_MARKERS: tuple[str, ...] = (
 	"input[type=\"date\"]",
 	"background-color: #ffffff !important",
 	"background-color: #e2e2e8 !important",
+	# Square cards + primary-fixed section/table headers (not lilac-grey #f4f3f9).
+	"Square cards + section/table headers",
+	"--kt-stitch-primary-fixed: #d7e2ff",
+	"#d7e2ff",
+	"thead tr.bg-surface-container-low",
+	"border-radius: 0 !important",
 )

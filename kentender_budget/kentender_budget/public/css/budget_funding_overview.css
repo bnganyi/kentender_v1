@@ -273,7 +273,7 @@
 
 /* ---------- Shared Stitch surface / type tokens (missing from utility dump) ---------- */
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .rounded-xl {
-	border-radius: 0.75rem !important;
+	border-radius: 0 !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .rounded-lg {
 	border-radius: 0.5rem !important;

@@ -1,0 +1,675 @@
+/* DEM-UI-02 / DEM-UI-03 — Demand form Stitch pins (defeat Desk/Bootstrap). */
+
+/*
+ * Stitch layout: surface page (#f9f9fe) + full-bleed white header bar +
+ * centered max-w-4xl sections. CL page padding/max-width must not inset the header.
+ */
+body.kt-dem-form-active .kt-cl-native-canvas > main {
+	padding: 0 !important;
+	padding-bottom: 6rem !important;
+	background: #f9f9fe !important;
+}
+body.kt-dem-form-active .kt-cl-native-canvas > main > .max-w-\[1280px\],
+body.kt-dem-form-active .kt-cl-native-canvas > main > .max-w-\[1280px\] > [data-testid="kt-cl-page-body"],
+body.kt-dem-form-active [data-testid="kt-cl-page-body"] {
+	max-width: none !important;
+	width: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	background: transparent !important;
+}
+
+.kt-cl-shell .kt-dem-form {
+	--kt-dem-primary: #001f48;
+	--kt-dem-outline-variant: #c3c6d1;
+	--kt-dem-surface: #f9f9fe;
+	/* App-wide Stitch focus lock (Strategy/Budget): soft secondary blue — never navy/black. */
+	--kt-dem-focus-border: #7bbeff;
+	--kt-dem-focus-ring: rgba(123, 190, 255, 0.55);
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	padding-bottom: 5rem;
+	background: #f9f9fe !important;
+	min-height: calc(100vh - 7rem);
+}
+
+/* Full-bleed header bar (Stitch: bg-surface-container-lowest + border-b + py-8). */
+body.kt-dem-form-active .kt-dem-form > [data-testid="kt-dem-ui02-header"] {
+	width: 100% !important;
+	background: #ffffff !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	padding: 2rem 1.5rem !important;
+}
+body.kt-dem-form-active .kt-dem-form > [data-testid="kt-dem-ui02-form-canvas"] {
+	width: 100% !important;
+	background: #f9f9fe !important;
+	padding: 1.5rem !important;
+	flex: 1 1 auto !important;
+}
+
+/*
+ * App-wide focus lock (same as Strategy/Budget):
+ * border #7bbeff + 1px soft halo — never CL near-black primary or navy slab.
+ */
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea):focus,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea):focus-visible,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea).focus\:ring-1:focus,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea).focus\:ring-2:focus,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea).focus\:ring-primary:focus,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea).focus\:border-primary:focus {
+	outline: none !important;
+	outline-style: none !important;
+	outline-width: 0 !important;
+	outline-offset: 0 !important;
+	border-width: 1px !important;
+	border-style: solid !important;
+	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
+	background-color: #ffffff !important;
+	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
+	transition: none !important;
+	--tw-ring-shadow: 0 0 #0000 !important;
+	--tw-ring-offset-shadow: 0 0 #0000 !important;
+	--tw-ring-width: 0px !important;
+	--tw-ring-color: var(--kt-dem-focus-border, #7bbeff) !important;
+	--tw-border-opacity: 1 !important;
+	--tw-shadow: 0 0 #0000 !important;
+}
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form :is(input, select, textarea):hover:not(:disabled):not(:focus):not(:focus-visible) {
+	border-color: #434750 !important;
+	box-shadow: none !important;
+}
+/* Transparent native date overlay must not paint its own focus chrome. */
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-native:focus,
+body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-native:focus-visible {
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+
+.kt-cl-shell .kt-dem-form h1,
+.kt-cl-shell .kt-dem-form h2,
+.kt-cl-shell .kt-dem-form p {
+	margin: 0 !important;
+}
+
+.kt-cl-shell .kt-dem-form .max-w-4xl {
+	max-width: 56rem !important;
+}
+.kt-cl-shell .kt-dem-form .mx-auto {
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+.kt-cl-shell .kt-dem-form .px-6 {
+	padding-left: 1.5rem !important;
+	padding-right: 1.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .py-8 {
+	padding-top: 2rem !important;
+	padding-bottom: 2rem !important;
+}
+.kt-cl-shell .kt-dem-form .py-4 {
+	padding-top: 1rem !important;
+	padding-bottom: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .py-3 {
+	padding-top: 0.75rem !important;
+	padding-bottom: 0.75rem !important;
+}
+.kt-cl-shell .kt-dem-form .p-6 {
+	padding: 1.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .p-4 {
+	padding: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .p-3 {
+	padding: 0.75rem !important;
+}
+.kt-cl-shell .kt-dem-form .p-card-padding,
+.kt-cl-shell .kt-dem-form .px-card-padding {
+	padding-left: 20px !important;
+	padding-right: 20px !important;
+}
+.kt-cl-shell .kt-dem-form .p-card-padding {
+	padding-top: 20px !important;
+	padding-bottom: 20px !important;
+}
+.kt-cl-shell .kt-dem-form .space-y-section-gap {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 24px !important;
+}
+.kt-cl-shell .kt-dem-form .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+	margin-top: 1.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .space-y-6 {
+	display: flex !important;
+	flex-direction: column !important;
+}
+.kt-cl-shell .kt-dem-form .gap-6 {
+	gap: 1.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .gap-4 {
+	gap: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .gap-3 {
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-dem-form .gap-2 {
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .mb-2 {
+	margin-bottom: 0.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .mb-1 {
+	margin-bottom: 0.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .mb-0 {
+	margin-bottom: 0 !important;
+}
+.kt-cl-shell .kt-dem-form .mt-2 {
+	margin-top: 0.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .mt-1 {
+	margin-top: 0.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .pb-8 {
+	padding-bottom: 2rem !important;
+}
+.kt-cl-shell .kt-dem-form .pb-4 {
+	padding-bottom: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .text-sm {
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-dem-form .text-xs {
+	font-size: 0.75rem !important;
+	line-height: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .text-3xl {
+	font-size: 1.875rem !important;
+	line-height: 2.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .text-\[18px\] {
+	font-size: 18px !important;
+}
+.kt-cl-shell .kt-dem-form .text-\[20px\] {
+	font-size: 20px !important;
+}
+.kt-cl-shell .kt-dem-form .w-full {
+	width: 100% !important;
+}
+.kt-cl-shell .kt-dem-form .w-24 {
+	width: 6rem !important;
+}
+.kt-cl-shell .kt-dem-form .w-32 {
+	width: 8rem !important;
+}
+.kt-cl-shell .kt-dem-form .w-48 {
+	width: 12rem !important;
+}
+.kt-cl-shell .kt-dem-form .w-16 {
+	width: 4rem !important;
+}
+.kt-cl-shell .kt-dem-form .w-5 {
+	width: 1.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .h-5 {
+	height: 1.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .w-4 {
+	width: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .h-4 {
+	height: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .grid {
+	display: grid !important;
+}
+.kt-cl-shell .kt-dem-form .grid-cols-1 {
+	grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.kt-cl-shell .kt-dem-form .flex {
+	display: flex !important;
+}
+.kt-cl-shell .kt-dem-form .flex-col {
+	flex-direction: column !important;
+}
+.kt-cl-shell .kt-dem-form .flex-1 {
+	flex: 1 1 0% !important;
+}
+.kt-cl-shell .kt-dem-form .items-center {
+	align-items: center !important;
+}
+.kt-cl-shell .kt-dem-form .items-start {
+	align-items: flex-start !important;
+}
+.kt-cl-shell .kt-dem-form .items-baseline {
+	align-items: baseline !important;
+}
+.kt-cl-shell .kt-dem-form .items-end {
+	align-items: flex-end !important;
+}
+.kt-cl-shell .kt-dem-form .justify-between {
+	justify-content: space-between !important;
+}
+.kt-cl-shell .kt-dem-form .justify-center {
+	justify-content: center !important;
+}
+.kt-cl-shell .kt-dem-form .text-left {
+	text-align: left !important;
+}
+.kt-cl-shell .kt-dem-form .text-right {
+	text-align: right !important;
+}
+.kt-cl-shell .kt-dem-form .text-center {
+	text-align: center !important;
+}
+.kt-cl-shell .kt-dem-form .relative {
+	position: relative !important;
+}
+.kt-cl-shell .kt-dem-form .absolute {
+	position: absolute !important;
+}
+.kt-cl-shell .kt-dem-form .fixed {
+	position: fixed !important;
+}
+.kt-cl-shell .kt-dem-form .right-0 {
+	right: 0 !important;
+}
+.kt-cl-shell .kt-dem-form .bottom-0 {
+	bottom: 0 !important;
+}
+.kt-cl-shell .kt-dem-form .left-0 {
+	left: 0 !important;
+}
+.kt-cl-shell .kt-dem-form .right-3 {
+	right: 0.75rem !important;
+}
+.kt-cl-shell .kt-dem-form .right-4 {
+	right: 1rem !important;
+}
+.kt-cl-shell .kt-dem-form .left-6 {
+	left: 1.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .top-2\.5 {
+	top: 0.625rem !important;
+}
+.kt-cl-shell .kt-dem-form .top-1\/2 {
+	top: 50% !important;
+}
+.kt-cl-shell .kt-dem-form .top-\[21px\] {
+	top: 21px !important;
+}
+.kt-cl-shell .kt-dem-form .-translate-y-1\/2 {
+	transform: translateY(-50%) !important;
+}
+.kt-cl-shell .kt-dem-form .z-10 {
+	z-index: 10 !important;
+}
+.kt-cl-shell .kt-dem-form .z-30 {
+	z-index: 30 !important;
+}
+.kt-cl-shell .kt-dem-form .pointer-events-none {
+	pointer-events: none !important;
+}
+.kt-cl-shell .kt-dem-form .overflow-hidden {
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-dem-form .overflow-x-auto {
+	overflow-x: auto !important;
+}
+.kt-cl-shell .kt-dem-form .rounded-xl {
+	border-radius: 0 !important;
+}
+.kt-cl-shell .kt-dem-form .rounded-lg {
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-dem-form .rounded-full {
+	border-radius: 9999px !important;
+}
+.kt-cl-shell .kt-dem-form .rounded {
+	border-radius: 0.25rem !important;
+}
+.kt-cl-shell .kt-dem-form .border {
+	border-width: 1px !important;
+	border-style: solid !important;
+}
+.kt-cl-shell .kt-dem-form .border-2 {
+	border-width: 2px !important;
+}
+.kt-cl-shell .kt-dem-form .border-b {
+	border-bottom-width: 1px !important;
+	border-bottom-style: solid !important;
+}
+.kt-cl-shell .kt-dem-form .border-t {
+	border-top-width: 1px !important;
+	border-top-style: solid !important;
+}
+.kt-cl-shell .kt-dem-form .border-dashed {
+	border-style: dashed !important;
+}
+.kt-cl-shell .kt-dem-form .border-collapse {
+	border-collapse: collapse !important;
+}
+.kt-cl-shell .kt-dem-form .border-transparent {
+	border-color: transparent !important;
+}
+.kt-cl-shell .kt-dem-form .border-outline-variant {
+	border-color: var(--kt-dem-outline-variant, #c3c6d1) !important;
+}
+.kt-cl-shell .kt-dem-form .border-outline-variant\/50 {
+	border-color: rgb(195 198 209 / 0.5) !important;
+}
+.kt-cl-shell .kt-dem-form .border-status-reserved\/20 {
+	border-color: rgb(245 158 11 / 0.2) !important;
+}
+.kt-cl-shell .kt-dem-form .border-status-reserved\/30 {
+	border-color: rgb(245 158 11 / 0.3) !important;
+}
+.kt-cl-shell .kt-dem-form .bg-surface,
+.kt-cl-shell .kt-dem-form .bg-surface-container-lowest {
+	background-color: #ffffff !important;
+}
+.kt-cl-shell .kt-dem-form .bg-surface-container-low {
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-dem-form .bg-status-reserved\/5 {
+	background-color: rgb(245 158 11 / 0.05) !important;
+}
+.kt-cl-shell .kt-dem-form .bg-status-reserved\/20 {
+	background-color: rgb(245 158 11 / 0.2) !important;
+}
+.kt-cl-shell .kt-dem-form .text-status-reserved {
+	color: #f59e0b !important;
+}
+.kt-cl-shell .kt-dem-form .text-primary {
+	color: var(--kt-dem-primary, #001f48) !important;
+}
+.kt-cl-shell .kt-dem-form .text-on-surface {
+	color: var(--kt-dem-on-surface, #1a1b20) !important;
+}
+.kt-cl-shell .kt-dem-form .text-on-surface-variant {
+	color: var(--kt-dem-on-surface-variant, #434750) !important;
+}
+.kt-cl-shell .kt-dem-form .text-on-primary {
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-dem-form .text-outline {
+	color: var(--kt-dem-outline, #737781) !important;
+}
+.kt-cl-shell .kt-dem-form .text-error {
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-dem-form .font-medium {
+	font-weight: 500 !important;
+}
+.kt-cl-shell .kt-dem-form .font-bold {
+	font-weight: 700 !important;
+}
+.kt-cl-shell .kt-dem-form .font-normal {
+	font-weight: 400 !important;
+}
+.kt-cl-shell .kt-dem-form .normal-case {
+	text-transform: none !important;
+}
+.kt-cl-shell .kt-dem-form .uppercase {
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-dem-form .block {
+	display: block !important;
+}
+.kt-cl-shell .kt-dem-form .hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-dem-form .resize-none {
+	resize: none !important;
+}
+.kt-cl-shell .kt-dem-form .appearance-none {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+}
+.kt-cl-shell .kt-dem-form .divide-y > :not([hidden]) ~ :not([hidden]) {
+	border-top-width: 1px !important;
+	border-top-style: solid !important;
+	border-top-color: var(--kt-dem-outline-variant, #c3c6d1) !important;
+}
+.kt-cl-shell .kt-dem-form .shadow-\[0_-4px_6px_-1px_rgba\(0\,0\,0\,0\.05\)\] {
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+.kt-cl-shell .kt-dem-form .shadow-sm {
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+/* Editable inputs: white fill + Stitch outline-variant rest border (not Desk black). */
+.kt-cl-shell .kt-dem-form input[type="text"],
+.kt-cl-shell .kt-dem-form input[type="number"],
+.kt-cl-shell .kt-dem-form input[type="date"],
+.kt-cl-shell .kt-dem-form textarea,
+.kt-cl-shell .kt-dem-form select {
+	background-color: #ffffff !important;
+	color: var(--kt-dem-on-surface, #1a1b20) !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	box-shadow: none !important;
+	outline: none !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+}
+/* Chevron comes from kt_stitch_desk_chrome.css data-URI — do not force background-image: none. */
+.kt-cl-shell .kt-dem-form select {
+	padding-right: 2.5rem !important;
+}
+
+/* Primary CTA in footer */
+.kt-cl-shell .kt-dem-form button.bg-primary,
+.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-submit"] {
+	background-color: #001f48 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+	padding: 0.625rem 1.25rem !important;
+}
+.kt-cl-shell .kt-dem-form button.bg-primary:hover,
+.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-submit"]:hover {
+	background-color: #001536 !important;
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-dem-form button.bg-primary .material-symbols-outlined,
+.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-submit"] .material-symbols-outlined {
+	color: #ffffff !important;
+}
+
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-save"],
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-cancel"] {
+	padding: 0.625rem 1.25rem !important;
+	border-radius: 0.5rem !important;
+	box-shadow: none !important;
+}
+/* Stitch: Cancel is borderless muted text; Save is outline-variant. */
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-cancel"] {
+	border: 1px solid transparent !important;
+	background: transparent !important;
+	background-image: none !important;
+	color: #434750 !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-save"] {
+	border: 1px solid #c3c6d1 !important;
+	background: #ffffff !important;
+	background-image: none !important;
+	color: #1a1b20 !important;
+}
+
+/* Sticky footer — align with Desk workspace sidebar when present. */
+body.kt-dem-form-active .kt-dem-form-footer {
+	left: var(--kt-left-sidebar-width, var(--kt-a2-sidebar, 16rem)) !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	position: fixed !important;
+	z-index: 30 !important;
+	background: #ffffff !important;
+	border-top: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Collapse CL page-header host — title lives in Stitch header bar. */
+body.kt-dem-form-active #kt-cl-page-header-host {
+	display: none !important;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-dem-form .md\:grid-cols-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+	.kt-cl-shell .kt-dem-form .md\:col-span-2 {
+		grid-column: span 2 / span 2 !important;
+	}
+	.kt-cl-shell .kt-dem-form .md\:flex-row {
+		flex-direction: row !important;
+	}
+	.kt-cl-shell .kt-dem-form .md\:items-end {
+		align-items: flex-end !important;
+	}
+	.kt-cl-shell .kt-dem-form .md\:w-64 {
+		width: 16rem !important;
+	}
+	.kt-cl-shell .kt-dem-form .md\:left-64 {
+		left: 16rem !important;
+	}
+}
+
+/*
+ * Typography pins — match Stitch token roles (NOT Desk / not workspace ALL CAPS).
+ * CRITICAL: font-* = family only; text-* = size. Mixing font-data-mono onto a
+ * headline amount must NOT crush 28px → 14px (DEM-UI-02 estimate gap).
+ */
+.kt-cl-shell .kt-dem-form .font-headline-lg {
+	font-family: Manrope, Inter, sans-serif !important;
+}
+.kt-cl-shell .kt-dem-form .text-headline-lg {
+	font-size: 28px !important;
+	line-height: 36px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+}
+.kt-cl-shell .kt-dem-form .font-headline-sm {
+	font-family: Manrope, Inter, sans-serif !important;
+}
+.kt-cl-shell .kt-dem-form .text-headline-sm {
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-dem-form .font-body-lg {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+}
+.kt-cl-shell .kt-dem-form .text-body-lg {
+	font-size: 16px !important;
+	line-height: 24px !important;
+	font-weight: 400 !important;
+}
+.kt-cl-shell .kt-dem-form .font-body-md {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+}
+.kt-cl-shell .kt-dem-form .text-body-md {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+}
+/* Stitch DEM-UI-02 labels are sentence case + tracking — not ALL CAPS. */
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .font-label-caps,
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .text-label-caps {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 12px !important;
+	line-height: 16px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: none !important;
+}
+.kt-cl-shell .kt-dem-form .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+.kt-cl-shell .kt-dem-form .text-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 500 !important;
+}
+/* Requester estimate amount — Stitch headline-lg + mono family. */
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-estimate-total"],
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .text-headline-lg.font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 28px !important;
+	line-height: 36px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+	color: #1a1b20 !important;
+}
+
+/*
+ * Date (Stitch): visible text + ONE Material calendar_month.
+ * Native <input type="date"> is a full-hit transparent overlay — never show its glyph.
+ */
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap {
+	position: relative !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap [data-kt-dem-date-display] {
+	padding-right: 2.75rem !important;
+	cursor: pointer !important;
+	background: #ffffff !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap .kt-dem-date-native {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	opacity: 0 !important;
+	cursor: pointer !important;
+	z-index: 2 !important;
+	background: transparent !important;
+	color: transparent !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap .kt-dem-date-native::-webkit-calendar-picker-indicator {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	opacity: 0 !important;
+	cursor: pointer !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap .kt-dem-date-icon,
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap [data-kt-dem-date-icon] {
+	position: absolute !important;
+	right: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	z-index: 1 !important;
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: #434750 !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-wrap:focus-within [data-kt-dem-date-display] {
+	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
+	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
+	outline: none !important;
+}
+
+/* Estimate row density — Stitch: estimate left + confidence 16rem right. */
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-section-estimate"] .md\:flex-row {
+	align-items: flex-end !important;
+	gap: 1.5rem !important;
+}
+body.kt-dem-form-active.kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-confidence"] {
+	min-height: 42px !important;
+}

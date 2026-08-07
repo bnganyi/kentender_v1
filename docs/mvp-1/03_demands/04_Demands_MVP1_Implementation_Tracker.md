@@ -134,8 +134,8 @@ Track Demands MVP-1 delivery **atomically** (schema, services, each screen, seed
 | DEM-SCH-010 | Approved snapshot field/storage on Demand | `approved_baseline_version` + `approved_baseline_snapshot` | DEM-SCH-002 | Done | `test_demand_doctype_and_core_fields` |
 | DEM-SCH-011 | Migrate + clear-cache; DocTypes present | `bench migrate` + `ensure_demands_doctypes` | DEM-SCH-002…009 | Done | DocTypes present on `kentender.midas.com`; schema tests green |
 | DEM-SCH-012 | Replace retired `dia` registry entry with Demands | `module_registry.py`, `kt_module_registry.js` | DEM-SCH-001 | Done | `test_module_registry_demands_not_retired_dia`; `test_module_registry` |
-| DEM-SCH-013 | Hooks: `page_js`, permissions maps, workspace fixtures | `hooks.py` | DEM-SCH-001, DEM-UI pages | Partial | Registry routes reserved; `page_js` deferred to Wave 4 pages |
-| DEM-SCH-014 | Procurement sidebar **Demands** link → new workspace | `workspace_sidebar/procurement.json` | DEM-UI-01 | Partial | Deferred until `demands-workspace` page exists |
+| DEM-SCH-013 | Hooks: `page_js`, permissions maps, workspace fixtures | `hooks.py` | DEM-SCH-001, DEM-UI pages | Done | `page_js` for `demands-workspace` + stub routes; CSS include |
+| DEM-SCH-014 | Procurement sidebar **Demands** link → new workspace | `workspace_sidebar/procurement.json` | DEM-UI-01 | Done | Sidebar link → `/desk/demands-workspace` |
 
 ---
 
@@ -179,9 +179,9 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 
 | ID | Screen | Stitch | Route / page | Primary services | Depends on | Status | Evidence |
 |---|---|---|---|---|---|---|---|
-| DEM-UI-01 | Demands workspace | [ui_design/DEM-UI-01.html](ui_design/DEM-UI-01.html) | `demands-workspace` | DEM-SVC-014 | DEM-SCH-012, DEM-SVC-014 | Not started | |
-| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Not started | |
-| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Not started | |
+| DEM-UI-01 | Demands workspace | [ui_design/DEM-UI-01.html](ui_design/DEM-UI-01.html) | `demands-workspace` | DEM-SVC-014 | DEM-SCH-012, DEM-SVC-014 | Partial | Stitch Desk hand-port (`kt-stitch-canvas`) + live bind; gate green after typography/chrome rework |
+| DEM-UI-02 | Create / Edit Demand | [DEM-UI-02.html](ui_design/DEM-UI-02.html) | `demand-form` | DEM-SVC-001, DEM-SVC-002 | DEM-SVC-001 | Partial | Stitch Desk hand-port + live create/edit/submit bind; `need_rationale` field; gate `ui-demands-form-gate`; supporting-docs upload not persisted yet |
+| DEM-UI-03 | Returned correction state | [DEM-UI-03.html](ui_design/DEM-UI-03.html) | `demand-form` (same page) | DEM-SVC-001, DEM-SVC-013 | DEM-UI-02, DEM-SVC-003 | Partial | Return notice region + Resubmit labels wired in shared form shell; dedicated Returned Playwright + correction highlighting still open |
 | DEM-UI-04 | Business review | [DEM-UI-04.html](ui_design/DEM-UI-04.html) | `demand-review` | DEM-SVC-003 | DEM-SVC-003, DEM-UI-02 | Not started | |
 | DEM-UI-05 | Procurement enrichment | [DEM-UI-05.html](ui_design/DEM-UI-05.html) | `demand-review` | DEM-SVC-004, DEM-SVC-006 | DEM-SVC-004 | Not started | |
 | DEM-UI-05A | Strategy target selector | [DEM-UI-05A.html](ui_design/DEM-UI-05A.html) | drawer on `demand-review` | DEM-SVC-005 | DEM-UI-05, DEM-SVC-005 | Not started | |
@@ -199,7 +199,7 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 
 | ID | Component | Used by | Status | Evidence |
 |---|---|---|---|---|
-| DEM-UIC-001 | Shared Demand form shell | DEM-UI-02, DEM-UI-03 | Not started | |
+| DEM-UIC-001 | Shared Demand form shell | DEM-UI-02, DEM-UI-03 | Partial | Same `demand-form` page + fixture; create vs returned mode toggles |
 | DEM-UIC-002 | Shared Demand review framework (stage sections/actions) | DEM-UI-04…08 | Not started | |
 | DEM-UIC-003 | Strategy selector drawer | DEM-UI-05A | Not started | |
 | DEM-UIC-004 | Detail tab host | DEM-UI-09A…09D | Not started | |
@@ -312,7 +312,8 @@ Run after migrate + tests. Exclude archive/docs from runtime claims.
 
 | ID | Gate | Purpose | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| DEM-GATE-001 | `ui-demands-workspace-gate` | DEM-UI-01 Civic Ledger pattern | DEM-UI-01 | Not started | |
+| DEM-GATE-001 | `ui-demands-workspace-gate` | DEM-UI-01 Stitch Desk pattern | DEM-UI-01 | Partial | Gate green (API + Playwright 3/3 incl. `assertStitchDeskChrome`); registered in stitch desk chrome registry |
+| DEM-GATE-001A | `ui-demands-form-gate` | DEM-UI-02 form Stitch + API | DEM-UI-02, DEM-UIC-001 | Partial | Form API + Playwright regions/chrome; docs upload persistence open |
 | DEM-GATE-002 | `ui-demands-review-gate` | Shared review 04–08 + 05A | DEM-UI-04…08, 05A | Not started | |
 | DEM-GATE-003 | `ui-demands-detail-gate` | 09 + tabs | DEM-UI-09…09D | Not started | |
 | DEM-GATE-004 | Replace retired DIA no-op gates | Makefile help + targets | DEM-GATE-001…003 | Not started | |

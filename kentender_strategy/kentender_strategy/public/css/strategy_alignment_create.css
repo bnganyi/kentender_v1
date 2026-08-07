@@ -276,7 +276,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 	border-radius: 0.5rem !important;
 }
 .kt-cl-shell .kt-str-root .rounded-xl {
-	border-radius: 0.75rem !important;
+	border-radius: 0 !important;
 }
 .kt-cl-shell .kt-str-root .rounded-full {
 	border-radius: 9999px !important;

@@ -20,6 +20,9 @@ DEMAND_REQUIRED_FIELDS = {
 	"approved_baseline_snapshot",
 	"planning_usage",
 	"fixture_namespace",
+	"need_statement",
+	"need_rationale",
+	"estimate_basis",
 }
 
 CHILD_DOCTYPES = {

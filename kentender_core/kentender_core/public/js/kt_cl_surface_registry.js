@@ -232,6 +232,16 @@ frappe.provide("kentender_core.cl_surface_registry");
 		return [crumbDashboard(), crumbBudgetFunding(), crumb(leafLabel)];
 	}
 
+	function crumbDemands() {
+		return crumb(__("Demands"), ["demands-workspace"]);
+	}
+	function trailDemands() {
+		return [crumbDashboard(), crumbDemands()];
+	}
+	function trailDemandsLeaf(leafLabel) {
+		return [crumbDashboard(), crumbDemands(), crumb(leafLabel)];
+	}
+
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
@@ -727,6 +737,69 @@ frappe.provide("kentender_core.cl_surface_registry");
 			],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(__("Budget overview"), "", trailBudgetLeaf(__("Budget overview")), []),
+		},
+		/* Demands MVP-1 — DEM-UI-01 workspace + stub routes keep shell on refresh. */
+		"DEM-UI-01": {
+			id: "DEM-UI-01",
+			label: "Demands",
+			routePrefixes: ["demands-workspace"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			/* Title/CTA live in Stitch canvas (Budget portfolio pattern). */
+			chrome: chrome(
+				__("Demands"),
+				__("Capture, review and fund business needs before Procurement Planning."),
+				trailDemands(),
+				[]
+			),
+		},
+		"DEM-UI-02": {
+			id: "DEM-UI-02",
+			label: "Demand Form",
+			routePrefixes: ["demand-form"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			/* Title/CTA live in Stitch canvas (Budget register pattern). */
+			chrome: chrome(
+				__("Demand Form"),
+				__("Create or correct a Demand before submission."),
+				trailDemandsLeaf(__("Demand Form")),
+				[]
+			),
+		},
+		"DEM-UI-04": {
+			id: "DEM-UI-04",
+			label: "Demand Review",
+			routePrefixes: ["demand-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Review"),
+				__("Review and decide on Demands in the current stage."),
+				trailDemandsLeaf(__("Demand Review")),
+				[]
+			),
+		},
+		"DEM-UI-09": {
+			id: "DEM-UI-09",
+			label: "Demand Detail",
+			routePrefixes: ["demand-detail"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Detail"),
+				__("Approved Demand overview and lifecycle tabs."),
+				trailDemandsLeaf(__("Demand Detail")),
+				[]
+			),
+		},
+		"DEM-UI-10": {
+			id: "DEM-UI-10",
+			label: "Demand Performance",
+			routePrefixes: ["demand-performance"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Performance"),
+				__("Monitor Demand throughput, returns, and funding outcomes."),
+				trailDemandsLeaf(__("Demand Performance")),
+				[]
+			),
 		},
 	};
 

@@ -124,7 +124,7 @@
 .kt-cl-shell .kt-str-root .rounded-full{border-radius: 9999px !important}
 .kt-cl-shell .kt-str-root .rounded-lg{border-radius: 0.5rem !important}
 .kt-cl-shell .kt-str-root .rounded-md{border-radius: 0.375rem !important}
-.kt-cl-shell .kt-str-root .rounded-xl{border-radius: 0.75rem !important}
+.kt-cl-shell .kt-str-root .rounded-xl{border-radius: 0 !important}
 .kt-cl-shell .kt-str-root .shadow-2xl{box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important}
 .kt-cl-shell .kt-str-root .shadow-sm{box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important}
 .kt-cl-shell .kt-str-root .text-\[11px\]{font-size: 11px !important}

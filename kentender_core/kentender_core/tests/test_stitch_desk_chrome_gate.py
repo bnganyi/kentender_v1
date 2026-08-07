@@ -72,6 +72,21 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertIn("cursor: not-allowed", input_slice)
 		self.assertNotIn("var(--kt-stitch-surface)", input_slice)
 
+		# Section/table headers: primary-fixed blue + square rounded-xl cards.
+		section_idx = css.find("Square cards + section/table headers")
+		self.assertGreaterEqual(section_idx, 0)
+		# Block ends at Win98 button reset (next major section after tokens).
+		section_end = css.find("Desk/Bootstrap must not paint Win98", section_idx)
+		self.assertGreater(section_end, section_idx)
+		section_slice = css[section_idx:section_end]
+		self.assertIn("#d7e2ff", section_slice)
+		self.assertIn("#abc7ff", section_slice)
+		self.assertIn("thead tr.bg-surface-container-low", section_slice)
+		self.assertIn(".rounded-xl", section_slice)
+		self.assertIn("border-radius: 0 !important", section_slice)
+		self.assertIn("inset 3px 0 0", section_slice)
+		self.assertNotIn("#f4f3f9", section_slice)
+
 		from kentender_core import hooks as core_hooks
 
 		includes = "\n".join(core_hooks.app_include_css or [])
@@ -101,6 +116,8 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertIn("assertStitchDeskChrome", helper_src)
 		self.assertIn("assertFilledPrimaryCtaHover", helper_src)
 		self.assertIn("assertEditableInputs", helper_src)
+		self.assertIn("assertStitchSectionTableChrome", helper_src)
+		self.assertIn("rgb(215, 226, 255)", helper_src)
 		self.assertIn("rgb(0, 31, 72)", helper_src)
 		self.assertIn("rgb(0, 52, 111)", helper_src)
 		self.assertIn("rgb(255, 255, 255)", helper_src)

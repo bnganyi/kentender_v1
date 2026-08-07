@@ -1,0 +1,118 @@
+// DEM-UI-02 / DEM-UI-03 Demand form — Stitch shell + live API bind.
+// Do NOT remount on every on_page_show (Budget register lesson).
+(function () {
+	"use strict";
+
+	var PAGE_SLUG = "demand-form";
+	var SURFACE_ID = "DEM-UI-02";
+
+	function surface() {
+		var reg = kentender_core.cl_surface_registry;
+		return reg && typeof reg.get === "function" ? reg.get(SURFACE_ID) : null;
+	}
+
+	function routeDemandId() {
+		var route = (frappe.get_route && frappe.get_route()) || [];
+		return route.length > 1 ? String(route[1] || "") : "";
+	}
+
+	function activateSurface() {
+		document.body.classList.add("kt-dem-surface", "kt-dem-form-active");
+	}
+
+	function enterShell() {
+		var sh = kentender_core.cl_shell;
+		var surf = surface();
+		if (!sh || typeof sh.enterNative !== "function") {
+			return;
+		}
+		sh.enterNative({
+			sidebarWorkspaceKey: (surf && surf.sidebarWorkspaceKey) || "procurement",
+			toolbar:
+				(surf && surf.chrome && surf.chrome.toolbar) || {
+					breadcrumbs: [
+						{ label: __("Home"), route: ["coming-soon"] },
+						{ label: __("Demands"), route: ["demands-workspace"] },
+						{ label: __("Demand Form") },
+					],
+					showSearch: false,
+					showUserMeta: true,
+				},
+			chrome: surf && surf.chrome,
+		});
+	}
+
+	function mount(page) {
+		activateSurface();
+		var sh = kentender_core.cl_shell;
+		if (!sh || typeof sh.mountContent !== "function") {
+			page.main.html(
+				'<div class="p-4 text-danger">' + __("Civic Ledger shell is not loaded.") + "</div>"
+			);
+			return;
+		}
+		enterShell();
+		var html =
+			kentender_procurement.ui_fixtures &&
+			typeof kentender_procurement.ui_fixtures.demand_form === "function"
+				? kentender_procurement.ui_fixtures.demand_form()
+				: '<div class="p-4 text-danger">' + __("Demand form fixture missing.") + "</div>";
+		sh.mountContent(page.main, {
+			mainHtml: html,
+			pageHeader: { title: "", hidden: true },
+		});
+		var $root = page.main.find('[data-testid="kt-dem-ui02-root"]');
+		page._ktDemFormMounted = true;
+		page._ktDemFormId = routeDemandId();
+		if (kentender_procurement.live && typeof kentender_procurement.live.bindDemandForm === "function") {
+			kentender_procurement.live.bindDemandForm($root, page._ktDemFormId).catch(function (err) {
+				console.warn("Demand form bind failed", err);
+			});
+		}
+	}
+
+	function ensureMounted(wrapper) {
+		if (!wrapper || !wrapper.page) {
+			return;
+		}
+		activateSurface();
+		var id = routeDemandId();
+		var $root = wrapper.page.main.find('[data-testid="kt-dem-ui02-root"]');
+		var idChanged = String(wrapper.page._ktDemFormId || "") !== String(id || "");
+		if (wrapper.page._ktDemFormMounted && $root.length && !idChanged) {
+			enterShell();
+			if (
+				kentender_procurement.live &&
+				typeof kentender_procurement.live.bindDemandForm === "function"
+			) {
+				kentender_procurement.live.bindDemandForm($root, id).catch(function (err) {
+					console.warn("Demand form rebind failed", err);
+				});
+			}
+			return;
+		}
+		mount(wrapper.page);
+	}
+
+	frappe.pages[PAGE_SLUG] = frappe.pages[PAGE_SLUG] || {};
+	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
+		activateSurface();
+		var page = frappe.ui.make_app_page({
+			parent: wrapper,
+			title: __("Demand Form"),
+			single_column: true,
+		});
+		wrapper.page = page;
+		page._ktDemFormMounted = false;
+		page._ktDemFormId = "";
+		mount(page);
+	};
+
+	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
+		ensureMounted(wrapper);
+	};
+
+	frappe.pages[PAGE_SLUG].on_page_hide = function () {
+		document.body.classList.remove("kt-dem-form-active");
+	};
+})();

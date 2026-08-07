@@ -40,6 +40,68 @@ export type StitchDeskChromeOptions = {
 	assertEditableInputs?: boolean;
 };
 
+/**
+ * Section headers + table theads use primary-fixed #d7e2ff; rounded-xl cards are square.
+ * Inputs/buttons stay lightly rounded (0.5rem). Intentional Stitch deviation.
+ */
+export async function assertStitchSectionTableChrome(
+	page: Page,
+	opts: {
+		/** Section card with .rounded-xl (e.g. Need). */
+		sectionTestId?: string;
+		/** Table card wrapper with .rounded-xl. */
+		tableWrapTestId?: string;
+		/** Soft-round control that must stay ~0.5rem (not squared). */
+		roundedControlTestId?: string;
+	},
+) {
+	const PRIMARY_FIXED = "rgb(215, 226, 255)";
+
+	if (opts.sectionTestId) {
+		const section = page.getByTestId(opts.sectionTestId).filter({ visible: true }).first();
+		await expect(section).toBeVisible({ timeout: 15_000 });
+		const styles = await section.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const header = el.querySelector(".bg-surface-container-low") as HTMLElement | null;
+			const hcs = header ? getComputedStyle(header) : null;
+			return {
+				cardRadius: cs.borderRadius,
+				headerBg: hcs?.backgroundColor || "",
+			};
+		});
+		expect(styles.cardRadius, "section card must be square").toBe("0px");
+		expect(styles.headerBg, "section header must be primary-fixed").toBe(PRIMARY_FIXED);
+	}
+
+	if (opts.tableWrapTestId) {
+		const wrap = page.getByTestId(opts.tableWrapTestId).filter({ visible: true }).first();
+		await expect(wrap).toBeVisible({ timeout: 15_000 });
+		const styles = await wrap.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const headerRow =
+				(el.querySelector("thead tr.bg-surface-container-low") as HTMLElement | null) ||
+				(el.querySelector("thead.bg-surface-container-low") as HTMLElement | null) ||
+				(el.querySelector("thead tr") as HTMLElement | null);
+			const hcs = headerRow ? getComputedStyle(headerRow) : null;
+			return {
+				cardRadius: cs.borderRadius,
+				headerBg: hcs?.backgroundColor || "",
+			};
+		});
+		expect(styles.cardRadius, "table card must be square").toBe("0px");
+		expect(styles.headerBg, "table thead must be primary-fixed").toBe(PRIMARY_FIXED);
+	}
+
+	if (opts.roundedControlTestId) {
+		const control = page.getByTestId(opts.roundedControlTestId).filter({ visible: true }).first();
+		await expect(control).toBeVisible({ timeout: 15_000 });
+		const radius = await control.evaluate((el) => getComputedStyle(el).borderRadius);
+		const px = parseFloat(radius);
+		expect(px, "inputs/buttons stay lightly rounded").toBeGreaterThanOrEqual(6);
+		expect(px, "inputs/buttons must not be fully squared").toBeLessThanOrEqual(10);
+	}
+}
+
 /** Editable form controls must look active — white fill, never #f9f9fe surface. */
 export async function assertEditableInputs(page: Page, rootTestId?: string) {
 	const scope = rootTestId
