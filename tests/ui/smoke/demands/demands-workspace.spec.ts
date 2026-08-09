@@ -81,6 +81,37 @@ test.describe("DEM-UI-01 Demands Workspace", () => {
 		await expect(page.getByRole("heading", { name: "Create demand" })).toBeVisible();
 	});
 
+	test("Queue chip filters table; Clear restores; empty filtered state", async ({ page }) => {
+		await page.goto("/desk/demands-workspace", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-dem-ui01-performance-link")).toBeVisible();
+
+		const rowCountBefore = await page.locator("[data-kt-dem-tbody] tr").count();
+		expect(rowCountBefore).toBeGreaterThan(0);
+
+		await page.getByTestId("kt-dem-ui01-queue-my_drafts").click();
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-dem-active-queue", "my_drafts");
+
+		// Impossible search → empty state (Clear filters only CTA).
+		await page.locator('[data-kt-dem-filter="search"]').fill("__dem_ui01_no_match_xyz__");
+		await expect(page.getByTestId("kt-dem-ui01-empty")).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByTestId("kt-dem-ui01-empty")).toContainText(
+			/No Demands match these filters/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui01-empty-clear")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui01-table-wrap")).toBeHidden();
+		await expect(page.locator(".kt-dem-ui01-kpi-card")).toHaveCount(0);
+		await expect(page.locator("canvas")).toHaveCount(0);
+
+		await page.getByTestId("kt-dem-ui01-empty-clear").click();
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-dem-active-queue", "");
+		await expect(page.locator('[data-kt-dem-filter="search"]')).toHaveValue("");
+		await expect(page.getByTestId("kt-dem-ui01-table-wrap")).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator("[data-kt-dem-tbody] tr").first()).toBeVisible({ timeout: 15_000 });
+	});
+
 });
 
 test.describe("DEM-UI-01 creation-scope (no Requester assignment)", () => {

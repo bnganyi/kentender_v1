@@ -9,10 +9,12 @@ import json
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import cint, flt, now_datetime
 
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_procurement.procurement_planning.pp2_constants import (
 	READINESS_FAILED,
 	READINESS_PASSED,
@@ -33,7 +35,8 @@ from kentender_procurement.procurement_planning.services.pp_governance_codes imp
 )
 from kentender_procurement.procurement_planning.permissions import pp_policy, pp_scope
 
-_APPROVED_DEMAND_STATUSES = frozenset(("Approved", "Planning Ready"))
+_APPROVED_DEMAND_STATUS = "Approved"
+_PLANNING_USAGE_FULL = "Fully planned"
 _REVIEW_APPROVAL_TYPES = frozenset(("Approved", "Release Authorized"))
 _VALUE_TOLERANCE = 0.01
 
@@ -123,15 +126,54 @@ def _load_active_lines(package_code: str) -> list[dict[str, Any]]:
 	)
 
 
-def _demand_code_from_ref(demand_ref: str) -> str:
-	if not demand_ref:
-		return ""
-	if not demand_consumers_live():
-		return demand_ref
-	row = frappe.db.get_value("Demand", demand_ref, ("demand_id", "name"), as_dict=True)
+def _resolve_demand_row(demand_ref: str) -> dict[str, Any] | None:
+	ref = (demand_ref or "").strip()
+	if not ref or not demand_doctype_available():
+		return None
+	fields = ("name", "demand_code", "status", "planning_ready", "planning_usage")
+	row = frappe.db.get_value("Demand", ref, fields, as_dict=True)
 	if not row:
-		return demand_ref
-	return (row.demand_id or row.name or demand_ref).strip()
+		row = frappe.db.get_value("Demand", {"demand_code": ref}, fields, as_dict=True)
+	return row
+
+
+def _demand_code_from_ref(demand_ref: str) -> str:
+	ref = (demand_ref or "").strip()
+	if not ref:
+		return ""
+	row = _resolve_demand_row(ref)
+	return ((row or {}).get("demand_code") or ref).strip()
+
+
+def _demand_is_planning_eligible(demand: dict[str, Any] | None) -> bool:
+	if not demand:
+		return False
+	return bool(
+		(demand.get("status") or "").strip() == _APPROVED_DEMAND_STATUS
+		and cint(demand.get("planning_ready"))
+		and (demand.get("planning_usage") or "").strip() != _PLANNING_USAGE_FULL
+	)
+
+
+def _line_uses_confirmed_demand_funding(line: dict[str, Any]) -> bool:
+	demand = _resolve_demand_row(line.get("demand_id") or "")
+	budget_line = (line.get("budget_line_id") or "").strip()
+	if (
+		not demand
+		or not budget_line
+		or not frappe.db.exists("DocType", "Demand Funding Allocation")
+	):
+		return False
+	return bool(
+		frappe.db.exists(
+			"Demand Funding Allocation",
+			{
+				"demand": demand.get("name"),
+				"budget_line": budget_line,
+				"bo_confirmation_status": "Confirmed",
+			},
+		)
+	)
 
 
 def _budget_line_code_from_ref(budget_ref: str) -> str:
@@ -284,10 +326,9 @@ def evaluate_pp2_readiness_checks(package_code: str) -> dict[str, Any]:
 	demand_ref = (pkg.get("demand_id") or "").strip()
 	if not demand_ref and lines:
 		demand_ref = (lines[0].get("demand_id") or "").strip()
+	demand = _resolve_demand_row(demand_ref)
 	demand_code = _demand_code_from_ref(demand_ref)
-	demand_status = ""
-	if demand_ref:
-		demand_status = (frappe.db.get_value("Demand", demand_ref, "status") or "").strip()
+	demand_eligible = _demand_is_planning_eligible(demand)
 
 	inclusion_code = (pkg.get("planning_inclusion_code") or "").strip()
 	inclusion = get_planning_inclusion(inclusion_code) if inclusion_code else None
@@ -345,13 +386,13 @@ def evaluate_pp2_readiness_checks(package_code: str) -> dict[str, Any]:
 		check_id="PP2-READY-001",
 		business_label="Approved demand exists",
 		blocking=True,
-		ok=bool(demand_ref) and demand_status in _APPROVED_DEMAND_STATUSES,
+		ok=demand_eligible,
 		message=(
 			_("Demand {0} is approved.").format(demand_code)
-			if demand_ref and demand_status in _APPROVED_DEMAND_STATUSES
-			else _("An approved demand must be linked to this package.")
+			if demand_eligible
+			else _("An approved, Planning Ready demand with remaining planning scope must be linked to this package.")
 		),
-		required_action=_fail_action(_("demand approval")) if not demand_ref or demand_status not in _APPROVED_DEMAND_STATUSES else None,
+		required_action=_fail_action(_("demand approval and planning eligibility")) if not demand_eligible else None,
 		source_object_type="Demand",
 		source_object_code=demand_code or demand_ref,
 	)
@@ -431,7 +472,7 @@ def evaluate_pp2_readiness_checks(package_code: str) -> dict[str, Any]:
 		source_object_code=(first_line.get("demand_item_code") or ""),
 	)
 
-	budget_link_ok = lines_ok and all(l.get("budget_line_id") for l in lines)
+	budget_link_ok = lines_ok and all(_line_uses_confirmed_demand_funding(l) for l in lines)
 	budget_line_code = _budget_line_code_from_ref(
 		(first_line.get("budget_line_id") or pkg.get("budget_line_id") or "")
 	)
@@ -443,9 +484,9 @@ def evaluate_pp2_readiness_checks(package_code: str) -> dict[str, Any]:
 		message=(
 			_("Package line maps to budget line.")
 			if budget_link_ok
-			else _("Every active package line must map to a budget line.")
+			else _("Every active package line must map to a Budget Officer-confirmed Demand funding allocation.")
 		),
-		required_action=_fail_action(_("budget line links")) if not budget_link_ok else None,
+		required_action=_fail_action(_("Demand funding allocation links")) if not budget_link_ok else None,
 		source_object_type="Budget Line",
 		source_object_code=budget_line_code,
 	)

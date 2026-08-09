@@ -15,10 +15,10 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import date_diff, flt, getdate
 
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_doctype_available
 from kentender_procurement.procurement_planning.services.package_creation_service import (
 	_map_procurement_category,
 	_resolve_template_for_demand,
@@ -50,10 +50,27 @@ _STATUS_ADDED_TO_PLAN = "Added to Active Plan"
 
 def _demand_name(demand_code: str) -> str | None:
 	demand_code = (demand_code or "").strip()
-	if not demand_code or not demand_consumers_live():
+	if not demand_code or not demand_doctype_available():
 		return None
-	name = frappe.db.get_value("Demand", {"demand_id": demand_code}, "name")
+	name = frappe.db.get_value("Demand", {"demand_code": demand_code}, "name")
 	return name or (demand_code if frappe.db.exists("Demand", demand_code) else None)
+
+
+def _primary_funding_allocation(demand_name: str | None) -> dict[str, Any]:
+	name = (demand_name or "").strip()
+	if not name:
+		return {}
+	rows = frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": name},
+		fields=["budget_line", "allocation_amount", "currency", "bo_confirmation_status"],
+		order_by="modified desc",
+		limit=100,
+	)
+	for row in rows:
+		if row.get("bo_confirmation_status") == "Confirmed" and row.get("budget_line"):
+			return row
+	return next((row for row in rows if row.get("budget_line")), {})
 
 
 def _strategy_label_for_demand(demand_name: str | None = None) -> str:
@@ -90,8 +107,7 @@ def _funding_label(demand_name: str | None) -> str:
 	funding-shortfall signal exists."""
 	if not demand_name:
 		return _("Not confirmed")
-	budget_line = frappe.db.get_value("Demand", demand_name, "budget_line")
-	if not budget_line:
+	if not _primary_funding_allocation(demand_name).get("budget_line"):
 		return _("Not confirmed")
 	return _("Reserved")
 
@@ -103,11 +119,25 @@ def _demand_card_fields(demand_code: str) -> dict[str, Any]:
 	row = frappe.db.get_value(
 		"Demand",
 		demand_name,
-		("required_by_date", "status"),
+		(
+			"demand_code",
+			"title",
+			"required_by_date",
+			"status",
+			"confirmed_estimate",
+			"requester_estimate",
+			"currency",
+		),
 		as_dict=True,
 	) or {}
+	allocation = _primary_funding_allocation(demand_name)
 	return {
 		"demand_name": demand_name,
+		"demand_code": row.get("demand_code") or demand_code,
+		"name": row.get("title") or row.get("demand_code") or demand_code,
+		"estimated_value": flt(row.get("confirmed_estimate") or row.get("requester_estimate")),
+		"currency": row.get("currency") or allocation.get("currency") or "KES",
+		"budget_line": allocation.get("budget_line") or "",
 		"needed_by": str(row.get("required_by_date") or ""),
 		"strategy_label": _strategy_label_for_demand(demand_name),
 		"documents_count": _documents_count(demand_name),
@@ -137,7 +167,7 @@ def list_wizard_eligible_demands(plan_code: str, search: str | None = None) -> l
 	set as the Workbench's "In Creation" placeholder rows
 	(`list_unpackaged_planning_inclusions`), enriched with the §8.3 demand
 	card fields. No technical codes are exposed (§15/§17)."""
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		return []
 	base_rows = list_unpackaged_planning_inclusions(plan_code)
 	out: list[dict[str, Any]] = []
@@ -150,14 +180,14 @@ def list_wizard_eligible_demands(plan_code: str, search: str | None = None) -> l
 			{
 				"inclusion_code": row.get("inclusion_code") or "",
 				"demand": {
-					"code": demand_code,
-					"name": row.get("title") or demand_code,
+					"code": extra.get("demand_code") or demand_code,
+					"name": extra.get("name") or row.get("title") or demand_code,
 				},
-				"ref": demand_code,
+				"ref": extra.get("demand_code") or demand_code,
 				"department": row.get("department_label") or "",
 				"category": row.get("category") or "",
-				"estimated_value": flt(row.get("estimated_value")),
-				"currency": row.get("currency") or "KES",
+				"estimated_value": flt(extra.get("estimated_value") or row.get("estimated_value")),
+				"currency": extra.get("currency") or row.get("currency") or "KES",
 				"funding_label": extra.get("funding_label") or _("Not confirmed"),
 				"strategy_label": extra.get("strategy_label") or "",
 				"needed_by": extra.get("needed_by") or "",

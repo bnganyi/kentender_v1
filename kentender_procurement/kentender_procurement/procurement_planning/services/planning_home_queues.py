@@ -8,7 +8,9 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from frappe.utils import add_days, cint, flt, fmt_money, getdate, nowdate
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
@@ -383,7 +385,7 @@ def _released_recently_rows(actor: str, *, limit: int) -> tuple[list[dict[str, A
 
 
 def _blocked_demand_rows(actor: str) -> list[dict[str, Any]]:
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		return []
 	clauses = _base_demand_filters({})
 	allowed_entities = pp_scope.get_user_allowed_entities(actor)
@@ -396,14 +398,14 @@ def _blocked_demand_rows(actor: str) -> list[dict[str, Any]]:
 		filters=clauses,
 		fields=[
 			"name",
-			"demand_id",
+			"demand_code",
 			"title",
 			"status",
-			"planning_status",
+			"planning_ready",
+			"planning_usage",
 			"procuring_entity",
-			"budget_line",
-			"total_amount",
-			"requisition_type",
+			"procurement_category",
+			"confirmed_estimate",
 			"modified",
 		],
 		order_by="modified desc",
@@ -418,15 +420,15 @@ def _blocked_demand_rows(actor: str) -> list[dict[str, Any]]:
 			continue
 		if _demand_passes_queue_eligibility(row):
 			continue
-		planning_status = (row.get("planning_status") or "").strip()
+		usage = (row.get("planning_usage") or "").strip()
 		if not _demand_budget_ok(row):
 			blocker = frappe._("Missing approved budget link")
-		elif planning_status != "Fully Planned":
-			blocker = frappe._("Demand is not fully planned")
+		elif usage != "Fully planned":
+			blocker = frappe._("Demand has planning blockers")
 		else:
 			blocker = frappe._("Demand has planning blockers")
 		demand_id = (row.get("name") or "").strip()
-		demand_code = (row.get("demand_id") or demand_id).strip()
+		demand_code = (row.get("demand_code") or demand_id).strip()
 		out.append(
 			{
 				"blocked_type": "demand",
@@ -435,8 +437,8 @@ def _blocked_demand_rows(actor: str) -> list[dict[str, Any]]:
 					"code": demand_code,
 					"name": (row.get("title") or demand_code).strip(),
 				},
-				"category": (row.get("requisition_type") or "").strip(),
-				"estimated_value": flt(row.get("total_amount")),
+				"category": (row.get("procurement_category") or "").strip(),
+				"estimated_value": flt(row.get("confirmed_estimate")),
 				"currency": "KES",
 				"blocker_message": blocker,
 				"modified": row.get("modified"),

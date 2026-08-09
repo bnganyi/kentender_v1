@@ -336,7 +336,7 @@ def strict_release_evidence_links(*, include_tender: bool = False) -> list[dict]
 			"label": "Approved Demand",
 			"object_type": "Demand",
 			"object_code": DEMAND_CODE,
-			"module": "Demand Intake and Approval",
+			"module": "Demands",
 			"route": f"/app/demand/{DEMAND_CODE}",
 			"visibility": "Internal",
 		},

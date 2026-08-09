@@ -235,7 +235,7 @@ def seed_upstream_handoffs(*, journey_code: str, demand_code: str, budget_line_c
 		(
 			f"DEMAPP-{suffix}",
 			"Demand Approval Certificate",
-			"Demand Intake and Approval",
+			"Demands",
 			"Procurement Planning",
 			"Demand",
 			demand_code,
@@ -244,7 +244,7 @@ def seed_upstream_handoffs(*, journey_code: str, demand_code: str, budget_line_c
 			f"BUDCONF-{suffix}",
 			"Budget Funding Confirmation",
 			"Budget",
-			"Demand Intake and Approval",
+			"Demands",
 			"Budget Line",
 			budget_line_code,
 		),

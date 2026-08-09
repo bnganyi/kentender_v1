@@ -10,12 +10,18 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, flt, today
 
 from kentender_procurement.demands.api import (
+	_action_for,
 	adjust_funding_allocation_form,
 	confirm_demand_funding_form,
+	enrich_demand_form,
 	get_demand_review,
 	prepare_budget_confirmation_ui06,
+	prepare_budget_exception_multiple_matches_ui07,
+	prepare_budget_exception_ui07,
 	record_business_decision_form,
+	resolve_funding_exception_form,
 	return_budget_confirmation_form,
+	save_funding_exception_note_form,
 )
 from kentender_procurement.demands.services.demand_lifecycle import (
 	create_or_update_demand,
@@ -307,6 +313,29 @@ class TestDemandsBudgetApi(IntegrationTestCase):
 		self.assertEqual(decision.stage, "Budget Confirmation")
 		self.assertIn("mismatch", (decision.reason or "").lower())
 
+		# Workspace must open demand-review (not demand-form) so Save/Resubmit are not dead.
+		label, route = _action_for(
+			{"status": "Returned", "current_stage": "Procurement Enrichment"}
+		)
+		self.assertEqual(route, "demand-review")
+		self.assertEqual(label, "Review")
+
+		frappe.set_user(paa)
+		review = get_demand_review(demand=name)
+		self.assertTrue(review["can_enrich"])
+		self.assertEqual(review["stage"], "Procurement Enrichment")
+		# PAA can save enrichment while Returned from Budget.
+		saved = enrich_demand_form(
+			demand=name,
+			values={
+				"confirmed_estimate": 1000,
+				"procurement_category": "ICT infrastructure and services",
+				"estimate_basis": "Revised after Budget return",
+			},
+			send_for_budget=0,
+		)
+		self.assertTrue(saved["ok"])
+
 	def test_prepare_budget_confirmation_ui06_factory(self) -> None:
 		frappe.set_user("Administrator")
 		payload = prepare_budget_confirmation_ui06(
@@ -538,3 +567,121 @@ class TestDemandsBudgetApi(IntegrationTestCase):
 			pluck="name",
 		)
 		self.assertEqual(open_exc, [])
+
+
+class TestDemandsBudgetExceptionUi07(IntegrationTestCase):
+	"""DEM-UI-07 — Insufficient Funding exception DTO + resolve/save-note."""
+
+	def test_exception_dto_shortfall_and_confirm_blocked(self) -> None:
+		frappe.set_user("Administrator")
+		payload = prepare_budget_exception_ui07(
+			requester=_ensure_user("dem-budget-ui07-req@example.com", [ROLE_REQUESTER])
+		)
+		name = payload["demand"]
+		bo = payload["budget_officer"]
+		self.assertEqual(payload["current_stage"], "Budget Confirmation")
+		self.assertEqual(payload.get("exception_type"), "Insufficient Funding")
+
+		frappe.set_user(bo)
+		loaded = get_demand_review(demand=name)
+		funding = loaded["funding"]
+		self.assertIsNotNone(funding)
+		exc = funding["exception"]
+		self.assertIsNotNone(exc)
+		self.assertEqual(exc["type"], "Insufficient Funding")
+		self.assertEqual(exc.get("title"), "Funding Shortfall Detected")
+		self.assertIn("cannot be confirmed", (exc.get("summary") or "").lower())
+		self.assertFalse(funding["confirm_ready"])
+		self.assertEqual(funding["condition"], "Exception")
+		self.assertGreater(flt(funding.get("shortfall")), 0)
+		self.assertGreater(flt(funding.get("unfunded_amount")), 0)
+		self.assertTrue(funding.get("shortfall_display"))
+		self.assertTrue(funding.get("available_funding_display"))
+		self.assertIn("KES", funding["shortfall_display"])
+		self.assertIn(",", funding["shortfall_display"])
+		rec = funding["recommendation"]
+		self.assertIsNotNone(rec)
+		self.assertFalse(rec.get("sufficient"))
+		self.assertNotEqual(rec.get("display_status"), "Active")
+		# Reference display must not expose internal ids.
+		self.assertNotEqual(rec.get("budget_display"), rec.get("budget"))
+		self.assertNotIn(rec.get("budget") or "___", rec.get("budget_display") or "")
+
+		with self.assertRaises(Exception):
+			confirm_demand_funding_form(demand=name)
+
+	def test_save_note_keeps_exception_and_blocks_confirm(self) -> None:
+		frappe.set_user("Administrator")
+		payload = prepare_budget_exception_ui07(
+			requester=_ensure_user("dem-budget-ui07-note@example.com", [ROLE_REQUESTER])
+		)
+		name = payload["demand"]
+		bo = payload["budget_officer"]
+		frappe.set_user(bo)
+		note = "Phased delivery required — shortfall exceeds available line capacity."
+		saved = save_funding_exception_note_form(demand=name, reason=note)
+		self.assertTrue(saved["ok"])
+		self.assertEqual(saved.get("exception_status"), "In Progress")
+		funding = saved["funding"]
+		self.assertIsNotNone(funding["exception"])
+		self.assertEqual(funding["exception"].get("status"), "In Progress")
+		self.assertEqual(funding["exception"].get("resolution_reason"), note)
+		self.assertFalse(funding["confirm_ready"])
+		loaded = get_demand_review(demand=name)
+		self.assertEqual(loaded["demand"]["current_stage"], "Budget Confirmation")
+		self.assertFalse(loaded["funding"]["confirm_ready"])
+
+	def test_return_resolve_requires_note_and_leaves_budget(self) -> None:
+		frappe.set_user("Administrator")
+		payload = prepare_budget_exception_ui07(
+			requester=_ensure_user("dem-budget-ui07-ret@example.com", [ROLE_REQUESTER])
+		)
+		name = payload["demand"]
+		bo = payload["budget_officer"]
+		frappe.set_user(bo)
+		with self.assertRaises(Exception):
+			resolve_funding_exception_form(demand=name, resolution="Return", reason="")
+		result = resolve_funding_exception_form(
+			demand=name,
+			resolution="Return",
+			reason="Revise scope — shortfall of available funding.",
+		)
+		self.assertTrue(result["ok"])
+		fresh = get_demand_review(demand=name)
+		# Returned out of Budget Confirmation.
+		self.assertNotEqual(fresh["demand"]["current_stage"], "Budget Confirmation")
+		open_exc = frappe.get_all(
+			"Funding Exception",
+			filters={"demand": name, "status": ["in", ["Open", "In Progress"]]},
+			pluck="name",
+		)
+		self.assertEqual(open_exc, [])
+
+	def test_multiple_matches_factory_dto_and_candidates(self) -> None:
+		frappe.set_user("Administrator")
+		payload = prepare_budget_exception_multiple_matches_ui07(
+			requester=_ensure_user(
+				"dem-budget-ui07-mm-req@example.com", [ROLE_REQUESTER]
+			)
+		)
+		name = payload["demand"]
+		bo = payload["budget_officer"]
+		self.assertEqual(payload["current_stage"], "Budget Confirmation")
+		self.assertEqual(payload.get("exception_type"), "Multiple Matches")
+		self.assertGreaterEqual(int(payload.get("candidate_count") or 0), 2)
+
+		frappe.set_user(bo)
+		loaded = get_demand_review(demand=name)
+		funding = loaded["funding"]
+		exc = funding["exception"]
+		self.assertIsNotNone(exc)
+		self.assertEqual(exc["type"], "Multiple Matches")
+		self.assertEqual(exc.get("title"), "Multiple Funding Matches")
+		self.assertIn("could not auto-select", (exc.get("summary") or "").lower())
+		self.assertFalse(funding["confirm_ready"])
+		self.assertIsNone(funding["recommendation"])
+		self.assertGreaterEqual(len(funding["candidates"]), 2)
+		for cand in funding["candidates"][:3]:
+			self.assertTrue(cand.get("display") or cand.get("name") or cand.get("code"))
+			if cand.get("id"):
+				self.assertNotEqual(cand.get("display"), cand.get("id"))

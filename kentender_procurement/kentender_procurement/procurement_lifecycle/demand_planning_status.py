@@ -1,9 +1,9 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""R5-004 / LV-R5-004-02 — read-only demand → planning handoff aggregation.
+"""DEM-INT-007 — read-only MVP Demand → Planning handoff aggregation.
 
-Surfaces Demand ``planning_status`` plus **Demand Approval Certificate** and
+Surfaces Demand ``planning_ready`` / ``planning_usage`` plus **Demand Approval Certificate** and
 **Planning Inclusion Record** handoff cards tied to the demand's Procurement
 Journey (when the demand is **Approved**).  Navigation aggregate only
 (ADR-PLC-002).
@@ -121,7 +121,6 @@ def build_demand_planning_status_payload(demand_name: str) -> dict[str, Any]:
 	Caller enforces authentication / journey read permission.
 	"""
 	from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-		demand_consumers_live,
 		RETIRED_MESSAGE,
 		demand_doctype_available,
 	)
@@ -133,7 +132,7 @@ def build_demand_planning_status_payload(demand_name: str) -> dict[str, Any]:
 			"error": "MISSING_PARAMS",
 			"message": "demand_name is required.",
 		}
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		return {
 			"ok": False,
 			"error": "DEMAND_MODULE_RETIRED",
@@ -141,42 +140,53 @@ def build_demand_planning_status_payload(demand_name: str) -> dict[str, Any]:
 			"skipped": True,
 		}
 
-	fields = ["name", "demand_id", "title", "status", "planning_status"]
+	fields = [
+		"name",
+		"demand_code",
+		"title",
+		"status",
+		"planning_ready",
+		"planning_usage",
+	]
 	demand = frappe.db.get_value("Demand", nm, fields, as_dict=True)
 	if not demand:
 		return {"ok": False, "error": "NOT_FOUND", "message": "Demand not found."}
 
-	demand_id = str(demand.get("demand_id") or "").strip()
+	demand_code = str(demand.get("demand_code") or "").strip()
 	status = str(demand.get("status") or "").strip()
-	planning_status = str(demand.get("planning_status") or "").strip()
+	planning_ready = bool(demand.get("planning_ready"))
+	planning_usage = str(demand.get("planning_usage") or "Not taken up").strip()
 
 	out: dict[str, Any] = {
 		"ok": True,
 		"demand_name": str(demand.get("name") or ""),
-		"demand_id": demand_id,
+		"demand_code": demand_code,
+		"demand_id": demand_code,
 		"demand_title": str(demand.get("title") or "").strip(),
 		"demand_status": status,
-		"planning_status_label": planning_status,
+		"planning_ready": planning_ready,
+		"planning_usage": planning_usage,
+		"planning_status_label": planning_usage,
 		"journey": None,
 		"demand_approval_certificate": None,
 		"planning_inclusion": None,
-		"eligible_for_certificate": status == "Approved",
+		"eligible_for_certificate": status == "Approved" and planning_ready,
 	}
 
-	if status != "Approved":
+	if status != "Approved" or not planning_ready:
 		out["hint"] = (
 			"When this demand is Approved, the Demand Approval Certificate and planning "
 			"inclusion artefacts appear here if a Procurement Journey is linked."
 		)
 		return out
 
-	if not demand_id:
-		out["hint"] = "Demand has no Demand ID yet; journeys cannot resolve."
+	if not demand_code:
+		out["hint"] = "Demand has no business code yet; journeys cannot resolve."
 		return out
 
 	jr_rows = frappe.get_all(
 		"Procurement Journey",
-		filters={"demand_ref": demand_id},
+		filters={"demand_ref": demand_code},
 		fields=[
 			"name",
 			"journey_code",

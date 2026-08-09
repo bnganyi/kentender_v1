@@ -78,6 +78,16 @@ def _strategy_registry_table_row(source: str) -> str:
 	return ""
 
 
+def _demands_registry_table_row(source: str) -> str:
+	"""Return the Module pack registry table row for Demands (MVP-1)."""
+	for line in source.splitlines():
+		if line.startswith("| Demands") and "mvp-1" in line.lower():
+			return line
+		if "03_demands" in line and line.startswith("|"):
+			return line
+	return ""
+
+
 class TestModuleRegistry(IntegrationTestCase):
 	def test_modules_defined(self):
 		self.assertIn("strategy", KT_MODULES)
@@ -200,5 +210,21 @@ class TestModuleRegistry(IntegrationTestCase):
 			"docs/prompts/strategy/",
 			row,
 			msg="Strategy pack folder cell must be MVP-1, not historical prompts/strategy",
+		)
+		self.assertIn("reference only", source.lower())
+
+	def test_demands_ticket_doc_read_gate_targets_mvp1_pack(self):
+		"""Demands pack hygiene — ticket-doc-read-gate targets MVP-1, not historical DIA prompts."""
+		source = _ticket_doc_read_gate_mdc()
+		self.assertIn("docs/mvp-1/03_demands", source)
+		self.assertIn("04_Demands_MVP1_Implementation_Tracker.md", source)
+		row = _demands_registry_table_row(source)
+		self.assertTrue(row, msg="Demands registry row not found in ticket-doc-read-gate.mdc")
+		self.assertIn("docs/mvp-1/03_demands", row)
+		self.assertIn("04_Demands_MVP1_Implementation_Tracker.md", row)
+		self.assertNotIn(
+			"docs/prompts/demand intake and approval/",
+			row,
+			msg="Demands pack folder cell must be MVP-1, not historical DIA prompts",
 		)
 		self.assertIn("reference only", source.lower())

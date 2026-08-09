@@ -34,7 +34,6 @@ from __future__ import annotations
 import json
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import cint, flt
 
@@ -433,23 +432,16 @@ def run(ensure_dia: bool = True) -> dict:
 	"""F1 — full locked seed. When ``ensure_dia`` is True, runs the DIA prerequisite pack first
 	(``seed_dia_planning_f1_prerequisites``), then re-validates F2 dependencies."""
 	frappe.only_for(("System Manager", "Administrator"))
-	if not demand_consumers_live():
-		return {
-			"ok": False,
-			"skipped": True,
-			"reason": "DEMAND_MODULE_RETIRED",
-			"message": (
-				"F1 planning seed skipped — Demand Intake retired pending Demands MVP-1 "
-				f"(ensure_dia={ensure_dia})."
-			),
-		}
-	if not frappe.db.exists("DocType", "Procurement Plan"):
-		frappe.throw(_("Procurement Planning is not installed."), title=_("Missing doctype"))
-	_ensure_core_if_needed()
-	ensure_budget_line_prerequisites()
-	if ensure_dia:
-		run_dia_f1_prereq()
-	assert_prerequisites()
+	# Legacy F1/DIA prerequisite pack — not re-enabled by DEM-INT-011 CONSUMERS_LIVE.
+	return {
+		"ok": False,
+		"skipped": True,
+		"reason": "LEGACY_F1_DIA_SEED_RETIRED",
+		"message": (
+			"F1 planning seed skipped — uses retired DIA Demand Intake prerequisites "
+			f"(ensure_dia={ensure_dia}). Use PP2 WORKS / Demands MVP seeds instead."
+		),
+	}
 
 	rp = _ensure_f1_risk_profiles()
 	kp = _ensure_f1_kpi_profiles()

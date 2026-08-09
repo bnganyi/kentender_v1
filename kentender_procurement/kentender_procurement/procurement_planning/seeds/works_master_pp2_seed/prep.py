@@ -37,8 +37,8 @@ def ensure_works_demand_queue_ready() -> None:
 			0,
 			update_modified=False,
 		)
-	demand_name = frappe.db.get_value("Demand", {"demand_id": DEMAND_CODE}, "name")
-	if demand_name:
+	demand_name = frappe.db.get_value("Demand", {"demand_code": DEMAND_CODE}, "name")
+	if demand_name and frappe.db.has_column("Procurement Package Line", "demand_id"):
 		for row in frappe.get_all(
 			"Procurement Package Line",
 			filters={"demand_id": demand_name, "is_active": 1},

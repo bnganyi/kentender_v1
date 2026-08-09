@@ -1,9 +1,10 @@
 # Demands — MVP 1 Stitch Prompts
 
 **Document ID:** DEMAND-MVP1-STITCH-1.2  
-**Status:** Design input  
-**Date:** 7 August 2026  
-**Requirements baseline:** `DEMAND-MVP1-REQ-1.1`  
+**Status:** Design baseline locked — screens shipped under Demands MVP-1 Done (2026-08-08)  
+**Date:** 7 August 2026 (status refreshed 8 August 2026)  
+**Requirements baseline:** `DEMAND-MVP1-REQ-1.1` — locked  
+
 **Application:** KenTender  
 **Module label:** Demands  
 **Primary fixture:** Ministry of Health  

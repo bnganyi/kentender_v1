@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-demands-form-gate ui-demands-review-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 
 help:
 	@echo "Targets:"
@@ -67,7 +67,10 @@ help:
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
 	@echo "  make ui-demands-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
-	@echo "  make ui-demands-review-gate — Demand review chrome gate + DEM-UI-04/05/06 API + Playwright"
+	@echo "  make ui-demands-review-gate ui-demands-detail-gate — Demand review chrome gate + DEM-UI-04…08 API + Playwright"
+	@echo "  make ui-demands-detail-gate — Approved Demand detail (DEM-UI-09…09D) API + Playwright"
+	@echo "  make ui-demands-performance-gate — Demand performance (DEM-UI-10) API + Playwright"
+	@echo "  make demands-abs-gate — DEM-ABS-001…012 legacy absence evidence"
 	@echo "  make bw-domain-gate SITE=$(SITE) — Bidder workspace A1 domain API tests"
 	@echo "  make bw-a0-domain-gate SITE=$(SITE) — Available Tenders (A0) domain tests"
 	@echo "  make bw-a2-domain-gate SITE=$(SITE) — Submission Checklist (A2) domain + web route tests"
@@ -109,7 +112,9 @@ help:
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed + validate KENTENDER_MVP_V1 (Contract v2.0)"
+	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed through Demands + validate KENTENDER_MVP_V1"
+	@echo "  make seed-kentender-mvp-v1-through-demands SITE=$(SITE) — alias of seed-kentender-mvp-v1"
+	@echo "  make seed-kentender-mvp-v1-through-budget SITE=$(SITE) — stop after Budget (no Demands stage)"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate KENTENDER_MVP_V1 invariants only"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
@@ -427,29 +432,50 @@ ui-publications-gate:
 		tests/ui/smoke/publications/a3-publication-setup.spec.ts
 
 ui-demands-workspace-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.demands.api.list_demands_workspace --kwargs '{"page": 1, "page_size": 20}'
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demands.tests.test_demands_workspace_api
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/demands-workspace.spec.ts
 
 ui-demands-form-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_form_api
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/demand-form.spec.ts
 
 ui-demands-review-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_review_chrome_gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_review_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_enrichment_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_budget_api
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demands.tests.test_demands_final_approval_api
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/business-review.spec.ts \
 		tests/ui/smoke/demands/procurement-enrichment.spec.ts \
-		tests/ui/smoke/demands/budget-confirm.spec.ts
+		tests/ui/smoke/demands/budget-confirm.spec.ts \
+		tests/ui/smoke/demands/budget-exception.spec.ts \
+		tests/ui/smoke/demands/final-approval.spec.ts
+
+ui-demands-detail-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demands.tests.test_demands_detail_api
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/demands/approved-detail.spec.ts
+
+ui-demands-performance-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demands.tests.test_demand_performance
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/demands/demand-performance.spec.ts
+
+demands-abs-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.demands.tests.test_demands_mvp1_legacy_absence
 
 bid-submissions-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -769,11 +795,19 @@ e1-nssf-poc-gate:
 seed-kentender-mvp-v1:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
-		--kwargs '{"reset": True, "force": True, "validate": True}'
+		--kwargs '{"reset": True, "force": True, "validate": True, "through": "demands"}'
+
+seed-kentender-mvp-v1-through-demands: seed-kentender-mvp-v1
+
+seed-kentender-mvp-v1-through-budget:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
+		--kwargs '{"reset": True, "force": True, "validate": True, "through": "budget"}'
 
 seed-kentender-mvp-v1-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1
+		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1 \
+		--kwargs '{"include_demands": True}'
 
 # Deprecated aliases (one cycle).
 seed-moh-mvp-v1: seed-kentender-mvp-v1

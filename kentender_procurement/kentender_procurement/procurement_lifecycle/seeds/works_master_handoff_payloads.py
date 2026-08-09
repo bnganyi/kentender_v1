@@ -83,7 +83,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 			"handoff_code": "BUDCONF-MOH-2026-001",
 			"handoff_title": "Budget Funding Confirmation",
 			"source_module": "Budget",
-			"target_module": "Demand Intake and Approval",
+			"target_module": "Demands",
 			"source_object_type": "Budget Line",
 			"source_object_code": "BUD-MOH-INFRA-2026-001",
 			"target_object_type": "Demand",
@@ -117,7 +117,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 		{
 			"handoff_code": "DEMAPP-MOH-2026-001",
 			"handoff_title": "Demand Approval Certificate",
-			"source_module": "Demand Intake and Approval",
+			"source_module": "Demands",
 			"target_module": "Procurement Planning",
 			"source_object_type": "Demand",
 			"source_object_code": "DEM-MOH-2026-001",
@@ -143,12 +143,12 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 				"planning_action": "Create procurement package",
 			},
 			"evidence_links": [
-				_el("Approved Demand", "Demand", "DEM-MOH-2026-001", "Demand Intake and Approval"),
+				_el("Approved Demand", "Demand", "DEM-MOH-2026-001", "Demands"),
 				_el(
 					"Demand Approval Record",
 					"Demand Approval",
 					"DEMAPPROVAL-MOH-2026-001",
-					"Demand Intake and Approval",
+					"Demands",
 				),
 			],
 			"technical_refs": {

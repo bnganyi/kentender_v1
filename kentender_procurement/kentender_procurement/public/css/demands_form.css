@@ -849,3 +849,20 @@ body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-reason-confirm[disabled
 	opacity: 0.55 !important;
 	cursor: not-allowed !important;
 }
+
+/* DEM-UI-02 supporting documents */
+body.kt-dem-form-active .kt-dem-form .sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	border: 0 !important;
+}
+body.kt-dem-form-active .kt-dem-ui02-docs-list {
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+}

@@ -197,7 +197,9 @@ Add item
 </div>
 <div class="md:col-span-2">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Supporting documents <span class="font-normal normal-case text-on-surface-variant/70">(Optional)</span></label>
-<div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-lowest transition-colors cursor-pointer bg-surface" data-testid="kt-dem-ui02-docs-dropzone" role="button" tabindex="0">
+<ul class="kt-dem-ui02-docs-list mb-3 space-y-2 hidden" data-kt-dem-docs-list data-testid="kt-dem-ui02-docs-list"></ul>
+<div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-lowest transition-colors cursor-pointer bg-surface relative" data-testid="kt-dem-ui02-docs-dropzone" data-kt-dem-action="pick-docs" role="button" tabindex="0">
+<input type="file" class="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-kt-dem-docs-file data-testid="kt-dem-ui02-docs-file" />
 <span class="material-symbols-outlined text-outline text-3xl mb-2">upload_file</span>
 <div class="font-body-md text-on-surface font-medium">Click to upload or drag and drop</div>
 <div class="font-body-sm text-sm text-on-surface-variant mt-1">PDF, DOCX, XLSX (Max. 10MB)</div>
@@ -251,7 +253,7 @@ This permanently cancels the demand. Provide a clear reason for the audit trail.
 <input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 outline-none font-data-mono text-data-mono text-on-surface" type="number" data-kt-dem-item="quantity" value="1" min="0" step="any">
 </td>
 <td class="py-3 px-4">
-<div class="relative"><select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 pr-8 outline-none font-body-md text-on-surface appearance-none" data-kt-dem-item="uom"><option value="Lot">Lot</option><option value="Pieces">Pieces</option><option value="Months">Months</option></select></div>
+<div class="relative"><select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 pr-8 outline-none font-body-md text-on-surface appearance-none" data-kt-dem-item="uom"><option value="Lot">Lot</option><option value="Pieces">Pieces</option><option value="Months">Months</option><option value="units">units</option><option value="set">set</option><option value="Unit">Unit</option><option value="Days">Days</option></select></div>
 </td>
 <td class="py-3 px-4 relative">
 <span class="absolute left-6 top-[21px] font-data-mono text-data-mono text-on-surface-variant text-sm z-10" data-kt-dem-currency-prefix>KES</span>

@@ -14,6 +14,7 @@ from kentender_procurement.demands.api import (
 	get_demand_form,
 	get_demand_form_context,
 	prepare_returned_demand_ui03,
+	remove_demand_attachment_form,
 	save_demand_form,
 	submit_demand_form,
 )
@@ -410,3 +411,102 @@ class TestDemandsFormApi(IntegrationTestCase):
 		form = payload["form"]
 		self.assertEqual(len(form["return_notice"]["correction_hints"]), 3)
 		self.assertEqual(form["available_funding_display"], "80,000,000.00")
+
+	def test_need_item_uom_units_and_set_round_trip(self) -> None:
+		"""Need Items UOM must preserve values outside Lot/Pieces/Months (blank select bug)."""
+		req = _ensure_requester("dem-form-uom-req@example.com")
+		frappe.set_user(req)
+		saved = save_demand_form(
+			values={
+				"title": "UOM round-trip demand",
+				"need_statement": "Need items with non-lot units",
+				"need_rationale": "Factory-style uoms",
+				"expected_outcome": "Units preserved",
+				"beneficiaries": "Clinics",
+				"delivery_location": "Nairobi",
+				"required_by_date": add_days(today(), 60),
+				"demand_route": "Standard",
+				"estimate_confidence": "Medium",
+				"estimate_basis": "Market scan",
+				"fixture_namespace": "DEMANDS_UI02_TEST",
+			},
+			items=[
+				{
+					"description": "High-performance compute cluster",
+					"quantity": 2,
+					"uom": "units",
+					"requester_estimate": 200000000,
+				},
+				{
+					"description": "Scalable storage arrays (10 PB)",
+					"quantity": 1,
+					"uom": "set",
+					"requester_estimate": 255000000,
+				},
+			],
+		)
+		self.assertTrue(saved["ok"])
+		uoms = {it["description"]: it["uom"] for it in saved["demand"]["items"]}
+		self.assertEqual(uoms["High-performance compute cluster"], "units")
+		self.assertEqual(uoms["Scalable storage arrays (10 PB)"], "set")
+		loaded = get_demand_form(demand=saved["demand"]["name"])
+		loaded_uoms = {it["description"]: it["uom"] for it in loaded["demand"]["items"]}
+		self.assertEqual(loaded_uoms["High-performance compute cluster"], "units")
+		self.assertEqual(loaded_uoms["Scalable storage arrays (10 PB)"], "set")
+		ctx = get_demand_form_context()
+		self.assertIn("units", ctx.get("uom_options") or [])
+		self.assertIn("set", ctx.get("uom_options") or [])
+
+	def test_supporting_document_attachment_roundtrip(self) -> None:
+		"""DEM-UI-02 — File attachments appear on form DTO and can be removed."""
+		req = _ensure_requester("dem-form-docs@example.com")
+		frappe.set_user(req)
+		saved = save_demand_form(
+			values={
+				"title": "UI02 supporting docs demand",
+				"need_statement": "Need statement",
+				"need_rationale": "Rationale",
+				"expected_outcome": "Outcome",
+				"beneficiaries": "Beneficiaries",
+				"delivery_location": "Nairobi",
+				"required_by_date": add_days(today(), 45),
+				"demand_route": "Standard",
+				"estimate_confidence": "Medium",
+				"estimate_basis": "Quote",
+				"fixture_namespace": "DEMANDS_UI02_DOCS",
+			},
+			items=[
+				{
+					"description": "Docs lot",
+					"quantity": 1,
+					"uom": "Lot",
+					"requester_estimate": 50000,
+				}
+			],
+		)
+		self.assertTrue(saved["ok"])
+		name = saved["demand"]["name"]
+		self.assertEqual(saved["demand"].get("attachments"), [])
+
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "ui02-support.txt",
+				"is_private": 1,
+				"content": "dem-ui02 supporting document",
+				"attached_to_doctype": "Demand",
+				"attached_to_name": name,
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+
+		loaded = get_demand_form(demand=name)
+		atts = loaded["demand"].get("attachments") or []
+		self.assertEqual(len(atts), 1)
+		self.assertEqual(atts[0]["file_name"], "ui02-support.txt")
+		self.assertEqual(atts[0]["id"], file_doc.name)
+
+		removed = remove_demand_attachment_form(demand=name, file_id=file_doc.name)
+		self.assertTrue(removed["ok"])
+		self.assertEqual(removed["demand"].get("attachments"), [])
+		self.assertFalse(frappe.db.exists("File", file_doc.name))

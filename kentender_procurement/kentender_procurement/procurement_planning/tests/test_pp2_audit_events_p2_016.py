@@ -240,7 +240,7 @@ class TestPP2AuditEventsP2016(IntegrationTestCase):
 			(
 				f"DEMAPP-{suffix}",
 				"Demand Approval Certificate",
-				"Demand Intake and Approval",
+				"Demands",
 				"Procurement Planning",
 				"Demand",
 				demand_code,
@@ -249,7 +249,7 @@ class TestPP2AuditEventsP2016(IntegrationTestCase):
 				f"BUDCONF-{suffix}",
 				"Budget Funding Confirmation",
 				"Budget",
-				"Demand Intake and Approval",
+				"Demands",
 				"Budget Line",
 				budget_line_code,
 			),

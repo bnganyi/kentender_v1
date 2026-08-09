@@ -1,14 +1,15 @@
 # Demands — MVP 1 Cursor Implementation Prompt
 
 **Document ID:** DEMAND-MVP1-CURSOR-1.2  
-**Status:** Implementation input  
-**Date:** 7 August 2026  
-**Requirements baseline:** `DEMAND-MVP1-REQ-1.1` — locked and approved  
+**Status:** Complete — Prompt A/B executed; Demands MVP-1 Done (2026-08-08)  
+**Date:** 7 August 2026 (status refreshed 8 August 2026)  
+**Requirements baseline:** `DEMAND-MVP1-REQ-1.1` — locked  
 **Design baseline:** Approved Stitch outputs for `DEM-UI-01` through `DEM-UI-10`, including `DEM-UI-05A` and `DEM-UI-09A` through `DEM-UI-09D`  
-**Seed baseline:** `KENTENDER_MVP_V1`, Canonical Demo Data Contract version 2.1 — approved  
+**Seed baseline:** `KENTENDER_MVP_V1`, Canonical Demo Data Contract version 2.3 — approved  
 **Application:** KenTender  
 **Module label:** Demands  
-**Implementation strategy:** Clean rebuild inside the existing procurement application boundary
+**Implementation strategy:** Clean rebuild inside the existing procurement application boundary  
+**Canonical tracker:** [`04_Demands_MVP1_Implementation_Tracker.md`](04_Demands_MVP1_Implementation_Tracker.md) — Closed
 
 ## 1. How to use this document
 

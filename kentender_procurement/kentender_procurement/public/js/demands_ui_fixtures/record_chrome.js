@@ -8,7 +8,7 @@ kentender_procurement.ui_fixtures.demand_record_chrome = function () {
 <div class="mb-6" data-testid="kt-dem-record-header" data-kt-dem-record-header>
 <div class="flex flex-wrap items-center gap-2 mb-3" data-testid="kt-dem-record-meta-top">
 <span class="font-data-mono text-data-mono text-on-surface-variant" data-kt-dem-label="demand_code" data-testid="kt-dem-code">—</span>
-<span class="kt-dem-status-pill" data-kt-dem-label="status_display" data-testid="kt-dem-status-pill">—</span>
+<span class="kt-dem-status-pill" data-kt-dem-label="status_display" data-testid="kt-dem-status-pill" role="status" aria-live="polite">—</span>
 <span class="kt-dem-route-pill" data-kt-dem-label="demand_route_display" data-testid="kt-dem-route-pill">—</span>
 </div>
 <div class="kt-dem-record-title-row" data-testid="kt-dem-record-title-row">
@@ -26,7 +26,7 @@ Describe what is needed, why it is needed and when it is required.
 <span data-kt-dem-label="pe_ou_display">—</span>
 </div>
 </div>
-<div class="kt-dem-stage-card bg-surface-container-lowest border border-outline-variant rounded-xl p-3" data-testid="kt-dem-stage" data-kt-dem-stage>
+<div class="kt-dem-stage-card bg-surface-container-lowest border border-outline-variant rounded-xl p-3" data-testid="kt-dem-stage" data-kt-dem-stage role="navigation" aria-label="Demand stage">
 <div class="flex flex-col md:flex-row justify-between gap-4" data-kt-dem-stage-list></div>
 </div>
 </div>`;

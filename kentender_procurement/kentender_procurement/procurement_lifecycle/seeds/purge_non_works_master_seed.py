@@ -23,7 +23,6 @@ from __future__ import annotations
 from typing import Any, Final
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 
 from kentender_budget.seeds.works_master_budget_seed import BUDGET_LINE_CODE, BUDGET_NAME
 from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
@@ -81,15 +80,23 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 
 def _purge_demands(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	if not demand_consumers_live():
+	from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+		demand_doctype_available,
+	)
+
+	if not demand_doctype_available():
 		return removed
-	for row in frappe.get_all("Demand", fields=["name", "demand_id"]):
-		if (row.get("demand_id") or "").strip() == DEMAND_ID:
+	for row in frappe.get_all("Demand", fields=["name", "demand_code"]):
+		code = (row.get("demand_code") or "").strip()
+		if code == DEMAND_ID:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
-		frappe.db.delete("Demand Item", {"parent": row["name"]})
+		for item in frappe.get_all(
+			"Demand Item", filters={"demand": row["name"]}, pluck="name"
+		):
+			frappe.delete_doc("Demand Item", item, force=True, ignore_permissions=True)
 		if frappe.db.exists("Demand", row["name"]):
 			frappe.delete_doc("Demand", row["name"], force=True, ignore_permissions=True)
 	return removed

@@ -11,9 +11,8 @@ Scope (Workbench Wiring Tracker, W4):
   markup, so every generated row stays pixel-identical to the design.
 - Wire the footer "X to Y of Z" summary and Prev/Next pagination against the
   shared W1 `page` URL state.
-- Wire row click -> `demand-workbench` navigation (the same route
-  `demand_hub_page.js` already uses for "view demand"), skipping the
-  checkbox so native row-selection still works.
+- Wire approved-Demand row click and link -> the Demands `demand-detail`
+  Desk route, skipping the checkbox so native row-selection still works.
 
 Only the "Needs Planning" (default) queue has a pixel design today, so this
 always renders that dataset regardless of which tab is active — the same
@@ -83,10 +82,13 @@ class TestPP4WorkbenchNeedsPlanningListW4Source(UnitTestCase):
 		):
 			self.assertIn(f'{value}: "{tone}"', tone_block)
 
-	def test_row_click_navigates_to_demand_workbench_route_and_skips_checkbox(self) -> None:
+	def test_row_click_and_links_navigate_to_approved_demand_detail(self) -> None:
 		fn = self._fn_block("function buildWorkbenchNeedsPlanningRow(template, doc, row) {")
 		self.assertIn('event.target.closest(\'input[type="checkbox"]\')', fn)
-		self.assertIn('frappe.set_route("demand-workbench", demandId)', fn)
+		self.assertIn('frappe.set_route("demand-detail", demandId)', fn)
+		self.assertIn('"/desk/demand-detail/" + encodeURIComponent(demandId)', fn)
+		self.assertNotIn("demand-workbench", fn)
+		self.assertNotIn('"/app/demand/"', fn)
 
 	def test_pagination_uses_shared_w1_page_state(self) -> None:
 		render_fn = self._fn_block("function renderWorkbenchNeedsPlanningRows(root, doc, payload) {")

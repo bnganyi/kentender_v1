@@ -18,7 +18,7 @@ reference, builds a typed payload, and delegates to the generic
 |---|---|
 | handoff_code | ``BUDCONF-{journey_suffix}`` (e.g. ``BUDCONF-MOH-2026-001``) |
 | source_module | ``Budget`` |
-| target_module | ``Demand Intake and Approval`` |
+| target_module | ``Demands`` |
 | source_object_type | ``Budget Line`` |
 | source_object_code | ``budget_line_code`` |
 
@@ -231,7 +231,7 @@ def create_budget_funding_confirmation(
         "handoff_title": "Budget Funding Confirmation",
         "journey_code": jrn_code,
         "source_module": "Budget",
-        "target_module": "Demand Intake and Approval",
+        "target_module": "Demands",
         "source_object_type": "Budget Line",
         "source_object_code": bl_code,
         "status": "Consumed",

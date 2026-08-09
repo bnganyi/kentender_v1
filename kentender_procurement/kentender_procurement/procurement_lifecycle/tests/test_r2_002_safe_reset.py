@@ -30,7 +30,7 @@ def _minimal_evidence_links() -> dict:
 				"label": "Test evidence",
 				"object_type": "Demand",
 				"object_code": "DEM-R2002-TEST",
-				"module": "Demand Intake and Approval",
+				"module": "Demands",
 				"route": "/desk/",
 				"visibility": "Internal",
 			}

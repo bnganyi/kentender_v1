@@ -17,6 +17,7 @@ from kentender_procurement.demands.services.demand_codes import (
 	allocate_item_code,
 )
 from kentender_procurement.demands.services.demand_permissions import (
+	ERR_STALE,
 	ROLE_BUDGET,
 	ROLE_BUSINESS,
 	ROLE_PAA,
@@ -36,6 +37,7 @@ ERR_NOT_FOUND = "DEMAND_NOT_FOUND"
 ERR_VALIDATION = "DEMAND_VALIDATION_ERROR"
 ERR_CONFLICT = "DEMAND_STATE_CONFLICT"
 ERR_FUNDING = "DEMAND_FUNDING_ERROR"
+ERR_STALE_VERSION = ERR_STALE
 
 
 def _now():
@@ -170,6 +172,9 @@ def _assert_editable_preparation(doc: frappe.Document) -> None:
 		throw_demand_error(
 			ERR_CONFLICT,
 			f"Demand {doc.demand_code} is not editable in status {doc.status}",
+			issue="Demand is not in an editable preparation state",
+			owner="Requester",
+			action="Open the Demand only when status is Draft or Returned at Request Preparation",
 		)
 
 
@@ -180,11 +185,14 @@ def create_or_update_demand(
 	items: list[dict[str, Any]] | None = None,
 	user: str | None = None,
 	demand_code: str | None = None,
+	expected_modified: str | None = None,
 ) -> dict[str, Any]:
 	"""DEM-SVC-001 — create or update Demand + items in Draft/Returned preparation."""
 	actor = _actor(user)
 	require_operational_roles(ROLE_REQUESTER, user=actor)
 	values = dict(values or {})
+	# Allow clients to pass optimistic concurrency token in values.
+	expected = (expected_modified or values.pop("expected_modified", None) or "").strip() or None
 	pe = values.get("procuring_entity")
 	ou = values.get("owner_org_unit")
 
@@ -194,6 +202,16 @@ def create_or_update_demand(
 		ou = ou or doc.owner_org_unit
 		assert_demand_scope(procuring_entity=pe, owner_org_unit=ou, user=actor, require_write=True)
 		_assert_editable_preparation(doc)
+		if expected:
+			current = str(doc.modified) if doc.modified else ""
+			if current and current != expected:
+				throw_demand_error(
+					ERR_STALE_VERSION,
+					"This Demand was changed by another user. Reload and retry.",
+					issue="Stale Demand version",
+					owner="Requester",
+					action="Reload the form and re-apply your changes",
+				)
 		_apply_requester_fields(doc, values)
 		doc.save(ignore_permissions=True)
 	else:
@@ -307,7 +325,13 @@ def _assert_submission_ready(doc: frappe.Document) -> None:
 	if not items:
 		missing.append("at least one need item")
 	if missing:
-		throw_demand_error(ERR_VALIDATION, "Submission incomplete: " + ", ".join(missing))
+		throw_demand_error(
+			ERR_VALIDATION,
+			"Submission incomplete: " + ", ".join(missing),
+			issue="Required fields are missing for submission",
+			owner="Requester",
+			action="Complete the missing fields and submit again",
+		)
 
 
 def submit_demand(*, demand: str, user: str | None = None) -> dict[str, Any]:
@@ -426,7 +450,10 @@ def enrich_demand(
 		user=actor,
 		require_write=True,
 	)
-	if doc.current_stage != "Procurement Enrichment" or doc.status != "In Review":
+	if doc.current_stage != "Procurement Enrichment" or doc.status not in (
+		"In Review",
+		"Returned",
+	):
 		throw_demand_error(ERR_CONFLICT, "Demand is not in Procurement Enrichment")
 	values = dict(values or {})
 	for field in (
@@ -555,7 +582,10 @@ def record_procurement_decision(
 		user=actor,
 		require_write=True,
 	)
-	if doc.current_stage != "Procurement Enrichment" or doc.status != "In Review":
+	if doc.current_stage != "Procurement Enrichment" or doc.status not in (
+		"In Review",
+		"Returned",
+	):
 		throw_demand_error(ERR_CONFLICT, "Demand is not in Procurement Enrichment")
 	if not (reason or "").strip():
 		throw_demand_error(ERR_VALIDATION, "reason is required")
@@ -1045,7 +1075,10 @@ def confirm_demand_funding(
 		user=actor,
 		require_write=True,
 	)
-	if doc.current_stage != "Budget Confirmation" or doc.status != "In Review":
+	if doc.current_stage != "Budget Confirmation" or doc.status not in (
+		"In Review",
+		"Returned",
+	):
 		throw_demand_error(ERR_CONFLICT, "Demand is not in Budget Confirmation")
 
 	open_exc = frappe.get_all(
@@ -1169,7 +1202,10 @@ def return_budget_confirmation(
 		user=actor,
 		require_write=True,
 	)
-	if doc.current_stage != "Budget Confirmation" or doc.status != "In Review":
+	if doc.current_stage != "Budget Confirmation" or doc.status not in (
+		"In Review",
+		"Returned",
+	):
 		throw_demand_error(ERR_CONFLICT, "Demand is not in Budget Confirmation")
 	if not (reason or "").strip():
 		throw_demand_error(ERR_VALIDATION, "A reason is required")
@@ -1232,7 +1268,10 @@ def adjust_funding_allocation(
 		user=actor,
 		require_write=True,
 	)
-	if doc.current_stage != "Budget Confirmation" or doc.status != "In Review":
+	if doc.current_stage != "Budget Confirmation" or doc.status not in (
+		"In Review",
+		"Returned",
+	):
 		throw_demand_error(ERR_CONFLICT, "Demand is not in Budget Confirmation")
 
 	line_key = (budget_line or "").strip() or None
@@ -1366,6 +1405,8 @@ def resolve_funding_exception(
 		exc.save(ignore_permissions=True)
 		return {"ok": True, "exception": exc.name, "demand": project_demand(get_demand(doc.name))}
 	if action == "Return":
+		if not (reason or "").strip():
+			throw_demand_error(ERR_VALIDATION, "Return note is required to resolve the exception")
 		result = resolve_transition(doc.status, doc.current_stage, "Return")
 		doc.status = result.status
 		doc.current_stage = result.stage
@@ -1387,6 +1428,119 @@ def resolve_funding_exception(
 	exc.resolved_at = _now()
 	exc.save(ignore_permissions=True)
 	return {"ok": True, "exception": exc.name}
+
+
+def save_funding_exception_note(
+	*,
+	exception: str,
+	reason: str | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-07 — persist resolution note; keep exception open (In Progress)."""
+	actor = _actor(user)
+	require_operational_roles(ROLE_BUDGET, user=actor)
+	if not frappe.db.exists("Funding Exception", exception):
+		throw_demand_error(ERR_NOT_FOUND, "Funding Exception not found")
+	exc = frappe.get_doc("Funding Exception", exception)
+	if (exc.status or "") not in ("Open", "In Progress"):
+		throw_demand_error(ERR_CONFLICT, "Funding Exception is not open")
+	doc = get_demand(exc.demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	note = (reason or "").strip()
+	if not note:
+		throw_demand_error(ERR_VALIDATION, "Resolution note is required")
+	exc.resolution_reason = note
+	exc.status = "In Progress"
+	exc.current_owner = actor
+	exc.save(ignore_permissions=True)
+	return {
+		"ok": True,
+		"exception": exc.name,
+		"status": exc.status,
+		"demand": project_demand(doc),
+	}
+
+
+def _invalidate_bo_signoff_return_to_budget_confirmation(
+	doc: frappe.Document,
+	actor: str,
+	*,
+	reason: str,
+	decision: str = "Material change",
+) -> None:
+	"""DIA-FR-087 / DIA-FR-093 — clear BO confirm and return to Budget Confirmation."""
+	for row in frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": doc.name},
+		fields=["name", "funding_reservation", "bo_confirmation_status"],
+	):
+		frappe.db.set_value(
+			"Demand Funding Allocation",
+			row.name,
+			{
+				"bo_confirmation_status": "Pending",
+				"bo_confirmed_by": "",
+				"bo_confirmed_at": None,
+				"funding_reservation": "",
+				"reservation_status": "",
+			},
+		)
+	doc.status = "In Review"
+	doc.current_stage = "Budget Confirmation"
+	doc.planning_ready = 0
+	doc.save(ignore_permissions=True)
+	_record_decision(
+		doc,
+		stage="Final Approval",
+		decision=decision,
+		actor=actor,
+		reason=(reason or "").strip(),
+	)
+
+
+def apply_material_funding_change(
+	*,
+	demand: str,
+	confirmed_estimate: float | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""DIA-AC-019 / DIA-FR-087 — funding-relevant change after BO sign-off."""
+	actor = _actor(user)
+	require_operational_roles(ROLE_PAA, ROLE_BUDGET, user=actor)
+	doc = get_demand(demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	if doc.current_stage != "Final Approval" or doc.status != "In Review":
+		throw_demand_error(
+			ERR_CONFLICT, "Material funding change applies only after BO sign-off"
+		)
+	if confirmed_estimate is None:
+		throw_demand_error(ERR_VALIDATION, "confirmed_estimate is required")
+	new_estimate = flt(confirmed_estimate)
+	if new_estimate <= 0:
+		throw_demand_error(ERR_VALIDATION, "confirmed_estimate must be positive")
+	if abs(new_estimate - flt(doc.confirmed_estimate)) <= 0.009:
+		throw_demand_error(ERR_VALIDATION, "No material funding change detected")
+
+	doc.confirmed_estimate = new_estimate
+	doc.save(ignore_permissions=True)
+	_invalidate_bo_signoff_return_to_budget_confirmation(
+		doc,
+		actor,
+		reason="Material funding-relevant change after Budget Officer sign-off",
+		decision="Material change",
+	)
+	doc.reload()
+	return {"ok": True, "demand": project_demand(doc)}
 
 
 def approve_and_reserve_demand(
@@ -1427,34 +1581,67 @@ def approve_and_reserve_demand(
 	if abs(total - flt(doc.confirmed_estimate)) > 0.009:
 		throw_demand_error(ERR_FUNDING, "Allocations must equal confirmed estimate")
 
+	from kentender_budget.api.dia_budget_control import release_reservation
 	from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
 
 	reservations: list[str] = []
-	for row in allocs:
-		if row.funding_reservation:
-			reservations.append(row.funding_reservation)
-			continue
-		key = (
-			idempotency_key
-			or f"{doc.demand_code}:{row.budget_line}:{flt(row.allocation_amount):.2f}"
-		)
-		res = reserve_funding(
-			budget_line=row.budget_line,
-			demand_name=doc.demand_code,
-			requested_amount=flt(row.allocation_amount),
-			idempotency_key=key,
-			actor=actor,
-			procuring_entity=doc.procuring_entity,
-		)
-		reservations.append(res["reservation_id"])
-		frappe.db.set_value(
-			"Demand Funding Allocation",
-			row.name,
-			{
-				"funding_reservation": res["reservation_id"],
-				"reservation_status": res.get("status") or "Reserved",
-			},
-		)
+	created_now: list[str] = []
+	linked_now: list[str] = []
+	try:
+		for row in allocs:
+			if row.funding_reservation:
+				reservations.append(row.funding_reservation)
+				continue
+			key = (
+				idempotency_key
+				or f"{doc.demand_code}:{row.budget_line}:{flt(row.allocation_amount):.2f}"
+			)
+			# Distinct keys per allocation when a shared key is supplied.
+			if idempotency_key and len(allocs) > 1:
+				key = f"{idempotency_key}:{row.name}"
+			res = reserve_funding(
+				budget_line=row.budget_line,
+				demand_name=doc.demand_code,
+				requested_amount=flt(row.allocation_amount),
+				idempotency_key=key,
+				actor=actor,
+				procuring_entity=doc.procuring_entity,
+			)
+			rid = res["reservation_id"]
+			reservations.append(rid)
+			if not res.get("reused"):
+				created_now.append(rid)
+			frappe.db.set_value(
+				"Demand Funding Allocation",
+				row.name,
+				{
+					"funding_reservation": rid,
+					"reservation_status": res.get("status") or "Reserved",
+				},
+			)
+			linked_now.append(row.name)
+	except Exception:
+		# DIA-AC-014 / DIA-FR-093 — fail closed: no partial RSV, Demand unapproved.
+		for rid in created_now:
+			try:
+				release_reservation(reservation_id=rid, actor=actor)
+			except Exception:
+				pass
+		for row_name in linked_now:
+			frappe.db.set_value(
+				"Demand Funding Allocation",
+				row_name,
+				{"funding_reservation": "", "reservation_status": ""},
+			)
+		doc.reload()
+		if doc.status != "Approved":
+			_invalidate_bo_signoff_return_to_budget_confirmation(
+				doc,
+				actor,
+				reason="Reservation failed; Budget Officer sign-off invalidated",
+				decision="Reservation failed",
+			)
+		raise
 
 	result = resolve_transition(doc.status, doc.current_stage, "Approve")
 	doc.status = result.status
@@ -1475,13 +1662,86 @@ def approve_and_reserve_demand(
 	}
 
 
+def record_final_decision(
+	*,
+	demand: str,
+	decision: str,
+	reason: str | None = None,
+	comment: str | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""DEM-UI-08 — PAA Return | Reject from Final Approval."""
+	actor = _actor(user)
+	action = (decision or "").strip()
+	if action not in ("Return", "Reject"):
+		throw_demand_error(ERR_VALIDATION, "decision must be Return or Reject")
+	require_operational_roles(ROLE_PAA, user=actor)
+	doc = get_demand(demand)
+	assert_demand_scope(
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+		require_write=True,
+	)
+	if doc.current_stage != "Final Approval" or doc.status != "In Review":
+		throw_demand_error(ERR_CONFLICT, "Demand is not in Final Approval")
+	if not (reason or "").strip():
+		throw_demand_error(ERR_VALIDATION, "reason is required")
+
+	result = preview_transition(
+		status=doc.status,
+		stage=doc.current_stage,
+		action=action,
+		procuring_entity=doc.procuring_entity,
+		owner_org_unit=doc.owner_org_unit,
+		user=actor,
+	)
+	doc.status = result.status
+	doc.current_stage = result.stage
+	if action == "Reject":
+		doc.rejected_at = _now()
+	doc.save(ignore_permissions=True)
+
+	if action == "Return":
+		# Invalidate BO sign-off so Budget Confirmation must reconfirm (DIA-FR-093/087).
+		for row_name in frappe.get_all(
+			"Demand Funding Allocation",
+			filters={"demand": doc.name, "bo_confirmation_status": "Confirmed"},
+			pluck="name",
+		):
+			frappe.db.set_value(
+				"Demand Funding Allocation",
+				row_name,
+				{
+					"bo_confirmation_status": "Pending",
+					"bo_confirmed_by": "",
+					"bo_confirmed_at": None,
+				},
+			)
+
+	_record_decision(
+		doc,
+		stage="Final Approval",
+		decision=action,
+		actor=actor,
+		comment=comment,
+		reason=reason,
+	)
+	doc.reload()
+	return {"ok": True, "demand": project_demand(doc)}
+
+
 def cancel_and_release_demand(
 	*,
 	demand: str,
 	reason: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""DEM-SVC-011 — cancel; release unconsumed reservations via Budget shim."""
+	"""DEM-SVC-011 — cancel; release unconsumed reservations via Budget shim.
+
+	DIA-NFR-001 — idempotent: repeating cancel on an already-Cancelled Demand
+	returns success without duplicate decisions or double release.
+	"""
 	actor = _actor(user)
 	doc = get_demand(demand)
 	assert_demand_scope(
@@ -1490,6 +1750,20 @@ def cancel_and_release_demand(
 		user=actor,
 		require_write=True,
 	)
+	if doc.status == "Cancelled":
+		# Idempotent success — release_reservation is itself safe on Released RSV.
+		from kentender_budget.api.dia_budget_control import release_reservation
+
+		for row in frappe.get_all(
+			"Demand Funding Allocation",
+			filters={"demand": doc.name},
+			fields=["funding_reservation"],
+		):
+			if row.funding_reservation:
+				release_reservation(reservation_id=row.funding_reservation, actor=actor)
+		doc.reload()
+		return {"ok": True, "demand": project_demand(doc), "idempotent": True}
+
 	if doc.status == "Approved":
 		require_operational_roles(ROLE_PAA, user=actor)
 		from kentender_budget.api.dia_budget_control import release_reservation
@@ -1600,6 +1874,30 @@ def consume_demand_in_planning(
 		item.consumed_quantity = flt(item.consumed_quantity) + flt(consumed_quantity)
 	item.save(ignore_permissions=True)
 
+	# DIA-AC-016 — planning consume reduces unconsumed reservation balance.
+	if rsv and frappe.db.exists("Funding Reservation", rsv):
+		rsv_doc = frappe.get_doc("Funding Reservation", rsv)
+		prior_remaining = flt(rsv_doc.remaining_reserved)
+		new_remaining = max(0.0, prior_remaining - amt)
+		rsv_doc.remaining_reserved = new_remaining
+		if new_remaining <= 0.009:
+			rsv_doc.status = "Converted"
+		else:
+			rsv_doc.status = "Partially converted"
+		rsv_doc.save(ignore_permissions=True)
+		if prior_remaining > 0 and rsv_doc.budget_line:
+			cur_reserved = flt(
+				frappe.db.get_value("Budget Line", rsv_doc.budget_line, "amount_reserved")
+			)
+			released = min(amt, prior_remaining)
+			frappe.db.set_value(
+				"Budget Line",
+				rsv_doc.budget_line,
+				"amount_reserved",
+				max(0.0, cur_reserved - released),
+				update_modified=True,
+			)
+
 	_refresh_planning_usage(doc)
 	doc.reload()
 	return {"ok": True, "demand": project_demand(doc)}
@@ -1634,6 +1932,43 @@ def _refresh_planning_usage(doc: frappe.Document) -> None:
 	frappe.db.set_value("Demand", doc.name, "planning_usage", usage, update_modified=False)
 
 
+def _user_timezone(user: str) -> str:
+	tz = (frappe.db.get_value("User", user, "time_zone") or "").strip()
+	if tz:
+		return tz
+	try:
+		from frappe.utils import get_system_timezone
+
+		return get_system_timezone() or "UTC"
+	except Exception:
+		return "UTC"
+
+
+def _project_datetime_for_user(value: Any, *, user: str) -> dict[str, str | None]:
+	"""DIA-NFR-006 — store UTC-ish; display in user TZ with explicit label."""
+	if not value:
+		return {
+			"utc": None,
+			"display": None,
+			"timezone": _user_timezone(user),
+		}
+	from frappe.utils import convert_utc_to_timezone, get_datetime
+
+	tz = _user_timezone(user)
+	raw = get_datetime(value)
+	try:
+		# Treat naive DB datetimes as UTC for conversion baseline.
+		if getattr(raw, "tzinfo", None) is None:
+			from datetime import timezone as dt_timezone
+
+			raw = raw.replace(tzinfo=dt_timezone.utc)
+		local = convert_utc_to_timezone(raw, tz)
+		display = local.strftime("%Y-%m-%d %H:%M:%S") + f" {tz}"
+	except Exception:
+		display = f"{value} {tz}"
+	return {"utc": str(value), "display": display, "timezone": tz}
+
+
 def get_demand_audit(*, demand: str, user: str | None = None) -> dict[str, Any]:
 	"""DEM-SVC-013."""
 	actor = _actor(user)
@@ -1644,6 +1979,7 @@ def get_demand_audit(*, demand: str, user: str | None = None) -> dict[str, Any]:
 		user=actor,
 		require_write=False,
 	)
+	tz = _user_timezone(actor)
 	decisions = frappe.get_all(
 		"Demand Decision",
 		filters={"demand": doc.name},
@@ -1659,7 +1995,26 @@ def get_demand_audit(*, demand: str, user: str | None = None) -> dict[str, Any]:
 		],
 		order_by="decided_at asc",
 	)
-	return {"ok": True, "demand_code": doc.demand_code, "decisions": decisions}
+	projected = []
+	for row in decisions:
+		proj = _project_datetime_for_user(row.decided_at, user=actor)
+		projected.append(
+			{
+				**row,
+				"decided_at": proj["utc"],
+				"decided_at_display": proj["display"],
+				"timezone": proj["timezone"],
+			}
+		)
+	approved_proj = _project_datetime_for_user(doc.get("approved_at"), user=actor)
+	return {
+		"ok": True,
+		"demand_code": doc.demand_code,
+		"timezone": tz,
+		"approved_at": approved_proj["utc"],
+		"approved_at_display": approved_proj["display"],
+		"decisions": projected,
+	}
 
 
 def list_demands_for_workspace(
@@ -1727,32 +2082,446 @@ def list_demands_for_workspace(
 	}
 
 
+_PERF_FLOW_STAGES = (
+	"Request Preparation",
+	"Business Review",
+	"Procurement Enrichment",
+	"Budget Confirmation",
+	"Final Approval",
+	"Approved",
+)
+
+
+def _perf_money(amount: Any, currency: str | None = None) -> str:
+	cur = (currency or "KES").strip() or "KES"
+	try:
+		n = float(amount or 0)
+	except (TypeError, ValueError):
+		n = 0.0
+	return f"{cur} {n:,.2f}"
+
+
+def _perf_age_days(modified: Any) -> int:
+	if not modified:
+		return 0
+	try:
+		from frappe.utils import date_diff, get_datetime
+
+		return max(0, int(date_diff(now_datetime(), get_datetime(modified))))
+	except Exception:
+		return 0
+
+
+def _perf_view_route(status: str, stage: str) -> str:
+	st = (status or "").strip()
+	sg = (stage or "").strip()
+	if st == "Returned" and sg == "Request Preparation":
+		return "demand-form"
+	if st == "Draft":
+		return "demand-form"
+	if st == "Approved":
+		return "demand-detail"
+	if sg in (
+		"Business Review",
+		"Procurement Enrichment",
+		"Budget Confirmation",
+		"Final Approval",
+	):
+		return "demand-review"
+	if st == "Returned":
+		return "demand-form"
+	return "demand-detail"
+
+
 def get_demand_performance(
 	*,
 	user: str | None = None,
 	as_at: str | None = None,
 	procuring_entity: str | None = None,
+	filters: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-	"""DEM-SVC-015 — lightweight metrics DTO with As at + drill-down keys."""
+	"""DEM-SVC-015 / DEM-UI-10 — scoped performance projection (As at + Stitch sections)."""
 	actor = _actor(user)
+	require_operational_roles(
+		ROLE_REQUESTER,
+		ROLE_BUSINESS,
+		ROLE_PAA,
+		ROLE_BUDGET,
+		ROLE_PLANNING,
+		ROLE_VIEWER,
+		user=actor,
+	)
+	filters = dict(filters or {})
+	pe_filter = (procuring_entity or filters.get("procuring_entity") or "").strip()
+	unit_filter = (filters.get("owner_org_unit") or "").strip()
+	route_filter = (filters.get("demand_route") or "").strip()
+	status_filter = (filters.get("status") or "").strip()
+	stage_filter = (filters.get("current_stage") or "").strip()
+
 	ws = list_demands_for_workspace(user=actor, filters={"limit": 500})
-	rows = ws["rows"]
-	if procuring_entity:
-		rows = [r for r in rows if r.procuring_entity == procuring_entity]
+	names = [r.name for r in ws["rows"]]
+	if not names:
+		as_at_val = as_at or str(getdate())
+		return {
+			"ok": True,
+			"as_at": as_at_val,
+			"as_at_display": as_at_val,
+			"basis": "Scoped Demand rows visible to the actor",
+			"counts_by_status": {},
+			"counts_by_stage": {},
+			"approved_value": 0.0,
+			"drill_down": [],
+			"header": {
+				"title": "Demand performance",
+				"as_at_display": as_at_val,
+				"basis": "Scoped Demand rows visible to the actor",
+				"pe_label": "",
+			},
+			"summary": {
+				"demands_count": 0,
+				"approved_value": 0.0,
+				"approved_value_display": _perf_money(0),
+				"returned_count": 0,
+				"awaiting_action_count": 0,
+				"planning_taken_display": "0 of 0",
+				"planning_taken_count": 0,
+				"planning_ready_count": 0,
+			},
+			"flow_ageing": [],
+			"funding_control": {
+				"auto_matches": 0,
+				"bo_confirmations": 0,
+				"adjusted": 0,
+				"exceptions": 0,
+				"unfunded_amount": 0.0,
+				"unfunded_amount_display": _perf_money(0),
+				"exception_demand": None,
+			},
+			"planning_uptake": [],
+			"strategy_coverage": [],
+			"filter_options": {
+				"procuring_entities": [],
+				"owner_org_units": [],
+				"routes": ["Standard", "Emergency", "Framework"],
+				"statuses": ["Draft", "In Review", "Returned", "Approved", "Rejected", "Cancelled"],
+				"stages": list(_PERF_FLOW_STAGES[:-1]),
+			},
+			"filters_applied": filters,
+		}
+
+	docs = frappe.get_all(
+		"Demand",
+		filters={"name": ["in", names]},
+		fields=[
+			"name",
+			"demand_code",
+			"title",
+			"status",
+			"current_stage",
+			"procuring_entity",
+			"owner_org_unit",
+			"demand_route",
+			"confirmed_estimate",
+			"requester_estimate",
+			"currency",
+			"planning_usage",
+			"planning_ready",
+			"modified",
+		],
+		limit=500,
+	)
+	rows = list(docs)
+	if pe_filter:
+		rows = [r for r in rows if r.procuring_entity == pe_filter]
+	if unit_filter:
+		rows = [r for r in rows if r.owner_org_unit == unit_filter]
+	if route_filter:
+		rows = [r for r in rows if (r.demand_route or "") == route_filter]
+	if status_filter:
+		rows = [r for r in rows if r.status == status_filter]
+	if stage_filter:
+		rows = [r for r in rows if r.current_stage == stage_filter]
+
 	by_status: dict[str, int] = {}
 	by_stage: dict[str, int] = {}
 	value_approved = 0.0
+	returned_count = 0
+	awaiting = 0
+	planning_ready_n = 0
+	planning_taken_n = 0
 	for r in rows:
 		by_status[r.status] = by_status.get(r.status, 0) + 1
 		by_stage[r.current_stage] = by_stage.get(r.current_stage, 0) + 1
 		if r.status == "Approved":
-			value_approved += flt(r.confirmed_estimate)
+			value_approved += flt(r.confirmed_estimate or r.requester_estimate)
+			if int(r.planning_ready or 0):
+				planning_ready_n += 1
+			if (r.planning_usage or "") in ("Partially planned", "Fully planned"):
+				planning_taken_n += 1
+		if r.status == "Returned":
+			returned_count += 1
+		if r.status in ("Draft", "In Review", "Returned") or (
+			r.status == "Approved"
+			and (r.planning_usage or "Not taken up") in ("", "Not taken up")
+		):
+			awaiting += 1
+
+	as_at_val = as_at or str(getdate())
+	basis = "Scoped Demand rows visible to the actor"
+	pe_label = ""
+	if pe_filter and frappe.db.exists("Procuring Entity", pe_filter):
+		pe_label = (
+			frappe.db.get_value("Procuring Entity", pe_filter, "entity_name") or pe_filter
+		)
+
+	# Flow / ageing
+	flow_ageing: list[dict[str, Any]] = []
+	for stage_label in _PERF_FLOW_STAGES:
+		if stage_label == "Approved":
+			bucket = [r for r in rows if r.status == "Approved"]
+		else:
+			bucket = [
+				r
+				for r in rows
+				if r.current_stage == stage_label and r.status != "Approved"
+			]
+		oldest = 0
+		view_demand = None
+		attention = "—"
+		if bucket:
+			ages = [( _perf_age_days(r.modified), r) for r in bucket]
+			ages.sort(key=lambda x: -x[0])
+			oldest = ages[0][0]
+			pick = ages[0][1]
+			view_demand = {
+				"demand": pick.name,
+				"demand_code": pick.demand_code,
+				"route": _perf_view_route(pick.status, pick.current_stage),
+			}
+			if stage_label == "Approved":
+				attention = "Baseline locked"
+			elif oldest >= 5:
+				attention = f"{oldest} days waiting"
+			elif pick.status == "Returned":
+				attention = "Returned — action needed"
+			else:
+				attention = "In queue"
+		flow_ageing.append(
+			{
+				"stage": stage_label,
+				"stage_display": stage_label,
+				"count": len(bucket),
+				"oldest_waiting_days": oldest,
+				"attention": attention,
+				"view_demand": view_demand,
+			}
+		)
+
+	# Funding control
+	demand_names = [r.name for r in rows]
+	auto_matches = 0
+	bo_confirmations = 0
+	adjusted = 0
+	if demand_names:
+		allocs = frappe.get_all(
+			"Demand Funding Allocation",
+			filters={"demand": ["in", demand_names]},
+			fields=["demand", "bo_confirmation_status", "matching_source", "allocation_amount"],
+			limit=2000,
+		)
+		auto_matches = sum(1 for a in allocs if (a.matching_source or "") == "Automatic")
+		if not auto_matches:
+			auto_matches = len(allocs)
+		bo_confirmations = sum(
+			1 for a in allocs if (a.bo_confirmation_status or "") == "Confirmed"
+		)
+		adjusted = sum(1 for a in allocs if (a.bo_confirmation_status or "") == "Adjusted")
+	exceptions = 0
+	unfunded = 0.0
+	exception_demand = None
+	if demand_names:
+		excs = frappe.get_all(
+			"Funding Exception",
+			filters={"demand": ["in", demand_names], "status": "Open"},
+			fields=["name", "demand", "exception_type"],
+			order_by="modified desc",
+			limit=50,
+		)
+		exceptions = len(excs)
+		for e in excs:
+			drow = next((r for r in rows if r.name == e.demand), None)
+			if drow:
+				unfunded += flt(drow.confirmed_estimate or drow.requester_estimate)
+				if exception_demand is None:
+					exception_demand = {
+						"demand": drow.name,
+						"demand_code": drow.demand_code,
+						"route": "demand-review",
+						"exception": e.name,
+					}
+
+	# Planning uptake (Approved + planning ready / consumed)
+	planning_uptake: list[dict[str, Any]] = []
+	approved_rows = [r for r in rows if r.status == "Approved"]
+	consumptions: dict[str, list[str]] = {}
+	if approved_rows:
+		cons = frappe.get_all(
+			"Planning Consumption",
+			filters={"demand": ["in", [r.name for r in approved_rows]]},
+			fields=["demand", "plan_item_code", "consumed_amount"],
+			limit=200,
+		)
+		for c in cons:
+			consumptions.setdefault(c.demand, []).append(c.plan_item_code or "—")
+	for r in approved_rows:
+		usage = (r.planning_usage or "Not taken up").strip() or "Not taken up"
+		if not int(r.planning_ready or 0) and usage == "Not taken up":
+			continue
+		codes = consumptions.get(r.name) or []
+		amt = flt(r.confirmed_estimate or r.requester_estimate)
+		planning_uptake.append(
+			{
+				"demand": r.name,
+				"demand_code": r.demand_code,
+				"title": r.title,
+				"approved_value": amt,
+				"approved_value_display": _perf_money(amt, r.currency),
+				"planning_usage": usage,
+				"plan_item_codes": codes,
+				"plan_item_codes_display": ", ".join(codes) if codes else "—",
+				"route": "demand-detail",
+			}
+		)
+
+	# Strategy coverage — Approved value by primary Demand Strategy Context path
+	strat_map: dict[str, dict[str, Any]] = {}
+	ctx_by_demand: dict[str, str] = {}
+	if approved_rows:
+		ctx_rows = frappe.get_all(
+			"Demand Strategy Reference",
+			filters={"demand": ["in", [r.name for r in approved_rows]]},
+			fields=["demand", "hierarchy_path", "snapshot_label", "reference_type"],
+			order_by="creation asc",
+			limit=500,
+		)
+		for c in ctx_rows:
+			is_primary = (c.reference_type or "") == "Primary"
+			if c.demand in ctx_by_demand and not is_primary:
+				continue
+			if is_primary or c.demand not in ctx_by_demand:
+				label = (c.hierarchy_path or c.snapshot_label or "").strip()
+				ctx_by_demand[c.demand] = label or "Unlinked"
+	for r in approved_rows:
+		path = (ctx_by_demand.get(r.name) or "").strip()
+		label = path.split(">")[0].strip() if path else "Unlinked"
+		if not label:
+			label = "Unlinked"
+		bucket = strat_map.setdefault(
+			label,
+			{
+				"strategy_label": label,
+				"approved_value": 0.0,
+				"demands_count": 0,
+				"required_commitments": 0,
+				"addressed_count": 0,
+				"currency": r.currency or "KES",
+			},
+		)
+		bucket["approved_value"] += flt(r.confirmed_estimate or r.requester_estimate)
+		bucket["demands_count"] += 1
+		bucket["required_commitments"] += 1
+		if (r.planning_usage or "") in ("Partially planned", "Fully planned"):
+			bucket["addressed_count"] += 1
+	strategy_coverage = [
+		{
+			"strategy_label": v["strategy_label"],
+			"approved_value": v["approved_value"],
+			"approved_value_display": _perf_money(v["approved_value"], v.get("currency")),
+			"required_commitments": v["required_commitments"],
+			"addressed_count": v["addressed_count"],
+			"attention": "No action" if v["addressed_count"] >= v["required_commitments"] else "Uptake pending",
+			"pvc_note": "Primary strategy path on Approved Demands (not realised benefits)",
+		}
+		for v in sorted(strat_map.values(), key=lambda x: -x["approved_value"])
+	]
+
+	# Filter options from scoped universe (pre-filter names)
+	all_docs = docs
+	pe_opts: list[dict[str, str]] = []
+	seen_pe: set[str] = set()
+	unit_opts: list[dict[str, str]] = []
+	seen_u: set[str] = set()
+	for r in all_docs:
+		if r.procuring_entity and r.procuring_entity not in seen_pe:
+			seen_pe.add(r.procuring_entity)
+			pe_opts.append(
+				{
+					"id": r.procuring_entity,
+					"code": r.procuring_entity,
+					"name": frappe.db.get_value("Procuring Entity", r.procuring_entity, "entity_name")
+					or r.procuring_entity,
+				}
+			)
+		if r.owner_org_unit and r.owner_org_unit not in seen_u:
+			seen_u.add(r.owner_org_unit)
+			unit_opts.append(
+				{
+					"id": r.owner_org_unit,
+					"code": r.owner_org_unit,
+					"name": frappe.db.get_value("Organisation Unit", r.owner_org_unit, "unit_name")
+					or r.owner_org_unit,
+				}
+			)
+
 	return {
 		"ok": True,
-		"as_at": as_at or str(getdate()),
-		"basis": "Scoped Demand rows visible to the actor",
+		"as_at": as_at_val,
+		"as_at_display": as_at_val,
+		"basis": basis,
 		"counts_by_status": by_status,
 		"counts_by_stage": by_stage,
 		"approved_value": value_approved,
 		"drill_down": [r.demand_code for r in rows[:50]],
+		"header": {
+			"title": "Demand performance",
+			"as_at_display": as_at_val,
+			"basis": basis,
+			"pe_label": pe_label or "",
+		},
+		"summary": {
+			"demands_count": len(rows),
+			"approved_value": value_approved,
+			"approved_value_display": _perf_money(value_approved),
+			"returned_count": returned_count,
+			"awaiting_action_count": awaiting,
+			"planning_taken_display": f"{planning_taken_n} of {planning_ready_n or len(approved_rows)}",
+			"planning_taken_count": planning_taken_n,
+			"planning_ready_count": planning_ready_n or len(approved_rows),
+		},
+		"flow_ageing": flow_ageing,
+		"funding_control": {
+			"auto_matches": auto_matches,
+			"bo_confirmations": bo_confirmations,
+			"adjusted": adjusted,
+			"exceptions": exceptions,
+			"unfunded_amount": unfunded,
+			"unfunded_amount_display": _perf_money(unfunded),
+			"exception_demand": exception_demand,
+		},
+		"planning_uptake": planning_uptake,
+		"strategy_coverage": strategy_coverage,
+		"filter_options": {
+			"procuring_entities": pe_opts,
+			"owner_org_units": unit_opts,
+			"routes": ["Standard", "Emergency", "Framework"],
+			"statuses": ["Draft", "In Review", "Returned", "Approved", "Rejected", "Cancelled"],
+			"stages": list(_PERF_FLOW_STAGES[:-1]),
+		},
+		"filters_applied": {
+			"procuring_entity": pe_filter,
+			"owner_org_unit": unit_filter,
+			"demand_route": route_filter,
+			"status": status_filter,
+			"current_stage": stage_filter,
+		},
 	}

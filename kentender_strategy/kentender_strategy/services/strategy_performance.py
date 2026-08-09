@@ -12,6 +12,9 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_strategy.services.strategy_contracts import (
 	_entity_code,
 	_entity_label,
@@ -89,51 +92,46 @@ def _fmt_kes(n: float) -> str:
 
 
 def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
-	"""XMOD-STR-007 / STR-AC-028 — treated Value Cases per PVC id/code for an aligned plan.
+	"""DEM-INT-008 — addressed PVCs from MVP Demand related records.
 
-	Returns (aligned_demand_count, treated_counts) where treated_counts is keyed by
-	pvc_id and pvc_code. A Demand counts as treated for a PVC when treatment is
-	Included, or Not applicable with a non-empty rationale.
+	Returns ``(aligned_demand_count, treated_counts)`` where counts are keyed by
+	Plan Value Commitment id. Alignment comes from Demand Strategy Reference;
+	adoption comes from Demand Value Treatment. A deferred or not-applicable
+	treatment is addressed only when it carries the reason required by DIA-FR-069.
 	"""
-	if not plan_name or not frappe.db.exists("DocType", "Demand"):
+	if not plan_name or not demand_doctype_available():
 		return 0, {}
-	if not frappe.db.has_column("Demand", "strategy_plan_version"):
+	if not frappe.db.exists("DocType", "Demand Strategy Reference"):
 		return 0, {}
 
-	demand_names = frappe.get_all(
-		"Demand",
-		filters={"strategy_plan_version": plan_name},
-		pluck="name",
+	references = frappe.get_all(
+		"Demand Strategy Reference",
+		filters={"plan_version_id": plan_name},
+		fields=["demand"],
 		limit=200,
 	)
+	demand_names = sorted({r.demand for r in references if r.demand})
 	aligned = len(demand_names)
 	if not demand_names or not frappe.db.exists("DocType", "Demand Value Treatment"):
 		return aligned, {}
 
 	rows = frappe.get_all(
 		"Demand Value Treatment",
-		filters={"parent": ["in", demand_names], "parenttype": "Demand"},
-		fields=["parent", "pvc_id", "pvc_code", "treatment", "rationale"],
+		filters={"demand": ["in", demand_names]},
+		fields=["demand", "plan_value_commitment", "treatment", "rationale"],
 		limit=2000,
 	)
 	by_key: dict[str, set[str]] = defaultdict(set)
 	for r in rows:
 		treatment = (r.treatment or "").strip()
-		if treatment == "Included":
-			ok = True
-		elif treatment == "Not applicable":
+		ok = bool(treatment)
+		if treatment in {"Not applicable", "To be determined in Planning"}:
 			ok = bool((r.rationale or "").strip())
-		else:
-			ok = False
 		if not ok:
 			continue
-		parent = r.parent
-		pvc_id = (r.pvc_id or "").strip()
-		pvc_code = (r.pvc_code or "").strip()
+		pvc_id = (r.plan_value_commitment or "").strip()
 		if pvc_id:
-			by_key[pvc_id].add(parent)
-		if pvc_code:
-			by_key[pvc_code].add(parent)
+			by_key[pvc_id].add(r.demand)
 	return aligned, {k: len(v) for k, v in by_key.items()}
 
 
@@ -558,8 +556,7 @@ def get_strategy_performance(
 		obj = row.get("objective") or {}
 		level = row.get("consideration_level") or ""
 		pvc_id = (row.get("id") or "").strip()
-		pvc_code = (obj.get("code") or "").strip()
-		treated = treated_by_key.get(pvc_id) or treated_by_key.get(pvc_code) or 0
+		treated = treated_by_key.get(pvc_id) or 0
 		if aligned_demands == 0:
 			treatment = "No aligned Value Cases"
 		else:

@@ -53,6 +53,34 @@ test.describe("Procurement Home — functional Desk page", () => {
 		await expect(page.getByTestId("kt-ph-actions")).toBeVisible();
 		await expect(page.getByTestId("kt-ph-pipeline")).toBeVisible();
 		await expect(page.getByTestId("kt-ph-deadlines")).toBeVisible();
+		await expect(
+			page
+				.getByTestId("kt-ph-pipeline")
+				.locator('[data-kt-ph-nav="/desk/demands-workspace"]')
+				.filter({ hasText: "Demands under review" })
+		).toBeVisible();
+		await expect(
+			page
+				.getByTestId("kt-ph-pipeline")
+				.locator('[data-kt-ph-nav="/desk/demands-workspace"]')
+				.filter({ hasText: "Approved demands awaiting planning" })
+		).toBeVisible();
+		const homePayload = await page.evaluate(
+			() =>
+				new Promise<Record<string, any>>((resolve) => {
+					(window as any).frappe.call({
+						method:
+							"kentender_procurement.procurement_home.api.home.get_procurement_home",
+						callback: (response: any) => resolve(response.message || {}),
+					});
+				})
+		);
+		expect(homePayload.actions.view_all_url).toBe("/desk/demands-workspace");
+		const homeTargets = await page
+			.getByTestId("kt-ph-root")
+			.locator("[data-kt-ph-nav]")
+			.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-kt-ph-nav") || ""));
+		expect(homeTargets.join("\n")).not.toMatch(/demand-workbench|create-demand|demand-hub/);
 
 		// Browser tab title must be KenTender-branded (not bare Frappe).
 		await expect.poll(async () => page.title()).toMatch(/^KenTender\b/);

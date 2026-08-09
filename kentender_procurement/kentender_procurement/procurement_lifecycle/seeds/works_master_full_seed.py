@@ -166,18 +166,15 @@ def run_works_master_full_seed(
         return {**bud, "stage_failed": "budget", "warnings": warnings}
     warnings.extend(bud.get("warnings") or [])
 
-    # ── Step 5-6: demand (retired with DIA preparatory teardown) ─────────────
-    dem = {
-        "ok": False,
-        "skipped": True,
-        "reason": "DEMAND_MODULE_RETIRED",
-        "message": (
-            "Demand Intake retired pending Demands MVP-1 rebuild; "
-            "WORKS demand seed stage skipped."
-        ),
-    }
-    warnings.append(dem["message"])
-    return {**dem, "stage_failed": "demand", "warnings": warnings}
+    # ── Step 5-6: demand (MVP Demand DocType — DEM-INT-010) ─────────────────
+    from kentender_procurement.demands.seeds.works_master_demand import (
+        upsert_works_master_demand,
+    )
+
+    dem = upsert_works_master_demand()
+    if not dem.get("ok"):
+        return {**dem, "stage_failed": "demand", "warnings": warnings}
+    warnings.extend(dem.get("warnings") or [])
 
     # ── Step 7-9: planning ───────────────────────────────────────────────────
     pln = upsert_works_master_planning()

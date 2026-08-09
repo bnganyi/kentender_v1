@@ -1,9 +1,10 @@
 # Demands — MVP 1 Requirements
 
 **Document ID:** DEMAND-MVP1-REQ-1.1  
-**Status:** Draft for approval  
+**Status:** Locked — Demands MVP-1 implemented (tracker Closed 2026-08-08)  
 **Date:** 7 August 2026  
-**Change control:** Approval locks the MVP 1 functional baseline; subsequent functional changes require a new version  
+**Change control:** Baseline locked; subsequent functional changes require a new version / successor tracker  
+
 **Module:** Demands  
 **Application:** KenTender  
 **Primary fixture:** Ministry of Health  

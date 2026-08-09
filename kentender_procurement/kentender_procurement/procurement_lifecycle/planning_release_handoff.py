@@ -64,7 +64,9 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+    demand_doctype_available,
+)
 
 from kentender_procurement.procurement_lifecycle.handoff_card_service import (
     create_or_update_handoff_card,
@@ -146,10 +148,10 @@ def _find_first_package_line(package_code: str) -> dict[str, Any] | None:
 
 
 def _get_demand_category(demand_frappe_name: str) -> str:
-    """Return ``Demand.requisition_type`` as a proxy for procurement category."""
-    if not demand_frappe_name or not demand_consumers_live():
+    """Return MVP ``Demand.procurement_category``."""
+    if not demand_frappe_name or not demand_doctype_available():
         return ""
-    val = frappe.db.get_value("Demand", demand_frappe_name, "requisition_type")
+    val = frappe.db.get_value("Demand", demand_frappe_name, "procurement_category")
     return str(val or "")
 
 

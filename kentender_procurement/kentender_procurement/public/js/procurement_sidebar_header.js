@@ -4,7 +4,7 @@
 //
 // Also harmonizes Workspace Sidebar active matching:
 // 1) coming-soon?feature=… links must not all share one active state (Frappe strips query)
-// 2) Workspace hub redirects (demand-hub, budget-hub, planning-hub) map to rail items
+// 2) Workspace hubs and their child pages map to rail items
 // 3) Workspace `url` overrides slug path (Plans → /desk/planning-hub)
 (function () {
 	"use strict";
@@ -115,7 +115,7 @@
 		add(path);
 		var groups = [
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
-			["/desk/demand-hub", "/desk/demand-intake-and-approval"],
+			["/desk/demands-workspace"],
 			["/desk/budget-hub", "/desk/budget-management"],
 			["/desk/planning-hub", "/desk/procurement-planning"],
 			["/desk/strategy-management"],
@@ -134,9 +134,12 @@
 			add("/desk/budget-hub");
 			add("/desk/budget-management");
 		}
-		if (/^\/desk\/create-demand(\/|$)/.test(path)) {
-			add("/desk/demand-hub");
-			add("/desk/demand-intake-and-approval");
+		if (
+			/^\/desk\/(demand-form|demand-review|demand-detail|demand-performance)(\/|$)/.test(
+				path
+			)
+		) {
+			add("/desk/demands-workspace");
 		}
 		if (/^\/desk\/it-tender-configuration(?!-dashboard)([/-]|$)/.test(path)) {
 			add("/desk/it-tender-configuration-dashboard");

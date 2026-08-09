@@ -79,6 +79,8 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/demands_record_chrome.css?v={_desk_asset_v('public/css/demands_record_chrome.css')}",
 	f"/assets/kentender_procurement/css/demands_form.css?v={_desk_asset_v('public/css/demands_form.css')}",
 	f"/assets/kentender_procurement/css/demands_review.css?v={_desk_asset_v('public/css/demands_review.css')}",
+	f"/assets/kentender_procurement/css/demands_detail.css?v={_desk_asset_v('public/css/demands_detail.css')}",
+	f"/assets/kentender_procurement/css/demands_performance.css?v={_desk_asset_v('public/css/demands_performance.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -87,6 +89,8 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/record_chrome.js?v={_desk_asset_v('public/js/demands_ui_fixtures/record_chrome.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/form.js?v={_desk_asset_v('public/js/demands_ui_fixtures/form.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/review.js?v={_desk_asset_v('public/js/demands_ui_fixtures/review.js')}",
+	f"/assets/kentender_procurement/js/demands_ui_fixtures/detail.js?v={_desk_asset_v('public/js/demands_ui_fixtures/detail.js')}",
+	f"/assets/kentender_procurement/js/demands_ui_fixtures/performance.js?v={_desk_asset_v('public/js/demands_ui_fixtures/performance.js')}",
 	f"/assets/kentender_procurement/js/demands_live_bind.js?v={_desk_asset_v('public/js/demands_live_bind.js')}",
 	f"/assets/kentender_procurement/js/planning_workspace.js?v={_desk_asset_v('public/js/planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
@@ -267,8 +271,8 @@ page_js = {
 	"demands-workspace": "public/js/demands_workspace_page.js",
 	"demand-form": "public/js/demands_form_page.js",
 	"demand-review": "public/js/demands_review_page.js",
-	"demand-detail": "public/js/demands_stub_pages.js",
-	"demand-performance": "public/js/demands_stub_pages.js",
+	"demand-detail": "public/js/demands_detail_page.js",
+	"demand-performance": "public/js/demands_performance_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",

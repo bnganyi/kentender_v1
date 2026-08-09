@@ -1,10 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Gate for Demand consumers during Demands MVP-1 rebuild.
+"""Demand consumer gate after Demands MVP-1 rewires (DEM-INT-011).
 
-Schema (DocType Demand) may exist while Planning/lifecycle consumers still expect
-legacy DIA shapes. Those consumers stay fail-closed until ``CONSUMERS_LIVE``.
+Consumers are live when the Demand DocType exists. ``CONSUMERS_LIVE`` remains as
+an explicit package flag (True) for callers/tests that still import it.
 """
 
 from __future__ import annotations
@@ -13,8 +13,7 @@ import frappe
 from frappe import _
 
 RETIRED_MESSAGE = (
-	"Demand Intake and Approval has been retired; Demands MVP-1 consumer rewires "
-	"are not live yet "
+	"Demand DocType is not available on this site "
 	"(see docs/mvp-1/03_demands/05_Demands_Teardown_Dependency_Inventory.md)."
 )
 
@@ -24,16 +23,18 @@ def demand_doctype_available() -> bool:
 
 
 def demand_consumers_live() -> bool:
+	"""True when Demand consumers may run — DocType present and package flag live."""
 	try:
 		from kentender_procurement.demands import CONSUMERS_LIVE
 
-		return bool(CONSUMERS_LIVE)
+		flag = bool(CONSUMERS_LIVE)
 	except ImportError:
-		return False
+		flag = False
+	return flag and demand_doctype_available()
 
 
 def assert_demand_module_available() -> None:
-	if not demand_doctype_available() or not demand_consumers_live():
+	if not demand_doctype_available():
 		frappe.throw(_(RETIRED_MESSAGE), frappe.ValidationError)
 
 

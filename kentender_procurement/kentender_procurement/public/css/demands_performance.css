@@ -1,0 +1,321 @@
+/* DEM-UI-10 Demand performance — Stitch regions + Desk thead lock */
+
+body.kt-dem-perf-active.kt-cl-shell .kt-dem-perf {
+	font-family: Inter, sans-serif;
+	color: #1a1b20;
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 1rem 1rem 3rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-header {
+	margin-bottom: 1.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-title {
+	font-family: Manrope, Inter, sans-serif;
+	font-size: 1.75rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: #001f48;
+	line-height: 1.25;
+	margin-bottom: 0.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-subtitle {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: #434750;
+	margin-bottom: 0.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-context {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #1a1b20;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.75rem;
+	margin-bottom: 1.5rem;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.25rem;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-select {
+	border: 1px solid #e2e8f0;
+	border-radius: 0.375rem;
+	font-size: 0.875rem;
+	padding: 0.375rem 2rem 0.375rem 0.75rem;
+	background: #fff;
+	color: #1a1b20;
+	min-height: 2.25rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-btn {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 0.5rem 1rem;
+	border-radius: 0.25rem;
+	border: none;
+	cursor: pointer;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-btn--primary {
+	background: #001f48;
+	color: #fff;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-btn--primary:hover {
+	background: #00346f;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-btn--ghost {
+	background: transparent;
+	color: #434750;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-btn--ghost:hover {
+	background: #eeedf3;
+}
+
+/* Summary strip — not KPI cards */
+body.kt-dem-perf-active .kt-dem-ui10-strip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+	padding: 1rem;
+	margin-bottom: 1.5rem;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.25rem;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-strip-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-strip-label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #434750;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-strip-value {
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: #001f48;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-strip-value--warn {
+	color: #f59e0b;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-strip-value--ok {
+	color: #10b981;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	margin-bottom: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+	body.kt-dem-perf-active .kt-dem-ui10-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-card {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.25rem;
+	padding: 1.25rem;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	margin-bottom: 1.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-card--full {
+	margin-bottom: 1.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-card-title {
+	font-family: Manrope, Inter, sans-serif;
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: #001f48;
+	margin: 0 0 1rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table-wrap {
+	overflow-x: auto;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	text-align: left;
+}
+
+/* Desk lock: primary-fixed thead (supersedes Stitch muted grey) */
+body.kt-dem-perf-active .kt-dem-ui10-table thead th {
+	background: #d7e2ff !important;
+	color: #001b3f;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 0.5rem 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table tbody td {
+	padding: 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
+	vertical-align: middle;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table tbody tr:hover {
+	background: #eeedf3;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table .text-right {
+	text-align: right;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-table .text-center {
+	text-align: center;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	background: none;
+	border: none;
+	padding: 0;
+	color: #001f48;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-link:hover {
+	text-decoration: underline;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-funding-rows {
+	display: flex;
+	flex-direction: column;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-funding-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.75rem 0;
+	border-bottom: 1px solid #e2e8f0;
+	font-size: 0.875rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-funding-row .font-data-mono {
+	font-weight: 700;
+	color: #001f48;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-funding-unfunded {
+	display: flex;
+	flex-direction: column;
+	padding: 0.75rem 0;
+	gap: 0.25rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-muted {
+	color: #434750;
+	font-size: 0.875rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-unfunded {
+	font-size: 1.125rem;
+	font-weight: 700;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-text-error {
+	color: #ef4444 !important;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-funding-action {
+	margin-top: 0.5rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-pill {
+	display: inline-block;
+	background: #10b981;
+	color: #fff;
+	font-size: 0.625rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 0.125rem 0.5rem;
+	border-radius: 0.25rem;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-empty {
+	font-size: 0.875rem;
+	color: #434750;
+	margin: 0.5rem 0 0;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-methodology {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid #e2e8f0;
+	text-align: center;
+}
+
+body.kt-dem-perf-active .kt-dem-ui10-methodology p {
+	font-size: 0.75rem;
+	color: #434750;
+	opacity: 0.75;
+}
+
+body.kt-dem-perf-active .sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+body.kt-dem-perf-active .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body.kt-dem-perf-active .font-semibold {
+	font-weight: 600;
+}

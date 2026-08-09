@@ -12,7 +12,7 @@ Scope (Workbench Wiring Tracker, W5):
   "Create Package" -> ensure inclusion then
   `create_pp_package_from_planning_inclusion`, sequentially per selected
   demand, with clear success/failure alerts surfacing server blockers.
-- "View Demand" is already covered by the W4 row click (-> demand-workbench
+- "View Demand" is already covered by the W4 row click (-> demand-detail
   route) — no separate action is added for it here.
 
 Source-level assertions only (no JS runtime harness in this router's test
@@ -145,18 +145,12 @@ class TestPP4WorkbenchNeedsPlanningActionsW5Source(UnitTestCase):
 			self.assertIn("Array.from(selection.values())", fn)
 			self.assertNotIn("Array.prototype.slice.call(selection.values())", fn)
 
-	def test_no_new_view_demand_action_duplicates_w4_row_click(self) -> None:
+	def test_no_legacy_demand_workbench_route_remains(self) -> None:
 		"""W5 explicitly reuses the W4 row-click navigation for "View Demand"
-		rather than adding a second action — pin that no *W5 selection-toolbar*
-		`frappe.set_route("demand-workbench", ...)` call site was added.
-
-		The remaining-queues pass (W7) legitimately introduces a second,
-		unrelated call site: the Blocked queue's row builder routes a blocked
-		*demand* row to `demand-workbench` (vs. a blocked *package* row, which
-		routes to `procurement-package`) — this is queue-shape branching, not
-		a duplicate of W4/W5's needs-planning row click."""
-		matches = self.source.count('frappe.set_route("demand-workbench"')
-		self.assertEqual(matches, 2)
+		rather than adding a second action. DEM-INT-005 retires the removed
+		Demand Workbench route everywhere in the PP2 router."""
+		self.assertNotIn("demand-workbench", self.source)
+		self.assertEqual(self.source.count('frappe.set_route("demand-detail"'), 2)
 
 
 class TestPP4WorkbenchNeedsPlanningActionsW5FieldContract(IntegrationTestCase):

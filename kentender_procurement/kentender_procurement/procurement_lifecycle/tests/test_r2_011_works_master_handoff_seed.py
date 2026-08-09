@@ -71,14 +71,14 @@ _CARD_SPEC = {
         "source_object_code": "BUD-MOH-INFRA-2026-001",
         "target_object_code": "DEM-MOH-2026-001",
         "source_module": "Budget",
-        "target_module": "Demand Intake and Approval",
+        "target_module": "Demands",
     },
     "DEMAPP-MOH-2026-001": {
         "handoff_title": "Demand Approval Certificate",
         "status": "Consumed",
         "source_object_code": "DEM-MOH-2026-001",
         "target_object_code": "PLAN-MOH-2026",
-        "source_module": "Demand Intake and Approval",
+        "source_module": "Demands",
         "target_module": "Procurement Planning",
     },
     "PLANINCL-MOH-2026-001": {

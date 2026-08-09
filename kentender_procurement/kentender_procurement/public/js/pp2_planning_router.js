@@ -958,7 +958,7 @@
 		const links = cells[1] ? cells[1].querySelectorAll("a") : [];
 		const titleLink = links[0];
 		const refLink = links[1];
-		const href = demandId ? "/app/demand/" + encodeURIComponent(demandId) : "#";
+		const href = demandId ? "/desk/demand-detail/" + encodeURIComponent(demandId) : "#";
 		if (titleLink) {
 			const icon = titleLink.querySelector(".material-symbols-outlined");
 			titleLink.textContent = "";
@@ -999,7 +999,7 @@
 			if (event.target && event.target.closest('input[type="checkbox"]')) return;
 			if (!demandId) return;
 			event.preventDefault();
-			frappe.set_route("demand-workbench", demandId);
+			frappe.set_route("demand-detail", demandId);
 		});
 
 		return tr;
@@ -1063,7 +1063,7 @@
 	// (ported verbatim from the "2. Needs planning - selection" design) with
 	// real selected-row state, and wires its two bulk actions against the
 	// live planning-inclusion APIs. "View Demand" is already covered by the
-	// W4 row click (-> demand-workbench), so there is no separate action here.
+	// W4 row click (-> demand-detail), so there is no separate action here.
 	function workbenchSelectionToolbarEls(doc) {
 		if (!doc) return null;
 		const toolbar = doc.getElementById("selection-toolbar");
@@ -1703,7 +1703,7 @@
 		const refLink = titleLinks[1];
 		const href = targetId
 			? isBlockedDemand
-				? "/app/demand/" + encodeURIComponent(targetId)
+				? "/desk/demand-detail/" + encodeURIComponent(targetId)
 				: buildPackageDetailUrl(targetCode || targetId)
 			: "#";
 		if (titleLink) {
@@ -1744,7 +1744,7 @@
 			if (!targetId) return;
 			event.preventDefault();
 			if (isBlockedDemand) {
-				frappe.set_route("demand-workbench", targetId);
+				frappe.set_route("demand-detail", targetId);
 			} else {
 				navigateToPackageDetailPage(targetCode || targetId);
 			}

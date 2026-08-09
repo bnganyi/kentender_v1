@@ -49,7 +49,7 @@ def _ensure_upstream_handoffs() -> None:
 		(
 			DEMAPP_CODE,
 			"Demand Approval Certificate",
-			"Demand Intake and Approval",
+			"Demands",
 			"Procurement Planning",
 			"Demand",
 			DEMAND_CODE,
@@ -58,7 +58,7 @@ def _ensure_upstream_handoffs() -> None:
 			BUDCONF_CODE,
 			"Budget Funding Confirmation",
 			"Budget",
-			"Demand Intake and Approval",
+			"Demands",
 			"Budget Line",
 			BUDGET_LINE_CODE,
 		),

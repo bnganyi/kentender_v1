@@ -16,7 +16,9 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from frappe.utils import add_days, getdate, nowdate
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
@@ -52,13 +54,13 @@ RELEASED_RECENTLY_DAYS = 90
 
 _QUEUE_DEMAND_FIELDS = [
 	"name",
-	"demand_id",
+	"demand_code",
 	"title",
 	"status",
-	"planning_status",
+	"planning_ready",
+	"planning_usage",
 	"procuring_entity",
-	"budget_line",
-	"total_amount",
+	"confirmed_estimate",
 ]
 
 
@@ -129,7 +131,7 @@ def _count_released_recently(actor: str) -> int:
 
 
 def _count_blocked_demands(actor: str) -> int:
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		return 0
 	clauses = _base_demand_filters({})
 	allowed_entities = pp_scope.get_user_allowed_entities(actor)
@@ -153,14 +155,14 @@ def _count_blocked_demands(actor: str) -> int:
 			continue
 		if _demand_passes_queue_eligibility(row):
 			continue
-		demand_code = (row.get("demand_id") or row.get("name") or "").strip()
+		demand_code = (row.get("demand_code") or row.get("name") or "").strip()
 		if demand_has_unpackaged_planning_inclusion(demand_code):
 			continue
 		if not _demand_budget_ok(row):
 			count += 1
 			continue
-		planning_status = (row.get("planning_status") or "").strip()
-		if planning_status != "Fully Planned":
+		usage = (row.get("planning_usage") or "").strip()
+		if usage != "Fully planned":
 			count += 1
 	return count
 

@@ -10,6 +10,7 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.demands.services.demand_permissions import (
 	ERR_ADMIN_ROLE,
+	ERR_PERMISSION,
 	ERR_SCOPE,
 	ERR_SEGREGATION,
 	ROLE_BUSINESS,
@@ -112,6 +113,67 @@ class TestDemandPermissionsWave2(IntegrationTestCase):
 		with self.assertRaises(frappe.PermissionError) as ctx:
 			assert_can_perform_stage_action("Final Approval", "Approve", user=user)
 		_assert_error_code(ctx.exception, ERR_ADMIN_ROLE)
+
+	def test_ac013_admin_denied_on_approve_and_reserve_path(self) -> None:
+		"""DIA-AC-013 — admin without operational role denied on approve_and_reserve."""
+		from kentender_procurement.demands.services.demand_lifecycle import (
+			approve_and_reserve_demand,
+		)
+		from kentender_procurement.demands.tests._ac_helpers import (
+			actor_bundle,
+			advance_to_final_approval,
+		)
+
+		actors = actor_bundle("dem-ac013")
+		name = advance_to_final_approval(
+			req=actors["req"],
+			ba=actors["ba"],
+			paa=actors["paa"],
+			bo=actors["bo"],
+			estimate=1000,
+			title="AC013 admin cannot approve",
+		)
+		admin = _ensure_user(
+			"dem-ac013-sysadmin@example.com",
+			["System Manager"],
+			replace_roles=True,
+		)
+		with self.assertRaises(frappe.PermissionError) as ctx:
+			approve_and_reserve_demand(demand=name, user=admin)
+		_assert_error_code(ctx.exception, ERR_ADMIN_ROLE)
+		self.assertEqual(frappe.db.get_value("Demand", name, "status"), "In Review")
+
+	def test_ac011_requester_cannot_edit_specialist_fields(self) -> None:
+		"""DIA-AC-011 — Requester cannot set Strategy / funding / specialist fields."""
+		from kentender_procurement.demands.services.demand_lifecycle import (
+			create_or_update_demand,
+			enrich_demand,
+			submit_demand,
+		)
+		from kentender_procurement.demands.tests._ac_helpers import create_draft, ensure_user
+
+		req = ensure_user("dem-ac011-req@example.com", [ROLE_REQUESTER])
+		name = create_draft(req, estimate=1000, title="AC011 specialist deny")
+		# Specialist fields on create/update are ignored (requester field whitelist).
+		updated = create_or_update_demand(
+			demand=name,
+			values={
+				"title": "AC011 specialist deny",
+				"confirmed_estimate": 99999,
+				"procurement_category": "Works",
+			},
+			user=req,
+		)
+		self.assertEqual(float(updated["demand"].get("confirmed_estimate") or 0), 0.0)
+		self.assertFalse(updated["demand"].get("procurement_category"))
+		submit_demand(demand=name, user=req)
+		with self.assertRaises(frappe.PermissionError) as ctx:
+			enrich_demand(
+				demand=name,
+				values={"confirmed_estimate": 1000, "procurement_category": "Works"},
+				user=req,
+			)
+		_assert_error_code(ctx.exception, ERR_PERMISSION)
 
 	def test_paa_can_approve_action(self) -> None:
 		user = _ensure_user("dem-paa-wave2@example.com", [ROLE_PAA])

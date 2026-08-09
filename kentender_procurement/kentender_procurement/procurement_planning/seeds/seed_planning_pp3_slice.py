@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 from frappe.utils import flt
 
@@ -226,27 +225,17 @@ def _ensure_core_if_needed() -> None:
 def run():
 	"""Idempotent PP3 slice: seed prerequisites, ensure data, apply template once."""
 	frappe.only_for(("System Manager", "Administrator"))
-	if not demand_consumers_live():
-		return {
-			"ok": False,
-			"skipped": True,
-			"reason": "DEMAND_MODULE_RETIRED",
-			"pack": "seed_planning_pp3_slice",
-			"message": "PP3 slice skipped — Demand Intake retired pending Demands MVP-1.",
-		}
-	_ensure_core_if_needed()
-
-	if not frappe.db.exists("Demand", {"demand_id": DEMAND_0004}):
-		frappe.throw(
-			_("Demand {0} is missing. Demand Intake seed helpers were retired.").format(DEMAND_0004),
-			title=_("Missing prerequisite"),
-		)
-
-	name4 = frappe.db.get_value("Demand", {"demand_id": DEMAND_0004}, "name")
-	_set_demand_reported_total(name4, TARGET_0004)
-
-	_ensure_demand_0011()
-	profiles = _ensure_pp3_profiles()
+	# Legacy DIA Demand codes — not re-enabled by DEM-INT-011 CONSUMERS_LIVE.
+	return {
+		"ok": False,
+		"skipped": True,
+		"reason": "LEGACY_PP3_DIA_SEED_RETIRED",
+		"pack": "seed_planning_pp3_slice",
+		"message": (
+			"PP3 slice skipped — uses retired DIA Demand Intake fixtures. "
+			"Use PP2 WORKS / Demands MVP seeds instead."
+		),
+	}
 	template_name = _ensure_pp3_template(profiles)
 	plan_name = _ensure_pp3_plan()
 

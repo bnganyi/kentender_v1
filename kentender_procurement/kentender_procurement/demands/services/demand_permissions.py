@@ -38,6 +38,7 @@ ERR_PERMISSION = "DEMAND_PERMISSION_DENIED"
 ERR_SCOPE = "DEMAND_SCOPE_DENIED"
 ERR_SEGREGATION = "DEMAND_SEGREGATION_VIOLATION"
 ERR_ADMIN_ROLE = "DEMAND_OPERATIONAL_ROLE_REQUIRED"
+ERR_STALE = "DEMAND_STALE_VERSION"
 
 
 def ensure_demand_roles() -> None:
@@ -48,9 +49,32 @@ def ensure_demand_roles() -> None:
 			)
 
 
-def throw_demand_error(code: str, message: str, *, exc: type[Exception] | None = None) -> None:
-	# Prefix stable machine codes for DIA-NFR-009 (Frappe does not put title on the Exception).
-	frappe.throw(f"{code}: {_(message)}", exc or frappe.ValidationError, title=code)
+def throw_demand_error(
+	code: str,
+	message: str,
+	*,
+	exc: type[Exception] | None = None,
+	issue: str | None = None,
+	owner: str | None = None,
+	action: str | None = None,
+) -> None:
+	"""Raise with stable code prefix (DIA-NFR-009) + optional business fields (DIA-NFR-008)."""
+	issue_text = (issue or message or "").strip()
+	owner_text = (owner or "").strip()
+	action_text = (action or "").strip()
+	frappe.flags.demand_error = {
+		"code": code,
+		"issue": issue_text,
+		"owner": owner_text,
+		"action": action_text,
+		"message": message,
+	}
+	parts = [f"{code}: {_(message)}"]
+	if owner_text:
+		parts.append(f"Owner: {owner_text}")
+	if action_text:
+		parts.append(f"Action: {action_text}")
+	frappe.throw(" | ".join(parts), exc or frappe.ValidationError, title=code)
 
 
 def operational_roles(user: str | None = None) -> set[str]:

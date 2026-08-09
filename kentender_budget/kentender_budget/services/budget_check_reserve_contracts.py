@@ -77,45 +77,52 @@ def _value_treatment_summary(line_name: str) -> str:
 	return f"{labels[0]} +{len(labels) - 1}"
 
 
+def demand_doctype_available() -> bool:
+	"""DEM-INT-009 — Budget Demand reads follow DocType availability, not CONSUMERS_LIVE."""
+	return bool(frappe.db.exists("DocType", "Demand"))
+
+
+def _demand_context_fallback(key: str = "") -> dict[str, str]:
+	code = (key or "").strip()
+	return {
+		"id": "",
+		"code": code,
+		"name": code,
+		"owner_org_unit": "",
+		"status": "",
+		"current_stage": "",
+		# Compat aliases used by reserve payload builders.
+		"demand_code": code,
+		"demand_title": code,
+	}
+
+
 def _demand_context(demand: str | None) -> dict[str, str]:
+	"""DEM-INT-009 — resolve MVP Demand by document name or demand_code."""
 	key = (demand or "").strip()
 	if not key:
-		return {
-			"demand_id": "",
-			"demand_code": "",
-			"demand_title": "",
-			"department": "",
-		}
-	# Prefer Demand DocType when present; else treat key as business code.
-	name = key
-	if not frappe.db.exists("Demand", name):
-		name = (
-			frappe.db.get_value("Demand", {"demand_code": key}, "name")
-			or frappe.db.get_value("Demand", {"demand_id": key}, "name")
-			or ""
-		)
-	if name and frappe.db.exists("Demand", name):
-		doc = frappe.get_doc("Demand", name)
-		return {
-			"demand_id": name,
-			"demand_code": (
-				getattr(doc, "demand_code", None)
-				or getattr(doc, "demand_id", None)
-				or name
-			),
-			"demand_title": (doc.title or doc.name or ""),
-			"department": (
-				getattr(doc, "owner_org_unit", None)
-				or getattr(doc, "requesting_department", None)
-				or getattr(doc, "department", None)
-				or ""
-			),
-		}
+		return _demand_context_fallback("")
+	if not demand_doctype_available():
+		return _demand_context_fallback(key)
+
+	name = key if frappe.db.exists("Demand", key) else ""
+	if not name:
+		name = frappe.db.get_value("Demand", {"demand_code": key}, "name") or ""
+	if not name:
+		return _demand_context_fallback(key)
+
+	doc = frappe.get_doc("Demand", name)
+	code = (getattr(doc, "demand_code", None) or "").strip() or name
+	title = (doc.title or "").strip() or code
 	return {
-		"demand_id": "",
-		"demand_code": key,
-		"demand_title": key,
-		"department": "",
+		"id": name,
+		"code": code,
+		"name": title,
+		"owner_org_unit": (getattr(doc, "owner_org_unit", None) or "").strip(),
+		"status": (doc.status or "").strip(),
+		"current_stage": (getattr(doc, "current_stage", None) or "").strip(),
+		"demand_code": code,
+		"demand_title": title,
 	}
 
 

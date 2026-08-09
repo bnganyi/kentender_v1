@@ -380,3 +380,45 @@ test.describe("DEM-UI-03 Returned correction state", () => {
 		await expect(cancelModal).toBeHidden();
 	});
 });
+
+test.describe("DEM-UI-02 supporting documents persistence", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+		await loginAsDemandRequester(page);
+	});
+
+	test("Upload persists after reload", async ({ page }) => {
+		await page.goto("/desk/demand-form", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+
+		await page.getByTestId("kt-dem-ui02-title").fill("DEM-UI-02 docs persistence");
+		await page.getByTestId("kt-dem-ui02-what").fill("Need for document upload proof");
+		await page.locator('[data-kt-dem-field="need_rationale"]').fill("Rationale for docs");
+		await page.locator('[data-kt-dem-field="expected_outcome"]').fill("Outcome");
+		await page.locator('[data-kt-dem-field="beneficiaries"]').fill("Beneficiaries");
+		await page.locator('[data-kt-dem-field="delivery_location"]').fill("Nairobi");
+		await page.locator('[data-kt-dem-field="required_by_date"]').fill("2027-12-31");
+		await page.locator('[data-kt-dem-item="description"]').first().fill("Lot A");
+		await page.locator('[data-kt-dem-item="requester_estimate"]').first().fill("100000");
+
+		await page.getByTestId("kt-dem-ui02-save").click();
+		await expect(page).toHaveURL(/demand-form\/.+/, { timeout: 30_000 });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+
+		const demandName = page.url().split("/demand-form/")[1]?.split("?")[0] || "";
+		expect(demandName).toBeTruthy();
+
+		await page.getByTestId("kt-dem-ui02-docs-file").setInputFiles({
+			name: "dem-ui02-support.txt",
+			mimeType: "text/plain",
+			buffer: Buffer.from("dem-ui02 playwright supporting document"),
+		});
+		await expect(page.getByTestId("kt-dem-ui02-doc-chip")).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-dem-ui02-doc-chip")).toContainText(/dem-ui02-support\.txt/i);
+
+		await page.goto(`/desk/demand-form/${demandName}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-dem-ui02-docs-list")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui02-doc-chip")).toContainText(/dem-ui02-support\.txt/i);
+	});
+});

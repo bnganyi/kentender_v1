@@ -348,8 +348,136 @@ Reject demand
 <span class="material-symbols-outlined text-[18px]" aria-hidden="true">warning</span>
 <span data-kt-dem-label="funding_exception_text">Funding exception — return to Procurement or resolve via exception flow.</span>
 </div>
+<!-- DEM-UI-07: exception variation (Insufficient Funding canonical). -->
+<div class="kt-dem-ui07 hidden" data-kt-dem-ui07-host data-testid="kt-dem-ui07-root" hidden>
+<div class="kt-dem-ui07-notice" data-testid="kt-dem-ui07-notice">
+<span class="material-symbols-outlined kt-dem-ui07-notice-icon" aria-hidden="true">warning</span>
+<div>
+<h4 class="kt-dem-ui07-notice-title mb-0" data-kt-dem-label="funding_exception_title">Funding Shortfall Detected</h4>
+<p class="kt-dem-ui07-notice-body mb-0" data-kt-dem-label="funding_exception_summary">Available funding does not cover the confirmed Demand estimate. Funding cannot be confirmed.</p>
+</div>
+</div>
+<div class="kt-dem-ui07-grid" data-testid="kt-dem-ui07-main">
+<div class="kt-dem-ui07-col-left">
+<div class="kt-dem-ui07-tiles" data-testid="kt-dem-ui07-shortfall-tiles">
+<div class="kt-dem-ui07-tile">
+<p class="kt-dem-ui07-tile-label">Confirmed Demand Estimate</p>
+<p class="kt-dem-ui07-tile-value font-data-mono" data-kt-dem-label="funding_exc_estimate_display">—</p>
+</div>
+<div class="kt-dem-ui07-tile">
+<p class="kt-dem-ui07-tile-label">Available Funding</p>
+<p class="kt-dem-ui07-tile-value font-data-mono" data-kt-dem-label="funding_exc_available_display">—</p>
+</div>
+<div class="kt-dem-ui07-tile kt-dem-ui07-tile--shortfall">
+<p class="kt-dem-ui07-tile-label">Shortfall</p>
+<p class="kt-dem-ui07-tile-value font-data-mono" data-kt-dem-label="funding_exc_shortfall_display">—</p>
+</div>
+</div>
+<section class="kt-dem-ui07-card" data-testid="kt-dem-ui07-target-allocation">
+<div class="kt-dem-ui07-card-head">
+<h3 class="kt-dem-ui07-card-title mb-0">Target Allocation</h3>
+<span class="kt-dem-ui07-badge" data-kt-dem-label="funding_exc_alloc_status" data-kt-dem-ui07-alloc-badge>Needs attention</span>
+</div>
+<div class="kt-dem-ui07-card-body">
+<div class="kt-dem-ui07-meta-grid">
+<div>
+<p class="kt-dem-ui07-meta-label">Budget</p>
+<p class="kt-dem-ui07-meta-value" data-kt-dem-label="funding_exc_budget_display">—</p>
+</div>
+<div>
+<p class="kt-dem-ui07-meta-label">Budget Line</p>
+<p class="kt-dem-ui07-meta-value" data-kt-dem-label="funding_exc_line_display">—</p>
+</div>
+<div>
+<p class="kt-dem-ui07-meta-label">Status</p>
+<span class="kt-dem-ui07-status-pill" data-testid="kt-dem-ui07-line-status">
+<span class="kt-dem-ui07-status-dot" aria-hidden="true"></span>
+<span data-kt-dem-label="funding_exc_line_status">Active</span>
+</span>
+</div>
+<div class="kt-dem-ui07-money-row">
+<div>
+<p class="kt-dem-ui07-meta-label">Available Before</p>
+<p class="kt-dem-ui07-meta-mono" data-kt-dem-label="funding_exc_avail_before_display">—</p>
+</div>
+<div>
+<p class="kt-dem-ui07-meta-label">Proposed Allocation</p>
+<p class="kt-dem-ui07-meta-mono" data-kt-dem-label="funding_exc_proposed_display">—</p>
+</div>
+<div>
+<p class="kt-dem-ui07-meta-label kt-dem-ui07-meta-label--danger">Unfunded Amount</p>
+<p class="kt-dem-ui07-meta-mono kt-dem-ui07-meta-mono--danger" data-kt-dem-label="funding_exc_unfunded_display">—</p>
+</div>
+</div>
+</div>
+<p class="kt-dem-ui07-rec-empty hidden mb-0" data-kt-dem-ui07-rec-empty hidden>
+No target allocation is available. Select another eligible line via Adjust, or Return to Procurement.
+</p>
+</div>
+</section>
+<section class="kt-dem-ui07-card hidden" data-kt-dem-ui07-candidates-card data-testid="kt-dem-ui07-candidates" hidden>
+<div class="kt-dem-ui07-card-head">
+<h3 class="kt-dem-ui07-card-title mb-0">Eligible funding candidates</h3>
+</div>
+<div class="kt-dem-ui07-card-body">
+<ul class="kt-dem-ui07-candidates-list mb-0" data-kt-dem-ui07-candidates-list></ul>
+</div>
+</section>
+</div>
+<div class="kt-dem-ui07-col-right">
+<section class="kt-dem-ui07-card" data-testid="kt-dem-ui07-resolution">
+<div class="kt-dem-ui07-card-head">
+<h3 class="kt-dem-ui07-card-title mb-0">Resolution Required</h3>
+</div>
+<div class="kt-dem-ui07-card-body">
+<p class="kt-dem-ui07-resolution-help mb-0">Select an action to resolve the funding shortfall.</p>
+<div class="kt-dem-ui07-resolution-list" role="radiogroup" aria-label="Funding exception resolution">
+<label class="kt-dem-ui07-radio" data-testid="kt-dem-ui07-res-return">
+<input type="radio" name="kt-dem-ui07-resolution" value="return" data-kt-dem-field="funding_exc_resolution"/>
+<span>Return for scope or estimate revision</span>
+</label>
+<label class="kt-dem-ui07-radio" data-testid="kt-dem-ui07-res-select-another" data-kt-dem-ui07-res-select-another>
+<input type="radio" name="kt-dem-ui07-resolution" value="select_another" data-kt-dem-field="funding_exc_resolution"/>
+<span>Select another eligible funding allocation</span>
+</label>
+<label class="kt-dem-ui07-radio is-disabled" data-testid="kt-dem-ui07-res-split">
+<input type="radio" name="kt-dem-ui07-resolution" value="split" disabled/>
+<span>Use split funding</span>
+<span class="kt-dem-ui07-mvp-hint">Not available in MVP 1</span>
+</label>
+<label class="kt-dem-ui07-radio is-disabled" data-testid="kt-dem-ui07-res-external">
+<input type="radio" name="kt-dem-ui07-resolution" value="external" disabled/>
+<span>Record external Budget action required</span>
+<span class="kt-dem-ui07-mvp-hint">Not available in MVP 1</span>
+</label>
+</div>
+</div>
+</section>
+<section class="kt-dem-ui07-card kt-dem-ui07-actions-card" data-testid="kt-dem-ui07-actions">
+<div class="kt-dem-ui07-card-body">
+<label class="kt-dem-ui07-note-label" for="kt-dem-ui07-return-note">
+Return Note <span class="kt-dem-ui07-required" aria-hidden="true">*</span>
+</label>
+<textarea id="kt-dem-ui07-return-note" class="kt-dem-ui07-note" rows="4" data-kt-dem-field="funding_exc_return_note" data-testid="kt-dem-ui07-return-note" placeholder="Describe the shortfall and required revision…"></textarea>
+<div class="kt-dem-ui07-action-stack">
+<button type="button" class="kt-dem-ui07-btn kt-dem-ui07-btn--primary" data-kt-dem-action="budget-exc-return" data-testid="kt-dem-ui07-return" disabled>
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">keyboard_return</span>
+Return to Procurement
+</button>
+<button type="button" class="kt-dem-ui07-btn kt-dem-ui07-btn--secondary" data-kt-dem-action="budget-exc-save-note" data-testid="kt-dem-ui07-save-note">
+Save resolution note
+</button>
+<button type="button" class="kt-dem-ui07-btn kt-dem-ui07-btn--disabled" data-kt-dem-action="budget-exc-confirm" data-testid="kt-dem-ui07-confirm" disabled>
+Confirm funding
+</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
 <!-- DEM-UI-06: left col sizes to content; Summary grows into leftover space (Stitch), Strategy never shrinks/clips. -->
-<div class="kt-dem-budget-stack" data-testid="kt-dem-ui06-main">
+<div class="kt-dem-budget-stack" data-kt-dem-ui06-routine data-testid="kt-dem-ui06-main">
 <div class="kt-dem-budget-grid">
 <div class="kt-dem-budget-col-left">
 <section class="kt-dem-ui06-card kt-dem-ui06-summary bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden" data-testid="kt-dem-ui06-summary">
@@ -473,7 +601,9 @@ No system recommendation is available. Use Adjust recommendation below, return t
 </p>
 </div>
 </section>
-<!-- Separate section — not nested under System-recommended allocation. -->
+</div>
+</div>
+<!-- Sibling of grid — visible in DEM-UI-07 when Select another is chosen. -->
 <section class="kt-dem-ui06-card kt-dem-ui06-adjust-section bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden" data-testid="kt-dem-ui06-adjust-panel" data-kt-dem-funding-adjust-panel>
 <div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center gap-2">
 <span class="material-symbols-outlined text-primary text-[20px]" aria-hidden="true">tune</span>
@@ -500,8 +630,6 @@ Apply adjustment
 </button>
 </div>
 </section>
-</div>
-</div>
 <section class="kt-dem-ui06-card kt-dem-ui06-signoff bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden" data-testid="kt-dem-ui06-signoff">
 <label class="flex items-start gap-3 cursor-pointer mb-6" data-testid="kt-dem-ui06-confirm-checkbox-label">
 <span class="kt-dem-ui06-checkbox-wrap relative flex items-center justify-center shrink-0 mt-1">
@@ -530,6 +658,190 @@ Confirm funding
 </div>
 </section>
 </div>
+</div>
+
+<!-- DEM-UI-08 Final Approval -->
+<div class="kt-dem-final hidden" data-kt-dem-final-host data-testid="kt-dem-ui08-root" hidden>
+<div class="kt-dem-final-role-banner hidden" data-kt-dem-final-role-banner data-testid="kt-dem-ui08-role-banner" hidden>
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span>
+<span>You can view this Final Approval, but only a Procurement Approval Authority can approve, return, or reject.</span>
+</div>
+<section class="kt-dem-ui08-readiness" data-testid="kt-dem-ui08-readiness">
+<h3 class="kt-dem-ui08-readiness-title mb-0">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">verified_user</span>
+Readiness Summary
+</h3>
+<div class="kt-dem-ui08-readiness-grid">
+<div class="kt-dem-ui08-ready-item" data-kt-dem-ui08-ready="business">
+<span class="material-symbols-outlined kt-dem-ui08-ready-icon" aria-hidden="true">check_circle</span>
+<div>
+<p class="kt-dem-ui08-ready-label mb-0">Business review</p>
+<p class="kt-dem-ui08-ready-detail mb-0" data-kt-dem-label="fa_ready_business">—</p>
+</div>
+</div>
+<div class="kt-dem-ui08-ready-item" data-kt-dem-ui08-ready="enrichment">
+<span class="material-symbols-outlined kt-dem-ui08-ready-icon" aria-hidden="true">check_circle</span>
+<div>
+<p class="kt-dem-ui08-ready-label mb-0">Procurement enrichment</p>
+<p class="kt-dem-ui08-ready-detail mb-0" data-kt-dem-label="fa_ready_enrichment">—</p>
+</div>
+</div>
+<div class="kt-dem-ui08-ready-item" data-kt-dem-ui08-ready="budget">
+<span class="material-symbols-outlined kt-dem-ui08-ready-icon" aria-hidden="true">check_circle</span>
+<div>
+<p class="kt-dem-ui08-ready-label mb-0">Budget confirmation</p>
+<p class="kt-dem-ui08-ready-detail mb-0" data-kt-dem-label="fa_ready_budget">—</p>
+</div>
+</div>
+</div>
+<div class="kt-dem-ui08-blocking">
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span>
+<span class="kt-dem-ui08-blocking-label">Blocking issues:</span>
+<span data-kt-dem-label="fa_blocking_issues">None</span>
+</div>
+</section>
+<div class="kt-dem-ui08-cards" data-testid="kt-dem-ui08-main">
+<section class="kt-dem-ui08-card" data-testid="kt-dem-ui08-demand-summary">
+<div class="kt-dem-ui08-card-head">
+<span class="material-symbols-outlined" aria-hidden="true">description</span>
+<h2 class="kt-dem-ui08-card-title mb-0">1. Demand Summary</h2>
+</div>
+<div class="kt-dem-ui08-card-body">
+<div>
+<p class="kt-dem-ui08-meta-label">Need</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_need">—</p>
+</div>
+<div>
+<p class="kt-dem-ui08-meta-label">Owning Unit</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_owning_unit">—</p>
+</div>
+<div class="kt-dem-ui08-meta-row">
+<div>
+<p class="kt-dem-ui08-meta-label">Required By</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_required_by">—</p>
+</div>
+<div>
+<p class="kt-dem-ui08-meta-label">Route</p>
+<span class="kt-dem-ui08-route-pill" data-kt-dem-label="fa_route">Standard</span>
+</div>
+</div>
+<div class="kt-dem-ui08-estimate">
+<p class="kt-dem-ui08-meta-label">Confirmed Estimate</p>
+<p class="kt-dem-ui08-estimate-value font-data-mono" data-kt-dem-label="fa_estimate_display">—</p>
+</div>
+</div>
+</section>
+<section class="kt-dem-ui08-card" data-testid="kt-dem-ui08-strategy">
+<div class="kt-dem-ui08-card-head">
+<span class="material-symbols-outlined" aria-hidden="true">track_changes</span>
+<h2 class="kt-dem-ui08-card-title mb-0">2. Strategy &amp; Public Value</h2>
+</div>
+<div class="kt-dem-ui08-card-body">
+<div>
+<p class="kt-dem-ui08-meta-label">Primary Target</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_primary_target">—</p>
+</div>
+<div>
+<p class="kt-dem-ui08-meta-label">Commitments (<span data-kt-dem-label="fa_pvc_applicable">0</span> Applicable)</p>
+<div class="kt-dem-ui08-pvc-bar" aria-hidden="true">
+<div class="kt-dem-ui08-pvc-addressed" data-kt-dem-fa-pvc-bar="addressed" style="width:0%"></div>
+<div class="kt-dem-ui08-pvc-carried" data-kt-dem-fa-pvc-bar="carried" style="width:0%"></div>
+</div>
+<div class="kt-dem-ui08-pvc-legend">
+<span class="kt-dem-ui08-pvc-legend-item is-addressed"><span class="kt-dem-ui08-dot"></span><span data-kt-dem-label="fa_pvc_addressed">0 Addressed</span></span>
+<span class="kt-dem-ui08-pvc-legend-item is-carried"><span class="kt-dem-ui08-dot"></span><span data-kt-dem-label="fa_pvc_carried">0 Carried to Planning</span></span>
+</div>
+</div>
+<button type="button" class="kt-dem-ui08-view-details" data-kt-dem-action="open-details-drawer" data-testid="kt-dem-ui08-view-details">
+View details
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span>
+</button>
+</div>
+</section>
+<section class="kt-dem-ui08-card" data-testid="kt-dem-ui08-funding">
+<div class="kt-dem-ui08-card-head">
+<span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+<h2 class="kt-dem-ui08-card-title mb-0">3. Funding Confirmation</h2>
+</div>
+<div class="kt-dem-ui08-card-body">
+<div>
+<p class="kt-dem-ui08-meta-label">Budget Line</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_budget_line_display">—</p>
+</div>
+<div class="kt-dem-ui08-meta-row">
+<div>
+<p class="kt-dem-ui08-meta-label">Confirmed Allocation</p>
+<p class="kt-dem-ui08-meta-value font-data-mono" data-kt-dem-label="fa_alloc_display">—</p>
+</div>
+<div>
+<p class="kt-dem-ui08-meta-label">Budget Officer</p>
+<p class="kt-dem-ui08-meta-value" data-kt-dem-label="fa_bo_label">—</p>
+</div>
+</div>
+<div>
+<p class="kt-dem-ui08-meta-label">Available after reservation</p>
+<div class="kt-dem-ui08-avail-row">
+<div class="kt-dem-ui08-avail-track" aria-hidden="true"><div class="kt-dem-ui08-avail-fill" style="width:95%"></div></div>
+<span class="font-data-mono" data-kt-dem-label="fa_avail_after_display">—</span>
+</div>
+</div>
+<div class="kt-dem-ui08-recheck">
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span>
+<p class="mb-0" data-kt-dem-label="fa_recheck_note">Funds will be rechecked on approval.</p>
+</div>
+</div>
+</section>
+<section class="kt-dem-ui08-card" data-testid="kt-dem-ui08-planning">
+<div class="kt-dem-ui08-card-head">
+<span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+<h2 class="kt-dem-ui08-card-title mb-0">4. Planning Hand-off</h2>
+</div>
+<div class="kt-dem-ui08-card-body">
+<div>
+<p class="kt-dem-ui08-meta-label">Status on approval</p>
+<span class="kt-dem-ui08-planning-pill">
+<span class="kt-dem-ui08-planning-dot" aria-hidden="true"></span>
+<span data-kt-dem-label="fa_planning_status">Planning Ready</span>
+</span>
+</div>
+<div class="kt-dem-ui08-planning-notes">
+<div class="kt-dem-ui08-planning-note">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">account_tree</span>
+<p class="mb-0" data-kt-dem-label="fa_reservation_note">Reservation identity carries forward to Planning and Tendering</p>
+</div>
+<div class="kt-dem-ui08-planning-note">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">pending_actions</span>
+<p class="mb-0" data-kt-dem-label="fa_method_note">Procurement method: Determined in Planning</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<section class="kt-dem-ui08-decision" data-testid="kt-dem-ui08-decision">
+<div class="kt-dem-ui08-decision-head">
+<h2 class="kt-dem-ui08-decision-title mb-0">Final Decision</h2>
+<p class="kt-dem-ui08-decision-lead mb-0">Review all information above before authorizing this demand.</p>
+</div>
+<div class="kt-dem-ui08-decision-body">
+<label class="kt-dem-ui08-checkbox-label" data-testid="kt-dem-ui08-approve-checkbox-label">
+<span class="kt-dem-ui08-checkbox-wrap relative flex items-center justify-center shrink-0">
+<input class="kt-dem-ui08-checkbox peer" type="checkbox" data-kt-dem-field="fa_approve_checkbox" data-testid="kt-dem-ui08-approve-checkbox"/>
+<span class="material-symbols-outlined kt-dem-ui08-checkbox-check" aria-hidden="true">check</span>
+</span>
+<span class="kt-dem-ui08-checkbox-text" data-kt-dem-label="fa_approve_checkbox_text">I approve this Demand for Procurement Planning and authorise the system to reserve funding against the confirmed Budget allocation</span>
+</label>
+<div class="kt-dem-ui08-actions" data-testid="kt-dem-ui08-footer">
+<div class="kt-dem-ui08-actions-secondary">
+<button type="button" class="kt-dem-ui08-btn kt-dem-ui08-btn--secondary" data-kt-dem-action="final-return" data-testid="kt-dem-ui08-return">Return</button>
+<button type="button" class="kt-dem-ui08-btn kt-dem-ui08-btn--danger" data-kt-dem-action="final-reject" data-testid="kt-dem-ui08-reject">Reject</button>
+</div>
+<button type="button" class="kt-dem-ui08-btn kt-dem-ui08-btn--primary" data-kt-dem-action="final-approve" data-testid="kt-dem-ui08-approve" disabled>
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">check_circle</span>
+Approve &amp; Reserve Funding
+</button>
+</div>
+</div>
+</section>
 </div>
 
 <footer class="kt-dem-enrichment-footer hidden" data-kt-dem-enrichment-footer data-testid="kt-dem-ui05-footer" hidden>

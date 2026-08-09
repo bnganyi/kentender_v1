@@ -2,8 +2,8 @@
 
 **Document ID:** DEMAND-MVP1-TEARDOWN-INV-1.0  
 **Branch:** `mvp1/strategy-teardown`  
-**Date:** 7 August 2026  
-**Scope:** Preparatory teardown only (delete legacy Demand Intake and Approval; no Demands MVP-1 domain yet)  
+**Date:** 7 August 2026 (header/§6 refreshed 8 August 2026)  
+**Scope:** Historical preparatory teardown inventory (delete legacy Demand Intake and Approval). Demands MVP-1 is now shipped — see §6.  
 **Authority:** DEMAND-MVP1-REQ-1.1 §5.1 / §17; Cursor Implementation Prompt (clean rebuild, no dual-write)
 
 App boundary: `apps/kentender_v1/kentender_procurement/kentender_procurement/demand_intake/` (bench symlink `apps/kentender_procurement`).
@@ -142,17 +142,21 @@ Before DocType deletion on `kentender.midas.com`:
 
 ---
 
-## 6. Status after preparatory teardown
+## 6. Status (post-rebuild refresh)
 
-**Preparatory teardown completed** — legacy Demand Intake and Approval domain removed on `kentender.midas.com`.
+**Teardown complete + Demands MVP-1 shipped (2026-08-08).**
 
-Evidence (7 August 2026):
+Preparatory teardown evidence (7 August 2026) — historical record of DIA removal:
 
-- DocTypes `Demand` / `Demand Item` / `Demand Value Treatment` absent
-- Pages `demand-hub` / `demand-workbench` / `create-demand` absent
-- Workspace `Demand Intake and Approval` and Module Def `Demand Intake` absent
+- Legacy DIA DocTypes / Pages `demand-hub` / `demand-workbench` / `create-demand` / Workspace / Module Def removed
 - `kentender_procurement.procurement_lifecycle.tests.test_demand_module_retired_gate` — 2/2 OK
 - `make ui-workspace-pattern-gate` — no-op (DIA pattern lock retired)
 - `make ui-create-demand-strategy-gate` — no-op (create-demand Playwright retired)
 
-**This is not Demands MVP-1 Done.** Prompt A/B rebuild, new DocTypes, DEM-UI Stitch ports, and Contract v2.1 Demand fixtures remain follow-on work.
+Post-rebuild (live under `kentender_procurement/.../demands/`):
+
+- MVP Demand DocTypes, services, Desk pages (`demands-workspace`, `demand-form`, `demand-review`, `demand-detail`, `demand-performance`), and `KENTENDER_MVP_V1` Demands fixtures are live
+- Consumer rewires (Planning / Home / handoff / Strategy PVC / Budget context) and legacy-absence evidence are Done
+- Canonical status: [`04_Demands_MVP1_Implementation_Tracker.md`](04_Demands_MVP1_Implementation_Tracker.md) — **Closed — Demands MVP-1 Done**
+
+Do not revive DIA labels, Pending HoD/Finance workflow, or retired Desk routes.

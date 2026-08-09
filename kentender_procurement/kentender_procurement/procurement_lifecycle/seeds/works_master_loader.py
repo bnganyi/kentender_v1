@@ -72,7 +72,7 @@ WORKS_BASE_STEP_ROWS: Final[tuple[dict[str, Any], ...]] = (
 		"step_key": "demand",
 		"label": "Need Approved",
 		"status_category": "Completed",
-		"owner_module": "Demand Intake and Approval",
+		"owner_module": "Demands",
 		"source_object_type": "Demand",
 		"source_object_code": "DEM-MOH-2026-001",
 		"handoff_code": "DEMAPP-MOH-2026-001",
@@ -233,7 +233,7 @@ def _upstream_warnings() -> list[str]:
 		"Procuring Entity", {"entity_code": "MOH"}
 	):
 		out.append("Procuring Entity PE-MOH (or MOH) not found — core prerequisite seed may be missing.")
-	if not frappe.db.exists("Demand", {"demand_id": "DEM-MOH-2026-001"}):
+	if not frappe.db.exists("Demand", {"demand_code": "DEM-MOH-2026-001"}):
 		out.append("Demand DEM-MOH-2026-001 not found — demand seed not aligned (LV-R2-001-06).")
 	if not frappe.db.exists("Procurement Package", {"package_code": "PKG-MOH-2026-001"}):
 		out.append("Procurement Package PKG-MOH-2026-001 not found — planning seed not aligned (LV-R2-001-07).")

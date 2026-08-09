@@ -65,6 +65,14 @@ DEMAND_TRANSITIONS: dict[tuple[str, str, str], TransitionResult] = {
 		"Returned", "Request Preparation"
 	),
 	("In Review", "Procurement Enrichment", "Reject"): TransitionResult("Rejected", "Complete"),
+	# After Budget Officer Return: PAA re-enriches while status is Returned.
+	("Returned", "Procurement Enrichment", "Send for budget confirmation"): TransitionResult(
+		"In Review", "Budget Confirmation"
+	),
+	("Returned", "Procurement Enrichment", "Return"): TransitionResult(
+		"Returned", "Request Preparation"
+	),
+	("Returned", "Procurement Enrichment", "Reject"): TransitionResult("Rejected", "Complete"),
 	("In Review", "Budget Confirmation", "Confirm funding"): TransitionResult(
 		"In Review", "Final Approval"
 	),
@@ -77,6 +85,12 @@ DEMAND_TRANSITIONS: dict[tuple[str, str, str], TransitionResult] = {
 	),
 	("In Review", "Final Approval", "Reject"): TransitionResult("Rejected", "Complete"),
 	("In Review", "Final Approval", "Cancel"): TransitionResult("Cancelled", "Complete"),
+	("Returned", "Budget Confirmation", "Confirm funding"): TransitionResult(
+		"In Review", "Final Approval"
+	),
+	("Returned", "Budget Confirmation", "Return"): TransitionResult(
+		"Returned", "Procurement Enrichment"
+	),
 }
 
 

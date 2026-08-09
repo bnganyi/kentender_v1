@@ -20,13 +20,16 @@ kentender_procurement.ui_fixtures.demands_workspace = function () {
 <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-1">Demands</h1>
 <p class="font-body-md text-body-md text-on-surface-variant">Capture, review and fund business needs before Procurement Planning.</p>
 </div>
-<button type="button" class="bg-primary text-on-primary font-body-md text-body-md font-medium py-2.5 px-5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shrink-0 shadow-sm whitespace-nowrap" data-kt-dem-action="create" data-testid="kt-dem-ui01-create">
-<span class="material-symbols-outlined text-[20px]">add</span>
+<div class="flex items-center gap-3 shrink-0" data-testid="kt-dem-ui01-header-actions">
+<a href="/desk/demand-performance" class="font-label-caps text-label-caps text-primary hover:underline whitespace-nowrap py-2.5 px-2" data-testid="kt-dem-ui01-performance-link">Demand performance</a>
+<button type="button" class="bg-primary text-on-primary font-body-md text-body-md font-medium py-2.5 px-5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap" data-kt-dem-action="create" data-testid="kt-dem-ui01-create" aria-label="Create demand">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">add</span>
 Create demand
 </button>
 </div>
-<div class="flex flex-wrap items-center gap-x-8 gap-y-3 py-3 border-b border-outline-variant w-full overflow-x-auto pb-4" data-testid="kt-dem-ui01-summary">
-<button type="button" class="flex items-center gap-2 group cursor-pointer" data-kt-dem-queue="my_drafts" data-testid="kt-dem-ui01-queue-my_drafts">
+</div>
+<div class="flex flex-wrap items-center gap-x-8 gap-y-3 py-3 border-b border-outline-variant w-full overflow-x-auto pb-4" data-testid="kt-dem-ui01-summary" role="navigation" aria-label="Demand queues">
+<button type="button" class="flex items-center gap-2 group cursor-pointer" data-kt-dem-queue="my_drafts" data-testid="kt-dem-ui01-queue-my_drafts" aria-label="My drafts queue">
 <span class="w-2 h-2 rounded-full bg-outline" aria-hidden="true"></span>
 <span class="font-label-caps text-label-caps text-on-surface-variant group-hover:text-primary transition-colors">My drafts — <span data-kt-dem-count="my_drafts">0</span></span>
 </button>
@@ -111,8 +114,7 @@ ${footerHtml}
 <div class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mb-4">
 <span class="material-symbols-outlined text-outline text-[32px]">filter_list_off</span>
 </div>
-<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">No Demands match these filters</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mb-6 max-w-md">Try adjusting your search criteria, selecting a different entity, or clearing active filters to see more results.</p>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">No Demands match these filters.</h3>
 <button type="button" class="bg-surface-container-low text-on-surface font-label-caps text-label-caps py-2 px-4 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors" data-kt-dem-action="clear-filters" data-testid="kt-dem-ui01-empty-clear">
 Clear filters
 </button>

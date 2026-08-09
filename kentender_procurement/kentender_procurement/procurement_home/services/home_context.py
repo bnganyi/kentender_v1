@@ -9,9 +9,11 @@ import re
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
 
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_procurement.procurement_planning.permissions import pp_scope
 
 _YEAR_RE = re.compile(r"(\d{4})")
@@ -56,7 +58,7 @@ def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
 		# Unrestricted users: prefer operational entities over demo PE clutter.
 		preferred = ["PE-MOH", "PE-MOE"]
 		active: set[str] = set()
-		if demand_consumers_live():
+		if demand_doctype_available():
 			active = set(
 				frappe.get_all("Demand", pluck="procuring_entity", distinct=True, limit=50)
 				or []

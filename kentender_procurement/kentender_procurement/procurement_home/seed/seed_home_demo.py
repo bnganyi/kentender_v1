@@ -11,8 +11,11 @@ Does not seed Home-specific totals — figures are computed by Home services.
 from __future__ import annotations
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import add_days, now_datetime
+
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 
 
 def _ensure_pe() -> str:
@@ -30,27 +33,24 @@ def seed_procurement_home_demo() -> dict:
 	pe = _ensure_pe()
 	summary: dict = {"procuring_entity": pe, "demands": [], "notes": []}
 
-	# DIA Demand domain retired — Home demo no longer seeds or queries Demand rows.
-	if demand_consumers_live():
+	if demand_doctype_available():
 		pending = frappe.get_all(
 			"Demand",
 			filters={
 				"procuring_entity": ["in", [pe, "MOH", "PE-MOH"]],
-				"status": "Pending HoD Approval",
+				"status": "In Review",
 			},
-			pluck="demand_id",
+			pluck="demand_code",
 			limit=3,
 		)
-		summary["demands"] = pending
-		if not pending:
+		summary["demands"] = [c for c in pending if c]
+		if not summary["demands"]:
 			summary["notes"].append(
-				"No Pending HoD demands found — Home actions may be empty."
+				"No In Review Demands found — Home demand actions may be empty."
 			)
 	else:
 		summary["demands"] = []
-		summary["notes"].append(
-			"Demand Intake retired — Demands MVP-1 rebuild pending; Home demand actions empty."
-		)
+		summary["notes"].append("Demand DocType unavailable — Home demand actions empty.")
 
 	tm_count = 0
 	if frappe.db.exists("DocType", "TM2 Tender"):

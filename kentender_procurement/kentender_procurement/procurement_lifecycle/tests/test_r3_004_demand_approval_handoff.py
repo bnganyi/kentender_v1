@@ -112,7 +112,7 @@ class TestR3004DemandApprovalHandoff(IntegrationTestCase):
         )
         self.assertIsNotNone(card, "DEMAPP card must exist in DB")
         self.assertEqual(card["handoff_title"], "Demand Approval Certificate")
-        self.assertEqual(card["source_module"], "Demand Intake and Approval")
+        self.assertEqual(card["source_module"], "Demands")
         self.assertEqual(card["target_module"], "Procurement Planning")
         self.assertEqual(card["source_object_type"], "Demand")
         self.assertEqual(card["source_object_code"], _DEMAND_CODE)
@@ -170,7 +170,7 @@ class TestR3004DemandApprovalHandoff(IntegrationTestCase):
         )
         self.assertIsNotNone(demand_link, "Must have a Demand evidence link")
         self.assertEqual(demand_link["object_code"], _DEMAND_CODE)
-        self.assertEqual(demand_link["module"], "Demand Intake and Approval")
+        self.assertEqual(demand_link["module"], "Demands")
         self.assertTrue(demand_link.get("route", "").strip(), "Demand link route must be non-empty")
 
         approval_link = next(

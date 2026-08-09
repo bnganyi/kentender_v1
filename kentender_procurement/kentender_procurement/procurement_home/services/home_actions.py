@@ -9,10 +9,15 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import getdate
 
+from kentender_procurement.demands.services.demand_lifecycle import (
+	list_demands_for_workspace,
+)
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_procurement.procurement_planning.pp2_constants import PKG_IN_REVIEW, PKG_RETURNED
 
 ACTION_LIMIT = 8
@@ -51,91 +56,60 @@ def _fmt_due(due: date | None) -> str | None:
 
 
 def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[str, Any]]:
-	roles = _roles(user)
+	if not demand_doctype_available():
+		return []
+
+	payload = list_demands_for_workspace(user=user, filters={"limit": 500})
+	aliases = set(pe_aliases(procuring_entity))
 	items: list[dict[str, Any]] = []
-	filters: dict[str, Any] = {"procuring_entity": ["in", pe_aliases(procuring_entity)]}
-	fields = [
-		"name",
-		"demand_id",
-		"title",
-		"status",
-		"return_reason",
-		"requested_by",
-		"modified",
-		"finance_approved_at",
-	]
-
-	if not demand_consumers_live():
-		return items
-
-	if "Department Approver" in roles or "System Manager" in roles or user == "Administrator":
-		rows = frappe.get_all(
-			"Demand",
-			filters={**filters, "status": "Pending HoD Approval"},
-			fields=fields,
-			limit=20,
-		)
-		for r in rows:
-			items.append(
-				{
-					"title": r.get("title") or r.get("demand_id") or r.name,
-					"reference": r.get("demand_id") or r.name,
-					"stage": "Demand",
-					"action_required": "Approval required",
-					"urgency": "Due soon",
-					"due_date": None,
-					"action_label": "Review",
-					"target_url": f"/desk/demand-workbench/{r.name}",
-					"_due_date": None,
-					"_modified": r.get("modified"),
-				}
-			)
-
-	if "Finance Reviewer" in roles or "Budget Officer" in roles or "System Manager" in roles or user == "Administrator":
-		rows = frappe.get_all(
-			"Demand",
-			filters={**filters, "status": "Pending Finance Approval"},
-			fields=fields,
-			limit=20,
-		)
-		for r in rows:
-			items.append(
-				{
-					"title": r.get("title") or r.get("demand_id") or r.name,
-					"reference": r.get("demand_id") or r.name,
-					"stage": "Demand",
-					"action_required": "Finance approval required",
-					"urgency": "Due soon",
-					"due_date": None,
-					"action_label": "Review",
-					"target_url": f"/desk/demand-workbench/{r.name}",
-					"_due_date": None,
-					"_modified": r.get("modified"),
-				}
-			)
-
-	# Returned to owner
-	rows = frappe.get_all(
-		"Demand",
-		filters={**filters, "status": "Draft", "requested_by": user},
-		fields=fields,
-		limit=20,
-	)
-	for r in rows:
-		if not (r.get("return_reason") or "").strip():
+	review_stages = {
+		"Business Review",
+		"Procurement Enrichment",
+		"Budget Confirmation",
+		"Final Approval",
+	}
+	for row in payload.get("rows") or []:
+		if row.get("procuring_entity") not in aliases:
 			continue
+		status = (row.get("status") or "").strip()
+		stage = (row.get("current_stage") or "").strip()
+		is_requester_work = (
+			row.get("requester") == user
+			and stage == "Request Preparation"
+			and status in {"Draft", "Returned"}
+		)
+		is_assigned_review = (
+			row.get("current_owner") == user
+			and stage in review_stages
+			and status in {"In Review", "Returned"}
+		)
+		if not is_requester_work and not is_assigned_review:
+			continue
+
+		due = getdate(row.get("required_by_date")) if row.get("required_by_date") else None
+		returned = status == "Returned"
 		items.append(
 			{
-				"title": r.get("title") or r.get("demand_id") or r.name,
-				"reference": r.get("demand_id") or r.name,
-				"stage": "Demand",
-				"action_required": "Returned for correction",
-				"urgency": "Returned",
-				"due_date": None,
-				"action_label": "Continue",
-				"target_url": f"/desk/demand-workbench/{r.name}",
-				"_due_date": None,
-				"_modified": r.get("modified"),
+				"title": row.get("title") or row.get("demand_code") or row.name,
+				"reference": row.get("demand_code") or row.name,
+				"stage": stage or "Demand",
+				"action_required": (
+					"Returned for correction"
+					if returned
+					else "Continue draft"
+					if is_requester_work
+					else f"{stage} required"
+				),
+				"urgency": "Returned" if returned else _urgency(due, today),
+				"due_date": _fmt_due(due),
+				"action_label": "Continue" if is_requester_work else "Review",
+				"target_url": (
+					f"/desk/demand-form/{row.name}"
+					if is_requester_work
+					else f"/desk/demand-review/{row.name}"
+				),
+				"_due_date": due,
+				"_modified": row.get("modified"),
 			}
 		)
 	return items
@@ -265,6 +239,6 @@ def get_home_actions(
 		"ok": True,
 		"items": capped,
 		"pending_count": len(capped),
-		"view_all_url": "/desk/demand-hub",
+		"view_all_url": "/desk/demands-workspace",
 		"empty": len(capped) == 0,
 	}

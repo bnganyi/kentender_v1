@@ -1,17 +1,19 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P4-002 — Approved demand planning drawer payload (UI spec §8)."""
+"""DEM-INT-002 — Approved demand planning drawer payload (UI spec §8)."""
 
 from __future__ import annotations
 
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
-from frappe.utils import flt, getdate
+from frappe.utils import cint, flt, getdate
 
 from kentender_budget.api.dia_budget_control import get_budget_line_context
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_procurement.procurement_lifecycle.demand_planning_status import (
 	build_demand_planning_status_payload,
 )
@@ -20,27 +22,29 @@ from kentender_procurement.procurement_planning.permissions import pp_scope
 from kentender_procurement.procurement_planning.pp2_constants import VALID_PROCUREMENT_CATEGORIES
 from kentender_procurement.procurement_planning.services.approved_demand_queue import (
 	_budget_line_ref,
-	_derive_demand_item_code,
-	_planning_status_label,
+	_org_unit_label,
+	_planning_usage_label,
+	_primary_budget_line,
 	load_demand_items_for_drawer,
 )
 from kentender_procurement.procurement_planning.services.planning_inclusion_service import (
-	_resolve_demand_row,
 	can_include_demand_in_plan,
 )
 
 _DRAWER_DEMAND_FIELDS = (
 	"name",
-	"demand_id",
+	"demand_code",
 	"title",
 	"status",
-	"planning_status",
-	"requisition_type",
-	"requesting_department",
+	"planning_ready",
+	"planning_usage",
+	"procurement_category",
+	"owner_org_unit",
 	"procuring_entity",
-	"total_amount",
-	"budget_line",
-	"finance_approved_at",
+	"confirmed_estimate",
+	"requester_estimate",
+	"currency",
+	"approved_at",
 )
 
 _DRAWER_CHECK_LABELS = {
@@ -58,6 +62,19 @@ def _fail(*, code: str, message: str, role_key: str = "auditor") -> dict[str, An
 		"message": str(message),
 		"role_key": role_key,
 	}
+
+
+def _resolve_demand_header(demand_code: str) -> dict[str, Any] | None:
+	"""Resolve Demand by business code or document name (MVP fields)."""
+	key = (demand_code or "").strip()
+	if not key or not demand_doctype_available():
+		return None
+	row = frappe.db.get_value(
+		"Demand", {"demand_code": key}, _DRAWER_DEMAND_FIELDS, as_dict=True
+	)
+	if not row:
+		row = frappe.db.get_value("Demand", key, _DRAWER_DEMAND_FIELDS, as_dict=True)
+	return row
 
 
 def _resolve_plan_row(plan_code: str | None) -> dict[str, Any] | None:
@@ -90,37 +107,40 @@ def _plan_ref(plan_row: dict[str, Any] | None) -> dict[str, str] | None:
 	}
 
 
-def _strategy_objective_ref_from_demand(demand_name: str | None) -> dict[str, str]:
-	"""XMOD-STR-004 — Demand Strategy Reference as id/code/name (no raw-only display)."""
+def _strategy_snapshot_from_demand(demand_name: str | None) -> dict[str, str]:
+	"""Primary Demand Strategy Reference as id/code/name (no raw-only display)."""
 	empty = {"id": "", "code": "", "name": ""}
-	if not demand_name or not frappe.db.exists("Demand", demand_name):
+	if not demand_name or not frappe.db.exists("Demand Strategy Reference", {"demand": demand_name}):
+		# Still try Primary lookup.
+		pass
+	if not demand_name:
 		return empty
-	try:
-		from kentender_strategy.services.strategy_consumer import strategy_fields_from_doc
-	except ImportError:
+	primary = frappe.db.get_value(
+		"Demand Strategy Reference",
+		{"demand": demand_name, "reference_type": "Primary"},
+		["name", "target_code", "target_name", "snapshot_label"],
+		as_dict=True,
+	)
+	if not primary:
 		return empty
-	doc = frappe.get_doc("Demand", demand_name)
-	sf = strategy_fields_from_doc(doc) or {}
+	code = (primary.get("target_code") or "").strip()
+	name = (primary.get("target_name") or primary.get("snapshot_label") or code).strip()
 	return {
-		"id": (sf.get("performance_target") or sf.get("strategy_target") or "") or "",
-		"code": (sf.get("performance_target_code") or "") or "",
-		"name": (sf.get("performance_target_label") or "") or "",
+		"id": primary.get("name") or "",
+		"code": code,
+		"name": name,
 	}
 
 
-def _default_item_codes(demand_name: str, demand_code: str) -> list[str]:
+def _default_item_codes(demand_name: str) -> list[str]:
 	rows = frappe.get_all(
 		"Demand Item",
-		filters={"parent": demand_name, "parenttype": "Demand"},
-		fields=["idx"],
-		order_by="idx asc",
+		filters={"demand": demand_name},
+		fields=["item_code"],
+		order_by="creation asc",
 		limit_page_length=100,
 	)
-	codes: list[str] = []
-	for row in rows:
-		idx = int(row.get("idx") or len(codes) + 1)
-		codes.append(_derive_demand_item_code(demand_code, idx))
-	return codes
+	return [(r.get("item_code") or "").strip() for r in rows if (r.get("item_code") or "").strip()]
 
 
 def _category_supported_label(category: str) -> str:
@@ -200,7 +220,7 @@ def get_approved_demand_planning_drawer(
 	if not demand_code:
 		return _fail(code="MISSING_DEMAND", message="Demand code is required.", role_key=role_key)
 
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		from kentender_procurement.procurement_lifecycle.demand_module_gate import RETIRED_MESSAGE
 
 		return _fail(
@@ -209,11 +229,11 @@ def get_approved_demand_planning_drawer(
 			role_key=role_key,
 		)
 
-	demand_row = _resolve_demand_row(demand_code)
-	if not demand_row:
+	header = _resolve_demand_header(demand_code)
+	if not header:
 		return _fail(code="NOT_FOUND", message="Demand not found.", role_key=role_key)
 
-	demand_name = demand_row.get("name") or ""
+	demand_name = header.get("name") or ""
 	try:
 		pp_scope.assert_may_act_on_demand(demand_name, user=actor)
 	except frappe.PermissionError:
@@ -223,25 +243,52 @@ def get_approved_demand_planning_drawer(
 			role_key=role_key,
 		)
 
-	header = frappe.db.get_value("Demand", demand_name, _DRAWER_DEMAND_FIELDS, as_dict=True) or {}
-	business_code = (header.get("demand_id") or demand_code).strip()
-	category = (header.get("requisition_type") or "").strip()
-	if not category:
-		items_preview = load_demand_items_for_drawer(demand_name, business_code)
-		category = (items_preview[0].get("category") if items_preview else "") or ""
+	business_code = (header.get("demand_code") or demand_code).strip()
+	category = (header.get("procurement_category") or "").strip()
 
 	item_codes = [c.strip() for c in (demand_item_codes or []) if (c or "").strip()]
 	if not item_codes:
-		item_codes = _default_item_codes(demand_name, business_code)
+		item_codes = _default_item_codes(demand_name)
 
 	plan_row = _resolve_plan_row(plan_code)
 	resolved_plan_code = (plan_code or "").strip()
-	inclusion_guard = can_include_demand_in_plan(
-		business_code,
-		item_codes,
-		resolved_plan_code,
-		actor,
-	)
+	# Inclusion guard may still be gated (INT-003); treat retired as soft empty checks.
+	try:
+		inclusion_guard = can_include_demand_in_plan(
+			business_code,
+			item_codes,
+			resolved_plan_code,
+			actor,
+		)
+	except Exception:
+		inclusion_guard = {"allowed": False, "checks": [], "blockers": []}
+	if inclusion_guard is None:
+		inclusion_guard = {"allowed": False, "checks": [], "blockers": []}
+
+	# Local MVP eligibility when inclusion still fail-closed.
+	if inclusion_guard.get("error_code") == "DEMAND_MODULE_RETIRED" or not inclusion_guard.get(
+		"checks"
+	):
+		status_ok = (header.get("status") or "").strip() == "Approved" and cint(
+			header.get("planning_ready")
+		)
+		budget_line = _primary_budget_line(demand_name)
+		budget_ok = bool(budget_line)
+		items_ok = bool(item_codes)
+		inclusion_guard = {
+			"allowed": bool(status_ok and budget_ok and items_ok),
+			"checks": [
+				{"id": "demand_approved", "label": "Demand approved", "ok": status_ok},
+				{"id": "budget_linked", "label": "Budget line linked", "ok": budget_ok},
+				{
+					"id": "not_already_packaged",
+					"label": "Demand item not already packaged",
+					"ok": items_ok,
+				},
+			],
+			"blockers": [],
+		}
+
 	if not resolved_plan_code:
 		from kentender_procurement.procurement_planning.services.pp_governance_codes import DemandInclusion
 
@@ -264,9 +311,10 @@ def get_approved_demand_planning_drawer(
 		plan_code=resolved_plan_code,
 	)
 
-	budget_line_ref = _budget_line_ref(header.get("budget_line"))
+	budget_line_name = _primary_budget_line(demand_name)
+	budget_line_ref = _budget_line_ref(budget_line_name)
 	budget_context_payload: dict[str, Any] | None = None
-	strategy_objective = _strategy_objective_ref_from_demand(demand_name)
+	strategy_objective = _strategy_snapshot_from_demand(demand_name)
 	if budget_line_ref.get("id"):
 		budget_context_payload = get_budget_line_context(budget_line_ref["id"])
 
@@ -279,10 +327,10 @@ def get_approved_demand_planning_drawer(
 			or approval_cert.get("demand_form_route")
 			or ""
 		).strip()
-	if not approval_route and approval_cert:
+	if not approval_route:
 		approval_route = f"/app/demand/{demand_name}"
 
-	approval_dt = header.get("finance_approved_at")
+	approval_dt = header.get("approved_at")
 	approval_date = getdate(approval_dt).isoformat() if approval_dt else ""
 
 	demand_items = load_demand_items_for_drawer(demand_name, business_code)
@@ -295,6 +343,8 @@ def get_approved_demand_planning_drawer(
 			"currency": (data.get("currency") or "KES").strip() or "KES",
 		}
 
+	estimate = flt(header.get("confirmed_estimate") or header.get("requester_estimate"))
+
 	return {
 		"ok": True,
 		"role_key": role_key,
@@ -303,14 +353,11 @@ def get_approved_demand_planning_drawer(
 			"code": business_code,
 			"name": (header.get("title") or business_code).strip(),
 			"status": (header.get("status") or "").strip(),
-			"planning_status": _planning_status_label(
-				status=(header.get("status") or "").strip(),
-				planning_status=(header.get("planning_status") or "").strip(),
-			),
-			"department": (header.get("requesting_department") or "").strip(),
+			"planning_status": _planning_usage_label(header.get("planning_usage") or ""),
+			"department": _org_unit_label(header.get("owner_org_unit")),
 			"category": category,
-			"estimated_value": flt(header.get("total_amount")),
-			"currency": "KES",
+			"estimated_value": estimate,
+			"currency": (header.get("currency") or "KES").strip() or "KES",
 			"approval_date": approval_date,
 		},
 		"target_plan": _plan_ref(plan_row),

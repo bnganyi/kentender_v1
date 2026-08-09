@@ -8,10 +8,10 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe import _
-from frappe.utils import flt, now_datetime
+from frappe.utils import cint, flt, now_datetime
 
+from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_doctype_available
 from kentender_procurement.procurement_lifecycle.handoff_card_service import (
 	create_or_update_handoff_card,
 )
@@ -22,7 +22,8 @@ from kentender_procurement.procurement_planning.services.planning_audit_service 
 from kentender_procurement.procurement_planning.services.pp_governance_codes import DemandInclusion
 from kentender_procurement.procurement_planning.permissions import pp_policy, pp_scope
 
-ALLOWED_DEMAND_STATUSES = frozenset(("Approved", "Planning Ready"))
+ALLOWED_DEMAND_STATUSES = frozenset(("Approved",))
+_PLANNING_USAGE_FULL = "Fully planned"
 _PLANNING_INCLUSION_TITLE = "Planning Inclusion Record"
 _INCLUSION_BUSINESS_STATUS = "Included"
 _INCLUSION_PACKAGED_STATUS = "Packaged"
@@ -31,19 +32,17 @@ _TERMINAL_INCLUSION_STATUSES = frozenset(("Cancelled", "Superseded"))
 
 _DEMAND_FIELDS = (
 	"name",
-	"demand_id",
-	"status",
-	"budget_line",
-)
-
-_DEMAND_INCLUSION_FIELDS = (
-	"name",
-	"demand_id",
-	"status",
+	"demand_code",
 	"title",
-	"requisition_type",
-	"total_amount",
-	"budget_line",
+	"status",
+	"planning_ready",
+	"planning_usage",
+	"owner_org_unit",
+	"procuring_entity",
+	"procurement_category",
+	"confirmed_estimate",
+	"requester_estimate",
+	"currency",
 )
 
 _PLAN_FIELDS = ("name", "plan_code", "status", "currency")
@@ -63,24 +62,39 @@ def _normalize_item_codes(demand_item_codes: list[str] | None) -> list[str]:
 
 def _resolve_demand_row(demand_code: str) -> dict[str, Any] | None:
 	demand_code = (demand_code or "").strip()
-	if not demand_code or not demand_consumers_live():
+	if not demand_code or not demand_doctype_available():
 		return None
-	row = frappe.db.get_value("Demand", {"demand_id": demand_code}, _DEMAND_FIELDS, as_dict=True)
+	row = frappe.db.get_value("Demand", {"demand_code": demand_code}, _DEMAND_FIELDS, as_dict=True)
 	if not row:
 		row = frappe.db.get_value("Demand", demand_code, _DEMAND_FIELDS, as_dict=True)
+	if row:
+		row["budget_line"] = _primary_budget_line(row.get("name"))
 	return row
 
 
 def _load_demand_for_inclusion(demand_code: str) -> dict[str, Any] | None:
-	demand_code = (demand_code or "").strip()
-	if not demand_code or not demand_consumers_live():
-		return None
-	row = frappe.db.get_value(
-		"Demand", {"demand_id": demand_code}, _DEMAND_INCLUSION_FIELDS, as_dict=True
+	return _resolve_demand_row(demand_code)
+
+
+def _primary_budget_line(demand_name: str | None) -> str:
+	"""Prefer a confirmed MVP funding allocation, then the latest allocation."""
+	name = (demand_name or "").strip()
+	if not name or not frappe.db.exists("DocType", "Demand Funding Allocation"):
+		return ""
+	rows = frappe.get_all(
+		"Demand Funding Allocation",
+		filters={"demand": name},
+		fields=["budget_line", "bo_confirmation_status"],
+		order_by="modified desc",
+		limit=100,
 	)
-	if not row:
-		row = frappe.db.get_value("Demand", demand_code, _DEMAND_INCLUSION_FIELDS, as_dict=True)
-	return row
+	for row in rows:
+		if row.get("bo_confirmation_status") == "Confirmed" and row.get("budget_line"):
+			return (row.get("budget_line") or "").strip()
+	for row in rows:
+		if row.get("budget_line"):
+			return (row.get("budget_line") or "").strip()
+	return ""
 
 
 def _resolve_plan_row(plan_code: str) -> dict[str, Any] | None:
@@ -102,7 +116,9 @@ def _budget_line_business_code(budget_line_name: str | None) -> str:
 
 
 def _demand_budget_ok(demand_row: dict[str, Any]) -> bool:
-	budget_line = (demand_row.get("budget_line") or "").strip()
+	budget_line = (demand_row.get("budget_line") or "").strip() or _primary_budget_line(
+		demand_row.get("name")
+	)
 	if not budget_line or not frappe.db.exists("Budget Line", budget_line):
 		return False
 	bl_active = frappe.db.get_value("Budget Line", budget_line, "is_active")
@@ -188,15 +204,23 @@ def demand_has_unpackaged_planning_inclusion(demand_code: str) -> bool:
 
 
 def _inclusion_department_label(demand_code: str) -> str:
-	demand_code = (demand_code or "").strip()
-	if not demand_code:
+	demand = _resolve_demand_row(demand_code)
+	if not demand:
 		return ""
-	dept_id = frappe.db.get_value("Demand", {"demand_id": demand_code}, "requesting_department")
-	if not dept_id:
-		dept_id = frappe.db.get_value("Demand", demand_code, "requesting_department")
-	if not dept_id:
+	org_unit = (demand.get("owner_org_unit") or "").strip()
+	if not org_unit:
 		return ""
-	return (frappe.db.get_value("Procuring Department", dept_id, "department_name") or "").strip()
+	label = frappe.db.get_value(
+		"Organisation Unit",
+		org_unit,
+		["unit_name", "unit_code"],
+		as_dict=True,
+	)
+	if not label:
+		return org_unit
+	name = (label.get("unit_name") or "").strip()
+	code = (label.get("unit_code") or "").strip()
+	return f"{name} ({code})" if name and code else name or code or org_unit
 
 
 def list_unpackaged_planning_inclusions(plan_code: str) -> list[dict[str, Any]]:
@@ -317,8 +341,13 @@ def can_include_demand_in_plan(
 
 	demand_row = _resolve_demand_row(demand_code)
 	demand_status = (demand_row.get("status") or "").strip() if demand_row else ""
-	demand_approved = bool(demand_row and demand_status in ALLOWED_DEMAND_STATUSES)
-	checks.append(_check("demand_approved", _("Demand is approved"), demand_approved))
+	demand_approved = bool(
+		demand_row
+		and demand_status in ALLOWED_DEMAND_STATUSES
+		and cint(demand_row.get("planning_ready"))
+		and (demand_row.get("planning_usage") or "").strip() != _PLANNING_USAGE_FULL
+	)
+	checks.append(_check("demand_approved", _("Demand is approved and planning ready"), demand_approved))
 	if not demand_row:
 		blockers.append(
 			_blocker(
@@ -537,7 +566,11 @@ def _create_planning_inclusion_handoff(
 	demand = _load_demand_for_inclusion(demand_code)
 	if not demand:
 		frappe.throw(_("Demand not found."), title=_("Invalid demand"))
-	if skip_guard and (demand.status or "").strip() not in ALLOWED_DEMAND_STATUSES:
+	if skip_guard and (
+		(demand.status or "").strip() not in ALLOWED_DEMAND_STATUSES
+		or not cint(demand.planning_ready)
+		or (demand.planning_usage or "").strip() == _PLANNING_USAGE_FULL
+	):
 		frappe.throw(_("Demand must be approved before planning inclusion."), title=_("Demand not approved"))
 
 	handoff_code = (inclusion_code or _inclusion_handoff_code(plan_code)).strip()
@@ -548,6 +581,7 @@ def _create_planning_inclusion_handoff(
 	bl_code = (budget_line_code or "").strip()
 	if not bl_code:
 		bl_code = _budget_line_business_code(demand.budget_line)
+	resolved_demand_code = (demand.demand_code or demand_code).strip()
 
 	now = now_datetime()
 	payload = {
@@ -557,7 +591,7 @@ def _create_planning_inclusion_handoff(
 		"source_module": "Procurement Planning",
 		"target_module": "Procurement Planning",
 		"source_object_type": "Demand",
-		"source_object_code": demand.demand_id or demand_code,
+		"source_object_code": resolved_demand_code,
 		"target_object_type": "Procurement Plan",
 		"target_object_code": plan_code,
 		"status": _HANDOFF_STATUS_INCLUDED,
@@ -566,14 +600,14 @@ def _create_planning_inclusion_handoff(
 		"next_action": "Prepare a procurement package for the approved demand.",
 		"locked_summary": {
 			"procurement_plan": plan_code,
-			"included_demand": demand.demand_id or demand_code,
+			"included_demand": resolved_demand_code,
 			"budget_line": bl_code,
 			"demand_item_codes": item_codes,
 		},
 		"passed_forward_summary": {
 			"package_candidate": demand.title or demand_code,
-			"category": demand.requisition_type or "",
-			"estimated_value": flt(demand.total_amount),
+			"category": demand.procurement_category or "",
+			"estimated_value": flt(demand.confirmed_estimate or demand.requester_estimate),
 			"currency": (plan.currency or "KES").strip(),
 		},
 		"evidence_links": [_plan_evidence_link(plan_code)],
@@ -598,7 +632,7 @@ def _create_planning_inclusion_handoff(
 	return _format_include_response(
 		action=result.get("action", "created"),
 		handoff_code=handoff_code,
-		demand_code=demand.demand_id or demand_code,
+		demand_code=resolved_demand_code,
 		plan_code=plan_code,
 		budget_line_code=bl_code,
 		demand_item_codes=item_codes,
@@ -633,7 +667,7 @@ def include_demand_in_procurement_plan(
 		return _format_include_response(
 			action="existing",
 			handoff_code=existing_code,
-			demand_code=demand.get("demand_id") or demand_code,
+			demand_code=demand.get("demand_code") or demand_code,
 			plan_code=procurement_plan_code,
 			budget_line_code=bl_code,
 			demand_item_codes=item_codes,
@@ -679,7 +713,7 @@ def create_planning_inclusion(
 		return _format_include_response(
 			action="existing",
 			handoff_code=existing_code,
-			demand_code=demand.get("demand_id") or demand_code,
+			demand_code=demand.get("demand_code") or demand_code,
 			plan_code=plan_code,
 			budget_line_code=bl_code,
 			demand_item_codes=item_codes,
@@ -691,7 +725,7 @@ def create_planning_inclusion(
 		return _format_include_response(
 			action="existing",
 			handoff_code=inclusion_code,
-			demand_code=demand.get("demand_id") or demand_code,
+			demand_code=demand.get("demand_code") or demand_code,
 			plan_code=plan_code,
 			budget_line_code=bl_code,
 			demand_item_codes=item_codes,

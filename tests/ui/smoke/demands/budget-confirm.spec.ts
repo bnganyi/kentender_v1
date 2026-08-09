@@ -215,8 +215,11 @@ test.describe("DEM-UI-06 Routine Budget confirmation", () => {
 			sectionTestId: "kt-dem-ui06-adjust-panel",
 		});
 
-		// Adjust is a sibling section (not nested under recommendation); Active only when sufficient.
+		// Adjust is a sibling section under the budget stack (not nested under recommendation).
 		const adjustLayout = await page.evaluate(() => {
+			const stack = document.querySelector(
+				'[data-testid="kt-dem-ui06-main"]',
+			) as HTMLElement | null;
 			const rec = document.querySelector(
 				'[data-testid="kt-dem-ui06-recommendation"]',
 			) as HTMLElement | null;
@@ -228,9 +231,11 @@ test.describe("DEM-UI-06 Routine Budget confirmation", () => {
 			) as HTMLElement | null;
 			return {
 				sibling: !!(
+					stack &&
 					rec &&
 					adj &&
-					rec.parentElement === adj.parentElement &&
+					stack.contains(rec) &&
+					stack.contains(adj) &&
 					!rec.contains(adj)
 				),
 				badgeText: (badge?.textContent || "").trim(),

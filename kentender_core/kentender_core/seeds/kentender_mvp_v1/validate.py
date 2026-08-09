@@ -21,7 +21,7 @@ def _check(name: str, ok: bool, detail: str = "") -> dict[str, Any]:
 	return {"name": name, "ok": bool(ok), "detail": detail}
 
 
-def validate_kentender_mvp_v1() -> dict[str, Any]:
+def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]:
 	checks: list[dict[str, Any]] = []
 
 	# --- Identity / org ---
@@ -435,6 +435,188 @@ def validate_kentender_mvp_v1() -> dict[str, Any]:
 			),
 		)
 	)
+
+	# --- Demands (Contract §7 / Demands-only boundary) ---
+	if include_demands and frappe.db.exists("DocType", "Demand"):
+		principal = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE},
+			[
+				"name",
+				"status",
+				"current_stage",
+				"confirmed_estimate",
+				"planning_usage",
+				"owner_org_unit",
+			],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"demands.principal.exists_approved",
+				bool(
+					principal
+					and principal.status == "Approved"
+					and principal.current_stage == "Complete"
+					and abs(flt(principal.confirmed_estimate) - 455_000_000) < 0.01
+				),
+				str(principal),
+			)
+		)
+		checks.append(
+			_check(
+				"demands.principal.not_taken_up",
+				bool(principal and principal.planning_usage == "Not taken up"),
+				getattr(principal, "planning_usage", None),
+			)
+		)
+		if principal:
+			item_total = sum(
+				flt(r.confirmed_estimate)
+				for r in frappe.get_all(
+					"Demand Item",
+					filters={"demand": principal.name},
+					fields=["confirmed_estimate"],
+				)
+			)
+			checks.append(
+				_check(
+					"demands.principal.items_455m",
+					abs(item_total - 455_000_000) < 0.01,
+					str(item_total),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.principal.strategy_primary_supporting",
+					frappe.db.count(
+						"Demand Strategy Reference",
+						{"demand": principal.name, "reference_type": "Primary"},
+					)
+					== 1
+					and frappe.db.count(
+						"Demand Strategy Reference",
+						{"demand": principal.name, "reference_type": "Supporting"},
+					)
+					== 1,
+				)
+			)
+			alloc = frappe.db.get_value(
+				"Demand Funding Allocation",
+				{"demand": principal.name},
+				["allocation_amount", "bo_confirmation_status", "funding_reservation"],
+				as_dict=True,
+			)
+			rsv_name = frappe.db.get_value(
+				"Funding Reservation",
+				{"generated_reference": C.RSV_CODE},
+				"name",
+			)
+			checks.append(
+				_check(
+					"demands.principal.allocation_and_rsv",
+					bool(
+						alloc
+						and abs(flt(alloc.allocation_amount) - 455_000_000) < 0.01
+						and alloc.bo_confirmation_status == "Confirmed"
+						and alloc.funding_reservation == rsv_name
+					),
+					str(alloc),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.principal.single_rsv",
+					frappe.db.count(
+						"Funding Reservation", {"generated_reference": C.RSV_CODE}
+					)
+					== 1,
+				)
+			)
+
+		returned = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE_RETURNED},
+			["name", "status", "current_stage", "confirmed_estimate", "current_owner"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"demands.returned.exists",
+				bool(
+					returned
+					and returned.status == "Returned"
+					and returned.current_stage == "Request Preparation"
+					and abs(flt(returned.confirmed_estimate) - 95_000_000) < 0.01
+					and returned.current_owner == C.USER_PUBLIC
+				),
+				str(returned),
+			)
+		)
+		checks.append(
+			_check(
+				"demands.returned.no_rsv",
+				frappe.db.count(
+					"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
+				)
+				== 0,
+			)
+		)
+		if returned:
+			exc = frappe.db.get_value(
+				"Funding Exception",
+				{
+					"demand": returned.name,
+					"exception_type": "Insufficient Funding",
+				},
+				["status", "resolution_reason"],
+				as_dict=True,
+			)
+			checks.append(
+				_check(
+					"demands.returned.shortfall_exception",
+					bool(
+						exc
+						and exc.status == "Resolved"
+						and "15,000,000" in (exc.resolution_reason or "")
+					),
+					str(exc),
+				)
+			)
+
+		county = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE_COUNTY},
+			["name", "status", "current_stage", "procuring_entity", "requester_estimate"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"demands.county.draft_isolated",
+				bool(
+					county
+					and county.status == "Draft"
+					and county.current_stage == "Request Preparation"
+					and county.procuring_entity == C.PE_CGKIS
+					and abs(flt(county.requester_estimate) - 24_000_000) < 0.01
+				),
+				str(county),
+			)
+		)
+		if county:
+			checks.append(
+				_check(
+					"demands.county.no_strategy_or_budget",
+					frappe.db.count(
+						"Demand Strategy Reference", {"demand": county.name}
+					)
+					== 0
+					and frappe.db.count(
+						"Demand Funding Allocation", {"demand": county.name}
+					)
+					== 0,
+				)
+			)
 
 	failed = [c for c in checks if not c["ok"]]
 	ok = not failed

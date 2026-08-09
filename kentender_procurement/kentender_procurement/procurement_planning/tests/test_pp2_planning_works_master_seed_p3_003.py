@@ -76,7 +76,7 @@ def _minimal_evidence_links() -> dict:
 				"label": "Test evidence",
 				"object_type": "Demand",
 				"object_code": "DEM-P3-003-DECOY",
-				"module": "Demand Intake and Approval",
+				"module": "Demands",
 				"route": "/desk/",
 				"visibility": "Internal",
 			}

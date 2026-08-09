@@ -90,7 +90,7 @@ class TestDemandsMvp1Schema(IntegrationTestCase):
 		self.assertEqual(KT_MODULES["demands"].get("form_doctype"), "Demand")
 		self.assertNotIn("dia", KT_MODULES)
 
-	def test_consumers_remain_gated_until_live(self) -> None:
+	def test_consumers_live_after_int011(self) -> None:
 		frappe.set_user("Administrator")
 		from kentender_procurement.demands import CONSUMERS_LIVE
 		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
@@ -102,8 +102,9 @@ class TestDemandsMvp1Schema(IntegrationTestCase):
 		)
 
 		self.assertTrue(demand_doctype_available())
-		self.assertFalse(CONSUMERS_LIVE)
-		self.assertFalse(demand_consumers_live())
+		self.assertTrue(CONSUMERS_LIVE)
+		self.assertTrue(demand_consumers_live())
 		out = get_approved_demands_for_queue(filters={}, actor="Administrator")
-		self.assertEqual(out.get("error_code"), "DEMAND_MODULE_RETIRED")
-		self.assertTrue(out.get("skipped"))
+		self.assertTrue(out.get("ok"))
+		self.assertNotEqual(out.get("error_code"), "DEMAND_MODULE_RETIRED")
+		self.assertFalse(out.get("skipped"))

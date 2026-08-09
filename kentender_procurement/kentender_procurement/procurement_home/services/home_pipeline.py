@@ -8,18 +8,27 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from kentender_procurement.procurement_lifecycle.demand_module_gate import demand_consumers_live
 from frappe.utils import get_datetime, now_datetime
 
+from kentender_procurement.demands.services.demand_lifecycle import (
+	list_demands_for_workspace,
+)
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 from kentender_procurement.procurement_planning.pp2_constants import (
 	PKG_APPROVED,
 	PKG_READY_FOR_RELEASE,
 )
 
 PIPELINE_STAGES = (
-	("demands_under_review", "Demands under review", "/desk/demand-hub"),
-	("approved_awaiting_planning", "Approved demands awaiting planning", "/desk/planning-hub"),
+	("demands_under_review", "Demands under review", "/desk/demands-workspace"),
+	(
+		"approved_awaiting_planning",
+		"Approved demands awaiting planning",
+		"/desk/demands-workspace",
+	),
 	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk/planning-hub"),
 	("tenders_in_preparation", "Tenders in preparation", "/desk/tender-management-v2"),
 	("published_and_open", "Published and open", "/desk/publications"),
@@ -39,22 +48,23 @@ _TM_CLOSED_AWAITING = frozenset(("Closed", "Closed - No Valid Submissions", "Ope
 _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
-def _count_demands_under_review(pe: str) -> int:
-	if not demand_consumers_live():
+def _count_demands_under_review(pe: str, user: str) -> int:
+	if not demand_doctype_available():
 		return 0
-	return int(
-		frappe.db.count(
-			"Demand",
-			{
-				"procuring_entity": ["in", pe_aliases(pe)],
-				"status": ["in", ["Pending HoD Approval", "Pending Finance Approval"]],
-			},
-		)
+	payload = list_demands_for_workspace(
+		user=user,
+		filters={"limit": 500},
+	)
+	aliases = set(pe_aliases(pe))
+	return sum(
+		1
+		for row in payload.get("rows") or []
+		if row.get("procuring_entity") in aliases and row.get("status") == "In Review"
 	)
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
-	if not demand_consumers_live():
+	if not demand_doctype_available():
 		return 0
 	try:
 		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
@@ -72,17 +82,8 @@ def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
 		if isinstance(payload.get("total"), (int, float)):
 			return int(payload["total"])
 	except Exception:
-		pass
-	return int(
-		frappe.db.count(
-			"Demand",
-			{
-				"procuring_entity": ["in", pe_aliases(pe)],
-				"status": "Approved",
-				"planning_status": ["in", ["Not Planned", "Partially Planned", "Planning Ready"]],
-			},
-		)
-	)
+		return 0
+	return 0
 
 
 def _packages_with_tender_initiation(pe: str) -> set[str]:
@@ -228,7 +229,7 @@ def get_home_pipeline(
 		procuring_entity
 	)
 	counts = {
-		"demands_under_review": _count_demands_under_review(procuring_entity),
+		"demands_under_review": _count_demands_under_review(procuring_entity, user),
 		"approved_awaiting_planning": _count_approved_awaiting_planning(procuring_entity, user),
 		"plan_awaiting_tender": _count_plan_awaiting_tender(procuring_entity),
 		"tenders_in_preparation": _count_tenders_in_preparation(procuring_entity),
