@@ -111,8 +111,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 	text-transform: uppercase !important;
 }
 .kt-cl-shell .kt-str-root .text-headline-lg {
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important; line-height: 38px !important;
 	letter-spacing: -0.02em !important;
 	font-weight: 700 !important;
 }
@@ -179,7 +178,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 }
 
 .kt-cl-shell .kt-str-root .text-primary {
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 .kt-cl-shell .kt-str-root .text-secondary {
 	color: #01629d !important;
@@ -197,7 +196,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 	color: #ffffff !important;
 }
 .kt-cl-shell .kt-str-root .text-primary-fixed {
-	color: #d7e2ff !important;
+	color: #dae2ff !important;
 }
 .kt-cl-shell .kt-str-root .text-on-secondary-fixed {
 	color: #001d34 !important;
@@ -216,22 +215,22 @@ body.kt-str-create-active .kt-str-field-invalid {
 	background-color: #e8e7ed !important;
 }
 .kt-cl-shell .kt-str-root .bg-primary {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 }
 .kt-cl-shell .kt-str-root .bg-primary-container {
-	background-color: #00346f !important;
+	background-color: #0052cc !important;
 }
 .kt-cl-shell .kt-str-root .bg-primary-fixed {
-	background-color: #d7e2ff !important;
+	background-color: #dae2ff !important;
 }
 .kt-cl-shell .kt-str-root .bg-secondary-fixed {
 	background-color: #cfe5ff !important;
 }
 .kt-cl-shell .kt-str-root .bg-primary\/60 {
-	background-color: color-mix(in srgb, #001f48 60%, transparent) !important;
+	background-color: color-mix(in srgb, #003d9b 60%, transparent) !important;
 }
 .kt-cl-shell .kt-str-root .bg-primary\/5 {
-	background-color: color-mix(in srgb, #001f48 5%, transparent) !important;
+	background-color: color-mix(in srgb, #003d9b 5%, transparent) !important;
 }
 .kt-cl-shell .kt-str-root .bg-white\/20 {
 	background-color: color-mix(in srgb, #ffffff 20%, transparent) !important;
@@ -263,10 +262,10 @@ body.kt-str-create-active .kt-str-field-invalid {
 	border-color: #eeedf3 !important;
 }
 .kt-cl-shell .kt-str-root .border-primary {
-	border-color: #001f48 !important;
+	border-color: #003d9b !important;
 }
 .kt-cl-shell .kt-str-root .border-primary-fixed\/20 {
-	border-color: color-mix(in srgb, #d7e2ff 20%, transparent) !important;
+	border-color: color-mix(in srgb, #dae2ff 20%, transparent) !important;
 }
 
 .kt-cl-shell .kt-str-root .rounded {
@@ -276,7 +275,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 	border-radius: 0.5rem !important;
 }
 .kt-cl-shell .kt-str-root .rounded-xl {
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 }
 .kt-cl-shell .kt-str-root .rounded-full {
 	border-radius: 9999px !important;
@@ -542,7 +541,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 }
 
 /* Field focus: use module lock in strategy_alignment_responsive.css (light blue).
-   Do not reintroduce #001f48 / 2px primary rings here. */
+   Do not reintroduce #003d9b / 2px primary rings here. */
 
 /* Action bar: Stitch sm:flex-row justify-between (must beat later .flex-col dumps) */
 @media (min-width: 640px) {
@@ -563,20 +562,20 @@ body.kt-str-create-active .kt-str-field-invalid {
 
 /* Portfolio button reset would erase Stitch Cancel / Create — restore exactly */
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-plan-cancel"] {
-	border: 2px solid #001f48 !important;
+	border: 2px solid #003d9b !important;
 	border-radius: 0.5rem !important;
 	background: transparent !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	padding: 0.625rem 1.5rem !important;
 	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
 	font-weight: 700 !important;
 	box-shadow: none !important;
 }
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-plan-cancel"]:hover {
-	background-color: color-mix(in srgb, #001f48 5%, transparent) !important;
+	background-color: color-mix(in srgb, #003d9b 5%, transparent) !important;
 }
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-plan-submit"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	color: #ffffff !important;
 	border: none !important;
 	border-radius: 0.5rem !important;
@@ -586,7 +585,7 @@ body.kt-str-create-active .kt-str-field-invalid {
 	box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
 }
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-plan-submit"]:hover {
-	background-color: #00346f !important;
+	background-color: #0052cc !important;
 }
 .kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-plan-submit"] .material-symbols-outlined {
 	color: #ffffff !important;

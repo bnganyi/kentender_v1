@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Register Procurement Plan - GovProcure Alpha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#c4d2ff",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#0052cc",
+                      "secondary-fixed": "#afecff",
+                      "surface-dim": "#d9dadc",
+                      "tertiary-container": "#545a6c",
+                      "primary-fixed": "#dae2ff",
+                      "surface-container-lowest": "#ffffff",
+                      "data-committed": "#6366F1",
+                      "surface-container": "#edeef0",
+                      "status-exhausted": "#E11D48",
+                      "on-secondary-fixed": "#001f27",
+                      "on-secondary-container": "#005f71",
+                      "secondary-container": "#50dcff",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "surface-bright": "#f8f9fb",
+                      "outline-variant": "#c3c6d6",
+                      "secondary": "#00687b",
+                      "outline": "#737685",
+                      "on-primary": "#ffffff",
+                      "surface-container-high": "#e7e8ea",
+                      "surface-variant": "#e1e2e4",
+                      "on-tertiary-fixed": "#151b2b",
+                      "surface-container-highest": "#e1e2e4",
+                      "surface-container-low": "#f3f4f6",
+                      "status-reserved": "#F59E0B",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-error": "#ffffff",
+                      "background": "#f8f9fb",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "primary": "#003d9b",
+                      "surface": "#f8f9fb",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "status-available": "#10B981",
+                      "on-surface-variant": "#434654",
+                      "inverse-primary": "#b2c5ff",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "on-surface": "#191c1e",
+                      "on-primary-fixed": "#001848",
+                      "surface-tint": "#0c56d0",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#191c1e",
+                      "inverse-surface": "#2e3132",
+                      "error-container": "#ffdad6",
+                      "border-subtle": "#DFE1E6",
+                      "tertiary": "#3d4354",
+                      "on-tertiary-container": "#ccd2e7",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#dce2f8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter-md": "1rem",
+                      "stack-sm": "0.5rem",
+                      "container-padding": "1rem",
+                      "stack-xs": "0.25rem",
+                      "section-gap": "1.5rem"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-neutral-50 text-neutral-900 font-sans antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-inverse-surface border-b border-border-subtle dark:border-outline docked full-width top-0 flat no shadows flex justify-between items-center w-full px-container-padding h-16 sticky z-50">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">GovProcure Alpha</span>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer transition-opacity active:opacity-70 font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer transition-opacity active:opacity-70 font-body-md text-body-md" href="#">Requisitions</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer transition-opacity active:opacity-70 font-body-md text-body-md" href="#">Tenders</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer transition-opacity active:opacity-70 font-body-md text-body-md" href="#">Awards</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer active:opacity-70 flex items-center justify-center p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer active:opacity-70 flex items-center justify-center p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-border-subtle cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-2 transition-all">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A clean, professional headshot of a user in a modern office environment, facing forward, natural lighting, sharp focus, 8k resolution, suitable for a professional corporate profile picture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHxST0UDvf5fltt85JdYVzhyNg6zbXQ6eemN7IErJwntBUmNsUMVFnNwVRw2auq3pWswq9A1hDRUw2Y4sLWrdJsazsu3Kd6mUqeDOS1JeNsvzECDYO31Fl10qqvpUc8_1aU9Kvfas6LGfzJbrWN-LJ-YC4IRUSN_g5f2WZSk7DevKLuWeI4cuTFVeNmLyn6e1l5HHY82hOz3xM9HAWGYwKUC1yISUU1BHGlWNxSNCZIESGjsQgp03O"/>
+</div>
+</div>
+</nav>
+<div class="flex flex-1">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-low dark:bg-inverse-surface border-r border-border-subtle dark:border-outline h-full w-64 fixed left-0 top-16 flat no shadows hidden lg:flex flex-col py-gutter-md overflow-y-auto transition-all duration-200 ease-in-out z-40">
+<div class="px-container-padding mb-section-gap flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-border-subtle flex items-center justify-center overflow-hidden flex-shrink-0">
+<img alt="Institution Seal" class="w-full h-full object-cover" data-alt="A highly detailed vector illustration of a modern institutional seal or emblem, featuring a stylized building or balance scale, clean lines, professional blue and gold color palette, minimalist design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSy9jALZuRpOw_o5-dPEDwTCI9lYVaxqpmZDgVtlrRuH9zSFwnoVL_HuFjqn4gG9bZ1tSVcMxxaRLFDNLM2ixBPRbTwChBqfxuhmtM6N2WxsgGvH91AnHYp_BdrK-GPLYWytBA0P99RS95D2ru6mnisgfDjBnOYgwS597HErbyZgW2r-T5aFCAmboUkCgMQ9LwTt1wl_aKryjQb1EooSw03d6FpXT34-9J5x21GaZ6DgQ9PJyxcgXt"/>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim">Federal Procurement</h2>
+<p class="font-label-caps text-label-caps text-on-surface-variant dark:text-surface-variant uppercase tracking-wider">Department of Finance</p>
+</div>
+</div>
+<div class="px-container-padding mb-stack-sm">
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary font-body-md text-body-md font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Requisition
+                </button>
+</div>
+<nav class="flex-1 px-stack-sm flex flex-col gap-1 mt-stack-sm">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+                    Budget Control
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg border-l-4 border-primary dark:border-primary-fixed-dim bg-surface-container-high dark:bg-surface-variant text-primary dark:text-primary-fixed-dim font-bold font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="assignment">assignment</span>
+                    Procurement Plan
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+                    Vendor Registry
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="history_edu">history_edu</span>
+                    Audit Logs
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+                    Settings
+                </a>
+</nav>
+<div class="px-stack-sm mt-auto flex flex-col gap-1 border-t border-border-subtle pt-stack-sm">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="contact_support">contact_support</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+                    Log Out
+                </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 p-container-padding md:p-section-gap max-w-5xl mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-section-gap">
+<nav aria-label="Breadcrumb" class="flex text-on-surface-variant font-body-sm mb-stack-sm">
+<ol class="inline-flex items-center space-x-1 md:space-x-3">
+<li class="inline-flex items-center">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+</li>
+<li>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span aria-current="page" class="text-on-surface">New annual plan</span>
+</div>
+</li>
+</ol>
+</nav>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs">Create annual procurement plan</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">Register the plan that will consolidate approved needs for one Procuring Entity and financial year.</p>
+</div>
+<!-- Form Data Block -->
+<form class="bg-surface-container-lowest border border-border-subtle rounded-xl p-container-padding md:p-section-gap shadow-sm flex flex-col gap-section-gap">
+<!-- Section 1: Plan ownership -->
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-stack-sm border-b border-border-subtle pb-2">Plan ownership</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md mt-stack-sm">
+<div class="flex flex-col gap-1 col-span-1 md:col-span-2 lg:col-span-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="procuringEntity">Procuring Entity <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full bg-surface-bright border border-border-subtle text-on-surface font-body-md text-body-md rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary block p-2.5 appearance-none pr-10" id="procuringEntity" name="procuringEntity">
+<option disabled="" selected="" value="">Select Procuring Entity...</option>
+<option value="health">Ministry of Health</option>
+<option value="kisumu">County Government of Kisumu</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Choose the entity that owns this plan. This cannot be changed after the plan is created.</p>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="financialYear">Financial year <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full bg-surface-bright border border-border-subtle text-on-surface font-body-md text-body-md rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary block p-2.5 appearance-none pr-10" id="financialYear" name="financialYear">
+<option selected="" value="2027/28">2027/28</option>
+<option value="2026/27">2026/27</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Plan details -->
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-stack-sm border-b border-border-subtle pb-2">Plan details</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md mt-stack-sm">
+<div class="flex flex-col gap-1 col-span-1 md:col-span-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="planTitle">Plan title</label>
+<input class="bg-surface-bright border border-border-subtle text-on-surface font-body-md text-body-md rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary block w-full p-2.5" id="planTitle" name="planTitle" type="text" value="Ministry of Health Annual Procurement Plan 2027/28"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Planning period</label>
+<div class="bg-surface-container-low border border-border-subtle text-on-surface-variant font-body-md text-body-md rounded-lg block w-full p-2.5 cursor-not-allowed">
+                                1 July 2027 to 30 June 2028
+                            </div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Currency</label>
+<div class="bg-surface-container-low border border-border-subtle text-on-surface-variant font-body-md text-body-md rounded-lg block w-full p-2.5 cursor-not-allowed">
+                                KES
+                            </div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="respFunction">Responsible procurement function</label>
+<input class="bg-surface-bright border border-border-subtle text-on-surface font-body-md text-body-md rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary block w-full p-2.5" id="respFunction" name="respFunction" type="text" value="Supply Chain Management Services"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Budget context</label>
+<div class="bg-surface-container-low border border-border-subtle text-on-surface-variant font-body-md text-body-md rounded-lg block w-full p-2.5 cursor-not-allowed">
+                                Approved FY 2027/28 procurement budget
+                            </div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-stack-md pt-section-gap border-t border-border-subtle flex flex-col sm:flex-row justify-end gap-stack-sm items-center">
+<button class="w-full sm:w-auto px-6 py-2.5 text-status-exhausted bg-transparent hover:bg-status-exhausted/10 font-body-md text-body-md font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-status-exhausted focus:ring-offset-2" type="button">
+                        Cancel
+                    </button>
+<button class="w-full sm:w-auto px-6 py-2.5 text-on-primary bg-primary hover:bg-primary/90 font-body-md text-body-md font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 shadow-sm shadow-primary/20" type="submit">
+                        Create plan
+                    </button>
+</div>
+</form>
+</main>
+</div>
+</body></html>

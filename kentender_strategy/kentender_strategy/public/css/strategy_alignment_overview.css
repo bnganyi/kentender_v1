@@ -5,9 +5,9 @@
 .kt-cl-shell .kt-str-root .bg-black\/50{background-color: color-mix(in srgb, #000000 50%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-error-container\/20{background-color: color-mix(in srgb, #ffdad6 20%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-outline-variant{background-color: #c3c6d1 !important}
-.kt-cl-shell .kt-str-root .bg-primary{background-color: #001f48 !important}
-.kt-cl-shell .kt-str-root .bg-primary-container\/10{background-color: color-mix(in srgb, #00346f 10%, transparent) !important}
-.kt-cl-shell .kt-str-root .bg-primary-fixed{background-color: #d7e2ff !important}
+.kt-cl-shell .kt-str-root .bg-primary{background-color: #003d9b !important}
+.kt-cl-shell .kt-str-root .bg-primary-container\/10{background-color: color-mix(in srgb, #0052cc 10%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-primary-fixed{background-color: #dae2ff !important}
 .kt-cl-shell .kt-str-root .bg-status-available{background-color: #10B981 !important}
 .kt-cl-shell .kt-str-root .bg-status-available\/10{background-color: color-mix(in srgb, #10B981 10%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-status-reserved\/10{background-color: color-mix(in srgb, #F59E0B 10%, transparent) !important}
@@ -21,7 +21,7 @@
 .kt-cl-shell .kt-str-root .border-border-subtle{border-color: #e2e2e8 !important}
 .kt-cl-shell .kt-str-root .border-collapse{border-collapse: collapse !important}
 .kt-cl-shell .kt-str-root .border-outline-variant{border-color: #c3c6d1 !important}
-.kt-cl-shell .kt-str-root .border-primary{border-color: #001f48 !important}
+.kt-cl-shell .kt-str-root .border-primary{border-color: #003d9b !important}
 .kt-cl-shell .kt-str-root .border-t{border-top-width: 1px !important; border-top-style: solid !important}
 .kt-cl-shell .kt-str-root .border-tertiary-container\/10{border-color: color-mix(in srgb, #26364b 10%, transparent) !important}
 .kt-cl-shell .kt-str-root .fixed{position: fixed !important}
@@ -93,7 +93,7 @@
 .kt-cl-shell .kt-str-root .rounded{border-radius: 0.25rem !important}
 .kt-cl-shell .kt-str-root .rounded-full{border-radius: 9999px !important}
 .kt-cl-shell .kt-str-root .rounded-lg{border-radius: 0.5rem !important}
-.kt-cl-shell .kt-str-root .rounded-xl{border-radius: 0 !important}
+.kt-cl-shell .kt-str-root .rounded-xl{border-radius: 0.75rem !important}
 .kt-cl-shell .kt-str-root .shadow-sm{box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important}
 .kt-cl-shell .kt-str-root .shadow-xl{box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important}
 .kt-cl-shell .kt-str-root .text-\[10px\]{font-size: 10px !important}
@@ -104,7 +104,7 @@
 .kt-cl-shell .kt-str-root .text-body-md{font-size: 0.875rem !important; line-height: 1.45 !important}
 .kt-cl-shell .kt-str-root .text-data-mono{font-size: 0.8125rem !important; font-family: "JetBrains Mono", ui-monospace, monospace !important}
 .kt-cl-shell .kt-str-root .text-error{color: #ba1a1a !important}
-.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 28px !important; line-height: 36px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
+.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 30px !important; line-height: 38px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
 .kt-cl-shell .kt-str-root .text-headline-sm{font-size: 1.125rem !important; line-height: 1.3 !important; font-weight: 700 !important}
 .kt-cl-shell .kt-str-root .text-label-caps{font-size: 0.6875rem !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; font-weight: 600 !important}
 .kt-cl-shell .kt-str-root .text-left{text-align: left !important}
@@ -115,7 +115,7 @@
 .kt-cl-shell .kt-str-root .text-on-tertiary-fixed-variant{color: #38485e !important}
 .kt-cl-shell .kt-str-root .text-outline{color: #737781 !important}
 .kt-cl-shell .kt-str-root .text-outline-variant{color: #c3c6d1 !important}
-.kt-cl-shell .kt-str-root .text-primary{color: #001f48 !important}
+.kt-cl-shell .kt-str-root .text-primary{color: #003d9b !important}
 .kt-cl-shell .kt-str-root .text-right{text-align: right !important}
 .kt-cl-shell .kt-str-root .text-status-available{color: #10B981 !important}
 .kt-cl-shell .kt-str-root .text-status-reserved{color: #F59E0B !important}
@@ -149,7 +149,7 @@
 }
 .kt-cl-shell .kt-str-root .hover\:bg-surface-container-low:hover{background-color:#f4f3f9 !important}
 .kt-cl-shell .kt-str-root .hover\:bg-surface-container:hover{background-color:#eceef0 !important}
-.kt-cl-shell .kt-str-root .hover\:bg-primary\/90:hover{background-color:color-mix(in srgb, #001f48 90%, transparent) !important}
+.kt-cl-shell .kt-str-root .hover\:bg-primary\/90:hover{background-color:color-mix(in srgb, #003d9b 90%, transparent) !important}
 .kt-cl-shell .kt-str-root .hover\:underline:hover{text-decoration:underline !important}
 .kt-cl-shell .kt-str-root .hover\:text-on-surface:hover{color:#1a1b20 !important}
 

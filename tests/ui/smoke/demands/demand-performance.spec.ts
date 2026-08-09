@@ -93,13 +93,13 @@ test.describe("DEM-UI-10 Demand performance", () => {
 			strip.locator('[data-kt-dem-label="strip_approved_value"]'),
 		).toContainText(/,/);
 
-		// Desk lock: thead primary-fixed #d7e2ff
+		// DS muted thead (#f7f8f9)
 		const theadBg = await page
 			.getByTestId("kt-dem-ui10-flow")
 			.locator("th")
 			.first()
 			.evaluate((el) => getComputedStyle(el).backgroundColor);
-		expect(theadBg).toBe("rgb(215, 226, 255)");
+		expect(theadBg).toMatch(/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/);
 
 		await expect(
 			page.getByTestId("kt-dem-ui10-funding").locator('[data-kt-dem-label="fund_unfunded"]'),

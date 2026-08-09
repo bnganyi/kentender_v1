@@ -63,6 +63,7 @@ app_include_js = [
 	f"/assets/kentender_core/js/kt_cl_shell_router.js?v={_asset_version('public/js/kt_cl_shell_router.js')}",
 	f"/assets/kentender_core/js/kt_stitch_table_footer.js?v={_asset_version('public/js/kt_stitch_table_footer.js')}",
 	f"/assets/kentender_core/js/kt_stitch_table_pager.js?v={_asset_version('public/js/kt_stitch_table_pager.js')}",
+	f"/assets/kentender_core/js/kt_ds_recipes.js?v={_asset_version('public/js/kt_ds_recipes.js')}",
 ]
 
 # include js, css files in header of web template

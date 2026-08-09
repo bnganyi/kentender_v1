@@ -1,7 +1,7 @@
 /* BUD-UI-07 Funding Activity — Stitch pins (Desk has no Tailwind). */
 
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-activity"] {
-	--kt-bud-primary: #001f48;
+	--kt-bud-primary: #003d9b;
 	--kt-bud-secondary: #01629d;
 	width: 100% !important;
 	display: block !important;
@@ -228,7 +228,7 @@
 	display: flex !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-activity-notice-icon {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-size: 22px !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-activity-notice-title {
@@ -332,7 +332,7 @@
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:hover,
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:focus-visible {
 	text-decoration: none !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:hover .kt-bud-activity-action-label,
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:focus-visible .kt-bud-activity-action-label {

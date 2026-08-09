@@ -61,7 +61,7 @@ body.kt-str-surface .kt-cl-native-canvas > main > .max-w-\[1280px\] {
  * Module-wide focus chrome.
  * - Fields (input/select/textarea): thin light-blue border + 1px soft ring.
  * - Buttons: never invent a box border; use outline only for keyboard focus.
- * Never use primary (#001f48) as focus.
+ * Never use primary (#003d9b) as focus.
  */
 .kt-cl-shell .kt-str-root :is(input, select, textarea):focus,
 .kt-cl-shell .kt-str-root :is(input, select, textarea):focus-visible,
@@ -253,9 +253,9 @@ body.kt-str-surface .kt-cl-native-canvas > main > .max-w-\[1280px\] {
 	font-weight: 500 !important;
 }
 .kt-cl-shell [data-testid="kt-str-plan-tabs"] .kt-str-tab.is-active {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-weight: 700 !important;
-	border-bottom: 2px solid #001f48 !important;
+	border-bottom: 2px solid #003d9b !important;
 }
 .kt-cl-shell [data-testid="kt-str-structure-drawer-overlay"] {
 	position: fixed !important;

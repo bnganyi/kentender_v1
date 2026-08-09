@@ -1,12 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
 /**
- * Runtime Stitch Desk chrome contract — Desk/Bootstrap bleed defeat.
+ * Runtime Stitch Desk chrome contract — Desk/Bootstrap bleed defeat + DS tokens.
  *
+ * Authority: docs/mvp-1/00_common/design_system_refactor/
  * Visibility-only smoke is insufficient. Call this from every Stitch Desk
  * portfolio/shell Playwright gate before claiming UI Done.
  *
- * Primary CTA must be Stitch navy #001f48 (not Win98 outset black).
+ * Primary CTA must be DS primary #003d9b (not Win98 outset black).
  * Selects must keep a chevron (SVG Forms stand-in or Material expand_more).
  */
 
@@ -16,8 +17,8 @@ export type StitchDeskChromeOptions = {
 	/** Primary CTA test id (bg-primary button). */
 	primaryCtaTestId: string;
 	/**
-	 * filled = Stitch navy primary (default).
-	 * bordered = Stitch secondary header action (Audit Export — white + border).
+	 * filled = DS primary (default).
+	 * bordered = secondary header action (Audit Export — white + border).
 	 */
 	primaryCtaStyle?: "filled" | "bordered";
 	/** Optional secondary bordered CTA test id. */
@@ -26,10 +27,10 @@ export type StitchDeskChromeOptions = {
 	selectSelector?: string;
 	/** Optional headline selector (defaults to canvas h1). */
 	headlineSelector?: string;
-	/** Expect Manrope 28/700 on headline (default true). */
+	/** Expect Manrope 30/700 on headline (default true). */
 	assertHeadline?: boolean;
 	/**
-	 * Hover filled primary and require white label on lifted navy (#00346f).
+	 * Hover filled primary and require white label on lifted primary-container (#0052cc).
 	 * Opt-in — wire for Budget Lines + Strategy portfolio (and later modules).
 	 */
 	assertPrimaryHover?: boolean;
@@ -40,9 +41,15 @@ export type StitchDeskChromeOptions = {
 	assertEditableInputs?: boolean;
 };
 
+/** DS muted table/toolbar head stand-ins (#f7f8f9, #f8f8fa) or surface-low (#f3f4f6). */
+const MUTED_HEAD_RGB =
+	/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/;
+/** outline-variant #c3c6d6 (DS) or legacy #c3c6d1 */
+const CARD_BORDER_OK = /rgb\(\s*195,\s*198,\s*(209|214)\s*\)/;
+
 /**
- * Section headers + table theads use primary-fixed #d7e2ff; rounded-xl cards are square.
- * Inputs/buttons stay lightly rounded (0.5rem). Intentional Stitch deviation.
+ * Section headers + table theads use DS muted surface; rounded-xl cards stay rounded.
+ * Inputs/buttons stay lightly rounded (0.5rem).
  */
 export async function assertStitchSectionTableChrome(
 	page: Page,
@@ -55,16 +62,14 @@ export async function assertStitchSectionTableChrome(
 		roundedControlTestId?: string;
 	},
 ) {
-	const PRIMARY_FIXED = "rgb(215, 226, 255)";
-	/** outline-variant #c3c6d1 — softened card stroke (not outline #737781). */
-	const CARD_BORDER = "rgb(195, 198, 209)";
-
 	if (opts.sectionTestId) {
 		const section = page.getByTestId(opts.sectionTestId).filter({ visible: true }).first();
 		await expect(section).toBeVisible({ timeout: 15_000 });
 		const styles = await section.evaluate((el) => {
 			const cs = getComputedStyle(el);
-			const header = el.querySelector(".bg-surface-container-low") as HTMLElement | null;
+			const header = el.querySelector(
+				".kt-ds-section-title, .bg-surface-container-low, .kt-ds-toolbar-band",
+			) as HTMLElement | null;
 			const hcs = header ? getComputedStyle(header) : null;
 			return {
 				cardRadius: cs.borderRadius,
@@ -73,10 +78,24 @@ export async function assertStitchSectionTableChrome(
 				headerBg: hcs?.backgroundColor || "",
 			};
 		});
-		expect(styles.cardRadius, "section card must be square").toBe("0px");
-		expect(styles.headerBg, "section header must be primary-fixed").toBe(PRIMARY_FIXED);
+		const radiusPx = parseFloat(styles.cardRadius);
+		expect(radiusPx, "section card must be rounded (DS)").toBeGreaterThanOrEqual(6);
+		expect(radiusPx, "section card must not be fully squared").toBeLessThanOrEqual(14);
+		if (styles.headerBg && styles.headerBg !== "rgba(0, 0, 0, 0)") {
+			// Transparent section titles (kt-ds-section-title) are OK; bands must be muted.
+			const isTransparent =
+				styles.headerBg === "rgba(0, 0, 0, 0)" || styles.headerBg === "transparent";
+			if (!isTransparent) {
+				expect(
+					styles.headerBg,
+					"section header band must be muted DS (not primary-fixed)",
+				).toMatch(MUTED_HEAD_RGB);
+			}
+		}
 		if (parseFloat(styles.borderWidth) > 0) {
-			expect(styles.borderColor, "section card border must be outline-variant").toBe(CARD_BORDER);
+			expect(styles.borderColor, "section card border must be outline-variant").toMatch(
+				CARD_BORDER_OK,
+			);
 		}
 	}
 
@@ -86,6 +105,7 @@ export async function assertStitchSectionTableChrome(
 		const styles = await wrap.evaluate((el) => {
 			const cs = getComputedStyle(el);
 			const headerRow =
+				(el.querySelector("thead tr.kt-ds-table-head") as HTMLElement | null) ||
 				(el.querySelector("thead tr.bg-surface-container-low") as HTMLElement | null) ||
 				(el.querySelector("thead.bg-surface-container-low") as HTMLElement | null) ||
 				(el.querySelector("thead tr") as HTMLElement | null);
@@ -97,10 +117,16 @@ export async function assertStitchSectionTableChrome(
 				headerBg: hcs?.backgroundColor || "",
 			};
 		});
-		expect(styles.cardRadius, "table card must be square").toBe("0px");
-		expect(styles.headerBg, "table thead must be primary-fixed").toBe(PRIMARY_FIXED);
+		const radiusPx = parseFloat(styles.cardRadius);
+		expect(radiusPx, "table card must be rounded (DS)").toBeGreaterThanOrEqual(6);
+		expect(radiusPx, "table card must not be fully squared").toBeLessThanOrEqual(14);
+		expect(styles.headerBg, "table thead must be muted DS (not primary-fixed)").toMatch(
+			MUTED_HEAD_RGB,
+		);
 		if (parseFloat(styles.borderWidth) > 0) {
-			expect(styles.borderColor, "table card border must be outline-variant").toBe(CARD_BORDER);
+			expect(styles.borderColor, "table card border must be outline-variant").toMatch(
+				CARD_BORDER_OK,
+			);
 		}
 	}
 
@@ -114,7 +140,7 @@ export async function assertStitchSectionTableChrome(
 	}
 }
 
-/** Editable form controls must look active — white fill, never #f9f9fe surface. */
+/** Editable form controls must look active — white fill, never surface gray. */
 export async function assertEditableInputs(page: Page, rootTestId?: string) {
 	const scope = rootTestId
 		? page.getByTestId(rootTestId).filter({ visible: true }).first()
@@ -131,12 +157,11 @@ export async function assertEditableInputs(page: Page, rootTestId?: string) {
 	expect(bg, "editable control must be white (not surface gray)").toBe("rgb(255, 255, 255)");
 }
 
-/** Filled primary hover contract — white on lifted navy, never inky #7b9ee0. */
+/** Filled primary hover contract — white on primary-container, never inky on-primary-container. */
 export async function assertFilledPrimaryCtaHover(page: Page, primaryCtaTestId: string) {
 	const primary = page.getByTestId(primaryCtaTestId).filter({ visible: true }).first();
 	await expect(primary).toBeVisible({ timeout: 15_000 });
 	await primary.hover();
-	// Wait out transition-colors mid-frames (e.g. rgb(0,41,90) between #001f48 and #00346f).
 	await expect
 		.poll(
 			async () =>
@@ -146,7 +171,7 @@ export async function assertFilledPrimaryCtaHover(page: Page, primaryCtaTestId: 
 				}),
 			{ timeout: 5_000 },
 		)
-		.toBe("rgb(255, 255, 255)|rgb(0, 52, 111)");
+		.toBe("rgb(255, 255, 255)|rgb(0, 82, 204)");
 }
 
 export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeOptions) {
@@ -208,8 +233,8 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 		expect(chrome.primaryBg).toMatch(/rgb\(\s*255,\s*255,\s*255\s*\)/);
 		expect(chrome.primaryBorder).toMatch(/1px/);
 	} else {
-		// Primary CTA = Stitch navy, never Desk Win98 outset black.
-		expect(chrome.primaryBg).toBe("rgb(0, 31, 72)");
+		// Primary CTA = DS #003d9b, never Desk Win98 outset black.
+		expect(chrome.primaryBg).toBe("rgb(0, 61, 155)");
 	}
 
 	if (opts.secondaryCtaTestId) {
@@ -236,7 +261,7 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 	if (opts.assertHeadline !== false) {
 		expect(chrome.titleFamily).toMatch(/Manrope/i);
 		expect(chrome.titleWeight).toBe("700");
-		expect(chrome.titleSize).toBe("28px");
+		expect(chrome.titleSize).toBe("30px");
 	}
 
 	if (opts.assertPrimaryHover && opts.primaryCtaStyle !== "bordered") {

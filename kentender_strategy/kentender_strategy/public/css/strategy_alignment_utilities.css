@@ -11,8 +11,8 @@
 .kt-cl-shell .bg-error\/10{background-color:color-mix(in srgb, #ba1a1a 10%, transparent)}
 .kt-cl-shell .bg-no-repeat{background-repeat:no-repeat}
 .kt-cl-shell .bg-on-surface\/40{background-color:color-mix(in srgb, #1a1b20 40%, transparent)}
-.kt-cl-shell .bg-primary-fixed\/30{background-color:color-mix(in srgb, #d7e2ff 30%, transparent)}
-.kt-cl-shell .bg-primary\/5{background-color:color-mix(in srgb, #001f48 5%, transparent)}
+.kt-cl-shell .bg-primary-fixed\/30{background-color:color-mix(in srgb, #dae2ff 30%, transparent)}
+.kt-cl-shell .bg-primary\/5{background-color:color-mix(in srgb, #003d9b 5%, transparent)}
 .kt-cl-shell .bg-status-available{background-color:#10B981}
 .kt-cl-shell .bg-status-available\/10{background-color:color-mix(in srgb, #10B981 10%, transparent)}
 .kt-cl-shell .bg-status-available\/15{background-color:color-mix(in srgb, #10B981 15%, transparent)}
@@ -33,13 +33,13 @@
 .kt-cl-shell .border-error\/20{border-color:color-mix(in srgb, #ba1a1a 20%, transparent)}
 .kt-cl-shell .border-l-0{border-left-width:0px}
 .kt-cl-shell .border-l-2{border-left-width:2px}
-.kt-cl-shell .border-l-primary{border-left-color:#001f48}
+.kt-cl-shell .border-l-primary{border-left-color:#003d9b}
 .kt-cl-shell .border-l-status-reserved{border-left-color:#F59E0B}
 .kt-cl-shell .border-l-transparent{border-left-color:transparent}
 .kt-cl-shell .border-outline-variant\/30{border-color:color-mix(in srgb, #c3c6d1 30%, transparent)}
 .kt-cl-shell .border-outline-variant\/50{border-color:color-mix(in srgb, #c3c6d1 50%, transparent)}
 .kt-cl-shell .border-outline-variant\/60{border-color:color-mix(in srgb, #c3c6d1 60%, transparent)}
-.kt-cl-shell .border-primary\/20{border-color:color-mix(in srgb, #001f48 20%, transparent)}
+.kt-cl-shell .border-primary\/20{border-color:color-mix(in srgb, #003d9b 20%, transparent)}
 .kt-cl-shell .border-secondary-fixed{border-color:#cfe5ff}
 .kt-cl-shell .border-secondary-fixed-dim{border-color:#99cbff}
 .kt-cl-shell .border-secondary-fixed-dim\/50{border-color:color-mix(in srgb, #99cbff 50%, transparent)}
@@ -227,7 +227,7 @@
 .kt-cl-shell .md\:p-12{padding:3rem}
 .kt-cl-shell .md\:p-8{padding:2rem}
 .kt-cl-shell .md\:px-8{padding-left:2rem;padding-right:2rem}
-.kt-cl-shell .md\:text-headline-lg{font-size:1.75rem}
+.kt-cl-shell .md\:text-headline-lg{font-size:1.875rem}
 .kt-cl-shell .md\:w-1\/2{width:50%}
 .kt-cl-shell .md\:w-auto{width:auto}
 }

@@ -194,13 +194,14 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"
 STITCH_CANVAS_CLASS = "kt-stitch-canvas"
 
-# Markers that must exist in the shared CSS (Desk bleed lessons).
+# Markers that must exist in the shared CSS (Desk bleed + DS recipes).
 REQUIRED_SHARED_CSS_MARKERS: tuple[str, ...] = (
 	"kt-stitch-canvas",
 	"Win98",
 	"--weight-regular: 400",
 	"button.bg-primary",
-	"--kt-stitch-primary: #001f48",
+	"--kt-stitch-primary: #003d9b",
+	"design_system_refactor",
 	"data:image/svg+xml",
 	"Manrope",
 	"Inter",
@@ -208,24 +209,29 @@ REQUIRED_SHARED_CSS_MARKERS: tuple[str, ...] = (
 	# Permanent double-chevron kill (SVG Forms + Material expand_more).
 	"select:has(+ .material-symbols-outlined)",
 	"background-image: none !important",
-	# Filled primary hover must stay white on lifted navy — never #7b9ee0 ink.
+	# Filled primary hover must stay white on lifted navy — never on-primary-container ink.
 	"Filled primary hover: keep on-primary white",
 	"button.bg-primary:hover",
-	"#001536",
-	# Editable inputs: white fill — never surface #f9f9fe (reads as disabled).
+	"#0052cc",
+	"#002a6e",
+	# Editable inputs: white fill — never surface (reads as disabled).
 	"Editable inputs: white fill",
 	"input[type=\"number\"]",
 	"input[type=\"date\"]",
 	"background-color: #ffffff !important",
 	"background-color: #e2e2e8 !important",
-	# Square cards + primary-fixed section/table headers (not lilac-grey #f4f3f9).
-	"Square cards + section/table headers",
-	"--kt-stitch-primary-fixed: #d7e2ff",
-	"#d7e2ff",
+	# DS section/table chrome — muted heads + rounded cards (not primary-fixed / square).
+	"DS section/table chrome",
+	"--kt-stitch-primary-fixed: #dae2ff",
+	"--kt-stitch-table-head",
 	"thead tr.bg-surface-container-low",
-	"border-radius: 0 !important",
-	# Softened card strokes — outline-variant, not outline #737781.
+	"border-radius: 0.75rem !important",
+	"kt-ds-section-title",
+	"kt-ds-toolbar-band",
+	"kt-ds-table-head",
+	"kt-ds-data-block",
+	# Softened card strokes — outline-variant / border-subtle.
 	"Card borders use outline-variant",
-	"--kt-stitch-outline-variant, #c3c6d1",
+	"--kt-stitch-outline-variant, #c3c6d6",
 	".rounded-xl.border",
 )

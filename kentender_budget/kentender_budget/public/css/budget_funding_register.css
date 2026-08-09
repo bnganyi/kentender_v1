@@ -10,8 +10,8 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 
 /* ---- page surface ---- */
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] {
-	--kt-bud-primary: #001f48;
-	--kt-bud-primary-container: #00346f;
+	--kt-bud-primary: #003d9b;
+	--kt-bud-primary-container: #0052cc;
 	--kt-bud-on-primary: #ffffff;
 	--kt-bud-on-primary-container: #7b9ee0;
 	--kt-bud-outline: #737781;
@@ -230,7 +230,7 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 	background-color: #f9f9fe !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] .text-primary {
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] .text-on-surface {
 	color: #1a1b20 !important;
@@ -357,9 +357,9 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input:focus-visible,
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] select:focus,
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] select:focus-visible {
-	border-color: #001f48 !important;
+	border-color: #003d9b !important;
 	background: #ffffff !important;
-	box-shadow: 0 0 0 1px #001f48 !important;
+	box-shadow: 0 0 0 1px #003d9b !important;
 	outline: none !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] input:disabled {
@@ -396,7 +396,7 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 /* Primary / secondary CTAs — defeat Desk Win98 black boxes. */
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] button.bg-primary,
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] [data-testid="kt-bud-create-draft"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	color: #ffffff !important;
 	border: none !important;
 	border-radius: 0.5rem !important;
@@ -406,7 +406,7 @@ body.kt-bud-register-active [data-kt-bud-error]:not(.hidden) {
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] button.border,
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-register"] [data-testid="kt-bud-register-cancel"] {
 	background: #ffffff !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	border: 1px solid #737781 !important;
 	border-radius: 0.5rem !important;
 	padding: 0.5rem 1.5rem !important;

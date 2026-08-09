@@ -70,7 +70,7 @@ test.describe("DEM-UI-05 Procurement Enrichment", () => {
 		await expect(page.getByTestId("kt-dem-ui05-business-toggle")).toHaveCount(0);
 		await expect(page.getByTestId("kt-dem-ui05-business-teaser")).toHaveCount(0);
 		await expect(page.getByTestId("kt-dem-ui05-section-classify")).toBeVisible();
-		// App-wide primary-fixed section heads + square cards (not muted drab bands).
+		// DS muted section heads + rounded cards.
 		await assertStitchSectionTableChrome(page, {
 			sectionTestId: "kt-dem-ui05-section-classify",
 			roundedControlTestId: "kt-dem-ui05-category",

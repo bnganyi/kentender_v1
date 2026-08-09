@@ -129,7 +129,7 @@ test.describe("DEM-UI-04 Business Review", () => {
 		await assertStitchSectionTableChrome(page, {
 			sectionTestId: "kt-dem-ui04-section-need",
 		});
-		// Decision footer must stay muted surface — not section-header primary-fixed + navy inset.
+		// Decision footer must stay muted surface — distinct from section toolbar bands.
 		const actionsChrome = await page.getByTestId("kt-dem-ui04-actions").evaluate((el) => {
 			const cs = getComputedStyle(el);
 			return { bg: cs.backgroundColor, boxShadow: cs.boxShadow, padding: cs.padding };

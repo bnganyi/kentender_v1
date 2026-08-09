@@ -287,7 +287,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		# later rules (including lg:col-span-2 used by Derived Result).
 		self.assertNotIn("font-size:[", remaining_css)
 		self.assertIn("lg\\:col-span-2", remaining_css)
-		self.assertIn("font-size:28px !important", remaining_css)
+		self.assertIn("font-size: 30px !important", remaining_css)
 		self.assertIn("letter-spacing:-0.02em !important", remaining_css)
 		self.assertIn(
 			'font-family: Manrope, "Public Sans", system-ui, sans-serif !important',

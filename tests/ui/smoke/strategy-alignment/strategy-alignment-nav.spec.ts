@@ -230,8 +230,8 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(geometry.mainWidth).toBeGreaterThan(geometry.bentoWidth * 0.55);
 		expect(geometry.asideWidth).toBeGreaterThan(180);
 		expect(geometry.asideWidth).toBeLessThan(geometry.bentoWidth * 0.4);
-		// Stitch primary #001f48
-		expect(geometry.btnBg).toBe("rgb(0, 31, 72)");
+		// DS primary #003d9b
+		expect(geometry.btnBg).toBe("rgb(0, 61, 155)");
 
 		// Search lives in the filter panel, left of dropdowns, separated by "|".
 		const filters = page.getByTestId("kt-str-pf-filters");
@@ -576,9 +576,10 @@ test.describe("Strategy Alignment UI shell", () => {
 			};
 		});
 		expect(typo.titleFamily).toMatch(/Manrope/i);
-		expect(typo.titleSize).toBe("28px");
+		expect(typo.titleSize).toBe("30px");
 		expect(typo.titleWeight).toBe("700");
-		expect(typo.titleTracking).toBe("-0.56px");
+		// DS headline-lg 30px × −0.02em → −0.6px
+		expect(typo.titleTracking).toBe("-0.6px");
 		expect(typo.metaFamily).toMatch(/Inter/i);
 		expect(typo.metaSize).toBe("14px");
 		expect(typo.metaWeight).toBe("400");

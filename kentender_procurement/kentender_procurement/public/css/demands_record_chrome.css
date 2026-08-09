@@ -34,7 +34,7 @@
 	padding: 0 !important;
 	border: 0 !important;
 	background: transparent !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
 	font-size: 0.875rem !important;
 	font-weight: 600 !important;
@@ -107,7 +107,7 @@
 	font-size: 0.75rem !important;
 	font-weight: 600 !important;
 	line-height: 1.25 !important;
-	background: #001f48 !important;
+	background: #003d9b !important;
 	color: #ffffff !important;
 	border: none !important;
 }
@@ -177,8 +177,8 @@
 	color: #fff;
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-dot] {
-	background: #d7e2ff;
-	color: #001f48;
+	background: #dae2ff;
+	color: #003d9b;
 	box-shadow: 0 0 0 4px rgb(215 226 255 / 0.45);
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Not started"] [data-kt-dem-stage-dot] {
@@ -189,11 +189,11 @@
 	opacity: 0.65;
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Current"] [data-kt-dem-stage-label] {
-	color: var(--kt-dem-primary, #001f48);
+	color: var(--kt-dem-primary, #003d9b);
 	font-weight: 600;
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Current"] .text-xs {
-	color: var(--kt-dem-primary, #001f48);
+	color: var(--kt-dem-primary, #003d9b);
 }
 .kt-cl-shell .kt-dem-root [data-kt-dem-stage-item][data-state="Complete"] .text-xs {
 	color: #0f766e;

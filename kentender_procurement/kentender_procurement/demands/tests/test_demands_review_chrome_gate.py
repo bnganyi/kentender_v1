@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Static forbid-list: Demand review must not re-mute app-wide primary-fixed section chrome."""
+"""Static forbid-list: Demand review must follow DS muted section chrome (not primary-fixed / square)."""
 
 from __future__ import annotations
 
@@ -19,60 +19,45 @@ class TestDemandsReviewChromeGate(unittest.TestCase):
 		self.assertTrue(CSS.is_file(), f"missing {CSS}")
 		self.assertTrue(FIXTURE.is_file(), f"missing {FIXTURE}")
 
-	def test_ui05_section_heads_not_muted_to_surface_low(self):
+	def test_must_not_reintroduce_primary_fixed_section_heads(self):
 		css = CSS.read_text(encoding="utf-8")
-		# Forbidden: painting enrichment section heads drab #f4f3f9 (image-1 regression).
-		mute_block = re.search(
-			r"kt-dem-ui05-card-head[^{]*\{[^}]*#f4f3f9",
+		# Forbidden: re-pin section/table heads to legacy primary-fixed #d7e2ff.
+		for needle in ("#d7e2ff", "#D7E2FF"):
+			self.assertNotIn(
+				needle,
+				css,
+				"demands_review.css must not re-pin primary-fixed #d7e2ff "
+				"(DS muted heads win via kt_stitch_desk_chrome)",
+			)
+		navy_inset = re.search(
+			r"inset\s+3px\s+0\s+0",
 			css,
-			flags=re.S,
+			flags=re.I,
 		)
 		self.assertIsNone(
-			mute_block,
-			"demands_review.css must not mute .kt-dem-ui05-card-head to #f4f3f9 "
-			"(app-wide primary-fixed wins)",
-		)
-		enrich_mute = re.search(
-			r"kt-dem-enrichment-active[^{]*\.rounded-xl\s*>\s*\.bg-surface-container-low[^{]*\{[^}]*#f4f3f9",
-			css,
-			flags=re.S,
-		)
-		self.assertIsNone(
-			enrich_mute,
-			"must not mute enrichment .rounded-xl > .bg-surface-container-low to #f4f3f9",
+			navy_inset,
+			"demands_review.css must not re-introduce navy inset section bands",
 		)
 
-	def test_ui06_cards_not_forced_rounded(self):
+	def test_must_not_force_square_cards(self):
 		css = CSS.read_text(encoding="utf-8")
-		# Forbidden: border-radius 0.75rem on UI-06 section cards (defeats square lock).
-		rounded_override = re.search(
-			r"kt-dem-ui06-card\.rounded-xl[^{]*\{[^}]*border-radius:\s*0\.75rem",
+		# Forbidden: square-card lock that fights DS rounded-xl / rounded-lg.
+		square = re.search(
+			r"\.kt-dem[^{]*rounded-xl[^{]*\{[^}]*border-radius:\s*0\s*!important",
 			css,
 			flags=re.S,
 		)
 		self.assertIsNone(
-			rounded_override,
-			"demands_review.css must not force 0.75rem radius on .kt-dem-ui06-card "
-			"(square cards are app-wide)",
-		)
-		# Forbidden: mute recommendation section head to drab #f4f3f9 (same as Summary).
-		rec_mute = re.search(
-			r"kt-dem-ui06-recommend-head[^{]*\{[^}]*#f4f3f9",
-			css,
-			flags=re.S,
-		)
-		self.assertIsNone(
-			rec_mute,
-			"must not mute .kt-dem-ui06-recommend-head to #f4f3f9 "
-			"(app-wide primary-fixed wins for all section heads)",
+			square,
+			"demands_review.css must not force border-radius: 0 on Stitch cards "
+			"(DS rounded cards win)",
 		)
 
-	def test_ui06_summary_strategy_have_primary_fixed_bands(self):
+	def test_ui06_summary_strategy_have_surface_low_bands(self):
 		html = FIXTURE.read_text(encoding="utf-8")
-		# Extract budget host region roughly.
 		idx = html.find('data-testid="kt-dem-ui06-summary"')
 		self.assertGreater(idx, 0)
-		# Summary section must open with a direct-child surface-low band (not inline-only title).
+		# Summary section must open with a direct-child surface-low band (muted DS).
 		summary_slice = html[idx : idx + 800]
 		self.assertIn("bg-surface-container-low", summary_slice)
 		self.assertNotIn("kt-dem-ui06-inline-title", summary_slice)
@@ -104,21 +89,20 @@ class TestDemandsReviewChromeGate(unittest.TestCase):
 			self.assertIn(
 				"bg-surface-container-low",
 				cls,
-				f"UI-05 card head must include bg-surface-container-low for primary-fixed: {cls}",
+				f"UI-05 card head must include bg-surface-container-low for DS muted band: {cls}",
 			)
 
-	def test_no_wrong_precedence_comments_for_summary_strategy(self):
+	def test_no_legacy_primary_fixed_precedence_comments(self):
 		css = CSS.read_text(encoding="utf-8")
 		fixture = FIXTURE.read_text(encoding="utf-8")
 		blob = css + "\n" + fixture
-		# Do not document the wrong lock for Funding Summary / Strategy.
 		bad = re.search(
-			r"(?i)(funding summary|strategy alignment).{0,80}(no primary-fixed|inline navy titles)",
+			r"(?i)(app-wide primary-fixed|square cards are app-wide|primary-fixed wins)",
 			blob,
 		)
 		self.assertIsNone(
 			bad,
-			"do not claim Summary/Strategy use inline titles / no primary-fixed",
+			"retire primary-fixed / square-card lock language from Demands review chrome",
 		)
 
 

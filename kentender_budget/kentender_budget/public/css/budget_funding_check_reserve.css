@@ -23,7 +23,7 @@
 }
 
 .kt-bud-root.kt-bud-check-reserve {
-	--kt-bud-primary: #001f48;
+	--kt-bud-primary: #003d9b;
 	position: relative !important;
 	z-index: 1 !important;
 	width: 100% !important;
@@ -50,8 +50,8 @@
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-header h1 {
 	font-family: Manrope, Inter, system-ui, sans-serif !important;
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
 	font-weight: 700 !important;
 	letter-spacing: -0.02em !important;
 	color: #1a1b20 !important;
@@ -116,7 +116,7 @@
 }
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-requested {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-weight: 600 !important;
 }
 
@@ -306,9 +306,9 @@
 }
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--primary {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	color: #ffffff !important;
-	border: 1px solid #001f48 !important;
+	border: 1px solid #003d9b !important;
 }
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--secondary {
@@ -319,8 +319,8 @@
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--outline {
 	background: #ffffff !important;
-	color: #001f48 !important;
-	border: 1px solid #001f48 !important;
+	color: #003d9b !important;
+	border: 1px solid #003d9b !important;
 }
 
 .kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--disabled,

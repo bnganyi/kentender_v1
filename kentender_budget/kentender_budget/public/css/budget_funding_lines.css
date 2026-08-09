@@ -164,7 +164,7 @@
 	border-radius: 0.5rem !important;
 	background-color: #eeedf3 !important;
 	background-image: none !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
 	font-size: 0.875rem !important;
 	font-weight: 500 !important;
@@ -182,7 +182,7 @@
 .kt-cl-shell .kt-bud-root button[data-testid="kt-bud-lines-new"] .material-symbols-outlined {
 	font-size: 18px !important;
 	line-height: 1 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 @media (min-width: 768px) {
 	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-toolbar"],
@@ -205,8 +205,8 @@
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table-card"] {
 	display: block !important;
 	background-color: #ffffff !important;
-	border: 1px solid #c3c6d1 !important;
-	border-radius: 0 !important;
+	border: 1px solid #c3c6d6 !important;
+	border-radius: 0.75rem !important;
 	overflow: hidden !important;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
@@ -219,8 +219,8 @@
 }
 
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] thead tr {
-	background-color: #d7e2ff !important;
-	border-bottom: 1px solid #abc7ff !important;
+	background-color: #f7f8f9 !important;
+	border-bottom: 1px solid #dfe1e6 !important;
 }
 
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] th {
@@ -342,10 +342,10 @@
 	height: 2.25rem !important;
 	padding: 0 0.9rem !important;
 	margin: 0 !important;
-	border: 1px solid #001f48 !important;
+	border: 1px solid #003d9b !important;
 	border-radius: 0.5rem !important;
 	background-color: #ffffff !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-size: 0.8125rem !important;
 	font-weight: 600 !important;
 	line-height: 1 !important;
@@ -390,7 +390,7 @@
 	align-items: center !important;
 	justify-content: flex-end !important;
 	gap: 0.25rem !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-weight: 500 !important;
 	font-size: 0.875rem !important;
 	background: transparent !important;
@@ -464,7 +464,7 @@
 	font-size: 22px !important;
 	line-height: 30px !important;
 	font-weight: 600 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	margin: 0 !important;
 }
 
@@ -497,7 +497,7 @@
 
 /* Win98 CTA pins */
 .kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-save"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	border: none !important;
@@ -556,7 +556,7 @@
 	font-size: 18px !important;
 	line-height: 24px !important;
 	font-weight: 600 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	margin: 0 !important;
 }
 

@@ -2,7 +2,7 @@
 /* Markup is the Stitch HTML (fixture). No BEM rewrite. */
 
 .kt-cl-shell .kt-str-root {
-  --kt-str-primary: #001f48;
+  --kt-str-primary: #003d9b;
   color: #1a1b20;
   font-family: Inter, 'Public Sans', system-ui, sans-serif;
   font-size: 0.875rem;
@@ -34,7 +34,7 @@
   min-height: 0;
 }
 .kt-cl-shell .kt-str-root button.bg-primary {
-  background-color: #001f48 !important;
+  background-color: #003d9b !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 0.5rem !important;
@@ -44,7 +44,7 @@
 /* Filled primary hover: lifted navy + white (never on-primary-container ink). */
 .kt-cl-shell .kt-str-root button.bg-primary:hover,
 .kt-cl-shell .kt-str-root button.bg-primary:focus-visible {
-  background-color: #00346f !important;
+  background-color: #0052cc !important;
   color: #ffffff !important;
   opacity: 1 !important;
 }
@@ -53,7 +53,7 @@
   color: #ffffff !important;
 }
 .kt-cl-shell .kt-str-root button.bg-primary:active {
-  background-color: #001536 !important;
+  background-color: #002a6e !important;
   color: #ffffff !important;
 }
 /* Bordered Stitch buttons keep outline chrome; padding comes from utility classes */
@@ -94,7 +94,7 @@
 
 .kt-cl-shell .kt-str-root .-translate-y-1\/2{transform: translateY(-50%) !important}
 .kt-cl-shell .kt-str-root .absolute{position: absolute !important}
-.kt-cl-shell .kt-str-root .bg-primary{background-color: #001f48 !important}
+.kt-cl-shell .kt-str-root .bg-primary{background-color: #003d9b !important}
 .kt-cl-shell .kt-str-root .bg-status-available\/10{background-color: color-mix(in srgb, #10B981 10%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-status-available\/15{background-color: color-mix(in srgb, #10B981 15%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-status-committed\/10{background-color: color-mix(in srgb, #6366F1 10%, transparent) !important}
@@ -189,14 +189,14 @@
 .kt-cl-shell .kt-str-root .text-center{text-align: center !important}
 .kt-cl-shell .kt-str-root .text-data-mono{font-size: 0.8125rem !important; font-family: "JetBrains Mono", ui-monospace, monospace !important}
 .kt-cl-shell .kt-str-root .text-error{color: #ba1a1a !important}
-.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 28px !important; line-height: 36px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
+.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 30px !important; line-height: 38px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
 .kt-cl-shell .kt-str-root .text-headline-sm{font-size: 18px !important; line-height: 24px !important; font-weight: 600 !important}
 .kt-cl-shell .kt-str-root .text-label-caps{font-size: 0.6875rem !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; font-weight: 600 !important}
 .kt-cl-shell .kt-str-root .text-left{text-align: left !important}
 .kt-cl-shell .kt-str-root .text-lg{font-size: 1.125rem !important}
 .kt-cl-shell .kt-str-root .text-on-primary{color: #ffffff !important}
 .kt-cl-shell .kt-str-root .text-on-surface-variant{color: #434750 !important}
-.kt-cl-shell .kt-str-root .text-primary{color: #001f48 !important}
+.kt-cl-shell .kt-str-root .text-primary{color: #003d9b !important}
 .kt-cl-shell .kt-str-root .text-right{text-align: right !important}
 .kt-cl-shell .kt-str-root .text-secondary{color: #01629d !important}
 .kt-cl-shell .kt-str-root .text-sm{font-size: 0.875rem !important}
@@ -238,11 +238,11 @@
 /* Only intentional Stitch text links (hover:underline utility). */
 .kt-cl-shell .kt-str-root a.hover\:underline:hover,
 .kt-cl-shell .kt-str-root .hover\:underline:hover{text-decoration:underline !important}
-.kt-cl-shell .kt-str-root .hover\:text-primary:hover{color:#001f48 !important}
+.kt-cl-shell .kt-str-root .hover\:text-primary:hover{color:#003d9b !important}
 .kt-cl-shell .kt-str-root .hover\:text-secondary:hover{color:#01629d !important}
 .kt-cl-shell .kt-str-root .hover\:bg-surface-container:hover{background-color:#eceef0 !important}
 .kt-cl-shell .kt-str-root .hover\:border-outline-variant:hover{border-color:#c3c6d1 !important}
-.kt-cl-shell .kt-str-root .group:hover .group-hover\:text-primary{color:#001f48 !important}
+.kt-cl-shell .kt-str-root .group:hover .group-hover\:text-primary{color:#003d9b !important}
 .kt-cl-shell .kt-str-root .group:hover .group-hover\:translate-x-1{transform:translateX(0.25rem) !important}
 .kt-cl-shell .kt-str-root .disabled\:opacity-30:disabled,.kt-cl-shell .kt-str-root .disabled\:opacity-30[disabled]{opacity:0.3 !important}
 .kt-cl-shell .kt-str-root .flex-1{flex:1 1 0% !important}

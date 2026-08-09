@@ -4,7 +4,7 @@ import { assertStitchSectionTableChrome } from "../../helpers/stitchDeskChrome";
 
 /**
  * DEM-UI-06 — Routine Budget confirmation on shared demand-review.
- * Section heads: app-wide primary-fixed. Recommendation body: Stitch DEM-UI-06.html.
+ * Section heads: DS muted bands. Recommendation body: Stitch DEM-UI-06.html.
  * Route: /desk/demand-review/<name>
  */
 
@@ -200,7 +200,7 @@ test.describe("DEM-UI-06 Routine Budget confirmation", () => {
 		await page.getByTestId("kt-dem-details-close").click();
 		await expect(page.getByTestId("kt-dem-details-drawer")).toBeHidden();
 
-		// App-wide chrome: Summary + Strategy + Recommendation + Adjust primary-fixed + square cards.
+		// DS chrome: Summary + Strategy + Recommendation + Adjust muted heads + rounded cards.
 		await assertStitchSectionTableChrome(page, {
 			sectionTestId: "kt-dem-ui06-summary",
 			roundedControlTestId: "kt-dem-ui06-adjust",
@@ -294,9 +294,13 @@ test.describe("DEM-UI-06 Routine Budget confirmation", () => {
 				barWidths: bars.map((b) => b.style.width || ""),
 			};
 		});
-		expect(recommendChrome.recBg).toBe("rgb(215, 226, 255)");
-		expect(recommendChrome.sumBg).toBe("rgb(215, 226, 255)");
-		expect(recommendChrome.recInset).toBe(true);
+		expect(recommendChrome.recBg).toMatch(
+			/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/,
+		);
+		expect(recommendChrome.sumBg).toMatch(
+			/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/,
+		);
+		expect(recommendChrome.recInset).toBe(false);
 		// Same vertical padding band as Funding Summary (py-3 + py-3).
 		expect(Math.abs(recommendChrome.recPadY - recommendChrome.sumPadY)).toBeLessThanOrEqual(2);
 		expect(recommendChrome.tileCols).toBe(4);
@@ -351,7 +355,7 @@ test.describe("DEM-UI-06 Routine Budget confirmation", () => {
 		expect(actionsLayout!.adjustLeftOfConfirm).toBe(true);
 		expect(actionsLayout!.adjustBg).toMatch(/rgb\(255,\s*255,\s*255\)/);
 		expect(actionsLayout!.adjustBorderColor).toBe("rgb(115, 119, 129)");
-		expect(actionsLayout!.confirmBg).toBe("rgb(0, 31, 72)");
+		expect(actionsLayout!.confirmBg).toBe("rgb(0, 61, 155)");
 
 		// Funding Summary: full thousands. Recommendation tiles: compact M.
 		await expect(page.getByTestId("kt-dem-ui06-summary")).toContainText(

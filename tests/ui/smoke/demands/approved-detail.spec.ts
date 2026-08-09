@@ -96,13 +96,13 @@ test.describe("DEM-UI-09 Approved Demand detail", () => {
 		await expect(page.getByTestId("kt-dem-ui09-overview")).toBeHidden();
 		await expect(page.getByTestId("kt-dem-ui09a-items")).toBeVisible();
 		await expect(page.locator('[data-kt-dem-label="sc_total"]')).toContainText(/KES/);
-		// Desk lock: thead primary-fixed #d7e2ff (not Stitch muted #f4f3f9).
+		// DS muted thead (#f7f8f9).
 		const theadBg = await page
 			.getByTestId("kt-dem-ui09a-items")
 			.locator("th")
 			.first()
 			.evaluate((el) => getComputedStyle(el).backgroundColor);
-		expect(theadBg).toBe("rgb(215, 226, 255)");
+		expect(theadBg).toMatch(/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/);
 
 		await page.getByTestId("kt-dem-ui09-tab-strategy").click();
 		await expect(page.getByTestId("kt-dem-ui09b-strategy")).toBeVisible();

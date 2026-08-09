@@ -2,8 +2,8 @@
    Mirror budget_funding_portfolio.css: button reset, select chevron, typography. */
 
 .kt-cl-shell .kt-dem-root {
-	--kt-dem-primary: #001f48;
-	--kt-dem-primary-container: #00346f;
+	--kt-dem-primary: #003d9b;
+	--kt-dem-primary-container: #0052cc;
 	--kt-dem-on-primary: #ffffff;
 	--kt-dem-secondary: #01629d;
 	--kt-dem-on-surface: #1a1b20;
@@ -58,7 +58,7 @@
 
 .kt-cl-shell .kt-dem-root button.bg-primary,
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-ui01-create"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	border: none !important;
@@ -78,7 +78,7 @@
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-ui01-create"]:hover,
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-ui01-create"]:focus,
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-ui01-create"]:focus-visible {
-	background-color: #00346f !important;
+	background-color: #0052cc !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	opacity: 1 !important;
@@ -86,7 +86,7 @@
 
 .kt-cl-shell .kt-dem-root button.bg-primary:active,
 .kt-cl-shell .kt-dem-root [data-testid="kt-dem-ui01-create"]:active {
-	background-color: #001536 !important;
+	background-color: #002a6e !important;
 	color: #ffffff !important;
 }
 
@@ -186,8 +186,8 @@ body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus-
 }
 
 .kt-cl-shell .kt-dem-root .text-headline-lg {
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
 	font-weight: 700 !important;
 	letter-spacing: -0.02em !important;
 }
@@ -200,8 +200,8 @@ body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus-
 
 @media (min-width: 768px) {
 	.kt-cl-shell .kt-dem-root .md\:text-headline-lg {
-		font-size: 28px !important;
-		line-height: 36px !important;
+		font-size: 30px !important;
+		line-height: 38px !important;
 		font-weight: 700 !important;
 		letter-spacing: -0.02em !important;
 	}
@@ -333,7 +333,7 @@ body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus-
 	border-radius: 0.5rem !important;
 }
 .kt-cl-shell .kt-dem-root .rounded-xl {
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 }
 .kt-cl-shell .kt-dem-root .rounded-full {
 	border-radius: 9999px !important;

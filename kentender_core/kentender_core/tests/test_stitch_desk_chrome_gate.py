@@ -56,11 +56,11 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertGreaterEqual(hover_idx, 0)
 		hover_slice = css[hover_idx : hover_idx + 500]
 		self.assertIn("#ffffff", hover_slice)
-		self.assertIn("#00346f", hover_slice)
+		self.assertIn("#0052cc", hover_slice)
 		self.assertNotIn("var(--kt-stitch-on-primary-container)", hover_slice)
 		self.assertNotIn("color: #7b9ee0", hover_slice)
 
-		# Editable inputs must default to white — never surface tint #f9f9fe.
+		# Editable inputs must default to white — never surface tint.
 		input_idx = css.find("Editable inputs: white fill")
 		self.assertGreaterEqual(input_idx, 0)
 		# Block ends at Tailwind Forms select chevron (next major section).
@@ -72,20 +72,22 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertIn("cursor: not-allowed", input_slice)
 		self.assertNotIn("var(--kt-stitch-surface)", input_slice)
 
-		# Section/table headers: primary-fixed blue + square rounded-xl cards.
-		section_idx = css.find("Square cards + section/table headers")
+		# Section/table headers: DS muted heads + rounded cards (not primary-fixed / square).
+		section_idx = css.find("DS section/table chrome")
 		self.assertGreaterEqual(section_idx, 0)
 		# Block ends at Win98 button reset (next major section after tokens).
 		section_end = css.find("Desk/Bootstrap must not paint Win98", section_idx)
 		self.assertGreater(section_end, section_idx)
 		section_slice = css[section_idx:section_end]
-		self.assertIn("#d7e2ff", section_slice)
-		self.assertIn("#abc7ff", section_slice)
+		self.assertIn("--kt-stitch-table-head", section_slice)
 		self.assertIn("thead tr.bg-surface-container-low", section_slice)
 		self.assertIn(".rounded-xl", section_slice)
-		self.assertIn("border-radius: 0 !important", section_slice)
-		self.assertIn("inset 3px 0 0", section_slice)
-		self.assertNotIn("#f4f3f9", section_slice)
+		self.assertIn("border-radius: 0.75rem !important", section_slice)
+		self.assertIn("kt-ds-section-title", section_slice)
+		self.assertIn("kt-ds-table-head", section_slice)
+		self.assertNotIn("border-radius: 0 !important", section_slice)
+		self.assertNotIn("inset 3px 0 0", section_slice)
+		self.assertNotIn("#d7e2ff", section_slice)
 
 		from kentender_core import hooks as core_hooks
 
@@ -117,11 +119,13 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertIn("assertFilledPrimaryCtaHover", helper_src)
 		self.assertIn("assertEditableInputs", helper_src)
 		self.assertIn("assertStitchSectionTableChrome", helper_src)
-		self.assertIn("rgb(215, 226, 255)", helper_src)
-		self.assertIn("rgb(0, 31, 72)", helper_src)
-		self.assertIn("rgb(0, 52, 111)", helper_src)
+		# DS primary #003d9b / hover #0052cc; muted table head (not primary-fixed #d7e2ff).
+		self.assertIn("rgb(0, 61, 155)", helper_src)
+		self.assertIn("rgb(0, 82, 204)", helper_src)
 		self.assertIn("rgb(255, 255, 255)", helper_src)
 		self.assertIn("outset", helper_src)
+		self.assertNotIn("rgb(215, 226, 255)", helper_src)
+		self.assertNotIn("rgb(0, 31, 72)", helper_src)
 
 		cross = v1 / "tests" / "ui" / "smoke" / "stitch-desk" / "stitch-desk-chrome.spec.ts"
 		self.assertTrue(cross.is_file(), cross)

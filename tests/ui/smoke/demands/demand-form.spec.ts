@@ -95,7 +95,7 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		});
 	});
 
-	test("Section headers are primary-fixed blue; cards square; inputs stay rounded", async ({
+	test("Section headers are DS muted; cards rounded; inputs stay rounded", async ({
 		page,
 	}) => {
 		await page.goto("/desk/demand-form", { waitUntil: "domcontentloaded" });
@@ -104,14 +104,14 @@ test.describe("DEM-UI-02 Demand Form", () => {
 			sectionTestId: "kt-dem-ui02-section-need",
 			roundedControlTestId: "kt-dem-ui02-title",
 		});
-		// Items section embeds a table — thead must match section header chrome.
+		// Items section embeds a table — thead must be muted DS (not primary-fixed).
 		const itemsTheadBg = await page
 			.getByTestId("kt-dem-ui02-section-items")
 			.evaluate((el) => {
 				const row = el.querySelector("thead tr") as HTMLElement | null;
 				return row ? getComputedStyle(row).backgroundColor : "";
 			});
-		expect(itemsTheadBg).toBe("rgb(215, 226, 255)");
+		expect(itemsTheadBg).toMatch(/^rgb\(\s*(243|247|248),\s*(244|248),\s*(246|249|250)\s*\)$/);
 	});
 
 	test("Focused inputs use Strategy/Budget soft #7bbeff lock, not navy/black", async ({ page }) => {
@@ -145,6 +145,7 @@ test.describe("DEM-UI-02 Demand Form", () => {
 		expect(focusChrome.boxShadow).toMatch(/123,\s*190,\s*255/);
 		// Reject Civic Ledger near-black and navy primary slabs.
 		expect(focusChrome.boxShadow).not.toMatch(/0,\s*11,\s*29/);
+		expect(focusChrome.borderColor).not.toBe("rgb(0, 61, 155)");
 		expect(focusChrome.borderColor).not.toBe("rgb(0, 31, 72)");
 	});
 

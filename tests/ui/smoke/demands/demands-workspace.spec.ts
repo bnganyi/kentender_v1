@@ -60,7 +60,7 @@ test.describe("DEM-UI-01 Demands Workspace", () => {
 		});
 	});
 
-	test("Table thead is primary-fixed blue; table card is square", async ({ page }) => {
+	test("Table thead is DS muted; table card is rounded", async ({ page }) => {
 		await page.goto("/desk/demands-workspace", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(`${ROOT}[data-kt-dem-live="1"]`)).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("kt-dem-ui01-table-wrap")).toBeVisible({ timeout: 15_000 });

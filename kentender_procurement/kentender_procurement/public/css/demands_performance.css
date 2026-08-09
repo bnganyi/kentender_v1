@@ -17,7 +17,7 @@ body.kt-dem-perf-active .kt-dem-ui10-title {
 	font-size: 1.75rem;
 	font-weight: 700;
 	letter-spacing: -0.02em;
-	color: #001f48;
+	color: #003d9b;
 	line-height: 1.25;
 	margin-bottom: 0.5rem;
 }
@@ -70,12 +70,12 @@ body.kt-dem-perf-active .kt-dem-ui10-btn {
 }
 
 body.kt-dem-perf-active .kt-dem-ui10-btn--primary {
-	background: #001f48;
+	background: #003d9b;
 	color: #fff;
 }
 
 body.kt-dem-perf-active .kt-dem-ui10-btn--primary:hover {
-	background: #00346f;
+	background: #0052cc;
 }
 
 body.kt-dem-perf-active .kt-dem-ui10-btn--ghost {
@@ -119,7 +119,7 @@ body.kt-dem-perf-active .kt-dem-ui10-strip-label {
 body.kt-dem-perf-active .kt-dem-ui10-strip-value {
 	font-size: 1.125rem;
 	font-weight: 700;
-	color: #001f48;
+	color: #003d9b;
 }
 
 body.kt-dem-perf-active .kt-dem-ui10-strip-value--warn {
@@ -160,7 +160,7 @@ body.kt-dem-perf-active .kt-dem-ui10-card-title {
 	font-family: Manrope, Inter, sans-serif;
 	font-size: 1.125rem;
 	font-weight: 600;
-	color: #001f48;
+	color: #003d9b;
 	margin: 0 0 1rem;
 	padding-bottom: 0.5rem;
 	border-bottom: 1px solid #e2e8f0;
@@ -177,10 +177,10 @@ body.kt-dem-perf-active .kt-dem-ui10-table {
 	text-align: left;
 }
 
-/* Desk lock: primary-fixed thead (supersedes Stitch muted grey) */
+/* DS muted thead (design_system_refactor sample_2) */
 body.kt-dem-perf-active .kt-dem-ui10-table thead th {
-	background: #d7e2ff !important;
-	color: #001b3f;
+	background: #f7f8f9 !important;
+	color: #434654;
 	font-size: 0.75rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
@@ -214,7 +214,7 @@ body.kt-dem-perf-active .kt-dem-ui10-link {
 	background: none;
 	border: none;
 	padding: 0;
-	color: #001f48;
+	color: #003d9b;
 	font-size: 0.75rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
@@ -242,7 +242,7 @@ body.kt-dem-perf-active .kt-dem-ui10-funding-row {
 
 body.kt-dem-perf-active .kt-dem-ui10-funding-row .font-data-mono {
 	font-weight: 700;
-	color: #001f48;
+	color: #003d9b;
 }
 
 body.kt-dem-perf-active .kt-dem-ui10-funding-unfunded {

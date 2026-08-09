@@ -47,10 +47,10 @@
 .kt-cl-shell .kt-bud-root [data-kt-bud-budget-title] {
 	font-family: Manrope, Inter, system-ui, sans-serif !important;
 	font-weight: 700 !important;
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
 	letter-spacing: -0.02em !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	margin: 0 !important;
 	min-height: 36px !important;
 }
@@ -109,7 +109,7 @@
 
 /* Primary CTA — navy pin (Win98 Desk bleed). */
 .kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	border: none !important;
@@ -131,7 +131,7 @@
 .kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:hover,
 .kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:focus,
 .kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:focus-visible {
-	background-color: #00346f !important;
+	background-color: #0052cc !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	opacity: 1 !important;
@@ -139,7 +139,7 @@
 
 .kt-cl-shell .kt-bud-root button[data-testid="kt-bud-overview-primary"]:active,
 .kt-cl-shell .kt-stitch-canvas button[data-testid="kt-bud-overview-primary"]:active {
-	background-color: #001536 !important;
+	background-color: #002a6e !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	opacity: 1 !important;
@@ -196,9 +196,9 @@
 
 .kt-cl-shell .kt-bud-root button.kt-bud-tab.is-active,
 .kt-cl-shell .kt-stitch-canvas button.kt-bud-tab.is-active {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-weight: 500 !important;
-	border-bottom-color: #001f48 !important;
+	border-bottom-color: #003d9b !important;
 	border-bottom-width: 2px !important;
 	border-bottom-style: solid !important;
 }
@@ -273,7 +273,7 @@
 
 /* ---------- Shared Stitch surface / type tokens (missing from utility dump) ---------- */
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .rounded-xl {
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .rounded-lg {
 	border-radius: 0.5rem !important;
@@ -349,7 +349,7 @@
 	background-color: color-mix(in srgb, #10b981 5%, transparent) !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .bg-primary\/10 {
-	background-color: color-mix(in srgb, #001f48 10%, transparent) !important;
+	background-color: color-mix(in srgb, #003d9b 10%, transparent) !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .text-on-surface {
 	color: #1a1b20 !important;
@@ -358,7 +358,7 @@
 	color: #434750 !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .text-primary {
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-overview"] .text-status-reserved {
 	color: #f59e0b !important;
@@ -645,8 +645,8 @@
 	align-items: center !important;
 	justify-content: center !important;
 	flex-shrink: 0 !important;
-	background-color: color-mix(in srgb, #001f48 10%, transparent) !important;
-	color: #001f48 !important;
+	background-color: color-mix(in srgb, #003d9b 10%, transparent) !important;
+	color: #003d9b !important;
 }
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-view-lines"] {
 	display: inline-flex !important;
@@ -656,7 +656,7 @@
 }
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-view-lines"],
 .kt-cl-shell .kt-bud-root [data-testid="kt-bud-overview-review-activity"] {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	background: transparent !important;
 	border: none !important;
 	padding: 0 !important;

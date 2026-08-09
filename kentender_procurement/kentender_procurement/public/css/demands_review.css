@@ -16,9 +16,9 @@ body.kt-dem-review-active [data-testid="kt-cl-page-body"] {
 }
 
 .kt-cl-shell .kt-dem-review {
-	--kt-dem-primary: #001f48;
-	--kt-dem-outline-variant: #c3c6d1;
-	--kt-dem-surface: #f9f9fe;
+	--kt-dem-primary: var(--kt-stitch-primary, #003d9b);
+	--kt-dem-outline-variant: var(--kt-stitch-outline-variant, #c3c6d6);
+	--kt-dem-surface: var(--kt-stitch-surface, #f8f9fb);
 	--kt-dem-focus-border: #7bbeff;
 	--kt-dem-focus-ring: rgba(123, 190, 255, 0.55);
 	--kt-dem-status-reserved: #f59e0b;
@@ -45,7 +45,7 @@ body.kt-dem-review-active [data-testid="kt-cl-page-body"] {
 	border-color: var(--kt-dem-outline-variant, #c3c6d1) !important;
 }
 .kt-cl-shell .kt-dem-review .text-primary {
-	color: var(--kt-dem-primary, #001f48) !important;
+	color: var(--kt-dem-primary, #003d9b) !important;
 }
 .kt-cl-shell .kt-dem-review .text-on-primary {
 	color: #ffffff !important;
@@ -61,7 +61,7 @@ body.kt-dem-review-active [data-testid="kt-cl-page-body"] {
 	color: #ba1a1a !important;
 }
 .kt-cl-shell .kt-dem-review .bg-primary {
-	background-color: var(--kt-dem-primary, #001f48) !important;
+	background-color: var(--kt-dem-primary, #003d9b) !important;
 }
 .kt-cl-shell .kt-dem-review .bg-status-reserved\/10 {
 	background-color: rgb(245 158 11 / 0.1) !important;
@@ -73,23 +73,23 @@ body.kt-dem-review-active [data-testid="kt-cl-page-body"] {
 	border-color: rgb(245 158 11 / 0.2) !important;
 }
 
-/* Section chrome — app-wide primary-fixed blue headers + square cards. */
+/* Section chrome — DS muted section/table headers + rounded cards. */
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review section > .bg-surface-container-low {
-	background-color: #d7e2ff !important;
+	background-color: #f8f8fa !important;
 }
-/* App-wide Stitch card lock: square corners (class name rounded-xl is historical). */
+/* DS cards honor rounded-xl (0.75rem). */
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review section.rounded-xl,
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .rounded-xl {
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review thead tr {
-	background-color: #d7e2ff !important;
+	background-color: #f7f8f9 !important;
 }
 
 /*
  * Decision card must NOT inherit section-header chrome.
  * Shared rule: `.kt-stitch-canvas .rounded-xl > .bg-surface-container-low`
- * paints primary-fixed + navy left inset — correct for section titles, wrong for
+ * shared canvas paints muted toolbar bands — keep decision footer distinct from
  * the sticky decision footer / muted bars.
  */
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision"] > .kt-dem-ui04-decision-card {
@@ -185,8 +185,8 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-inpu
 	display: block;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked {
-	background: var(--kt-dem-primary, #001f48) !important;
-	border-color: var(--kt-dem-primary, #001f48) !important;
+	background: var(--kt-dem-primary, #003d9b) !important;
+	border-color: var(--kt-dem-primary, #003d9b) !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-check {
 	position: absolute;
@@ -303,9 +303,9 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textar
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textarea:focus {
 	outline: none !important;
-	border-color: #001f48 !important;
+	border-color: #003d9b !important;
 	background: #ffffff !important;
-	box-shadow: 0 0 0 1px #001f48 !important;
+	box-shadow: 0 0 0 1px #003d9b !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-modal-textarea.is-invalid {
 	border-color: #ba1a1a !important;
@@ -375,7 +375,7 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm {
 	color: #fff !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm.is-return {
-	background: #001f48 !important;
+	background: #003d9b !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-reason-confirm.is-reject {
 	background: #ba1a1a !important;
@@ -421,7 +421,7 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrichment-stack {
 	padding-bottom: 1.5rem !important;
 	max-width: 56rem !important;
 }
-/* DEM-UI-05 section heads use app-wide primary-fixed via .rounded-xl > .bg-surface-container-low. */
+/* DEM-UI-05 section heads use DS muted band via .rounded-xl > .bg-surface-container-low. */
 body.kt-dem-review-active.kt-dem-enrichment-active .kt-dem-ui05-card {
 	padding: 0 !important;
 	gap: 0 !important;
@@ -472,14 +472,14 @@ body.kt-dem-review-active.kt-dem-enrichment-active.kt-cl-shell .kt-dem-root .kt-
 	align-items: center !important;
 	gap: 0.5rem !important;
 	border: 0 !important;
-	border-bottom: 2px solid #001f48 !important;
+	border-bottom: 2px solid #003d9b !important;
 	border-radius: 0 !important;
 	padding: 0 0 0.25rem !important;
 	background: transparent !important;
 	box-shadow: none !important;
 }
 body.kt-dem-review-active.kt-dem-enrichment-active.kt-cl-shell .kt-dem-root .kt-dem-ui05-confirmed-currency {
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-family: "JetBrains Mono", ui-monospace, monospace !important;
 	font-weight: 700 !important;
 	font-size: 1.125rem !important;
@@ -499,7 +499,7 @@ body.kt-dem-review-active.kt-dem-enrichment-active.kt-cl-shell .kt-dem-root .kt-
 	outline: none !important;
 	padding: 0 !important;
 	margin: 0 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	font-family: "JetBrains Mono", ui-monospace, monospace !important;
 	font-weight: 700 !important;
 	font-size: 1.125rem !important;
@@ -517,7 +517,7 @@ body.kt-dem-review-active.kt-dem-enrichment-active.kt-cl-shell .kt-dem-root .kt-
 	background-color: transparent !important;
 	box-shadow: none !important;
 	outline: none !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 
 /*
@@ -669,7 +669,7 @@ body.kt-dem-review-active.kt-dem-enrichment-active [data-testid="kt-dem-ui05-ite
 	font-family: "JetBrains Mono", ui-monospace, monospace !important;
 	font-size: 0.875rem !important;
 	white-space: nowrap !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-dem-enrichment-active [data-testid="kt-dem-ui05-items-total"] {
 	font-size: 1.125rem !important;
@@ -750,12 +750,12 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrich-btn--seconda
 	background: #f4f3f9 !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrich-btn--primary {
-	background: #001f48 !important;
-	border: 1px solid #001f48 !important;
+	background: #003d9b !important;
+	border: 1px solid #003d9b !important;
 	color: #ffffff !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrich-btn--primary:hover:not(:disabled) {
-	background: #00346f !important;
+	background: #0052cc !important;
 }
 /* Disabled = opacity only. Do not restyle Save as a filled muted chip. */
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrich-btn:disabled {
@@ -764,7 +764,7 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-enrich-btn:disabled
 }
 
 /* ---------- DEM-UI-06 Budget confirmation ----------
- * Summary/Strategy/Recommendation: app-wide primary-fixed section heads + square cards.
+ * Summary/Strategy/Recommendation: DS muted section heads + rounded cards.
  * Recommendation body (progress + money tiles): Stitch DEM-UI-06.html via explicit CSS.
  * Actions inside sign-off card (Stitch), not a sticky bar.
  */
@@ -996,7 +996,7 @@ body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-card-title {
 	margin: 0 !important;
 }
 /*
- * Recommendation section head = same app-wide primary-fixed band as Summary/Strategy.
+ * Recommendation section head = same DS muted band as Summary/Strategy.
  * Do NOT mute to #f4f3f9. Match Summary height: px-4 py-3 (not taller py-4).
  */
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-recommend-head {
@@ -1008,7 +1008,7 @@ body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-recommend-title {
 	font-size: 1.125rem !important;
 	line-height: 1.5rem !important;
 	font-weight: 700 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	margin: 0 !important;
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-strategy-box {
@@ -1055,7 +1055,7 @@ body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-meta-value--line {
 	font-size: 1rem !important;
 	line-height: 1.5rem !important;
 	font-weight: 700 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-progress {
@@ -1171,11 +1171,11 @@ body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-money-tile-value {
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-tile-allocate {
 	background: rgba(0, 52, 111, 0.05) !important;
-	border-top-color: #001f48 !important;
+	border-top-color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-tile-allocate .kt-dem-ui06-money-tile-label,
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-tile-allocate .kt-dem-ui06-money-tile-value {
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-tile-allocate .kt-dem-ui06-money-tile-value {
 	font-weight: 700 !important;
@@ -1240,9 +1240,9 @@ body.kt-dem-review-active.kt-dem-budget-active.kt-cl-shell .kt-dem-root input.kt
 body.kt-dem-surface.kt-dem-review-active.kt-dem-budget-active.kt-cl-shell .kt-dem-root input.kt-dem-ui06-checkbox[type="checkbox"]:checked,
 body.kt-dem-surface.kt-dem-review-active.kt-dem-budget-active.kt-cl-shell .kt-dem-root input.kt-dem-ui06-checkbox[type="checkbox"]:checked:focus,
 body.kt-dem-surface.kt-dem-review-active.kt-dem-budget-active.kt-cl-shell .kt-dem-root input.kt-dem-ui06-checkbox[type="checkbox"]:checked:focus-visible {
-	background: #001f48 !important;
-	background-color: #001f48 !important;
-	border-color: #001f48 !important;
+	background: #003d9b !important;
+	background-color: #003d9b !important;
+	border-color: #003d9b !important;
 	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui06-checkbox:focus,
@@ -1566,7 +1566,7 @@ body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui07-radio.is-disabled {
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui07-radio input {
 	margin-top: 0.2rem;
-	accent-color: #001f48;
+	accent-color: #003d9b;
 }
 body.kt-dem-review-active.kt-dem-budget-active .kt-dem-ui07-radio span {
 	font-family: Inter, sans-serif !important;
@@ -1638,8 +1638,8 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui07-btn {
 	box-shadow: none !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui07-btn--primary {
-	background: #001f48 !important;
-	border: 1px solid #001f48 !important;
+	background: #003d9b !important;
+	border: 1px solid #003d9b !important;
 	color: #ffffff !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui07-btn--primary:hover:not(:disabled) {
@@ -1757,15 +1757,15 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui06-btn--secondary
 	background: #ffffff !important;
 	background-image: none !important;
 	border: 1px solid #737781 !important; /* Stitch border-outline */
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui06-btn--secondary:hover:not(:disabled) {
 	background: #eeedf3 !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui06-btn--primary {
-	background: #001f48 !important;
+	background: #003d9b !important;
 	background-image: none !important;
-	border: 1px solid #001f48 !important;
+	border: 1px solid #003d9b !important;
 	color: #ffffff !important;
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.05) !important;
 }
@@ -1848,8 +1848,8 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-details-drawer-body
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-details-section {
 	background: #ffffff !important;
-	border: 1px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
-	border-radius: 0 !important;
+	border: 1px solid var(--kt-dem-outline-variant, #c3c6d6) !important;
+	border-radius: 0.75rem !important;
 	overflow: visible !important;
 	flex: 0 0 auto !important;
 	min-height: auto !important;
@@ -1860,13 +1860,13 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-details-section-hea
 	justify-content: space-between !important;
 	gap: 0.75rem !important;
 	padding: 0.75rem 1rem !important;
-	background: #d7e2ff !important;
-	border-bottom: 1px solid #abc7ff !important;
-	box-shadow: inset 3px 0 0 #001f48 !important;
+	background: #f8f8fa !important;
+	border-bottom: 1px solid #dfe1e6 !important;
+	box-shadow: none !important;
 	font-family: Manrope, Inter, sans-serif !important;
 	font-size: 0.9375rem !important;
 	font-weight: 700 !important;
-	color: #001f48 !important;
+	color: #191c1e !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-details-section-body {
 	padding: 1rem !important;
@@ -2033,11 +2033,11 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-option {
 	background: #ffffff !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-option.is-suggested {
-	border: 2px solid var(--kt-dem-primary, #001f48) !important;
+	border: 2px solid var(--kt-dem-primary, #003d9b) !important;
 	background: rgb(0 31 72 / 0.05) !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-strategy-option:has(input:checked) {
-	border-color: var(--kt-dem-primary, #001f48) !important;
+	border-color: var(--kt-dem-primary, #003d9b) !important;
 	border-width: 2px !important;
 	background: rgb(0 31 72 / 0.05) !important;
 }
@@ -2186,7 +2186,7 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-card {
 	flex-direction: column !important;
 	background: #ffffff !important;
 	border: 1px solid #c3c6d1 !important;
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 	overflow: hidden !important;
 	height: 100% !important;
 }
@@ -2195,9 +2195,9 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-card-head {
 	align-items: center !important;
 	gap: 0.5rem !important;
 	padding: 1rem !important;
-	background: #d7e2ff !important;
-	border-bottom: 1px solid #c3c6d1 !important;
-	color: #001b3f !important;
+	background: #f8f8fa !important;
+	border-bottom: 1px solid #dfe1e6 !important;
+	color: #191c1e !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-card-head .material-symbols-outlined {
 	color: #434750 !important;
@@ -2241,7 +2241,7 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-route-pill {
 	align-items: center !important;
 	padding: 0.25rem 0.5rem !important;
 	border-radius: 9999px !important;
-	background: #001f48 !important;
+	background: #003d9b !important;
 	color: #ffffff !important;
 	font-size: 0.8125rem !important;
 }
@@ -2310,7 +2310,7 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-view-details {
 	gap: 0.25rem !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-view-details:hover {
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-avail-row {
 	display: flex !important;
@@ -2334,8 +2334,8 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-recheck {
 	gap: 0.5rem !important;
 	padding: 0.75rem !important;
 	border: 1px solid #c3c6d1 !important;
-	border-radius: 0 !important;
-	background: #f4f3f9 !important;
+	border-radius: 0.5rem !important;
+	background: #f3f4f6 !important;
 	font-family: Inter, sans-serif !important;
 	font-size: 0.8125rem !important;
 	color: #434750 !important;
@@ -2346,7 +2346,7 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-planning-pill {
 	gap: 0.5rem !important;
 	padding: 0.35rem 0.75rem !important;
 	border-radius: 9999px !important;
-	background: #d7e2ff !important;
+	background: #dae2ff !important;
 	color: #001b3f !important;
 	font-family: Inter, sans-serif !important;
 	font-size: 0.875rem !important;
@@ -2373,14 +2373,14 @@ body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-planning-note {
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-decision {
 	background: #ffffff !important;
-	border: 1px solid #c3c6d1 !important;
-	border-radius: 0 !important;
+	border: 1px solid #c3c6d6 !important;
+	border-radius: 0.75rem !important;
 	overflow: hidden !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-decision-head {
 	padding: 1rem 1.25rem !important;
-	background: #d7e2ff !important;
-	border-bottom: 1px solid #c3c6d1 !important;
+	background: #f8f8fa !important;
+	border-bottom: 1px solid #dfe1e6 !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-decision-title {
 	font-family: Inter, sans-serif !important;
@@ -2443,9 +2443,9 @@ body.kt-dem-review-active.kt-dem-final-active.kt-cl-shell .kt-dem-root input.kt-
 body.kt-dem-surface.kt-dem-review-active.kt-dem-final-active.kt-cl-shell .kt-dem-root input.kt-dem-ui08-checkbox[type="checkbox"]:checked,
 body.kt-dem-surface.kt-dem-review-active.kt-dem-final-active.kt-cl-shell .kt-dem-root input.kt-dem-ui08-checkbox[type="checkbox"]:checked:focus,
 body.kt-dem-surface.kt-dem-review-active.kt-dem-final-active.kt-cl-shell .kt-dem-root input.kt-dem-ui08-checkbox[type="checkbox"]:checked:focus-visible {
-	background: #001f48 !important;
-	background-color: #001f48 !important;
-	border-color: #001f48 !important;
+	background: #003d9b !important;
+	background-color: #003d9b !important;
+	border-color: #003d9b !important;
 	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
 }
 body.kt-dem-review-active.kt-dem-final-active .kt-dem-ui08-checkbox:focus,
@@ -2507,7 +2507,7 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui08-btn {
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui08-btn--secondary {
 	background: #ffffff !important;
 	border: 1px solid #737781 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui08-btn--secondary:hover:not(:disabled) {
 	background: #eeedf3 !important;
@@ -2521,8 +2521,8 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui08-btn--danger:ho
 	background: #ffdad6 !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui08-btn--primary {
-	background: #001f48 !important;
-	border: 1px solid #001f48 !important;
+	background: #003d9b !important;
+	border: 1px solid #003d9b !important;
 	color: #ffffff !important;
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.05) !important;
 }

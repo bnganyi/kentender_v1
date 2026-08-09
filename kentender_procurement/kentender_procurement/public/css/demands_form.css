@@ -20,7 +20,7 @@ body.kt-dem-form-active [data-testid="kt-cl-page-body"] {
 }
 
 .kt-cl-shell .kt-dem-form {
-	--kt-dem-primary: #001f48;
+	--kt-dem-primary: #003d9b;
 	--kt-dem-outline-variant: #c3c6d1;
 	--kt-dem-surface: #f9f9fe;
 	/* App-wide Stitch focus lock (Strategy/Budget): soft secondary blue — never navy/black. */
@@ -338,7 +338,7 @@ body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-nat
 	overflow-x: auto !important;
 }
 .kt-cl-shell .kt-dem-form .rounded-xl {
-	border-radius: 0 !important;
+	border-radius: 0.75rem !important;
 }
 .kt-cl-shell .kt-dem-form .rounded-lg {
 	border-radius: 0.5rem !important;
@@ -402,7 +402,7 @@ body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-nat
 	color: #f59e0b !important;
 }
 .kt-cl-shell .kt-dem-form .text-primary {
-	color: var(--kt-dem-primary, #001f48) !important;
+	color: var(--kt-dem-primary, #003d9b) !important;
 }
 .kt-cl-shell .kt-dem-form .text-on-surface {
 	color: var(--kt-dem-on-surface, #1a1b20) !important;
@@ -484,7 +484,7 @@ body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-nat
 /* Primary CTA in footer */
 .kt-cl-shell .kt-dem-form button.bg-primary,
 .kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-submit"] {
-	background-color: #001f48 !important;
+	background-color: #003d9b !important;
 	background-image: none !important;
 	color: #ffffff !important;
 	border: none !important;
@@ -494,7 +494,7 @@ body.kt-dem-surface.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-date-nat
 }
 .kt-cl-shell .kt-dem-form button.bg-primary:hover,
 .kt-cl-shell .kt-dem-form [data-testid="kt-dem-ui02-submit"]:hover {
-	background-color: #001536 !important;
+	background-color: #002a6e !important;
 	color: #ffffff !important;
 }
 .kt-cl-shell .kt-dem-form button.bg-primary .material-symbols-outlined,
@@ -569,8 +569,8 @@ body.kt-dem-form-active #kt-cl-page-header-host {
 	font-family: Manrope, Inter, sans-serif !important;
 }
 .kt-cl-shell .kt-dem-form .text-headline-lg {
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
 	font-weight: 700 !important;
 	letter-spacing: -0.02em !important;
 }
@@ -797,9 +797,9 @@ body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-reason-modal-textarea {
 }
 body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-reason-modal-textarea:focus {
 	outline: none !important;
-	border-color: #001f48 !important;
+	border-color: #003d9b !important;
 	background: #ffffff !important;
-	box-shadow: 0 0 0 1px #001f48 !important;
+	box-shadow: 0 0 0 1px #003d9b !important;
 }
 body.kt-dem-form-active.kt-cl-shell .kt-dem-form .kt-dem-reason-modal-textarea.is-invalid {
 	border-color: #ba1a1a !important;

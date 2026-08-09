@@ -1,7 +1,7 @@
 /* BUD-UI-02 — Funding Performance (Stitch hand-port). Desk has no Tailwind. */
 
 .kt-cl-shell .kt-bud-root[data-testid="kt-bud-performance"] {
-	--kt-bud-primary: #001f48;
+	--kt-bud-primary: #003d9b;
 	--kt-bud-secondary: #01629d;
 	width: 100% !important;
 	display: block !important;
@@ -25,11 +25,11 @@
 
 .kt-cl-shell .kt-bud-root .kt-bud-perf-header h1 {
 	font-family: Manrope, Inter, system-ui, sans-serif !important;
-	font-size: 28px !important;
-	line-height: 36px !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
 	font-weight: 700 !important;
 	letter-spacing: -0.02em !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 	margin: 0 !important;
 }
 
@@ -187,7 +187,7 @@
 	font-size: 1.25rem !important;
 	font-weight: 700 !important;
 	line-height: 1.4 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 
 .kt-cl-shell .kt-bud-root .kt-bud-perf-kpi--reserved .kt-bud-perf-kpi-value {
@@ -236,7 +236,7 @@
 	font-family: Manrope, Inter, system-ui, sans-serif !important;
 	font-size: 18px !important;
 	font-weight: 600 !important;
-	color: #001f48 !important;
+	color: #003d9b !important;
 }
 
 .kt-cl-shell .kt-bud-root .kt-bud-perf-table-card-head--exceptions {
