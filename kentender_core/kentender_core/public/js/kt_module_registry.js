@@ -101,19 +101,12 @@ frappe.provide("kentender_core.module_registry");
 			workbenchLabel: __("Procurement Planning"),
 			backLabel: __("Back to Procurement Planning"),
 			sidebarWorkspaceKey: "procurement planning",
-			formDoctype: "Procurement Package",
+			formDoctype: "Procurement Plan",
 			stateKey: "kt_pp_workbench_state",
 			selectKey: "kt_pp_workspace_select",
-			routePrefixes: [
-				"procurement-planning",
-				"procurement-planning/approved-demands",
-				"procurement-planning/plans",
-				"procurement-planning/packages",
-				"procurement-planning/releases",
-				"Form/Procurement Package",
-			],
+			routePrefixes: ["Form/Procurement Plan"],
 			taskLabels: {
-				form: __("Edit Package"),
+				form: __("Edit Plan"),
 			},
 		},
 		ktsm: {

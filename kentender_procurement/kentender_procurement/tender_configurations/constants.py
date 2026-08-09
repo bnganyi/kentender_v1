@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-from kentender_procurement.procurement_planning.pp2_constants import (
-	PKG_APPROVED,
-	PKG_READY_FOR_RELEASE,
-	PKG_RELEASED,
-)
+# PP2 Package statuses (DocType retired) — retained only for legacy CFG filters.
+PKG_APPROVED = "Approved"
+PKG_READY_FOR_RELEASE = "Ready for Release"
+PKG_RELEASED = "Released"
 
 DOCTYPE = "Tender Configuration"
 

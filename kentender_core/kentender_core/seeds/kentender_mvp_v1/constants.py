@@ -94,8 +94,16 @@ DEMAND_CODE: Final[str] = "DMD-MOH-2027-014"
 DEMAND_CODE_RETURNED: Final[str] = "DMD-MOH-2027-019"
 DEMAND_CODE_COUNTY: Final[str] = "DMD-CGK-2027-006"
 CONTRACT_CODE: Final[str] = "CTR-MOH-2027-005"
+PROCUREMENT_PLAN_CODE: Final[str] = "PLN-MOH-2027-001"
+PROCUREMENT_PLAN_VERSION_CODE: Final[str] = "PLN-MOH-2027-001-V1"
 PLAN_ITEM_CODE: Final[str] = "PPI-MOH-2027-021"
+PLAN_ITEM_CODE_SCN: Final[str] = "PPI-MOH-2027-022"
+PROCUREMENT_PLAN_VERSION_V2: Final[str] = "PLN-MOH-2027-001-V2"
 TENDER_CODE: Final[str] = "TND-MOH-2027-008"
+PLAN_AMOUNT_V1: Final[float] = 455_000_000
+PLAN_AMOUNT_V2: Final[float] = 535_000_000
+PLAN_ITEM_SCN_AMOUNT: Final[float] = 80_000_000
+RSV_CODE_SCN: Final[str] = "RSV-MOH-0002"
 
 USER_MEDICAL: Final[str] = "moh.medicalservices.officer@example.test"
 USER_PUBLIC: Final[str] = "moh.publichealth.officer@example.test"
@@ -109,6 +117,13 @@ USER_BUD_DUAL: Final[str] = "moh.budget.officer.authority@example.test"
 # Contract v2.2 §4.6 / §7.5 — Demand creation-scope demonstration personas.
 USER_MULTISCOPE: Final[str] = "kentender.multiscope.admin@example.test"
 USER_SYSTEM_ADMIN: Final[str] = "kentender.system.admin@example.test"
+# Contract v2.4 §4.6 — Planning personas
+USER_PLANNING_OFFICER: Final[str] = "moh.planning.officer@example.test"
+USER_PLANNING_REVIEWER: Final[str] = "moh.planning.reviewer@example.test"
+USER_ACCOUNTING_OFFICER: Final[str] = "moh.accounting.officer@example.test"
+USER_PLAN_APPROVER: Final[str] = "moh.plan.approver@example.test"
+USER_TENDER_INITIATOR: Final[str] = "moh.tender.initiator@example.test"
+USER_COUNTY_PLANNER: Final[str] = "kisumu.planning.officer@example.test"
 # Retired primary denial persona (kept disabled).
 USER_OTHER_ENTITY: Final[str] = "other.entity.officer@example.test"
 
@@ -124,6 +139,12 @@ CANONICAL_USERS: Final[tuple[str, ...]] = (
 	USER_BUD_DUAL,
 	USER_MULTISCOPE,
 	USER_SYSTEM_ADMIN,
+	USER_PLANNING_OFFICER,
+	USER_PLANNING_REVIEWER,
+	USER_ACCOUNTING_OFFICER,
+	USER_PLAN_APPROVER,
+	USER_TENDER_INITIATOR,
+	USER_COUNTY_PLANNER,
 )
 
 RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (

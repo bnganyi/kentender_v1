@@ -239,34 +239,10 @@ def seed_moh_downstream_usage_refs(
 		if bl_name and _link_budget_line(bl_name, plan_name, target_name):
 			linked["budget_line"] = bl_name
 
-	# XMOD-STR-006 — Planning package strategy_* for Downstream Usage.
-	if frappe.db.exists("DocType", "Procurement Package"):
-		pkg_name = frappe.db.get_value(
-			"Procurement Package",
-			{"package_code": SEED_PACKAGE_CODE},
-			"name",
-		)
-		if not pkg_name:
-			try:
-				from kentender_procurement.procurement_planning.seeds.seed_procurement_planning_works_master import (
-					seed_procurement_planning_works_master,
-				)
-
-				seed_procurement_planning_works_master(
-					checkpoint="PACKAGE_DRAFT", force_reset=False
-				)
-			except Exception:
-				frappe.log_error(title="moh_downstream_usage: PP2 package seed skipped")
-			pkg_name = frappe.db.get_value(
-				"Procurement Package",
-				{"package_code": SEED_PACKAGE_CODE},
-				"name",
-			)
-		if pkg_name and _link_consumer("Procurement Package", pkg_name, target_name):
-			linked["package"] = pkg_name
+	# XMOD-STR-006 — PP2 Procurement Package retired; skip package consumer link.
 
 	return {
-		"ok": bool(linked["demand"] or linked["budget_line"] or linked["package"]),
+		"ok": bool(linked["demand"] or linked["budget_line"] or linked.get("package")),
 		"linked": linked,
 	}
 
@@ -283,17 +259,6 @@ def seed_moh_performance_contribution_depth(
 		linked.get("plan"),
 	)
 
-	package_name = linked.get("package")
-	if package_name and frappe.db.has_column("Procurement Package", "estimated_value"):
-		cur = frappe.db.get_value("Procurement Package", package_name, "estimated_value")
-		if not cur or float(cur or 0) <= 0:
-			frappe.db.set_value(
-				"Procurement Package",
-				package_name,
-				"estimated_value",
-				12_500_000,
-				update_modified=False,
-			)
 
 	return {
 		"ok": bool(base.get("ok")),

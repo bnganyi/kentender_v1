@@ -18,7 +18,6 @@ from kentender_procurement.procurement_home.services.pe_aliases import pe_aliase
 from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 	demand_doctype_available,
 )
-from kentender_procurement.procurement_planning.pp2_constants import PKG_IN_REVIEW, PKG_RETURNED
 
 ACTION_LIMIT = 8
 DUE_SOON_DAYS = 3
@@ -115,49 +114,9 @@ def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[
 	return items
 
 
-def _package_actions(user: str, procuring_entity: str) -> list[dict[str, Any]]:
-	roles = _roles(user)
-	pp_roles = {
-		"Procurement Planner",
-		"Planning Reviewer",
-		"Planning Authority",
-		"Procurement Officer",
-		"System Manager",
-	}
-	if user != "Administrator" and not (roles & pp_roles):
-		return []
-	if not frappe.db.exists("DocType", "Procurement Package"):
-		return []
-	filters: dict[str, Any] = {"status": ["in", [PKG_IN_REVIEW, PKG_RETURNED]]}
-	if frappe.db.has_column("Procurement Package", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(procuring_entity)]
-	elif frappe.db.has_column("Procurement Package", "procuring_entity"):
-		filters["procuring_entity"] = procuring_entity
-	rows = frappe.get_all(
-		"Procurement Package",
-		filters=filters,
-		fields=["name", "package_code", "package_name", "status", "modified"],
-		limit=20,
-	)
-	items: list[dict[str, Any]] = []
-	for r in rows:
-		returned = r.get("status") == PKG_RETURNED
-		items.append(
-			{
-				"title": r.get("package_name") or r.get("package_code") or r.name,
-				"reference": r.get("package_code") or r.name,
-				"stage": "Procurement Planning",
-				"action_required": "Returned for correction" if returned else "Plan review required",
-				"urgency": "Returned" if returned else "Due soon",
-				"due_date": None,
-				"action_label": "Continue" if returned else "Review",
-				"target_url": "/desk/planning-hub",
-				"_due_date": None,
-				"_modified": r.get("modified"),
-			}
-		)
-	return items
-
+def _package_actions(*_args, **_kwargs) -> list[dict[str, Any]]:
+	"""PP2 Package actions retired."""
+	return []
 
 def _tender_actions(user: str, procuring_entity: str) -> list[dict[str, Any]]:
 	roles = _roles(user)

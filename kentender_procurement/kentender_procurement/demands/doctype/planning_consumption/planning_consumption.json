@@ -53,9 +53,8 @@
   },
   {
    "fieldname": "package",
-   "fieldtype": "Link",
-   "label": "Procurement Package",
-   "options": "Procurement Package"
+   "fieldtype": "Data",
+   "label": "Procurement Package"
   },
   {
    "fieldname": "section_amounts",

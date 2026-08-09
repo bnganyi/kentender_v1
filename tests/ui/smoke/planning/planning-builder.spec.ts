@@ -1,0 +1,39 @@
+import { test, expect } from "@playwright/test";
+import { loginAsAdministrator } from "../../helpers/auth";
+import {
+	loginAsMohPlanningOfficer,
+	preparePlanningGate03,
+} from "../../helpers/planningRoles";
+import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
+
+const ROOT = '[data-testid="kt-pln-ui03-root"]';
+
+test.describe("PLN-UI-03 Empty Draft plan builder", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+	});
+
+	test("empty draft shows guidance + Add approved demand CTA", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate03(page);
+		expect(prep.empty_draft_plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-builder?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId("kt-pln-ui03-empty")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui03-empty")).toContainText(/No plan items yet/i);
+		await expect(page.getByTestId("kt-pln-ui03-add-demand")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui03-add-pending")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui03-items")).toBeHidden();
+		await assertStitchDeskChrome(page, {
+			rootTestId: "kt-pln-ui03-root",
+			primaryCtaTestId: "kt-pln-ui03-add-demand",
+		});
+	});
+});

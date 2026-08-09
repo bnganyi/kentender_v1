@@ -4,6 +4,7 @@ import {
 	loginAsBusinessApprover,
 	loginAsDemandRequester,
 } from "../../helpers/auth";
+import { loginAsMohPlanningOfficer } from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 /**
@@ -170,6 +171,29 @@ const SURFACES = [
 		liveAttr: "data-kt-dem-live",
 		primaryCtaTestId: "kt-dem-ui04-support",
 	},
+	{
+		id: "planning-workspace",
+		route: "/desk/planning-workspace",
+		rootTestId: "kt-pln-ui01-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui01-open-plan",
+		selectSelector: '[data-kt-pln-filter="financial_year"]',
+	},
+	{
+		id: "procurement-plan-register",
+		route: "/desk/procurement-plan-register",
+		rootTestId: "kt-pln-ui02-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui02-submit",
+		selectSelector: '[data-kt-field="financial_year"]',
+	},
+	{
+		id: "procurement-plan-builder",
+		route: "/desk/procurement-plan-builder",
+		rootTestId: "kt-pln-ui03-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui03-add-demand",
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -208,6 +232,38 @@ test.describe("Stitch Desk chrome baseline", () => {
 				await page.context().clearCookies();
 				await loginAsBusinessApprover(page);
 				route = `/desk/demand-review/${demandName}`;
+			}
+			if (
+				surface.id === "planning-workspace" ||
+				surface.id === "procurement-plan-register" ||
+				surface.id === "procurement-plan-builder"
+			) {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const prep = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: { method: string }) => Promise<{
+									message?: {
+										builder_route?: string;
+										empty_draft_plan?: string;
+									};
+								}>;
+							};
+						}
+					).frappe.call({
+						method:
+							"kentender_procurement.procurement_planning.api.prepare_planning_gate03_ui",
+					});
+					return r.message || {};
+				});
+				await page.context().clearCookies();
+				await loginAsMohPlanningOfficer(page);
+				if (surface.id === "procurement-plan-builder") {
+					const plan = prep.empty_draft_plan || "";
+					expect(plan).toBeTruthy();
+					route = `/desk/procurement-plan-builder?plan=${encodeURIComponent(plan)}`;
+				}
 			}
 			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(

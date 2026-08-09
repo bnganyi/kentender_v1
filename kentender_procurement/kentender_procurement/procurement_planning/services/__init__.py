@@ -1,1 +1,2 @@
-"""Services: business actions for this subdomain."""
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt

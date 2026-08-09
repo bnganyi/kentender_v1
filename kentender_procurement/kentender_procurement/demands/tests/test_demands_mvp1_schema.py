@@ -97,14 +97,8 @@ class TestDemandsMvp1Schema(IntegrationTestCase):
 			demand_consumers_live,
 			demand_doctype_available,
 		)
-		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
-			get_approved_demands_for_queue,
-		)
 
 		self.assertTrue(demand_doctype_available())
 		self.assertTrue(CONSUMERS_LIVE)
 		self.assertTrue(demand_consumers_live())
-		out = get_approved_demands_for_queue(filters={}, actor="Administrator")
-		self.assertTrue(out.get("ok"))
-		self.assertNotEqual(out.get("error_code"), "DEMAND_MODULE_RETIRED")
-		self.assertFalse(out.get("skipped"))
+		# PP2 approved_demand_queue retired — Planning MVP-1 owns the queue.

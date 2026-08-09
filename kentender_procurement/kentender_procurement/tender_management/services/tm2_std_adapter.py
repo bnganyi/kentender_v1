@@ -35,19 +35,8 @@ def _retired(**extra: Any) -> dict[str, Any]:
 
 
 def load_procurement_package_by_code(package_code: str) -> dict[str, Any] | None:
-	if not package_code:
-		return None
-	if not frappe.db.exists("Procurement Package", package_code):
-		name = frappe.db.get_value("Procurement Package", {"package_code": package_code}, "name")
-		if not name or not frappe.db.exists("Procurement Package", name):
-			return None
-		package_code = name
-	return frappe.db.get_value(
-		"Procurement Package",
-		package_code,
-		["name", "package_code", "package_title", "status", "procurement_method"],
-		as_dict=True,
-	)
+	"""PP2 Procurement Package DocType retired."""
+	return None
 
 
 def get_eligible_std_templates(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:

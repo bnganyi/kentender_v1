@@ -22,12 +22,11 @@ from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
 	WORKS_DEMAND_CODE,
 	WORKS_DEMAND_TITLE,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.constants import (
-	BUDGET_LINE_CODE,
-	DEMAND_ITEM_CODE,
-	ESTIMATED_VALUE,
-	PE_CODE,
-)
+# WORKS master demo constants (formerly works_master_pp2_seed.constants)
+BUDGET_LINE_CODE = "BL-MOH-2026-001"
+DEMAND_ITEM_CODE = "DI-MOH-2026-001"
+ESTIMATED_VALUE = 125_000_000
+PE_CODE = "PE-MOH"
 
 FIXTURE_NS = "WORKS_MASTER"
 AMOUNT = float(ESTIMATED_VALUE)

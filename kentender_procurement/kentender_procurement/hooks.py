@@ -53,26 +53,17 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
-	f"/assets/kentender_procurement/css/planning_hub_page.css?v={_desk_asset_v('public/css/planning_hub_page.css')}",
-	f"/assets/kentender_procurement/css/create_package_wizard_page.css?v={_desk_asset_v('public/css/create_package_wizard_page.css')}",
-	f"/assets/kentender_procurement/css/package_detail_page.css?v={_desk_asset_v('public/css/package_detail_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
-	f"/assets/kentender_procurement/css/pp2_planning_status_badge.css?v={_desk_asset_v('public/css/pp2_planning_status_badge.css')}",
-	f"/assets/kentender_procurement/css/pp2_planning_handoff_card.css?v={_desk_asset_v('public/css/pp2_planning_handoff_card.css')}",
 	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
-	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
-	f"/assets/kentender_procurement/css/pp2_planning_page.css?v={_desk_asset_v('public/css/pp2_planning_page.css')}",
-	f"/assets/kentender_procurement/css/pp3_planning_design_system.css?v={_desk_asset_v('public/css/pp3_planning_design_system.css')}",
 	f"/assets/kentender_procurement/css/std_prod_std_library_page.css?v={_desk_asset_v('public/css/std_prod_std_library_page.css')}",
 	f"/assets/kentender_procurement/css/std_prod_std_family_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_family_detail_page.css')}",
 	f"/assets/kentender_procurement/css/std_prod_std_version_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_version_detail_page.css')}",
 	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
-	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
 	f"/assets/kentender_procurement/css/demands_workspace.css?v={_desk_asset_v('public/css/demands_workspace.css')}",
@@ -81,6 +72,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/demands_review.css?v={_desk_asset_v('public/css/demands_review.css')}",
 	f"/assets/kentender_procurement/css/demands_detail.css?v={_desk_asset_v('public/css/demands_detail.css')}",
 	f"/assets/kentender_procurement/css/demands_performance.css?v={_desk_asset_v('public/css/demands_performance.css')}",
+	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -92,41 +84,16 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/detail.js?v={_desk_asset_v('public/js/demands_ui_fixtures/detail.js')}",
 	f"/assets/kentender_procurement/js/demands_ui_fixtures/performance.js?v={_desk_asset_v('public/js/demands_ui_fixtures/performance.js')}",
 	f"/assets/kentender_procurement/js/demands_live_bind.js?v={_desk_asset_v('public/js/demands_live_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_workspace.js?v={_desk_asset_v('public/js/planning_workspace.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_handoff_card.js?v={_desk_asset_v('public/js/pp2_planning_handoff_card.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/workspace.js?v={_desk_asset_v('public/js/planning_ui_fixtures/workspace.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/register.js?v={_desk_asset_v('public/js/planning_ui_fixtures/register.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js?v={_desk_asset_v('public/js/planning_ui_fixtures/builder.js')}",
+	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",
+	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	f"/assets/kentender_procurement/js/std_prod_engine.js?v={_desk_asset_v('public/js/std_prod_engine.js')}",
 	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
 	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
-	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_active_plan_banner.js?v={_desk_asset_v('public/js/pp3_planning_active_plan_banner.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_workbench_queue_tabs.js?v={_desk_asset_v('public/js/pp3_planning_workbench_queue_tabs.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_work_list.js?v={_desk_asset_v('public/js/pp3_planning_work_list.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_plan_list.js?v={_desk_asset_v('public/js/pp3_planning_plan_list.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_plan_summary.js?v={_desk_asset_v('public/js/pp3_planning_plan_summary.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_create_plan_modal.js?v={_desk_asset_v('public/js/pp3_planning_create_plan_modal.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_selected_work_summary.js?v={_desk_asset_v('public/js/pp3_planning_selected_work_summary.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_evidence_drawer.js?v={_desk_asset_v('public/js/pp3_planning_evidence_drawer.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_released_list.js?v={_desk_asset_v('public/js/pp3_planning_released_list.js')}",
-	f"/assets/kentender_procurement/js/pp3_planning_release_summary.js?v={_desk_asset_v('public/js/pp3_planning_release_summary.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_page_header.js?v={_desk_asset_v('public/js/pp2_planning_page_header.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_queue_tabs.js?v={_desk_asset_v('public/js/pp2_planning_queue_tabs.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_work_list.js?v={_desk_asset_v('public/js/pp2_planning_work_list.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_blocker_summary.js?v={_desk_asset_v('public/js/pp2_planning_blocker_summary.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_empty_state.js?v={_desk_asset_v('public/js/pp2_planning_empty_state.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_advanced_filters.js?v={_desk_asset_v('public/js/pp2_planning_advanced_filters.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_evidence_drawer.js?v={_desk_asset_v('public/js/pp2_planning_evidence_drawer.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_selected_summary_panel.js?v={_desk_asset_v('public/js/pp2_planning_selected_summary_panel.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_include_plan_modal.js?v={_desk_asset_v('public/js/pp2_planning_include_plan_modal.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_create_package_modal.js?v={_desk_asset_v('public/js/pp2_planning_create_package_modal.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_summary.js?v={_desk_asset_v('public/js/pp2_planning_summary.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_home_item_card.js?v={_desk_asset_v('public/js/pp2_planning_home_item_card.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_home_queue_section.js?v={_desk_asset_v('public/js/pp2_planning_home_queue_section.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_home_queues.js?v={_desk_asset_v('public/js/pp2_planning_home_queues.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_home.js?v={_desk_asset_v('public/js/pp2_planning_home.js')}",
-	f"/assets/kentender_procurement/js/pp2_planning_router.js?v={_desk_asset_v('public/js/pp2_planning_router.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
@@ -236,15 +203,11 @@ website_route_rules = [
 
 # include js in doctype views
 doctype_js = {
-	"Procurement Package": "public/js/procurement_package.js",
 }
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
 	"kt-procurement-home": "public/js/procurement_home_page.js",
-	"planning-hub": "public/js/planning_hub_page.js",
-	"create-package-wizard": "public/js/create_package_wizard_page.js",
-	"package-detail": "public/js/package_detail_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
@@ -273,6 +236,9 @@ page_js = {
 	"demand-review": "public/js/demands_review_page.js",
 	"demand-detail": "public/js/demands_detail_page.js",
 	"demand-performance": "public/js/demands_performance_page.js",
+	"planning-workspace": "public/js/planning_workspace_page.js",
+	"procurement-plan-register": "public/js/planning_register_page.js",
+	"procurement-plan-builder": "public/js/planning_builder_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
@@ -379,15 +345,9 @@ page_js = {
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_plan",
-	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_package",
-	"Package Review Decision": "kentender_procurement.procurement_planning.permissions.pp_scope.get_permission_query_conditions_for_package_review_decision",
 }
 
 has_permission = {
-	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_plan_has_permission",
-	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_package_has_permission",
-	"Package Review Decision": "kentender_procurement.procurement_planning.permissions.pp_scope.package_review_decision_has_permission",
 }
 
 # Document Events
@@ -519,9 +479,7 @@ boot_session = [
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
-release_procurement_package_to_tender = [
-	"kentender_procurement.tender_management.services.release_procurement_package_to_tender.hook_release_procurement_package_to_tender",
-]
+# PP2 retired: release_procurement_package_to_tender removed
 
 fixtures = [
 	{"dt": "DocType", "filters": [["name", "=", "Procurement Navigation"]]},

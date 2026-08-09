@@ -18,6 +18,15 @@ from kentender_procurement.demands.services.demand_permissions import (
 	ROLE_REQUESTER,
 	ensure_demand_roles,
 )
+from kentender_procurement.procurement_planning.services.planning_permissions import (
+	ROLE_ACCOUNTING_OFFICER,
+	ROLE_DESIGNATED_APPROVER,
+	ROLE_PLANNER,
+	ROLE_REVIEWER,
+	ROLE_TENDER_INITIATOR,
+	ROLE_VIEWER,
+	ensure_planning_roles,
+)
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 
 # (email, full_name, roles, pe, org_unit|None, include_descendants)
@@ -94,6 +103,54 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		C.PE_MOH,
 		None,
 		0,
+	),
+	(
+		C.USER_PLANNING_OFFICER,
+		"Mercy Kilonzo",
+		(ROLE_PLANNER,),
+		C.PE_MOH,
+		C.OU_DIR_DHP,
+		1,
+	),
+	(
+		C.USER_PLANNING_REVIEWER,
+		"David Kiptoo",
+		(ROLE_REVIEWER,),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_ACCOUNTING_OFFICER,
+		"Josephine Mburu",
+		(ROLE_ACCOUNTING_OFFICER,),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_PLAN_APPROVER,
+		"MOH Plan Approver",
+		(ROLE_DESIGNATED_APPROVER,),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_TENDER_INITIATOR,
+		"MOH Tender Initiator",
+		(ROLE_TENDER_INITIATOR,),
+		C.PE_MOH,
+		C.OU_DIR_DHP,
+		1,
+	),
+	(
+		C.USER_COUNTY_PLANNER,
+		"Kisumu Planning Officer",
+		(ROLE_PLANNER,),
+		C.PE_CGKIS,
+		C.OU_CGK_HEALTH,
+		1,
 	),
 )
 
@@ -214,6 +271,53 @@ def _upsert_multiscope_admin() -> str:
 	return email
 
 
+def ensure_administrator_planning_support_viewer() -> str:
+	"""Desk Administrator: cross-entity Planning Viewer (read-only support).
+
+	Grants no create/edit/approve/tender authority — Viewer USA only for MOH + Kisumu.
+	Strips accidental operational Planning roles from Administrator (support ≠ owner).
+	"""
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ALL_PLANNING_ROLES,
+	)
+
+	ensure_planning_roles()
+	email = "Administrator"
+	if not frappe.db.exists("User", email):
+		return email
+	user = frappe.get_doc("User", email)
+	# Remove operational Planning roles; keep support Viewer only.
+	have = {r.role for r in (user.roles or [])}
+	to_remove = [r for r in ALL_PLANNING_ROLES if r != ROLE_VIEWER and r in have]
+	if to_remove:
+		user.remove_roles(*to_remove)
+	user.add_roles(ROLE_VIEWER)
+	# Drop operational Planning USA rows for Administrator (keep fixture Viewer only).
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": email},
+		pluck="name",
+	):
+		role = frappe.db.get_value("User Scope Assignment", name, "role")
+		ns = frappe.db.get_value("User Scope Assignment", name, "fixture_namespace")
+		if role == ROLE_VIEWER and ns == C.FIXTURE_NS:
+			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		elif role in ALL_PLANNING_ROLES and role != ROLE_VIEWER:
+			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	for pe, ou in (
+		(C.PE_MOH, C.OU_DIR_DHP),
+		(C.PE_CGKIS, C.OU_CGK_HEALTH),
+	):
+		_upsert_scope(
+			user=email,
+			role=ROLE_VIEWER,
+			pe=pe,
+			org_unit=ou,
+			include_descendants=1,
+		)
+	return email
+
+
 def _upsert_system_admin_no_requester() -> str:
 	"""Contract §4.6 — System Manager only; proves admin alone cannot create Demands."""
 	email = C.USER_SYSTEM_ADMIN
@@ -255,6 +359,7 @@ def upsert_canonical_users() -> dict[str, Any]:
 	ensure_strategy_roles()
 	ensure_budget_roles()
 	ensure_demand_roles()
+	ensure_planning_roles()
 	# Skip User→Contact sync (avoids RetryBackgroundJobError under tests / reseed).
 	prev_import = frappe.flags.in_import
 	frappe.flags.in_import = True
@@ -264,6 +369,7 @@ def upsert_canonical_users() -> dict[str, Any]:
 			created.append(_upsert_user(*spec))
 		created.append(_upsert_multiscope_admin())
 		created.append(_upsert_system_admin_no_requester())
+		created.append(ensure_administrator_planning_support_viewer())
 		disabled: list[str] = []
 		for email in C.RETIRED_DEMO_USERS:
 			if frappe.db.exists("User", email):

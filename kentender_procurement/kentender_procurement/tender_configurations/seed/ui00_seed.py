@@ -9,9 +9,13 @@ import json
 from typing import Any
 
 import frappe
+
+def _pp2_pkg_available() -> bool:
+	return bool(frappe.db.exists("DocType", "Procurement Package"))
+
 from frappe.utils import nowdate
 
-from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.tender_configurations.constants import (
 	STATUS_COMPLETED,
 	STATUS_IN_PROGRESS,
@@ -83,7 +87,7 @@ def _clear_seed() -> None:
 		frappe.delete_doc("Tender Configuration", name, force=True, ignore_permissions=True)
 
 	for code in PACKAGE_REFS:
-		if frappe.db.exists("Procurement Package", code):
+		if (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), code):
 			frappe.delete_doc("Procurement Package", code, force=True, ignore_permissions=True)
 
 
@@ -114,7 +118,7 @@ def _insert_package(
 	entity: str,
 	category: str = "Information Technology",
 ) -> str:
-	if frappe.db.exists("Procurement Package", code):
+	if (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), code):
 		frappe.db.set_value(
 			"Procurement Package",
 			code,

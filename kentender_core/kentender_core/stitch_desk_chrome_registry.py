@@ -189,6 +189,33 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"select_filter_attr": "",
 		"headline_selector": ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1",
 	},
+	{
+		"id": "planning-workspace",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/workspace.js",
+		"desk_route": "planning-workspace",
+		"primary_cta_testid": "kt-pln-ui01-open-plan",
+		"select_filter_attr": "data-kt-pln-filter",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui01-root'] h1",
+	},
+	{
+		"id": "procurement-plan-register",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/register.js",
+		"desk_route": "procurement-plan-register",
+		"primary_cta_testid": "kt-pln-ui02-submit",
+		"select_filter_attr": "data-kt-field",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui02-root'] h1",
+	},
+	{
+		"id": "procurement-plan-builder",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/builder.js",
+		"desk_route": "procurement-plan-builder",
+		"primary_cta_testid": "kt-pln-ui03-add-demand",
+		"select_filter_attr": "",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui03-root'] h1",
+	},
 )
 
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"

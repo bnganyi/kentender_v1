@@ -1,0 +1,281 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:item_version_code",
+ "creation": "2026-08-09 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_item",
+  "plan_version",
+  "item_version_code",
+  "col_a",
+  "source_item_version",
+  "carry_forward_unchanged",
+  "requirement_title",
+  "requirement_description",
+  "section_values",
+  "confirmed_estimate",
+  "currency",
+  "procurement_category",
+  "procurement_method",
+  "method_basis",
+  "col_b",
+  "reservation_reference",
+  "strategy_snapshot",
+  "pvc_snapshot",
+  "validation_projection"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_item",
+   "fieldtype": "Link",
+   "label": "Plan Item",
+   "options": "Procurement Plan Item",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Procurement Plan Version",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item_version_code",
+   "fieldtype": "Data",
+   "label": "Item Version Code",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "source_item_version",
+   "fieldtype": "Link",
+   "label": "Source Item Version",
+   "options": "Procurement Plan Item Version"
+  },
+  {
+   "fieldname": "carry_forward_unchanged",
+   "fieldtype": "Check",
+   "label": "Unchanged Carry-Forward",
+   "default": 0
+  },
+  {
+   "fieldname": "requirement_title",
+   "fieldtype": "Data",
+   "label": "Requirement Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requirement_description",
+   "fieldtype": "Small Text",
+   "label": "Requirement Description"
+  },
+  {
+   "fieldname": "section_values",
+   "fieldtype": "Section Break",
+   "label": "Planning values"
+  },
+  {
+   "fieldname": "confirmed_estimate",
+   "fieldtype": "Currency",
+   "label": "Confirmed Estimate",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Data",
+   "label": "Procurement Category"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Data",
+   "label": "Procurement Method"
+  },
+  {
+   "fieldname": "method_basis",
+   "fieldtype": "Small Text",
+   "label": "Method Basis"
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "reservation_reference",
+   "fieldtype": "Data",
+   "label": "Reservation Reference"
+  },
+  {
+   "fieldname": "strategy_snapshot",
+   "fieldtype": "Small Text",
+   "label": "Strategy Snapshot"
+  },
+  {
+   "fieldname": "pvc_snapshot",
+   "fieldtype": "Small Text",
+   "label": "Plan Value Commitment Snapshot"
+  },
+  {
+   "fieldname": "validation_projection",
+   "fieldtype": "Select",
+   "label": "Validation Projection",
+   "options": "Not run\nReady\nNeeds attention\nBlocked\nStale",
+   "default": "Not run"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-09 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Procurement Plan Item Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Contributor",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Reviewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Designated Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tender Initiator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "requirement_title",
+ "show_title_field_in_link": 1
+}

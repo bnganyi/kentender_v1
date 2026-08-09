@@ -21,7 +21,11 @@ def _check(name: str, ok: bool, detail: str = "") -> dict[str, Any]:
 	return {"name": name, "ok": bool(ok), "detail": detail}
 
 
-def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]:
+def validate_kentender_mvp_v1(
+	*,
+	include_demands: bool = True,
+	include_planning: bool = False,
+) -> dict[str, Any]:
 	checks: list[dict[str, Any]] = []
 
 	# --- Identity / org ---
@@ -335,7 +339,11 @@ def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]
 		usa = frappe.db.count(
 			"User Scope Assignment", {"user": email, "fixture_namespace": C.FIXTURE_NS}
 		)
-		checks.append(_check(f"user.scope.{email}", usa >= 1, str(usa)))
+		# System admin proves zero operational USA (Contract §4.6 / §7.5).
+		if email == C.USER_SYSTEM_ADMIN:
+			checks.append(_check(f"user.scope.{email}", usa == 0, str(usa)))
+		else:
+			checks.append(_check(f"user.scope.{email}", usa >= 1, str(usa)))
 
 	# --- Ownership isolation (§9) ---
 	pe_moh = frappe.db.get_value("Procuring Entity", {"entity_code": C.PE_MOH}, "name")
@@ -463,10 +471,11 @@ def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]
 				str(principal),
 			)
 		)
+		expected_usage = "Fully planned" if include_planning else "Not taken up"
 		checks.append(
 			_check(
-				"demands.principal.not_taken_up",
-				bool(principal and principal.planning_usage == "Not taken up"),
+				"demands.principal.planning_usage",
+				bool(principal and principal.planning_usage == expected_usage),
 				getattr(principal, "planning_usage", None),
 			)
 		)
@@ -617,6 +626,104 @@ def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]
 					== 0,
 				)
 			)
+
+	if include_planning and frappe.db.exists("DocType", "Procurement Plan"):
+		plan = frappe.db.get_value(
+			"Procurement Plan",
+			{"plan_code": C.PROCUREMENT_PLAN_CODE},
+			["name", "lifecycle_state", "current_approved_version", "procuring_entity"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.plan.open",
+				bool(
+					plan
+					and plan.lifecycle_state == "Open"
+					and plan.procuring_entity == C.PE_MOH
+				),
+				str(plan),
+			)
+		)
+		version = frappe.db.get_value(
+			"Procurement Plan Version",
+			{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
+			["name", "status", "plan"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.version.approved_v1",
+				bool(
+					version
+					and version.status == "Approved"
+					and plan
+					and version.name == plan.current_approved_version
+				),
+				str(version),
+			)
+		)
+		item = frappe.db.get_value(
+			"Procurement Plan Item",
+			{"plan_item_code": C.PLAN_ITEM_CODE},
+			["name", "baseline_state", "plan"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.item.active_021",
+				bool(item and item.baseline_state == "Active" and plan and item.plan == plan.name),
+				str(item),
+			)
+		)
+		alloc_total = 0.0
+		if item:
+			alloc_total = sum(
+				flt(r.allocated_amount)
+				for r in frappe.get_all(
+					"Plan Demand Allocation",
+					filters={"plan_item": item.name, "status": "Effective"},
+					fields=["allocated_amount"],
+				)
+			)
+		checks.append(
+			_check(
+				"planning.allocations_455m",
+				abs(alloc_total - C.PLAN_AMOUNT_V1) < 0.01,
+				str(alloc_total),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.no_duplicate_plan",
+				frappe.db.count(
+					"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}
+				)
+				== 1,
+			)
+		)
+		checks.append(
+			_check(
+				"planning.county_demand_not_planned",
+				not frappe.db.exists(
+					"Plan Demand Allocation",
+					{
+						"demand": frappe.db.get_value(
+							"Demand", {"demand_code": C.DEMAND_CODE_COUNTY}, "name"
+						)
+						or "__missing__"
+					},
+				),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.no_scn_item_at_base",
+				not frappe.db.exists(
+					"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}
+				),
+			)
+		)
 
 	failed = [c for c in checks if not c["ok"]]
 	ok = not failed

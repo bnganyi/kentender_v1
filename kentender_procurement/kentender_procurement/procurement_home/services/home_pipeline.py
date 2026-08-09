@@ -17,10 +17,6 @@ from kentender_procurement.procurement_home.services.pe_aliases import pe_aliase
 from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 	demand_doctype_available,
 )
-from kentender_procurement.procurement_planning.pp2_constants import (
-	PKG_APPROVED,
-	PKG_READY_FOR_RELEASE,
-)
 
 PIPELINE_STAGES = (
 	("demands_under_review", "Demands under review", "/desk/demands-workspace"),
@@ -29,7 +25,7 @@ PIPELINE_STAGES = (
 		"Approved demands awaiting planning",
 		"/desk/demands-workspace",
 	),
-	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk/planning-hub"),
+	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk"),
 	("tenders_in_preparation", "Tenders in preparation", "/desk/tender-management-v2"),
 	("published_and_open", "Published and open", "/desk/publications"),
 	("closed_awaiting_next", "Closed awaiting next stage", "/desk/tender-management-v2"),
@@ -64,26 +60,23 @@ def _count_demands_under_review(pe: str, user: str) -> int:
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
+	"""PP2 queue retired — count Approved + planning_ready Demands directly."""
 	if not demand_doctype_available():
 		return 0
-	try:
-		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
-			get_approved_demands_awaiting_planning,
-		)
-
-		actor = (user or frappe.session.user or "").strip() or "Administrator"
-		payload = get_approved_demands_awaiting_planning(
-			{"procuring_entity": pe},
-			actor,
-		) or {}
-		rows = payload.get("items") or payload.get("demands") or payload.get("rows") or []
-		if isinstance(rows, list) and rows:
-			return len(rows)
-		if isinstance(payload.get("total"), (int, float)):
-			return int(payload["total"])
-	except Exception:
-		return 0
-	return 0
+	aliases = pe_aliases(pe)
+	filters: dict[str, Any] = {"status": "Approved"}
+	if frappe.db.has_column("Demand", "procuring_entity"):
+		filters["procuring_entity"] = ["in", aliases]
+	rows = frappe.get_all("Demand", filters=filters, fields=["name", "planning_ready", "planning_usage"], limit=2000)
+	count = 0
+	for r in rows:
+		if frappe.db.has_column("Demand", "planning_ready") and not int(r.get("planning_ready") or 0):
+			continue
+		usage = (r.get("planning_usage") or "").strip()
+		if usage == "Fully taken up":
+			continue
+		count += 1
+	return count
 
 
 def _packages_with_tender_initiation(pe: str) -> set[str]:
@@ -122,31 +115,8 @@ def _packages_with_tender_initiation(pe: str) -> set[str]:
 
 
 def _count_plan_awaiting_tender(pe: str) -> int:
-	"""Approved plan items that do not yet have a tender / CFG record (PRD §9)."""
-	if not frappe.db.exists("DocType", "Procurement Package"):
-		return 0
-	filters: dict[str, Any] = {
-		"status": ["in", [PKG_APPROVED, PKG_READY_FOR_RELEASE]],
-	}
-	if frappe.db.has_column("Procurement Package", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(pe)]
-	elif frappe.db.has_column("Procurement Package", "procuring_entity"):
-		filters["procuring_entity"] = pe
-	rows = frappe.get_all(
-		"Procurement Package",
-		filters=filters,
-		fields=["name", "package_code"],
-		limit=2000,
-	)
-	claimed = _packages_with_tender_initiation(pe)
-	count = 0
-	for r in rows:
-		name = (r.get("name") or "").strip()
-		code = (r.get("package_code") or "").strip()
-		if name in claimed or (code and code in claimed):
-			continue
-		count += 1
-	return count
+	"""PP2 Package queue retired — MVP-1 Plan Item take-up not yet live."""
+	return 0
 
 
 def _tm_filters(pe: str) -> dict[str, Any]:

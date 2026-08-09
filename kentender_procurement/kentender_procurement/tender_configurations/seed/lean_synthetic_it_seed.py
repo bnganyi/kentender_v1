@@ -9,9 +9,13 @@ import json
 from typing import Any
 
 import frappe
+
+def _pp2_pkg_available() -> bool:
+	return bool(frappe.db.exists("DocType", "Procurement Package"))
+
 from frappe.utils import add_to_date, cstr, now_datetime, nowdate
 
-from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
 	ensure_active_canonical_ppra_it_std,
@@ -65,7 +69,7 @@ def _clear() -> None:
 		pluck="name",
 	):
 		frappe.delete_doc("Tender Configuration", name, force=True, ignore_permissions=True)
-	if frappe.db.exists("Procurement Package", PACKAGE_CODE):
+	if (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), PACKAGE_CODE):
 		frappe.delete_doc("Procurement Package", PACKAGE_CODE, force=True, ignore_permissions=True)
 
 
@@ -95,7 +99,7 @@ def seed_lean_synthetic_it_published(*, clear: bool = True) -> dict[str, Any]:
 		).insert(ignore_permissions=True, ignore_mandatory=True)
 
 	title = "Lean Demo IT Services Tender"
-	if not frappe.db.exists("Procurement Package", PACKAGE_CODE):
+	if not (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), PACKAGE_CODE):
 		pkg = frappe.get_doc(
 			{
 				"doctype": "Procurement Package",

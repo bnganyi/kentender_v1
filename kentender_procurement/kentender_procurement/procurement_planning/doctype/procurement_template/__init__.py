@@ -1,1 +1,0 @@
-"""Procurement Template DocType."""

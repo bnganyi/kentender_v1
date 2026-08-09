@@ -28,18 +28,15 @@ class TestDemandModuleRetiredGate(IntegrationTestCase):
 		self.assertFalse(payload["ok"])
 		self.assertEqual(payload["error_code"], "DEMAND_MODULE_RETIRED")
 
-	def test_approved_demand_queue_live_when_demand_doctype_available(self) -> None:
+	def test_approved_demand_queue_retired_with_pp2(self) -> None:
 		frappe.set_user("Administrator")
 		from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 			demand_doctype_available,
 		)
-		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
-			get_approved_demands_for_queue,
-		)
 
 		self.assertTrue(demand_doctype_available())
-		out = get_approved_demands_for_queue(filters={}, actor="Administrator")
-		self.assertTrue(out.get("ok"))
-		self.assertNotEqual(out.get("error_code"), "DEMAND_MODULE_RETIRED")
-		self.assertFalse(out.get("skipped"))
-		self.assertIn("rows", out)
+		# PP2 approved_demand_queue module removed — Planning MVP-1 owns the queue.
+		self.assertFalse(
+			frappe.db.exists("DocType", "Procurement Package"),
+			msg="PP2 Procurement Package DocType must be removed",
+		)

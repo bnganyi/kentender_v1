@@ -14,13 +14,14 @@ from kentender_core.seeds.kentender_mvp_v1.budget import upsert_budget
 from kentender_core.seeds.kentender_mvp_v1.clear import clear_kentender_mvp_v1
 from kentender_core.seeds.kentender_mvp_v1.demands import upsert_demands
 from kentender_core.seeds.kentender_mvp_v1.org import upsert_org
+from kentender_core.seeds.kentender_mvp_v1.planning import upsert_planning
 from kentender_core.seeds.kentender_mvp_v1.strategy import upsert_strategy
 from kentender_core.seeds.kentender_mvp_v1.users import upsert_canonical_users
 from kentender_core.seeds.kentender_mvp_v1.validate import (
 	validate_kentender_mvp_v1 as _validate,
 )
 
-ThroughBoundary = Literal["budget", "demands"]
+ThroughBoundary = Literal["budget", "demands", "planning"]
 
 
 def _assert_demo_allowed(*, force: bool = False) -> None:
@@ -45,19 +46,21 @@ def run_kentender_mvp_v1(
 	validate: bool = True,
 	through: ThroughBoundary = "demands",
 ) -> dict[str, Any]:
-	"""Clear (optional), seed org → users → strategy → budget → demands.
+	"""Clear (optional), seed org → users → strategy → budget → demands → planning.
 
 	``through="budget"`` stops after Budget (legacy Demands-absent boundary).
 	``through="demands"`` (default) seeds the three canonical Demand anchors.
+	``through="planning"`` seeds Demands then Contract Planning base (Approved V1).
 	"""
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_demo_allowed(force=force)
 	frappe.set_user("Administrator")
 
-	if through not in ("budget", "demands"):
+	if through not in ("budget", "demands", "planning"):
 		frappe.throw(f"Unsupported through boundary: {through}")
 
-	include_demands = through == "demands"
+	include_demands = through in ("demands", "planning")
+	include_planning = through == "planning"
 	result: dict[str, Any] = {
 		"ok": True,
 		"fixture_namespace": C.FIXTURE_NS,
@@ -69,7 +72,8 @@ def run_kentender_mvp_v1(
 		result["clear"] = clear_kentender_mvp_v1(
 			include_strategy=True,
 			include_budget=True,
-			include_demands=True,
+			include_demands=include_demands,
+			include_planning=include_planning or include_demands,
 		)
 
 	result["org"] = upsert_org()
@@ -78,10 +82,15 @@ def run_kentender_mvp_v1(
 	result["budget"] = upsert_budget()
 	if include_demands:
 		result["demands"] = upsert_demands()
+	if include_planning:
+		result["planning"] = upsert_planning()
 	frappe.db.commit()
 
 	if validate:
-		report = _validate(include_demands=include_demands)
+		report = _validate(
+			include_demands=include_demands,
+			include_planning=include_planning,
+		)
 		result["validate"] = report
 		result["ok"] = bool(report.get("ok"))
 		print(report.get("summary") or "")
@@ -90,9 +99,16 @@ def run_kentender_mvp_v1(
 	return result
 
 
-def validate_kentender_mvp_v1(*, include_demands: bool = True) -> dict[str, Any]:
+def validate_kentender_mvp_v1(
+	*,
+	include_demands: bool = True,
+	include_planning: bool = False,
+) -> dict[str, Any]:
 	frappe.only_for(("System Manager", "Administrator"))
-	report = _validate(include_demands=include_demands)
+	report = _validate(
+		include_demands=include_demands,
+		include_planning=include_planning,
+	)
 	print(report.get("summary") or "")
 	return report
 
@@ -110,5 +126,8 @@ def run_moh_mvp_v1(
 	)
 
 
-def validate_moh_mvp_v1(*, include_demands: bool = True):
-	return validate_kentender_mvp_v1(include_demands=include_demands)
+def validate_moh_mvp_v1(*, include_demands: bool = True, include_planning: bool = False):
+	return validate_kentender_mvp_v1(
+		include_demands=include_demands,
+		include_planning=include_planning,
+	)

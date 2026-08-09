@@ -22,9 +22,6 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_SUB_PROGRAM_CODE,
 	IT_TARGET_CODE,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.clear import (
-	run_clear as clear_pp2_works_planning,
-)
 
 
 def _dev_or_test_clear_allowed() -> bool:
@@ -45,39 +42,8 @@ def _delete_doc(doctype: str, name: str, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_planning(*, deleted: dict[str, int]) -> None:
-	for doctype, filter_field in (
-		("Package Method Decision", "package_code"),
-		("Package Readiness Result", "package_code"),
-		("Package Review Decision", "package_code"),
-	):
-		for name in frappe.get_all(doctype, filters={filter_field: IT_PKG_CODE}, pluck="name"):
-			_delete_doc(doctype, name, deleted)
-
-	line_name = frappe.db.get_value(
-		"Procurement Package Line",
-		{"package_line_code": IT_PKG_LINE_CODE},
-		"name",
-	)
-	if line_name:
-		frappe.flags.skip_package_line_rollup = True
-		try:
-			_delete_doc("Procurement Package Line", line_name, deleted)
-		finally:
-			frappe.flags.pop("skip_package_line_rollup", None)
-
-	for line_name in frappe.get_all(
-		"Procurement Package Line",
-		filters={"package_id": IT_PKG_CODE},
-		pluck="name",
-	):
-		frappe.flags.skip_package_line_rollup = True
-		try:
-			_delete_doc("Procurement Package Line", line_name, deleted)
-		finally:
-			frappe.flags.pop("skip_package_line_rollup", None)
-
-	_delete_doc("Procurement Package", IT_PKG_CODE, deleted)
-	_delete_doc("Procurement Handoff Card", IT_INCLUSION_CODE, deleted)
+	"""PP2 IT planning supplement retired."""
+	return
 
 
 def _clear_it_demand(*, deleted: dict[str, int]) -> None:
@@ -139,7 +105,7 @@ def clear_stable_platform_seed(
 	_clear_it_budget_line(deleted=deleted)
 	_clear_it_strategy(deleted=deleted)
 
-	pp2_clear = clear_pp2_works_planning(skip_guard=skip_guard)
+	pp2_clear = {"ok": True, "skipped": True, "reason": "PP2_PLANNING_RETIRED"}
 	for doctype, count in (pp2_clear.get("deleted") or {}).items():
 		deleted[doctype] = deleted.get(doctype, 0) + int(count)
 

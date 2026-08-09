@@ -32,7 +32,7 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_BUDGET_LINE_CODE,
 	IT_DEPT_NAME,
 )
-from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
 	ensure_active_canonical_ppra_it_std,

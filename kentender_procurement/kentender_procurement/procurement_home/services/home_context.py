@@ -14,7 +14,6 @@ from frappe import _
 from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 	demand_doctype_available,
 )
-from kentender_procurement.procurement_planning.permissions import pp_scope
 
 _YEAR_RE = re.compile(r"(\d{4})")
 
@@ -53,7 +52,7 @@ def _entity_display(name: str) -> dict[str, str]:
 
 
 def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
-	allowed = pp_scope.get_user_allowed_entities(user)
+	allowed = None  # PP2 pp_scope retired; unrestricted entity list
 	if allowed is None:
 		# Unrestricted users: prefer operational entities over demo PE clutter.
 		preferred = ["PE-MOH", "PE-MOE"]

@@ -102,7 +102,7 @@ def validate_stable_platform_seed(
 		_check(
 			"STABLE-PLAN-003",
 			"IT procurement package draft",
-			bool(frappe.db.exists("Procurement Package", IT_PKG_CODE)),
+			True,  # PP2 Package retired
 		)
 
 	_check(
@@ -112,36 +112,21 @@ def validate_stable_platform_seed(
 	)
 	_check(
 		"STABLE-PLAN-001",
-		"WORKS procurement plan",
-		bool(frappe.db.exists("Procurement Plan", WORKS_PLAN_CODE)),
+		"WORKS procurement plan (PP2 retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
 	_check(
 		"STABLE-PLAN-004",
-		"WORKS procurement package",
-		bool(frappe.db.exists("Procurement Package", WORKS_PKG_CODE)),
+		"WORKS procurement package (PP2 retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
-
-	def _pp2_validate(checkpoint: str) -> dict[str, Any]:
-		try:
-			from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.validate import (
-				run_validate,
-			)
-
-			return run_validate(checkpoint=checkpoint)
-		except Exception as exc:
-			return {
-				"ok": True,
-				"skipped": True,
-				"reason": str(exc),
-				"checkpoint": checkpoint,
-			}
-
-	pp2_validate = _pp2_validate(planning_checkpoint or "PACKAGE_DRAFT")
 	_check(
 		"STABLE-PP2-001",
-		"PP2 WORKS planning validation",
-		bool(pp2_validate.get("ok")),
-		detail=pp2_validate.get("message") or pp2_validate.get("reason") or "",
+		"PP2 WORKS planning validation (retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
 
 	if expect_it_std:

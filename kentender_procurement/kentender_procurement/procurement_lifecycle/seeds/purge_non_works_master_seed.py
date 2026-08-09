@@ -31,10 +31,8 @@ from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
 from kentender_procurement.procurement_lifecycle.seeds.purge_plc_outside_works_master_registry import (
 	purge_procurement_lifecycle_plc_outside_works_master_registry,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.constants import (
-	PKG_CODE,
-	PLAN_CODE,
-)
+PKG_CODE = "PKG-MOH-2026-001"
+PLAN_CODE = "PLAN-MOH-2026"
 from kentender_procurement.tender_management.seeds.purge_smoke_test_tenders import run as purge_smoke_tenders
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
 
@@ -104,6 +102,8 @@ def _purge_demands(*, dry_run: bool) -> list[str]:
 
 def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
+	if not frappe.db.exists("DocType", "Procurement Plan"):
+		return removed
 	for row in frappe.get_all("Procurement Plan", fields=["name", "plan_code"]):
 		if (row.get("plan_code") or row.get("name") or "").strip() == PLAN_CODE:
 			continue
@@ -114,27 +114,8 @@ def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 
 
 def _purge_procurement_packages(*, dry_run: bool) -> list[str]:
-	removed: list[str] = []
-	for row in frappe.get_all("Procurement Package", fields=["name", "package_code"]):
-		if (row.get("package_code") or row.get("name") or "").strip() == PKG_CODE:
-			continue
-		removed.append(row["name"])
-		if dry_run:
-			continue
-		for line_name in frappe.get_all(
-			"Procurement Package Line",
-			filters={"package_id": row["name"]},
-			pluck="name",
-		):
-			frappe.flags.skip_package_line_rollup = True
-			try:
-				if frappe.db.exists("Procurement Package Line", line_name):
-					frappe.delete_doc("Procurement Package Line", line_name, force=True, ignore_permissions=True)
-			finally:
-				frappe.flags.pop("skip_package_line_rollup", None)
-		if frappe.db.exists("Procurement Package", row["name"]):
-			frappe.delete_doc("Procurement Package", row["name"], force=True, ignore_permissions=True)
-	return removed
+	"""PP2 Package DocType retired — no-op purge."""
+	return []
 
 
 def _purge_non_master_tenders(*, dry_run: bool) -> list[str]:

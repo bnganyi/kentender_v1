@@ -149,10 +149,17 @@ def clear_kentender_mvp_v1(
 	include_strategy: bool = True,
 	include_budget: bool = True,
 	include_demands: bool = True,
+	include_planning: bool = False,
 ) -> dict[str, Any]:
 	out: dict[str, Any] = {"ok": True}
 	out["scope_assignments"] = clear_kentender_mvp_v1_scope_assignments()
-	# Reverse dependency: Demands → Budget → Strategy.
+	# Reverse dependency: Planning → Demands → Budget → Strategy.
+	if include_planning:
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+			clear_planning_fixture_rows,
+		)
+
+		out["planning"] = {"ok": True, "deleted": clear_planning_fixture_rows()}
 	if include_demands:
 		from kentender_core.seeds.kentender_mvp_v1.clear_demands import (
 			clear_kentender_mvp_v1_demands,
