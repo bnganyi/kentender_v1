@@ -97,7 +97,8 @@ test.describe("DEM-UI-05 Procurement Enrichment", () => {
 		expect(confirmedChrome.inputBorder === "0px" || confirmedChrome.inputBorder === "").toBe(true);
 		expect(confirmedChrome.inputBg).toMatch(/rgba?\(0,\s*0,\s*0,\s*0\)|transparent/);
 		expect(parseFloat(confirmedChrome.wrapBorderBottom || "0")).toBeGreaterThanOrEqual(2);
-		expect(confirmedChrome.wrapBorderBottomColor).toMatch(/rgb\(0,\s*31,\s*72\)/);
+		// Stitch underline uses primary (#003d9b), not on-surface (#001f48).
+		expect(confirmedChrome.wrapBorderBottomColor).toMatch(/rgb\(0,\s*61,\s*155\)/);
 		// Need Items edit rules (DIA-FR-046): Description/Qty/Unit/Unit Est. editable;
 		// Total Est. computed. Soft rows — no number spinners; descriptions not clipped.
 		const itemsBody = page.getByTestId("kt-dem-ui05-items-body");
@@ -286,6 +287,22 @@ test.describe("DEM-UI-05 Procurement Enrichment", () => {
 		await expect(planLabel).not.toHaveText(/^[a-z0-9]{8,12}$/);
 		await expect(planLabel).toContainText(/\(/);
 
+		// Strategy assign persists refs but must not unlock Send — PAA must Save enrichment.
+		await expect(page.getByTestId("kt-dem-ui05-send")).toBeDisabled();
+
+		await page.getByTestId("kt-dem-ui05-save").click();
+		await expect(page.getByText(/Enrichment saved/i)).toBeVisible({
+			timeout: 15_000,
+		});
+		await expect(page.getByTestId("kt-dem-ui05-send")).toBeEnabled({
+			timeout: 15_000,
+		});
+
+		// Further edits re-disable Send until Save again.
+		await page.getByTestId("kt-dem-ui05-estimate-basis").fill(
+			"Updated market research note before send",
+		);
+		await expect(page.getByTestId("kt-dem-ui05-send")).toBeDisabled();
 		await page.getByTestId("kt-dem-ui05-save").click();
 		await expect(page.getByText(/Enrichment saved/i)).toBeVisible({
 			timeout: 15_000,

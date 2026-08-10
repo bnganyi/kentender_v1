@@ -23,6 +23,53 @@ def _money(amount: float, currency: str = "KES") -> str:
 	return f"{currency} {flt(amount):,.2f}"
 
 
+def _funding_line_label(reservation_reference: str) -> str:
+	ref = cstr(reservation_reference).strip()
+	if not ref:
+		return ""
+	if not frappe.db.exists("DocType", "Funding Reservation"):
+		return ref
+	row = frappe.db.get_value(
+		"Funding Reservation",
+		{"generated_reference": ref},
+		["budget_line", "demand_title", "status"],
+		as_dict=True,
+	)
+	if not row:
+		return ref
+	line = cstr(row.budget_line or "").strip()
+	if line and frappe.db.exists("Budget Line", line):
+		label = cstr(frappe.db.get_value("Budget Line", line, "title") or "").strip()
+		if label:
+			return label
+	return cstr(row.demand_title or "").strip() or ref
+
+
+def _attention_message(*, iv: Any, fields: dict[str, Any]) -> str:
+	"""Surface the highest-priority editor attention copy for Needs attention panels."""
+	lotting = cstr(fields.get("lotting_decision") or "").strip()
+	if lotting == "Multiple lots" and not cstr(fields.get("lot_basis") or "").strip():
+		return "Confirm the indicative lot basis before departmental sign-off."
+	missing_ms = [
+		k
+		for k in (
+			"ms_invitation_published",
+			"ms_tender_opening",
+			"ms_evaluation_completed",
+			"ms_award_approval",
+			"ms_contract_signature",
+			"ms_delivery_completion",
+		)
+		if not cstr(fields.get(k) or "").strip()
+	]
+	if missing_ms:
+		return "Confirm all milestone dates before departmental sign-off."
+	proj = cstr(getattr(iv, "validation_projection", "") or "").strip()
+	if proj and proj not in ("Not run", "Pass", "Passed"):
+		return proj
+	return ""
+
+
 def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str, Any]:
 	actor = (user or frappe.session.user or "").strip()
 	require_operational_roles(*READ_PLAN_ROLES, user=actor)
@@ -81,8 +128,53 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 			or item.owner_org_unit
 		)
 
+	demand_ou_label = ou_label
+	if demand_row and demand_row.owner_org_unit:
+		demand_ou_label = cstr(
+			frappe.db.get_value("Organisation Unit", demand_row.owner_org_unit, "unit_name")
+			or demand_row.owner_org_unit
+		)
+
 	currency = cstr(iv.currency or plan.currency or "KES")
 	read_only = is_planning_read_only(actor)
+	rsv_ref = cstr(iv.reservation_reference or "").strip()
+	funding_line = _funding_line_label(rsv_ref)
+	need_count = len(allocs)
+	fields = {
+		"requirement_description": iv.requirement_description,
+		"procurement_category": iv.procurement_category,
+		"governing_regime": iv.governing_regime or "PPADA",
+		"recommended_method": iv.recommended_method or "Open tender",
+		"procurement_method": iv.procurement_method or "Open tender",
+		"method_basis": iv.method_basis
+		or "Open tender is the preferred method under PPADA.",
+		"method_override_grounds": iv.method_override_grounds,
+		"method_override_reason": iv.method_override_reason,
+		"method_override_evidence": iv.method_override_evidence,
+		"arrangement": iv.arrangement or "Single year",
+		"multi_year_justification": iv.multi_year_justification,
+		"annual_funding_schedule": iv.annual_funding_schedule,
+		"aggregation_decision": cstr(iv.aggregation_decision or ""),
+		"aggregation_reason": iv.aggregation_reason,
+		"lotting_decision": iv.lotting_decision or "Single lot",
+		"expected_lot_count": iv.expected_lot_count or 1,
+		"lot_basis": iv.lot_basis,
+		"statutory_treatment": iv.statutory_treatment,
+		"statutory_target_groups": iv.statutory_target_groups,
+		"planned_treatment_value": flt(iv.planned_treatment_value),
+		"value_treatment_note": iv.value_treatment_note,
+		"ms_invitation_published": str(iv.ms_invitation_published or ""),
+		"ms_tender_opening": str(iv.ms_tender_opening or ""),
+		"ms_evaluation_completed": str(iv.ms_evaluation_completed or ""),
+		"ms_award_approval": str(iv.ms_award_approval or ""),
+		"ms_contract_signature": str(iv.ms_contract_signature or ""),
+		"ms_delivery_completion": str(iv.ms_delivery_completion or ""),
+		"schedule_change_reason": iv.schedule_change_reason,
+	}
+	strategy_text = cstr(iv.strategy_snapshot or iv.pvc_snapshot or "").strip()
+	plan_crumb = cstr(plan.title or plan.plan_code or plan.financial_year or "").strip()
+	has_draft = bool(cstr(plan.open_draft_version or "").strip())
+	attention = _attention_message(iv=iv, fields=fields)
 
 	return {
 		"ok": True,
@@ -93,9 +185,10 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"plan_item": item.name,
 		"plan_item_code": item.plan_item_code,
 		"baseline_state": item.baseline_state,
+		"lifecycle_label": cstr(item.baseline_state or ITEM_PROPOSED),
 		"item_version": iv.name,
 		"read_only": read_only,
-		"can_edit": (not read_only) and bool(plan.open_draft_version),
+		"can_edit": (not read_only) and has_draft,
 		"requirement_title": iv.requirement_title,
 		"requirement_description": iv.requirement_description,
 		"confirmed_estimate": flt(iv.confirmed_estimate),
@@ -104,45 +197,27 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"organisation_unit": item.owner_org_unit,
 		"organisation_unit_label": ou_label,
 		"validation_projection": iv.validation_projection or "Not run",
-		"fields": {
-			"procurement_category": iv.procurement_category,
-			"governing_regime": iv.governing_regime or "PPADA",
-			"recommended_method": iv.recommended_method or "Open tender",
-			"procurement_method": iv.procurement_method or "Open tender",
-			"method_basis": iv.method_basis
-			or "Open tender is the preferred method under PPADA.",
-			"method_override_grounds": iv.method_override_grounds,
-			"method_override_reason": iv.method_override_reason,
-			"method_override_evidence": iv.method_override_evidence,
-			"arrangement": iv.arrangement or "Single year",
-			"multi_year_justification": iv.multi_year_justification,
-			"annual_funding_schedule": iv.annual_funding_schedule,
-			"aggregation_decision": cstr(iv.aggregation_decision or ""),
-			"aggregation_reason": iv.aggregation_reason,
-			"lotting_decision": iv.lotting_decision or "Single lot",
-			"expected_lot_count": iv.expected_lot_count or 1,
-			"lot_basis": iv.lot_basis,
-			"statutory_treatment": iv.statutory_treatment,
-			"statutory_target_groups": iv.statutory_target_groups,
-			"planned_treatment_value": flt(iv.planned_treatment_value),
-			"value_treatment_note": iv.value_treatment_note,
-			"ms_invitation_published": str(iv.ms_invitation_published or ""),
-			"ms_tender_opening": str(iv.ms_tender_opening or ""),
-			"ms_evaluation_completed": str(iv.ms_evaluation_completed or ""),
-			"ms_award_approval": str(iv.ms_award_approval or ""),
-			"ms_contract_signature": str(iv.ms_contract_signature or ""),
-			"ms_delivery_completion": str(iv.ms_delivery_completion or ""),
-			"schedule_change_reason": iv.schedule_change_reason,
-		},
+		"draft_banner": (
+			"Draft Plan update · The current Approved Plan remains active."
+			if has_draft
+			else "Viewing Plan Item · Open a Draft revision to edit."
+		),
+		"plan_crumb_label": plan_crumb or cstr(plan.financial_year or "Plan"),
+		"coverage_note": "Recalculated at Plan level after this item is saved",
+		"attention_message": attention,
+		"fields": fields,
 		"approved_source": {
 			"demand": demand_row.name if demand_row else None,
 			"demand_code": demand_row.demand_code if demand_row else "",
 			"title": demand_row.title if demand_row else "",
-			"funding_label": "Reserved" if iv.reservation_reference else "Unreserved",
-			"reservation_reference": iv.reservation_reference or "",
-			"strategy_snapshot": iv.strategy_snapshot or "",
+			"need_item_count": need_count,
+			"funding_label": "Reserved" if rsv_ref else "Unreserved",
+			"funding_line_label": funding_line or "—",
+			"reservation_reference": rsv_ref,
+			"strategy_snapshot": strategy_text,
 			"pvc_snapshot": iv.pvc_snapshot or "",
-			"owner_org_unit_label": ou_label,
+			"owner_org_unit_label": demand_ou_label,
+			"reserved_value_display": _money(flt(iv.confirmed_estimate), currency),
 		},
 		"allocations": allocs,
 		"source_allocation_summary": _source_allocation_summary(
@@ -150,10 +225,13 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		),
 		"can_add_another_demand": (
 			(not read_only)
-			and bool(plan.open_draft_version)
+			and has_draft
 			and cstr(item.baseline_state) == ITEM_PROPOSED
 		),
 		"builder_route": f"/app/procurement-plan-builder?plan={plan.name}",
+		"demand_route": (
+			f"/app/demand/{demand_row.name}" if demand_row and demand_row.name else ""
+		),
 		# ABS / AC-025: never claim realised savings.
 		"aggregation_benefit_realised": False,
 	}

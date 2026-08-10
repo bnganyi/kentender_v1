@@ -625,6 +625,14 @@
 			$dialog
 				.find("[data-kt-pln-elig-amount]")
 				.text(__("Total {0}", [formatKes(total, cur)]));
+			var fundingRaw = String((row && row.funding) || "").trim().toLowerCase();
+			var fundingReserved = !!row && fundingRaw === "reserved";
+			setHidden($dialog.find("[data-kt-pln-elig-funding-wrap]"), !fundingReserved);
+			if (fundingReserved) {
+				$dialog
+					.find("[data-kt-pln-elig-funding-label]")
+					.text(__("Funding reserved"));
+			}
 			var showSeparate =
 				dialogMode === "add" && !!row && needCount > 1 && !separateIntent;
 			setHidden($dialog.find('[data-kt-pln-action="plan-separately"]'), !showSeparate);
@@ -1186,17 +1194,37 @@
 		function paint(dto) {
 			$root.attr("data-kt-pln-live", "1");
 			$root.attr("data-kt-pln-plan-item", dto.plan_item || planItem);
+			$root.attr("data-kt-pln-plan", dto.plan || plan || "");
 			plan = dto.plan || plan;
-			$root.find("[data-kt-pln-editor-title]").text(dto.requirement_title || "");
+			var title = dto.requirement_title || "";
+			$root.find("[data-kt-pln-editor-title], [data-kt-pln-editor-title-crumb]").text(title);
+			$root.find("[data-kt-pln-editor-ou]").text(dto.organisation_unit_label || "—");
+			$root.find("[data-kt-pln-editor-amount]").text(dto.amount_display || "");
 			$root
-				.find("[data-kt-pln-editor-meta]")
-				.text(
-					(dto.organisation_unit_label || "") +
-						" · " +
-						(dto.amount_display || "")
-				);
-			$root.find("[data-kt-pln-editor-validation]").text(dto.validation_projection || "");
+				.find("[data-kt-pln-editor-lifecycle]")
+				.text(dto.lifecycle_label || dto.baseline_state || "Proposed");
+			$root.find("[data-kt-pln-editor-draft-banner]").text(dto.draft_banner || "");
+			$root
+				.find("[data-kt-pln-editor-plan-crumb]")
+				.text(dto.plan_crumb_label || dto.plan_title || dto.plan_code || "Plan")
+				.attr("href", dto.builder_route || "#");
+			$root
+				.find("[data-kt-pln-editor-update-crumb]")
+				.attr("href", dto.builder_route || "#");
 			var f = dto.fields || {};
+			var recommended = cstr(f.recommended_method || "Open tender") || "Open tender";
+			$root.attr("data-kt-pln-recommended-method", recommended);
+			$root.find("[data-kt-pln-editor-regime]").text(f.governing_regime || "PPADA");
+			$root.find("[data-kt-pln-editor-recommended-method]").text(recommended);
+			$root
+				.find("[data-kt-pln-editor-method-basis]")
+				.text(f.method_basis || "Preferred competitive method under the applicable regime.");
+			$root
+				.find("[data-kt-pln-editor-coverage]")
+				.text(dto.coverage_note || "Recalculated at Plan level after this item is saved");
+			$root
+				.find("[data-kt-pln-editor-strategy-target]")
+				.text((dto.approved_source && dto.approved_source.strategy_snapshot) || "—");
 			Object.keys(f).forEach(function (k) {
 				var $el = $root.find('[data-kt-pln-field="' + k + '"]');
 				if (!$el.length) {
@@ -1205,30 +1233,71 @@
 				if ($el.is('[type="radio"]')) {
 					$el.filter('[value="' + f[k] + '"]').prop("checked", true);
 				} else {
-					$el.val(f[k] == null ? "" : f[k]);
+					var val = f[k] == null ? "" : f[k];
+					if ($el.is("select") && val !== "") {
+						var hasOpt = false;
+						$el.find("option").each(function () {
+							if (String($(this).attr("value")) === String(val)) {
+								hasOpt = true;
+								return false;
+							}
+						});
+						if (!hasOpt) {
+							$el.append(
+								$("<option></option>").attr("value", val).text(String(val))
+							);
+						}
+					}
+					$el.val(val);
 				}
 			});
 			$root
-				.find("[data-kt-pln-field='requirement_description']")
+				.find('[data-kt-pln-field="requirement_description"]')
 				.val(dto.requirement_description || f.requirement_description || "");
 			var src = dto.approved_source || {};
 			$root.find("[data-kt-pln-source-demand]").text(src.title || src.demand_code || "—");
-			$root.find("[data-kt-pln-source-funding]").text(src.funding_label || "—");
+			$root.find("[data-kt-pln-source-demand-code]").text(src.demand_code || "");
+			$root
+				.find("[data-kt-pln-source-need-count]")
+				.text(String(src.need_item_count != null ? src.need_item_count : "—"));
 			$root.find("[data-kt-pln-source-owner]").text(src.owner_org_unit_label || "—");
+			$root
+				.find("[data-kt-pln-source-reserved-value]")
+				.text(src.reserved_value_display || dto.amount_display || "—");
+			$root.find("[data-kt-pln-source-funding-line]").text(src.funding_line_label || "—");
+			$root.find("[data-kt-pln-source-funding]").text(src.funding_label || "—");
+			$root
+				.find("[data-kt-pln-source-strategy]")
+				.text(src.strategy_snapshot || "—");
 			$root
 				.find("[data-kt-pln-editor-source-allocation]")
 				.text(dto.source_allocation_summary || "");
+			if (dto.demand_route) {
+				$root.find('[data-kt-pln-action="view-demand"]').attr("href", dto.demand_route);
+			}
+			var attention = cstr(dto.attention_message || "");
+			$root.find("[data-kt-pln-editor-issue-copy]").text(
+				attention || "Confirm all milestone dates before departmental sign-off."
+			);
+			setHidden($root.find("[data-kt-pln-editor-issue], [data-kt-pln-editor-issue-aside]"), !attention);
 			setHidden(
 				$root.find('[data-kt-pln-action="add-another-demand"]'),
 				!dto.can_add_another_demand
 			);
 			var showOverride =
 				cstr(f.procurement_method || "") &&
-				cstr(f.procurement_method) !== cstr(f.recommended_method || "Open tender");
+				cstr(f.procurement_method) !== recommended;
 			setHidden($root.find("[data-kt-pln-method-override]"), !showOverride);
 			var multi = cstr(f.arrangement || "") === "Multi-year";
 			setHidden($root.find("[data-kt-pln-multi-year]"), !multi);
-			setHidden($root.find('[data-kt-pln-action="save-draft"], [data-kt-pln-action="save-return"]'), !dto.can_edit);
+			setHidden(
+				$root.find("[data-kt-pln-schedule-reason]"),
+				!cstr(f.schedule_change_reason || "")
+			);
+			setHidden(
+				$root.find('[data-kt-pln-action="save-draft"], [data-kt-pln-action="save-return"]'),
+				!dto.can_edit
+			);
 		}
 
 		function formatKes(n, currency) {
@@ -1289,6 +1358,16 @@
 			$dialog
 				.find("[data-kt-pln-elig-amount]")
 				.text(__("Total {0}", [formatKes(total, cur)]));
+			var fundingRaw = String((row && row.funding) || "")
+				.trim()
+				.toLowerCase();
+			var fundingReserved = !!row && fundingRaw === "reserved";
+			setHidden($dialog.find("[data-kt-pln-elig-funding-wrap]"), !fundingReserved);
+			if (fundingReserved) {
+				$dialog
+					.find("[data-kt-pln-elig-funding-label]")
+					.text(__("Funding reserved"));
+			}
 			setHidden($dialog.find("[data-kt-pln-add-mode-footer]"), true);
 			setHidden($dialog.find("[data-kt-pln-separation-wrap]"), true);
 			setHidden($dialog.find("[data-kt-pln-aggregate-reason-wrap]"), false);
@@ -1418,12 +1497,19 @@
 
 		$root.off(".ktPlnEd");
 		$root.on("change.ktPlnEd", '[data-kt-pln-field="procurement_method"]', function () {
-			var rec = $root.find('[data-kt-pln-field="recommended_method"]').val() || "Open tender";
+			var rec = $root.attr("data-kt-pln-recommended-method") || "Open tender";
 			setHidden($root.find("[data-kt-pln-method-override]"), $(this).val() === rec);
 		});
 		$root.on("change.ktPlnEd", '[data-kt-pln-field="arrangement"]', function () {
 			setHidden($root.find("[data-kt-pln-multi-year]"), $(this).val() !== "Multi-year");
 		});
+		$root.on(
+			"change.ktPlnEd",
+			'[data-kt-pln-field^="ms_"]',
+			function () {
+				setHidden($root.find("[data-kt-pln-schedule-reason]"), false);
+			}
+		);
 		$root.on("click.ktPlnEd", '[data-kt-pln-action="save-draft"]', function (e) {
 			e.preventDefault();
 			save(false);
@@ -1437,6 +1523,13 @@
 			call("get_plan_item_editor", { plan_item: planItem }).then(function (dto) {
 				window.location.href = dto.builder_route || "/app/planning-workspace";
 			});
+		});
+		$root.on("click.ktPlnEd", '[data-kt-pln-action="view-source"]', function (e) {
+			e.preventDefault();
+			var summary =
+				$root.find("[data-kt-pln-editor-source-allocation]").text() ||
+				__("No source allocation summary.");
+			frappe.show_alert({ message: summary, indicator: "blue" });
 		});
 		$root.on("click.ktPlnEd", '[data-kt-pln-action="add-another-demand"]', function (e) {
 			e.preventDefault();

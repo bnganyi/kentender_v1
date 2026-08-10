@@ -57,6 +57,32 @@ test.describe("PLN-UI-04 Add approved Demand dialog", () => {
 		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-count-label]`)).toContainText(
 			/1 Approved Demand selected/i,
 		);
+		await expect(page.getByTestId("kt-pln-ui04-funding-reserved")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui04-funding-reserved")).toContainText(
+			/Funding reserved/i,
+		);
+		// Stitch summary chips: icon↔label gap (~8px) and chip↔chip column gap (~24px).
+		const summaryGaps = await page.getByTestId("kt-pln-ui04-summary").evaluate((bar) => {
+			const cs = getComputedStyle(bar);
+			const chips = Array.from(bar.querySelectorAll(".kt-pln-ui04-summary-chip")).filter(
+				(el) => getComputedStyle(el).display !== "none" && !(el as HTMLElement).hidden,
+			);
+			const chipGaps = chips.map((chip) => parseFloat(getComputedStyle(chip).gap || "0"));
+			let chipToChip = 0;
+			if (chips.length >= 2) {
+				const a = chips[0].getBoundingClientRect();
+				const b = chips[1].getBoundingClientRect();
+				chipToChip = Math.round(b.left - a.right);
+			}
+			return {
+				columnGap: parseFloat(cs.columnGap || "0"),
+				chipGaps,
+				chipToChip,
+			};
+		});
+		expect(summaryGaps.columnGap).toBeGreaterThanOrEqual(20);
+		expect(summaryGaps.chipGaps.every((g) => g >= 7)).toBeTruthy();
+		expect(summaryGaps.chipToChip).toBeGreaterThanOrEqual(16);
 		await expect(page.locator(DIALOG)).toContainText(/End of available demands/i);
 		const firstRow = page.locator(`${DIALOG} [data-kt-pln-elig-row]`).first();
 		await expect(firstRow).toHaveClass(/is-selected/);

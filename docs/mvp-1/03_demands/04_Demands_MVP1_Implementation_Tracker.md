@@ -231,10 +231,10 @@ Update **Status** per screen. **DoD:** hand-port Stitch regions + live data + Pl
 | DEM-SEED-001 | Seed `DMD-MOH-2027-014` | Approved; items; Strategy; allocation; attach `RSV-MOH-0001` | DEM-SVC-010, Budget portfolio | Done | `test_kentender_mvp_v1_demands_seed` 1/1; item codes via `allocate_item_code` (`DMDITEM-MOH-2027-014-00N`); existing `RSV-MOH-0001` attached; no second RSV |
 | DEM-SEED-002 | Seed `DMD-MOH-2027-019` | Returned; KES 15M shortfall; no RSV | DEM-SVC-003…009 | Done | `test_dem_seed_002_returned_shortfall` 1/1; Returned/Request Preparation; Primary `MOH-TGT-SKILLS-2029`; allocation Insufficient/Returned on `MOH-BL-HWD-2027`; resolved Funding Exception + Budget Return reason; zero RSV for demand_code |
 | DEM-SEED-003 | Seed `DMD-CGK-2027-006` | County Draft; isolation | DEM-SVC-001 | Done | `test_dem_seed_003_county_draft` 1/1; Draft/Request Preparation on `PE-CGKIS`/`CGK-DEPT-HEALTH`; no Strategy/allocation/exception/RSV; requester estimate KES 24M |
-| DEM-SEED-004 | Orchestrator stage after Budget | `kentender_mvp_v1/orchestrator.py` | DEM-SEED-001…003 | Done | `upsert_demands()` after Budget; `through=demands` default; evidence `test_dem_seed_004_orchestrator_demands` 1/1 |
+| DEM-SEED-004 | Orchestrator stage after Budget | `kentender_mvp_v1/orchestrator.py` | DEM-SEED-001…003 | Done | Full seed always includes Demands then latest module (Planning) |
 | DEM-SEED-005 | Clear/reset Demands-owned rows | reverse dependency order | DEM-SEED-004 | Done | `clear_demands.py` deletes Demand + children before Budget clear; RSV detached not deleted; proven in SEED-004 test |
 | DEM-SEED-006 | Validate invariants + repeatability | Contract § Demands checks | DEM-SEED-004 | Done | `validate.py` `demands.*` checks (principal 455M + RSV, returned shortfall, county Draft); SEED-004 test asserts green |
-| DEM-SEED-007 | Makefile / through-Demands boundary | `seed-kentender-mvp-v1` + Demands-only option | DEM-SEED-004 | Done | `seed-kentender-mvp-v1` / `-through-demands` (`through=demands`); `-through-budget` stops after Budget |
+| DEM-SEED-007 | Makefile seed command | `seed-kentender-mvp-v1` | DEM-SEED-004 | Done | Single full-stack target (no stage `through` variants) |
 
 ---
 

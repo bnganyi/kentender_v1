@@ -15,24 +15,28 @@ ${recordChrome}
 <div class="lg:col-span-2 space-y-4" data-testid="kt-dem-ui04-main">
 <section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden" data-testid="kt-dem-ui04-section-need">
 <div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">corporate_fare</span>
+<span class="material-symbols-outlined text-on-surface-variant">corporate_fare</span>
 <h2 class="font-headline-sm text-headline-sm text-on-surface mb-0">Business need</h2>
 </div>
-<div class="p-4 space-y-4">
-<p class="text-on-surface font-body-lg mb-0" data-kt-dem-label="need_statement">—</p>
+<div class="p-4 kt-dem-ui04-need-body" data-testid="kt-dem-ui04-need-body">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">What is needed</div>
+<p class="text-on-surface font-body-lg mb-0 whitespace-pre-wrap" data-kt-dem-label="need_statement" data-testid="kt-dem-ui04-need-statement">—</p>
+</div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 <div>
-<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Why</div>
-<p class="font-body-md text-on-surface mb-0" data-kt-dem-label="need_rationale">—</p>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">Why it is needed</div>
+<p class="font-body-md text-on-surface mb-0 whitespace-pre-wrap" data-kt-dem-label="need_rationale" data-testid="kt-dem-ui04-need-rationale">—</p>
 </div>
 <div>
-<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Expected outcome</div>
-<p class="font-body-md text-on-surface mb-0" data-kt-dem-label="expected_outcome">—</p>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">Expected outcome</div>
+<p class="font-body-md text-on-surface mb-0 whitespace-pre-wrap" data-kt-dem-label="expected_outcome" data-testid="kt-dem-ui04-expected-outcome">—</p>
 </div>
 </div>
-<div class="bg-surface border border-outline-variant rounded-lg p-4">
+<div class="bg-surface-container-lowest border border-surface-container-highest rounded p-4" data-testid="kt-dem-ui04-beneficiaries-box">
 <div class="font-label-caps text-label-caps text-on-surface-variant mb-2">Beneficiaries</div>
-<p class="font-body-md text-on-surface mb-0" data-kt-dem-label="beneficiaries">—</p>
+<ul class="list-disc list-inside text-on-surface space-y-1 mb-0" data-kt-dem-beneficiaries-list data-testid="kt-dem-ui04-beneficiaries"></ul>
+<p class="font-body-md text-on-surface mb-0 hidden" data-kt-dem-label="beneficiaries" hidden>—</p>
 </div>
 </div>
 </section>
@@ -113,16 +117,16 @@ Business review
 </h2>
 <p class="text-sm text-on-surface-variant mt-2 mb-0">Evaluate the strategic alignment and necessity of this demand.</p>
 </div>
-<div class="space-y-6" data-kt-dem-decision-pad>
+<div class="kt-dem-ui04-decision-body" data-kt-dem-decision-pad data-testid="kt-dem-ui04-decision-body">
 <div data-testid="kt-dem-ui04-prompts">
 <div class="font-label-caps text-label-caps text-on-surface-variant mb-3">Review Criteria</div>
-<div class="space-y-3" data-kt-dem-review-prompts></div>
+<div class="space-y-3 kt-dem-ui04-criteria-list" data-kt-dem-review-prompts></div>
 </div>
-<div>
+<div data-testid="kt-dem-ui04-comment-wrap">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-2" for="kt-dem-ui04-comment">Review comments <span class="font-normal normal-case text-outline text-xs">(Optional)</span></label>
 <textarea id="kt-dem-ui04-comment" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md px-3 py-2 outline-none resize-none" data-kt-dem-field="comment" data-testid="kt-dem-ui04-comment" placeholder="Add rationale or notes for the procurement team..." rows="3"></textarea>
 </div>
-<div class="kt-dem-ui04-disclaimer bg-surface-container-low p-3 rounded border border-outline-variant flex gap-3 items-start" data-testid="kt-dem-ui04-disclaimer">
+<div class="kt-dem-ui04-disclaimer bg-surface-container-low p-3 rounded border border-surface-container-high flex gap-3 items-start" data-testid="kt-dem-ui04-disclaimer">
 <span class="material-symbols-outlined text-outline text-[20px] shrink-0 mt-0.5">lightbulb</span>
 <p class="text-xs text-on-surface-variant leading-relaxed mb-0" data-kt-dem-label="non_final_disclaimer">Business support does not confirm funding or constitute final procurement approval.</p>
 </div>

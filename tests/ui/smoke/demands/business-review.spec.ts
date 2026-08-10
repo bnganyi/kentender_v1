@@ -74,13 +74,34 @@ test.describe("DEM-UI-04 Business Review", () => {
 		expect(stageLayout.height).toBeLessThan(140);
 		expect(stageLayout.width).toBeGreaterThan(stageLayout.height * 2);
 		await expect(page.getByTestId("kt-dem-ui04-section-need")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui04-need-statement")).toContainText(
+			/digital health infrastructure|clinical data|district hospitals/i,
+		);
+		await expect(page.getByTestId("kt-dem-ui04-need-rationale")).not.toHaveText("—");
+		await expect(page.getByTestId("kt-dem-ui04-expected-outcome")).not.toHaveText("—");
+		await expect(page.getByTestId("kt-dem-ui04-beneficiaries")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui04-beneficiaries").locator("li")).toHaveCount(3);
 		await expect(page.getByTestId("kt-dem-ui04-section-items")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui04-section-delivery")).toBeVisible();
+		await expect(page.getByTestId("kt-dem-ui04-section-delivery")).toContainText(/Standard/i);
 		await expect(page.getByTestId("kt-dem-ui04-section-supporting")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui04-decision")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui04-disclaimer")).toContainText(
 			/does not confirm funding|final procurement approval/i,
 		);
+		// Stitch space-y-6: disclaimer must not sit flush against comments.
+		const decisionGap = await page.getByTestId("kt-dem-ui04-decision-body").evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const disc = el.querySelector('[data-testid="kt-dem-ui04-disclaimer"]');
+			const comment = el.querySelector('[data-testid="kt-dem-ui04-comment-wrap"]');
+			if (!disc || !comment) {
+				return { gap: cs.gap, delta: 0 };
+			}
+			const dr = disc.getBoundingClientRect();
+			const cr = comment.getBoundingClientRect();
+			return { gap: cs.gap, delta: Math.round(dr.top - cr.bottom) };
+		});
+		expect(decisionGap.delta).toBeGreaterThanOrEqual(20);
 		const prompts = page.getByTestId("kt-dem-ui04-prompts");
 		await expect(prompts).toContainText(/Review Criteria/i);
 		await expect(prompts).toContainText(/necessary and supports the unit/i);
@@ -90,6 +111,23 @@ test.describe("DEM-UI-04 Business Review", () => {
 		// Stitch: acknowledgement checkboxes (not scored questions / bullet list).
 		await expect(prompts.locator('input[type="checkbox"]')).toHaveCount(4);
 		await expect(prompts.locator("ul, li")).toHaveCount(0);
+		// Desk focus must not force white fill over :checked (regression: looked unchecked until refresh).
+		const criterion = page.getByTestId("kt-dem-ui04-criterion-0");
+		await criterion.check();
+		await expect(criterion).toBeChecked();
+		const criterionPaint = await criterion.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const check = el.nextElementSibling as HTMLElement | null;
+			const checkCs = check ? getComputedStyle(check) : null;
+			return {
+				bg: cs.backgroundColor,
+				checkOpacity: checkCs?.opacity || "",
+				focused: document.activeElement === el,
+			};
+		});
+		expect(criterionPaint.focused).toBe(true);
+		expect(criterionPaint.bg).toBe("rgb(0, 61, 155)");
+		expect(Number(criterionPaint.checkOpacity)).toBeGreaterThan(0.9);
 		await expect(page.getByTestId("kt-dem-ui04-support")).toBeVisible();
 		await expect(page.getByTestId("kt-dem-ui04-return")).toContainText(
 			/Return for correction/i,

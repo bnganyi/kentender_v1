@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 import frappe
 
@@ -21,7 +21,8 @@ from kentender_core.seeds.kentender_mvp_v1.validate import (
 	validate_kentender_mvp_v1 as _validate,
 )
 
-ThroughBoundary = Literal["budget", "demands", "planning"]
+# Latest seeded module stage (extend when the next MVP module lands).
+LATEST_STAGE = "planning"
 
 
 def _assert_demo_allowed(*, force: bool = False) -> None:
@@ -44,53 +45,41 @@ def run_kentender_mvp_v1(
 	reset: bool = True,
 	force: bool = False,
 	validate: bool = True,
-	through: ThroughBoundary = "demands",
 ) -> dict[str, Any]:
-	"""Clear (optional), seed org → users → strategy → budget → demands → planning.
+	"""Clear (optional) and seed org → users → strategy → budget → demands → planning.
 
-	``through="budget"`` stops after Budget (legacy Demands-absent boundary).
-	``through="demands"`` (default) seeds the three canonical Demand anchors.
-	``through="planning"`` seeds Demands then Contract Planning base (Approved V1).
+	Always seeds through the latest implemented module stage (``LATEST_STAGE``).
+	There is no partial ``through`` boundary — one command, full fixture stack.
 	"""
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_demo_allowed(force=force)
 	frappe.set_user("Administrator")
 
-	if through not in ("budget", "demands", "planning"):
-		frappe.throw(f"Unsupported through boundary: {through}")
-
-	include_demands = through in ("demands", "planning")
-	include_planning = through == "planning"
 	result: dict[str, Any] = {
 		"ok": True,
 		"fixture_namespace": C.FIXTURE_NS,
 		"fixture_clock": C.FIXTURE_NOW_STR,
 		"finance_freshness_days": C.FINANCE_FRESHNESS_DAYS,
-		"through": through,
+		"latest_stage": LATEST_STAGE,
 	}
 	if reset:
 		result["clear"] = clear_kentender_mvp_v1(
 			include_strategy=True,
 			include_budget=True,
-			include_demands=include_demands,
-			include_planning=include_planning or include_demands,
+			include_demands=True,
+			include_planning=True,
 		)
 
 	result["org"] = upsert_org()
 	result["users"] = upsert_canonical_users()
 	result["strategy"] = upsert_strategy(reset=False)
 	result["budget"] = upsert_budget()
-	if include_demands:
-		result["demands"] = upsert_demands()
-	if include_planning:
-		result["planning"] = upsert_planning()
+	result["demands"] = upsert_demands()
+	result["planning"] = upsert_planning()
 	frappe.db.commit()
 
 	if validate:
-		report = _validate(
-			include_demands=include_demands,
-			include_planning=include_planning,
-		)
+		report = _validate(include_demands=True, include_planning=True)
 		result["validate"] = report
 		result["ok"] = bool(report.get("ok"))
 		print(report.get("summary") or "")
@@ -99,16 +88,10 @@ def run_kentender_mvp_v1(
 	return result
 
 
-def validate_kentender_mvp_v1(
-	*,
-	include_demands: bool = True,
-	include_planning: bool = False,
-) -> dict[str, Any]:
+def validate_kentender_mvp_v1() -> dict[str, Any]:
+	"""Validate the full KENTENDER_MVP_V1 stack through the latest module stage."""
 	frappe.only_for(("System Manager", "Administrator"))
-	report = _validate(
-		include_demands=include_demands,
-		include_planning=include_planning,
-	)
+	report = _validate(include_demands=True, include_planning=True)
 	print(report.get("summary") or "")
 	return report
 
@@ -119,15 +102,9 @@ def run_moh_mvp_v1(
 	reset: bool = True,
 	force: bool = False,
 	validate: bool = True,
-	through: ThroughBoundary = "demands",
 ):
-	return run_kentender_mvp_v1(
-		reset=reset, force=force, validate=validate, through=through
-	)
+	return run_kentender_mvp_v1(reset=reset, force=force, validate=validate)
 
 
-def validate_moh_mvp_v1(*, include_demands: bool = True, include_planning: bool = False):
-	return validate_kentender_mvp_v1(
-		include_demands=include_demands,
-		include_planning=include_planning,
-	)
+def validate_moh_mvp_v1():
+	return validate_kentender_mvp_v1()

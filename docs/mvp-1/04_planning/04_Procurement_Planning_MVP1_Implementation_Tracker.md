@@ -242,7 +242,7 @@ Exact names from Requirements v1.4 / Cursor pack v1.2.
 
 | ID | Work item | Notes | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| PLN-SEED-001 | Extend `KENTENDER_MVP_V1` Planning baseline (Contract v2.4) | Idempotent reset | PLN-SCH-012, PLN-PERM-001 | Done | `through="planning"`; `test_planning_mvp_seed_contract` 4/4 |
+| PLN-SEED-001 | Extend `KENTENDER_MVP_V1` Planning baseline (Contract v2.4) | Idempotent reset | PLN-SCH-012, PLN-PERM-001 | Done | Full seed always through Planning; `test_planning_mvp_seed_contract` 4/4 |
 | PLN-SEED-002 | `SCN-PLN-ADD-001` setup / run / reset | No duplicate on second run | PLN-SEED-001, PLN-SVC-012 | Done | `test_scn_pln_add_001` 4/4 (SVC-012 not required for seed runner) |
 | PLN-SEED-003 | Seed validation: arithmetic, ownership, reservation lineage, current version | Contract verification | PLN-SEED-001 | Done | `validate.py` planning checks; seed contract tests |
 | PLN-SEED-004 | Isolated pre-approval UI fixtures (do not contradict permanent Approved V1 seed) | Stitch journey states | PLN-SEED-001 | Done | `pln_seed_004_empty_draft.py` (`PLN-MOH-UI-DRAFT-001` / FY 2029/30) |

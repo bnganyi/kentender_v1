@@ -37,7 +37,7 @@ def setup(*, force: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	from kentender_core.seeds.kentender_mvp_v1.orchestrator import run_kentender_mvp_v1
 
-	base = run_kentender_mvp_v1(reset=True, force=force, validate=True, through="planning")
+	base = run_kentender_mvp_v1(reset=True, force=force, validate=True)
 	return {"ok": bool(base.get("ok")), "base": base}
 
 

@@ -114,10 +114,8 @@ help:
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed through Demands + validate KENTENDER_MVP_V1"
-	@echo "  make seed-kentender-mvp-v1-through-demands SITE=$(SITE) — alias of seed-kentender-mvp-v1"
-	@echo "  make seed-kentender-mvp-v1-through-budget SITE=$(SITE) — stop after Budget (no Demands stage)"
-	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate KENTENDER_MVP_V1 invariants only"
+	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed full KENTENDER_MVP_V1 through latest module (Planning) + validate"
+	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
@@ -829,19 +827,11 @@ e1-nssf-poc-gate:
 seed-kentender-mvp-v1:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
-		--kwargs '{"reset": True, "force": True, "validate": True, "through": "demands"}'
-
-seed-kentender-mvp-v1-through-demands: seed-kentender-mvp-v1
-
-seed-kentender-mvp-v1-through-budget:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
-		--kwargs '{"reset": True, "force": True, "validate": True, "through": "budget"}'
+		--kwargs '{"reset": True, "force": True, "validate": True}'
 
 seed-kentender-mvp-v1-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1 \
-		--kwargs '{"include_demands": True}'
+		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1
 
 # Deprecated aliases (one cycle).
 seed-moh-mvp-v1: seed-kentender-mvp-v1

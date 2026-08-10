@@ -2198,6 +2198,32 @@ frappe.provide("kentender_procurement.live");
 		return grand;
 	}
 
+	function markEnrichmentDirty($root) {
+		if (!$root || !$root.length) {
+			return;
+		}
+		if ($root.attr("data-kt-dem-review-stage") !== "Procurement Enrichment") {
+			return;
+		}
+		if ($root.attr("data-kt-dem-can-enrich") !== "1") {
+			return;
+		}
+		$root.attr("data-kt-dem-enrich-dirty", "1");
+		// Edits invalidate the last explicit Save — Send stays off until Save again.
+		$root.attr("data-kt-dem-enrich-saved", "0");
+		syncEnrichSendEnabled($root);
+	}
+
+	function syncEnrichSendEnabled($root) {
+		var can = $root.attr("data-kt-dem-can-enrich") === "1";
+		var ready = $root.attr("data-kt-dem-send-ready") === "1";
+		var dirty = $root.attr("data-kt-dem-enrich-dirty") === "1";
+		var saved = $root.attr("data-kt-dem-enrich-saved") === "1";
+		$root
+			.find('[data-kt-dem-action="enrich-send"]')
+			.prop("disabled", !(can && ready && saved && !dirty));
+	}
+
 	function paintEnrichItems($root, items) {
 		var $tbody = $root.find("[data-kt-dem-enrich-items-tbody]");
 		$tbody.empty();
@@ -2626,6 +2652,31 @@ frappe.provide("kentender_procurement.live");
 		});
 	}
 
+	function paintReviewBeneficiaries($root, text) {
+		var $list = $root.find("[data-kt-dem-beneficiaries-list]");
+		var $fallback = $root.find('[data-kt-dem-label="beneficiaries"]');
+		var raw = (text == null ? "" : String(text)).trim();
+		$list.empty();
+		if (!raw || raw === "—") {
+			$list.append("<li>—</li>");
+			$fallback.text("—");
+			return;
+		}
+		var parts = raw
+			.split(/\n|;|•/)
+			.map(function (p) {
+				return p.replace(/^[\s\-–—]+/, "").trim();
+			})
+			.filter(Boolean);
+		if (!parts.length) {
+			parts = [raw];
+		}
+		parts.forEach(function (p) {
+			$list.append($("<li></li>").text(p));
+		});
+		$fallback.text(raw);
+	}
+
 	function paintReviewPrompts($root, prompts) {
 		var $host = $root.find("[data-kt-dem-review-prompts]");
 		$host.empty();
@@ -2685,7 +2736,6 @@ frappe.provide("kentender_procurement.live");
 			"need_statement",
 			"need_rationale",
 			"expected_outcome",
-			"beneficiaries",
 			"owner_org_unit_label",
 			"delivery_location",
 			"technical_contact_label",
@@ -2693,9 +2743,11 @@ frappe.provide("kentender_procurement.live");
 			"required_by_display",
 			"estimate_header_display",
 			"currency",
+			"demand_route",
 		].forEach(function (k) {
 			setLabel($root, k, demand[k] || "—");
 		});
+		paintReviewBeneficiaries($root, demand.beneficiaries || "");
 		var baSummary = (enrichment && enrichment.business_decision_summary) || null;
 		setLabel(
 			$root,
@@ -2765,14 +2817,18 @@ frappe.provide("kentender_procurement.live");
 			paintEnrichItems($root, demand.items || []);
 			paintStrategyCard($root, enrichment);
 			paintPvc($root, enrichment.value_treatments || []);
+			$root.attr(
+				"data-kt-dem-send-ready",
+				enrichment.send_ready ? "1" : "0"
+			);
+			// Fresh server paint is clean; explicit Save gate is preserved across reload.
+			$root.attr("data-kt-dem-enrich-dirty", "0");
 			$root
 				.find(
 					'[data-kt-dem-action="enrich-save"], [data-kt-dem-action="enrich-return"], [data-kt-dem-action="assign-strategy"], [data-kt-dem-action="change-strategy"], [data-kt-dem-action="remove-strategy"], [data-kt-dem-action="enrich-add-item"]'
 				)
 				.prop("disabled", !canEnrich);
-			$root
-				.find('[data-kt-dem-action="enrich-send"]')
-				.prop("disabled", !(canEnrich && enrichment.send_ready));
+			syncEnrichSendEnabled($root);
 			$root
 				.find("[data-kt-dem-enrichment-host]")
 				.toggleClass("kt-dem-review-readonly", !canEnrich);
@@ -2878,6 +2934,10 @@ frappe.provide("kentender_procurement.live");
 		$root.attr("data-kt-dem-bind-token", String(token));
 		$root.attr("data-kt-dem-live", "0");
 		$root.attr("data-kt-dem-error", "0");
+		// Send requires an explicit Save enrichment in this session (not strategy-assign alone).
+		$root.attr("data-kt-dem-enrich-saved", "0");
+		$root.attr("data-kt-dem-enrich-dirty", "0");
+		$root.attr("data-kt-dem-send-ready", "0");
 
 		$root.off(".ktDemReview");
 		$root.on("click.ktDemReview", '[data-kt-dem-action="support"]', function (e) {
@@ -3348,6 +3408,14 @@ frappe.provide("kentender_procurement.live");
 					if (!res || !res.ok) {
 						throw new Error("Save failed");
 					}
+					$root.attr("data-kt-dem-enrich-saved", "1");
+					$root.attr("data-kt-dem-enrich-dirty", "0");
+					if (res.enrichment) {
+						$root.attr(
+							"data-kt-dem-send-ready",
+							res.enrichment.send_ready ? "1" : "0"
+						);
+					}
 					frappe.show_alert({
 						message: __("Enrichment saved"),
 						indicator: "green",
@@ -3363,6 +3431,7 @@ frappe.provide("kentender_procurement.live");
 				})
 				.finally(function () {
 					$btn.prop("disabled", false);
+					syncEnrichSendEnabled($root);
 				});
 		});
 		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-send"]', function (e) {
@@ -3421,6 +3490,7 @@ frappe.provide("kentender_procurement.live");
 					if (!res || !res.ok) {
 						throw new Error("Remove failed");
 					}
+					$root.attr("data-kt-dem-enrich-saved", "0");
 					frappe.show_alert({
 						message: __("Strategy assignment removed"),
 						indicator: "orange",
@@ -3535,6 +3605,8 @@ frappe.provide("kentender_procurement.live");
 					if (!res || !res.ok) {
 						throw new Error("Assign failed");
 					}
+					// Strategy assign is not "Save enrichment" — Send stays gated.
+					$root.attr("data-kt-dem-enrich-saved", "0");
 					closeStrategyDrawer($root);
 					frappe.show_alert({
 						message: okMessage,
@@ -3570,17 +3642,27 @@ frappe.provide("kentender_procurement.live");
 				})
 			);
 			syncEnrichItemRowTotals($root);
+			markEnrichmentDirty($root);
 		});
 		$root.on("click.ktDemReview", '[data-kt-dem-action="enrich-remove-item"]', function (e) {
 			e.preventDefault();
 			$(this).closest("[data-kt-dem-enrich-item-row]").remove();
 			syncEnrichItemRowTotals($root);
+			markEnrichmentDirty($root);
 		});
 		$root.on(
 			"input.ktDemReview change.ktDemReview",
-			'[data-kt-dem-enrich-item="confirmed_quantity"], [data-kt-dem-enrich-item="unit_estimate"]',
+			'[data-kt-dem-enrich-item="confirmed_quantity"], [data-kt-dem-enrich-item="unit_estimate"], [data-kt-dem-enrich-item="confirmed_uom"], [data-kt-dem-enrich-item="description"]',
 			function () {
 				syncEnrichItemRowTotals($root);
+				markEnrichmentDirty($root);
+			}
+		);
+		$root.on(
+			"input.ktDemReview change.ktDemReview",
+			'[data-kt-dem-field="procurement_category"], [data-kt-dem-field="demand_route"], [data-kt-dem-field="estimate_basis"], [data-kt-dem-field="confirmed_estimate"], [data-kt-dem-field="related_demands_note"], [data-kt-dem-field="aggregation_treatment"], [data-kt-dem-field="aggregation_rationale"]',
+			function () {
+				markEnrichmentDirty($root);
 			}
 		);
 

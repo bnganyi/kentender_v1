@@ -26,7 +26,7 @@ Ship **Planning roles + PE/OU scope** and the **canonical Planning seed** so ope
 ### Seed (`PLN-SEED-001`…`003`)
 
 - Module seed `procurement_planning/seeds/kentender_mvp_v1.py` — `PLN-MOH-2027-001` / V1 Approved / `PPI-MOH-2027-021` Active @ **455,000,000**
-- Orchestrator `through="planning"` (default remains `"demands"`)
+- Orchestrator always seeds through the latest module stage (Planning); no partial `through` boundary
 - Canonical Planning users + USA in `kentender_mvp_v1/users.py`
 - Validate / clear Planning checks
 - `SCN-PLN-ADD-001` setup / run / reset → `PPI-MOH-2027-022`, consolidated **535,000,000**, idempotent second run
@@ -64,7 +64,7 @@ bench --site kentender.midas.com run-tests \
 
 bench --site kentender.midas.com execute \
   kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
-  --kwargs '{"reset": True, "force": True, "through": "planning"}'
+  --kwargs '{"reset": True, "force": True, "validate": True}'
 
 bench --site kentender.midas.com run-tests \
   --module kentender_procurement.procurement_planning.tests.test_planning_mvp_seed_contract

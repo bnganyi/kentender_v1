@@ -149,7 +149,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 	demand = frappe.db.get_value("Demand", {"demand_code": C.DEMAND_CODE}, "name")
 	if not demand:
 		raise frappe.ValidationError(
-			f"Planning seed requires Demand {C.DEMAND_CODE} (run through=demands first)"
+			f"Planning seed requires Demand {C.DEMAND_CODE} (run full KENTENDER_MVP_V1 seed first)"
 		)
 
 	pe = C.PE_MOH

@@ -19,7 +19,7 @@ class TestPlanningMvpSeedContract(IntegrationTestCase):
 		from kentender_core.seeds.kentender_mvp_v1.orchestrator import run_kentender_mvp_v1
 
 		cls.seed = run_kentender_mvp_v1(
-			reset=True, force=True, validate=True, through="planning"
+			reset=True, force=True, validate=True
 		)
 
 	def test_seed_ok(self) -> None:
@@ -70,7 +70,7 @@ class TestPlanningMvpSeedContract(IntegrationTestCase):
 			"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE}
 		)
 		second = run_kentender_mvp_v1(
-			reset=False, force=True, validate=True, through="planning"
+			reset=False, force=True, validate=True
 		)
 		self.assertTrue(second.get("ok"), msg=str(second.get("validate")))
 		self.assertEqual(

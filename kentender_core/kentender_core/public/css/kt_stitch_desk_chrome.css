@@ -301,6 +301,7 @@
 
 /* Permanent: Material expand_more sibling owns the chevron — suppress SVG. */
 .kt-cl-shell .kt-stitch-canvas select:has(+ .material-symbols-outlined),
+.kt-cl-shell .kt-stitch-canvas select:has(+ div .material-symbols-outlined),
 .kt-cl-shell .kt-str-root select:has(+ .material-symbols-outlined),
 .kt-cl-shell .kt-bud-root select:has(+ .material-symbols-outlined) {
 	background-image: none !important;

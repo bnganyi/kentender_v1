@@ -133,8 +133,8 @@
 	background-color: #ffffff !important;
 	border-radius: 0.5rem !important;
 }
-body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox),
-body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus-visible:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox) {
+body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox):not(.kt-dem-ui04-criterion-input):not(.kt-dem-ui08-checkbox),
+body.kt-dem-surface.kt-cl-shell .kt-dem-root :is(input, select, textarea):focus-visible:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox):not(.kt-dem-ui04-criterion-input):not(.kt-dem-ui08-checkbox) {
 	outline: none !important;
 	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
 	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;

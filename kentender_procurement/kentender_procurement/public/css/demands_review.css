@@ -110,6 +110,42 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-a
 	padding: 20px !important;
 	box-sizing: border-box !important;
 }
+/* space-y-* is form-only in demands_form.css — review must pin Stitch 24px stack */
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-decision-body,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-decision-body"] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important; /* Stitch space-y-6 */
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-need-body,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-need-body"] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criteria-list,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-kt-dem-review-prompts] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-disclaimer"] {
+	margin-top: 0 !important; /* gap on parent owns separation from comments */
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-beneficiaries"] {
+	margin: 0 !important;
+	padding-left: 0 !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-beneficiaries"] > li {
+	margin: 0 !important;
+	white-space: normal !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .whitespace-pre-wrap,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-need-statement"],
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-need-rationale"],
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-expected-outcome"] {
+	white-space: pre-wrap !important;
+}
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-comment"] {
 	width: 100% !important;
 	max-width: 100% !important;
@@ -152,8 +188,8 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review [data-testid="kt-dem-ui04-m
 	}
 }
 
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox),
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus-visible:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox) {
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox):not(.kt-dem-ui04-criterion-input):not(.kt-dem-ui08-checkbox),
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea):focus-visible:not(.kt-dem-ui05-item-input):not(.kt-dem-ui06-checkbox):not(.kt-dem-ui04-criterion-input):not(.kt-dem-ui08-checkbox) {
 	outline: none !important;
 	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
 	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
@@ -166,42 +202,71 @@ body.kt-dem-review-active.kt-cl-shell .kt-dem-review :is(input, select, textarea
 	cursor: not-allowed;
 }
 
-/* Stitch DEM-UI-04 — Review Criteria acknowledgement checkboxes */
+/* Stitch DEM-UI-04 — Review Criteria acknowledgement checkboxes
+   Desk focus rules force white fill on :focus — keep navy when checked (same as UI-06). */
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-box {
-	width: 1.25rem;
-	height: 1.25rem;
-	position: relative;
+	position: relative !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 1.25rem !important;
+	height: 1.25rem !important;
+	flex-shrink: 0 !important;
 }
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input {
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"] {
 	appearance: none !important;
 	-webkit-appearance: none !important;
+	display: block !important;
 	width: 1.25rem !important;
 	height: 1.25rem !important;
 	margin: 0 !important;
 	border: 2px solid var(--kt-dem-outline-variant, #c3c6d1) !important;
 	border-radius: 0.25rem !important;
-	background: #fff !important;
-	cursor: pointer;
-	display: block;
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+	cursor: pointer !important;
+	flex-shrink: 0 !important;
 }
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked {
-	background: var(--kt-dem-primary, #003d9b) !important;
-	border-color: var(--kt-dem-primary, #003d9b) !important;
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked:focus,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked:focus-visible,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"]:checked,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"]:checked:focus,
+body.kt-dem-surface.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"]:checked,
+body.kt-dem-surface.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"]:checked:focus,
+body.kt-dem-surface.kt-dem-review-active.kt-cl-shell .kt-dem-root input.kt-dem-ui04-criterion-input[type="checkbox"]:checked:focus-visible {
+	background: #003d9b !important;
+	background-color: #003d9b !important;
+	border-color: #003d9b !important;
+	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
+}
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:focus,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:focus-visible {
+	outline: none !important;
+	border-color: var(--kt-dem-focus-border, #7bbeff) !important;
+	box-shadow: 0 0 0 1px var(--kt-dem-focus-ring, rgba(123, 190, 255, 0.55)) !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-check {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	position: absolute !important;
+	inset: 0 !important;
+	z-index: 1 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 	font-size: 16px !important;
-	line-height: 1;
-	color: #fff;
-	opacity: 0;
-	pointer-events: none;
+	line-height: 1 !important;
+	font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24 !important;
+	color: #ffffff !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
 }
-body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked + .kt-dem-ui04-criterion-check {
-	opacity: 1;
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked + .kt-dem-ui04-criterion-check,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked:focus + .kt-dem-ui04-criterion-check,
+body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion-input:checked:focus-visible + .kt-dem-ui04-criterion-check {
+	opacity: 1 !important;
+	color: #ffffff !important;
+	visibility: visible !important;
 }
 body.kt-dem-review-active.kt-cl-shell .kt-dem-review .kt-dem-ui04-criterion:hover .text-sm {
 	color: #0b0e14;

@@ -54,6 +54,11 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.locator("body")).not.toContainText("Value missing for");
 		await expect(page.getByTestId("kt-pln-ui06-add-another")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui06-source-allocation")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui06-source-demand")).toBeVisible();
+		await expect(page.locator(ROOT)).toContainText("Planning approach");
+		await expect(page.locator(ROOT)).toContainText("Planned schedule");
+		await expect(page.locator(ROOT)).toContainText("Statutory and strategy treatment");
+		await expect(page.locator(ROOT)).toContainText("Source Demand");
 		await expect(page.locator(ROOT)).not.toContainText("Combine in this Plan Item");
 		await expect(page.locator(ROOT)).not.toContainText("Keep separate");
 		await expect(page.locator(`${ROOT} [name="aggregation_decision"]`)).toHaveCount(0);

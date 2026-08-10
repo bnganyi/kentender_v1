@@ -44,7 +44,11 @@ Notes:
 3. Ministry plan `MOH-SP-2026-2030` (entity-owned) + Kisumu plan `CGK-SP-HEALTH-2027-2028`
 4. Budgets `MOH-BUD-2027-2028` / draft / closed + `CGK-BUD-2027-2028`
 5. Funding ledger RSV / COM / EXP for the Ministry DHI line
-6. Contract §9 PASS/FAIL report (identity, ownership isolation, cross-entity denial)
+6. Demands anchors (`DMD-MOH-2027-014`, returned, county draft)
+7. Procurement Plan `PLN-MOH-2027-001` (Approved V1) + Active Plan Item `PPI-MOH-2027-021`
+8. Contract PASS/FAIL report through the latest module stage (Planning)
+
+Always seeds the **full** stack through the latest implemented module. There is no partial `through` boundary.
 
 ## UI personas (`.env.ui`)
 

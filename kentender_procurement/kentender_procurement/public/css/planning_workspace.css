@@ -165,6 +165,7 @@
 .kt-cl-shell .kt-pln-root .max-w-4xl { max-width: 56rem !important; }
 .kt-cl-shell .kt-pln-root .max-w-7xl { max-width: 80rem !important; }
 .kt-cl-shell .kt-pln-root .max-w-md { max-width: 28rem !important; }
+.kt-cl-shell .kt-pln-root .max-w-48 { max-width: 12rem !important; }
 .kt-cl-shell .kt-pln-root .mx-auto { margin-left: auto !important; margin-right: auto !important; }
 .kt-cl-shell .kt-pln-root .ml-1 { margin-left: 0.25rem !important; }
 .kt-cl-shell .kt-pln-root .mt-1 { margin-top: 0.25rem !important; }
@@ -186,9 +187,15 @@
 .kt-cl-shell .kt-pln-root .gap-3 { gap: 0.75rem !important; }
 .kt-cl-shell .kt-pln-root .gap-4 { gap: 1rem !important; }
 .kt-cl-shell .kt-pln-root .gap-6 { gap: 1.5rem !important; }
+.kt-cl-shell .kt-pln-root .gap-x-6 { column-gap: 1.5rem !important; }
+.kt-cl-shell .kt-pln-root .gap-y-2 { row-gap: 0.5rem !important; }
 .kt-cl-shell .kt-pln-root .gap-section-gap { gap: 2rem !important; }
 .kt-cl-shell .kt-pln-root .gap-stack-xs { gap: 0.25rem !important; }
 .kt-cl-shell .kt-pln-root .gap-gutter-md { gap: 1.5rem !important; }
+.kt-cl-shell .kt-pln-root .ml-auto { margin-left: auto !important; }
+.kt-cl-shell .kt-pln-root .mr-8 { margin-right: 2rem !important; }
+.kt-cl-shell .kt-pln-root .px-1 { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .text-status-available { color: var(--kt-pln-status-available, #10b981) !important; }
 .kt-cl-shell .kt-pln-root .grid { display: grid !important; }
 .kt-cl-shell .kt-pln-root .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
 .kt-cl-shell .kt-pln-root .p-3 { padding: 0.75rem !important; }
@@ -210,13 +217,65 @@
 .kt-cl-shell .kt-pln-root .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
 .kt-cl-shell .kt-pln-root .py-section-gap { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 .kt-cl-shell .kt-pln-root .pt-section-gap { padding-top: 2rem !important; }
+.kt-cl-shell .kt-pln-root .pt-8 { padding-top: 2rem !important; }
 .kt-cl-shell .kt-pln-root .pb-1 { padding-bottom: 0.25rem !important; }
 .kt-cl-shell .kt-pln-root .pb-4 { padding-bottom: 1rem !important; }
+.kt-cl-shell .kt-pln-root .pb-32 { padding-bottom: 8rem !important; }
 .kt-cl-shell .kt-pln-root .pl-3 { padding-left: 0.75rem !important; }
 .kt-cl-shell .kt-pln-root .pl-10 { padding-left: 2.5rem !important; }
 .kt-cl-shell .kt-pln-root .pr-4 { padding-right: 1rem !important; }
 .kt-cl-shell .kt-pln-root .pr-8 { padding-right: 2rem !important; }
 .kt-cl-shell .kt-pln-root .pr-10 { padding-right: 2.5rem !important; }
+.kt-cl-shell .kt-pln-root .right-0 { right: 0 !important; }
+.kt-cl-shell .kt-pln-root .bottom-0 { bottom: 0 !important; }
+.kt-cl-shell .kt-pln-root .left-0 { left: 0 !important; }
+.kt-cl-shell .kt-pln-root .z-40 { z-index: 40 !important; }
+.kt-cl-shell .kt-pln-root .shadow-\[0_-4px_6px_-1px_rgba\(0\,0\,0\,0\.05\)\] {
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+.kt-cl-shell .kt-pln-root .bg-tertiary-fixed { background-color: #dce2f8 !important; }
+.kt-cl-shell .kt-pln-root .bg-tertiary-fixed\/30 { background-color: rgba(220, 226, 248, 0.3) !important; }
+.kt-cl-shell .kt-pln-root .text-tertiary { color: #3d4354 !important; }
+.kt-cl-shell .kt-pln-root .border-tertiary-fixed-dim\/50 { border-color: rgba(192, 198, 219, 0.5) !important; }
+.kt-cl-shell .kt-pln-root .bg-error-container\/20 { background-color: rgba(255, 218, 214, 0.2) !important; }
+.kt-cl-shell .kt-pln-root .border-error { border-color: #ba1a1a !important; }
+.kt-cl-shell .kt-pln-root .text-error { color: #ba1a1a !important; }
+.kt-cl-shell .kt-pln-root .border-l-4 { border-left-width: 4px !important; border-left-style: solid !important; }
+.kt-cl-shell .kt-pln-root .rounded-r-lg {
+	border-top-right-radius: 0.5rem !important;
+	border-bottom-right-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-pln-root .w-1\.5 { width: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .h-1\.5 { height: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .text-\[13px\] { font-size: 13px !important; }
+.kt-cl-shell .kt-pln-root .text-\[16px\] { font-size: 16px !important; }
+.kt-cl-shell .kt-pln-root .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+.kt-cl-shell .kt-pln-root .leading-tight { line-height: 1.25 !important; }
+.kt-cl-shell .kt-pln-root .leading-snug { line-height: 1.375 !important; }
+.kt-cl-shell .kt-pln-root .tracking-tight { letter-spacing: -0.025em !important; }
+.kt-cl-shell .kt-pln-root .italic { font-style: italic !important; }
+.kt-cl-shell .kt-pln-root .resize-y { resize: vertical !important; }
+.kt-cl-shell .kt-pln-root .cursor-pointer { cursor: pointer !important; }
+.kt-cl-shell .kt-pln-root .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+	margin-left: 0.5rem !important;
+}
+.kt-cl-shell .kt-pln-root .mt-stack-sm { margin-top: 0.5rem !important; }
+.kt-cl-shell .kt-pln-root .mt-section-gap { margin-top: 2rem !important; }
+.kt-cl-shell .kt-pln-root .gap-stack-sm { gap: 0.5rem !important; }
+.kt-cl-shell .kt-pln-root .border-transparent { border-color: transparent !important; }
+.kt-cl-shell .kt-pln-root .bg-primary-fixed-dim\/20 { background-color: rgba(178, 197, 255, 0.2) !important; }
+.kt-cl-shell .kt-pln-root .border-primary-fixed-dim\/30 { border-color: rgba(178, 197, 255, 0.3) !important; }
+.kt-cl-shell .kt-pln-root .w-2 { width: 0.5rem !important; }
+.kt-cl-shell .kt-pln-root .h-2 { height: 0.5rem !important; }
+.kt-cl-shell .kt-pln-root .w-48 { width: 12rem !important; }
+.kt-cl-shell .kt-pln-root .border-collapse { border-collapse: collapse !important; }
+.kt-cl-shell .kt-pln-root .text-left { text-align: left !important; }
+.kt-cl-shell .kt-pln-root .table-row-hover:hover { background-color: var(--kt-pln-surface-low) !important; }
+.kt-cl-shell .kt-pln-root .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+.kt-cl-shell .kt-pln-root .text-\[14px\] { font-size: 14px !important; }
+.kt-cl-shell .kt-pln-root .cursor-help { cursor: help !important; }
+
+
 
 @media (min-width: 640px) {
 	.kt-cl-shell .kt-pln-root .sm\:flex-row { flex-direction: row !important; }
@@ -238,7 +297,15 @@
 	.kt-cl-shell .kt-pln-root .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 	.kt-cl-shell .kt-pln-root .md\:col-span-2 { grid-column: span 2 / span 2 !important; }
 	.kt-cl-shell .kt-pln-root .md\:p-section-gap { padding: 2rem !important; }
+	.kt-cl-shell .kt-pln-root .md\:px-section-gap { padding-left: 2rem !important; padding-right: 2rem !important; }
 	.kt-cl-shell .kt-pln-root .md\:block { display: block !important; }
+	.kt-cl-shell .kt-pln-root .md\:w-1\/2 { width: 50% !important; }
+}
+
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-pln-root .lg\:grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; }
+	.kt-cl-shell .kt-pln-root .lg\:col-span-8 { grid-column: span 8 / span 8 !important; }
+	.kt-cl-shell .kt-pln-root .lg\:col-span-4 { grid-column: span 4 / span 4 !important; }
 }
 
 .kt-cl-shell .kt-pln-root .rounded { border-radius: 0.25rem !important; }
@@ -299,6 +366,7 @@
 .kt-cl-shell .kt-pln-root .bg-primary { background-color: var(--kt-pln-primary) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-exhausted\/10 { background-color: rgb(225 29 72 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-available\/10 { background-color: rgb(16 185 129 / 0.1) !important; }
+.kt-cl-shell .kt-pln-root .bg-status-reserved { background-color: var(--kt-pln-status-reserved) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-reserved\/10 { background-color: rgb(245 158 11 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .text-on-surface { color: var(--kt-pln-on-surface) !important; }
 .kt-cl-shell .kt-pln-root .text-on-surface-variant { color: var(--kt-pln-on-surface-variant) !important; }
@@ -412,20 +480,23 @@ body.kt-pln-surface .kt-cl-native-canvas > main {
 }
 
 /* Keep Stitch side/bottom padding; tighten canvas top under the toolbar. */
-body.kt-pln-surface .kt-pln-root > main.p-container-padding,
-body.kt-pln-surface .kt-pln-root > main.md\:p-section-gap,
-body.kt-pln-surface .kt-pln-root > main.p-section-gap,
-body.kt-pln-surface .kt-pln-root > main.py-section-gap,
-body.kt-pln-surface .kt-pln-root > main {
+body.kt-pln-surface .kt-pln-root main.p-container-padding,
+body.kt-pln-surface .kt-pln-root main.md\:p-section-gap,
+body.kt-pln-surface .kt-pln-root main.p-section-gap,
+body.kt-pln-surface .kt-pln-root main.py-section-gap,
+body.kt-pln-surface .kt-pln-root main {
 	padding-top: 16px !important;
 }
 
 @media (min-width: 768px) {
-	body.kt-pln-surface .kt-pln-root > main.md\:p-section-gap {
+	body.kt-pln-surface .kt-pln-root main.md\:px-section-gap,
+	body.kt-pln-surface .kt-pln-root main.md\:p-section-gap {
 		padding-top: 16px !important;
 		padding-left: 2rem !important;
 		padding-right: 2rem !important;
-		padding-bottom: 2rem !important;
+	}
+	body.kt-pln-surface .kt-pln-root main {
+		padding-bottom: 8rem !important;
 	}
 }
 
@@ -558,6 +629,11 @@ body.kt-pln-editor-active .body-sidebar-container {
 	padding-right: 2.5rem !important;
 }
 
+/* PLN-UI-06 Stitch selects wrap expand_more in an absolute div (literal port). */
+.kt-cl-shell .kt-pln-root select:has(+ div .material-symbols-outlined) {
+	background-image: none !important;
+}
+
 /*
  * PLN-UI-04 table selection bar:
  * - NEVER an absolute <td> (counts as a column in Chrome).
@@ -672,5 +748,44 @@ body.kt-pln-editor-active .body-sidebar-container {
 	text-overflow: clip !important;
 	white-space: normal !important;
 	max-width: none !important;
+}
+
+/* PLN-UI-04 selection summary — Stitch gap-x-6 between chips; gap-2 icon↔label */
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] [data-kt-pln-elig-summary-bar] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	column-gap: 1.5rem !important;
+	row-gap: 0.5rem !important;
+	padding: 0.75rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] .kt-pln-ui04-summary-chip {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] .kt-pln-ui04-summary-chip .material-symbols-outlined {
+	flex-shrink: 0 !important;
+	margin: 0 !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] [data-kt-pln-add-mode-footer] {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding-left: 0.25rem !important;
+	padding-right: 0.25rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] [data-kt-pln-ui04-helper] {
+	margin: 0 !important;
+	max-width: 42rem !important;
+}
+/* Footer action buttons — balanced padding (Stitch px-4 py-2) */
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] [data-kt-pln-action="elig-cancel"],
+.kt-cl-shell .kt-pln-root [data-kt-pln-add-demand-dialog] [data-kt-pln-action="elig-add"] {
+	padding: 0.5rem 1rem !important;
+	line-height: 1.25 !important;
+	min-height: 2.25rem !important;
+	box-sizing: border-box !important;
 }
 

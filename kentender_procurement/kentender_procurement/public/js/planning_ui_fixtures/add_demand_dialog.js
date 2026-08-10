@@ -32,7 +32,7 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 </div>
 <div class="relative min-w-[180px]">
 <select class="block w-full pl-3 pr-10 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-shadow" data-kt-pln-elig-ou aria-label="Organisation Unit">
-<option value="">Organisation Unit</option>
+<option value="">All permitted units</option>
 </select>
 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
 <span class="material-symbols-outlined text-outline text-sm" aria-hidden="true">arrow_drop_down</span>
@@ -40,7 +40,7 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 </div>
 <div class="relative min-w-[150px]">
 <select class="block w-full pl-3 pr-10 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-shadow" data-kt-pln-elig-category aria-label="Category">
-<option value="">Category</option>
+<option value="">All categories</option>
 </select>
 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
 <span class="material-symbols-outlined text-outline text-sm" aria-hidden="true">arrow_drop_down</span>
@@ -48,8 +48,8 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 </div>
 </div>
 <div class="flex items-center gap-2 flex-shrink-0">
-<input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 transition-colors" id="kt-pln-elig-remaining" type="checkbox" data-kt-pln-elig-remaining/>
-<label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer select-none" for="kt-pln-elig-remaining">Show remaining planning availability only</label>
+<input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 transition-colors" id="kt-pln-elig-remaining" type="checkbox" data-kt-pln-elig-remaining checked/>
+<label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer select-none" for="kt-pln-elig-remaining">Available to plan only</label>
 </div>
 </div>
 <!-- Table Content -->
@@ -64,7 +64,7 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 <th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Already planned</th>
 <th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Available to plan</th>
 <th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Required by</th>
-<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Funding</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Funding status</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-subtle" data-kt-pln-elig-body></tbody>
@@ -72,19 +72,23 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 </div>
 <!-- Footer & Selection Summary (Stitch PLN-UI-04) -->
 <div class="px-6 py-4 border-t border-subtle bg-surface-container-lowest flex items-center justify-between gap-4">
-<div class="flex flex-col gap-3 flex-1 mr-4 min-w-0">
-<div class="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 bg-surface-container-low rounded-lg border border-subtle" data-kt-pln-elig-summary-bar>
-<div class="flex items-center gap-2">
+<div class="flex flex-col gap-3 flex-1 mr-8 min-w-0">
+<div class="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 bg-surface-container-low rounded-lg border border-subtle" data-kt-pln-elig-summary-bar data-testid="kt-pln-ui04-summary">
+<div class="flex items-center gap-2 kt-pln-ui04-summary-chip">
 <span class="material-symbols-outlined text-primary text-sm" aria-hidden="true">check_circle</span>
 <span class="font-body-sm font-semibold" data-kt-pln-elig-count-label>0 Approved Demands selected</span>
 </div>
-<div class="flex items-center gap-2" data-kt-pln-elig-need-wrap>
+<div class="flex items-center gap-2 kt-pln-ui04-summary-chip" data-kt-pln-elig-need-wrap>
 <span class="material-symbols-outlined text-on-surface-variant text-sm" aria-hidden="true">list_alt</span>
 <span class="font-body-sm" data-kt-pln-elig-need-count>0 Need Items</span>
 </div>
-<div class="flex items-center gap-2">
+<div class="flex items-center gap-2 kt-pln-ui04-summary-chip">
 <span class="material-symbols-outlined text-on-surface-variant text-sm" aria-hidden="true">payments</span>
 <span class="font-data-md text-sm" data-kt-pln-elig-amount>Total KES 0</span>
+</div>
+<div class="flex items-center gap-2 kt-pln-ui04-summary-chip hidden" data-kt-pln-elig-funding-wrap data-testid="kt-pln-ui04-funding-reserved" hidden>
+<span class="material-symbols-outlined text-status-available text-sm" aria-hidden="true">verified</span>
+<span class="font-body-sm" data-kt-pln-elig-funding-label>Funding reserved</span>
 </div>
 <button type="button" class="text-primary font-label-caps text-[11px] hover:underline ml-auto" data-kt-pln-action="view-source-breakdown" data-testid="kt-pln-ui04-view-source">View source breakdown</button>
 </div>

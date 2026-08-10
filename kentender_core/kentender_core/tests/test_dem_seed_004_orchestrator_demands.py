@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""DEM-SEED-004…007 — orchestrator Demands stage, clear, validate, through boundary."""
+"""DEM-SEED-004…007 — Demands upsert/clear/validate on the full MVP seed stack."""
 
 from __future__ import annotations
 
