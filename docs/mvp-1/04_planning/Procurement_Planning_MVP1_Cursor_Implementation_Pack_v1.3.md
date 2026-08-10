@@ -1,16 +1,13 @@
 # KenTender Procurement Planning — Cursor Implementation Pack
 
-**Document ID:** PLANNING-MVP1-CURSOR-1.2  
-**Date:** 9 August 2026  
+**Document ID:** PLANNING-MVP1-CURSOR-1.3  
+**Date:** 10 August 2026  
 **Status:** Approved implementation baseline  
 **Requirements:** `Procurement_Planning_MVP1_Requirements_v1.4.md`  
-**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v1.4.md` and approved Stitch outputs `PLN-UI-01` through `PLN-UI-10`  
-**Seed:** `KenTender_MVP_Canonical_Demo_Data_Contract_v2.4.md`  
-**Tracker:** `04_Procurement_Planning_MVP1_Implementation_Tracker.md`  
-**Gate 00 boundary:** `GATE_00_REPLACEMENT_BOUNDARY.md` (Approved)  
-**PP2 retirement:** `GATE_PP2_RETIREMENT.md` v1.1 — **full removal before Gate 01**; zero legacy Planning code; no temporary preserve
+**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v1.5.md` and approved Stitch outputs `PLN-UI-01` through `PLN-UI-10`  
+**Seed:** `KenTender_MVP_Canonical_Demo_Data_Contract_v2.4.md`
 
-**Revision 1.2:** Retains the 1.1 document-hygiene decisions and makes the Requirements v1.4 service and business-record names authoritative. Repository conventions may determine code placement and language casing, but may not rename the approved service contract or domain records.
+**Revision 1.3:** Aligns implementation with Stitch v1.5. The ordinary Add Plan Item path is one Approved Demand to one Proposed Plan Item; Draft Plan-version creation is background governance; PLN-UI-06 completes an item whose source was already selected; aggregation is an explicit exceptional action; and regression tests must prevent the former “Keep separate” radio from being stored without creating separate Plan Items.
 
 ---
 
@@ -38,7 +35,7 @@ Use this order:
 1. `Procurement_Planning_MVP1_Requirements_v1.4.md`
 2. this implementation pack;
 3. `KenTender_MVP_Canonical_Demo_Data_Contract_v2.4.md`
-4. approved Stitch outputs and `Procurement_Planning_MVP1_Stitch_Prompts_v1.4.md`;
+4. approved Stitch outputs and `Procurement_Planning_MVP1_Stitch_Prompts_v1.5.md`;
 5. existing repository conventions that do not conflict with the above.
 
 Stitch defines screen composition, hierarchy and visible controls. It does not define persistence, permissions, workflow or validation.
@@ -98,19 +95,25 @@ Planning does not own Demand approval, Budget approval, reservation creation, St
 
 The required post-approval path is:
 
-> `PLN-UI-09 Add Plan Item` → `PLN-UI-04 eligible Demand selection` → create or reuse the single Draft successor and a Proposed Plan Item → `PLN-UI-06 Plan Item editor` → save to `PLN-UI-10 revision overview`
+> `PLN-UI-09 Add Plan Item` → `PLN-UI-04 select one eligible Approved Demand` → system creates or reuses the Draft successor and creates one Proposed Plan Item → `PLN-UI-06 complete that Plan Item` → save to `PLN-UI-10 Plan update overview`
 
 Rules:
 
-- `PLN-UI-10` is a revision overview, not an item-selection screen.
+- The Plan Item is the operational unit. The Plan Version is the approval and immutability boundary.
+- `PLN-UI-04` selects the source. It does not configure procurement method, schedule or revision metadata.
+- The ordinary selection is single-select: one Approved Demand creates one Proposed Plan Item by default and includes its available Need Items as Draft Plan Demand Allocations.
+- `PLN-UI-06` completes the already-created Plan Item. It must not ask the user to select the Demand again or present a mandatory aggregation decision.
+- `PLN-UI-10` is a compact Plan update overview, not an item-selection or version-management workbench.
 - The user does not manually create a revision before selecting **Add Plan Item**.
-- If no Draft successor exists, the service creates one.
-- If one exists, the addition joins it.
+- On confirmation in `PLN-UI-04`, the server creates or reuses the single Draft successor before creating the Proposed Plan Item and allocations. This is one transactional user action.
 - The current Approved version remains operational throughout.
-- A compatible Demand may be added to an existing Proposed Plan Item while its Plan Version is Draft. This is a Draft edit, not a new revision.
-- Adding a Demand to an Active item in an Approved version requires a Draft successor and a new Plan Item Version.
-- Aggregation requires the same Procuring Entity, preserved funding/reservation lineage and an accountable reason.
+- Adding another Approved Demand to an existing Proposed Plan Item is an explicit exceptional action invoked from that Draft item. It is not part of the ordinary Add Plan Item path.
+- Explicit aggregation requires the same Procuring Entity, compatible scope and timing, preserved funding/reservation lineage and an accountable reason.
+- Planning Need Items separately is an explicit source-breakdown action. It creates one Proposed Plan Item per selected Need Item, records the division reason and runs the server-side anti-splitting check.
+- Adding a source to an Active item in the current Approved version requires a Draft successor and a new Draft Plan Item Version; a taken-up item additionally requires the governed downstream correction process.
 - A taken-up Active item cannot be materially changed without the governed downstream correction process.
+
+Do not implement the former ambiguous state in which `aggregation_decision = "Keep separate"` is stored while all Need Items remain allocations of one Plan Item. Either one Plan Item exists, or separate Plan Items actually exist.
 
 ### 3.6 Source and field semantics
 
@@ -122,6 +125,10 @@ Rules:
 - Coordinating procurement unit is an authorised Organisation Unit select; it need not be the lowest unit.
 - Do not capture a Budget context on the Plan header.
 - Demand, Budget, reservation and Strategy information in the Plan Item editor is inherited and read-only.
+- For the ordinary one-Demand path, derive the source-composition state as single source; do not require an aggregation reason.
+- Preserve every Need Item as a distinct Plan Demand Allocation even when the Approved Demand becomes one Plan Item.
+- Store aggregation metadata only when multiple Approved source requirements are deliberately combined. Store division metadata only when source Need Items are deliberately planned separately.
+- Indicative lotting belongs to the Plan Item editor and concerns the eventual Tender. It must not create extra Plan Items or masquerade as source aggregation.
 - Users do not maintain business codes or statutory percentages.
 - Actual milestones are downstream projections, not editable Planning fields.
 
@@ -179,6 +186,14 @@ Expose these exact server service names from Requirements v1.4. Do not substitut
 - `get_plan_implementation`
 - `get_plan_audit`
 
+Required service semantics:
+
+- `add_demand_to_plan` accepts one Approved Demand selection and defaults to one Proposed Plan Item containing Draft allocations for its available Need Items. On an Approved Plan it transactionally calls or shares the `open_or_create_plan_revision` invariant; the client must not orchestrate a partially created revision.
+- The explicit **Plan Need Items separately** option is handled by `add_demand_to_plan` using a controlled formation mode and required division reason. It creates separate Proposed Plan Items in the same Draft Plan Version and must pass anti-splitting validation.
+- `aggregate_plan_allocations` is called only from **Add another approved Demand to this Plan Item**. It adds compatible Draft allocations to an existing Proposed Plan Item and requires an aggregation reason.
+- `update_plan_item` changes planning decisions on one existing Draft Plan Item Version. It must not create, split or aggregate source allocations from an ordinary PLN-UI-06 save.
+- No service may persist `Keep separate` as a cosmetic value. Separate means separate stable Plan Items and Plan Item Versions exist.
+
 Every mutation returns a fresh projection. Use stable business error codes for permission, scope, validation, stale version, funding, duplicate allocation and downstream-take-up conflicts.
 
 ---
@@ -207,12 +222,18 @@ Post-approval scenario `SCN-PLN-ADD-001`:
 1. `DMD-MOH-2027-019` starts Returned at KES 95,000,000 with a KES 15,000,000 shortfall.
 2. Its scope is corrected to KES 80,000,000 and passes the existing mandatory Demand approvals.
 3. Final Demand approval creates exactly one `RSV-MOH-0002`.
-4. **Add Plan Item** creates or opens Draft Version 2.
-5. Proposed `PPI-MOH-2027-022` is created for the certification programme.
-6. Version 1 and its active Tender remain operational.
-7. Revised value becomes KES 535,000,000.
-8. The 30% plan-allocation basis becomes KES 160,500,000.
-9. Approval makes Version 2 current Approved, supersedes Version 1 and activates the new item.
+4. **Add Plan Item** opens PLN-UI-04; confirming the corrected Approved Demand transactionally creates or reuses Draft Version 2.
+5. Exactly one Proposed `PPI-MOH-2027-022` is created for the certification programme, with its eligible Need Items represented as distinct Draft Plan Demand Allocations.
+6. PLN-UI-06 completes procurement decisions for `PPI-MOH-2027-022`; it does not reselect the Demand or request an aggregation decision.
+7. Version 1 and its active Tender remain operational.
+8. Revised value becomes KES 535,000,000.
+9. The 30% plan-allocation basis becomes KES 160,500,000.
+10. Approval makes Version 2 current Approved, supersedes Version 1 and activates the new item.
+
+Use isolated tests, not additional permanent canonical records, to prove:
+
+- **Plan Need Items separately** creates multiple Proposed Plan Items rather than one item with a cosmetic `Keep separate` value; and
+- **Add another approved Demand to this Plan Item** aggregates compatible allocations into one existing Proposed Plan Item with an accountable reason.
 
 The seed/reset and scenario runner must be idempotent. A second run creates no duplicate plan, version, item, allocation, reservation, decision, handoff or audit event.
 
@@ -225,8 +246,8 @@ Stitch screens represent journey states. Do not create contradictory permanent c
 ```text
 Read these files completely before acting:
 - Procurement_Planning_MVP1_Requirements_v1.4.md
-- Procurement_Planning_MVP1_Stitch_Prompts_v1.4.md
-- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.2.md
+- Procurement_Planning_MVP1_Stitch_Prompts_v1.5.md
+- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.3.md
 - KenTender_MVP_Canonical_Demo_Data_Contract_v2.4.md
 
 Perform a read-only audit of the current Procurement Planning implementation.
@@ -238,6 +259,7 @@ Identify:
 4. Reusable shared infrastructure that already satisfies the requirements.
 5. The exact clean replacement boundary.
 6. Data/migrations that can be discarded and any non-disposable dependency that must be preserved.
+7. Every use of aggregation_decision, its defaults, UI payloads and tests, especially any Keep separate value that still produces one Plan Item.
 
 Do not implement or edit files.
 
@@ -282,6 +304,9 @@ Implement server-side invariants:
 - Draft allocations do not consume Demand availability;
 - approval makes allocations effective exactly once;
 - same-PE enforcement for all Plan Item allocations;
+- one Approved Demand creates one Proposed Plan Item by default while preserving each Need Item as a distinct allocation;
+- aggregation metadata is optional and exists only for deliberately combined Approved sources;
+- division creates actual separate Plan Items and is never represented by a cosmetic field value;
 - optimistic/stale-version protection;
 - no Administrator fallback authority.
 
@@ -322,7 +347,7 @@ Implement the zero-, single- and multi-scope selection pattern:
 
 Extend the central KENTENDER_MVP_V1 seed/reset using Canonical Demo Data Contract 2.4. Add deterministic SCN-PLN-ADD-001 setup/run/reset commands. Do not invent substitute names, values, dates or IDs.
 
-Add seed validation that proves arithmetic, ownership, references, role scope, current version, reservation lineage and rerun idempotency.
+Add seed validation that proves arithmetic, ownership, references, role scope, current version, reservation lineage, one-Demand/one-Plan-Item default formation, distinct Need Item allocations and rerun idempotency. Do not seed the former cosmetic Keep separate state.
 
 Add role-matrix service tests and browser-login helpers for each operational role. Stop with the exact seed command, validation report and role test evidence.
 ```
@@ -370,35 +395,61 @@ Implement live APIs, permission checks, empty/loading/error states and browser t
 ```text
 Implement PLN-UI-04, PLN-UI-05 and PLN-UI-06.
 
-Eligible Demand selection:
-- list only Approved, Planning Ready, authorised and not-fully-planned Demand Items;
-- show approved, planned and available amounts, required-by date and funding read-only;
-- selection must not edit the Demand;
-- selecting one Approved Demand creates one Proposed Plan Item by default and includes its available Need Items as Draft allocations;
-- partial allocation must remain within approved available quantity/amount.
+Normal Add Plan Item journey:
+- PLN-UI-04 is a single-select Approved Demand dialog;
+- list only Approved, Planning Ready, authorised and not-fully-planned Demands;
+- show owner, approved value, available value, required-by date and funding read-only;
+- selecting a Demand must not edit it;
+- show its Need Items in a read-only source breakdown;
+- on confirmation, call add_demand_to_plan once;
+- default to one Proposed Plan Item containing one Draft Plan Demand Allocation per available Need Item;
+- on an Approved Plan, create or reuse the single Draft successor inside the same server transaction;
+- return the created Plan Item projection and route directly to PLN-UI-06;
+- do not show revision fields, method fields or aggregation controls in this normal dialog.
+
+Plan Need Items separately:
+- expose only as a secondary action inside the source breakdown when multiple Need Items are available;
+- require a business reason;
+- create one Proposed Plan Item per selected Need Item in the same Draft Plan Version;
+- run the server-side anti-splitting check before commit;
+- return the user to the Plan builder or Plan update with the actual separate items visible;
+- never store Keep separate while retaining one combined Plan Item.
 
 Plan Item editor:
+- edit one existing Proposed Plan Item Version created before the page opens;
 - inherited Demand, owner, funding, reservation and Strategy context is read-only;
+- show every source Need Item through a read-only source breakdown;
+- do not reselect, recreate or reallocate the Demand on save;
 - description is multiline input;
 - category is searchable controlled selection;
 - governing regime and method recommendation are derived read-only;
 - confirmed method and arrangement are controlled selections;
 - alternative method requires configured grounds, reason and evidence;
-- aggregation and lotting use explicit decisions and accountable reasons;
+- do not show aggregation decision, Combine in this Plan Item, Keep separate or aggregation reason in the normal editor;
+- indicative lotting remains an explicit Plan Item decision and does not create Plan Items;
 - milestone values are date inputs with chronological validation;
 - statutory treatment and target groups are controlled selections;
 - statutory percentage and plan-level required amount are derived;
 - Strategy targets and Plan Value Commitments are immutable snapshots;
 - users may enter only the Planning treatment note.
 
-Support adding another eligible Demand allocation to an existing Proposed Plan Item while its Plan Version remains Draft. Treat this as a Draft edit, not a new revision. Enforce compatible PE, funding/reservation lineage and required aggregation reason.
+Exceptional aggregation journey:
+- expose Add another approved Demand only on an existing Proposed Plan Item;
+- reopen PLN-UI-04 in the explicit “Add another approved Demand to this Plan Item” variant;
+- list only compatible Approved Demands;
+- require the reason for combining requirements;
+- call aggregate_plan_allocations, not the ordinary update_plan_item save;
+- preserve each source Demand Item, Budget and reservation lineage;
+- keep the item Proposed in the same Draft Plan Version.
 
 Material upstream changes must return a stable correction error instead of mutating Demand, Budget or Strategy.
 
-Add unit, service and Playwright tests for eligibility, allocation arithmetic, aggregation, anti-splitting, read-only inheritance, field types and permissions.
+Remove or rebuild disposable seed data that encodes the old cosmetic Keep separate state. Do not add a compatibility branch for it.
+
+Add unit, transaction and Playwright tests for eligibility, one-Demand default formation, actual separate-item formation, explicit aggregation, allocation arithmetic, anti-splitting, read-only inheritance, field types and permissions.
 ```
 
-**Gate 04:** A planner can create and complete one valid Proposed Plan Item without upstream mutation.
+**Gate 04:** A planner can select one Approved Demand, create exactly one Proposed Plan Item by default and complete it without duplicate source selection or upstream mutation; exceptional separation and aggregation create the structures their labels promise.
 
 ---
 
@@ -453,7 +504,7 @@ Add role-based Playwright tests for Contributor, Head of Department, Planner, Re
 # Cursor Prompt 06 — Approved Plan, implementation and controlled revision
 
 ```text
-Implement PLN-UI-09 and PLN-UI-10 with the corrected routing.
+Implement PLN-UI-09 and PLN-UI-10 with the direct Add Plan Item routing from Stitch v1.5.
 
 Approved Plan view:
 - approved baseline is read-only;
@@ -461,33 +512,39 @@ Approved Plan view:
 - reporting period is a controlled select;
 - As-at, totals, publication and variance are derived;
 - Add Plan Item is available only on an Open Plan with suitable authority;
-- existing Active items and Tenders remain operational while a Draft revision exists.
+- the user never creates a revision manually;
+- while a Draft Plan update exists, show one compact Continue update / View changes notice;
+- existing Active items and Tenders remain operational while a Draft Plan update exists;
+- do not show aggregation controls on the Approved Plan.
 
 Add Plan Item route:
-1. Open the PLN-UI-04 eligible Demand selection modal from PLN-UI-09.
-2. On confirmed selection, call open_or_create_plan_revision.
-3. Create or reuse the Proposed Plan Item and Draft allocation.
-4. Open PLN-UI-06 to complete that item.
-5. Save back to PLN-UI-10, the revision overview.
+1. Open the normal PLN-UI-04 single-select Approved Demand dialog from PLN-UI-09.
+2. On confirmation, call add_demand_to_plan once. The server must atomically create or reuse the Draft successor and create exactly one Proposed Plan Item by default with its Draft source allocations.
+3. Open PLN-UI-06 for the returned Proposed Plan Item. Do not ask the user to select or add the Demand again.
+4. Save planning decisions through update_plan_item.
+5. Return to PLN-UI-10, presented as the Plan update overview.
 
-Revision overview:
-- show Approved Version 1 and Draft Revision 2 concurrently;
-- reason is a required controlled selection;
-- explanation is a required user-entered multiline field, not prefilled evidence;
-- show changed and unchanged items read-only;
+Plan update overview:
+- make the added or changed Plan Items primary and show unchanged items as a collapsed read-only count;
+- state plainly that the current Approved Plan remains operational until the update is approved;
+- derive change type as Additional approved need for this route;
+- require one concise user-entered reason for adding after approval;
+- do not expose version-management controls or aggregation controls;
 - revalidate only changed items and affected plan-level controls while retaining the complete consolidated snapshot;
 - do not suspend unchanged Active items or downstream Tenders.
 
 For SCN-PLN-ADD-001 prove:
 - one Draft Version 2 is created/reused;
 - PPI-MOH-2027-022 is Proposed at KES 80,000,000;
+- its eligible Need Items exist as Draft allocations under that one Plan Item;
+- PLN-UI-06 performs no second source-selection or allocation mutation;
 - total becomes KES 535,000,000;
 - statutory basis becomes KES 160,500,000;
 - Version 1 and TND-MOH-2027-008 remain operational;
 - approval supersedes V1, activates the new item and preserves the unchanged handoff;
 - rerun creates no duplicates.
 
-Add service, transaction and Playwright tests for the complete route and concurrency conflicts.
+Add service, transaction and Playwright tests for the complete route, refresh/back navigation, double-submit, concurrency conflicts and the absence of cosmetic Keep separate persistence.
 ```
 
 **Gate 06:** The post-approval addition scenario passes end to end and remains idempotent.
@@ -533,8 +590,8 @@ Add contract tests across Demands, Budget, Core Scope and Tender boundaries. Do 
 ```text
 Perform the final Procurement Planning MVP 1 verification against:
 - Procurement_Planning_MVP1_Requirements_v1.4.md
-- Procurement_Planning_MVP1_Stitch_Prompts_v1.4.md
-- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.2.md
+- Procurement_Planning_MVP1_Stitch_Prompts_v1.5.md
+- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.3.md
 - KenTender_MVP_Canonical_Demo_Data_Contract_v2.4.md
 
 Run:
@@ -548,6 +605,13 @@ Run:
 8. cross-entity isolation tests;
 9. accessibility checks for labels, keyboard operation, focus, error association and disabled actions; and
 10. legacy-reference search proving retired Planning code is no longer called.
+
+The browser and service evidence must additionally prove:
+- normal Add Plan Item creates one Proposed Plan Item from one Approved Demand;
+- PLN-UI-06 does not select or allocate the source a second time;
+- Plan Need Items separately creates real separate Plan Items and passes anti-splitting validation;
+- explicit aggregation is available only through Add another approved Demand on a Proposed Plan Item; and
+- no cosmetic Keep separate state remains in schema defaults, fixtures, UI payloads or tests.
 
 Produce a requirements traceability table with requirement/acceptance ID, implementation location, automated test and result.
 
@@ -576,6 +640,8 @@ MVP 1 is complete when:
 - PE/OU scope and role segregation are enforced server-side;
 - Approved versions are immutable;
 - Draft edits and post-approval revisions behave differently and correctly;
+- the normal source-selection path creates one Proposed Plan Item and PLN-UI-06 only completes it;
+- exceptional separation and aggregation create structurally correct Plan Items and allocations;
 - the canonical story resets and reruns without duplication;
 - unchanged Active items and Tenders survive a Draft revision;
 - Planning never mutates upstream baselines;

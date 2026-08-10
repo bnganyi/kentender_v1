@@ -81,6 +81,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	# Keep Planning surfaces nested under the main Procurement IA shell.
 	"procurement planning": "Procurement",
 	"procurement-planning": "Procurement",
+	"planning-workspace": "Procurement",
 	"planning-hub": "Procurement",
 	"procurement-planning/approved-demands": "Procurement",
 	"approved-demands": "Procurement",
@@ -158,6 +159,7 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		# Hub pages linked from the Procurement rail (Civic Ledger IA).
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",
+		"planning-workspace": "Procurement",
 		"planning-hub": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",

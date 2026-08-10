@@ -24,6 +24,7 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	PE_FILTER_ALL,
 	READ_PLAN_ROLES,
 	assert_planning_scope,
+	has_planning_scope,
 	is_planning_read_only,
 	list_eligible_procuring_entities,
 	require_operational_roles,
@@ -126,14 +127,13 @@ def _work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[st
 	)
 	out: list[dict[str, Any]] = []
 	for r in rows:
-		try:
-			assert_planning_scope(
-				procuring_entity=pe,
-				org_unit=cstr(r.owner_org_unit or "").strip() or None,
-				user=user,
-				require_write=False,
-			)
-		except Exception:
+		# Soft filter — never throw/msgprint for out-of-scope Demand OUs.
+		if not has_planning_scope(
+			procuring_entity=pe,
+			org_unit=cstr(r.owner_org_unit or "").strip() or None,
+			user=user,
+			require_write=False,
+		):
 			continue
 		status = cstr(r.status)
 		ready = int(r.planning_ready or 0)
@@ -360,10 +360,11 @@ def get_planning_workspace(
 	if view_all:
 		# Prefer first accessible plan for the summary panel; queue merges all PEs.
 		for e in filter_entities:
-			try:
-				loaded = _load_plan(e["id"])
-			except Exception:
+			if not has_planning_scope(
+				procuring_entity=e["id"], org_unit=None, user=actor, require_write=False
+			):
 				continue
+			loaded = _load_plan(e["id"])
 			if current_plan is None and loaded:
 				current_plan = loaded
 			queue.extend(

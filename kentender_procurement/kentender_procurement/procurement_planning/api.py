@@ -1,25 +1,45 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Whitelisted Desk APIs for Procurement Planning MVP-1 UI (Gate 03)."""
+"""Whitelisted Desk APIs for Procurement Planning MVP-1 UI (Gate 03–04)."""
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
+from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+	add_demand_to_plan as _add_demand_to_plan,
+)
+from kentender_procurement.procurement_planning.services.aggregate_plan_allocations import (
+	aggregate_plan_allocations as _aggregate_plan_allocations,
+)
 from kentender_procurement.procurement_planning.services.create_procurement_plan import (
 	create_procurement_plan as _create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder as _get_plan_builder,
 )
+from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
+	get_plan_item_editor as _get_plan_item_editor,
+)
 from kentender_procurement.procurement_planning.services.get_planning_create_scope import (
 	get_planning_create_scope as _get_planning_create_scope,
 )
 from kentender_procurement.procurement_planning.services.get_planning_workspace import (
 	get_planning_workspace as _get_planning_workspace,
+)
+from kentender_procurement.procurement_planning.services.list_eligible_demands import (
+	list_eligible_demands as _list_eligible_demands,
+)
+from kentender_procurement.procurement_planning.services.update_plan_item import (
+	update_plan_item as _update_plan_item,
+)
+from kentender_procurement.procurement_planning.services.validate_plan import (
+	validate_plan as _validate_plan,
 )
 
 
@@ -118,6 +138,158 @@ def create_procurement_plan(
 @frappe.whitelist()
 def get_plan_builder(plan: str | None = None) -> dict[str, Any]:
 	return _get_plan_builder(plan=plan or "")
+
+
+@frappe.whitelist()
+def list_eligible_demands(
+	plan: str | None = None,
+	search: str | None = None,
+	organisation_unit: str | None = None,
+	category: str | None = None,
+	remaining_only: int | str | None = 1,
+) -> dict[str, Any]:
+	return _list_eligible_demands(
+		plan=plan or "",
+		search=search,
+		organisation_unit=organisation_unit,
+		category=category,
+		remaining_only=remaining_only if remaining_only is not None else 1,
+	)
+
+
+@frappe.whitelist()
+def add_demand_to_plan(
+	plan: str | None = None,
+	demand: str | None = None,
+	demand_item: str | None = None,
+	allocated_amount: float | str | None = None,
+	package_mode: str | None = None,
+	formation_mode: str | None = None,
+	separation_reason: str | None = None,
+) -> dict[str, Any]:
+	try:
+		amt = float(allocated_amount) if allocated_amount not in (None, "") else None
+	except (TypeError, ValueError):
+		amt = None
+	try:
+		return _add_demand_to_plan(
+			plan=plan or "",
+			demand=demand or "",
+			demand_item=demand_item,
+			allocated_amount=amt,
+			package_mode=package_mode,
+			formation_mode=formation_mode,
+			separation_reason=separation_reason,
+		)
+	except Exception as exc:
+		msg = str(exc)
+		title = getattr(exc, "title", None) or ""
+		errors: dict[str, str] = {"form": msg}
+		if "SEPARATION_REASON" in cstr(title).upper() or "separation reason" in msg.lower():
+			errors["separation_reason"] = msg
+		return {"ok": False, "errors": errors}
+
+
+@frappe.whitelist()
+def update_plan_item(
+	plan_item: str | None = None,
+	fields: str | dict | None = None,
+) -> dict[str, Any]:
+	payload: dict[str, Any]
+	if isinstance(fields, str):
+		try:
+			payload = json.loads(fields) if fields else {}
+		except json.JSONDecodeError:
+			payload = {}
+	elif isinstance(fields, dict):
+		payload = fields
+	else:
+		payload = {}
+	return _update_plan_item(plan_item=plan_item or "", fields=payload)
+
+
+@frappe.whitelist()
+def get_plan_item_editor(plan_item: str | None = None) -> dict[str, Any]:
+	return _get_plan_item_editor(plan_item=plan_item or "")
+
+
+@frappe.whitelist()
+def validate_plan(plan: str | None = None) -> dict[str, Any]:
+	return _validate_plan(plan=plan or "")
+
+
+@frappe.whitelist()
+def aggregate_plan_allocations(
+	plan_item: str | None = None,
+	demand: str | None = None,
+	demand_item: str | None = None,
+	allocated_amount: float | str | None = None,
+	aggregation_reason: str | None = None,
+) -> dict[str, Any]:
+	try:
+		amt = float(allocated_amount) if allocated_amount not in (None, "") else None
+	except (TypeError, ValueError):
+		amt = None
+	try:
+		return _aggregate_plan_allocations(
+			plan_item=plan_item or "",
+			demand=demand or "",
+			demand_item=demand_item,
+			allocated_amount=amt,
+			aggregation_reason=aggregation_reason,
+		)
+	except Exception as exc:
+		msg = str(exc)
+		title = getattr(exc, "title", None) or ""
+		errors: dict[str, str] = {"form": msg}
+		if "AGG_REASON" in cstr(title).upper() or "aggregation requires" in msg.lower():
+			errors["aggregation_reason"] = msg
+		return {"ok": False, "errors": errors}
+
+
+@frappe.whitelist()
+def prepare_planning_gate04_ui(
+	with_plan_item: int | str | None = 0,
+	need_item_count: int | str | None = 1,
+) -> dict[str, Any]:
+	"""Empty Draft + eligible Approved Demand in planner scope for Gate 04 UI tests.
+
+	When ``with_plan_item`` is truthy, also adds the Demand as the seeded planner so
+	editor / populated-builder Playwright can open a Plan Item immediately.
+	``need_item_count`` > 1 seeds a multi–Need Item Demand for packaging UI tests.
+	"""
+	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+		add_demand_to_plan,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		make_approved_demand,
+	)
+
+	base = prepare_planning_gate03_ui()
+	plan = base["empty_draft_plan"]
+	n_items = max(1, int(need_item_count or 1))
+	# Demand in MOH-DIR-DHP (same as empty draft coordinating OU).
+	d = make_approved_demand(
+		pe=base["pe_moh"],
+		ou="MOH-DIR-DHP",
+		title="Gate04 eligible digital health need",
+		need_item_count=n_items,
+	)
+	out: dict[str, Any] = {
+		**base,
+		"eligible_demand": d["demand"],
+		"eligible_demand_code": d["demand_code"],
+		"need_item_count": n_items,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}",
+	}
+	if int(with_plan_item or 0):
+		planner = "moh.planning.officer@example.test"
+		added = add_demand_to_plan(plan=plan, demand=d["demand"], user=planner)
+		out["plan_item"] = added.get("plan_item")
+		out["editor_route"] = added.get("editor_route")
+		out["plan_item_code"] = added.get("plan_item_code")
+	frappe.db.commit()
+	return out
 
 
 @frappe.whitelist()

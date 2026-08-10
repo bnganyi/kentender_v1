@@ -3,6 +3,7 @@ import { loginAsAdministrator } from "../../helpers/auth";
 import {
 	loginAsMohPlanningOfficer,
 	preparePlanningGate03,
+	preparePlanningGate04,
 } from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
@@ -35,5 +36,36 @@ test.describe("PLN-UI-03 Empty Draft plan builder", () => {
 			rootTestId: "kt-pln-ui03-root",
 			primaryCtaTestId: "kt-pln-ui03-add-demand",
 		});
+	});
+});
+
+test.describe("PLN-UI-05 Populated Draft plan builder", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1400, height: 900 });
+	});
+
+	test("shows Plan Item row, Continue, and Run validation", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate04(page, { withPlanItem: true });
+		expect(prep.empty_draft_plan).toBeTruthy();
+		expect(prep.plan_item).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-builder?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId("kt-pln-ui03-empty")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui03-items")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui05-table")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui05-run-validation")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui05-row-continue").first()).toBeVisible();
+		await page.getByTestId("kt-pln-ui05-run-validation").click();
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible();
+		await page.getByTestId("kt-pln-ui05-row-continue").first().click();
+		await expect(page).toHaveURL(/procurement-plan-item-editor/, { timeout: 30_000 });
 	});
 });

@@ -59,11 +59,26 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		});
 		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-read-only", "1");
 		await expect(page.getByTestId("kt-pln-ui01-blocked")).toBeHidden();
-		await expect(page.getByTestId("kt-pln-ui01-readonly")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-readonly")).toHaveCount(0);
 		await expect(page.locator('[data-kt-pln-filter="procuring_entity"]')).toContainText(
 			/All authorised entities/i,
 		);
 		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-register")).toBeHidden();
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-can-create", "0");
+		// Support viewer must never be sent to register via a fake "Open" CTA when empty.
+		await page.locator('[data-kt-pln-filter="procuring_entity"]').selectOption("PE-MOH");
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-can-create", "0");
+		const hasPlan = await page.locator(ROOT).getAttribute("data-kt-pln-plan");
+		if (!hasPlan) {
+			await expect(page.getByTestId("kt-pln-ui01-open-plan")).toBeHidden();
+			await expect(page.getByTestId("kt-pln-ui01-no-plan")).toBeVisible();
+			await expect(page.getByTestId("kt-pln-ui01-no-plan")).toContainText(
+				/Support viewers can browse existing plans only/i,
+			);
+			await expect(page.getByTestId("kt-pln-ui01-header-create")).toBeHidden();
+		} else {
+			await expect(page.getByTestId("kt-pln-ui01-open-plan")).toBeVisible();
+		}
 	});
 });

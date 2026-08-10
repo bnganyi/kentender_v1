@@ -67,7 +67,7 @@
 		}
 		var o = _opts(opts);
 		_errorSelectors(o).forEach(function (sel) {
-			$root.find(sel).addClass("hidden").text("");
+			$root.find(sel).addClass("hidden").attr("hidden", "hidden").text("");
 		});
 		var classes = [o.invalidClass].concat(o.invalidClassAliases || []).join(" ");
 		$root
@@ -88,7 +88,7 @@
 			var msg = map[field] || "";
 			var $slot = _findErrorSlot($root, field, o);
 			if ($slot.length) {
-				$slot.text(msg).removeClass("hidden");
+				$slot.text(msg).removeClass("hidden").removeAttr("hidden");
 			}
 			var $ctrl = _findFieldControl($root, field, o);
 			if ($ctrl.length) {

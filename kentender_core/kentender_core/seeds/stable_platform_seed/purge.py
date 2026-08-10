@@ -70,6 +70,19 @@ def _tm2_module_available() -> bool:
 def _doctype_exists(doctype: str) -> bool:
 	return bool(frappe.db.exists("DocType", doctype))
 
+
+def _hard_delete(doctype: str, name: str) -> None:
+	"""Force-delete without flooding Redis RQ (bulk seed purge)."""
+	if not frappe.db.exists(doctype, name):
+		return
+	# frappe.delete_doc enqueues link cleanup unless in_test (now=True).
+	was = bool(getattr(frappe.flags, "in_test", False))
+	frappe.flags.in_test = True
+	try:
+		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+	finally:
+		frappe.flags.in_test = was
+
 _PKG_CHILD_DOCTYPES: Final[tuple[tuple[str, str], ...]] = (
 	("Package Review Decision", "package_code"),
 	("Package Readiness Result", "package_code"),
@@ -89,43 +102,43 @@ def _delete_package_cascade(package_code: str) -> None:
 
 
 def _purge_budgets(*, dry_run: bool) -> list[str]:
-	# MVP-1 Budget teardown: Budget DocType removed.
+	# MVP-1 Budget: identity is generated_reference (legacy field was budget_name).
 	if not _doctype_exists("Budget"):
 		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget", fields=["name", "budget_name"]):
-		if (row.get("budget_name") or "").strip() in _KEEP_BUDGET_NAMES:
+	for row in frappe.get_all("Budget", fields=["name", "generated_reference", "title"]):
+		code = (row.get("generated_reference") or row.get("title") or "").strip()
+		if code in _KEEP_BUDGET_NAMES or row["name"] in _KEEP_BUDGET_NAMES:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
 		frappe.db.sql("UPDATE `tabBudget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
 		for line in frappe.get_all("Budget Line", filters={"budget": row["name"]}, pluck="name"):
-			if frappe.db.exists("Budget Line", line):
-				frappe.flags.budget_line_force_delete = True
-				try:
-					frappe.delete_doc("Budget Line", line, force=True, ignore_permissions=True)
-				finally:
-					frappe.flags.budget_line_force_delete = False
-		if frappe.db.exists("Budget", row["name"]):
-			frappe.delete_doc("Budget", row["name"], force=True, ignore_permissions=True)
+			frappe.flags.budget_line_force_delete = True
+			try:
+				_hard_delete("Budget Line", line)
+			finally:
+				frappe.flags.budget_line_force_delete = False
+		_hard_delete("Budget", row["name"])
 	return removed
 
 
 def _purge_budget_lines(*, dry_run: bool) -> list[str]:
-	# MVP-1 Budget teardown: Budget Line DocType removed.
+	# MVP-1 Budget Line: identity is generated_reference (legacy was budget_line_code).
 	if not _doctype_exists("Budget Line"):
 		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget Line", fields=["name", "budget_line_code"]):
-		if (row.get("budget_line_code") or "").strip() in _KEEP_BUDGET_LINE_CODES:
+	for row in frappe.get_all("Budget Line", fields=["name", "generated_reference", "title"]):
+		code = (row.get("generated_reference") or row.get("title") or "").strip()
+		if code in _KEEP_BUDGET_LINE_CODES:
 			continue
 		removed.append(row["name"])
-		if dry_run or not frappe.db.exists("Budget Line", row["name"]):
+		if dry_run:
 			continue
 		frappe.flags.budget_line_force_delete = True
 		try:
-			frappe.delete_doc("Budget Line", row["name"], force=True, ignore_permissions=True)
+			_hard_delete("Budget Line", row["name"])
 		finally:
 			frappe.flags.budget_line_force_delete = False
 	return removed
@@ -133,15 +146,15 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 
 def _purge_demands(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	for row in frappe.get_all("Demand", fields=["name", "demand_id"]):
-		if (row.get("demand_id") or "").strip() in _KEEP_DEMAND_CODES:
+	for row in frappe.get_all("Demand", fields=["name", "demand_code", "demand_id"]):
+		code = (row.get("demand_code") or row.get("demand_id") or "").strip()
+		if code in _KEEP_DEMAND_CODES:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
 		frappe.db.delete("Demand Item", {"parent": row["name"]})
-		if frappe.db.exists("Demand", row["name"]):
-			frappe.delete_doc("Demand", row["name"], force=True, ignore_permissions=True)
+		_hard_delete("Demand", row["name"])
 	return removed
 
 
@@ -154,8 +167,8 @@ def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 		if code in _KEEP_PLAN_CODES:
 			continue
 		removed.append(row["name"])
-		if not dry_run and frappe.db.exists("Procurement Plan", row["name"]):
-			frappe.delete_doc("Procurement Plan", row["name"], force=True, ignore_permissions=True)
+		if not dry_run:
+			_hard_delete("Procurement Plan", row["name"])
 	return removed
 
 
@@ -248,14 +261,14 @@ def _purge_plc_outside_stable_registry(*, dry_run: bool) -> dict[str, Any]:
 	for h in handoffs_to_remove:
 		name = h["name"]
 		if frappe.db.exists("Procurement Handoff Card", name):
-			frappe.delete_doc("Procurement Handoff Card", name, force=True, ignore_permissions=True)
+			_hard_delete("Procurement Handoff Card", name)
 			deleted_handoffs.append(name)
 
 	deleted_journeys: list[str] = []
 	for j in journeys_to_remove:
 		name = j["name"]
 		if frappe.db.exists("Procurement Journey", name):
-			frappe.delete_doc("Procurement Journey", name, force=True, ignore_permissions=True)
+			_hard_delete("Procurement Journey", name)
 			deleted_journeys.append(name)
 
 	return {

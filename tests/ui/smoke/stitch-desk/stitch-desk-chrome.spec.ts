@@ -194,6 +194,16 @@ const SURFACES = [
 		liveAttr: "data-kt-pln-live",
 		primaryCtaTestId: "kt-pln-ui03-add-demand",
 	},
+	{
+		id: "procurement-plan-item-editor",
+		route: "/desk/procurement-plan-item-editor",
+		rootTestId: "kt-pln-ui06-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui06-save-return",
+		selectSelector: '[data-kt-pln-field="procurement_method"]',
+		assertEditableInputs: true,
+		assertHeadline: false,
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -265,6 +275,33 @@ test.describe("Stitch Desk chrome baseline", () => {
 					route = `/desk/procurement-plan-builder?plan=${encodeURIComponent(plan)}`;
 				}
 			}
+			if (surface.id === "procurement-plan-item-editor") {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const prep = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: {
+									method: string;
+									args?: Record<string, unknown>;
+								}) => Promise<{
+									message?: { plan_item?: string };
+								}>;
+							};
+						}
+					).frappe.call({
+						method:
+							"kentender_procurement.procurement_planning.api.prepare_planning_gate04_ui",
+						args: { with_plan_item: 1 },
+					});
+					return r.message || {};
+				});
+				await page.context().clearCookies();
+				await loginAsMohPlanningOfficer(page);
+				const item = prep.plan_item || "";
+				expect(item).toBeTruthy();
+				route = `/desk/procurement-plan-item-editor?plan_item=${encodeURIComponent(item)}`;
+			}
 			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(
 				`[data-testid="${surface.rootTestId}"][${surface.liveAttr}="1"]`,
@@ -283,6 +320,8 @@ test.describe("Stitch Desk chrome baseline", () => {
 					"assertPrimaryHover" in surface ? surface.assertPrimaryHover : false,
 				assertEditableInputs:
 					"assertEditableInputs" in surface ? surface.assertEditableInputs : false,
+				assertHeadline:
+					"assertHeadline" in surface ? surface.assertHeadline : true,
 				headlineSelector:
 					surface.id === "budget-overview" ||
 					surface.id === "budget-lines" ||
@@ -298,7 +337,9 @@ test.describe("Stitch Desk chrome baseline", () => {
 								? ".kt-bud-rev-review-title"
 								: surface.id === "demand-review"
 									? ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1"
-									: undefined,
+									: surface.id === "procurement-plan-item-editor"
+										? "[data-kt-pln-editor-title]"
+										: undefined,
 			});
 		});
 	}

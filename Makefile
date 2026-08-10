@@ -67,6 +67,7 @@ help:
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
 	@echo "  make ui-demands-workspace-gate ui-planning-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
 	@echo "  make ui-planning-workspace-gate — Planning Gate 03 (PLN-UI-01…03) chrome + API + Playwright"
+	@echo "  make ui-planning-builder-gate — Planning Gate 04 (PLN-UI-04…06) chrome + API + Playwright"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
 	@echo "  make ui-demands-review-gate ui-demands-detail-gate — Demand review chrome gate + DEM-UI-04…08 API + Playwright"
 	@echo "  make ui-demands-detail-gate — Approved Demand detail (DEM-UI-09…09D) API + Playwright"
@@ -450,6 +451,25 @@ ui-planning-workspace-gate: ui-stitch-desk-chrome-gate
 		tests/ui/smoke/planning/planning-workspace.spec.ts \
 		tests/ui/smoke/planning/planning-register.spec.ts \
 		tests/ui/smoke/planning/planning-builder.spec.ts
+
+# PLN-GATE-04 — Demand modal / populated builder / Plan Item editor (PLN-UI-04…06).
+ui-planning-builder-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_list_eligible_demands
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_add_demand_to_plan_gate04
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_update_plan_item
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_aggregate_plan_allocations
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_validate_plan
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning/planning-builder.spec.ts \
+		tests/ui/smoke/planning/planning-add-demand.spec.ts \
+		tests/ui/smoke/planning/planning-plan-item-editor.spec.ts
 
 ui-demands-form-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \

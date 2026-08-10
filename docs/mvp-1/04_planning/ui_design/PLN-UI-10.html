@@ -1,352 +1,455 @@
-<!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>KenTender - Add Plan Item through a Draft revision</title>
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Plan update - Ministry of Health Annual Procurement Plan 2027/28</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <script id="tailwind-config">
         tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "on-background": "#191c1e",
-                        "on-primary-fixed-variant": "#0040a2",
-                        "surface-container-highest": "#e1e2e4",
-                        "on-surface": "#191c1e",
-                        "surface": "#f8f9fb",
-                        "inverse-primary": "#b2c5ff",
-                        "on-secondary": "#ffffff",
-                        "status-exhausted": "#E11D48",
-                        "outline-variant": "#c3c6d6",
-                        "primary-container": "#0052cc",
-                        "on-error-container": "#93000a",
-                        "status-reserved": "#F59E0B",
-                        "on-surface-variant": "#434654",
-                        "error": "#ba1a1a",
-                        "surface-container-low": "#f3f4f6",
-                        "on-primary-container": "#c4d2ff",
-                        "on-tertiary-container": "#ccd2e7",
-                        "tertiary": "#3d4354",
-                        "secondary-container": "#50dcff",
-                        "on-primary-fixed": "#001848",
-                        "primary-fixed-dim": "#b2c5ff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-secondary-fixed-variant": "#004e5d",
-                        "secondary-fixed": "#afecff",
-                        "background": "#f8f9fb",
-                        "error-container": "#ffdad6",
-                        "surface-container-high": "#e7e8ea",
-                        "surface-container": "#edeef0",
-                        "secondary-fixed-dim": "#48d7f9",
-                        "on-error": "#ffffff",
-                        "data-committed": "#6366F1",
-                        "primary": "#003d9b",
-                        "on-primary": "#ffffff",
-                        "inverse-on-surface": "#f0f1f3",
-                        "tertiary-fixed-dim": "#c0c6db",
-                        "surface-tint": "#0c56d0",
-                        "status-available": "#10B981",
-                        "on-secondary-container": "#005f71",
-                        "surface-variant": "#e1e2e4",
-                        "secondary": "#00687b",
-                        "tertiary-fixed": "#dce2f8",
-                        "surface-bright": "#f8f9fb",
-                        "on-tertiary-fixed-variant": "#404658",
-                        "on-tertiary-fixed": "#151b2b",
-                        "on-tertiary": "#ffffff",
-                        "primary-fixed": "#dae2ff",
-                        "surface-dim": "#d9dadc",
-                        "on-secondary-fixed": "#001f27",
-                        "tertiary-container": "#545a6c",
-                        "inverse-surface": "#2e3132",
-                        "outline": "#737685",
-                        "border-subtle": "#DFE1E6"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "section-gap": "1.5rem",
-                        "stack-xs": "0.25rem",
-                        "stack-sm": "0.5rem",
-                        "gutter-md": "1rem",
-                        "container-padding": "1rem"
-                    },
-                    "fontFamily": {
-                        "data-lg": ["JetBrains Mono"],
-                        "body-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "headline-sm": ["Manrope"],
-                        "label-caps": ["Inter"],
-                        "body-sm": ["Inter"],
-                        "headline-lg": ["Manrope"],
-                        "headline-md": ["Manrope"],
-                        "data-md": ["JetBrains Mono"]
-                    },
-                    "fontSize": {
-                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
-                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
-                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
-                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }]
-                    }
-                }
-            }
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "surface-variant": "#e1e2e4",
+                      "outline": "#737685",
+                      "inverse-primary": "#b2c5ff",
+                      "data-committed": "#6366F1",
+                      "surface-bright": "#f8f9fb",
+                      "outline-variant": "#c3c6d6",
+                      "surface": "#f8f9fb",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#005f71",
+                      "status-exhausted": "#E11D48",
+                      "on-tertiary-container": "#ccd2e7",
+                      "tertiary-container": "#545a6c",
+                      "on-primary-fixed": "#001848",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "status-reserved": "#F59E0B",
+                      "surface-container-highest": "#e1e2e4",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-dim": "#d9dadc",
+                      "surface-container-high": "#e7e8ea",
+                      "primary-container": "#0052cc",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#3d4354",
+                      "on-background": "#191c1e",
+                      "secondary-container": "#50dcff",
+                      "on-primary-container": "#c4d2ff",
+                      "status-available": "#10B981",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#0c56d0",
+                      "on-error": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed": "#afecff",
+                      "primary": "#003d9b",
+                      "inverse-surface": "#2e3132",
+                      "primary-fixed": "#dae2ff",
+                      "on-surface": "#191c1e",
+                      "surface-container-low": "#f3f4f6",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#001f27",
+                      "on-tertiary-fixed": "#151b2b",
+                      "border-subtle": "#DFE1E6",
+                      "on-surface-variant": "#434654",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "secondary": "#00687b",
+                      "background": "#f8f9fb",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "tertiary-fixed": "#dce2f8",
+                      "surface-container": "#edeef0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "1.5rem",
+                      "gutter-md": "1rem",
+                      "stack-sm": "0.5rem",
+                      "stack-xs": "0.25rem",
+                      "container-padding": "1rem"
+              },
+              "fontFamily": {
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
         }
-    </script>
+      </script>
 <style>
-        .material-symbols-outlined {
+          .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .material-symbols-outlined.filled {
-            font-variation-settings: 'FILL' 1;
-        }
-        
-        /* Custom scrollbar for tables */
-        .table-container::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
-        }
-        .table-container::-webkit-scrollbar-track {
-            background: #f8f9fb;
-        }
-        .table-container::-webkit-scrollbar-thumb {
-            background-color: #DFE1E6;
-            border-radius: 4px;
-        }
-    </style>
+          }
+          .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          }
+      </style>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
-<!-- TopNavBar -->
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-gutter-md h-16 bg-surface-container-lowest dark:bg-inverse-surface border-b border-subtle dark:border-outline-variant flat no shadows">
-<div class="flex items-center gap-6 h-full">
-<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">GovProcure Alpha</span>
-<nav class="hidden md:flex h-full items-center gap-6 ml-4">
-<a class="h-full flex items-center text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container transition-colors px-2" href="#">Dashboard</a>
-<a class="h-full flex items-center text-primary dark:text-primary-fixed-dim border-b-2 border-primary hover:bg-surface-container-low dark:hover:bg-tertiary-container transition-colors px-2" href="#">Procurement Plan</a>
-<a class="h-full flex items-center text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-low dark:hover:bg-tertiary-container transition-colors px-2" href="#">Tenders</a>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar -->
+<nav class="hidden lg:flex flex-col h-screen w-64 docked left-0 bg-surface-container-low dark:bg-surface-container-lowest text-primary dark:text-primary-fixed border-r border-subtle dark:border-outline-variant transition-all duration-200 ease-in-out py-section-gap shrink-0 sticky top-0">
+<div class="px-container-padding mb-8">
+<div class="flex items-center gap-3">
+<img alt="Organization Logo" class="w-10 h-10 object-cover rounded-full" data-alt="A clean, minimalist abstract logo for a government digital service, featuring a solid geometric crest in a bright, modern light-mode blue color on a pristine white background. High contrast, highly polished, corporate vector style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHyaEIx6eGxpIYdsO_fNRdY4TPpEl7NDsB50Xumct6PjTNdJ3SJxdlUrmqE7Z1d5Emj8O6xechlH5QmsbHHix9Fw451DWhVwJWLShrepevfltSNXw1Lu8PoCwfzREsp0beNlUAoT6gCwyiHahHVXnD51QtQGl44-WsOxIgGjDmwcLvLEqTRRo7AX9QVst8CQ_i6fNN7kuLjyDJZHFgJk5-8p4F_rzErjhbEDnEnlUuIudB6j4BYwUz">
+<div>
+<div class="font-headline-sm text-headline-sm font-extrabold text-primary dark:text-primary-fixed">KenTender</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">e-Procurement System</div>
+</div>
+</div>
+<button class="w-full mt-6 bg-primary text-on-primary py-2 px-4 rounded-full font-label-caps text-label-caps flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined">add</span>
+                New Requisition
+            </button>
+</div>
+<ul class="flex flex-col gap-1 px-3 flex-grow">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+                    Budget Control
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-container text-on-primary-container border-l-4 border-primary dark:bg-secondary-container dark:text-on-secondary-container font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                    Procurement Plan
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                    Vendor Registry
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+                    Audit Logs
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+<div class="px-3 mt-auto pt-4 border-t border-subtle mx-3">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Logout
+            </a>
+</div>
 </nav>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col min-w-0">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-container-padding w-full h-16 bg-surface dark:bg-surface-container text-primary dark:text-primary-fixed border-b border-subtle dark:border-outline-variant transition-colors duration-200">
+<div class="flex items-center gap-4 lg:hidden">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">GovProcure Alpha</div>
 </div>
-<div class="flex items-center gap-4">
-<button class="text-on-surface-variant hover:text-primary transition-colors">
-<span class="material-symbols-outlined">search</span>
-</button>
-<button class="text-on-surface-variant hover:text-primary transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="text-on-surface-variant hover:text-primary transition-colors">
-<span class="material-symbols-outlined">help</span>
-</button>
-<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-subtle">
-<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an African government official in a well-lit office, wearing business attire. The photo should be clear and optimized for a circular avatar placeholder, set against a neutral, corporate background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuou5kN_4K1XlGzaIycunqShpTGRnFHlIgbiqyTc8NJOpjxEyEI8I937XpAm8JwDP9UUUUPyL_v4b2FLxCxKpFKvBUtRGoP41IvUxOmwfj0z8-40NKGWxwui4UKH1RWekHGfkLHeWkDvqgKTcuszLPlppoG8ZHQiX_vLKX8obEm6pvJuqscu9isvt8YHjx_uLfCCmLLDB_1tNWw_pZxexIEEkRGLKEdsUA4t1CtLwp6vwi8c5rlMjU"/>
+<div class="hidden lg:block font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">
+                GovProcure Alpha
+            </div>
+<div class="flex-grow flex justify-start lg:px-8 px-4 max-w-2xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-subtle rounded-full font-body-sm text-body-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" placeholder="Search..." type="text">
 </div>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover ml-2 border border-subtle" data-alt="A professional headshot of a business executive in a modern, brightly lit office environment, serving as a user profile avatar. Clean background, corporate minimalist style, sharp details, light-mode palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGIyWFRNJX8ZXk1LNjlt1y3H3MO-ltVPQJuKiGOo8BLbPFDliTtprcKqYYuhOIjv_MGqjnpQq_T7SWT_pEf-QuFEqkuXNz061bQijCGyoaftqYHcohdTSLobKpsY59Ro-ptn_jOplyOk6Ts9S75lwJnXOx1Jhux63Cfjhafsr7n1ITdwg19SsowY8GzC56kcY7EVPvJFGnCIVm1ZG8c05vBfHjrcjpEx921DVElPXyLNs9VQTfQuAE">
 </div>
 </header>
-<!-- SideNavBar (Suppressed for this task-focused transactional flow) -->
-<!-- Main Content Canvas -->
-<main class="flex-1 mt-16 pb-24 px-container-padding md:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col gap-section-gap pt-6">
-<!-- Header Section -->
-<section class="flex flex-col gap-stack-sm">
-<nav aria-label="Breadcrumb" class="flex text-on-surface-variant font-body-sm text-body-sm">
-<ol class="flex items-center space-x-2">
-<li><a class="hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">Procurement Planning</a></li>
-<li><span class="material-symbols-outlined text-[16px]">chevron_right</span></li>
-<li><a class="hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">Ministry of Health</a></li>
-<li><span class="material-symbols-outlined text-[16px]">chevron_right</span></li>
-<li><a class="hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">2027/28</a></li>
-<li><span class="material-symbols-outlined text-[16px]">chevron_right</span></li>
-<li aria-current="page" class="text-on-surface">Revision 2</li>
-</ol>
-</nav>
+<!-- Main Canvas -->
+<main class="flex-grow p-container-padding md:p-section-gap flex flex-col gap-section-gap">
+<!-- Breadcrumbs & Header -->
+<div class="flex flex-col gap-stack-sm">
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2 flex-wrap">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Ministry of Health</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">2027/28</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Plan update</span>
+</div>
 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mt-2">
-<div class="flex flex-col gap-stack-xs max-w-3xl">
-<h1 class="font-headline-lg text-headline-lg text-on-background">Ministry of Health Annual Procurement Plan 2027/28</h1>
-<p class="font-body-md text-body-md text-on-surface-variant">Approved Version 1 remains operational</p>
-<div class="flex flex-wrap items-center gap-2 mt-2">
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-surface-variant text-on-surface-variant border border-subtle">
-                            Open Plan
-                        </span>
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-primary/10 text-primary border border-primary/20">
-                            Draft Revision 2 in progress
-                        </span>
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-status-reserved/10 text-status-reserved border border-status-reserved/20">
-<span class="material-symbols-outlined text-[14px] mr-1">warning</span> Needs attention
-                        </span>
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Plan update</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">Ministry of Health Annual Procurement Plan 2027/28</p>
+<div class="flex items-center gap-2 mt-3">
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-label-caps text-label-caps">Draft</span>
+<span class="px-3 py-1 rounded-full bg-status-reserved/10 text-status-reserved font-label-caps text-label-caps border border-status-reserved/20">Needs attention</span>
 </div>
 </div>
-<div class="shrink-0 pt-1">
-<button class="bg-primary text-on-primary px-4 py-2 rounded font-body-md text-body-md hover:bg-surface-tint transition-colors flex items-center gap-2">
+<button class="self-start px-4 py-2 bg-primary-container text-on-primary-container rounded-lg font-label-caps text-label-caps hover:bg-surface-tint transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[18px]">play_arrow</span>
                         Run validation
                     </button>
 </div>
 </div>
-</section>
-<!-- Information Banner -->
-<div class="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
-<span class="material-symbols-outlined text-primary mt-0.5 filled">info</span>
-<p class="font-body-md text-body-md text-on-surface">
-                You are adding this item through Draft Revision 2. Approved Version 1 remains active until this revision is approved.
-            </p>
+<!-- Context Banner -->
+<div class="bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5">info</span>
+<p class="font-body-md text-body-md text-on-surface">The current Approved Plan remains active until this update is approved.</p>
 </div>
-<!-- Top Revision Summary (Data Blocks) -->
-<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approved Version 1 value</span>
-<span class="font-data-lg text-data-lg text-on-surface">KES 455,000,000</span>
+<!-- Top Update Summary Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-2">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Current Approved Value</div>
+<div class="font-data-lg text-data-lg text-on-surface">KES 455,000,000</div>
 </div>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1 relative overflow-hidden">
-<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase pl-2">Derived Draft Revision 2 value</span>
-<span class="font-data-lg text-data-lg text-on-surface pl-2">KES 535,000,000</span>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-2 border-l-4 border-l-primary">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Updated Plan Value</div>
+<div class="font-data-lg text-data-lg text-on-surface">KES 535,000,000</div>
 </div>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Derived change</span>
-<span class="font-data-lg text-data-lg text-status-available">KES +80,000,000</span>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-2">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Change</div>
+<div class="font-data-md text-data-md text-status-available flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                        KES 80,000,000
+                    </div>
 </div>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Derived changed items</span>
-<span class="font-data-lg text-data-lg text-on-surface">1</span>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-2">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Changed Items</div>
+<div class="font-data-lg text-data-lg text-on-surface">1</div>
 </div>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Derived unchanged items</span>
-<span class="font-data-lg text-data-lg text-on-surface">1</span>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-2">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Unchanged Items</div>
+<div class="font-data-lg text-data-lg text-on-surface-variant">1</div>
 </div>
-</section>
-<!-- Revision Context Section -->
-<section class="bg-surface-container-lowest border border-subtle rounded-lg p-5 flex flex-col gap-5">
-<h2 class="font-headline-sm text-headline-sm text-on-surface border-b border-subtle pb-3">Revision Context</h2>
+</div>
+<!-- Update Context & Validation Issues (Asymmetric Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-section-gap">
+<!-- Update Context -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-subtle rounded-lg p-6">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-6 border-b border-subtle pb-2">Update Context</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="flex flex-col gap-stack-sm">
-<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="revision-reason">Revision reason</label>
-<div class="relative">
-<select class="w-full appearance-none bg-surface border border-subtle rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" id="revision-reason">
-<option>Additional approved need</option>
-<option>Budget adjustment</option>
-<option>Cancellation of requirement</option>
-</select>
-<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Change type</label>
+<div class="font-body-md text-body-md text-on-surface py-2">Additional approved need</div>
 </div>
-<div class="mt-4 flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Initiated by</span>
-<span class="font-body-md text-body-md text-on-surface">Supply Chain Management Services</span>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Initiated by</label>
+<div class="font-body-md text-body-md text-on-surface py-2">Supply Chain Management Services</div>
 </div>
-<div class="flex flex-col gap-1 mt-2">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Created</span>
-<span class="font-body-md text-body-md text-on-surface">5 November 2027</span>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Created</label>
+<div class="font-body-md text-body-md text-on-surface py-2">5 November 2027</div>
 </div>
-</div>
-<div class="flex flex-col gap-stack-sm h-full">
-<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="revision-note">Revision note</label>
-<textarea class="w-full h-full min-h-[120px] bg-surface border border-subtle rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all resize-y" id="revision-note" placeholder="Explain why this requirement is being added after Plan approval." rows="4"></textarea>
+<div class="md:col-span-2 flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface flex items-center gap-1" for="reason">
+                                Reason for adding after approval <span class="text-error">*</span>
+</label>
+<textarea class="w-full bg-surface-bright border border-subtle rounded-lg px-3 py-2 font-body-md text-body-md focus:border-secondary focus:ring-1 focus:ring-secondary transition-all resize-y" id="reason" placeholder="Briefly explain why this requirement is being added after Plan approval." rows="3"></textarea>
 </div>
 </div>
-</section>
-<!-- Main Section: Changes in this revision -->
-<section class="flex flex-col gap-4">
-<h2 class="font-headline-sm text-headline-sm text-on-surface">Changes in this revision</h2>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden">
-<div class="table-container overflow-x-auto w-full">
-<table class="w-full text-left border-collapse min-w-[1000px]">
+</div>
+<!-- Validation Issues -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-6 flex flex-col">
+<div class="flex items-center gap-2 mb-6 border-b border-subtle pb-2">
+<span class="material-symbols-outlined text-status-reserved">warning</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Validation Issues</h2>
+<span class="ml-auto bg-status-reserved/10 text-status-reserved px-2 py-0.5 rounded-full font-label-caps text-label-caps">2</span>
+</div>
+<ul class="flex flex-col gap-4">
+<li class="bg-status-reserved/5 border border-status-reserved/20 rounded-lg p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-status-reserved mt-0.5 text-[20px]">error</span>
+<span class="font-body-sm text-body-sm text-on-surface">The added Organisation Unit contribution requires Head of Department sign-off.</span>
+</li>
+<li class="bg-status-reserved/5 border border-status-reserved/20 rounded-lg p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-status-reserved mt-0.5 text-[20px]">calculate</span>
+<span class="font-body-sm text-body-sm text-on-surface">Recalculate the plan-level statutory allocation against the revised value of <span class="font-data-md text-data-md">KES 535,000,000</span>.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Changes in this update -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden flex flex-col">
+<div class="p-6 border-b border-subtle bg-surface-bright flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Changes in this update</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
 <thead>
-<tr class="bg-surface border-b border-subtle">
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[25%]">Plan Item</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[10%]">Change</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[20%]">Approved Version 1</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[20%]">Draft Revision 2</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[15%]">Impact</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-[10%] text-right">Action</th>
+<tr class="bg-surface-container-lowest border-b border-subtle">
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">Change</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Plan Item</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Organisation Unit</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Value</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-center">Readiness</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Action</th>
 </tr>
 </thead>
-<tbody class="font-body-sm text-body-sm">
-<!-- Row 1 (Unchanged) -->
-<tr class="border-b border-subtle hover:bg-surface/50 transition-colors">
-<td class="py-4 px-4 font-medium text-on-surface align-top">National digital health infrastructure upgrade</td>
-<td class="py-4 px-4 align-top">
-<span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-surface-variant text-on-surface-variant">Unchanged</span>
+<tbody class="divide-y divide-subtle">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="px-2 py-1 bg-surface-tint/10 text-surface-tint rounded-full font-label-caps text-label-caps">Added</span>
 </td>
-<td class="py-4 px-4 text-on-surface-variant align-top">
-<div class="font-data-md text-data-md text-on-surface mb-1">KES 455,000,000</div>
-<div>Open tender</div>
-<div class="text-xs text-outline mt-1">Completion 31 March 2028</div>
+<td class="px-6 py-4 font-body-md text-body-md text-on-surface max-w-xs">
+                                    Digital health technical staff certification programme
+                                </td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">
+                                    Human Resources Management and Development
+                                </td>
+<td class="px-6 py-4 font-data-md text-data-md text-on-surface text-right whitespace-nowrap">
+                                    KES 80,000,000
+                                </td>
+<td class="px-6 py-4 text-center">
+<span class="px-2 py-1 bg-status-available/10 text-status-available rounded-full font-label-caps text-label-caps border border-status-available/20">Ready</span>
 </td>
-<td class="py-4 px-4 text-on-surface-variant align-top italic">Same</td>
-<td class="py-4 px-4 text-on-surface-variant align-top text-xs">Existing Tender TND-MOH-2027-008 remains active</td>
-<td class="py-4 px-4 align-top text-right">
-<button class="text-primary hover:text-surface-tint font-medium underline decoration-transparent hover:decoration-primary transition-all">View</button>
-</td>
-</tr>
-<!-- Row 2 (Added) - Highlighted -->
-<tr class="border-b border-subtle bg-status-available/5 hover:bg-status-available/10 transition-colors relative">
-<td class="py-4 px-4 font-medium text-on-surface align-top border-l-4 border-status-available">Digital health technical staff certification programme</td>
-<td class="py-4 px-4 align-top">
-<span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-status-available/20 text-status-available">Added</span>
-</td>
-<td class="py-4 px-4 text-on-surface-variant align-top italic">Not in Version 1</td>
-<td class="py-4 px-4 text-on-surface align-top">
-<div class="font-data-md text-data-md text-on-surface mb-1">KES 80,000,000</div>
-<div>Open tender</div>
-<div class="text-xs text-outline mt-1">Owner: Human Resources Management and Development</div>
-</td>
-<td class="py-4 px-4 text-on-surface-variant align-top text-xs">Proposed; departmental sign-off and plan-level revalidation required</td>
-<td class="py-4 px-4 align-top text-right">
-<button class="text-primary hover:text-surface-tint font-medium underline decoration-transparent hover:decoration-primary transition-all">Complete item</button>
+<td class="px-6 py-4 text-right">
+<a class="inline-flex items-center gap-1 text-primary hover:text-surface-tint font-label-caps text-label-caps transition-colors" href="#">
+                                        View
+                                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
+<!-- Unchanged Summary (Footer of table block) -->
+<div class="p-4 bg-surface-bright border-t border-subtle flex items-center justify-between">
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+                        1 existing Plan Item remains unchanged and operational.
+                    </div>
+<a class="text-on-surface-variant hover:text-primary font-body-sm text-body-sm underline transition-colors" href="#">View unchanged item</a>
 </div>
-</section>
-<!-- Validation Issues Section -->
-<section class="bg-surface-container-lowest border border-status-reserved/30 rounded-lg p-5 flex flex-col gap-4 relative overflow-hidden">
-<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-reserved"></div>
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-status-reserved">warning</span>
-<h3 class="font-headline-sm text-headline-sm text-on-surface">Validation Issues</h3>
 </div>
-<ul class="flex flex-col gap-3 pl-8">
-<li class="flex items-start gap-2 text-on-surface font-body-md text-body-md">
-<span class="w-1.5 h-1.5 rounded-full bg-status-reserved mt-2 shrink-0"></span>
-<span>The added Organisation Unit contribution requires Head of Department sign-off.</span>
-</li>
-<li class="flex items-start gap-2 text-on-surface font-body-md text-body-md">
-<span class="w-1.5 h-1.5 rounded-full bg-status-reserved mt-2 shrink-0"></span>
-<span>Recalculate the plan-level statutory allocation against the revised value of <span class="font-data-md text-data-md">KES 535,000,000</span>.</span>
-</li>
-</ul>
-</section>
-<!-- Restrained Notice -->
-<p class="text-center font-body-sm text-body-sm text-outline mt-2">
-            Only changed items and affected plan-level checks require active review. Approved Version 1 remains unchanged until Revision 2 is approved.
-        </p>
+<!-- Informational Notice -->
+<div class="text-center py-4 text-on-surface-variant font-body-sm text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                Only the added item and affected Plan-level checks require review. Existing operational items remain unchanged.
+            </div>
 </main>
-<!-- Bottom Action Bar (Sticky) -->
-<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t border-subtle p-4 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-<div class="max-w-7xl mx-auto flex justify-between items-center px-container-padding md:px-6 lg:px-8">
-<button class="text-status-exhausted hover:bg-status-exhausted/10 px-4 py-2 rounded font-body-md text-body-md transition-colors">
-                Cancel revision
+<!-- Bottom Action Bar -->
+<div class="sticky bottom-0 w-full bg-surface-container-lowest border-t border-subtle p-4 px-container-padding flex justify-between items-center z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<button class="px-4 py-2 text-status-exhausted font-label-caps text-label-caps hover:bg-status-exhausted/5 rounded-lg transition-colors">
+                Cancel update
             </button>
 <div class="flex items-center gap-3">
-<button class="border border-subtle text-primary hover:bg-surface px-4 py-2 rounded font-body-md text-body-md transition-colors bg-surface-container-lowest">
+<button class="px-4 py-2 border border-subtle text-primary font-label-caps text-label-caps hover:bg-primary/5 rounded-lg transition-colors">
                     Save draft
                 </button>
-<button class="bg-surface-variant text-outline px-4 py-2 rounded font-body-md text-body-md cursor-not-allowed opacity-70" disabled="">
-                    Submit revision
-                </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-label-caps text-label-caps rounded-lg opacity-50 cursor-not-allowed flex items-center gap-2" disabled="">
+                    Submit update for review
+                    <span class="material-symbols-outlined text-[18px]">send</span>
+</button>
 </div>
 </div>
 </div>
+
+
 </body></html>

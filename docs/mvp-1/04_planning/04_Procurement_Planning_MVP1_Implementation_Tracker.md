@@ -1,8 +1,8 @@
 # Procurement Planning MVP-1 Implementation Tracker
 
 **Document ID:** PLANNING-MVP1-IMPL-TRACKER-1.0  
-**Status:** Active — Gate 00 / RET / Gate 01 / **Gate 02 Done**; next Gate 03 (Stitch workspace)  
-**Date:** 9 August 2026  
+**Status:** Active — Gate 00–04 Done; next Gate 05 (approval)  
+**Date:** 10 August 2026  
 **Authority:** `PLANNING-MVP1-REQ-1.4` → approved Stitch `PLN-UI-01`…`10` → `PLANNING-MVP1-CURSOR-1.2` → Canonical Demo Data Contract v2.4 → Org Scope Model  
 
 ## Goal
@@ -11,7 +11,7 @@ Track Procurement Planning MVP-1 delivery **atomically** (schema, services, each
 
 **User mandate:** Zero PP2 Planning code. Full retirement (`PLN-RET-*` / [GATE_PP2_RETIREMENT.md](GATE_PP2_RETIREMENT.md) v1.2) completed before Gate 01. No temporary preserve. No coexistence.
 
-**Overall:** Gate 00 Done. RET-001…005 Done. Gate 01 Done. Gate 02 Done. Gate 03 Done ([GATE_03_WORKSPACE_AND_REGISTER.md](GATE_03_WORKSPACE_AND_REGISTER.md)). **Next:** Gate 04 — Demand modal / `PLN-UI-04`.
+**Overall:** Gate 00 Done. RET-001…005 Done. Gate 01 Done. Gate 02 Done. Gate 03 Done ([GATE_03_WORKSPACE_AND_REGISTER.md](GATE_03_WORKSPACE_AND_REGISTER.md)). Gate 04 Done ([GATE_04_DEMAND_AND_PLAN_ITEM_EDITOR.md](GATE_04_DEMAND_AND_PLAN_ITEM_EDITOR.md)). **Next:** Gate 05 — `PLN-UI-07`…`08` / approval.
 
 ---
 
@@ -189,11 +189,11 @@ Exact names from Requirements v1.4 / Cursor pack v1.2.
 |---|---|---|---|---|---|
 | PLN-SVC-001 | Workspace projection | `get_planning_workspace` | PLN-SCH-012, PLN-PERM-002 | Done | `test_planning_workspace_api` + whitelist; Gate 03 |
 | PLN-SVC-002 | Register annual plan | `create_procurement_plan` | PLN-SCH-012, PLN-PERM-003 | Done | Whitelist + create-scope DTO + register UI; `test_planning_register_api` |
-| PLN-SVC-003 | Eligible Demands queue | `list_eligible_demands` | PLN-SVC-001 | Not started | |
-| PLN-SVC-004 | Add Demand → Plan Item + Draft allocation | `add_demand_to_plan` | PLN-SVC-003 | Partial | Gate 01 minimal path (no eligibility queue yet) |
-| PLN-SVC-005 | Update Plan Item decisions | `update_plan_item` | PLN-SVC-004 | Not started | |
-| PLN-SVC-006 | Aggregation of compatible allocations | `aggregate_plan_allocations` | PLN-SVC-005 | Not started | |
-| PLN-SVC-007 | Issue-led validation | `validate_plan` | PLN-SVC-005 | Not started | |
+| PLN-SVC-003 | Eligible Demands queue | `list_eligible_demands` | PLN-SVC-001 | Done | `test_list_eligible_demands` |
+| PLN-SVC-004 | Add Demand → Plan Item + Draft allocation | `add_demand_to_plan` | PLN-SVC-003 | Done | Pack v1.3: one Demand→one item default; `formation_mode` separate; no cosmetic Keep separate; `test_add_demand_to_plan_gate04` |
+| PLN-SVC-005 | Update Plan Item decisions | `update_plan_item` | PLN-SVC-004 | Done | `test_update_plan_item` (AC-012 / AC-016) |
+| PLN-SVC-006 | Aggregation of compatible allocations | `aggregate_plan_allocations` | PLN-SVC-005 | Done | `test_aggregate_plan_allocations` (AC-013 / AC-014) |
+| PLN-SVC-007 | Issue-led validation | `validate_plan` | PLN-SVC-005 | Done | `test_validate_plan` (Draft issue-led; Ready not user-settable) |
 | PLN-SVC-008 | Departmental contribution submit | `submit_departmental_contribution` | PLN-SVC-007, PLN-SCH-007 | Not started | |
 | PLN-SVC-009 | Submit for review | `submit_plan_for_review` | PLN-SVC-008 | Not started | |
 | PLN-SVC-010 | Record plan decision | `record_plan_decision` | PLN-SVC-009 | Not started | |
@@ -210,7 +210,7 @@ Exact names from Requirements v1.4 / Cursor pack v1.2.
 
 | ID | Work item | Notes | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| PLN-INT-001 | Demands: eligibility + effective Planning Consumption on approval | No Demand mutation of scope/ownership | PLN-SVC-004, PLN-SVC-011 | Partial | Consumption on approve Done; eligibility queue later |
+| PLN-INT-001 | Demands: eligibility + effective Planning Consumption on approval | No Demand mutation of scope/ownership | PLN-SVC-004, PLN-SVC-011 | Partial | Eligibility + add without Demand mutation Done; consumption on approve remains Gate 05 |
 | PLN-INT-002 | Budget: revalidate reservation / funding; no balance mutation | Read-only funding context | PLN-SVC-007, PLN-SVC-015 | Not started | |
 | PLN-INT-003 | Strategy / Plan Value Commitments: immutable snapshots via Demand | No Strategy reassignment in Planning | PLN-SVC-005 | Not started | |
 | PLN-INT-004 | Core scope: PE / OU / authority resolution | — | PLN-PERM-002 | Not started | |
@@ -225,16 +225,16 @@ Exact names from Requirements v1.4 / Cursor pack v1.2.
 |---|---|---|---|---|---|
 | PLN-UI-01 | Procurement Planning workspace | `PLN-UI-01.html` | PLN-SVC-001 | Done | `planning-workspace` + Workspace redirect; Playwright workspace spec |
 | PLN-UI-02 | Register annual plan (multi-PE) | `PLN-UI-02.html` | PLN-SVC-002, PLN-PERM-003 | Done | zero/single/multi + create → builder; inline errors |
-| PLN-UI-03 | Empty Draft plan builder | `PLN-UI-03.html` | PLN-SVC-001 | Done | empty-state CTA; Gate 04 modal deferred |
-| PLN-UI-04 | Add approved Demand dialog | `PLN-UI-04.html` | PLN-SVC-003, PLN-SVC-004 | Not started | |
-| PLN-UI-05 | Plan builder with Plan Item | `PLN-UI-05.html` | PLN-UI-04, PLN-SVC-005 | Not started | |
-| PLN-UI-06 | Plan Item editor | `PLN-UI-06.html` | PLN-SVC-005, PLN-SVC-007 | Not started | |
+| PLN-UI-03 | Empty Draft plan builder | `PLN-UI-03.html` | PLN-SVC-001 | Done | empty-state CTA; Add Demand opens UI-04 |
+| PLN-UI-04 | Add approved Demand dialog | `PLN-UI-04.html` | PLN-SVC-003, PLN-SVC-004 | Done | Pack v1.3 single-select source; Plan Need Items separately secondary; `planning-add-demand.spec.ts` |
+| PLN-UI-05 | Plan builder with Plan Item | `PLN-UI-05.html` | PLN-UI-04, PLN-SVC-005 | Done | Populated builder + Run validation; `planning-builder.spec.ts` |
+| PLN-UI-06 | Plan Item editor | `PLN-UI-06.html` | PLN-SVC-005, PLN-SVC-007 | Done | Completes existing item; Add another Demand CTA; no aggregation radios; editor Playwright |
 | PLN-UI-07 | Departmental contribution drawer | `PLN-UI-07.html` | PLN-SVC-008 | Not started | |
 | PLN-UI-08 | Consolidated review and approval | `PLN-UI-08.html` | PLN-SVC-009…011 | Not started | |
 | PLN-UI-09 | Approved plan and implementation | `PLN-UI-09.html` | PLN-SVC-016, PLN-SVC-014 | Not started | |
 | PLN-UI-10 | Draft revision overview | `PLN-UI-10.html` | PLN-SVC-012, PLN-UI-06 | Not started | |
-| PLN-UIC-001 | Stitch Desk chrome registry + `kt-stitch-canvas` + `assertStitchDeskChrome` | Shared chrome gate | PLN-UI-01…10 | Partial | Gate 03: three surfaces registered + chrome asserts; remaining UI-04…10 later |
-| PLN-UIC-002 | Inline form errors (`kt_form_errors`); no Message dialog for field validation | Form error rule | PLN-UI-02, PLN-UI-06 | Partial | Register form Done; Plan Item editor later |
+| PLN-UIC-001 | Stitch Desk chrome registry + `kt-stitch-canvas` + `assertStitchDeskChrome` | Shared chrome gate | PLN-UI-01…10 | Partial | Gate 03–04: workspace/register/builder/editor registered; UI-04 dialog chrome in add-demand Playwright; UI-07…10 later |
+| PLN-UIC-002 | Inline form errors (`kt_form_errors`); no Message dialog for field validation | Form error rule | PLN-UI-02, PLN-UI-06 | Done | Register + Plan Item editor (`planning-plan-item-editor.spec.ts`) |
 
 ---
 
@@ -258,9 +258,9 @@ Trace every Requirements §18 criterion. Evidence may be service, Playwright, or
 | ID | Criterion (summary) | Primary proof | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
 | PLN-AC-001 | Register annual plan; no technical codes | `create_procurement_plan` + PLN-UI-02 | PLN-UI-02, PLN-SVC-002 | Done | API + register Playwright happy path → builder |
-| PLN-AC-002 | Queue: Approved, Planning Ready, not fully planned | `list_eligible_demands` | PLN-SVC-003, PLN-UI-04 | Not started | |
-| PLN-AC-003 | Add Demand → Plan Item + Draft allocation; no Demand/RSV mutation | `add_demand_to_plan` | PLN-SVC-004, PLN-INT-001 | Not started | |
-| PLN-AC-004 | Complete method/schedule/aggregation/lotting/statutory in editor | PLN-UI-06 | PLN-UI-06, PLN-SVC-005 | Not started | |
+| PLN-AC-002 | Queue: Approved, Planning Ready, not fully planned | `list_eligible_demands` | PLN-SVC-003, PLN-UI-04 | Done | Service negatives + UI-04 dialog |
+| PLN-AC-003 | Add Demand → Plan Item + Draft allocation; no Demand/RSV mutation | `add_demand_to_plan` | PLN-SVC-004, PLN-INT-001 | Done | `test_add_demand_to_plan_gate04` + add-demand Playwright |
+| PLN-AC-004 | Complete method/schedule/lotting/statutory in editor (source selected at UI-04) | PLN-UI-06 | PLN-UI-06, PLN-SVC-005 | Done | `test_update_plan_item` + editor surface; formation at UI-04 |
 | PLN-AC-005 | HoD submits unit contribution (drawer, not separate workspace) | PLN-UI-07 | PLN-UI-07, PLN-SVC-008 | Not started | |
 | PLN-AC-006 | Consolidate contributions; resolve aggregation candidates | PLN-SVC-006 + review | PLN-SVC-006, PLN-UI-08 | Not started | |
 | PLN-AC-007 | Review / AO / Designated Approver per configured route | `record_plan_decision` | PLN-SVC-010, PLN-UI-08 | Not started | |
@@ -272,12 +272,12 @@ Trace every Requirements §18 criterion. Evidence may be service, Playwright, or
 
 | ID | Criterion (summary) | Primary proof | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| PLN-AC-011 | Cannot exceed approved/funded/unplanned scope | allocation tests | PLN-SVC-004, PLN-SVC-007 | Not started | |
-| PLN-AC-012 | Open tender default; alternative needs grounds + evidence | method rules | PLN-SVC-005, PLN-UI-06 | Not started | |
-| PLN-AC-013 | Anti-splitting blocked/escalated; no client bypass | server checks | PLN-SVC-006, PLN-SVC-007 | Not started | |
-| PLN-AC-014 | Aggregated allocations retain Demand/Budget/RSV lineage | aggregation tests | PLN-SVC-006, PLN-INT-002 | Not started | |
-| PLN-AC-015 | Cannot approve while statutory minimums unmet | validation + approve | PLN-SVC-007, PLN-SVC-011 | Not started | |
-| PLN-AC-016 | Multi-year: justification + annual funding schedule | Plan Item Version fields | PLN-SVC-005 | Not started | |
+| PLN-AC-011 | Cannot exceed approved/funded/unplanned scope | allocation tests | PLN-SVC-004, PLN-SVC-007 | Done | Over-allocation rejected in `test_add_demand_to_plan_gate04` |
+| PLN-AC-012 | Open tender default; alternative needs grounds + evidence | method rules | PLN-SVC-005, PLN-UI-06 | Done | `test_update_plan_item` + editor inline errors |
+| PLN-AC-013 | Anti-splitting blocked/escalated; no client bypass | server checks | PLN-SVC-006, PLN-SVC-007 | Done | `test_aggregate_plan_allocations` |
+| PLN-AC-014 | Aggregated allocations retain Demand/Budget/RSV lineage | aggregation tests | PLN-SVC-006, PLN-INT-002 | Done | Aggregate lineage test (Budget revalidate remains Gate 05+) |
+| PLN-AC-015 | Cannot approve while statutory minimums unmet | validation + approve | PLN-SVC-007, PLN-SVC-011 | Partial | Validate may surface Needs attention; approve block stays Gate 05 |
+| PLN-AC-016 | Multi-year: justification + annual funding schedule | Plan Item Version fields | PLN-SVC-005 | Done | `test_update_plan_item` multi-year errors |
 | PLN-AC-017 | Actual dates derived; do not overwrite planned | implementation projection | PLN-SVC-016 | Not started | |
 | PLN-AC-018 | No cross-PE/OU read or mutate via UI or API | scope matrix | PLN-PERM-002, PLN-PERM-005 | Not started | |
 | PLN-AC-019 | Admin without Planning role/scope cannot act | permission tests | PLN-PERM-004 | Not started | |
@@ -291,7 +291,7 @@ Trace every Requirements §18 criterion. Evidence may be service, Playwright, or
 |---|---|---|---|---|---|
 | PLN-AC-023 | Totals / statutory / metrics reconcile to Plan Items | reporting tests | PLN-SVC-001, PLN-SVC-016 | Not started | |
 | PLN-AC-024 | Quarterly report: As at, scope, basis, drill-down | PLN-UI-09 | PLN-UI-09, PLN-SVC-016 | Not started | |
-| PLN-AC-025 | Aggregation / public-value not shown as realised without evidence | UI + DTO asserts | PLN-UI-06, PLN-UI-09 | Not started | |
+| PLN-AC-025 | Aggregation / public-value not shown as realised without evidence | UI + DTO asserts | PLN-UI-06, PLN-UI-09 | Partial | Editor treatment copy present; UI-09 evidence later |
 | PLN-AC-026 | MOH + County fixtures rebuild without duplicates | seed twice | PLN-SEED-001, PLN-SEED-003 | Not started | |
 | PLN-AC-027 | Principal item retains Demand/Strategy/Budget/RSV/Tender IDs | seed + handoff | PLN-SEED-001, PLN-SVC-015 | Not started | |
 | PLN-AC-028 | One current Approved version per PE/FY; superseded readable | version invariants | PLN-SCH-003, PLN-SVC-011 | Not started | |
@@ -313,7 +313,7 @@ Trace every Requirements §18 criterion. Evidence may be service, Playwright, or
 | PLN-NFR-003 | Approved versions, decisions, handoffs, audit immutable | immutability tests | PLN-SCH-003…011 | Not started | |
 | PLN-NFR-004 | WCAG 2.1 AA: keyboard, labels, focus, contrast, status | Playwright a11y | PLN-UI-01…10, PLN-UIC-002 | Not started | |
 | PLN-NFR-005 | Ordinary requests target ≤2s at MVP volume | soft latency check | PLN-SVC-* | Not started | |
-| PLN-NFR-006 | Validation errors: issue, owner, corrective action | validation DTO tests | PLN-SVC-007 | Not started | |
+| PLN-NFR-006 | Validation errors: issue, owner, corrective action | validation DTO tests | PLN-SVC-007 | Done | `test_validate_plan` issue shape |
 | PLN-NFR-007 | Stable API error codes (permission, validation, conflict, stale, funding, duplicate take-up) | error-code tests | PLN-SVC-* | Not started | |
 | PLN-NFR-008 | Consistent date storage + user display timezone | timezone tests | PLN-SVC-005, PLN-SVC-016 | Not started | |
 | PLN-NFR-009 | Seed/reset deterministic, idempotent, fixture-isolated | PLN-SEED-003 | PLN-SEED-001…002 | Not started | |
@@ -340,7 +340,7 @@ Owned by **`PLN-RET-005`** after structural retirement — not by Gate 01 schema
 | PLN-ABS-009 | No manual entry of actual tender milestones in Planning | PLN-UI-06 / 09 | Not started | |
 | PLN-ABS-010 | No planner mutation of funding reservations | services | Not started | |
 | PLN-ABS-011 | No Strategy re-selection in Planning | PLN-UI-06 | Not started | |
-| PLN-ABS-012 | No automatic merging of Demand Items | `add_demand_to_plan` | Not started | |
+| PLN-ABS-012 | No automatic merging of Demand Items | `add_demand_to_plan` | Done | Default one Plan Item; separate mode creates one Plan Item per Need Item; Combine only via aggregate |
 | PLN-ABS-013 | No detailed Tender lots / STD configuration in Planning | UI / services | Not started | |
 | PLN-ABS-014 | No page-local canonical fixture JSON in Planning JS | `public/js` grep | Not started | |
 | PLN-ABS-015 | No Ministry-specific ownership fields | DocType JSON | Not started | |
@@ -348,7 +348,7 @@ Owned by **`PLN-RET-005`** after structural retirement — not by Gate 01 schema
 | PLN-ABS-017 | No user-maintained Plan / Item / Demand / Budget / Strategy codes in forms | PLN-UI-02 / 06 | Not started | |
 | PLN-ABS-018 | No dual-read / dual-write / fallback Planning adapters | services grep | Done | `test_planning_mvp1_no_package_dual_write` 2/2 OK |
 | PLN-ABS-019 | No Plan-header Budget context | PLN-UI-02 | Not started | |
-| PLN-ABS-020 | No user-maintained statutory percentages on Plan Items | PLN-UI-06 | Not started | |
+| PLN-ABS-020 | No user-maintained statutory percentages on Plan Items | PLN-UI-06 | Done | Editor has treatment/value notes; no % fields |
 | PLN-ABS-021 | District Hospital Renovation Works seed does not compete with digital-health story | seed inventory | Not started | |
 
 ---
@@ -360,7 +360,7 @@ Owned by **`PLN-RET-005`** after structural retirement — not by Gate 01 schema
 | PLN-GATE-00 | Replacement boundary approval | Cursor Prompt 00 output accepted | Pack baselines | Done | [GATE_00_REPLACEMENT_BOUNDARY.md](GATE_00_REPLACEMENT_BOUNDARY.md) |
 | PLN-GATE-01 | Domain / schema gate | Invariants + no dual-write | PLN-SCH-*, PLN-ABS-018 | Done | [GATE_01_DOMAIN_FOUNDATION.md](GATE_01_DOMAIN_FOUNDATION.md); invariants 10/10 + schema 5/5 + ABS-018 2/2 |
 | PLN-GATE-03 | `ui-planning-workspace-gate` | PLN-UI-01…03 | PLN-UI-01…03, PLN-UIC-001 | Done | [GATE_03_WORKSPACE_AND_REGISTER.md](GATE_03_WORKSPACE_AND_REGISTER.md) |
-| PLN-GATE-04 | `ui-planning-builder-gate` (name TBD) | PLN-UI-04…06 | PLN-UI-04…06 | Not started | |
+| PLN-GATE-04 | `ui-planning-builder-gate` | PLN-UI-04…06 | PLN-UI-04…06 | Done | [GATE_04_DEMAND_AND_PLAN_ITEM_EDITOR.md](GATE_04_DEMAND_AND_PLAN_ITEM_EDITOR.md) |
 | PLN-GATE-05 | `ui-planning-approval-gate` (name TBD) | PLN-UI-07…08 + roles | PLN-UI-07…08 | Not started | |
 | PLN-GATE-06 | `ui-planning-revision-gate` (name TBD) | PLN-UI-09…10 + SCN-PLN-ADD-001 | PLN-UI-09…10, PLN-SEED-002 | Not started | |
 | PLN-GATE-ABS | `planning-abs-gate` (name TBD) | PLN-ABS-001…021 | PLN-RET-005, PLN-ABS-* | Not started | |

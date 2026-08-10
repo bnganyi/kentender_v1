@@ -1,4 +1,4 @@
-// PLN-UI-03 — literal Stitch <main> from docs/mvp-1/04_planning/ui_design/PLN-UI-03.html
+// PLN-UI-03 empty + PLN-UI-05 items — literal Stitch from docs/mvp-1/04_planning/ui_design/
 // Fake top/side nav discarded; kt-stitch-canvas + testids/bind hooks only.
 frappe.provide("kentender_procurement.ui_fixtures");
 
@@ -19,7 +19,7 @@ kentender_procurement.ui_fixtures.planning_builder = function () {
 <span class="bg-surface-variant px-2 py-1 rounded-sm font-label-caps text-label-caps text-on-surface" data-kt-pln-builder-lifecycle data-testid="kt-pln-ui03-lifecycle">Draft</span>
 <span>·</span>
 <span data-kt-pln-builder-version>Version 1</span>
-<span>·</span>
+<span data-kt-pln-builder-period-sep>·</span>
 <span data-kt-pln-builder-period>Planning period 1 July 2027 to 30 June 2028</span>
 </div>
 </div>
@@ -57,7 +57,14 @@ Not run
 </div>
 </div>
 </div>
-<div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+<div class="bg-[#FEF3C7] border border-[#F59E0B] rounded-lg p-4 flex items-center justify-between shadow-sm hidden" data-kt-pln-issue-strip data-testid="kt-pln-ui05-issue-strip" hidden>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#D97706]" aria-hidden="true">warning</span>
+<span class="font-body-md text-body-md text-[#92400E]" data-kt-pln-issue-copy>1 item needs attention before departmental sign-off.</span>
+</div>
+<a class="text-[#D97706] hover:text-[#B45309] font-body-md text-body-md font-medium underline transition-colors" href="#" data-kt-pln-action="review-issue">Review issue</a>
+</div>
+<div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center" data-testid="kt-pln-ui03-filters">
 <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
 <div class="relative w-full sm:w-48">
 <select class="w-full appearance-none bg-surface-container-lowest border border-border-subtle rounded py-2 pl-3 pr-8 font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" aria-label="Organisation Unit">
@@ -102,39 +109,48 @@ Add approved demand
 </div>
 </div>
 </div>
-<div class="bg-surface-container-lowest border border-border-subtle rounded-lg shadow-sm overflow-hidden hidden" data-testid="kt-pln-ui03-items" data-kt-pln-items-table hidden>
-<div class="px-5 py-4 border-b border-border-subtle bg-surface-container-low">
-<h2 class="font-headline-sm text-headline-sm text-on-surface">Plan Items</h2>
-</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg shadow-sm overflow-hidden flex flex-col hidden" data-testid="kt-pln-ui03-items" data-kt-pln-items-table data-kt-pln-ui05-items hidden>
 <div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
+<table class="w-full text-left border-collapse min-w-[1000px]" data-testid="kt-pln-ui05-table">
 <thead>
-<tr class="border-b border-border-subtle bg-surface-container-low/50">
-<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase">Demand</th>
-<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase">Category</th>
-<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase text-right">Estimated value</th>
-<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase">Status</th>
+<tr class="bg-surface-container-low border-b border-border-subtle font-label-caps text-label-caps text-on-surface-variant">
+<th class="p-4 font-semibold w-1/4">Requirement</th>
+<th class="p-4 font-semibold">Organisation Unit</th>
+<th class="p-4 font-semibold">Category</th>
+<th class="p-4 font-semibold text-right">Planned Value</th>
+<th class="p-4 font-semibold">Method</th>
+<th class="p-4 font-semibold">Schedule</th>
+<th class="p-4 font-semibold">Validation</th>
+<th class="p-4 font-semibold text-center">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-subtle" data-kt-pln-items-body></tbody>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-border-subtle" data-kt-pln-items-body></tbody>
+<tfoot class="bg-surface-container-low border-t-2 border-border-subtle">
+<tr>
+<td class="p-4 font-headline-sm text-headline-sm text-right text-on-surface" colspan="3">Total</td>
+<td class="p-4 font-data-lg text-data-lg text-right text-on-surface whitespace-nowrap" data-kt-pln-builder-table-total>KES 0</td>
+<td colspan="4"></td>
+</tr>
+</tfoot>
 </table>
 </div>
 </div>
-<div class="mt-auto pt-section-gap border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
-<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center gap-2 px-4 py-2 rounded hover:bg-surface-variant" href="/app/planning-workspace" data-testid="kt-pln-ui03-back">
+<div class="mt-auto pt-section-gap border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4" data-testid="kt-pln-ui05-footer">
+<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center gap-2 px-4 py-2 rounded hover:bg-surface-variant" href="/app/planning-workspace" data-testid="kt-pln-ui03-back" data-kt-pln-action="back">
 <span class="material-symbols-outlined text-sm" aria-hidden="true">arrow_back</span>
 Back to Planning
 </a>
 <div class="flex items-center gap-4 w-full sm:w-auto">
-<button type="button" class="flex-1 sm:flex-none bg-surface-container-highest hover:bg-surface-variant text-on-surface font-body-md text-body-md px-6 py-2 rounded border border-border-subtle transition-colors opacity-50 cursor-not-allowed" disabled="">
+<button type="button" class="flex-1 sm:flex-none bg-surface-container-highest hover:bg-surface-variant text-on-surface font-body-md text-body-md px-6 py-2 rounded border border-border-subtle transition-colors opacity-50 cursor-not-allowed" data-kt-pln-action="run-validation" data-testid="kt-pln-ui05-run-validation" disabled="">
 Run validation
 </button>
-<button type="button" class="flex-1 sm:flex-none bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed font-body-md text-body-md px-6 py-2 rounded flex items-center justify-center gap-2" disabled="">
+<button type="button" class="flex-1 sm:flex-none bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed font-body-md text-body-md px-6 py-2 rounded flex items-center justify-center gap-2" data-kt-pln-action="submit-dept" data-testid="kt-pln-ui05-submit-dept" disabled="">
 Submit for departmental sign-off
 <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>
 </button>
 </div>
 </div>
 </main>
+<div data-kt-pln-dialog-host></div>
 </div>`;
 };

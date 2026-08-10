@@ -123,10 +123,14 @@ def make_approved_demand(
 	pe: str = PE,
 	ou: str = OU,
 	title: str = "Gate01 Demand",
+	need_item_count: int = 1,
+	item_amount: float = 1_000_000,
 ) -> dict[str, str]:
 	ensure_scope()
 	planner = ensure_planner_user()
 	code = f"DEM-G01-{frappe.generate_hash(length=6).upper()}"
+	n = max(1, int(need_item_count or 1))
+	total = float(item_amount) * n
 	demand = frappe.get_doc(
 		{
 			"doctype": "Demand",
@@ -141,27 +145,38 @@ def make_approved_demand(
 			"planning_ready": 1,
 			"planning_usage": "Not taken up",
 			"currency": "KES",
-			"confirmed_estimate": 1_000_000,
-			"requester_estimate": 1_000_000,
+			"confirmed_estimate": total,
+			"requester_estimate": total,
 		}
 	)
 	demand.insert(ignore_permissions=True)
-	item_code = f"DI-{code}"
-	item = frappe.get_doc(
-		{
-			"doctype": "Demand Item",
-			"demand": demand.name,
-			"item_code": item_code,
-			"description": title,
-			"confirmed_estimate": 1_000_000,
-			"requester_estimate": 1_000_000,
-			"currency": "KES",
-			"quantity": 1,
-			"confirmed_quantity": 1,
-		}
-	)
-	item.insert(ignore_permissions=True)
-	return {"demand": demand.name, "demand_item": item.name, "demand_code": code}
+	items: list[str] = []
+	first_item = ""
+	for i in range(n):
+		item_code = f"DI-{code}-{i + 1}"
+		item = frappe.get_doc(
+			{
+				"doctype": "Demand Item",
+				"demand": demand.name,
+				"item_code": item_code,
+				"description": f"{title} — need {i + 1}",
+				"confirmed_estimate": float(item_amount),
+				"requester_estimate": float(item_amount),
+				"currency": "KES",
+				"quantity": 1,
+				"confirmed_quantity": 1,
+			}
+		)
+		item.insert(ignore_permissions=True)
+		items.append(item.name)
+		if not first_item:
+			first_item = item.name
+	return {
+		"demand": demand.name,
+		"demand_item": first_item,
+		"demand_items": items,
+		"demand_code": code,
+	}
 
 
 def create_plan_as_planner(**overrides: Any) -> dict[str, Any]:

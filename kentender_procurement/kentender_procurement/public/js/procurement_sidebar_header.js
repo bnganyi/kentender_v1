@@ -117,7 +117,7 @@
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
 			["/desk/demands-workspace"],
 			["/desk/budget-hub", "/desk/budget-management"],
-			["/desk/planning-hub", "/desk/procurement-planning"],
+			["/desk/planning-workspace", "/desk/procurement-planning", "/desk/planning-hub"],
 			["/desk/strategy-management"],
 		];
 		for (var g = 0; g < groups.length; g++) {

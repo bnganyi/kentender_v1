@@ -55,6 +55,45 @@ export async function preparePlanningGate03(
 	return message;
 }
 
+export type PlanningGate04Prep = PlanningGate03Prep & {
+	eligible_demand?: string;
+	eligible_demand_code?: string;
+	need_item_count?: number;
+	plan_item?: string;
+	editor_route?: string;
+	plan_item_code?: string;
+};
+
+/** Admin-only prepare for Gate 04 Playwright fixtures. */
+export async function preparePlanningGate04(
+	page: Page,
+	opts?: { withPlanItem?: boolean; needItemCount?: number },
+): Promise<PlanningGate04Prep> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const withPlanItem = opts?.withPlanItem ? 1 : 0;
+	const needItemCount = Math.max(1, opts?.needItemCount ?? 1);
+	const message = await page.evaluate(
+		async ({ withItem, needCount }: { withItem: number; needCount: number }) => {
+			const r = await (
+				window as unknown as {
+					frappe: {
+						call: (o: {
+							method: string;
+							args?: Record<string, unknown>;
+						}) => Promise<{ message?: PlanningGate04Prep }>;
+					};
+				}
+			).frappe.call({
+				method: 'kentender_procurement.procurement_planning.api.prepare_planning_gate04_ui',
+				args: { with_plan_item: withItem, need_item_count: needCount },
+			});
+			return r.message || {};
+		},
+		{ withItem: withPlanItem, needCount: needItemCount },
+	);
+	return message;
+}
+
 async function loginPlanning(page: Page, email: string, passwordEnv?: string) {
 	await login(page, email, passwordEnv || DEFAULT_SEED_PASSWORD);
 }

@@ -18,13 +18,41 @@
   "confirmed_estimate",
   "currency",
   "procurement_category",
-  "procurement_method",
-  "method_basis",
   "col_b",
   "reservation_reference",
   "strategy_snapshot",
   "pvc_snapshot",
-  "validation_projection"
+  "validation_projection",
+  "section_method",
+  "governing_regime",
+  "recommended_method",
+  "procurement_method",
+  "method_basis",
+  "method_override_grounds",
+  "method_override_reason",
+  "method_override_evidence",
+  "arrangement",
+  "multi_year_justification",
+  "annual_funding_schedule",
+  "section_aggregation",
+  "aggregation_decision",
+  "aggregation_reason",
+  "lotting_decision",
+  "expected_lot_count",
+  "lot_basis",
+  "section_statutory",
+  "statutory_treatment",
+  "statutory_target_groups",
+  "planned_treatment_value",
+  "value_treatment_note",
+  "section_schedule",
+  "ms_invitation_published",
+  "ms_tender_opening",
+  "ms_evaluation_completed",
+  "ms_award_approval",
+  "ms_contract_signature",
+  "ms_delivery_completion",
+  "schedule_change_reason"
  ],
  "fields": [
   {
@@ -107,16 +135,6 @@
    "label": "Procurement Category"
   },
   {
-   "fieldname": "procurement_method",
-   "fieldtype": "Data",
-   "label": "Procurement Method"
-  },
-  {
-   "fieldname": "method_basis",
-   "fieldtype": "Small Text",
-   "label": "Method Basis"
-  },
-  {
    "fieldname": "col_b",
    "fieldtype": "Column Break",
    "label": ""
@@ -142,10 +160,176 @@
    "label": "Validation Projection",
    "options": "Not run\nReady\nNeeds attention\nBlocked\nStale",
    "default": "Not run"
+  },
+  {
+   "fieldname": "section_method",
+   "fieldtype": "Section Break",
+   "label": "Method and arrangement"
+  },
+  {
+   "fieldname": "governing_regime",
+   "fieldtype": "Data",
+   "label": "Governing Regime",
+   "default": "PPADA",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommended_method",
+   "fieldtype": "Data",
+   "label": "Recommended Method",
+   "default": "Open tender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "label": "Confirmed Method",
+   "options": "\nOpen tender\nRestricted tender\nDirect procurement\nRequest for quotations\nFramework agreement",
+   "default": "Open tender"
+  },
+  {
+   "fieldname": "method_basis",
+   "fieldtype": "Small Text",
+   "label": "Method Basis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "method_override_grounds",
+   "fieldtype": "Data",
+   "label": "Method Override Grounds"
+  },
+  {
+   "fieldname": "method_override_reason",
+   "fieldtype": "Small Text",
+   "label": "Method Override Reason"
+  },
+  {
+   "fieldname": "method_override_evidence",
+   "fieldtype": "Small Text",
+   "label": "Method Override Evidence"
+  },
+  {
+   "fieldname": "arrangement",
+   "fieldtype": "Select",
+   "label": "Arrangement",
+   "options": "\nSingle year\nMulti-year\nFramework",
+   "default": "Single year"
+  },
+  {
+   "fieldname": "multi_year_justification",
+   "fieldtype": "Small Text",
+   "label": "Multi-year Justification"
+  },
+  {
+   "fieldname": "annual_funding_schedule",
+   "fieldtype": "Small Text",
+   "label": "Annual Funding Schedule"
+  },
+  {
+   "fieldname": "section_aggregation",
+   "fieldtype": "Section Break",
+   "label": "Aggregation and lotting"
+  },
+  {
+   "fieldname": "aggregation_decision",
+   "fieldtype": "Select",
+   "label": "Aggregation Decision",
+   "options": "\nCombine",
+   "default": ""
+  },
+  {
+   "fieldname": "aggregation_reason",
+   "fieldtype": "Small Text",
+   "label": "Aggregation Reason"
+  },
+  {
+   "fieldname": "lotting_decision",
+   "fieldtype": "Select",
+   "label": "Indicative Lotting",
+   "options": "\nSingle lot\nMultiple lots",
+   "default": "Single lot"
+  },
+  {
+   "fieldname": "expected_lot_count",
+   "fieldtype": "Int",
+   "label": "Expected Lot Count",
+   "default": 1
+  },
+  {
+   "fieldname": "lot_basis",
+   "fieldtype": "Small Text",
+   "label": "Lot Basis"
+  },
+  {
+   "fieldname": "section_statutory",
+   "fieldtype": "Section Break",
+   "label": "Statutory and strategy"
+  },
+  {
+   "fieldname": "statutory_treatment",
+   "fieldtype": "Select",
+   "label": "Statutory Treatment",
+   "options": "\nOpen competition\nReserved\nPreferential"
+  },
+  {
+   "fieldname": "statutory_target_groups",
+   "fieldtype": "Small Text",
+   "label": "Statutory Target Groups"
+  },
+  {
+   "fieldname": "planned_treatment_value",
+   "fieldtype": "Currency",
+   "label": "Planned Treatment Value",
+   "options": "currency"
+  },
+  {
+   "fieldname": "value_treatment_note",
+   "fieldtype": "Small Text",
+   "label": "Value Treatment Note"
+  },
+  {
+   "fieldname": "section_schedule",
+   "fieldtype": "Section Break",
+   "label": "Planned schedule"
+  },
+  {
+   "fieldname": "ms_invitation_published",
+   "fieldtype": "Date",
+   "label": "Invitation Published"
+  },
+  {
+   "fieldname": "ms_tender_opening",
+   "fieldtype": "Date",
+   "label": "Tender Opening"
+  },
+  {
+   "fieldname": "ms_evaluation_completed",
+   "fieldtype": "Date",
+   "label": "Evaluation Completed"
+  },
+  {
+   "fieldname": "ms_award_approval",
+   "fieldtype": "Date",
+   "label": "Award Approval"
+  },
+  {
+   "fieldname": "ms_contract_signature",
+   "fieldtype": "Date",
+   "label": "Contract Signature"
+  },
+  {
+   "fieldname": "ms_delivery_completion",
+   "fieldtype": "Date",
+   "label": "Delivery and Completion"
+  },
+  {
+   "fieldname": "schedule_change_reason",
+   "fieldtype": "Small Text",
+   "label": "Schedule Change Reason"
   }
  ],
  "links": [],
- "modified": "2026-08-09 00:00:00.000000",
+ "modified": "2026-08-10 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Procurement Plan Item Version",

@@ -187,6 +187,47 @@ def assert_can_approve_plan(user: str | None = None) -> str:
 	return actor
 
 
+def has_planning_scope(
+	*,
+	procuring_entity: str | None,
+	org_unit: str | None = None,
+	user: str | None = None,
+	require_write: bool = False,
+) -> bool:
+	"""Silent PE + OU gate for list/filter paths (never msgprint / throw)."""
+	user = user or frappe.session.user
+	if _is_admin_only(user):
+		return False
+	roles = operational_roles(user)
+	is_pure_admin = (
+		user == "Administrator" or "System Manager" in roles
+	) and not roles.intersection(ALL_PLANNING_ROLES)
+	if is_pure_admin:
+		return False
+
+	from kentender_core.services.org_scope_access import (
+		permitted_org_units,
+		permitted_procuring_entities,
+		user_scope_rows,
+	)
+
+	pes = permitted_procuring_entities(user)
+	# None means unrestricted Desk admin — Planning still requires USA rows.
+	if pes is None:
+		rows = user_scope_rows(user)
+		pes = {r.procuring_entity for r in rows if r.procuring_entity} if rows else set()
+
+	if not procuring_entity or procuring_entity not in pes:
+		return False
+
+	units = permitted_org_units(user, procuring_entity=procuring_entity)
+	if units is None:
+		return True
+	if not org_unit:
+		return not require_write
+	return org_unit in units
+
+
 def assert_planning_scope(
 	*,
 	procuring_entity: str | None,
@@ -195,69 +236,20 @@ def assert_planning_scope(
 	require_write: bool = False,
 ) -> None:
 	"""Server-side PE + organisation-unit gate (REQ §11 / PLN-NFR-001)."""
-	from kentender_core.services.org_scope_access import can_access_owned_record
-
 	user = user or frappe.session.user
-	# Admin alone (no Planning role, including Viewer) must not bypass via org_scope_access.
-	if _is_admin_only(user):
-		throw_planning_error(
-			ERR_OPERATIONAL_ROLE,
-			"Not permitted for this organisational scope",
-			exc=frappe.PermissionError,
-		)
-	# Administrator / System Manager with a Planning role (e.g. Viewer) still honour USA —
-	# never treat them as unrestricted PE owners.
-	roles = operational_roles(user)
-	is_pure_admin = (
-		user == "Administrator" or "System Manager" in roles
-	) and not roles.intersection(ALL_PLANNING_ROLES)
-	if is_pure_admin:
-		throw_planning_error(
-			ERR_SCOPE,
-			"Not permitted for this organisational scope",
-			exc=frappe.PermissionError,
-		)
-
-	from kentender_core.services.org_scope_access import (
-		permitted_org_units,
-		permitted_procuring_entities,
+	if has_planning_scope(
+		procuring_entity=procuring_entity,
+		org_unit=org_unit,
+		user=user,
+		require_write=require_write,
+	):
+		return
+	code = ERR_OPERATIONAL_ROLE if _is_admin_only(user) else ERR_SCOPE
+	throw_planning_error(
+		code,
+		"Not permitted for this organisational scope",
+		exc=frappe.PermissionError,
 	)
-
-	pes = permitted_procuring_entities(user)
-	# None means unrestricted admin — treat as no PE when also lacking planning USA.
-	if pes is None:
-		# System Manager + Planning role without USA rows: fall through to USA empty.
-		from kentender_core.services.org_scope_access import user_scope_rows
-
-		rows = user_scope_rows(user)
-		pes = {r.procuring_entity for r in rows if r.procuring_entity} if rows else set()
-
-	if not procuring_entity or procuring_entity not in pes:
-		throw_planning_error(
-			ERR_SCOPE,
-			"Not permitted for this organisational scope",
-			exc=frappe.PermissionError,
-		)
-
-	units = permitted_org_units(user, procuring_entity=procuring_entity)
-	if units is None:
-		return
-	if not org_unit:
-		if require_write:
-			throw_planning_error(
-				ERR_SCOPE,
-				"Not permitted for this organisational scope",
-				exc=frappe.PermissionError,
-			)
-		return
-	if org_unit not in units:
-		throw_planning_error(
-			ERR_SCOPE,
-			"Not permitted for this organisational scope",
-			exc=frappe.PermissionError,
-		)
-	# Keep Demands-compatible helper available for callers that prefer it.
-	_ = can_access_owned_record
 
 
 def _entity_ref(pe: str) -> dict[str, str]:

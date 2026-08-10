@@ -155,4 +155,4 @@ class TestPlanningRegisterApi(IntegrationTestCase):
 		self.assertTrue(builder["ok"])
 		self.assertTrue(builder["empty"])
 		self.assertEqual(builder["item_count"], 0)
-		self.assertTrue(builder.get("add_demand_pending_gate"))
+		self.assertFalse(builder.get("add_demand_pending_gate"))

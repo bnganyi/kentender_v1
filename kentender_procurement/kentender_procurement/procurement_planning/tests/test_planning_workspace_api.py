@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import cstr
 
 from kentender_procurement.procurement_planning.api import (
 	get_planning_workspace as api_get_planning_workspace,
@@ -22,11 +23,15 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	ROLE_PLANNER,
 	ROLE_VIEWER,
 )
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	make_approved_demand,
+)
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	OU_CGK,
 	OU_MOH,
 	PE_CGK,
 	PE_MOH,
+	_ensure_ou,
 	ensure_admin_only,
 	ensure_moh_planner,
 	ensure_org,
@@ -108,7 +113,6 @@ class TestPlanningWorkspaceApi(IntegrationTestCase):
 		self.assertIn("current_plan", payload)
 		self.assertIn("work_queue", payload)
 		self.assertIsInstance(payload["work_queue"], list)
-		self.assertTrue(payload.get("helper_text"))
 		# Whitelist entry also callable
 		frappe.set_user(planner)
 		try:
@@ -118,6 +122,40 @@ class TestPlanningWorkspaceApi(IntegrationTestCase):
 		finally:
 			frappe.set_user("Administrator")
 		self.assertTrue(api_payload["ok"])
+
+	def test_work_queue_soft_filters_out_of_scope_ou_without_msgprint(self) -> None:
+		"""Out-of-scope Demand OUs must not raise PLN_SCOPE_DENIED dialogs on load."""
+		ensure_org()
+		other_ou = "MOH-DIR-HRMD"
+		_ensure_ou(other_ou, "Human Resource Management", PE_MOH)
+		planner = ensure_moh_planner()
+		foreign = make_approved_demand(
+			pe=PE_MOH,
+			ou=other_ou,
+			title="Out-of-scope OU demand for queue filter",
+		)
+		frappe.db.set_value("Demand", foreign["demand"], "status", "Returned")
+		frappe.db.commit()
+
+		titles: list[str] = []
+		orig = frappe.msgprint
+
+		def _spy(msg, *args, **kwargs):
+			titles.append(cstr(kwargs.get("title") or ""))
+			return orig(msg, *args, **kwargs)
+
+		frappe.msgprint = _spy
+		try:
+			payload = get_planning_workspace(
+				procuring_entity=PE_MOH, financial_year="2027/28", user=planner
+			)
+		finally:
+			frappe.msgprint = orig
+
+		self.assertTrue(payload["ok"])
+		self.assertNotIn("PLN_SCOPE_DENIED", titles)
+		queue_ids = {row.get("demand") for row in payload.get("work_queue") or []}
+		self.assertNotIn(foreign["demand"], queue_ids)
 
 	def test_zero_scope_blocked(self) -> None:
 		email = ensure_user_with_roles(

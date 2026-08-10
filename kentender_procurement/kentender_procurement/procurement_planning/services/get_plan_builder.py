@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Plan builder projection for PLN-UI-03 (empty Draft / Draft items list shell)."""
+"""Plan builder projection for PLN-UI-03 / PLN-UI-05."""
 
 from __future__ import annotations
 
@@ -17,12 +17,21 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
 	assert_planning_scope,
+	is_planning_read_only,
 	require_operational_roles,
 )
 
 
 def _money(amount: float, currency: str = "KES") -> str:
 	return f"{currency} {flt(amount):,.2f}"
+
+
+def _ou_label(ou: str) -> str:
+	if not ou:
+		return ""
+	return cstr(
+		frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou
+	)
 
 
 def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
@@ -61,6 +70,7 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 
 	items_out: list[dict[str, Any]] = []
 	planned_total = 0.0
+	ous: set[str] = set()
 	item_names = frappe.get_all(
 		"Procurement Plan Item",
 		filters={
@@ -87,18 +97,37 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		title = ""
 		amount = 0.0
 		category = ""
+		method = ""
+		schedule = ""
+		validation = "Not run"
 		if iv_name:
 			iv = frappe.db.get_value(
 				"Procurement Plan Item Version",
 				iv_name,
-				["requirement_title", "confirmed_estimate", "procurement_category"],
+				[
+					"requirement_title",
+					"confirmed_estimate",
+					"procurement_category",
+					"procurement_method",
+					"ms_delivery_completion",
+					"validation_projection",
+				],
 				as_dict=True,
 			)
 			if iv:
 				title = iv.requirement_title or ""
 				amount = flt(iv.confirmed_estimate)
 				category = iv.procurement_category or ""
+				method = iv.procurement_method or ""
+				schedule = (
+					f"Completion by {iv.ms_delivery_completion}"
+					if iv.ms_delivery_completion
+					else ""
+				)
+				validation = iv.validation_projection or "Not run"
 		planned_total += amount
+		if it.owner_org_unit:
+			ous.add(it.owner_org_unit)
 		items_out.append(
 			{
 				"plan_item": it.name,
@@ -106,9 +135,14 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 				"baseline_state": it.baseline_state,
 				"title": title,
 				"owner_org_unit": it.owner_org_unit,
+				"owner_org_unit_label": _ou_label(it.owner_org_unit or ""),
 				"amount": amount,
 				"amount_display": _money(amount, plan_doc.currency or "KES"),
 				"category": category,
+				"method": method,
+				"schedule": schedule,
+				"validation_projection": validation,
+				"editor_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
 			}
 		)
 
@@ -116,6 +150,13 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	pe_label = (
 		frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "entity_name")
 		or plan_doc.procuring_entity
+	)
+	read_only = is_planning_read_only(actor)
+	validation = (version.validation_projection if version else "Not run") or "Not run"
+	issue_count = sum(
+		1
+		for i in items_out
+		if cstr(i.get("validation_projection")) in ("Needs attention", "Blocked")
 	)
 
 	return {
@@ -137,12 +178,27 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"item_count": len(items_out),
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, plan_doc.currency or "KES"),
-		"validation_projection": (version.validation_projection if version else "Not run")
-		or "Not run",
-		"departmental_contributions_label": "0 submitted",
+		"organisation_unit_count": len(ous),
+		"validation_projection": validation,
+		"issue_count": issue_count,
+		"issue_summary": (
+			f"{issue_count} item needs attention before departmental sign-off."
+			if issue_count == 1
+			else (
+				f"{issue_count} items need attention before departmental sign-off."
+				if issue_count
+				else ""
+			)
+		),
+		"departmental_contributions_label": "Preparing",
 		"items": items_out,
 		"empty": empty,
-		"can_add_demand": empty or bool(draft),
-		"add_demand_pending_gate": True,
+		# Add Demand may open a Draft successor when only Approved Vn exists (PLN-FR-018).
+		"can_add_demand": (not read_only)
+		and cstr(plan_doc.lifecycle_state) == "Open"
+		and (bool(draft) or bool(approved)),
+		"add_demand_pending_gate": False,
+		"read_only": read_only,
+		"can_submit_departmental": False,
 		"workspace_route": "/app/planning-workspace",
 	}

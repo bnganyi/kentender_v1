@@ -216,6 +216,15 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"select_filter_attr": "",
 		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui03-root'] h1",
 	},
+	{
+		"id": "procurement-plan-item-editor",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/plan_item_editor.js",
+		"desk_route": "procurement-plan-item-editor",
+		"primary_cta_testid": "kt-pln-ui06-save-return",
+		"select_filter_attr": "data-kt-pln-field",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui06-root'] h1",
+	},
 )
 
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"

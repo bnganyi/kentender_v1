@@ -194,10 +194,11 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 			const sel = select ? getComputedStyle(select) : null;
 			const h1cs = h1 ? getComputedStyle(h1) : null;
 			const sib = select?.nextElementSibling;
+			const glyph = sib ? (sib.textContent || "").trim() : "";
 			const materialChevron =
 				!!sib &&
 				sib.classList.contains("material-symbols-outlined") &&
-				(sib.textContent || "").trim() === "expand_more";
+				(glyph === "expand_more" || glyph === "arrow_drop_down");
 			return {
 				hasPrimary: !!primary,
 				hasSelect: !!select,

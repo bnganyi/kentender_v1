@@ -43,14 +43,10 @@ Open current plan
 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" aria-hidden="true">expand_more</span>
 </div>
 </div>
-<p class="font-body-sm text-body-sm text-on-surface-variant w-full" data-kt-pln-filter-helper>These controls filter the workspace; they do not assign ownership to new records.</p>
 </div>
 <div class="bg-status-exhausted/10 border border-status-exhausted/20 rounded-lg p-4 mb-section-gap hidden" data-testid="kt-pln-ui01-blocked" data-kt-pln-blocked hidden role="alert">
 <p class="font-headline-sm text-headline-sm text-status-exhausted mb-1">Planning workspace blocked</p>
 <p class="font-body-md text-body-md text-on-surface" data-kt-pln-blocked-msg>An authorised Procuring Entity assignment is required.</p>
-</div>
-<div class="bg-surface-container-low border border-subtle rounded-lg p-4 mb-section-gap hidden" data-testid="kt-pln-ui01-readonly" data-kt-pln-read-only-banner hidden role="status">
-<p class="font-body-md text-body-md text-on-surface">Read-only support view. Sample plans and work items are visible across authorised entities. Create, edit, submit, review, approve and tender actions stay blocked unless you hold a separate operational Planning assignment.</p>
 </div>
 <div class="bg-surface-container-lowest border border-subtle rounded-lg p-6 mb-section-gap shadow-sm" data-testid="kt-pln-ui01-plan-panel" data-kt-pln-plan-panel>
 <div class="flex justify-between items-start mb-6 border-b border-subtle pb-4">
@@ -83,9 +79,9 @@ Continue planning
 <p class="font-body-md text-body-md mt-1 text-secondary" data-kt-pln-plan-contributions data-kt-pln-plan-version>0 of 1 submitted</p>
 </div>
 </div>
-<p class="font-body-md text-body-md text-on-surface-variant mt-4 hidden" data-kt-pln-no-plan>
-No plan registered for this Procuring Entity and financial year.
-<button type="button" class="font-body-sm text-body-sm text-primary font-medium hover:underline ml-1" data-kt-pln-action="register" data-testid="kt-pln-ui01-register">Create annual plan</button>
+<p class="font-body-md text-body-md text-on-surface-variant mt-4 hidden" data-kt-pln-no-plan data-testid="kt-pln-ui01-no-plan">
+<span data-kt-pln-no-plan-msg>No plan registered for this Procuring Entity and financial year.</span>
+<button type="button" class="font-body-sm text-body-sm text-primary font-medium no-underline ml-1" data-kt-pln-action="register" data-testid="kt-pln-ui01-register">Create annual plan</button>
 </p>
 </div>
 <div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm overflow-hidden" data-testid="kt-pln-ui01-queue">

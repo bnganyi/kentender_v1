@@ -260,15 +260,16 @@ Show one selectable row:
 - Reserved
 
 Below the selected row, show a small read-only derived selection summary:
-- 1 Demand selected
-- KES 455,000,000 to add
-- Helper text: “Selecting this Demand includes its available Need Items and creates one Proposed Plan Item by default. The Plan Item editor confirms any aggregation or division decision.”
+- 1 Approved Demand selected
+- Need Item count and total available amount
+- Helper text: “This Demand will be added as one new Plan Item. You will complete its procurement method, schedule and other planning details next.”
+- When multiple Need Items are available, expose a quiet secondary action **Plan Need Items separately** (requires a division reason). Do **not** show packaging radios or aggregation controls. See Cursor Pack v1.3 Prompt 04 + approved `PLN-UI-04.html`.
 
 Footer actions:
 - Cancel
-- Add to plan
+- Add Demand and continue
 
-All Demand, amount, date and funding values are inherited and read-only. The only row interaction is selection. Do not display Draft, Returned, Rejected, Cancelled or fully planned Demands. Do not add editable Budget, Strategy or ownership fields. Do not expose allocation records or technical IDs.
+All Demand, amount, date and funding values are inherited and read-only. The only row interaction is single-select. Do not display Draft, Returned, Rejected, Cancelled or fully planned Demands. Do not add editable Budget, Strategy or ownership fields. Do not expose allocation records or technical IDs.
 ```
 
 ---
@@ -361,10 +362,9 @@ Main form section: Planning approach
 - Do not show an override-reason field in this state because the recommended method is confirmed
 - Arrangement: required select with “Single year” selected; other permitted value is “Multi-year”
 
-Subsection: Aggregation and indicative lotting
+Subsection: Source allocation and indicative lotting
 - Source allocation: read-only summary “1 Approved Demand · 2 Need Items · KES 455,000,000” with a quiet “View source breakdown” button
-- Aggregation decision: required radio group with “Combine in this Plan Item” selected and “Keep separate” as the other option
-- Aggregation reason: required multiline field prefilled with “Single integrated infrastructure requirement with common delivery and interoperability dependencies.”
+- Quiet exceptional action on Proposed items: **Add another approved Demand to this Plan Item** (opens UI-04 aggregate variant). Do **not** show Combine / Keep separate / aggregation reason in the normal editor (Pack v1.3).
 - Indicative lotting decision: required radio group with “Indicative lots expected” selected and “No lots expected” as the other option
 - Expected lot count: optional number field, left blank
 - Indicative lot basis: required multiline field prefilled with “Infrastructure supply, installation and support components.”

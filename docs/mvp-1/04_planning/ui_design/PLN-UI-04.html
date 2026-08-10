@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>GovProcure Alpha - Add Approved Demand</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -130,18 +128,18 @@
 <body class="bg-background text-on-surface font-body-md h-screen w-screen overflow-hidden flex font-sans antialiased">
 <!-- Background Layer (Screen 5 representation, dimmed) -->
 <div class="absolute inset-0 z-0">
-<img alt="Plan Builder Background" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6buBk_cP0J_ff7gpOZQQ5kP7LhvZdmSNnBaw5f6UPdA9a6FhPY7r_2Wv3UxdP67gjIKI6dHS06rjw2TpHRLpUDPgwJS926-nFiJgmJVHD0GB8eMcFkm-qNPvW_K1QynpJYo5PB1BJjurlLPVaY7dBr2rupjKCowh-q2edpj_AtAoD0uLA7KoM4QltX5d0dSK17DQiPYt3_f_0UjlG0Ducb7Y1QTIM7_TahRInhIIVe_dcyp9EPy1u"/>
+<img alt="Plan Builder Background" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6buBk_cP0J_ff7gpOZQQ5kP7LhvZdmSNnBaw5f6UPdA9a6FhPY7r_2Wv3UxdP67gjIKI6dHS06rjw2TpHRLpUDPgwJS926-nFiJgmJVHD0GB8eMcFkm-qNPvW_K1QynpJYo5PB1BJjurlLPVaY7dBr2rupjKCowh-q2edpj_AtAoD0uLA7KoM4QltX5d0dSK17DQiPYt3_f_0UjlG0Ducb7Y1QTIM7_TahRInhIIVe_dcyp9EPy1u">
 <!-- Overlay for Modal focus -->
 <div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm z-10 transition-opacity duration-300"></div>
 </div>
 <!-- Modal Dialog -->
 <div class="relative z-50 flex items-center justify-center w-full h-full p-4 sm:p-6 md:p-8">
 <!-- Modal Container -->
-<div aria-labelledby="modal-title" aria-modal="true" class="bg-surface-container-lowest rounded-xl border border-subtle shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden ring-1 ring-black/5" role="dialog">
+<div aria-labelledby="modal-title" aria-modal="true" class="bg-surface-container-lowest rounded-xl border border-subtle shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-full max-w-6xl max-h-[921px] flex flex-col overflow-hidden ring-1 ring-black/5" role="dialog">
 <!-- Header -->
 <div class="flex items-center justify-between px-6 py-5 border-b border-subtle bg-surface-container-lowest">
 <div>
-<h2 class="font-headline-md text-headline-md text-on-surface m-0" id="modal-title">Add approved demand</h2>
+<h2 class="font-headline-md text-headline-md text-on-surface m-0" id="modal-title">Add approved Demand</h2>
 <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Select from pre-approved strategic demands to allocate to this procurement plan.</p>
 </div>
 <button class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -157,12 +155,12 @@
 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 <span class="material-symbols-outlined text-outline text-sm">search</span>
 </div>
-<input class="block w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" placeholder="Search approved Demands" type="text"/>
+<input class="block w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" placeholder="Search approved Demands" type="text">
 </div>
 <!-- Org Unit Dropdown -->
 <div class="relative min-w-[180px]">
 <select class="block w-full pl-3 pr-10 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-shadow">
-<option value="">Organisation Unit</option>
+<option value="">All permitted units</option>
 <option value="ddhp">Directorate of Digital Health</option>
 </select>
 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
@@ -172,7 +170,7 @@
 <!-- Category Dropdown -->
 <div class="relative min-w-[150px]">
 <select class="block w-full pl-3 pr-10 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-shadow">
-<option value="">Category</option>
+<option value="">All categories</option>
 <option value="ict">ICT Infrastructure</option>
 </select>
 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
@@ -182,96 +180,42 @@
 </div>
 <!-- Toggle -->
 <div class="flex items-center gap-2 flex-shrink-0">
-<input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 transition-colors" id="show-remaining" type="checkbox"/>
-<label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer select-none" for="show-remaining">Show remaining planning availability only</label>
+<input checked="checked" class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 transition-colors" id="show-remaining" type="checkbox" placeholder="on" value="">
+<label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer select-none" for="show-remaining">Available to plan only</label>
 </div>
 </div>
 <!-- Table Content -->
 <div class="flex-1 overflow-x-auto overflow-y-auto bg-surface-container-lowest custom-scrollbar relative">
 <table class="w-full text-left border-collapse min-w-[1000px]">
-<thead class="sticky top-0 bg-surface-container-lowest shadow-[0_1px_0_theme('colors.border-subtle')] z-10">
-<tr>
-<th class="pl-6 pr-3 py-3 w-10" scope="col">
-<input aria-label="Select all rows" class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2" type="checkbox"/>
-</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Demand</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Organisation Unit</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Approved amount</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Already planned</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Available to plan</th>
-<th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Required by</th>
-<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" scope="col">Funding</th>
-</tr>
-</thead>
+<thead class="sticky top-0 bg-surface-container-lowest shadow-[0_1px_0_theme('colors.border-subtle')] z-10"><tr><th class="pl-6 pr-3 py-3 w-[48px] text-center" scope="col"><span class="sr-only">Select</span></th><th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-left" scope="col">Demand</th><th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-left" scope="col">Organisation Unit</th><th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Approved value</th><th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right" scope="col">Available to plan</th><th class="px-3 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-left" scope="col">Required by</th><th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-left" scope="col">Funding status</th></tr></thead>
 <tbody class="divide-y divide-subtle">
 <!-- Selectable Row -->
-<tr class="hover:bg-surface-container-low transition-colors group relative cursor-pointer bg-primary/5">
-<!-- Selection Highlight (Left Border) -->
-<td aria-hidden="true" class="absolute inset-y-0 left-0 w-1 bg-primary hidden group-hover:block"></td>
-<td class="pl-6 pr-3 py-4 w-10 align-top">
-<input aria-label="Select demand DMD-MOH-2027-014" checked="" class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 mt-1" type="checkbox"/>
-</td>
-<td class="px-3 py-4 align-top max-w-xs">
-<div class="font-body-md text-body-md text-on-surface font-medium leading-tight mb-1 group-hover:text-primary transition-colors">National digital health infrastructure upgrade</div>
-<div class="font-data-md text-[13px] text-on-surface-variant tracking-tight">DMD-MOH-2027-014</div>
-</td>
-<td class="px-3 py-4 align-top">
-<div class="font-body-sm text-body-sm text-on-surface truncate max-w-[180px]" title="Directorate of Digital Health and Policy">Directorate of Digital Health and Policy</div>
-</td>
-<td class="px-3 py-4 align-top text-right">
-<div class="font-data-md text-data-md text-on-surface">KES 455,000,000</div>
-</td>
-<td class="px-3 py-4 align-top text-right">
-<div class="font-data-md text-data-md text-on-surface-variant">KES 0</div>
-</td>
-<td class="px-3 py-4 align-top text-right">
-<div class="font-data-md text-data-md text-on-surface font-medium">KES 455,000,000</div>
-</td>
-<td class="px-3 py-4 align-top">
-<div class="font-body-sm text-body-sm text-on-surface whitespace-nowrap">31 March 2028</div>
-</td>
-<td class="px-6 py-4 align-top">
-<!-- Status Chip -->
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-[11px] font-bold tracking-wide uppercase bg-status-reserved/10 text-status-reserved border border-status-reserved/20">
-                                    Reserved
-                                </span>
-</td>
-</tr>
+<tr class="hover:bg-surface-container-low transition-colors group relative cursor-pointer bg-primary/5"><td aria-hidden="true" class="absolute inset-y-0 left-0 w-1 bg-primary group-hover:block"></td><td class="pl-6 pr-3 py-4 w-[48px] align-top text-center"><input checked="" class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2 mt-1" name="demand-select" type="checkbox"></td><td class="px-3 py-4 align-top max-w-xs text-left"><div class="font-headline-sm text-body-md text-on-surface font-medium leading-tight mb-1 group-hover:text-primary transition-colors">National digital health infrastructure upgrade</div><div class="font-data-md text-[13px] text-on-surface-variant tracking-tight">DMD-MOH-2027-014</div></td><td class="px-3 py-4 align-top text-left"><div class="font-body-sm text-body-sm text-on-surface truncate max-w-[180px]" title="Directorate of Digital Health and Policy">Directorate of Digital Health and Policy</div></td><td class="px-3 py-4 align-top text-right"><div class="font-data-md text-data-md text-on-surface">KES 455,000,000 <span class="text-[11px] text-on-surface-variant block">approved</span></div></td><td class="px-3 py-4 align-top text-right"><div class="font-data-md text-data-md text-on-surface font-medium">KES 455,000,000 <span class="text-[11px] text-on-surface-variant block">available</span></div></td><td class="px-3 py-4 align-top text-left"><div class="font-body-sm text-body-sm text-on-surface whitespace-nowrap">31 March 2028</div></td><td class="px-6 py-4 align-top text-left"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-[11px] font-bold tracking-wide uppercase bg-status-reserved/10 text-status-reserved border border-status-reserved/20">Reserved</span></td></tr>
 <!-- Empty rows for structural intent to show table continues if populated -->
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="pl-6 pr-3 py-4 w-10 align-top">
-<input aria-label="Disabled row" class="w-4 h-4 text-on-surface-variant/30 bg-surface border-outline-variant/50 rounded" disabled="" type="checkbox"/>
-</td>
-<td class="px-3 py-4 text-center" colspan="7">
-<span class="font-body-sm text-on-surface-variant italic">End of available demands based on current filters.</span>
-</td>
-</tr>
+
 </tbody>
 </table>
 </div>
 <!-- Footer & Selection Summary -->
 <div class="px-6 py-4 border-t border-subtle bg-surface-container-lowest flex items-center justify-between">
 <!-- Summary -->
-<div class="flex items-center gap-4">
-<div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-data-md text-sm">
-                        1
-                    </div>
-<div>
-<div class="font-body-sm text-body-sm text-on-surface font-medium">Demand selected</div>
-<div class="font-data-md text-[13px] text-on-surface-variant"><span class="text-on-surface font-semibold">KES 455,000,000</span> to add</div>
-</div>
-</div>
+<div class="flex flex-col gap-3 flex-1 mr-8"><div class="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 bg-surface-container-low rounded-lg border border-subtle"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-sm">check_circle</span><span class="font-body-sm font-semibold">1 Approved Demand selected</span></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-on-surface-variant text-sm">list_alt</span><span class="font-body-sm">2 Need Items</span></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-on-surface-variant text-sm">payments</span><span class="font-data-md text-sm">Total KES 455,000,000</span></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-sm">verified</span><span class="font-body-sm">Funding reserved</span></div><button class="text-primary font-label-caps text-[11px] hover:underline ml-auto">View source breakdown</button></div><div class="flex items-center justify-between px-1"><p class="font-body-sm text-[13px] text-on-surface-variant max-w-2xl">This Demand will be added as one new Plan Item. You will complete its procurement method, schedule and other planning details next.</p><button class="text-primary font-label-caps text-[11px] hover:underline italic">Plan Need Items separately</button></div></div>
 <!-- Actions -->
 <div class="flex items-center gap-3">
 <button class="px-4 py-2 border border-subtle rounded-lg font-label-caps text-label-caps text-primary hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-colors bg-surface-container-lowest" type="button">
                         Cancel
                     </button>
-<button class="px-4 py-2 rounded-lg font-label-caps text-label-caps bg-primary text-on-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 shadow-sm flex items-center gap-2 transition-colors" type="button">
-<span class="material-symbols-outlined text-[18px]">add</span>
-                        Add to plan
-                    </button>
+<button class="px-4 py-2 rounded-lg font-label-caps text-label-caps bg-primary text-on-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 shadow-sm flex items-center gap-2 transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">add</span> Add Demand and continue</button>
 </div>
 </div>
 </div>
 </div>
+
+
+
+
+
+
+
+
 </body></html>

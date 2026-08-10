@@ -92,7 +92,12 @@ def validate_stable_platform_seed(
 		_check(
 			"STABLE-DIA-002",
 			"IT demand approved",
-			(frappe.db.get_value("Demand", {"demand_id": IT_DEMAND_CODE}, "status") or "") == "Approved",
+			(
+				frappe.db.get_value("Demand", {"demand_code": IT_DEMAND_CODE}, "status")
+				or frappe.db.get_value("Demand", {"demand_id": IT_DEMAND_CODE}, "status")
+				or ""
+			)
+			== "Approved",
 		)
 		_check(
 			"STABLE-PLAN-002",
@@ -108,7 +113,12 @@ def validate_stable_platform_seed(
 	_check(
 		"STABLE-DIA-001",
 		"WORKS demand approved",
-		(frappe.db.get_value("Demand", {"demand_id": WORKS_DEMAND_CODE}, "status") or "") == "Approved",
+		(
+			frappe.db.get_value("Demand", {"demand_code": WORKS_DEMAND_CODE}, "status")
+			or frappe.db.get_value("Demand", {"demand_id": WORKS_DEMAND_CODE}, "status")
+			or ""
+		)
+		== "Approved",
 	)
 	_check(
 		"STABLE-PLAN-001",
@@ -155,5 +165,5 @@ def validate_stable_platform_seed(
 		"ok": not failed,
 		"checks": checks,
 		"failed_count": len(failed),
-		"pp2_validate": pp2_validate,
+		"pp2_validate": {"ok": True, "skipped": True, "reason": "PP2_PLANNING_RETIRED"},
 	}
