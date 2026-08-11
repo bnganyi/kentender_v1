@@ -22,6 +22,137 @@
 		return frappe.utils.escape_html(String(s == null ? "" : s));
 	}
 
+	/** Stitch semantic tones: available=green, reserved=amber, exhausted=red, primary=blue, neutral=grey. */
+	function validationTone(value) {
+		var s = String(value || "")
+			.trim()
+			.toLowerCase();
+		if (s === "ready") {
+			return "available";
+		}
+		if (s === "blocked") {
+			return "exhausted";
+		}
+		// Needs attention, Stale, Not run — warning family (PLN-UI-01 / UI-05).
+		return "reserved";
+	}
+
+	function lifecycleTone(value) {
+		var s = String(value || "")
+			.trim()
+			.toLowerCase();
+		if (s === "open") {
+			return "primary";
+		}
+		if (s === "in review") {
+			return "reserved";
+		}
+		if (s === "approved" || s === "active") {
+			return "available";
+		}
+		// Draft, Returned, Closed, Superseded, empty — neutral chip (Stitch Draft).
+		return "neutral";
+	}
+
+	/** Dept. contribution summary — same Active/Submitted tones as Budget/Strategy. */
+	function contributionTone(label) {
+		var s = String(label || "")
+			.trim()
+			.toLowerCase();
+		if (s === "submitted") {
+			return "available";
+		}
+		var m = s.match(/^(\d+)\s+of\s+(\d+)\s+submitted$/);
+		if (m) {
+			var done = parseInt(m[1], 10);
+			var total = parseInt(m[2], 10);
+			if (total > 0 && done >= total) {
+				return "available";
+			}
+			return "reserved";
+		}
+		if (/awaiting|preparing/.test(s)) {
+			return "reserved";
+		}
+		return "neutral";
+	}
+
+	function statusPillClasses(tone) {
+		if (tone === "available") {
+			return "bg-status-available/10 text-status-available border-status-available/20";
+		}
+		if (tone === "reserved") {
+			return "bg-status-reserved/10 text-status-reserved border-status-reserved/20";
+		}
+		if (tone === "exhausted") {
+			return "bg-status-exhausted/10 text-status-exhausted border-status-exhausted/20";
+		}
+		if (tone === "primary") {
+			return "bg-primary/10 text-primary border-primary/20";
+		}
+		return "bg-surface-variant text-on-surface border-outline-variant";
+	}
+
+	function statusTextClass(tone) {
+		if (tone === "available") {
+			return "text-status-available";
+		}
+		if (tone === "reserved") {
+			return "text-status-reserved";
+		}
+		if (tone === "exhausted") {
+			return "text-status-exhausted";
+		}
+		if (tone === "primary") {
+			return "text-primary";
+		}
+		return "text-on-surface";
+	}
+
+	function validationIcon(value, tone) {
+		var s = String(value || "")
+			.trim()
+			.toLowerCase();
+		if (tone === "available") {
+			return "check_circle";
+		}
+		if (tone === "exhausted") {
+			return "error";
+		}
+		if (s === "not run" || s === "stale") {
+			return "pending";
+		}
+		return "error";
+	}
+
+	function validationPillHtml(value) {
+		var label = String(value || "Not run");
+		var tone = validationTone(label);
+		var icon = validationIcon(label, tone);
+		return (
+			'<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-caps text-label-caps border whitespace-nowrap ' +
+			statusPillClasses(tone) +
+			'">' +
+			'<span class="material-symbols-outlined text-[12px]" aria-hidden="true">' +
+			icon +
+			"</span>" +
+			esc(label) +
+			"</div>"
+		);
+	}
+
+	function contributionPillHtml(label) {
+		var text = String(label || "Preparing");
+		var tone = contributionTone(text);
+		return (
+			'<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-caps text-label-caps border whitespace-nowrap ' +
+			statusPillClasses(tone) +
+			'">' +
+			esc(text) +
+			"</span>"
+		);
+	}
+
 	function fillSelect($el, options, selected) {
 		var html = (options || [])
 			.map(function (o) {
@@ -111,17 +242,45 @@
 			if (plan) {
 				setHidden($noPlan, true);
 				$root.find("[data-kt-pln-plan-title]").text(plan.title || plan.plan_code || plan.plan);
-				$root.find("[data-kt-pln-plan-lifecycle]").text(plan.lifecycle_state || "—");
+				var life = plan.lifecycle_state || "—";
+				var lifeTone = lifecycleTone(life);
+				$root
+					.find("[data-kt-pln-plan-lifecycle]")
+					.text(life)
+					.attr(
+						"class",
+						"font-label-caps text-label-caps px-2 py-1 rounded-full border " +
+							statusPillClasses(lifeTone)
+					);
 				$root.find("[data-kt-pln-plan-items]").text(String(plan.item_count || 0));
 				$root.find("[data-kt-pln-plan-total]").text(plan.planned_total_display || "KES 0");
+				var contribDisp =
+					plan.contributions_display ||
+					plan.version_label ||
+					"0 of 1 submitted";
 				$root
 					.find("[data-kt-pln-plan-contributions], [data-kt-pln-plan-version]")
-					.text(
-						plan.contributions_display ||
-							plan.version_label ||
-							"0 of 1 submitted"
+					.text(contribDisp)
+					.attr(
+						"class",
+						"font-body-md text-body-md mt-1 " +
+							statusTextClass(contributionTone(contribDisp))
 					);
-				$root.find("[data-kt-pln-plan-validation]").text(plan.validation_projection || "Not run");
+				var planVal = plan.validation_projection || "Not run";
+				var planValTone = validationTone(planVal);
+				var planValColor =
+					planValTone === "available"
+						? "text-status-available"
+						: planValTone === "exhausted"
+							? "text-status-exhausted"
+							: "text-status-reserved";
+				$root
+					.find("[data-kt-pln-plan-validation]")
+					.text(planVal)
+					.attr("class", "font-body-sm text-body-sm " + planValColor);
+				$root
+					.find("[data-kt-pln-plan-validation-label]")
+					.attr("class", "font-label-caps text-label-caps mb-1 uppercase " + planValColor);
 				$root.attr("data-kt-pln-plan", plan.plan || "");
 				$root.attr("data-kt-pln-builder-route", plan.builder_route || "");
 				setHidden($open, false);
@@ -137,13 +296,23 @@
 				setHidden($root.find('[data-testid="kt-pln-ui01-header-create"]'), true);
 			} else {
 				$root.find("[data-kt-pln-plan-title]").text(__("No annual plan for this context"));
-				$root.find("[data-kt-pln-plan-lifecycle]").text("—");
+				$root
+					.find("[data-kt-pln-plan-lifecycle]")
+					.text("—")
+					.attr(
+						"class",
+						"font-label-caps text-label-caps px-2 py-1 rounded-full border " +
+							statusPillClasses("neutral")
+					);
 				$root.find("[data-kt-pln-plan-items]").text("0");
 				$root.find("[data-kt-pln-plan-total]").text("KES 0");
 				$root
 					.find("[data-kt-pln-plan-contributions], [data-kt-pln-plan-version]")
 					.text("—");
-				$root.find("[data-kt-pln-plan-validation]").text("Not run");
+				$root
+					.find("[data-kt-pln-plan-validation]")
+					.text("Not run")
+					.attr("class", "font-body-sm text-body-sm text-status-reserved");
 				$root.removeAttr("data-kt-pln-plan");
 				$root.removeAttr("data-kt-pln-builder-route");
 
@@ -535,6 +704,26 @@
 		return $host.find("[data-kt-pln-add-demand-dialog]");
 	}
 
+	function ensureContributionDrawer($root) {
+		var $existing = $root.find("[data-kt-pln-contribution-drawer]");
+		if ($existing.length) {
+			return $existing.first();
+		}
+		var $host = $root.find("[data-kt-pln-contribution-host]");
+		if (!$host.length) {
+			$host = $('<div data-kt-pln-contribution-host></div>').appendTo($root);
+		}
+		var html =
+			kentender_procurement.ui_fixtures &&
+			typeof kentender_procurement.ui_fixtures.planning_contribution_drawer === "function"
+				? kentender_procurement.ui_fixtures.planning_contribution_drawer()
+				: "";
+		if (html) {
+			$host.html(html);
+		}
+		return $host.find("[data-kt-pln-contribution-drawer]");
+	}
+
 	function bindPlanningBuilder($root, opts) {
 		if (!$root || !$root.length) {
 			return;
@@ -556,11 +745,92 @@
 		}
 
 		var $dialog = ensureAddDemandDialog($root);
+		var $contrib = ensureContributionDrawer($root);
 		var selectedId = "";
 		var lastEligRows = [];
 		var dialogMode = "add"; // add | aggregate
 		var aggregatePlanItem = "";
 		var separateIntent = false;
+		var contribOu = "";
+
+		function paintContribution(dto) {
+			contribOu = dto.organisation_unit || "";
+			$contrib.find("[data-kt-pln-contrib-ou]").text(dto.organisation_unit_label || "—");
+			$contrib.find("[data-kt-pln-contrib-fy]").text(dto.financial_year || "—");
+			$contrib.find("[data-kt-pln-contrib-item-count]").text(String(dto.item_count || 0));
+			$contrib.find("[data-kt-pln-contrib-total]").text(dto.planned_total_display || "KES 0");
+			var val = dto.validation_projection || "Not run";
+			$contrib.find("[data-kt-pln-contrib-validation-label]").text(val);
+			var $valChip = $contrib.find("[data-kt-pln-contrib-validation]");
+			$valChip
+				.toggleClass("bg-status-available/10 text-status-available", val === "Ready")
+				.toggleClass("bg-status-reserved/10 text-status-reserved", val !== "Ready");
+			var reason = dto.return_reason || "";
+			setHidden($contrib.find("[data-kt-pln-contrib-return-reason]"), !reason);
+			if (reason) {
+				$contrib.find("[data-kt-pln-contrib-return-reason]").text(reason);
+			}
+			if (dto.declaration_text) {
+				$contrib.find("[data-kt-pln-contrib-declaration-label]").text(dto.declaration_text);
+			}
+			$contrib.find('[data-kt-pln-field="submission_note"]').val(dto.submission_note || "");
+			$contrib.find('[data-kt-pln-field="declaration"]').prop("checked", false);
+			var body = (dto.items || [])
+				.map(function (it) {
+					var iv = it.validation_projection || "Not run";
+					var ready = iv === "Ready";
+					return (
+						'<div class="p-3 hover:bg-surface-container-lowest transition-colors flex flex-col gap-1">' +
+						'<div class="flex justify-between items-start gap-4">' +
+						'<p class="font-body-sm text-body-sm text-on-surface font-medium whitespace-normal flex-1">' +
+						esc(it.title || it.plan_item_code || "") +
+						"</p>" +
+						'<p class="font-data-md text-data-md text-on-surface whitespace-nowrap">' +
+						esc(it.amount_display || "") +
+						"</p></div>" +
+						'<div class="flex items-center justify-between mt-1">' +
+						'<span class="font-body-sm text-body-sm text-on-surface-variant">' +
+						esc(it.method || "—") +
+						"</span>" +
+						'<span class="inline-flex items-center gap-1 font-body-sm text-body-sm ' +
+						(ready ? "text-status-available" : "text-status-reserved") +
+						'">' +
+						(ready
+							? '<span class="material-symbols-outlined text-[14px]" aria-hidden="true">check</span> '
+							: "") +
+						esc(iv) +
+						"</span></div></div>"
+					);
+				})
+				.join("");
+			if (!body) {
+				body =
+					'<div class="p-3 font-body-sm text-body-sm text-on-surface-variant">' +
+					__("No Plan Items for this Organisation Unit.") +
+					"</div>";
+			}
+			$contrib.find("[data-kt-pln-contrib-items]").html(body);
+			setHidden($contrib.find('[data-kt-pln-action="contrib-confirm"]'), !dto.can_submit);
+			$contrib
+				.find('[data-kt-pln-field="declaration"], [data-kt-pln-field="submission_note"]')
+				.prop("disabled", !dto.can_submit);
+		}
+
+		function openContributionDrawer() {
+			if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
+				window.ktFormErrors.clear($contrib);
+			}
+			setHidden($contrib, false);
+			$contrib.removeClass("hidden").removeAttr("hidden");
+			return call("get_departmental_contribution", { plan: plan }).then(function (dto) {
+				paintContribution(dto || {});
+			});
+		}
+
+		function closeContributionDrawer() {
+			setHidden($contrib, true);
+			$contrib.addClass("hidden").attr("hidden", "hidden");
+		}
 
 		function formatKes(n, currency) {
 			var cur = currency || "KES";
@@ -809,29 +1079,65 @@
 		function paintBuilder(dto) {
 			$root.attr("data-kt-pln-live", "1");
 			$root.attr("data-kt-pln-plan", dto.plan || plan);
-			$root
-				.find("[data-kt-pln-builder-pe-crumb]")
-				.text(dto.procuring_entity_label || dto.procuring_entity || "—");
-			$root.find("[data-kt-pln-builder-fy-crumb]").text(dto.financial_year || "—");
 			$root.find("[data-kt-pln-builder-title]").text(dto.title || dto.plan_code || "Plan builder");
-			$root.find("[data-kt-pln-builder-lifecycle]").text(dto.lifecycle_state || "Draft");
-			$root.find("[data-kt-pln-builder-version]").text(dto.version_label || "Version 1");
+			// Stitch PLN-UI-05: Draft chip + "Version N" (not plan lifecycle OPEN).
+			$root
+				.find("[data-kt-pln-builder-version]")
+				.text(dto.version_number_label || "Version 1");
 			if (dto.period_start && dto.period_end) {
 				$root
 					.find("[data-kt-pln-builder-period]")
 					.text("Planning period " + dto.period_start + " to " + dto.period_end);
 			}
-			$root.find("[data-kt-pln-builder-items]").text(String(dto.item_count || 0));
-			$root.find("[data-kt-pln-builder-total]").text(dto.planned_total_display || "KES 0");
+			$root.attr("data-kt-pln-concurrency", dto.concurrency_token || "");
+			// Summary metrics — PLN-UI-01 uses primary for counts/money; status chips use semantic tones.
+			$root
+				.find("[data-kt-pln-builder-items]")
+				.text(String(dto.item_count || 0))
+				.attr("class", "font-headline-sm text-headline-sm text-primary");
+			$root
+				.find("[data-kt-pln-builder-total]")
+				.text(dto.planned_total_display || "KES 0")
+				.attr("class", "font-data-lg text-data-lg text-primary");
 			$root
 				.find("[data-kt-pln-builder-org-units]")
-				.text(String(dto.organisation_unit_count != null ? dto.organisation_unit_count : 0));
+				.text(String(dto.organisation_unit_count != null ? dto.organisation_unit_count : 0))
+				.attr("class", "font-headline-sm text-headline-sm text-primary");
+			var contribLabel = dto.departmental_contributions_label || "Preparing";
+			var contribTone = contributionTone(contribLabel);
 			$root
 				.find("[data-kt-pln-builder-contributions]")
-				.text(dto.departmental_contributions_label || "Preparing");
+				.attr(
+					"class",
+					"inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-caps text-label-caps border whitespace-nowrap " +
+						statusPillClasses(contribTone)
+				)
+				.text(contribLabel);
+			var valProj = String(dto.validation_projection || "Not run");
+			var valTone = validationTone(valProj);
 			$root
 				.find("[data-kt-pln-builder-validation]")
-				.text(dto.validation_projection || "Not run");
+				.attr(
+					"class",
+					"inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-caps text-label-caps border " +
+						statusPillClasses(valTone)
+				)
+				.html(
+					'<span class="material-symbols-outlined text-[14px]" aria-hidden="true">' +
+						validationIcon(valProj, valTone) +
+						"</span>" +
+						esc(valProj)
+				);
+			// Version status chip (Draft) stays neutral; plan Open is painted on workspace.
+			var verStatus = String(dto.version_status || "Draft");
+			$root
+				.find("[data-kt-pln-builder-lifecycle]")
+				.text(verStatus)
+				.attr(
+					"class",
+					"px-2 py-1 rounded-sm font-label-caps text-label-caps border " +
+						statusPillClasses(lifecycleTone(verStatus))
+				);
 
 			var empty = !!dto.empty;
 			setHidden($root.find("[data-kt-pln-empty-state]"), !empty);
@@ -840,55 +1146,99 @@
 			setHidden($root.find('[data-testid="kt-pln-ui03-filters"]'), !empty);
 			setHidden($root.find("[data-kt-pln-builder-period]"), !empty);
 			$root.find("[data-kt-pln-builder-period-sep]").toggle(!!empty);
+			// Stitch PLN-UI-05: amber issue strip only when items need attention.
 			var showIssues = !empty && (dto.issue_count || 0) > 0;
-			setHidden($root.find("[data-kt-pln-issue-strip]"), !showIssues);
+			var $strip = $root.find("[data-kt-pln-issue-strip]");
+			setHidden($strip, !showIssues);
 			if (showIssues) {
 				$root
 					.find("[data-kt-pln-issue-copy], [data-kt-pln-issue-summary]")
-					.text(dto.issue_summary || __("1 item needs attention before departmental sign-off."));
+					.text(
+						dto.issue_summary ||
+							__("1 item needs attention before departmental sign-off.")
+					);
+				setHidden($root.find("[data-kt-pln-issue-action]"), false);
 			}
 			setHidden($root.find('[data-kt-pln-action="add-demand"]'), !dto.can_add_demand);
 
-			// Footer: Stitch UI-03 disables both; UI-05 enables Run validation.
+			// Footer: Stitch UI-03 disables both; UI-05 enables Run validation / sign-off when ready.
 			var $run = $root.find('[data-kt-pln-action="run-validation"]');
+			var $submitDept = $root.find('[data-kt-pln-action="submit-dept"]');
 			$run.prop("disabled", empty);
 			if (empty) {
 				$run.addClass("opacity-50 cursor-not-allowed");
-				$root
-					.find('[data-kt-pln-action="submit-dept"]')
-					.contents()
-					.filter(function () {
-						return this.nodeType === 3;
-					})
-					.first()
-					.replaceWith("Submit for departmental sign-off");
+				$submitDept
+					.prop("disabled", true)
+					.attr("title", __("Add Plan Items before departmental sign-off."))
+					.addClass(
+						"opacity-50 cursor-not-allowed bg-surface-variant text-on-surface-variant"
+					)
+					.removeClass("bg-primary text-on-primary");
+				$submitDept.html(
+					__("Submit for sign-off") +
+						' <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>'
+				);
 			} else {
 				$run.removeClass("opacity-50 cursor-not-allowed");
-				$root.find('[data-testid="kt-pln-ui05-submit-dept"]').each(function () {
+				var canSubmitReview = !!dto.can_submit_for_review;
+				var canSubmit = !!dto.can_submit_departmental;
+				var lockHint = canSubmit
+					? ""
+					: String(dto.next_step_message || "") ||
+						__(
+							"Head of User Department submits departmental contribution when Plan Items are Ready."
+						);
+				$submitDept.each(function () {
 					var $btn = $(this);
+					if (canSubmitReview) {
+						$btn
+							.attr("data-kt-pln-action", "submit-for-review")
+							.attr("data-testid", "kt-pln-ui05-submit-review")
+							.html(__("Submit for review"))
+							.prop("disabled", false)
+							.attr("title", "")
+							.attr("aria-label", __("Submit for review"))
+							.removeClass(
+								"opacity-50 cursor-not-allowed bg-surface-variant text-on-surface-variant"
+							)
+							.addClass("bg-primary text-on-primary cursor-pointer");
+						return;
+					}
+					$btn
+						.attr("data-kt-pln-action", "submit-dept")
+						.attr("data-testid", "kt-pln-ui05-submit-dept");
 					$btn.html(
 						__("Submit for sign-off") +
-							' <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>'
+							(canSubmit
+								? ""
+								: ' <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>')
 					);
+					$btn.prop("disabled", !canSubmit);
+					$btn.attr("title", canSubmit ? "" : lockHint);
+					$btn.attr(
+						"aria-label",
+						canSubmit ? __("Submit for sign-off") : lockHint
+					);
+					if (canSubmit) {
+						$btn
+							.removeClass(
+								"opacity-50 cursor-not-allowed bg-surface-variant text-on-surface-variant"
+							)
+							.addClass("bg-primary text-on-primary cursor-pointer");
+					} else {
+						$btn
+							.addClass(
+								"opacity-50 cursor-not-allowed bg-surface-variant text-on-surface-variant"
+							)
+							.removeClass("bg-primary text-on-primary");
+					}
 				});
 			}
 
 			if (!empty) {
 				var body = (dto.items || [])
 					.map(function (it) {
-						var val = it.validation_projection || "Not run";
-						var needs = /attention|needs/i.test(val);
-						var pill =
-							'<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-caps text-label-caps border whitespace-nowrap ' +
-							(needs
-								? "bg-status-reserved/10 text-status-reserved border-status-reserved/20"
-								: "bg-surface-variant text-on-surface-variant border-outline-variant") +
-							'">' +
-							(needs
-								? '<span class="material-symbols-outlined text-[12px]" aria-hidden="true">error</span>'
-								: "") +
-							esc(val) +
-							"</div>";
+						var pill = validationPillHtml(it.validation_projection || "Not run");
 						return (
 							'<tr class="hover:bg-surface-bright transition-colors group" data-kt-pln-item-row data-plan-item="' +
 							esc(it.plan_item) +
@@ -916,7 +1266,7 @@
 							'<td class="p-4 align-top">' +
 							pill +
 							"</td>" +
-							'<td class="p-4 align-top text-center"><button type="button" class="text-primary hover:text-primary-container font-medium no-underline" data-kt-pln-action="continue-item" data-plan-item="' +
+							'<td class="p-4 align-top text-center"><button type="button" class="text-primary hover:text-primary-container font-medium decoration-primary/30 hover:decoration-primary transition-all" data-kt-pln-action="continue-item" data-plan-item="' +
 							esc(it.plan_item) +
 							'" data-testid="kt-pln-ui05-row-continue"><div class="flex flex-col items-center gap-1"><span>' +
 							__("Continue") +
@@ -1123,6 +1473,97 @@
 				return refresh();
 			});
 		});
+		$root.on("click.ktPlnBld", '[data-kt-pln-action="submit-dept"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			openContributionDrawer().catch(function (err) {
+				frappe.show_alert({
+					message: (err && err.message) || __("Could not open contribution drawer"),
+					indicator: "red",
+				});
+			});
+		});
+		$root.on("click.ktPlnBld", '[data-kt-pln-action="submit-for-review"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			var token = $root.attr("data-kt-pln-concurrency") || "";
+			call("submit_plan_for_review", {
+				plan: plan,
+				concurrency_token: token || undefined,
+			})
+				.then(function (res) {
+					if (!res || res.ok === false) {
+						frappe.show_alert({
+							message:
+								(res && res.errors && res.errors.form) ||
+								__("Could not submit for review"),
+							indicator: "red",
+						});
+						return;
+					}
+					frappe.show_alert({
+						message: __("Plan submitted for review"),
+						indicator: "green",
+					});
+					frappe.set_route("procurement-plan-review", {
+						plan: plan,
+					});
+					window.location.href =
+						"/app/procurement-plan-review?plan=" + encodeURIComponent(plan);
+				})
+				.catch(function (err) {
+					frappe.show_alert({
+						message: (err && err.message) || __("Could not submit for review"),
+						indicator: "red",
+					});
+				});
+		});
+		$root.on(
+			"click.ktPlnBld",
+			'[data-kt-pln-action="contrib-close"], [data-kt-pln-action="contrib-cancel"]',
+			function (e) {
+				e.preventDefault();
+				closeContributionDrawer();
+			}
+		);
+		$root.on("click.ktPlnBld", '[data-kt-pln-action="contrib-confirm"]', function (e) {
+			e.preventDefault();
+			if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
+				window.ktFormErrors.clear($contrib);
+			}
+			var declared = $contrib.find('[data-kt-pln-field="declaration"]').is(":checked")
+				? 1
+				: 0;
+			var note = $contrib.find('[data-kt-pln-field="submission_note"]').val() || "";
+			call("submit_departmental_contribution", {
+				plan: plan,
+				organisation_unit: contribOu || "",
+				declaration: declared,
+				submission_note: note,
+			}).then(function (res) {
+				if (!res || res.ok === false) {
+					if (
+						res &&
+						res.errors &&
+						window.ktFormErrors &&
+						typeof window.ktFormErrors.show === "function"
+					) {
+						window.ktFormErrors.show($contrib, res.errors);
+					}
+					return;
+				}
+				closeContributionDrawer();
+				frappe.show_alert({
+					message: __("Departmental contribution submitted"),
+					indicator: "green",
+				});
+				return refresh();
+			});
+		});
 		$root.on("click.ktPlnBld", '[data-kt-pln-action="back-workspace"]', function (e) {
 			e.preventDefault();
 			frappe.set_route("planning-workspace");
@@ -1188,7 +1629,66 @@
 					fields[name] = $(this).val();
 				}
 			});
+			var groups = [];
+			$root.find("[data-kt-pln-pref-group]:checked").each(function () {
+				groups.push($(this).val());
+			});
+			var scheme = cstr(fields.preference_reservation_scheme || "");
+			var assignedVisible = !$root.find("[data-kt-pln-pref-assigned]").hasClass("hidden") &&
+				!$root.find("[data-kt-pln-pref-assigned]").attr("hidden");
+			if (!scheme || !assignedVisible) {
+				fields.preference_reservation_scheme = "";
+				fields.reservation_scope = "";
+				fields.eligible_groups = [];
+				fields.planned_reserved_value = 0;
+			} else {
+				fields.eligible_groups = groups;
+				var rawVal = String(fields.planned_reserved_value || "").replace(/,/g, "");
+				fields.planned_reserved_value = rawVal;
+			}
 			return fields;
+		}
+
+		function setPrefAssigned(assigned) {
+			setHidden($root.find("[data-kt-pln-pref-none]"), !!assigned);
+			setHidden($root.find("[data-kt-pln-pref-assigned]"), !assigned);
+		}
+
+		function paintPreference(dto) {
+			var pref = dto.preference_reservation || {};
+			var assigned = !!pref.assigned;
+			setPrefAssigned(assigned);
+			$root
+				.find('[data-kt-pln-field="preference_reservation_scheme"]')
+				.val(pref.scheme || "");
+			$root.find('[name="reservation_scope"]').prop("checked", false);
+			if (pref.reservation_scope) {
+				$root
+					.find('[name="reservation_scope"][value="' + pref.reservation_scope + '"]')
+					.prop("checked", true);
+			}
+			var groups = pref.eligible_groups || [];
+			$root.find("[data-kt-pln-pref-group]").each(function () {
+				$(this).prop("checked", groups.indexOf($(this).val()) >= 0);
+			});
+			var val = pref.planned_reserved_value;
+			$root
+				.find('[data-kt-pln-field="planned_reserved_value"]')
+				.val(
+					val
+						? Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 })
+						: ""
+				);
+			$root
+				.find("[data-kt-pln-pref-contribution-note]")
+				.text(
+					pref.contribution_note ||
+						"This contributes to the Plan’s calculated reservation coverage. It is a planned set-aside, not an award."
+				);
+			var scopeLots = cstr(pref.reservation_scope) === "Reserved lot(s)";
+			$root
+				.find('[data-kt-pln-field="planned_reserved_value"]')
+				.prop("readonly", assigned && !scopeLots && !!pref.scheme);
 		}
 
 		function paint(dto) {
@@ -1197,20 +1697,13 @@
 			$root.attr("data-kt-pln-plan", dto.plan || plan || "");
 			plan = dto.plan || plan;
 			var title = dto.requirement_title || "";
-			$root.find("[data-kt-pln-editor-title], [data-kt-pln-editor-title-crumb]").text(title);
+			$root.find("[data-kt-pln-editor-title]").text(title);
 			$root.find("[data-kt-pln-editor-ou]").text(dto.organisation_unit_label || "—");
 			$root.find("[data-kt-pln-editor-amount]").text(dto.amount_display || "");
 			$root
 				.find("[data-kt-pln-editor-lifecycle]")
 				.text(dto.lifecycle_label || dto.baseline_state || "Proposed");
 			$root.find("[data-kt-pln-editor-draft-banner]").text(dto.draft_banner || "");
-			$root
-				.find("[data-kt-pln-editor-plan-crumb]")
-				.text(dto.plan_crumb_label || dto.plan_title || dto.plan_code || "Plan")
-				.attr("href", dto.builder_route || "#");
-			$root
-				.find("[data-kt-pln-editor-update-crumb]")
-				.attr("href", dto.builder_route || "#");
 			var f = dto.fields || {};
 			var recommended = cstr(f.recommended_method || "Open tender") || "Open tender";
 			$root.attr("data-kt-pln-recommended-method", recommended);
@@ -1219,13 +1712,15 @@
 			$root
 				.find("[data-kt-pln-editor-method-basis]")
 				.text(f.method_basis || "Preferred competitive method under the applicable regime.");
-			$root
-				.find("[data-kt-pln-editor-coverage]")
-				.text(dto.coverage_note || "Recalculated at Plan level after this item is saved");
-			$root
-				.find("[data-kt-pln-editor-strategy-target]")
-				.text((dto.approved_source && dto.approved_source.strategy_snapshot) || "—");
 			Object.keys(f).forEach(function (k) {
+				if (
+					k === "preference_reservation_scheme" ||
+					k === "reservation_scope" ||
+					k === "eligible_groups" ||
+					k === "planned_reserved_value"
+				) {
+					return;
+				}
 				var $el = $root.find('[data-kt-pln-field="' + k + '"]');
 				if (!$el.length) {
 					return;
@@ -1251,6 +1746,7 @@
 					$el.val(val);
 				}
 			});
+			paintPreference(dto);
 			$root
 				.find('[data-kt-pln-field="requirement_description"]')
 				.val(dto.requirement_description || f.requirement_description || "");
@@ -1264,11 +1760,18 @@
 			$root
 				.find("[data-kt-pln-source-reserved-value]")
 				.text(src.reserved_value_display || dto.amount_display || "—");
-			$root.find("[data-kt-pln-source-funding-line]").text(src.funding_line_label || "—");
+			$root
+				.find("[data-kt-pln-source-funding-line]")
+				.text(
+					src.funding_line_label &&
+						!/^[a-z0-9]{8,}$/.test(String(src.funding_line_label).trim())
+						? src.funding_line_label
+						: "—"
+				);
 			$root.find("[data-kt-pln-source-funding]").text(src.funding_label || "—");
 			$root
 				.find("[data-kt-pln-source-strategy]")
-				.text(src.strategy_snapshot || "—");
+				.text(src.strategy_context || src.strategy_snapshot || "—");
 			$root
 				.find("[data-kt-pln-editor-source-allocation]")
 				.text(dto.source_allocation_summary || "");
@@ -1280,6 +1783,10 @@
 				attention || "Confirm all milestone dates before departmental sign-off."
 			);
 			setHidden($root.find("[data-kt-pln-editor-issue], [data-kt-pln-editor-issue-aside]"), !attention);
+			clearErrors();
+			if (dto.field_issues && Object.keys(dto.field_issues).length) {
+				showErrors(dto.field_issues);
+			}
 			setHidden(
 				$root.find('[data-kt-pln-action="add-another-demand"]'),
 				!dto.can_add_another_demand
@@ -1290,6 +1797,8 @@
 			setHidden($root.find("[data-kt-pln-method-override]"), !showOverride);
 			var multi = cstr(f.arrangement || "") === "Multi-year";
 			setHidden($root.find("[data-kt-pln-multi-year]"), !multi);
+			var lotted = cstr(f.lotting_decision || "") === "Multiple lots";
+			setHidden($root.find("[data-kt-pln-lotting-details]"), !lotted);
 			setHidden(
 				$root.find("[data-kt-pln-schedule-reason]"),
 				!cstr(f.schedule_change_reason || "")
@@ -1491,7 +2000,12 @@
 						);
 					return;
 				}
-				return call("get_plan_item_editor", { plan_item: planItem }).then(paint);
+				return call("get_plan_item_editor", { plan_item: planItem }).then(function (dto) {
+					paint(dto);
+					if (result.field_issues && Object.keys(result.field_issues).length) {
+						showErrors(result.field_issues);
+					}
+				});
 			});
 		}
 
@@ -1503,6 +2017,58 @@
 		$root.on("change.ktPlnEd", '[data-kt-pln-field="arrangement"]', function () {
 			setHidden($root.find("[data-kt-pln-multi-year]"), $(this).val() !== "Multi-year");
 		});
+		$root.on("change.ktPlnEd", '[name="lotting_decision"]', function () {
+			var lotted =
+				$root.find('[name="lotting_decision"]:checked').val() === "Multiple lots";
+			setHidden($root.find("[data-kt-pln-lotting-details]"), !lotted);
+		});
+		$root.on("click.ktPlnEd", '[data-kt-pln-action="pref-assign"]', function (e) {
+			e.preventDefault();
+			setPrefAssigned(true);
+			var $scheme = $root.find('[data-kt-pln-field="preference_reservation_scheme"]');
+			if (!$scheme.val()) {
+				$scheme.val("AGPO reservation");
+			}
+			if (!$root.find('[name="reservation_scope"]:checked').length) {
+				$root
+					.find('[name="reservation_scope"][value="Reserved lot(s)"]')
+					.prop("checked", true);
+			}
+		});
+		$root.on("click.ktPlnEd", '[data-kt-pln-action="pref-clear"]', function (e) {
+			e.preventDefault();
+			$root.find('[data-kt-pln-field="preference_reservation_scheme"]').val("");
+			$root.find('[name="reservation_scope"]').prop("checked", false);
+			$root.find("[data-kt-pln-pref-group]").prop("checked", false);
+			$root.find('[data-kt-pln-field="planned_reserved_value"]').val("");
+			setPrefAssigned(false);
+		});
+		$root.on(
+			"change.ktPlnEd",
+			'[data-kt-pln-field="preference_reservation_scheme"], [name="reservation_scope"]',
+			function () {
+				var scheme = $root.find('[data-kt-pln-field="preference_reservation_scheme"]').val();
+				if (!scheme) {
+					setPrefAssigned(false);
+					return;
+				}
+				setPrefAssigned(true);
+				var scope = $root.find('[name="reservation_scope"]:checked').val() || "";
+				var $val = $root.find('[data-kt-pln-field="planned_reserved_value"]');
+				if (scope === "Entire Plan Item") {
+					var amtText = String($root.find("[data-kt-pln-editor-amount]").text() || "");
+					var digits = amtText.replace(/[^\d.]/g, "");
+					if (digits) {
+						$val.val(
+							Number(digits).toLocaleString(undefined, { maximumFractionDigits: 0 })
+						);
+					}
+					$val.prop("readonly", true);
+				} else {
+					$val.prop("readonly", false);
+				}
+			}
+		);
 		$root.on(
 			"change.ktPlnEd",
 			'[data-kt-pln-field^="ms_"]',
@@ -1633,8 +2199,375 @@
 			});
 	}
 
+	function bindPlanningReview($root, opts) {
+		opts = opts || {};
+		var plan = String(opts.plan || $root.attr("data-kt-pln-plan") || "").trim();
+		$root.attr("data-kt-pln-live", "0");
+		if (!plan) {
+			$root.find("h1").first().text(__("Plan not specified"));
+			return;
+		}
+		$root.attr("data-kt-pln-plan", plan);
+		var concurrency = "";
+		var version = "";
+		var railMode = "readonly";
+
+		function paintReview(dto) {
+			if (!dto || !dto.ok) {
+				return;
+			}
+			$root.attr("data-kt-pln-live", "1");
+			concurrency = dto.concurrency_token || "";
+			version = dto.version || "";
+			railMode = dto.rail_mode || "readonly";
+			$root.find("[data-kt-pln-review-secondary]").text(dto.secondary_line || "");
+			$root
+				.find("[data-kt-pln-review-lifecycle]")
+				.html(
+					'<span class="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">pending</span> ' +
+						esc(dto.version_status || "In review")
+				)
+				.attr(
+					"class",
+					"inline-flex items-center px-3 py-1 rounded-full font-label-caps text-label-caps border " +
+						statusPillClasses(lifecycleTone(dto.version_status || "In review"))
+				);
+			var val = dto.validation_projection || "Not run";
+			var valTone = validationTone(val);
+			$root
+				.find("[data-kt-pln-review-validation-chip]")
+				.html(
+					'<span class="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">' +
+						validationIcon(val, valTone) +
+						"</span> " +
+						esc(val)
+				)
+				.attr(
+					"class",
+					"inline-flex items-center px-3 py-1 rounded-full font-label-caps text-label-caps border " +
+						statusPillClasses(valTone)
+				);
+			$root.find("[data-kt-pln-review-items]").text(String(dto.item_count || 0));
+			$root.find("[data-kt-pln-review-total]").text(dto.planned_total_display || "KES 0");
+			$root
+				.find("[data-kt-pln-review-contributions]")
+				.text(dto.contributions_label || "—");
+			$root
+				.find("[data-kt-pln-review-open-tender]")
+				.text(dto.open_tender_display || "KES 0");
+			$root
+				.find("[data-kt-pln-review-validation]")
+				.text(val)
+				.attr(
+					"class",
+					"inline-flex items-center mt-2 px-2 py-0.5 rounded-full font-label-caps text-label-caps w-max " +
+						statusPillClasses(valTone)
+				);
+			$root
+				.find("[data-kt-pln-review-current-decision]")
+				.text(dto.current_decision_label || "—");
+			$root.find("[data-kt-pln-review-prepared-by]").text(dto.prepared_by || "—");
+			$root
+				.find("[data-kt-pln-review-dept]")
+				.text(dto.departmental_submission_label || "—");
+			$root
+				.find("[data-kt-pln-review-validation-run]")
+				.html(
+					'<span class="material-symbols-outlined text-[16px]" aria-hidden="true">' +
+						validationIcon(val, valTone) +
+						"</span> " +
+						esc(val)
+				)
+				.attr(
+					"class",
+					"font-body-sm text-body-sm flex items-center gap-1 " + statusTextClass(valTone)
+				);
+
+			var itemsHtml = (dto.items || [])
+				.map(function (it) {
+					var iv = it.validation_projection || "Not run";
+					var tone = validationTone(iv);
+					return (
+						'<tr class="hover:bg-surface-container-low transition-colors">' +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface whitespace-normal">' +
+						esc(it.title || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface whitespace-normal">' +
+						esc(it.owner_org_unit_label || it.owner_org_unit || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-data-md text-data-md text-on-surface whitespace-nowrap">' +
+						esc(it.amount_display || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface">' +
+						esc(it.method || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface">' +
+						esc(it.completion || "—") +
+						"</td>" +
+						'<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-caps text-label-caps w-max ' +
+						statusPillClasses(tone) +
+						'">' +
+						esc(iv) +
+						"</span></td>" +
+						'<td class="px-4 py-3 text-right"><a class="font-body-sm text-body-sm text-primary font-medium hover:underline" href="' +
+						esc(it.editor_route || "#") +
+						'" data-testid="kt-pln-ui08-view">' +
+						__("View") +
+						"</a></td></tr>"
+					);
+				})
+				.join("");
+			$root.find("[data-kt-pln-review-items-body]").html(itemsHtml || "");
+
+			var statHtml = (dto.statutory_coverage || [])
+				.map(function (row) {
+					var st = row.status || "";
+					var stTone =
+						st === "Ready"
+							? "available"
+							: st === "Needs attention"
+								? "reserved"
+								: "neutral";
+					var statusCell =
+						st === "Not applicable"
+							? '<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant italic">' +
+								esc(st) +
+								"</td>"
+							: '<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-caps text-label-caps w-max ' +
+								statusPillClasses(stTone) +
+								'">' +
+								esc(st) +
+								"</span></td>";
+					return (
+						'<tr class="hover:bg-surface-container-low transition-colors">' +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface whitespace-normal">' +
+						esc(row.obligation || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface whitespace-normal">' +
+						esc(row.required_treatment || "") +
+						"</td>" +
+						'<td class="px-4 py-3 font-body-sm text-body-sm text-on-surface whitespace-normal' +
+						(st === "Not applicable" ? " text-on-surface-variant italic" : "") +
+						'">' +
+						esc(row.planned_treatment || "") +
+						"</td>" +
+						statusCell +
+						"</tr>"
+					);
+				})
+				.join("");
+			$root.find("[data-kt-pln-review-statutory-body]").html(statHtml);
+
+			var $banner = $root.find("[data-kt-pln-review-issues-banner]");
+			$root.find("[data-kt-pln-review-issues-copy]").text(dto.issues_message || "");
+			if (dto.issues_ready) {
+				$banner.attr(
+					"class",
+					"bg-status-available/10 border border-status-available/20 rounded-lg p-4 flex items-start gap-3 text-status-available"
+				);
+			} else {
+				$banner.attr(
+					"class",
+					"bg-status-reserved/10 border border-status-reserved/20 rounded-lg p-4 flex items-start gap-3 text-status-reserved"
+				);
+			}
+
+			var $primary = $root.find('[data-kt-pln-action="primary-decision"]');
+			var $return = $root.find('[data-kt-pln-action="return-plan"]');
+			var surface = dto.surface || "task";
+			var isTask = surface === "task";
+			var showPrimary =
+				isTask &&
+				((railMode === "approver" && !!dto.can_approve) ||
+					(railMode === "reviewer" && !!dto.can_recommend));
+			var showReturn = isTask && !!dto.can_return;
+			var showActions = showPrimary || showReturn;
+			setHidden($root.find("[data-kt-pln-review-actions]"), !showActions);
+			setHidden($root.find("[data-kt-pln-review-comment-block]"), !showActions);
+			setHidden($primary, !showPrimary);
+			setHidden($return, !showReturn);
+			// Never leave disabled primary CTAs on the rail (PLN-FR-083).
+			$primary.prop("disabled", false).removeClass("opacity-50 cursor-not-allowed");
+			$return.prop("disabled", false);
+			if (showPrimary && railMode === "approver") {
+				$primary.text(dto.primary_cta_label || __("Approve plan"));
+			} else if (showPrimary && railMode === "reviewer") {
+				$primary.text(dto.primary_cta_label || __("Recommend approval"));
+			}
+			$root.attr("data-kt-pln-surface", surface);
+			$root.attr("data-kt-pln-task", isTask ? "1" : "0");
+
+			var trailHtml = (dto.prior_decision_trail || [])
+				.map(function (t) {
+					return (
+						'<div class="relative">' +
+						'<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-subtle border-2 border-surface-container-lowest"></div>' +
+						'<p class="font-body-sm text-body-sm text-on-surface">' +
+						esc(t.label || "") +
+						"</p>" +
+						'<p class="font-label-caps text-label-caps text-on-surface-variant">' +
+						esc(t.date || "") +
+						"</p></div>"
+					);
+				})
+				.join("");
+			$root.find("[data-kt-pln-review-trail]").html(trailHtml || "");
+		}
+
+		function refresh() {
+			return new Promise(function (resolve, reject) {
+				frappe.call({
+					method: API + ".get_plan_review",
+					args: { plan: plan },
+					freeze: false,
+					callback: function (r) {
+						if (r && r.message) {
+							resolve(r.message);
+							return;
+						}
+						reject(r || { message: __("Review load failed") });
+					},
+					error: function (r) {
+						reject(r || { message: __("Review load failed") });
+					},
+				});
+			}).then(paintReview);
+		}
+
+		function showDenied(err) {
+			$root.attr("data-kt-pln-error", "1");
+			$root.attr("data-kt-pln-surface", "denied");
+			setHidden($root.find("[data-kt-pln-review-actions]"), true);
+			setHidden($root.find("[data-kt-pln-review-comment-block]"), true);
+			var msg =
+				(err && (err.message || err._server_messages || err.exc)) ||
+				__("You are not permitted to open this Planning review.");
+			if (typeof msg !== "string") {
+				msg = __("You are not permitted to open this Planning review.");
+			}
+			$root.find("h1").first().text(__("Planning review unavailable"));
+			$root
+				.find("[data-kt-pln-review-secondary]")
+				.text(String(msg).replace(/^PLN_[A-Z_]+:\s*/, "").slice(0, 280));
+		}
+
+		function commentValue() {
+			return String($root.find('[data-kt-field="decision_comment"]').val() || "").trim();
+		}
+
+		$root.off(".ktPlnRev");
+		$root.on("click.ktPlnRev", '[data-kt-pln-action="primary-decision"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
+				window.ktFormErrors.clear($root);
+			}
+			if (railMode === "approver") {
+				call("approve_plan_version", {
+					version: version,
+					concurrency_token: concurrency || undefined,
+					reason: commentValue() || undefined,
+				})
+					.then(function (res) {
+						if (!res || res.ok === false) {
+							frappe.show_alert({
+								message:
+									(res && res.errors && res.errors.form) ||
+									__("Approval failed"),
+								indicator: "red",
+							});
+							return;
+						}
+						frappe.show_alert({
+							message: __("Plan approved"),
+							indicator: "green",
+						});
+						window.location.href = "/app/planning-workspace";
+					})
+					.catch(function (err) {
+						frappe.show_alert({
+							message: (err && err.message) || __("Approval failed"),
+							indicator: "red",
+						});
+					});
+				return;
+			}
+			call("record_plan_decision", {
+				version: version,
+				decision: "recommend",
+				comment: commentValue() || undefined,
+				concurrency_token: concurrency || undefined,
+			}).then(function (res) {
+				if (!res || res.ok === false) {
+					if (
+						res &&
+						res.errors &&
+						window.ktFormErrors &&
+						typeof window.ktFormErrors.show === "function"
+					) {
+						window.ktFormErrors.show($root, res.errors);
+					}
+					return;
+				}
+				frappe.show_alert({
+					message: __("Recommendation recorded"),
+					indicator: "green",
+				});
+				return refresh();
+			});
+		});
+		$root.on("click.ktPlnRev", '[data-kt-pln-action="return-plan"]', function (e) {
+			e.preventDefault();
+			if ($(this).prop("disabled")) {
+				return;
+			}
+			if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
+				window.ktFormErrors.clear($root);
+			}
+			call("record_plan_decision", {
+				version: version,
+				decision: "return",
+				comment: commentValue(),
+				concurrency_token: concurrency || undefined,
+			}).then(function (res) {
+				if (!res || res.ok === false) {
+					if (
+						res &&
+						res.errors &&
+						window.ktFormErrors &&
+						typeof window.ktFormErrors.show === "function"
+					) {
+						window.ktFormErrors.show($root, res.errors);
+					} else {
+						frappe.show_alert({
+							message:
+								(res && res.errors && res.errors.decision_comment) ||
+								__("Return failed"),
+							indicator: "red",
+						});
+					}
+					return;
+				}
+				frappe.show_alert({
+					message: __("Plan returned"),
+					indicator: "orange",
+				});
+				window.location.href =
+					"/app/procurement-plan-builder?plan=" + encodeURIComponent(plan);
+			});
+		});
+
+		return refresh().catch(function (err) {
+			showDenied(err);
+			console.warn("Plan review load failed", err);
+		});
+	}
+
 	kentender_procurement.live.bindPlanningWorkspace = bindPlanningWorkspace;
 	kentender_procurement.live.bindPlanningRegister = bindPlanningRegister;
 	kentender_procurement.live.bindPlanningBuilder = bindPlanningBuilder;
 	kentender_procurement.live.bindPlanningItemEditor = bindPlanningItemEditor;
+	kentender_procurement.live.bindPlanningReview = bindPlanningReview;
 })();

@@ -25,6 +25,10 @@ _DEMANDS_PAGE_ROLES: frozenset[str] = frozenset(
 	}
 )
 
+# Planning MVP-1 HoD enters Desk via Procurement Home → Plan builder (PLN-FR-091).
+_PLANNING_HOD_ROLE = "Head of User Department"
+_CANONICAL_HOD = "moh.hod.dhp@example.test"
+
 _CANONICAL_BA = "moh.business.approver@example.test"
 
 
@@ -87,6 +91,34 @@ class TestProcurementHomeDemandsRoles(IntegrationTestCase):
 				"kt-procurement-home",
 				allowed,
 				msg="Business Approver must load Procurement Home (Desktop Icon → page)",
+			)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_export_includes_planning_hod_role(self):
+		path = _procurement_home_json_path()
+		self.assertTrue(path, msg="kt_procurement_home.json missing")
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		roles = {row.get("role") for row in (data.get("roles") or [])}
+		self.assertIn(
+			_PLANNING_HOD_ROLE,
+			roles,
+			msg="kt-procurement-home export must admit Head of User Department",
+		)
+
+	def test_hod_allowed_procurement_home_page(self):
+		if not frappe.db.exists("User", _CANONICAL_HOD):
+			self.skipTest(f"Canonical HoD {_CANONICAL_HOD} not seeded")
+		if not frappe.db.exists("Page", "kt-procurement-home"):
+			self.skipTest("kt-procurement-home Page not on site")
+		frappe.set_user(_CANONICAL_HOD)
+		try:
+			allowed = get_allowed_pages(cache=False)
+			self.assertIn(
+				"kt-procurement-home",
+				allowed,
+				msg="Head of User Department must load Procurement Home for departmental sign-off",
 			)
 		finally:
 			frappe.set_user("Administrator")

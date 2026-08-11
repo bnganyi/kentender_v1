@@ -15,9 +15,20 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_EDITABLE_STATUSES,
 )
 from kentender_procurement.procurement_planning.services._invariants import assert_version_mutable
+from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
+	MILESTONE_FIELDS,
+	PREF_KEYS,
+	collect_plan_item_field_issues,
+)
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	assert_can_add_demand,
 	assert_planning_scope,
+)
+from kentender_procurement.procurement_planning.services.preference_reservation import (
+	dump_eligible_groups,
+	parse_eligible_groups,
+	scheme_is_assigned,
+	validate_designation,
 )
 
 _WRITABLE = (
@@ -34,10 +45,10 @@ _WRITABLE = (
 	"lotting_decision",
 	"expected_lot_count",
 	"lot_basis",
-	"statutory_treatment",
-	"statutory_target_groups",
-	"planned_treatment_value",
-	"value_treatment_note",
+	"preference_reservation_scheme",
+	"reservation_scope",
+	"eligible_groups",
+	"planned_reserved_value",
 	"ms_invitation_published",
 	"ms_tender_opening",
 	"ms_evaluation_completed",
@@ -45,15 +56,6 @@ _WRITABLE = (
 	"ms_contract_signature",
 	"ms_delivery_completion",
 	"schedule_change_reason",
-)
-
-_MILESTONE_FIELDS = (
-	"ms_invitation_published",
-	"ms_tender_opening",
-	"ms_evaluation_completed",
-	"ms_award_approval",
-	"ms_contract_signature",
-	"ms_delivery_completion",
 )
 
 
@@ -96,61 +98,74 @@ def update_plan_item(
 		return {"ok": False, "errors": {"form": "Draft Plan Item Version not found."}}
 
 	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
-	errors: dict[str, str] = {}
 
-	method = cstr(payload.get("procurement_method", iv.procurement_method) or "").strip()
-	recommended = cstr(iv.recommended_method or "Open tender").strip() or "Open tender"
-	if method and method != recommended:
-		if not cstr(payload.get("method_override_grounds", iv.method_override_grounds) or "").strip():
-			errors["method_override_grounds"] = "Alternative method requires configured grounds."
-		if not cstr(payload.get("method_override_reason", iv.method_override_reason) or "").strip():
-			errors["method_override_reason"] = "Alternative method requires a reason."
-		if not cstr(payload.get("method_override_evidence", iv.method_override_evidence) or "").strip():
-			errors["method_override_evidence"] = "Alternative method requires evidence."
-
-	arrangement = cstr(payload.get("arrangement", iv.arrangement) or "").strip()
-	if arrangement == "Multi-year":
-		if not cstr(payload.get("multi_year_justification", iv.multi_year_justification) or "").strip():
-			errors["multi_year_justification"] = "Multi-year arrangement requires justification."
-		if not cstr(payload.get("annual_funding_schedule", iv.annual_funding_schedule) or "").strip():
-			errors["annual_funding_schedule"] = "Multi-year arrangement requires an annual funding schedule."
-
-	lotting = cstr(payload.get("lotting_decision", iv.lotting_decision) or "").strip()
-	if lotting == "Multiple lots":
-		count = int(payload.get("expected_lot_count", iv.expected_lot_count) or 0)
-		if count < 2:
-			errors["expected_lot_count"] = "Multiple lots requires an expected lot count of at least 2."
-		if not cstr(payload.get("lot_basis", iv.lot_basis) or "").strip():
-			errors["lot_basis"] = "Confirm the indicative lot basis before departmental sign-off."
-
-	# Chronological milestones
-	dates: list[tuple[str, Any]] = []
-	for key in _MILESTONE_FIELDS:
-		raw = payload.get(key, getattr(iv, key, None))
-		if raw:
-			try:
-				dates.append((key, getdate(raw)))
-			except Exception:
-				errors[key] = "Invalid date."
-	for i in range(1, len(dates)):
-		if dates[i][1] < dates[i - 1][1]:
-			errors[dates[i][0]] = "Milestone dates must be in chronological order."
-
-	if errors:
-		return {"ok": False, "errors": errors}
+	# Soft field issues — Draft save must still persist; UI flags fields inline.
+	field_issues = collect_plan_item_field_issues(
+		iv=iv,
+		payload=payload,
+		include_preference=any(k in payload for k in PREF_KEYS),
+	)
 
 	for key in _WRITABLE:
 		if key not in payload:
 			continue
+		if key in PREF_KEYS:
+			continue
 		val = payload[key]
 		if key == "expected_lot_count":
-			iv.set(key, int(val or 0))
-		elif key == "planned_treatment_value":
-			iv.set(key, flt(val))
-		elif key in _MILESTONE_FIELDS:
-			iv.set(key, getdate(val) if val else None)
+			try:
+				iv.set(key, int(val or 0))
+			except (TypeError, ValueError):
+				iv.set(key, 0)
+		elif key in MILESTONE_FIELDS:
+			if val:
+				try:
+					iv.set(key, getdate(val))
+				except Exception:
+					# Keep prior value; field_issues already marks Invalid date.
+					pass
+			else:
+				iv.set(key, None)
 		else:
 			iv.set(key, val)
+
+	if any(k in payload for k in PREF_KEYS):
+		scheme = payload.get(
+			"preference_reservation_scheme", iv.preference_reservation_scheme
+		)
+		scope = payload.get("reservation_scope", iv.reservation_scope)
+		groups = payload.get("eligible_groups", iv.eligible_groups)
+		planned = payload.get("planned_reserved_value", iv.planned_reserved_value)
+		pref_errors, pref_norm = validate_designation(
+			scheme=scheme,
+			scope=scope,
+			eligible_groups=groups,
+			planned_reserved_value=planned,
+			item_value=flt(iv.confirmed_estimate),
+		)
+		field_issues.update(pref_errors)
+		if pref_norm:
+			iv.preference_reservation_scheme = pref_norm["preference_reservation_scheme"]
+			iv.reservation_scope = pref_norm["reservation_scope"]
+			iv.eligible_groups = pref_norm["eligible_groups"]
+			iv.planned_reserved_value = pref_norm["planned_reserved_value"]
+		elif scheme_is_assigned(scheme):
+			# Persist partial designation so Draft work is not discarded.
+			iv.preference_reservation_scheme = cstr(scheme).strip()
+			iv.reservation_scope = cstr(scope or "").strip()
+			iv.eligible_groups = dump_eligible_groups(parse_eligible_groups(groups))
+			iv.planned_reserved_value = flt(planned)
+		else:
+			iv.preference_reservation_scheme = ""
+			iv.reservation_scope = ""
+			iv.eligible_groups = dump_eligible_groups([])
+			iv.planned_reserved_value = 0
+
+	# Never write retired questionnaire fields from the editor API.
+	iv.statutory_treatment = None
+	iv.statutory_target_groups = None
+	iv.planned_treatment_value = 0
+	iv.value_treatment_note = None
 
 	if not cstr(iv.governing_regime or "").strip():
 		iv.governing_regime = "PPADA"
@@ -167,10 +182,13 @@ def update_plan_item(
 	)
 
 	validation = validate_plan(plan=plan.name, user=actor)
+	# Recompute against saved state so callers/UI stay aligned with persistence.
+	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=True)
 	return {
 		"ok": True,
 		"plan_item": item_name,
 		"item_version": iv.name,
+		"field_issues": field_issues,
 		"validation": validation,
 		"actor": actor,
 	}

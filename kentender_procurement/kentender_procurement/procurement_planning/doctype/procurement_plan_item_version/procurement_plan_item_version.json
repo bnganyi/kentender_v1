@@ -40,11 +40,11 @@
   "lotting_decision",
   "expected_lot_count",
   "lot_basis",
-  "section_statutory",
-  "statutory_treatment",
-  "statutory_target_groups",
-  "planned_treatment_value",
-  "value_treatment_note",
+  "section_preference",
+  "preference_reservation_scheme",
+  "reservation_scope",
+  "eligible_groups",
+  "planned_reserved_value",
   "section_schedule",
   "ms_invitation_published",
   "ms_tender_opening",
@@ -52,7 +52,12 @@
   "ms_award_approval",
   "ms_contract_signature",
   "ms_delivery_completion",
-  "schedule_change_reason"
+  "schedule_change_reason",
+  "section_retired_statutory",
+  "statutory_treatment",
+  "statutory_target_groups",
+  "planned_treatment_value",
+  "value_treatment_note"
  ],
  "fields": [
   {
@@ -261,31 +266,32 @@
    "label": "Lot Basis"
   },
   {
-   "fieldname": "section_statutory",
+   "fieldname": "section_preference",
    "fieldtype": "Section Break",
-   "label": "Statutory and strategy"
+   "label": "Preference and reservation"
   },
   {
-   "fieldname": "statutory_treatment",
+   "fieldname": "preference_reservation_scheme",
    "fieldtype": "Select",
-   "label": "Statutory Treatment",
-   "options": "\nOpen competition\nReserved\nPreferential"
+   "label": "Preference or Reservation Scheme",
+   "options": "\nAGPO reservation\nLocal preference"
   },
   {
-   "fieldname": "statutory_target_groups",
+   "fieldname": "reservation_scope",
+   "fieldtype": "Select",
+   "label": "Reservation Scope",
+   "options": "\nEntire Plan Item\nReserved lot(s)"
+  },
+  {
+   "fieldname": "eligible_groups",
    "fieldtype": "Small Text",
-   "label": "Statutory Target Groups"
+   "label": "Eligible Groups"
   },
   {
-   "fieldname": "planned_treatment_value",
+   "fieldname": "planned_reserved_value",
    "fieldtype": "Currency",
-   "label": "Planned Treatment Value",
+   "label": "Planned Reserved Value",
    "options": "currency"
-  },
-  {
-   "fieldname": "value_treatment_note",
-   "fieldtype": "Small Text",
-   "label": "Value Treatment Note"
   },
   {
    "fieldname": "section_schedule",
@@ -326,6 +332,43 @@
    "fieldname": "schedule_change_reason",
    "fieldtype": "Small Text",
    "label": "Schedule Change Reason"
+  },
+  {
+   "fieldname": "section_retired_statutory",
+   "fieldtype": "Section Break",
+   "label": "Retired statutory questionnaire",
+   "collapsible": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "statutory_treatment",
+   "fieldtype": "Select",
+   "label": "Statutory Treatment (retired)",
+   "options": "\nOpen competition\nReserved\nPreferential",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "statutory_target_groups",
+   "fieldtype": "Small Text",
+   "label": "Statutory Target Groups (retired)",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "planned_treatment_value",
+   "fieldtype": "Currency",
+   "label": "Planned Treatment Value (retired)",
+   "options": "currency",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "value_treatment_note",
+   "fieldtype": "Small Text",
+   "label": "Value Treatment Note (retired)",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "links": [],

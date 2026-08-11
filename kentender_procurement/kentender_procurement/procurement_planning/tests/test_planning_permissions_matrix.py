@@ -18,6 +18,11 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	assert_can_approve_plan,
 	assert_can_create_plan,
 )
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	advance_draft_to_recommended,
+	approve_plan_via_gate05,
+	make_approved_demand,
+)
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	OU_MOH,
 	PE_MOH,
@@ -26,9 +31,6 @@ from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	ensure_moh_planner,
 	ensure_org,
 	ensure_user_with_roles,
-)
-from kentender_procurement.procurement_planning.tests._gate01_helpers import (
-	make_approved_demand,
 )
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan,
@@ -93,12 +95,15 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 			demand=demand["demand"],
 			user=planner,
 		)
+		advanced = advance_draft_to_recommended(
+			plan=created["plan"], version=created["version"]
+		)
 		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
+			"Procurement Plan Version", advanced["version"], "concurrency_token"
 		)
 		with self.assertRaises(frappe.PermissionError):
 			approve_plan_version(
-				version=created["version"],
+				version=advanced["version"],
 				concurrency_token=token,
 				user=planner,
 			)
@@ -120,13 +125,8 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 			demand=demand["demand"],
 			user=planner,
 		)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		result = approve_plan_version(
-			version=created["version"],
-			concurrency_token=token,
-			user=approver,
+		result = approve_plan_via_gate05(
+			plan=created["plan"], version=created["version"], user=approver
 		)
 		self.assertTrue(result["ok"])
 		self.assertEqual(result["approved_by"], approver)

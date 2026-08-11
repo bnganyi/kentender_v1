@@ -17,56 +17,127 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	is_planning_read_only,
 	require_operational_roles,
 )
+from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
+	MILESTONE_FIELDS,
+	collect_plan_item_field_issues,
+)
+from kentender_procurement.procurement_planning.services.preference_reservation import (
+	ELIGIBLE_GROUP_OPTIONS,
+	SCHEME_OPTIONS,
+	SCOPE_OPTIONS,
+	format_money,
+	parse_eligible_groups,
+	scheme_is_assigned,
+)
 
 
 def _money(amount: float, currency: str = "KES") -> str:
-	return f"{currency} {flt(amount):,.2f}"
+	return format_money(amount, currency)
 
 
-def _funding_line_label(reservation_reference: str) -> str:
+def _is_internal_id(value: str) -> bool:
+	"""Hash-style Frappe names must never appear in Desk UI."""
+	raw = cstr(value).strip()
+	if not raw:
+		return False
+	# Business codes use separators / uppercase prefixes (RSV-, BUD-, …).
+	if "-" in raw or " " in raw or raw != raw.lower():
+		return False
+	return len(raw) >= 8 and raw.isalnum()
+
+
+def _funding_reservation_row(reservation_reference: str) -> dict[str, Any] | None:
+	"""Resolve by business generated_reference or by Funding Reservation name."""
 	ref = cstr(reservation_reference).strip()
-	if not ref:
-		return ""
-	if not frappe.db.exists("DocType", "Funding Reservation"):
-		return ref
+	if not ref or not frappe.db.exists("DocType", "Funding Reservation"):
+		return None
+	fields = ["name", "generated_reference", "budget_line", "demand_title", "status"]
 	row = frappe.db.get_value(
 		"Funding Reservation",
 		{"generated_reference": ref},
-		["budget_line", "demand_title", "status"],
+		fields,
 		as_dict=True,
 	)
+	if row:
+		return row
+	if frappe.db.exists("Funding Reservation", ref):
+		return frappe.db.get_value("Funding Reservation", ref, fields, as_dict=True)
+	return None
+
+
+def _funding_line_label(reservation_reference: str) -> str:
+	"""Human funding line for Source Demand — never an internal primary key."""
+	ref = cstr(reservation_reference).strip()
+	if not ref:
+		return ""
+	row = _funding_reservation_row(ref)
 	if not row:
-		return ref
+		# Unknown token: hide hash IDs; allow business codes through.
+		return "" if _is_internal_id(ref) else ref
 	line = cstr(row.budget_line or "").strip()
 	if line and frappe.db.exists("Budget Line", line):
 		label = cstr(frappe.db.get_value("Budget Line", line, "title") or "").strip()
-		if label:
+		if label and not _is_internal_id(label):
 			return label
-	return cstr(row.demand_title or "").strip() or ref
+	generated = cstr(row.generated_reference or "").strip()
+	if generated and not _is_internal_id(generated):
+		return generated
+	demand_title = cstr(row.demand_title or "").strip()
+	if demand_title and not _is_internal_id(demand_title):
+		return demand_title
+	return ""
 
 
-def _attention_message(*, iv: Any, fields: dict[str, Any]) -> str:
-	"""Surface the highest-priority editor attention copy for Needs attention panels."""
+def _attention_message(
+	*,
+	iv: Any,
+	fields: dict[str, Any],
+	field_issues: dict[str, str] | None = None,
+) -> str:
+	"""Human issue copy for the editor attention panel — never a bare status label.
+
+	Returns empty when the item is Ready / Not run so the red banner stays hidden.
+	"""
+	issues = field_issues or {}
+	for key in MILESTONE_FIELDS:
+		msg = cstr(issues.get(key) or "").strip()
+		if msg:
+			return msg
+	if issues.get("lot_basis") or issues.get("expected_lot_count"):
+		return cstr(
+			issues.get("lot_basis")
+			or issues.get("expected_lot_count")
+			or "Confirm the indicative lot basis before departmental sign-off."
+		)
 	lotting = cstr(fields.get("lotting_decision") or "").strip()
 	if lotting == "Multiple lots" and not cstr(fields.get("lot_basis") or "").strip():
 		return "Confirm the indicative lot basis before departmental sign-off."
-	missing_ms = [
-		k
-		for k in (
-			"ms_invitation_published",
-			"ms_tender_opening",
-			"ms_evaluation_completed",
-			"ms_award_approval",
-			"ms_contract_signature",
-			"ms_delivery_completion",
-		)
-		if not cstr(fields.get(k) or "").strip()
-	]
+	missing_ms = [k for k in MILESTONE_FIELDS if not cstr(fields.get(k) or "").strip()]
 	if missing_ms:
 		return "Confirm all milestone dates before departmental sign-off."
+	# Prefer concrete field issue copy over bare projection labels.
+	for key in (
+		"method_override_grounds",
+		"method_override_reason",
+		"method_override_evidence",
+		"multi_year_justification",
+		"annual_funding_schedule",
+		"planned_reserved_value",
+		"eligible_groups",
+		"reservation_scope",
+		"preference_reservation_scheme",
+	):
+		msg = cstr(issues.get(key) or "").strip()
+		if msg:
+			return msg
 	proj = cstr(getattr(iv, "validation_projection", "") or "").strip()
-	if proj and proj not in ("Not run", "Pass", "Passed"):
-		return proj
+	# Status labels must never become the banner body under "Needs attention".
+	if proj == "Blocked":
+		return "Resolve blocking validation issues before departmental sign-off."
+	if proj == "Stale":
+		return "Re-run validation; this Plan Item projection is stale."
+	if proj == "Needs attention" or issues:
+		return "Review validation issues before departmental sign-off."
 	return ""
 
 
@@ -138,7 +209,14 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 	currency = cstr(iv.currency or plan.currency or "KES")
 	read_only = is_planning_read_only(actor)
 	rsv_ref = cstr(iv.reservation_reference or "").strip()
+	funding_row = _funding_reservation_row(rsv_ref)
 	funding_line = _funding_line_label(rsv_ref)
+	# Prefer business reservation code for any downstream display; never the hash name.
+	rsv_code = ""
+	if funding_row:
+		rsv_code = cstr(funding_row.generated_reference or "").strip()
+	elif rsv_ref and not _is_internal_id(rsv_ref):
+		rsv_code = rsv_ref
 	need_count = len(allocs)
 	fields = {
 		"requirement_description": iv.requirement_description,
@@ -159,10 +237,10 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"lotting_decision": iv.lotting_decision or "Single lot",
 		"expected_lot_count": iv.expected_lot_count or 1,
 		"lot_basis": iv.lot_basis,
-		"statutory_treatment": iv.statutory_treatment,
-		"statutory_target_groups": iv.statutory_target_groups,
-		"planned_treatment_value": flt(iv.planned_treatment_value),
-		"value_treatment_note": iv.value_treatment_note,
+		"preference_reservation_scheme": cstr(iv.preference_reservation_scheme or ""),
+		"reservation_scope": cstr(iv.reservation_scope or ""),
+		"eligible_groups": parse_eligible_groups(iv.eligible_groups),
+		"planned_reserved_value": flt(iv.planned_reserved_value),
 		"ms_invitation_published": str(iv.ms_invitation_published or ""),
 		"ms_tender_opening": str(iv.ms_tender_opening or ""),
 		"ms_evaluation_completed": str(iv.ms_evaluation_completed or ""),
@@ -174,10 +252,15 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 	strategy_text = cstr(iv.strategy_snapshot or iv.pvc_snapshot or "").strip()
 	plan_crumb = cstr(plan.title or plan.plan_code or plan.financial_year or "").strip()
 	has_draft = bool(cstr(plan.open_draft_version or "").strip())
-	attention = _attention_message(iv=iv, fields=fields)
+	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=True)
+	attention = _attention_message(iv=iv, fields=fields, field_issues=field_issues)
+	scheme = cstr(fields["preference_reservation_scheme"] or "").strip()
+	assigned = scheme_is_assigned(scheme)
+	reserved_val = flt(fields["planned_reserved_value"]) if assigned else 0.0
 
 	return {
 		"ok": True,
+		"field_issues": field_issues,
 		"plan": plan.name,
 		"plan_code": plan.plan_code,
 		"plan_title": plan.title,
@@ -203,9 +286,25 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 			else "Viewing Plan Item · Open a Draft revision to edit."
 		),
 		"plan_crumb_label": plan_crumb or cstr(plan.financial_year or "Plan"),
-		"coverage_note": "Recalculated at Plan level after this item is saved",
 		"attention_message": attention,
 		"fields": fields,
+		"preference_reservation": {
+			"assigned": assigned,
+			"scheme": scheme,
+			"reservation_scope": fields["reservation_scope"],
+			"eligible_groups": fields["eligible_groups"],
+			"planned_reserved_value": reserved_val,
+			"planned_reserved_value_display": _money(reserved_val, currency) if assigned else "",
+			"contribution_note": (
+				f"This contributes {_money(reserved_val, currency)} to the Plan’s calculated "
+				"reservation coverage. It is a planned set-aside, not an award."
+				if assigned and reserved_val > 0
+				else ""
+			),
+			"scheme_options": list(SCHEME_OPTIONS),
+			"scope_options": list(SCOPE_OPTIONS),
+			"eligible_group_options": list(ELIGIBLE_GROUP_OPTIONS),
+		},
 		"approved_source": {
 			"demand": demand_row.name if demand_row else None,
 			"demand_code": demand_row.demand_code if demand_row else "",
@@ -213,8 +312,10 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 			"need_item_count": need_count,
 			"funding_label": "Reserved" if rsv_ref else "Unreserved",
 			"funding_line_label": funding_line or "—",
-			"reservation_reference": rsv_ref,
+			"reservation_reference": rsv_code,
+			"reservation_id": (funding_row.name if funding_row else None),
 			"strategy_snapshot": strategy_text,
+			"strategy_context": strategy_text,
 			"pvc_snapshot": iv.pvc_snapshot or "",
 			"owner_org_unit_label": demand_ou_label,
 			"reserved_value_display": _money(flt(iv.confirmed_estimate), currency),

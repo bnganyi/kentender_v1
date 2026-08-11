@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Approve Plan Version — atomic lock, supersede prior, Effective allocations once."""
+"""Approve Plan Version — Gate 05: In review + recommend + Ready → atomic lock."""
 
 from __future__ import annotations
 
@@ -14,7 +14,9 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_DRAFT,
 	ALLOC_EFFECTIVE,
+	DECISION_APPROVED,
 	ITEM_ACTIVE,
+	VALIDATION_READY,
 	VERSION_APPROVABLE_STATUSES,
 	VERSION_APPROVED,
 	VERSION_SUPERSEDED,
@@ -28,6 +30,10 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	assert_can_approve_plan,
 	assert_planning_scope,
 )
+from kentender_procurement.procurement_planning.services.record_plan_decision import (
+	has_recommendation,
+)
+from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 
 
 def approve_plan_version(
@@ -46,8 +52,13 @@ def approve_plan_version(
 	ver = frappe.get_doc("Procurement Plan Version", version_name)
 	if ver.status not in VERSION_APPROVABLE_STATUSES:
 		frappe.throw(
-			_("Only Draft or Returned versions can be approved."),
+			_("Only In review versions with a recommendation can be approved."),
 			title="PLN_VERSION_NOT_APPROVABLE",
+		)
+	if not has_recommendation(version=version_name):
+		frappe.throw(
+			_("Professional recommendation is required before approval."),
+			title="PLN_RECOMMENDATION_REQUIRED",
 		)
 
 	plan = frappe.get_doc("Procurement Plan", ver.plan)
@@ -59,6 +70,13 @@ def approve_plan_version(
 	)
 	if plan.lifecycle_state != "Open":
 		frappe.throw(_("Plan is not Open."), title="PLN_PLAN_NOT_OPEN")
+
+	validation = validate_plan(plan=plan.name, user=actor)
+	if cstr(validation.get("status")) != VALIDATION_READY:
+		frappe.throw(
+			_("Validation must be Ready before approval."),
+			title="PLN_VALIDATION_NOT_READY",
+		)
 
 	now = now_datetime()
 	prior = cstr(plan.current_approved_version or "").strip()
@@ -123,6 +141,7 @@ def approve_plan_version(
 		ver.name,
 		{
 			"status": VERSION_APPROVED,
+			"validation_projection": VALIDATION_READY,
 			"effective_at": now,
 			"approved_by": actor,
 			"approved_at": now,
@@ -149,7 +168,7 @@ def approve_plan_version(
 			"decision_stage": "Plan Version Approval",
 			"actor": actor,
 			"actor_role": _primary_planning_role(actor),
-			"decision": "Approved",
+			"decision": DECISION_APPROVED,
 			"reason": cstr(reason or "Approved"),
 			"decided_at": now,
 		}
@@ -174,10 +193,8 @@ def _primary_planning_role(user: str) -> str:
 		"Designated Approver",
 		"Accounting Officer",
 		"Planning Authority",
-		"Procurement Planner",
-		"Planning Reviewer",
 	):
-		if role in roles and (role in APPROVE_PLAN_ROLES or role == "Procurement Planner"):
+		if role in roles and role in APPROVE_PLAN_ROLES:
 			return role
 	return "Designated Approver"
 

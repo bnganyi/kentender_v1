@@ -28,6 +28,7 @@ from kentender_procurement.procurement_planning.services.open_or_create_plan_rev
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	PE,
+	approve_plan_via_gate05,
 	create_plan_as_planner,
 	ensure_approver_user,
 	ensure_planner_user,
@@ -84,16 +85,10 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 			demand_item=demand["demand_item"],
 			user=planner,
 		)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		approve_plan_version(version=created["version"], concurrency_token=token, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		rev = open_or_create_plan_revision(plan=created["plan"], user=planner)
 		self.assertTrue(rev["created"])
-		token2 = frappe.db.get_value(
-			"Procurement Plan Version", rev["version"], "concurrency_token"
-		)
-		approve_plan_version(version=rev["version"], concurrency_token=token2, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=rev["version"], user=approver)
 		plan = frappe.get_doc("Procurement Plan", created["plan"])
 		self.assertEqual(plan.current_approved_version, rev["version"])
 		self.assertEqual(
@@ -117,10 +112,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 			demand=demand["demand"],
 			user=planner,
 		)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		approve_plan_version(version=created["version"], concurrency_token=token, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		a = open_or_create_plan_revision(plan=created["plan"], user=planner)
 		b = open_or_create_plan_revision(plan=created["plan"], user=planner)
 		self.assertEqual(a["version"], b["version"])
@@ -138,10 +130,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		created = create_plan_as_planner(title="Immutable")
 		demand = make_approved_demand(title="Immutable demand")
 		add_demand_to_plan(plan=created["plan"], demand=demand["demand"], user=planner)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		approve_plan_version(version=created["version"], concurrency_token=token, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		doc = frappe.get_doc("Procurement Plan Version", created["version"])
 		doc.version_reason = "tamper"
 		with self.assertRaises(frappe.ValidationError):
@@ -154,10 +143,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		demand = make_approved_demand(title="Stable item demand")
 		added = add_demand_to_plan(plan=created["plan"], demand=demand["demand"], user=planner)
 		code = added["plan_item_code"]
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		approve_plan_version(version=created["version"], concurrency_token=token, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		rev = open_or_create_plan_revision(plan=created["plan"], user=planner)
 		item = frappe.get_doc("Procurement Plan Item", added["plan_item"])
 		self.assertEqual(item.plan_item_code, code)
@@ -190,10 +176,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		created = create_plan_as_planner(title="Effective once")
 		demand = make_approved_demand(title="Effective once demand")
 		added = add_demand_to_plan(plan=created["plan"], demand=demand["demand"], user=planner)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", created["version"], "concurrency_token"
-		)
-		approve_plan_version(version=created["version"], concurrency_token=token, user=approver)
+		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		status = frappe.db.get_value("Plan Demand Allocation", added["allocation"], "status")
 		self.assertEqual(status, ALLOC_EFFECTIVE)
 		self.assertTrue(

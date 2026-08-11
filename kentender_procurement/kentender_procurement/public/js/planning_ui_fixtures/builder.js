@@ -1,5 +1,5 @@
 // PLN-UI-03 empty + PLN-UI-05 items — literal Stitch from docs/mvp-1/04_planning/ui_design/
-// Fake top/side nav discarded; kt-stitch-canvas + testids/bind hooks only.
+// Fake top/side nav + in-canvas breadcrumbs discarded (Desk chrome); kt-stitch-canvas + testids/bind hooks only.
 frappe.provide("kentender_procurement.ui_fixtures");
 
 kentender_procurement.ui_fixtures.planning_builder = function () {
@@ -7,13 +7,6 @@ kentender_procurement.ui_fixtures.planning_builder = function () {
 <main class="flex-1 max-w-7xl mx-auto w-full px-container-padding py-section-gap flex flex-col gap-section-gap">
 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4" data-testid="kt-pln-ui03-header">
 <div class="flex flex-col gap-stack-xs">
-<nav class="flex items-center text-on-surface-variant font-body-sm text-body-sm gap-2" data-kt-pln-builder-context aria-label="Breadcrumb">
-<a class="hover:text-primary transition-colors" href="/app/planning-workspace">Procurement Planning</a>
-<span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-<span class="hover:text-primary transition-colors" data-kt-pln-builder-pe-crumb>Ministry of Health</span>
-<span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-<span class="text-on-surface" data-kt-pln-builder-fy-crumb>2027/28</span>
-</nav>
 <h1 class="font-headline-lg text-headline-lg text-on-surface" data-kt-pln-builder-title>Ministry of Health Annual Procurement Plan 2027/28</h1>
 <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
 <span class="bg-surface-variant px-2 py-1 rounded-sm font-label-caps text-label-caps text-on-surface" data-kt-pln-builder-lifecycle data-testid="kt-pln-ui03-lifecycle">Draft</span>
@@ -31,27 +24,27 @@ Add approved demand
 <div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-container-padding flex flex-wrap gap-6 items-center justify-between shadow-sm" data-testid="kt-pln-ui03-summary">
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant">Plan Items</span>
-<span class="font-headline-sm text-headline-sm text-on-surface" data-kt-pln-builder-items>0</span>
+<span class="font-headline-sm text-headline-sm text-primary" data-kt-pln-builder-items>0</span>
 </div>
 <div class="w-px h-10 bg-border-subtle hidden md:block"></div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant">Planned Value</span>
-<span class="font-data-lg text-data-lg text-on-surface" data-kt-pln-builder-total>KES 0</span>
+<span class="font-data-lg text-data-lg text-primary" data-kt-pln-builder-total>KES 0</span>
 </div>
 <div class="w-px h-10 bg-border-subtle hidden md:block"></div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant">Org Units</span>
-<span class="font-headline-sm text-headline-sm text-on-surface" data-kt-pln-builder-org-units>0</span>
+<span class="font-headline-sm text-headline-sm text-primary" data-kt-pln-builder-org-units>0</span>
 </div>
 <div class="w-px h-10 bg-border-subtle hidden md:block"></div>
 <div class="flex flex-col">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Dept. Contributions</span>
-<span class="font-body-md text-body-md text-on-surface" data-kt-pln-builder-contributions>0 submitted</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Dept. Contributions</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-caps text-label-caps border whitespace-nowrap bg-status-reserved/10 text-status-reserved border-status-reserved/20" data-kt-pln-builder-contributions>Preparing</span>
 </div>
 <div class="w-px h-10 bg-border-subtle hidden md:block"></div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Validation</span>
-<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-variant text-on-surface-variant font-label-caps text-label-caps border border-outline-variant" data-kt-pln-builder-validation>
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-reserved/10 text-status-reserved font-label-caps text-label-caps border border-status-reserved/20" data-kt-pln-builder-validation data-testid="kt-pln-ui05-validation">
 <span class="material-symbols-outlined text-[14px]" aria-hidden="true">pending</span>
 Not run
 </div>
@@ -59,10 +52,10 @@ Not run
 </div>
 <div class="bg-[#FEF3C7] border border-[#F59E0B] rounded-lg p-4 flex items-center justify-between shadow-sm hidden" data-kt-pln-issue-strip data-testid="kt-pln-ui05-issue-strip" hidden>
 <div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[#D97706]" aria-hidden="true">warning</span>
+<span class="material-symbols-outlined text-[#D97706]" aria-hidden="true" data-kt-pln-issue-icon>warning</span>
 <span class="font-body-md text-body-md text-[#92400E]" data-kt-pln-issue-copy>1 item needs attention before departmental sign-off.</span>
 </div>
-<a class="text-[#D97706] hover:text-[#B45309] font-body-md text-body-md font-medium underline transition-colors" href="#" data-kt-pln-action="review-issue">Review issue</a>
+<a class="text-[#D97706] hover:text-[#B45309] font-body-md text-body-md font-medium underline transition-colors" href="#" data-kt-pln-action="review-issue" data-kt-pln-issue-action>Review issue</a>
 </div>
 <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center" data-testid="kt-pln-ui03-filters">
 <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -145,7 +138,7 @@ Back to Planning
 Run validation
 </button>
 <button type="button" class="flex-1 sm:flex-none bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed font-body-md text-body-md px-6 py-2 rounded flex items-center justify-center gap-2" data-kt-pln-action="submit-dept" data-testid="kt-pln-ui05-submit-dept" disabled="">
-Submit for departmental sign-off
+Submit for sign-off
 <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>
 </button>
 </div>

@@ -65,6 +65,22 @@ test.describe("PLN-UI-05 Populated Draft plan builder", () => {
 		await expect(page.getByTestId("kt-pln-ui05-row-continue").first()).toBeVisible();
 		await page.getByTestId("kt-pln-ui05-run-validation").click();
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible();
+		// Stitch PLN-UI-05: Draft chip (not plan OPEN), footer "Submit for sign-off".
+		await expect(page.getByTestId("kt-pln-ui03-lifecycle")).toHaveText(/Draft/i);
+		await expect(page.getByTestId("kt-pln-ui05-submit-dept")).toContainText(/Submit for sign-off/i);
+		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui03-summary"]`)).not.toContainText(
+			/Preference and reservation/i,
+		);
+		await expect(page.getByTestId("kt-pln-ui03-filters")).toBeHidden();
+		const issueStrip = page.getByTestId("kt-pln-ui05-issue-strip");
+		const submit = page.getByTestId("kt-pln-ui05-submit-dept");
+		if (await issueStrip.isVisible()) {
+			await expect(issueStrip).toContainText(/needs attention/i);
+		} else {
+			await expect(submit).toBeDisabled();
+			const title = (await submit.getAttribute("title")) || "";
+			expect(title.length).toBeGreaterThan(0);
+		}
 		await page.getByTestId("kt-pln-ui05-row-continue").first().click();
 		await expect(page).toHaveURL(/procurement-plan-item-editor/, { timeout: 30_000 });
 	});

@@ -1,0 +1,372 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""PLN-UI-08 — consolidated plan review / approval read DTO."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+from frappe.utils import cstr, flt, formatdate
+
+from kentender_procurement.procurement_planning.mvp1_constants import (
+	DEPT_SUBMITTED,
+	DOCTYPE_DECISION,
+	DOCTYPE_DEPT_SUBMISSION,
+	ITEM_ACTIVE,
+	ITEM_PROPOSED,
+	VALIDATION_READY,
+	VERSION_IN_REVIEW,
+)
+from kentender_procurement.procurement_planning.services.planning_permissions import (
+	APPROVE_PLAN_ROLES,
+	CAP_PLAN_VIEW,
+	RECOMMEND_PLAN_ROLES,
+	RETURN_PLAN_ROLES,
+	SUBMIT_FOR_REVIEW_ROLES,
+	actor_planning_roles,
+	has_review_task_capability,
+	is_planning_read_only,
+	require_capability,
+)
+from kentender_procurement.procurement_planning.services.preference_reservation import (
+	COVERAGE_RATE,
+	format_money,
+	plan_coverage,
+	scheme_is_assigned,
+)
+from kentender_procurement.procurement_planning.services.record_plan_decision import (
+	has_recommendation,
+)
+
+
+def _money(amount: float, currency: str) -> str:
+	return f"{currency} {flt(amount):,.2f}"
+
+
+def _ou_label(ou: str) -> str:
+	if not ou:
+		return ""
+	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou)
+
+
+def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
+	actor = (user or frappe.session.user or "").strip()
+	if not actor or actor == "Guest":
+		frappe.throw(
+			frappe._("Login required."),
+			frappe.PermissionError,
+			title="PLN_LOGIN_REQUIRED",
+		)
+
+	plan_name = cstr(plan).strip()
+	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name):
+		frappe.throw(frappe._("Procurement Plan not found."), title="PLN_PLAN_NOT_FOUND")
+
+	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
+	pe = cstr(plan_doc.procuring_entity).strip()
+	ou = cstr(plan_doc.coordinating_org_unit or "").strip() or None
+	# Record visibility first; task vs neutral branched below (PLN-FR-080…083).
+	require_capability(
+		CAP_PLAN_VIEW,
+		procuring_entity=pe,
+		org_unit=ou,
+		user=actor,
+		require_write=False,
+	)
+	surface = "task" if has_review_task_capability(actor) else "neutral"
+
+	# Prefer open draft/in-review version; else current approved for read-only trail.
+	focus = cstr(plan_doc.open_draft_version or plan_doc.current_approved_version or "").strip()
+	if not focus:
+		frappe.throw(frappe._("No Plan Version available for review."), title="PLN_VERSION_NOT_FOUND")
+
+	ver = frappe.db.get_value(
+		"Procurement Plan Version",
+		focus,
+		[
+			"name",
+			"version_code",
+			"version_number",
+			"status",
+			"validation_projection",
+			"concurrency_token",
+		],
+		as_dict=True,
+	)
+	if not ver:
+		frappe.throw(frappe._("Plan Version not found."), title="PLN_VERSION_NOT_FOUND")
+
+	currency = plan_doc.currency or "KES"
+	items_out: list[dict[str, Any]] = []
+	planned_total = 0.0
+	open_tender_total = 0.0
+	designation_values: list[float] = []
+	ous: set[str] = set()
+
+	for it in frappe.get_all(
+		"Procurement Plan Item",
+		filters={
+			"plan": plan_name,
+			"baseline_state": ["in", [ITEM_PROPOSED, ITEM_ACTIVE]],
+		},
+		fields=["name", "plan_item_code", "baseline_state", "owner_org_unit"],
+		order_by="creation asc",
+	):
+		iv_name = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_item": it.name, "plan_version": focus},
+			"name",
+		)
+		if not iv_name:
+			continue
+		iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+		amount = flt(iv.confirmed_estimate)
+		planned_total += amount
+		method = cstr(iv.procurement_method or "")
+		if method.lower() == "open tender":
+			open_tender_total += amount
+		ou = cstr(it.owner_org_unit or "")
+		if ou:
+			ous.add(ou)
+		if scheme_is_assigned(getattr(iv, "preference_reservation_scheme", None)):
+			designation_values.append(flt(getattr(iv, "planned_reserved_value", 0)))
+		completion = ""
+		if iv.ms_delivery_completion:
+			completion = formatdate(iv.ms_delivery_completion, "dd MMMM yyyy")
+		validation = cstr(
+			getattr(iv, "validation_projection", None) or ver.validation_projection or "Not run"
+		)
+		items_out.append(
+			{
+				"plan_item": it.name,
+				"plan_item_code": it.plan_item_code,
+				"title": cstr(iv.requirement_title or it.plan_item_code),
+				"owner_org_unit": ou,
+				"owner_org_unit_label": _ou_label(ou),
+				"amount": amount,
+				"amount_display": _money(amount, currency),
+				"method": method or "—",
+				"completion": completion or "—",
+				"validation_projection": validation,
+				"editor_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
+			}
+		)
+
+	# Contributions
+	submitted = 0
+	for ou in sorted(ous):
+		st = frappe.db.get_value(
+			DOCTYPE_DEPT_SUBMISSION,
+			{"plan_version": focus, "organisation_unit": ou},
+			"status",
+		)
+		if cstr(st) == DEPT_SUBMITTED:
+			submitted += 1
+	total_ous = len(ous)
+	contrib_label = (
+		f"{submitted} of {total_ous} submitted" if total_ous else "—"
+	)
+
+	coverage = plan_coverage(
+		planned_total=planned_total,
+		designation_values=designation_values,
+		currency=currency,
+	)
+	required = flt(coverage.get("required"))
+	planned_cov = flt(coverage.get("planned"))
+	stat_status = cstr(coverage.get("status_label") or "Not started")
+	if required <= 0:
+		planned_treatment = "Not applicable"
+		stat_status = "Not applicable"
+	elif planned_cov > 0:
+		planned_treatment = (
+			f"{format_money(planned_cov, currency)} planned through reserved lot treatment"
+		)
+	else:
+		planned_treatment = "No reserved treatment planned yet"
+
+	statutory_rows = [
+		{
+			"obligation": (
+				"Women, youth, persons with disabilities and disadvantaged groups"
+			),
+			"required_treatment": f"Minimum {int(COVERAGE_RATE * 100)}% plan allocation",
+			"planned_treatment": planned_treatment,
+			"status": stat_status,
+		},
+		{
+			"obligation": "County resident tenderers",
+			"required_treatment": "Not applicable to this national Procuring Entity",
+			"planned_treatment": "Not applicable",
+			"status": "Not applicable",
+		},
+	]
+
+	validation = cstr(ver.validation_projection or "Not run") or "Not run"
+	issues_ready = validation == VALIDATION_READY
+	issues_message = (
+		"All required planning checks are ready for this decision."
+		if issues_ready
+		else "Resolve validation issues before recording this decision."
+	)
+
+	recommended = has_recommendation(version=focus)
+	roles = actor_planning_roles(actor)
+	read_only_actor = is_planning_read_only(actor)
+	task_surface = surface == "task" and not read_only_actor
+
+	can_recommend = (
+		task_surface
+		and bool(roles.intersection(RECOMMEND_PLAN_ROLES))
+		and cstr(ver.status) == VERSION_IN_REVIEW
+	)
+	can_return = (
+		task_surface
+		and bool(roles.intersection(RETURN_PLAN_ROLES))
+		and cstr(ver.status) == VERSION_IN_REVIEW
+	)
+	can_approve = (
+		task_surface
+		and bool(roles.intersection(APPROVE_PLAN_ROLES))
+		and cstr(ver.status) == VERSION_IN_REVIEW
+		and recommended
+		and issues_ready
+	)
+	can_submit_for_review = (
+		task_surface
+		and bool(roles.intersection(SUBMIT_FOR_REVIEW_ROLES))
+		and cstr(ver.status) in ("Draft", "Returned")
+		and issues_ready
+		and submitted >= total_ous
+		and total_ous > 0
+	)
+
+	if not task_surface:
+		rail_mode = "readonly"
+		current_decision_label = (
+			"In review" if cstr(ver.status) == VERSION_IN_REVIEW else cstr(ver.status)
+		)
+		primary_cta_label = ""
+	elif can_approve or (
+		bool(roles.intersection(APPROVE_PLAN_ROLES)) and cstr(ver.status) == VERSION_IN_REVIEW
+	):
+		rail_mode = "approver"
+		current_decision_label = (
+			"Final approval" if recommended else "Awaiting recommendation"
+		)
+		primary_cta_label = "Approve plan" if can_approve else ""
+	elif can_recommend or (
+		bool(roles.intersection(RECOMMEND_PLAN_ROLES)) and cstr(ver.status) == VERSION_IN_REVIEW
+	):
+		rail_mode = "reviewer"
+		current_decision_label = "Professional review"
+		primary_cta_label = "Recommend approval" if can_recommend else ""
+	else:
+		rail_mode = "readonly"
+		current_decision_label = (
+			"In review" if cstr(ver.status) == VERSION_IN_REVIEW else cstr(ver.status)
+		)
+		primary_cta_label = ""
+
+	authority_label = "Designated Approver"
+	for role in ("Designated Approver", "Accounting Officer", "Planning Authority"):
+		if role in roles:
+			authority_label = role
+			break
+
+	pe_label = (
+		frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "entity_name")
+		or plan_doc.procuring_entity
+	)
+	prepared_by = _ou_label(cstr(plan_doc.coordinating_org_unit or "")) or pe_label
+
+	trail: list[dict[str, str]] = []
+	for row in frappe.get_all(
+		DOCTYPE_DECISION,
+		filters={"plan_version": focus},
+		fields=["decision", "actor", "actor_role", "decided_at", "reason"],
+		order_by="decided_at desc",
+		limit_page_length=20,
+	):
+		trail.append(
+			{
+				"label": cstr(row.decision),
+				"actor": cstr(row.actor),
+				"actor_role": cstr(row.actor_role or ""),
+				"date": formatdate(row.decided_at, "dd MMMM yyyy") if row.decided_at else "",
+				"reason": cstr(row.reason or ""),
+			}
+		)
+	# Also surface departmental submissions as trail entries when no decisions yet.
+	if not trail:
+		for ou in sorted(ous):
+			row = frappe.db.get_value(
+				DOCTYPE_DEPT_SUBMISSION,
+				{"plan_version": focus, "organisation_unit": ou},
+				["status", "submitted_at"],
+				as_dict=True,
+			)
+			if row and cstr(row.status) == DEPT_SUBMITTED:
+				trail.append(
+					{
+						"label": "Departmental submission",
+						"actor": "",
+						"actor_role": "",
+						"date": (
+							formatdate(row.submitted_at, "dd MMMM yyyy")
+							if row.submitted_at
+							else ""
+						),
+						"reason": "",
+					}
+				)
+
+	return {
+		"ok": True,
+		"surface": surface,
+		"plan": plan_doc.name,
+		"plan_code": plan_doc.plan_code,
+		"title": plan_doc.title,
+		"procuring_entity": plan_doc.procuring_entity,
+		"procuring_entity_label": pe_label,
+		"financial_year": plan_doc.financial_year,
+		"version": ver.name,
+		"version_number": int(ver.version_number or 1),
+		"version_number_label": f"Version {int(ver.version_number or 1)}",
+		"version_status": cstr(ver.status),
+		"validation_projection": validation,
+		"concurrency_token": cstr(ver.concurrency_token or ""),
+		"item_count": len(items_out),
+		"planned_total": planned_total,
+		"planned_total_display": _money(planned_total, currency),
+		"contributions_label": contrib_label,
+		"departmental_submission_label": (
+			"Submitted" if submitted >= total_ous and total_ous else contrib_label
+		),
+		"open_tender_total": open_tender_total,
+		"open_tender_display": _money(open_tender_total, currency),
+		"items": items_out,
+		"statutory_coverage": statutory_rows,
+		"preference_reservation_coverage": coverage,
+		"issues_ready": issues_ready,
+		"issues_message": issues_message,
+		"current_decision_label": current_decision_label,
+		"prepared_by": prepared_by,
+		"authority_label": authority_label,
+		"rail_mode": rail_mode,
+		"primary_cta_label": primary_cta_label,
+		"prior_decision_trail": trail,
+		"has_recommendation": recommended,
+		"can_submit_for_review": bool(can_submit_for_review),
+		"can_recommend": bool(can_recommend),
+		"can_return": bool(can_return),
+		"can_approve": bool(can_approve),
+		"read_only": (not task_surface) or rail_mode == "readonly",
+		"builder_route": f"/app/procurement-plan-builder?plan={plan_name}",
+		"workspace_route": "/app/planning-workspace",
+		"secondary_line": (
+			f"{pe_label} · FY {plan_doc.financial_year} · Version {int(ver.version_number or 1)}"
+		),
+	}

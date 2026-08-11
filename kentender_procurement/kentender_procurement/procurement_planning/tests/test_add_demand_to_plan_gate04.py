@@ -12,13 +12,11 @@ from frappe.utils import flt
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan,
 )
-from kentender_procurement.procurement_planning.services.approve_plan_version import (
-	approve_plan_version,
-)
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder,
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	approve_plan_via_gate05,
 	create_plan_as_planner,
 	ensure_approver_user,
 	ensure_planner_user,
@@ -101,10 +99,9 @@ class TestAddDemandToPlanGate04(IntegrationTestCase):
 		first = make_approved_demand(title="Seed approved item")
 		added = add_demand_to_plan(plan=plan["plan"], demand=first["demand"], user=planner)
 		self.assertTrue(added["ok"])
-		token = frappe.db.get_value(
-			"Procurement Plan Version", plan["version"], "concurrency_token"
+		approve_plan_via_gate05(
+			plan=plan["plan"], version=plan["version"], user=approver
 		)
-		approve_plan_version(version=plan["version"], concurrency_token=token, user=approver)
 		self.assertFalse(
 			frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
 		)

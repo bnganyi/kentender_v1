@@ -137,6 +137,7 @@
 /* Layout utilities used by Stitch mains */
 .kt-cl-shell .kt-pln-root .flex { display: flex !important; }
 .kt-cl-shell .kt-pln-root .inline-flex { display: inline-flex !important; }
+.kt-cl-shell .kt-pln-root .inline-block { display: inline-block !important; }
 .kt-cl-shell .kt-pln-root .flex-col { flex-direction: column !important; }
 .kt-cl-shell .kt-pln-root .flex-wrap { flex-wrap: wrap !important; }
 .kt-cl-shell .kt-pln-root .flex-1 { flex: 1 1 0% !important; }
@@ -306,6 +307,21 @@
 	.kt-cl-shell .kt-pln-root .lg\:grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; }
 	.kt-cl-shell .kt-pln-root .lg\:col-span-8 { grid-column: span 8 / span 8 !important; }
 	.kt-cl-shell .kt-pln-root .lg\:col-span-4 { grid-column: span 4 / span 4 !important; }
+	/* Source Demand sidebar — sticky while scrolling the long editor (Stitch lg:sticky lg:top-8). */
+	.kt-cl-shell .kt-pln-root .lg\:sticky { position: sticky !important; }
+	.kt-cl-shell .kt-pln-root .lg\:top-8 { top: 2rem !important; }
+}
+.kt-cl-shell .kt-pln-root .self-start { align-self: flex-start !important; }
+
+/* Desk: keep Source Demand readable under navbar while scrolling the form. */
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-pln-root [data-kt-pln-source-sidebar] {
+		position: sticky !important;
+		top: 5.5rem !important; /* below Desk navbar / page header */
+		z-index: 5;
+		max-height: calc(100vh - 7rem);
+		overflow-y: auto;
+	}
 }
 
 .kt-cl-shell .kt-pln-root .rounded { border-radius: 0.25rem !important; }
@@ -368,6 +384,10 @@
 .kt-cl-shell .kt-pln-root .bg-status-available\/10 { background-color: rgb(16 185 129 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-reserved { background-color: var(--kt-pln-status-reserved) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-reserved\/10 { background-color: rgb(245 158 11 / 0.1) !important; }
+.kt-cl-shell .kt-pln-root .border-status-available\/20 { border-color: rgb(16 185 129 / 0.2) !important; }
+.kt-cl-shell .kt-pln-root .border-status-reserved\/20 { border-color: rgb(245 158 11 / 0.2) !important; }
+.kt-cl-shell .kt-pln-root .border-status-exhausted\/20 { border-color: rgb(225 29 72 / 0.2) !important; }
+.kt-cl-shell .kt-pln-root .bg-primary\/10 { background-color: rgb(0 61 155 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .text-on-surface { color: var(--kt-pln-on-surface) !important; }
 .kt-cl-shell .kt-pln-root .text-on-surface-variant { color: var(--kt-pln-on-surface-variant) !important; }
 .kt-cl-shell .kt-pln-root .text-on-primary { color: var(--kt-pln-on-primary) !important; }
@@ -418,6 +438,14 @@
 	color: var(--kt-pln-status-exhausted) !important;
 	font-size: 0.75rem !important;
 	margin-top: 0.25rem;
+}
+.kt-cl-shell .kt-pln-root .kt-field-invalid,
+.kt-cl-shell .kt-pln-root input.kt-field-invalid,
+.kt-cl-shell .kt-pln-root select.kt-field-invalid,
+.kt-cl-shell .kt-pln-root textarea.kt-field-invalid {
+	border-color: #ba1a1a !important;
+	outline-color: #ba1a1a !important;
+	box-shadow: 0 0 0 1px #ba1a1a !important;
 }
 
 /* Work-filter active (Stitch underline tabs) — never text-underline on hover */
@@ -558,6 +586,8 @@ body.kt-pln-editor-active .body-sidebar-container {
 .kt-cl-shell .kt-pln-root .min-w-\[180px\] { min-width: 180px !important; }
 .kt-cl-shell .kt-pln-root .min-w-\[1000px\] { min-width: 1000px !important; }
 .kt-cl-shell .kt-pln-root .w-1 { width: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .h-1 { height: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .bg-outline-variant { background-color: var(--kt-pln-outline-variant) !important; }
 .kt-cl-shell .kt-pln-root .w-4 { width: 1rem !important; }
 .kt-cl-shell .kt-pln-root .w-8 { width: 2rem !important; }
 .kt-cl-shell .kt-pln-root .w-10 { width: 2.5rem !important; }
@@ -583,6 +613,7 @@ body.kt-pln-editor-active .body-sidebar-container {
 .kt-cl-shell .kt-pln-root .backdrop-blur-sm { backdrop-filter: blur(4px) !important; }
 .kt-cl-shell .kt-pln-root .bg-on-surface\/40 { background-color: rgb(25 28 30 / 0.4) !important; }
 .kt-cl-shell .kt-pln-root .bg-primary\/5 { background-color: rgb(0 61 155 / 0.05) !important; }
+.kt-cl-shell .kt-pln-root .border-primary\/20 { border-color: rgb(0 61 155 / 0.2) !important; }
 .kt-cl-shell .kt-pln-root .bg-primary-container { background-color: var(--kt-pln-primary-container) !important; }
 .kt-cl-shell .kt-pln-root .text-on-primary-container { color: #ffffff !important; }
 .kt-cl-shell .kt-pln-root .ring-1 { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.05) !important; }
@@ -788,4 +819,72 @@ body.kt-pln-editor-active .body-sidebar-container {
 	min-height: 2.25rem !important;
 	box-sizing: border-box !important;
 }
+
+/* PLN-UI-07 departmental contribution drawer */
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer],
+.kt-cl-shell .kt-stitch-canvas[data-kt-pln-contribution-drawer] {
+	--kt-pln-drawer-overlay: rgba(25, 28, 30, 0.4);
+}
+.kt-cl-shell .kt-pln-root .drawer-overlay,
+.kt-cl-shell .kt-stitch-canvas.drawer-overlay {
+	background-color: rgba(25, 28, 30, 0.4) !important;
+	backdrop-filter: blur(2px);
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 200 !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer][hidden],
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer].hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .max-w-\[400px\] {
+	max-width: 400px !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .shadow-2xl {
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .divide-y > :not([hidden]) ~ :not([hidden]) {
+	border-top-width: 1px !important;
+	border-color: var(--kt-pln-border-subtle, #dfe1e6) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .divide-subtle > :not([hidden]) ~ :not([hidden]) {
+	border-color: var(--kt-pln-border-subtle, #dfe1e6) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .space-y-section-gap > :not([hidden]) ~ :not([hidden]) {
+	margin-top: 2rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+	margin-top: 1rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .bg-status-available\/10 {
+	background-color: rgb(16 185 129 / 0.1) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .text-status-available {
+	color: var(--kt-pln-status-available, #10b981) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .bg-surface-bright {
+	background-color: var(--kt-stitch-surface-bright, #f8f9fb) !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .col-span-2 {
+	grid-column: span 2 / span 2 !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .leading-relaxed {
+	line-height: 1.625 !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .uppercase {
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .whitespace-normal {
+	white-space: normal !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .md\:w-1\/3 {
+		width: 33.333333% !important;
+	}
+}
+
 

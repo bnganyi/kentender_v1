@@ -23,6 +23,9 @@ from kentender_procurement.procurement_planning.services.create_procurement_plan
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder as _get_plan_builder,
 )
+from kentender_procurement.procurement_planning.services.get_departmental_contribution import (
+	get_departmental_contribution as _get_departmental_contribution,
+)
 from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
 	get_plan_item_editor as _get_plan_item_editor,
 )
@@ -40,6 +43,21 @@ from kentender_procurement.procurement_planning.services.update_plan_item import
 )
 from kentender_procurement.procurement_planning.services.validate_plan import (
 	validate_plan as _validate_plan,
+)
+from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
+	submit_departmental_contribution as _submit_departmental_contribution,
+)
+from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
+	submit_plan_for_review as _submit_plan_for_review,
+)
+from kentender_procurement.procurement_planning.services.record_plan_decision import (
+	record_plan_decision as _record_plan_decision,
+)
+from kentender_procurement.procurement_planning.services.approve_plan_version import (
+	approve_plan_version as _approve_plan_version,
+)
+from kentender_procurement.procurement_planning.services.get_plan_review import (
+	get_plan_review as _get_plan_review,
 )
 
 
@@ -214,8 +232,86 @@ def get_plan_item_editor(plan_item: str | None = None) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def get_departmental_contribution(
+	plan: str | None = None,
+	organisation_unit: str | None = None,
+) -> dict[str, Any]:
+	return _get_departmental_contribution(
+		plan=plan or "",
+		organisation_unit=organisation_unit,
+	)
+
+
+@frappe.whitelist()
+def submit_departmental_contribution(
+	plan: str | None = None,
+	organisation_unit: str | None = None,
+	declaration: int | str | None = None,
+	submission_note: str | None = None,
+) -> dict[str, Any]:
+	return _submit_departmental_contribution(
+		plan=plan or "",
+		organisation_unit=organisation_unit,
+		declaration=declaration,
+		submission_note=submission_note,
+	)
+
+
+@frappe.whitelist()
 def validate_plan(plan: str | None = None) -> dict[str, Any]:
 	return _validate_plan(plan=plan or "")
+
+
+@frappe.whitelist()
+def submit_plan_for_review(
+	plan: str | None = None,
+	concurrency_token: str | None = None,
+) -> dict[str, Any]:
+	return _submit_plan_for_review(
+		plan=plan or "",
+		concurrency_token=concurrency_token,
+	)
+
+
+@frappe.whitelist()
+def record_plan_decision(
+	version: str | None = None,
+	decision: str | None = None,
+	comment: str | None = None,
+	concurrency_token: str | None = None,
+) -> dict[str, Any]:
+	return _record_plan_decision(
+		version=version or "",
+		decision=decision or "",
+		comment=comment,
+		concurrency_token=concurrency_token,
+	)
+
+
+@frappe.whitelist()
+def approve_plan_version(
+	version: str | None = None,
+	concurrency_token: str | None = None,
+	reason: str | None = None,
+) -> dict[str, Any]:
+	try:
+		return _approve_plan_version(
+			version=version or "",
+			concurrency_token=concurrency_token,
+			reason=reason,
+		)
+	except frappe.PermissionError as exc:
+		return {
+			"ok": False,
+			"errors": {"form": str(exc).split(":", 1)[-1].strip() or "Not permitted"},
+		}
+	except Exception as exc:
+		return {"ok": False, "errors": {"form": str(exc)}}
+
+
+@frappe.whitelist()
+def get_plan_review(plan: str | None = None) -> dict[str, Any]:
+	return _get_plan_review(plan=plan or "")
 
 
 @frappe.whitelist()
@@ -290,6 +386,235 @@ def prepare_planning_gate04_ui(
 		out["plan_item_code"] = added.get("plan_item_code")
 	frappe.db.commit()
 	return out
+
+
+@frappe.whitelist()
+def prepare_planning_gate05_ui() -> dict[str, Any]:
+	"""Ready Plan Item + HoD user for PLN-UI-07 contribution drawer Playwright."""
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds.constants import TEST_PASSWORD
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_HOD,
+		ensure_planning_roles,
+	)
+	from kentender_procurement.procurement_planning.services.validate_plan import (
+		validate_plan,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		complete_plan_item_for_signoff,
+	)
+
+	frappe.only_for(("System Manager", "Administrator"))
+	ensure_planning_roles()
+	base = prepare_planning_gate04_ui(with_plan_item=1, need_item_count=1)
+	plan = base["empty_draft_plan"]
+	plan_item = base.get("plan_item")
+	planner = "moh.planning.officer@example.test"
+	if plan_item:
+		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
+		validate_plan(plan=plan, user=planner)
+
+	# Prior UI runs may have submitted this Draft's contribution — reset for HoD smoke.
+	from kentender_procurement.procurement_planning.mvp1_constants import (
+		DEPT_PREPARING,
+		DOCTYPE_DEPT_SUBMISSION,
+	)
+
+	draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+	if draft:
+		for name in frappe.get_all(
+			DOCTYPE_DEPT_SUBMISSION,
+			filters={"plan_version": draft},
+			pluck="name",
+		):
+			frappe.db.set_value(
+				DOCTYPE_DEPT_SUBMISSION,
+				name,
+				{
+					"status": DEPT_PREPARING,
+					"submitted_by": "",
+					"submitted_at": None,
+					"submission_hash": "",
+					"submission_note": "",
+					"declaration": "",
+				},
+			)
+
+	hod_email = "moh.hod.dhp@example.test"
+	if not frappe.db.exists("User", hod_email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": hod_email,
+				"first_name": "MOH",
+				"last_name": "HoD",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", hod_email)
+	user.enabled = 1
+	user.save(ignore_permissions=True)
+	user.add_roles("Desk User", ROLE_HOD)
+	update_password(hod_email, TEST_PASSWORD)
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": hod_email, "role": ROLE_HOD},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "User Scope Assignment",
+			"user": hod_email,
+			"role": ROLE_HOD,
+			"procuring_entity": base["pe_moh"],
+			"organisation_unit": "MOH-DIR-DHP",
+			"include_descendants": 1,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {
+		**base,
+		"hod_user": hod_email,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}",
+		"ready_for_signoff": True,
+	}
+
+
+@frappe.whitelist()
+def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
+	"""In-review + recommended plan + Reviewer/Approver users for PLN-UI-08 Playwright."""
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds.constants import TEST_PASSWORD
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_DESIGNATED_APPROVER,
+		ROLE_REVIEWER,
+		ROLE_VIEWER,
+		ensure_planning_roles,
+	)
+	from kentender_procurement.procurement_planning.services.record_plan_decision import (
+		record_plan_decision,
+	)
+	from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
+		submit_departmental_contribution,
+	)
+	from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
+		submit_plan_for_review,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		complete_plan_item_for_signoff,
+	)
+
+	frappe.only_for(("System Manager", "Administrator"))
+	ensure_planning_roles()
+	base = prepare_planning_gate05_ui()
+	plan = base["empty_draft_plan"]
+	plan_item = base.get("plan_item")
+	planner = "moh.planning.officer@example.test"
+	hod = base["hod_user"]
+	if plan_item:
+		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
+	from kentender_procurement.procurement_planning.services.validate_plan import (
+		validate_plan,
+	)
+
+	validate_plan(plan=plan, user=planner)
+	dept = submit_departmental_contribution(plan=plan, declaration=1, user=hod)
+	if not dept.get("ok"):
+		frappe.throw(f"Gate05 approval prep: dept submit failed: {dept}")
+
+	version = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+	token = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
+	sub = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
+	if not sub.get("ok"):
+		frappe.throw(f"Gate05 approval prep: submit for review failed: {sub}")
+
+	reviewer = "moh.planning.reviewer@example.test"
+	approver = "moh.plan.approver@example.test"
+	viewer = "pln.ui.viewer@example.test"
+	for email, role, first, last in (
+		(reviewer, ROLE_REVIEWER, "MOH", "Reviewer"),
+		(approver, ROLE_DESIGNATED_APPROVER, "MOH", "Approver"),
+		(viewer, ROLE_VIEWER, "MOH", "Viewer"),
+	):
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": first,
+					"last_name": last,
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		user = frappe.get_doc("User", email)
+		user.enabled = 1
+		user.save(ignore_permissions=True)
+		user.add_roles("Desk User", role)
+		update_password(email, TEST_PASSWORD)
+		for name in frappe.get_all(
+			"User Scope Assignment",
+			filters={"user": email, "role": role},
+			pluck="name",
+		):
+			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "User Scope Assignment",
+				"user": email,
+				"role": role,
+				"procuring_entity": base["pe_moh"],
+				"organisation_unit": "",
+				"include_descendants": 0,
+			}
+		).insert(ignore_permissions=True)
+
+	token2 = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
+	rec = record_plan_decision(
+		version=version,
+		decision="recommend",
+		comment="Ready for designated approval",
+		concurrency_token=token2,
+		user=reviewer,
+	)
+	if not rec.get("ok"):
+		frappe.throw(f"Gate05 approval prep: recommend failed: {rec}")
+
+	# Ensure review page admits these roles
+	if frappe.db.exists("Page", "procurement-plan-review"):
+		page = frappe.get_doc("Page", "procurement-plan-review")
+		existing = {r.role for r in page.roles}
+		for role in (
+			"Procurement Planner",
+			"Planning Reviewer",
+			"Designated Approver",
+			"Accounting Officer",
+			"Planning Authority",
+			"Planning Viewer",
+			"Head of User Department",
+			"Requester",
+			"Desk User",
+			"Administrator",
+			"System Manager",
+		):
+			if role not in existing:
+				page.append("roles", {"role": role})
+		page.save(ignore_permissions=True)
+
+	frappe.db.commit()
+	return {
+		**base,
+		"reviewer_user": reviewer,
+		"approver_user": approver,
+		"viewer_user": viewer,
+		"version": version,
+		"review_route": f"/app/procurement-plan-review?plan={plan}",
+		"ready_for_approval": True,
+	}
 
 
 @frappe.whitelist()

@@ -7,11 +7,6 @@ kentender_procurement.ui_fixtures.planning_register = function () {
 <main class="flex-grow flex flex-col overflow-y-auto w-full">
 <div class="p-container-padding md:p-section-gap max-w-4xl mx-auto w-full flex-grow flex flex-col">
 <div class="mb-section-gap" data-testid="kt-pln-ui02-header">
-<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-stack-sm">
-<a class="hover:text-primary transition-colors" href="/app/planning-workspace">Procurement Planning</a>
-<span class="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_right</span>
-<span class="text-on-surface font-medium">New annual plan</span>
-</div>
 <h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs">Create annual procurement plan</h1>
 <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Register the plan that will consolidate approved needs for one Procuring Entity and financial year.</p>
 </div>

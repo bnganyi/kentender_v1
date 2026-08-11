@@ -2,9 +2,9 @@
 
 **Fixture bundle:** `KENTENDER_MVP_V1`  
 **Status:** Living contract — approved baseline for implementation  
-**Version:** 2.4  
-**Supersedes:** Version 2.3 and all Ministry-specific seed contracts  
-**Compatibility:** Compatible fixture correction of version 2.3; legacy ownership fields remain prohibited  
+**Version:** 2.6  
+**Supersedes:** Version 2.5 and all Ministry-specific seed contracts  
+**Compatibility:** Compatible Planning lifecycle and exception-scenario correction of version 2.5; legacy ownership, contribution and generic Planning-treatment fields remain prohibited  
 **Fixture clock:** `2027-11-05T12:00:00+03:00`  
 **Primary story:** Ministry of Health  
 **Secondary entity:** County Government of Kisumu  
@@ -22,7 +22,7 @@ Module requirements remain authoritative for business behaviour. This document i
 
 ## 2. Story in one paragraph
 
-The Ministry of Health adopts a 2026–2030 strategic plan to improve the reliability of digital clinical services and strengthen health-workforce capability. The State Department for Medical Services, through the Directorate of Digital Health and Policy, owns the principal infrastructure outcome and receives KES 480 million in the FY 2027/28 procurement budget. An approved KES 455 million Demand reserves that funding and becomes an Active Plan Item in Approved Plan Version 1; its existing Tender later converts KES 310 million into a contract commitment, leaving KES 145 million reserved. A second Ministry Demand for technical-staff certification starts Returned after a KES 15 million funding shortfall. The Planning scenario corrects it to KES 80 million and adds it as a Proposed Plan Item through Draft Revision 2 while Approved Version 1 remains operational. A KES 180 million finance expenditure snapshot is stale and requires attention. Strategy performance moves from 99.82% availability in September 2027 to 99.96% in October after a verified corrective action. Separately, the County Government of Kisumu owns a minimal county-health strategy, a KES 24 million cold-chain Budget Line and a Draft Demand that has not yet been enriched with Strategy or funding. Unit-scoped users maintain only their own data, entity-level reviewers see their authorised consolidated position, and no user receives cross-entity access by default.
+The Ministry of Health adopts a 2026–2030 strategic plan to improve the reliability of digital clinical services and strengthen health-workforce capability. The State Department for Medical Services, through the Directorate of Digital Health and Policy, owns the principal infrastructure outcome and receives KES 480 million in the FY 2027/28 procurement budget. An HoD-approved KES 455 million Demand becomes a completed Plan Item; Finance then confirms and reserves the full amount before Head-of-Procurement approval makes it Active in Approved Plan Version 1. Its existing Tender later converts KES 310 million into a contract commitment, leaving KES 145 million reserved. A second Ministry Demand for technical-staff certification is corrected to KES 80 million, approved by its HoD and added as a Proposed Plan Item through Draft Version 2 while Approved Version 1 remains operational. An optional resettable scenario applies a competing KES 55 million hold to its Budget Line so PLN-UI-07A shows KES 25 million available against KES 80 million required and an exact KES 55 million shortfall. A KES 180 million finance expenditure snapshot is stale and requires attention. Strategy performance moves from 99.82% availability in September 2027 to 99.96% in October after a verified corrective action. Separately, the County Government of Kisumu owns a minimal county-health strategy, a KES 24 million cold-chain Budget Line and a Draft Demand that has not yet been enriched with Strategy or funding. Unit-scoped users maintain only their own data, entity-level reviewers see their authorised consolidated position, and no user receives cross-entity access by default.
 
 The system may show that procurement supports strategic outcomes. It must not claim that expenditure alone caused a performance result.
 
@@ -110,13 +110,10 @@ Use the repository's shared test-user and credential mechanism. Do not hardcode 
 | `moh.strategy.reviewer@example.test` | `PE-MOH`, all assigned units | Reviews Strategy submissions |
 | `moh.budget.reviewer@example.test` | `PE-MOH`, all assigned units | Reviews Budget submissions and revisions |
 | `moh.budget.authority@example.test` | `PE-MOH`, all assigned units | Activates Budgets and applies approved revisions |
-| `moh.business.approver@example.test` | `PE-MOH`, assigned Ministry units | James Mwangi — supports, returns or rejects assigned business needs |
-| `moh.procurement.authority@example.test` | `PE-MOH`, assigned Ministry units | Grace Wanjiku — performs Procurement enrichment and final Demand approval |
-| `moh.budget.officer@example.test` | `PE-MOH`, assigned Ministry units | Peter Otieno — confirms every Demand funding assignment and resolves exceptions |
+| `moh.business.approver@example.test` | `PE-MOH`, assigned Ministry units | James Mwangi — HoD/Business Approver who approves or returns assigned Demands |
+| `moh.procurement.authority@example.test` | `PE-MOH`, assigned Ministry units | Grace Wanjiku — Head of Procurement who approves or returns Finance-confirmed Plan Versions |
+| `moh.budget.officer@example.test` | `PE-MOH`, assigned Ministry units | Peter Otieno — confirms full funding after Plan Item completion or resolves/returns shortfalls |
 | `moh.planning.officer@example.test` | `PE-MOH`, assigned Ministry units | Mercy Kilonzo — prepares the consolidated Plan and Plan Items |
-| `moh.planning.reviewer@example.test` | `PE-MOH`, all assigned units | David Kiptoo — performs professional Planning review and recommendation |
-| `moh.accounting.officer@example.test` | `PE-MOH`, entity scope | Josephine Mburu — performs the configured Accounting Officer Planning action |
-| `moh.plan.approver@example.test` | `PE-MOH`, entity scope | Performs the configured final annual-plan approval action |
 | `moh.tender.initiator@example.test` | `PE-MOH`, assigned Ministry units | Starts Tender preparation from Active Plan Items |
 | `moh.viewer@example.test` | `PE-MOH`, read-only Active data | Demonstrates consolidated entity access |
 | `kisumu.health.officer@example.test` | `PE-CGKIS` / `CGK-DEPT-HEALTH` | Maintains the minimal county-health data and proves cross-entity denial |
@@ -426,8 +423,8 @@ The county Draft Demand is defined in section 7.3. It has no Strategy assignment
 | Owner Organisation Unit | `MOH-DIR-DHP` |
 | Requester | Dr Miriam Njeri — `moh.medicalservices.officer@example.test` |
 | Business Approver | James Mwangi — `moh.business.approver@example.test` |
-| Procurement Approval Authority | Grace Wanjiku — `moh.procurement.authority@example.test` |
-| Budget Officer | Peter Otieno — `moh.budget.officer@example.test` |
+| Head of Procurement | Grace Wanjiku — `moh.procurement.authority@example.test` |
+| Budget Officer | Peter Otieno — `moh.budget.officer@example.test`; acts after Plan Item completion |
 | Route | Standard |
 | Required by | 31 March 2028 |
 | Delivery location | National Data Centre and designated health facilities |
@@ -461,25 +458,23 @@ Public-value treatments:
 | Plan Value Commitment | Treatment | Rationale |
 |---|---|---|
 | `MOH-PVC-EFT-01` | Embedded in specification | Infrastructure supports reliable critical health services |
-| `MOH-PVC-ECO-01` | To be determined in Planning | Whole-life costing, energy use and lifecycle optimisation must be resolved during plan preparation |
+| `MOH-PVC-ECO-01` | Tender preparation input | The approved whole-life cost, energy-use and lifecycle commitment passes through Planning unchanged for Tender Configuration to implement |
 | `MOH-PVC-RES-01` | Contract obligation | Redundancy, continuity and support requirements must carry forward |
 | `MOH-PVC-SUS-02` | Delivery or disposal obligation | Replaced ICT equipment requires controlled end-of-life handling |
 
-Funding and decisions:
+Funding context and Demand decision:
 
 | Control | Canonical value |
 |---|---|
 | Budget Line | `MOH-BL-DHI-2027` |
-| Budget Officer-confirmed allocation | KES 455,000,000 |
-| Reservation | `RSV-MOH-0001` |
-| Business support | James Mwangi — 12 August 2027 |
-| Procurement enrichment | Grace Wanjiku — 14 August 2027 |
-| Budget confirmation | Peter Otieno — 15 August 2027 |
-| Final approval and reservation | Grace Wanjiku — 16 August 2027 |
+| Proposed Budget Line | `MOH-BL-DHI-2027`; read-only Planning input |
+| Demand reservation | None |
+| Request submitted | Dr Miriam Njeri — 12 August 2027 |
+| HoD approval | James Mwangi — 14 August 2027 |
 
-All decision times shall be fixed values in East Africa Time and preserve this order. Budget confirmation does not create the reservation. Final approval creates or resolves exactly one `RSV-MOH-0001` atomically and idempotently.
+All decision times shall be fixed values in East Africa Time and preserve this order. Demand approval does not create a Finance decision or reservation. After `PPI-MOH-2027-021` is complete, Peter Otieno confirms the full KES 455,000,000 and creates or resolves exactly one `RSV-MOH-0001` atomically and idempotently. Grace Wanjiku then approves Plan Version 1.
 
-### 7.2 Returned Ministry Demand with a funding shortfall
+### 7.2 Returned Ministry Demand requiring scope correction
 
 | Field | Value |
 |---|---|
@@ -494,15 +489,13 @@ All decision times shall be fixed values in East Africa Time and preserve this o
 | Currency | KES |
 | Primary Strategy target | `MOH-TGT-SKILLS-2029` |
 | Relevant Budget Line | `MOH-BL-HWD-2027` |
-| Available funding | KES 80,000,000 |
-| Funding shortfall | KES 15,000,000 |
 | Final status/stage | Returned / Request preparation |
 
 Return reason:
 
-> The proposed scope exceeds available funding by KES 15,000,000. Revise the number of participants or provide a phased delivery approach.
+> The proposed certification scope is too broad for the current annual priority. Revise the number of participants or provide a phased delivery approach within KES 80,000,000.
 
-The audit history shall show that Procurement enrichment was completed, the funding exception was detected and the Demand was returned to Anne Achieng. There is no Budget Officer confirmation, reservation, commitment or expenditure. The fixture shall not create negative availability or a funding override.
+The audit history shall show that the HoD returned the Demand to Anne Achieng for scope correction. There is no Planning, Budget Officer, reservation, commitment or expenditure decision at this state.
 
 ### 7.3 Minimal County Draft Demand
 
@@ -576,31 +569,64 @@ Base Planning state:
 
 The deterministic scenario `SCN-PLN-ADD-001` shall then demonstrate adding a common post-approval requirement:
 
-1. `DMD-MOH-2027-019` starts Returned at KES 95,000,000 with a KES 15,000,000 funding shortfall.
-2. Anne Achieng reduces the certification scope to KES 80,000,000 and resubmits it through the existing business, Procurement, mandatory Budget Officer and final approval route.
-3. Final Demand approval creates `RSV-MOH-0002` for KES 80,000,000 exactly once.
-4. Mercy Kilonzo selects **Add Plan Item** on `PLN-MOH-2027-001`.
+1. `DMD-MOH-2027-019` starts Returned at KES 95,000,000 after the HoD requests a narrower annual scope.
+2. Anne Achieng reduces the certification scope to KES 80,000,000 and resubmits it.
+3. The responsible HoD approves the corrected Demand. Approval makes it Planning Ready but creates no reservation.
+4. Mercy Kilonzo selects **Add Plan Item** on `PLN-MOH-2027-001` and selects the Approved Demand once in PLN-UI-04.
 5. The system creates `PLN-MOH-2027-001-V2` as the single Draft successor and creates Proposed `PPI-MOH-2027-022` for the Digital health technical staff certification programme.
-6. Version 1 remains current Approved; `PPI-MOH-2027-021` remains Active and `TND-MOH-2027-008` remains valid.
-7. The added Organisation Unit contribution is signed off and the revised consolidated totals, funding and statutory allocations are revalidated.
-8. Approval makes Version 2 current Approved, Version 1 Superseded and `PPI-MOH-2027-022` Active.
+6. Mercy completes the procurement-owned Plan Item fields. Version 1 remains current Approved; `PPI-MOH-2027-021` remains Active and `TND-MOH-2027-008` remains valid.
+7. Peter Otieno confirms the full KES 80,000,000 after Plan Item completion and creates `RSV-MOH-0002` exactly once.
+8. Grace Wanjiku approves Version 2. Version 2 becomes current Approved, Version 1 becomes Superseded and `PPI-MOH-2027-022` becomes Active.
 9. The unchanged `PPI-MOH-2027-021` retains the same stable identity, handoff and Tender linkage.
 
 Draft and Approved Version 2 values:
 
-| Item | Owner | Value | Version 2 treatment |
+| Item | Owner | Value | Version 2 state |
 |---|---|---:|---|
-| `PPI-MOH-2027-021` National digital health infrastructure upgrade | `MOH-DIR-DHP` | KES 455,000,000 | Carried forward unchanged |
-| `PPI-MOH-2027-022` Digital health technical staff certification programme | `MOH-DIR-HRMD` | KES 80,000,000 | Added; Open tender; single year |
+| `PPI-MOH-2027-021` National digital health infrastructure upgrade | `MOH-DIR-DHP` | KES 455,000,000 | Carried forward unchanged and remains operational while Version 2 is Draft |
+| `PPI-MOH-2027-022` Digital health technical staff certification programme | `MOH-DIR-HRMD` | KES 80,000,000 | Added as Proposed; Open tender; single year; awaiting post-Planning Finance confirmation |
 | **Consolidated Plan** | — | **KES 535,000,000** | Revised approval baseline |
 
-The applicable 30% plan-allocation basis becomes KES 160,500,000. The fixture records planned treatment only; it must not present the allocation as an award, expenditure or realised result.
+The fixture shall not create `Departmental Submission`, Organisation Unit contribution/sign-off, `statutory_allocation_treatment`, `statutory_rationale`, `planned_treatment_value`, `value_treatment_note` or an equivalent generic Planning questionnaire record. Strategy Targets and Plan Value Commitments remain inherited read-only snapshots from the Approved Demand and pass unchanged into the Planning handoff. Plan-level preference and reservation coverage is omitted unless a governed supported source can derive it without item-level treatment inputs.
 
 After Demand approval in the scenario, Ministry Budget arithmetic becomes:
 
 `KES 560,000,000 Budget = KES 310,000,000 committed + KES 225,000,000 remaining reserved + KES 25,000,000 available`
 
 Running `SCN-PLN-ADD-001` a second time shall not create another revision, Plan Item, reservation, decision or audit event. Reset returns the bundle to the base Planning state above.
+
+### 7.7 Optional Planning Finance shortfall scenario
+
+`SCN-PLN-FUND-SHORT-001` is an optional resettable scenario used to demonstrate PLN-UI-07A without changing the canonical successful funding story.
+
+Scenario preparation:
+
+1. Start from the base bundle and run `SCN-PLN-ADD-001` only through completion of Proposed `PPI-MOH-2027-022`, before Finance confirmation.
+2. Create one scenario-owned competing hold `RSV-MOH-SHORT-001` for KES 55,000,000 against `MOH-BL-HWD-2027`.
+3. Do not create `RSV-MOH-0002` and do not approve Version 2 while the shortfall exists.
+
+`RSV-MOH-SHORT-001` is a non-production scenario fixture representing a concurrent valid hold. It must be fixture-owned, clearly labelled **Concurrent workforce funding hold — scenario only**, and created only by the scenario harness. It must not introduce a production reservation source type, another permanent Demand or an unrelated canonical record.
+
+Expected Finance state:
+
+| Field | Value |
+|---|---:|
+| Plan Item | `PPI-MOH-2027-022` — Digital health technical staff certification programme |
+| Budget Line approved | KES 80,000,000 |
+| Scenario competing hold | KES 55,000,000 |
+| Current available allocation | KES 25,000,000 |
+| Amount required | KES 80,000,000 |
+| Funding shortfall | KES 55,000,000 |
+| Finance state | Awaiting confirmation — Insufficient funding |
+
+PLN-UI-07A shall omit Confirm funding and shall not create a partial reservation, negative balance, manual override or reduced Plan Item value. The Budget Officer may:
+
+- leave the same Finance task pending and open Budget & Funding to resolve the competing hold; or
+- Return to planner with a required reason.
+
+The deterministic resolution branch releases `RSV-MOH-SHORT-001` through the governed Budget & Funding service. The same Finance task then revalidates with KES 80,000,000 available and returns to the sufficient-funding PLN-UI-07 state. It does not confirm automatically. Peter Otieno may then confirm KES 80,000,000 and create `RSV-MOH-0002` once.
+
+Running the scenario or its resolution twice shall not duplicate the competing hold, Finance task, decision or reservation. Reset removes only scenario-owned shortfall records and restores the base Planning state without deleting unrelated fixture data.
 
 ## 8. Seed implementation contract
 
@@ -623,14 +649,15 @@ The implementation should use one central orchestrator with module-owned seed fu
 9. Strategy measurements and corrective action
 10. Budget headers
 11. Budget lines, Strategy references and funding treatments
-12. Demand and reservation
-13. Logical Procurement Plan and Approved Version 1
-14. Stable Plan Item, Plan Item Version and Demand Allocations
-15. Departmental submissions, Planning decisions and publication evidence
-16. Planning handoff and Tender
-17. Contract and commitment
-18. Expenditure snapshot
-19. Audit and lifecycle events
+12. Approved Demands and immutable business snapshots
+13. Logical Procurement Plan, Draft Version and Proposed Plan Items
+14. Stable Plan Item Versions and Demand Allocations
+15. Post-Planning Finance confirmation and Reservation
+16. Head-of-Procurement decision and Approved Plan Version
+17. Planning handoff and Tender
+18. Contract and commitment
+19. Expenditure snapshot
+20. Audit and lifecycle events
 
 Only implemented modules need live records. Until a downstream module is available, its references may be declared in this contract but shall not be represented by misleading production records.
 
@@ -645,6 +672,7 @@ The reset process shall:
 - fail clearly if a non-fixture record depends on a fixture record;
 - recreate the same identities and values;
 - leave no duplicate relationships, reservations, commitments or audit events.
+- remove scenario-owned `RSV-MOH-SHORT-001` and shortfall decisions without deleting canonical Budget, Demand or Planning records.
 
 ### 8.4 Time and freshness
 
@@ -693,13 +721,14 @@ Verify at minimum:
 ### Demands
 
 - all three Demand references resolve exactly once;
-- `DMD-MOH-2027-014` Need Items, confirmed estimate, allocation and original reservation each total KES 455,000,000;
-- `DMD-MOH-2027-014` references `MOH-TGT-AVAIL-2028`, `MOH-TGT-RESTORE-2028`, `MOH-BL-DHI-2027` and exactly one `RSV-MOH-0001`;
-- the principal Demand contains ordered Business, Procurement, Budget and Final approval decisions by the named actors;
-- at the base boundary, `DMD-MOH-2027-019` has a KES 15,000,000 funding shortfall, a preserved return reason and no confirmation or reservation;
+- `DMD-MOH-2027-014` Need Items and confirmed estimate total KES 455,000,000;
+- `DMD-MOH-2027-014` references `MOH-TGT-AVAIL-2028`, `MOH-TGT-RESTORE-2028` and the proposed `MOH-BL-DHI-2027` context without a Demand-stage reservation;
+- the principal Demand contains the ordered Request submission and HoD approval decisions by the named actors;
+- `RSV-MOH-0001` exists only after post-Planning Finance confirmation and retains the Demand/Plan Item lineage;
+- at the base boundary, `DMD-MOH-2027-019` preserves its HoD return reason and has no Planning, Finance confirmation or reservation;
 - `DMD-CGK-2027-006` is Draft and has no Strategy target, Budget Line, funding allocation or reservation;
 - the Requester accounts cannot mutate specialist Strategy, value-treatment or funding fields;
-- the Budget Officer is required for routine and exception funding assignments;
+- the Budget Officer is required after Plan Item completion for both sufficient-funding and shortfall outcomes;
 - a Demands-only seed run shows the principal Demand as Not taken up; a full bundle derives downstream usage from actual Planning records;
 - rerunning the seed creates no duplicate Demands, decisions, allocations, exceptions, reservations or audit events.
 - the single-scope Requester resolves exactly one visible creation pair;
@@ -716,13 +745,17 @@ Verify at minimum:
 - before `SCN-PLN-ADD-001`, `DMD-MOH-2027-019` is ineligible for Planning;
 - the scenario creates or resolves exactly one `RSV-MOH-0002`, Draft Version 2 and Proposed `PPI-MOH-2027-022`;
 - while Version 2 is Draft, Version 1 remains current Approved and `PPI-MOH-2027-021` remains operational;
-- Draft Version 2 totals KES 535,000,000 and recalculates the 30% allocation basis to KES 160,500,000;
-- after Demand approval in the scenario, Ministry Budget totals reconcile to KES 310,000,000 committed, KES 225,000,000 remaining reserved and KES 25,000,000 available;
+- Draft Version 2 totals KES 535,000,000 without creating item-level statutory-treatment or reserved-value fields;
+- after post-Planning Finance confirmation, Ministry Budget totals reconcile to KES 310,000,000 committed, KES 225,000,000 remaining reserved and KES 25,000,000 available;
 - Proposed `PPI-MOH-2027-022` cannot be taken up by Tender Management;
 - approving Version 2 makes it current Approved, makes Version 1 Superseded and activates `PPI-MOH-2027-022`;
 - supersession does not alter the existing handoff or Tender link for unchanged `PPI-MOH-2027-021`;
 - rerunning the scenario creates no duplicate version, item, allocation, reservation, decision, handoff or audit event; and
 - resetting the scenario restores the base Planning state without deleting unrelated fixture data.
+- `SCN-PLN-FUND-SHORT-001` creates exactly one KES 55,000,000 scenario hold, shows KES 25,000,000 available and KES 55,000,000 shortfall for `PPI-MOH-2027-022`, and creates no `RSV-MOH-0002` while insufficient;
+- the shortfall state exposes no Confirm funding action and direct confirmation creates no partial or negative reservation;
+- governed release of the scenario hold revalidates the same Finance task to sufficient funding without automatic confirmation or task duplication; and
+- resetting the shortfall scenario removes only scenario-owned records and restores the KES 80,000,000 workforce line availability.
 
 ### Organisation ownership and isolation
 
@@ -752,20 +785,22 @@ Verify at minimum:
 
 1. Sign in as `kentender.multiscope.admin@example.test`, start Create demand and show that no Procuring Entity / Organisation Unit pair is silently selected; choose the Ministry pair explicitly.
 2. Sign in as Dr Miriam Njeri and show her single authorised ownership pair, then show that Request preparation asks for the business need but not Strategy, Budget, Planning or procurement-method codes.
-3. Trace `DMD-MOH-2027-014` through Business support, Procurement Strategy assignment, mandatory Budget Officer confirmation and final approval/reservation.
-4. Open the approved Demand and trace `MOH-TGT-AVAIL-2028`, the value treatments, `MOH-BL-DHI-2027` and `RSV-MOH-0001`.
-5. Open `DMD-MOH-2027-019` and show the KES 15 million shortfall, named correction owner and controlled return without a reservation.
+3. Trace `DMD-MOH-2027-014` through Request submission and HoD approval. Show that approval makes it Planning Ready but creates no Finance decision or reservation.
+4. Open the approved Demand and trace its inherited Strategy targets and proposed `MOH-BL-DHI-2027` funding context.
+5. Open `DMD-MOH-2027-019` and show the HoD return for scope correction, named owner and absence of Planning or Finance records.
 6. Open the consolidated Ministry Budget and show the principal infrastructure line and the separate workforce-capability line owned by different Organisation Units.
-7. Open `PLN-MOH-2027-001` and show Approved Version 1, Active `PPI-MOH-2027-021` and the existing Tender take-up.
-8. Run `SCN-PLN-ADD-001`: correct and approve `DMD-MOH-2027-019`, then select Add Plan Item on the Approved Plan.
-9. Show Draft Version 2 and Proposed `PPI-MOH-2027-022` while Version 1 and `TND-MOH-2027-008` remain operational.
-10. Approve Version 2 and show Version 1 Superseded, both Plan Items Active and unchanged Tender lineage preserved.
-11. Trace the principal reservation into Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
-12. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
-13. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
-14. Attempt to open a Ministry Demand from the county account and show that access is denied.
-15. Sign in as `kentender.system.admin@example.test` and show that Demand creation is blocked because no operational Requester assignment exists.
-16. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
+7. Open `PLN-MOH-2027-001` and show Approved Version 1, Active `PPI-MOH-2027-021`, post-Planning Finance confirmation and existing Tender take-up.
+8. Run `SCN-PLN-ADD-001` through Plan Item completion: correct and obtain HoD approval for `DMD-MOH-2027-019`, select Add Plan Item, and create Proposed `PPI-MOH-2027-022` in Draft Version 2.
+9. Show that Version 1 and `TND-MOH-2027-008` remain operational while Draft Version 2 awaits Finance.
+10. Run `SCN-PLN-FUND-SHORT-001` and show PLN-UI-07A with KES 80 million required, KES 25 million available and a KES 55 million shortfall. Confirm funding must be absent.
+11. Resolve the scenario hold through Budget & Funding and show the same Finance task return to sufficient funding without automatic confirmation.
+12. Confirm KES 80 million once, approve Version 2 and show Version 1 Superseded, both Plan Items Active and unchanged Tender lineage preserved.
+13. Trace the principal reservation into Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
+14. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
+15. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
+16. Attempt to open a Ministry Demand from the county account and show that access is denied.
+17. Sign in as `kentender.system.admin@example.test` and show that Demand creation is blocked because no operational Requester assignment exists.
+18. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
 
 ## 11. Extension rules for subsequent modules
 
@@ -789,3 +824,5 @@ When Planning, Tender, Evaluation, Award, Contract, Stores, Assets, Disposal or 
 | 2.2 | 7 August 2026 | Demands; access scope | Added deterministic zero-, single- and multi-scope Demand-creation fixtures; prohibited assignment-order, workspace-filter and Administrator ownership fallbacks; added verification and demonstration steps |
 | 2.3 | 8 August 2026 | Procurement Planning | Added the logical Plan, version and stable Plan Item model; Approved Version 1 baseline; deterministic post-approval Plan Item addition through Draft Revision 2; Planning actors, status invariants and preserved Tender lineage |
 | 2.4 | 9 August 2026 | Demands; Procurement Planning | Corrected the principal Demand required-by date to 31 March 2028 so the approved need and planned delivery schedule reconcile; clarified downstream design-field semantics without changing fixture identities or amounts |
+| 2.5 | 10 August 2026 | Procurement Planning | Replaced generic item-level statutory/Strategy treatment fixtures with explicit planned reservation designations; assigned KES 136,500,000 to the existing item and KES 24,000,000 to the added item so Plan-level KES 160,500,000 coverage is repeatable without invented rationales or treatment notes |
+| 2.6 | 11 August 2026 | Demands; Budget & Funding; Procurement Planning | Aligned the canonical actor journey to HoD Demand approval followed by Plan Item completion and post-Planning Finance confirmation; removed contribution and item-level treatment assumptions from the Planning scenario; added resettable `SCN-PLN-FUND-SHORT-001` for the PLN-UI-07A KES 55 million shortfall without changing the successful base story |

@@ -4,7 +4,10 @@ import {
 	loginAsBusinessApprover,
 	loginAsDemandRequester,
 } from "../../helpers/auth";
-import { loginAsMohPlanningOfficer } from "../../helpers/planningRoles";
+import {
+	loginAsMohPlanningOfficer,
+	loginAsMohPlanningReviewer,
+} from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 /**
@@ -204,6 +207,13 @@ const SURFACES = [
 		assertEditableInputs: true,
 		assertHeadline: false,
 	},
+	{
+		id: "procurement-plan-review",
+		route: "/desk/procurement-plan-review",
+		rootTestId: "kt-pln-ui08-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui08-primary",
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -301,6 +311,29 @@ test.describe("Stitch Desk chrome baseline", () => {
 				const item = prep.plan_item || "";
 				expect(item).toBeTruthy();
 				route = `/desk/procurement-plan-item-editor?plan_item=${encodeURIComponent(item)}`;
+			}
+			if (surface.id === "procurement-plan-review") {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const prep = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: { method: string }) => Promise<{
+									message?: { empty_draft_plan?: string };
+								}>;
+							};
+						}
+					).frappe.call({
+						method:
+							"kentender_procurement.procurement_planning.api.prepare_planning_gate05_approval_ui",
+					});
+					return r.message || {};
+				});
+				await page.context().clearCookies();
+				await loginAsMohPlanningReviewer(page);
+				const plan = prep.empty_draft_plan || "";
+				expect(plan).toBeTruthy();
+				route = `/desk/procurement-plan-review?plan=${encodeURIComponent(plan)}`;
 			}
 			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(

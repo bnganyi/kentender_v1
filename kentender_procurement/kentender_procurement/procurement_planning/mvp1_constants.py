@@ -30,7 +30,15 @@ VERSION_IMMUTABLE_STATUSES = frozenset(
 	(VERSION_APPROVED, VERSION_SUPERSEDED, VERSION_CANCELLED)
 )
 VERSION_EDITABLE_STATUSES = frozenset((VERSION_DRAFT, VERSION_RETURNED))
-VERSION_APPROVABLE_STATUSES = frozenset((VERSION_DRAFT, VERSION_RETURNED))
+# Gate 05 — final approve only after submit_for_review + professional recommend.
+VERSION_APPROVABLE_STATUSES = frozenset((VERSION_IN_REVIEW,))
+VERSION_SUBMITTABLE_FOR_REVIEW = frozenset((VERSION_DRAFT, VERSION_RETURNED))
+
+# Plan Decision.decision vocabulary (Gate 05)
+DECISION_SUBMITTED_FOR_REVIEW = "Submitted for review"
+DECISION_RECOMMENDED = "Recommended approval"
+DECISION_RETURNED = "Returned"
+DECISION_APPROVED = "Approved"
 
 # Plan Item baseline (§9.3)
 ITEM_PROPOSED = "Proposed"

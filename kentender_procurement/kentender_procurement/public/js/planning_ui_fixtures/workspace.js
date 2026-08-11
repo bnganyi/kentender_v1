@@ -68,7 +68,7 @@ Continue planning
 <p class="font-data-lg text-data-lg text-primary" data-kt-pln-plan-total>KES 0</p>
 </div>
 <div>
-<p class="font-label-caps text-label-caps mb-1 uppercase text-status-reserved">Validation</p>
+<p class="font-label-caps text-label-caps mb-1 uppercase text-status-reserved" data-kt-pln-plan-validation-label>Validation</p>
 <div class="flex items-center gap-2 mt-2">
 <span class="material-symbols-outlined text-outline text-[18px]" aria-hidden="true">rule</span>
 <p class="font-body-sm text-body-sm text-status-reserved" data-kt-pln-plan-validation>Not run</p>

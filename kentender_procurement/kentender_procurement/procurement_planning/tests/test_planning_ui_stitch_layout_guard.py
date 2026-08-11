@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Static layout guard — Planning Stitch UI (PLN-UI-01…06)."""
+"""Static layout guard — Planning Stitch UI (PLN-UI-01…08)."""
 
 from __future__ import annotations
 
@@ -16,6 +16,9 @@ REG_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "register.js"
 BLD_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "builder.js"
 ADD_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "add_demand_dialog.js"
 ED_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "plan_item_editor.js"
+CONTRIB_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "contribution_drawer.js"
+REVIEW_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "plan_review.js"
+REVIEW_PAGE = APP_PUBLIC / "js" / "planning_review_page.js"
 LIVE_BIND = APP_PUBLIC / "js" / "planning_live_bind.js"
 CSS = APP_PUBLIC / "css" / "planning_workspace.css"
 WS_PAGE = APP_PUBLIC / "js" / "planning_workspace_page.js"
@@ -36,12 +39,15 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 			BLD_FIXTURE,
 			ADD_FIXTURE,
 			ED_FIXTURE,
+			CONTRIB_FIXTURE,
+			REVIEW_FIXTURE,
 			LIVE_BIND,
 			CSS,
 			WS_PAGE,
 			REG_PAGE,
 			BLD_PAGE,
 			ED_PAGE,
+			REVIEW_PAGE,
 		):
 			self.assertTrue(path.is_file(), path)
 
@@ -76,6 +82,9 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)
 		self.assertNotIn("budget_amount", text.lower())
+		# Desk chrome already provides breadcrumbs — no in-canvas crumb trail.
+		self.assertNotIn('aria-label="Breadcrumb"', text)
+		self.assertNotIn("chevron_right", text)
 
 	def test_builder_fixture_markers(self):
 		text = _read(BLD_FIXTURE)
@@ -89,10 +98,20 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		# PLN-UI-05 populated regions share the builder fixture.
 		self.assertIn('data-testid="kt-pln-ui05-issue-strip"', text)
 		self.assertIn('data-testid="kt-pln-ui05-run-validation"', text)
-		self.assertIn('data-testid="kt-pln-ui05-table"', text)
+		self.assertIn("Submit for sign-off", text)
+		self.assertIn("Dept. Contributions", text)
+		# Summary metrics use primary; status chips use semantic available/reserved (not flat grey).
+		self.assertIn('data-kt-pln-builder-total', text)
+		self.assertIn("text-primary", text)
+		self.assertIn("bg-status-reserved/10", text)
 		self.assertIn("data-kt-pln-dialog-host", text)
+		# Stitch PLN-UI-05 summary has no Preference cell / no extra Next-step card.
+		self.assertNotIn("kt-pln-ui05-pref-coverage", text)
+		self.assertNotIn("kt-pln-ui05-next-step", text)
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)
+		self.assertNotIn('aria-label="Breadcrumb"', text)
+		self.assertNotIn("chevron_right", text)
 
 	def test_add_demand_dialog_fixture_markers(self):
 		text = _read(ADD_FIXTURE)
@@ -177,20 +196,43 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("Save and return to Plan update", text)
 		self.assertIn("font-headline-lg", text)
 		self.assertIn("font-headline-md", text)
-		# Literal Stitch PLN-UI-06 regions (not a lean approximation).
+		# Literal Stitch PLN-UI-06 regions (REQ v1.5 Preference and reservation).
 		self.assertIn("Planning approach", text)
 		self.assertIn("Planned schedule", text)
-		self.assertIn("Statutory and strategy treatment", text)
+		self.assertIn("Preference and reservation", text)
+		self.assertIn("None assigned", text)
+		self.assertIn("Strategy Context", text)
+		self.assertIn('data-testid="kt-pln-ui06-pref-section"', text)
+		self.assertIn('data-testid="kt-pln-ui06-pref-none"', text)
 		self.assertIn("Source Demand", text)
 		self.assertIn("Indicative lotting", text)
-		self.assertIn("Draft Plan update", text)
+		self.assertIn('data-testid="kt-pln-ui06-lotting-details"', text)
+		self.assertIn("data-kt-pln-lotting-details", text)
+		self.assertIn('data-testid="kt-pln-ui06-lifecycle"', text)
+		self.assertIn("bg-status-reserved/10", text)
+		self.assertIn("text-status-reserved", text)
+		self.assertIn("border-status-reserved/20", text)
+		# Chip sits above the title (Stitch), not inline after amount.
+		life_idx = text.find('data-testid="kt-pln-ui06-lifecycle"')
+		title_idx = text.find('data-testid="kt-pln-ui06-title"')
+		self.assertGreater(title_idx, life_idx)
+		self.assertNotIn("bg-tertiary-fixed text-tertiary font-label-caps", text)
 		self.assertIn("lg:grid-cols-12", text)
 		self.assertIn("lg:col-span-8", text)
 		self.assertIn("lg:col-span-4", text)
+		self.assertIn("lg:sticky", text)
+		self.assertIn('data-testid="kt-pln-ui06-source-sidebar"', text)
+		self.assertIn("data-kt-pln-source-sidebar", text)
 		self.assertIn("max-w-7xl", text)
 		self.assertNotIn("max-w-5xl", text)
 		self.assertNotIn("flat-input", text)
 		self.assertNotIn("Approved source", text)
+		self.assertNotIn("Statutory and strategy treatment", text)
+		self.assertNotIn("Statutory allocation treatment", text)
+		self.assertNotIn("Statutory rationale", text)
+		self.assertNotIn("Planned treatment value", text)
+		self.assertNotIn("Value treatment note", text)
+		self.assertNotIn("Plan-level coverage", text)
 		# Pack v1.3: no aggregation radios; Add another Demand CTA for exceptional combine.
 		self.assertIn('data-testid="kt-pln-ui06-add-another"', text)
 		self.assertIn("Add another approved Demand to this Plan Item", text)
@@ -202,6 +244,52 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn('name="aggregation_decision"', text)
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)
+		# Desk chrome already provides breadcrumbs — no in-canvas crumb trail.
+		self.assertNotIn('aria-label="Breadcrumb"', text)
+		self.assertNotIn("data-kt-pln-editor-plan-crumb", text)
+		self.assertNotIn("chevron_right", text)
+		# Milestone dates have inline error slots for soft validation flagging.
+		self.assertIn('data-kt-field-error="ms_evaluation_completed"', text)
+		self.assertIn('data-kt-field-error="ms_invitation_published"', text)
+
+	def test_contribution_drawer_fixture_markers(self):
+		text = _read(CONTRIB_FIXTURE)
+		self.assertIn("kt-stitch-canvas", text)
+		self.assertIn('data-testid="kt-pln-ui07-root"', text)
+		self.assertIn('data-testid="kt-pln-ui07-footer"', text)
+		self.assertIn('data-testid="kt-pln-ui07-confirm"', text)
+		self.assertIn('data-testid="kt-pln-ui07-declaration"', text)
+		self.assertIn("Confirm contribution", text)
+		self.assertIn("Submit departmental contribution", text)
+		self.assertIn("Included Items", text)
+		self.assertIn("data-kt-field-error", text)
+		self.assertIn("data-kt-pln-field", text)
+		self.assertNotIn("truncate", text)
+		self.assertNotIn("cdn.tailwindcss.com", text)
+
+	def test_plan_review_fixture_markers(self):
+		text = _read(REVIEW_FIXTURE)
+		self.assertIn("kt-stitch-canvas", text)
+		self.assertIn('data-testid="kt-pln-ui08-root"', text)
+		self.assertIn('data-testid="kt-pln-ui08-summary"', text)
+		self.assertIn('data-testid="kt-pln-ui08-items"', text)
+		self.assertIn('data-testid="kt-pln-ui08-statutory"', text)
+		self.assertIn('data-testid="kt-pln-ui08-issues"', text)
+		self.assertIn('data-testid="kt-pln-ui08-rail"', text)
+		self.assertIn('data-testid="kt-pln-ui08-primary"', text)
+		self.assertIn('data-testid="kt-pln-ui08-return"', text)
+		self.assertIn('data-testid="kt-pln-ui08-trail"', text)
+		self.assertIn("Review annual procurement plan", text)
+		self.assertIn("Statutory allocation coverage", text)
+		self.assertIn("Prior-decision trail", text)
+		self.assertIn("Recommend approval", text)
+		self.assertIn("Return plan", text)
+		self.assertIn('data-kt-field="decision_comment"', text)
+		self.assertIn('data-kt-field-error="decision_comment"', text)
+		self.assertNotIn("approval matrix", text.lower())
+		self.assertNotIn("truncate", text)
+		self.assertNotIn("cdn.tailwindcss.com", text)
+		self.assertNotIn('aria-label="Breadcrumb"', text)
 
 	def test_live_bind_and_pages(self):
 		live = _read(LIVE_BIND)
@@ -209,6 +297,24 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("get_planning_create_scope", live)
 		self.assertIn("create_procurement_plan", live)
 		self.assertIn("get_plan_builder", live)
+		self.assertIn("next_step_message", live)
+		self.assertIn("version_status", live)
+		self.assertIn("Submit for sign-off", live)
+		# Semantic status tones shared with workspace / Budget / Strategy chips.
+		self.assertIn("status-available", live)
+		self.assertIn("validationTone", live)
+		self.assertIn("contributionTone", live)
+		self.assertIn("lifecycleTone", live)
+		# Semantic status tones — Ready = available (green), Open = primary (blue).
+		self.assertIn("function validationTone", live)
+		self.assertIn("function lifecycleTone", live)
+		self.assertIn("status-available", live)
+		self.assertIn('s === "ready"', live)
+		self.assertIn('s === "open"', live)
+		self.assertNotIn(
+			'bg-surface-variant text-on-surface-variant border-outline-variant") +\n\t\t\t\t\t\t\t\'">\' +\n\t\t\t\t\t\t\t(needs',
+			live,
+		)
 		self.assertIn("list_eligible_demands", live)
 		self.assertIn("add_demand_to_plan", live)
 		self.assertIn("aggregate_plan_allocations", live)
@@ -217,16 +323,31 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("update_plan_item", live)
 		self.assertIn("validate_plan", live)
 		self.assertIn("get_plan_item_editor", live)
+		self.assertIn("preference_reservation", live)
+		self.assertIn("pref-assign", live)
+		self.assertNotIn("builder-pref-coverage", live)
+		self.assertIn("lotting-details", live)
+		self.assertIn("lotting_decision", live)
+		self.assertIn("get_departmental_contribution", live)
+		self.assertIn("submit_departmental_contribution", live)
+		self.assertIn("ensureContributionDrawer", live)
 		self.assertIn("ktFormErrors", live)
+		self.assertIn("get_plan_review", live)
+		self.assertIn("submit_plan_for_review", live)
+		self.assertIn("record_plan_decision", live)
+		self.assertIn("approve_plan_version", live)
 		self.assertIn("bindPlanningWorkspace", live)
 		self.assertIn("bindPlanningRegister", live)
 		self.assertIn("bindPlanningBuilder", live)
 		self.assertIn("bindPlanningItemEditor", live)
+		self.assertIn("bindPlanningReview", live)
+		self.assertIn("submit-for-review", live)
 
 		self.assertIn("enterNative", _read(WS_PAGE))
 		self.assertIn("enterNative", _read(REG_PAGE))
 		self.assertIn("enterNative", _read(BLD_PAGE))
 		self.assertIn("enterNative", _read(ED_PAGE))
+		self.assertIn("enterNative", _read(REVIEW_PAGE))
 
 	def test_hooks_wire_pages(self):
 		from kentender_procurement import hooks
@@ -250,9 +371,16 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 			page_js.get("procurement-plan-item-editor"),
 			"public/js/planning_item_editor_page.js",
 		)
+		self.assertEqual(
+			page_js.get("procurement-plan-review"),
+			"public/js/planning_review_page.js",
+		)
 		includes = "\n".join(hooks.app_include_css or [])
 		self.assertIn("planning_workspace.css", includes)
 		self.assertIn("planning_live_bind.js", js_includes)
 		self.assertIn("planning_ui_fixtures/workspace.js", js_includes)
 		self.assertIn("planning_ui_fixtures/add_demand_dialog.js", js_includes)
+		self.assertIn("planning_ui_fixtures/contribution_drawer.js", js_includes)
 		self.assertIn("planning_ui_fixtures/plan_item_editor.js", js_includes)
+		self.assertIn("planning_ui_fixtures/plan_review.js", js_includes)
+		self.assertIn("planning_review_page.js", js_includes)

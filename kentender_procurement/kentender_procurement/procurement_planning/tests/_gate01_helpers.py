@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
 from kentender_procurement.procurement_planning.services.planning_permissions import (
@@ -67,6 +68,58 @@ def ensure_planner_user() -> str:
 	return PLANNER_USER
 
 
+HOD_USER = "pln.gate01.hod@test.local"
+
+
+def ensure_hod_user() -> str:
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_HOD,
+	)
+
+	ensure_planning_roles()
+	if not frappe.db.exists("User", HOD_USER):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": HOD_USER,
+				"first_name": "Gate01",
+				"last_name": "HoD",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	roles = {r.role for r in frappe.get_doc("User", HOD_USER).roles}
+	if ROLE_HOD not in roles:
+		frappe.get_doc("User", HOD_USER).add_roles(ROLE_HOD)
+	_ensure_usa(HOD_USER, ROLE_HOD, PE, OU)
+	return HOD_USER
+
+
+def complete_plan_item_for_signoff(*, plan_item: str, user: str) -> dict:
+	"""Fill method/schedule so validate_plan projects Ready for the item."""
+	from kentender_procurement.procurement_planning.services.update_plan_item import (
+		update_plan_item,
+	)
+
+	return update_plan_item(
+		plan_item=plan_item,
+		user=user,
+		fields={
+			"requirement_description": "Complete for departmental sign-off",
+			"procurement_category": "ICT infrastructure and services",
+			"procurement_method": "Open tender",
+			"arrangement": "Single year",
+			"lotting_decision": "Single lot",
+			"ms_invitation_published": "2027-09-15",
+			"ms_tender_opening": "2027-10-20",
+			"ms_evaluation_completed": "2027-11-15",
+			"ms_award_approval": "2027-12-15",
+			"ms_contract_signature": "2028-01-15",
+			"ms_delivery_completion": "2028-03-31",
+		},
+	)
+
+
 def ensure_approver_user() -> str:
 	ensure_planning_roles()
 	if not frappe.db.exists("User", APPROVER_USER):
@@ -85,6 +138,113 @@ def ensure_approver_user() -> str:
 		frappe.get_doc("User", APPROVER_USER).add_roles(ROLE_DESIGNATED_APPROVER)
 	_ensure_usa(APPROVER_USER, ROLE_DESIGNATED_APPROVER, PE, None)
 	return APPROVER_USER
+
+
+REVIEWER_USER = "pln.gate01.reviewer@test.local"
+
+
+def ensure_reviewer_user() -> str:
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_REVIEWER,
+	)
+
+	ensure_planning_roles()
+	if not frappe.db.exists("User", REVIEWER_USER):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": REVIEWER_USER,
+				"first_name": "Gate01",
+				"last_name": "Reviewer",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	roles = {r.role for r in frappe.get_doc("User", REVIEWER_USER).roles}
+	if ROLE_REVIEWER not in roles:
+		frappe.get_doc("User", REVIEWER_USER).add_roles(ROLE_REVIEWER)
+	_ensure_usa(REVIEWER_USER, ROLE_REVIEWER, PE, None)
+	return REVIEWER_USER
+
+
+def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> dict[str, Any]:
+	"""Complete items → validate → HoD submit → submit for review → recommend.
+
+	Required before ``approve_plan_version`` under Gate 05 rules.
+	"""
+	from kentender_procurement.procurement_planning.services.record_plan_decision import (
+		record_plan_decision,
+	)
+	from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
+		submit_departmental_contribution,
+	)
+	from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
+		submit_plan_for_review,
+	)
+	from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
+
+	planner = ensure_planner_user()
+	hod = ensure_hod_user()
+	reviewer = ensure_reviewer_user()
+	plan_doc = frappe.get_doc("Procurement Plan", plan)
+	ver = cstr(version or plan_doc.open_draft_version or "").strip()
+	if not ver:
+		raise frappe.ValidationError("No open draft version to advance")
+
+	items = frappe.get_all(
+		"Procurement Plan Item",
+		filters={"plan": plan, "baseline_state": ["in", ["Proposed", "Active"]]},
+		pluck="name",
+	)
+	for item in items:
+		complete_plan_item_for_signoff(plan_item=item, user=planner)
+
+	validate_plan(plan=plan, user=planner)
+	dept = submit_departmental_contribution(plan=plan, declaration=1, user=hod)
+	if not dept.get("ok"):
+		raise frappe.ValidationError(f"Departmental submit failed: {dept}")
+
+	token = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
+	submitted = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
+	if not submitted.get("ok"):
+		raise frappe.ValidationError(f"Submit for review failed: {submitted}")
+
+	token2 = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
+	rec = record_plan_decision(
+		version=ver,
+		decision="recommend",
+		comment="Ready for approval",
+		concurrency_token=token2,
+		user=reviewer,
+	)
+	if not rec.get("ok"):
+		raise frappe.ValidationError(f"Recommend failed: {rec}")
+	return {
+		"plan": plan,
+		"version": ver,
+		"planner": planner,
+		"hod": hod,
+		"reviewer": reviewer,
+		"concurrency_token": rec.get("concurrency_token"),
+	}
+
+
+def approve_plan_via_gate05(*, plan: str, version: str, user: str | None = None) -> dict[str, Any]:
+	"""Advance Draft through review chain then approve (Gate 05 path)."""
+	from kentender_procurement.procurement_planning.services.approve_plan_version import (
+		approve_plan_version,
+	)
+
+	advanced = advance_draft_to_recommended(plan=plan, version=version)
+	approver = user or ensure_approver_user()
+	token = frappe.db.get_value(
+		"Procurement Plan Version", advanced["version"], "concurrency_token"
+	)
+	return approve_plan_version(
+		version=advanced["version"],
+		concurrency_token=token,
+		user=approver,
+	)
 
 
 def ensure_scope() -> dict[str, str]:
@@ -115,6 +275,7 @@ def ensure_scope() -> dict[str, str]:
 		).insert(ignore_permissions=True)
 	ensure_planner_user()
 	ensure_approver_user()
+	ensure_reviewer_user()
 	return {"pe": PE, "ou": OU, "fy": FY}
 
 
@@ -198,3 +359,34 @@ def create_plan_as_planner(**overrides: Any) -> dict[str, Any]:
 	}
 	kwargs.update(overrides)
 	return create_procurement_plan(**kwargs)
+
+
+def unique_test_fy(*, base_year: int = 2600, bucket: int = 0) -> str:
+	"""High-year FY unique per call (Gate 05). Years stay in 2100–2899 for DATE columns."""
+	import time
+	import uuid
+
+	# Mix time + uuid + bucket; keep result in a safe calendar range for period_start/end.
+	n = (int(time.time() * 1000) + int(uuid.uuid4().hex[:5], 16) + bucket * 97) % 700
+	y = 2100 + ((base_year + n) % 700)
+	return f"{y}/{str(y + 1)[-2:]}"
+
+
+def purge_pe_fy(financial_year: str) -> None:
+	"""Delete PE+FY plans and orphan versions left by force-clears."""
+	scope = ensure_scope()
+	pe = scope["pe"]
+	for name in frappe.get_all(
+		"Procurement Plan",
+		filters={"procuring_entity": pe, "financial_year": financial_year},
+		pluck="name",
+	):
+		frappe.delete_doc("Procurement Plan", name, force=True, ignore_permissions=True)
+	fy_slug = (financial_year or "").replace("/", "-")
+	for name in frappe.get_all(
+		"Procurement Plan Version",
+		filters={"name": ("like", f"PLN-%{fy_slug}%")},
+		pluck="name",
+	):
+		frappe.delete_doc("Procurement Plan Version", name, force=True, ignore_permissions=True)
+	frappe.db.commit()

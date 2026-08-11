@@ -19,6 +19,8 @@ ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
 ROLE_DESIGNATED_APPROVER = "Designated Approver"
 ROLE_TENDER_INITIATOR = "Tender Initiator"
 ROLE_VIEWER = "Planning Viewer"
+# Finance confirmation (C05) — Budget Officer; scaffolded in C01 for task guards.
+ROLE_BUDGET_OFFICER = "Budget Officer"
 
 ALL_PLANNING_ROLES = (
 	ROLE_CONTRIBUTOR,
@@ -49,19 +51,66 @@ CREATE_PLAN_ROLES = frozenset((ROLE_PLANNER, ROLE_AUTHORITY))
 ADD_DEMAND_ROLES = frozenset(
 	(ROLE_CONTRIBUTOR, ROLE_HOD, ROLE_PLANNER, ROLE_AUTHORITY)
 )
+SUBMIT_FOR_REVIEW_ROLES = frozenset((ROLE_PLANNER, ROLE_AUTHORITY))
+# Professional recommend — Reviewer (Authority may also recommend in small entities).
+RECOMMEND_PLAN_ROLES = frozenset((ROLE_REVIEWER, ROLE_AUTHORITY))
+# Return from review rail — Reviewer or final-approver roles.
+RETURN_PLAN_ROLES = frozenset(
+	(
+		ROLE_REVIEWER,
+		ROLE_DESIGNATED_APPROVER,
+		ROLE_ACCOUNTING_OFFICER,
+		ROLE_AUTHORITY,
+	)
+)
 APPROVE_PLAN_ROLES = frozenset(
 	(ROLE_DESIGNATED_APPROVER, ROLE_ACCOUNTING_OFFICER, ROLE_AUTHORITY)
 )
 READ_PLAN_ROLES = frozenset(ALL_PLANNING_ROLES)
+# Professional review task (recommend / return / approve) — opens PLN-UI-08 task surface.
+REVIEW_TASK_ROLES = frozenset(
+	RECOMMEND_PLAN_ROLES | RETURN_PLAN_ROLES | APPROVE_PLAN_ROLES
+)
+# Departmental contribution task (tightened in C01; removed in C02).
+DEPT_CONTRIB_TASK_ROLES = frozenset((ROLE_HOD, ROLE_AUTHORITY, ROLE_CONTRIBUTOR))
+CONFIRM_PLAN_FUNDING_ROLES = frozenset((ROLE_BUDGET_OFFICER,))
 
 # USA roles that grant PE eligibility for plan create selection.
 CREATE_SCOPE_ROLES = frozenset((ROLE_PLANNER, ROLE_AUTHORITY))
+
+# Auth-pack shaped capability vocabulary (Planning-local).
+CAP_PLAN_VIEW = "plan.view"
+CAP_PLAN_CREATE = "plan.create"
+CAP_PLAN_ITEM_EDIT = "plan_item.edit"
+CAP_PLAN_SUBMIT = "plan.submit"
+CAP_PLAN_REVIEW = "plan.review"
+CAP_PLAN_APPROVE = "plan.approve"
+CAP_PLAN_RECOMMEND = "plan.recommend"
+CAP_PLAN_RETURN = "plan.return"
+CAP_PLAN_FINANCE_CONFIRM = "plan.finance.confirm"
+CAP_PLAN_FINANCE_TASK = "plan.finance.task"
+CAP_DEPT_CONTRIB_TASK = "plan.dept_contrib.task"
+
+CAPABILITY_ROLES: dict[str, frozenset[str]] = {
+	CAP_PLAN_VIEW: READ_PLAN_ROLES,
+	CAP_PLAN_CREATE: CREATE_PLAN_ROLES,
+	CAP_PLAN_ITEM_EDIT: ADD_DEMAND_ROLES,
+	CAP_PLAN_SUBMIT: SUBMIT_FOR_REVIEW_ROLES,
+	CAP_PLAN_REVIEW: REVIEW_TASK_ROLES,
+	CAP_PLAN_APPROVE: APPROVE_PLAN_ROLES,
+	CAP_PLAN_RECOMMEND: RECOMMEND_PLAN_ROLES,
+	CAP_PLAN_RETURN: RETURN_PLAN_ROLES,
+	CAP_PLAN_FINANCE_CONFIRM: CONFIRM_PLAN_FUNDING_ROLES,
+	CAP_PLAN_FINANCE_TASK: CONFIRM_PLAN_FUNDING_ROLES,
+	CAP_DEPT_CONTRIB_TASK: DEPT_CONTRIB_TASK_ROLES,
+}
 
 ERR_PERMISSION = "PLN_PERMISSION_DENIED"
 ERR_SCOPE = "PLN_SCOPE_DENIED"
 ERR_OPERATIONAL_ROLE = "PLN_OPERATIONAL_ROLE_REQUIRED"
 ERR_PE_SELECTION = "PLN_PE_SELECTION_REQUIRED"
 ERR_PE_BLOCKED = "PLN_PE_SCOPE_BLOCKED"
+ERR_TASK = "PLN_TASK_DENIED"
 
 MODE_SINGLE = "single_readonly"
 MODE_MULTI = "multi_required"
@@ -93,23 +142,6 @@ def operational_roles(user: str | None = None) -> set[str]:
 	return set(frappe.get_roles(user))
 
 
-def has_any_operational_role(*roles: str, user: str | None = None) -> bool:
-	return bool(operational_roles(user).intersection(roles))
-
-
-def _is_admin_only(user: str | None = None) -> bool:
-	"""True when the actor is adminish and has no Planning role at all (incl. Viewer).
-
-	Administrator + Planning Viewer is support read access — not "admin only".
-	"""
-	user = user or frappe.session.user
-	roles = operational_roles(user)
-	adminish = user == "Administrator" or "System Manager" in roles
-	if not adminish:
-		return False
-	return not roles.intersection(ALL_PLANNING_ROLES)
-
-
 def planning_usa_roles(user: str | None = None) -> set[str]:
 	"""Planning roles granted via User Scope Assignment (not Desk role inflation).
 
@@ -126,19 +158,74 @@ def planning_usa_roles(user: str | None = None) -> set[str]:
 	}
 
 
+def actor_planning_roles(user: str | None = None) -> set[str]:
+	"""Roles used for Planning capability checks (C01).
+
+	Administrator / System Manager never inherit Planning authority from Desk
+	``get_roles`` inflation — only User Scope Assignment counts for them.
+	Other users: USA when present, else Desk Planning roles.
+	"""
+	user = user or frappe.session.user
+	usa = planning_usa_roles(user)
+	desk = operational_roles(user)
+	adminish = user == "Administrator" or "System Manager" in desk
+	if adminish:
+		return usa
+	if usa:
+		return usa
+	return desk.intersection(ALL_PLANNING_ROLES)
+
+
+def funding_usa_roles(user: str | None = None) -> set[str]:
+	"""Budget Officer (and related) from USA — used for Finance task scaffolding."""
+	from kentender_core.services.org_scope_access import user_scope_rows
+
+	user = user or frappe.session.user
+	return {
+		(row.get("role") or "").strip()
+		for row in user_scope_rows(user)
+		if (row.get("role") or "").strip() == ROLE_BUDGET_OFFICER
+	}
+
+
+def actor_funding_roles(user: str | None = None) -> set[str]:
+	user = user or frappe.session.user
+	usa = funding_usa_roles(user)
+	desk = operational_roles(user)
+	adminish = user == "Administrator" or "System Manager" in desk
+	if adminish:
+		return usa
+	if usa:
+		return usa
+	return desk.intersection(CONFIRM_PLAN_FUNDING_ROLES)
+
+
+def has_any_operational_role(*roles: str, user: str | None = None) -> bool:
+	wanted = set(roles)
+	if wanted.intersection(CONFIRM_PLAN_FUNDING_ROLES) and not wanted.intersection(
+		ALL_PLANNING_ROLES
+	):
+		return bool(actor_funding_roles(user).intersection(wanted))
+	return bool(actor_planning_roles(user).intersection(wanted))
+
+
+def _is_admin_only(user: str | None = None) -> bool:
+	"""True when the actor is adminish and has no Planning USA role at all."""
+	user = user or frappe.session.user
+	desk = operational_roles(user)
+	adminish = user == "Administrator" or "System Manager" in desk
+	if not adminish:
+		return False
+	return not planning_usa_roles(user)
+
+
 def is_planning_read_only(user: str | None = None) -> bool:
 	"""True when the actor may inspect Planning but has no mutate/approve/create USA."""
 	user = user or frappe.session.user
-	usa_roles = planning_usa_roles(user)
-	if usa_roles:
-		return not usa_roles.intersection(
-			PLANNING_MUTATE_ROLES | APPROVE_PLAN_ROLES | CREATE_PLAN_ROLES
-		)
-	# No Planning USA: Administrator never gains operational authority from get_roles.
-	if user == "Administrator":
+	usa_roles = actor_planning_roles(user)
+	if not usa_roles:
 		return True
-	roles = operational_roles(user)
-	return not roles.intersection(
+	return not usa_roles.intersection(
 		PLANNING_MUTATE_ROLES | APPROVE_PLAN_ROLES | CREATE_PLAN_ROLES
 	)
 
@@ -154,37 +241,87 @@ def require_operational_roles(*roles: str, user: str | None = None) -> None:
 	)
 
 
-def assert_planning_actor(user: str | None = None) -> str:
-	"""Login + any mutate-capable Planning role (Admin alone denied)."""
+def require_capability(
+	capability: str,
+	*,
+	procuring_entity: str | None = None,
+	org_unit: str | None = None,
+	user: str | None = None,
+	require_write: bool = False,
+) -> str:
+	"""Record / task / mutation gate — capability + optional PE/OU scope."""
 	actor = (user or frappe.session.user or "").strip()
 	if not actor or actor == "Guest":
 		frappe.throw(_("Login required."), frappe.PermissionError, title="PLN_LOGIN_REQUIRED")
-	require_operational_roles(*PLANNING_MUTATE_ROLES, user=actor)
+	role_set = CAPABILITY_ROLES.get(capability)
+	if not role_set:
+		throw_planning_error(
+			ERR_PERMISSION,
+			"Unknown Planning capability",
+			exc=frappe.PermissionError,
+		)
+	require_operational_roles(*role_set, user=actor)
+	if procuring_entity:
+		assert_planning_scope(
+			procuring_entity=procuring_entity,
+			org_unit=org_unit,
+			user=actor,
+			require_write=require_write,
+		)
 	return actor
+
+
+def has_review_task_capability(user: str | None = None) -> bool:
+	return bool(actor_planning_roles(user).intersection(REVIEW_TASK_ROLES))
+
+
+def assert_planning_actor(user: str | None = None) -> str:
+	"""Login + any mutate-capable Planning role (Admin alone denied)."""
+	return require_capability(CAP_PLAN_ITEM_EDIT, user=user)
 
 
 def assert_can_create_plan(user: str | None = None) -> str:
-	actor = (user or frappe.session.user or "").strip()
-	if not actor or actor == "Guest":
-		frappe.throw(_("Login required."), frappe.PermissionError, title="PLN_LOGIN_REQUIRED")
-	require_operational_roles(*CREATE_PLAN_ROLES, user=actor)
-	return actor
+	return require_capability(CAP_PLAN_CREATE, user=user)
 
 
 def assert_can_add_demand(user: str | None = None) -> str:
-	actor = (user or frappe.session.user or "").strip()
-	if not actor or actor == "Guest":
-		frappe.throw(_("Login required."), frappe.PermissionError, title="PLN_LOGIN_REQUIRED")
-	require_operational_roles(*ADD_DEMAND_ROLES, user=actor)
-	return actor
+	return require_capability(CAP_PLAN_ITEM_EDIT, user=user)
+
+
+def assert_can_submit_departmental_contribution(user: str | None = None) -> str:
+	"""HoD (or Authority / Contributor with task capability) may submit unit contribution."""
+	return require_capability(CAP_DEPT_CONTRIB_TASK, user=user)
 
 
 def assert_can_approve_plan(user: str | None = None) -> str:
-	actor = (user or frappe.session.user or "").strip()
-	if not actor or actor == "Guest":
-		frappe.throw(_("Login required."), frappe.PermissionError, title="PLN_LOGIN_REQUIRED")
-	require_operational_roles(*APPROVE_PLAN_ROLES, user=actor)
-	return actor
+	return require_capability(CAP_PLAN_APPROVE, user=user)
+
+
+def assert_can_submit_for_review(user: str | None = None) -> str:
+	return require_capability(CAP_PLAN_SUBMIT, user=user)
+
+
+def assert_can_recommend_plan(user: str | None = None) -> str:
+	return require_capability(CAP_PLAN_RECOMMEND, user=user)
+
+
+def assert_can_return_plan(user: str | None = None) -> str:
+	return require_capability(CAP_PLAN_RETURN, user=user)
+
+
+def assert_can_open_finance_task(user: str | None = None) -> str:
+	"""C01 scaffold — Budget Officer may open PLN-UI-07 Finance task (wired in C05)."""
+	return require_capability(CAP_PLAN_FINANCE_TASK, user=user)
+
+
+def assert_can_confirm_plan_funding(user: str | None = None) -> str:
+	"""C01 scaffold — Confirm funding mutation authority (wired in C05)."""
+	return require_capability(CAP_PLAN_FINANCE_CONFIRM, user=user)
+
+
+def assert_can_open_review_task(user: str | None = None) -> str:
+	"""Open PLN-UI-08 professional task surface (not neutral detail)."""
+	return require_capability(CAP_PLAN_REVIEW, user=user)
 
 
 def has_planning_scope(
@@ -197,12 +334,6 @@ def has_planning_scope(
 	"""Silent PE + OU gate for list/filter paths (never msgprint / throw)."""
 	user = user or frappe.session.user
 	if _is_admin_only(user):
-		return False
-	roles = operational_roles(user)
-	is_pure_admin = (
-		user == "Administrator" or "System Manager" in roles
-	) and not roles.intersection(ALL_PLANNING_ROLES)
-	if is_pure_admin:
 		return False
 
 	from kentender_core.services.org_scope_access import (

@@ -1,10 +1,10 @@
-<!DOCTYPE html><html class="h-full" lang="en"><head>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>GovProcure - Submit Departmental Contribution</title>
+<title>Confirm Plan Item funding</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <script id="tailwind-config">
         tailwind.config = {
@@ -12,58 +12,58 @@
             theme: {
                 extend: {
                     "colors": {
-                        "status-exhausted": "#E11D48",
-                        "secondary": "#00687b",
-                        "on-tertiary-container": "#ccd2e7",
-                        "secondary-fixed-dim": "#48d7f9",
-                        "primary-container": "#0052cc",
-                        "surface-bright": "#f8f9fb",
-                        "inverse-surface": "#2e3132",
-                        "primary": "#003d9b",
-                        "on-primary-fixed": "#001848",
-                        "status-available": "#10B981",
-                        "surface-container-high": "#e7e8ea",
-                        "on-tertiary-fixed-variant": "#404658",
-                        "status-reserved": "#F59E0B",
-                        "surface-container-highest": "#e1e2e4",
-                        "on-primary": "#ffffff",
-                        "secondary-container": "#50dcff",
-                        "error-container": "#ffdad6",
-                        "background": "#f8f9fb",
-                        "on-secondary-container": "#005f71",
-                        "tertiary-fixed-dim": "#c0c6db",
-                        "primary-fixed": "#dae2ff",
-                        "surface-tint": "#0c56d0",
-                        "on-surface": "#191c1e",
-                        "on-secondary-fixed": "#001f27",
-                        "surface": "#f8f9fb",
-                        "on-tertiary-fixed": "#151b2b",
-                        "on-secondary": "#ffffff",
-                        "on-secondary-fixed-variant": "#004e5d",
-                        "tertiary": "#3d4354",
-                        "on-error": "#ffffff",
-                        "surface-container": "#edeef0",
-                        "on-error-container": "#93000a",
-                        "on-primary-fixed-variant": "#0040a2",
-                        "on-primary-container": "#c4d2ff",
-                        "surface-dim": "#d9dadc",
                         "border-subtle": "#DFE1E6",
-                        "on-tertiary": "#ffffff",
-                        "tertiary-container": "#545a6c",
-                        "data-committed": "#6366F1",
-                        "surface-container-low": "#f3f4f6",
+                        "status-exhausted": "#E11D48",
                         "outline-variant": "#c3c6d6",
-                        "on-surface-variant": "#434654",
-                        "error": "#ba1a1a",
-                        "on-background": "#191c1e",
-                        "outline": "#737685",
-                        "inverse-primary": "#b2c5ff",
-                        "secondary-fixed": "#afecff",
-                        "primary-fixed-dim": "#b2c5ff",
-                        "surface-variant": "#e1e2e4",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "on-tertiary-fixed": "#151b2b",
+                        "primary-container": "#0052cc",
                         "tertiary-fixed": "#dce2f8",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f6",
+                        "secondary-container": "#50dcff",
+                        "on-tertiary-container": "#ccd2e7",
+                        "secondary-fixed": "#afecff",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2e3132",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-background": "#191c1e",
+                        "on-error-container": "#93000a",
+                        "status-available": "#10B981",
+                        "surface-bright": "#f8f9fb",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "background": "#f8f9fb",
+                        "surface-dim": "#d9dadc",
+                        "surface-tint": "#0c56d0",
+                        "on-secondary-fixed": "#001f27",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "inverse-on-surface": "#f0f1f3",
+                        "tertiary": "#3d4354",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface": "#f8f9fb",
+                        "surface-variant": "#e1e2e4",
+                        "primary-fixed": "#dae2ff",
+                        "data-committed": "#6366F1",
+                        "on-surface-variant": "#434654",
+                        "on-secondary-container": "#005f71",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#545a6c",
+                        "secondary": "#00687b",
+                        "on-primary-fixed": "#001848",
+                        "primary": "#003d9b",
+                        "surface-container-high": "#e7e8ea",
                         "surface-container-lowest": "#ffffff",
-                        "inverse-on-surface": "#f0f1f3"
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "on-primary-container": "#c4d2ff",
+                        "on-error": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "status-reserved": "#F59E0B",
+                        "inverse-primary": "#b2c5ff",
+                        "outline": "#737685",
+                        "surface-container": "#edeef0",
+                        "on-tertiary": "#ffffff"
                     },
                     "borderRadius": {
                         "DEFAULT": "0.25rem",
@@ -72,148 +72,178 @@
                         "full": "9999px"
                     },
                     "spacing": {
+                        "section-gap": "1.5rem",
                         "stack-sm": "0.5rem",
                         "container-padding": "1rem",
-                        "section-gap": "1.5rem",
-                        "gutter-md": "1rem",
-                        "stack-xs": "0.25rem"
+                        "stack-xs": "0.25rem",
+                        "gutter-md": "1rem"
                     },
                     "fontFamily": {
-                        "label-caps": ["Inter"],
-                        "body-md": ["Inter"],
-                        "data-lg": ["JetBrains Mono"],
-                        "headline-lg": ["Manrope"],
                         "headline-md": ["Manrope"],
                         "data-md": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "data-lg": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Manrope"],
                         "body-sm": ["Inter"],
-                        "headline-sm": ["Manrope"],
-                        "body-lg": ["Inter"]
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"]
                     },
                     "fontSize": {
-                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
                         "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
                         "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
                         "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
-                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
                     }
                 }
             }
         }
     </script>
 <style>
-        .drawer-overlay {
-            background-color: rgba(25, 28, 30, 0.4);
-            backdrop-filter: blur(2px);
+        .drawer-enter {
+            transform: translateX(100%);
+        }
+        .drawer-enter-active {
+            transform: translateX(0);
+            transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+        }
+        .backdrop-enter {
+            opacity: 0;
+        }
+        .backdrop-enter-active {
+            opacity: 1;
+            transition: opacity 300ms ease-out;
         }
     </style>
 </head>
-<body class="h-full bg-background font-body-md text-on-surface antialiased overflow-hidden">
-<!-- Background Screen Context (Dimmed) -->
-<div aria-hidden="true" class="fixed inset-0 z-0 opacity-40 grayscale pointer-events-none">
-<img class="object-cover w-full h-full opacity-30" data-alt="A blurred, faint background screenshot of a complex procurement planning dashboard. The dashboard features tables, financial charts, and navigational elements typical of enterprise software. The overall color scheme is light with subtle blue accents, creating a professional and functional atmosphere. The image should be abstract enough to serve as a non-distracting background context layer." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsHxfBIyywILId1SD--V5he3_WTBfzVhCt2OEH6V5KmNJrAsbl4QdkpnzWLxHLsaLBdE9r4I1TZwSBQt9Kac8AOCxKLc-OeeJnJxOS_uoDhMwkL57Yz7Eh-pZljtqLV23SL9WNi1PItKpKGt4ADYM07M-3S5OqM7mRJTL1i0HbhzoNqr-wkEhmq_rVBgg80qzXphErUyp4okSXN0YJuTideV_fUsAFZi1L27rbwRdHjO-r87LTBzpf">
-</div>
-<!-- Drawer Overlay -->
-<div aria-modal="true" class="fixed inset-0 z-40 drawer-overlay flex justify-end" role="dialog">
+<body class="bg-surface font-body-md text-on-surface antialiased overflow-hidden h-screen w-screen relative">
+<!-- Underlying Screen Placeholder -->
+<div class="w-full h-full object-cover">
+        {{DATA:SCREEN:SCREEN_5}}
+    </div>
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm z-40 backdrop-enter-active flex justify-end" id="drawer-backdrop">
 <!-- Drawer Container -->
-<div class="w-full max-w-[400px] md:w-1/3 bg-surface-container-lowest h-full flex flex-col shadow-2xl animate-[slideInRight_0.3s_ease-out]">
-<!-- Drawer Header -->
-<header class="flex items-center justify-between px-container-padding py-4 border-b border-subtle bg-surface-container-lowest">
-<h2 class="font-headline-md text-headline-md text-on-surface">Submit departmental contribution</h2>
-<button aria-label="Close drawer" class="p-2 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-DEFAULT transition-colors">
-<span class="material-symbols-outlined">close</span>
+<div class="w-full max-w-2xl bg-surface-container-lowest h-full shadow-2xl flex flex-col drawer-enter-active z-50 border-l border-border-subtle" id="drawer">
+<!-- Header -->
+<header class="flex items-center justify-between px-container-padding py-stack-sm border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-headline-md text-headline-md text-on-surface">Confirm Plan Item funding</h2>
+<button aria-label="Close drawer" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant flex items-center justify-center group">
+<span class="material-symbols-outlined text-[24px] group-hover:text-on-surface">close</span>
 </button>
 </header>
-<!-- Drawer Body -->
-<div class="flex-1 overflow-y-auto px-container-padding py-section-gap space-y-section-gap">
-<!-- Read-only Info Block -->
-<section class="bg-surface-container-low rounded-lg p-4 border border-subtle">
-<div class="grid grid-cols-1 gap-stack-sm mb-4">
+<!-- Scrollable Content Area -->
+<main class="flex-1 overflow-y-auto p-container-padding space-y-section-gap">
+<!-- Context Section (Data Block) -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded p-container-padding space-y-stack-sm relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-primary-container before:rounded-l">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Plan Item Context</h3>
+<span class="font-data-md text-data-md text-on-surface-variant text-sm bg-surface-container px-2 py-0.5 rounded">PPI-MOH-2027-021</span>
+</div>
+<div class="space-y-4">
 <div>
-<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Organisation Unit</p>
+<p class="font-headline-sm text-headline-sm text-on-surface mb-1">National digital health infrastructure upgrade</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ministry of Health Annual Procurement Plan 2027/28 · Draft Version 1</p>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-border-subtle border-dashed">
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-1 uppercase tracking-wider">Owner OU</p>
 <p class="font-body-md text-body-md text-on-surface">Directorate of Digital Health and Policy</p>
 </div>
 <div>
-<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Financial year</p>
-<p class="font-body-md text-body-md text-on-surface">2027/28</p>
+<p class="font-label-caps text-label-caps text-outline mb-1 uppercase tracking-wider">Plan Item status</p>
+<!-- Status Chip -->
+<div class="inline-flex items-center px-2 py-1 rounded-full bg-primary-fixed text-on-primary-fixed border border-primary-fixed-dim font-body-sm text-body-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>
+                                    Proposed · Planning complete
+                                 </div>
 </div>
-</div>
-<div class="border-t border-subtle pt-4 grid grid-cols-2 gap-4">
-<div>
-<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Plan Items</p>
-<p class="font-data-md text-data-md text-on-surface">1</p>
-</div>
-<div>
-<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Total planned value</p>
-<p class="font-data-md text-data-md text-on-surface">KES 455,000,000</p>
-</div>
-<div class="col-span-2">
-<p class="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase">Validation</p>
-<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-available/10 text-status-available font-body-sm text-body-sm">
-<span class="material-symbols-outlined text-[16px]">check_circle</span>
-                                Ready
-                            </span>
 </div>
 </div>
 </section>
-<!-- Plan Items List (Compact) -->
-<section>
-<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase">Included Items</h3>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg divide-y divide-subtle">
-<div class="p-3 hover:bg-surface-container-lowest transition-colors flex flex-col gap-1">
-<div class="flex justify-between items-start gap-4">
-<p class="font-body-sm text-body-sm text-on-surface font-medium truncate flex-1">National digital health infrastructure upgrade</p>
-<p class="font-data-md text-data-md text-on-surface whitespace-nowrap">KES 455,000,000</p>
+<!-- Funding to Confirm Section -->
+<section class="space-y-stack-sm">
+<h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2 mb-4">Funding to confirm</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-container-padding">
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Source Demand</p>
+<p class="font-body-md text-body-md text-on-surface">National digital health infrastructure upgrade</p>
 </div>
-<div class="flex items-center justify-between mt-1">
-<span class="font-body-sm text-body-sm text-on-surface-variant">Open tender</span>
-<span class="inline-flex items-center gap-1 text-status-available font-body-sm text-body-sm">
-<span class="material-symbols-outlined text-[14px]">check</span> Ready
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Proposed Budget Line</p>
+<p class="font-body-md text-body-md text-on-surface">Digital clinical systems infrastructure</p>
+</div>
+</div>
+<!-- Financial Highlights Block -->
+<div class="bg-surface-bright border border-border-subtle rounded p-container-padding mt-4 grid grid-cols-1 sm:grid-cols-3 gap-container-padding divide-y sm:divide-y-0 sm:divide-x divide-border-subtle">
+<div class="sm:pr-4 py-2 sm:py-0 flex flex-col justify-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-2">Amount to reserve</p>
+<p class="font-data-lg text-data-lg text-primary tracking-tight">KES 455,000,000</p>
+</div>
+<div class="sm:px-4 py-2 sm:py-0 flex flex-col justify-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-2">Available allocation</p>
+<p class="font-data-md text-data-md text-on-surface">KES 480,000,000</p>
+</div>
+<div class="sm:pl-4 py-2 sm:py-0 flex flex-col justify-center">
+<div class="flex items-center gap-2 mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Derived balance</p>
+<!-- Success Indicator -->
+<span class="inline-flex items-center gap-1 text-status-available font-body-sm text-[12px] bg-status-available/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Sufficient
                                 </span>
 </div>
+<p class="font-data-md text-data-md text-on-surface">KES 25,000,000</p>
 </div>
 </div>
-</section>
-<!-- Input Section -->
-<section class="space-y-4">
-<div>
-<label class="block font-label-caps text-label-caps text-on-surface mb-2 uppercase" for="submission-note">Submission note (Optional)</label>
-<textarea class="w-full rounded-DEFAULT border-subtle bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:border-secondary focus:ring-1 focus:ring-secondary/50 placeholder:text-outline" id="submission-note" placeholder="Add context for Procurement, if needed" rows="3"></textarea>
-</div>
-<div class="flex items-start gap-3 mt-6 bg-surface-bright p-4 rounded-lg border border-subtle">
-<div class="flex items-center h-5 mt-0.5">
-<input class="w-4 h-4 rounded border-subtle text-primary focus:ring-primary/50 bg-surface-container-lowest cursor-pointer" id="declaration" type="checkbox">
-</div>
-<label class="font-body-sm text-body-sm text-on-surface cursor-pointer leading-relaxed" for="declaration">
-                            I confirm that these requirements represent this Organisation Unit’s planned procurement needs for the stated financial year.
-                        </label>
+<!-- Informational Notice -->
+<div class="flex items-start gap-3 bg-surface-container-low border border-border-subtle rounded p-3 mt-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-outline mt-0.5">info</span>
+<p class="font-body-sm text-body-sm">Confirming funding records the Finance decision and reserves this amount for the Plan Item.</p>
 </div>
 </section>
-</div>
-<!-- Drawer Footer (Sticky) -->
-<footer class="p-container-padding border-t border-subtle bg-surface-container-lowest flex justify-end gap-3 mt-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-<button class="px-4 py-2 font-body-md text-body-md text-primary border border-subtle rounded-DEFAULT hover:bg-surface-container transition-colors" type="button">
+<!-- Decision Input -->
+<section class="space-y-2 mt-section-gap">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider block" for="decision-note">Decision note</label>
+<textarea class="w-full bg-surface-container-lowest border border-border-subtle rounded p-3 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-shadow resize-none" id="decision-note" placeholder="Enter any relevant notes or conditions..." rows="3"></textarea>
+<p class="font-body-sm text-body-sm text-outline">Decision notes are optional when confirming, but required if returning the item to the planner for revision.</p>
+</section>
+</main>
+<!-- Footer Buttons -->
+<footer class="border-t border-border-subtle p-container-padding bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
+<button class="w-full sm:w-auto font-body-md text-body-md font-medium text-status-exhausted hover:bg-error-container/20 px-4 py-2 rounded transition-colors flex items-center justify-center gap-2">
                     Cancel
                 </button>
-<button class="px-4 py-2 font-body-md text-body-md bg-primary text-on-primary rounded-DEFAULT hover:bg-primary/90 transition-colors shadow-sm" type="button">
-                    Confirm contribution
-                </button>
+<div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+<button class="w-full sm:w-auto font-body-md text-body-md font-medium text-primary border border-border-subtle hover:bg-surface-container-low px-4 py-2 rounded transition-colors bg-surface-container-lowest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">undo</span> Return to planner
+                    </button>
+<button class="w-full sm:w-auto font-body-md text-body-md font-medium text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-6 py-2 rounded transition-colors shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">check</span> Confirm funding
+                    </button>
+</div>
 </footer>
 </div>
 </div>
-<style>
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-            }
-            to {
-                transform: translateX(0);
-            }
-        }
-    </style>
+<script>
+        // Simple initialization script to simulate entry animation if needed in a static prototype
+        document.addEventListener('DOMContentLoaded', () => {
+            const drawer = document.getElementById('drawer');
+            const backdrop = document.getElementById('drawer-backdrop');
+            
+            // Ensure classes are set for open state after a brief delay for transition to show
+            setTimeout(() => {
+                drawer.classList.add('drawer-enter-active');
+                drawer.classList.remove('drawer-enter');
+                backdrop.classList.add('backdrop-enter-active');
+                backdrop.classList.remove('backdrop-enter');
+            }, 50);
+        });
+    </script>
 
 
 </body></html>

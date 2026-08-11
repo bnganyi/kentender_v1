@@ -6,35 +6,24 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 	return `<div class="kt-pln-root kt-stitch-canvas" data-testid="kt-pln-ui06-root" data-kt-pln-live="0">
 <div class="flex-1 flex w-full max-w-7xl mx-auto">
 <main class="flex-1 w-full px-container-padding md:px-section-gap py-section-gap pb-32">
-<!-- Breadcrumbs -->
-<nav class="flex items-center text-on-surface-variant font-body-sm mb-stack-sm space-x-2" aria-label="Breadcrumb">
-<a class="hover:text-primary transition-colors" href="/app/planning-workspace">Procurement Planning</a>
-<span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-<a class="hover:text-primary transition-colors" href="#" data-kt-pln-editor-plan-crumb>2027/28 Plan</a>
-<span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-<a class="hover:text-primary transition-colors" href="#" data-kt-pln-editor-update-crumb>Plan update</a>
-<span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-<span class="text-on-surface font-medium" data-kt-pln-editor-title-crumb>Digital health technical staff certification programme</span>
-</nav>
-<!-- Page Header -->
+<!-- Page Header (Stitch: status chip above title) -->
 <div class="mb-section-gap">
-<div class="flex flex-col md:flex-row md:items-start justify-between gap-stack-sm">
-<div class="flex-1">
-<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs" data-kt-pln-editor-title data-testid="kt-pln-ui06-title">Digital health technical staff certification programme</h1>
-<div class="flex items-center gap-2 flex-wrap">
-<span class="font-body-lg text-body-lg text-on-surface-variant" data-kt-pln-editor-ou>Human Resources Management and Development</span>
-<span class="text-on-surface-variant">·</span>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="mb-2">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-status-reserved/10 text-status-reserved border border-status-reserved/20" data-kt-pln-editor-lifecycle data-testid="kt-pln-ui06-lifecycle">Proposed</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2" data-kt-pln-editor-title data-testid="kt-pln-ui06-title">Digital health technical staff certification programme</h1>
+<div class="flex items-center gap-3 text-body-md font-body-md text-on-surface-variant">
+<span class="" data-kt-pln-editor-ou>Human Resources Management and Development</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant shrink-0" data-kt-pln-editor-meta-sep aria-hidden="true"></span>
 <span class="font-data-md text-data-md text-on-surface" data-kt-pln-editor-amount>KES 80,000,000</span>
-<!-- Status Chip -->
-<div class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-tertiary font-label-caps text-label-caps" data-kt-pln-editor-lifecycle data-testid="kt-pln-ui06-lifecycle">
-                                Proposed
-                            </div>
-</div>
-</div>
 </div>
 <div class="mt-stack-sm flex items-center gap-2 bg-surface-container-low px-4 py-2 border-l-4 border-outline rounded-r-lg">
-<span class="material-symbols-outlined text-outline text-sm">info</span>
+<span class="material-symbols-outlined text-outline text-sm" aria-hidden="true">info</span>
 <span class="font-body-sm text-body-sm text-on-surface-variant italic" data-kt-pln-editor-draft-banner>Draft Plan update · The current Approved Plan remains active.</span>
+</div>
+</div>
 </div>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap">
@@ -156,14 +145,19 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 </label>
 <div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="lotting_decision" hidden></div>
 </div>
-<div class="flex flex-col gap-stack-sm mt-stack-sm max-w-48">
+<div class="flex flex-col gap-stack-sm mt-stack-sm hidden" data-kt-pln-lotting-details data-testid="kt-pln-ui06-lotting-details" hidden>
+<div class="flex flex-col gap-stack-sm max-w-48">
     <label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-lot-count">Expected lot count (optional)</label>
     <input type="number" id="kt-pln-ui06-lot-count" name="expected_lot_count" data-kt-pln-field="expected_lot_count" data-kt-field="expected_lot_count" data-testid="kt-pln-ui06-lot-count" placeholder="e.g. 5" class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-body-md text-body-md text-on-surface bg-surface-container-lowest" min="1">
-</div><div class="flex flex-col gap-stack-sm mt-stack-sm">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="expected_lot_count" hidden></div>
+</div>
+<div class="flex flex-col gap-stack-sm">
     <label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-lot-basis">Indicative lot basis</label>
     <textarea class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-body-md text-body-md text-on-surface bg-surface-container-lowest resize-y" id="kt-pln-ui06-lot-basis" name="lot_basis" data-kt-pln-field="lot_basis" data-kt-field="lot_basis" data-testid="kt-pln-ui06-lot-basis" rows="2" placeholder="Describe the basis for lotting (e.g. by region, by technical domain)"></textarea>
 <div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="lot_basis" hidden></div>
-</div><p class="font-body-sm text-body-sm text-outline mt-1 max-w-2xl">This indicates whether the eventual tender may contain lots. Detailed lots are configured during tender preparation.</p>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-1 max-w-2xl">This indicates whether the eventual tender may contain lots. Detailed lots are configured during tender preparation.</p>
+</div>
 </div>
 </div>
 <!-- Planned Schedule Block -->
@@ -196,6 +190,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
                                         </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2027-12-01" name="ms_invitation_published" data-kt-pln-field="ms_invitation_published" data-kt-field="ms_invitation_published" data-testid="kt-pln-ui06-ms_invitation_published">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_invitation_published" hidden></div>
 </td>
 </tr>
 <tr class="border-b border-surface-variant table-row-hover transition-colors">
@@ -205,6 +200,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
                                         </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2028-01-12" name="ms_tender_opening" data-kt-pln-field="ms_tender_opening" data-kt-field="ms_tender_opening" data-testid="kt-pln-ui06-ms_tender_opening">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_tender_opening" hidden></div>
 </td>
 </tr>
 <tr class="border-b border-surface-variant table-row-hover transition-colors">
@@ -214,6 +210,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
                                         </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2028-01-31" name="ms_evaluation_completed" data-kt-pln-field="ms_evaluation_completed" data-kt-field="ms_evaluation_completed" data-testid="kt-pln-ui06-ms_evaluation_completed">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_evaluation_completed" hidden></div>
 </td>
 </tr>
 <tr class="border-b border-surface-variant table-row-hover transition-colors">
@@ -223,6 +220,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
                                         </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2028-02-15" name="ms_award_approval" data-kt-pln-field="ms_award_approval" data-kt-field="ms_award_approval" data-testid="kt-pln-ui06-ms_award_approval">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_award_approval" hidden></div>
 </td>
 </tr>
 <tr class="border-b border-surface-variant table-row-hover transition-colors">
@@ -232,6 +230,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
                                         </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2028-03-01" name="ms_contract_signature" data-kt-pln-field="ms_contract_signature" data-kt-field="ms_contract_signature" data-testid="kt-pln-ui06-ms_contract_signature">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_contract_signature" hidden></div>
 </td>
 </tr>
 <tr class="table-row-hover transition-colors">
@@ -241,72 +240,89 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 </td>
 <td class="py-2 pr-2">
 <input class="w-full border-subtle rounded py-1 px-2 text-sm focus:border-secondary focus:ring-1 focus:ring-secondary" type="date" value="2028-03-31" name="ms_delivery_completion" data-kt-pln-field="ms_delivery_completion" data-kt-field="ms_delivery_completion" data-testid="kt-pln-ui06-ms_delivery_completion">
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="ms_delivery_completion" hidden></div>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<!-- Statutory and Strategy Block -->
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-container-padding flex flex-col gap-section-gap">
-<div class="border-b border-subtle pb-stack-sm mb-stack-xs">
-<h2 class="font-headline-md text-headline-md text-on-surface">Statutory and strategy treatment</h2>
+<!-- Preference and reservation (literal port of PLN-UI-06.html) -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg p-6" data-kt-pln-pref-section data-testid="kt-pln-ui06-pref-section">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">Preference and reservation</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6 max-w-3xl">Use this only when all or part of this Plan Item is deliberately set aside under an applicable configured scheme.</p>
+<div class="flex items-center justify-between gap-4 py-3 px-4 rounded-lg border border-subtle bg-surface-container-low" data-kt-pln-pref-none data-testid="kt-pln-ui06-pref-none">
+<p class="font-body-md text-body-md text-on-surface mb-0">Preference or reservation scheme: None assigned</p>
+<button type="button" class="px-3 py-1.5 font-body-sm text-body-sm text-primary border border-subtle rounded-DEFAULT hover:bg-surface-container transition-colors cursor-pointer bg-surface-container-lowest" data-kt-pln-action="pref-assign" data-testid="kt-pln-ui06-pref-assign">Edit</button>
 </div>
-<div class="flex flex-col gap-stack-sm">
-<label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-statutory">Statutory allocation treatment</label>
-<div class="relative w-full md:w-1/2">
-<select id="kt-pln-ui06-statutory" class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-body-md text-body-md text-on-surface bg-surface-container-lowest appearance-none pr-10" name="statutory_treatment" data-kt-pln-field="statutory_treatment" data-kt-field="statutory_treatment" data-testid="kt-pln-ui06-statutory">
-<option value="Not applicable to this Plan Item" selected>Not applicable to this Plan Item</option>
-<option value="Contributes through indicative reserved lot(s)">Contributes through indicative reserved lot(s)</option>
-<option value="Youth Enterprise">Youth Enterprise</option>
-<option value="Women Enterprise">Women Enterprise</option>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 hidden" data-kt-pln-pref-assigned data-testid="kt-pln-ui06-pref-assigned" hidden>
+<div class="space-y-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2" for="kt-pln-ui06-pref-scheme">Scheme</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline-variant rounded-md pl-4 pr-10 py-2.5 font-body-md text-body-md text-on-surface appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" id="kt-pln-ui06-pref-scheme" name="preference_reservation_scheme" data-kt-pln-field="preference_reservation_scheme" data-kt-field="preference_reservation_scheme" data-testid="kt-pln-ui06-pref-scheme">
+<option value="">None</option>
+<option value="AGPO reservation">AGPO reservation</option>
+<option value="Local preference">Local preference</option>
 </select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
-<span class="material-symbols-outlined">expand_more</span>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="preference_reservation_scheme" hidden></div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-3">Scope</label>
+<div class="flex items-center gap-6">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="text-secondary focus:ring-secondary h-4 w-4 border-outline-variant" name="reservation_scope" type="radio" value="Reserved lot(s)" data-kt-pln-field="reservation_scope" data-kt-field="reservation_scope" data-testid="kt-pln-ui06-pref-scope-lots"/>
+<span class="font-body-md text-body-md text-on-surface">Reserved lot(s)</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="text-secondary focus:ring-secondary h-4 w-4 border-outline-variant" name="reservation_scope" type="radio" value="Entire Plan Item" data-kt-pln-field="reservation_scope" data-kt-field="reservation_scope" data-testid="kt-pln-ui06-pref-scope-entire"/>
+<span class="font-body-md text-body-md text-on-surface">Entire Plan Item</span>
+</label>
+</div>
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="reservation_scope" hidden></div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Eligible group</label>
+<div class="flex flex-wrap gap-2" data-kt-pln-pref-groups data-testid="kt-pln-ui06-pref-groups">
+<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
+<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Women-owned enterprises" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-women"/>
+<span>Women-owned enterprises</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
+<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Youth-owned enterprises" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-youth"/>
+<span>Youth-owned enterprises</span>
+</label>
+<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
+<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Enterprises owned by PWDs" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-pwd"/>
+<span>Enterprises owned by PWDs</span>
+</label>
+</div>
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="eligible_groups" hidden></div>
+</div>
+<button type="button" class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface bg-transparent border-0 p-0 cursor-pointer underline" data-kt-pln-action="pref-clear" data-testid="kt-pln-ui06-pref-clear">Clear designation</button>
+</div>
+<div class="bg-surface-container p-5 rounded-lg border border-subtle self-start">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2" for="kt-pln-ui06-pref-value">Planned reserved value (KES)</label>
+<div class="relative mb-3">
+<span class="absolute left-4 top-2.5 font-data-md text-data-md text-on-surface-variant">KES</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md pl-14 pr-4 py-2.5 font-data-md text-data-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" id="kt-pln-ui06-pref-value" name="planned_reserved_value" data-kt-pln-field="planned_reserved_value" data-kt-field="planned_reserved_value" data-testid="kt-pln-ui06-pref-value" type="text" inputmode="decimal" value=""/>
+</div>
+<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="planned_reserved_value" hidden></div>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-kt-pln-pref-contribution-note>This contributes to the Plan’s calculated reservation coverage. It is a planned set-aside, not an award.</p>
 </div>
 </div>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="statutory_treatment" hidden></div>
-
+</section>
+<div class="bg-error-container/20 border-l-4 border-error p-4 rounded-r-md flex gap-3 items-start hidden" data-kt-pln-editor-issue data-testid="kt-pln-ui06-issue" hidden>
+<span class="material-symbols-outlined text-error shrink-0">error</span>
+<div>
+<h4 class="font-headline-sm text-[16px] font-semibold text-error mb-1">Needs attention</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-kt-pln-editor-issue-copy>Confirm all milestone dates before departmental sign-off.</p>
 </div>
-<div class="flex flex-col gap-stack-sm">
-<label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-statutory-rationale">Statutory rationale</label>
-<textarea class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-body-md text-body-md text-on-surface bg-surface-container-lowest resize-y" id="kt-pln-ui06-statutory-rationale" name="statutory_target_groups" data-kt-pln-field="statutory_target_groups" data-kt-field="statutory_target_groups" data-testid="kt-pln-ui06-statutory-rationale" rows="2">Specialised certification services require accredited providers.</textarea>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-section-gap pt-section-gap border-t border-subtle">
-<div class="flex flex-col gap-stack-sm">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Plan-level coverage</span>
-<div class="font-body-md text-body-md text-on-surface bg-surface-container-highest px-3 py-2 rounded border border-transparent text-on-surface-variant" data-kt-pln-editor-coverage>
-                                    Recalculated at Plan level after this item is saved
-                                </div>
-<span class="font-body-sm text-body-sm text-outline mt-1">Aggregated stat targets are monitored on the main plan view.</span>
-</div>
-<div class="flex flex-col gap-stack-sm">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Strategy context</span>
-<div class="font-body-md text-body-md text-on-surface bg-surface-container-low px-3 py-2 rounded border border-subtle flex items-start gap-2 h-full">
-<span class="material-symbols-outlined text-outline mt-0.5 text-sm">target</span>
-<span data-kt-pln-editor-strategy-target>Strengthen capability to operate and support national digital health services</span>
-</div>
-</div>
-</div>
-<div class="flex flex-col gap-stack-sm mt-stack-sm max-w-md">
-<label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-treatment-value">Planned treatment value</label>
-<input id="kt-pln-ui06-treatment-value" class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-data-md text-data-md text-on-surface bg-surface-container-lowest" type="text" inputmode="decimal" name="planned_treatment_value" data-kt-pln-field="planned_treatment_value" data-kt-field="planned_treatment_value" data-testid="kt-pln-ui06-treatment-value" value=""/>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="planned_treatment_value" hidden></div>
-</div>
-<div class="flex flex-col gap-stack-sm mt-stack-sm">
-<label class="font-label-caps text-label-caps text-on-surface-variant" for="kt-pln-ui06-value-treatment">Value treatment note</label>
-<textarea class="w-full border-subtle rounded focus:border-secondary focus:ring-1 focus:ring-secondary font-body-md text-body-md text-on-surface bg-surface-container-lowest resize-y" id="kt-pln-ui06-value-treatment" name="value_treatment_note" data-kt-pln-field="value_treatment_note" data-kt-field="value_treatment_note" data-testid="kt-pln-ui06-value-treatment" rows="2">Require recognised certification, practical knowledge transfer and completion evidence.</textarea>
-</div>
-</div>
-<div class="bg-error-container/20 border-l-4 border-error rounded-r-lg p-4 flex gap-3 items-start mt-section-gap" data-kt-pln-editor-issue data-testid="kt-pln-ui06-issue">
-    <span class="material-symbols-outlined text-error mt-0.5" aria-hidden="true">warning</span>
-    <div>
-        <span class="font-label-caps text-label-caps text-error block mb-1">Needs attention</span>
-        <span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-editor-issue-copy>Confirm all milestone dates before departmental sign-off.</span>
-    </div>
 </div></div>
 <!-- Right Column (Context & Metadata) -->
-<div class="lg:col-span-4 flex flex-col gap-section-gap">
+<div class="lg:col-span-4 flex flex-col gap-section-gap lg:sticky lg:top-8 self-start" data-kt-pln-source-sidebar data-testid="kt-pln-ui06-source-sidebar">
 <!-- Source Demand Panel (Compact Read-Only) -->
 <div class="bg-surface-bright border border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
 <div class="bg-surface-container-low px-container-padding py-3 border-b border-subtle flex items-center justify-between">
@@ -343,8 +359,8 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 <p class="font-body-sm text-body-sm text-on-surface-variant mt-2" data-kt-pln-editor-source-allocation data-testid="kt-pln-ui06-source-allocation">1 Approved Demand · 2 Need Items · KES 80,000,000</p>
 </div>
 <div>
-<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Strategy context</span>
-<span class="text-on-surface-variant block leading-snug" data-kt-pln-source-strategy>Strengthen capability to operate and support national digital health services.</span>
+<span class="block text-on-surface-variant font-label-caps text-label-caps mb-1">Strategy Context</span>
+<span class="text-on-surface italic text-on-surface-variant" data-kt-pln-source-strategy data-testid="kt-pln-ui06-strategy-context">Strengthen capability to operate and support national digital health services</span>
 </div>
 <div class="border-t border-subtle pt-4 mt-2 flex flex-col gap-2">
 <a class="text-secondary hover:text-primary transition-colors flex items-center gap-1 font-medium" href="#" data-kt-pln-action="view-demand" data-testid="kt-pln-ui06-view-demand">
@@ -363,7 +379,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 </div>
 </div>
 <!-- Bottom Issue -->
-<div class="bg-error-container/20 border-l-4 border-error rounded-r-lg p-4 flex gap-3 items-start" data-kt-pln-editor-issue-aside>
+<div class="bg-error-container/20 border-l-4 border-error rounded-r-lg p-4 flex gap-3 items-start hidden" data-kt-pln-editor-issue-aside hidden>
 <span class="material-symbols-outlined text-error mt-0.5" aria-hidden="true">warning</span>
 <div>
 <span class="font-label-caps text-label-caps text-error block mb-1">Needs attention</span>
