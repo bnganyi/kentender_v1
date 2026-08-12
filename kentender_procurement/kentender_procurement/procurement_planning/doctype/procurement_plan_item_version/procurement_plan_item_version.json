@@ -52,12 +52,7 @@
   "ms_award_approval",
   "ms_contract_signature",
   "ms_delivery_completion",
-  "schedule_change_reason",
-  "section_retired_statutory",
-  "statutory_treatment",
-  "statutory_target_groups",
-  "planned_treatment_value",
-  "value_treatment_note"
+  "schedule_change_reason"
  ],
  "fields": [
   {
@@ -268,30 +263,35 @@
   {
    "fieldname": "section_preference",
    "fieldtype": "Section Break",
-   "label": "Preference and reservation"
+   "label": "Preference and reservation",
+   "read_only": 1
   },
   {
    "fieldname": "preference_reservation_scheme",
    "fieldtype": "Select",
    "label": "Preference or Reservation Scheme",
-   "options": "\nAGPO reservation\nLocal preference"
+   "options": "\nAGPO reservation\nLocal preference",
+   "read_only": 1
   },
   {
    "fieldname": "reservation_scope",
    "fieldtype": "Select",
    "label": "Reservation Scope",
-   "options": "\nEntire Plan Item\nReserved lot(s)"
+   "options": "\nEntire Plan Item\nReserved lot(s)",
+   "read_only": 1
   },
   {
    "fieldname": "eligible_groups",
    "fieldtype": "Small Text",
-   "label": "Eligible Groups"
+   "label": "Eligible Groups",
+   "read_only": 1
   },
   {
    "fieldname": "planned_reserved_value",
    "fieldtype": "Currency",
    "label": "Planned Reserved Value",
-   "options": "currency"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "fieldname": "section_schedule",
@@ -332,43 +332,6 @@
    "fieldname": "schedule_change_reason",
    "fieldtype": "Small Text",
    "label": "Schedule Change Reason"
-  },
-  {
-   "fieldname": "section_retired_statutory",
-   "fieldtype": "Section Break",
-   "label": "Retired statutory questionnaire",
-   "collapsible": 1,
-   "hidden": 1
-  },
-  {
-   "fieldname": "statutory_treatment",
-   "fieldtype": "Select",
-   "label": "Statutory Treatment (retired)",
-   "options": "\nOpen competition\nReserved\nPreferential",
-   "hidden": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "statutory_target_groups",
-   "fieldtype": "Small Text",
-   "label": "Statutory Target Groups (retired)",
-   "hidden": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "planned_treatment_value",
-   "fieldtype": "Currency",
-   "label": "Planned Treatment Value (retired)",
-   "options": "currency",
-   "hidden": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "value_treatment_note",
-   "fieldtype": "Small Text",
-   "label": "Value Treatment Note (retired)",
-   "hidden": 1,
-   "read_only": 1
   }
  ],
  "links": [],

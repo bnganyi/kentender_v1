@@ -88,7 +88,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/register.js?v={_desk_asset_v('public/js/planning_ui_fixtures/register.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js?v={_desk_asset_v('public/js/planning_ui_fixtures/builder.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/add_demand_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/add_demand_dialog.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/contribution_drawer.js?v={_desk_asset_v('public/js/planning_ui_fixtures/contribution_drawer.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_item_editor.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_item_editor.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_review.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_review.js')}",
 	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",

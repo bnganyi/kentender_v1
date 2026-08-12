@@ -17,9 +17,6 @@ from kentender_procurement.procurement_planning.services.approve_plan_version im
 from kentender_procurement.procurement_planning.services.create_procurement_plan import (
 	create_procurement_plan,
 )
-from kentender_procurement.procurement_planning.services.get_departmental_contribution import (
-	get_departmental_contribution,
-)
 from kentender_procurement.procurement_planning.services.get_plan_review import (
 	get_plan_review,
 )
@@ -147,8 +144,10 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			coordinating_org_unit=OU_MOH,
 			user=planner,
 		)
-		with self.assertRaises(frappe.PermissionError):
-			get_departmental_contribution(plan=draft["plan"], user=viewer)
+		# Viewer may read plan review as neutral; cannot mutate/create.
+		dto_draft = get_plan_review(plan=draft["plan"], user=viewer)
+		self.assertEqual(dto_draft["surface"], "neutral")
+		self.assertFalse(dto_draft["can_approve"])
 
 		ctx = self._in_review_plan(planner)
 		dto = get_plan_review(plan=ctx["plan"], user=viewer)

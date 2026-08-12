@@ -67,7 +67,7 @@ export type PlanningGate04Prep = PlanningGate03Prep & {
 
 export type PlanningGate05Prep = PlanningGate04Prep & {
 	hod_user?: string;
-	ready_for_signoff?: boolean;
+	ready_for_submit?: boolean;
 };
 
 export type PlanningGate05ApprovalPrep = PlanningGate05Prep & {
@@ -108,7 +108,7 @@ export async function preparePlanningGate04(
 	return message;
 }
 
-/** Admin-only prepare for PLN-UI-07 contribution drawer (Ready item + HoD). */
+/** Admin-only prepare for Ready Plan Item (C02: no contribution). */
 export async function preparePlanningGate05(page: Page): Promise<PlanningGate05Prep> {
 	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
 	const message = await page.evaluate(async () => {

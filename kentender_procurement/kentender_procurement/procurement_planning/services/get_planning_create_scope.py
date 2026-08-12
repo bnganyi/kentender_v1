@@ -101,7 +101,7 @@ def get_planning_create_scope(
 		pe_name = next((e["name"] for e in entities if e["id"] == pe), pe)
 		title_default = f"{pe_name} Annual Procurement Plan {fy}"
 
-	currencies = [{"id": "KES", "label": "KES"}]
+	currencies = [{"id": "KES", "label": "KES - Kenyan Shilling"}]
 	return {
 		"ok": True,
 		"selection_mode": scope["selection_mode"],

@@ -15,7 +15,7 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 		await page.setViewportSize({ width: 1400, height: 900 });
 	});
 
-	test("single PE: readonly entity, no budget fields, stitch chrome", async ({ page }) => {
+	test("single PE: Stitch regions, no budget, stitch chrome", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningGate03(page);
 		await page.context().clearCookies();
@@ -27,6 +27,12 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 		await expect(
 			page.getByRole("heading", { name: "Create annual procurement plan" }),
 		).toBeVisible();
+		await expect(page.getByText("1. Plan ownership")).toBeVisible();
+		await expect(page.getByText("2. Plan details")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui02-period")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui02-period")).toContainText(/Plan period:/i);
+		await expect(page.getByTestId("kt-pln-ui02-actions")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui02-submit")).toContainText(/Create plan/i);
 		await expect(page.getByTestId("kt-pln-ui02-pe-readonly")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui02-pe-readonly")).toContainText(
 			/Ministry|PE-MOH|Health/i,
@@ -34,8 +40,8 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 		await expect(page.locator("[data-kt-pln-pe-helper]")).toContainText(
 			/Assigned from your authorised scope/i,
 		);
-		await expect(page.getByTestId("kt-pln-ui02-no-budget")).toBeVisible();
 		await expect(page.locator('[data-kt-field="budget"]')).toHaveCount(0);
+		await expect(page.getByTestId("kt-pln-ui02-no-budget")).toHaveCount(0);
 		await assertStitchDeskChrome(page, {
 			rootTestId: "kt-pln-ui02-root",
 			primaryCtaTestId: "kt-pln-ui02-submit",

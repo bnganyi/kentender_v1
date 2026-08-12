@@ -111,7 +111,8 @@
 .kt-cl-shell .kt-pln-root input:focus-visible {
 	outline: none !important;
 	border-color: var(--kt-pln-focus-border) !important;
-	box-shadow: 0 0 0 3px var(--kt-pln-focus-ring) !important;
+	/* 1px soft sky ring — avoid heavy 3px halos that stack with wrappers. */
+	box-shadow: 0 0 0 1px var(--kt-pln-focus-ring) !important;
 }
 
 /* Do NOT force horizontal padding — Stitch uses pl-10/pr-* for icon fields. */
@@ -189,7 +190,45 @@
 .kt-cl-shell .kt-pln-root .gap-4 { gap: 1rem !important; }
 .kt-cl-shell .kt-pln-root .gap-6 { gap: 1.5rem !important; }
 .kt-cl-shell .kt-pln-root .gap-x-6 { column-gap: 1.5rem !important; }
+.kt-cl-shell .kt-pln-root .gap-x-4 { column-gap: 1rem !important; }
 .kt-cl-shell .kt-pln-root .gap-y-2 { row-gap: 0.5rem !important; }
+.kt-cl-shell .kt-pln-root .max-w-\[1400px\] { max-width: 1400px !important; }
+.kt-cl-shell .kt-pln-root .min-w-0 { min-width: 0 !important; }
+.kt-cl-shell .kt-pln-root .whitespace-normal { white-space: normal !important; }
+.kt-cl-shell .kt-pln-root .border-l-primary { border-left-color: var(--kt-pln-primary) !important; }
+.kt-cl-shell .kt-pln-root .pl-9 { padding-left: 2.25rem !important; }
+.kt-cl-shell .kt-pln-root .left-2\.5 { left: 0.625rem !important; }
+.kt-cl-shell .kt-pln-root .hover\:bg-primary-container-low:hover {
+	background-color: var(--kt-pln-primary-container) !important;
+}
+
+/* PLN-UI-01 scope selects — never crush PE to "Min…". */
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] > .flex {
+	width: 100% !important;
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] .flex-1 {
+	flex: 1 1 0% !important;
+	min-width: 14rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] select {
+	min-width: 0 !important;
+	max-width: 100% !important;
+}
+
+/* Plan meta strip: keep separators readable; amounts without mono letter-spacing artifacts. */
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	column-gap: 1rem !important;
+	row-gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] .font-data-md,
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] .text-data-md,
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-total-amount] {
+	letter-spacing: 0 !important;
+	font-variant-numeric: tabular-nums !important;
+}
 .kt-cl-shell .kt-pln-root .gap-section-gap { gap: 2rem !important; }
 .kt-cl-shell .kt-pln-root .gap-stack-xs { gap: 0.25rem !important; }
 .kt-cl-shell .kt-pln-root .gap-gutter-md { gap: 1.5rem !important; }
@@ -294,6 +333,7 @@
 	.kt-cl-shell .kt-pln-root .md\:justify-between { justify-content: space-between !important; }
 	.kt-cl-shell .kt-pln-root .md\:items-start { align-items: flex-start !important; }
 	.kt-cl-shell .kt-pln-root .md\:items-end { align-items: flex-end !important; }
+	.kt-cl-shell .kt-pln-root .md\:items-center { align-items: center !important; }
 	.kt-cl-shell .kt-pln-root .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 	.kt-cl-shell .kt-pln-root .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 	.kt-cl-shell .kt-pln-root .md\:col-span-2 { grid-column: span 2 / span 2 !important; }
@@ -301,6 +341,8 @@
 	.kt-cl-shell .kt-pln-root .md\:px-section-gap { padding-left: 2rem !important; padding-right: 2rem !important; }
 	.kt-cl-shell .kt-pln-root .md\:block { display: block !important; }
 	.kt-cl-shell .kt-pln-root .md\:w-1\/2 { width: 50% !important; }
+	.kt-cl-shell .kt-pln-root .md\:w-64 { width: 16rem !important; }
+	.kt-cl-shell .kt-pln-root .md\:w-auto { width: auto !important; }
 }
 
 @media (min-width: 1024px) {
@@ -382,6 +424,7 @@
 .kt-cl-shell .kt-pln-root .bg-primary { background-color: var(--kt-pln-primary) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-exhausted\/10 { background-color: rgb(225 29 72 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-available\/10 { background-color: rgb(16 185 129 / 0.1) !important; }
+.kt-cl-shell .kt-pln-root .bg-status-available { background-color: var(--kt-pln-status-available, #10b981) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-reserved { background-color: var(--kt-pln-status-reserved) !important; }
 .kt-cl-shell .kt-pln-root .bg-status-reserved\/10 { background-color: rgb(245 158 11 / 0.1) !important; }
 .kt-cl-shell .kt-pln-root .border-status-available\/20 { border-color: rgb(16 185 129 / 0.2) !important; }
@@ -486,6 +529,13 @@
 	display: none !important;
 }
 
+/* hidden + md:block (summary strip dividers) — reinstate after .hidden wins cascade */
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-pln-root .hidden.md\:block {
+		display: block !important;
+	}
+}
+
 /* Title lives in Stitch canvas — collapse empty CL page-header host (mirror Demands). */
 body.kt-pln-surface #kt-cl-page-header-host,
 body.kt-pln-surface.kt-pln-ws-active #kt-cl-page-header-host,
@@ -586,7 +636,10 @@ body.kt-pln-editor-active .body-sidebar-container {
 .kt-cl-shell .kt-pln-root .min-w-\[180px\] { min-width: 180px !important; }
 .kt-cl-shell .kt-pln-root .min-w-\[1000px\] { min-width: 1000px !important; }
 .kt-cl-shell .kt-pln-root .w-1 { width: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .w-1\.5 { width: 0.375rem !important; }
 .kt-cl-shell .kt-pln-root .h-1 { height: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .h-1\.5 { height: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .w-fit { width: fit-content !important; }
 .kt-cl-shell .kt-pln-root .bg-outline-variant { background-color: var(--kt-pln-outline-variant) !important; }
 .kt-cl-shell .kt-pln-root .w-4 { width: 1rem !important; }
 .kt-cl-shell .kt-pln-root .w-8 { width: 2rem !important; }
@@ -820,71 +873,169 @@ body.kt-pln-editor-active .body-sidebar-container {
 	box-sizing: border-box !important;
 }
 
-/* PLN-UI-07 departmental contribution drawer */
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer],
-.kt-cl-shell .kt-stitch-canvas[data-kt-pln-contribution-drawer] {
-	--kt-pln-drawer-overlay: rgba(25, 28, 30, 0.4);
+
+
+/* PLN-UI-01 Stitch v1.9 — reinforce scope flex + plan meta (after other rules).
+   FY must NOT keep w-full at md+ or PE collapses to "Min…". */
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] > .flex {
+	width: 100% !important;
 }
-.kt-cl-shell .kt-pln-root .drawer-overlay,
-.kt-cl-shell .kt-stitch-canvas.drawer-overlay {
-	background-color: rgba(25, 28, 30, 0.4) !important;
-	backdrop-filter: blur(2px);
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] {
-	position: fixed !important;
-	inset: 0 !important;
-	z-index: 200 !important;
-	display: flex !important;
-	justify-content: flex-end !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer][hidden],
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer].hidden {
-	display: none !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .max-w-\[400px\] {
-	max-width: 400px !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .shadow-2xl {
-	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .divide-y > :not([hidden]) ~ :not([hidden]) {
-	border-top-width: 1px !important;
-	border-color: var(--kt-pln-border-subtle, #dfe1e6) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .divide-subtle > :not([hidden]) ~ :not([hidden]) {
-	border-color: var(--kt-pln-border-subtle, #dfe1e6) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .space-y-section-gap > :not([hidden]) ~ :not([hidden]) {
-	margin-top: 2rem !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
-	margin-top: 1rem !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .bg-status-available\/10 {
-	background-color: rgb(16 185 129 / 0.1) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .text-status-available {
-	color: var(--kt-pln-status-available, #10b981) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .bg-surface-bright {
-	background-color: var(--kt-stitch-surface-bright, #f8f9fb) !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .col-span-2 {
-	grid-column: span 2 / span 2 !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .leading-relaxed {
-	line-height: 1.625 !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .uppercase {
-	text-transform: uppercase !important;
-}
-.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .whitespace-normal {
-	white-space: normal !important;
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] .flex-1 {
+	flex: 1 1 0% !important;
+	min-width: 14rem !important;
+	max-width: 100% !important;
 }
 @media (min-width: 768px) {
-	.kt-cl-shell .kt-pln-root [data-kt-pln-contribution-drawer] .md\:w-1\/3 {
-		width: 33.333333% !important;
+	.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui01-filters"] .md\:w-64 {
+		width: 16rem !important;
+		max-width: 16rem !important;
+		flex: 0 0 16rem !important;
 	}
 }
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	column-gap: 1rem !important;
+	row-gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] .font-data-md,
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-meta] .text-data-md,
+.kt-cl-shell .kt-pln-root [data-kt-pln-plan-total-amount] {
+	letter-spacing: 0 !important;
+	font-variant-numeric: tabular-nums !important;
+}
 
+/* PLN-UI-02 — Stitch v1.9 register form utilities + sticky footer. */
+.kt-cl-shell .kt-pln-root .bg-transparent { background-color: transparent !important; }
+.kt-cl-shell .kt-pln-root .border-none { border-style: none !important; border-width: 0 !important; }
+.kt-cl-shell .kt-pln-root .pb-24 { padding-bottom: 6rem !important; }
+.kt-cl-shell .kt-pln-root .mx-container-padding {
+	margin-left: 1rem !important;
+	margin-right: 1rem !important;
+}
+.kt-cl-shell .kt-pln-root .mt-container-padding { margin-top: 1rem !important; }
+.kt-cl-shell .kt-pln-root .input-glow {
+	/* Soft resting chrome — one border on the wrapper only. */
+	border-color: var(--kt-pln-border-subtle) !important;
+	transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.kt-cl-shell .kt-pln-root .input-glow input,
+.kt-cl-shell .kt-pln-root .input-glow select,
+.kt-cl-shell .kt-pln-root .input-glow textarea {
+	/* Control lives inside the wrapper — never draw a second border. */
+	border: none !important;
+	border-width: 0 !important;
+	box-shadow: none !important;
+	outline: none !important;
+	background-color: transparent !important;
+	border-radius: inherit !important;
+}
+.kt-cl-shell .kt-pln-root .input-glow input:focus,
+.kt-cl-shell .kt-pln-root .input-glow input:focus-visible,
+.kt-cl-shell .kt-pln-root .input-glow select:focus,
+.kt-cl-shell .kt-pln-root .input-glow select:focus-visible,
+.kt-cl-shell .kt-pln-root .input-glow textarea:focus,
+.kt-cl-shell .kt-pln-root .input-glow textarea:focus-visible {
+	border: none !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+.kt-cl-shell .kt-pln-root .input-glow:focus-within {
+	/* Single sky-blue focus on the wrapper (matches planning focus tokens). */
+	border-color: var(--kt-pln-focus-border) !important;
+	box-shadow: 0 0 0 1px var(--kt-pln-focus-ring) !important;
+}
+/* Defeat shared Stitch canvas teal focus when nested in input-glow. */
+.kt-cl-shell .kt-stitch-canvas.kt-pln-root .input-glow input:focus,
+.kt-cl-shell .kt-stitch-canvas.kt-pln-root .input-glow input:focus-visible,
+.kt-cl-shell .kt-stitch-canvas.kt-pln-root .input-glow select:focus,
+.kt-cl-shell .kt-stitch-canvas.kt-pln-root .input-glow select:focus-visible,
+.kt-cl-shell .kt-pln-root.kt-stitch-canvas .input-glow input:focus,
+.kt-cl-shell .kt-pln-root.kt-stitch-canvas .input-glow input:focus-visible,
+.kt-cl-shell .kt-pln-root.kt-stitch-canvas .input-glow select:focus,
+.kt-cl-shell .kt-pln-root.kt-stitch-canvas .input-glow select:focus-visible {
+	border: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui02-root"],
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui02-main"],
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui02-form"] {
+	min-height: 0 !important;
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui02-actions"] {
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+.kt-cl-shell .kt-pln-root .hover\:bg-on-primary-fixed-variant:hover {
+	background-color: var(--kt-pln-on-primary-fixed-variant, #0040a2) !important;
+}
+.kt-cl-shell .kt-pln-root .shadow-\[0_-4px_6px_-1px_rgba\(0\,0\,0\,0\.05\)\] {
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
 
+/* PLN-UI-03 — Stitch v1.9 empty builder utilities + sticky footer. */
+.kt-cl-shell .kt-pln-root .space-y-section-gap > :not([hidden]) ~ :not([hidden]) {
+	margin-top: 2rem !important;
+}
+.kt-cl-shell .kt-pln-root .h-\[400px\] { height: 400px !important; }
+.kt-cl-shell .kt-pln-root .text-4xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+.kt-cl-shell .kt-pln-root .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+.kt-cl-shell .kt-pln-root .flex-shrink-0 { flex-shrink: 0 !important; }
+.kt-cl-shell .kt-pln-root .ring-1 { box-shadow: 0 0 0 1px currentColor !important; }
+.kt-cl-shell .kt-pln-root .ring-inset { box-shadow: inset 0 0 0 1px currentColor !important; }
+.kt-cl-shell .kt-pln-root .ring-status-reserved\/20 {
+	--tw-ring-color: rgba(245, 158, 11, 0.2);
+	box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.2) !important;
+}
+.kt-cl-shell .kt-pln-root .bg-primary-container\/10 {
+	background-color: color-mix(in srgb, var(--kt-pln-primary-container) 10%, transparent) !important;
+}
+.kt-cl-shell .kt-pln-root .bg-surface-container {
+	background-color: var(--kt-pln-surface-low, #edeef0) !important;
+}
+.kt-cl-shell .kt-pln-root .bg-surface-container-high {
+	background-color: #e7e8ea !important;
+}
+.kt-cl-shell .kt-pln-root .bg-on-surface-variant\/40 {
+	background-color: rgba(67, 70, 84, 0.4) !important;
+}
+.kt-cl-shell .kt-pln-root .text-on-surface-variant\/50 {
+	color: rgba(67, 70, 84, 0.5) !important;
+}
+.kt-cl-shell .kt-pln-root .bg-primary\/50 {
+	background-color: color-mix(in srgb, var(--kt-pln-primary) 50%, transparent) !important;
+}
+.kt-cl-shell .kt-pln-root .text-on-primary\/50 {
+	color: color-mix(in srgb, var(--kt-pln-on-primary) 50%, transparent) !important;
+}
+.kt-cl-shell .kt-pln-root .border-t { border-top-width: 1px !important; border-top-style: solid !important; }
+.kt-cl-shell .kt-pln-root .pt-4 { padding-top: 1rem !important; }
+.kt-cl-shell .kt-pln-root .w-10 { width: 2.5rem !important; }
+.kt-cl-shell .kt-pln-root .h-10 { height: 2.5rem !important; }
+.kt-cl-shell .kt-pln-root .w-1\.5 { width: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .h-1\.5 { height: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .mr-1\.5 { margin-right: 0.375rem !important; }
+.kt-cl-shell .kt-pln-root .mr-1 { margin-right: 0.25rem !important; }
+.kt-cl-shell .kt-pln-root .mb-1 { margin-bottom: 0.25rem !important; }
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-pln-root .md\:border-t-0 { border-top-width: 0 !important; }
+	.kt-cl-shell .kt-pln-root .md\:border-l {
+		border-left-width: 1px !important;
+		border-left-style: solid !important;
+	}
+	.kt-cl-shell .kt-pln-root .md\:pt-0 { padding-top: 0 !important; }
+	.kt-cl-shell .kt-pln-root .md\:pl-6 { padding-left: 1.5rem !important; }
+	.kt-cl-shell .kt-pln-root .md\:max-w-xs { max-width: 20rem !important; }
+}
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-pln-root .lg\:p-section-gap { padding: 2rem !important; }
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui03-root"] {
+	position: relative !important;
+	min-height: 100% !important;
+}
+.kt-cl-shell .kt-pln-root [data-testid="kt-pln-ui05-footer"] {
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}

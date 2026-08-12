@@ -111,6 +111,14 @@ class TestPlanningRegisterApi(IntegrationTestCase):
 	def test_create_happy_path_redirects_to_builder(self) -> None:
 		planner = ensure_moh_planner()
 		fy = f"212{frappe.db.count('Procurement Plan') % 9}/90"
+		fy_code = fy.replace("/", "-")
+		# Versions can outlive plans if a prior run aborted mid-create — clear both.
+		for name in frappe.get_all(
+			"Procurement Plan Version",
+			filters={"name": ["like", f"PLN-MOH-{fy_code}-%"]},
+			pluck="name",
+		):
+			frappe.delete_doc("Procurement Plan Version", name, force=True, ignore_permissions=True)
 		for name in frappe.get_all(
 			"Procurement Plan",
 			filters={"procuring_entity": PE_MOH, "financial_year": fy},

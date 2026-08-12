@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-SVC-009 — submit_plan_for_review."""
+"""PLN-SVC-009 — submit_plan_for_review (Ready-only; no contribution)."""
 
 from __future__ import annotations
 
@@ -11,9 +11,6 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.procurement_planning.mvp1_constants import VERSION_IN_REVIEW
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan,
-)
-from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
-	submit_departmental_contribution,
 )
 from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 	submit_plan_for_review,
@@ -37,9 +34,8 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		super().setUpClass()
 		ensure_scope()
 
-	def _ready_submitted_plan(self):
+	def _ready_plan(self):
 		planner = ensure_planner_user()
-		hod = ensure_hod_user()
 		fy = unique_test_fy(base_year=2600, bucket=0)
 		purge_pe_fy(fy)
 		plan = create_plan_as_planner(title="Submit review plan", financial_year=fy)
@@ -47,12 +43,10 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
 		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
 		validate_plan(plan=plan["plan"], user=planner)
-		dept = submit_departmental_contribution(plan=plan["plan"], declaration=1, user=hod)
-		self.assertTrue(dept["ok"], dept)
 		return planner, plan
 
-	def test_planner_submits_for_review(self) -> None:
-		planner, plan = self._ready_submitted_plan()
+	def test_planner_submits_for_review_without_contribution(self) -> None:
+		planner, plan = self._ready_plan()
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"
 		)
@@ -66,34 +60,19 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 			VERSION_IN_REVIEW,
 		)
 
-	def test_blocks_without_contribution(self) -> None:
-		planner = ensure_planner_user()
-		fy = unique_test_fy(base_year=2600, bucket=1)
-		purge_pe_fy(fy)
-		plan = create_plan_as_planner(title="No contrib review", financial_year=fy)
-		d = make_approved_demand(title="No contrib demand")
-		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
-		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
-		validate_plan(plan=plan["plan"], user=planner)
-		result = submit_plan_for_review(plan=plan["plan"], user=planner)
-		self.assertFalse(result["ok"])
-		self.assertIn("form", result["errors"])
-
 	def test_blocks_when_not_ready(self) -> None:
 		planner = ensure_planner_user()
-		hod = ensure_hod_user()
 		fy = unique_test_fy(base_year=2600, bucket=2)
 		purge_pe_fy(fy)
 		plan = create_plan_as_planner(title="Not ready review", financial_year=fy)
 		d = make_approved_demand(title="Not ready demand")
 		add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
-		# Incomplete item — validate not Ready; contribution also blocked
 		result = submit_plan_for_review(plan=plan["plan"], user=planner)
 		self.assertFalse(result["ok"])
 		self.assertIn("form", result["errors"])
 
 	def test_hod_denied(self) -> None:
-		planner, plan = self._ready_submitted_plan()
+		planner, plan = self._ready_plan()
 		hod = ensure_hod_user()
 		with self.assertRaises(frappe.PermissionError):
 			submit_plan_for_review(plan=plan["plan"], user=hod)

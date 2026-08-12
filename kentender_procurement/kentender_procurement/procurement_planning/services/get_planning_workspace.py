@@ -153,27 +153,30 @@ def _work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[st
 			action = "add_to_plan"
 			queue_status = "Ready"
 		elif status == "Returned":
-			row_filter = "returned"
+			# Until C05 Finance returns exist, Demand returns surface under needing attention.
+			row_filter = "needs_attention"
 			reason = "Returned for correction"
 			action_label = "View return"
 			action = "view_return"
 			queue_status = "Returned"
 		else:
 			continue
-		if work_filter not in ("all", "all_work", "") and work_filter != row_filter:
-			if work_filter == "approved_not_started" and row_filter != "approved_demands":
-				continue
-			if work_filter == "needs_attention" and row_filter not in (
-				"returned",
-				"approved_demands",
-			):
-				continue
-			if work_filter not in (
-				"approved_not_started",
-				"needs_attention",
-				row_filter,
-			):
-				continue
+		wf = cstr(work_filter or "all").strip() or "all"
+		if wf in ("all", "all_work"):
+			pass
+		elif wf == "approved_demands" and row_filter != "approved_demands":
+			continue
+		elif wf == "returned_by_finance" and row_filter != "returned_by_finance":
+			continue
+		elif wf == "needs_attention" and row_filter != "needs_attention":
+			continue
+		elif wf not in (
+			"approved_demands",
+			"returned_by_finance",
+			"needs_attention",
+			row_filter,
+		):
+			continue
 		out.append(
 			{
 				"demand": r.name,
@@ -230,7 +233,7 @@ def get_planning_workspace(
 		"Read-only support view. These controls filter visibility; they do not grant "
 		"ownership or operational Planning authority."
 		if read_only
-		else "These controls filter the workspace; they do not assign ownership to new records."
+		else "These controls define the workspace scope; they do not assign ownership to records."
 	)
 
 	if not filter_entities:
@@ -347,7 +350,7 @@ def get_planning_workspace(
 			"planned_total": stats["planned_total"],
 			"planned_total_display": _money(stats["planned_total"], plan.currency or "KES"),
 			"validation_projection": validation,
-			"departmental_contributions_label": "0 of 1 submitted",
+			"departmental_contributions_label": "—",
 			"period_start": str(plan.period_start or ""),
 			"period_end": str(plan.period_end or ""),
 			"builder_route": f"/app/procurement-plan-builder?plan={plan.name}",

@@ -313,55 +313,28 @@
 </div>
 </div>
 <!-- Summary Strip -->
-<div class="bg-surface-container-lowest border border-subtle rounded-lg p-6 grid grid-cols-1 md:grid-cols-4 gap-6 shadow-sm">
-  <!-- Plan Items -->
-  <div class="flex items-start gap-3">
-    <div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center flex-shrink-0">
-      <span class="material-symbols-outlined text-primary">list_alt</span>
-    </div>
-    <div class="flex flex-col">
-      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Plan Items</span>
-      <span class="font-data-md text-data-lg text-on-surface font-bold">0</span>
-    </div>
-  </div>
-
-  <!-- Planned Value -->
-  <div class="flex items-start gap-3 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
-    <div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center flex-shrink-0">
-      <span class="material-symbols-outlined text-primary">payments</span>
-    </div>
-    <div class="flex flex-col">
-      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Planned Value</span>
-      <span class="font-data-md text-data-lg text-on-surface font-bold">KES 0</span>
-    </div>
-  </div>
-
-  <!-- Finance Confirmed -->
-  <div class="flex items-start gap-3 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
-    <div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center flex-shrink-0">
-      <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
-    </div>
-    <div class="flex flex-col">
-      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Finance Confirmed</span>
-      <span class="font-data-md text-data-lg text-on-surface font-bold">0 <span class="text-on-surface-variant/50 font-medium text-sm font-data-md">of 0</span></span>
-    </div>
-  </div>
-
-  <!-- Validation Status -->
-  <div class="flex items-start gap-3 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
-    <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0">
-      <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 24px;">verified_user</span>
-    </div>
-    <div class="flex flex-col">
-      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Validation</span>
-      <div class="flex items-center gap-2 mt-1">
-        <span class="inline-flex items-center rounded-full bg-surface-container-high px-2.5 py-0.5 text-xs font-medium text-on-surface-variant border border-subtle font-body-md">
-          <span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40 mr-1.5"></span>
-          Not run
-        </span>
-      </div>
-    </div>
-  </div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-row items-center justify-between shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Plan Items</span>
+<span class="font-data-md text-data-md text-on-surface">0</span>
+</div>
+<div class="h-8 w-px bg-border-subtle hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Total Planned Value</span>
+<span class="font-data-lg text-data-lg text-primary">KES 0</span>
+</div>
+<div class="h-8 w-px bg-border-subtle hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Finance Confirmed</span>
+<span class="font-data-md text-data-md text-on-surface">0 of 0</span>
+</div>
+<div class="h-8 w-px bg-border-subtle hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Validation Status</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-caps text-label-caps w-fit border border-subtle">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40 mr-1.5"></span> Not run
+                        </span>
+</div>
 </div>
 <!-- Filters -->
 <div class="flex flex-col md:flex-row gap-3"><div class="relative flex-1">
@@ -439,6 +412,8 @@
 </div>
 </div>
 </div>
+
+
 
 
 

@@ -95,9 +95,10 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.getByTestId("kt-pln-ui06-source-demand")).toBeVisible();
 		await expect(page.locator(ROOT)).toContainText("Planning approach");
 		await expect(page.locator(ROOT)).toContainText("Planned schedule");
-		await expect(page.locator(ROOT)).toContainText("Preference and reservation");
-		await expect(page.getByTestId("kt-pln-ui06-pref-none")).toBeVisible();
-		await expect(page.locator(ROOT)).toContainText("None assigned");
+		// C02: item-level Preference editor removed (coverage remains plan-level derived).
+		await expect(page.locator(ROOT)).not.toContainText("Preference and reservation");
+		await expect(page.getByTestId("kt-pln-ui06-pref-none")).toHaveCount(0);
+		await expect(page.getByTestId("kt-pln-ui06-pref-section")).toHaveCount(0);
 		await expect(page.locator(ROOT)).toContainText("Strategy Context");
 		await expect(page.locator(ROOT)).toContainText("Source Demand");
 		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeHidden();
@@ -120,16 +121,7 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.locator(`${ROOT} [name="aggregation_decision"]`)).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui06-package-structure")).toHaveCount(0);
 
-		await page.getByTestId("kt-pln-ui06-pref-assign").click();
-		await expect(page.getByTestId("kt-pln-ui06-pref-assigned")).toBeVisible();
-		await page.getByTestId("kt-pln-ui06-pref-scheme").selectOption("AGPO reservation");
-		await page.getByTestId("kt-pln-ui06-pref-scope-lots").check();
-		await page.getByTestId("kt-pln-ui06-pref-group-women").check();
-		await page.getByTestId("kt-pln-ui06-pref-value").fill("1000");
 		await page.getByTestId("kt-pln-ui06-save-draft").click();
-		await expect(page.getByTestId("kt-pln-ui06-pref-assigned")).toBeVisible({
-			timeout: 15_000,
-		});
 		await expect(page.getByRole("dialog", { name: /^Message$/i })).toHaveCount(0);
 	});
 });

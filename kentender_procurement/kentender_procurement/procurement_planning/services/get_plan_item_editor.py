@@ -107,14 +107,14 @@ def _attention_message(
 		return cstr(
 			issues.get("lot_basis")
 			or issues.get("expected_lot_count")
-			or "Confirm the indicative lot basis before departmental sign-off."
+			or "Confirm the indicative lot basis before submit for review."
 		)
 	lotting = cstr(fields.get("lotting_decision") or "").strip()
 	if lotting == "Multiple lots" and not cstr(fields.get("lot_basis") or "").strip():
-		return "Confirm the indicative lot basis before departmental sign-off."
+		return "Confirm the indicative lot basis before submit for review."
 	missing_ms = [k for k in MILESTONE_FIELDS if not cstr(fields.get(k) or "").strip()]
 	if missing_ms:
-		return "Confirm all milestone dates before departmental sign-off."
+		return "Confirm all milestone dates before submit for review."
 	# Prefer concrete field issue copy over bare projection labels.
 	for key in (
 		"method_override_grounds",
@@ -133,11 +133,11 @@ def _attention_message(
 	proj = cstr(getattr(iv, "validation_projection", "") or "").strip()
 	# Status labels must never become the banner body under "Needs attention".
 	if proj == "Blocked":
-		return "Resolve blocking validation issues before departmental sign-off."
+		return "Resolve blocking validation issues before submit for review."
 	if proj == "Stale":
 		return "Re-run validation; this Plan Item projection is stale."
 	if proj == "Needs attention" or issues:
-		return "Review validation issues before departmental sign-off."
+		return "Review validation issues before submit for review."
 	return ""
 
 

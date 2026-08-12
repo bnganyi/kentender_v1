@@ -1,8 +1,8 @@
 # Procurement Planning MVP-1 Implementation Tracker
 
 **Document ID:** PLANNING-MVP1-IMPL-TRACKER-2.0  
-**Status:** Active — streamlined correction baseline; implementation not started under v1.8  
-**Date:** 11 August 2026  
+**Status:** Active — correction baseline; C01–C02 Done; **all PLN-UI-01…10 + 07A require full Stitch v1.9 re-implementation** (C03–C06)  
+**Date:** 12 August 2026  
 **Supersedes:** [retired/04_Procurement_Planning_MVP1_Implementation_Tracker.md](retired/04_Procurement_Planning_MVP1_Implementation_Tracker.md) (REQ ≤1.5 / contribution-era Gate 05)
 
 ## Goal
@@ -11,7 +11,9 @@ Realign Procurement Planning to the **approved streamlined operating model** so 
 
 > **Approved Demand → Planner completes Plan Item → Finance confirms funding → Head of Procurement approves Plan Version → Tender take-up**
 
-**Done looks like:** contribution / generic treatment / Demand-stage Finance duplicate / silent PE fallbacks **gone**; PLN-UI-01…10 (+07A) are **literal Stitch ports** of `ui_design/*.html` with live services; canonical seed v2.6 arithmetic green twice; Cursor pack v1.7 DoD + AC matrix evidenced by automated tests — not Administrator smoke or title-only guards.
+**Done looks like:** contribution / generic treatment / Demand-stage Finance duplicate / silent PE fallbacks **gone**; **every** Planning screen — **PLN-UI-01…10 and PLN-UI-07A** — is a **full literal Stitch re-implementation** of the approved `ui_design/*.html` (v1.9), not a touch-up of the contribution-era fixtures; live services bound; canonical seed v2.6 arithmetic green twice; Cursor pack v1.7 DoD + AC matrix evidenced by automated tests — not Administrator smoke or title-only guards.
+
+**UI scope lock (non-negotiable):** Stitch v1.9 has **substantial** composition/workflow changes across the whole journey. Tracker work must **re-implement all screens**. Selective “fix UI-04 / UI-08 only” or “re-verify existing fixtures” is **wrong** and is not UI Done for any skipped screen.
 
 ---
 
@@ -39,10 +41,11 @@ Realign Procurement Planning to the **approved streamlined operating model** so 
 ## How to use this tracker
 
 1. Update only **Status** and **Evidence**. Do not delete rows — use **Out of scope** / **Blocked**.
-2. **UI Done** requires **all** of § UI rigor below — gate-green alone is insufficient.
+2. **UI Done** requires **all** of § UI rigor below — gate-green alone is insufficient. **Every** `PLN-UI-01…10` / `07A` row must reach Done via a **full Stitch re-implementation**; none are exempt because an older fixture already exists.
 3. Domain/service **Done** only with named automated tests green on `kentender.midas.com`.
-4. Do not start a UI row before its service dependencies are Done or Partial with an explicit note.
+4. Do not start a UI row before its service dependencies are Done or Partial with an explicit note — but **do not** treat an old fixture as satisfying the UI row.
 5. Prefer clean teardown/reseed over compatibility shims (Correction Pack §1). No dual-write; no renamed contribution.
+6. **Do not** narrow correction gates to “the changed bits” of a few screens. Gate C03–C06 each **fully re-port** every screen assigned to that gate.
 
 ### Status vocabulary
 
@@ -50,12 +53,13 @@ Realign Procurement Planning to the **approved streamlined operating model** so 
 |---|---|
 | Not started | No work under this baseline |
 | In progress | Active coding |
-| Partial | First pass; DoD incomplete |
-| Done | Evidence filled; tests green; UI visual Stitch match where applicable |
+| Partial | First pass; DoD incomplete (for UI: legacy fixture may still be mounted — **not** Stitch v1.9 Done) |
+| Re-implement required | Screen must be fully re-ported from Stitch v1.9; existing fixture is **not** authority |
+| Done | Evidence filled; tests green; for UI: **full** literal Stitch v1.9 match + Playwright + chrome |
 | Blocked | Cannot proceed; note blocker |
 | Out of scope | Explicitly deferred (see § Deferred) |
 | Remove-pending | Exists in repo; must be deleted under this baseline |
-| Keep | Retained foundation; no correction ticket unless noted |
+| Keep | Retained **domain** foundation only; **never** use Keep for a Stitch screen row |
 
 ---
 
@@ -77,9 +81,25 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 | **Visual side-by-side** | stitch-literal-port | Stitch HTML vs Desk canvas before UI Done |
 | **Playwright** | TDD quality gate | Surface opens; contract testids; role denial; no Message dialog on field errors |
 
-**Construction order for each screen:** open approved HTML → literal-port `<main>` (+ overlays) → `kt-stitch-canvas` / testids / bind hooks only → chrome registry → live-bind → visual check → Playwright.
+**Construction order for each screen (apply to UI-01…10 and 07A — no exceptions):** open approved HTML → **replace** fixture/`<main>` with literal port (+ overlays) → `kt-stitch-canvas` / testids / bind hooks only → chrome registry → live-bind → visual side-by-side vs Stitch → Playwright. Incremental CSS/string patches on the contribution-era layout **do not** count.
 
 **PLN-UI-07 renumbering:** Contribution drawer is **removed**. **PLN-UI-07 / 07A** are Finance confirmation (sufficient / shortfall). Do not revive contribution under a new label.
+
+**Full-screen inventory (all mandatory):**
+
+| Screen | Gate | Must re-implement |
+|---|---|---|
+| PLN-UI-01 Workspace | C03 | Yes — full canvas |
+| PLN-UI-02 Create / register Plan | C03 | Yes — full canvas |
+| PLN-UI-03 Empty Draft builder | C03 | Yes — full canvas |
+| PLN-UI-04 Add approved Demands (+ formation) | C03 | Yes — full dialog/canvas |
+| PLN-UI-05 Draft with Plan Items | C03 | Yes — full canvas |
+| PLN-UI-06 Plan Item editor | C04 | Yes — full canvas |
+| PLN-UI-07 Finance confirm (sufficient) | C05 | Yes — full task surface |
+| PLN-UI-07A Finance confirm (shortfall) | C05 | Yes — full task surface |
+| PLN-UI-08 HoP review / approve | C05 | Yes — full canvas |
+| PLN-UI-09 Approved Plan + implementation | C06 | Yes — full canvas |
+| PLN-UI-10 Draft update overview | C06 | Yes — full canvas |
 
 ---
 
@@ -88,13 +108,13 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 | Area | State vs this baseline |
 |---|---|
 | Plan / Version / Item / Allocation / Plan Decision / validate / approve (professional) | **Keep** foundations; Correct gates/readiness |
-| Departmental Submission + `submit_departmental_contribution` + old UI-07 drawer + contrib submit gate | **Remove-pending** |
+| Departmental Submission + `submit_departmental_contribution` + old UI-07 drawer + contrib submit gate | **Removed** (C02 / REM-001…005) |
 | Demand-stage BO confirmation as Planning prerequisite | **Correct** — Finance after Plan Item only |
-| PLN-UI-01…06 / 08 fixtures | Exist; **Correct** to Stitch v1.9 (esp. UI-04 multi-select formation; UI-08 Finance strip; strip contrib) |
-| PLN-UI-07 / 07A Finance | **Not started** (HTML exists; product not wired) |
-| PLN-UI-09 / 10 | **Not started** / Partial HTML only |
+| PLN-UI-01…10 + 07A fixtures / Desk mounts | **UI-01…03 Done** (Stitch v1.9). UI-04…10 + 07A remain **Re-implement required**. |
+| PLN-UI-07 / 07A Finance | **Re-implement required** (new Finance task surfaces; HTML in `ui_design/`) |
+| PLN-UI-09 / 10 | **Re-implement required** (approved + draft-update canvases) |
 | PE-MOH / Admin inflation (Budget/Home/Strategy) | Cross-module Correct (Correction Pack A) — track under shared + Planning consumers |
-| Canonical seed contribution/treatment rows | **Remove-pending**; rebuild to v2.6 |
+| Canonical seed contribution/treatment rows | **Removed** from active schema/UI (C02); seed rebuild to v2.6 remains C07 |
 
 ---
 
@@ -104,14 +124,14 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 |---|---|---|---|---|---|
 | PLN-GATE-C00 | Baseline lock | — | Docs above accepted | Done | This tracker + CMOM 1.1 / REQ 1.8 / Stitch 1.9 / Cursor 1.7 |
 | PLN-GATE-C01 | Scope + task authority | Prompt 01 | C00 | Done | `test_planning_task_capability` (7) + matrix/PE + Playwright `planning-task-route-denial.spec.ts` (5); `make ui-planning-scope-auth-gate` |
-| PLN-GATE-C02 | Remove superseded structures | Prompt 02 | C01 | Not started | |
-| PLN-GATE-C03 | Workspace, register, formation | Prompt 03 | C02 | Not started | |
-| PLN-GATE-C04 | Focused Plan Item editor | Prompt 04 | C03 | Not started | |
-| PLN-GATE-C05 | Finance + professional approval | Prompt 05 | C04 | Not started | |
-| PLN-GATE-C06 | Approved Plan, successor, publish, handoff | Prompt 06 | C05 | Not started | |
-| PLN-GATE-C07 | Canonical seed + regression close-out | Prompt 07 | C06 | Not started | |
+| PLN-GATE-C02 | Remove superseded structures | Prompt 02 | C01 | Done | `test_planning_contribution_absent` (5); submit/decision/gate05 + layout forbid; migrate + patch drop DocType; `make ui-planning-approval-gate` green; builder/editor Playwright (no pref/contrib); Finance submit gate deferred C05 |
+| PLN-GATE-C03 | **Full re-implement** PLN-UI-01…05 (+ formation services) | Prompt 03 | C02 | In progress | **UI-01…03 Done**; UI-04…05 outstanding |
+| PLN-GATE-C04 | **Full re-implement** PLN-UI-06 Plan Item editor | Prompt 04 | C03 | Not started | Full canvas replace; field register only |
+| PLN-GATE-C05 | **Full re-implement** PLN-UI-07 / 07A / 08 + Finance/professional services | Prompt 05 | C04 | Not started | New Finance surfaces + full UI-08 re-port |
+| PLN-GATE-C06 | **Full re-implement** PLN-UI-09 / 10 + successor/publish/handoff | Prompt 06 | C05 | Not started | Both approved + draft-update canvases |
+| PLN-GATE-C07 | Canonical seed + regression close-out | Prompt 07 | C06 | Not started | All UI-01…10/07A Done before close-out |
 
-**Makefile targets (to add/rename as work lands):** replace `ui-planning-contribution-gate` with Finance gate; keep/extend `ui-planning-approval-gate`, workspace/builder gates; add `ui-planning-finance-gate`, `ui-planning-revision-gate`, final `ui-planning-mvp1-gate`.
+**Makefile targets (to add/rename as work lands):** `ui-planning-contribution-gate` removed (C02); absence covered by `test_planning_contribution_absent` inside `ui-planning-approval-gate`. Add Finance gate in C05; keep/extend workspace/builder gates; add `ui-planning-finance-gate`, `ui-planning-revision-gate`, final `ui-planning-mvp1-gate`.
 
 ---
 
@@ -119,15 +139,15 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 
 | ID | Work item | Exact targets (repo) | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| PLN-REM-001 | Departmental Submission DocType + writers | `doctype/departmental_submission/`; seeds; clear helpers | C01 | Remove-pending | |
-| PLN-REM-002 | Contribution services/API | `submit_departmental_contribution`, `get_departmental_contribution`, whitelist | C01 | Remove-pending | |
-| PLN-REM-003 | Contribution UI + gate | `contribution_drawer.js`, builder bind, `prepare_planning_gate05_ui` contrib, `ui-planning-contribution-gate`, Playwright contrib | C02 | Remove-pending | |
-| PLN-REM-004 | Contribution readiness on submit | `submit_plan_for_review` contribution prerequisite + copy | C02 | Remove-pending | |
-| PLN-REM-005 | Contributor contribution capability | Planning Contributor contrib asserts / USA where only for contrib | C02 | Remove-pending | |
-| PLN-REM-006 | Generic Plan Item treatment/statutory fields | Retired `statutory_*` / `planned_treatment_value` / `value_treatment_note` — finish schema purge | C02 | Remove-pending | |
-| PLN-REM-007 | Item-level preference scheme editors (superseded) | Writable preference/reservation scheme / target-group / planned-value if present | C02 | Remove-pending | |
-| PLN-REM-008 | Tests that only prove contribution | Replace with Finance/professional coverage; do not delete coverage volume | C02 | Remove-pending | |
-| PLN-REM-009 | Active references search | Grep schema/services/UI/seeds/tests for Submission/contribution/OU_SIGNOFF | C07 | Not started | |
+| PLN-REM-001 | Departmental Submission DocType + writers | `doctype/departmental_submission/`; seeds; clear helpers | C01 | Done | DocType folder deleted; `c02_drop_departmental_submission` patch; seed clear no longer references DS; migrate `kentender.midas.com` |
+| PLN-REM-002 | Contribution services/API | `submit_departmental_contribution`, `get_departmental_contribution`, whitelist | C01 | Done | Services deleted; API whitelist gone; `test_planning_contribution_absent` import/API asserts |
+| PLN-REM-003 | Contribution UI + gate | `contribution_drawer.js`, builder bind, `prepare_planning_gate05_ui` contrib, `ui-planning-contribution-gate`, Playwright contrib | C02 | Done | Drawer/spec deleted; builder CTA `submit-for-review`; contrib Makefile target removed; layout forbid markers |
+| PLN-REM-004 | Contribution readiness on submit | `submit_plan_for_review` contribution prerequisite + copy | C02 | Done | Ready-only gate; `test_planner_submits_for_review_without_contribution`; Finance confirm = C05 |
+| PLN-REM-005 | Contributor contribution capability | Planning Contributor contrib asserts / USA where only for contrib | C02 | Done | `CAP_DEPT_CONTRIB_TASK` / frozensets / assert removed; role may remain for ADD_DEMAND |
+| PLN-REM-006 | Generic Plan Item treatment/statutory fields | Retired `statutory_*` / `planned_treatment_value` / `value_treatment_note` — finish schema purge | C02 | Done | Fields removed from `procurement_plan_item_version.json`; meta absence tests |
+| PLN-REM-007 | Item-level preference scheme editors (superseded) | Writable preference/reservation scheme / target-group / planned-value if present | C02 | Done | Editor Preference UI removed; `update_plan_item` ignores preference keys; schema fields read-only for coverage |
+| PLN-REM-008 | Tests that only prove contribution | Replace with Finance/professional coverage; do not delete coverage volume | C02 | Done | Contrib suite deleted; absence + rewired Gate05 helpers; approval/builder gates green |
+| PLN-REM-009 | Active references search | Grep schema/services/UI/seeds/tests for Submission/contribution/OU_SIGNOFF | C07 | Not started | C02 Planning-scoped grep: active callers absent (absence tests + patch + DTO stub keys only) |
 
 ---
 
@@ -171,22 +191,24 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 
 Stitch source: `ui_design/PLN-UI-XX.html` (07A: `PLN-UI-07A.html`).
 
-| ID | Screen | Stitch HTML | Depends on | Status | Evidence |
+**Authority:** Stitch v1.9 HTML is the UI contract for **every** row below. Pre-correction fixtures may remain mounted until each gate lands; they are **not** Done evidence. Status **Re-implement required** means a full literal port is still outstanding even if Playwright smoke exists against the old canvas.
+
+| ID | Screen | Stitch HTML | Depends on | Status | Evidence / exit |
 |---|---|---|---|---|---|
-| PLN-UI-01 | Planning workspace | `PLN-UI-01.html` | SVC-001, PERM-001 | Partial | Re-verify vs Stitch v1.9; chrome |
-| PLN-UI-02 | Create annual Plan | `PLN-UI-02.html` | SVC-002 | Partial | Inline errors; no free-text Budget |
-| PLN-UI-03 | Empty Draft builder | `PLN-UI-03.html` | UI-01 | Partial | |
-| PLN-UI-04 | Add approved Demands | `PLN-UI-04.html` | SVC-003/004 | Partial | **Re-port:** multi-select + formation progressive disclosure |
-| PLN-UI-05 | Draft with Plan Item | `PLN-UI-05.html` | UI-04, SVC-006 | Partial | Finance confirmed 0 of N; no contribution CTA |
-| PLN-UI-06 | Plan Item editor | `PLN-UI-06.html` | SVC-005 | Partial | Field register only; Request Finance entry |
-| PLN-UI-07 | Finance confirm — sufficient | `PLN-UI-07.html` | SVC-007, PERM-004 | Not started | Literal drawer port |
-| PLN-UI-07A | Finance confirm — shortfall | `PLN-UI-07A.html` | SVC-008 | Not started | Same task; no Confirm button |
-| PLN-UI-08 | HoP review / approve | `PLN-UI-08.html` | SVC-009…011 | Partial | Re-port: Finance strip; derived coverage; no contrib |
-| PLN-UI-09 | Approved Plan + implementation | `PLN-UI-09.html` | SVC-012…015 | Not started | |
-| PLN-UI-10 | Draft update overview | `PLN-UI-10.html` | SVC-012, UI-04 | Not started | |
-| PLN-UIC-001 | Stitch Desk chrome for all Planning routes | Registry + gates | Each UI | Partial | Add Finance routes; drop contrib surface |
-| PLN-UIC-002 | Inline form errors (return/confirm notes, formation reason) | ktFormErrors | UI-02/04/07/08 | Partial | Extend to Finance return reason |
-| PLN-UIC-003 | Layout / Stitch contract guards | `test_planning_ui_stitch_layout_guard` | Each UI | Partial | Update markers for v1.9; forbid contribution markers |
+| PLN-UI-01 | Planning workspace | `PLN-UI-01.html` | SVC-001, PERM-001 | Done | Literal Stitch v1.9 port; helper + plan strip + work select/search + `attachPagination`; layout guard + `planning-workspace.spec.ts`; `make ui-planning-workspace-gate` green |
+| PLN-UI-02 | Create annual Plan | `PLN-UI-02.html` | SVC-002 | Done | Literal Stitch v1.9 port (numbered sections, input-glow, calendar period, sticky Create/`add_task`); no Budget field; inline errors; layout guard + `planning-register.spec.ts`; `make ui-planning-workspace-gate` green |
+| PLN-UI-03 | Empty Draft builder | `PLN-UI-03.html` | UI-01 | Done | Literal Stitch empty canvas + **standardized horizontal summary strip** (Total Planned Value, Validation Status, dividers; no icon grid); layout guard + `planning-builder.spec.ts`; `make ui-planning-workspace-gate` green |
+| PLN-UI-04 | Add approved Demands | `PLN-UI-04.html` | SVC-003/004 | Re-implement required | C03: full dialog — multi-select + formation progressive disclosure |
+| PLN-UI-05 | Draft with Plan Item | `PLN-UI-05.html` | UI-04, SVC-006 | Re-implement required | C03: full populated builder; Finance strip when wired (C05 readiness labels OK interim) |
+| PLN-UI-06 | Plan Item editor | `PLN-UI-06.html` | SVC-005 | Re-implement required | C04: full canvas; field register only; Request Finance entry |
+| PLN-UI-07 | Finance confirm — sufficient | `PLN-UI-07.html` | SVC-007, PERM-004 | Re-implement required | C05: full Finance task surface (new) |
+| PLN-UI-07A | Finance confirm — shortfall | `PLN-UI-07A.html` | SVC-008 | Re-implement required | C05: full shortfall surface; no Confirm button |
+| PLN-UI-08 | HoP review / approve | `PLN-UI-08.html` | SVC-009…011 | Re-implement required | C05: full review canvas; Finance strip; derived coverage; no contrib |
+| PLN-UI-09 | Approved Plan + implementation | `PLN-UI-09.html` | SVC-012…015 | Re-implement required | C06: full approved canvas |
+| PLN-UI-10 | Draft update overview | `PLN-UI-10.html` | SVC-012, UI-04 | Re-implement required | C06: full draft-update canvas |
+| PLN-UIC-001 | Stitch Desk chrome for **all** Planning routes | Registry + gates | Each UI | Re-implement required | Register every route (incl. Finance); drop contrib; gate green per surface |
+| PLN-UIC-002 | Inline form errors (return/confirm notes, formation reason) | ktFormErrors | UI-02/04/07/08 | Partial | UI-02 register uses `ktFormErrors` (Playwright); extend to UI-04/07/08 on re-implement |
+| PLN-UIC-003 | Layout / Stitch contract guards | `test_planning_ui_stitch_layout_guard` | Each UI | Partial | UI-01…03 v1.9 markers; remaining screens still outstanding |
 
 ---
 
@@ -240,7 +262,7 @@ Map to REQ v1.8 §16. Mark Done only with test IDs.
 | PLN-NFR-001 | Server-side scope on every read/mutation | C01 | Partial | |
 | PLN-NFR-002 | Atomic Finance / approve / handoff + idempotent retry | C05–C06 | Partial | |
 | PLN-NFR-003 | Concurrency / stale version protection | C05 | Partial | |
-| PLN-NFR-004 | a11y: labels, keyboard, focus, error association | Each UI | Not started | |
+| PLN-NFR-004 | a11y: labels, keyboard, focus, error association | **Each** UI-01…10/07A re-impl | Not started | |
 | PLN-NFR-005 | No Message dialog for field validation | UIC-002 | Partial | |
 
 ---
@@ -260,25 +282,29 @@ Map to REQ v1.8 §16. Mark Done only with test IDs.
 
 ## Cursor gate map
 
-| Cursor Prompt | Tracker coverage | Exit |
+| Cursor Prompt | Tracker coverage | Exit (UI = **all** assigned screens fully re-ported) |
 |---|---|---|
 | 01 | PLN-GATE-C01, PERM-*, AC-001/021 | Scope + task surfaces correct |
 | 02 | PLN-GATE-C02, REM-* | Contribution/treatment absent |
-| 03 | C03, UI-01…05, SVC-001…004, AC-002/014…016 | Formation journey live |
-| 04 | C04, UI-06, SVC-005, AC-003…005 | Editor field register only |
-| 05 | C05, UI-07/07A/08, SVC-007…011, AC-006…011/017/022 | Finance then HoP |
-| 06 | C06, UI-09/10, SVC-012…015, AC-012…013/018…019 | Successor + handoff |
-| 07 | C07, SEED-*, REM-009, AC-020, SVC-016 | Seed + full regression + completion report |
+| 03 | C03, **UI-01 + 02 + 03 + 04 + 05**, SVC-001…004, AC-002/014…016 | **All five** formation-journey screens live as Stitch v1.9 ports |
+| 04 | C04, **UI-06**, SVC-005, AC-003…005 | Editor **fully** re-implemented; field register only |
+| 05 | C05, **UI-07 + 07A + 08**, SVC-007…011, AC-006…011/017/022 | Finance + HoP canvases **fully** re-implemented |
+| 06 | C06, **UI-09 + 10**, SVC-012…015, AC-012…013/018…019 | Approved + draft-update canvases **fully** re-implemented |
+| 07 | C07, SEED-*, REM-009, AC-020, SVC-016 | Seed + full regression; **UI-01…10/07A all Done** |
 
 ---
 
-## First implementation slice (recommended start)
+## Implementation order (all screens)
 
-1. **PLN-GATE-C01** — Planning scope + task/action projection + negative route tests.  
-2. **PLN-GATE-C02 / REM-001…008** — Tear out contribution end-to-end (services, UI, gates, tests, seed clears).  
-3. **PLN-UI-04 re-port** — Multi-select + formation (literal HTML).  
-4. **PLN-SVC-007 + UI-07/07A** — Finance after Plan Item.  
-5. **Rewire submit + UI-08** — Finance-confirmed readiness; Stitch v1.9 review canvas.
+Domain gates C01–C02 are Done. Remaining work **must** re-implement **every** Stitch screen — not a subset.
+
+1. **C03 — PLN-UI-01, 02, 03, 04, 05** — Full literal ports for workspace, register, empty builder, add-Demand/formation dialog, populated builder (plus SVC-001…004).  
+2. **C04 — PLN-UI-06** — Full Plan Item editor re-port (SVC-005).  
+3. **C05 — PLN-UI-07, 07A, 08** — Full Finance + HoP review re-ports (SVC-007…011).  
+4. **C06 — PLN-UI-09, 10** — Full approved + draft-update re-ports (SVC-012…015).  
+5. **C07** — Seed v2.6 + regression; close only when **all** UI rows are Done.
+
+**Anti-pattern (forbidden):** treating C03 as “UI-04 multi-select only”, C05 as “wire Finance strip into old UI-08”, or skipping UI-01/02/03/09/10 because “fixtures already exist”.
 
 Do not mark any UI Done without literal Stitch match + Playwright + chrome where registered.
 
@@ -288,4 +314,10 @@ Do not mark any UI Done without literal Stitch match + Playwright + chrome where
 
 | Date | Change |
 |---|---|
+| 2026-08-12 | **PLN-UI-03 summary strip revised** — standardized compact horizontal strip (Total Planned Value / Validation Status / `h-8` dividers; drop icon tiles); bind plain `N of M` + Stitch validation pill; layout guard + Playwright + `make ui-planning-workspace-gate` green |
+| 2026-08-12 | **PLN-UI-03 Done** — literal Stitch v1.9 empty builder (Open Plan meta, Finance Confirmed summary, search-first filters, assignment_late empty, sticky footer); C03 still In progress (UI-04…05) |
+| 2026-08-12 | **PLN-UI-02 Done** — literal Stitch v1.9 register port (1./2. sections, input-glow, calendar period, sticky Create/`add_task`); no Budget field; layout guard + `planning-register.spec.ts`; `make ui-planning-workspace-gate` green; C03 still In progress (UI-03…05) |
+| 2026-08-12 | **PLN-UI-01 Done** — literal Stitch v1.9 workspace port (scope helper, plan strip, work select+search, table footer/`attachPagination`); C03 In progress (UI-02…05 remain) |
+| 2026-08-12 | **UI scope correction** — every PLN-UI-01…10 + 07A is **Re-implement required** (full Stitch v1.9 literal port). Tracker no longer implies selective re-ports of a few screens; C03–C06 exit = all assigned canvases Done |
+| 2026-08-11 | **PLN-GATE-C02 Done** — Departmental Submission + contribution UI/API/capability removed; statutory schema purged; preference editor writes stopped; submit = Ready-only until C05 Finance; REM-001…008 Done |
 | 2026-08-11 | Tracker 2.0 created for REQ 1.8 / Stitch 1.9 / Cursor 1.7 / CMOM 1.1; contribution-era tracker retired |

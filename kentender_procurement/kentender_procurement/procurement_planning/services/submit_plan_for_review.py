@@ -12,9 +12,7 @@ from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	DECISION_SUBMITTED_FOR_REVIEW,
-	DEPT_SUBMITTED,
 	DOCTYPE_DECISION,
-	DOCTYPE_DEPT_SUBMISSION,
 	DOCTYPE_ITEM,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
@@ -88,43 +86,21 @@ def submit_plan_for_review(
 			},
 		}
 
-	item_ous = {
-		cstr(r.owner_org_unit).strip()
-		for r in frappe.get_all(
-			DOCTYPE_ITEM,
-			filters={
-				"plan": plan_name,
-				"baseline_state": ["in", [ITEM_PROPOSED, ITEM_ACTIVE]],
-			},
-			fields=["owner_org_unit"],
-		)
-		if cstr(r.owner_org_unit).strip()
-	}
-	if not item_ous:
+	item_count = frappe.db.count(
+		DOCTYPE_ITEM,
+		{
+			"plan": plan_name,
+			"baseline_state": ["in", [ITEM_PROPOSED, ITEM_ACTIVE]],
+		},
+	)
+	if not item_count:
 		return {
 			"ok": False,
 			"errors": {"form": "Add at least one Plan Item before submitting for review."},
 		}
 
-	missing: list[str] = []
-	for ou in sorted(item_ous):
-		status = frappe.db.get_value(
-			DOCTYPE_DEPT_SUBMISSION,
-			{"plan_version": version_name, "organisation_unit": ou},
-			"status",
-		)
-		if cstr(status) != DEPT_SUBMITTED:
-			missing.append(ou)
-	if missing:
-		return {
-			"ok": False,
-			"errors": {
-				"form": (
-					"All Organisation Unit departmental contributions must be Submitted "
-					"before plan review."
-				)
-			},
-		}
+	# C02: no Departmental Submission / contribution prerequisite.
+	# C05 will add Finance-confirmed readiness (PLN-AC-009).
 
 	now = now_datetime()
 	token = new_concurrency_token()

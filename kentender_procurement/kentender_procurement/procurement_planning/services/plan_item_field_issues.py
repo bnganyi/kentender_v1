@@ -80,7 +80,7 @@ def collect_plan_item_field_issues(
 				"Multiple lots requires an expected lot count of at least 2."
 			)
 		if not cstr(_merged(iv, payload, "lot_basis") or "").strip():
-			issues["lot_basis"] = "Confirm the indicative lot basis before departmental sign-off."
+			issues["lot_basis"] = "Confirm the indicative lot basis before submit for review."
 
 	dates: list[tuple[str, Any]] = []
 	for key in MILESTONE_FIELDS:

@@ -31,8 +31,8 @@ kentender_procurement.ui_fixtures.planning_plan_review = function () {
 <span class="font-data-md text-data-md text-on-surface mt-2 text-primary" data-kt-pln-review-total>KES 455,000,000</span>
 </div>
 <div class="flex flex-col border-l border-subtle pl-4">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Contributions</span>
-<span class="font-body-md text-body-md text-on-surface mt-2" data-kt-pln-review-contributions>1 of 1 submitted</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Items ready</span>
+<span class="font-body-md text-body-md text-on-surface mt-2" data-kt-pln-review-contributions>—</span>
 </div>
 <div class="flex flex-col border-l border-subtle pl-4">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Open Tender</span>
@@ -101,8 +101,8 @@ kentender_procurement.ui_fixtures.planning_plan_review = function () {
 <span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-review-prepared-by>Supply Chain Management Services</span>
 </div>
 <div class="flex flex-col gap-1">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Departmental submission</span>
-<span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-review-dept>Submitted</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Plan readiness</span>
+<span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-review-dept>—</span>
 </div>
 <div class="flex flex-col gap-1">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Validation run</span>

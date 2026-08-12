@@ -14,7 +14,7 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		await page.setViewportSize({ width: 1400, height: 900 });
 	});
 
-	test("planner sees filters, plan panel, queue, stitch chrome", async ({ page }) => {
+	test("planner sees Stitch v1.9 regions, chrome, footer", async ({ page }) => {
 		await loginAsAdministrator(page);
 		await preparePlanningGate03(page);
 		await page.context().clearCookies();
@@ -25,12 +25,26 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		});
 		await expect(page.locator(`${ROOT}.kt-stitch-canvas`)).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Procurement Planning" })).toBeVisible();
+		await expect(page.locator(ROOT)).toContainText(
+			/Turn approved needs into funded, approved Plan Items ready for tendering/i,
+		);
 		await expect(page.getByTestId("kt-pln-ui01-filters")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-scope-helper")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-scope-helper")).toContainText(
+			/define the workspace scope|filter visibility/i,
+		);
 		await expect(page.locator('[data-kt-pln-filter="procuring_entity"]')).toBeVisible();
 		await expect(page.locator('[data-kt-pln-filter="financial_year"]')).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText(/Plan Items/i);
 		await expect(page.getByTestId("kt-pln-ui01-queue")).toBeVisible();
+		await expect(page.locator('[data-kt-pln-filter="work_type"]')).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-work-search")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-open-plan")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-open-plan")).toContainText(/Open current plan/i);
+		await expect(page.getByTestId("kt-pln-ui01-table-footer")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui01-table-footer")).toContainText(/Showing/i);
+		await expect(page.getByRole("dialog", { name: /^Message$/i })).toHaveCount(0);
 		await assertStitchDeskChrome(page, {
 			rootTestId: "kt-pln-ui01-root",
 			primaryCtaTestId: "kt-pln-ui01-open-plan",

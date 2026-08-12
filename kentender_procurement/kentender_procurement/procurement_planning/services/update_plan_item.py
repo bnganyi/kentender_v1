@@ -24,12 +24,6 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	assert_can_add_demand,
 	assert_planning_scope,
 )
-from kentender_procurement.procurement_planning.services.preference_reservation import (
-	dump_eligible_groups,
-	parse_eligible_groups,
-	scheme_is_assigned,
-	validate_designation,
-)
 
 _WRITABLE = (
 	"requirement_description",
@@ -45,10 +39,7 @@ _WRITABLE = (
 	"lotting_decision",
 	"expected_lot_count",
 	"lot_basis",
-	"preference_reservation_scheme",
-	"reservation_scope",
-	"eligible_groups",
-	"planned_reserved_value",
+	# C02: preference/reservation no longer writable from Plan Item editor (coverage fields retained).
 	"ms_invitation_published",
 	"ms_tender_opening",
 	"ms_evaluation_completed",
@@ -100,16 +91,15 @@ def update_plan_item(
 	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
 
 	# Soft field issues — Draft save must still persist; UI flags fields inline.
+	# C02: preference keys in payload are ignored (not writable from editor).
 	field_issues = collect_plan_item_field_issues(
 		iv=iv,
-		payload=payload,
-		include_preference=any(k in payload for k in PREF_KEYS),
+		payload={k: v for k, v in payload.items() if k not in PREF_KEYS},
+		include_preference=False,
 	)
 
 	for key in _WRITABLE:
 		if key not in payload:
-			continue
-		if key in PREF_KEYS:
 			continue
 		val = payload[key]
 		if key == "expected_lot_count":
@@ -129,44 +119,6 @@ def update_plan_item(
 		else:
 			iv.set(key, val)
 
-	if any(k in payload for k in PREF_KEYS):
-		scheme = payload.get(
-			"preference_reservation_scheme", iv.preference_reservation_scheme
-		)
-		scope = payload.get("reservation_scope", iv.reservation_scope)
-		groups = payload.get("eligible_groups", iv.eligible_groups)
-		planned = payload.get("planned_reserved_value", iv.planned_reserved_value)
-		pref_errors, pref_norm = validate_designation(
-			scheme=scheme,
-			scope=scope,
-			eligible_groups=groups,
-			planned_reserved_value=planned,
-			item_value=flt(iv.confirmed_estimate),
-		)
-		field_issues.update(pref_errors)
-		if pref_norm:
-			iv.preference_reservation_scheme = pref_norm["preference_reservation_scheme"]
-			iv.reservation_scope = pref_norm["reservation_scope"]
-			iv.eligible_groups = pref_norm["eligible_groups"]
-			iv.planned_reserved_value = pref_norm["planned_reserved_value"]
-		elif scheme_is_assigned(scheme):
-			# Persist partial designation so Draft work is not discarded.
-			iv.preference_reservation_scheme = cstr(scheme).strip()
-			iv.reservation_scope = cstr(scope or "").strip()
-			iv.eligible_groups = dump_eligible_groups(parse_eligible_groups(groups))
-			iv.planned_reserved_value = flt(planned)
-		else:
-			iv.preference_reservation_scheme = ""
-			iv.reservation_scope = ""
-			iv.eligible_groups = dump_eligible_groups([])
-			iv.planned_reserved_value = 0
-
-	# Never write retired questionnaire fields from the editor API.
-	iv.statutory_treatment = None
-	iv.statutory_target_groups = None
-	iv.planned_treatment_value = 0
-	iv.value_treatment_note = None
-
 	if not cstr(iv.governing_regime or "").strip():
 		iv.governing_regime = "PPADA"
 	if not cstr(iv.recommended_method or "").strip():
@@ -183,7 +135,7 @@ def update_plan_item(
 
 	validation = validate_plan(plan=plan.name, user=actor)
 	# Recompute against saved state so callers/UI stay aligned with persistence.
-	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=True)
+	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=False)
 	return {
 		"ok": True,
 		"plan_item": item_name,

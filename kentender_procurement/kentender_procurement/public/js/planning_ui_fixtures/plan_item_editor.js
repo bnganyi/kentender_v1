@@ -247,78 +247,11 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 </table>
 </div>
 </div>
-<!-- Preference and reservation (literal port of PLN-UI-06.html) -->
-<section class="bg-surface-container-lowest border border-subtle rounded-lg p-6" data-kt-pln-pref-section data-testid="kt-pln-ui06-pref-section">
-<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">Preference and reservation</h2>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-6 max-w-3xl">Use this only when all or part of this Plan Item is deliberately set aside under an applicable configured scheme.</p>
-<div class="flex items-center justify-between gap-4 py-3 px-4 rounded-lg border border-subtle bg-surface-container-low" data-kt-pln-pref-none data-testid="kt-pln-ui06-pref-none">
-<p class="font-body-md text-body-md text-on-surface mb-0">Preference or reservation scheme: None assigned</p>
-<button type="button" class="px-3 py-1.5 font-body-sm text-body-sm text-primary border border-subtle rounded-DEFAULT hover:bg-surface-container transition-colors cursor-pointer bg-surface-container-lowest" data-kt-pln-action="pref-assign" data-testid="kt-pln-ui06-pref-assign">Edit</button>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 hidden" data-kt-pln-pref-assigned data-testid="kt-pln-ui06-pref-assigned" hidden>
-<div class="space-y-6">
-<div>
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2" for="kt-pln-ui06-pref-scheme">Scheme</label>
-<div class="relative">
-<select class="w-full bg-surface border border-outline-variant rounded-md pl-4 pr-10 py-2.5 font-body-md text-body-md text-on-surface appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" id="kt-pln-ui06-pref-scheme" name="preference_reservation_scheme" data-kt-pln-field="preference_reservation_scheme" data-kt-field="preference_reservation_scheme" data-testid="kt-pln-ui06-pref-scheme">
-<option value="">None</option>
-<option value="AGPO reservation">AGPO reservation</option>
-<option value="Local preference">Local preference</option>
-</select>
-<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
-</div>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="preference_reservation_scheme" hidden></div>
-</div>
-<div>
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-3">Scope</label>
-<div class="flex items-center gap-6">
-<label class="flex items-center gap-2 cursor-pointer">
-<input class="text-secondary focus:ring-secondary h-4 w-4 border-outline-variant" name="reservation_scope" type="radio" value="Reserved lot(s)" data-kt-pln-field="reservation_scope" data-kt-field="reservation_scope" data-testid="kt-pln-ui06-pref-scope-lots"/>
-<span class="font-body-md text-body-md text-on-surface">Reserved lot(s)</span>
-</label>
-<label class="flex items-center gap-2 cursor-pointer">
-<input class="text-secondary focus:ring-secondary h-4 w-4 border-outline-variant" name="reservation_scope" type="radio" value="Entire Plan Item" data-kt-pln-field="reservation_scope" data-kt-field="reservation_scope" data-testid="kt-pln-ui06-pref-scope-entire"/>
-<span class="font-body-md text-body-md text-on-surface">Entire Plan Item</span>
-</label>
-</div>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="reservation_scope" hidden></div>
-</div>
-<div>
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Eligible group</label>
-<div class="flex flex-wrap gap-2" data-kt-pln-pref-groups data-testid="kt-pln-ui06-pref-groups">
-<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
-<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Women-owned enterprises" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-women"/>
-<span>Women-owned enterprises</span>
-</label>
-<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
-<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Youth-owned enterprises" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-youth"/>
-<span>Youth-owned enterprises</span>
-</label>
-<label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-subtle cursor-pointer">
-<input type="checkbox" class="h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary" value="Enterprises owned by PWDs" data-kt-pln-pref-group data-testid="kt-pln-ui06-pref-group-pwd"/>
-<span>Enterprises owned by PWDs</span>
-</label>
-</div>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="eligible_groups" hidden></div>
-</div>
-<button type="button" class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface bg-transparent border-0 p-0 cursor-pointer underline" data-kt-pln-action="pref-clear" data-testid="kt-pln-ui06-pref-clear">Clear designation</button>
-</div>
-<div class="bg-surface-container p-5 rounded-lg border border-subtle self-start">
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2" for="kt-pln-ui06-pref-value">Planned reserved value (KES)</label>
-<div class="relative mb-3">
-<span class="absolute left-4 top-2.5 font-data-md text-data-md text-on-surface-variant">KES</span>
-<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md pl-14 pr-4 py-2.5 font-data-md text-data-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" id="kt-pln-ui06-pref-value" name="planned_reserved_value" data-kt-pln-field="planned_reserved_value" data-kt-field="planned_reserved_value" data-testid="kt-pln-ui06-pref-value" type="text" inputmode="decimal" value=""/>
-</div>
-<div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="planned_reserved_value" hidden></div>
-<p class="font-body-sm text-body-sm text-on-surface-variant" data-kt-pln-pref-contribution-note>This contributes to the Plan’s calculated reservation coverage. It is a planned set-aside, not an award.</p>
-</div>
-</div>
-</section>
 <div class="bg-error-container/20 border-l-4 border-error p-4 rounded-r-md flex gap-3 items-start hidden" data-kt-pln-editor-issue data-testid="kt-pln-ui06-issue" hidden>
 <span class="material-symbols-outlined text-error shrink-0">error</span>
 <div>
 <h4 class="font-headline-sm text-[16px] font-semibold text-error mb-1">Needs attention</h4>
-<p class="font-body-sm text-body-sm text-on-surface-variant" data-kt-pln-editor-issue-copy>Confirm all milestone dates before departmental sign-off.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-kt-pln-editor-issue-copy>Confirm all milestone dates before submit for review.</p>
 </div>
 </div></div>
 <!-- Right Column (Context & Metadata) -->
@@ -383,7 +316,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 <span class="material-symbols-outlined text-error mt-0.5" aria-hidden="true">warning</span>
 <div>
 <span class="font-label-caps text-label-caps text-error block mb-1">Needs attention</span>
-<span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-editor-issue-copy>Confirm all milestone dates before departmental sign-off.</span>
+<span class="font-body-sm text-body-sm text-on-surface" data-kt-pln-editor-issue-copy>Confirm all milestone dates before submit for review.</span>
 </div>
 </div>
 </div>

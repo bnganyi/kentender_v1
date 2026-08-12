@@ -11,17 +11,9 @@ import frappe
 from frappe.utils import cstr, flt, getdate
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
-	DEPT_PREPARING,
-	DEPT_SUBMITTED,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VALIDATION_READY,
-)
-from kentender_procurement.procurement_planning.services.get_departmental_contribution import (
-	_dept_row,
-	_items_for_ou,
-	_resolve_ou,
-	actor_can_submit_departmental,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
@@ -52,8 +44,7 @@ def _builder_next_step(
 	empty: bool,
 	issue_count: int,
 	items_ready: bool,
-	can_submit_departmental: bool,
-	dept_fully_submitted: bool,
+	can_submit_for_review: bool,
 ) -> dict[str, str]:
 	"""Guidance for the builder when the issue strip is not the primary cue."""
 	if empty:
@@ -62,29 +53,14 @@ def _builder_next_step(
 		return {"kind": "attention", "message": ""}
 	if not items_ready:
 		return {"kind": "", "message": ""}
-	if can_submit_departmental:
-		return {
-			"kind": "submit_dept",
-			"message": (
-				"Plan Items are ready. Submit the departmental contribution to sign off "
-				"this Organisation Unit’s inputs."
-			),
-		}
-	if dept_fully_submitted:
+	if can_submit_for_review:
 		return {
 			"kind": "submit_review",
 			"message": (
-				"Departmental contribution is submitted. Submit the consolidated plan "
-				"for professional review."
+				"Plan Items are ready. Submit the consolidated plan for professional review."
 			),
 		}
-	return {
-		"kind": "await_hod",
-		"message": (
-			"Plan Item work is complete. Next: Head of User Department submits the "
-			"departmental contribution for sign-off."
-		),
-	}
+	return {"kind": "", "message": ""}
 
 
 def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
@@ -231,64 +207,25 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		currency=currency,
 	)
 
-	dept_label = "Preparing"
-	can_submit_departmental = False
-	dept_fully_submitted = False
-	if draft:
-		# Contribution summary across OUs that own items on this Draft.
-		ou_list = sorted(ous) or (
-			[cstr(plan_doc.coordinating_org_unit or "").strip()]
-			if cstr(plan_doc.coordinating_org_unit or "").strip()
-			else []
-		)
-		submitted = 0
-		for ou in ou_list:
-			if not ou:
-				continue
-			row = _dept_row(plan_version=draft, organisation_unit=ou)
-			if row and cstr(row.status) == DEPT_SUBMITTED:
-				submitted += 1
-		total_ous = len([o for o in ou_list if o])
-		dept_fully_submitted = bool(total_ous) and submitted >= total_ous
-		items_ready = (not empty) and issue_count == 0 and all(
-			cstr(i.get("validation_projection")) == VALIDATION_READY for i in items_out
-		)
-		if total_ous <= 1:
-			if submitted:
-				dept_label = "Submitted"
-			elif items_ready:
-				dept_label = "Awaiting HoD sign-off"
-			else:
-				dept_label = DEPT_PREPARING
-		else:
-			dept_label = f"{submitted} of {total_ous} submitted"
-			if items_ready and submitted < total_ous and submitted == 0:
-				dept_label = f"Awaiting HoD · 0 of {total_ous}"
+	items_ready = (not empty) and issue_count == 0 and all(
+		cstr(i.get("validation_projection")) == VALIDATION_READY for i in items_out
+	)
+	can_submit_for_review = (
+		(not read_only)
+		and bool(draft)
+		and items_ready
+		and cstr(version.status if version else "") in ("Draft", "Returned")
+	)
 
-		try:
-			actor_ou = _resolve_ou(plan_doc=plan_doc, actor=actor, organisation_unit=None)
-			actor_items = _items_for_ou(
-				plan=plan_name, plan_version=draft, organisation_unit=actor_ou
-			)
-			actor_dept = _dept_row(plan_version=draft, organisation_unit=actor_ou)
-			can_submit_departmental = actor_can_submit_departmental(
-				plan_doc=plan_doc,
-				organisation_unit=actor_ou,
-				items=actor_items,
-				dept=actor_dept,
-				actor=actor,
-			)
-		except Exception:
-			can_submit_departmental = False
-	else:
-		items_ready = False
+	# PLN-UI-03 Finance Confirmed projection — real confirmation lands in C05.
+	finance_confirmed_count = 0
+	finance_confirmed_total = len(items_out)
 
 	next_step = _builder_next_step(
 		empty=empty,
 		issue_count=issue_count,
 		items_ready=items_ready,
-		can_submit_departmental=can_submit_departmental,
-		dept_fully_submitted=dept_fully_submitted,
+		can_submit_for_review=can_submit_for_review,
 	)
 
 	return {
@@ -304,10 +241,10 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"period_end": str(plan_doc.period_end or ""),
 		"currency": plan_doc.currency or "KES",
 		"version": version,
-		# Stitch PLN-UI-05 header: chip = Draft, text = Version N (not plan lifecycle OPEN).
+		# Stitch PLN-UI-03/05 header: Open Plan pill + Draft Version N.
 		"version_status": cstr(version.status if version else "Draft") or "Draft",
 		"version_number_label": (
-			f"Version {int(version.version_number)}" if version else "Version 1"
+			f"Draft Version {int(version.version_number)}" if version else "Draft Version 1"
 		),
 		"version_label": (
 			f"{version.status} Version {int(version.version_number)}" if version else "—"
@@ -316,13 +253,18 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, plan_doc.currency or "KES"),
 		"organisation_unit_count": len(ous),
+		"finance_confirmed_count": finance_confirmed_count,
+		"finance_confirmed_total": finance_confirmed_total,
+		"finance_confirmed_display": (
+			f"{finance_confirmed_count} of {finance_confirmed_total}"
+		),
 		"validation_projection": validation,
 		"issue_count": issue_count,
 		"issue_summary": (
-			f"{issue_count} item needs attention before departmental sign-off."
+			f"{issue_count} item needs attention before submit for review."
 			if issue_count == 1
 			else (
-				f"{issue_count} items need attention before departmental sign-off."
+				f"{issue_count} items need attention before submit for review."
 				if issue_count
 				else ""
 			)
@@ -331,7 +273,6 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"next_step_message": next_step["message"],
 		"preference_reservation_coverage": coverage,
 		"preference_reservation_coverage_display": coverage["display"],
-		"departmental_contributions_label": dept_label,
 		"items": items_out,
 		"empty": empty,
 		# Add Demand may open a Draft successor when only Approved Vn exists (PLN-FR-018).
@@ -340,12 +281,7 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		and (bool(draft) or bool(approved)),
 		"add_demand_pending_gate": False,
 		"read_only": read_only,
-		"can_submit_departmental": can_submit_departmental,
-		"can_submit_for_review": (not read_only)
-		and bool(draft)
-		and dept_fully_submitted
-		and items_ready
-		and cstr(version.status if version else "") in ("Draft", "Returned"),
+		"can_submit_for_review": can_submit_for_review,
 		"review_route": f"/app/procurement-plan-review?plan={plan_name}",
 		"concurrency_token": cstr(version.concurrency_token if version else "") or "",
 		"workspace_route": "/app/planning-workspace",

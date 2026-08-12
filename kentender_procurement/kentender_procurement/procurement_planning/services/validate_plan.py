@@ -118,7 +118,7 @@ def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
 					title,
 					"lot_basis",
 					"Needs attention",
-					"Confirm the indicative lot basis before departmental sign-off.",
+					"Confirm the indicative lot basis before submit for review.",
 					"Enter the lot basis for multiple indicative lots.",
 				)
 			)
@@ -159,7 +159,7 @@ def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
 						title,
 						"form",
 						"Needs attention",
-						"Complete method and schedule before departmental sign-off.",
+						"Complete method and schedule before submit for review.",
 						"Open the Plan Item editor and complete required decisions.",
 					)
 				)

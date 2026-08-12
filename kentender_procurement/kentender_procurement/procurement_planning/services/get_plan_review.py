@@ -11,9 +11,7 @@ import frappe
 from frappe.utils import cstr, flt, formatdate
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
-	DEPT_SUBMITTED,
 	DOCTYPE_DECISION,
-	DOCTYPE_DEPT_SUBMISSION,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VALIDATION_READY,
@@ -103,7 +101,6 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	planned_total = 0.0
 	open_tender_total = 0.0
 	designation_values: list[float] = []
-	ous: set[str] = set()
 
 	for it in frappe.get_all(
 		"Procurement Plan Item",
@@ -128,8 +125,6 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		if method.lower() == "open tender":
 			open_tender_total += amount
 		ou = cstr(it.owner_org_unit or "")
-		if ou:
-			ous.add(ou)
 		if scheme_is_assigned(getattr(iv, "preference_reservation_scheme", None)):
 			designation_values.append(flt(getattr(iv, "planned_reserved_value", 0)))
 		completion = ""
@@ -154,20 +149,17 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			}
 		)
 
-	# Contributions
-	submitted = 0
-	for ou in sorted(ous):
-		st = frappe.db.get_value(
-			DOCTYPE_DEPT_SUBMISSION,
-			{"plan_version": focus, "organisation_unit": ou},
-			"status",
-		)
-		if cstr(st) == DEPT_SUBMITTED:
-			submitted += 1
-	total_ous = len(ous)
-	contrib_label = (
-		f"{submitted} of {total_ous} submitted" if total_ous else "—"
+	ready_count = sum(
+		1
+		for i in items_out
+		if cstr(i.get("validation_projection")) == VALIDATION_READY
 	)
+	if not items_out:
+		readiness_label = "—"
+	elif ready_count == len(items_out):
+		readiness_label = "Plan Items ready"
+	else:
+		readiness_label = f"{ready_count} of {len(items_out)} ready"
 
 	coverage = plan_coverage(
 		planned_total=planned_total,
@@ -239,8 +231,8 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		and bool(roles.intersection(SUBMIT_FOR_REVIEW_ROLES))
 		and cstr(ver.status) in ("Draft", "Returned")
 		and issues_ready
-		and submitted >= total_ous
-		and total_ous > 0
+		and bool(items_out)
+		and ready_count == len(items_out)
 	)
 
 	if not task_surface:
@@ -299,30 +291,6 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 				"reason": cstr(row.reason or ""),
 			}
 		)
-	# Also surface departmental submissions as trail entries when no decisions yet.
-	if not trail:
-		for ou in sorted(ous):
-			row = frappe.db.get_value(
-				DOCTYPE_DEPT_SUBMISSION,
-				{"plan_version": focus, "organisation_unit": ou},
-				["status", "submitted_at"],
-				as_dict=True,
-			)
-			if row and cstr(row.status) == DEPT_SUBMITTED:
-				trail.append(
-					{
-						"label": "Departmental submission",
-						"actor": "",
-						"actor_role": "",
-						"date": (
-							formatdate(row.submitted_at, "dd MMMM yyyy")
-							if row.submitted_at
-							else ""
-						),
-						"reason": "",
-					}
-				)
-
 	return {
 		"ok": True,
 		"surface": surface,
@@ -341,9 +309,9 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"item_count": len(items_out),
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, currency),
-		"contributions_label": contrib_label,
+		"contributions_label": readiness_label,
 		"departmental_submission_label": (
-			"Submitted" if submitted >= total_ous and total_ous else contrib_label
+			"Ready" if ready_count == len(items_out) and items_out else readiness_label
 		),
 		"open_tender_total": open_tender_total,
 		"open_tender_display": _money(open_tender_total, currency),

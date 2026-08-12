@@ -87,128 +87,39 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		)
 		self.assertTrue(result["ok"], result)
 
-	def test_preference_designation_reserved_lots(self) -> None:
+	def test_preference_writes_ignored_from_editor(self) -> None:
+		"""C02: preference keys no longer mutate Plan Item Version via update_plan_item."""
 		planner, item = self._item()
 		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
 			get_plan_item_editor,
 		)
 
 		before = get_plan_item_editor(plan_item=item, user=planner)
-		half = max(1.0, float(before["confirmed_estimate"] or 0) / 2.0)
+		assigned_before = before["preference_reservation"]["assigned"]
 		result = update_plan_item(
 			plan_item=item,
 			user=planner,
 			fields={
 				"preference_reservation_scheme": "AGPO reservation",
 				"reservation_scope": "Reserved lot(s)",
-				"eligible_groups": [
-					"Women-owned enterprises",
-					"Youth-owned enterprises",
-				],
-				"planned_reserved_value": half,
-			},
-		)
-		self.assertTrue(result["ok"], result)
-		proj = get_plan_item_editor(plan_item=item, user=planner)
-		self.assertTrue(proj["preference_reservation"]["assigned"])
-		self.assertEqual(proj["preference_reservation"]["scheme"], "AGPO reservation")
-		self.assertEqual(proj["preference_reservation"]["planned_reserved_value"], half)
-
-	def test_preference_entire_item_derives_value(self) -> None:
-		planner, item = self._item()
-		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
-			get_plan_item_editor,
-		)
-
-		before = get_plan_item_editor(plan_item=item, user=planner)
-		item_value = before["confirmed_estimate"]
-		result = update_plan_item(
-			plan_item=item,
-			user=planner,
-			fields={
-				"preference_reservation_scheme": "AGPO reservation",
-				"reservation_scope": "Entire Plan Item",
-				"eligible_groups": ["Enterprises owned by PWDs"],
-				"planned_reserved_value": 1,
+				"eligible_groups": ["Women-owned enterprises"],
+				"planned_reserved_value": 9999,
 			},
 		)
 		self.assertTrue(result["ok"], result)
 		after = get_plan_item_editor(plan_item=item, user=planner)
-		self.assertEqual(after["preference_reservation"]["planned_reserved_value"], item_value)
+		self.assertEqual(after["preference_reservation"]["assigned"], assigned_before)
+		self.assertNotEqual(after["preference_reservation"].get("scheme"), "AGPO reservation")
 
-	def test_preference_clear_removes_designation(self) -> None:
-		planner, item = self._item()
-		update_plan_item(
-			plan_item=item,
-			user=planner,
-			fields={
-				"preference_reservation_scheme": "Local preference",
-				"reservation_scope": "Reserved lot(s)",
-				"eligible_groups": ["Women-owned enterprises"],
-				"planned_reserved_value": 1000,
-			},
-		)
-		cleared = update_plan_item(
-			plan_item=item,
-			user=planner,
-			fields={"preference_reservation_scheme": ""},
-		)
-		self.assertTrue(cleared["ok"], cleared)
-		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
-			get_plan_item_editor,
-		)
-
-		proj = get_plan_item_editor(plan_item=item, user=planner)
-		self.assertFalse(proj["preference_reservation"]["assigned"])
-
-	def test_preference_rejects_over_item_value(self) -> None:
-		planner, item = self._item()
-		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
-			get_plan_item_editor,
-		)
-
-		before = get_plan_item_editor(plan_item=item, user=planner)
-		too_high = before["confirmed_estimate"] + 1000
-		result = update_plan_item(
-			plan_item=item,
-			user=planner,
-			fields={
-				"preference_reservation_scheme": "AGPO reservation",
-				"reservation_scope": "Reserved lot(s)",
-				"eligible_groups": ["Women-owned enterprises"],
-				"planned_reserved_value": too_high,
-			},
-		)
-		# Draft save still persists; field is flagged for correction before sign-off.
-		self.assertTrue(result["ok"], result)
-		self.assertIn("planned_reserved_value", result["field_issues"])
-
-	def test_retired_statutory_fields_not_writable(self) -> None:
-		planner, item = self._item()
-		result = update_plan_item(
-			plan_item=item,
-			user=planner,
-			fields={
-				"statutory_treatment": "Open competition",
-				"value_treatment_note": "should not stick",
-				"planned_treatment_value": 99,
-			},
-		)
-		self.assertTrue(result["ok"], result)
-		import frappe
-
-		iv = frappe.db.get_value(
-			"Procurement Plan Item", item, "draft_item_version"
-		)
-		row = frappe.db.get_value(
-			"Procurement Plan Item Version",
-			iv,
-			["statutory_treatment", "value_treatment_note", "planned_treatment_value"],
-			as_dict=True,
-		)
-		self.assertFalse(row.statutory_treatment)
-		self.assertFalse(row.value_treatment_note)
-		self.assertEqual(float(row.planned_treatment_value or 0), 0.0)
+	def test_retired_statutory_fields_absent_from_meta(self) -> None:
+		meta = frappe.get_meta("Procurement Plan Item Version")
+		for fieldname in (
+			"statutory_treatment",
+			"statutory_target_groups",
+			"planned_treatment_value",
+			"value_treatment_note",
+		):
+			self.assertIsNone(meta.get_field(fieldname), fieldname)
 
 	def test_alternative_method_requires_grounds(self) -> None:
 		planner, item = self._item()

@@ -71,8 +71,6 @@ READ_PLAN_ROLES = frozenset(ALL_PLANNING_ROLES)
 REVIEW_TASK_ROLES = frozenset(
 	RECOMMEND_PLAN_ROLES | RETURN_PLAN_ROLES | APPROVE_PLAN_ROLES
 )
-# Departmental contribution task (tightened in C01; removed in C02).
-DEPT_CONTRIB_TASK_ROLES = frozenset((ROLE_HOD, ROLE_AUTHORITY, ROLE_CONTRIBUTOR))
 CONFIRM_PLAN_FUNDING_ROLES = frozenset((ROLE_BUDGET_OFFICER,))
 
 # USA roles that grant PE eligibility for plan create selection.
@@ -89,7 +87,6 @@ CAP_PLAN_RECOMMEND = "plan.recommend"
 CAP_PLAN_RETURN = "plan.return"
 CAP_PLAN_FINANCE_CONFIRM = "plan.finance.confirm"
 CAP_PLAN_FINANCE_TASK = "plan.finance.task"
-CAP_DEPT_CONTRIB_TASK = "plan.dept_contrib.task"
 
 CAPABILITY_ROLES: dict[str, frozenset[str]] = {
 	CAP_PLAN_VIEW: READ_PLAN_ROLES,
@@ -102,7 +99,6 @@ CAPABILITY_ROLES: dict[str, frozenset[str]] = {
 	CAP_PLAN_RETURN: RETURN_PLAN_ROLES,
 	CAP_PLAN_FINANCE_CONFIRM: CONFIRM_PLAN_FUNDING_ROLES,
 	CAP_PLAN_FINANCE_TASK: CONFIRM_PLAN_FUNDING_ROLES,
-	CAP_DEPT_CONTRIB_TASK: DEPT_CONTRIB_TASK_ROLES,
 }
 
 ERR_PERMISSION = "PLN_PERMISSION_DENIED"
@@ -286,11 +282,6 @@ def assert_can_create_plan(user: str | None = None) -> str:
 
 def assert_can_add_demand(user: str | None = None) -> str:
 	return require_capability(CAP_PLAN_ITEM_EDIT, user=user)
-
-
-def assert_can_submit_departmental_contribution(user: str | None = None) -> str:
-	"""HoD (or Authority / Contributor with task capability) may submit unit contribution."""
-	return require_capability(CAP_DEPT_CONTRIB_TASK, user=user)
 
 
 def assert_can_approve_plan(user: str | None = None) -> str:

@@ -105,7 +105,7 @@ def complete_plan_item_for_signoff(*, plan_item: str, user: str) -> dict:
 		plan_item=plan_item,
 		user=user,
 		fields={
-			"requirement_description": "Complete for departmental sign-off",
+			"requirement_description": "Complete for submit for review",
 			"procurement_category": "ICT infrastructure and services",
 			"procurement_method": "Open tender",
 			"arrangement": "Single year",
@@ -168,15 +168,13 @@ def ensure_reviewer_user() -> str:
 
 
 def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> dict[str, Any]:
-	"""Complete items → validate → HoD submit → submit for review → recommend.
+	"""Complete items → validate → submit for review → recommend.
 
 	Required before ``approve_plan_version`` under Gate 05 rules.
+	C02: no departmental contribution step.
 	"""
 	from kentender_procurement.procurement_planning.services.record_plan_decision import (
 		record_plan_decision,
-	)
-	from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
-		submit_departmental_contribution,
 	)
 	from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 		submit_plan_for_review,
@@ -184,7 +182,6 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 	from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 
 	planner = ensure_planner_user()
-	hod = ensure_hod_user()
 	reviewer = ensure_reviewer_user()
 	plan_doc = frappe.get_doc("Procurement Plan", plan)
 	ver = cstr(version or plan_doc.open_draft_version or "").strip()
@@ -200,9 +197,6 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 		complete_plan_item_for_signoff(plan_item=item, user=planner)
 
 	validate_plan(plan=plan, user=planner)
-	dept = submit_departmental_contribution(plan=plan, declaration=1, user=hod)
-	if not dept.get("ok"):
-		raise frappe.ValidationError(f"Departmental submit failed: {dept}")
 
 	token = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
 	submitted = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
@@ -223,7 +217,6 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 		"plan": plan,
 		"version": ver,
 		"planner": planner,
-		"hod": hod,
 		"reviewer": reviewer,
 		"concurrency_token": rec.get("concurrency_token"),
 	}
@@ -347,8 +340,11 @@ def create_plan_as_planner(**overrides: Any) -> dict[str, Any]:
 
 	scope = ensure_scope()
 	planner = ensure_planner_user()
-	seq = int(frappe.db.count("Procurement Plan") or 0) + 1
-	fy = overrides.pop("financial_year", None) or f"{2100 + seq}/{str(2101 + seq)[-2:]}"
+	fy = overrides.pop("financial_year", None)
+	if not fy:
+		# Count-based FY collided with leftover PE+FY rows after heavy Gate runs.
+		fy = unique_test_fy(base_year=2200, bucket=int(frappe.db.count("Procurement Plan") or 0))
+		purge_pe_fy(fy)
 	kwargs = {
 		"procuring_entity": scope["pe"],
 		"financial_year": fy,

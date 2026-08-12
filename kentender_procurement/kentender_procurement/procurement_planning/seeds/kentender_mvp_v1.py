@@ -92,7 +92,6 @@ def clear_planning_fixture_rows() -> dict[str, int]:
 	for plan in plans:
 		for doctype in (
 			"Plan Decision",
-			"Departmental Submission",
 			"Plan Validation Result",
 			"Publication Event",
 			"Planning Handoff Snapshot",
@@ -116,7 +115,6 @@ def clear_planning_fixture_rows() -> dict[str, int]:
 						deleted["Plan Decision"] = deleted.get("Plan Decision", 0) + 1
 				continue
 			if doctype in (
-				"Departmental Submission",
 				"Plan Validation Result",
 				"Publication Event",
 				"Planning Handoff Snapshot",

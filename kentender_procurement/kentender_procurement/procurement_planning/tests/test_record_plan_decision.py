@@ -20,9 +20,6 @@ from kentender_procurement.procurement_planning.services.add_demand_to_plan impo
 from kentender_procurement.procurement_planning.services.record_plan_decision import (
 	record_plan_decision,
 )
-from kentender_procurement.procurement_planning.services.submit_departmental_contribution import (
-	submit_departmental_contribution,
-)
 from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 	submit_plan_for_review,
 )
@@ -30,7 +27,6 @@ from kentender_procurement.procurement_planning.services.validate_plan import va
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	complete_plan_item_for_signoff,
 	create_plan_as_planner,
-	ensure_hod_user,
 	ensure_planner_user,
 	ensure_reviewer_user,
 	ensure_scope,
@@ -48,7 +44,6 @@ class TestRecordPlanDecision(IntegrationTestCase):
 
 	def _in_review(self):
 		planner = ensure_planner_user()
-		hod = ensure_hod_user()
 		reviewer = ensure_reviewer_user()
 		fy = unique_test_fy(base_year=2700, bucket=0)
 		purge_pe_fy(fy)
@@ -57,11 +52,6 @@ class TestRecordPlanDecision(IntegrationTestCase):
 		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
 		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
 		validate_plan(plan=plan["plan"], user=planner)
-		self.assertTrue(
-			submit_departmental_contribution(plan=plan["plan"], declaration=1, user=hod)[
-				"ok"
-			]
-		)
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"
 		)
