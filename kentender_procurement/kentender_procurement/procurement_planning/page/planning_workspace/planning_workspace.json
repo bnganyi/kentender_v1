@@ -1,27 +1,52 @@
 {
  "content": null,
- "creation": "2026-08-09 00:00:00.000000",
+ "creation": "2026-08-09 00:00:00",
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-08-09 00:00:00.000000",
+ "modified": "2026-08-13 13:03:31.884341",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "planning-workspace",
  "owner": "Administrator",
  "page_name": "planning-workspace",
  "roles": [
-  {"role": "Administrator"},
-  {"role": "System Manager"},
-  {"role": "Procurement Planner"},
-  {"role": "Planning Authority"},
-  {"role": "Planning Reviewer"},
-  {"role": "Designated Approver"},
-  {"role": "Accounting Officer"},
-  {"role": "Planning Contributor"},
-  {"role": "Head of User Department"},
-  {"role": "Planning Viewer"},
-  {"role": "Tender Initiator"}
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Planning Reviewer"
+  },
+  {
+   "role": "Designated Approver"
+  },
+  {
+   "role": "Accounting Officer"
+  },
+  {
+   "role": "Planning Contributor"
+  },
+  {
+   "role": "Head of User Department"
+  },
+  {
+   "role": "Planning Viewer"
+  },
+  {
+   "role": "Tender Initiator"
+  },
+  {
+   "role": "Budget Officer"
+  }
  ],
  "script": null,
  "standard": "Yes",

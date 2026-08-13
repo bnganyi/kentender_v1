@@ -1,14 +1,14 @@
 # Procurement Planning — MVP 1 Stitch Prompts
 
-**Document ID:** PLANNING-MVP1-STITCH-1.9  
-**Version:** 1.9  
+**Document ID:** PLANNING-MVP1-STITCH-2.0  
+**Version:** 2.0  
 **Status:** Approved design baseline for direct MVP correction  
-**Date:** 11 August 2026  
-**Controlling authority:** `KENTENDER-MVP-CMOM-1.1` and `PLANNING-MVP1-REQ-1.8`  
-**Supersedes:** `PLANNING-MVP1-STITCH-1.8`  
+**Date:** 12 August 2026  
+**Controlling authority:** `KENTENDER-MVP-CMOM-1.1` and `PLANNING-MVP1-REQ-1.9`  
+**Supersedes:** `PLANNING-MVP1-STITCH-1.9`  
 **Module:** Procurement Planning
 
-**Revision 1.9:** Adds PLN-UI-07A as the explicit insufficient-funding state of the existing Finance task. It shows the exact shortfall, removes Confirm funding, and lets the Budget Officer either keep the task pending while resolving funding in Budget & Funding or return it to the planner. It does not introduce a new approval or workbench. All v1.8 formation and workflow corrections remain in force.
+**Revision 2.0:** Adds the missing Plan Item removal journey. PLN-UI-05 and PLN-UI-10 expose a restrained row menu; PLN-UI-05A confirms whole-item removal with one required reason and explains the immediate or approval-time effect. Active items with Tender/downstream execution never show removal. No deletion screen, source-editing workbench or extra approval is introduced. All v1.9 Finance-shortfall and earlier workflow corrections remain in force.
 
 ## 1. Purpose
 
@@ -30,6 +30,7 @@ These are **Stitch screen-design prompts**. They define visible layout, hierarch
 8. Adding an item to an Approved Plan quietly creates or reuses one Draft successor. The current Approved Version stays operational.
 9. Combined formation appears only when multiple compatible Demands are selected and is decided in PLN-UI-04.
 10. Planning cannot change HoD-owned facts. Material changes are made by amending and reapproving the Demand.
+11. Plan Item removal starts from the Plan builder/update view. Draft-only items leave the Draft immediately; eligible Active items are only proposed for removal until the Draft successor is approved.
 
 ## 3. How to use
 
@@ -62,6 +63,8 @@ Apply these instructions to every prompt:
 - Strategy appears only as inherited read-only source context.
 - Funding confirmation is a distinct Finance task after Plan Item completion, not a duplicate Demand approval.
 - Plan-level preference and reservation coverage may appear only as a derived read-only review result. Do not add item-level treatment inputs.
+- Use **Remove from draft** for a draft-only Proposed item and **Propose removal** for an eligible Active item. Never use Delete.
+- Do not expose item removal when a Tender handoff or other downstream execution exists.
 
 ### 4.1 Status vocabulary
 
@@ -70,6 +73,7 @@ Use only the values relevant to the screen:
 - Logical Plan: Open, Closed, Cancelled
 - Plan Version: Draft, In review, Returned, Approved, Superseded, Cancelled
 - Plan Item: Proposed, Active, Removed
+- Draft change labels: Added, Changed, Proposed removal
 - Validation: Not run, Ready, Needs attention, Blocked, Stale
 - Finance confirmation: Not requested, Awaiting confirmation, Confirmed, Returned, Stale
 - Publication: Not submitted, Queued, Published, Failed, Not applicable
@@ -375,9 +379,9 @@ Do not show Finance approval, revision fields, procurement method fields or sche
 - **Primary actor:** Procurement Planner.
 - **Entry point:** Return from Add Demand or Plan Item editor.
 - **Reads:** Draft Plan Version, Plan Items, validation and Finance status.
-- **Writes:** Nothing directly.
-- **Primary outcomes:** Continue the item, run validation or add another Demand.
-- **Exit:** PLN-UI-06, PLN-UI-04 or validation result.
+- **Writes:** Nothing until the planner confirms removal in PLN-UI-05A.
+- **Primary outcomes:** Continue the item, remove it from the Draft, run validation or add another Demand.
+- **Exit:** PLN-UI-06, PLN-UI-04, PLN-UI-05A or validation result.
 - **Exclude:** HoD sign-off, contribution submission and editable Finance decisions.
 
 ```text
@@ -418,14 +422,62 @@ One row:
 - Not completed
 - Not requested
 - Needs attention
-- Button: Continue
+- Primary row link: Continue
+- Overflow menu: Remove from draft
 
 Bottom action bar:
 - Back to Planning
 - Run validation
 - Submit for review, disabled
 
-Do not show packages, contribution status, routine HoD sign-off, release objects or charts.
+Do not use Delete. Do not expose source-level removal, packages, contribution status, routine HoD sign-off, release objects or charts.
+```
+
+---
+
+## Stitch Prompt 05A — PLN-UI-05A Remove Plan Item confirmation
+
+**Screen contract**
+
+- **Purpose:** Confirm whole-item removal without creating another workflow step.
+- **Primary actor:** Procurement Planner.
+- **Entry point:** Remove from draft on PLN-UI-05/10, or Propose removal for an eligible Active item while preparing an update.
+- **Reads:** Plan Item, Draft-change type, source Demand(s), value, Finance state and downstream take-up.
+- **Writes:** Required removal reason and one removal command.
+- **Primary outcome:** Remove the whole item from the Draft or record its proposed removal in the Draft successor.
+- **Exit:** Return to the same Plan builder/update view.
+- **Exclude:** Hard deletion, source editing, Demand cancellation, downstream Tender cancellation and extra approval.
+
+```text
+Design one compact confirmation dialog. Do not create a page, drawer, wizard or removal workbench.
+
+Draft-only Proposed-item state:
+- Title: Remove Plan Item from draft?
+- Intro: “This removes the item from the current Draft Plan. The Approved Demand will be available for planning again.”
+- Read-only item: Digital health technical staff certification programme
+- Read-only Organisation Unit: Human Resources Management and Development
+- Read-only planned value: KES 80,000,000
+- Read-only approved sources: 1 Demand · 1 Need Item
+- Read-only Finance effect: No funding confirmed; no reservation to release
+- Required multiline input: Reason for removal
+- Placeholder: “Briefly explain why this item should be removed from the draft.”
+- Buttons: Keep item; Remove from draft
+
+Finance-confirmed draft-only variant:
+- Replace the Finance effect with: “Funding confirmation will be cancelled and KES 80,000,000 will be released.”
+- Keep the same controls and button labels.
+
+Eligible Active-item variant:
+- Title: Propose Plan Item removal?
+- Intro: “The item remains active in the current Approved Plan until this update is approved.”
+- Read-only effective-on-approval note: “If approved, the item will be removed and its uncommitted reservation released.”
+- Buttons: Keep item; Propose removal
+
+Do not show the Active-item variant for an item with a Tender handoff or downstream execution. For a combined Plan Item, show every source Demand read-only and state: “The whole Plan Item and all its source allocations will be removed together.” Do not offer individual-source checkboxes.
+
+After success, return to the builder, recalculate counts and totals, and show a quiet confirmation message. If no Draft changes remain, show “No changes remain” with Cancel update as the next action.
+
+Never use Delete, destructive red-page styling, technical status codes or editable funding controls.
 ```
 
 ---
@@ -590,16 +642,16 @@ Do not design a disabled version for Requesters or other unauthorised roles. The
 Design the insufficient-funding state of the same right-side drawer. Title it “Funding shortfall”.
 
 At the top show the same read-only task context as PLN-UI-07:
-- Plan Item: National digital health infrastructure upgrade
-- Quiet reference: PPI-MOH-2027-021
-- Plan: Ministry of Health Annual Procurement Plan 2027/28 · Draft Version 1
-- Owner OU: Directorate of Digital Health and Policy
+- Plan Item: Digital health technical staff certification programme
+- Quiet reference: PPI-MOH-2027-022
+- Plan: Ministry of Health Annual Procurement Plan 2027/28 · Draft Version 2
+- Owner OU: Human Resources Management and Development
 - Plan Item status: Proposed · Planning complete
 
 Section: Funding required
-- Proposed Budget Line: Digital clinical systems infrastructure
-- Amount required: KES 455,000,000
-- Current available allocation: KES 400,000,000
+- Proposed Budget Line: Digital Health Workforce Capacity Development
+- Amount required: KES 80,000,000
+- Current available allocation: KES 25,000,000
 - Funding shortfall: KES 55,000,000
 - Availability status: Insufficient funding
 
@@ -625,7 +677,7 @@ Footer actions:
 
 Do not show Confirm funding in this state. Do not show a disabled Confirm button. Do not permit partial confirmation, negative balance, availability override, inline Budget Line editing or manual reduction of the Plan Item amount.
 
-Use the KES 400,000,000 availability only as an alternate shortfall design state; do not replace the canonical successful seed arithmetic.
+Use this only as the optional `SCN-PLN-FUND-SHORT-001` state. The successful base story retains the fully available KES 80,000,000 workforce Budget Line.
 
 Unauthorised users must not see this Finance task or route. Neutral record detail may show only “Funding confirmation: Awaiting confirmation”.
 ```
@@ -717,8 +769,8 @@ Do not design this task form for unauthorised users. A permitted viewer sees the
 - **Entry point:** Planning workspace → current Approved Plan.
 - **Reads:** Approved Plan Version, Active Plan Items, Tender take-up, publication and reporting projections.
 - **Writes:** Nothing to the Approved baseline.
-- **Primary outcomes:** View implementation or begin adding a new Plan Item through a Draft successor.
-- **Exit:** PLN-UI-04, Tender/implementation detail or export.
+- **Primary outcomes:** View implementation, begin adding a new Plan Item, or propose removal of an eligible Active item through a Draft successor.
+- **Exit:** PLN-UI-04, PLN-UI-05A, Tender/implementation detail or export.
 - **Exclude:** In-place editing, revision setup, aggregation and duplicated Tender data entry.
 
 ```text
@@ -766,6 +818,8 @@ One row:
 - On schedule
 - Link: View implementation
 
+The illustrated item has an active Tender, so do not show Propose removal for this row. For an Active item with no Tender handoff or downstream execution, add a restrained overflow-row action labelled Propose removal; it opens PLN-UI-05A and quietly creates or reuses the Draft successor.
+
 Section: Publication
 - Destination: State Portal
 - Status: Published
@@ -776,7 +830,7 @@ If an update exists, show one compact notice:
 - “Draft Version 2 in progress · 1 new Plan Item · Approved Version 1 remains operational.”
 - Buttons: Continue update; View changes
 
-Do not allow editing of Approved planning fields. Do not require the user to create a revision before adding an item. Do not show aggregation controls, expenditure entry, package/release tables or duplicated Tender controls.
+Do not allow editing of Approved planning fields. Do not require the user to create a revision before adding or proposing removal of an item. Do not show removal for an executed item, aggregation controls, expenditure entry, package/release tables or duplicated Tender controls.
 ```
 
 ---
@@ -789,9 +843,9 @@ Do not allow editing of Approved planning fields. Do not require the user to cre
 - **Primary actor:** Procurement Planner.
 - **Entry point:** Return after completing a Plan Item added through PLN-UI-09 → PLN-UI-04 → PLN-UI-06.
 - **Reads:** Approved Version 1, Draft Version 2, changed Plan Items, validation and Finance status.
-- **Writes:** Reason for adding after approval only.
-- **Primary outcomes:** Save the update, follow the Finance task or submit the ready update for review.
-- **Exit:** PLN-UI-07, PLN-UI-08 or Approved Plan.
+- **Writes:** One concise update reason and, through PLN-UI-05A, a Plan Item removal reason.
+- **Primary outcomes:** Save the update, remove a draft-only item, propose eligible Active-item removal, follow the Finance task or submit the ready update for review.
+- **Exit:** PLN-UI-05A, PLN-UI-07, PLN-UI-08 or Approved Plan.
 - **Exclude:** Full version-management workbench, routine HoD sign-off, aggregation and editing unchanged items.
 
 ```text
@@ -838,7 +892,8 @@ Show:
 - KES 80,000,000
 - Awaiting confirmation
 - Ready
-- Link: View
+- Primary row link: View
+- Overflow menu: Remove from update
 
 Below the table show a collapsed read-only summary:
 - “1 existing Plan Item remains unchanged and operational.”
@@ -856,7 +911,13 @@ Bottom action bar:
 
 Add a design-state note: after Finance confirms the added item and validation is Ready, show Finance as Confirmed, remove the issue and enable Submit update for review.
 
-Do not show a second HoD sign-off, Departmental Contribution, aggregation controls, suspended existing items, duplicated complete plans, raw diffs or editable fields from Approved Version 1.
+Add a removal design state:
+- A removed draft-only addition disappears from the Changes table after confirmation and totals recalculate immediately.
+- An eligible carried-forward Active item selected for removal remains listed as Change: Proposed removal, with its current Approved value and Status: Active until approval.
+- If removal leaves no effective changes, replace validation/submission controls with the message “No changes remain in this update.” and the primary action Cancel update.
+- Do not show removal for an item with Tender take-up or downstream execution.
+
+Do not show a second HoD sign-off, Departmental Contribution, aggregation controls, source-level removal, suspended existing items, duplicated complete plans, raw diffs or editable fields from Approved Version 1.
 ```
 
 ---
@@ -878,6 +939,13 @@ PLN-UI-05 is the Plan-builder state used while the new Plan Item remains incompl
 If Finance detects a shortfall, PLN-UI-07A replaces the confirmation state until the funding issue is governed and resolved or the item is returned.
 
 The user does not create a revision manually. The Plan Item remains the operational focus; versioning is quiet governance context.
+
+### 5.3 Remove a Plan Item
+
+- Draft-only item: `PLN-UI-05/10 Remove from draft → PLN-UI-05A confirm → recalculated PLN-UI-05/10`.
+- Eligible Active item: `PLN-UI-09 Propose removal → PLN-UI-05A confirm → PLN-UI-10 Proposed removal → PLN-UI-08 review → PLN-UI-09 Approved successor`.
+- An item with Tender/downstream execution has no removal path.
+- Removal does not open PLN-UI-06 and does not ask the user to edit source allocations.
 
 ## 6. Design acceptance checklist
 
@@ -903,6 +971,10 @@ Approve the Stitch set only if:
 18. Strategy context is inherited and never rewritten in Planning.
 19. Every input has a stated actor, source and operational outcome.
 20. No screen introduces a package/release workbench, internal identifiers, decorative dashboards or invented workflow stages.
+21. PLN-UI-05/10 exposes Remove from draft for a draft-only item and uses PLN-UI-05A for one compact confirmation with a required reason.
+22. Eligible Active-item removal is shown as Proposed removal until successor approval; the current Approved item remains operational meanwhile.
+23. Items with Tender/downstream execution have no removal action, and combined Plan Items can be removed only as a whole.
+24. Removal never uses Delete and never introduces a source-allocation editor or extra approval.
 
 ## 7. Explicitly leave for Cursor
 
@@ -920,6 +992,7 @@ Do not ask Stitch to implement:
 - aggregation compatibility checks;
 - Plan validation and approval transitions;
 - Draft successor creation or Approved-Version locking;
+- whole-item removal, Finance-task cancellation, reservation release, source-eligibility restoration and removal concurrency checks;
 - derived preference/reservation coverage calculations;
 - publication integration;
 - Tender handoff creation;

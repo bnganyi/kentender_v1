@@ -9,7 +9,7 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cstr, flt
 
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan as _add_demand_to_plan,
@@ -38,6 +38,11 @@ from kentender_procurement.procurement_planning.services.list_eligible_demands i
 from kentender_procurement.procurement_planning.services.update_plan_item import (
 	update_plan_item as _update_plan_item,
 )
+from kentender_procurement.procurement_planning.services.plan_item_finance import (
+	confirm_plan_item_funding as _confirm_plan_item_funding,
+	get_plan_finance_task as _get_plan_finance_task,
+	return_plan_item_from_finance as _return_plan_item_from_finance,
+)
 from kentender_procurement.procurement_planning.services.validate_plan import (
 	validate_plan as _validate_plan,
 )
@@ -50,8 +55,25 @@ from kentender_procurement.procurement_planning.services.record_plan_decision im
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version as _approve_plan_version,
 )
+from kentender_procurement.procurement_planning.services.remove_plan_item import (
+	cancel_plan_update as _cancel_plan_update,
+	remove_plan_item_from_plan as _remove_plan_item_from_plan,
+)
 from kentender_procurement.procurement_planning.services.get_plan_review import (
 	get_plan_review as _get_plan_review,
+)
+from kentender_procurement.procurement_planning.services.get_plan_implementation import (
+	get_plan_implementation as _get_plan_implementation,
+)
+from kentender_procurement.procurement_planning.services.get_plan_update import (
+	get_plan_update as _get_plan_update,
+	save_plan_update as _save_plan_update,
+)
+from kentender_procurement.procurement_planning.services.publish_approved_plan import (
+	publish_approved_plan as _publish_approved_plan,
+)
+from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
+	create_planning_handoff_snapshot as _create_planning_handoff_snapshot,
 )
 
 
@@ -173,11 +195,13 @@ def list_eligible_demands(
 def add_demand_to_plan(
 	plan: str | None = None,
 	demand: str | None = None,
+	demands: str | list | None = None,
 	demand_item: str | None = None,
 	allocated_amount: float | str | None = None,
 	package_mode: str | None = None,
 	formation_mode: str | None = None,
 	separation_reason: str | None = None,
+	formation_reason: str | None = None,
 ) -> dict[str, Any]:
 	try:
 		amt = float(allocated_amount) if allocated_amount not in (None, "") else None
@@ -187,25 +211,70 @@ def add_demand_to_plan(
 		return _add_demand_to_plan(
 			plan=plan or "",
 			demand=demand or "",
+			demands=demands,
 			demand_item=demand_item,
 			allocated_amount=amt,
 			package_mode=package_mode,
 			formation_mode=formation_mode,
 			separation_reason=separation_reason,
+			formation_reason=formation_reason,
 		)
 	except Exception as exc:
 		msg = str(exc)
 		title = getattr(exc, "title", None) or ""
 		errors: dict[str, str] = {"form": msg}
-		if "SEPARATION_REASON" in cstr(title).upper() or "separation reason" in msg.lower():
+		title_u = cstr(title).upper()
+		if "SEPARATION_REASON" in title_u or "separation reason" in msg.lower():
 			errors["separation_reason"] = msg
+		if "FORMATION_REASON" in title_u or "reason for combining" in msg.lower():
+			errors["formation_reason"] = msg
 		return {"ok": False, "errors": errors}
+
+
+@frappe.whitelist()
+def remove_plan_item_from_plan(
+	plan: str | None = None,
+	plan_item: str | None = None,
+	reason: str | None = None,
+	concurrency_token: str | None = None,
+) -> dict[str, Any]:
+	try:
+		return _remove_plan_item_from_plan(
+			plan=plan or "",
+			plan_item=plan_item or "",
+			reason=reason,
+			concurrency_token=concurrency_token,
+		)
+	except frappe.PermissionError as exc:
+		return {
+			"ok": False,
+			"errors": {"form": str(exc).split(":", 1)[-1].strip() or "Not permitted"},
+		}
+	except Exception as exc:
+		msg = str(exc)
+		title = cstr(getattr(exc, "title", None) or "")
+		errors: dict[str, str] = {"form": msg}
+		if "reason" in msg.lower() and "required" in msg.lower():
+			errors["reason"] = msg
+		return {"ok": False, "errors": errors, "error_code": title or None}
+
+
+@frappe.whitelist()
+def cancel_plan_update(
+	plan: str | None = None,
+	concurrency_token: str | None = None,
+) -> dict[str, Any]:
+	try:
+		return _cancel_plan_update(plan=plan or "", concurrency_token=concurrency_token)
+	except Exception as exc:
+		return {"ok": False, "errors": {"form": str(exc)}}
 
 
 @frappe.whitelist()
 def update_plan_item(
 	plan_item: str | None = None,
 	fields: str | dict | None = None,
+	request_finance: int | str | None = None,
 ) -> dict[str, Any]:
 	payload: dict[str, Any]
 	if isinstance(fields, str):
@@ -217,7 +286,37 @@ def update_plan_item(
 		payload = fields
 	else:
 		payload = {}
-	return _update_plan_item(plan_item=plan_item or "", fields=payload)
+	try:
+		return _update_plan_item(
+			plan_item=plan_item or "",
+			fields=payload,
+			request_finance=request_finance,
+		)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return {"ok": False, "errors": {"form": str(exc)}}
+
+
+@frappe.whitelist()
+def get_plan_finance_task(plan_item: str | None = None) -> dict[str, Any]:
+	return _get_plan_finance_task(plan_item=plan_item or "")
+
+
+@frappe.whitelist()
+def confirm_plan_item_funding(
+	plan_item: str | None = None,
+	note: str | None = None,
+) -> dict[str, Any]:
+	return _confirm_plan_item_funding(plan_item=plan_item or "", note=note)
+
+
+@frappe.whitelist()
+def return_plan_item_from_finance(
+	plan_item: str | None = None,
+	reason: str | None = None,
+) -> dict[str, Any]:
+	return _return_plan_item_from_finance(plan_item=plan_item or "", reason=reason)
 
 
 @frappe.whitelist()
@@ -280,6 +379,56 @@ def approve_plan_version(
 @frappe.whitelist()
 def get_plan_review(plan: str | None = None) -> dict[str, Any]:
 	return _get_plan_review(plan=plan or "")
+
+
+@frappe.whitelist()
+def get_plan_implementation(plan: str | None = None) -> dict[str, Any]:
+	return _get_plan_implementation(plan=plan or "")
+
+
+@frappe.whitelist()
+def get_plan_update(plan: str | None = None) -> dict[str, Any]:
+	return _get_plan_update(plan=plan or "")
+
+
+@frappe.whitelist()
+def save_plan_update(
+	plan: str | None = None,
+	update_reason: str | None = None,
+	concurrency_token: str | None = None,
+) -> dict[str, Any]:
+	try:
+		return _save_plan_update(
+			plan=plan or "",
+			update_reason=update_reason,
+			concurrency_token=concurrency_token,
+		)
+	except frappe.PermissionError as exc:
+		return {
+			"ok": False,
+			"errors": {"form": str(exc).split(":", 1)[-1].strip() or "Not permitted"},
+		}
+	except Exception as exc:
+		return {"ok": False, "errors": {"form": str(exc)}}
+
+
+@frappe.whitelist()
+def publish_approved_plan(
+	plan: str | None = None,
+	channel: str | None = None,
+) -> dict[str, Any]:
+	return _publish_approved_plan(plan=plan or "", channel=channel)
+
+
+@frappe.whitelist()
+def create_planning_handoff_snapshot(
+	plan_item: str | None = None,
+	tender_reference: str | None = None,
+) -> dict[str, Any]:
+	return _create_planning_handoff_snapshot(
+		plan_item=plan_item or "",
+		tender_reference=tender_reference,
+	)
 
 
 @frappe.whitelist()
@@ -388,6 +537,156 @@ def prepare_planning_gate05_ui() -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def prepare_planning_finance_ui() -> dict[str, Any]:
+	"""Complete Plan Item + Awaiting Finance task for PLN-UI-07 Playwright."""
+	from kentender_procurement.procurement_planning.services.update_plan_item import (
+		update_plan_item,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		attach_demand_funding,
+		make_test_budget_line,
+	)
+
+	frappe.only_for(("System Manager", "Administrator"))
+	base = prepare_planning_gate05_ui()
+	plan = base["empty_draft_plan"]
+	plan_item = base.get("plan_item")
+	demand = base.get("eligible_demand")
+	planner = "moh.planning.officer@example.test"
+	if plan_item and demand:
+		amount = flt(
+			frappe.db.get_value("Procurement Plan Item Version", {"plan_item": plan_item}, "confirmed_estimate")
+			or 1_000_000
+		)
+		funding = make_test_budget_line(approved_amount=max(amount * 2, 10_000_000))
+		if not frappe.db.exists("Demand Funding Allocation", {"demand": demand}):
+			attach_demand_funding(
+				demand=demand,
+				budget_line=funding["budget_line"],
+				budget=funding["budget"],
+				amount=amount,
+			)
+		update_plan_item(plan_item=plan_item, user=planner, request_finance=True)
+	# BO must open SCREEN_5 (builder) and the workspace queue — Page.roles gate Desk.
+	for page_name in ("procurement-plan-builder", "planning-workspace"):
+		if not frappe.db.exists("Page", page_name):
+			continue
+		page = frappe.get_doc("Page", page_name)
+		existing = {r.role for r in page.roles}
+		if "Budget Officer" not in existing:
+			page.append("roles", {"role": "Budget Officer"})
+			page.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {
+		**base,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_item={plan_item or ''}",
+		"finance_item": plan_item,
+		"finance_status": "Awaiting confirmation",
+	}
+
+
+@frappe.whitelist()
+def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
+	"""Isolated 80/25/55 Awaiting task for PLN-UI-07A Playwright (no full MVP reset)."""
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+	from kentender_procurement.procurement_planning.services.update_plan_item import (
+		update_plan_item,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		attach_demand_funding,
+		make_test_budget_line,
+	)
+
+	frappe.only_for(("System Manager", "Administrator"))
+	amount = flt(C.PLAN_ITEM_SCN_AMOUNT)
+	hold_amount = 55_000_000.0
+	base = prepare_planning_gate05_ui()
+	plan = base["empty_draft_plan"]
+	plan_item = base.get("plan_item")
+	demand = base.get("eligible_demand")
+	planner = "moh.planning.officer@example.test"
+	hold_code = ""
+	budget_code = ""
+	demand_row: dict[str, Any] = {}
+	if plan_item and demand:
+		iv_name = frappe.db.get_value(
+			"Procurement Plan Item Version", {"plan_item": plan_item}, "name"
+		)
+		if iv_name:
+			frappe.db.set_value(
+				"Procurement Plan Item Version",
+				iv_name,
+				"confirmed_estimate",
+				amount,
+				update_modified=False,
+			)
+		funding = make_test_budget_line(approved_amount=amount)
+		budget_code = cstr(
+			frappe.db.get_value("Budget", funding["budget"], "generated_reference") or ""
+		)
+		if not frappe.db.exists("Demand Funding Allocation", {"demand": demand}):
+			attach_demand_funding(
+				demand=demand,
+				budget_line=funding["budget_line"],
+				budget=funding["budget"],
+				amount=amount,
+			)
+		demand_row = frappe.db.get_value(
+			"Demand", demand, ["demand_code", "title"], as_dict=True
+		) or {}
+		hold_code = f"RSV-PLN-UI07A-{frappe.generate_hash(length=6).upper()}"
+		frappe.get_doc(
+			{
+				"doctype": "Funding Reservation",
+				"generated_reference": hold_code,
+				"budget": funding["budget"],
+				"budget_line": funding["budget_line"],
+				"original_amount": hold_amount,
+				"remaining_reserved": hold_amount,
+				"status": "Reserved",
+				"currency": "KES",
+				"demand_code": hold_code,
+				"demand_title": "Concurrent workforce funding hold — scenario only",
+				"event_date": C.FIXTURE_DATE,
+				"plan_item_code": "",
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.set_value(
+			"Budget Line",
+			funding["budget_line"],
+			"amount_reserved",
+			hold_amount,
+			update_modified=True,
+		)
+		update_plan_item(plan_item=plan_item, user=planner, request_finance=True)
+	for page_name in ("procurement-plan-builder", "planning-workspace"):
+		if not frappe.db.exists("Page", page_name):
+			continue
+		page = frappe.get_doc("Page", page_name)
+		existing = {r.role for r in page.roles}
+		if "Budget Officer" not in existing:
+			page.append("roles", {"role": "Budget Officer"})
+			page.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {
+		"ok": True,
+		"empty_draft_plan": plan,
+		"plan": plan,
+		"finance_item": plan_item,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_item={plan_item or ''}",
+		"budget_funding_route": (
+			f"/app/budget-funding-activity/{budget_code}" if budget_code else "/app/budget-funding"
+		),
+		"hold": hold_code,
+		"finance_status": "Awaiting confirmation",
+		"amount_required": amount,
+		"available": amount - hold_amount,
+		"shortfall": hold_amount,
+		"demand_title": demand_row.get("title") if plan_item and demand else "",
+	}
+
+
+@frappe.whitelist()
 def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 	"""In-review + recommended plan + Reviewer/Approver users for PLN-UI-08 Playwright."""
 	from frappe.utils.password import update_password
@@ -410,6 +709,7 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 	)
 	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 		complete_plan_item_for_signoff,
+		confirm_included_items_funding,
 	)
 
 	frappe.only_for(("System Manager", "Administrator"))
@@ -420,6 +720,7 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 	planner = "moh.planning.officer@example.test"
 	if plan_item:
 		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
+	confirm_included_items_funding(plan=plan, planner=planner)
 
 	validate_plan(plan=plan, user=planner)
 
@@ -511,6 +812,151 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 		"version": version,
 		"review_route": f"/app/procurement-plan-review?plan={plan}",
 		"ready_for_approval": True,
+	}
+
+
+@frappe.whitelist()
+def prepare_planning_gate06_approved_ui(
+	with_successor: int | str | None = 0,
+	with_handoff: int | str | None = 0,
+) -> dict[str, Any]:
+	"""Approved V1 + planner/viewer for PLN-UI-09 Playwright (unique Plan per call)."""
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds.constants import TEST_PASSWORD
+	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+		add_demand_to_plan,
+	)
+	from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
+		create_planning_handoff_snapshot,
+	)
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_VIEWER,
+		ensure_planning_roles,
+	)
+	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		approve_plan_via_gate05,
+		complete_plan_item_for_signoff,
+		confirm_included_items_funding,
+		create_plan_as_planner,
+		make_approved_demand,
+		purge_pe_fy,
+		unique_test_fy,
+	)
+
+	frappe.only_for(("System Manager", "Administrator"))
+	ensure_planning_roles()
+	from kentender_procurement.procurement_planning.tests._gate02_helpers import PE_MOH
+
+	pe_moh = PE_MOH
+	planner = "moh.planning.officer@example.test"
+	viewer = "pln.ui.viewer@example.test"
+	if not frappe.db.exists("User", viewer):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": viewer,
+				"first_name": "MOH",
+				"last_name": "Viewer",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", viewer)
+	user.enabled = 1
+	user.save(ignore_permissions=True)
+	user.add_roles("Desk User", ROLE_VIEWER)
+	update_password(viewer, TEST_PASSWORD)
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": viewer, "role": ROLE_VIEWER},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "User Scope Assignment",
+			"user": viewer,
+			"role": ROLE_VIEWER,
+			"procuring_entity": pe_moh,
+			"organisation_unit": "",
+			"include_descendants": 0,
+		}
+	).insert(ignore_permissions=True)
+
+	fy = unique_test_fy(base_year=3400)
+	purge_pe_fy(fy)
+	created = create_plan_as_planner(title="UI-09 Approved Plan", financial_year=fy)
+	plan = created["plan"]
+	version = created["version"]
+	demand = make_approved_demand(title="UI-09 approved Demand")
+	added = add_demand_to_plan(plan=plan, demand=demand["demand"], user=planner)
+	plan_item = added.get("plan_item")
+	if plan_item:
+		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
+	confirm_included_items_funding(plan=plan, planner=planner)
+	approved = approve_plan_via_gate05(plan=plan, version=version)
+	if not approved.get("ok"):
+		frappe.throw(f"Gate06 approved prep: approve failed: {approved}")
+
+	for page_name in ("procurement-plan-approved", "procurement-plan-update"):
+		if not frappe.db.exists("Page", page_name):
+			continue
+		page = frappe.get_doc("Page", page_name)
+		existing = {r.role for r in page.roles}
+		for role in (
+			"Procurement Planner",
+			"Planning Reviewer",
+			"Designated Approver",
+			"Accounting Officer",
+			"Planning Authority",
+			"Planning Viewer",
+			"Head of User Department",
+			"Requester",
+			"Desk User",
+			"Administrator",
+			"System Manager",
+		):
+			if role not in existing:
+				page.append("roles", {"role": role})
+		page.save(ignore_permissions=True)
+
+	want_successor = str(with_successor or "0") not in ("0", "", "None")
+	want_handoff = str(with_handoff or "0") not in ("0", "", "None")
+	if want_handoff and plan_item:
+		frappe.set_user(planner)
+		try:
+			snap = create_planning_handoff_snapshot(
+				plan_item=plan_item,
+				tender_reference="TND-MOH-TEST-008",
+				user=planner,
+			)
+		finally:
+			frappe.set_user("Administrator")
+		if not snap.get("ok"):
+			frappe.throw(f"Gate06 approved prep: handoff failed: {snap}")
+
+	if want_successor:
+		extra = make_approved_demand(title="Gate06 successor Demand")
+		added2 = add_demand_to_plan(plan=plan, demand=extra["demand"], user=planner)
+		if not added2.get("ok"):
+			frappe.throw(f"Gate06 approved prep: successor add failed: {added2}")
+
+	frappe.db.commit()
+	return {
+		"ok": True,
+		"pe_moh": pe_moh,
+		"empty_draft_plan": plan,
+		"plan_item": plan_item,
+		"approved": True,
+		"approved_version": version,
+		"approved_route": f"/app/procurement-plan-approved?plan={plan}",
+		"viewer_user": viewer,
+		"has_successor": want_successor,
+		"has_handoff": want_handoff,
+		"update_route": f"/app/procurement-plan-update?plan={plan}"
+		if want_successor
+		else f"/app/procurement-plan-approved?plan={plan}",
 	}
 
 

@@ -112,7 +112,7 @@ def clear_kentender_mvp_v1_budget() -> dict[str, Any]:
 			deleted["Budget Line"] = deleted.get("Budget Line", 0) + 1
 
 	for doctype, field, codes in (
-		("Funding Reservation", "generated_reference", (C.RSV_CODE,)),
+		("Funding Reservation", "generated_reference", (C.RSV_CODE, C.RSV_SHORT_CODE)),
 		("Procurement Commitment", "generated_reference", (C.COM_CODE,)),
 		("Expenditure Snapshot", "generated_reference", (C.EXP_CODE,)),
 	):

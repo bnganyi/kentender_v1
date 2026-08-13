@@ -85,6 +85,7 @@ Continue planning
 <option value="all">All work</option>
 <option value="approved_demands">Approved Demands</option>
 <option value="returned_by_finance">Plan Items returned by Finance</option>
+<option value="awaiting_finance">Awaiting Finance confirmation</option>
 <option value="needs_attention">Plan Items needing attention</option>
 </select>
 <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]" aria-hidden="true">arrow_drop_down</span>

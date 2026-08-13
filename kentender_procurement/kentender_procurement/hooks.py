@@ -14,6 +14,7 @@ def _desk_asset_v(rel_path: str) -> int:
 	Editing only JS/CSS does not reload this module — touch hooks.py (or restart)
 	so Desk boot emits a new ?v= and browsers drop stale fixture functions.
 	clear-cache alone is not enough while the worker still holds the old import.
+	Touched: PLN-UI-07 Finance confirmation drawer overlay (flex dim + panel).
 	"""
 	try:
 		base = Path(__file__).resolve().parent
@@ -88,11 +89,17 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/register.js?v={_desk_asset_v('public/js/planning_ui_fixtures/register.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js?v={_desk_asset_v('public/js/planning_ui_fixtures/builder.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/add_demand_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/add_demand_dialog.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/remove_plan_item_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/remove_plan_item_dialog.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/finance_confirm_drawer.js?v={_desk_asset_v('public/js/planning_ui_fixtures/finance_confirm_drawer.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_item_editor.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_item_editor.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_review.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_review.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_approved.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_approved.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_update.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_update.js')}",
 	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",
 	f"/assets/kentender_procurement/js/planning_item_editor_page.js?v={_desk_asset_v('public/js/planning_item_editor_page.js')}",
 	f"/assets/kentender_procurement/js/planning_review_page.js?v={_desk_asset_v('public/js/planning_review_page.js')}",
+	f"/assets/kentender_procurement/js/planning_approved_page.js?v={_desk_asset_v('public/js/planning_approved_page.js')}",
+	f"/assets/kentender_procurement/js/planning_update_page.js?v={_desk_asset_v('public/js/planning_update_page.js')}",
 	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	f"/assets/kentender_procurement/js/std_prod_engine.js?v={_desk_asset_v('public/js/std_prod_engine.js')}",
@@ -246,6 +253,8 @@ page_js = {
 	"procurement-plan-builder": "public/js/planning_builder_page.js",
 	"procurement-plan-item-editor": "public/js/planning_item_editor_page.js",
 	"procurement-plan-review": "public/js/planning_review_page.js",
+	"procurement-plan-approved": "public/js/planning_approved_page.js",
+	"procurement-plan-update": "public/js/planning_update_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",

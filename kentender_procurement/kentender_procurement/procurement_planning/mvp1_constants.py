@@ -52,6 +52,18 @@ ALLOC_EFFECTIVE = "Effective"
 ALLOC_REVERSED = "Reversed"
 ALLOCATION_STATUSES = (ALLOC_DRAFT, ALLOC_EFFECTIVE, ALLOC_REVERSED)
 
+# Plan Item Version draft-change labels (PLN-FR-066 / UI-05A)
+DRAFT_CHANGE_ADDED = "Added"
+DRAFT_CHANGE_CHANGED = "Changed"
+DRAFT_CHANGE_PROPOSED_REMOVAL = "Proposed removal"
+DRAFT_CHANGE_LABELS = (
+	DRAFT_CHANGE_ADDED,
+	DRAFT_CHANGE_CHANGED,
+	DRAFT_CHANGE_PROPOSED_REMOVAL,
+)
+MODE_DRAFT_EXCLUDE = "draft_exclude"
+MODE_PROPOSE_ACTIVE = "propose_active"
+
 # Projections (§9.4) — not Plan statuses
 VALIDATION_NOT_RUN = "Not run"
 VALIDATION_READY = "Ready"
@@ -91,6 +103,23 @@ TENDER_TAKEUP_PROJECTIONS = (
 	TAKEUP_CONTRACTED,
 	TAKEUP_CLOSED,
 )
+
+# Plan Item Finance task (PLN-FR-040…049 / PLN-UI-07)
+FINANCE_NOT_REQUESTED = "Not requested"
+FINANCE_AWAITING = "Awaiting confirmation"
+FINANCE_CONFIRMED = "Confirmed"
+FINANCE_RETURNED = "Returned"
+FINANCE_STALE = "Stale"
+FINANCE_STATUSES = (
+	FINANCE_NOT_REQUESTED,
+	FINANCE_AWAITING,
+	FINANCE_CONFIRMED,
+	FINANCE_RETURNED,
+	FINANCE_STALE,
+)
+FINANCE_DECISION_CONFIRM = "Finance confirmation"
+FINANCE_DECISION_RETURN = "Finance return"
+ERR_INSUFFICIENT_FUNDING = "PLN_INSUFFICIENT_FUNDING"
 
 # Roles that may mutate draft plan content (Gate 02). Final approve is narrower —
 # see planning_permissions.APPROVE_PLAN_ROLES (no Administrator / System Manager bypass).

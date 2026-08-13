@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, getdate
+from frappe.utils import cint, cstr, getdate
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	VALIDATION_NOT_RUN,
@@ -49,12 +49,49 @@ _WRITABLE = (
 	"schedule_change_reason",
 )
 
+HOD_LOCKED = (
+	"owner_org_unit",
+	"confirmed_estimate",
+	"allocated_amount",
+	"demand",
+	"need_item",
+	"approved_value",
+	"requirement_title",
+)
+
+HOD_IMMUTABLE_MSG = (
+	"Business scope, quantity, owner, delivery requirement and approved value come "
+	"from the Approved Demand source(s) and cannot be changed here. Amend and reapprove the Demand."
+)
+
+STITCH_FINANCE_ISSUE = (
+	"Confirm all milestone dates before requesting Finance confirmation."
+)
+
+
+def _request_finance_issues(iv: Any, field_issues: dict[str, str]) -> dict[str, str]:
+	extra: dict[str, str] = dict(field_issues or {})
+	for key in (
+		"requirement_description",
+		"procurement_category",
+		"procurement_method",
+		"arrangement",
+		"lotting_decision",
+	):
+		if not cstr(getattr(iv, key, None) or "").strip():
+			extra[key] = STITCH_FINANCE_ISSUE
+	for key in MILESTONE_FIELDS:
+		if not getattr(iv, key, None):
+			extra[key] = STITCH_FINANCE_ISSUE
+	return extra
+
 
 def update_plan_item(
 	*,
 	plan_item: str,
 	fields: dict[str, Any] | None = None,
 	user: str | None = None,
+	request_finance: bool | int | None = None,
 ) -> dict[str, Any]:
 	actor = assert_can_add_demand(user)
 	item_name = cstr(plan_item).strip()
@@ -89,6 +126,10 @@ def update_plan_item(
 		return {"ok": False, "errors": {"form": "Draft Plan Item Version not found."}}
 
 	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+
+	locked = [k for k in HOD_LOCKED if k in payload]
+	if locked:
+		return {"ok": False, "errors": {k: HOD_IMMUTABLE_MSG for k in locked}}
 
 	# Soft field issues — Draft save must still persist; UI flags fields inline.
 	# C02: preference keys in payload are ignored (not writable from editor).
@@ -136,11 +177,26 @@ def update_plan_item(
 	validation = validate_plan(plan=plan.name, user=actor)
 	# Recompute against saved state so callers/UI stay aligned with persistence.
 	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=False)
-	return {
+	want_finance = bool(cint(request_finance))
+	finance_issues = _request_finance_issues(iv, field_issues) if want_finance else field_issues
+	complete = want_finance and not finance_issues
+	out: dict[str, Any] = {
 		"ok": True,
 		"plan_item": item_name,
 		"item_version": iv.name,
-		"field_issues": field_issues,
+		"field_issues": finance_issues if want_finance else field_issues,
 		"validation": validation,
 		"actor": actor,
+		"complete": complete,
 	}
+	if want_finance and not complete:
+		out["attention_message"] = STITCH_FINANCE_ISSUE
+	if complete:
+		from kentender_procurement.procurement_planning.services.plan_item_finance import (
+			request_plan_item_finance,
+		)
+
+		finance = request_plan_item_finance(plan_item=item_name, user=actor)
+		out["finance_status"] = finance.get("finance_status")
+		out["builder_route"] = f"/app/procurement-plan-builder?plan={plan.name}"
+	return out

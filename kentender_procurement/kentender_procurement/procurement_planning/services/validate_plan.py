@@ -72,6 +72,8 @@ def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		if not iv_name:
 			continue
 		iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+		if int(getattr(iv, "proposed_removal", 0) or 0):
+			continue
 		title = cstr(iv.requirement_title or it.plan_item_code)
 
 		method = cstr(iv.procurement_method or "").strip()

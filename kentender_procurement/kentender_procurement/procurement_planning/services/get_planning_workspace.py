@@ -11,6 +11,8 @@ import frappe
 from frappe.utils import cstr, flt
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
+	FINANCE_AWAITING,
+	FINANCE_RETURNED,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VERSION_APPROVED,
@@ -24,6 +26,8 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	PE_FILTER_ALL,
 	READ_PLAN_ROLES,
 	assert_planning_scope,
+	has_any_operational_role,
+	has_finance_task_capability,
 	has_planning_scope,
 	is_planning_read_only,
 	list_eligible_procuring_entities,
@@ -196,6 +200,86 @@ def _work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[st
 	return out
 
 
+def _finance_work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[str, Any]]:
+	"""Awaiting confirmation (BO) and Returned by Finance (planner) Plan Item rows."""
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		finance_status_label,
+	)
+
+	wf = cstr(work_filter or "all").strip() or "all"
+	want_awaiting = wf in ("all", "all_work", "awaiting_finance")
+	want_returned = wf in ("all", "all_work", "returned_by_finance")
+	if not want_awaiting and not want_returned:
+		return []
+	plans = frappe.get_all(
+		"Procurement Plan",
+		filters={"procuring_entity": pe},
+		fields=["name", "title", "open_draft_version", "current_approved_version", "currency"],
+		limit_page_length=20,
+	)
+	out: list[dict[str, Any]] = []
+	bo = has_finance_task_capability(user)
+	for plan in plans:
+		focus = cstr(plan.open_draft_version or plan.current_approved_version or "")
+		if not focus:
+			continue
+		items = frappe.get_all(
+			"Procurement Plan Item",
+			filters={"plan": plan.name, "baseline_state": ["in", [ITEM_PROPOSED, ITEM_ACTIVE]]},
+			fields=["name", "plan_item_code", "owner_org_unit"],
+		)
+		for it in items:
+			iv_name = frappe.db.get_value(
+				"Procurement Plan Item Version",
+				{"plan_item": it.name, "plan_version": focus},
+				"name",
+			)
+			if not iv_name:
+				continue
+			iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+			status = finance_status_label(iv)
+			row_filter = ""
+			action = "view"
+			action_label = "View"
+			reason = ""
+			if status == FINANCE_AWAITING and bo and want_awaiting:
+				row_filter = "awaiting_finance"
+				action = "confirm_funding"
+				action_label = "Confirm funding"
+				reason = "Plan Item awaiting Finance confirmation"
+			elif status == FINANCE_RETURNED and want_returned:
+				row_filter = "returned_by_finance"
+				action = "continue_item"
+				action_label = "Review return"
+				reason = "Returned by Finance"
+			else:
+				continue
+			ou = cstr(it.owner_org_unit or "")
+			out.append(
+				{
+					"demand": "",
+					"demand_code": it.plan_item_code,
+					"plan": plan.name,
+					"plan_item": it.name,
+					"plan_item_code": it.plan_item_code,
+					"title": iv.requirement_title or it.plan_item_code,
+					"organisation_unit": ou,
+					"organisation_unit_label": _ou_label(ou),
+					"amount": flt(iv.confirmed_estimate),
+					"amount_display": _money(flt(iv.confirmed_estimate), plan.currency or "KES"),
+					"reason": reason,
+					"status": status,
+					"filter_key": row_filter,
+					"action": action,
+					"action_label": action_label,
+					"builder_route": (
+						f"/app/procurement-plan-builder?plan={plan.name}&finance_item={it.name}"
+					),
+				}
+			)
+	return out
+
+
 def get_planning_workspace(
 	*,
 	procuring_entity: str | None = None,
@@ -210,7 +294,11 @@ def get_planning_workspace(
 			frappe.PermissionError,
 			title="PLN_LOGIN_REQUIRED",
 		)
-	require_operational_roles(*READ_PLAN_ROLES, user=actor)
+	if not (
+		has_any_operational_role(*READ_PLAN_ROLES, user=actor)
+		or has_finance_task_capability(actor)
+	):
+		require_operational_roles(*READ_PLAN_ROLES, user=actor)
 
 	entities = list_eligible_procuring_entities(actor)
 	# Workspace filters use any Planning USA PE (broader than create-only).
@@ -353,7 +441,11 @@ def get_planning_workspace(
 			"departmental_contributions_label": "—",
 			"period_start": str(plan.period_start or ""),
 			"period_end": str(plan.period_end or ""),
-			"builder_route": f"/app/procurement-plan-builder?plan={plan.name}",
+			"builder_route": (
+				f"/app/procurement-plan-approved?plan={plan.name}"
+				if plan.current_approved_version
+				else f"/app/procurement-plan-builder?plan={plan.name}"
+			),
 			"procuring_entity": for_pe,
 			"procuring_entity_label": _entity_label(for_pe),
 		}
@@ -373,11 +465,27 @@ def get_planning_workspace(
 			queue.extend(
 				_work_queue(pe=e["id"], user=actor, work_filter=cstr(work_filter or "all"))
 			)
+			queue.extend(
+				_finance_work_queue(
+					pe=e["id"], user=actor, work_filter=cstr(work_filter or "all")
+				)
+			)
 		pe_label = "All authorised entities"
 	else:
 		assert_planning_scope(procuring_entity=pe, org_unit=None, user=actor, require_write=False)
 		current_plan = _load_plan(pe)
-		queue = _work_queue(pe=pe, user=actor, work_filter=cstr(work_filter or "all"))
+		finance_only = has_finance_task_capability(actor) and is_planning_read_only(actor)
+		if finance_only:
+			queue = _finance_work_queue(
+				pe=pe, user=actor, work_filter=cstr(work_filter or "all")
+			)
+		else:
+			queue = _work_queue(pe=pe, user=actor, work_filter=cstr(work_filter or "all"))
+			queue.extend(
+				_finance_work_queue(
+					pe=pe, user=actor, work_filter=cstr(work_filter or "all")
+				)
+			)
 		pe_label = _entity_label(pe)
 
 	# Create requires an operational create-scope PE — never Viewer / all-entities.

@@ -10,6 +10,7 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_EFFECTIVE,
+	FINANCE_AWAITING,
 	VERSION_APPROVED,
 	VERSION_IN_REVIEW,
 )
@@ -27,6 +28,7 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	advance_draft_to_recommended,
 	approve_plan_via_gate05,
 	complete_plan_item_for_signoff,
+	confirm_included_items_funding,
 	create_plan_as_planner,
 	ensure_approver_user,
 	ensure_planner_user,
@@ -74,6 +76,7 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 		d = make_approved_demand(title="No recommend demand")
 		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
 		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
+		confirm_included_items_funding(plan=plan["plan"], planner=planner)
 		validate_plan(plan=plan["plan"], user=planner)
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"
@@ -147,4 +150,45 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 		self.assertEqual(as_approver["rail_mode"], "approver")
 		self.assertTrue(as_approver["can_approve"])
 		self.assertTrue(as_approver["items"])
-		self.assertTrue(as_approver["statutory_coverage"])
+		self.assertEqual(as_approver["statutory_coverage"], [])
+		self.assertTrue(as_approver.get("finance_complete"))
+		self.assertEqual(
+			as_approver.get("finance_confirmed_label"),
+			f"{as_approver['finance_confirmed_count']} of {as_approver['finance_item_count']}",
+		)
+		self.assertEqual(as_approver["finance_confirmed_count"], as_approver["finance_item_count"])
+		self.assertTrue(as_approver["finance_item_count"] >= 1)
+		for row in as_approver["items"]:
+			self.assertEqual(row.get("finance_status_label"), "Confirmed")
+
+	def test_approve_denied_when_finance_not_confirmed(self) -> None:
+		planner = ensure_planner_user()
+		approver = ensure_approver_user()
+		fy = unique_test_fy(base_year=2800, bucket=4)
+		purge_pe_fy(fy)
+		plan = create_plan_as_planner(title="Approve finance deny", financial_year=fy)
+		d = make_approved_demand(title="Approve finance deny demand")
+		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
+		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
+		advanced = advance_draft_to_recommended(
+			plan=plan["plan"], version=plan["version"]
+		)
+		iv_name = frappe.db.get_value(
+			"Procurement Plan Item", added["plan_item"], "draft_item_version"
+		)
+		frappe.db.set_value(
+			"Procurement Plan Item Version",
+			iv_name,
+			"finance_status",
+			FINANCE_AWAITING,
+			update_modified=False,
+		)
+		token = frappe.db.get_value(
+			"Procurement Plan Version", advanced["version"], "concurrency_token"
+		)
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			approve_plan_version(
+				version=advanced["version"], concurrency_token=token, user=approver
+			)
+		msg = str(ctx.exception).upper()
+		self.assertTrue("FINANCE" in msg or "PLN_FINANCE_NOT_CONFIRMED" in msg, msg)

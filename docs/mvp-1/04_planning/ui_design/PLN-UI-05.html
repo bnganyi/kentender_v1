@@ -295,12 +295,24 @@
                                         Needs attention
                                     </span>
 </td>
-<td class="p-4">
-<a href="#" class="inline-flex items-center text-primary hover:underline font-label-caps text-label-caps transition-colors group/link">
-    Continue
-    <span class="material-symbols-outlined text-[16px] ml-1 transform group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
-</a>
-</td>
+<td class="p-4"><div class="flex items-center justify-end space-x-3">
+    <a href="#" class="inline-flex items-center text-primary hover:underline font-label-caps text-label-caps transition-colors group/link">
+        Continue
+        <span class="material-symbols-outlined text-[16px] ml-1 transform group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+    </a>
+    <div class="relative group/menu">
+        <button class="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">more_vert</span>
+        </button>
+        <!-- Static Dropdown Simulation -->
+        <div class="hidden group-hover/menu:block absolute right-0 top-full mt-1 w-48 bg-surface-container-lowest border border-subtle rounded shadow-lg z-20">
+            <button class="w-full text-left px-4 py-2 text-body-sm text-status-exhausted hover:bg-surface-container-low transition-colors flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-2">delete</span>
+                Remove from draft
+            </button>
+        </div>
+    </div>
+</div></td>
 </tr>
 <!-- Empty state filler to maintain layout height -->
 <tr class="h-auto">
@@ -340,6 +352,8 @@
 <a class="hover:text-primary dark:hover:text-secondary-fixed-dim transition-opacity duration-150" href="#">Support</a>
 </div>
 </footer>
+
+
 
 
 </body></html>

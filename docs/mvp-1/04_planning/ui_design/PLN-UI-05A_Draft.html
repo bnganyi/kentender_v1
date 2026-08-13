@@ -1,0 +1,264 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Remove Plan Item Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f3f4f6",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-surface": "#191c1e",
+                      "inverse-primary": "#b2c5ff",
+                      "on-tertiary-fixed": "#151b2b",
+                      "on-error-container": "#93000a",
+                      "surface-dim": "#d9dadc",
+                      "secondary": "#00687b",
+                      "border-subtle": "#DFE1E6",
+                      "surface-bright": "#f8f9fb",
+                      "background": "#f8f9fb",
+                      "on-tertiary-container": "#ccd2e7",
+                      "tertiary-fixed": "#dce2f8",
+                      "surface": "#f8f9fb",
+                      "surface-variant": "#e1e2e4",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-container": "#c4d2ff",
+                      "tertiary-container": "#545a6c",
+                      "on-primary-fixed": "#001848",
+                      "outline": "#737685",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-secondary-container": "#005f71",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-background": "#191c1e",
+                      "status-exhausted": "#E11D48",
+                      "data-committed": "#6366F1",
+                      "outline-variant": "#c3c6d6",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#434654",
+                      "on-error": "#ffffff",
+                      "surface-container-high": "#e7e8ea",
+                      "inverse-surface": "#2e3132",
+                      "surface-tint": "#0c56d0",
+                      "secondary-container": "#50dcff",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#3d4354",
+                      "primary": "#003d9b",
+                      "primary-container": "#0052cc",
+                      "primary-fixed": "#dae2ff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed": "#001f27",
+                      "secondary-fixed": "#afecff",
+                      "surface-container": "#edeef0",
+                      "status-reserved": "#F59E0B",
+                      "on-primary": "#ffffff",
+                      "status-available": "#10B981"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter-md": "1rem",
+                      "stack-sm": "0.5rem",
+                      "section-gap": "1.5rem",
+                      "container-padding": "1rem",
+                      "stack-xs": "0.25rem"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex items-center justify-center relative">
+<!-- Mock Background for context (Plan Builder) -->
+<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
+<div class="p-8 grid grid-cols-12 gap-section-gap opacity-50 blur-sm">
+<div class="col-span-12 h-16 bg-surface-container-low border border-subtle rounded flex items-center px-4"><div class="w-48 h-4 bg-outline-variant rounded"></div></div>
+<div class="col-span-3 h-[600px] bg-surface-container-low border border-subtle rounded"></div>
+<div class="col-span-9 space-y-section-gap">
+<div class="h-64 bg-surface-container-low border border-subtle rounded"></div>
+<div class="h-64 bg-surface-container-low border border-subtle rounded"></div>
+</div>
+</div>
+</div>
+<!-- Overlay Dimming -->
+<div class="absolute inset-0 bg-on-surface/30 backdrop-blur-[2px] z-10"></div>
+<!-- Dialog Container -->
+<div class="relative z-20 w-full max-w-[560px] bg-surface-container-lowest border border-subtle rounded-lg shadow-xl overflow-hidden mx-4">
+<!-- Header -->
+<div class="px-section-gap py-section-gap border-b border-subtle flex items-start justify-between">
+<div class="flex items-center gap-stack-sm">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-status-exhausted/10 flex items-center justify-center"><span aria-hidden="true" class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">delete_forever</span></div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Remove Plan Item from draft?</h2>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-section-gap space-y-section-gap">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                This removes the item from the current Draft Plan. The Approved Demand will be available for planning again.
+            </p>
+<!-- Read-only Details Block -->
+<div class="bg-surface p-container-padding rounded border border-subtle space-y-stack-sm">
+<div class="flex flex-col gap-stack-xs pb-stack-sm border-b border-subtle border-opacity-50">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Item</span>
+<span class="font-body-md text-body-md font-medium">Digital health technical staff certification programme</span>
+</div>
+<div class="grid grid-cols-2 gap-container-padding pb-stack-sm border-b border-subtle border-opacity-50 pt-stack-sm">
+<div class="flex flex-col gap-stack-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Organisation Unit</span>
+<span class="font-body-sm text-body-sm text-on-surface">Human Resources Management and Development</span>
+</div>
+<div class="flex flex-col gap-stack-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Planned Value</span>
+<span class="font-data-md text-data-md text-primary">KES 80,000,000</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-container-padding pt-stack-sm">
+<div class="flex flex-col gap-stack-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approved Sources</span>
+<span class="font-body-sm text-body-sm text-on-surface">1 Demand · 1 Need Item</span>
+</div>
+<div class="flex flex-col gap-stack-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Finance Effect</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                            No funding confirmed; no reservation to release
+                        </span>
+</div>
+</div>
+</div>
+<!-- Input Form -->
+<div class="space-y-stack-sm">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="reason">Reason for removal <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface border border-subtle rounded px-3 py-2 font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" id="reason" placeholder="Briefly explain why this item should be removed from the draft." rows="3"></textarea>
+</div>
+</div>
+<!-- Footer / Actions -->
+<div class="px-section-gap py-container-padding bg-surface-bright border-t border-subtle flex justify-end gap-stack-sm">
+<button class="px-4 py-2 rounded border border-subtle font-body-sm text-body-sm font-medium text-primary hover:bg-surface-container-low transition-colors">
+                Keep item
+            </button>
+<button class="px-4 py-2 rounded bg-error font-body-sm text-body-sm font-medium text-on-error hover:opacity-90 transition-colors shadow-sm" type="button">Remove from draft</button>
+</div>
+</div>
+
+
+</body></html>

@@ -34,6 +34,10 @@ from kentender_procurement.procurement_planning.services.record_plan_decision im
 	has_recommendation,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
+from kentender_procurement.procurement_planning.services.remove_plan_item import (
+	apply_proposed_removals_on_approval,
+	assert_no_handoff_for_proposed_removals,
+)
 
 
 def approve_plan_version(
@@ -78,6 +82,19 @@ def approve_plan_version(
 			title="PLN_VALIDATION_NOT_READY",
 		)
 
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		finance_not_confirmed_error,
+	)
+
+	finance_err = finance_not_confirmed_error(plan=plan.name, version=ver.name)
+	if finance_err:
+		frappe.throw(
+			_(finance_err["form"]),
+			title="PLN_FINANCE_NOT_CONFIRMED",
+		)
+
+	assert_no_handoff_for_proposed_removals(version=ver.name)
+
 	now = now_datetime()
 	prior = cstr(plan.current_approved_version or "").strip()
 
@@ -118,13 +135,15 @@ def approve_plan_version(
 		alloc.save(ignore_permissions=True)
 		_write_planning_consumption(alloc)
 
-	# Activate items that have item versions on this plan version
+	# Activate items that have item versions on this plan version (skip proposed removals)
 	item_versions = frappe.get_all(
 		"Procurement Plan Item Version",
 		filters={"plan_version": ver.name},
-		fields=["name", "plan_item"],
+		fields=["name", "plan_item", "proposed_removal"],
 	)
 	for iv in item_versions:
+		if int(iv.proposed_removal or 0):
+			continue
 		frappe.db.set_value(
 			"Procurement Plan Item",
 			iv.plan_item,
@@ -135,6 +154,8 @@ def approve_plan_version(
 			},
 			update_modified=False,
 		)
+
+	apply_proposed_removals_on_approval(version=ver.name, actor=actor)
 
 	frappe.db.set_value(
 		"Procurement Plan Version",

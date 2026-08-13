@@ -141,8 +141,11 @@ def _approve_returned_demand_for_scn() -> dict[str, Any]:
 	return {"demand": demand_name, "reservation": rsv_name, "already_approved": False}
 
 
-def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
-	"""Execute SCN-PLN-ADD-001 once; second run is a no-op for duplicates."""
+def run(*, reset_first: bool = False, force: bool = True, stop_before_approve: bool = False) -> dict[str, Any]:
+	"""Execute SCN-PLN-ADD-001 once; second run is a no-op for duplicates.
+
+	``stop_before_approve=True`` leaves Draft V2 with Proposed PPI-022 (REMOVE-001 start).
+	"""
 	frappe.only_for(("System Manager", "Administrator"))
 	frappe.set_user("Administrator")
 
@@ -157,7 +160,21 @@ def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
 			["name", "status"],
 			as_dict=True,
 		)
-		if v2 and v2.status == VERSION_APPROVED:
+		item_state = frappe.db.get_value(
+			"Procurement Plan Item",
+			{"plan_item_code": C.PLAN_ITEM_CODE_SCN},
+			"baseline_state",
+		)
+		if stop_before_approve and v2 and v2.status == VERSION_DRAFT and item_state == ITEM_PROPOSED:
+			return {
+				"ok": True,
+				"idempotent": True,
+				"plan_item_code": C.PLAN_ITEM_CODE_SCN,
+				"version_code": C.PROCUREMENT_PLAN_VERSION_V2,
+				"total": C.PLAN_AMOUNT_V2,
+				"stopped_before_approve": True,
+			}
+		if (not stop_before_approve) and v2 and v2.status == VERSION_APPROVED:
 			return {
 				"ok": True,
 				"idempotent": True,
@@ -312,6 +329,20 @@ def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
 		)
 		alloc_doc.insert(ignore_permissions=True)
 		alloc = alloc_doc.name
+
+	if stop_before_approve:
+		frappe.db.commit()
+		return {
+			"ok": True,
+			"idempotent": False,
+			"created_v2": created_v2,
+			"created_item": created_item,
+			"plan_item_code": C.PLAN_ITEM_CODE_SCN,
+			"version_code": C.PROCUREMENT_PLAN_VERSION_V2,
+			"total": C.PLAN_AMOUNT_V2,
+			"expected_total": C.PLAN_AMOUNT_V2,
+			"stopped_before_approve": True,
+		}
 
 	# Approve V2 → supersede V1, activate 022
 	v2_status = frappe.db.get_value("Procurement Plan Version", v2_name, "status")

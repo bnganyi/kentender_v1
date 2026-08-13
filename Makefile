@@ -68,6 +68,7 @@ help:
 	@echo "  make ui-demands-workspace-gate ui-planning-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
 	@echo "  make ui-planning-workspace-gate — Planning Gate 03 (PLN-UI-01…03) chrome + API + Playwright"
 	@echo "  make ui-planning-builder-gate — Planning Gate 04 (PLN-UI-04…06) chrome + API + Playwright"
+	@echo "  make ui-planning-finance-gate — PLN-UI-07/07A Finance confirm (SVC-007/008) domain + Playwright"
 	@echo "  make ui-planning-approval-gate — Planning Gate 05 (PLN-UI-08 review/approval + C02 absence)"
 	@echo "  make ui-planning-scope-auth-gate — PLN-GATE-C01 scope + task authority + route denial"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
@@ -461,6 +462,8 @@ ui-planning-builder-gate: ui-stitch-desk-chrome-gate
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.procurement_planning.tests.test_update_plan_item
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_remove_plan_item
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.procurement_planning.tests.test_aggregate_plan_allocations
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.procurement_planning.tests.test_validate_plan
@@ -470,6 +473,17 @@ ui-planning-builder-gate: ui-stitch-desk-chrome-gate
 		tests/ui/smoke/planning/planning-builder.spec.ts \
 		tests/ui/smoke/planning/planning-add-demand.spec.ts \
 		tests/ui/smoke/planning/planning-plan-item-editor.spec.ts
+
+# PLN-UI-07 / SVC-007 — Finance confirmation (sufficient) + 07A drawer/API reject.
+ui-planning-finance-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_scn_pln_fund_short_001
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_plan_item_finance
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning/planning-finance-confirm.spec.ts
 
 # PLN-GATE-05 — Consolidated review/approval (PLN-UI-08 / PLN-SVC-009…011).
 # Contribution gate removed in PLN-GATE-C02 (use test_planning_contribution_absent).

@@ -18,6 +18,7 @@ from kentender_procurement.procurement_planning.services.submit_plan_for_review 
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	complete_plan_item_for_signoff,
+	confirm_included_items_funding,
 	create_plan_as_planner,
 	ensure_hod_user,
 	ensure_planner_user,
@@ -45,8 +46,31 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		validate_plan(plan=plan["plan"], user=planner)
 		return planner, plan
 
+	def test_submit_blocked_until_finance_confirmed(self) -> None:
+		planner, plan = self._ready_plan()
+		token = frappe.db.get_value(
+			"Procurement Plan Version", plan["version"], "concurrency_token"
+		)
+		blocked = submit_plan_for_review(
+			plan=plan["plan"], concurrency_token=token, user=planner
+		)
+		self.assertFalse(blocked["ok"], blocked)
+		self.assertIn("form", blocked["errors"])
+		self.assertIn("finance", blocked["errors"]["form"].lower())
+
+		confirm_included_items_funding(plan=plan["plan"], planner=planner)
+		token2 = frappe.db.get_value(
+			"Procurement Plan Version", plan["version"], "concurrency_token"
+		)
+		result = submit_plan_for_review(
+			plan=plan["plan"], concurrency_token=token2, user=planner
+		)
+		self.assertTrue(result["ok"], result)
+		self.assertEqual(result["status"], VERSION_IN_REVIEW)
+
 	def test_planner_submits_for_review_without_contribution(self) -> None:
 		planner, plan = self._ready_plan()
+		confirm_included_items_funding(plan=plan["plan"], planner=planner)
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"
 		)

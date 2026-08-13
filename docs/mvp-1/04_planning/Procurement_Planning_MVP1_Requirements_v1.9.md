@@ -1,17 +1,17 @@
 # Procurement Planning — MVP 1 Requirements
 
-**Document ID:** PLANNING-MVP1-REQ-1.8  
-**Version:** 1.8  
+**Document ID:** PLANNING-MVP1-REQ-1.9  
+**Version:** 1.9  
 **Status:** Approved functional baseline for direct MVP correction  
-**Date:** 11 August 2026  
-**Supersedes:** `PLANNING-MVP1-REQ-1.7`  
+**Date:** 12 August 2026  
+**Supersedes:** `PLANNING-MVP1-REQ-1.8`  
 **Controlling authority:** `KENTENDER-MVP-CMOM-1.1`  
-**Design baseline:** `PLANNING-MVP1-STITCH-1.9`  
+**Design baseline:** `PLANNING-MVP1-STITCH-2.0`  
 **Module:** Procurement Planning  
 **Primary fixture:** Ministry of Health  
 **Secondary fixture:** County Government of Kisumu
 
-**Revision 1.8:** Adds PLN-UI-07A as the explicit funding-shortfall state of the Finance confirmation task. The Budget Officer may confirm fully available funding, keep the task pending while resolving the shortfall in Budget & Funding, or return it to the planner with a reason. Partial confirmation, availability override and inline Budget editing are prohibited. All v1.7 formation and workflow corrections remain in force.
+**Revision 1.9:** Defines removal of a Plan Item as a controlled, audited Plan-Version change. A planner may remove a draft-only Proposed item or propose removal of an eligible Active item through a Draft successor. Removal never hard-deletes lineage, never edits an Approved Version in place, restores source-Demand eligibility only when the removal is effective, and reverses Finance tasks/reservations at the correct lifecycle boundary. All v1.8 Finance-shortfall and earlier workflow corrections remain in force.
 
 ## Source baseline
 
@@ -34,7 +34,7 @@
 - Budget & Funding Requirements v1.1 or its approved successor
 - Strategy Alignment Requirements v1.1 or its approved successor
 - KenTender Procuring Entity and Organisation Scope Model
-- KenTender MVP Canonical Demo Data Contract v2.5 or its approved successor
+- KenTender MVP Canonical Demo Data Contract v2.7
 - KenTender Statutory and Public-Value Obligations Matrix v1.1
 
 Applicable Kenyan law and binding financing agreements prevail. International references inform value for money, competition, integration, proportionality, transparency and lifecycle evidence; they do not create extra screens or approvals. Approval routes and legal rules must be configurable and verified before production use.
@@ -71,6 +71,7 @@ The module is not a package, contribution or compliance-questionnaire workbench.
 8. **The Approved Version remains operational during revision.** Existing Tender handoffs remain effective.
 9. **Planning cannot change HoD-owned facts.** Material changes require a Demand amendment and HoD reapproval upstream.
 10. **Prefer omission to speculation.** Unsupported fields and workflows are removed, not relabelled.
+11. **Plan Item removal is a versioned business change, not deletion.** Draft-only additions can be removed from the Draft; an Active item can only be proposed for removal in a Draft successor and remains operational until that successor is approved.
 
 ## 3. Legal and standards treatment
 
@@ -206,7 +207,7 @@ Rules:
 
 - Proposed — exists only in a Draft/Returned Version
 - Active — included in the current Approved Version
-- Removed — intentionally omitted by an Approved successor while history remains
+- Removed — excluded from an editable Draft when it existed only in that Draft, or intentionally omitted by an Approved successor; identity, sources, decisions and audit history remain
 
 ### 7.4 Separate projections
 
@@ -265,6 +266,19 @@ No targeted Planning-stage HoD workbench is created in MVP.
 - Combined formation requires a reason.
 - Every Demand and Need Item retains Budget, funding, approval and allocation lineage.
 - `Keep separate` is not stored as a cosmetic value on one combined item.
+
+### 8.5 Remove a Plan Item
+
+Removal is initiated from the Plan builder/update view, not from the Plan Item editor.
+
+1. The authorised planner opens the row action and selects **Remove from draft** for a draft-only Proposed item, or **Propose removal** for an eligible Active item carried into a Draft successor.
+2. The system shows one compact confirmation dialog with the item, value, source Demand(s), funding effect and one required business reason.
+3. Removing a draft-only Proposed item takes effect immediately in the editable Draft, preserves an audit tombstone, cancels any open Finance task and releases any draft-stage reservation atomically. Its source Demand allocation(s) return to the eligible queue.
+4. Proposing removal of an Active item records a removal change only in the Draft successor. The current Approved Version, reservation and item remain operational until successor approval; its source Demand(s) do not become eligible yet.
+5. On successor approval, the Active item becomes Removed, its unconsumed reservation is released atomically and its source Demand allocation(s) return to the eligible queue.
+6. An item with a Tender handoff or other downstream execution cannot be removed in MVP. The action is absent and the server rejects direct calls. Cancellation or amendment of downstream procurement is a separate lifecycle.
+7. A combined Plan Item is removed as one whole item. MVP does not remove an individual source from an already formed combined item; the planner removes the item and reforms it from the intended source Demands.
+8. If removal leaves a Draft successor with no effective changes, the system shows **No changes remain** and requires the planner to cancel the empty update; it does not submit a no-op Version.
 
 ## 9. Functional requirements
 
@@ -371,6 +385,11 @@ The ordinary editor shall not contain aggregation controls, Departmental Contrib
 | PLN-FR-063 | PLN-UI-10 shall focus on changed items and show unchanged operational items as read-only context. |
 | PLN-FR-064 | An addition after approval shall capture one concise update reason. |
 | PLN-FR-065 | Approval of the successor shall atomically replace the current Version without duplicating unchanged item identity or handoffs. |
+| PLN-FR-066 | A scoped Procurement Planner shall be able to remove a draft-only Proposed Plan Item from the editable Draft or propose removal of an eligible Active Plan Item through the Draft successor. |
+| PLN-FR-067 | Removal shall require one business reason, preserve the Plan Item, source allocations, decisions and audit history, and shall never hard-delete or edit an Approved Version in place. |
+| PLN-FR-068 | Draft-only removal shall atomically exclude the item, cancel its open Finance task, release any draft-stage reservation and restore its source Demand allocation(s) to Planning eligibility. |
+| PLN-FR-069 | Active-item removal shall become effective only on successor approval. Until then the current Approved item and reservation remain operational; approval shall recheck that no Tender/downstream handoff exists, then mark the item Removed, release unconsumed reservation and restore source eligibility atomically. |
+| PLN-FR-069A | Items with a Tender handoff or downstream execution shall not expose removal and shall be rejected by the server. Combined Plan Items shall be removable only as a whole in MVP. |
 
 ### 9.9 Publication, Tender handoff and monitoring
 
@@ -415,7 +434,8 @@ A Draft Plan Version is ready when:
 - every applicable Plan Item has current Confirmed Finance state;
 - all source allocations reconcile to approved available amounts;
 - no blocking validation issue remains; and
-- the update reason is complete for a post-approval addition.
+- the update reason is complete for a post-approval change; and
+- at least one effective change remains in a Draft successor.
 
 ### 10.3 Approve Plan Version
 
@@ -466,13 +486,13 @@ The implementation shall provide these capabilities without requiring a second p
 - list eligible Approved Demands;
 - add one or more selected Demands to a Plan atomically using an explicit formation mode when multiple are selected;
 - save one existing Draft Plan Item Version;
-- add another compatible Approved Demand to a Proposed Plan Item;
 - validate Plan/Version;
 - request and record Finance confirmation/return;
 - submit Plan Version for professional review;
 - record return/approval decision;
 - approve Plan Version atomically;
 - open/reuse/cancel Draft successor;
+- remove a draft-only Proposed Plan Item or record an eligible Active-item removal in the Draft successor;
 - publish/export current Approved Version;
 - create Tender handoff from eligible Plan Item;
 - return implementation and audit projections.
@@ -500,6 +520,7 @@ Repository public service names are authoritative when already used and semantic
 | PLN-UI-03 | Empty Draft Plan builder |
 | PLN-UI-04 | Select one or more Approved Demands and choose separate or compatible combined formation when needed |
 | PLN-UI-05 | Draft Plan with Proposed Plan Item |
+| PLN-UI-05A | Remove Plan Item confirmation dialog, reused for draft removal and proposed removal |
 | PLN-UI-06 | Focused Plan Item editor |
 | PLN-UI-07 | Finance funding confirmation task — sufficient-funding state |
 | PLN-UI-07A | Finance funding confirmation task — shortfall state |
@@ -507,7 +528,7 @@ Repository public service names are authoritative when already used and semantic
 | PLN-UI-09 | Approved Plan and implementation |
 | PLN-UI-10 | Draft Plan update overview |
 
-Screen composition is controlled by Stitch v1.9. Requirements control behaviour, ownership, state and authority.
+Screen composition is controlled by Stitch v2.0. Requirements control behaviour, ownership, state and authority.
 
 ## 14. Canonical seed contract
 
@@ -544,6 +565,12 @@ Screen composition is controlled by Stitch v1.9. Requirements control behaviour,
 - No routine planning-stage HoD-sign-off records
 - No cosmetic `Keep separate` value
 - Running the canonical seed twice produces no duplicates and reconciles all amounts
+
+### 14.4 Optional removal scenario
+
+- `SCN-PLN-REMOVE-001` starts after Proposed `PPI-MOH-2027-022` has been added to Draft Version 2 and before Finance confirmation.
+- Removing the item records the required reason **Added for demonstration; remove from this draft**, returns `DMD-MOH-2027-019` to Planning eligibility, restores the Draft total from KES 535,000,000 to KES 455,000,000 and leaves Approved Version 1 and `TND-MOH-2027-008` unchanged.
+- Reset restores the pre-removal Draft Version 2 state without duplicating items, allocations or audit events.
 
 ## 15. Non-functional requirements
 
@@ -583,6 +610,11 @@ Screen composition is controlled by Stitch v1.9. Requirements control behaviour,
 | PLN-AC-020 | Canonical seed and post-approval scenario run twice without duplication and with correct arithmetic. |
 | PLN-AC-021 | Neutral record visibility does not expose Finance or approval task forms/actions. |
 | PLN-AC-022 | A shortfall state shows the exact deficit, prevents confirmation and overrides, and returns to Confirmable on the same task only after governed funding resolution. |
+| PLN-AC-023 | A planner can remove a draft-only Proposed item from PLN-UI-05/10 through one confirmation; the item disappears from the Draft projection, history remains and its source Demand becomes eligible again. |
+| PLN-AC-024 | Removing a Finance-confirmed draft-only item cancels the open task and releases its reservation once; a retry creates no duplicate release or audit event. |
+| PLN-AC-025 | Proposing removal of an Active item creates/reuses a Draft successor while the current Approved item remains operational and its Demand remains unavailable for replanning. |
+| PLN-AC-026 | Successor approval makes an eligible proposed removal effective atomically; a concurrent/new Tender handoff blocks removal approval. |
+| PLN-AC-027 | An item with Tender/downstream execution has no removal action and direct service calls are rejected. A combined item can be removed only as a whole. |
 
 ## 17. Explicit removals from v1.5
 
@@ -604,4 +636,4 @@ Remove from requirements, schema, services, UI, seeds and tests where present:
 
 ## 18. Approval decision
 
-Version 1.8 is the complete controlling Procurement Planning Requirements baseline. Version 1.7 and earlier are superseded for implementation. Any new field, approval, record or workflow requires a new approved Requirements version and must pass the field/concept admission rule in `KENTENDER-MVP-CMOM-1.1`.
+Version 1.9 is the complete controlling Procurement Planning Requirements baseline. Version 1.8 and earlier are superseded for implementation. Any new field, approval, record or workflow requires a new approved Requirements version and must pass the field/concept admission rule in `KENTENDER-MVP-CMOM-1.1`.

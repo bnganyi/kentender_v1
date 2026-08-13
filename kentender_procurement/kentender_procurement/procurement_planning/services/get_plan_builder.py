@@ -18,12 +18,21 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
 	assert_planning_scope,
+	has_any_operational_role,
+	has_finance_task_capability,
 	is_planning_read_only,
 	require_operational_roles,
+)
+from kentender_procurement.procurement_planning.services.plan_item_finance import (
+	finance_status_label,
 )
 from kentender_procurement.procurement_planning.services.preference_reservation import (
 	plan_coverage,
 	scheme_is_assigned,
+)
+from kentender_procurement.procurement_planning.services.remove_plan_item import (
+	draft_has_effective_changes,
+	removal_capabilities_for_item,
 )
 
 
@@ -71,7 +80,11 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			frappe.PermissionError,
 			title="PLN_LOGIN_REQUIRED",
 		)
-	require_operational_roles(*READ_PLAN_ROLES, user=actor)
+	if not (
+		has_any_operational_role(*READ_PLAN_ROLES, user=actor)
+		or has_finance_task_capability(actor)
+	):
+		require_operational_roles(*READ_PLAN_ROLES, user=actor)
 
 	plan_name = cstr(plan).strip()
 	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name):
@@ -108,6 +121,7 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	planned_total = 0.0
 	designation_values: list[float] = []
 	ous: set[str] = set()
+	read_only = is_planning_read_only(actor)
 	item_names = frappe.get_all(
 		"Procurement Plan Item",
 		filters={
@@ -137,6 +151,7 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		method = ""
 		schedule = ""
 		validation = "Not run"
+		iv = None
 		if iv_name:
 			iv = frappe.db.get_value(
 				"Procurement Plan Item Version",
@@ -150,6 +165,10 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 					"validation_projection",
 					"preference_reservation_scheme",
 					"planned_reserved_value",
+					"finance_status",
+					"finance_snapshot_amount",
+					"finance_snapshot_budget_line",
+					"plan_item",
 				],
 				as_dict=True,
 			)
@@ -170,6 +189,15 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		planned_total += amount
 		if it.owner_org_unit:
 			ous.add(it.owner_org_unit)
+		finance_label = "Not requested"
+		if iv:
+			finance_label = finance_status_label(iv)
+		caps = removal_capabilities_for_item(
+			plan_item=it.name,
+			baseline_state=it.baseline_state,
+			draft_version=draft or None,
+			read_only=read_only,
+		)
 		items_out.append(
 			{
 				"plan_item": it.name,
@@ -184,7 +212,17 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 				"method": method,
 				"schedule": schedule,
 				"validation_projection": validation,
+				"finance_status_label": finance_label,
+				"can_open_finance_task": has_finance_task_capability(actor)
+				and finance_label
+				in ("Awaiting confirmation", "Stale", "Returned"),
 				"editor_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
+				"can_remove_from_draft": caps["can_remove_from_draft"],
+				"can_propose_removal": caps["can_propose_removal"],
+				"removal_variant": caps["removal_variant"],
+				"finance_effect_kind": caps["finance_effect_kind"],
+				"finance_effect_copy": caps["finance_effect_copy"],
+				"sources_label": caps["sources_label"],
 			}
 		)
 
@@ -193,7 +231,6 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "entity_name")
 		or plan_doc.procuring_entity
 	)
-	read_only = is_planning_read_only(actor)
 	validation = (version.validation_projection if version else "Not run") or "Not run"
 	issue_count = sum(
 		1
@@ -210,15 +247,21 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	items_ready = (not empty) and issue_count == 0 and all(
 		cstr(i.get("validation_projection")) == VALIDATION_READY for i in items_out
 	)
+	has_successor = bool(draft) and bool(approved)
+	no_changes_remain = has_successor and (not draft_has_effective_changes(plan=plan_name, version=draft))
+	can_cancel_update = (not read_only) and no_changes_remain
 	can_submit_for_review = (
 		(not read_only)
 		and bool(draft)
 		and items_ready
+		and (not no_changes_remain)
 		and cstr(version.status if version else "") in ("Draft", "Returned")
 	)
 
-	# PLN-UI-03 Finance Confirmed projection — real confirmation lands in C05.
-	finance_confirmed_count = 0
+	# PLN-UI-03 Finance Confirmed projection.
+	finance_confirmed_count = sum(
+		1 for i in items_out if cstr(i.get("finance_status_label")) == "Confirmed"
+	)
 	finance_confirmed_total = len(items_out)
 
 	next_step = _builder_next_step(
@@ -261,12 +304,16 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"validation_projection": validation,
 		"issue_count": issue_count,
 		"issue_summary": (
-			f"{issue_count} item needs attention before submit for review."
-			if issue_count == 1
+			"Complete the Plan Item before requesting Finance confirmation."
+			if (not empty and not can_submit_for_review)
 			else (
-				f"{issue_count} items need attention before submit for review."
-				if issue_count
-				else ""
+				f"{issue_count} item needs attention before submit for review."
+				if issue_count == 1
+				else (
+					f"{issue_count} items need attention before submit for review."
+					if issue_count
+					else ""
+				)
 			)
 		),
 		"next_step_kind": next_step["kind"],
@@ -282,7 +329,14 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"add_demand_pending_gate": False,
 		"read_only": read_only,
 		"can_submit_for_review": can_submit_for_review,
+		"no_changes_remain": no_changes_remain,
+		"can_cancel_update": can_cancel_update,
 		"review_route": f"/app/procurement-plan-review?plan={plan_name}",
+		"current_approved_version": approved,
+		"open_draft_version": draft,
+		"update_route": (
+			f"/app/procurement-plan-update?plan={plan_name}" if has_successor else ""
+		),
 		"concurrency_token": cstr(version.concurrency_token if version else "") or "",
 		"workspace_route": "/app/planning-workspace",
 	}

@@ -10,7 +10,12 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, flt
 
-from kentender_procurement.procurement_planning.mvp1_constants import ITEM_PROPOSED
+from kentender_procurement.procurement_planning.mvp1_constants import (
+	ITEM_PROPOSED,
+	VERSION_DRAFT,
+	VERSION_EDITABLE_STATUSES,
+	VERSION_RETURNED,
+)
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
 	assert_planning_scope,
@@ -20,6 +25,9 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
 	MILESTONE_FIELDS,
 	collect_plan_item_field_issues,
+)
+from kentender_procurement.procurement_planning.services.get_plan_update import (
+	plan_canvas_routes,
 )
 from kentender_procurement.procurement_planning.services.preference_reservation import (
 	ELIGIBLE_GROUP_OPTIONS,
@@ -33,6 +41,14 @@ from kentender_procurement.procurement_planning.services.preference_reservation 
 
 def _money(amount: float, currency: str = "KES") -> str:
 	return format_money(amount, currency)
+
+
+def _finance_label(iv: Any) -> str:
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		finance_status_label,
+	)
+
+	return finance_status_label(iv)
 
 
 def _is_internal_id(value: str) -> bool:
@@ -114,7 +130,8 @@ def _attention_message(
 		return "Confirm the indicative lot basis before submit for review."
 	missing_ms = [k for k in MILESTONE_FIELDS if not cstr(fields.get(k) or "").strip()]
 	if missing_ms:
-		return "Confirm all milestone dates before submit for review."
+		# Default incomplete state — do not paint the red banner until Request Finance.
+		return ""
 	# Prefer concrete field issue copy over bare projection labels.
 	for key in (
 		"method_override_grounds",
@@ -139,6 +156,15 @@ def _attention_message(
 	if proj == "Needs attention" or issues:
 		return "Review validation issues before submit for review."
 	return ""
+
+
+def _version_label(ver_num: int, status: str) -> str:
+	st = cstr(status).strip()
+	if st == VERSION_RETURNED:
+		return f"Returned Plan Version {ver_num}"
+	if st and st != VERSION_DRAFT:
+		return f"Plan Version {ver_num} · {st}"
+	return f"Draft Plan Version {ver_num}"
 
 
 def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str, Any]:
@@ -251,12 +277,34 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 	}
 	strategy_text = cstr(iv.strategy_snapshot or iv.pvc_snapshot or "").strip()
 	plan_crumb = cstr(plan.title or plan.plan_code or plan.financial_year or "").strip()
-	has_draft = bool(cstr(plan.open_draft_version or "").strip())
-	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=True)
+	open_draft = cstr(plan.open_draft_version or "").strip()
+	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=False)
 	attention = _attention_message(iv=iv, fields=fields, field_issues=field_issues)
 	scheme = cstr(fields["preference_reservation_scheme"] or "").strip()
 	assigned = scheme_is_assigned(scheme)
 	reserved_val = flt(fields["planned_reserved_value"]) if assigned else 0.0
+	is_successor = bool(cstr(plan.current_approved_version or "").strip() and open_draft)
+	ver_name = cstr(open_draft or plan.current_approved_version or "").strip()
+	ver_num = 1
+	ver_status = ""
+	if ver_name:
+		ver_row = frappe.db.get_value(
+			"Procurement Plan Version",
+			ver_name,
+			["version_number", "status"],
+			as_dict=True,
+		)
+		if ver_row:
+			ver_num = int(ver_row.version_number or 1)
+			ver_status = cstr(ver_row.status or "")
+	editable_version = bool(open_draft) and ver_status in VERSION_EDITABLE_STATUSES
+	if open_draft and not editable_version:
+		attention = (
+			f"This plan version is {ver_status}. "
+			"Only Draft or Returned versions can be edited."
+		)
+	source_rows = _source_rows(allocs, currency)
+	combined = len({a.demand for a in allocs if a.demand}) > 1
 
 	return {
 		"ok": True,
@@ -271,7 +319,7 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"lifecycle_label": cstr(item.baseline_state or ITEM_PROPOSED),
 		"item_version": iv.name,
 		"read_only": read_only,
-		"can_edit": (not read_only) and has_draft,
+		"can_edit": (not read_only) and editable_version,
 		"requirement_title": iv.requirement_title,
 		"requirement_description": iv.requirement_description,
 		"confirmed_estimate": flt(iv.confirmed_estimate),
@@ -282,9 +330,14 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"validation_projection": iv.validation_projection or "Not run",
 		"draft_banner": (
 			"Draft Plan update · The current Approved Plan remains active."
-			if has_draft
-			else "Viewing Plan Item · Open a Draft revision to edit."
+			if is_successor
+			else ""
 		),
+		"version_label": _version_label(ver_num, ver_status),
+		"finance_status_label": _finance_label(iv),
+		"formation_reason": cstr(iv.aggregation_reason or "").strip(),
+		"source_rows": source_rows,
+		"combined_sources": combined,
 		"plan_crumb_label": plan_crumb or cstr(plan.financial_year or "Plan"),
 		"attention_message": attention,
 		"fields": fields,
@@ -319,23 +372,69 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 			"pvc_snapshot": iv.pvc_snapshot or "",
 			"owner_org_unit_label": demand_ou_label,
 			"reserved_value_display": _money(flt(iv.confirmed_estimate), currency),
+			"approved_value_display": _money(flt(iv.confirmed_estimate), currency),
 		},
 		"allocations": allocs,
 		"source_allocation_summary": _source_allocation_summary(
 			allocs, flt(iv.confirmed_estimate), currency
 		),
-		"can_add_another_demand": (
-			(not read_only)
-			and has_draft
-			and cstr(item.baseline_state) == ITEM_PROPOSED
-		),
-		"builder_route": f"/app/procurement-plan-builder?plan={plan.name}",
+		"can_add_another_demand": False,
+		"builder_route": plan_canvas_routes(plan)["builder_route"],
 		"demand_route": (
 			f"/app/demand/{demand_row.name}" if demand_row and demand_row.name else ""
 		),
 		# ABS / AC-025: never claim realised savings.
 		"aggregation_benefit_realised": False,
 	}
+
+
+def _source_rows(allocs: list[Any], currency: str) -> list[dict[str, Any]]:
+	"""Per-Demand rows for combined Approved sources (PLN-UI-06)."""
+	grouped: dict[str, dict[str, Any]] = {}
+	order: list[str] = []
+	for a in allocs:
+		demand = cstr(getattr(a, "demand", None) or "").strip()
+		if not demand:
+			continue
+		if demand not in grouped:
+			title = ""
+			code = ""
+			owner = ""
+			if frappe.db.exists("Demand", demand):
+				drow = frappe.db.get_value(
+					"Demand",
+					demand,
+					["title", "demand_code", "owner_org_unit"],
+					as_dict=True,
+				)
+				title = cstr(drow.title or "")
+				code = cstr(drow.demand_code or "")
+				if drow.owner_org_unit:
+					owner = cstr(
+						frappe.db.get_value("Organisation Unit", drow.owner_org_unit, "unit_name")
+						or drow.owner_org_unit
+					)
+			rsv = cstr(getattr(a, "reservation_reference", None) or "").strip()
+			grouped[demand] = {
+				"demand": demand,
+				"demand_code": code,
+				"title": title,
+				"owner_org_unit_label": owner,
+				"need_item_count": 0,
+				"amount": 0.0,
+				"budget_line_label": _funding_line_label(rsv) or "—",
+				"demand_route": f"/app/demand/{demand}",
+			}
+			order.append(demand)
+		grouped[demand]["need_item_count"] += 1
+		grouped[demand]["amount"] += flt(getattr(a, "allocated_amount", 0))
+	rows: list[dict[str, Any]] = []
+	for demand in order:
+		row = grouped[demand]
+		amount = flt(row.pop("amount"))
+		row["approved_value_display"] = _money(amount, currency)
+		rows.append(row)
+	return rows
 
 
 def _source_allocation_summary(

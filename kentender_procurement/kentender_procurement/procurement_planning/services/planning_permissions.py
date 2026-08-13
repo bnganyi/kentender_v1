@@ -271,6 +271,10 @@ def has_review_task_capability(user: str | None = None) -> bool:
 	return bool(actor_planning_roles(user).intersection(REVIEW_TASK_ROLES))
 
 
+def has_finance_task_capability(user: str | None = None) -> bool:
+	return bool(actor_funding_roles(user).intersection(CONFIRM_PLAN_FUNDING_ROLES))
+
+
 def assert_planning_actor(user: str | None = None) -> str:
 	"""Login + any mutate-capable Planning role (Admin alone denied)."""
 	return require_capability(CAP_PLAN_ITEM_EDIT, user=user)

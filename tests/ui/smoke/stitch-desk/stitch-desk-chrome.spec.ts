@@ -202,7 +202,7 @@ const SURFACES = [
 		route: "/desk/procurement-plan-item-editor",
 		rootTestId: "kt-pln-ui06-root",
 		liveAttr: "data-kt-pln-live",
-		primaryCtaTestId: "kt-pln-ui06-save-return",
+		primaryCtaTestId: "kt-pln-ui06-request-finance",
 		selectSelector: '[data-kt-pln-field="procurement_method"]',
 		assertEditableInputs: true,
 		assertHeadline: false,
@@ -213,6 +213,22 @@ const SURFACES = [
 		rootTestId: "kt-pln-ui08-root",
 		liveAttr: "data-kt-pln-live",
 		primaryCtaTestId: "kt-pln-ui08-primary",
+	},
+	{
+		id: "procurement-plan-approved",
+		route: "/desk/procurement-plan-approved",
+		rootTestId: "kt-pln-ui09-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui09-add-item",
+		selectSelector: '[data-kt-pln-ui09-filter="ou"]',
+	},
+	{
+		id: "procurement-plan-update",
+		route: "/desk/procurement-plan-update",
+		rootTestId: "kt-pln-ui10-root",
+		liveAttr: "data-kt-pln-live",
+		primaryCtaTestId: "kt-pln-ui10-validate",
+		primaryCtaStyle: "bordered" as const,
 	},
 ] as const;
 
@@ -334,6 +350,56 @@ test.describe("Stitch Desk chrome baseline", () => {
 				const plan = prep.empty_draft_plan || "";
 				expect(plan).toBeTruthy();
 				route = `/desk/procurement-plan-review?plan=${encodeURIComponent(plan)}`;
+			}
+			if (surface.id === "procurement-plan-approved") {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const prep = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: { method: string }) => Promise<{
+									message?: { empty_draft_plan?: string };
+								}>;
+							};
+						}
+					).frappe.call({
+						method:
+							"kentender_procurement.procurement_planning.api.prepare_planning_gate06_approved_ui",
+					});
+					return r.message || {};
+				});
+				await page.context().clearCookies();
+				await loginAsMohPlanningOfficer(page);
+				const plan = prep.empty_draft_plan || "";
+				expect(plan).toBeTruthy();
+				route = `/desk/procurement-plan-approved?plan=${encodeURIComponent(plan)}`;
+			}
+			if (surface.id === "procurement-plan-update") {
+				await page.goto("/desk", { waitUntil: "domcontentloaded" });
+				const prep = await page.evaluate(async () => {
+					const r = await (
+						window as unknown as {
+							frappe: {
+								call: (o: {
+									method: string;
+									args?: Record<string, unknown>;
+								}) => Promise<{
+									message?: { empty_draft_plan?: string };
+								}>;
+							};
+						}
+					).frappe.call({
+						method:
+							"kentender_procurement.procurement_planning.api.prepare_planning_gate06_approved_ui",
+						args: { with_successor: 1 },
+					});
+					return r.message || {};
+				});
+				await page.context().clearCookies();
+				await loginAsMohPlanningOfficer(page);
+				const plan = prep.empty_draft_plan || "";
+				expect(plan).toBeTruthy();
+				route = `/desk/procurement-plan-update?plan=${encodeURIComponent(plan)}`;
 			}
 			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(

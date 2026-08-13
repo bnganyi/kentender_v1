@@ -221,7 +221,7 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"app": "kentender_procurement",
 		"fixture_rel": "public/js/planning_ui_fixtures/plan_item_editor.js",
 		"desk_route": "procurement-plan-item-editor",
-		"primary_cta_testid": "kt-pln-ui06-save-return",
+		"primary_cta_testid": "kt-pln-ui06-request-finance",
 		"select_filter_attr": "data-kt-pln-field",
 		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui06-root'] h1",
 	},
@@ -233,6 +233,24 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"primary_cta_testid": "kt-pln-ui08-primary",
 		"select_filter_attr": "",
 		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui08-root'] h1",
+	},
+	{
+		"id": "procurement-plan-approved",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/plan_approved.js",
+		"desk_route": "procurement-plan-approved",
+		"primary_cta_testid": "kt-pln-ui09-add-item",
+		"select_filter_attr": "data-kt-pln-ui09-filter",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui09-root'] h1",
+	},
+	{
+		"id": "procurement-plan-update",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/planning_ui_fixtures/plan_update.js",
+		"desk_route": "procurement-plan-update",
+		"primary_cta_testid": "kt-pln-ui10-validate",
+		"select_filter_attr": "",
+		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui10-root'] h1",
 	},
 )
 

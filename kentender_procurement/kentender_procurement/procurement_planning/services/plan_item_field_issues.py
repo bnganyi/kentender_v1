@@ -60,15 +60,6 @@ def collect_plan_item_field_issues(
 		if not cstr(_merged(iv, payload, "method_override_evidence") or "").strip():
 			issues["method_override_evidence"] = "Alternative method requires evidence."
 
-	arrangement = cstr(_merged(iv, payload, "arrangement") or "").strip()
-	if arrangement == "Multi-year":
-		if not cstr(_merged(iv, payload, "multi_year_justification") or "").strip():
-			issues["multi_year_justification"] = "Multi-year arrangement requires justification."
-		if not cstr(_merged(iv, payload, "annual_funding_schedule") or "").strip():
-			issues["annual_funding_schedule"] = (
-				"Multi-year arrangement requires an annual funding schedule."
-			)
-
 	lotting = cstr(_merged(iv, payload, "lotting_decision") or "").strip()
 	if lotting == "Multiple lots":
 		try:

@@ -35,6 +35,10 @@ class TestListEligibleDemands(IntegrationTestCase):
 		self.assertIn(d["demand"], ids)
 		row = next(r for r in payload["demands"] if r["demand"] == d["demand"])
 		self.assertGreater(row["available_to_plan"], 0)
+		self.assertEqual(row.get("status_label"), "Planning Ready")
+		self.assertIn("proposed_funding", row)
+		self.assertIn("display", row["proposed_funding"])
+		self.assertIn("proposed_budget_line_display", row)
 
 	def test_excludes_returned_and_fully_planned(self) -> None:
 		planner = ensure_planner_user()

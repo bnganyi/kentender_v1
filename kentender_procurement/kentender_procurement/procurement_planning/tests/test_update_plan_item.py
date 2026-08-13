@@ -10,13 +10,23 @@ import uuid
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_procurement.procurement_planning.mvp1_constants import VERSION_IN_REVIEW
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan,
+)
+from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
+	get_plan_item_editor,
+)
+from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
+	submit_plan_for_review,
 )
 from kentender_procurement.procurement_planning.services.update_plan_item import (
 	update_plan_item,
 )
+from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	complete_plan_item_for_signoff,
+	confirm_included_items_funding,
 	create_plan_as_planner,
 	ensure_planner_user,
 	ensure_scope,
@@ -131,7 +141,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		self.assertTrue(result["ok"], result)
 		self.assertIn("method_override_grounds", result["field_issues"])
 
-	def test_multi_year_requires_justification_and_schedule(self) -> None:
+	def test_multi_year_does_not_require_justification_fields(self) -> None:
 		planner, item = self._item()
 		result = update_plan_item(
 			plan_item=item,
@@ -139,8 +149,36 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			fields={"arrangement": "Multi-year"},
 		)
 		self.assertTrue(result["ok"], result)
-		self.assertIn("multi_year_justification", result["field_issues"])
-		self.assertIn("annual_funding_schedule", result["field_issues"])
+		self.assertNotIn("multi_year_justification", result["field_issues"])
+		self.assertNotIn("annual_funding_schedule", result["field_issues"])
+
+	def test_hod_owned_facts_rejected(self) -> None:
+		planner, item = self._item()
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={"owner_org_unit": "MOH-DIR-HR", "confirmed_estimate": 1},
+		)
+		self.assertFalse(result.get("ok"))
+		self.assertIn("errors", result)
+		msg = " ".join(str(v) for v in (result.get("errors") or {}).values())
+		self.assertIn("cannot be changed here", msg.lower())
+		self.assertIn("Demand", msg)
+
+	def test_request_finance_incomplete_stays_with_attention(self) -> None:
+		planner, item = self._item()
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={"requirement_description": "Partial"},
+			request_finance=True,
+		)
+		self.assertTrue(result["ok"], result)
+		self.assertFalse(result.get("complete"))
+		self.assertIn(
+			"Confirm all milestone dates before requesting Finance confirmation.",
+			result.get("attention_message") or "",
+		)
 
 	def test_out_of_order_milestones_save_with_field_issues(self) -> None:
 		planner, item = self._item()
@@ -175,3 +213,72 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		proj = get_plan_item_editor(plan_item=item, user=planner)
 		self.assertIn("ms_evaluation_completed", proj["field_issues"])
 		self.assertIn("chronolog", proj["attention_message"].lower())
+
+	def test_in_review_version_rejects_save_and_editor_is_read_only(self) -> None:
+		"""In review successor must not look editable or swallow Save as a no-op."""
+		planner, item = self._item()
+		complete_plan_item_for_signoff(plan_item=item, user=planner)
+		plan = frappe.db.get_value("Procurement Plan Item", item, "plan")
+		confirm_included_items_funding(plan=plan, planner=planner)
+		validate_plan(plan=plan, user=planner)
+		submit_plan_for_review(plan=plan, user=planner)
+		self.assertEqual(
+			frappe.db.get_value(
+				"Procurement Plan Version",
+				frappe.db.get_value("Procurement Plan", plan, "open_draft_version"),
+				"status",
+			),
+			VERSION_IN_REVIEW,
+		)
+		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
+		before = frappe.db.get_value(
+			"Procurement Plan Item Version", iv, "requirement_description"
+		)
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={"requirement_description": "should not persist while in review"},
+		)
+		self.assertFalse(result.get("ok"), result)
+		self.assertIn("form", result.get("errors") or {})
+		self.assertIn("Draft or Returned", result["errors"]["form"])
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "requirement_description"),
+			before,
+		)
+		dto = get_plan_item_editor(plan_item=item, user=planner)
+		self.assertFalse(dto["can_edit"])
+		self.assertIn("In review", dto.get("attention_message") or "")
+		self.assertIn("In review", dto.get("version_label") or "")
+
+	def test_missing_draft_item_version_pointer_still_saves(self) -> None:
+		planner, item = self._item()
+		frappe.db.set_value(
+			"Procurement Plan Item", item, "draft_item_version", None, update_modified=False
+		)
+		frappe.db.commit()
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={
+				"requirement_description": "Saved without draft pointer",
+				"procurement_category": "ICT infrastructure and services",
+			},
+		)
+		self.assertTrue(result["ok"], result)
+		iv = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{
+				"plan_item": item,
+				"plan_version": frappe.db.get_value(
+					"Procurement Plan",
+					frappe.db.get_value("Procurement Plan Item", item, "plan"),
+					"open_draft_version",
+				),
+			},
+			"name",
+		)
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "requirement_description"),
+			"Saved without draft pointer",
+		)

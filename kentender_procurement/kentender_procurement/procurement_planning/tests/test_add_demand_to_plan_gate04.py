@@ -227,3 +227,55 @@ class TestAddDemandToPlanGate04(IntegrationTestCase):
 		self.assertIsNotNone(field)
 		self.assertNotIn("Keep separate", field.options or "")
 		self.assertIn((field.default or ""), ("", None))
+
+	def test_multi_demand_separate_creates_n_items(self) -> None:
+		planner = ensure_planner_user()
+		plan = create_plan_as_planner(title="Multi demand separate")
+		a = make_approved_demand(title="Separate A")
+		b = make_approved_demand(title="Separate B")
+		result = add_demand_to_plan(
+			plan=plan["plan"],
+			demands=[a["demand"], b["demand"]],
+			formation_mode="separate",
+			user=planner,
+		)
+		self.assertTrue(result["ok"])
+		self.assertEqual(result.get("formation_mode"), "separate")
+		self.assertEqual(len(result["plan_items"]), 2)
+		self.assertFalse(result.get("editor_route"))
+
+	def test_multi_demand_combined_same_ou_requires_reason(self) -> None:
+		planner = ensure_planner_user()
+		plan = create_plan_as_planner(title="Multi demand combine")
+		a = make_approved_demand(title="Combine A")
+		b = make_approved_demand(title="Combine B")
+		with self.assertRaises(Exception) as ctx:
+			add_demand_to_plan(
+				plan=plan["plan"],
+				demands=[a["demand"], b["demand"]],
+				formation_mode="combined",
+				user=planner,
+			)
+		self.assertIn("reason", str(ctx.exception).lower())
+		result = add_demand_to_plan(
+			plan=plan["plan"],
+			demands=[a["demand"], b["demand"]],
+			formation_mode="combined",
+			formation_reason="Shared digital health programme package",
+			user=planner,
+		)
+		self.assertTrue(result["ok"])
+		self.assertEqual(result.get("formation_mode"), "combined")
+		self.assertEqual(len(result["plan_items"]), 1)
+		self.assertTrue(result.get("editor_route"))
+		iv = result["item_version"]
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_decision"),
+			"Combine",
+		)
+		allocs = frappe.get_all(
+			"Plan Demand Allocation",
+			filters={"plan_item": result["plan_item"], "status": "Draft"},
+			fields=["demand"],
+		)
+		self.assertEqual({a["demand"] for a in allocs}, {a["demand"], b["demand"]})

@@ -73,9 +73,23 @@ export type PlanningGate05Prep = PlanningGate04Prep & {
 export type PlanningGate05ApprovalPrep = PlanningGate05Prep & {
 	reviewer_user?: string;
 	approver_user?: string;
+	viewer_user?: string;
 	version?: string;
 	review_route?: string;
 	ready_for_approval?: boolean;
+};
+
+export type PlanningGate06ApprovedPrep = PlanningGate05ApprovalPrep & {
+	approved?: boolean;
+	approved_version?: string;
+	approved_route?: string;
+	has_successor?: boolean;
+	has_handoff?: boolean;
+};
+
+export type PlanningFinancePrep = PlanningGate05Prep & {
+	finance_item?: string;
+	finance_status?: string;
 };
 
 /** Admin-only prepare for Gate 04 Playwright fixtures. */
@@ -143,6 +157,95 @@ export async function preparePlanningGate05Approval(
 		).frappe.call({
 			method:
 				'kentender_procurement.procurement_planning.api.prepare_planning_gate05_approval_ui',
+		});
+		return r.message || {};
+	});
+	return message;
+}
+
+/** Admin-only prepare for PLN-UI-09 Approved Plan (Approved V1 + optional successor/handoff). */
+export async function preparePlanningGate06Approved(
+	page: Page,
+	opts?: { withSuccessor?: boolean; withHandoff?: boolean },
+): Promise<PlanningGate06ApprovedPrep> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const withSuccessor = opts?.withSuccessor ? 1 : 0;
+	const withHandoff = opts?.withHandoff ? 1 : 0;
+	const message = await page.evaluate(
+		async ({ successor, handoff }: { successor: number; handoff: number }) => {
+			try {
+				const r = await (
+					window as unknown as {
+						frappe: {
+							call: (o: {
+								method: string;
+								args?: Record<string, unknown>;
+							}) => Promise<{ message?: PlanningGate06ApprovedPrep }>;
+						};
+					}
+				).frappe.call({
+					method:
+						'kentender_procurement.procurement_planning.api.prepare_planning_gate06_approved_ui',
+					args: { with_successor: successor, with_handoff: handoff },
+				});
+				const msg = r.message || {};
+				if (!msg.ok) {
+					throw new Error(
+						`prepare_planning_gate06_approved_ui failed: ${JSON.stringify(msg)}`,
+					);
+				}
+				return msg;
+			} catch (err) {
+				const e = err as { message?: string; _server_messages?: string };
+				throw new Error(e._server_messages || e.message || String(err));
+			}
+		},
+		{ successor: withSuccessor, handoff: withHandoff },
+	);
+	return message;
+}
+
+/** Admin-only prepare for PLN-UI-07 Finance confirmation Playwright. */
+export async function preparePlanningFinance(
+	page: Page,
+): Promise<PlanningFinancePrep> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const message = await page.evaluate(async () => {
+		const r = await (
+			window as unknown as {
+				frappe: {
+					call: (o: { method: string }) => Promise<{ message?: PlanningFinancePrep }>;
+				};
+			}
+		).frappe.call({
+			method: 'kentender_procurement.procurement_planning.api.prepare_planning_finance_ui',
+		});
+		return r.message || {};
+	});
+	return message;
+}
+
+export type PlanningFinanceShortfallPrep = PlanningFinancePrep & {
+	hold?: string;
+	budget_funding_route?: string;
+};
+
+/** Admin-only prepare for PLN-UI-07A shortfall Playwright (SCN-PLN-FUND-SHORT-001). */
+export async function preparePlanningFinanceShortfall(
+	page: Page,
+): Promise<PlanningFinanceShortfallPrep> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const message = await page.evaluate(async () => {
+		const r = await (
+			window as unknown as {
+				frappe: {
+					call: (o: {
+						method: string;
+					}) => Promise<{ message?: PlanningFinanceShortfallPrep }>;
+				};
+			}
+		).frappe.call({
+			method: 'kentender_procurement.procurement_planning.api.prepare_planning_finance_shortfall_ui',
 		});
 		return r.message || {};
 	});

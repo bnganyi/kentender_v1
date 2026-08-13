@@ -211,6 +211,7 @@ def reserve_funding(
 	idempotency_key: str | None = None,
 	actor: str | None = None,
 	procuring_entity: str | None = None,
+	generated_reference: str | None = None,
 ) -> dict[str, Any]:
 	"""Create a Funding Reservation from an authorised Demand event (BUD-FR-062–066)."""
 	# PAA final-approval path triggers reservation (Demands MVP-1 DEM-SVC-010).
@@ -286,7 +287,13 @@ def reserve_funding(
 		return _reservation_result(doc, reused=True)
 
 	requested = flt(requested_amount)
-	ref = allocate_reservation_reference(bud.procuring_entity)
+	preferred = (generated_reference or "").strip()
+	if preferred and not frappe.db.exists(
+		"Funding Reservation", {"generated_reference": preferred}
+	):
+		ref = preferred
+	else:
+		ref = allocate_reservation_reference(bud.procuring_entity)
 	idem = key or f"{demand_code}:{line.generated_reference}:{flt(requested):.2f}"
 
 	# Re-check idempotency after lock (race).

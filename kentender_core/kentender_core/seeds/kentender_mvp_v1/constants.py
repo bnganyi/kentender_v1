@@ -104,6 +104,7 @@ PLAN_AMOUNT_V1: Final[float] = 455_000_000
 PLAN_AMOUNT_V2: Final[float] = 535_000_000
 PLAN_ITEM_SCN_AMOUNT: Final[float] = 80_000_000
 RSV_CODE_SCN: Final[str] = "RSV-MOH-0002"
+RSV_SHORT_CODE: Final[str] = "RSV-MOH-SHORT-001"
 
 USER_MEDICAL: Final[str] = "moh.medicalservices.officer@example.test"
 USER_PUBLIC: Final[str] = "moh.publichealth.officer@example.test"

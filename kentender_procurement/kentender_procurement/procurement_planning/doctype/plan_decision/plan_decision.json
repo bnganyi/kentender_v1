@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "plan_version",
+  "plan_item",
   "decision_type",
   "decision_stage",
   "col_a",
@@ -24,6 +25,12 @@
    "options": "Procurement Plan Version",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "plan_item",
+   "fieldtype": "Link",
+   "label": "Plan Item",
+   "options": "Procurement Plan Item"
   },
   {
    "fieldname": "decision_type",

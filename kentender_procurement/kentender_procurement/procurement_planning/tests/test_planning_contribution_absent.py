@@ -22,6 +22,7 @@ from kentender_procurement.procurement_planning.services.submit_plan_for_review 
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	complete_plan_item_for_signoff,
+	confirm_included_items_funding,
 	create_plan_as_planner,
 	ensure_planner_user,
 	ensure_scope,
@@ -74,6 +75,7 @@ class TestPlanningContributionAbsent(IntegrationTestCase):
 		d = make_approved_demand(title="C02 no contrib demand")
 		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
 		complete_plan_item_for_signoff(plan_item=added["plan_item"], user=planner)
+		confirm_included_items_funding(plan=plan["plan"], planner=planner)
 		validate_plan(plan=plan["plan"], user=planner)
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"

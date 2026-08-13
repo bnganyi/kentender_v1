@@ -1,0 +1,110 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""PLN-SVC-015 / PLN-UI-09 — get_plan_implementation read DTO."""
+
+from __future__ import annotations
+
+import frappe
+from frappe.tests import IntegrationTestCase
+
+from kentender_procurement.procurement_planning.mvp1_constants import (
+	TAKEUP_NOT_TAKEN,
+	VERSION_APPROVED,
+)
+from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+	add_demand_to_plan,
+)
+from kentender_procurement.procurement_planning.services.get_plan_implementation import (
+	get_plan_implementation,
+)
+from kentender_procurement.procurement_planning.services.planning_permissions import (
+	ROLE_VIEWER,
+)
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	approve_plan_via_gate05,
+	create_plan_as_planner,
+	ensure_planner_user,
+	ensure_scope,
+	make_approved_demand,
+	purge_pe_fy,
+	unique_test_fy,
+)
+from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+	PE_MOH,
+	ensure_user_with_roles,
+)
+
+
+class TestGetPlanImplementation(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		ensure_scope()
+
+	def test_draft_plan_is_not_an_implementation_surface(self) -> None:
+		planner = ensure_planner_user()
+		fy = unique_test_fy(base_year=3100, bucket=0)
+		purge_pe_fy(fy)
+		plan = create_plan_as_planner(title="Draft not approved overview", financial_year=fy)
+		with self.assertRaises(frappe.ValidationError):
+			get_plan_implementation(plan=plan["plan"], user=planner)
+
+	def test_approved_dto_without_handoff_or_publication(self) -> None:
+		planner = ensure_planner_user()
+		fy = unique_test_fy(base_year=3100, bucket=1)
+		purge_pe_fy(fy)
+		plan = create_plan_as_planner(title="Approved overview", financial_year=fy)
+		d = make_approved_demand(title="Approved overview demand")
+		added = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
+		approve_plan_via_gate05(plan=plan["plan"], version=plan["version"])
+		dto = get_plan_implementation(plan=plan["plan"], user=planner)
+		self.assertTrue(dto["ok"], dto)
+		self.assertEqual(dto["version_status"], VERSION_APPROVED)
+		self.assertTrue(dto["can_add_item"])
+		self.assertTrue(dto["can_export"])
+		self.assertTrue(dto["items"])
+		self.assertEqual(dto["items"][0]["takeup_label"], TAKEUP_NOT_TAKEN)
+		self.assertTrue(dto["items"][0]["can_propose_removal"])
+		self.assertEqual(dto["publication"]["status"], "Not published")
+		self.assertFalse(dto["has_successor"])
+		self.assertIn("procurement-plan-approved", dto["approved_route"])
+		self.assertIn("procurement-plan-approved", dto["update_route"])
+
+	def test_successor_notice_after_add_to_approved(self) -> None:
+		planner = ensure_planner_user()
+		fy = unique_test_fy(base_year=3100, bucket=2)
+		purge_pe_fy(fy)
+		plan = create_plan_as_planner(title="Successor notice", financial_year=fy)
+		d1 = make_approved_demand(title="Successor base demand")
+		add_demand_to_plan(plan=plan["plan"], demand=d1["demand"], user=planner)
+		approve_plan_via_gate05(plan=plan["plan"], version=plan["version"])
+		d2 = make_approved_demand(title="Successor extra demand")
+		add_demand_to_plan(plan=plan["plan"], demand=d2["demand"], user=planner)
+		dto = get_plan_implementation(plan=plan["plan"], user=planner)
+		self.assertTrue(dto["has_successor"])
+		self.assertIn("Draft Version", dto["successor_label"])
+		self.assertTrue(dto["can_add_item"])
+		self.assertIn("procurement-plan-update", dto["update_route"])
+
+	def test_viewer_cannot_add_or_propose(self) -> None:
+		planner = ensure_planner_user()
+		fy = unique_test_fy(base_year=3100, bucket=3)
+		purge_pe_fy(fy)
+		plan = create_plan_as_planner(title="Viewer overview", financial_year=fy)
+		d = make_approved_demand(title="Viewer overview demand")
+		add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
+		approve_plan_via_gate05(plan=plan["plan"], version=plan["version"])
+		viewer = ensure_user_with_roles(
+			"pln.ui09.viewer@test.local",
+			roles=(ROLE_VIEWER,),
+			pe=PE_MOH,
+			org_unit=None,
+			include_descendants=0,
+		)
+		dto = get_plan_implementation(plan=plan["plan"], user=viewer)
+		self.assertTrue(dto["ok"], dto)
+		self.assertFalse(dto["can_add_item"])
+		self.assertFalse(dto["can_export"])
+		self.assertTrue(dto["items"])
+		self.assertFalse(dto["items"][0]["can_propose_removal"])

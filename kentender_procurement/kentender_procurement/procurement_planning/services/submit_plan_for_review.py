@@ -29,6 +29,9 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	assert_planning_scope,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
+from kentender_procurement.procurement_planning.services.remove_plan_item import (
+	draft_has_effective_changes,
+)
 
 
 def submit_plan_for_review(
@@ -77,6 +80,20 @@ def submit_plan_for_review(
 	except frappe.ValidationError as exc:
 		return {"ok": False, "errors": {"form": str(exc) or "Concurrency conflict"}}
 
+	from kentender_procurement.procurement_planning.services.get_plan_update import (
+		planner_update_reason,
+	)
+
+	if cstr(plan_doc.current_approved_version or "").strip() and not planner_update_reason(
+		ver.version_reason
+	):
+		return {
+			"ok": False,
+			"errors": {
+				"update_reason": "Enter a reason for this update after Plan approval before submitting for review."
+			},
+		}
+
 	validation = validate_plan(plan=plan_name, user=actor)
 	if cstr(validation.get("status")) != VALIDATION_READY:
 		return {
@@ -99,8 +116,22 @@ def submit_plan_for_review(
 			"errors": {"form": "Add at least one Plan Item before submitting for review."},
 		}
 
+	if cstr(plan_doc.current_approved_version or "").strip() and not draft_has_effective_changes(
+		plan=plan_name, version=version_name
+	):
+		return {
+			"ok": False,
+			"errors": {"form": "No changes remain on this update. Cancel the update or add a change before submitting."},
+		}
+
 	# C02: no Departmental Submission / contribution prerequisite.
-	# C05 will add Finance-confirmed readiness (PLN-AC-009).
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		finance_not_confirmed_error,
+	)
+
+	finance_err = finance_not_confirmed_error(plan=plan_name, version=version_name)
+	if finance_err:
+		return {"ok": False, "errors": finance_err}
 
 	now = now_datetime()
 	token = new_concurrency_token()

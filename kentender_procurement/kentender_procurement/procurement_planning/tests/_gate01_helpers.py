@@ -167,8 +167,72 @@ def ensure_reviewer_user() -> str:
 	return REVIEWER_USER
 
 
+def confirm_included_items_funding(*, plan: str, planner: str | None = None) -> None:
+	"""Attach funding, request Finance, and confirm every included Plan Item (Gate 05)."""
+	from frappe.utils import flt
+
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		_source_demand_row,
+		confirm_plan_item_funding,
+		effective_finance_status,
+	)
+	from kentender_procurement.procurement_planning.services.update_plan_item import (
+		update_plan_item,
+	)
+	from kentender_procurement.procurement_planning.mvp1_constants import (
+		FINANCE_AWAITING,
+		FINANCE_CONFIRMED,
+		FINANCE_STALE,
+	)
+
+	actor = planner or ensure_planner_user()
+	bo = ensure_budget_officer_user()
+	items = frappe.get_all(
+		"Procurement Plan Item",
+		filters={"plan": plan, "baseline_state": ["in", ["Proposed", "Active"]]},
+		pluck="name",
+	)
+	for plan_item in items:
+		complete_plan_item_for_signoff(plan_item=plan_item, user=actor)
+		iv_name = frappe.db.get_value(
+			"Procurement Plan Item", plan_item, "draft_item_version"
+		)
+		if not iv_name:
+			continue
+		iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+		if effective_finance_status(iv) == FINANCE_CONFIRMED:
+			continue
+		demand_row = _source_demand_row(plan_item)
+		demand = cstr(demand_row["demand"] if demand_row else "").strip()
+		amount = flt(iv.confirmed_estimate) or 1_000_000
+		if demand and not frappe.db.exists("Demand Funding Allocation", {"demand": demand}):
+			funding = make_test_budget_line(approved_amount=max(amount * 2, 10_000_000))
+			attach_demand_funding(
+				demand=demand,
+				budget_line=funding["budget_line"],
+				budget=funding["budget"],
+				amount=amount,
+			)
+		requested = update_plan_item(
+			plan_item=plan_item, user=actor, request_finance=True
+		)
+		if not requested.get("ok"):
+			raise frappe.ValidationError(f"Request finance failed: {requested}")
+		iv.reload()
+		status = effective_finance_status(iv)
+		if status == FINANCE_CONFIRMED:
+			continue
+		if status not in (FINANCE_AWAITING, FINANCE_STALE):
+			raise frappe.ValidationError(
+				f"Request finance did not open a confirmation task: {requested}"
+			)
+		confirmed = confirm_plan_item_funding(plan_item=plan_item, user=bo)
+		if not confirmed.get("ok"):
+			raise frappe.ValidationError(f"Confirm finance failed: {confirmed}")
+
+
 def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> dict[str, Any]:
-	"""Complete items → validate → submit for review → recommend.
+	"""Complete items → Finance confirm → validate → submit for review → recommend.
 
 	Required before ``approve_plan_version`` under Gate 05 rules.
 	C02: no departmental contribution step.
@@ -196,6 +260,7 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 	for item in items:
 		complete_plan_item_for_signoff(plan_item=item, user=planner)
 
+	confirm_included_items_funding(plan=plan, planner=planner)
 	validate_plan(plan=plan, user=planner)
 
 	token = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
@@ -386,3 +451,96 @@ def purge_pe_fy(financial_year: str) -> None:
 	):
 		frappe.delete_doc("Procurement Plan Version", name, force=True, ignore_permissions=True)
 	frappe.db.commit()
+
+
+def ensure_budget_officer_user() -> str:
+	from kentender_budget.services.budget_permissions import ROLE_OFFICER, ensure_budget_roles
+	from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+		ensure_user_with_roles,
+	)
+
+	ensure_budget_roles()
+	ensure_scope()
+	return ensure_user_with_roles(
+		"pln.c05.bo@test.local",
+		roles=(ROLE_OFFICER,),
+		pe=PE,
+		org_unit=None,
+		include_descendants=0,
+	)
+
+
+def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.0) -> dict[str, str]:
+	"""Isolated Active Budget Line so Finance tests do not mutate the MOH seed portfolio."""
+	ensure_scope()
+	token = frappe.generate_hash(length=8).upper()
+	bud = frappe.get_doc(
+		{
+			"doctype": "Budget",
+			"generated_reference": f"MOH-BUD-PLN-{token}",
+			"title": f"Planning finance test {token}",
+			"procuring_entity": PE,
+			"fiscal_period": "2027/28",
+			"start_date": "2027-07-01",
+			"end_date": "2028-06-30",
+			"currency": "KES",
+			"budget_owner": "Budget Officer",
+			"registration_source": "Direct capture",
+			"authoritative_reference": f"PLN-FIN-{token}",
+			"approval_date": "2027-06-01",
+			"external_approved_total": approved_amount,
+			"approval_evidence": "/files/pln-fin-test.pdf",
+			"status": "Active",
+		}
+	)
+	bud.flags.ignore_validate = True
+	bud.insert(ignore_permissions=True)
+	line = frappe.get_doc(
+		{
+			"doctype": "Budget Line",
+			"budget": bud.name,
+			"generated_reference": f"MOH-BL-PLN-{token}",
+			"title": "Planning finance test line",
+			"organisational_owner": "Directorate of Digital Health and Policy",
+			"classification": "Capital expenditure",
+			"funding_source_type": "Exchequer",
+			"funding_source_name": "Government of Kenya Development Budget",
+			"approved_amount": approved_amount,
+			"amount_reserved": reserved_amount,
+			"amount_committed": 0,
+			"currency": "KES",
+			"is_active": 1,
+		}
+	)
+	line.flags.skip_budget_strategy_validate = True
+	line.insert(ignore_permissions=True)
+	return {
+		"budget": bud.name,
+		"budget_line": line.name,
+		"budget_line_code": line.generated_reference,
+	}
+
+
+def attach_demand_funding(
+	*,
+	demand: str,
+	budget_line: str,
+	budget: str,
+	amount: float,
+	reservation: str | None = None,
+) -> str:
+	doc = frappe.get_doc(
+		{
+			"doctype": "Demand Funding Allocation",
+			"demand": demand,
+			"budget": budget,
+			"budget_line": budget_line,
+			"allocation_amount": amount,
+			"currency": "KES",
+			"matching_source": "Budget Officer",
+			"bo_confirmation_status": "Pending",
+			"funding_reservation": reservation or "",
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	return doc.name

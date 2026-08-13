@@ -12,6 +12,7 @@ from frappe.utils import cstr, flt, formatdate
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	DOCTYPE_DECISION,
+	FINANCE_CONFIRMED,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VALIDATION_READY,
@@ -28,9 +29,11 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	is_planning_read_only,
 	require_capability,
 )
+from kentender_procurement.procurement_planning.services.plan_item_finance import (
+	effective_finance_status,
+)
 from kentender_procurement.procurement_planning.services.preference_reservation import (
 	COVERAGE_RATE,
-	format_money,
 	plan_coverage,
 	scheme_is_assigned,
 )
@@ -133,6 +136,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		validation = cstr(
 			getattr(iv, "validation_projection", None) or ver.validation_projection or "Not run"
 		)
+		finance_status = effective_finance_status(iv)
 		items_out.append(
 			{
 				"plan_item": it.name,
@@ -145,64 +149,56 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 				"method": method or "—",
 				"completion": completion or "—",
 				"validation_projection": validation,
+				"finance_status": finance_status,
+				"finance_status_label": finance_status,
 				"editor_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
 			}
 		)
+
+	finance_confirmed_count = sum(
+		1 for i in items_out if cstr(i.get("finance_status")) == FINANCE_CONFIRMED
+	)
+	finance_item_count = len(items_out)
+	finance_complete = bool(finance_item_count) and finance_confirmed_count == finance_item_count
+	finance_confirmed_label = f"{finance_confirmed_count} of {finance_item_count}"
 
 	ready_count = sum(
 		1
 		for i in items_out
 		if cstr(i.get("validation_projection")) == VALIDATION_READY
 	)
-	if not items_out:
-		readiness_label = "—"
-	elif ready_count == len(items_out):
-		readiness_label = "Plan Items ready"
-	else:
-		readiness_label = f"{ready_count} of {len(items_out)} ready"
 
 	coverage = plan_coverage(
 		planned_total=planned_total,
 		designation_values=designation_values,
 		currency=currency,
 	)
-	required = flt(coverage.get("required"))
-	planned_cov = flt(coverage.get("planned"))
-	stat_status = cstr(coverage.get("status_label") or "Not started")
-	if required <= 0:
-		planned_treatment = "Not applicable"
-		stat_status = "Not applicable"
-	elif planned_cov > 0:
-		planned_treatment = (
-			f"{format_money(planned_cov, currency)} planned through reserved lot treatment"
-		)
-	else:
-		planned_treatment = "No reserved treatment planned yet"
-
-	statutory_rows = [
-		{
-			"obligation": (
-				"Women, youth, persons with disabilities and disadvantaged groups"
-			),
-			"required_treatment": f"Minimum {int(COVERAGE_RATE * 100)}% plan allocation",
-			"planned_treatment": planned_treatment,
-			"status": stat_status,
-		},
-		{
-			"obligation": "County resident tenderers",
-			"required_treatment": "Not applicable to this national Procuring Entity",
-			"planned_treatment": "Not applicable",
-			"status": "Not applicable",
-		},
-	]
+	statutory_rows: list[dict[str, Any]] = []
+	if designation_values:
+		required = flt(coverage.get("required"))
+		planned_cov = flt(coverage.get("planned"))
+		cov_status = cstr(coverage.get("status_label") or "")
+		if cov_status == "Ready":
+			cov_status = "Compliant"
+		statutory_rows = [
+			{
+				"obligation": f"{int(COVERAGE_RATE * 100)}% AGPO Minimum",
+				"required_treatment": f"{required:,.2f}",
+				"planned_treatment": f"{planned_cov:,.2f}",
+				"status": cov_status,
+			}
+		]
 
 	validation = cstr(ver.validation_projection or "Not run") or "Not run"
 	issues_ready = validation == VALIDATION_READY
-	issues_message = (
-		"All required planning checks are ready for this decision."
-		if issues_ready
-		else "Resolve validation issues before recording this decision."
-	)
+	if issues_ready and finance_complete:
+		issues_message = "All required planning and funding checks are ready for decision."
+	elif not finance_complete:
+		issues_message = (
+			"Confirm current Finance for every included Plan Item before this decision."
+		)
+	else:
+		issues_message = "Resolve validation issues before recording this decision."
 
 	recommended = has_recommendation(version=focus)
 	roles = actor_planning_roles(actor)
@@ -225,6 +221,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		and cstr(ver.status) == VERSION_IN_REVIEW
 		and recommended
 		and issues_ready
+		and finance_complete
 	)
 	can_submit_for_review = (
 		task_surface
@@ -233,6 +230,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		and issues_ready
 		and bool(items_out)
 		and ready_count == len(items_out)
+		and finance_complete
 	)
 
 	if not task_surface:
@@ -309,9 +307,14 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"item_count": len(items_out),
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, currency),
-		"contributions_label": readiness_label,
+		"finance_confirmed_count": finance_confirmed_count,
+		"finance_item_count": finance_item_count,
+		"finance_confirmed_label": finance_confirmed_label,
+		"finance_complete": finance_complete,
+		"finance_confirmation_label": "Complete" if finance_complete else "Incomplete",
+		"contributions_label": finance_confirmed_label,
 		"departmental_submission_label": (
-			"Ready" if ready_count == len(items_out) and items_out else readiness_label
+			"Complete" if finance_complete else finance_confirmed_label
 		),
 		"open_tender_total": open_tender_total,
 		"open_tender_display": _money(open_tender_total, currency),

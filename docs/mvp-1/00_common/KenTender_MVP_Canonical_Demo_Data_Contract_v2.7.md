@@ -2,9 +2,9 @@
 
 **Fixture bundle:** `KENTENDER_MVP_V1`  
 **Status:** Living contract — approved baseline for implementation  
-**Version:** 2.6  
-**Supersedes:** Version 2.5 and all Ministry-specific seed contracts  
-**Compatibility:** Compatible Planning lifecycle and exception-scenario correction of version 2.5; legacy ownership, contribution and generic Planning-treatment fields remain prohibited  
+**Version:** 2.7  
+**Supersedes:** Version 2.6 and all Ministry-specific seed contracts  
+**Compatibility:** Compatible Planning lifecycle, shortfall and Plan-Item-removal correction of version 2.6; legacy ownership, contribution and generic Planning-treatment fields remain prohibited  
 **Fixture clock:** `2027-11-05T12:00:00+03:00`  
 **Primary story:** Ministry of Health  
 **Secondary entity:** County Government of Kisumu  
@@ -22,7 +22,7 @@ Module requirements remain authoritative for business behaviour. This document i
 
 ## 2. Story in one paragraph
 
-The Ministry of Health adopts a 2026–2030 strategic plan to improve the reliability of digital clinical services and strengthen health-workforce capability. The State Department for Medical Services, through the Directorate of Digital Health and Policy, owns the principal infrastructure outcome and receives KES 480 million in the FY 2027/28 procurement budget. An HoD-approved KES 455 million Demand becomes a completed Plan Item; Finance then confirms and reserves the full amount before Head-of-Procurement approval makes it Active in Approved Plan Version 1. Its existing Tender later converts KES 310 million into a contract commitment, leaving KES 145 million reserved. A second Ministry Demand for technical-staff certification is corrected to KES 80 million, approved by its HoD and added as a Proposed Plan Item through Draft Version 2 while Approved Version 1 remains operational. An optional resettable scenario applies a competing KES 55 million hold to its Budget Line so PLN-UI-07A shows KES 25 million available against KES 80 million required and an exact KES 55 million shortfall. A KES 180 million finance expenditure snapshot is stale and requires attention. Strategy performance moves from 99.82% availability in September 2027 to 99.96% in October after a verified corrective action. Separately, the County Government of Kisumu owns a minimal county-health strategy, a KES 24 million cold-chain Budget Line and a Draft Demand that has not yet been enriched with Strategy or funding. Unit-scoped users maintain only their own data, entity-level reviewers see their authorised consolidated position, and no user receives cross-entity access by default.
+The Ministry of Health adopts a 2026–2030 strategic plan to improve the reliability of digital clinical services and strengthen health-workforce capability. The State Department for Medical Services, through the Directorate of Digital Health and Policy, owns the principal infrastructure outcome and receives KES 480 million in the FY 2027/28 procurement budget. An HoD-approved KES 455 million Demand becomes a completed Plan Item; Finance then confirms and reserves the full amount before Head-of-Procurement approval makes it Active in Approved Plan Version 1. Its existing Tender later converts KES 310 million into a contract commitment, leaving KES 145 million reserved. A second Ministry Demand for technical-staff certification is corrected to KES 80 million, approved by its HoD and added as a Proposed Plan Item through Draft Version 2 while Approved Version 1 remains operational. Optional resettable scenarios demonstrate both a KES 55 million Finance shortfall and removal of that draft-only item before Finance, returning the Demand to Planning eligibility without altering Approved Version 1 or its Tender. A KES 180 million finance expenditure snapshot is stale and requires attention. Strategy performance moves from 99.82% availability in September 2027 to 99.96% in October after a verified corrective action. Separately, the County Government of Kisumu owns a minimal county-health strategy, a KES 24 million cold-chain Budget Line and a Draft Demand that has not yet been enriched with Strategy or funding. Unit-scoped users maintain only their own data, entity-level reviewers see their authorised consolidated position, and no user receives cross-entity access by default.
 
 The system may show that procurement supports strategic outcomes. It must not claim that expenditure alone caused a performance result.
 
@@ -628,6 +628,35 @@ The deterministic resolution branch releases `RSV-MOH-SHORT-001` through the gov
 
 Running the scenario or its resolution twice shall not duplicate the competing hold, Finance task, decision or reservation. Reset removes only scenario-owned shortfall records and restores the base Planning state without deleting unrelated fixture data.
 
+### 7.8 Optional draft Plan Item removal scenario
+
+`SCN-PLN-REMOVE-001` is an optional resettable scenario used to demonstrate PLN-UI-05A and the draft-only removal path without altering the canonical successful addition story.
+
+Scenario preparation:
+
+1. Start from the base bundle and run `SCN-PLN-ADD-001` through creation and completion of Proposed `PPI-MOH-2027-022`, before Finance confirmation.
+2. Mercy Kilonzo selects **Remove from draft** from the Plan Item row in Draft Version 2.
+3. Confirm PLN-UI-05A using the fixed reason **Added for demonstration; remove from this draft**.
+
+Expected removal result:
+
+| Field | Value |
+|---|---|
+| Logical Plan | `PLN-MOH-2027-001` remains Open |
+| Current Approved Version | `PLN-MOH-2027-001-V1` remains Approved and unchanged |
+| Draft Version | `PLN-MOH-2027-001-V2` remains Draft but contains no effective addition |
+| Removed draft-only item | `PPI-MOH-2027-022` is excluded/Removed with source allocations and audit history retained |
+| Draft total after removal | KES 455,000,000 |
+| Source Demand | `DMD-MOH-2027-019` returns to Planning eligibility |
+| Finance task/reservation | None exists for `PPI-MOH-2027-022`; no release is needed in this scenario branch |
+| Existing operational item | `PPI-MOH-2027-021` remains Active |
+| Existing Tender | `TND-MOH-2027-008` remains unchanged |
+| Builder next state | No changes remain; Cancel update is available and submission is blocked |
+
+The scenario shall preserve a removal audit event and shall never hard-delete the Plan Item, Plan Item Version, source allocations or the Approved Demand. Running the scenario twice shall not duplicate the removal event or eligibility transition. Reset restores Draft Version 2 with Proposed `PPI-MOH-2027-022` and makes `DMD-MOH-2027-019` unavailable for a second simultaneous allocation.
+
+The Finance-confirmed draft-removal branch and Active-item proposed-removal branch belong in isolated transactional tests, not in the permanent canonical base. The canonical Active item has `TND-MOH-2027-008` and therefore must never expose or accept removal.
+
 ## 8. Seed implementation contract
 
 ### 8.1 Orchestration
@@ -673,6 +702,7 @@ The reset process shall:
 - recreate the same identities and values;
 - leave no duplicate relationships, reservations, commitments or audit events.
 - remove scenario-owned `RSV-MOH-SHORT-001` and shortfall decisions without deleting canonical Budget, Demand or Planning records.
+- reset `SCN-PLN-REMOVE-001` by restoring the scenario-owned Draft inclusion state and eligibility projection without deleting the Plan Item, allocation or removal history outside the scenario boundary.
 
 ### 8.4 Time and freshness
 
@@ -756,6 +786,10 @@ Verify at minimum:
 - the shortfall state exposes no Confirm funding action and direct confirmation creates no partial or negative reservation;
 - governed release of the scenario hold revalidates the same Finance task to sufficient funding without automatic confirmation or task duplication; and
 - resetting the shortfall scenario removes only scenario-owned records and restores the KES 80,000,000 workforce line availability.
+- `SCN-PLN-REMOVE-001` excludes Proposed `PPI-MOH-2027-022`, restores the Draft total to KES 455,000,000 and returns `DMD-MOH-2027-019` to Planning eligibility while preserving its item/allocation/audit lineage;
+- the removal leaves Approved Version 1, Active `PPI-MOH-2027-021`, `RSV-MOH-0001` and `TND-MOH-2027-008` unchanged;
+- rerunning removal does not duplicate the audit event or eligibility transition, and reset restores the pre-removal Draft addition exactly once; and
+- `PPI-MOH-2027-021` exposes no removal action because its Tender handoff exists.
 
 ### Organisation ownership and isolation
 
@@ -792,15 +826,16 @@ Verify at minimum:
 7. Open `PLN-MOH-2027-001` and show Approved Version 1, Active `PPI-MOH-2027-021`, post-Planning Finance confirmation and existing Tender take-up.
 8. Run `SCN-PLN-ADD-001` through Plan Item completion: correct and obtain HoD approval for `DMD-MOH-2027-019`, select Add Plan Item, and create Proposed `PPI-MOH-2027-022` in Draft Version 2.
 9. Show that Version 1 and `TND-MOH-2027-008` remain operational while Draft Version 2 awaits Finance.
-10. Run `SCN-PLN-FUND-SHORT-001` and show PLN-UI-07A with KES 80 million required, KES 25 million available and a KES 55 million shortfall. Confirm funding must be absent.
-11. Resolve the scenario hold through Budget & Funding and show the same Finance task return to sufficient funding without automatic confirmation.
-12. Confirm KES 80 million once, approve Version 2 and show Version 1 Superseded, both Plan Items Active and unchanged Tender lineage preserved.
-13. Trace the principal reservation into Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
-14. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
-15. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
-16. Attempt to open a Ministry Demand from the county account and show that access is denied.
-17. Sign in as `kentender.system.admin@example.test` and show that Demand creation is blocked because no operational Requester assignment exists.
-18. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
+10. Run `SCN-PLN-REMOVE-001`, remove `PPI-MOH-2027-022` through PLN-UI-05A and show KES 455 million Draft total, restored Demand eligibility, preserved audit history and unchanged Approved Version 1/Tender. Reset the scenario.
+11. Run `SCN-PLN-FUND-SHORT-001` and show PLN-UI-07A with KES 80 million required, KES 25 million available and a KES 55 million shortfall. Confirm funding must be absent.
+12. Resolve the scenario hold through Budget & Funding and show the same Finance task return to sufficient funding without automatic confirmation.
+13. Confirm KES 80 million once, approve Version 2 and show Version 1 Superseded, both Plan Items Active and unchanged Tender lineage preserved.
+14. Trace the principal reservation into Tender, the KES 310 million commitment and the stale KES 180 million expenditure snapshot.
+15. Open Strategy Performance and show September At risk, the verified corrective action and October On track.
+16. Sign in as the Kisumu health officer and show `DMD-CGK-2027-006` as a county-owned Draft without Strategy or Budget assignment.
+17. Attempt to open a Ministry Demand from the county account and show that access is denied.
+18. Sign in as `kentender.system.admin@example.test` and show that Demand creation is blocked because no operational Requester assignment exists.
+19. Explain that the same KenTender ownership model supports different public-entity structures without hardcoded hierarchy levels.
 
 ## 11. Extension rules for subsequent modules
 
@@ -826,3 +861,4 @@ When Planning, Tender, Evaluation, Award, Contract, Stores, Assets, Disposal or 
 | 2.4 | 9 August 2026 | Demands; Procurement Planning | Corrected the principal Demand required-by date to 31 March 2028 so the approved need and planned delivery schedule reconcile; clarified downstream design-field semantics without changing fixture identities or amounts |
 | 2.5 | 10 August 2026 | Procurement Planning | Replaced generic item-level statutory/Strategy treatment fixtures with explicit planned reservation designations; assigned KES 136,500,000 to the existing item and KES 24,000,000 to the added item so Plan-level KES 160,500,000 coverage is repeatable without invented rationales or treatment notes |
 | 2.6 | 11 August 2026 | Demands; Budget & Funding; Procurement Planning | Aligned the canonical actor journey to HoD Demand approval followed by Plan Item completion and post-Planning Finance confirmation; removed contribution and item-level treatment assumptions from the Planning scenario; added resettable `SCN-PLN-FUND-SHORT-001` for the PLN-UI-07A KES 55 million shortfall without changing the successful base story |
+| 2.7 | 12 August 2026 | Procurement Planning | Added resettable `SCN-PLN-REMOVE-001` to prove controlled removal of draft-only `PPI-MOH-2027-022`, restored Demand eligibility and preserved Approved Version 1/Tender lineage; kept Finance-confirmed and Active-item removal variants in isolated tests |

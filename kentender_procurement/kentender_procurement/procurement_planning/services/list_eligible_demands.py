@@ -81,6 +81,51 @@ def _need_items_breakdown(demand: str, currency: str) -> list[dict[str, Any]]:
 	return out
 
 
+def _proposed_funding(demand: str) -> dict[str, str | None]:
+	"""Budget Line identity for Proposed Funding column — never expose hash PK as display."""
+	empty = {
+		"id": None,
+		"code": "",
+		"name": "",
+		"display": "—",
+	}
+	if not frappe.db.exists("DocType", "Demand Funding Allocation"):
+		return empty
+	row = frappe.db.get_value(
+		"Demand Funding Allocation",
+		{"demand": demand},
+		["budget_line", "funding_reservation"],
+		as_dict=True,
+	)
+	if not row:
+		return empty
+	line_id = cstr(row.budget_line or "").strip()
+	if not line_id and row.funding_reservation:
+		# Resolve Budget Line via Funding Reservation when DFA only stores RSV.
+		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
+			_funding_line_label,
+		)
+
+		label = _funding_line_label(cstr(row.funding_reservation))
+		if label:
+			return {"id": None, "code": "", "name": label, "display": label}
+		return empty
+	if not line_id or not frappe.db.exists("Budget Line", line_id):
+		return empty
+	title = cstr(frappe.db.get_value("Budget Line", line_id, "title") or "").strip()
+	code = cstr(
+		frappe.db.get_value("Budget Line", line_id, "budget_line_code")
+		or frappe.db.get_value("Budget Line", line_id, "code")
+		or ""
+	).strip()
+	name = title or code or line_id
+	# Never show internal hash as the primary display.
+	if name == line_id and len(line_id) <= 12 and name.isalnum():
+		return empty
+	display = f"{name} ({code})" if code and name != code else name
+	return {"id": line_id, "code": code, "name": name, "display": display or "—"}
+
+
 def list_eligible_demands(
 	*,
 	plan: str,
@@ -171,6 +216,7 @@ def list_eligible_demands(
 		if not rsv:
 			funding = "Unreserved"
 		need_items = _need_items_breakdown(r.name, currency)
+		proposed = _proposed_funding(r.name)
 		out.append(
 			{
 				"demand": r.name,
@@ -186,6 +232,12 @@ def list_eligible_demands(
 				"available_to_plan_display": _money(available, currency),
 				"required_by": str(r.required_by_date or ""),
 				"funding": funding,
+				"proposed_funding": proposed,
+				"proposed_budget_line": proposed.get("id"),
+				"proposed_budget_line_name": proposed.get("name") or "",
+				"proposed_budget_line_code": proposed.get("code") or "",
+				"proposed_budget_line_display": proposed.get("display") or "—",
+				"status_label": "Planning Ready",
 				"category": cstr(r.procurement_category or ""),
 				"currency": currency,
 				"need_item_count": len(need_items),

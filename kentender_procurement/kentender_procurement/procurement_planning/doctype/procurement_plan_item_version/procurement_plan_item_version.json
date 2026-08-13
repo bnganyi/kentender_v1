@@ -20,6 +20,14 @@
   "procurement_category",
   "col_b",
   "reservation_reference",
+  "section_finance",
+  "finance_status",
+  "finance_snapshot_amount",
+  "finance_snapshot_budget_line",
+  "finance_confirmed_at",
+  "finance_confirmed_by",
+  "finance_reservation",
+  "finance_owned_reservation",
   "strategy_snapshot",
   "pvc_snapshot",
   "validation_projection",
@@ -52,7 +60,12 @@
   "ms_award_approval",
   "ms_contract_signature",
   "ms_delivery_completion",
-  "schedule_change_reason"
+  "schedule_change_reason",
+  "section_removal",
+  "draft_change_label",
+  "proposed_removal",
+  "removal_reason",
+  "removed_in_version"
  ],
  "fields": [
   {
@@ -143,6 +156,51 @@
    "fieldname": "reservation_reference",
    "fieldtype": "Data",
    "label": "Reservation Reference"
+  },
+  {
+   "fieldname": "section_finance",
+   "fieldtype": "Section Break",
+   "label": "Finance confirmation"
+  },
+  {
+   "fieldname": "finance_status",
+   "fieldtype": "Select",
+   "label": "Finance Status",
+   "options": "Not requested\nAwaiting confirmation\nConfirmed\nReturned\nStale",
+   "default": "Not requested"
+  },
+  {
+   "fieldname": "finance_snapshot_amount",
+   "fieldtype": "Currency",
+   "label": "Finance Snapshot Amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "finance_snapshot_budget_line",
+   "fieldtype": "Data",
+   "label": "Finance Snapshot Budget Line"
+  },
+  {
+   "fieldname": "finance_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Finance Confirmed At"
+  },
+  {
+   "fieldname": "finance_confirmed_by",
+   "fieldtype": "Link",
+   "label": "Finance Confirmed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "finance_reservation",
+   "fieldtype": "Data",
+   "label": "Finance Reservation"
+  },
+  {
+   "fieldname": "finance_owned_reservation",
+   "fieldtype": "Check",
+   "label": "Planning-Owned Reservation",
+   "default": 0
   },
   {
    "fieldname": "strategy_snapshot",
@@ -332,10 +390,38 @@
    "fieldname": "schedule_change_reason",
    "fieldtype": "Small Text",
    "label": "Schedule Change Reason"
+  },
+  {
+   "fieldname": "section_removal",
+   "fieldtype": "Section Break",
+   "label": "Removal"
+  },
+  {
+   "fieldname": "draft_change_label",
+   "fieldtype": "Select",
+   "label": "Draft Change",
+   "options": "\nAdded\nChanged\nProposed removal"
+  },
+  {
+   "default": "0",
+   "fieldname": "proposed_removal",
+   "fieldtype": "Check",
+   "label": "Proposed Removal"
+  },
+  {
+   "fieldname": "removal_reason",
+   "fieldtype": "Small Text",
+   "label": "Removal Reason"
+  },
+  {
+   "fieldname": "removed_in_version",
+   "fieldtype": "Link",
+   "label": "Removed In Version",
+   "options": "Procurement Plan Version"
   }
  ],
  "links": [],
- "modified": "2026-08-10 00:00:00.000000",
+ "modified": "2026-08-13 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Procurement Plan Item Version",

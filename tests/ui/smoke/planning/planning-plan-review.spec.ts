@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import {
 	loginAsMohPlanApprover,
+	loginAsMohPlanningOfficer,
 	loginAsMohPlanningReviewer,
 	preparePlanningGate05Approval,
 } from "../../helpers/planningRoles";
@@ -32,12 +33,19 @@ test.describe("PLN-UI-08 Consolidated plan review and approval", () => {
 			rootTestId: "kt-pln-ui08-root",
 			primaryCtaTestId: "kt-pln-ui08-primary",
 		});
-		await expect(page.getByRole("heading", { name: /Review annual procurement plan/i })).toBeVisible();
+		await expect(
+			page.getByRole("heading", { name: /Review and approve procurement plan/i }),
+		).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui08-summary")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui08-statutory")).toBeVisible();
+		await expect(page.getByText("Finance Confirmed", { exact: true })).toBeVisible();
+		await expect(page.locator(`${ROOT} th`, { hasText: "Finance" })).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui08-statutory")).toBeHidden();
 		await expect(page.getByTestId("kt-pln-ui08-rail")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui08-trail")).toBeVisible();
-		await expect(page.getByText("Statutory allocation coverage")).toBeVisible();
+		await expect(page.getByText("Professional approval")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui08-primary")).toContainText(/Recommend approval/i);
+		await expect(page.getByTestId("kt-pln-ui08-return")).toContainText(/Return to planner/i);
+		await expect(page.getByText("Statutory allocation coverage")).toHaveCount(0);
 		await expect(page.getByText(/approval matrix/i)).toHaveCount(0);
 
 		await page.getByTestId("kt-pln-ui08-return").click();
@@ -65,5 +73,23 @@ test.describe("PLN-UI-08 Consolidated plan review and approval", () => {
 		await expect(primary).toBeEnabled({ timeout: 15_000 });
 		await primary.click();
 		await expect(page).toHaveURL(/planning-workspace/, { timeout: 45_000 });
+	});
+
+	test("Planner cannot act on the professional review task", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate05Approval(page);
+		expect(prep.empty_draft_plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-review?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(ROOT)).toBeVisible({ timeout: 45_000 });
+		await expect(
+			page.getByRole("heading", { name: /Review and approve procurement plan/i }),
+		).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui08-primary")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui08-return")).toBeHidden();
 	});
 });

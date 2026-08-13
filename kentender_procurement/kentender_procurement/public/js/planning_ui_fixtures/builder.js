@@ -1,9 +1,9 @@
-// PLN-UI-03 empty (Stitch v1.9 literal) + PLN-UI-05 items table (interim shared shell).
-// Fake top/side nav + in-canvas breadcrumbs discarded (Desk chrome); kt-stitch-canvas + testids/bind hooks only.
+// PLN-UI-03 empty (Stitch v1.9 literal) + PLN-UI-05 populated (Stitch v1.9 literal).
+// Fake top/side nav and in-canvas breadcrumbs discarded (Desk chrome owns crumbs).
 frappe.provide("kentender_procurement.ui_fixtures");
 
 kentender_procurement.ui_fixtures.planning_builder = function () {
-	return `<div class="kt-pln-root kt-stitch-canvas" data-testid="kt-pln-ui03-root">
+	return `<div class="kt-pln-root kt-stitch-canvas relative" data-testid="kt-pln-ui03-root" data-kt-pln-builder-state="empty">
 <main class="flex-1 overflow-y-auto bg-surface-bright pb-24 relative" data-testid="kt-pln-ui03-main">
 <div class="max-w-7xl mx-auto p-container-padding lg:p-section-gap space-y-section-gap">
 <div data-testid="kt-pln-ui03-header">
@@ -26,6 +26,22 @@ Add approved Demand
 </div>
 </div>
 </div>
+<header class="hidden" data-testid="kt-pln-ui05-header" hidden>
+<div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs" data-kt-pln-builder-title>Ministry of Health Annual Procurement Plan 2027/28</h1>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-status-reserved" aria-hidden="true"></span>
+<span data-kt-pln-builder-lifecycle data-testid="kt-pln-ui05-lifecycle">Open Plan</span>
+<span aria-hidden="true">·</span>
+<span data-kt-pln-builder-version>Draft Version 1</span>
+</p>
+</div>
+<button type="button" class="bg-primary text-on-primary px-6 py-2.5 rounded font-label-caps text-label-caps hover:bg-surface-tint transition-colors flex items-center shadow-sm" data-kt-pln-action="add-demand" data-testid="kt-pln-ui05-add-demand">
+<span class="material-symbols-outlined mr-2" aria-hidden="true">add</span> Add approved demands
+</button>
+</div>
+</header>
 <div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-row items-center justify-between shadow-sm" data-testid="kt-pln-ui03-summary">
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Plan Items</span>
@@ -49,12 +65,18 @@ Add approved Demand
 </span>
 </div>
 </div>
-<div class="bg-[#FEF3C7] border border-[#F59E0B] rounded-lg p-4 flex items-center justify-between shadow-sm hidden" data-kt-pln-issue-strip data-testid="kt-pln-ui05-issue-strip" hidden>
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[#D97706]" aria-hidden="true" data-kt-pln-issue-icon>warning</span>
-<span class="font-body-md text-body-md text-[#92400E]" data-kt-pln-issue-copy>1 item needs attention before submit for review.</span>
+<div class="bg-error-container/30 border border-error-container rounded-lg p-3 flex items-center justify-between hidden" data-kt-pln-issue-strip data-testid="kt-pln-ui05-issue-strip" hidden>
+<div class="flex items-center text-on-error-container font-body-sm text-body-sm">
+<span class="material-symbols-outlined mr-2 text-error" aria-hidden="true" data-kt-pln-issue-icon>info</span>
+<span data-kt-pln-issue-copy>Complete the Plan Item before requesting Finance confirmation.</span>
 </div>
-<a class="text-[#D97706] hover:text-[#B45309] font-body-md text-body-md font-medium underline transition-colors" href="#" data-kt-pln-action="review-issue" data-kt-pln-issue-action>Review issue</a>
+<a class="text-primary font-body-sm text-body-sm font-medium hover:underline flex items-center" href="#" data-kt-pln-action="review-issue" data-kt-pln-issue-action>Review issue <span class="material-symbols-outlined ml-1 text-sm" aria-hidden="true">arrow_forward</span></a>
+</div>
+<div class="bg-surface-container-low border border-subtle rounded-lg p-3 flex items-center justify-between hidden" data-testid="kt-pln-ui05-no-changes" hidden>
+<div class="flex items-center text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined mr-2 text-on-surface-variant" aria-hidden="true">info</span>
+<span>No changes remain</span>
+</div>
 </div>
 <div class="flex flex-col md:flex-row gap-3" data-testid="kt-pln-ui03-filters">
 <div class="relative flex-1">
@@ -107,44 +129,45 @@ Add approved Demand
 </div>
 </div>
 </div>
-<div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm overflow-hidden flex flex-col hidden" data-testid="kt-pln-ui03-items" data-kt-pln-items-table data-kt-pln-ui05-items hidden>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm flex-1 overflow-hidden flex flex-col mb-20 hidden" data-testid="kt-pln-ui03-items" data-kt-pln-items-table data-kt-pln-ui05-items hidden>
 <div class="overflow-x-auto">
-<table class="w-full text-left border-collapse min-w-[1000px]" data-testid="kt-pln-ui05-table">
+<table class="w-full text-left border-collapse" data-testid="kt-pln-ui05-table">
 <thead>
-<tr class="bg-surface-container-low border-b border-subtle font-label-caps text-label-caps text-on-surface-variant">
-<th class="p-4 font-semibold w-1/4">Requirement</th>
-<th class="p-4 font-semibold">Organisation Unit</th>
-<th class="p-4 font-semibold">Category</th>
-<th class="p-4 font-semibold text-right">Planned Value</th>
-<th class="p-4 font-semibold">Method</th>
-<th class="p-4 font-semibold">Schedule</th>
-<th class="p-4 font-semibold">Validation</th>
-<th class="p-4 font-semibold text-center">Action</th>
+<tr class="border-b border-subtle bg-surface-bright">
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Requirement</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Organisation Unit</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant text-right">Planned Value</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Method</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Schedule</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant" data-kt-pln-finance-empty="Not requested">Finance</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Validation</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant">Action</th>
 </tr>
 </thead>
-<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-border-subtle" data-kt-pln-items-body></tbody>
-<tfoot class="bg-surface-container-low border-t-2 border-subtle">
-<tr>
-<td class="p-4 font-headline-sm text-headline-sm text-right text-on-surface" colspan="3">Total</td>
-<td class="p-4 font-data-lg text-data-lg text-right text-on-surface whitespace-nowrap" data-kt-pln-builder-table-total>KES 0</td>
-<td colspan="4"></td>
+<tbody class="divide-y divide-subtle" data-kt-pln-items-body>
+<tr class="h-auto" data-kt-pln-items-filler>
+<td class="p-8 text-center text-on-surface-variant font-body-sm text-body-sm border-t-0" colspan="8">
+No further plan items added yet.
+</td>
 </tr>
-</tfoot>
+</tbody>
 </table>
 </div>
 </div>
 </div>
 </main>
-<div class="absolute bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-subtle px-container-padding py-3 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40" data-testid="kt-pln-ui05-footer">
-<a class="border border-subtle bg-surface-bright hover:bg-surface-container-low text-on-surface font-body-sm text-body-sm font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2" href="/app/planning-workspace" data-testid="kt-pln-ui03-back" data-kt-pln-action="back">
-<span class="material-symbols-outlined text-sm" aria-hidden="true">arrow_back</span>
-Back to Planning
-</a>
-<div class="flex gap-3">
-<button type="button" class="border border-subtle bg-surface-container text-on-surface-variant/50 font-body-sm text-body-sm font-medium py-2 px-4 rounded-lg cursor-not-allowed" data-kt-pln-action="run-validation" data-testid="kt-pln-ui05-run-validation" disabled="">
+<div class="absolute bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-subtle p-4 px-container-padding md:px-section-gap flex justify-between items-center z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]" data-testid="kt-pln-ui05-footer">
+<button type="button" class="flex items-center text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors" data-testid="kt-pln-ui03-back" data-kt-pln-action="back">
+<span class="material-symbols-outlined mr-2" aria-hidden="true">arrow_back</span> Back to Planning
+</button>
+<div class="flex gap-4">
+<button type="button" class="px-6 py-2 border border-subtle text-primary bg-surface-bright rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors shadow-sm hidden" data-kt-pln-action="cancel-update" data-testid="kt-pln-ui05-cancel-update" hidden>
+Cancel update
+</button>
+<button type="button" class="px-6 py-2 border border-subtle text-primary bg-surface-bright rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors shadow-sm" data-kt-pln-action="run-validation" data-testid="kt-pln-ui05-run-validation" disabled="">
 Run validation
 </button>
-<button type="button" class="bg-primary/50 text-on-primary/50 font-body-sm text-body-sm font-medium py-2 px-4 rounded-lg cursor-not-allowed" data-kt-pln-action="submit-for-review" data-testid="kt-pln-ui05-submit-review" disabled="">
+<button type="button" class="px-6 py-2 bg-surface-variant text-outline rounded font-label-caps text-label-caps cursor-not-allowed opacity-70" data-kt-pln-action="submit-for-review" data-testid="kt-pln-ui05-submit-review" disabled="">
 Submit for review
 </button>
 </div>

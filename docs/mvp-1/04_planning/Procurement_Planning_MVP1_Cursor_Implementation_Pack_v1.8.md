@@ -1,15 +1,15 @@
 # KenTender Procurement Planning — Cursor Implementation Pack
 
-**Document ID:** PLANNING-MVP1-CURSOR-1.7  
-**Version:** 1.7  
+**Document ID:** PLANNING-MVP1-CURSOR-1.8  
+**Version:** 1.8  
 **Status:** Approved implementation baseline for direct MVP correction  
-**Date:** 11 August 2026  
-**Supersedes:** `PLANNING-MVP1-CURSOR-1.6`  
-**Requirements:** `Procurement_Planning_MVP1_Requirements_v1.8.md`  
-**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v1.9.md` and approved outputs PLN-UI-01 through PLN-UI-10, including PLN-UI-07A  
+**Date:** 12 August 2026  
+**Supersedes:** `PLANNING-MVP1-CURSOR-1.7`  
+**Requirements:** `Procurement_Planning_MVP1_Requirements_v1.9.md`  
+**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v2.0.md` and approved outputs PLN-UI-01 through PLN-UI-10, including PLN-UI-05A and PLN-UI-07A  
 **Operating model:** `KenTender_MVP_Cross_Module_Operating_Model_v1.1.md`
 
-**Revision 1.7:** Adds the PLN-UI-07A funding-shortfall state to the existing Finance task. Confirmation requires full live availability. A shortfall keeps the task pending while the Budget Officer resolves it through Budget & Funding or returns it to the planner. Partial confirmation, negative availability, manual override and inline Budget mutation are prohibited. All v1.6 formation and workflow corrections remain in force.
+**Revision 1.8:** Implements controlled whole-Plan-Item removal. Draft-only items are removed from the Draft with preserved history and immediate task/funding reversal; eligible Active items are proposed for removal in a Draft successor and become Removed only on successor approval. Executed items are protected. All v1.7 Finance-shortfall and earlier workflow corrections remain in force.
 
 ## 1. How to use this pack
 
@@ -32,8 +32,8 @@ MVP seed data is disposable. Prefer a clean teardown/reseed to dual-write, alias
 Use this order:
 
 1. `KENTENDER-MVP-CMOM-1.1`
-2. `PLANNING-MVP1-REQ-1.8`
-3. `PLANNING-MVP1-STITCH-1.9` for visible screen composition
+2. `PLANNING-MVP1-REQ-1.9`
+3. `PLANNING-MVP1-STITCH-2.0` for visible screen composition
 4. this Cursor pack
 5. the canonical seed contract only where it does not conflict with the above
 6. existing repository conventions that do not conflict
@@ -57,6 +57,7 @@ Non-negotiable results:
 - No Departmental Contribution, Departmental Submission or routine second HoD sign-off remains.
 - Approved Plan Versions are immutable.
 - Adding to an Approved Plan quietly creates/reuses one Draft successor.
+- A planner can remove a draft-only item or propose eligible Active-item removal without deleting history or editing the Approved baseline.
 - The current Approved Version and existing Tender handoffs remain operational until successor approval.
 - Restricted task actions and task routes are absent for unauthorised users, not merely disabled.
 
@@ -138,9 +139,9 @@ Use isolated automated-test fixtures, rather than new permanent canonical seed r
 ```text
 Read completely:
 - KenTender_MVP_Cross_Module_Operating_Model_v1.1.md
-- Procurement_Planning_MVP1_Requirements_v1.8.md
-- Procurement_Planning_MVP1_Stitch_Prompts_v1.9.md
-- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.7.md
+- Procurement_Planning_MVP1_Requirements_v1.9.md
+- Procurement_Planning_MVP1_Stitch_Prompts_v2.0.md
+- Procurement_Planning_MVP1_Cursor_Implementation_Pack_v1.8.md
 
 Implement the Planning security correction first.
 
@@ -175,6 +176,7 @@ Task protection:
 - reject direct API mutation calls server-side;
 - permit neutral read-only detail only when record visibility exists;
 - show permitted completed decision history on neutral detail, not a disabled task form.
+- show Plan Item removal only to a scoped Procurement Planner with Draft mutation authority; reject direct removal calls for viewers, other roles, cross-scope records and executed items.
 
 Cover PLN-UI-01, PLN-UI-02, PLN-UI-07, PLN-UI-07A and PLN-UI-08 route/action guards.
 
@@ -239,6 +241,7 @@ Enforce domain invariants:
 - approval makes allocations effective exactly once;
 - same-PE allocation enforcement;
 - Proposed/Active/Removed item states;
+- Proposed-removal as a Draft-Version change projection, not an in-place Active-item status mutation;
 - optimistic concurrency and double-submit protection.
 
 Use clean teardown/reseed for disposable MVP data. Do not build migration compatibility layers or aliases.
@@ -257,7 +260,7 @@ Add schema/invariant tests and a repository search proving the removed structure
 # Cursor Prompt 03 — Workspace, Plan registration and Plan formation
 
 ```text
-Implement PLN-UI-01, PLN-UI-02, PLN-UI-03, PLN-UI-04 and PLN-UI-05 from Stitch v1.9 using native KenTender/Frappe pages and the existing shell.
+Implement PLN-UI-01, PLN-UI-02, PLN-UI-03, PLN-UI-04 and PLN-UI-05 from Stitch v2.0 using native KenTender/Frappe pages and the existing shell.
 
 PLN-UI-01:
 - explicit authorised PE and FY context;
@@ -278,6 +281,8 @@ PLN-UI-02:
 
 PLN-UI-03/05:
 - compact Plan Items table, totals, validation and Finance-confirmation projections;
+- show Continue as the primary row link and a scoped overflow action Remove from draft for a removable draft-only Proposed item;
+- open PLN-UI-05A for confirmation; never issue the mutation from the menu click itself;
 - no Departmental Contribution or HoD sign-off action;
 - no manual blank Plan Item grid or package/release objects.
 
@@ -316,7 +321,7 @@ Do not implement PLN-UI-06 yet. Return changed files, actual service names and t
 # Cursor Prompt 04 — Focused Plan Item editor
 
 ```text
-Implement PLN-UI-06 exactly from Stitch v1.9.
+Implement PLN-UI-06 exactly from Stitch v2.0.
 
 The page opens an existing Proposed Plan Item created by PLN-UI-04.
 
@@ -481,9 +486,25 @@ PLN-UI-10:
 - show Approved Version 1 and Draft Version 2 totals;
 - make added/changed Plan Items primary;
 - show unchanged operational items as collapsed read-only context;
-- require one concise reason for adding after approval;
+- require one concise reason for the post-approval change;
 - show Finance/validation per changed item;
+- show Remove from update for a removable draft-only item and Proposed removal for an eligible carried-forward Active item;
 - do not expose version-management controls, formation controls, raw diffs, second HoD sign-off or editable Approved fields.
+
+PLN-UI-05A and removal service:
+- use one compact confirmation dialog from PLN-UI-05/10 and from an eligible Active-item row on PLN-UI-09;
+- require one non-empty business reason and show item, owner OU, value, all source Demands, Finance state and the exact lifecycle effect read-only;
+- the public capability accepts Plan, Draft Version, Plan Item, expected version/concurrency token and reason; it derives the removal mode and financial effects server-side;
+- never accept client-supplied release amount, Demand-eligibility flag, item status or `has_downstream` authority;
+- for an item created only in the editable Draft, atomically mark it Removed/excluded, preserve an audit tombstone and source allocations, cancel any open Finance task, reverse any draft-stage Finance confirmation through the governed service, release its reservation once, and restore every source Demand allocation to Planning eligibility;
+- for an Active item in the current Approved Version, create/reuse the Draft successor and record Proposed removal only; keep the current item, reservation and source ineligible/operational until successor approval;
+- on successor approval, recheck there is no Tender handoff, commitment or other downstream execution, then atomically mark the item Removed in the successor, release only the unconsumed reservation and restore source eligibility;
+- if downstream execution exists at request time, omit the action and reject direct calls with a stable business error; if it appears concurrently before approval, block successor approval and show a business-readable validation issue;
+- remove a combined Plan Item only as a whole; do not add source-level removal to PLN-UI-06 or PLN-UI-05A;
+- recalculate Draft counts, totals, Finance counts and validation after success;
+- if no effective Draft changes remain, return `no_changes_remain = true`, block no-op submission and offer Cancel update;
+- use idempotency and optimistic concurrency so retry/double-click cannot duplicate release, eligibility restoration or audit events;
+- never hard-delete Plan Item, Plan Item Version, Plan Demand Allocation, Finance decision or audit evidence.
 
 Publication:
 - publish/export current Approved Version only;
@@ -504,7 +525,12 @@ Prove the canonical post-approval scenario:
 - Finance confirmation follows new-item completion;
 - successor approval supersedes V1 and activates the new item without duplicating unchanged handoffs.
 
-Add service, transaction and Playwright tests for the complete route, refresh/back, double-submit, concurrency and publication/Tender contracts.
+Prove removal separately:
+- run `SCN-PLN-REMOVE-001` before Finance confirmation and remove `PPI-MOH-2027-022` from Draft Version 2;
+- Draft total returns from KES 535,000,000 to KES 455,000,000, `DMD-MOH-2027-019` is eligible again, and Approved Version 1 plus `TND-MOH-2027-008` remain unchanged;
+- add transactional tests for the Finance-confirmed draft-only branch and the Active-item proposed-removal branch without altering the canonical base story.
+
+Add service, transaction and Playwright tests for the complete route, removal variants, refresh/back, double-submit, concurrency and publication/Tender contracts.
 ```
 
 **Section acceptance**
@@ -518,7 +544,7 @@ Add service, transaction and Playwright tests for the complete route, refresh/ba
 # Cursor Prompt 07 — Canonical seed, regression suite and close-out
 
 ```text
-Rebuild and verify the canonical Strategy → Budget → Demand → Planning story against the approved operating model.
+Rebuild and verify the canonical Strategy → Budget → Demand → Planning story against `KenTender_MVP_Canonical_Demo_Data_Contract_v2.7.md` and the approved operating model.
 
 Seed:
 - make the approved canonical Strategy seed the single ordinary source;
@@ -529,6 +555,9 @@ Seed:
 - seed explicit PE/OU assignments for Requester, HoD, Planner, Budget Officer, Head of Procurement and Viewer;
 - seed HoD approval before Planning;
 - seed Finance confirmation after Plan Item completion;
+- implement optional resettable `SCN-PLN-FUND-SHORT-001` exactly as defined in the canonical contract: KES 80m required, KES 25m available and KES 55m shortfall on `PPI-MOH-2027-022`;
+- implement optional resettable `SCN-PLN-REMOVE-001` exactly as defined in the canonical contract: remove Proposed `PPI-MOH-2027-022` before Finance confirmation, return `DMD-MOH-2027-019` to eligibility and restore the Draft total to KES 455m without changing Approved Version 1 or its Tender;
+- keep the shortfall hold scenario-owned and absent from the successful base seed;
 - remove all treatment, contribution, routine Planning-HoD and cosmetic Keep separate fixtures;
 - keep unrelated works-master data opt-in.
 
@@ -548,6 +577,7 @@ Run final verification:
 11. publication and Tender handoff;
 12. PLN-UI-07A shortfall, no-override/no-partial-confirmation and same-task recovery tests;
 13. accessibility checks for labels, keyboard, focus and error association.
+14. draft-only removal before/after Finance confirmation, Active-item proposed removal, executed-item denial, whole-combined-item removal, no-op Draft handling, double-submit and approval-time race tests.
 
 Produce one concise completion report only:
 - capability → actual public service name;
@@ -569,7 +599,7 @@ Do not create another audit directory or documentation-recovery project. Do not 
 
 Procurement Planning MVP 1 is corrected when:
 
-- all ten Stitch v1.9 screens, including the PLN-UI-07A shortfall state, are backed by live scoped services;
+- the complete Stitch v2.0 set, including PLN-UI-05A removal and PLN-UI-07A shortfall states, is backed by live scoped services;
 - one selected Demand creates one Plan Item, while multiple selected Demands create exactly the confirmed separate or compatible combined structure;
 - PLN-UI-06 never repeats source selection;
 - Plan Items contain only admitted planning fields;
@@ -578,6 +608,7 @@ Procurement Planning MVP 1 is corrected when:
 - no contribution, routine second HoD or generic treatment structure remains;
 - restricted task forms/actions are absent and server-denied for unauthorised roles;
 - Approved Versions are immutable and remain operational during revision;
+- Plan Item removal is whole-item, audited and version-correct; draft-only removal reverses draft effects, Active removal waits for successor approval, and executed items are protected;
 - compatible combination is explicit in PLN-UI-04 and cross-OU combination is rejected;
 - Tender handoff uses one immutable approved snapshot;
 - canonical seed and post-approval scenario rerun without duplicates; and
