@@ -34,6 +34,11 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 			/define the workspace scope|filter visibility/i,
 		);
 		await expect(page.locator('[data-kt-pln-filter="procuring_entity"]')).toBeVisible();
+		const peValues = await page
+			.locator('[data-kt-pln-filter="procuring_entity"] option')
+			.evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value));
+		expect(peValues.filter(Boolean)).toEqual(expect.arrayContaining(["PE-MOH"]));
+		expect(peValues.join(" ")).not.toMatch(/PE-CGK|Kisumu/i);
 		await expect(page.locator('[data-kt-pln-filter="financial_year"]')).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText(/Plan Items/i);

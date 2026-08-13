@@ -113,11 +113,14 @@ def _proposed_funding(demand: str) -> dict[str, str | None]:
 	if not line_id or not frappe.db.exists("Budget Line", line_id):
 		return empty
 	title = cstr(frappe.db.get_value("Budget Line", line_id, "title") or "").strip()
-	code = cstr(
-		frappe.db.get_value("Budget Line", line_id, "budget_line_code")
-		or frappe.db.get_value("Budget Line", line_id, "code")
-		or ""
-	).strip()
+	meta = frappe.get_meta("Budget Line")
+	code = ""
+	for field in ("generated_reference", "budget_line_code", "code"):
+		if not meta.has_field(field):
+			continue
+		code = cstr(frappe.db.get_value("Budget Line", line_id, field) or "").strip()
+		if code:
+			break
 	name = title or code or line_id
 	# Never show internal hash as the primary display.
 	if name == line_id and len(line_id) <= 12 and name.isalnum():

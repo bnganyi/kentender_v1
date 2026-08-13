@@ -62,6 +62,8 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 			BLD_PAGE,
 			ED_PAGE,
 			REVIEW_PAGE,
+			APPROVED_PAGE,
+			UPDATE_PAGE,
 		):
 			self.assertTrue(path.is_file(), path)
 
@@ -315,6 +317,7 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("Combine into one Plan Item", text)
 		self.assertIn('data-testid="kt-pln-ui04-formation"', text)
 		self.assertIn('data-testid="kt-pln-ui04-formation-reason"', text)
+		self.assertIn('data-kt-field-error="formation_reason"', text)
 		self.assertIn("View source breakdown", text)
 		# Never an absolute selection <td> (shifts columns vs headers).
 		self.assertNotIn("absolute left-0 top-0 bottom-0 w-1 bg-primary", text)
@@ -583,6 +586,7 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn('data-testid="kt-pln-ui10-summary"', text)
 		self.assertIn('data-testid="kt-pln-ui10-context"', text)
 		self.assertIn('data-testid="kt-pln-ui10-reason"', text)
+		self.assertIn('data-kt-field-error="update_reason"', text)
 		self.assertIn('data-testid="kt-pln-ui10-changes-table"', text)
 		self.assertIn('data-testid="kt-pln-ui10-unchanged"', text)
 		self.assertIn('data-testid="kt-pln-ui10-issue"', text)

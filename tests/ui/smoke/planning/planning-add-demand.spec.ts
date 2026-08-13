@@ -181,6 +181,102 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 		await expect(page.locator(ROOT_EDITOR)).not.toContainText("Keep separate");
 	});
 
+	test("Combine without a reason shows an inline error, not a Message dialog", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate04(page, { eligibleCount: 2 });
+		expect(prep.empty_draft_plan).toBeTruthy();
+		expect(prep.eligible_demand).toBeTruthy();
+		expect(prep.eligible_demand_2).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-builder?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${BUILDER}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await page.getByTestId("kt-pln-ui03-add-demand").click();
+		await expect(page.locator(DIALOG)).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-row]`).first()).toBeVisible({
+			timeout: 20_000,
+		});
+		const first = page.locator(
+			`${DIALOG} [data-kt-pln-elig-check][data-demand="${prep.eligible_demand}"]`,
+		);
+		const second = page.locator(
+			`${DIALOG} [data-kt-pln-elig-check][data-demand="${prep.eligible_demand_2}"]`,
+		);
+		await expect(first).toBeVisible();
+		await expect(second).toBeVisible();
+		await first.evaluate((el: HTMLInputElement) => {
+			el.checked = true;
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+		await second.evaluate((el: HTMLInputElement) => {
+			el.checked = true;
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+		await expect(page.getByTestId("kt-pln-ui04-formation")).toBeVisible();
+		await page.getByTestId("kt-pln-ui04-formation-combine").check();
+		await expect(page.getByTestId("kt-pln-ui04-formation-reason")).toBeVisible();
+		await page.getByTestId("kt-pln-ui04-add").click();
+		await expect(
+			page.locator(`${DIALOG} [data-kt-field-error="formation_reason"]`),
+		).toBeVisible();
+		await expect(page.locator(`${DIALOG} [data-kt-field-error="formation_reason"]`)).toContainText(
+			/reason for combining is required/i,
+		);
+		await expect(page.getByRole("dialog", { name: "Message" })).toHaveCount(0);
+		await expect(page.locator(DIALOG)).toBeVisible();
+		await expect(page).toHaveURL(/procurement-plan-builder/);
+	});
+
+	test("mixed-OU selection disables Combine and shows the incompatibility callout", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate04(page, { eligibleCount: 2, mixedOu: true });
+		expect(prep.empty_draft_plan).toBeTruthy();
+		expect(prep.eligible_demand).toBeTruthy();
+		expect(prep.eligible_demand_2).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-builder?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${BUILDER}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await page.getByTestId("kt-pln-ui03-add-demand").click();
+		await expect(page.locator(DIALOG)).toBeVisible({ timeout: 15_000 });
+		const first = page.locator(
+			`${DIALOG} [data-kt-pln-elig-check][data-demand="${prep.eligible_demand}"]`,
+		);
+		const second = page.locator(
+			`${DIALOG} [data-kt-pln-elig-check][data-demand="${prep.eligible_demand_2}"]`,
+		);
+		await expect(first).toBeVisible({ timeout: 20_000 });
+		await expect(second).toBeVisible();
+		await first.evaluate((el: HTMLInputElement) => {
+			el.checked = true;
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+		await second.evaluate((el: HTMLInputElement) => {
+			el.checked = true;
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+		await expect(page.getByTestId("kt-pln-ui04-formation")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui04-formation-combine")).toBeDisabled();
+		await expect(page.locator(`${DIALOG} [data-kt-pln-formation-callout-copy]`)).toContainText(
+			/These Demands have different owning Organisation Units and cannot be combined in MVP 1/i,
+		);
+		await expect(page.getByRole("dialog", { name: "Message" })).toHaveCount(0);
+	});
+
 	test("single Demand creates one Plan Item without formation radios", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningGate04(page, { needItemCount: 2 });

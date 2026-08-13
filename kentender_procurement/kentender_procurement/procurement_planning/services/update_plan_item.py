@@ -59,6 +59,11 @@ HOD_LOCKED = (
 	"requirement_title",
 )
 
+# AC-018 — Demand strategy / PVC snapshots are pass-through; Planning cannot author them.
+SNAPSHOT_IGNORE_KEYS = frozenset(
+	("strategy_snapshot", "pvc_snapshot", "value_treatment_note")
+)
+
 HOD_IMMUTABLE_MSG = (
 	"Business scope, quantity, owner, delivery requirement and approved value come "
 	"from the Approved Demand source(s) and cannot be changed here. Amend and reapprove the Demand."
@@ -133,9 +138,11 @@ def update_plan_item(
 
 	# Soft field issues — Draft save must still persist; UI flags fields inline.
 	# C02: preference keys in payload are ignored (not writable from editor).
+	# AC-018: strategy / PVC / treatment keys are Demand pass-through — ignore writes.
+	ignored = frozenset(PREF_KEYS) | SNAPSHOT_IGNORE_KEYS
 	field_issues = collect_plan_item_field_issues(
 		iv=iv,
-		payload={k: v for k, v in payload.items() if k not in PREF_KEYS},
+		payload={k: v for k, v in payload.items() if k not in ignored},
 		include_preference=False,
 	)
 

@@ -19,6 +19,10 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	assert_pe_resolved_for_create,
 	resolve_pe_for_create,
 )
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	purge_pe_fy,
+	unique_test_fy,
+)
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	OU_CGK,
 	OU_MOH,
@@ -58,19 +62,14 @@ class TestPlanningPeScopeSelection(IntegrationTestCase):
 			)
 
 	def test_single_pe_forces_assignment(self) -> None:
+		"""PLN-AC-001 — one PE stays the assigned entity; caller cannot invent another."""
 		planner = ensure_moh_planner()
 		scope = resolve_pe_for_create(planner, selected_pe=None)
 		self.assertEqual(scope["selection_mode"], MODE_SINGLE)
 		self.assertEqual(scope["procuring_entity"], PE_MOH)
 		# Even if caller passes a different PE, create forces the assigned PE.
-		fy = f"215{frappe.db.count('Procurement Plan') % 9}/52"
-		# Clean any prior for forced PE+FY
-		for name in frappe.get_all(
-			"Procurement Plan",
-			filters={"procuring_entity": PE_MOH, "financial_year": fy},
-			pluck="name",
-		):
-			frappe.delete_doc("Procurement Plan", name, force=True, ignore_permissions=True)
+		fy = unique_test_fy(base_year=2160, bucket=int(frappe.db.count("Procurement Plan") or 0))
+		purge_pe_fy(fy)
 		result = create_procurement_plan(
 			procuring_entity=PE_CGK,  # wrong — must be overridden
 			financial_year=fy,

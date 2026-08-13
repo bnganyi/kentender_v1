@@ -15,6 +15,7 @@ from kentender_core.seeds import constants as CoreC
 from kentender_core.seeds._common import ensure_user_permission
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.demands.services.demand_permissions import (
+	ROLE_BUSINESS,
 	ROLE_REQUESTER,
 	ensure_demand_roles,
 )
@@ -35,7 +36,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_MEDICAL,
 		"Dr Miriam Njeri",
-		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
+		("Strategy Officer", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
 		C.PE_MOH,
 		C.OU_DIR_DHP,
 		1,
@@ -43,7 +44,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_PUBLIC,
 		"MOH Public Health Officer",
-		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
+		("Strategy Officer", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
 		1,
@@ -75,7 +76,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_VIEWER,
 		"MOH Management Viewer",
-		("Strategy Viewer", "Budget Viewer"),
+		("Strategy Viewer", "Budget Viewer", ROLE_VIEWER),
 		C.PE_MOH,
 		None,
 		0,
@@ -109,8 +110,8 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		"Mercy Kilonzo",
 		(ROLE_PLANNER,),
 		C.PE_MOH,
-		C.OU_DIR_DHP,
-		1,
+		None,
+		0,
 	),
 	(
 		C.USER_PLANNING_REVIEWER,

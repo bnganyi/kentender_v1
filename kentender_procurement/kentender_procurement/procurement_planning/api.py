@@ -464,12 +464,17 @@ def aggregate_plan_allocations(
 def prepare_planning_gate04_ui(
 	with_plan_item: int | str | None = 0,
 	need_item_count: int | str | None = 1,
+	eligible_count: int | str | None = 1,
+	mixed_ou: int | str | None = 0,
 ) -> dict[str, Any]:
 	"""Empty Draft + eligible Approved Demand in planner scope for Gate 04 UI tests.
 
 	When ``with_plan_item`` is truthy, also adds the Demand as the seeded planner so
 	editor / populated-builder Playwright can open a Plan Item immediately.
 	``need_item_count`` > 1 seeds a multi–Need Item Demand for packaging UI tests.
+	``eligible_count`` > 1 seeds a second same-OU Approved Demand for Combine UI tests.
+	``mixed_ou`` with ``eligible_count`` >= 2 seeds the second Demand under HRMD
+	so UI-04 can prove Combine is disabled (PLN-AC-016).
 	"""
 	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 		add_demand_to_plan,
@@ -481,6 +486,7 @@ def prepare_planning_gate04_ui(
 	base = prepare_planning_gate03_ui()
 	plan = base["empty_draft_plan"]
 	n_items = max(1, int(need_item_count or 1))
+	n_eligible = max(1, int(eligible_count or 1))
 	# Demand in MOH-DIR-DHP (same as empty draft coordinating OU).
 	d = make_approved_demand(
 		pe=base["pe_moh"],
@@ -493,8 +499,32 @@ def prepare_planning_gate04_ui(
 		"eligible_demand": d["demand"],
 		"eligible_demand_code": d["demand_code"],
 		"need_item_count": n_items,
+		"eligible_count": n_eligible,
 		"builder_route": f"/app/procurement-plan-builder?plan={plan}",
 	}
+	if n_eligible >= 2:
+		second_ou = "MOH-DIR-DHP"
+		if int(mixed_ou or 0):
+			from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+				_ensure_ou,
+			)
+
+			second_ou = "MOH-DIR-HRMD"
+			_ensure_ou(second_ou, "Human Resource Management", base["pe_moh"])
+		d2 = make_approved_demand(
+			pe=base["pe_moh"],
+			ou=second_ou,
+			title=(
+				"Gate04 HRMD eligible need"
+				if int(mixed_ou or 0)
+				else "Gate04 second digital health need"
+			),
+			need_item_count=1,
+		)
+		out["eligible_demand_2"] = d2["demand"]
+		out["eligible_demand_code_2"] = d2["demand_code"]
+		out["mixed_ou"] = bool(int(mixed_ou or 0))
+		out["eligible_demand_2_ou"] = second_ou
 	if int(with_plan_item or 0):
 		planner = "moh.planning.officer@example.test"
 		added = add_demand_to_plan(plan=plan, demand=d["demand"], user=planner)
@@ -547,12 +577,54 @@ def prepare_planning_finance_ui() -> dict[str, Any]:
 		make_test_budget_line,
 	)
 
+	from frappe.utils.password import update_password
+
+	from kentender_core.seeds.constants import TEST_PASSWORD
+	from kentender_procurement.procurement_planning.services.planning_permissions import (
+		ROLE_VIEWER,
+		ensure_planning_roles,
+	)
+
 	frappe.only_for(("System Manager", "Administrator"))
+	ensure_planning_roles()
 	base = prepare_planning_gate05_ui()
 	plan = base["empty_draft_plan"]
 	plan_item = base.get("plan_item")
 	demand = base.get("eligible_demand")
 	planner = "moh.planning.officer@example.test"
+	viewer = "pln.ui.viewer@example.test"
+	if not frappe.db.exists("User", viewer):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": viewer,
+				"first_name": "MOH",
+				"last_name": "Viewer",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", viewer)
+	user.enabled = 1
+	user.save(ignore_permissions=True)
+	user.add_roles("Desk User", ROLE_VIEWER)
+	update_password(viewer, TEST_PASSWORD)
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": viewer, "role": ROLE_VIEWER},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "User Scope Assignment",
+			"user": viewer,
+			"role": ROLE_VIEWER,
+			"procuring_entity": base.get("pe_moh") or "PE-MOH",
+			"organisation_unit": "",
+			"include_descendants": 0,
+		}
+	).insert(ignore_permissions=True)
 	if plan_item and demand:
 		amount = flt(
 			frappe.db.get_value("Procurement Plan Item Version", {"plan_item": plan_item}, "confirmed_estimate")
@@ -582,6 +654,7 @@ def prepare_planning_finance_ui() -> dict[str, Any]:
 		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_item={plan_item or ''}",
 		"finance_item": plan_item,
 		"finance_status": "Awaiting confirmation",
+		"viewer_user": viewer,
 	}
 
 
@@ -957,6 +1030,33 @@ def prepare_planning_gate06_approved_ui(
 		"update_route": f"/app/procurement-plan-update?plan={plan}"
 		if want_successor
 		else f"/app/procurement-plan-approved?plan={plan}",
+	}
+
+
+@frappe.whitelist()
+def prepare_planning_scn_add_ui() -> dict[str, Any]:
+	"""Canonical SCN-ADD stop_before_finance for AC-013 Playwright."""
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+	from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as scn
+
+	frappe.only_for(("System Manager", "Administrator"))
+	prepared = scn.run(reset_first=True, force=True, stop_before_finance=True)
+	if not prepared.get("ok"):
+		frappe.throw(f"SCN-ADD prepare failed: {prepared}")
+	plan = frappe.db.get_value(
+		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
+	)
+	frappe.db.commit()
+	return {
+		"ok": True,
+		"plan": plan,
+		"plan_code": C.PROCUREMENT_PLAN_CODE,
+		"stopped_before_finance": True,
+		"approved_route": f"/app/procurement-plan-approved?plan={plan}",
+		"update_route": f"/app/procurement-plan-update?plan={plan}",
+		"tender_code": C.TENDER_CODE,
+		"draft_total": C.PLAN_AMOUNT_V2,
+		"approved_total": C.PLAN_AMOUNT_V1,
 	}
 
 

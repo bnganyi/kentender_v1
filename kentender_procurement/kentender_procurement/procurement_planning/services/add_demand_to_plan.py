@@ -82,6 +82,43 @@ def _assert_no_ungoverned_parallel(demand: str, draft: str) -> None:
 		)
 
 
+def _demand_strategy_snapshots(demand: str | Any) -> tuple[str, str]:
+	"""Copy Approved Demand strategy / PVC labels onto the Plan Item Version.
+
+	Planning does not author treatment notes — labels pass through unchanged.
+	"""
+	name = demand if isinstance(demand, str) else cstr(getattr(demand, "name", "") or "")
+	if not name:
+		return "", ""
+	strategy_labels = frappe.get_all(
+		"Demand Strategy Reference",
+		filters={"demand": name},
+		pluck="snapshot_label",
+		order_by="creation asc",
+	)
+	strategy = "; ".join(cstr(x).strip() for x in strategy_labels if cstr(x).strip())
+	pvc_labels = frappe.get_all(
+		"Demand Value Treatment",
+		filters={"demand": name},
+		pluck="pvc_snapshot",
+		order_by="creation asc",
+	)
+	pvc = "; ".join(cstr(x).strip() for x in pvc_labels if cstr(x).strip())
+	return strategy, pvc
+
+
+def _snapshots_for_demands(docs: list[Any]) -> tuple[str, str]:
+	seen_s: list[str] = []
+	seen_p: list[str] = []
+	for doc in docs:
+		strategy, pvc = _demand_strategy_snapshots(doc)
+		if strategy and strategy not in seen_s:
+			seen_s.append(strategy)
+		if pvc and pvc not in seen_p:
+			seen_p.append(pvc)
+	return "; ".join(seen_s), "; ".join(seen_p)
+
+
 def _build_allocations_spec(
 	need_items: list[Any],
 	*,
@@ -141,6 +178,7 @@ def _create_plan_item_with_allocations(
 	)
 	item.insert(ignore_permissions=True)
 
+	strategy_snapshot, pvc_snapshot = _demand_strategy_snapshots(demand_doc)
 	iv_code = f"{plan_item_code}-{ver.version_number}"
 	item_version = frappe.get_doc(
 		{
@@ -169,6 +207,8 @@ def _create_plan_item_with_allocations(
 			"lotting_decision": "Single lot",
 			"expected_lot_count": 1,
 			"reservation_reference": rsv_ref,
+			"strategy_snapshot": strategy_snapshot,
+			"pvc_snapshot": pvc_snapshot,
 			"validation_projection": VALIDATION_NOT_RUN,
 		}
 	)
@@ -441,6 +481,7 @@ def _add_multi_demands_to_plan(
 		title = cstr(primary.title or primary.demand_code or "Combined Plan Item")
 		if len(docs) > 1:
 			title = f"{title} (+{len(docs) - 1} sources)"
+		strategy_snapshot, pvc_snapshot = _snapshots_for_demands(docs)
 		iv_code = f"{plan_item_code}-{ver.version_number}"
 		item_version = frappe.get_doc(
 			{
@@ -469,6 +510,8 @@ def _add_multi_demands_to_plan(
 				"lotting_decision": "Single lot",
 				"expected_lot_count": 1,
 				"reservation_reference": all_specs[0][3] if all_specs else "",
+				"strategy_snapshot": strategy_snapshot,
+				"pvc_snapshot": pvc_snapshot,
 				"validation_projection": VALIDATION_NOT_RUN,
 			}
 		)

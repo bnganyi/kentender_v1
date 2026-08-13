@@ -155,6 +155,21 @@ class TestGetPlanUpdate(IntegrationTestCase):
 			or "reason" in str(blocked.get("errors", {})).lower()
 		)
 
+	def test_save_plan_update_stale_token_rejected(self) -> None:
+		"""PLN-NFR-003 — stale concurrency token cannot save a successor update."""
+		planner, plan, _added = self._approved_then_successor(
+			bucket=6, title="Stale update token"
+		)
+		stale = save_plan_update(
+			plan=plan["plan"],
+			update_reason="Late approved training need",
+			concurrency_token="not-the-token",
+			user=planner,
+		)
+		self.assertFalse(stale.get("ok"), stale)
+		self.assertIn("form", stale.get("errors") or {})
+		self.assertIn("changed by another user", str(stale.get("errors")).lower())
+
 	def test_viewer_cannot_save_or_submit(self) -> None:
 		planner, plan, _added = self._approved_then_successor(
 			bucket=5, title="Viewer update"

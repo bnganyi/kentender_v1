@@ -4,6 +4,7 @@ import {
 	loginAsMohPlanningOfficer,
 	loginAsMohPlanningViewer,
 	preparePlanningGate06Approved,
+	preparePlanningScnAdd,
 } from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
@@ -126,5 +127,32 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 				`${ROOT} [data-kt-pln-ui09-row] [data-kt-pln-action="propose-removal"]`,
 			),
 		).toHaveCount(0);
+	});
+
+	test("AC-013: Approved V1 and Tender stay live while Draft V2 exists", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningScnAdd(page);
+		expect(prep.plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-approved?plan=${encodeURIComponent(prep.plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.locator("[data-kt-pln-ui09-version]")).toContainText(
+			"Approved Version",
+		);
+		await expect(page.locator("[data-kt-pln-ui09-total]")).toContainText(
+			"455,000,000",
+		);
+		await expect(
+			page.locator(`${ROOT} [data-kt-pln-ui09-row]`).getByText("TND-MOH-2027-008"),
+		).toHaveCount(1);
+		await expect(page.getByTestId("kt-pln-ui09-successor-notice")).toBeVisible();
 	});
 });

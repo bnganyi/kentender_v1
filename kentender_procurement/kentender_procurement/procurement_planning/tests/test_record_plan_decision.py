@@ -115,6 +115,20 @@ class TestRecordPlanDecision(IntegrationTestCase):
 			VERSION_RETURNED,
 		)
 
+	def test_stale_concurrency_token_rejected(self) -> None:
+		"""PLN-NFR-003 — stale concurrency token cannot record a review decision."""
+		_planner, reviewer, plan = self._in_review()
+		stale = record_plan_decision(
+			version=plan["version"],
+			decision="recommend",
+			comment="Looks good",
+			concurrency_token="not-the-token",
+			user=reviewer,
+		)
+		self.assertFalse(stale.get("ok"), stale)
+		self.assertIn("form", stale.get("errors") or {})
+		self.assertIn("changed by another user", str(stale.get("errors")).lower())
+
 	def test_planner_cannot_recommend(self) -> None:
 		planner, _reviewer, plan = self._in_review()
 		with self.assertRaises(frappe.PermissionError):

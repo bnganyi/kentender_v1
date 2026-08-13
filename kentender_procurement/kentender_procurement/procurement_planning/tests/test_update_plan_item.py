@@ -24,6 +24,8 @@ from kentender_procurement.procurement_planning.services.update_plan_item import
 	update_plan_item,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
+from frappe.utils import cstr
+
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	complete_plan_item_for_signoff,
 	confirm_included_items_funding,
@@ -96,6 +98,73 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			},
 		)
 		self.assertTrue(result["ok"], result)
+
+	def test_strategy_and_pvc_writes_ignored_from_editor(self) -> None:
+		"""PLN-AC-018 — Planning cannot author strategy / PVC / treatment notes."""
+		planner, item = self._item()
+		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
+		before = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			iv,
+			["strategy_snapshot", "pvc_snapshot"],
+			as_dict=True,
+		)
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={
+				"strategy_snapshot": "Planning-authored treatment — must not persist",
+				"pvc_snapshot": "Planning-authored PVC — must not persist",
+				"value_treatment_note": "Planning treatment note — must not persist",
+			},
+		)
+		self.assertTrue(result["ok"], result)
+		after = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			iv,
+			["strategy_snapshot", "pvc_snapshot"],
+			as_dict=True,
+		)
+		self.assertEqual(after.strategy_snapshot, before.strategy_snapshot)
+		self.assertEqual(after.pvc_snapshot, before.pvc_snapshot)
+		self.assertNotEqual(
+			cstr(after.strategy_snapshot or ""),
+			"Planning-authored treatment — must not persist",
+		)
+
+	def test_approved_version_rejects_update_plan_item(self) -> None:
+		"""PLN-AC-011 — Approved Version / item snapshots are immutable via update_plan_item."""
+		from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+			approve_plan_via_gate05,
+			ensure_approver_user,
+		)
+
+		planner, item = self._item()
+		complete_plan_item_for_signoff(plan_item=item, user=planner)
+		plan = frappe.db.get_value("Procurement Plan Item", item, "plan")
+		version = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+		approve_plan_via_gate05(
+			plan=plan, version=version, user=ensure_approver_user()
+		)
+		iv = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_item": item, "plan_version": version},
+			"name",
+		)
+		before = frappe.db.get_value(
+			"Procurement Plan Item Version", iv, "requirement_description"
+		)
+		result = update_plan_item(
+			plan_item=item,
+			user=planner,
+			fields={"requirement_description": "tamper approved item"},
+		)
+		self.assertFalse(result.get("ok"), result)
+		self.assertIn("form", result.get("errors") or {})
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "requirement_description"),
+			before,
+		)
 
 	def test_preference_writes_ignored_from_editor(self) -> None:
 		"""C02: preference keys no longer mutate Plan Item Version via update_plan_item."""

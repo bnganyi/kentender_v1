@@ -8,11 +8,13 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import flt
+from frappe.utils import cstr, flt
 
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_EFFECTIVE,
+	DOCTYPE_HANDOFF,
+	FINANCE_CONFIRMED,
 	ITEM_ACTIVE,
 	PLAN_OPEN,
 	PLAN_TYPE_ANNUAL,
@@ -136,6 +138,55 @@ def clear_planning_fixture_rows() -> dict[str, int]:
 	return deleted
 
 
+def _ensure_v1_finance_and_handoff(
+	*,
+	plan_name: str,
+	version_name: str,
+	item_name: str,
+	iv_name: str,
+	demand: str,
+) -> None:
+	"""Post-Planning Finance on V1 + immutable TND-MOH-2027-008 handoff (no TM2 Tender)."""
+	rsv_name = frappe.db.get_value(
+		"Funding Reservation", {"generated_reference": C.RSV_CODE}, "name"
+	)
+	line_id = ""
+	if rsv_name:
+		line_id = cstr(frappe.db.get_value("Funding Reservation", rsv_name, "budget_line") or "")
+	if not line_id:
+		line_id = cstr(
+			frappe.db.get_value("Budget Line", {"generated_reference": C.BL_DHI_2027}, "name")
+			or ""
+		)
+	frappe.db.set_value(
+		"Procurement Plan Item Version",
+		iv_name,
+		{
+			"finance_status": FINANCE_CONFIRMED,
+			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
+			"finance_snapshot_budget_line": line_id or None,
+			"finance_reservation": rsv_name or C.RSV_CODE,
+			"reservation_reference": C.RSV_CODE,
+		},
+		update_modified=False,
+	)
+	if not frappe.db.exists(DOCTYPE_HANDOFF, {"plan_item": item_name}):
+		frappe.get_doc(
+			{
+				"doctype": DOCTYPE_HANDOFF,
+				"plan": plan_name,
+				"plan_version": version_name,
+				"plan_item": item_name,
+				"handoff_code": f"HO-{C.PLAN_ITEM_CODE}-CANON",
+				"tender_reference": C.TENDER_CODE,
+				"snapshot_json": "{}",
+				"snapshot_hash": "KENTENDER_MVP_V1",
+				"created_by_user": C.USER_TENDER_INITIATOR,
+				"handed_off_at": C.FIXTURE_NOW_STR,
+			}
+		).insert(ignore_permissions=True)
+
+
 def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 	"""Idempotent base Planning state: Approved V1 + Active PPI-MOH-2027-021 @ 455M."""
 	frappe.only_for(("System Manager", "Administrator"))
@@ -196,7 +247,22 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"Plan Decision", filters={"plan_version": ver}, pluck="name"
 			):
 				frappe.delete_doc("Plan Decision", name, force=1, ignore_permissions=True)
-			# item versions / draft allocations on V2 cleared via item delete below
+			for name in frappe.get_all(
+				"Procurement Plan Item Version",
+				filters={"plan_version": ver},
+				pluck="name",
+			):
+				frappe.delete_doc(
+					"Procurement Plan Item Version", name, force=1, ignore_permissions=True
+				)
+			for name in frappe.get_all(
+				"Plan Demand Allocation",
+				filters={"proposed_in_version": ver},
+				pluck="name",
+			):
+				frappe.delete_doc(
+					"Plan Demand Allocation", name, force=1, ignore_permissions=True
+				)
 			frappe.delete_doc("Procurement Plan Version", ver, force=1, ignore_permissions=True)
 
 	if frappe.db.exists("Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}):
@@ -244,10 +310,41 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"confirmed_estimate": C.PLAN_AMOUNT_V1,
 			"currency": "KES",
 			"procurement_category": "ICT infrastructure and services",
+			"procurement_method": "Open tender",
+			"arrangement": "Single year",
+			"lotting_decision": "Single lot",
+			"ms_invitation_published": "2027-09-15",
+			"ms_tender_opening": "2027-10-20",
+			"ms_evaluation_completed": "2027-11-15",
+			"ms_award_approval": "2027-12-15",
+			"ms_contract_signature": "2028-01-15",
+			"ms_delivery_completion": "2028-03-31",
 			"reservation_reference": C.RSV_CODE,
+			"finance_status": FINANCE_CONFIRMED,
+			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
 			"validation_projection": VALIDATION_READY,
 		},
 	)
+	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+		_demand_strategy_snapshots,
+	)
+
+	strat, pvc = _demand_strategy_snapshots(demand)
+	if strat or pvc:
+		updates: dict[str, str] = {}
+		if strat and not cstr(
+			frappe.db.get_value("Procurement Plan Item Version", iv_name, "strategy_snapshot")
+			or ""
+		).strip():
+			updates["strategy_snapshot"] = strat
+		if pvc and not cstr(
+			frappe.db.get_value("Procurement Plan Item Version", iv_name, "pvc_snapshot") or ""
+		).strip():
+			updates["pvc_snapshot"] = pvc
+		if updates:
+			frappe.db.set_value(
+				"Procurement Plan Item Version", iv_name, updates, update_modified=False
+			)
 
 	demand_items = frappe.get_all(
 		"Demand Item",
@@ -373,6 +470,14 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"Fully planned",
 			update_modified=False,
 		)
+
+	_ensure_v1_finance_and_handoff(
+		plan_name=plan_name,
+		version_name=version_name,
+		item_name=item_name,
+		iv_name=iv_name,
+		demand=demand,
+	)
 
 	if commit:
 		frappe.db.commit()

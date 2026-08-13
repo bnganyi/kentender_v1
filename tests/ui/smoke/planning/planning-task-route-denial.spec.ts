@@ -6,6 +6,7 @@ import {
 import {
 	loginAsMohPlanApprover,
 	loginAsMohPlanningOfficer,
+	loginAsMohPlanningReviewer,
 	loginAsMohPlanningViewer,
 	loginAsPlanningSystemAdminNoScope,
 	preparePlanningGate05Approval,
@@ -68,6 +69,23 @@ test.describe("PLN-GATE-C01 Planning task route denial", () => {
 			timeout: 30_000,
 		});
 		await expectNoTaskCtas(page);
+	});
+
+	test("Reviewer: Recommend approval, not Approve plan", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate05Approval(page);
+		expect(prep.empty_draft_plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningReviewer(page);
+		await openReview(page, prep.empty_draft_plan || "");
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-task", "1", {
+			timeout: 30_000,
+		});
+		const primary = page.getByTestId("kt-pln-ui08-primary");
+		await expect(primary).toBeVisible();
+		await expect(primary).toContainText(/Recommend approval/i);
+		await expect(primary).not.toContainText(/Approve plan/i);
+		await expect(page.getByTestId("kt-pln-ui08-return")).toBeVisible();
 	});
 
 	test("Approver: task CTAs present", async ({ page }) => {

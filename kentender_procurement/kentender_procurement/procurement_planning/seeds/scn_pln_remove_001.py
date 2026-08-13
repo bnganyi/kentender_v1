@@ -32,7 +32,7 @@ def setup(*, force: bool = True) -> dict[str, Any]:
 	"""Base bundle + ADD-001 through Proposed PPI-022 (before Finance / V2 approve)."""
 	frappe.only_for(("System Manager", "Administrator"))
 	base = add_scn.setup(force=force)
-	prepared = add_scn.run(reset_first=False, force=force, stop_before_approve=True)
+	prepared = add_scn.run(reset_first=False, force=force, stop_before_finance=True)
 	return {"ok": bool(base.get("ok") and prepared.get("ok")), "base": base, "prepared": prepared}
 
 
@@ -41,7 +41,7 @@ def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
 	if reset_first:
 		setup(force=force)
 	else:
-		add_scn.run(reset_first=False, force=force, stop_before_approve=True)
+		add_scn.run(reset_first=False, force=force, stop_before_finance=True)
 
 	item_name = frappe.db.get_value(
 		"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}, "name"

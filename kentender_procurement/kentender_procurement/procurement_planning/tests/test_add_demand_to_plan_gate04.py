@@ -25,6 +25,31 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 )
 
 
+def _attach_demand_snapshots(
+	demand: str, *, strategy_label: str, pvc_label: str
+) -> None:
+	frappe.get_doc(
+		{
+			"doctype": "Demand Strategy Reference",
+			"demand": demand,
+			"reference_type": "Primary",
+			"snapshot_label": strategy_label,
+		}
+	).insert(ignore_permissions=True)
+	pvc = frappe.db.get_value("Plan Value Commitment", {}, "name")
+	treatment = frappe.get_doc(
+		{
+			"doctype": "Demand Value Treatment",
+			"demand": demand,
+			"plan_value_commitment": pvc or "",
+			"treatment": "Pass-through from Approved Demand",
+			"pvc_snapshot": pvc_label,
+		}
+	)
+	treatment.flags.ignore_mandatory = True
+	treatment.insert(ignore_permissions=True)
+
+
 class TestAddDemandToPlanGate04(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -279,3 +304,114 @@ class TestAddDemandToPlanGate04(IntegrationTestCase):
 			fields=["demand"],
 		)
 		self.assertEqual({a["demand"] for a in allocs}, {a["demand"], b["demand"]})
+
+	def test_multi_demand_combined_mixed_ou_rejected(self) -> None:
+		"""PLN-AC-016 — mixed-OU Combine must throw PLN_COMBINE_INCOMPATIBLE."""
+		from kentender_procurement.procurement_planning.services.planning_permissions import (
+			ROLE_PLANNER,
+		)
+		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+			PE_MOH,
+			_ensure_ou,
+			ensure_user_with_roles,
+		)
+
+		ou_hrmd = "MOH-DIR-HRMD"
+		_ensure_ou(ou_hrmd, "Human Resource Management", PE_MOH)
+		pe_planner = ensure_user_with_roles(
+			"pln.ac016.planner@test.local",
+			roles=(ROLE_PLANNER,),
+			pe=PE_MOH,
+			org_unit=None,
+			include_descendants=0,
+		)
+		plan = create_plan_as_planner(title="Mixed OU combine reject")
+		a = make_approved_demand(title="DHP combine source", ou="MOH-DIR-DHP")
+		b = make_approved_demand(title="HRMD combine source", ou=ou_hrmd)
+		before = frappe.db.count("Procurement Plan Item", {"plan": plan["plan"]})
+		with self.assertRaises(Exception) as ctx:
+			add_demand_to_plan(
+				plan=plan["plan"],
+				demands=[a["demand"], b["demand"]],
+				formation_mode="combined",
+				formation_reason="Should be rejected — mixed Organisation Units",
+				user=pe_planner,
+			)
+		blob = (
+			(getattr(ctx.exception, "title", None) or "") + " " + str(ctx.exception)
+		)
+		self.assertIn("cannot be combined", blob.lower())
+		self.assertTrue(
+			"PLN_COMBINE_INCOMPATIBLE" in blob.upper()
+			or "organisation units" in blob.lower(),
+			blob,
+		)
+		self.assertEqual(
+			frappe.db.count("Procurement Plan Item", {"plan": plan["plan"]}),
+			before,
+		)
+
+	def test_multi_demand_separate_mixed_ou_creates_two_items(self) -> None:
+		"""PLN-AC-016 — Separate mode still creates one item per Demand across OUs."""
+		from kentender_procurement.procurement_planning.services.planning_permissions import (
+			ROLE_PLANNER,
+		)
+		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+			PE_MOH,
+			_ensure_ou,
+			ensure_user_with_roles,
+		)
+
+		ou_hrmd = "MOH-DIR-HRMD"
+		_ensure_ou(ou_hrmd, "Human Resource Management", PE_MOH)
+		pe_planner = ensure_user_with_roles(
+			"pln.ac016.planner@test.local",
+			roles=(ROLE_PLANNER,),
+			pe=PE_MOH,
+			org_unit=None,
+			include_descendants=0,
+		)
+		plan = create_plan_as_planner(title="Mixed OU separate ok")
+		a = make_approved_demand(title="DHP separate source", ou="MOH-DIR-DHP")
+		b = make_approved_demand(title="HRMD separate source", ou=ou_hrmd)
+		result = add_demand_to_plan(
+			plan=plan["plan"],
+			demands=[a["demand"], b["demand"]],
+			formation_mode="separate",
+			user=pe_planner,
+		)
+		self.assertTrue(result["ok"])
+		self.assertEqual(result.get("formation_mode"), "separate")
+		self.assertEqual(len(result["plan_items"]), 2)
+
+	def test_copies_demand_strategy_and_pvc_snapshots(self) -> None:
+		"""PLN-AC-018 — Strategy targets and PVC labels pass through onto the IV."""
+		planner = ensure_planner_user()
+		plan = create_plan_as_planner(title="Strategy snapshot add")
+		d = make_approved_demand(title="Demand with strategy PVC")
+		strategy_label = "Increase service availability (MOH-TGT-AVAIL-2028)"
+		pvc_label = "MOH-PVC-EFT-01 — Efficiency treatment"
+		_attach_demand_snapshots(
+			d["demand"], strategy_label=strategy_label, pvc_label=pvc_label
+		)
+		result = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
+		self.assertTrue(result["ok"])
+		iv = result["item_version"]
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "strategy_snapshot"),
+			strategy_label,
+		)
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item Version", iv, "pvc_snapshot"),
+			pvc_label,
+		)
+		dto = get_plan_builder(plan=plan["plan"], user=planner)
+		self.assertTrue(dto.get("ok") or dto.get("items") is not None)
+		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
+			get_plan_item_editor,
+		)
+
+		editor = get_plan_item_editor(plan_item=result["plan_item"], user=planner)
+		src = editor.get("approved_source") or {}
+		self.assertEqual(src.get("strategy_snapshot"), strategy_label)
+		self.assertEqual(src.get("pvc_snapshot"), pvc_label)

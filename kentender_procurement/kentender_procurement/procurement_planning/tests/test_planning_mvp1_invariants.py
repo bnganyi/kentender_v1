@@ -125,6 +125,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		self.assertEqual(len(drafts), 1)
 
 	def test_04_immutable_approved_version(self) -> None:
+		"""PLN-AC-011 — Approved Plan Version document cannot be mutated."""
 		planner = ensure_planner_user()
 		approver = ensure_approver_user()
 		created = create_plan_as_planner(title="Immutable")

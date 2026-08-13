@@ -263,6 +263,22 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 	confirm_included_items_funding(plan=plan, planner=planner)
 	validate_plan(plan=plan, user=planner)
 
+	if cstr(plan_doc.current_approved_version or "").strip():
+		from kentender_procurement.procurement_planning.services.get_plan_update import (
+			planner_update_reason,
+		)
+
+		if not planner_update_reason(
+			frappe.db.get_value("Procurement Plan Version", ver, "version_reason")
+		):
+			frappe.db.set_value(
+				"Procurement Plan Version",
+				ver,
+				"version_reason",
+				"Test successor update after Approved Version",
+				update_modified=False,
+			)
+
 	token = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
 	submitted = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
 	if not submitted.get("ok"):
@@ -450,6 +466,15 @@ def purge_pe_fy(financial_year: str) -> None:
 		pluck="name",
 	):
 		frappe.delete_doc("Procurement Plan Version", name, force=True, ignore_permissions=True)
+	for name in frappe.get_all(
+		"Procurement Plan Item",
+		filters={"plan_item_code": ("like", f"PPI-%{fy_slug}%")},
+		pluck="name",
+	):
+		for doctype in ("Plan Demand Allocation", "Procurement Plan Item Version"):
+			for child in frappe.get_all(doctype, filters={"plan_item": name}, pluck="name"):
+				frappe.delete_doc(doctype, child, force=True, ignore_permissions=True)
+		frappe.delete_doc("Procurement Plan Item", name, force=True, ignore_permissions=True)
 	frappe.db.commit()
 
 

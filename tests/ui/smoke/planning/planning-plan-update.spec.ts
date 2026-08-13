@@ -4,6 +4,7 @@ import {
 	loginAsMohPlanningOfficer,
 	loginAsMohPlanningViewer,
 	preparePlanningGate06Approved,
+	preparePlanningScnAdd,
 } from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
@@ -101,5 +102,34 @@ test.describe("PLN-UI-10 Draft Plan update overview", () => {
 		});
 		await expect(page.getByTestId("kt-pln-ui10-cancel")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui10-submit")).toBeHidden();
+	});
+
+	test("AC-013: Draft update shows 535m while Approved remains active", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningScnAdd(page);
+		expect(prep.plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-update?plan=${encodeURIComponent(prep.plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId("kt-pln-ui10-banner")).toContainText(
+			"remains active until this update is approved",
+		);
+		await expect(page.locator("[data-kt-pln-ui10-draft-total]")).toContainText(
+			"535,000,000",
+		);
+		await expect(
+			page.locator(`${ROOT} [data-kt-pln-ui10-row]`).getByText("Added"),
+		).toBeVisible();
+		await expect(
+			page.locator(`${ROOT} [data-kt-pln-ui10-row]`).getByText("80,000,000"),
+		).toBeVisible();
 	});
 });

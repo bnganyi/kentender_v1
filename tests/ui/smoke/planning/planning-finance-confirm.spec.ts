@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { loginAsAdministrator, loginAsBudgetOfficerAuthority } from "../../helpers/auth";
 import {
 	loginAsMohPlanningOfficer,
+	loginAsMohPlanningViewer,
 	preparePlanningFinance,
 	preparePlanningFinanceShortfall,
 } from "../../helpers/planningRoles";
@@ -51,6 +52,23 @@ test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
 		await expect(drawer).toBeHidden({ timeout: 20_000 });
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(/Confirmed/i);
+		await expect(page.getByRole("dialog", { name: "Message" })).toHaveCount(0);
+	});
+
+	test("Viewer cannot open the Finance Confirm drawer", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningFinance(page);
+		expect(prep.finance_item).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningViewer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+			waitUntil: "domcontentloaded",
+		});
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId("kt-pln-ui07-drawer")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui07-confirm")).toBeHidden();
 		await expect(page.getByRole("dialog", { name: "Message" })).toHaveCount(0);
 	});
 

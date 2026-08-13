@@ -21,10 +21,128 @@ def _check(name: str, ok: bool, detail: str = "") -> dict[str, Any]:
 	return {"name": name, "ok": bool(ok), "detail": detail}
 
 
+def _scn_draft_total(plan_name: str, version_name: str) -> float:
+	total = 0.0
+	for it in frappe.get_all(
+		"Procurement Plan Item",
+		filters={"plan": plan_name, "baseline_state": ["in", ["Proposed", "Active"]]},
+		pluck="name",
+	):
+		amt = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_item": it, "plan_version": version_name},
+			"confirmed_estimate",
+		)
+		total += flt(amt)
+	return total
+
+
+def _append_scn_add_checks(checks: list[dict[str, Any]]) -> None:
+	"""Optional SCN-PLN-ADD-001 mode: 535m draft or approved; V1 matches stop point."""
+	v1 = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
+		["name", "status"],
+		as_dict=True,
+	)
+	v2 = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_V2},
+		["name", "status"],
+		as_dict=True,
+	)
+	item_022 = frappe.db.get_value(
+		"Procurement Plan Item",
+		{"plan_item_code": C.PLAN_ITEM_CODE_SCN},
+		["name", "baseline_state"],
+		as_dict=True,
+	)
+	rsv_count = frappe.db.count(
+		"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+	)
+	plan = frappe.db.get_value(
+		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
+	)
+	checks.append(_check("planning.scn.item_022", bool(item_022), str(item_022)))
+	checks.append(_check("planning.scn.v2_exists", bool(v2), str(v2)))
+	if not v2 or not item_022 or not v1:
+		return
+	if v2.status == "Draft":
+		total = _scn_draft_total(plan, v2.name) if plan else 0.0
+		checks.append(
+			_check(
+				"planning.scn.draft_535m",
+				abs(total - C.PLAN_AMOUNT_V2) < 0.01,
+				str(total),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.v1_approved_while_draft",
+				v1.status == "Approved",
+				str(v1.status),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.022_proposed",
+				item_022.baseline_state == "Proposed",
+				str(item_022.baseline_state),
+			)
+		)
+		if rsv_count:
+			checks.append(
+				_check("planning.scn.one_rsv_0002", rsv_count == 1, str(rsv_count))
+			)
+		else:
+			checks.append(_check("planning.scn.no_rsv_before_finance", rsv_count == 0))
+	elif v2.status == "Approved":
+		checks.append(
+			_check(
+				"planning.scn.v1_superseded",
+				v1.status == "Superseded",
+				str(v1.status),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.022_active",
+				item_022.baseline_state == "Active",
+				str(item_022.baseline_state),
+			)
+		)
+		checks.append(
+			_check("planning.scn.one_rsv_0002", rsv_count == 1, str(rsv_count))
+		)
+		total = 0.0
+		for item in frappe.get_all(
+			"Procurement Plan Item",
+			filters={"plan": plan, "baseline_state": "Active"},
+			pluck="name",
+		):
+			iv = frappe.db.get_value(
+				"Procurement Plan Item", item, "current_approved_item_version"
+			)
+			if iv:
+				total += flt(
+					frappe.db.get_value(
+						"Procurement Plan Item Version", iv, "confirmed_estimate"
+					)
+				)
+		checks.append(
+			_check(
+				"planning.scn.approved_535m",
+				abs(total - C.PLAN_AMOUNT_V2) < 0.01,
+				str(total),
+			)
+		)
+
+
 def validate_kentender_mvp_v1(
 	*,
 	include_demands: bool = True,
 	include_planning: bool = False,
+	include_scn_add: bool = False,
 ) -> dict[str, Any]:
 	checks: list[dict[str, Any]] = []
 
@@ -219,9 +337,28 @@ def validate_kentender_mvp_v1(
 	committed = sum(flt(r.amount_committed) for r in lines)
 	available = approved - reserved - committed
 	checks.append(_check("budget.lines_total_560m", abs(approved - 560_000_000) < 0.01, str(approved)))
-	checks.append(_check("budget.reserved_145m", abs(reserved - 145_000_000) < 0.01, str(reserved)))
+	expect_reserved = 225_000_000 if include_scn_add else 145_000_000
+	expect_available = 25_000_000 if include_scn_add else 105_000_000
+	if include_scn_add and not frappe.db.exists(
+		"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+	):
+		expect_reserved = 145_000_000
+		expect_available = 105_000_000
+	checks.append(
+		_check(
+			"budget.reserved_145m" if not include_scn_add else "budget.reserved_after_scn",
+			abs(reserved - expect_reserved) < 0.01,
+			str(reserved),
+		)
+	)
 	checks.append(_check("budget.committed_310m", abs(committed - 310_000_000) < 0.01, str(committed)))
-	checks.append(_check("budget.available_105m", abs(available - 105_000_000) < 0.01, str(available)))
+	checks.append(
+		_check(
+			"budget.available_105m" if not include_scn_add else "budget.available_after_scn",
+			abs(available - expect_available) < 0.01,
+			str(available),
+		)
+	)
 	checks.append(
 		_check(
 			"budget.dhi_actual_180m",
@@ -549,28 +686,42 @@ def validate_kentender_mvp_v1(
 			["name", "status", "current_stage", "confirmed_estimate", "current_owner"],
 			as_dict=True,
 		)
-		checks.append(
-			_check(
-				"demands.returned.exists",
-				bool(
-					returned
-					and returned.status == "Returned"
-					and returned.current_stage == "Request Preparation"
-					and abs(flt(returned.confirmed_estimate) - 95_000_000) < 0.01
-					and returned.current_owner == C.USER_PUBLIC
-				),
-				str(returned),
-			)
-		)
-		checks.append(
-			_check(
-				"demands.returned.no_rsv",
-				frappe.db.count(
-					"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
+		if include_scn_add:
+			checks.append(
+				_check(
+					"demands.scn_019_planning_ready",
+					bool(
+						returned
+						and returned.status == "Approved"
+						and abs(flt(returned.confirmed_estimate) - C.PLAN_ITEM_SCN_AMOUNT)
+						< 0.01
+					),
+					str(returned),
 				)
-				== 0,
 			)
-		)
+		else:
+			checks.append(
+				_check(
+					"demands.returned.exists",
+					bool(
+						returned
+						and returned.status == "Returned"
+						and returned.current_stage == "Request Preparation"
+						and abs(flt(returned.confirmed_estimate) - 95_000_000) < 0.01
+						and returned.current_owner == C.USER_PUBLIC
+					),
+					str(returned),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.returned.no_rsv",
+					frappe.db.count(
+						"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
+					)
+					== 0,
+				)
+			)
 		if returned:
 			exc = frappe.db.get_value(
 				"Funding Exception",
@@ -651,18 +802,19 @@ def validate_kentender_mvp_v1(
 			["name", "status", "plan"],
 			as_dict=True,
 		)
-		checks.append(
-			_check(
-				"planning.version.approved_v1",
-				bool(
-					version
-					and version.status == "Approved"
-					and plan
-					and version.name == plan.current_approved_version
-				),
-				str(version),
+		if not include_scn_add:
+			checks.append(
+				_check(
+					"planning.version.approved_v1",
+					bool(
+						version
+						and version.status == "Approved"
+						and plan
+						and version.name == plan.current_approved_version
+					),
+					str(version),
+				)
 			)
-		)
 		item = frappe.db.get_value(
 			"Procurement Plan Item",
 			{"plan_item_code": C.PLAN_ITEM_CODE},
@@ -718,12 +870,32 @@ def validate_kentender_mvp_v1(
 		)
 		checks.append(
 			_check(
-				"planning.no_scn_item_at_base",
-				not frappe.db.exists(
-					"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}
-				),
+				"planning.rsv_0001_after_plan_item",
+				frappe.db.count(
+					"Funding Reservation", {"generated_reference": C.RSV_CODE}
+				)
+				== 1,
 			)
 		)
+		if include_scn_add:
+			_append_scn_add_checks(checks)
+		else:
+			checks.append(
+				_check(
+					"planning.no_scn_item_at_base",
+					not frappe.db.exists(
+						"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}
+					),
+				)
+			)
+			checks.append(
+				_check(
+					"planning.no_scn_rsv_at_base",
+					not frappe.db.exists(
+						"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+					),
+				)
+			)
 
 	failed = [c for c in checks if not c["ok"]]
 	ok = not failed

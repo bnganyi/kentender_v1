@@ -24,6 +24,7 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	MODE_BLOCKED,
 	MODE_MULTI,
 	MODE_SINGLE,
+	ROLE_REVIEWER,
 	ROLE_VIEWER,
 	assert_can_approve_plan,
 	assert_can_confirm_plan_funding,
@@ -121,6 +122,7 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		self.assertEqual(dto["rail_mode"], "readonly")
 
 	def test_viewer_neutral_read_mutation_and_task_denied(self) -> None:
+		"""PLN-AC-021 — Neutral visibility must not expose Finance or approval task forms."""
 		viewer = ensure_user_with_roles(
 			"pln.c01.viewer@test.local",
 			roles=(ROLE_VIEWER,),
@@ -156,6 +158,38 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		self.assertFalse(dto["can_recommend"])
 		self.assertFalse(dto["can_return"])
 
+	def test_reviewer_cannot_approve_plan(self) -> None:
+		"""PLN-PERM-005 — Reviewer Recommend/Return only; Approve is denied."""
+		reviewer = ensure_user_with_roles(
+			"pln.c01.reviewer.deny@test.local",
+			roles=(ROLE_REVIEWER,),
+			pe=PE_MOH,
+			org_unit=None,
+			include_descendants=0,
+		)
+		with self.assertRaises(frappe.PermissionError):
+			assert_can_approve_plan(reviewer)
+
+		planner = ensure_moh_planner()
+		approver = ensure_moh_approver()
+		ctx = self._in_review_plan(planner)
+		token = frappe.db.get_value(
+			"Procurement Plan Version", ctx["version"], "concurrency_token"
+		)
+		with self.assertRaises(frappe.PermissionError):
+			approve_plan_version(
+				version=ctx["version"],
+				concurrency_token=token,
+				user=reviewer,
+			)
+		assert_can_approve_plan(approver)
+		result = approve_plan_version(
+			version=ctx["version"],
+			concurrency_token=token,
+			user=approver,
+		)
+		self.assertTrue(result["ok"], result)
+
 	def test_reviewer_and_approver_task_surface(self) -> None:
 		planner = ensure_moh_planner()
 		approver = ensure_moh_approver()
@@ -165,6 +199,8 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		as_reviewer = get_plan_review(plan=ctx["plan"], user=ctx["reviewer"])
 		self.assertEqual(as_reviewer["surface"], "task")
 		self.assertIn(as_reviewer["rail_mode"], ("reviewer", "approver"))
+		self.assertFalse(as_reviewer["can_approve"])
+		self.assertTrue(as_reviewer["can_recommend"] or as_reviewer["has_recommendation"])
 
 		assert_can_open_review_task(approver)
 		assert_can_approve_plan(approver)
@@ -190,6 +226,7 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			)
 
 	def test_resolve_pe_for_create_zero_one_multi(self) -> None:
+		"""PLN-AC-001 — multi-PE selects; zero blocks; one PE stays visible."""
 		admin = ensure_admin_only()
 		blocked = resolve_pe_for_create(admin)
 		self.assertEqual(blocked["selection_mode"], MODE_BLOCKED)

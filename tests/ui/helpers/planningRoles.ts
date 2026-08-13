@@ -59,10 +59,15 @@ export async function preparePlanningGate03(
 export type PlanningGate04Prep = PlanningGate03Prep & {
 	eligible_demand?: string;
 	eligible_demand_code?: string;
+	eligible_demand_2?: string;
+	eligible_demand_code_2?: string;
 	need_item_count?: number;
+	eligible_count?: number;
 	plan_item?: string;
 	editor_route?: string;
 	plan_item_code?: string;
+	mixed_ou?: boolean;
+	eligible_demand_2_ou?: string;
 };
 
 export type PlanningGate05Prep = PlanningGate04Prep & {
@@ -95,13 +100,30 @@ export type PlanningFinancePrep = PlanningGate05Prep & {
 /** Admin-only prepare for Gate 04 Playwright fixtures. */
 export async function preparePlanningGate04(
 	page: Page,
-	opts?: { withPlanItem?: boolean; needItemCount?: number },
+	opts?: {
+		withPlanItem?: boolean;
+		needItemCount?: number;
+		eligibleCount?: number;
+		mixedOu?: boolean;
+	},
 ): Promise<PlanningGate04Prep> {
 	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
 	const withPlanItem = opts?.withPlanItem ? 1 : 0;
 	const needItemCount = Math.max(1, opts?.needItemCount ?? 1);
+	const eligibleCount = Math.max(1, opts?.eligibleCount ?? 1);
+	const mixedOu = opts?.mixedOu ? 1 : 0;
 	const message = await page.evaluate(
-		async ({ withItem, needCount }: { withItem: number; needCount: number }) => {
+		async ({
+			withItem,
+			needCount,
+			eligCount,
+			mixed,
+		}: {
+			withItem: number;
+			needCount: number;
+			eligCount: number;
+			mixed: number;
+		}) => {
 			const r = await (
 				window as unknown as {
 					frappe: {
@@ -113,11 +135,21 @@ export async function preparePlanningGate04(
 				}
 			).frappe.call({
 				method: 'kentender_procurement.procurement_planning.api.prepare_planning_gate04_ui',
-				args: { with_plan_item: withItem, need_item_count: needCount },
+				args: {
+					with_plan_item: withItem,
+					need_item_count: needCount,
+					eligible_count: eligCount,
+					mixed_ou: mixed,
+				},
 			});
 			return r.message || {};
 		},
-		{ withItem: withPlanItem, needCount: needItemCount },
+		{
+			withItem: withPlanItem,
+			needCount: needItemCount,
+			eligCount: eligibleCount,
+			mixed: mixedOu,
+		},
 	);
 	return message;
 }
@@ -202,6 +234,42 @@ export async function preparePlanningGate06Approved(
 		},
 		{ successor: withSuccessor, handoff: withHandoff },
 	);
+	return message;
+}
+
+export type PlanningScnAddPrep = {
+	ok?: boolean;
+	plan?: string;
+	plan_code?: string;
+	stopped_before_finance?: boolean;
+	approved_route?: string;
+	update_route?: string;
+	tender_code?: string;
+	draft_total?: number;
+	approved_total?: number;
+};
+
+/** Admin-only prepare: canonical SCN-ADD Draft V2 @ 535m, V1 + Tender still live. */
+export async function preparePlanningScnAdd(
+	page: Page,
+): Promise<PlanningScnAddPrep> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const message = await page.evaluate(async () => {
+		const r = await (
+			window as unknown as {
+				frappe: {
+					call: (o: { method: string }) => Promise<{ message?: PlanningScnAddPrep }>;
+				};
+			}
+		).frappe.call({
+			method: 'kentender_procurement.procurement_planning.api.prepare_planning_scn_add_ui',
+		});
+		const msg = r.message || {};
+		if (!msg.ok) {
+			throw new Error(`prepare_planning_scn_add_ui failed: ${JSON.stringify(msg)}`);
+		}
+		return msg;
+	});
 	return message;
 }
 

@@ -61,6 +61,24 @@
 		return $();
 	}
 
+	function _clearAria($ctrl) {
+		var id = $ctrl.attr("data-kt-error-describedby");
+		if (id) {
+			var parts = ($ctrl.attr("aria-describedby") || "")
+				.split(/\s+/)
+				.filter(function (p) {
+					return p && p !== id;
+				});
+			if (parts.length) {
+				$ctrl.attr("aria-describedby", parts.join(" "));
+			} else {
+				$ctrl.removeAttr("aria-describedby");
+			}
+			$ctrl.removeAttr("data-kt-error-describedby");
+		}
+		$ctrl.removeAttr("aria-invalid");
+	}
+
 	function clear($root, opts) {
 		if (!$root || !$root.length) {
 			return;
@@ -70,10 +88,13 @@
 			$root.find(sel).addClass("hidden").attr("hidden", "hidden").text("");
 		});
 		var classes = [o.invalidClass].concat(o.invalidClassAliases || []).join(" ");
-		$root
+		var $ctrls = $root
 			.find("input, select, textarea, [" + o.fieldAttr + "]")
-			.add($root.find("[data-kt-str-field], [data-kt-str-drawer-field] :is(input, select, textarea)"))
-			.removeClass(classes);
+			.add($root.find("[data-kt-str-field], [data-kt-str-drawer-field] :is(input, select, textarea)"));
+		$ctrls.removeClass(classes);
+		$root.find("[aria-invalid='true'], [data-kt-error-describedby]").each(function () {
+			_clearAria($(this));
+		});
 	}
 
 	function show($root, errors, opts) {
@@ -87,13 +108,27 @@
 		Object.keys(map).forEach(function (field) {
 			var msg = map[field] || "";
 			var $slot = _findErrorSlot($root, field, o);
+			var slotId = "";
 			if ($slot.length) {
 				$slot.text(msg).removeClass("hidden").removeAttr("hidden");
+				slotId = $slot.attr("id") || "kt-field-error-" + field;
+				$slot.attr("id", slotId);
 			}
 			var $ctrl = _findFieldControl($root, field, o);
 			if ($ctrl.length) {
 				var classes = [o.invalidClass].concat(o.invalidClassAliases || []);
 				$ctrl.addClass(classes.join(" "));
+				$ctrl.attr("aria-invalid", "true");
+				if (slotId) {
+					var described = ($ctrl.attr("aria-describedby") || "")
+						.split(/\s+/)
+						.filter(Boolean);
+					if (described.indexOf(slotId) === -1) {
+						described.push(slotId);
+					}
+					$ctrl.attr("aria-describedby", described.join(" "));
+					$ctrl.attr("data-kt-error-describedby", slotId);
+				}
 				if (!firstFocus) {
 					firstFocus = $ctrl;
 				}

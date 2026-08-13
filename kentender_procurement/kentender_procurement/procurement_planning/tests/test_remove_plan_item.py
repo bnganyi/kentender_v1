@@ -157,6 +157,7 @@ class TestRemovePlanItem(IntegrationTestCase):
 		)
 
 	def test_active_with_handoff_rejected(self) -> None:
+		"""PLN-AC-027 — executed / handoff item: no removal action + service reject."""
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Remove handoff deny")
 		d = make_approved_demand(title="Handoff demand")
@@ -193,6 +194,7 @@ class TestRemovePlanItem(IntegrationTestCase):
 		self.assertFalse(row.get("can_propose_removal"))
 
 	def test_combined_item_removed_as_whole(self) -> None:
+		"""PLN-AC-027 — combined item is removed only as a whole."""
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Remove combined whole")
 		d1 = make_approved_demand(title="Combine A")
@@ -288,6 +290,7 @@ class TestRemovePlanItem(IntegrationTestCase):
 		)
 
 	def test_active_propose_does_not_restore_eligibility_until_approve(self) -> None:
+		"""PLN-AC-026 — successor approve applies proposed removal atomically."""
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Propose active removal")
 		d = make_approved_demand(title="Active propose demand")
@@ -351,6 +354,7 @@ class TestRemovePlanItem(IntegrationTestCase):
 		self.assertIn(d["demand"], self._eligible_ids(plan["plan"], planner))
 
 	def test_concurrent_handoff_blocks_successor_approval(self) -> None:
+		"""PLN-AC-026 — new handoff after propose blocks successor approval."""
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Handoff during propose")
 		d = make_approved_demand(title="Handoff race demand")
