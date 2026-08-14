@@ -1,7 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Fixture-scoped clear for KENTENDER_MVP_V1 (Contract §8.3 — no broad PE wipe)."""
+"""Clear KENTENDER_MVP_V1 fixture rows plus Playwright/test runtime leftovers.
+
+Contract §8.3: do not wipe unrelated *Strategic* Plans. Demo reseed *does* wipe
+extra Procurement Plans, Demands, `@test.local` users, and test budgets on PE-MOH /
+PE-CGKIS so queues show only canonical demo data.
+"""
 
 from __future__ import annotations
 
@@ -13,8 +18,15 @@ from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
 EDGE_NS = "KENTENDER_MVP_V1_EDGE"
 LEGACY_EDGE_NS = "MOH_MVP_V1_EDGE"
+TEST_ACTIVITY_NS = "KENTENDER_MVP_V1_BUDGET_TEST_ACT"
 
-_NAMESPACES = (C.FIXTURE_NS, C.LEGACY_FIXTURE_NS, EDGE_NS, LEGACY_EDGE_NS)
+_NAMESPACES = (
+	C.FIXTURE_NS,
+	C.LEGACY_FIXTURE_NS,
+	EDGE_NS,
+	LEGACY_EDGE_NS,
+	TEST_ACTIVITY_NS,
+)
 
 _BUDGET_CHILD_DOCTYPES = (
 	"Expenditure Snapshot",
@@ -83,7 +95,50 @@ def _collect_fixture_budgets() -> list[str]:
 		names.extend(
 			frappe.get_all("Budget", filters={"generated_reference": code}, pluck="name")
 		)
+	# Planning Finance tests: `MOH-BUD-PLN-<token>`.
+	names.extend(
+		frappe.get_all(
+			"Budget",
+			filters={"generated_reference": ["like", "MOH-BUD-PLN-%"]},
+			pluck="name",
+		)
+	)
 	return _unique(names)
+
+
+def purge_test_local_users() -> dict[str, int]:
+	"""Remove Gate/Playwright helper users (`*@test.local`). Keep @example.test personas."""
+	deleted: dict[str, int] = {}
+	users = frappe.get_all(
+		"User",
+		filters={"name": ["like", "%@test.local"]},
+		pluck="name",
+	)
+	keep = set(C.CANONICAL_USERS) | {"Administrator", "Guest"}
+	for user in users:
+		if user in keep:
+			continue
+		if frappe.db.exists("DocType", "Notification Log"):
+			for name in frappe.get_all(
+				"Notification Log", filters={"for_user": user}, pluck="name"
+			):
+				frappe.delete_doc("Notification Log", name, force=1, ignore_permissions=True)
+				deleted["Notification Log"] = deleted.get("Notification Log", 0) + 1
+		if frappe.db.exists("DocType", "User Scope Assignment"):
+			for name in frappe.get_all(
+				"User Scope Assignment", filters={"user": user}, pluck="name"
+			):
+				frappe.delete_doc(
+					"User Scope Assignment", name, force=1, ignore_permissions=True
+				)
+				deleted["User Scope Assignment"] = deleted.get("User Scope Assignment", 0) + 1
+		if frappe.db.exists("User Permission"):
+			for name in frappe.get_all("User Permission", filters={"user": user}, pluck="name"):
+				frappe.delete_doc("User Permission", name, force=1, ignore_permissions=True)
+		if frappe.db.exists("User", user):
+			frappe.delete_doc("User", user, force=1, ignore_permissions=True)
+			deleted["User"] = deleted.get("User", 0) + 1
+	return deleted
 
 
 def clear_kentender_mvp_v1_budget() -> dict[str, Any]:
@@ -174,4 +229,6 @@ def clear_kentender_mvp_v1(
 		)
 
 		out["strategy"] = clear_kentender_mvp_v1_strategy()
+	# After documents: drop leftover Playwright / Gate helper users.
+	out["test_local_users"] = purge_test_local_users()
 	return out

@@ -120,7 +120,7 @@ help:
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed full KENTENDER_MVP_V1 through latest module (Planning) + validate"
+	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed full KENTENDER_MVP_V1 (also deletes Playwright leftover plans/demands/@test.local users) + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"

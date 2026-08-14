@@ -35,7 +35,8 @@ bench --site kentender.midas.com execute \
 Notes:
 
 - Use Python `True`/`False` in `--kwargs` (not JSON `true`/`false`).
-- Reset is **fixture-scoped** (namespace + known codes). It does **not** wipe unrelated PE-MOH Playwright plans.
+- Reset deletes canonical fixture rows **and** leftover Playwright / Gate test data on PE-MOH and PE-CGKIS: extra Procurement Plans, extra Demands, `MOH-BUD-PLN-*` test budgets, and `*@test.local` users.
+- Reset does **not** wipe unrelated *Strategic* Plans (Contract §8.3). Canonical `@example.test` personas are re-upserted.
 
 ## What the seed creates
 

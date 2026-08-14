@@ -58,6 +58,17 @@ def clear_planning_fixture_rows() -> dict[str, int]:
 		filters={"plan_code": ["in", list(plan_codes)]},
 		pluck="name",
 	)
+	# Playwright / Gate tests leave extra PE-MOH and PE-CGKIS plans; reseed must wipe them.
+	if frappe.db.has_column("Procurement Plan", "procuring_entity"):
+		for pe in (C.PE_MOH, C.PE_CGKIS):
+			plans.extend(
+				frappe.get_all(
+					"Procurement Plan",
+					filters={"procuring_entity": pe},
+					pluck="name",
+				)
+			)
+	plans = list(dict.fromkeys(plans))
 	item_codes = (C.PLAN_ITEM_CODE, C.PLAN_ITEM_CODE_SCN)
 	items = frappe.get_all(
 		"Procurement Plan Item",

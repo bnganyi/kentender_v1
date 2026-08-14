@@ -47,6 +47,16 @@ def clear_kentender_mvp_v1_demands() -> dict[str, Any]:
 		):
 			if name not in demand_names:
 				demand_names.append(name)
+	# Playwright / service tests create extra Demands on demo PEs.
+	if frappe.db.has_column("Demand", "procuring_entity"):
+		for pe in (C.PE_MOH, C.PE_CGKIS):
+			for name in frappe.get_all(
+				"Demand",
+				filters={"procuring_entity": pe},
+				pluck="name",
+			):
+				if name not in demand_names:
+					demand_names.append(name)
 
 	for demand in demand_names:
 		for doctype in _CHILD_DOCTYPES:

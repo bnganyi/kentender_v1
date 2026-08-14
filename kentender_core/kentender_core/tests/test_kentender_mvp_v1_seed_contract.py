@@ -165,3 +165,53 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 		name = frappe.db.get_value("Strategic Plan", {"plan_code": stray}, "name")
 		if name:
 			frappe.delete_doc("Strategic Plan", name, force=1, ignore_permissions=True)
+
+	def test_reset_purges_playwright_runtime_data(self):
+		"""Demo reseed must drop leftover Procurement Plans and @test.local users."""
+		frappe.set_user("Administrator")
+		code = "PLN-MOH-PW-LEFTOVER-001"
+		email = "pw.leftover@test.local"
+		for name in frappe.get_all(
+			"Procurement Plan", filters={"plan_code": code}, pluck="name"
+		):
+			frappe.delete_doc("Procurement Plan", name, force=1, ignore_permissions=True)
+		pe = frappe.db.get_value("Procuring Entity", {"entity_code": C.PE_MOH}, "name") or C.PE_MOH
+		frappe.get_doc(
+			{
+				"doctype": "Procurement Plan",
+				"plan_code": code,
+				"title": "Playwright leftover plan",
+				"procuring_entity": pe,
+				"financial_year": "2099/00",
+				"period_start": "2099-07-01",
+				"period_end": "2100-06-30",
+				"currency": "KES",
+				"plan_type": "Annual",
+				"coordinating_org_unit": C.OU_DIR_DHP,
+				"lifecycle_state": "Open",
+			}
+		).insert(ignore_permissions=True)
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": "Playwright",
+					"last_name": "Leftover",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		run_kentender_mvp_v1(reset=True, force=True, validate=False)
+		self.assertFalse(
+			frappe.db.exists("Procurement Plan", {"plan_code": code}),
+			msg="Playwright leftover Procurement Plan must be deleted on reseed",
+		)
+		self.assertFalse(
+			frappe.db.exists("User", email),
+			msg="@test.local helper users must be deleted on reseed",
+		)
+		self.assertTrue(
+			frappe.db.exists("Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE})
+		)
+		self.assertTrue(frappe.db.get_value("User", C.USER_PLANNING_OFFICER, "enabled"))
