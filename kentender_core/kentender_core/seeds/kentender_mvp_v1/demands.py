@@ -18,11 +18,11 @@ def upsert_demands() -> dict[str, Any]:
 	from kentender_procurement.demands.seeds.kentender_mvp_v1 import (
 		upsert_county_draft_demand,
 		upsert_principal_approved_demand,
-		upsert_returned_shortfall_demand,
+		upsert_returned_scope_demand,
 	)
 
 	principal = upsert_principal_approved_demand(commit=False)
-	returned = upsert_returned_shortfall_demand(commit=False)
+	returned = upsert_returned_scope_demand(commit=False)
 	county = upsert_county_draft_demand(commit=False)
 	frappe.db.commit()
 	return {

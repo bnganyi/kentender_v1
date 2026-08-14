@@ -85,6 +85,7 @@ Continue planning
 <option value="all">All work</option>
 <option value="approved_demands">Approved Demands</option>
 <option value="returned_by_finance">Plan Items returned by Finance</option>
+<!-- PLN-FR-040 / PLN-GAP-UI-003: REQ queue filter (Stitch UI-01 omits this option). -->
 <option value="awaiting_finance">Awaiting Finance confirmation</option>
 <option value="needs_attention">Plan Items needing attention</option>
 </select>

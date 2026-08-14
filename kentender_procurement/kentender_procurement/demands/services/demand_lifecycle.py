@@ -374,6 +374,7 @@ def record_business_decision(
 	small_entity_exception: bool = False,
 	correction_hints: list[dict[str, Any]] | None = None,
 	available_funding: float | None = None,
+	release_to_planning: bool = False,
 ) -> dict[str, Any]:
 	"""DEM-SVC-003 — Support | Return | Reject.
 
@@ -426,6 +427,16 @@ def record_business_decision(
 		reason=reason,
 		snapshot=snap,
 	)
+	if action == "Support" and release_to_planning:
+		doc.reload()
+		doc.status = "Approved"
+		doc.current_stage = "Complete"
+		doc.planning_ready = 1
+		doc.planning_usage = "Not taken up"
+		doc.approved_at = _now()
+		doc.confirmed_estimate = flt(doc.requester_estimate) or flt(doc.confirmed_estimate)
+		doc.save(ignore_permissions=True)
+		_record_decision(doc, stage="Complete", decision="Release to planning", actor=actor)
 	doc.reload()
 	return {"ok": True, "demand": project_demand(doc)}
 

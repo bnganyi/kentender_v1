@@ -20,22 +20,34 @@ from kentender_procurement.procurement_planning.services.create_procurement_plan
 from kentender_procurement.procurement_planning.services.get_plan_review import (
 	get_plan_review,
 )
+from kentender_procurement.procurement_planning.mvp1_constants import (
+	FINANCE_AWAITING,
+	FINANCE_RETURNED,
+	VERSION_IN_REVIEW,
+)
 from kentender_procurement.procurement_planning.services.planning_permissions import (
+	CAP_PLAN_FINANCE_CONFIRM,
+	CAP_PLAN_ITEM_EDIT,
+	CAP_PLAN_VIEW,
 	MODE_BLOCKED,
 	MODE_MULTI,
 	MODE_SINGLE,
 	ROLE_REVIEWER,
+	ROLE_TENDER_INITIATOR,
 	ROLE_VIEWER,
 	assert_can_approve_plan,
 	assert_can_confirm_plan_funding,
 	assert_can_create_plan,
+	assert_can_handoff,
 	assert_can_open_finance_task,
 	assert_can_open_review_task,
 	assert_can_submit_for_review,
+	get_available_actions,
 	resolve_pe_for_create,
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	advance_draft_to_recommended,
+	ensure_reviewer_user,
 	make_approved_demand,
 )
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
@@ -95,6 +107,8 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			assert_can_open_finance_task(admin)
 		with self.assertRaises(frappe.PermissionError):
 			assert_can_confirm_plan_funding(admin)
+		with self.assertRaises(frappe.PermissionError):
+			assert_can_handoff(admin)
 
 		planner = ensure_moh_planner()
 		ctx = self._in_review_plan(planner)
@@ -112,6 +126,8 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			assert_can_open_finance_task(planner)
 		with self.assertRaises(frappe.PermissionError):
 			assert_can_confirm_plan_funding(planner)
+		with self.assertRaises(frappe.PermissionError):
+			assert_can_handoff(planner)
 
 		ctx = self._in_review_plan(planner)
 		dto = get_plan_review(plan=ctx["plan"], user=planner)
@@ -136,6 +152,8 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			assert_can_open_review_task(viewer)
 		with self.assertRaises(frappe.PermissionError):
 			assert_can_approve_plan(viewer)
+		with self.assertRaises(frappe.PermissionError):
+			assert_can_handoff(viewer)
 
 		planner = ensure_moh_planner()
 		draft = create_procurement_plan(
@@ -209,6 +227,24 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		self.assertEqual(as_approver["rail_mode"], "approver")
 		self.assertTrue(as_approver["can_approve"])
 
+	def test_reviewer_draft_plan_is_neutral_surface(self) -> None:
+		"""PLN-GAP-PERM-004 — role alone must not open the professional rail."""
+		planner = ensure_moh_planner()
+		reviewer = ensure_reviewer_user()
+		created = create_procurement_plan(
+			procuring_entity=PE_MOH,
+			financial_year=_unique_fy(prefix=2290),
+			title="PERM-004 draft review",
+			currency="KES",
+			coordinating_org_unit=OU_MOH,
+			user=planner,
+		)
+		dto = get_plan_review(plan=created["plan"], user=reviewer)
+		self.assertEqual(dto["surface"], "neutral")
+		self.assertFalse(dto["can_recommend"])
+		self.assertFalse(dto["can_approve"])
+		self.assertEqual(dto["rail_mode"], "readonly")
+
 	def test_cross_pe_county_denied_moh_review(self) -> None:
 		planner = ensure_moh_planner()
 		county = ensure_county_planner()
@@ -270,3 +306,44 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 			assert_can_open_finance_task(planner)
 		with self.assertRaises(frappe.PermissionError):
 			assert_can_confirm_plan_funding(planner)
+
+	def test_available_actions_finance_and_review_from_capability(self) -> None:
+		"""PLN-GAP-PERM-003 — queues must not invent Confirm/Review from status."""
+		planner = ensure_moh_planner()
+		viewer = ensure_user_with_roles(
+			"pln.c01.actions.viewer@test.local",
+			roles=(ROLE_VIEWER,),
+			pe=PE_MOH,
+			org_unit=OU_MOH,
+		)
+		awaiting = {"kind": "finance_item", "finance_status": FINANCE_AWAITING}
+		returned = {"kind": "finance_item", "finance_status": FINANCE_RETURNED}
+		planner_await = get_available_actions(planner, awaiting)
+		self.assertEqual(planner_await[0]["action"], "view")
+		self.assertNotEqual(planner_await[0]["code"], CAP_PLAN_FINANCE_CONFIRM)
+		planner_ret = get_available_actions(planner, returned)
+		self.assertEqual(planner_ret[0]["action"], "continue_item")
+		self.assertEqual(planner_ret[0]["code"], CAP_PLAN_ITEM_EDIT)
+		viewer_await = get_available_actions(viewer, awaiting)
+		self.assertEqual(viewer_await[0]["action"], "view")
+		self.assertEqual(viewer_await[0]["code"], CAP_PLAN_VIEW)
+		viewer_ret = get_available_actions(viewer, returned)
+		self.assertEqual(viewer_ret[0]["action"], "view")
+		review = get_available_actions(
+			planner,
+			{"kind": "plan_version", "version_status": VERSION_IN_REVIEW},
+		)
+		self.assertEqual(review[0]["action"], "view")
+
+	def test_tender_initiator_can_handoff_planner_cannot(self) -> None:
+		"""PLN-GAP-PERM-001 — take-up is Tender Initiator only."""
+		planner = ensure_moh_planner()
+		with self.assertRaises(frappe.PermissionError):
+			assert_can_handoff(planner)
+		initiator = ensure_user_with_roles(
+			"pln.c01.initiator@test.local",
+			roles=(ROLE_TENDER_INITIATOR,),
+			pe=PE_MOH,
+			org_unit=OU_MOH,
+		)
+		assert_can_handoff(initiator)

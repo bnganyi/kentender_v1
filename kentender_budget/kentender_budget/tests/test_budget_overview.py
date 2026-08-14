@@ -28,20 +28,19 @@ class TestBudgetOverview(FrappeTestCase):
 		self.assertEqual(ov["status_label"], "Active")
 		totals = ov["totals"]
 		self.assertEqual(flt(totals["approved"]), 560_000_000)
-		self.assertEqual(flt(totals["reserved"]), 145_000_000)
-		self.assertEqual(flt(totals["committed"]), 310_000_000)
-		self.assertEqual(flt(totals["available"]), 105_000_000)
-		self.assertEqual(flt(totals["actual"]), 180_000_000)
-		self.assertEqual(flt(totals["outstanding"]), 130_000_000)
+		self.assertEqual(flt(totals["reserved"]), 0)
+		self.assertEqual(flt(totals["committed"]), 0)
+		self.assertEqual(flt(totals["available"]), 560_000_000)
+		self.assertEqual(flt(totals["actual"]), 0)
+		self.assertEqual(flt(totals["outstanding"]), 0)
 		self.assertEqual(totals["approved_display"], "KES 560M")
-		self.assertEqual(totals["reserved_display"], "KES 145M")
-		self.assertEqual(totals["committed_display"], "KES 310M")
-		self.assertEqual(totals["available_display"], "KES 105M")
-		self.assertEqual(totals["actual_display"], "KES 180M")
-		self.assertEqual(totals["outstanding_display"], "KES 130M")
+		self.assertEqual(totals["reserved_display"], "KES 0")
+		self.assertEqual(totals["committed_display"], "KES 0")
+		self.assertEqual(totals["available_display"], "KES 560M")
+		self.assertEqual(totals["actual_display"], "KES 0")
+		self.assertEqual(totals["outstanding_display"], "KES 0")
 		bar = ov["utilization_bar"]
 		self.assertAlmostEqual(bar["reserved_pct"] + bar["committed_pct"] + bar["available_pct"], 100.0, places=1)
-		self.assertIn("stale", (ov.get("attention") or {}).get("text", "").lower())
 
 	def test_draft_without_lines_shows_registered_approved(self):
 		pe = self.seed["procuring_entity"]

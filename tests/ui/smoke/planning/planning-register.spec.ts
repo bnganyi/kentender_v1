@@ -31,6 +31,10 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 		await expect(page.getByText("2. Plan details")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui02-period")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui02-period")).toContainText(/Plan period:/i);
+		const currency = page.getByTestId("kt-pln-ui02-currency");
+		await expect(currency).toBeVisible();
+		await expect(currency).toContainText("KES - Kenyan Shilling");
+		await expect(currency.locator('option[value="USD"]')).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui02-actions")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui02-submit")).toContainText(/Create plan/i);
 		await expect(page.getByTestId("kt-pln-ui02-pe-readonly")).toBeVisible();

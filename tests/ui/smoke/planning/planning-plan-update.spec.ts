@@ -34,6 +34,9 @@ test.describe("PLN-UI-10 Draft Plan update overview", () => {
 			primaryCtaStyle: "bordered",
 		});
 		await expect(page.getByRole("heading", { name: "Plan update" })).toBeVisible();
+		const subtitle = await page.locator("[data-kt-pln-ui10-subtitle]").innerText();
+		expect(subtitle.trim()).toBeTruthy();
+		expect(subtitle.trim()).not.toBe("Annual Procurement Plan");
 		await expect(page.getByTestId("kt-pln-ui10-banner")).toContainText(
 			"remains active until this update is approved",
 		);

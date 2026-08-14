@@ -43,6 +43,16 @@ def _money(amount: float, currency: str = "KES") -> str:
 	return format_money(amount, currency)
 
 
+def demand_desk_route(demand_name: str, status: str | None = None) -> str:
+	"""PLN-AC-005 / DEM-INT-005 — Demands Desk routes, never retired /app/demand/."""
+	name = cstr(demand_name).strip()
+	if not name:
+		return ""
+	if cstr(status).strip() == "Returned":
+		return f"/desk/demand-form/{name}"
+	return f"/desk/demand-detail/{name}"
+
+
 def _finance_label(iv: Any) -> str:
 	from kentender_procurement.procurement_planning.services.plan_item_finance import (
 		finance_status_label,
@@ -260,8 +270,8 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"annual_funding_schedule": iv.annual_funding_schedule,
 		"aggregation_decision": cstr(iv.aggregation_decision or ""),
 		"aggregation_reason": iv.aggregation_reason,
-		"lotting_decision": iv.lotting_decision or "Single lot",
-		"expected_lot_count": iv.expected_lot_count or 1,
+		"lotting_decision": iv.lotting_decision or "Multiple lots",
+		"expected_lot_count": iv.expected_lot_count or 2,
 		"lot_basis": iv.lot_basis,
 		"preference_reservation_scheme": cstr(iv.preference_reservation_scheme or ""),
 		"reservation_scope": cstr(iv.reservation_scope or ""),
@@ -381,7 +391,9 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"can_add_another_demand": False,
 		"builder_route": plan_canvas_routes(plan)["builder_route"],
 		"demand_route": (
-			f"/app/demand/{demand_row.name}" if demand_row and demand_row.name else ""
+			demand_desk_route(demand_row.name, demand_row.status)
+			if demand_row and demand_row.name
+			else ""
 		),
 		# ABS / AC-025: never claim realised savings.
 		"aggregation_benefit_realised": False,
@@ -400,15 +412,17 @@ def _source_rows(allocs: list[Any], currency: str) -> list[dict[str, Any]]:
 			title = ""
 			code = ""
 			owner = ""
+			dstatus = ""
 			if frappe.db.exists("Demand", demand):
 				drow = frappe.db.get_value(
 					"Demand",
 					demand,
-					["title", "demand_code", "owner_org_unit"],
+					["title", "demand_code", "owner_org_unit", "status"],
 					as_dict=True,
 				)
 				title = cstr(drow.title or "")
 				code = cstr(drow.demand_code or "")
+				dstatus = cstr(drow.status or "")
 				if drow.owner_org_unit:
 					owner = cstr(
 						frappe.db.get_value("Organisation Unit", drow.owner_org_unit, "unit_name")
@@ -423,7 +437,7 @@ def _source_rows(allocs: list[Any], currency: str) -> list[dict[str, Any]]:
 				"need_item_count": 0,
 				"amount": 0.0,
 				"budget_line_label": _funding_line_label(rsv) or "—",
-				"demand_route": f"/app/demand/{demand}",
+				"demand_route": demand_desk_route(demand, dstatus),
 			}
 			order.append(demand)
 		grouped[demand]["need_item_count"] += 1

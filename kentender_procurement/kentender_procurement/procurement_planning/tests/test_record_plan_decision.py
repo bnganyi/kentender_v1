@@ -114,6 +114,11 @@ class TestRecordPlanDecision(IntegrationTestCase):
 			frappe.db.get_value("Procurement Plan Version", plan["version"], "status"),
 			VERSION_RETURNED,
 		)
+		planner_logs = frappe.db.count(
+			"Notification Log",
+			{"for_user": _planner, "email_header": ["like", f"pln-return:{plan['version']}:%"]},
+		)
+		self.assertGreaterEqual(planner_logs, 1)
 
 	def test_stale_concurrency_token_rejected(self) -> None:
 		"""PLN-NFR-003 — stale concurrency token cannot record a review decision."""
@@ -137,3 +142,32 @@ class TestRecordPlanDecision(IntegrationTestCase):
 				decision="recommend",
 				user=planner,
 			)
+
+	def test_recommend_stamps_usa_role_not_desk_approver(self) -> None:
+		"""PLN-GAP-PERM-005 — actor_role comes from USA, not frappe.get_roles."""
+		from kentender_procurement.procurement_planning.services.planning_permissions import (
+			ROLE_DESIGNATED_APPROVER,
+			ROLE_REVIEWER,
+		)
+
+		_planner, reviewer, plan = self._in_review()
+		user = frappe.get_doc("User", reviewer)
+		if ROLE_DESIGNATED_APPROVER not in {r.role for r in user.roles}:
+			user.add_roles(ROLE_DESIGNATED_APPROVER)
+		token = frappe.db.get_value(
+			"Procurement Plan Version", plan["version"], "concurrency_token"
+		)
+		result = record_plan_decision(
+			version=plan["version"],
+			decision="recommend",
+			comment="USA role stamp",
+			concurrency_token=token,
+			user=reviewer,
+		)
+		self.assertTrue(result["ok"], result)
+		stamped = frappe.db.get_value(
+			"Plan Decision",
+			{"plan_version": plan["version"], "decision": DECISION_RECOMMENDED},
+			"actor_role",
+		)
+		self.assertEqual(stamped, ROLE_REVIEWER)

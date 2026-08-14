@@ -9,7 +9,14 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
-from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	TEST_CONTRACT_CODE,
+	TEST_DEMAND_CODE,
+	TEST_PLAN_ITEM_CODE,
+	TEST_RSV_CODE,
+	TEST_TENDER_CODE,
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.services.budget_downstream_contracts import (
 	get_budget_usage,
 	list_downstream_usage,
@@ -22,7 +29,7 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
-		cls.seed = upsert_moh_mvp_v1_portfolio()
+		cls.seed = upsert_budget_activity_test_fixture()
 
 	def test_list_seeded_lineage_row_pack_93(self):
 		dto = list_downstream_usage("MOH-BUD-2027-2028")
@@ -30,14 +37,12 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		self.assertTrue(dto["capabilities"]["read_only"])
 		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
 		self.assertEqual(dto["capabilities"]["primary_label"], "Request revision")
-		self.assertEqual(dto["row_count"], 1)
-
-		row = dto["rows"][0]
-		self.assertEqual(row["code"], "RSV-MOH-0001")
-		self.assertEqual(row["demand_code"], "DMD-MOH-2027-014")
-		self.assertEqual(row["plan_item_code"], "PPI-MOH-2027-021")
-		self.assertEqual(row["tender_code"], "TND-MOH-2027-008")
-		self.assertEqual(row["contract_code"], "CTR-MOH-2027-005")
+		self.assertGreaterEqual(dto["row_count"], 1)
+		row = next(r for r in dto["rows"] if r["code"] == TEST_RSV_CODE)
+		self.assertEqual(row["demand_code"], TEST_DEMAND_CODE)
+		self.assertEqual(row["plan_item_code"], TEST_PLAN_ITEM_CODE)
+		self.assertEqual(row["tender_code"], TEST_TENDER_CODE)
+		self.assertEqual(row["contract_code"], TEST_CONTRACT_CODE)
 		self.assertEqual(flt(row["reserved_balance"]), 145_000_000)
 		self.assertEqual(flt(row["commitment"]), 310_000_000)
 		self.assertEqual(row["reserved_balance_display"], "KES 145,000,000")

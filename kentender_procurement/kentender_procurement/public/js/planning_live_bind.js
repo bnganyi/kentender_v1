@@ -878,8 +878,7 @@
 		var $financeDrawer = ensureBuilderDialogs($root).$finance;
 		var selectedIds = [];
 		var lastEligRows = [];
-		var dialogMode = "add"; // add | aggregate
-		var aggregatePlanItem = "";
+		var dialogMode = "add";
 		var lastBuilderDto = null;
 		var removeTargetItem = "";
 		var financeTargetItem = "";
@@ -1057,9 +1056,7 @@
 			var $cta = $dialog.find('[data-kt-pln-action="elig-add"]');
 			$cta.prop("disabled", n === 0);
 			var ctaLabel = __("Create Plan Item");
-			if (dialogMode === "aggregate") {
-				ctaLabel = __("Add Demand to Plan Item");
-			} else if (n >= 2 && mode === "combined" && canCombine) {
+			if (n >= 2 && mode === "combined" && canCombine) {
 				ctaLabel = __("Create combined Plan Item");
 			} else if (n >= 1) {
 				ctaLabel =
@@ -1072,27 +1069,14 @@
 
 		function applyDialogMode() {
 			$dialog.attr("data-kt-pln-dialog-mode", dialogMode);
-			if (dialogMode === "aggregate") {
-				$dialog
-					.find("[data-kt-pln-ui04-title]")
-					.text(__("Add another approved Demand to this Plan Item"));
-				$dialog
-					.find("[data-kt-pln-ui04-subtitle]")
-					.text(
-						__(
-							"Select a compatible Approved Demand to combine into this Proposed Plan Item."
-						)
-					);
-			} else {
-				$dialog.find("[data-kt-pln-ui04-title]").text(__("Add approved Demands"));
-				$dialog
-					.find("[data-kt-pln-ui04-subtitle]")
-					.text(
-						__(
-							"Select from pre-approved strategic demands to allocate to this procurement plan."
-						)
-					);
-			}
+			$dialog.find("[data-kt-pln-ui04-title]").text(__("Add approved Demands"));
+			$dialog
+				.find("[data-kt-pln-ui04-subtitle]")
+				.text(
+					__(
+						"Select from pre-approved strategic demands to allocate to this procurement plan."
+					)
+				);
 			paintEligSummary();
 		}
 
@@ -1204,9 +1188,8 @@
 			});
 		}
 
-		function openDialog(mode, planItemForAgg) {
-			dialogMode = mode === "aggregate" ? "aggregate" : "add";
-			aggregatePlanItem = planItemForAgg || "";
+		function openDialog() {
+			dialogMode = "add";
 			selectedIds = [];
 			$dialog.find("[data-kt-pln-formation-reason]").val("");
 			$dialog
@@ -1225,7 +1208,6 @@
 			setHidden($dialog, true);
 			$dialog.addClass("hidden").attr("hidden", "hidden");
 			dialogMode = "add";
-			aggregatePlanItem = "";
 			selectedIds = [];
 		}
 
@@ -1614,26 +1596,7 @@
 			if (!id) {
 				return;
 			}
-			if (dialogMode === "aggregate") {
-				// Aggregate path remains single-select.
-				if ($(this).is(":checked")) {
-					selectedIds = [id];
-					$dialog.find("[data-kt-pln-elig-check]").each(function () {
-						var other = $(this).attr("data-demand");
-						$(this).prop("checked", other === id);
-						$(this)
-							.closest("[data-kt-pln-elig-row]")
-							.toggleClass("bg-surface-container-low/50 is-selected", other === id);
-					});
-				} else {
-					selectedIds = selectedIds.filter(function (x) {
-						return x !== id;
-					});
-					$(this)
-						.closest("[data-kt-pln-elig-row]")
-						.removeClass("bg-surface-container-low/50 is-selected");
-				}
-			} else if ($(this).is(":checked")) {
+			if ($(this).is(":checked")) {
 				if (selectedIds.indexOf(id) === -1) {
 					selectedIds.push(id);
 				}
@@ -1671,59 +1634,6 @@
 			}
 			if (window.ktFormErrors && typeof window.ktFormErrors.clear === "function") {
 				window.ktFormErrors.clear($dialog);
-			}
-
-			if (dialogMode === "aggregate") {
-				var aggReason = (
-					$dialog.find("[data-kt-pln-formation-reason]").val() ||
-					$dialog.find("[data-kt-pln-aggregate-reason]").val() ||
-					""
-				).trim();
-				if (!aggReason) {
-					if (window.ktFormErrors && typeof window.ktFormErrors.show === "function") {
-						window.ktFormErrors.show($dialog, {
-							formation_reason: __("A reason for combining is required."),
-							aggregation_reason: __("A reason for combining is required."),
-						});
-					}
-					return;
-				}
-				call("aggregate_plan_allocations", {
-					plan_item: aggregatePlanItem,
-					demand: selectedIds[0],
-					aggregation_reason: aggReason,
-				})
-					.then(function (res) {
-						if (!res || res.ok === false) {
-							if (
-								res &&
-								res.errors &&
-								window.ktFormErrors &&
-								typeof window.ktFormErrors.show === "function"
-							) {
-								window.ktFormErrors.show($dialog, res.errors);
-							}
-							throw new Error(
-								(res && res.errors && (res.errors.aggregation_reason || res.errors.form)) ||
-									"Aggregate failed"
-							);
-						}
-						closeDialog();
-						frappe.show_alert({
-							message: __("Demand added to Plan Item"),
-							indicator: "green",
-						});
-						window.location.href =
-							"/app/procurement-plan-item-editor?plan_item=" +
-							encodeURIComponent(aggregatePlanItem);
-					})
-					.catch(function (err) {
-						frappe.show_alert({
-							message: (err && err.message) || __("Could not aggregate Demand"),
-							indicator: "red",
-						});
-					});
-				return;
 			}
 
 			var rows = selectedRows();
@@ -2994,6 +2904,8 @@
 
 		function paintTable(dto) {
 			var items = dto.items || [];
+			var showActuals = !!dto.has_downstream_actuals;
+			var colCount = showActuals ? 8 : 6;
 			var body = items
 				.filter(function (it) {
 					if (filterOu && String(it.owner_org_unit || "") !== filterOu) {
@@ -3050,14 +2962,16 @@
 						takeup +
 						"</td>" +
 						'<td class="px-5 py-4 font-body-sm text-body-sm text-on-surface">' +
-						esc(it.milestone_label || "—") +
+						esc(it.milestone_label || "") +
 						"</td>" +
-						'<td class="px-5 py-4 font-body-sm text-body-sm text-on-surface" style="white-space:normal">' +
-						esc(it.progress_label || "—") +
-						"</td>" +
-						'<td class="px-5 py-4 text-center font-body-sm">' +
-						esc(it.variance_label || "—") +
-						"</td>" +
+						(showActuals
+							? '<td class="px-5 py-4 font-body-sm text-body-sm text-on-surface" style="white-space:normal">' +
+								esc(it.progress_label || "") +
+								"</td>" +
+								'<td class="px-5 py-4 text-center font-body-sm">' +
+								esc(it.variance_label || "") +
+								"</td>"
+							: "") +
 						'<td class="px-5 py-4 text-right whitespace-nowrap">' +
 						'<a class="inline-flex items-center gap-1 font-label-caps text-label-caps text-primary" href="' +
 						esc(it.view_route || "#") +
@@ -3071,7 +2985,9 @@
 				.join("");
 			if (!body) {
 				body =
-					'<tr><td class="px-5 py-4 font-body-sm text-on-surface-variant" colspan="8">' +
+					'<tr><td class="px-5 py-4 font-body-sm text-on-surface-variant" colspan="' +
+					colCount +
+					'">' +
 					__("No Plan Items match these filters.") +
 					"</td></tr>";
 			}
@@ -3090,7 +3006,12 @@
 			$root.find("[data-kt-pln-ui09-total]").text(dto.planned_total_display || "KES 0.00");
 			$root.find("[data-kt-pln-ui09-items]").text(String(dto.item_count || 0));
 			$root.find("[data-kt-pln-ui09-takeup]").text(dto.takeup_label || "0 of 0");
-			$root.find("[data-kt-pln-ui09-on-schedule]").text(dto.on_schedule_label || "—");
+			setHidden($root.find("[data-kt-pln-ui09-on-schedule-kpi]"), !dto.has_downstream_actuals);
+			setHidden($root.find("[data-kt-pln-ui09-progress-col]"), !dto.has_downstream_actuals);
+			setHidden($root.find("[data-kt-pln-ui09-variance-col]"), !dto.has_downstream_actuals);
+			if (dto.has_downstream_actuals) {
+				$root.find("[data-kt-pln-ui09-on-schedule]").text(dto.on_schedule_label || "");
+			}
 			var pub = dto.publication || {};
 			var pubStatus = pub.status || dto.publication_status_label || "Not published";
 			$root

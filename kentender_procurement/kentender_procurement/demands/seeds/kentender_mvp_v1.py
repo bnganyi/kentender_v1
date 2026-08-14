@@ -224,7 +224,7 @@ def _seed_value_treatments(demand: str, plan_name: str) -> tuple[list[str], int]
 
 
 def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
-	"""Idempotently seed only DMD-MOH-2027-014 and attach the existing RSV."""
+	"""Idempotently seed DMD-MOH-2027-014 — no reservation (created at Planning Finance)."""
 	frappe.only_for(("System Manager", "Administrator"))
 
 	pe = _required("Procuring Entity", {"entity_code": C.PE_MOH}, C.PE_MOH)
@@ -242,25 +242,6 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 		C.BL_DHI_2027,
 	)
 	budget = frappe.db.get_value("Budget Line", budget_line, "budget")
-	reservation = _required(
-		"Funding Reservation",
-		{"generated_reference": C.RSV_CODE},
-		C.RSV_CODE,
-	)
-	reservation_row = frappe.db.get_value(
-		"Funding Reservation",
-		reservation,
-		["budget", "budget_line", "original_amount", "status"],
-		as_dict=True,
-	)
-	if (
-		reservation_row.budget != budget
-		or reservation_row.budget_line != budget_line
-		or flt(reservation_row.original_amount) != AMOUNT
-	):
-		raise frappe.ValidationError(
-			"DEM-SEED-001 RSV-MOH-0001 does not match MOH-BL-DHI-2027 / KES 455,000,000"
-		)
 
 	snapshot = {
 		"demand_code": C.DEMAND_CODE,
@@ -278,7 +259,7 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 		"strategy_targets": [spec["target_code"] for spec in STRATEGY_REFS],
 		"budget_line": C.BL_DHI_2027,
 		"allocation": AMOUNT,
-		"reservation": C.RSV_CODE,
+		"reservation": None,
 	}
 	demand, demand_created = _upsert(
 		"Demand",
@@ -306,7 +287,7 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 				"digital health services."
 			),
 			"delivery_location": "National Data Centre and designated health facilities",
-			"required_by_date": "2027-09-30",
+			"required_by_date": "2028-03-31",
 			"demand_route": "Standard",
 			"urgency": "Medium",
 			"requester_estimate": AMOUNT,
@@ -343,27 +324,33 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 			"matching_source": "Automatic",
 			"funds_check_result": "Sufficient",
 			"funds_check_at": BUDGET_CONFIRMED_AT,
-			"bo_confirmation_status": "Confirmed",
-			"bo_confirmed_by": _existing_user(BUDGET_OFFICER_USER),
-			"bo_confirmed_at": BUDGET_CONFIRMED_AT,
-			"funding_reservation": reservation,
-			"reservation_status": reservation_row.status,
+			"bo_confirmation_status": "Pending",
+			"bo_confirmed_by": None,
+			"bo_confirmed_at": None,
+			"funding_reservation": None,
+			"reservation_status": None,
 			"availability_before": 480_000_000,
-			"availability_after": 25_000_000,
+			"availability_after": 480_000_000,
 			"fixture_namespace": FIXTURE_NS,
 		},
 	)
-
-	# Attach existing RSV identity — never create a second reservation.
 	frappe.db.set_value(
-		"Funding Reservation",
-		reservation,
-		{
-			"demand_code": C.DEMAND_CODE,
-			"demand_title": "National digital health infrastructure upgrade",
-		},
+		"Demand Funding Allocation",
+		allocation,
+		{"funding_reservation": None, "reservation_status": None},
 		update_modified=False,
 	)
+	for leftover in frappe.get_all(
+		"Funding Reservation",
+		{"demand_code": C.DEMAND_CODE, "fixture_namespace": FIXTURE_NS},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Funding Reservation",
+			leftover,
+			{"demand_code": "", "demand_title": ""},
+			update_modified=False,
+		)
 
 	if commit:
 		frappe.db.commit()
@@ -376,7 +363,7 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 		"strategy_references": strategy_names,
 		"value_treatments": treatment_names,
 		"allocation": allocation,
-		"reservation": reservation,
+		"reservation": None,
 		"created": (
 			int(demand_created)
 			+ items_created
@@ -394,14 +381,14 @@ def upsert_principal_approved_demand(*, commit: bool = True) -> dict[str, Any]:
 	}
 
 
-# --- DEM-SEED-002: Returned shortfall Demand ---------------------------------
+# --- DEM-SEED-002: HoD scope-return Demand -----------------------------------
 
 RETURNED_AMOUNT = 95_000_000
 RETURNED_AVAILABLE = 80_000_000
-RETURNED_SHORTFALL = 15_000_000
 RETURNED_REASON = (
-	"The proposed scope exceeds available funding by KES 15,000,000. "
-	"Revise the number of participants or provide a phased delivery approach."
+	"The proposed certification scope is too broad for the current annual priority. "
+	"Revise the number of participants or provide a phased delivery approach "
+	"within KES 80,000,000."
 )
 RETURN_AT = "2027-08-18 11:00:00"
 ENRICHED_AT = "2027-08-17 10:00:00"
@@ -494,114 +481,51 @@ def _seed_returned_strategy(demand: str) -> tuple[str, bool]:
 
 
 def _seed_returned_decisions(demand: str) -> list[str]:
-	"""Audit trail: Support → Enrich → Budget Return (shortfall)."""
-	specs = (
-		{
-			"stage": "Business Review",
-			"decision": "Support",
-			"actor": _existing_user(BUSINESS_APPROVER) or "Administrator",
-			"actor_role": "Business Approver",
-			"decided_at": SUPPORTED_AT,
-			"comment": "Business need supported for workforce certification",
-			"reason": None,
-		},
-		{
-			"stage": "Procurement Enrichment",
-			"decision": "Send for budget confirmation",
-			"actor": _existing_user(PAA_USER) or "Administrator",
-			"actor_role": "Procurement Approval Authority",
-			"decided_at": ENRICHED_AT,
-			"comment": "Strategy assigned; send for Budget confirmation",
-			"reason": None,
-		},
-		{
-			"stage": "Budget Confirmation",
-			"decision": "Return",
-			"actor": _existing_user(BUDGET_OFFICER_USER) or "Administrator",
-			"actor_role": "Budget Officer",
-			"decided_at": RETURN_AT,
-			"comment": "Insufficient Funding exception detected",
-			"reason": RETURNED_REASON,
-		},
-	)
-	names: list[str] = []
-	for spec in specs:
-		name, _ = _upsert(
-			"Demand Decision",
-			{
-				"demand": demand,
-				"stage": spec["stage"],
-				"decision": spec["decision"],
-				"fixture_namespace": FIXTURE_NS,
-			},
-			{
-				"actor": spec["actor"],
-				"actor_role": spec["actor_role"],
-				"decided_at": spec["decided_at"],
-				"comment": spec["comment"],
-				"reason": spec["reason"],
-				"decision_input_snapshot": frappe.as_json(
-					{
-						"estimate": RETURNED_AMOUNT,
-						"available_funding": RETURNED_AVAILABLE,
-						"shortfall": RETURNED_SHORTFALL,
-						"budget_line": C.BL_HWD_2027,
-					}
-				),
-			},
-		)
-		names.append(name)
-	return names
-
-
-def _seed_returned_exception(demand: str) -> str:
-	"""Resolved Insufficient Funding exception — detected, then returned."""
+	"""Audit trail: HoD returned the Demand for scope correction (Demo §7.2)."""
+	for extra in frappe.get_all(
+		"Demand Decision",
+		filters={"demand": demand, "fixture_namespace": FIXTURE_NS},
+		fields=["name", "stage", "decision"],
+	):
+		if extra.stage != "Business Review" or extra.decision != "Return":
+			frappe.delete_doc(
+				"Demand Decision", extra.name, force=True, ignore_permissions=True
+			)
 	name, _ = _upsert(
-		"Funding Exception",
+		"Demand Decision",
 		{
 			"demand": demand,
-			"exception_type": "Insufficient Funding",
+			"stage": "Business Review",
+			"decision": "Return",
 			"fixture_namespace": FIXTURE_NS,
 		},
 		{
-			"demand_code": C.DEMAND_CODE_RETURNED,
-			"status": "Resolved",
-			"current_owner": _existing_user(C.USER_PUBLIC),
-			"diagnostic_context": frappe.as_json(
+			"actor": _existing_user(BUSINESS_APPROVER) or "Administrator",
+			"actor_role": "Business Approver",
+			"decided_at": RETURN_AT,
+			"comment": "Returned to requester for a narrower annual certification scope",
+			"reason": RETURNED_REASON,
+			"decision_input_snapshot": frappe.as_json(
 				{
-					"available_funding": RETURNED_AVAILABLE,
 					"estimate": RETURNED_AMOUNT,
-					"shortfall": RETURNED_SHORTFALL,
+					"target_ceiling": RETURNED_AVAILABLE,
 					"budget_line": C.BL_HWD_2027,
 				}
 			),
-			"resolution": "Returned to requester",
-			"resolution_reason": RETURNED_REASON,
-			"resolved_by": _existing_user(BUDGET_OFFICER_USER),
-			"resolved_at": RETURN_AT,
 		},
 	)
-	# No open exceptions for this Demand.
-	for open_name in frappe.get_all(
-		"Funding Exception",
-		filters={
-			"demand": demand,
-			"status": ["in", ["Open", "In Progress"]],
-			"name": ["!=", name],
-		},
-		pluck="name",
-	):
-		frappe.db.set_value(
-			"Funding Exception",
-			open_name,
-			{"status": "Cancelled"},
-			update_modified=False,
-		)
-	return name
+	return [name]
 
 
-def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
-	"""DEM-SEED-002 — idempotent `DMD-MOH-2027-019` Returned shortfall fixture."""
+def _clear_returned_exceptions(demand: str) -> None:
+	if not frappe.db.exists("DocType", "Funding Exception"):
+		return
+	for name in frappe.get_all("Funding Exception", {"demand": demand}, pluck="name"):
+		frappe.delete_doc("Funding Exception", name, force=True, ignore_permissions=True)
+
+
+def upsert_returned_scope_demand(*, commit: bool = True) -> dict[str, Any]:
+	"""DEM-SEED-002 — idempotent `DMD-MOH-2027-019` HoD scope-return fixture."""
 	frappe.only_for(("System Manager", "Administrator"))
 
 	pe = _required("Procuring Entity", {"entity_code": C.PE_MOH}, C.PE_MOH)
@@ -703,9 +627,9 @@ def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
 			"allocation_amount": RETURNED_AMOUNT,
 			"currency": "KES",
 			"matching_source": "Automatic",
-			"funds_check_result": "Insufficient",
+			"funds_check_result": "Sufficient",
 			"funds_check_at": RETURN_AT,
-			"bo_confirmation_status": "Returned",
+			"bo_confirmation_status": "Pending",
 			"bo_confirmed_by": None,
 			"bo_confirmed_at": None,
 			"funding_reservation": None,
@@ -722,16 +646,19 @@ def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
 		{"funding_reservation": None, "reservation_status": None},
 		update_modified=False,
 	)
-	exception = _seed_returned_exception(demand)
+	_clear_returned_exceptions(demand)
 	decisions = _seed_returned_decisions(demand)
 
-	rsv_for_code = frappe.db.count(
-		"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
-	)
-	if rsv_for_code:
-		raise frappe.ValidationError(
-			"DEM-SEED-002 must not create or attach a Funding Reservation for "
-			f"{C.DEMAND_CODE_RETURNED}"
+	for leftover in frappe.get_all(
+		"Funding Reservation",
+		{"demand_code": C.DEMAND_CODE_RETURNED},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Funding Reservation",
+			leftover,
+			{"demand_code": "", "demand_title": ""},
+			update_modified=False,
 		)
 
 	if commit:
@@ -744,9 +671,8 @@ def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
 		"items": item_names,
 		"strategy_reference": strategy_name,
 		"allocation": allocation,
-		"funding_exception": exception,
+		"funding_exception": None,
 		"decisions": decisions,
-		"shortfall": RETURNED_SHORTFALL,
 		"available_funding": available,
 		"reservation": None,
 		"created": int(demand_created)
@@ -754,6 +680,11 @@ def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
 		+ int(strategy_created)
 		+ int(allocation_created),
 	}
+
+
+def upsert_returned_shortfall_demand(*, commit: bool = True) -> dict[str, Any]:
+	"""Thin alias — DEM-SEED-002 is now an HoD scope return."""
+	return upsert_returned_scope_demand(commit=commit)
 
 
 # --- DEM-SEED-003: County Draft Demand ---------------------------------------

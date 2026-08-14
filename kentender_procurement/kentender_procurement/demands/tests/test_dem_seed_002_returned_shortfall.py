@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""DEM-SEED-002 — Returned shortfall Demand DMD-MOH-2027-019."""
+"""DEM-SEED-002 / PLN-GAP-SEED-002 — HoD scope-return Demand DMD-MOH-2027-019."""
 
 from __future__ import annotations
 
@@ -12,8 +12,7 @@ from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.demands.seeds.kentender_mvp_v1 import (
 	RETURNED_AMOUNT,
 	RETURNED_REASON,
-	RETURNED_SHORTFALL,
-	upsert_returned_shortfall_demand,
+	upsert_returned_scope_demand,
 )
 
 
@@ -22,7 +21,7 @@ class TestDemSeed002ReturnedShortfall(IntegrationTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 
-	def test_returned_shortfall_demand_is_canonical_and_idempotent(self) -> None:
+	def test_returned_scope_demand_is_canonical_and_idempotent(self) -> None:
 		self.assertTrue(
 			frappe.db.get_value(
 				"Budget Line", {"generated_reference": C.BL_HWD_2027}, "name"
@@ -30,13 +29,13 @@ class TestDemSeed002ReturnedShortfall(IntegrationTestCase):
 			"Budget portfolio must provide MOH-BL-HWD-2027",
 		)
 
-		first = upsert_returned_shortfall_demand(commit=False)
-		second = upsert_returned_shortfall_demand(commit=False)
+		first = upsert_returned_scope_demand(commit=False)
+		second = upsert_returned_scope_demand(commit=False)
 
 		self.assertEqual(second["demand"], first["demand"])
 		self.assertEqual(second["demand_code"], C.DEMAND_CODE_RETURNED)
 		self.assertIsNone(second["reservation"])
-		self.assertEqual(second["shortfall"], RETURNED_SHORTFALL)
+		self.assertIsNone(second["funding_exception"])
 		self.assertEqual(
 			frappe.db.count(
 				"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
@@ -94,37 +93,25 @@ class TestDemSeed002ReturnedShortfall(IntegrationTestCase):
 			C.BL_HWD_2027,
 		)
 		self.assertEqual(float(allocation.allocation_amount), RETURNED_AMOUNT)
-		self.assertEqual(allocation.bo_confirmation_status, "Returned")
-		self.assertEqual(allocation.funds_check_result, "Insufficient")
+		self.assertNotEqual(allocation.bo_confirmation_status, "Returned")
+		self.assertEqual(allocation.funds_check_result, "Sufficient")
 		self.assertFalse(allocation.funding_reservation)
 
-		exc = frappe.db.get_value(
-			"Funding Exception",
-			{"demand": demand.name, "exception_type": "Insufficient Funding"},
-			["status", "resolution_reason"],
-			as_dict=True,
+		self.assertEqual(
+			frappe.db.count("Funding Exception", {"demand": demand.name}),
+			0,
 		)
-		self.assertEqual(exc.status, "Resolved")
-		self.assertEqual(exc.resolution_reason, RETURNED_REASON)
 
 		ret = frappe.db.get_value(
 			"Demand Decision",
 			{
 				"demand": demand.name,
-				"stage": "Budget Confirmation",
+				"stage": "Business Review",
 				"decision": "Return",
 			},
 			["reason", "actor_role"],
 			as_dict=True,
 		)
 		self.assertEqual(ret.reason, RETURNED_REASON)
-		self.assertEqual(ret.actor_role, "Budget Officer")
-
-		open_exc = frappe.db.count(
-			"Funding Exception",
-			{
-				"demand": demand.name,
-				"status": ["in", ["Open", "In Progress"]],
-			},
-		)
-		self.assertEqual(open_exc, 0)
+		self.assertEqual(ret.actor_role, "Business Approver")
+		self.assertIn("too broad", ret.reason)

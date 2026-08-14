@@ -412,6 +412,9 @@ class TestAddDemandToPlanGate04(IntegrationTestCase):
 		)
 
 		editor = get_plan_item_editor(plan_item=result["plan_item"], user=planner)
+		route = editor.get("demand_route") or ""
+		self.assertIn("/desk/demand-detail/", route)
+		self.assertNotIn("/app/demand/", route)
 		src = editor.get("approved_source") or {}
 		self.assertEqual(src.get("strategy_snapshot"), strategy_label)
 		self.assertEqual(src.get("pvc_snapshot"), pvc_label)

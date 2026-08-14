@@ -11,7 +11,7 @@ import frappe
 
 
 def upsert_planning() -> dict[str, Any]:
-	"""Seed Contract v2.4 base Planning (Approved V1 + Active PPI @ 455M)."""
+	"""Seed Demo v2.7 base Planning (Approved V1 + Active PPI @ 455M)."""
 	if not frappe.db.exists("DocType", "Procurement Plan"):
 		return {"ok": False, "reason": "Procurement Plan DocType unavailable"}
 

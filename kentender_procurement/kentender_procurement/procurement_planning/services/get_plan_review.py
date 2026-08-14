@@ -24,7 +24,11 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	RECOMMEND_PLAN_ROLES,
 	RETURN_PLAN_ROLES,
 	SUBMIT_FOR_REVIEW_ROLES,
+	CAP_PLAN_APPROVE,
+	CAP_PLAN_RECOMMEND,
+	CAP_PLAN_RETURN,
 	actor_planning_roles,
+	get_available_actions,
 	has_review_task_capability,
 	is_planning_read_only,
 	require_capability,
@@ -39,6 +43,9 @@ from kentender_procurement.procurement_planning.services.preference_reservation 
 )
 from kentender_procurement.procurement_planning.services.record_plan_decision import (
 	has_recommendation,
+)
+from kentender_procurement.procurement_planning.services.validate_plan import (
+	effective_validation_status,
 )
 
 
@@ -76,7 +83,6 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		user=actor,
 		require_write=False,
 	)
-	surface = "task" if has_review_task_capability(actor) else "neutral"
 
 	# Prefer open draft/in-review version; else current approved for read-only trail.
 	focus = cstr(plan_doc.open_draft_version or plan_doc.current_approved_version or "").strip()
@@ -98,6 +104,12 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	)
 	if not ver:
 		frappe.throw(frappe._("Plan Version not found."), title="PLN_VERSION_NOT_FOUND")
+
+	surface = (
+		"task"
+		if has_review_task_capability(actor) and cstr(ver.status) == VERSION_IN_REVIEW
+		else "neutral"
+	)
 
 	currency = plan_doc.currency or "KES"
 	items_out: list[dict[str, Any]] = []
@@ -189,7 +201,9 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			}
 		]
 
-	validation = cstr(ver.validation_projection or "Not run") or "Not run"
+	validation = effective_validation_status(
+		plan=plan_name, version=focus, stored=cstr(ver.validation_projection or "")
+	)
 	issues_ready = validation == VALIDATION_READY
 	if issues_ready and finance_complete:
 		issues_message = "All required planning and funding checks are ready for decision."
@@ -205,24 +219,20 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	read_only_actor = is_planning_read_only(actor)
 	task_surface = surface == "task" and not read_only_actor
 
-	can_recommend = (
-		task_surface
-		and bool(roles.intersection(RECOMMEND_PLAN_ROLES))
-		and cstr(ver.status) == VERSION_IN_REVIEW
+	review_actions = get_available_actions(
+		actor,
+		{
+			"kind": "plan_version",
+			"version_status": cstr(ver.status),
+			"recommended": recommended,
+			"issues_ready": issues_ready,
+			"finance_complete": finance_complete,
+		},
 	)
-	can_return = (
-		task_surface
-		and bool(roles.intersection(RETURN_PLAN_ROLES))
-		and cstr(ver.status) == VERSION_IN_REVIEW
-	)
-	can_approve = (
-		task_surface
-		and bool(roles.intersection(APPROVE_PLAN_ROLES))
-		and cstr(ver.status) == VERSION_IN_REVIEW
-		and recommended
-		and issues_ready
-		and finance_complete
-	)
+	action_codes = {cstr(a.get("code")) for a in review_actions}
+	can_recommend = task_surface and CAP_PLAN_RECOMMEND in action_codes
+	can_return = task_surface and CAP_PLAN_RETURN in action_codes
+	can_approve = task_surface and CAP_PLAN_APPROVE in action_codes
 	can_submit_for_review = (
 		task_surface
 		and bool(roles.intersection(SUBMIT_FOR_REVIEW_ROLES))
@@ -334,10 +344,11 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"can_recommend": bool(can_recommend),
 		"can_return": bool(can_return),
 		"can_approve": bool(can_approve),
+		"available_actions": review_actions,
 		"read_only": (not task_surface) or rail_mode == "readonly",
 		"builder_route": f"/app/procurement-plan-builder?plan={plan_name}",
 		"workspace_route": "/app/planning-workspace",
 		"secondary_line": (
-			f"{pe_label} · FY {plan_doc.financial_year} · Version {int(ver.version_number or 1)}"
+			f"{cstr(plan_doc.title)} · {cstr(ver.status) or 'Draft'} Version {int(ver.version_number or 1)}"
 		),
 	}

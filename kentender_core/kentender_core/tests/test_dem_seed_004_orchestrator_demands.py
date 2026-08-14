@@ -24,9 +24,9 @@ class TestDemSeed004OrchestratorDemands(IntegrationTestCase):
 	def test_upsert_clear_and_demands_validate(self) -> None:
 		self.assertTrue(
 			frappe.db.get_value(
-				"Funding Reservation", {"generated_reference": C.RSV_CODE}, "name"
+				"Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
 			),
-			"Budget portfolio must provide RSV-MOH-0001 before Demands stage",
+			"Budget portfolio must provide MOH-BL-DHI-2027 before Demands stage",
 		)
 
 		first = upsert_demands()
@@ -64,14 +64,6 @@ class TestDemSeed004OrchestratorDemands(IntegrationTestCase):
 			),
 			0,
 		)
-		# RSV identity survives Demands clear.
-		self.assertEqual(
-			frappe.db.count(
-				"Funding Reservation", {"generated_reference": C.RSV_CODE}
-			),
-			1,
-		)
-
 		# Re-seed after clear remains valid.
 		again = upsert_demands()
 		self.assertTrue(again.get("ok"))

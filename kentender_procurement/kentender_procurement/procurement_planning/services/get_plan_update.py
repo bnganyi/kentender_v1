@@ -43,6 +43,9 @@ from kentender_procurement.procurement_planning.services.remove_plan_item import
 	item_has_downstream,
 	removal_capabilities_for_item,
 )
+from kentender_procurement.procurement_planning.services.validate_plan import (
+	effective_validation_status,
+)
 
 SYSTEM_UPDATE_REASONS = frozenset(
 	(
@@ -271,7 +274,9 @@ def get_plan_update(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	update_reason = planner_update_reason(draft_ver.version_reason)
 	no_changes = not draft_has_effective_changes(plan=plan_name, version=draft)
 	finance_err = finance_not_confirmed_error(plan=plan_name, version=draft)
-	validation = cstr(draft_ver.validation_projection or "Not run") or "Not run"
+	validation = effective_validation_status(
+		plan=plan_name, version=draft, stored=cstr(draft_ver.validation_projection or "")
+	)
 	issues: list[str] = []
 	if finance_err:
 		issues.append(

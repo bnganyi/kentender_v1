@@ -14,6 +14,8 @@ from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_e
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	ROLE_DESIGNATED_APPROVER,
 	ROLE_PLANNER,
+	ROLE_TENDER_INITIATOR,
+	ROLE_VIEWER,
 	ensure_planning_roles,
 )
 
@@ -23,6 +25,8 @@ FY = "2027/28"
 PLANNER_ROLE = ROLE_PLANNER
 PLANNER_USER = "pln.gate01.planner@test.local"
 APPROVER_USER = "pln.gate01.approver@test.local"
+INITIATOR_USER = "pln.gate01.initiator@test.local"
+VIEWER_USER = "pln.gate01.viewer@test.local"
 
 
 def _ensure_usa(user: str, role: str, pe: str, org_unit: str | None) -> None:
@@ -66,6 +70,47 @@ def ensure_planner_user() -> str:
 		frappe.get_doc("User", PLANNER_USER).add_roles(PLANNER_ROLE)
 	_ensure_usa(PLANNER_USER, PLANNER_ROLE, PE, OU)
 	return PLANNER_USER
+
+
+def ensure_tender_initiator() -> str:
+	"""PLN-GAP-PERM-001 — Tender Initiator with PE/OU write for take-up tests."""
+	ensure_planning_roles()
+	if not frappe.db.exists("User", INITIATOR_USER):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": INITIATOR_USER,
+				"first_name": "Gate01",
+				"last_name": "Initiator",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	roles = {r.role for r in frappe.get_doc("User", INITIATOR_USER).roles}
+	if ROLE_TENDER_INITIATOR not in roles:
+		frappe.get_doc("User", INITIATOR_USER).add_roles(ROLE_TENDER_INITIATOR)
+	_ensure_usa(INITIATOR_USER, ROLE_TENDER_INITIATOR, PE, OU)
+	return INITIATOR_USER
+
+
+def ensure_viewer_user() -> str:
+	ensure_planning_roles()
+	if not frappe.db.exists("User", VIEWER_USER):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": VIEWER_USER,
+				"first_name": "Gate01",
+				"last_name": "Viewer",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	roles = {r.role for r in frappe.get_doc("User", VIEWER_USER).roles}
+	if ROLE_VIEWER not in roles:
+		frappe.get_doc("User", VIEWER_USER).add_roles(ROLE_VIEWER)
+	_ensure_usa(VIEWER_USER, ROLE_VIEWER, PE, OU)
+	return VIEWER_USER
 
 
 HOD_USER = "pln.gate01.hod@test.local"
@@ -460,6 +505,15 @@ def purge_pe_fy(financial_year: str) -> None:
 	):
 		frappe.delete_doc("Procurement Plan", name, force=True, ignore_permissions=True)
 	fy_slug = (financial_year or "").replace("/", "-")
+	if frappe.db.exists("DocType", "Planning Handoff Snapshot"):
+		for name in frappe.get_all(
+			"Planning Handoff Snapshot",
+			filters={"plan_item": ("like", f"%{fy_slug}%")},
+			pluck="name",
+		):
+			frappe.delete_doc(
+				"Planning Handoff Snapshot", name, force=True, ignore_permissions=True
+			)
 	for name in frappe.get_all(
 		"Procurement Plan Version",
 		filters={"name": ("like", f"PLN-%{fy_slug}%")},
@@ -471,7 +525,13 @@ def purge_pe_fy(financial_year: str) -> None:
 		filters={"plan_item_code": ("like", f"PPI-%{fy_slug}%")},
 		pluck="name",
 	):
-		for doctype in ("Plan Demand Allocation", "Procurement Plan Item Version"):
+		for doctype in (
+			"Planning Handoff Snapshot",
+			"Plan Demand Allocation",
+			"Procurement Plan Item Version",
+		):
+			if not frappe.db.exists("DocType", doctype):
+				continue
 			for child in frappe.get_all(doctype, filters={"plan_item": name}, pluck="name"):
 				frappe.delete_doc(doctype, child, force=True, ignore_permissions=True)
 		frappe.delete_doc("Procurement Plan Item", name, force=True, ignore_permissions=True)

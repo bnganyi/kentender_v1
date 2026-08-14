@@ -90,9 +90,15 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("arrow_forward", text)
 		self.assertIn('data-kt-pln-filter="work_type"', text)
 		self.assertIn('placeholder="Search work..."', text)
+		# Stitch PLN-UI-01 work options (four labels).
+		self.assertIn("All work", text)
+		self.assertIn("Approved Demands", text)
 		self.assertIn("Plan Items returned by Finance", text)
-		self.assertIn("Awaiting Finance confirmation", text)
 		self.assertIn("Plan Items needing attention", text)
+		# PLN-GAP-UI-003 / PLN-FR-040: keep Awaiting Finance confirmation — REQ
+		# Finance-after-Plan-Item queue filter, not a Stitch miss.
+		self.assertIn("Awaiting Finance confirmation", text)
+		self.assertIn('value="awaiting_finance"', text)
 		self.assertIn('testid: "kt-pln-ui01-table-footer"', text)
 		self.assertIn("tablePaginationFooterHtml", text)
 		self.assertIn("font-headline-lg", text)
@@ -139,6 +145,9 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn('data-testid="kt-pln-ui02-actions"', text)
 		self.assertIn("absolute bottom-0", text)
 		self.assertIn("KES - Kenyan Shilling", text)
+		self.assertIn('data-testid="kt-pln-ui02-currency"', text)
+		# PLN-GAP-UI-004: Kenya MVP / Demo KES-only — Stitch USD must not ship.
+		self.assertNotIn('value="USD"', text)
 		self.assertNotIn("kt-pln-ui02-no-budget", text)
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)
@@ -189,6 +198,12 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn(">payments<", text)
 		# PLN-UI-05 populated regions share the builder fixture.
 		self.assertIn('data-testid="kt-pln-ui05-header"', text)
+		hdr_start = text.find('data-testid="kt-pln-ui05-header"')
+		hdr_end = text.find('data-testid="kt-pln-ui03-summary"')
+		hdr = text[hdr_start:hdr_end] if hdr_start >= 0 and hdr_end > hdr_start else ""
+		self.assertIn("Open Plan", hdr)
+		self.assertIn("Draft Version", hdr)
+		self.assertIn("Add approved demands", hdr)
 		self.assertIn('data-testid="kt-pln-ui05-issue-strip"', text)
 		self.assertIn('data-testid="kt-pln-ui05-run-validation"', text)
 		self.assertIn("Submit for review", text)
@@ -427,6 +442,8 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 			"Business scope, quantity, owner, delivery requirement and approved value come from the Approved Demand source(s) and cannot be changed here.",
 			text,
 		)
+		self.assertIn("Amend those facts on the Demand in Demands", text)
+		self.assertIn("HoD reapproval", text)
 		self.assertIn("Confirm all milestone dates before requesting Finance confirmation.", text)
 		self.assertNotIn("Preference and reservation", text)
 		self.assertNotIn('data-testid="kt-pln-ui06-pref-section"', text)
@@ -435,6 +452,8 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("Indicative lotting", text)
 		self.assertIn('data-testid="kt-pln-ui06-lotting-details"', text)
 		self.assertIn("data-kt-pln-lotting-details", text)
+		self.assertRegex(text, r"<input checked[^>]*kt-pln-ui06-lotting-multiple")
+		self.assertNotIn('data-testid="kt-pln-ui06-lotting-details" hidden', text)
 		self.assertIn('data-testid="kt-pln-ui06-lifecycle"', text)
 		# Chip sits to the right of the title (Stitch), not above it.
 		life_idx = text.find('data-testid="kt-pln-ui06-lifecycle"')
@@ -637,7 +656,7 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		)
 		self.assertIn("list_eligible_demands", live)
 		self.assertIn("add_demand_to_plan", live)
-		self.assertIn("aggregate_plan_allocations", live)
+		self.assertNotIn("aggregate_plan_allocations", live)
 		self.assertIn("formation_mode", live)
 		self.assertIn("selectedIds", live)
 		self.assertIn("data-kt-pln-formation-mode", live)

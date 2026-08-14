@@ -36,6 +36,13 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			selectSelector: `${ROOT} [data-kt-pln-ui09-filter="ou"]`,
 		});
 		await expect(page.getByTestId("kt-pln-ui09-header")).toBeVisible();
+		const liveTitle = await page.locator("[data-kt-pln-ui09-title]").innerText();
+		expect(liveTitle.trim()).toBeTruthy();
+		expect(liveTitle.trim()).not.toBe("Annual Procurement Plan");
+		expect(liveTitle.trim()).not.toBe("Approved procurement plan");
+		await expect(page.locator("[data-kt-pln-ui09-on-schedule-kpi]")).toBeHidden();
+		await expect(page.locator("[data-kt-pln-ui09-progress-col]")).toBeHidden();
+		await expect(page.locator("[data-kt-pln-ui09-variance-col]")).toBeHidden();
 		await expect(page.locator("[data-kt-pln-ui09-version]")).toContainText(
 			"Approved Version",
 		);

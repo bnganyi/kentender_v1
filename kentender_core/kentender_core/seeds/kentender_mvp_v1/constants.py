@@ -13,9 +13,9 @@ FIXTURE_NS: Final[str] = "KENTENDER_MVP_V1"
 LEGACY_FIXTURE_NS: Final[str] = "MOH_MVP_V1"
 
 FIXTURE_TZ = timezone(timedelta(hours=3))
-FIXTURE_NOW: Final[datetime] = datetime(2027, 11, 3, 12, 0, 0, tzinfo=FIXTURE_TZ)
-FIXTURE_NOW_STR: Final[str] = "2027-11-03 12:00:00"
-FIXTURE_DATE: Final[str] = "2027-11-03"
+FIXTURE_NOW: Final[datetime] = datetime(2027, 11, 5, 12, 0, 0, tzinfo=FIXTURE_TZ)
+FIXTURE_NOW_STR: Final[str] = "2027-11-05 12:00:00"
+FIXTURE_DATE: Final[str] = "2027-11-05"
 FINANCE_FRESHNESS_DAYS: Final[int] = 1
 
 PE_MOH: Final[str] = "PE-MOH"
@@ -118,13 +118,18 @@ USER_BUD_DUAL: Final[str] = "moh.budget.officer.authority@example.test"
 # Contract v2.2 §4.6 / §7.5 — Demand creation-scope demonstration personas.
 USER_MULTISCOPE: Final[str] = "kentender.multiscope.admin@example.test"
 USER_SYSTEM_ADMIN: Final[str] = "kentender.system.admin@example.test"
-# Contract v2.4 §4.6 — Planning personas
+# Demo v2.7 §4.6 — Planning personas
 USER_PLANNING_OFFICER: Final[str] = "moh.planning.officer@example.test"
 USER_PLANNING_REVIEWER: Final[str] = "moh.planning.reviewer@example.test"
+# Extra SoD persona (not listed in Demo §4.6).
 USER_ACCOUNTING_OFFICER: Final[str] = "moh.accounting.officer@example.test"
 USER_PLAN_APPROVER: Final[str] = "moh.plan.approver@example.test"
 USER_TENDER_INITIATOR: Final[str] = "moh.tender.initiator@example.test"
 USER_COUNTY_PLANNER: Final[str] = "kisumu.planning.officer@example.test"
+# Demo v2.7 §4.6 — named HoD / HoP / Budget Officer login personas.
+USER_BUSINESS_APPROVER: Final[str] = "moh.business.approver@example.test"
+USER_HOP: Final[str] = "moh.procurement.authority@example.test"
+USER_BUD_OFFICER: Final[str] = "moh.budget.officer@example.test"
 # Retired primary denial persona (kept disabled).
 USER_OTHER_ENTITY: Final[str] = "other.entity.officer@example.test"
 
@@ -146,6 +151,9 @@ CANONICAL_USERS: Final[tuple[str, ...]] = (
 	USER_PLAN_APPROVER,
 	USER_TENDER_INITIATOR,
 	USER_COUNTY_PLANNER,
+	USER_BUSINESS_APPROVER,
+	USER_HOP,
+	USER_BUD_OFFICER,
 )
 
 RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (

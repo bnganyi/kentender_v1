@@ -26,13 +26,18 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	PE_FILTER_ALL,
 	READ_PLAN_ROLES,
 	assert_planning_scope,
+	get_available_actions,
 	has_any_operational_role,
 	has_finance_task_capability,
 	has_planning_scope,
 	is_planning_read_only,
 	list_eligible_procuring_entities,
+	primary_queue_action,
 	require_operational_roles,
 	resolve_pe_for_create,
+)
+from kentender_procurement.procurement_planning.services.validate_plan import (
+	effective_validation_status,
 )
 
 
@@ -147,21 +152,23 @@ def _work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[st
 		ou = cstr(r.owner_org_unit or "")
 		row_filter = "all"
 		reason = ""
-		action_label = "View"
-		action = "view"
+		action, action_label = primary_queue_action(
+			user,
+			{
+				"kind": "workspace_demand",
+				"demand_status": status,
+				"planning_ready": ready,
+				"planning_usage": usage,
+			},
+		)
 		queue_status = status
 		if status == "Approved" and ready and usage != "Fully planned":
 			row_filter = "approved_demands"
 			reason = "Approved Demand ready for planning"
-			action_label = "Add to plan"
-			action = "add_to_plan"
 			queue_status = "Ready"
 		elif status == "Returned":
-			# Until C05 Finance returns exist, Demand returns surface under needing attention.
 			row_filter = "needs_attention"
 			reason = "Returned for correction"
-			action_label = "View return"
-			action = "view_return"
 			queue_status = "Returned"
 		else:
 			continue
@@ -195,6 +202,15 @@ def _work_queue(*, pe: str, user: str, work_filter: str = "all") -> list[dict[st
 				"filter_key": row_filter,
 				"action": action,
 				"action_label": action_label,
+				"available_actions": get_available_actions(
+					user,
+					{
+						"kind": "workspace_demand",
+						"demand_status": status,
+						"planning_ready": ready,
+						"planning_usage": usage,
+					},
+				),
 			}
 		)
 	return out
@@ -218,7 +234,6 @@ def _finance_work_queue(*, pe: str, user: str, work_filter: str = "all") -> list
 		limit_page_length=20,
 	)
 	out: list[dict[str, Any]] = []
-	bo = has_finance_task_capability(user)
 	for plan in plans:
 		focus = cstr(plan.open_draft_version or plan.current_approved_version or "")
 		if not focus:
@@ -239,21 +254,19 @@ def _finance_work_queue(*, pe: str, user: str, work_filter: str = "all") -> list
 			iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
 			status = finance_status_label(iv)
 			row_filter = ""
-			action = "view"
-			action_label = "View"
 			reason = ""
-			if status == FINANCE_AWAITING and bo and want_awaiting:
+			if status == FINANCE_AWAITING and want_awaiting:
 				row_filter = "awaiting_finance"
-				action = "confirm_funding"
-				action_label = "Confirm funding"
 				reason = "Plan Item awaiting Finance confirmation"
 			elif status == FINANCE_RETURNED and want_returned:
 				row_filter = "returned_by_finance"
-				action = "continue_item"
-				action_label = "Review return"
 				reason = "Returned by Finance"
 			else:
 				continue
+			action, action_label = primary_queue_action(
+				user,
+				{"kind": "finance_item", "finance_status": status},
+			)
 			ou = cstr(it.owner_org_unit or "")
 			out.append(
 				{
@@ -272,6 +285,10 @@ def _finance_work_queue(*, pe: str, user: str, work_filter: str = "all") -> list
 					"filter_key": row_filter,
 					"action": action,
 					"action_label": action_label,
+					"available_actions": get_available_actions(
+						user,
+						{"kind": "finance_item", "finance_status": status},
+					),
 					"builder_route": (
 						f"/app/procurement-plan-builder?plan={plan.name}&finance_item={it.name}"
 					),
@@ -419,11 +436,11 @@ def get_planning_workspace(
 		stats = _plan_item_stats(plan.name, focus_version or None)
 		validation = "Not run"
 		if focus_version and frappe.db.exists("Procurement Plan Version", focus_version):
-			validation = (
-				frappe.db.get_value(
-					"Procurement Plan Version", focus_version, "validation_projection"
-				)
-				or "Not run"
+			stored = frappe.db.get_value(
+				"Procurement Plan Version", focus_version, "validation_projection"
+			)
+			validation = effective_validation_status(
+				plan=plan.name, version=focus_version, stored=cstr(stored or "")
 			)
 		return {
 			"plan": plan.name,
@@ -493,10 +510,10 @@ def get_planning_workspace(
 	create_scope = resolve_pe_for_create(actor, create_pe)
 	can_create = (not read_only) and create_scope.get("selection_mode") != MODE_BLOCKED
 
-	# Soften queue actions in read-only support view.
+	# Soften every operational queue action in read-only support view.
 	if read_only:
 		for row in queue:
-			if row.get("action") == "add_to_plan":
+			if row.get("action") in ("add_to_plan", "confirm_funding", "continue_item"):
 				row["action"] = "view"
 				row["action_label"] = "View"
 

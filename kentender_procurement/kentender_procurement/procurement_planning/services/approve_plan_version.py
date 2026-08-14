@@ -27,6 +27,7 @@ from kentender_procurement.procurement_planning.services._invariants import (
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	APPROVE_PLAN_ROLES,
+	actor_planning_roles,
 	assert_can_approve_plan,
 	assert_planning_scope,
 )
@@ -209,7 +210,7 @@ def approve_plan_version(
 
 
 def _primary_planning_role(user: str) -> str:
-	roles = set(frappe.get_roles(user))
+	roles = actor_planning_roles(user)
 	for role in (
 		"Designated Approver",
 		"Accounting Officer",

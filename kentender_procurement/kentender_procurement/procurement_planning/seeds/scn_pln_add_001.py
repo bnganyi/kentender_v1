@@ -61,7 +61,13 @@ def setup(*, force: bool = True) -> dict[str, Any]:
 
 
 def _approve_returned_demand_for_scn() -> dict[str, Any]:
-	"""Correct DMD-MOH-2027-019 to 80M Planning Ready — no reservation."""
+	"""Demo §7.6 — Anne corrects 019 and James HoD Support → Planning Ready, no Demand RSV."""
+	from kentender_procurement.demands.services.demand_lifecycle import (
+		create_or_update_demand,
+		record_business_decision,
+		submit_demand,
+	)
+
 	demand_name = frappe.db.get_value("Demand", {"demand_code": C.DEMAND_CODE_RETURNED}, "name")
 	if not demand_name:
 		raise frappe.ValidationError(f"Missing {C.DEMAND_CODE_RETURNED}")
@@ -77,30 +83,33 @@ def _approve_returned_demand_for_scn() -> dict[str, Any]:
 	if not budget_line:
 		raise frappe.ValidationError(f"Missing Budget Line {C.BL_HWD_2027}")
 
-	for di in frappe.get_all("Demand Item", filters={"demand": demand_name}, pluck="name"):
-		frappe.db.set_value(
-			"Demand Item",
-			di,
-			{
-				"confirmed_estimate": CORRECTED_AMOUNT,
-				"requester_estimate": CORRECTED_AMOUNT,
-			},
-			update_modified=False,
-		)
-
-	frappe.db.set_value(
-		"Demand",
-		demand_name,
+	item_rows = frappe.get_all(
+		"Demand Item",
+		filters={"demand": demand_name},
+		fields=["description", "quantity", "uom"],
+	)
+	items = [
 		{
-			"status": "Approved",
-			"current_stage": "Complete",
-			"confirmed_estimate": CORRECTED_AMOUNT,
+			"description": r.description,
+			"quantity": r.quantity,
+			"uom": r.uom,
 			"requester_estimate": CORRECTED_AMOUNT,
-			"planning_ready": 1,
-			"planning_usage": "Not taken up",
-			"approved_at": C.FIXTURE_NOW_STR,
-		},
-		update_modified=False,
+		}
+		for r in item_rows
+	]
+	create_or_update_demand(
+		demand=demand_name,
+		values={"requester_estimate": CORRECTED_AMOUNT},
+		items=items or None,
+		user=C.USER_PUBLIC,
+	)
+	submit_demand(demand=demand_name, user=C.USER_PUBLIC)
+	record_business_decision(
+		demand=demand_name,
+		decision="Support",
+		comment="HoD support after correction to 80 million",
+		user=C.USER_BUSINESS_APPROVER,
+		release_to_planning=True,
 	)
 
 	alloc = frappe.db.get_value(
@@ -255,7 +264,7 @@ def _ensure_finance(item_022: str, plan_name: str) -> None:
 	confirmed = confirm_plan_item_funding(
 		plan_item=item_022,
 		note="SCN-PLN-ADD-001 post-Planning Finance",
-		user=C.USER_BUD_DUAL,
+		user=C.USER_BUD_OFFICER,
 	)
 	if not confirmed.get("ok"):
 		raise frappe.ValidationError(confirmed.get("errors") or confirmed)
@@ -344,7 +353,7 @@ def _ensure_approved(plan_name: str) -> None:
 		version=v2_name,
 		concurrency_token=token,
 		reason=UPDATE_REASON,
-		user=C.USER_PLAN_APPROVER,
+		user=C.USER_HOP,
 	)
 	if not approved.get("ok"):
 		raise frappe.ValidationError(approved.get("errors") or approved)

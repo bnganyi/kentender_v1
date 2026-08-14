@@ -15,6 +15,7 @@ from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_e
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
 FIXTURE_NS = C.FIXTURE_NS
+TEST_ACTIVITY_NS = "KENTENDER_MVP_V1_BUDGET_TEST_ACT"
 PE_CODE = C.PE_MOH
 PE_NAME = C.PE_MOH_NAME
 
@@ -151,7 +152,7 @@ BUDGETS = (
 		"approval_date": "2027-06-15",
 		"approval_evidence": "/private/files/moh-bud-2027-approval.pdf",
 		"external_approved_total": 560_000_000,
-		"attention_note": "Actual expenditure is stale on 1 line",
+		"attention_note": "",
 		"readiness_issue_count": 0,
 		"strategy_pvc_treated": 4,
 		"strategy_pvc_applicable": 4,
@@ -166,10 +167,9 @@ BUDGETS = (
 				"generated_reference": C.BL_DHI_2027,
 				"title": "Digital clinical systems infrastructure",
 				"approved_amount": 480_000_000,
-				"amount_reserved": 145_000_000,
-				"amount_committed": 310_000_000,
-				"amount_actual": 180_000_000,
-				"actual_as_at_stale": True,
+				"amount_reserved": 0,
+				"amount_committed": 0,
+				"amount_actual": 0,
 				"classification": "Capital expenditure",
 				"external_financial_line_reference": "HLTH-INF-2027-004",
 				"organisational_owner": C.DIR_DHP_NAME,
@@ -187,39 +187,6 @@ BUDGETS = (
 				),
 				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
-				"funding_activity": {
-					"reservation": {
-						"generated_reference": C.RSV_CODE,
-						"demand_code": C.DEMAND_CODE,
-						"demand_title": "National digital health infrastructure upgrade",
-						"original_amount": 455_000_000,
-						"remaining_reserved": 145_000_000,
-						"status": "Partially converted",
-						"event_date": "2027-09-12",
-						"plan_item_code": C.PLAN_ITEM_CODE,
-						"current_downstream_reference": C.TENDER_CODE,
-						"idempotency_key": f"{C.FIXTURE_NS}:{C.RSV_CODE}",
-					},
-					"commitment": {
-						"generated_reference": C.COM_CODE,
-						"contract_code": C.CONTRACT_CODE,
-						"contract_title": "Digital health infrastructure implementation contract",
-						"original_amount": 310_000_000,
-						"current_amount": 310_000_000,
-						"actual_expenditure": 180_000_000,
-						"status": "Active",
-						"event_date": "2027-10-28",
-					},
-					"expenditure": {
-						"generated_reference": C.EXP_CODE,
-						"source_system": "Finance system",
-						"source_reference": "FIN-SNAP-MOH-2027-11",
-						"contract_code": C.CONTRACT_CODE,
-						"amount": 180_000_000,
-						"reconciliation_status": "Stale",
-						"source_as_at_offset_days": -3,
-					},
-				},
 			},
 			{
 				"generated_reference": C.BL_HWD_2027,
@@ -823,15 +790,17 @@ def _seed_budget_revision(budget_name: str, rev_spec: dict | None) -> None:
 
 def _clear_fixture_activity(budget_name: str) -> None:
 	"""Delete fixture activity rows for a budget (snapshots → commitments → reservations)."""
+	namespaces = (FIXTURE_NS, TEST_ACTIVITY_NS)
 	for doctype in ("Expenditure Snapshot", "Procurement Commitment", "Funding Reservation"):
 		if not frappe.db.exists("DocType", doctype):
 			continue
-		for name in frappe.get_all(
-			doctype,
-			filters={"budget": budget_name, "fixture_namespace": FIXTURE_NS},
-			pluck="name",
-		):
-			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+		for ns in namespaces:
+			for name in frappe.get_all(
+				doctype,
+				filters={"budget": budget_name, "fixture_namespace": ns},
+				pluck="name",
+			):
+				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 
 
 def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None) -> None:
@@ -841,6 +810,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 	if not frappe.db.exists("DocType", "Funding Reservation"):
 		return
 
+	ns = activity.get("fixture_namespace") or FIXTURE_NS
 	rsv_name = None
 	rsv = activity.get("reservation")
 	if rsv:
@@ -860,7 +830,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 				"plan_item_code": rsv.get("plan_item_code") or "",
 				"current_downstream_reference": rsv.get("current_downstream_reference") or "",
 				"idempotency_key": rsv.get("idempotency_key") or "",
-				"fixture_namespace": FIXTURE_NS,
+				"fixture_namespace": ns,
 			}
 		)
 		rsv_doc.insert(ignore_permissions=True)
@@ -884,7 +854,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 				"currency": "KES",
 				"status": com["status"],
 				"event_date": com["event_date"],
-				"fixture_namespace": FIXTURE_NS,
+				"fixture_namespace": ns,
 			}
 		)
 		com_doc.insert(ignore_permissions=True)
@@ -909,7 +879,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 				"contract_code": exp.get("contract_code") or "",
 				"source_as_at": source_as_at,
 				"reconciliation_status": exp.get("reconciliation_status") or "Matched",
-				"fixture_namespace": FIXTURE_NS,
+				"fixture_namespace": ns,
 			}
 		).insert(ignore_permissions=True)
 
@@ -938,12 +908,13 @@ def _clear_fixture_audit(budget_name: str) -> None:
 		return
 	frappe.flags.allow_budget_audit_purge = True
 	try:
-		for name in frappe.get_all(
-			"Budget Audit Event",
-			filters={"budget": budget_name, "fixture_namespace": FIXTURE_NS},
-			pluck="name",
-		):
-			frappe.delete_doc("Budget Audit Event", name, force=1, ignore_permissions=True)
+		for ns in (FIXTURE_NS, TEST_ACTIVITY_NS):
+			for name in frappe.get_all(
+				"Budget Audit Event",
+				filters={"budget": budget_name, "fixture_namespace": ns},
+				pluck="name",
+			):
+				frappe.delete_doc("Budget Audit Event", name, force=1, ignore_permissions=True)
 	finally:
 		frappe.flags.allow_budget_audit_purge = False
 
@@ -984,46 +955,6 @@ def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
 			"after_summary": "Active",
 			"change_summary": "Status: Submitted → Active",
 			"source_reference": "MOH-FIN-BUD-2027-01",
-		},
-		{
-			"event_type": "Expenditure snapshot recorded",
-			"event_at": "2027-11-05 08:00:00",
-			"actor": "Finance system",
-			"actor_kind": "integration",
-			"record_code": "EXP-MOH-2027-005-01",
-			"record_doctype": "Expenditure Snapshot",
-			"change_summary": f"Actual: {format_kes_full(180_000_000)} (Stale)",
-			"source_reference": "FIN-SNAP-MOH-2027-11",
-		},
-		{
-			"event_type": "Contract commitment recorded",
-			"event_at": "2027-10-28 10:00:00",
-			"actor": "System",
-			"actor_kind": "system",
-			"record_code": "COM-MOH-2027-005",
-			"record_doctype": "Procurement Commitment",
-			"change_summary": f"Commitment: {format_kes_full(310_000_000)}",
-			"source_reference": "CTR-MOH-2027-005",
-		},
-		{
-			"event_type": "Reservation partially converted",
-			"event_at": "2027-10-28 09:55:00",
-			"actor": "System",
-			"actor_kind": "system",
-			"record_code": "RSV-MOH-0001",
-			"record_doctype": "Funding Reservation",
-			"change_summary": f"Remaining reserved: {format_kes_full(145_000_000)}",
-			"source_reference": "TND-MOH-2027-008",
-		},
-		{
-			"event_type": "Funding reserved",
-			"event_at": "2027-09-12 14:30:00",
-			"actor": "System",
-			"actor_kind": "system",
-			"record_code": "RSV-MOH-0001",
-			"record_doctype": "Funding Reservation",
-			"change_summary": f"Reserved: {format_kes_full(455_000_000)}",
-			"source_reference": "DMD-MOH-2027-014",
 		},
 		{
 			"event_type": "Budget submitted",

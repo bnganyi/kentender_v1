@@ -161,6 +161,11 @@ def submit_plan_for_review(
 	).insert(ignore_permissions=True)
 
 	frappe.db.commit()
+	from kentender_procurement.procurement_planning.services.planning_notification_service import (
+		notify_plan_submitted,
+	)
+
+	notify_plan_submitted(plan=plan_doc, version_name=version_name, actor=actor)
 	return {
 		"ok": True,
 		"plan": plan_name,

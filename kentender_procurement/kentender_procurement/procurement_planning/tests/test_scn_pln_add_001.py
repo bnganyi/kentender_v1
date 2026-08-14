@@ -80,6 +80,12 @@ class TestScnPlnAdd001(IntegrationTestCase):
 		self.assertFalse(
 			frappe.db.exists("Funding Reservation", {"generated_reference": C.RSV_CODE_SCN})
 		)
+		self.assertTrue(
+			frappe.db.exists(
+				"Demand Decision",
+				{"demand": demand, "decision": "Support", "actor": C.USER_BUSINESS_APPROVER},
+			)
+		)
 
 	def test_draft_535m_v1_and_tender_remain_operational(self) -> None:
 		result = scn.run(reset_first=False, force=True, stop_before_finance=True)

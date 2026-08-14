@@ -43,7 +43,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	),
 	(
 		C.USER_PUBLIC,
-		"MOH Public Health Officer",
+		"Anne Achieng",
 		("Strategy Officer", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
@@ -92,7 +92,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_VIEWER,
 		"Kisumu Management Viewer",
-		("Strategy Viewer", "Budget Viewer"),
+		("Strategy Viewer", "Budget Viewer", ROLE_VIEWER),
 		C.PE_CGKIS,
 		None,
 		0,
@@ -122,6 +122,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
+		# Extra SoD persona — not Demo v2.7 §4.6 (Anne / James / Grace / Peter).
 		C.USER_ACCOUNTING_OFFICER,
 		"Josephine Mburu",
 		(ROLE_ACCOUNTING_OFFICER,),
@@ -152,6 +153,30 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		C.PE_CGKIS,
 		C.OU_CGK_HEALTH,
 		1,
+	),
+	(
+		C.USER_BUSINESS_APPROVER,
+		"James Mwangi",
+		(ROLE_BUSINESS,),
+		C.PE_MOH,
+		C.OU_DIR_HRMD,
+		1,
+	),
+	(
+		C.USER_HOP,
+		"Grace Wanjiku",
+		(ROLE_DESIGNATED_APPROVER,),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_BUD_OFFICER,
+		"Peter Otieno",
+		("Budget Officer", ROLE_VIEWER),
+		C.PE_MOH,
+		None,
+		0,
 	),
 )
 

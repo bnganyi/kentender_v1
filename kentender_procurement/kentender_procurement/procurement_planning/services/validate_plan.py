@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 import frappe
@@ -17,6 +19,7 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VALIDATION_NEEDS_ATTENTION,
 	VALIDATION_NOT_RUN,
 	VALIDATION_READY,
+	VALIDATION_STALE,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
@@ -32,6 +35,126 @@ _MILESTONE_FIELDS = (
 	("ms_contract_signature", "Contract signature"),
 	("ms_delivery_completion", "Delivery and completion"),
 )
+
+_FP_ISSUE = "PLN_READY_FP"
+
+
+def _included_items(plan_name: str) -> list[dict[str, Any]]:
+	return frappe.get_all(
+		"Procurement Plan Item",
+		filters={
+			"plan": plan_name,
+			"baseline_state": ["in", [ITEM_PROPOSED, ITEM_ACTIVE]],
+		},
+		fields=["name", "plan_item_code", "draft_item_version", "current_approved_item_version"],
+	)
+
+
+def _iv_for_focus(it: dict[str, Any], focus: str) -> str | None:
+	name = it.get("name") if isinstance(it, dict) else it.name
+	iv_name = None
+	if focus:
+		iv_name = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_item": name, "plan_version": focus},
+			"name",
+		)
+	draft = it.get("draft_item_version") if isinstance(it, dict) else it.draft_item_version
+	approved = (
+		it.get("current_approved_item_version")
+		if isinstance(it, dict)
+		else it.current_approved_item_version
+	)
+	return iv_name or draft or approved
+
+
+def validation_input_fingerprint(*, plan: str, version: str) -> str:
+	rows: list[dict[str, Any]] = []
+	for it in _included_items(plan):
+		iv_name = _iv_for_focus(it, version)
+		if not iv_name:
+			continue
+		iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+		if int(getattr(iv, "proposed_removal", 0) or 0):
+			continue
+		payload = {
+			"item": it.get("name") if isinstance(it, dict) else it.name,
+			"estimate": flt_str(iv.confirmed_estimate),
+			"method": cstr(iv.procurement_method or ""),
+			"arrangement": cstr(iv.arrangement or ""),
+			"lotting": cstr(iv.lotting_decision or ""),
+			"lot_basis": cstr(iv.lot_basis or ""),
+			"lot_count": cstr(iv.expected_lot_count or ""),
+		}
+		for field, _label in _MILESTONE_FIELDS:
+			payload[field] = cstr(getattr(iv, field, None) or "")
+		rows.append(payload)
+	blob = json.dumps(rows, sort_keys=True, separators=(",", ":"))
+	return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def flt_str(value: Any) -> str:
+	from frappe.utils import flt
+
+	return f"{flt(value):.2f}"
+
+
+def _store_fingerprint(version: str, digest: str) -> None:
+	frappe.cache().set_value(f"pln_val_fp:{version}", digest)
+	for name in frappe.get_all(
+		"Plan Validation Result",
+		filters={"plan_version": version, "issue_code": _FP_ISSUE},
+		pluck="name",
+	):
+		frappe.delete_doc("Plan Validation Result", name, force=1, ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "Plan Validation Result",
+			"plan_version": version,
+			"result_status": VALIDATION_READY,
+			"issue_code": _FP_ISSUE,
+			"business_message": digest,
+			"severity": "Info",
+			"rule_set_version": "mvp1",
+		}
+	).insert(ignore_permissions=True)
+
+
+def _stored_fingerprint(version: str) -> str:
+	cached = cstr(frappe.cache().get_value(f"pln_val_fp:{version}") or "")
+	if cached:
+		return cached
+	return cstr(
+		frappe.db.get_value(
+			"Plan Validation Result",
+			{"plan_version": version, "issue_code": _FP_ISSUE},
+			"business_message",
+		)
+		or ""
+	)
+
+
+def effective_validation_status(
+	*,
+	plan: str,
+	version: str,
+	stored: str | None = None,
+) -> str:
+	status = cstr(
+		stored
+		if stored is not None
+		else frappe.db.get_value("Procurement Plan Version", version, "validation_projection")
+		or VALIDATION_NOT_RUN
+	)
+	if status != VALIDATION_READY:
+		return status or VALIDATION_NOT_RUN
+	prior = _stored_fingerprint(version)
+	if not prior:
+		return VALIDATION_READY
+	current = validation_input_fingerprint(plan=plan, version=version)
+	if current != prior:
+		return VALIDATION_STALE
+	return VALIDATION_READY
 
 
 def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
@@ -189,6 +312,16 @@ def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			plan_status,
 			update_modified=False,
 		)
+		if plan_status == VALIDATION_READY:
+			_store_fingerprint(focus, validation_input_fingerprint(plan=plan_name, version=focus))
+		else:
+			frappe.cache().delete_value(f"pln_val_fp:{focus}")
+			for name in frappe.get_all(
+				"Plan Validation Result",
+				filters={"plan_version": focus, "issue_code": _FP_ISSUE},
+				pluck="name",
+			):
+				frappe.delete_doc("Plan Validation Result", name, force=1, ignore_permissions=True)
 
 	return {
 		"ok": True,

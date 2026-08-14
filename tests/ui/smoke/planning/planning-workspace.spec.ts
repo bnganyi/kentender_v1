@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import {
 	loginAsMohPlanningOfficer,
+	loginAsMohPlanningViewer,
 	loginAsPlanningSystemAdminNoScope,
 	preparePlanningGate03,
 } from "../../helpers/planningRoles";
@@ -44,6 +45,12 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText(/Plan Items/i);
 		await expect(page.getByTestId("kt-pln-ui01-queue")).toBeVisible();
 		await expect(page.locator('[data-kt-pln-filter="work_type"]')).toBeVisible();
+		const workFilter = page.getByTestId("kt-pln-ui01-work-filter");
+		await expect(workFilter).toContainText("All work");
+		await expect(workFilter).toContainText("Approved Demands");
+		await expect(workFilter).toContainText("Plan Items returned by Finance");
+		await expect(workFilter).toContainText("Plan Items needing attention");
+		await expect(workFilter).toContainText("Awaiting Finance confirmation");
 		await expect(page.getByTestId("kt-pln-ui01-work-search")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-open-plan")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui01-open-plan")).toContainText(/Open current plan/i);
@@ -99,5 +106,21 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		} else {
 			await expect(page.getByTestId("kt-pln-ui01-open-plan")).toBeVisible();
 		}
+	});
+
+	test("Viewer queue has no Confirm funding or Review return", async ({ page }) => {
+		await loginAsAdministrator(page);
+		await preparePlanningGate03(page);
+		await page.context().clearCookies();
+		await loginAsMohPlanningViewer(page);
+		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.locator('[data-kt-pln-queue-action="confirm_funding"]')).toHaveCount(0);
+		await expect(page.locator('[data-kt-pln-queue-action="continue_item"]')).toHaveCount(0);
+		const queue = page.getByTestId("kt-pln-ui01-queue");
+		await expect(queue).not.toContainText("Confirm funding");
+		await expect(queue).not.toContainText("Review return");
 	});
 });

@@ -108,6 +108,22 @@ class TestPlanningRegisterApi(IntegrationTestCase):
 		self.assertIn("title", result["errors"])
 		self.assertIn("coordinating_org_unit", result["errors"])
 
+	def test_create_rejects_non_kes_currency(self) -> None:
+		planner = ensure_moh_planner()
+		frappe.set_user(planner)
+		try:
+			result = create_procurement_plan(
+				procuring_entity=PE_MOH,
+				financial_year="2199/00",
+				title="USD blocked",
+				currency="USD",
+				coordinating_org_unit=OU_MOH,
+			)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertFalse(result["ok"])
+		self.assertIn("currency", result["errors"])
+
 	def test_create_happy_path_redirects_to_builder(self) -> None:
 		planner = ensure_moh_planner()
 		fy = f"212{frappe.db.count('Procurement Plan') % 9}/90"

@@ -43,8 +43,8 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 		active = by_code["MOH-BUD-2027-2028"]
 		self.assertEqual(active["status"], "Active")
 		self.assertEqual(active["approved_display"], "KES 560M")
-		self.assertEqual(active["available_display"], "KES 105M")
-		self.assertIn("stale", (active.get("attention") or "").lower())
+		self.assertEqual(active["available_display"], "KES 560M")
+		self.assertNotIn("stale", (active.get("attention") or "").lower())
 		self.assertEqual(active["action"], "open")
 
 		submitted = by_code["MOH-BUD-0002"]
@@ -53,7 +53,11 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 		self.assertEqual(submitted["available_display"], "Not active")
 		self.assertEqual(submitted["action"], "review")
 
-		closed = by_code["MOH-BUD-2026-2027"]
+		closed_rows = list_budgets(
+			procuring_entity=self.seed["procuring_entity"],
+			search="MOH-BUD-2026-2027",
+		)
+		closed = {r["code"]: r for r in closed_rows}["MOH-BUD-2026-2027"]
 		self.assertEqual(closed["status"], "Closed")
 		self.assertEqual(closed["action"], "view")
 		# Stitch Closed Available is KES 0 (not "Not active" — that is for Submitted).

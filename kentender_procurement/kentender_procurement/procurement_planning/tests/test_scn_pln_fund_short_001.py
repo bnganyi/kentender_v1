@@ -91,6 +91,15 @@ class TestScnPlnFundShort001(IntegrationTestCase):
 			places=2,
 		)
 
+	def test_validate_include_scn_fund_short(self) -> None:
+		scn.run(reset_first=False, force=True)
+		from kentender_core.seeds.kentender_mvp_v1.orchestrator import (
+			validate_kentender_mvp_v1,
+		)
+
+		report = validate_kentender_mvp_v1(include_scn_fund_short=True)
+		self.assertTrue(report.get("ok"), report.get("summary"))
+
 	def test_reset_restores_hwd_availability(self) -> None:
 		scn.run(reset_first=False, force=True)
 		reset = scn.reset(force=True)

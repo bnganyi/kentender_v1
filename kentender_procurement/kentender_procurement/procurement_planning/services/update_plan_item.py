@@ -178,10 +178,18 @@ def update_plan_item(
 	frappe.db.commit()
 
 	from kentender_procurement.procurement_planning.services.validate_plan import (
-		validate_plan,
+		effective_validation_status,
 	)
 
-	validation = validate_plan(plan=plan.name, user=actor)
+	val_status = effective_validation_status(plan=plan.name, version=draft)
+	validation = {
+		"ok": True,
+		"plan": plan.name,
+		"status": val_status,
+		"issue_count": 0,
+		"issues": [],
+		"user_may_set_ready": False,
+	}
 	# Recompute against saved state so callers/UI stay aligned with persistence.
 	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=False)
 	want_finance = bool(cint(request_finance))

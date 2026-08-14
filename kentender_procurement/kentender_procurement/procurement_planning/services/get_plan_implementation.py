@@ -219,41 +219,36 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 			taken_up += 1
 			takeup_label = TAKEUP_ACTIVE
 			tender_ref = cstr((handoff or {}).get("tender_reference") or "")
-			progress_label = "—"
 		else:
 			takeup_label = TAKEUP_NOT_TAKEN
 			tender_ref = ""
-			progress_label = "—"
 		milestone = ""
 		if iv.ms_delivery_completion:
 			milestone = f"Completion by {formatdate(iv.ms_delivery_completion, 'dd MMM yyyy')}"
 		can_propose = can_add_item and not has_handoff
-		items_out.append(
-			{
-				"plan_item": it.name,
-				"plan_item_code": it.plan_item_code,
-				"title": cstr(iv.requirement_title or it.plan_item_code),
-				"owner_org_unit": owner,
-				"owner_org_unit_label": _ou_label(owner),
-				"amount": amount,
-				"amount_display": _money(amount, currency),
-				"takeup_label": takeup_label,
-				"tender_reference": tender_ref,
-				"milestone_label": milestone or "—",
-				"progress_label": progress_label,
-				"variance_label": "—",
-				"finance_status": effective_finance_status(iv),
-				"can_propose_removal": can_propose,
-				"removal_variant": "active" if can_propose else None,
-				"sources_label": _sources_label(it.name),
-				"finance_effect_copy": (
-					"Confirmed funding remains on the Approved Version until the update is approved."
-					if can_propose
-					else ""
-				),
-				"view_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
-			}
-		)
+		item_row = {
+			"plan_item": it.name,
+			"plan_item_code": it.plan_item_code,
+			"title": cstr(iv.requirement_title or it.plan_item_code),
+			"owner_org_unit": owner,
+			"owner_org_unit_label": _ou_label(owner),
+			"amount": amount,
+			"amount_display": _money(amount, currency),
+			"takeup_label": takeup_label,
+			"tender_reference": tender_ref,
+			"milestone_label": milestone or None,
+			"finance_status": effective_finance_status(iv),
+			"can_propose_removal": can_propose,
+			"removal_variant": "active" if can_propose else None,
+			"sources_label": _sources_label(it.name),
+			"finance_effect_copy": (
+				"Confirmed funding remains on the Approved Version until the update is approved."
+				if can_propose
+				else ""
+			),
+			"view_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
+		}
+		items_out.append(item_row)
 
 	item_count = len(items_out)
 	takeup_label = f"{taken_up} of {item_count}" if item_count else "0 of 0"
@@ -303,7 +298,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		"item_count": item_count,
 		"takeup_count": taken_up,
 		"takeup_label": takeup_label,
-		"on_schedule_label": "—",
+		"has_downstream_actuals": False,
 		"publication": publication,
 		"publication_status_label": publication["status"],
 		"as_at_display": f"As at: {as_at}",

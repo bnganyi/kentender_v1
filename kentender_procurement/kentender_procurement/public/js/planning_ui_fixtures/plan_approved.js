@@ -62,9 +62,9 @@ kentender_procurement.ui_fixtures.planning_plan_approved = function () {
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Tender take-up</span>
 <span class="font-data-lg text-data-lg text-on-surface" data-kt-pln-ui09-takeup>0 of 0</span>
 </div>
-<div class="bg-surface border border-subtle rounded p-4 flex flex-col justify-center">
+<div class="bg-surface border border-subtle rounded p-4 flex flex-col justify-center hidden" data-kt-pln-ui09-on-schedule-kpi hidden>
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">On schedule</span>
-<span class="font-data-lg text-data-lg text-on-surface" data-kt-pln-ui09-on-schedule>—</span>
+<span class="font-data-lg text-data-lg text-on-surface" data-kt-pln-ui09-on-schedule></span>
 </div>
 <div class="bg-surface border border-subtle rounded p-4 flex flex-col justify-center">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Publication</span>
@@ -116,8 +116,8 @@ kentender_procurement.ui_fixtures.planning_plan_approved = function () {
 <th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap text-right">Planned value</th>
 <th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">Tender take-up</th>
 <th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">Planned milestone</th>
-<th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">Actual progress</th>
-<th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap text-center">Variance</th>
+<th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap hidden" data-kt-pln-ui09-progress-col hidden>Actual progress</th>
+<th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap text-center hidden" data-kt-pln-ui09-variance-col hidden>Variance</th>
 <th class="px-5 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap text-right">Action</th>
 </tr>
 </thead>

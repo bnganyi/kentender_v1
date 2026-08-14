@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""KENTENDER_MVP_V1 Planning stage — Contract v2.4 §7.4 / §7.6 base state."""
+"""KENTENDER_MVP_V1 Planning stage — Demo v2.7 §7.4 / §7.6 base state."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from frappe.utils import cstr, flt
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_EFFECTIVE,
-	DOCTYPE_HANDOFF,
+	FINANCE_AWAITING,
 	FINANCE_CONFIRMED,
 	ITEM_ACTIVE,
 	PLAN_OPEN,
@@ -138,6 +138,36 @@ def clear_planning_fixture_rows() -> dict[str, int]:
 	return deleted
 
 
+def _purge_orphan_canonical_rsv(*, keep: str = "") -> None:
+	"""Remove leftover Budget-era RSV-MOH-0001 so Finance can create the live identity."""
+	keep = cstr(keep).strip()
+	for name in frappe.get_all(
+		"Funding Reservation",
+		filters={"generated_reference": C.RSV_CODE},
+		pluck="name",
+	):
+		if keep and name == keep:
+			continue
+		coms = []
+		if frappe.db.exists("DocType", "Procurement Commitment"):
+			coms = frappe.get_all(
+				"Procurement Commitment", {"reservation": name}, pluck="name"
+			)
+		if frappe.db.exists("DocType", "Expenditure Snapshot"):
+			for com in coms:
+				for exp in frappe.get_all(
+					"Expenditure Snapshot", {"commitment": com}, pluck="name"
+				):
+					frappe.delete_doc(
+						"Expenditure Snapshot", exp, force=1, ignore_permissions=True
+					)
+		for com in coms:
+			frappe.delete_doc(
+				"Procurement Commitment", com, force=1, ignore_permissions=True
+			)
+		frappe.delete_doc("Funding Reservation", name, force=1, ignore_permissions=True)
+
+
 def _ensure_v1_finance_and_handoff(
 	*,
 	plan_name: str,
@@ -147,44 +177,59 @@ def _ensure_v1_finance_and_handoff(
 	demand: str,
 ) -> None:
 	"""Post-Planning Finance on V1 + immutable TND-MOH-2027-008 handoff (no TM2 Tender)."""
-	rsv_name = frappe.db.get_value(
-		"Funding Reservation", {"generated_reference": C.RSV_CODE}, "name"
+	from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
+		create_planning_handoff_snapshot,
 	)
-	line_id = ""
-	if rsv_name:
-		line_id = cstr(frappe.db.get_value("Funding Reservation", rsv_name, "budget_line") or "")
-	if not line_id:
-		line_id = cstr(
-			frappe.db.get_value("Budget Line", {"generated_reference": C.BL_DHI_2027}, "name")
-			or ""
+	from kentender_procurement.procurement_planning.services.plan_item_finance import (
+		confirm_plan_item_funding,
+		effective_finance_status,
+	)
+
+	owned = cstr(
+		frappe.db.get_value("Procurement Plan Item Version", iv_name, "finance_reservation") or ""
+	)
+	_purge_orphan_canonical_rsv(keep=owned)
+
+	status = effective_finance_status(frappe.get_doc("Procurement Plan Item Version", iv_name))
+	if status != FINANCE_CONFIRMED:
+		frappe.db.set_value(
+			"Procurement Plan Item Version",
+			iv_name,
+			{"finance_status": FINANCE_AWAITING},
+			update_modified=False,
 		)
-	frappe.db.set_value(
-		"Procurement Plan Item Version",
-		iv_name,
-		{
-			"finance_status": FINANCE_CONFIRMED,
-			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
-			"finance_snapshot_budget_line": line_id or None,
-			"finance_reservation": rsv_name or C.RSV_CODE,
-			"reservation_reference": C.RSV_CODE,
-		},
-		update_modified=False,
+		confirmed = confirm_plan_item_funding(plan_item=item_name, user=C.USER_BUD_OFFICER)
+		if not confirmed.get("ok"):
+			raise frappe.ValidationError(f"Planning seed Finance confirm failed: {confirmed}")
+		code = cstr(confirmed.get("reservation") or "")
+		if code and code != C.RSV_CODE:
+			# Prefer the canonical business code when reserve_funding returned a name.
+			gen = frappe.db.get_value(
+				"Funding Reservation",
+				{"generated_reference": C.RSV_CODE},
+				"generated_reference",
+			)
+			if not gen:
+				rsv_name = frappe.db.get_value(
+					"Funding Reservation",
+					{"name": code},
+					"name",
+				)
+				if rsv_name:
+					frappe.db.set_value(
+						"Funding Reservation",
+						rsv_name,
+						{"generated_reference": C.RSV_CODE},
+						update_modified=False,
+					)
+
+	handoff = create_planning_handoff_snapshot(
+		plan_item=item_name,
+		tender_reference=C.TENDER_CODE,
+		user=C.USER_TENDER_INITIATOR,
 	)
-	if not frappe.db.exists(DOCTYPE_HANDOFF, {"plan_item": item_name}):
-		frappe.get_doc(
-			{
-				"doctype": DOCTYPE_HANDOFF,
-				"plan": plan_name,
-				"plan_version": version_name,
-				"plan_item": item_name,
-				"handoff_code": f"HO-{C.PLAN_ITEM_CODE}-CANON",
-				"tender_reference": C.TENDER_CODE,
-				"snapshot_json": "{}",
-				"snapshot_hash": "KENTENDER_MVP_V1",
-				"created_by_user": C.USER_TENDER_INITIATOR,
-				"handed_off_at": C.FIXTURE_NOW_STR,
-			}
-		).insert(ignore_permissions=True)
+	if not handoff.get("ok"):
+		raise frappe.ValidationError(f"Planning seed handoff failed: {handoff}")
 
 
 def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
@@ -319,8 +364,6 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"ms_award_approval": "2027-12-15",
 			"ms_contract_signature": "2028-01-15",
 			"ms_delivery_completion": "2028-03-31",
-			"reservation_reference": C.RSV_CODE,
-			"finance_status": FINANCE_CONFIRMED,
 			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
 			"validation_projection": VALIDATION_READY,
 		},
@@ -377,7 +420,6 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"allocated_amount": amt,
 				"currency": di.currency or "KES",
 				"allocated_quantity": flt(di.confirmed_quantity or di.quantity),
-				"reservation_reference": C.RSV_CODE,
 				"proposed_in_version": version_name,
 				"effective_from_version": version_name,
 				"effective_at": approved_at,

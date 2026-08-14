@@ -22,26 +22,26 @@ class TestKentenderMvpV1DemandsSeed(IntegrationTestCase):
 		frappe.set_user("Administrator")
 
 	def test_principal_approved_demand_is_canonical_and_idempotent(self) -> None:
-		reservation = frappe.db.get_value(
-			"Funding Reservation",
-			{"generated_reference": C.RSV_CODE},
-			"name",
+		self.assertTrue(
+			frappe.db.get_value(
+				"Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
+			),
+			"Budget seed must provide MOH-BL-DHI-2027",
 		)
-		self.assertTrue(reservation, "Budget seed must create RSV-MOH-0001 first")
 
 		first = upsert_principal_approved_demand(commit=False)
 		first_counts = self._related_counts(first["demand"])
 		second = upsert_principal_approved_demand(commit=False)
 
 		self.assertEqual(second["demand"], first["demand"])
-		self.assertEqual(second["reservation"], reservation)
+		self.assertIsNone(second["reservation"])
 		self.assertEqual(self._related_counts(second["demand"]), first_counts)
 		self.assertEqual(
 			frappe.db.count(
 				"Funding Reservation",
-				{"generated_reference": C.RSV_CODE},
+				{"demand_code": C.DEMAND_CODE, "fixture_namespace": C.FIXTURE_NS},
 			),
-			1,
+			0,
 		)
 
 		demand = frappe.get_doc("Demand", first["demand"])
@@ -54,6 +54,7 @@ class TestKentenderMvpV1DemandsSeed(IntegrationTestCase):
 		self.assertEqual(demand.planning_ready, 1)
 		self.assertEqual(demand.planning_usage, "Not taken up")
 		self.assertEqual(float(demand.confirmed_estimate), 455_000_000)
+		self.assertEqual(str(demand.required_by_date), "2028-03-31")
 
 		items = frappe.get_all(
 			"Demand Item",
@@ -107,12 +108,12 @@ class TestKentenderMvpV1DemandsSeed(IntegrationTestCase):
 			C.BL_DHI_2027,
 		)
 		self.assertEqual(float(allocation.allocation_amount), 455_000_000)
-		self.assertEqual(allocation.bo_confirmation_status, "Confirmed")
-		self.assertEqual(allocation.funding_reservation, reservation)
+		self.assertNotEqual(allocation.bo_confirmation_status, "Confirmed")
+		self.assertFalse(allocation.funding_reservation)
 
 		snapshot = json.loads(demand.approved_baseline_snapshot)
 		self.assertEqual(snapshot["demand_code"], C.DEMAND_CODE)
-		self.assertEqual(snapshot["reservation"], C.RSV_CODE)
+		self.assertFalse(snapshot.get("reservation"))
 
 	@staticmethod
 	def _related_counts(demand: str) -> dict[str, int]:

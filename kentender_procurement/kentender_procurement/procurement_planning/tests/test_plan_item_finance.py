@@ -128,6 +128,72 @@ class TestPlanItemFinance(IntegrationTestCase):
 		self.assertTrue(bo_row.get("can_open_finance_task"))
 		self.assertFalse(bo_builder.get("can_add_demand"))
 
+	def test_finance_request_emits_pe_scoped_notification(self) -> None:
+		"""PLN-GAP-FR-006 — Budget Officer on the PE gets a Notification Log; Kisumu does not."""
+		from kentender_budget.services.budget_permissions import ROLE_OFFICER, ensure_budget_roles
+		from kentender_procurement.procurement_planning.services.planning_notification_service import (
+			EVENT_FINANCE_REQUESTED,
+		)
+		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+			PE_CGK,
+			ensure_org,
+			ensure_user_with_roles,
+		)
+
+		ensure_org()
+		ensure_budget_roles()
+		kisumu_bo = ensure_user_with_roles(
+			"pln.wave3.kisumu.bo@test.local",
+			roles=(ROLE_OFFICER,),
+			pe=PE_CGK,
+			org_unit=None,
+			include_descendants=0,
+		)
+		ctx = self._ready_item()
+		bo = ctx["bo"]
+		before = frappe.db.count(
+			"Notification Log",
+			{"for_user": bo, "email_header": ["like", "pln-finance-request:%"]},
+		)
+		kisumu_before = frappe.db.count(
+			"Notification Log",
+			{"for_user": kisumu_bo, "email_header": ["like", "pln-finance-request:%"]},
+		)
+		first = update_plan_item(
+			plan_item=ctx["plan_item"], user=ctx["planner"], request_finance=True
+		)
+		self.assertTrue(first["ok"], first)
+		after = frappe.db.count(
+			"Notification Log",
+			{"for_user": bo, "email_header": ["like", "pln-finance-request:%"]},
+		)
+		self.assertEqual(after, before + 1)
+		self.assertEqual(
+			frappe.db.count(
+				"Notification Log",
+				{"for_user": kisumu_bo, "email_header": ["like", "pln-finance-request:%"]},
+			),
+			kisumu_before,
+		)
+		row = frappe.get_all(
+			"Notification Log",
+			filters={"for_user": bo, "email_header": ["like", "pln-finance-request:%"]},
+			fields=["email_content", "email_header"],
+			order_by="creation desc",
+			limit=1,
+		)[0]
+		self.assertIn(EVENT_FINANCE_REQUESTED, cstr(row.email_content))
+		self.assertIn("PE-MOH", cstr(row.email_content))
+		second = request_plan_item_finance(plan_item=ctx["plan_item"], user=ctx["planner"])
+		self.assertTrue(second.get("idempotent"))
+		self.assertEqual(
+			frappe.db.count(
+				"Notification Log",
+				{"for_user": bo, "email_header": ["like", "pln-finance-request:%"]},
+			),
+			after,
+		)
+
 	def test_confirm_reserves_and_retry_is_idempotent(self) -> None:
 		ctx = self._ready_item()
 		update_plan_item(plan_item=ctx["plan_item"], user=ctx["planner"], request_finance=True)

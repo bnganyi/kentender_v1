@@ -157,6 +157,29 @@ class TestPlanningWorkspaceApi(IntegrationTestCase):
 		queue_ids = {row.get("demand") for row in payload.get("work_queue") or []}
 		self.assertNotIn(foreign["demand"], queue_ids)
 
+	def test_viewer_queue_has_no_finance_task_actions(self) -> None:
+		"""PLN-GAP-PERM-002 — Viewer/Auditor get View only; no Confirm/Review return."""
+		viewer = ensure_user_with_roles(
+			"pln.gate03.queue.viewer@test.local",
+			roles=(ROLE_VIEWER,),
+			pe=PE_MOH,
+			org_unit=OU_MOH,
+			clear_scope=True,
+		)
+		payload = get_planning_workspace(procuring_entity=PE_MOH, user=viewer)
+		self.assertTrue(payload.get("read_only"))
+		for row in payload.get("work_queue") or []:
+			self.assertNotIn(row.get("action"), ("confirm_funding", "continue_item", "add_to_plan"))
+			self.assertNotIn(
+				row.get("action_label"),
+				("Confirm funding", "Review return", "Add to plan"),
+			)
+			for act in row.get("available_actions") or []:
+				self.assertNotIn(
+					act.get("action"),
+					("confirm_funding", "continue_item", "add_to_plan"),
+				)
+
 	def test_zero_scope_blocked(self) -> None:
 		email = ensure_user_with_roles(
 			"pln.gate03.zero.ws@test.local",

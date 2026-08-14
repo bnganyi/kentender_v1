@@ -9,6 +9,7 @@ from typing import Any
 
 import frappe
 from frappe import _
+from frappe.utils import cstr
 
 ROLE_CONTRIBUTOR = "Planning Contributor"
 ROLE_HOD = "Head of User Department"
@@ -72,6 +73,7 @@ REVIEW_TASK_ROLES = frozenset(
 	RECOMMEND_PLAN_ROLES | RETURN_PLAN_ROLES | APPROVE_PLAN_ROLES
 )
 CONFIRM_PLAN_FUNDING_ROLES = frozenset((ROLE_BUDGET_OFFICER,))
+HANDOFF_ROLES = frozenset((ROLE_TENDER_INITIATOR,))
 
 # USA roles that grant PE eligibility for plan create selection.
 CREATE_SCOPE_ROLES = frozenset((ROLE_PLANNER, ROLE_AUTHORITY))
@@ -87,6 +89,7 @@ CAP_PLAN_RECOMMEND = "plan.recommend"
 CAP_PLAN_RETURN = "plan.return"
 CAP_PLAN_FINANCE_CONFIRM = "plan.finance.confirm"
 CAP_PLAN_FINANCE_TASK = "plan.finance.task"
+CAP_PLAN_HANDOFF = "plan.handoff"
 
 CAPABILITY_ROLES: dict[str, frozenset[str]] = {
 	CAP_PLAN_VIEW: READ_PLAN_ROLES,
@@ -99,6 +102,7 @@ CAPABILITY_ROLES: dict[str, frozenset[str]] = {
 	CAP_PLAN_RETURN: RETURN_PLAN_ROLES,
 	CAP_PLAN_FINANCE_CONFIRM: CONFIRM_PLAN_FUNDING_ROLES,
 	CAP_PLAN_FINANCE_TASK: CONFIRM_PLAN_FUNDING_ROLES,
+	CAP_PLAN_HANDOFF: HANDOFF_ROLES,
 }
 
 ERR_PERMISSION = "PLN_PERMISSION_DENIED"
@@ -317,6 +321,126 @@ def assert_can_confirm_plan_funding(user: str | None = None) -> str:
 def assert_can_open_review_task(user: str | None = None) -> str:
 	"""Open PLN-UI-08 professional task surface (not neutral detail)."""
 	return require_capability(CAP_PLAN_REVIEW, user=user)
+
+
+def assert_can_handoff(user: str | None = None) -> str:
+	"""PLN-GAP-PERM-001 — Tender take-up requires Tender Initiator."""
+	return require_capability(CAP_PLAN_HANDOFF, user=user)
+
+
+def get_available_actions(
+	user: str | None,
+	resource: dict[str, Any] | None,
+) -> list[dict[str, str]]:
+	"""Auth pack §6.1 / §7.1 — capability projection for queues and CTAs.
+
+	Unauthorized workflow actions are omitted (never disabled-for-missing-role).
+	"""
+	from kentender_procurement.procurement_planning.mvp1_constants import (
+		FINANCE_AWAITING,
+		FINANCE_RETURNED,
+		VERSION_IN_REVIEW,
+	)
+
+	actor = (user or frappe.session.user or "").strip()
+	kind = cstr((resource or {}).get("kind")).strip()
+	view = {"code": CAP_PLAN_VIEW, "label": "View", "action": "view"}
+	if not actor or actor == "Guest":
+		return [view]
+	read_only = is_planning_read_only(actor)
+	res = resource or {}
+
+	if kind == "finance_item":
+		status = cstr(res.get("finance_status"))
+		if not read_only and status == FINANCE_AWAITING and has_finance_task_capability(actor):
+			return [
+				{
+					"code": CAP_PLAN_FINANCE_CONFIRM,
+					"label": "Confirm funding",
+					"action": "confirm_funding",
+				}
+			]
+		if (
+			not read_only
+			and status == FINANCE_RETURNED
+			and has_any_operational_role(*ADD_DEMAND_ROLES, user=actor)
+		):
+			return [
+				{
+					"code": CAP_PLAN_ITEM_EDIT,
+					"label": "Review return",
+					"action": "continue_item",
+				}
+			]
+		return [view]
+
+	if kind == "workspace_demand":
+		status = cstr(res.get("demand_status"))
+		ready = bool(res.get("planning_ready"))
+		usage = cstr(res.get("planning_usage") or "Not taken up")
+		if (
+			not read_only
+			and status == "Approved"
+			and ready
+			and usage != "Fully planned"
+			and has_any_operational_role(*ADD_DEMAND_ROLES, user=actor)
+		):
+			return [
+				{
+					"code": CAP_PLAN_ITEM_EDIT,
+					"label": "Add to plan",
+					"action": "add_to_plan",
+				}
+			]
+		if status == "Returned":
+			return [{"code": CAP_PLAN_VIEW, "label": "View return", "action": "view_return"}]
+		return [view]
+
+	if kind == "plan_version":
+		status = cstr(res.get("version_status"))
+		out: list[dict[str, str]] = []
+		if read_only or status != VERSION_IN_REVIEW:
+			return [view]
+		if has_any_operational_role(*RECOMMEND_PLAN_ROLES, user=actor):
+			out.append(
+				{
+					"code": CAP_PLAN_RECOMMEND,
+					"label": "Recommend approval",
+					"action": "recommend",
+				}
+			)
+		if has_any_operational_role(*RETURN_PLAN_ROLES, user=actor):
+			out.append(
+				{
+					"code": CAP_PLAN_RETURN,
+					"label": "Return to planner",
+					"action": "return",
+				}
+			)
+		if (
+			has_any_operational_role(*APPROVE_PLAN_ROLES, user=actor)
+			and res.get("recommended")
+			and res.get("issues_ready")
+			and res.get("finance_complete")
+		):
+			out.append(
+				{"code": CAP_PLAN_APPROVE, "label": "Approve plan", "action": "approve"}
+			)
+		return out or [view]
+
+	return [view]
+
+
+def primary_queue_action(
+	user: str | None,
+	resource: dict[str, Any] | None,
+) -> tuple[str, str]:
+	"""First available action code/label for a workspace row."""
+	actions = get_available_actions(user, resource)
+	if not actions:
+		return "view", "View"
+	first = actions[0]
+	return cstr(first.get("action") or "view"), cstr(first.get("label") or "View")
 
 
 def has_planning_scope(

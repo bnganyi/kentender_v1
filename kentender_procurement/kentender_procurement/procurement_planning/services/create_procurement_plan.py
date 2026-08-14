@@ -45,8 +45,10 @@ def create_procurement_plan(
 	pe = assert_pe_resolved_for_create(user=actor, selected_pe=requested_pe or None)
 	fy = cstr(financial_year).strip()
 	ttl = cstr(title).strip()
-	cur = cstr(currency).strip() or "KES"
+	cur = (cstr(currency).strip() or "KES").upper()
 	ou = cstr(coordinating_org_unit).strip()
+	if cur != "KES":
+		frappe.throw(_("Kenya MVP plans use KES only."), title="PLN_CURRENCY_KES")
 	if not fy or not ttl or not ou:
 		frappe.throw(
 			_("Procuring Entity, financial year, title and coordinating unit are required."),

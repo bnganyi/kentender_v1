@@ -9,7 +9,12 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
-from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	TEST_COM_CODE,
+	TEST_EXP_CODE,
+	TEST_RSV_CODE,
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.services.budget_funding_activity import list_funding_activity
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 
@@ -19,7 +24,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
-		cls.seed = upsert_moh_mvp_v1_portfolio()
+		cls.seed = upsert_budget_activity_test_fixture()
 
 	def test_list_active_fixture_activity_and_balances(self):
 		dto = list_funding_activity("MOH-BUD-2027-2028")
@@ -44,26 +49,26 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertGreaterEqual(dto["row_count"], 3)
 		by_code = {r["code"]: r for r in dto["rows"]}
 
-		rsv = by_code["RSV-MOH-0001"]
+		rsv = by_code[TEST_RSV_CODE]
 		self.assertEqual(rsv["activity_type"], "reservation")
 		self.assertEqual(rsv["activity_label"], "Funding reservation")
-		self.assertEqual(rsv["source_code"], "DMD-MOH-2027-014")
-		self.assertEqual(rsv["source_name"], "National digital health infrastructure upgrade")
+		self.assertEqual(rsv["source_code"], "DMD-MOH-TEST-ACT-0001")
+		self.assertEqual(rsv["source_name"], "Budget activity test reservation")
 		self.assertEqual(flt(rsv["amount"]), 455_000_000)
 		self.assertEqual(rsv["amount_display"], "KES 455,000,000")
 		self.assertEqual(rsv["status"], "Partially converted")
 		self.assertEqual(rsv["related_value"], "KES 145,000,000")
 		self.assertEqual(rsv["action_label"], "View reservation")
 
-		com = by_code["COM-MOH-2027-005"]
+		com = by_code[TEST_COM_CODE]
 		self.assertEqual(com["activity_type"], "commitment")
-		self.assertEqual(com["source_code"], "CTR-MOH-2027-005")
-		self.assertEqual(com["source_name"], "Digital health infrastructure implementation contract")
+		self.assertEqual(com["source_code"], "CTR-MOH-TEST-ACT-0001")
+		self.assertEqual(com["source_name"], "Budget activity test contract")
 		self.assertEqual(flt(com["amount"]), 310_000_000)
 		self.assertEqual(com["status"], "Active")
 		self.assertEqual(com["action_label"], "View contract")
 
-		exp = by_code["EXP-MOH-2027-005-01"]
+		exp = by_code[TEST_EXP_CODE]
 		self.assertEqual(exp["activity_type"], "actual")
 		self.assertEqual(exp["source_name"], "Finance system")
 		self.assertEqual(flt(exp["amount"]), 180_000_000)
@@ -77,7 +82,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		by_code = {r["code"]: r for r in dto["rows"]}
 		remaining = flt(dto["balances"]["reserved"])
 		committed = flt(dto["balances"]["committed"])
-		original = flt(by_code["RSV-MOH-0001"]["amount"])
+		original = flt(by_code[TEST_RSV_CODE]["amount"])
 		# Pack §9.3: remaining reserved + commitment = original reservation.
 		self.assertEqual(remaining + committed, original)
 		self.assertEqual(remaining + committed, 455_000_000)
@@ -87,7 +92,8 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		dto = list_funding_activity("MOH-BUD-2027-2028")
 		codes = [r["code"] for r in dto["rows"]]
 		self.assertEqual(len(codes), len(set(codes)))
-		self.assertEqual(codes.count("RSV-MOH-0001"), 1)
+		self.assertEqual(codes.count(TEST_RSV_CODE), 1)
+		self.assertEqual(codes.count("RSV-MOH-0001"), 0)
 
 	def test_pe_scope_denial(self):
 		email = "budget.activity.pe.deny@example.com"

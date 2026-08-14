@@ -26,9 +26,9 @@ class TestDemandSeedRepeatability(IntegrationTestCase):
 		"""DIA-AC-024 — MOH + Kisumu fixtures rebuild without duplicate records."""
 		self.assertTrue(
 			frappe.db.get_value(
-				"Funding Reservation", {"generated_reference": C.RSV_CODE}, "name"
+				"Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
 			),
-			"Budget RSV-MOH-0001 required before Demands AC-024",
+			"Budget line MOH-BL-DHI-2027 required before Demands AC-024",
 		)
 
 		first = upsert_demands()
@@ -56,8 +56,8 @@ class TestDemandSeedRepeatability(IntegrationTestCase):
 		self.assertEqual(c1["demand"], c2["demand"])
 
 		self.assertEqual(
-			frappe.db.count("Funding Reservation", {"generated_reference": C.RSV_CODE}),
-			1,
+			frappe.db.count("Funding Reservation", {"demand_code": C.DEMAND_CODE}),
+			0,
 		)
 		self.assertEqual(
 			frappe.db.get_value("Demand", p1["demand"], "procuring_entity"),

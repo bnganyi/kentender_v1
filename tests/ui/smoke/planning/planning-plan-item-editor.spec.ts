@@ -44,6 +44,15 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(sidebar).toContainText(
 			/Business scope, quantity, owner, delivery requirement and approved value/i,
 		);
+		await expect(sidebar).toContainText(/Amend those facts on the Demand in Demands/i, {
+			timeout: 15_000,
+		});
+		const viewDemand = page.getByTestId("kt-pln-ui06-view-demand");
+		await expect(viewDemand).toBeVisible();
+		await expect
+			.poll(async () => (await viewDemand.getAttribute("href")) || "")
+			.toMatch(/\/desk\/demand-(detail|form)\//);
+		expect((await viewDemand.getAttribute("href")) || "").not.toContain("/app/demand/");
 		const sticky = await sidebar.evaluate((el) => getComputedStyle(el).position);
 		expect(sticky).toBe("sticky");
 
@@ -57,7 +66,8 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.getByTestId("kt-pln-ui06-cancel")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui06-footer")).toBeInViewport();
 		await expect(page.getByTestId("kt-pln-ui06-request-finance")).toBeInViewport();
-		await expect(page.getByTestId("kt-pln-ui06-issue")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui06-lotting-multiple")).toBeChecked();
+		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui06-add-another")).toHaveCount(0);
 		await expect(page.locator(ROOT)).not.toContainText("Planning approach");
 		await expect(page.locator(ROOT)).not.toContainText("Source Demand");
@@ -115,13 +125,12 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.getByTestId("kt-pln-ui06-pref-none")).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui06-pref-section")).toHaveCount(0);
 		await expect(page.locator(ROOT)).toContainText("Strategy target");
+		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui06-lotting-multiple")).toBeChecked();
+		await page.getByTestId("kt-pln-ui06-lotting-single").check();
 		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeHidden();
 		await page.getByTestId("kt-pln-ui06-lotting-multiple").check();
 		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui06-lot-count")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui06-lot-basis")).toBeVisible();
-		await page.getByTestId("kt-pln-ui06-lotting-single").check();
-		await expect(page.getByTestId("kt-pln-ui06-lotting-details")).toBeHidden();
 
 		await page.getByTestId("kt-pln-ui06-request-finance").click();
 		await expect(page.getByTestId("kt-pln-ui06-issue")).toBeVisible({ timeout: 15_000 });

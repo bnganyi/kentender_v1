@@ -10,7 +10,12 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
 from kentender_budget.seeds.budget_role_users import upsert_budget_role_users
-from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	TEST_COM_CODE,
+	TEST_EXP_CODE,
+	TEST_RSV_CODE,
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, get_budget_audit
 from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
 from kentender_budget.services.budget_funding_activity import list_funding_activity
@@ -34,7 +39,7 @@ def _purge_test_reservations_for_budget(budget_code: str = "MOH-BUD-2027-2028") 
 		if not (r.generated_reference or "").startswith("RSV-"):
 			continue
 		# Keep pack fixture codes even if namespace blank.
-		if r.generated_reference in ("RSV-MOH-0001",):
+		if r.generated_reference in ("RSV-MOH-0001", TEST_RSV_CODE):
 			continue
 		line = r.budget_line
 		amt = flt(r.original_amount)
@@ -68,11 +73,11 @@ class TestBudgetFundingLifecycle(FrappeTestCase):
 		super().setUpClass()
 		ensure_budget_roles()
 		upsert_budget_role_users()
-		cls.seed = upsert_moh_mvp_v1_portfolio()
+		cls.seed = upsert_budget_activity_test_fixture()
 
 	def setUp(self):
 		_purge_test_reservations_for_budget()
-		upsert_moh_mvp_v1_portfolio()
+		upsert_budget_activity_test_fixture()
 
 	def tearDown(self):
 		_purge_test_reservations_for_budget()
@@ -83,12 +88,12 @@ class TestBudgetFundingLifecycle(FrappeTestCase):
 		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		domain = [e for e in dto["events"] if e.get("kind") == "domain"]
 		by_code = {e["source_code"]: e for e in domain}
-		self.assertIn("RSV-MOH-0001", by_code)
-		self.assertIn("COM-MOH-2027-005", by_code)
-		self.assertIn("EXP-MOH-2027-005-01", by_code)
-		self.assertEqual(by_code["RSV-MOH-0001"]["source_doctype"], "Funding Reservation")
-		self.assertEqual(by_code["COM-MOH-2027-005"]["source_doctype"], "Procurement Commitment")
-		self.assertEqual(by_code["EXP-MOH-2027-005-01"]["source_doctype"], "Expenditure Snapshot")
+		self.assertIn(TEST_RSV_CODE, by_code)
+		self.assertIn(TEST_COM_CODE, by_code)
+		self.assertIn(TEST_EXP_CODE, by_code)
+		self.assertEqual(by_code[TEST_RSV_CODE]["source_doctype"], "Funding Reservation")
+		self.assertEqual(by_code[TEST_COM_CODE]["source_doctype"], "Procurement Commitment")
+		self.assertEqual(by_code[TEST_EXP_CODE]["source_doctype"], "Expenditure Snapshot")
 		# Deterministic descending order by event_at_sort / type / code.
 		sort_keys = [
 			(e.get("event_at_sort") or "", e.get("event_type") or "", e.get("source_code") or "")

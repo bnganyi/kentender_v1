@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import cstr
 
 from kentender_procurement.procurement_planning.mvp1_constants import VERSION_IN_REVIEW
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
@@ -83,6 +84,70 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 			frappe.db.get_value("Procurement Plan Version", plan["version"], "status"),
 			VERSION_IN_REVIEW,
 		)
+
+	def test_submit_notifies_pe_reviewer_not_kisumu(self) -> None:
+		from kentender_procurement.procurement_planning.services.planning_notification_service import (
+			EVENT_PLAN_SUBMITTED,
+		)
+		from kentender_procurement.procurement_planning.services.planning_permissions import (
+			ROLE_REVIEWER,
+		)
+		from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+			ensure_reviewer_user,
+		)
+		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
+			PE_CGK,
+			ensure_org,
+			ensure_user_with_roles,
+		)
+
+		ensure_org()
+		reviewer = ensure_reviewer_user()
+		kisumu = ensure_user_with_roles(
+			"pln.wave3.kisumu.reviewer@test.local",
+			roles=(ROLE_REVIEWER,),
+			pe=PE_CGK,
+			org_unit=None,
+			include_descendants=0,
+		)
+		planner, plan = self._ready_plan()
+		confirm_included_items_funding(plan=plan["plan"], planner=planner)
+		token = frappe.db.get_value(
+			"Procurement Plan Version", plan["version"], "concurrency_token"
+		)
+		before = frappe.db.count(
+			"Notification Log",
+			{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+		)
+		kisumu_before = frappe.db.count(
+			"Notification Log",
+			{"for_user": kisumu, "email_header": f"pln-submit-review:{plan['version']}"},
+		)
+		result = submit_plan_for_review(
+			plan=plan["plan"], concurrency_token=token, user=planner
+		)
+		self.assertTrue(result["ok"], result)
+		self.assertEqual(
+			frappe.db.count(
+				"Notification Log",
+				{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+			),
+			before + 1,
+		)
+		self.assertEqual(
+			frappe.db.count(
+				"Notification Log",
+				{"for_user": kisumu, "email_header": f"pln-submit-review:{plan['version']}"},
+			),
+			kisumu_before,
+		)
+		content = frappe.db.get_value(
+			"Notification Log",
+			{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+			"email_content",
+		)
+		self.assertIn(EVENT_PLAN_SUBMITTED, cstr(content))
+		self.assertIn("PE-MOH", cstr(content))
 
 	def test_blocks_when_not_ready(self) -> None:
 		planner = ensure_planner_user()

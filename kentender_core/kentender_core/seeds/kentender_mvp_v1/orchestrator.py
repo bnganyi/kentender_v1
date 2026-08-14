@@ -88,10 +88,21 @@ def run_kentender_mvp_v1(
 	return result
 
 
-def validate_kentender_mvp_v1() -> dict[str, Any]:
+def validate_kentender_mvp_v1(
+	*,
+	include_scn_add: bool = False,
+	include_scn_fund_short: bool = False,
+	include_scn_remove: bool = False,
+) -> dict[str, Any]:
 	"""Validate the full KENTENDER_MVP_V1 stack through the latest module stage."""
 	frappe.only_for(("System Manager", "Administrator"))
-	report = _validate(include_demands=True, include_planning=True)
+	report = _validate(
+		include_demands=True,
+		include_planning=True,
+		include_scn_add=include_scn_add,
+		include_scn_fund_short=include_scn_fund_short,
+		include_scn_remove=include_scn_remove,
+	)
 	print(report.get("summary") or "")
 	return report
 

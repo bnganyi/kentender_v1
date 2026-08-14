@@ -38,14 +38,12 @@ class TestBudgetLines(FrappeTestCase):
 		l1 = by_code["MOH-BL-DHI-2027"]
 		self.assertEqual(l1["title"], "Digital clinical systems infrastructure")
 		self.assertEqual(flt(l1["approved"]), 480_000_000)
-		self.assertEqual(flt(l1["reserved"]), 145_000_000)
-		self.assertEqual(flt(l1["committed"]), 310_000_000)
-		self.assertEqual(flt(l1["available"]), 25_000_000)
+		self.assertEqual(flt(l1["reserved"]), 0)
+		self.assertEqual(flt(l1["committed"]), 0)
+		self.assertEqual(flt(l1["available"]), 480_000_000)
 		self.assertEqual(l1["approved_display"], "KES 480,000,000")
-		self.assertEqual(l1["actual_display"], "KES 180,000,000")
-		self.assertEqual(l1["actual_freshness"], "Stale")
-		self.assertEqual(l1["status_label"], "Needs attention")
-		self.assertEqual(l1["action"], "review")
+		self.assertEqual(l1["actual_display"], "Unknown")
+		self.assertEqual(l1["actual_freshness"], "Unknown")
 		self.assertEqual(l1["primary_target_code"], "MOH-TGT-AVAIL-2028")
 
 		l2 = by_code["MOH-BL-HWD-2027"]

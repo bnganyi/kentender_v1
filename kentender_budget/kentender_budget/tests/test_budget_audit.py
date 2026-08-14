@@ -8,6 +8,12 @@ from __future__ import annotations
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	TEST_COM_CODE,
+	TEST_EXP_CODE,
+	TEST_RSV_CODE,
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_audit_contracts import (
 	EVENT_ACTIVATED,
@@ -28,10 +34,10 @@ class TestBudgetAudit(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
-		cls.seed = upsert_moh_mvp_v1_portfolio()
+		cls.seed = upsert_budget_activity_test_fixture()
 
 	def setUp(self):
-		upsert_moh_mvp_v1_portfolio()
+		upsert_budget_activity_test_fixture()
 
 	def test_seeded_moh_0001_ledger_pack_codes_and_full_money(self):
 		dto = get_budget_audit("MOH-BUD-2027-2028")
@@ -40,9 +46,10 @@ class TestBudgetAudit(FrappeTestCase):
 		self.assertGreaterEqual(dto["row_count"], 7)
 		codes = {r["record_code"] for r in dto["rows"]}
 		self.assertIn("MOH-BUD-2027-2028", codes)
-		self.assertIn("RSV-MOH-0001", codes)
-		self.assertIn("COM-MOH-2027-005", codes)
-		self.assertIn("EXP-MOH-2027-005-01", codes)
+		self.assertIn(TEST_RSV_CODE, codes)
+		self.assertIn(TEST_COM_CODE, codes)
+		self.assertIn(TEST_EXP_CODE, codes)
+		self.assertNotIn("RSV-MOH-0001", codes)
 		self.assertIn("BR-MOH-0000", codes)
 		joined = " ".join(r["change_summary_display"] for r in dto["rows"])
 		self.assertIn("KES 455,000,000", joined)
@@ -57,12 +64,12 @@ class TestBudgetAudit(FrappeTestCase):
 		self.assertGreaterEqual(dto["row_count"], 1)
 		for r in dto["rows"]:
 			self.assertEqual(r["event_type"], "Funding reserved")
-		self.assertIn("RSV-MOH-0001", {r["record_code"] for r in dto["rows"]})
+		self.assertIn(TEST_RSV_CODE, {r["record_code"] for r in dto["rows"]})
 
 	def test_immutability_blocks_delete(self):
 		name = frappe.db.get_value(
 			"Budget Audit Event",
-			{"record_code": "RSV-MOH-0001", "event_type": "Funding reserved"},
+			{"record_code": TEST_RSV_CODE, "event_type": "Funding reserved"},
 			"name",
 		)
 		self.assertTrue(name)

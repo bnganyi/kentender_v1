@@ -113,16 +113,16 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 <div class="space-y-6">
 <div class="flex flex-col sm:flex-row gap-6">
 <label class="flex items-center gap-2 cursor-pointer">
-<input checked class="text-primary focus:ring-primary h-5 w-5 border-border-subtle" name="lotting_decision" type="radio" value="Single lot" data-kt-pln-field="lotting_decision" data-kt-field="lotting_decision" data-testid="kt-pln-ui06-lotting-single"/>
+<input class="text-primary focus:ring-primary h-5 w-5 border-border-subtle" name="lotting_decision" type="radio" value="Single lot" data-kt-pln-field="lotting_decision" data-kt-field="lotting_decision" data-testid="kt-pln-ui06-lotting-single"/>
 <span class="font-body-md text-on-surface">No lots expected</span>
 </label>
 <label class="flex items-center gap-2 cursor-pointer">
-<input class="text-primary focus:ring-primary h-5 w-5 border-border-subtle" name="lotting_decision" type="radio" value="Multiple lots" data-kt-pln-field="lotting_decision" data-kt-field="lotting_decision" data-testid="kt-pln-ui06-lotting-multiple"/>
+<input checked class="text-primary focus:ring-primary h-5 w-5 border-border-subtle" name="lotting_decision" type="radio" value="Multiple lots" data-kt-pln-field="lotting_decision" data-kt-field="lotting_decision" data-testid="kt-pln-ui06-lotting-multiple"/>
 <span class="font-body-md text-on-surface">Indicative lots expected</span>
 </label>
 </div>
 <div class="font-body-sm text-body-sm text-status-exhausted mt-1" data-kt-field-error="lotting_decision" hidden></div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border border-border-subtle rounded-md bg-surface-bright hidden" data-kt-pln-lotting-details data-testid="kt-pln-ui06-lotting-details" hidden>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border border-border-subtle rounded-md bg-surface-bright" data-kt-pln-lotting-details data-testid="kt-pln-ui06-lotting-details">
 <div>
 <label class="block font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="kt-pln-ui06-lot-count">Expected lot count</label>
 <input class="w-full border-border-subtle rounded-md shadow-sm focus:border-secondary focus:ring focus:ring-secondary focus:ring-opacity-50 font-body-md h-10 px-3 max-w-[150px]" id="kt-pln-ui06-lot-count" name="expected_lot_count" data-kt-pln-field="expected_lot_count" data-kt-field="expected_lot_count" data-testid="kt-pln-ui06-lot-count" type="number" min="2"/>
@@ -287,7 +287,7 @@ kentender_procurement.ui_fixtures.planning_plan_item_editor = function () {
 </div>
 <div class="bg-surface-container-low p-4 rounded-md border-l-4 border-outline flex gap-3 mt-4">
 <span class="material-symbols-outlined text-on-surface-variant">info</span>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Business scope, quantity, owner, delivery requirement and approved value come from the Approved Demand source(s) and cannot be changed here.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Business scope, quantity, owner, delivery requirement and approved value come from the Approved Demand source(s) and cannot be changed here. Amend those facts on the Demand in Demands (HoD reapproval).</p>
 </div>
 </section>
 </div>

@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-08-13 22:39:21.218385",
+ "modified": "2026-08-14 12:06:05.569614",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "procurement-plan-review",
@@ -49,6 +49,9 @@
   },
   {
    "role": "Desk User"
+  },
+  {
+   "role": "Budget Officer"
   }
  ],
  "script": null,

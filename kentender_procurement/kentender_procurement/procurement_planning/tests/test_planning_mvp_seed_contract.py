@@ -91,6 +91,14 @@ class TestPlanningMvpSeedContract(IntegrationTestCase):
 			frappe.db.count("Funding Reservation", {"generated_reference": C.RSV_CODE}),
 			1,
 		)
+		iv = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"item_version_code": f"{C.PLAN_ITEM_CODE}-1"},
+			["finance_reservation", "finance_confirmed_by"],
+			as_dict=True,
+		)
+		self.assertTrue(iv and iv.finance_reservation)
+		self.assertEqual(iv.finance_confirmed_by, C.USER_BUD_OFFICER)
 		self.assertFalse(frappe.db.exists("DocType", "Departmental Submission"))
 		self.assertFalse(
 			frappe.db.exists(
@@ -130,6 +138,14 @@ class TestPlanningMvpSeedContract(IntegrationTestCase):
 		self.assertGreaterEqual(
 			_usa(C.USER_MEDICAL, ROLE_BUSINESS, C.PE_MOH, C.OU_DIR_DHP), 1
 		)
+		self.assertEqual(
+			frappe.db.get_value("User", C.USER_PUBLIC, "first_name"),
+			"Anne",
+		)
+		self.assertEqual(
+			frappe.db.get_value("User", C.USER_PUBLIC, "last_name"),
+			"Achieng",
+		)
 		self.assertGreaterEqual(
 			_usa(C.USER_PUBLIC, ROLE_REQUESTER, C.PE_MOH, C.OU_DIR_HRMD), 1
 		)
@@ -143,9 +159,20 @@ class TestPlanningMvpSeedContract(IntegrationTestCase):
 			_usa(C.USER_BUD_DUAL, "Budget Officer", C.PE_MOH, None), 1
 		)
 		self.assertGreaterEqual(
+			_usa(C.USER_BUD_OFFICER, "Budget Officer", C.PE_MOH, None), 1
+		)
+		self.assertGreaterEqual(
 			_usa(C.USER_PLAN_APPROVER, ROLE_DESIGNATED_APPROVER, C.PE_MOH, None), 1
 		)
+		self.assertGreaterEqual(
+			_usa(C.USER_HOP, ROLE_DESIGNATED_APPROVER, C.PE_MOH, None), 1
+		)
+		self.assertGreaterEqual(
+			_usa(C.USER_BUSINESS_APPROVER, ROLE_BUSINESS, C.PE_MOH, C.OU_DIR_HRMD), 1
+		)
 		self.assertGreaterEqual(_usa(C.USER_VIEWER, ROLE_VIEWER, C.PE_MOH, None), 1)
+		self.assertGreaterEqual(_usa(C.USER_KISUMU_VIEWER, ROLE_VIEWER, C.PE_CGKIS, None), 1)
+		self.assertGreaterEqual(_usa(C.USER_BUD_OFFICER, ROLE_VIEWER, C.PE_MOH, None), 1)
 
 	def test_scn_add_double_run_no_duplicates(self) -> None:
 		from kentender_core.seeds.kentender_mvp_v1.validate import validate_kentender_mvp_v1

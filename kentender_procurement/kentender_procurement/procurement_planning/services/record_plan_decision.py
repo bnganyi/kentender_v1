@@ -27,10 +27,10 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	ROLE_AUTHORITY,
 	ROLE_DESIGNATED_APPROVER,
 	ROLE_REVIEWER,
+	actor_planning_roles,
 	assert_can_recommend_plan,
 	assert_can_return_plan,
 	assert_planning_scope,
-	operational_roles,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 
@@ -137,6 +137,12 @@ def record_plan_decision(
 	).insert(ignore_permissions=True)
 
 	frappe.db.commit()
+	if action == ACTION_RETURN:
+		from kentender_procurement.procurement_planning.services.planning_notification_service import (
+			notify_plan_returned,
+		)
+
+		notify_plan_returned(plan=plan, version_name=version_name, actor=actor)
 	status = VERSION_RETURNED if action == ACTION_RETURN else VERSION_IN_REVIEW
 	return {
 		"ok": True,
@@ -160,7 +166,7 @@ def has_recommendation(*, version: str) -> bool:
 
 
 def _actor_role(user: str, action: str) -> str:
-	roles = operational_roles(user)
+	roles = actor_planning_roles(user)
 	order = (
 		(ROLE_REVIEWER, ROLE_AUTHORITY)
 		if action == ACTION_RECOMMEND

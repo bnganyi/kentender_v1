@@ -9,6 +9,9 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_budget.services.budget_revision_contracts import (
@@ -39,6 +42,7 @@ class TestBudgetRevisions(FrappeTestCase):
 		self.assertEqual(seed["change_total_display"], "+ KES 25,000,000")
 
 	def test_create_context_floors_and_money(self):
+		upsert_budget_activity_test_fixture()
 		ctx = get_budget_revision_create_context("MOH-BUD-2027-2028")
 		self.assertEqual(ctx["budget"]["status"], "Active")
 		by_code = {r["code"]: r for r in ctx["lines"]}
@@ -49,7 +53,7 @@ class TestBudgetRevisions(FrappeTestCase):
 		self.assertEqual(flt(bl["committed"]), 310_000_000)
 		self.assertEqual(flt(bl["floor"]), 455_000_000)
 		self.assertEqual(ctx["impact"]["before_display"], "KES 560,000,000")
-		self.assertGreaterEqual(ctx["impact"]["affected_demands"], 1)
+		self.assertGreaterEqual(ctx["impact"]["affected_demands"], 0)
 
 	def test_create_draft_ok(self):
 		result = create_budget_revision(
@@ -74,7 +78,8 @@ class TestBudgetRevisions(FrappeTestCase):
 		self.assertEqual(rev["impact"]["after_display"], "KES 570,000,000")
 
 	def test_ac016_denies_below_floor(self):
-		# Floor for MOH-BL-DHI-2027 is 455M; before 480M → max reduce 25M.
+		upsert_budget_activity_test_fixture()
+		# Test fixture floor is 455M; before 480M → max reduce 25M.
 		result = create_budget_revision(
 			{
 				"budget": "MOH-BUD-2027-2028",

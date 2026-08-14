@@ -119,6 +119,8 @@ def create_procurement_plan(
 		errors["coordinating_org_unit"] = "Coordinating procurement unit is required"
 	if not (currency or "").strip():
 		errors["currency"] = "Currency is required"
+	elif cstr(currency).strip().upper() != "KES":
+		errors["currency"] = "Kenya MVP plans use KES only"
 	# PE required when multi; create service resolves single/forced.
 	from kentender_procurement.procurement_planning.services.planning_permissions import (
 		MODE_MULTI,
@@ -443,21 +445,13 @@ def aggregate_plan_allocations(
 		amt = float(allocated_amount) if allocated_amount not in (None, "") else None
 	except (TypeError, ValueError):
 		amt = None
-	try:
-		return _aggregate_plan_allocations(
-			plan_item=plan_item or "",
-			demand=demand or "",
-			demand_item=demand_item,
-			allocated_amount=amt,
-			aggregation_reason=aggregation_reason,
-		)
-	except Exception as exc:
-		msg = str(exc)
-		title = getattr(exc, "title", None) or ""
-		errors: dict[str, str] = {"form": msg}
-		if "AGG_REASON" in cstr(title).upper() or "aggregation requires" in msg.lower():
-			errors["aggregation_reason"] = msg
-		return {"ok": False, "errors": errors}
+	return _aggregate_plan_allocations(
+		plan_item=plan_item or "",
+		demand=demand or "",
+		demand_item=demand_item,
+		allocated_amount=amt,
+		aggregation_reason=aggregation_reason,
+	)
 
 
 @frappe.whitelist()
@@ -844,6 +838,28 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 			}
 		).insert(ignore_permissions=True)
 
+	bo = "moh.budget.officer@example.test"
+	if frappe.db.exists("User", bo):
+		bo_user = frappe.get_doc("User", bo)
+		bo_user.enabled = 1
+		bo_user.save(ignore_permissions=True)
+		bo_user.add_roles("Desk User", ROLE_VIEWER)
+		update_password(bo, TEST_PASSWORD)
+		if not frappe.db.exists(
+			"User Scope Assignment",
+			{"user": bo, "role": ROLE_VIEWER, "procuring_entity": base["pe_moh"]},
+		):
+			frappe.get_doc(
+				{
+					"doctype": "User Scope Assignment",
+					"user": bo,
+					"role": ROLE_VIEWER,
+					"procuring_entity": base["pe_moh"],
+					"organisation_unit": "",
+					"include_descendants": 0,
+				}
+			).insert(ignore_permissions=True)
+
 	token2 = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
 	rec = record_plan_decision(
 		version=version,
@@ -866,6 +882,7 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 			"Accounting Officer",
 			"Planning Authority",
 			"Planning Viewer",
+			"Budget Officer",
 			"Head of User Department",
 			"Requester",
 			"Desk User",
@@ -912,6 +929,7 @@ def prepare_planning_gate06_approved_ui(
 		complete_plan_item_for_signoff,
 		confirm_included_items_funding,
 		create_plan_as_planner,
+		ensure_tender_initiator,
 		make_approved_demand,
 		purge_pe_fy,
 		unique_test_fy,
@@ -997,12 +1015,13 @@ def prepare_planning_gate06_approved_ui(
 	want_successor = str(with_successor or "0") not in ("0", "", "None")
 	want_handoff = str(with_handoff or "0") not in ("0", "", "None")
 	if want_handoff and plan_item:
-		frappe.set_user(planner)
+		initiator = ensure_tender_initiator()
+		frappe.set_user(initiator)
 		try:
 			snap = create_planning_handoff_snapshot(
 				plan_item=plan_item,
 				tender_reference="TND-MOH-TEST-008",
-				user=planner,
+				user=initiator,
 			)
 		finally:
 			frappe.set_user("Administrator")

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import {
+	loginAsMohBudgetOfficer,
 	loginAsMohPlanApprover,
 	loginAsMohPlanningOfficer,
 	loginAsMohPlanningReviewer,
@@ -91,5 +92,63 @@ test.describe("PLN-UI-08 Consolidated plan review and approval", () => {
 		).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui08-primary")).toBeHidden();
 		await expect(page.getByTestId("kt-pln-ui08-return")).toBeHidden();
+	});
+
+	test("Budget Officer has no Recommend or Approve controls", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate05Approval(page);
+		expect(prep.empty_draft_plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-review?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(ROOT)).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId("kt-pln-ui08-primary")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui08-return")).toBeHidden();
+		await expect(page.getByRole("button", { name: /Recommend approval/i })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: /Approve plan/i })).toHaveCount(0);
+	});
+
+	test("Review subtitle binds the live plan title and In review version", async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate05Approval(page);
+		expect(prep.empty_draft_plan).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningReviewer(page);
+		await page.goto(
+			`/desk/procurement-plan-review?plan=${encodeURIComponent(prep.empty_draft_plan || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+		await expect(page.locator(ROOT)).toBeVisible({ timeout: 45_000 });
+		const title = await page.evaluate(async (plan: string) => {
+			const r = await (
+				window as unknown as {
+					frappe: {
+						call: (o: {
+							method: string;
+							args: { plan: string };
+						}) => Promise<{ message?: { title?: string } }>;
+					};
+				}
+			).frappe.call({
+				method:
+					"kentender_procurement.procurement_planning.api.get_plan_review",
+				args: { plan },
+			});
+			return r.message?.title || "";
+		}, prep.empty_draft_plan || "");
+		expect(title).toBeTruthy();
+		expect(title).not.toBe("Annual Procurement Plan");
+		await expect(page.locator("[data-kt-pln-review-secondary]")).toContainText(title);
+		await expect(page.locator("[data-kt-pln-review-secondary]")).toContainText(
+			/In review Version/i,
+		);
+		await expect(page.locator("[data-kt-pln-review-secondary]")).not.toHaveText(
+			/^Version 1$/,
+		);
 	});
 });

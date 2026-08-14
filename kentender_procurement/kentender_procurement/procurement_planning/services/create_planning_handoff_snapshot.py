@@ -22,7 +22,7 @@ from kentender_procurement.procurement_planning.services.plan_item_finance impor
 	effective_finance_status,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
-	CAP_PLAN_ITEM_EDIT,
+	CAP_PLAN_HANDOFF,
 	require_capability,
 )
 
@@ -58,7 +58,7 @@ def create_planning_handoff_snapshot(
 	ou = cstr(plan_doc.coordinating_org_unit or "").strip() or None
 	try:
 		require_capability(
-			CAP_PLAN_ITEM_EDIT,
+			CAP_PLAN_HANDOFF,
 			procuring_entity=pe,
 			org_unit=ou,
 			user=actor,
@@ -131,10 +131,27 @@ def create_planning_handoff_snapshot(
 		)
 
 	tender_ref = cstr(tender_reference or "").strip()
+	rsv_name = cstr(
+		getattr(iv, "finance_reservation", None)
+		or getattr(iv, "reservation_reference", None)
+		or ""
+	).strip()
+	rsv_code = ""
+	if rsv_name and frappe.db.exists("Funding Reservation", rsv_name):
+		rsv_code = cstr(
+			frappe.db.get_value("Funding Reservation", rsv_name, "generated_reference")
+			or rsv_name
+		)
+	elif rsv_name:
+		rsv_code = rsv_name
+	version_code = cstr(
+		frappe.db.get_value("Procurement Plan Version", approved, "version_code") or ""
+	)
 	payload = {
 		"plan": plan_name,
 		"plan_code": plan_doc.plan_code,
 		"plan_version": approved,
+		"plan_version_code": version_code,
 		"plan_item": item_name,
 		"plan_item_code": item.plan_item_code,
 		"requirement_title": cstr(iv.requirement_title or ""),
@@ -142,9 +159,20 @@ def create_planning_handoff_snapshot(
 		"confirmed_estimate": flt(iv.confirmed_estimate),
 		"currency": plan_doc.currency or "KES",
 		"finance_status": FINANCE_CONFIRMED,
+		"finance": {
+			"status": FINANCE_CONFIRMED,
+			"reservation_id": rsv_name,
+			"reservation_code": rsv_code,
+			"confirmed_by": cstr(iv.finance_confirmed_by or ""),
+		},
+		"strategy_snapshot": cstr(iv.strategy_snapshot or ""),
+		"pvc_snapshot": cstr(iv.pvc_snapshot or ""),
 		"demand_allocations": [
 			{
 				"demand": cstr(a.demand),
+				"demand_code": cstr(
+					frappe.db.get_value("Demand", a.demand, "demand_code") or ""
+				),
 				"demand_item": cstr(a.demand_item or ""),
 				"allocated_amount": flt(a.allocated_amount),
 				"status": cstr(a.status),

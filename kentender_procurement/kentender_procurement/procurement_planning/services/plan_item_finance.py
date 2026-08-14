@@ -135,7 +135,7 @@ def _budget_line_display(line_id: str) -> dict[str, str]:
 	return {"id": line_id, "code": code, "name": name, "display": display}
 
 
-def _existing_reservation(dfa: Any | None, line_id: str) -> Any | None:
+def _existing_reservation(dfa: Any | None, line_id: str, *, iv: Any | None = None) -> Any | None:
 	if not dfa:
 		return None
 	rsv_name = cstr(dfa.funding_reservation or "").strip()
@@ -145,6 +145,12 @@ def _existing_reservation(dfa: Any | None, line_id: str) -> Any | None:
 	if cstr(rsv.status) not in ("Reserved", "Partially converted"):
 		return None
 	if line_id and cstr(rsv.budget_line) != line_id:
+		return None
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+
+	code = cstr(rsv.generated_reference or "")
+	owned = cstr(getattr(iv, "finance_reservation", None) or "") if iv is not None else ""
+	if code == C.RSV_CODE and owned not in (rsv.name, code):
 		return None
 	return rsv
 
@@ -281,6 +287,11 @@ def request_plan_item_finance(
 	iv.finance_status = FINANCE_AWAITING
 	iv.save(ignore_permissions=True)
 	frappe.db.commit()
+	from kentender_procurement.procurement_planning.services.planning_notification_service import (
+		notify_finance_requested,
+	)
+
+	notify_finance_requested(plan=plan, item=item, iv=iv, actor=actor)
 	return {
 		"ok": True,
 		"complete": True,
@@ -429,7 +440,7 @@ def get_plan_finance_task(
 	dfa = _dfa_for_demand(demand["demand"] if demand else "")
 	line_id = cstr(dfa.budget_line if dfa else "").strip()
 	line = _budget_line_display(line_id)
-	existing = _existing_reservation(dfa, line_id)
+	existing = _existing_reservation(dfa, line_id, iv=iv)
 	check: dict[str, Any] | None = None
 	if line_id:
 		from kentender_budget.services.budget_check_reserve_contracts import check_funding
@@ -517,7 +528,7 @@ def confirm_plan_item_funding(
 	if not line_id:
 		return {"ok": False, "errors": {"form": "A proposed Budget Line is required to confirm funding."}}
 	amount = flt(iv.confirmed_estimate)
-	existing = _existing_reservation(dfa, line_id)
+	existing = _existing_reservation(dfa, line_id, iv=iv)
 	owned = 0
 	reservation_name = ""
 	reservation_code = ""
@@ -554,6 +565,13 @@ def confirm_plan_item_funding(
 			from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
 			if (
+				cstr(item.plan_item_code) == C.PLAN_ITEM_CODE
+				and not frappe.db.exists(
+					"Funding Reservation", {"generated_reference": C.RSV_CODE}
+				)
+			):
+				preferred_ref = C.RSV_CODE
+			elif (
 				cstr(item.plan_item_code) == C.PLAN_ITEM_CODE_SCN
 				and not frappe.db.exists(
 					"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}

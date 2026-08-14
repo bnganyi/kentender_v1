@@ -24,6 +24,8 @@ export const PLANNING_USERS = {
 	/** Ensured by prepare_planning_gate03_ui — dual PE Planning USA. */
 	multiPlanner: process.env.UI_PLN_MULTI_USER || 'pln.ui.multi@example.test',
 	viewer: process.env.UI_PLN_VIEWER_USER || 'pln.ui.viewer@example.test',
+	budgetOfficer:
+		process.env.UI_PLN_BUDGET_OFFICER_USER || 'moh.budget.officer@example.test',
 } as const;
 
 export type PlanningGate03Prep = {
@@ -326,6 +328,14 @@ async function loginPlanning(page: Page, email: string, passwordEnv?: string) {
 
 export async function loginAsMohPlanningOfficer(page: Page) {
 	await loginPlanning(page, PLANNING_USERS.planner, process.env.UI_PLN_PLANNER_PASSWORD);
+}
+
+export async function loginAsMohBudgetOfficer(page: Page) {
+	await loginPlanning(
+		page,
+		PLANNING_USERS.budgetOfficer,
+		process.env.UI_PLN_BUDGET_OFFICER_PASSWORD,
+	);
 }
 
 export async function loginAsMohHod(page: Page, hodEmail?: string) {

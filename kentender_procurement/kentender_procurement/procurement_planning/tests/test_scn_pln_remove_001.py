@@ -83,3 +83,12 @@ class TestScnPlnRemove001(IntegrationTestCase):
 			),
 			first,
 		)
+
+	def test_validate_include_scn_remove(self) -> None:
+		scn.run(reset_first=False, force=True)
+		from kentender_core.seeds.kentender_mvp_v1.orchestrator import (
+			validate_kentender_mvp_v1,
+		)
+
+		report = validate_kentender_mvp_v1(include_scn_remove=True)
+		self.assertTrue(report.get("ok"), report.get("summary"))

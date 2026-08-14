@@ -9,6 +9,9 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
+from kentender_budget.seeds.budget_activity_test_fixture import (
+	upsert_budget_activity_test_fixture,
+)
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_funding_performance_contracts import (
 	DISCLAIMER,
@@ -28,24 +31,25 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 	def setUp(self):
 		upsert_moh_mvp_v1_portfolio()
 
+	def _canonical_coverage(self, dto):
+		return [r for r in dto["coverage_rows"] if r.get("budget_code") == "MOH-BUD-2027-2028"]
+
 	def test_moh_strip_totals_full_money(self):
 		dto = get_funding_performance()
-		k = dto["kpis"]
-		self.assertEqual(flt(k["approved"]), 560_000_000)
-		self.assertEqual(flt(k["reserved"]), 145_000_000)
-		self.assertEqual(flt(k["committed"]), 310_000_000)
-		self.assertEqual(flt(k["available"]), 105_000_000)
-		self.assertEqual(flt(k["actual"]), 180_000_000)
-		self.assertEqual(int(k["attention_lines"]), 1)
-		self.assertEqual(k["approved_display"], "KES 560,000,000")
-		self.assertEqual(k["reserved_display"], "KES 145,000,000")
-		self.assertEqual(k["available_display"], "KES 105,000,000")
-		self.assertNotIn("560M", k["approved_display"])
+		canonical = self._canonical_coverage(dto)
+		self.assertTrue(canonical)
+		self.assertEqual(sum(flt(r["approved"]) for r in canonical), 560_000_000)
+		self.assertEqual(sum(flt(r["reserved"]) for r in canonical), 0)
+		self.assertEqual(sum(flt(r["committed"]) for r in canonical), 0)
+		self.assertEqual(sum(flt(r["available"]) for r in canonical), 560_000_000)
+		self.assertGreaterEqual(flt(dto["kpis"]["approved"]), 560_000_000)
 		self.assertIn("Ministry of Health", dto["entity"]["name"])
 		self.assertTrue(dto["as_at_display"])
 		self.assertIn("does not prove", dto["disclaimer"].lower())
 		self.assertEqual(dto["disclaimer"], DISCLAIMER)
 		self.assertTrue(dto["capabilities"]["can_export"])
+		joined = " ".join(r["approved_display"] for r in canonical)
+		self.assertNotIn("560M", joined)
 
 	def test_coverage_includes_pack_target_codes(self):
 		dto = get_funding_performance()
@@ -60,6 +64,7 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertNotIn("560M", joined)
 
 	def test_stale_expenditure_exception(self):
+		upsert_budget_activity_test_fixture()
 		dto = get_funding_performance()
 		self.assertGreaterEqual(len(dto["exception_rows"]), 1)
 		exc = dto["exception_rows"][0]
@@ -77,7 +82,9 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 
 	def test_filter_by_fiscal_period(self):
 		dto = get_funding_performance(fiscal_period="2027/28")
-		self.assertEqual(flt(dto["kpis"]["approved"]), 560_000_000)
+		canonical = self._canonical_coverage(dto)
+		self.assertEqual(sum(flt(r["approved"]) for r in canonical), 560_000_000)
+		self.assertGreaterEqual(flt(dto["kpis"]["approved"]), 560_000_000)
 		empty = get_funding_performance(fiscal_period="2099/00")
 		self.assertEqual(flt(empty["kpis"]["approved"]), 0)
 		self.assertEqual(empty["coverage_rows"], [])
@@ -89,7 +96,8 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertIn("source_coverage", exp["lineage"])
 		codes = {r["target_code"] for r in exp["coverage_rows"]}
 		self.assertIn("MOH-TGT-AVAIL-2028", codes)
-		self.assertEqual(exp["kpis"]["approved_display"], "KES 560,000,000")
+		canonical = self._canonical_coverage(exp)
+		self.assertEqual(sum(flt(r["approved"]) for r in canonical), 560_000_000)
 
 	def test_pe_scope_denial(self):
 		email = "budget.perf.pe.deny@example.com"

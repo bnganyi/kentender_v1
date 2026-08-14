@@ -34,6 +34,9 @@ from kentender_procurement.procurement_planning.services.remove_plan_item import
 	draft_has_effective_changes,
 	removal_capabilities_for_item,
 )
+from kentender_procurement.procurement_planning.services.validate_plan import (
+	effective_validation_status,
+)
 
 
 def _money(amount: float, currency: str = "KES") -> str:
@@ -231,7 +234,13 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "entity_name")
 		or plan_doc.procuring_entity
 	)
-	validation = (version.validation_projection if version else "Not run") or "Not run"
+	validation = "Not run"
+	if version:
+		validation = effective_validation_status(
+			plan=plan_name,
+			version=version.name,
+			stored=cstr(version.validation_projection or ""),
+		)
 	issue_count = sum(
 		1
 		for i in items_out
@@ -244,8 +253,11 @@ def get_plan_builder(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		currency=currency,
 	)
 
-	items_ready = (not empty) and issue_count == 0 and all(
-		cstr(i.get("validation_projection")) == VALIDATION_READY for i in items_out
+	items_ready = (
+		(not empty)
+		and issue_count == 0
+		and validation == VALIDATION_READY
+		and all(cstr(i.get("validation_projection")) == VALIDATION_READY for i in items_out)
 	)
 	has_successor = bool(draft) and bool(approved)
 	no_changes_remain = has_successor and (not draft_has_effective_changes(plan=plan_name, version=draft))

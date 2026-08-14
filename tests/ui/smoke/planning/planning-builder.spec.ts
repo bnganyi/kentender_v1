@@ -99,6 +99,8 @@ test.describe("PLN-UI-05 Populated Draft plan builder", () => {
 			.evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
 		expect(popPadTop).toBeLessThanOrEqual(8);
 		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Add approved demands/i);
+		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Open Plan/i);
+		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Draft Version/i);
 		await expect(page.getByTestId("kt-pln-ui05-lifecycle")).toContainText(/Open Plan/i);
 		await expect(page.getByTestId("kt-pln-ui03-items")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui05-table")).toBeVisible();
