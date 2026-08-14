@@ -28,6 +28,13 @@
 	}
 
 	function planItemFromRoute() {
+		var route = frappe.get_route() || [];
+		if (route.length > 1 && route[1]) {
+			return String(route[1]);
+		}
+		if (frappe.route_options && frappe.route_options.plan_item) {
+			return String(frappe.route_options.plan_item);
+		}
 		var q = frappe.utils.get_query_params ? frappe.utils.get_query_params() : {};
 		if (q && q.plan_item) {
 			return q.plan_item;

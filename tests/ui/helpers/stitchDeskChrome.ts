@@ -27,6 +27,8 @@ export type StitchDeskChromeOptions = {
 	selectSelector?: string;
 	/** Optional headline selector (defaults to canvas h1). */
 	headlineSelector?: string;
+	/** Minimum CTA radius in pixels; defaults to the shared 6px chrome floor. */
+	primaryRadiusMin?: number;
 	/** Expect Manrope 30/700 on headline (default true). */
 	assertHeadline?: boolean;
 	/**
@@ -236,7 +238,9 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 	expect(chrome.hasPrimary, `missing primary CTA ${opts.primaryCtaTestId}`).toBeTruthy();
 
 	expect(chrome.primaryBorder.toLowerCase()).not.toContain("outset");
-	expect(parseFloat(chrome.primaryRadius)).toBeGreaterThanOrEqual(6);
+	expect(parseFloat(chrome.primaryRadius)).toBeGreaterThanOrEqual(
+		opts.primaryRadiusMin ?? 6,
+	);
 	if (opts.primaryCtaStyle === "bordered") {
 		// Audit Stitch header Export — white fill + outline, not navy primary.
 		expect(chrome.primaryBg).toMatch(/rgb\(\s*255,\s*255,\s*255\s*\)/);

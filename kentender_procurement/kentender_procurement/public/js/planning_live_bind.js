@@ -184,7 +184,7 @@
 		}
 	}
 
-	function bindPlanningWorkspace($root) {
+	function bindPlanningWorkspaceLegacy($root) {
 		if (!$root || !$root.length) {
 			return;
 		}
@@ -315,6 +315,8 @@
 						esc(r.demand || "") +
 						'" data-kt-pln-builder-route="' +
 						esc(r.builder_route || "") +
+						'" data-kt-pln-demand-route="' +
+						esc(r.demand_route || "") +
 						'">' +
 						'<span class="material-symbols-outlined text-[18px]" aria-hidden="true">' +
 						actionIcon +
@@ -576,6 +578,7 @@
 			e.preventDefault();
 			var action = $(this).attr("data-kt-pln-queue-action") || "view";
 			var demand = $(this).attr("data-kt-pln-demand") || "";
+			var demandRoute = $(this).attr("data-kt-pln-demand-route") || "";
 			var plan = $root.attr("data-kt-pln-plan");
 			var builder = $root.attr("data-kt-pln-builder-route");
 			if (action === "add_to_plan" && (builder || plan)) {
@@ -593,11 +596,300 @@
 					return;
 				}
 			}
-			if (demand) {
-				frappe.set_route("Form", "Demand", demand);
+			if (demand && demandRoute) {
+				var routeParts = demandRoute
+					.replace(/^\/?(?:desk|app)\//, "")
+					.split("/")
+					.filter(Boolean);
+				frappe.set_route(routeParts);
 			}
 		});
 
+		return refresh();
+	}
+
+	function bindPlanningWorkspace($root) {
+		if (!$root || !$root.length) {
+			return;
+		}
+		$root.attr("data-kt-pln-live", "0");
+		var state = {
+			pe: $root.attr("data-kt-pln-pe") || "",
+			fy: $root.attr("data-kt-pln-fy") || "2027/28",
+			workFilter: $root.attr("data-kt-pln-work-filter") || "all",
+			search: "",
+			request: 0,
+			dto: null,
+		};
+		var searchTimer = null;
+
+		function setBackgroundRefreshing(refreshing) {
+			$root.attr("data-kt-pln-refreshing", refreshing ? "1" : "0");
+			$root.attr("aria-busy", refreshing ? "true" : "false");
+			$root
+				.find('[data-testid="kt-pln-ui01-work-section"]')
+				.attr("aria-busy", refreshing ? "true" : "false");
+		}
+
+		function navigate(route) {
+			if (!route) {
+				return;
+			}
+			var url = new URL(route, window.location.origin);
+			var parts = url.pathname
+				.replace(/^\/(?:app|desk)\//, "")
+				.split("/")
+				.filter(Boolean);
+			var query = {};
+			url.searchParams.forEach(function (value, key) {
+				query[key] = value;
+			});
+			frappe.route_options = Object.assign({}, query);
+			if (parts.length === 1 && query.plan) {
+				parts.push(query.plan);
+			} else if (parts.length === 1 && query.plan_item) {
+				parts.push(query.plan_item);
+			}
+			frappe.set_route(parts);
+		}
+
+		function metric(label, value, kind, validation) {
+			var valueClass = kind === "money" ? "font-data-md kt-pln-data-value" : "font-body-md";
+			var icon = "";
+			if (kind === "finance") {
+				icon = '<span class="material-symbols-outlined kt-pln-icon-filled kt-pln-available" aria-hidden="true">verified</span>';
+			}
+			if (kind === "validation") {
+				var tone = validationTone(validation);
+				icon = '<span class="material-symbols-outlined kt-pln-icon-filled kt-pln-' + tone + '" aria-hidden="true">' + validationIcon(validation, tone) + "</span>";
+				valueClass += " kt-pln-" + tone;
+			}
+			return (
+				'<div class="kt-pln-metric"><span class="font-label-caps text-label-caps text-on-surface-variant">' +
+				esc(label) +
+				'</span><div class="kt-pln-metric-value">' + icon + '<span class="' + valueClass + '">' + esc(value) + "</span></div></div>"
+			);
+		}
+
+		function renderSummary(plan) {
+			var approved = plan.approved;
+			var draft = plan.draft;
+			var html = "";
+			if (approved) {
+				html += metric("Plan Items", approved.item_count + " active", "count");
+				html += metric("Approved value", String(approved.planned_total_display || "").replace(/\.00$/, ""), "money");
+			}
+			if (draft) {
+				html += metric("Draft Plan Items", draft.item_count + " items", "count");
+				html += metric("Draft value", String(draft.planned_total_display || "").replace(/\.00$/, ""), "money");
+			}
+			var focus = draft || approved || {};
+			html += metric("Finance confirmed", focus.finance_confirmed_label || "0 of 0", "finance");
+			html += metric("Validation", focus.validation_projection || "Not run", "validation", focus.validation_projection || "Not run");
+			$root.find("[data-kt-pln-summary-grid]").html(html);
+		}
+
+		function renderStatusLine(plan) {
+			var html = '<span class="kt-pln-plan-state">' + esc((plan.lifecycle_state || "Open") + " Plan") + "</span>";
+			if (plan.approved) {
+				html += '<span class="kt-pln-status-separator" aria-hidden="true">·</span>';
+				html += '<span class="kt-pln-version-status"><span class="material-symbols-outlined kt-pln-icon-filled kt-pln-available" aria-hidden="true">check_circle</span>';
+				html += esc("Approved Version " + plan.approved.version_number) + "</span>";
+			}
+			if (plan.draft) {
+				html += '<span class="kt-pln-status-separator" aria-hidden="true">·</span>';
+				html += '<span class="kt-pln-version-status">' + esc("Draft Version " + plan.draft.version_number) + "</span>";
+			}
+			if (plan.supporting_text) {
+				html += '<span class="kt-pln-status-separator" aria-hidden="true">|</span><em>' + esc(plan.supporting_text) + "</em>";
+			}
+			$root.find("[data-kt-pln-plan-status-line]").html(html);
+		}
+
+		function statusTone(status) {
+			var value = String(status || "").toLowerCase();
+			if (/return|blocked|stale/.test(value)) {
+				return "exhausted";
+			}
+			if (/awaiting|attention|incomplete|draft|no changes/.test(value)) {
+				return "reserved";
+			}
+			return "primary";
+		}
+
+		function rowsHtml(rows, waiting) {
+			return (rows || [])
+				.map(function (row) {
+					var action = row.action || {};
+					var tone = statusTone(row.status);
+					return (
+							'<tr data-kt-pln-row="' + esc(row.resource_key || "") + '"><td><div class="kt-pln-work-title">' +
+							esc(row.title || "") +
+							'</div><span class="font-data-md kt-pln-reference">' + esc(row.reference || row.demand_code || "") +
+							"</span></td><td>" + esc(row.work_type || "") + "</td><td>" +
+							esc(row.organisation_unit_label || row.organisation_unit || "") +
+							'</td><td class="text-right font-data-md kt-pln-data-value">' + esc(String(row.amount_display || "—").replace(/\.00$/, "")) +
+						"</td><td>" + esc(row.reason || "") + '</td><td><span class="kt-pln-status-pill kt-pln-status-' + tone + '">' +
+						esc(row.status || "") +
+						'</span></td><td><button type="button" class="kt-pln-row-action" data-kt-pln-route="' + esc(action.route || "") +
+						'" data-kt-pln-row-action="' + esc(action.code || "view") + '" aria-label="' +
+						esc((action.label || "View") + " " + (row.title || "")) + '">' + esc(action.label || "View") +
+							'<span class="material-symbols-outlined text-xs" aria-hidden="true">arrow_forward</span></button></td></tr>'
+					);
+				})
+				.join("");
+		}
+
+		function paint(dto) {
+			state.dto = dto;
+			state.pe = dto.procuring_entity || state.pe;
+			state.fy = dto.financial_year || state.fy;
+			$root
+				.attr("data-kt-pln-live", "1")
+				.attr("data-kt-pln-mode", dto.selection_mode || "")
+				.removeAttr("data-kt-pln-error");
+			setBackgroundRefreshing(false);
+			$root.attr("data-kt-pln-state", dto.state_id || "");
+			$root.attr("data-kt-pln-read-only", dto.read_only ? "1" : "0");
+			$root.attr("data-kt-pln-can-create", dto.can_create_plan ? "1" : "0");
+			$root.attr("data-kt-pln-pe", state.pe).attr("data-kt-pln-fy", state.fy);
+			setHidden($root.find("[data-kt-pln-loading]"), true);
+			setHidden($root.find("[data-kt-pln-error]"), true);
+			var blocked = dto.selection_mode === "blocked";
+			setHidden($root.find("[data-kt-pln-blocked]"), !blocked);
+			$root.find("[data-kt-pln-blocked-msg]").text(dto.blocked_reason || "An authorised Procuring Entity assignment is required.");
+			setHidden($root.find("[data-kt-pln-content]"), blocked);
+			if (blocked) {
+				return;
+			}
+			var single = dto.selection_mode === "single_readonly";
+			var $peSelect = $root.find("[data-kt-pln-pe-select]");
+			fillSelect($peSelect, dto.procuring_entities || [], dto.procuring_entity || "");
+			if (!single && !dto.procuring_entity) {
+				$peSelect.prepend(
+					'<option value="">' + esc(__("Select a Procuring Entity")) + "</option>"
+				);
+				$peSelect.val("");
+			}
+			setHidden($peSelect, single);
+			$root.find("[data-kt-pln-pe-readonly]").text(dto.procuring_entity_label || "Select a Procuring Entity");
+			fillSelect($root.find('[data-kt-pln-filter="financial_year"]'), dto.financial_years || [], state.fy);
+			fillSelect($root.find('[data-kt-pln-filter="work_type"]'), dto.filter_options || [], state.workFilter);
+			$root.find("[data-kt-pln-fy-readonly]").text(state.fy || "");
+			var editingContext = $root.attr("data-kt-pln-context-editing") === "1";
+			var needsSelection = !dto.procuring_entity;
+			setHidden($root.find("[data-kt-pln-context-summary]"), needsSelection || editingContext);
+			setHidden($root.find("[data-kt-pln-context-controls]"), !needsSelection && !editingContext);
+
+			var plan = dto.current_plan;
+			setHidden($root.find("[data-kt-pln-plan-panel]"), dto.state_id === "selection_required");
+			setHidden($root.find("[data-kt-pln-current-plan]"), !plan);
+			setHidden($root.find("[data-kt-pln-no-plan]"), !!plan || dto.state_id === "selection_required");
+			if (plan) {
+				$root.attr("data-kt-pln-plan", plan.plan || "");
+				$root.find("[data-kt-pln-plan-reference]").text(plan.plan_code || plan.plan || "");
+				$root.find("[data-kt-pln-plan-title]").text(String(plan.title || "").replace(/ Annual Procurement Plan FY (\d{4}\/\d{2})$/, " Annual Procurement Plan $1"));
+				renderStatusLine(plan);
+				renderSummary(plan);
+			} else {
+				$root.removeAttr("data-kt-pln-plan");
+				$root.find("[data-kt-pln-no-plan-msg]").text((dto.empty_states || {}).current_plan || "No annual Procurement Plan exists for this context.");
+			}
+			var primary = dto.primary_action;
+			setHidden($root.find("[data-kt-pln-primary-action]"), !primary);
+			if (primary) {
+				$root.find("[data-kt-pln-primary-label]").text(primary.label || "Continue");
+				$root.find("[data-kt-pln-primary-action]").attr("data-kt-pln-route", primary.route || "");
+			}
+
+			var work = dto.work_requiring_action || dto.work_queue || [];
+			var waiting = dto.waiting_on_others || [];
+			$root.find("[data-kt-pln-work-body]").html(rowsHtml(work, false));
+			$root.find("[data-kt-pln-waiting-body]").html(rowsHtml(waiting, true));
+			setHidden($root.find("[data-kt-pln-work-table]"), !work.length);
+			setHidden($root.find("[data-kt-pln-work-empty]"), !!work.length);
+			setHidden($root.find("[data-kt-pln-waiting-table]"), !waiting.length);
+			setHidden($root.find("[data-kt-pln-waiting-empty]"), !!waiting.length);
+			$root.find("[data-kt-pln-work-empty-text]").text((dto.empty_states || {}).work_requiring_action || "Nothing currently requires your planning action.");
+			$root.find("[data-kt-pln-waiting-empty-text]").text((dto.empty_states || {}).waiting_on_others || "Nothing is currently waiting on another reviewer.");
+		}
+
+		function refresh() {
+			var request = ++state.request;
+			var initialLoad = !state.dto;
+			setHidden($root.find("[data-kt-pln-loading]"), !initialLoad);
+			setHidden($root.find("[data-kt-pln-error]"), true);
+			setBackgroundRefreshing(!initialLoad);
+			return call("get_planning_workspace", {
+				procuring_entity: state.pe || null,
+				financial_year: state.fy,
+				work_filter: state.workFilter,
+				search: state.search,
+			})
+				.then(function (dto) {
+					if (request === state.request) {
+						paint(dto || {});
+					}
+				})
+				.catch(function (error) {
+					if (request !== state.request) {
+						return;
+					}
+					setBackgroundRefreshing(false);
+					setHidden($root.find("[data-kt-pln-loading]"), true);
+					if (initialLoad) {
+						setHidden($root.find("[data-kt-pln-content]"), true);
+						setHidden($root.find("[data-kt-pln-error]"), false);
+						$root.find("[data-kt-pln-error]").trigger("focus");
+						$root.attr("data-kt-pln-live", "1").attr("data-kt-pln-error", "1");
+					} else if (frappe.show_alert) {
+						frappe.show_alert({
+							message: __("The planning work list could not be refreshed."),
+							indicator: "red",
+						});
+					}
+					console.warn("Planning workspace load failed", error);
+				});
+		}
+
+		$root.off(".ktPlnWs");
+		$root.on("change.ktPlnWs", '[data-kt-pln-filter="procuring_entity"]', function () {
+			state.pe = $(this).val() || "";
+			$root.attr("data-kt-pln-context-editing", "0");
+			refresh();
+		});
+		$root.on("change.ktPlnWs", '[data-kt-pln-filter="financial_year"]', function () {
+			state.fy = $(this).val() || "2027/28";
+			$root.attr("data-kt-pln-context-editing", "0");
+			refresh();
+		});
+		$root.on("click.ktPlnWs", '[data-kt-pln-action="change-context"]', function () {
+			$root.attr("data-kt-pln-context-editing", "1");
+			setHidden($root.find("[data-kt-pln-context-summary]"), true);
+			setHidden($root.find("[data-kt-pln-context-controls]"), false);
+			var $target = $root.find('[data-kt-pln-filter="procuring_entity"]:visible');
+			if (!$target.length) {
+				$target = $root.find('[data-kt-pln-filter="financial_year"]');
+			}
+			$target.trigger("focus");
+		});
+		$root.on("change.ktPlnWs", '[data-kt-pln-filter="work_type"]', function () {
+			state.workFilter = $(this).val() || "all";
+			$root.attr("data-kt-pln-work-filter", state.workFilter);
+			refresh();
+		});
+		$root.on("input.ktPlnWs", "[data-kt-pln-work-search]", function () {
+			state.search = $(this).val() || "";
+			window.clearTimeout(searchTimer);
+			searchTimer = window.setTimeout(refresh, 250);
+		});
+		$root.on("click.ktPlnWs", "[data-kt-pln-primary-action], [data-kt-pln-row-action]", function (event) {
+			event.preventDefault();
+			navigate($(this).attr("data-kt-pln-route") || "");
+		});
+		$root.on("click.ktPlnWs", '[data-kt-pln-action="retry"]', function () {
+			refresh();
+		});
 		return refresh();
 	}
 
@@ -1188,7 +1480,7 @@
 			});
 		}
 
-		function openDialog() {
+		function openDialog(preselectedDemand) {
 			dialogMode = "add";
 			selectedIds = [];
 			$dialog.find("[data-kt-pln-formation-reason]").val("");
@@ -1201,7 +1493,15 @@
 			applyDialogMode();
 			setHidden($dialog, false);
 			$dialog.removeClass("hidden").removeAttr("hidden");
-			return loadElig();
+			return loadElig().then(function () {
+				if (preselectedDemand && findEligRow(preselectedDemand)) {
+					selectedIds = [preselectedDemand];
+					paintElig(lastEligRows);
+					$dialog.find("[data-kt-pln-elig-check]").filter(function () {
+						return $(this).attr("data-demand") === preselectedDemand;
+					}).trigger("focus");
+				}
+			});
 		}
 
 		function closeDialog() {
@@ -1978,7 +2278,28 @@
 			frappe.set_route("planning-workspace");
 		});
 
-		return refresh().catch(function (err) {
+		var preselectedDemand = "";
+		try {
+			preselectedDemand =
+				(frappe.route_options && frappe.route_options.add_demand) ||
+				new URLSearchParams(window.location.search || "").get("add_demand") ||
+				"";
+		} catch (e) {
+			preselectedDemand = "";
+		}
+		return refresh().then(function () {
+			if (!preselectedDemand) {
+				return;
+			}
+			return openDialog(preselectedDemand).then(function () {
+				if (frappe.route_options) {
+					delete frappe.route_options.add_demand;
+				}
+				var clean = new URL(window.location.href);
+				clean.searchParams.delete("add_demand");
+				window.history.replaceState(window.history.state, "", clean.pathname + clean.search + clean.hash);
+			});
+		}).catch(function (err) {
 			$root.attr("data-kt-pln-live", "0");
 			$root.attr("data-kt-pln-error", "1");
 			console.warn("Plan builder load failed", err);
@@ -2874,7 +3195,7 @@
 			});
 		}
 
-		function openAddDialog() {
+		function openAddDialog(preselectedDemand) {
 			selectedIds = [];
 			$dialog.find("[data-kt-pln-formation-reason]").val("");
 			$dialog.find('[data-kt-pln-formation-mode][value="separate"]').prop("checked", true);
@@ -2883,7 +3204,15 @@
 			}
 			setHidden($dialog, false);
 			$dialog.removeClass("hidden").removeAttr("hidden");
-			return loadElig();
+			return loadElig().then(function () {
+				if (preselectedDemand && findEligRow(preselectedDemand)) {
+					selectedIds = [preselectedDemand];
+					paintElig(lastEligRows);
+					$dialog.find("[data-kt-pln-elig-check]").filter(function () {
+						return $(this).attr("data-demand") === preselectedDemand;
+					}).trigger("focus");
+				}
+			});
 		}
 
 		function closeAddDialog() {
@@ -3321,7 +3650,28 @@
 			}
 		});
 
-		return refresh().catch(function (err) {
+		var preselectedDemand = "";
+		try {
+			preselectedDemand =
+				(frappe.route_options && frappe.route_options.add_demand) ||
+				new URLSearchParams(window.location.search || "").get("add_demand") ||
+				"";
+		} catch (e) {
+			preselectedDemand = "";
+		}
+		return refresh().then(function () {
+			if (!preselectedDemand) {
+				return;
+			}
+			return openAddDialog(preselectedDemand).then(function () {
+				if (frappe.route_options) {
+					delete frappe.route_options.add_demand;
+				}
+				var clean = new URL(window.location.href);
+				clean.searchParams.delete("add_demand");
+				window.history.replaceState(window.history.state, "", clean.pathname + clean.search + clean.hash);
+			});
+		}).catch(function (err) {
 			showDenied(err);
 			console.warn("Approved plan load failed", err);
 		});

@@ -22,9 +22,18 @@
   "col_b",
   "effective_at",
   "reversed_at",
-  "reason"
+  "reason",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan_item",
    "fieldtype": "Link",

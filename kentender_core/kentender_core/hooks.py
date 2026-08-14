@@ -59,6 +59,7 @@ app_include_js = [
 	f"/assets/kentender_core/js/kt_cl_components.js?v={_asset_version('public/js/kt_cl_components.js')}",
 	f"/assets/kentender_core/js/kt_cl_sidebar.js?v={_asset_version('public/js/kt_cl_sidebar.js')}",
 	f"/assets/kentender_core/js/kt_cl_shell.js?v={_asset_version('public/js/kt_cl_shell.js')}",
+	f"/assets/kentender_core/js/kt_page_lifecycle.js?v={_asset_version('public/js/kt_page_lifecycle.js')}",
 	f"/assets/kentender_core/js/kt_cl_surface_registry.js?v={_asset_version('public/js/kt_cl_surface_registry.js')}",
 	f"/assets/kentender_core/js/kt_cl_shell_router.js?v={_asset_version('public/js/kt_cl_shell_router.js')}",
 	f"/assets/kentender_core/js/kt_stitch_table_footer.js?v={_asset_version('public/js/kt_stitch_table_footer.js')}",
@@ -292,4 +293,3 @@ after_migrate = "kentender_core.install.after_migrate"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

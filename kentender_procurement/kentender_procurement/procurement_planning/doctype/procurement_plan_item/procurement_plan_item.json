@@ -16,9 +16,18 @@
   "baseline_state",
   "current_approved_item_version",
   "draft_item_version",
-  "tender_takeup_projection"
+  "tender_takeup_projection",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan",
    "fieldtype": "Link",

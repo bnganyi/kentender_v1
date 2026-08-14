@@ -1,11 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Clear KENTENDER_MVP_V1 fixture rows plus Playwright/test runtime leftovers.
+"""Clear explicitly owned KENTENDER_MVP_V1 and Playwright fixture rows.
 
-Contract §8.3: do not wipe unrelated *Strategic* Plans. Demo reseed *does* wipe
-extra Procurement Plans, Demands, `@test.local` users, and test budgets on PE-MOH /
-PE-CGKIS so queues show only canonical demo data.
+Contract §8.3 forbids treating Procuring Entity ownership as fixture ownership.
+Every deletion below therefore requires a namespace, exact canonical identity, or
+a narrow legacy browser-test signature.
 """
 
 from __future__ import annotations
@@ -26,7 +26,17 @@ _NAMESPACES = (
 	EDGE_NS,
 	LEGACY_EDGE_NS,
 	TEST_ACTIVITY_NS,
+	C.PLAYWRIGHT_FIXTURE_NS,
+	"DEMANDS_UI03_FACTORY",
+	"DEMANDS_UI04_FACTORY",
+	"DEMANDS_UI05_FACTORY",
+	"DEMANDS_UI06_FACTORY",
+	"DEMANDS_UI07_FACTORY",
+	"DEMANDS_UI07_MM_FACTORY",
+	"DEMANDS_UI09_FACTORY",
 )
+
+_PLAYWRIGHT_NAMESPACES = _NAMESPACES[2:]
 
 _BUDGET_CHILD_DOCTYPES = (
 	"Expenditure Snapshot",
@@ -38,11 +48,14 @@ _BUDGET_CHILD_DOCTYPES = (
 )
 
 # Exact fixture budget codes (MOH + CGK + known edge codes).
-_FIXTURE_BUDGET_CODES = (
+_CANONICAL_BUDGET_CODES = (
 	C.BUD_ACTIVE,
 	C.BUD_DRAFT,
 	C.BUD_CLOSED,
 	C.CGK_BUD_ACTIVE,
+)
+
+_PLAYWRIGHT_BUDGET_CODES = (
 	"MOH-BUD-0002",
 	"MOH-BUD-0004",
 )
@@ -81,41 +94,55 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 		deleted["Budget"] = deleted.get("Budget", 0) + 1
 
 
-def _collect_fixture_budgets() -> list[str]:
+def _collect_fixture_budgets(
+	*, include_canonical: bool = True, include_playwright: bool = True
+) -> list[str]:
 	names: list[str] = []
 	if frappe.db.has_column("Budget", "fixture_namespace"):
-		names.extend(
-			frappe.get_all(
-				"Budget",
-				filters={"fixture_namespace": ["in", list(_NAMESPACES)]},
-				pluck="name",
+		namespaces = []
+		if include_canonical:
+			namespaces.extend((C.FIXTURE_NS, C.LEGACY_FIXTURE_NS))
+		if include_playwright:
+			namespaces.extend((EDGE_NS, LEGACY_EDGE_NS, TEST_ACTIVITY_NS, C.PLAYWRIGHT_FIXTURE_NS))
+		if namespaces:
+			names.extend(
+				frappe.get_all(
+					"Budget",
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
 			)
-		)
-	for code in _FIXTURE_BUDGET_CODES:
+	for code in (
+		list(_CANONICAL_BUDGET_CODES) if include_canonical else []
+	) + (list(_PLAYWRIGHT_BUDGET_CODES) if include_playwright else []):
 		names.extend(
 			frappe.get_all("Budget", filters={"generated_reference": code}, pluck="name")
 		)
-	# Planning Finance tests: `MOH-BUD-PLN-<token>`.
-	names.extend(
-		frappe.get_all(
-			"Budget",
-			filters={"generated_reference": ["like", "MOH-BUD-PLN-%"]},
-			pluck="name",
+	if include_playwright:
+		# Planning Finance helpers have a reserved generated-reference prefix.
+		names.extend(
+			frappe.get_all(
+				"Budget",
+				filters={"generated_reference": ["like", "MOH-BUD-PLN-%"]},
+				pluck="name",
+			)
 		)
-	)
+		# Budget registration Playwright stores its marker in the authoritative
+		# reference, not in the server-generated business reference.
+		names.extend(
+			frappe.get_all(
+				"Budget",
+				filters={"authoritative_reference": ["like", "MOH-FIN-BUD-PW-%"]},
+				pluck="name",
+			)
+		)
 	return _unique(names)
 
 
-def purge_test_local_users() -> dict[str, int]:
-	"""Remove Gate/Playwright helper users (`*@test.local`). Keep @example.test personas."""
+def _delete_test_users(users: list[str]) -> dict[str, int]:
 	deleted: dict[str, int] = {}
-	users = frappe.get_all(
-		"User",
-		filters={"name": ["like", "%@test.local"]},
-		pluck="name",
-	)
 	keep = set(C.CANONICAL_USERS) | {"Administrator", "Guest"}
-	for user in users:
+	for user in _unique(users):
 		if user in keep:
 			continue
 		if frappe.db.exists("DocType", "Notification Log"):
@@ -135,29 +162,150 @@ def purge_test_local_users() -> dict[str, int]:
 		if frappe.db.exists("User Permission"):
 			for name in frappe.get_all("User Permission", filters={"user": user}, pluck="name"):
 				frappe.delete_doc("User Permission", name, force=1, ignore_permissions=True)
+				deleted["User Permission"] = deleted.get("User Permission", 0) + 1
 		if frappe.db.exists("User", user):
 			frappe.delete_doc("User", user, force=1, ignore_permissions=True)
 			deleted["User"] = deleted.get("User", 0) + 1
 	return deleted
 
 
-def clear_kentender_mvp_v1_budget() -> dict[str, Any]:
+def purge_dem_test_users(
+	*, users: list[str] | tuple[str, ...] | str | None = None, commit: bool = True
+) -> dict[str, Any]:
+	"""Delete all, or an exact subset of, reserved `dem-*` test accounts."""
+	frappe.only_for(("System Manager", "Administrator"))
+	if users is None:
+		users = frappe.get_all(
+			"User",
+			filters={"name": ["like", "dem-%@example.com"]},
+			pluck="name",
+		)
+	if isinstance(users, str):
+		users = frappe.parse_json(users)
+	if not isinstance(users, (list, tuple)):
+		frappe.throw("users must be a JSON list of dem-* test account emails")
+	requested = _unique([str(user).strip() for user in users])
+	invalid = [
+		user
+		for user in requested
+		if not (user.startswith("dem-") and user.endswith("@example.com"))
+	]
+	if invalid:
+		frappe.throw(f"Refusing to delete non-dem test users: {', '.join(invalid)}")
+
+	try:
+		deleted = _delete_test_users(requested)
+		if commit:
+			frappe.db.commit()
+		return {"ok": True, "requested": requested, "deleted": deleted}
+	except Exception:
+		frappe.db.rollback()
+		raise
+
+
+def purge_test_local_users() -> dict[str, int]:
+	"""Remove reserved automated-test users while keeping canonical personas."""
+	users: list[str] = []
+	for pattern in ("%@test.local", "dem-%@example.com"):
+		users.extend(
+			frappe.get_all(
+				"User",
+				filters={"name": ["like", pattern]},
+				pluck="name",
+			)
+		)
+	users.extend(user for user in C.PLAYWRIGHT_USERS if frappe.db.exists("User", user))
+	return _delete_test_users(users)
+
+
+def clear_kentender_mvp_v1_budget(
+	*, include_canonical: bool = True, include_playwright: bool = True
+) -> dict[str, Any]:
 	deleted: dict[str, int] = {}
-	for budget_name in _collect_fixture_budgets():
+	for budget_name in _collect_fixture_budgets(
+		include_canonical=include_canonical, include_playwright=include_playwright
+	):
 		_delete_budget_graph(budget_name, deleted)
 
-	# Orphan fixture lines / ledger by exact known codes / prefixes under namespace.
-	for code in (
-		C.BL_DHI_2027,
-		C.BL_HWD_2027,
-		C.BL_DHI_2028,
-		C.BL_HWD_2028,
-		C.CGK_BL_COLDCHAIN,
-		"MOH-BL-CLOSED-2026",
-		"MOH-BL-0003",
-		"MOH-BL-0005",
-		"MOH-BL-0006",
-	):
+	if include_playwright and frappe.db.exists("DocType", "Budget Revision"):
+		revisions: list[str] = []
+		if frappe.db.has_column("Budget Revision", "fixture_namespace"):
+			revisions.extend(
+				frappe.get_all(
+					"Budget Revision",
+					filters={"fixture_namespace": ["in", list(_PLAYWRIGHT_NAMESPACES)]},
+					pluck="name",
+				)
+			)
+		# BUD-UI-08 used this exact reference/reason before it could persist a
+		# fixture namespace. Both values are required to avoid matching user data.
+		revisions.extend(
+			frappe.get_all(
+				"Budget Revision",
+				filters={
+					"external_approval_reference": "MOF/UI/REV-01",
+					"reason": "Playwright draft revision",
+				},
+				pluck="name",
+			)
+		)
+		for revision in _unique(revisions):
+			revision_code = frappe.db.get_value(
+				"Budget Revision", revision, "generated_reference"
+			)
+			if revision_code and frappe.db.exists("DocType", "Budget Audit Event"):
+				frappe.flags.allow_budget_audit_purge = True
+				try:
+					for audit_name in frappe.get_all(
+						"Budget Audit Event",
+						filters={
+							"record_doctype": "Budget Revision",
+							"record_code": revision_code,
+						},
+						pluck="name",
+					):
+						frappe.delete_doc(
+							"Budget Audit Event",
+							audit_name,
+							force=1,
+							ignore_permissions=True,
+						)
+						deleted["Budget Audit Event"] = (
+							deleted.get("Budget Audit Event", 0) + 1
+						)
+				finally:
+					frappe.flags.allow_budget_audit_purge = False
+			for file_name in frappe.get_all(
+				"File",
+				filters={
+					"attached_to_doctype": "Budget Revision",
+					"attached_to_name": revision,
+				},
+				pluck="name",
+			):
+				frappe.delete_doc("File", file_name, force=1, ignore_permissions=True)
+				deleted["File"] = deleted.get("File", 0) + 1
+			if frappe.db.exists("Budget Revision", revision):
+				frappe.delete_doc("Budget Revision", revision, force=1, ignore_permissions=True)
+				deleted["Budget Revision"] = deleted.get("Budget Revision", 0) + 1
+
+	# Orphan fixture lines / ledger by exact known canonical codes.
+	canonical_line_codes = (
+		(
+			C.BL_DHI_2027,
+			C.BL_HWD_2027,
+			C.BL_DHI_2028,
+			C.BL_HWD_2028,
+			C.CGK_BL_COLDCHAIN,
+			"MOH-BL-CLOSED-2026",
+			"MOH-BL-0003",
+			"MOH-BL-0005",
+			"MOH-BL-0006",
+		)
+		if include_canonical
+		else ()
+	)
+	for code in canonical_line_codes:
 		for name in frappe.get_all(
 			"Budget Line", filters={"generated_reference": code}, pluck="name"
 		):
@@ -166,11 +314,16 @@ def clear_kentender_mvp_v1_budget() -> dict[str, Any]:
 			frappe.delete_doc("Budget Line", name, force=1, ignore_permissions=True)
 			deleted["Budget Line"] = deleted.get("Budget Line", 0) + 1
 
-	for doctype, field, codes in (
-		("Funding Reservation", "generated_reference", (C.RSV_CODE, C.RSV_SHORT_CODE)),
-		("Procurement Commitment", "generated_reference", (C.COM_CODE,)),
-		("Expenditure Snapshot", "generated_reference", (C.EXP_CODE,)),
-	):
+	canonical_ledger_codes = (
+		(
+			("Funding Reservation", "generated_reference", (C.RSV_CODE, C.RSV_SHORT_CODE)),
+			("Procurement Commitment", "generated_reference", (C.COM_CODE,)),
+			("Expenditure Snapshot", "generated_reference", (C.EXP_CODE,)),
+		)
+		if include_canonical
+		else ()
+	)
+	for doctype, field, codes in canonical_ledger_codes:
 		if not frappe.db.exists("DocType", doctype):
 			continue
 		for code in codes:
@@ -182,21 +335,70 @@ def clear_kentender_mvp_v1_budget() -> dict[str, Any]:
 	return {"ok": True, "deleted": deleted}
 
 
-def clear_kentender_mvp_v1_scope_assignments() -> dict[str, int]:
+def clear_kentender_mvp_v1_scope_assignments(
+	*, include_canonical: bool = True, include_playwright: bool = True
+) -> dict[str, int]:
 	deleted: dict[str, int] = {}
+	namespaces = []
+	if include_canonical:
+		namespaces.extend((C.FIXTURE_NS, C.LEGACY_FIXTURE_NS))
+	if include_playwright:
+		namespaces.extend(_PLAYWRIGHT_NAMESPACES)
 	for doctype in ("User Scope Assignment", "Strategy Scope Assignment"):
-		if not frappe.db.exists("DocType", doctype):
+		if not namespaces or not frappe.db.exists("DocType", doctype):
 			continue
 		count = 0
 		for name in frappe.get_all(
 			doctype,
-			filters={"fixture_namespace": ["in", list(_NAMESPACES)]},
+			filters={"fixture_namespace": ["in", namespaces]},
 			pluck="name",
 		):
 			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 			count += 1
 		deleted[doctype] = count
 	return deleted
+
+
+def purge_kentender_playwright_data(*, commit: bool = True) -> dict[str, Any]:
+	"""Remove known browser-test artifacts without deleting canonical or business records."""
+	frappe.only_for(("System Manager", "Administrator"))
+	frappe.set_user("Administrator")
+	from kentender_core.seeds.kentender_mvp_v1.clear_demands import (
+		clear_kentender_mvp_v1_demands,
+	)
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+		clear_planning_fixture_rows,
+	)
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
+		clear_kentender_mvp_v1_strategy,
+	)
+
+	try:
+		out = {
+			"ok": True,
+			"planning": clear_planning_fixture_rows(
+				include_canonical=False, include_playwright=True
+			),
+			"demands": clear_kentender_mvp_v1_demands(
+				include_canonical=False, include_playwright=True
+			),
+			"budget": clear_kentender_mvp_v1_budget(
+				include_canonical=False, include_playwright=True
+			),
+			"strategy": clear_kentender_mvp_v1_strategy(
+				include_canonical=False, include_playwright=True
+			),
+			"scope_assignments": clear_kentender_mvp_v1_scope_assignments(
+				include_canonical=False, include_playwright=True
+			),
+			"users": purge_test_local_users(),
+		}
+		if commit:
+			frappe.db.commit()
+		return out
+	except Exception:
+		frappe.db.rollback()
+		raise
 
 
 def clear_kentender_mvp_v1(

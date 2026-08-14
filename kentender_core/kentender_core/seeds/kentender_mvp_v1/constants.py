@@ -11,6 +11,7 @@ from typing import Final
 FIXTURE_NS: Final[str] = "KENTENDER_MVP_V1"
 # Legacy namespace still purged on clear for one migration cycle.
 LEGACY_FIXTURE_NS: Final[str] = "MOH_MVP_V1"
+PLAYWRIGHT_FIXTURE_NS: Final[str] = "KENTENDER_PLAYWRIGHT"
 
 FIXTURE_TZ = timezone(timedelta(hours=3))
 FIXTURE_NOW: Final[datetime] = datetime(2027, 11, 5, 12, 0, 0, tzinfo=FIXTURE_TZ)
@@ -168,6 +169,17 @@ RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (
 	"budget.officer.authority@moh.test",
 	"budget.officer@moe.test",
 	USER_OTHER_ENTITY,
+)
+
+# Browser factories historically created these users with the same @example.test
+# domain as canonical personas. Keep the identities explicit so cleanup never
+# guesses from the email domain and never removes a real demo persona.
+PLAYWRIGHT_USERS: Final[tuple[str, ...]] = (
+	"dem-ui03-ba@example.test",
+	"moh.procurement.approver@example.test",
+	"dem-ui09-planner@example.test",
+	"pln.ui.viewer@example.test",
+	"pln.ui.multi@example.test",
 )
 
 

@@ -73,7 +73,7 @@ test.describe("PLN-NFR-004 Planning a11y", () => {
 		await expect(pe).toHaveAttribute("aria-label", /Procuring Entity/i);
 		await expect(fy).toHaveAttribute("aria-label", /Financial Year/i);
 
-		const openPlan = page.getByTestId("kt-pln-ui01-open-plan");
+		const openPlan = page.getByTestId("kt-pln-ui01-primary-action");
 		await openPlan.focus();
 		await expect(openPlan).toBeFocused();
 		await visibleFocusChrome(openPlan);

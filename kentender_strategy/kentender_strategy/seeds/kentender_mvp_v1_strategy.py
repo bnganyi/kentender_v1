@@ -160,12 +160,16 @@ def _ensure_pvos(pe: str) -> dict[str, str]:
 	return out
 
 
-def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
+def clear_kentender_mvp_v1_strategy(
+	*, include_canonical: bool = True, include_playwright: bool = True
+) -> dict[str, Any]:
 	"""Delete fixture-tagged Strategy records (MOH + CGK codes) — no broad PE wipe."""
 	deleted: dict[str, int] = {}
-	namespaces = (C.FIXTURE_NS, C.LEGACY_FIXTURE_NS)
+	namespaces = [C.FIXTURE_NS, C.LEGACY_FIXTURE_NS] if include_canonical else []
+	if include_playwright:
+		namespaces.append(C.PLAYWRIGHT_FIXTURE_NS)
 	plans: list[str] = []
-	if frappe.db.has_column("Strategic Plan", "fixture_namespace"):
+	if namespaces and frappe.db.has_column("Strategic Plan", "fixture_namespace"):
 		plans.extend(
 			frappe.get_all(
 				"Strategic Plan",
@@ -173,9 +177,20 @@ def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
 				pluck="name",
 			)
 		)
-	for code in (C.PLAN_CODE, C.CGK_PLAN_CODE, "MOH-SP-0001"):
+	if include_canonical:
+		for code in (C.PLAN_CODE, C.CGK_PLAN_CODE, "MOH-SP-0001"):
+			plans.extend(
+				frappe.get_all("Strategic Plan", filters={"plan_code": code}, pluck="name")
+			)
+	if include_playwright:
+		# Legacy STR Playwright creation predates fixture_namespace. Its title is
+		# deliberately test-specific, so it can be removed without a PE-wide wipe.
 		plans.extend(
-			frappe.get_all("Strategic Plan", filters={"plan_code": code}, pluck="name")
+			frappe.get_all(
+				"Strategic Plan",
+				filters={"title": ["like", "Playwright Create %"]},
+				pluck="name",
+			)
 		)
 	seen_plans: set[str] = set()
 	uniq_plans: list[str] = []
@@ -186,6 +201,7 @@ def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
 	plans = uniq_plans
 
 	child_doctypes = (
+		"Strategy Audit Event",
 		"Strategy Corrective Action",
 		"Performance Measurement",
 		"Plan Value Commitment",
@@ -195,19 +211,9 @@ def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
 		"Strategy Sub Programme",
 		"Strategy Programme",
 	)
-	code_field = {
-		"Strategy Programme": "programme_code",
-		"Strategy Sub Programme": "sub_programme_code",
-		"Strategic Outcome": "outcome_code",
-		"Performance Indicator": "indicator_code",
-		"Performance Target": "target_code",
-		"Plan Value Commitment": "commitment_code",
-		"Performance Measurement": "measurement_code",
-		"Strategy Corrective Action": "corrective_action_code",
-	}
 	for doctype in child_doctypes:
 		names: list[str] = []
-		if frappe.db.has_column(doctype, "fixture_namespace"):
+		if namespaces and frappe.db.has_column(doctype, "fixture_namespace"):
 			names.extend(
 				frappe.get_all(
 					doctype,
@@ -219,12 +225,6 @@ def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
 			if frappe.db.has_column(doctype, "plan_version"):
 				names.extend(
 					frappe.get_all(doctype, filters={"plan_version": p}, pluck="name")
-				)
-		cf = code_field.get(doctype)
-		if cf and frappe.db.has_column(doctype, cf):
-			for pattern in ("MOH-%", "CGK-%"):
-				names.extend(
-					frappe.get_all(doctype, filters={cf: ["like", pattern]}, pluck="name")
 				)
 		seen: set[str] = set()
 		count = 0
@@ -241,7 +241,7 @@ def clear_kentender_mvp_v1_strategy() -> dict[str, Any]:
 			frappe.delete_doc("Strategic Plan", p, force=1, ignore_permissions=True)
 			deleted["Strategic Plan"] = deleted.get("Strategic Plan", 0) + 1
 
-	if frappe.db.exists("DocType", "Strategy Scope Assignment"):
+	if namespaces and frappe.db.exists("DocType", "Strategy Scope Assignment"):
 		ssa = 0
 		for name in frappe.get_all(
 			"Strategy Scope Assignment",

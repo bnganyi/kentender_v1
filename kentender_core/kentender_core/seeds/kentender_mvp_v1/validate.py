@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Contract v2.0 §9 verification report for KENTENDER_MVP_V1."""
+"""Contract v2.7 §9 verification report for KENTENDER_MVP_V1."""
 
 from __future__ import annotations
 
@@ -985,7 +985,13 @@ def validate_kentender_mvp_v1(
 		plan = frappe.db.get_value(
 			"Procurement Plan",
 			{"plan_code": C.PROCUREMENT_PLAN_CODE},
-			["name", "lifecycle_state", "current_approved_version", "procuring_entity"],
+			[
+				"name",
+				"lifecycle_state",
+				"current_approved_version",
+				"procuring_entity",
+				"fixture_namespace",
+			],
 			as_dict=True,
 		)
 		checks.append(
@@ -995,6 +1001,7 @@ def validate_kentender_mvp_v1(
 					plan
 					and plan.lifecycle_state == "Open"
 					and plan.procuring_entity == C.PE_MOH
+					and plan.fixture_namespace == C.FIXTURE_NS
 				),
 				str(plan),
 			)
@@ -1002,7 +1009,7 @@ def validate_kentender_mvp_v1(
 		version = frappe.db.get_value(
 			"Procurement Plan Version",
 			{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
-			["name", "status", "plan"],
+			["name", "status", "plan", "approved_by", "fixture_namespace"],
 			as_dict=True,
 		)
 		if not include_scn_add:
@@ -1018,6 +1025,17 @@ def validate_kentender_mvp_v1(
 					str(version),
 				)
 			)
+		checks.append(
+			_check(
+				"planning.version.canonical_approval_actor",
+				bool(
+					version
+					and version.approved_by == C.USER_HOP
+					and version.fixture_namespace == C.FIXTURE_NS
+				),
+				str(version),
+			)
+		)
 		item = frappe.db.get_value(
 			"Procurement Plan Item",
 			{"plan_item_code": C.PLAN_ITEM_CODE},

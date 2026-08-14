@@ -73,45 +73,42 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn('data-testid="kt-pln-ui01-root"', text)
 		self.assertIn('data-testid="kt-pln-ui01-filters"', text)
 		self.assertIn('data-testid="kt-pln-ui01-plan-panel"', text)
-		self.assertIn('data-testid="kt-pln-ui01-queue"', text)
-		self.assertIn('data-testid="kt-pln-ui01-open-plan"', text)
+		self.assertIn('data-testid="kt-pln-ui01-work-section"', text)
+		self.assertIn('data-testid="kt-pln-ui01-waiting-section"', text)
+		self.assertIn('data-testid="kt-pln-ui01-primary-action"', text)
 		self.assertIn("data-kt-pln-filter", text)
-		self.assertIn("Work Requiring Action", text)
+		self.assertIn("Work requiring action", text)
 		# Stitch v1.9 literal port markers.
 		self.assertIn(
 			"Turn approved needs into funded, approved Plan Items ready for tendering.",
 			text,
 		)
-		self.assertIn(
-			"These controls define the workspace scope; they do not assign ownership to records.",
-			text,
-		)
-		self.assertIn("border-l-4 border-l-primary", text)
+		self.assertIn('data-kt-pln-action="change-context"', text)
+		self.assertIn("All pending actions have been completed.", text)
+		self.assertNotIn('aria-label="Breadcrumb"', text)
+		self.assertNotIn("chevron_right", text)
+		self.assertNotIn(">Current Plan<", text)
+		self.assertIn("kt-pln-table-block", text)
 		self.assertIn("arrow_forward", text)
 		self.assertIn('data-kt-pln-filter="work_type"', text)
-		self.assertIn('placeholder="Search work..."', text)
-		# Stitch PLN-UI-01 work options (four labels).
-		self.assertIn("All work", text)
-		self.assertIn("Approved Demands", text)
-		self.assertIn("Plan Items returned by Finance", text)
-		self.assertIn("Plan Items needing attention", text)
-		# PLN-GAP-UI-003 / PLN-FR-040: keep Awaiting Finance confirmation — REQ
-		# Finance-after-Plan-Item queue filter, not a Stitch miss.
-		self.assertIn("Awaiting Finance confirmation", text)
-		self.assertIn('value="awaiting_finance"', text)
-		self.assertIn('testid: "kt-pln-ui01-table-footer"', text)
-		self.assertIn("tablePaginationFooterHtml", text)
+		self.assertIn('placeholder="Search work"', text)
+		# The exact four options are server-owned and bound into this select.
+		self.assertIn("data-kt-pln-work-body", text)
+		self.assertIn("data-kt-pln-waiting-body", text)
+		self.assertIn("Nothing is currently waiting on another reviewer.", text)
+		self.assertIn("data-kt-pln-loading", text)
+		self.assertIn("data-kt-pln-error", text)
 		self.assertIn("font-headline-lg", text)
-		self.assertIn("bg-surface-container-lowest", text)
-		self.assertIn("max-w-[1400px]", text)
-		# CSS must defeat md:w-64 or PE select crushes to "Min…".
+		self.assertIn("max-w-7xl", text)
 		css = _read(CSS)
-		self.assertIn(r".md\:w-64", css)
-		self.assertIn('data-testid="kt-pln-ui01-filters"] .md\\:w-64', css)
-		self.assertIn("flex: 0 0 16rem", css)
-		self.assertIn("min-width: 14rem", css)
-		self.assertIn("gap-x-4", css)
-		self.assertIn("border-l-primary", css)
+		self.assertIn(".kt-pln-workspace-canvas", css)
+		self.assertIn(".kt-pln-summary-grid", css)
+		self.assertIn("grid-template-columns: repeat(4", css)
+		self.assertIn("@media (max-width: 599px)", css)
+		self.assertIn("font-family: \"JetBrains Mono\"", css)
+		self.assertIn(".kt-pln-icon-filled", css)
+		self.assertIn("font-family: Manrope", css)
+		self.assertIn("font-family: Inter", css)
 		# Forbidden: contribution-era scaffold.
 		self.assertNotIn("md:grid-cols-4", text)
 		self.assertNotIn("data-kt-pln-plan-contributions", text)
@@ -121,6 +118,11 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn("truncate", text)
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)
+		self.assertIn(
+			'.page-container[data-page-route="procurement-plan-item-editor"]',
+			css,
+		)
+		self.assertNotIn("body.kt-pln-editor-active .page-container,", css)
 
 	def test_register_fixture_markers(self):
 		text = _read(REG_FIXTURE)
@@ -639,6 +641,8 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn("Submit for review", live)
 		self.assertIn("attachPagination", live)
 		self.assertIn("helper_text", live)
+		self.assertIn("data-kt-pln-demand-route", live)
+		self.assertNotIn('frappe.set_route("Form", "Demand"', live)
 		# Semantic status tones shared with workspace / Budget / Strategy chips.
 		self.assertIn("status-available", live)
 		self.assertIn("validationTone", live)
@@ -779,8 +783,5 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn("contribution_drawer.js", js_includes)
 		self.assertIn("planning_ui_fixtures/plan_item_editor.js", js_includes)
 		self.assertIn("planning_ui_fixtures/plan_review.js", js_includes)
-		self.assertIn("planning_review_page.js", js_includes)
 		self.assertIn("planning_ui_fixtures/plan_approved.js", js_includes)
-		self.assertIn("planning_approved_page.js", js_includes)
 		self.assertIn("planning_ui_fixtures/plan_update.js", js_includes)
-		self.assertIn("planning_update_page.js", js_includes)

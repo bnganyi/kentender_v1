@@ -89,7 +89,16 @@ def validation_input_fingerprint(*, plan: str, version: str) -> str:
 		for field, _label in _MILESTONE_FIELDS:
 			payload[field] = cstr(getattr(iv, field, None) or "")
 		rows.append(payload)
-	blob = json.dumps(rows, sort_keys=True, separators=(",", ":"))
+	return validation_input_fingerprint_from_rows(rows)
+
+
+def validation_input_fingerprint_from_rows(rows: list[dict[str, Any]]) -> str:
+	"""Hash preloaded validation inputs without issuing per-item queries.
+
+	Workspace and queue projections load the same fields in bulk and use this
+	helper so their effective Ready/Stale result cannot drift from Plan validation.
+	"""
+	blob = json.dumps(rows, sort_keys=True, separators=(",", ":"), default=str)
 	return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
@@ -155,6 +164,27 @@ def effective_validation_status(
 	if current != prior:
 		return VALIDATION_STALE
 	return VALIDATION_READY
+
+
+def effective_validation_status_from_rows(
+	*,
+	version: str,
+	stored: str | None,
+	rows: list[dict[str, Any]],
+) -> str:
+	"""Bulk equivalent of :func:`effective_validation_status`.
+
+	The caller supplies the already-scoped item-version inputs. Only the stored
+	fingerprint lookup remains, so response cost does not grow per queue row.
+	"""
+	status = cstr(stored or VALIDATION_NOT_RUN)
+	if status != VALIDATION_READY:
+		return status or VALIDATION_NOT_RUN
+	prior = _stored_fingerprint(version)
+	if not prior:
+		return VALIDATION_READY
+	current = validation_input_fingerprint_from_rows(rows)
+	return VALIDATION_READY if current == prior else VALIDATION_STALE
 
 
 def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:

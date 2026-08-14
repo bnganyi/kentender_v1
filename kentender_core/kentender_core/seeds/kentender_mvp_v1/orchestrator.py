@@ -62,30 +62,37 @@ def run_kentender_mvp_v1(
 		"finance_freshness_days": C.FINANCE_FRESHNESS_DAYS,
 		"latest_stage": LATEST_STAGE,
 	}
-	if reset:
-		result["clear"] = clear_kentender_mvp_v1(
-			include_strategy=True,
-			include_budget=True,
-			include_demands=True,
-			include_planning=True,
-		)
+	try:
+		if reset:
+			result["clear"] = clear_kentender_mvp_v1(
+				include_strategy=True,
+				include_budget=True,
+				include_demands=True,
+				include_planning=True,
+			)
 
-	result["org"] = upsert_org()
-	result["users"] = upsert_canonical_users()
-	result["strategy"] = upsert_strategy(reset=False)
-	result["budget"] = upsert_budget()
-	result["demands"] = upsert_demands()
-	result["planning"] = upsert_planning()
-	frappe.db.commit()
+		result["org"] = upsert_org()
+		result["users"] = upsert_canonical_users(commit=False)
+		result["strategy"] = upsert_strategy(reset=False)
+		result["budget"] = upsert_budget()
+		result["demands"] = upsert_demands()
+		result["planning"] = upsert_planning()
 
-	if validate:
-		report = _validate(include_demands=True, include_planning=True)
-		result["validate"] = report
-		result["ok"] = bool(report.get("ok"))
-		print(report.get("summary") or "")
-		if not report.get("ok"):
-			frappe.msgprint("KENTENDER_MVP_V1 validation FAILED — see validate.failures")
-	return result
+		if validate:
+			report = _validate(include_demands=True, include_planning=True)
+			result["validate"] = report
+			result["ok"] = bool(report.get("ok"))
+			print(report.get("summary") or "")
+			if not report.get("ok"):
+				raise frappe.ValidationError(
+					"KENTENDER_MVP_V1 validation failed: "
+					+ "; ".join(c.get("name", "unknown") for c in report.get("failures", []))
+				)
+		frappe.db.commit()
+		return result
+	except Exception:
+		frappe.db.rollback()
+		raise
 
 
 def validate_kentender_mvp_v1(
@@ -104,6 +111,11 @@ def validate_kentender_mvp_v1(
 		include_scn_remove=include_scn_remove,
 	)
 	print(report.get("summary") or "")
+	if not report.get("ok"):
+		raise frappe.ValidationError(
+			"KENTENDER_MVP_V1 validation failed: "
+			+ "; ".join(c.get("name", "unknown") for c in report.get("failures", []))
+		)
 	return report
 
 

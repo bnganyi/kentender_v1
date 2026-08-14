@@ -77,16 +77,63 @@ from kentender_procurement.procurement_planning.services.create_planning_handoff
 )
 
 
+def _mark_playwright_demand_graph(demand: str) -> None:
+	"""Tag a Demand created by a browser fixture without touching business records."""
+	if not demand or not frappe.db.exists("Demand", demand):
+		return
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+
+	for doctype in (
+		"Demand",
+		"Demand Item",
+		"Demand Decision",
+		"Demand Strategy Reference",
+		"Demand Value Treatment",
+		"Demand Funding Allocation",
+		"Funding Exception",
+		"Planning Consumption",
+	):
+		if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(
+			doctype, "fixture_namespace"
+		):
+			continue
+		names = [demand] if doctype == "Demand" else frappe.get_all(
+			doctype, filters={"demand": demand}, pluck="name"
+		)
+		for name in names:
+			frappe.db.set_value(
+				doctype,
+				name,
+				"fixture_namespace",
+				C.PLAYWRIGHT_FIXTURE_NS,
+				update_modified=False,
+			)
+
+
+def _mark_playwright_plan_graph(plan: str, *demands: str | None) -> None:
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+		mark_plan_graph_fixture,
+	)
+
+	mark_plan_graph_fixture(plan, C.PLAYWRIGHT_FIXTURE_NS)
+	for demand in demands:
+		if demand:
+			_mark_playwright_demand_graph(demand)
+
+
 @frappe.whitelist()
 def get_planning_workspace(
 	procuring_entity: str | None = None,
 	financial_year: str | None = "2027/28",
 	work_filter: str | None = "all",
+	search: str | None = None,
 ) -> dict[str, Any]:
 	return _get_planning_workspace(
 		procuring_entity=procuring_entity,
 		financial_year=financial_year,
 		work_filter=work_filter,
+		search=search,
 	)
 
 
@@ -525,6 +572,11 @@ def prepare_planning_gate04_ui(
 		out["plan_item"] = added.get("plan_item")
 		out["editor_route"] = added.get("editor_route")
 		out["plan_item_code"] = added.get("plan_item_code")
+	_mark_playwright_plan_graph(
+		plan,
+		d["demand"],
+		out.get("eligible_demand_2"),
+	)
 	frappe.db.commit()
 	return out
 
@@ -552,6 +604,7 @@ def prepare_planning_gate05_ui() -> dict[str, Any]:
 		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
 		validate_plan(plan=plan, user=planner)
 
+	_mark_playwright_plan_graph(plan, base.get("eligible_demand"))
 	frappe.db.commit()
 	return {
 		**base,
@@ -642,6 +695,7 @@ def prepare_planning_finance_ui() -> dict[str, Any]:
 		if "Budget Officer" not in existing:
 			page.append("roles", {"role": "Budget Officer"})
 			page.save(ignore_permissions=True)
+	_mark_playwright_plan_graph(plan, demand)
 	frappe.db.commit()
 	return {
 		**base,
@@ -734,6 +788,7 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 		if "Budget Officer" not in existing:
 			page.append("roles", {"role": "Budget Officer"})
 			page.save(ignore_permissions=True)
+	_mark_playwright_plan_graph(plan, demand)
 	frappe.db.commit()
 	return {
 		"ok": True,
@@ -893,6 +948,7 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 				page.append("roles", {"role": role})
 		page.save(ignore_permissions=True)
 
+	_mark_playwright_plan_graph(plan, base.get("eligible_demand"))
 	frappe.db.commit()
 	return {
 		**base,
@@ -1014,6 +1070,7 @@ def prepare_planning_gate06_approved_ui(
 
 	want_successor = str(with_successor or "0") not in ("0", "", "None")
 	want_handoff = str(with_handoff or "0") not in ("0", "", "None")
+	extra: dict[str, Any] = {}
 	if want_handoff and plan_item:
 		initiator = ensure_tender_initiator()
 		frappe.set_user(initiator)
@@ -1034,6 +1091,11 @@ def prepare_planning_gate06_approved_ui(
 		if not added2.get("ok"):
 			frappe.throw(f"Gate06 approved prep: successor add failed: {added2}")
 
+	_mark_playwright_plan_graph(
+		plan,
+		demand.get("demand"),
+		extra.get("demand") if want_successor else None,
+	)
 	frappe.db.commit()
 	return {
 		"ok": True,
@@ -1053,24 +1115,35 @@ def prepare_planning_gate06_approved_ui(
 
 
 @frappe.whitelist()
-def prepare_planning_scn_add_ui() -> dict[str, Any]:
-	"""Canonical SCN-ADD stop_before_finance for AC-013 Playwright."""
+def prepare_planning_scn_add_ui(stop_point: str | None = None) -> dict[str, Any]:
+	"""Prepare a deterministic SCN-ADD evidence boundary for Playwright."""
 	from kentender_core.seeds.kentender_mvp_v1 import constants as C
 	from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as scn
 
 	frappe.only_for(("System Manager", "Administrator"))
-	prepared = scn.run(reset_first=True, force=True, stop_before_finance=True)
+	selected_stop = cstr(stop_point).strip()
+	prepared = (
+		scn.run(reset_first=True, force=True, stop_point=selected_stop)
+		if selected_stop
+		else scn.run(reset_first=True, force=True, stop_before_finance=True)
+	)
 	if not prepared.get("ok"):
 		frappe.throw(f"SCN-ADD prepare failed: {prepared}")
 	plan = frappe.db.get_value(
 		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
 	)
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+		mark_plan_graph_fixture,
+	)
+
+	mark_plan_graph_fixture(plan, C.FIXTURE_NS)
 	frappe.db.commit()
 	return {
 		"ok": True,
+		"stage": prepared.get("stage"),
 		"plan": plan,
 		"plan_code": C.PROCUREMENT_PLAN_CODE,
-		"stopped_before_finance": True,
+		"stopped_before_finance": bool(prepared.get("stopped_before_finance")),
 		"approved_route": f"/app/procurement-plan-approved?plan={plan}",
 		"update_route": f"/app/procurement-plan-update?plan={plan}",
 		"tender_code": C.TENDER_CODE,
@@ -1095,6 +1168,7 @@ def prepare_planning_gate03_ui(clear_create_fy: str | None = None) -> dict[str, 
 	)
 	from kentender_procurement.procurement_planning.services.planning_permissions import (
 		ROLE_PLANNER,
+		ROLE_VIEWER,
 		ensure_planning_roles,
 	)
 
@@ -1113,6 +1187,54 @@ def prepare_planning_gate03_ui(clear_create_fy: str | None = None) -> dict[str, 
 
 	ensure_administrator_planning_support_viewer()
 	fixture = ensure_empty_draft_plan_fixture(commit=True)
+	_mark_playwright_plan_graph(fixture["plan"])
+
+	# Gate-03 owns these disposable browser personas. The no-scope persona has
+	# record-read capability but deliberately receives no scope assignment.
+	for email, first, last, with_scope in (
+		("pln.ui.viewer@example.test", "MOH", "Viewer", True),
+		("pln.ui.no.scope@example.test", "No Scope", "Support", False),
+	):
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": first,
+					"last_name": last,
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+		browser_user = frappe.get_doc("User", email)
+		browser_user.enabled = 1
+		browser_user.save(ignore_permissions=True)
+		browser_user.add_roles("Desk User", ROLE_VIEWER)
+		if not with_scope:
+			# The zero-scope persona may reach create-capable pages so those pages
+			# can render their server-derived blocked state; it still has no USA.
+			browser_user.add_roles(ROLE_PLANNER)
+		update_password(email, TEST_PASSWORD)
+		for name in frappe.get_all(
+			"User Scope Assignment",
+			filters={
+				"user": email,
+				"role": ["in", [ROLE_VIEWER, ROLE_PLANNER]],
+			},
+			pluck="name",
+		):
+			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		if with_scope:
+			frappe.get_doc(
+				{
+					"doctype": "User Scope Assignment",
+					"user": email,
+					"role": ROLE_VIEWER,
+					"procuring_entity": pe_moh,
+					"organisation_unit": "",
+					"include_descendants": 0,
+				}
+			).insert(ignore_permissions=True)
 
 	multi_email = "pln.ui.multi@example.test"
 	if not frappe.db.exists("User", multi_email):

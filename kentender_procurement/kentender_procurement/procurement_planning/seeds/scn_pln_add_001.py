@@ -8,16 +8,19 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import flt
+from frappe.utils import cstr, flt
 
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.procurement_planning.mvp1_constants import (
+	FINANCE_AWAITING,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VERSION_APPROVED,
 	VERSION_DRAFT,
+	VERSION_IN_REVIEW,
 )
 from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+	mark_plan_graph_fixture,
 	upsert_planning_base,
 )
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
@@ -190,10 +193,18 @@ def _draft_total(plan_name: str, version_name: str) -> float:
 	return total
 
 
-def _snapshot(*, idempotent: bool, stopped_before_finance: bool = False, stopped_before_approve: bool = False) -> dict[str, Any]:
+def _snapshot(
+	*,
+	idempotent: bool,
+	stage: str = "approved",
+	stopped_before_finance: bool = False,
+	stopped_before_approve: bool = False,
+) -> dict[str, Any]:
 	plan_name = frappe.db.get_value(
 		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
 	)
+	if plan_name:
+		mark_plan_graph_fixture(plan_name, C.FIXTURE_NS)
 	v2_name = frappe.db.get_value(
 		"Procurement Plan Version",
 		{"version_code": C.PROCUREMENT_PLAN_VERSION_V2},
@@ -220,6 +231,7 @@ def _snapshot(*, idempotent: bool, stopped_before_finance: bool = False, stopped
 	return {
 		"ok": True,
 		"idempotent": idempotent,
+		"stage": stage,
 		"plan_item_code": C.PLAN_ITEM_CODE_SCN,
 		"version_code": C.PROCUREMENT_PLAN_VERSION_V2,
 		"total": total,
@@ -229,7 +241,7 @@ def _snapshot(*, idempotent: bool, stopped_before_finance: bool = False, stopped
 	}
 
 
-def _ensure_draft_item(*, demand: str, plan_name: str) -> str:
+def _ensure_draft_item(*, demand: str, plan_name: str, complete: bool = True) -> str:
 	item_022 = frappe.db.get_value(
 		"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}, "name"
 	)
@@ -239,7 +251,8 @@ def _ensure_draft_item(*, demand: str, plan_name: str) -> str:
 		if not added.get("ok"):
 			raise frappe.ValidationError(added.get("errors") or added)
 		item_022 = _pin_scn_item_identity(added["plan_item"])
-	_complete_item_if_needed(item_022)
+	if complete:
+		_complete_item_if_needed(item_022)
 	saved = save_plan_update(
 		plan=plan_name,
 		update_reason=UPDATE_REASON,
@@ -250,17 +263,22 @@ def _ensure_draft_item(*, demand: str, plan_name: str) -> str:
 	return item_022
 
 
-def _ensure_finance(item_022: str, plan_name: str) -> None:
-	if frappe.db.exists("Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}):
+def _ensure_finance(item_022: str, plan_name: str, *, confirm: bool = True) -> None:
+	if confirm and frappe.db.exists("Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}):
 		return
 	_complete_item_if_needed(item_022)
 	_complete_carry_forward_items(plan_name)
 	planner = C.USER_PLANNING_OFFICER
-	req = update_plan_item(plan_item=item_022, user=planner, request_finance=True)
-	if req.get("ok") is False:
-		raise frappe.ValidationError(req.get("errors") or req)
-	if not req.get("complete"):
-		raise frappe.ValidationError(req.get("field_issues") or req)
+	iv = frappe.db.get_value("Procurement Plan Item", item_022, "draft_item_version")
+	status = frappe.db.get_value("Procurement Plan Item Version", iv, "finance_status") if iv else None
+	if status != FINANCE_AWAITING:
+		req = update_plan_item(plan_item=item_022, user=planner, request_finance=True)
+		if req.get("ok") is False:
+			raise frappe.ValidationError(req.get("errors") or req)
+		if not req.get("complete"):
+			raise frappe.ValidationError(req.get("field_issues") or req)
+	if not confirm:
+		return
 	confirmed = confirm_plan_item_funding(
 		plan_item=item_022,
 		note="SCN-PLN-ADD-001 post-Planning Finance",
@@ -309,15 +327,15 @@ def _complete_carry_forward_items(plan_name: str) -> None:
 			raise frappe.ValidationError(complete.get("errors") or complete)
 
 
-def _ensure_approved(plan_name: str) -> None:
+def _ensure_submitted(plan_name: str) -> str:
 	v2_name = frappe.db.get_value(
 		"Procurement Plan Version",
 		{"version_code": C.PROCUREMENT_PLAN_VERSION_V2},
 		"name",
 	)
 	status = frappe.db.get_value("Procurement Plan Version", v2_name, "status")
-	if status == VERSION_APPROVED:
-		return
+	if status in (VERSION_IN_REVIEW, VERSION_APPROVED):
+		return v2_name
 	_complete_carry_forward_items(plan_name)
 	planner = C.USER_PLANNING_OFFICER
 	token = frappe.db.get_value("Procurement Plan Version", v2_name, "concurrency_token")
@@ -336,8 +354,15 @@ def _ensure_approved(plan_name: str) -> None:
 				"validation": validation,
 			}
 		)
-	v2_name = submitted.get("version") or v2_name
-	token = submitted.get("concurrency_token")
+	return submitted.get("version") or v2_name
+
+
+def _ensure_approved(plan_name: str) -> None:
+	v2_name = _ensure_submitted(plan_name)
+	status = frappe.db.get_value("Procurement Plan Version", v2_name, "status")
+	if status == VERSION_APPROVED:
+		return
+	token = frappe.db.get_value("Procurement Plan Version", v2_name, "concurrency_token")
 	recommended = record_plan_decision(
 		version=v2_name,
 		decision="recommend",
@@ -365,12 +390,19 @@ def run(
 	force: bool = True,
 	stop_before_finance: bool = False,
 	stop_before_approve: bool = False,
+	stop_point: str | None = None,
 ) -> dict[str, Any]:
 	"""Execute SCN-PLN-ADD-001 via live Planning services.
 
 	``stop_before_finance`` — Draft V2 + Proposed 022, no RSV-0002 (REMOVE / FUND-SHORT / AC-013).
 	``stop_before_approve`` — after Finance; RSV-0002 exists; V1 still Approved.
+	``stop_point`` — idempotent UI evidence boundary: ``ready_demand``,
+	``incomplete_item``, ``awaiting_finance`` or ``submitted_review``.
 	"""
+	allowed_stops = {"", "ready_demand", "incomplete_item", "awaiting_finance", "submitted_review"}
+	stop = cstr(stop_point or "").strip()
+	if stop not in allowed_stops:
+		raise frappe.ValidationError(f"Unknown SCN-PLN-ADD-001 stop point: {stop}")
 	frappe.only_for(("System Manager", "Administrator"))
 	prev = frappe.session.user
 	frappe.set_user("Administrator")
@@ -392,6 +424,39 @@ def run(
 		has_rsv = bool(
 			frappe.db.exists("Funding Reservation", {"generated_reference": C.RSV_CODE_SCN})
 		)
+		item_name = frappe.db.get_value(
+			"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}, "name"
+		)
+		item_iv = (
+			frappe.db.get_value("Procurement Plan Item", item_name, "draft_item_version")
+			if item_name else None
+		)
+		item_finance = (
+			frappe.db.get_value("Procurement Plan Item Version", item_iv, "finance_status")
+			if item_iv else None
+		)
+		demand_ready = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE_RETURNED},
+			["status", "planning_ready"],
+			as_dict=True,
+		)
+		if (
+			stop == "ready_demand" and demand_ready
+			and demand_ready.status == "Approved" and int(demand_ready.planning_ready or 0)
+			and not v2
+		):
+			return _snapshot(idempotent=True, stage=stop)
+		if stop == "incomplete_item" and v2 and v2.status == VERSION_DRAFT and item_state == ITEM_PROPOSED and item_finance != FINANCE_AWAITING:
+			first_milestone = frappe.db.get_value(
+				"Procurement Plan Item Version", item_iv, "ms_invitation_published"
+			) if item_iv else None
+			if not first_milestone:
+				return _snapshot(idempotent=True, stage=stop, stopped_before_finance=True)
+		if stop == "awaiting_finance" and v2 and v2.status == VERSION_DRAFT and item_finance == FINANCE_AWAITING:
+			return _snapshot(idempotent=True, stage=stop, stopped_before_approve=True)
+		if stop == "submitted_review" and v2 and v2.status == VERSION_IN_REVIEW:
+			return _snapshot(idempotent=True, stage=stop, stopped_before_approve=True)
 
 		if stop_before_finance and v2 and v2.status == VERSION_DRAFT and item_state == ITEM_PROPOSED and not has_rsv:
 			return _snapshot(idempotent=True, stopped_before_finance=True)
@@ -412,16 +477,33 @@ def run(
 		)
 		if not plan_name:
 			raise frappe.ValidationError(f"Missing plan {C.PROCUREMENT_PLAN_CODE}")
+		if stop == "ready_demand":
+			frappe.db.commit()
+			return _snapshot(idempotent=False, stage=stop)
 
-		item_022 = _ensure_draft_item(demand=demand_info["demand"], plan_name=plan_name)
+		item_022 = _ensure_draft_item(
+			demand=demand_info["demand"],
+			plan_name=plan_name,
+			complete=stop != "incomplete_item",
+		)
+		if stop == "incomplete_item":
+			frappe.db.commit()
+			return _snapshot(idempotent=False, stage=stop, stopped_before_finance=True)
 		if stop_before_finance:
 			frappe.db.commit()
-			return _snapshot(idempotent=False, stopped_before_finance=True)
+			return _snapshot(idempotent=False, stage="complete_item", stopped_before_finance=True)
 
-		_ensure_finance(item_022, plan_name)
+		_ensure_finance(item_022, plan_name, confirm=stop != "awaiting_finance")
+		if stop == "awaiting_finance":
+			frappe.db.commit()
+			return _snapshot(idempotent=False, stage=stop, stopped_before_approve=True)
 		if stop_before_approve:
 			frappe.db.commit()
-			return _snapshot(idempotent=False, stopped_before_approve=True)
+			return _snapshot(idempotent=False, stage="finance_confirmed", stopped_before_approve=True)
+		if stop == "submitted_review":
+			_ensure_submitted(plan_name)
+			frappe.db.commit()
+			return _snapshot(idempotent=False, stage=stop, stopped_before_approve=True)
 
 		_ensure_approved(plan_name)
 		frappe.db.commit()

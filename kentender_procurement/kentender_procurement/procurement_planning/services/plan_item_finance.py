@@ -158,14 +158,34 @@ def _existing_reservation(dfa: Any | None, line_id: str, *, iv: Any | None = Non
 def effective_finance_status(iv: Any) -> str:
 	"""Live status — Confirmed becomes Stale when amount or Budget Line diverges."""
 	status = cstr(getattr(iv, "finance_status", None) or FINANCE_NOT_REQUESTED).strip()
-	if status != FINANCE_CONFIRMED:
-		return status or FINANCE_NOT_REQUESTED
-	snap_amt = flt(getattr(iv, "finance_snapshot_amount", 0) or 0)
-	snap_line = cstr(getattr(iv, "finance_snapshot_budget_line", None) or "").strip()
 	demand = _source_demand_row(iv.plan_item)
 	dfa = _dfa_for_demand(demand["demand"] if demand else "")
 	live_line = cstr(dfa.budget_line if dfa else "").strip()
-	live_amt = flt(iv.confirmed_estimate)
+	return effective_finance_status_from_values(
+		status=status,
+		snapshot_amount=getattr(iv, "finance_snapshot_amount", 0),
+		snapshot_budget_line=getattr(iv, "finance_snapshot_budget_line", None),
+		live_amount=getattr(iv, "confirmed_estimate", 0),
+		live_budget_line=live_line,
+	)
+
+
+def effective_finance_status_from_values(
+	*,
+	status: str | None,
+	snapshot_amount: float | None,
+	snapshot_budget_line: str | None,
+	live_amount: float | None,
+	live_budget_line: str | None,
+) -> str:
+	"""Apply the canonical Finance stale predicate to preloaded values."""
+	current = cstr(status or FINANCE_NOT_REQUESTED).strip() or FINANCE_NOT_REQUESTED
+	if current != FINANCE_CONFIRMED:
+		return current
+	snap_amt = flt(snapshot_amount or 0)
+	snap_line = cstr(snapshot_budget_line or "").strip()
+	live_amt = flt(live_amount or 0)
+	live_line = cstr(live_budget_line or "").strip()
 	if snap_amt and abs(live_amt - snap_amt) > 0.005:
 		return FINANCE_STALE
 	if snap_line and live_line and snap_line != live_line:

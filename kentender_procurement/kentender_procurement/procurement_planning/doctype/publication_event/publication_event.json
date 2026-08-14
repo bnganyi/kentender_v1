@@ -13,9 +13,18 @@
   "submitted_by",
   "published_at",
   "external_reference",
-  "failure_reason"
+  "failure_reason",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan_version",
    "fieldtype": "Link",

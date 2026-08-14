@@ -12,4 +12,4 @@ def upsert_budget() -> dict[str, Any]:
 	)
 
 	# Canonical demo pack only — test-edge budgets stay out of make seed.
-	return upsert_kentender_mvp_v1_portfolio(include_test_edges=False)
+	return upsert_kentender_mvp_v1_portfolio(include_test_edges=False, commit=False)

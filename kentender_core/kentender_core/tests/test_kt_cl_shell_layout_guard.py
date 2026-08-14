@@ -285,6 +285,83 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 		self.assertIn('frappe.router.on("change"', source)
 		self.assertIn("enterNative", source)
 		self.assertIn("leaveNative", source)
+		self.assertIn("page_lifecycle.bindPagesWithin", source)
+		self.assertIn("page_lifecycle.clearSurfaceBodyClasses", source)
+
+	def test_custom_page_hide_lifecycle_is_wired_before_shell_router(self) -> None:
+		source = _core_public("js", "kt_page_lifecycle.js").read_text(encoding="utf-8")
+		self.assertIn('on("hide.ktPageLifecycle"', source)
+		self.assertIn("wrapper.on_page_hide(wrapper)", source)
+		self.assertIn("clearSurfaceBodyClasses", source)
+		self.assertIn("MutationObserver", source)
+
+		js_hooks = frappe.get_hooks("app_include_js", app_name="kentender_core", default=[])
+		flat_js = [
+			item
+			for row in js_hooks
+			for item in (row if isinstance(row, (list, tuple)) else [row])
+		]
+		lifecycle_index = next(
+			i for i, path in enumerate(flat_js) if "kt_page_lifecycle.js" in str(path)
+		)
+		router_index = next(
+			i for i, path in enumerate(flat_js) if "kt_cl_shell_router.js" in str(path)
+		)
+		self.assertLess(lifecycle_index, router_index)
+
+	def test_planning_surfaces_are_registered(self) -> None:
+		source = _core_public("js", "kt_cl_surface_registry.js").read_text(encoding="utf-8")
+		for route in (
+			"planning-workspace",
+			"procurement-plan-register",
+			"procurement-plan-builder",
+			"procurement-plan-item-editor",
+			"procurement-plan-review",
+			"procurement-plan-approved",
+			"procurement-plan-update",
+		):
+			self.assertIn(f'routePrefixes: ["{route}"]', source)
+
+	def test_procurement_page_controllers_are_page_scoped(self) -> None:
+		page_js = frappe.get_hooks("page_js", app_name="kentender_procurement", default={})
+		app_include = frappe.get_hooks(
+			"app_include_js", app_name="kentender_procurement", default=[]
+		)
+		flat_include = [
+			str(item)
+			for row in app_include
+			for item in (row if isinstance(row, (list, tuple)) else [row])
+		]
+		controllers = {
+			"procurement-plan-item-editor": "planning_item_editor_page.js",
+			"procurement-plan-review": "planning_review_page.js",
+			"procurement-plan-approved": "planning_approved_page.js",
+			"procurement-plan-update": "planning_update_page.js",
+		}
+		for route, filename in controllers.items():
+			self.assertTrue(
+				any(filename in str(path) for path in page_js.get(route, [])),
+				msg=f"{route} must load {filename} through page_js",
+			)
+			self.assertFalse(
+				any(filename in path for path in flat_include),
+				msg=f"{filename} must not execute globally before its Page wrapper exists",
+			)
+
+		self.assertTrue(
+			any(
+				"procurement_home_page.js" in str(path)
+				for path in page_js.get("kt-procurement-home", [])
+			)
+		)
+		stub = (
+			Path(frappe.get_app_path("kentender_procurement"))
+			/ "kentender_procurement"
+			/ "page"
+			/ "kt_procurement_home"
+			/ "kt_procurement_home.js"
+		).read_text(encoding="utf-8")
+		self.assertNotIn("make_app_page", stub)
 
 	# ---- Desk wiring: POC page + gallery + permanent redirect ------------
 	def test_poc_page_is_wired(self) -> None:

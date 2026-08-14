@@ -11,6 +11,8 @@ test.describe("Procurement Home — functional Desk page", () => {
 
 	test("Desktop → Procurement first open shows left rail without refresh", async ({ page }) => {
 		test.setTimeout(120_000);
+		const pageErrors: string[] = [];
+		page.on("pageerror", (error) => pageErrors.push(error.message));
 		await page.goto("/desk", { waitUntil: "domcontentloaded" });
 		await page.getByRole("link", { name: /Procurement/i }).first().click();
 		await expect(page).toHaveURL(/\/desk\/kt-procurement-home/, { timeout: 30_000 });
@@ -28,6 +30,18 @@ test.describe("Procurement Home — functional Desk page", () => {
 		await expect(page.locator(`${NATIVE_RAIL} .sidebar-header .header-title`)).toHaveText(
 			/^\s*Procurement\s*$/i
 		);
+		expect(
+			pageErrors.filter((message) =>
+				/Cannot set properties of undefined \(setting 'on_page_(?:load|show)'\)/.test(message),
+			),
+		).toEqual([]);
+
+		await page.goBack();
+		await expect(page).toHaveURL(/\/desk\/?$/, { timeout: 30_000 });
+		await expect(page.getByRole("link", { name: /Procurement/i }).first()).toBeVisible();
+		await page.goForward();
+		await expect(page).toHaveURL(/\/desk\/kt-procurement-home/, { timeout: 30_000 });
+		await expect(page.getByTestId("kt-ph-root")).toBeVisible({ timeout: 45_000 });
 	});
 
 	test("loads Stitch content order inside Procurement rail with Home active", async ({ page }) => {

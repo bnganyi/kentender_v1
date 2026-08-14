@@ -26,9 +26,18 @@
   "section_audit",
   "closed_at",
   "cancelled_at",
-  "cancellation_reason"
+  "cancellation_reason",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "section_identity",
    "fieldtype": "Section Break",

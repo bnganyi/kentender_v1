@@ -211,6 +211,25 @@ def _upsert_scope(
 	).insert(ignore_permissions=True)
 
 
+def _save_user_identity_if_changed(user, *, first_name: str, last_name: str) -> None:
+	changes = {
+		"enabled": 1,
+		"first_name": first_name,
+		"last_name": last_name,
+	}
+	if all(user.get(field) == value for field, value in changes.items()):
+		return
+	user.update(changes)
+	user.save(ignore_permissions=True)
+
+
+def _add_missing_roles(user, *roles: str) -> None:
+	current = {row.role for row in user.get("roles")}
+	missing = [role for role in roles if role not in current]
+	if missing:
+		user.add_roles(*missing)
+
+
 def _upsert_user(
 	email: str,
 	full_name: str,
@@ -235,11 +254,8 @@ def _upsert_user(
 		)
 		doc.insert(ignore_permissions=True)
 	user = frappe.get_doc("User", email)
-	user.enabled = 1
-	user.first_name = first
-	user.last_name = last
-	user.save(ignore_permissions=True)
-	user.add_roles("Desk User", *roles)
+	_save_user_identity_if_changed(user, first_name=first, last_name=last)
+	_add_missing_roles(user, "Desk User", *roles)
 	update_password(email, CoreC.TEST_PASSWORD)
 	ensure_user_permission(email, pe_code)
 	frappe.defaults.set_user_default("Procuring Entity", pe_code, user=email)
@@ -271,11 +287,8 @@ def _upsert_multiscope_admin() -> str:
 			}
 		).insert(ignore_permissions=True)
 	user = frappe.get_doc("User", email)
-	user.enabled = 1
-	user.first_name = "Multi"
-	user.last_name = "Scope Admin"
-	user.save(ignore_permissions=True)
-	user.add_roles("Desk User", "System Manager", ROLE_REQUESTER)
+	_save_user_identity_if_changed(user, first_name="Multi", last_name="Scope Admin")
+	_add_missing_roles(user, "Desk User", "System Manager", ROLE_REQUESTER)
 	update_password(email, CoreC.TEST_PASSWORD)
 	ensure_user_permission(email, C.PE_MOH)
 	ensure_user_permission(email, C.PE_CGKIS)
@@ -317,7 +330,7 @@ def ensure_administrator_planning_support_viewer() -> str:
 	to_remove = [r for r in ALL_PLANNING_ROLES if r != ROLE_VIEWER and r in have]
 	if to_remove:
 		user.remove_roles(*to_remove)
-	user.add_roles(ROLE_VIEWER)
+	_add_missing_roles(user, ROLE_VIEWER)
 	# Drop operational Planning USA rows for Administrator (keep fixture Viewer only).
 	for name in frappe.get_all(
 		"User Scope Assignment",
@@ -359,11 +372,8 @@ def _upsert_system_admin_no_requester() -> str:
 			}
 		).insert(ignore_permissions=True)
 	user = frappe.get_doc("User", email)
-	user.enabled = 1
-	user.first_name = "System"
-	user.last_name = "Admin"
-	user.save(ignore_permissions=True)
-	user.add_roles("Desk User", "System Manager")
+	_save_user_identity_if_changed(user, first_name="System", last_name="Admin")
+	_add_missing_roles(user, "Desk User", "System Manager")
 	# Strip accidental Requester role from prior seeds.
 	have = {r.role for r in user.roles}
 	if ROLE_REQUESTER in have:
@@ -381,7 +391,7 @@ def _upsert_system_admin_no_requester() -> str:
 	return email
 
 
-def upsert_canonical_users() -> dict[str, Any]:
+def upsert_canonical_users(*, commit: bool = True) -> dict[str, Any]:
 	ensure_strategy_roles()
 	ensure_budget_roles()
 	ensure_demand_roles()
@@ -401,7 +411,8 @@ def upsert_canonical_users() -> dict[str, Any]:
 			if frappe.db.exists("User", email):
 				frappe.db.set_value("User", email, "enabled", 0, update_modified=False)
 				disabled.append(email)
-		frappe.db.commit()
+		if commit:
+			frappe.db.commit()
 	finally:
 		frappe.flags.in_import = prev_import
 	return {

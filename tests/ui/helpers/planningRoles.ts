@@ -20,7 +20,7 @@ export const PLANNING_USERS = {
 	countyPlanner:
 		process.env.UI_PLN_COUNTY_PLANNER_USER || 'kisumu.planning.officer@example.test',
 	systemAdminNoScope:
-		process.env.UI_PLN_SYSADMIN_USER || 'kentender.system.admin@example.test',
+		process.env.UI_PLN_SYSADMIN_USER || 'pln.ui.no.scope@example.test',
 	/** Ensured by prepare_planning_gate03_ui — dual PE Planning USA. */
 	multiPlanner: process.env.UI_PLN_MULTI_USER || 'pln.ui.multi@example.test',
 	viewer: process.env.UI_PLN_VIEWER_USER || 'pln.ui.viewer@example.test',
@@ -55,6 +55,31 @@ export async function preparePlanningGate03(
 		});
 		return r.message || {};
 	});
+	return message;
+}
+
+/** Canonical Section 9.1 workspace evidence boundary. */
+export async function preparePlanningScenarioStop(
+	page: Page,
+	stopPoint: 'ready_demand' | 'incomplete_item' | 'awaiting_finance' | 'submitted_review',
+) {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const message = await page.evaluate(async (stop_point) => {
+		const r = await (
+			window as unknown as {
+				frappe: {
+					call: (o: {
+						method: string;
+						args: { stop_point: string };
+					}) => Promise<{ message?: Record<string, unknown> }>;
+				};
+			}
+		).frappe.call({
+			method: 'kentender_procurement.procurement_planning.api.prepare_planning_scn_add_ui',
+			args: { stop_point },
+		});
+		return r.message || {};
+	}, stopPoint);
 	return message;
 }
 

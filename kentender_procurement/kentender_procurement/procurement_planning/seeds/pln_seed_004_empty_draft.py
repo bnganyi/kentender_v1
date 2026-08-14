@@ -10,6 +10,7 @@ from typing import Any
 import frappe
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
+from kentender_core.seeds.kentender_mvp_v1.constants import PLAYWRIGHT_FIXTURE_NS
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	PLAN_OPEN,
 	PLAN_TYPE_ANNUAL,
@@ -30,7 +31,7 @@ UI_PLAN_CODE = "PLN-MOH-UI-DRAFT-001"
 UI_FY = "2029/30"
 UI_PE = "PE-MOH"
 UI_OU = "MOH-DIR-DHP"
-UI_TITLE = "Ministry of Health Annual Procurement Plan 2029/30 (UI empty draft)"
+UI_TITLE = "Ministry of Health Annual Procurement Plan 2029/30"
 
 
 def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
@@ -82,6 +83,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 				"coordinating_org_unit": UI_OU,
 				"lifecycle_state": PLAN_OPEN,
 				"publication_projection": PUB_NOT_SUBMITTED,
+				"fixture_namespace": PLAYWRIGHT_FIXTURE_NS,
 			}
 		)
 		plan.insert(ignore_permissions=True)
@@ -109,6 +111,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 				"version_reason": "PLN-SEED-004 empty draft for UI",
 				"validation_projection": VALIDATION_NOT_RUN,
 				"concurrency_token": new_concurrency_token(),
+				"fixture_namespace": PLAYWRIGHT_FIXTURE_NS,
 			}
 		)
 		version.insert(ignore_permissions=True)
@@ -131,6 +134,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"current_approved_version": None,
 			"lifecycle_state": PLAN_OPEN,
 			"title": UI_TITLE,
+			"fixture_namespace": PLAYWRIGHT_FIXTURE_NS,
 		},
 		update_modified=False,
 	)

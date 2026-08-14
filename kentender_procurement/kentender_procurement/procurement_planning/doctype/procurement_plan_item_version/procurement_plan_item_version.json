@@ -65,9 +65,18 @@
   "draft_change_label",
   "proposed_removal",
   "removal_reason",
-  "removed_in_version"
+  "removed_in_version",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan_item",
    "fieldtype": "Link",

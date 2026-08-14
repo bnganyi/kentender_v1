@@ -120,8 +120,9 @@ help:
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed full KENTENDER_MVP_V1 (also deletes Playwright leftover plans/demands/@test.local users) + validate"
+	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
+	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
@@ -901,6 +902,10 @@ seed-kentender-mvp-v1:
 seed-kentender-mvp-v1-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1
+
+purge-kentender-playwright-data:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_core.seeds.kentender_mvp_v1.clear.purge_kentender_playwright_data
 
 # Deprecated aliases (one cycle).
 seed-moh-mvp-v1: seed-kentender-mvp-v1

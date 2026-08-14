@@ -12,6 +12,9 @@ from frappe.utils import flt
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.procurement_planning.seeds import scn_pln_remove_001 as scn
 from kentender_procurement.procurement_planning.seeds.scn_pln_remove_001 import REMOVE_REASON
+from kentender_procurement.procurement_planning.services.get_planning_workspace import (
+	get_planning_workspace,
+)
 
 
 class TestScnPlnRemove001(IntegrationTestCase):
@@ -83,6 +86,30 @@ class TestScnPlnRemove001(IntegrationTestCase):
 			),
 			first,
 		)
+
+	def test_workspace_projects_no_effective_changes_state(self) -> None:
+		"""PLN-UI-01C-NC remains an update surface, never a workspace mutation."""
+		scn.run(reset_first=False, force=True)
+		payload = get_planning_workspace(
+			procuring_entity=C.PE_MOH,
+			financial_year="2027/28",
+			user=C.USER_PLANNING_OFFICER,
+		)
+
+		self.assertEqual(payload.get("state_id"), "no_effective_changes")
+		self.assertEqual(payload["current_plan"]["approved"]["planned_total"], C.PLAN_AMOUNT_V1)
+		self.assertEqual(payload["current_plan"]["draft"]["planned_total"], C.PLAN_AMOUNT_V1)
+		self.assertEqual(payload["primary_action"]["label"], "Continue plan update")
+		self.assertEqual(payload.get("waiting_on_others"), [])
+		cancel_rows = [
+			row
+			for row in payload["work_requiring_action"]
+			if row["action"]["code"] == "cancel_update"
+		]
+		self.assertEqual(len(cancel_rows), 1)
+		action = cancel_rows[0]["action"]
+		self.assertEqual(action["label"], "Cancel update")
+		self.assertEqual(action["route"], payload["current_plan"]["update_route"])
 
 	def test_validate_include_scn_remove(self) -> None:
 		scn.run(reset_first=False, force=True)

@@ -73,6 +73,9 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 		await expect(ou.locator("option")).not.toHaveCount(0, { timeout: 10_000 });
 		const firstOu = await ou.locator("option").first().getAttribute("value");
 		await ou.selectOption(firstOu || { index: 0 });
+		await page
+			.getByTestId("kt-pln-ui02-title")
+			.fill(`Playwright Create ${Date.now()}`);
 		await page.getByTestId("kt-pln-ui02-submit").click();
 		await expect(page).toHaveURL(/procurement-plan-builder/, { timeout: 45_000 });
 		await expect(page.locator('[data-testid="kt-pln-ui03-root"][data-kt-pln-live="1"]')).toBeVisible({
@@ -100,6 +103,9 @@ test.describe("PLN-UI-02 Register annual plan", () => {
 	});
 
 	test("zero scope: registration blocked", async ({ page }) => {
+		await loginAsAdministrator(page);
+		await preparePlanningGate03(page);
+		await page.context().clearCookies();
 		await loginAsPlanningSystemAdminNoScope(page);
 		await page.goto("/desk/procurement-plan-register", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({

@@ -1,6 +1,7 @@
 # KENTENDER_MVP_V1 — Seed Runbook
 
-**Contract:** [01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.0.md](01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.0.md)  
+**Contract:** [KenTender_MVP_Canonical_Demo_Data_Contract_v2.7.md](KenTender_MVP_Canonical_Demo_Data_Contract_v2.7.md)
+
 **Scope model:** [00_KenTender_Procuring_Entity_and_Organisation_Scope_Model.md](00_KenTender_Procuring_Entity_and_Organisation_Scope_Model.md)  
 **Fixture namespace:** `KENTENDER_MVP_V1`  
 
@@ -22,6 +23,7 @@ From `apps/kentender_v1`:
 ```bash
 make seed-kentender-mvp-v1 SITE=kentender.midas.com
 make seed-kentender-mvp-v1-validate SITE=kentender.midas.com
+make purge-kentender-playwright-data SITE=kentender.midas.com
 ```
 
 Or directly:
@@ -35,7 +37,9 @@ bench --site kentender.midas.com execute \
 Notes:
 
 - Use Python `True`/`False` in `--kwargs` (not JSON `true`/`false`).
-- Reset deletes canonical fixture rows **and** leftover Playwright / Gate test data on PE-MOH and PE-CGKIS: extra Procurement Plans, extra Demands, `MOH-BUD-PLN-*` test budgets, and `*@test.local` users.
+- Reset deletes canonical fixture rows and explicitly owned Playwright/Gate fixtures. It does not delete records merely because they belong to PE-MOH or PE-CGKIS.
+- `purge-kentender-playwright-data` removes browser-test plans, demands, dependent Planning records, test budgets, test Strategy plans, test scope assignments, and reserved helper users (`*@test.local`, explicit Playwright accounts, and `dem-*@example.com`) without reseeding or deleting the canonical bundle.
+- Current browser fixtures use the `KENTENDER_PLAYWRIGHT` namespace. Narrow legacy signatures remain supported for records created before the namespace was introduced.
 - Reset does **not** wipe unrelated *Strategic* Plans (Contract §8.3). Canonical `@example.test` personas are re-upserted.
 
 ## What the seed creates

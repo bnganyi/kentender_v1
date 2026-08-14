@@ -20,9 +20,18 @@
   "effective_at",
   "superseded_at",
   "approved_by",
-  "approved_at"
+  "approved_at",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan",
    "fieldtype": "Link",

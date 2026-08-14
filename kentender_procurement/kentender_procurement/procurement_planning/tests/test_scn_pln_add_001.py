@@ -19,6 +19,9 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_SUPERSEDED,
 )
 from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as scn
+from kentender_procurement.procurement_planning.services.get_planning_workspace import (
+	get_planning_workspace,
+)
 
 
 def _draft_total(plan_name: str, version_name: str) -> float:
@@ -186,6 +189,37 @@ class TestScnPlnAdd001(IntegrationTestCase):
 			),
 			VERSION_DRAFT,
 		)
+
+	def test_named_workspace_stop_points_are_idempotent(self) -> None:
+		expected = {
+			"ready_demand": ("View approved plan", "Add to plan", None),
+			"incomplete_item": ("Continue plan update", "Complete item", None),
+			"awaiting_finance": ("Continue plan update", None, "View item"),
+			"submitted_review": ("View approved plan", None, "View update"),
+		}
+		for stop, (primary, work_action, waiting_action) in expected.items():
+			with self.subTest(stop=stop):
+				first = scn.run(reset_first=True, force=True, stop_point=stop)
+				self.assertEqual(first.get("stage"), stop, first)
+				second = scn.run(reset_first=False, force=True, stop_point=stop)
+				self.assertTrue(second.get("idempotent"), second)
+				workspace = get_planning_workspace(
+					procuring_entity=C.PE_MOH,
+					financial_year="2027/28",
+					user=C.USER_PLANNING_OFFICER,
+				)
+				self.assertEqual(workspace["primary_action"]["label"], primary)
+				work_labels = {
+					row["action"]["label"] for row in workspace["work_requiring_action"]
+				}
+				waiting_labels = {
+					row["action"]["label"] for row in workspace["waiting_on_others"]
+				}
+				if work_action:
+					self.assertIn(work_action, work_labels)
+				if waiting_action:
+					self.assertIn(waiting_action, waiting_labels)
+		scn.reset(force=True)
 
 	def test_run_adds_022_and_535m(self) -> None:
 		result = scn.run(reset_first=False, force=True)

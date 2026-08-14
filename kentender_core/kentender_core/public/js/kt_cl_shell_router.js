@@ -20,6 +20,9 @@ frappe.provide("kentender_core.cl_shell_router");
 		var reg = registry();
 		var sh = shell();
 		if (!reg || !sh) return;
+		if (kentender_core.page_lifecycle) {
+			kentender_core.page_lifecycle.bindPagesWithin(document);
+		}
 
 		var surface = reg.resolveFromRoute(frappe.get_route());
 		if (surface) {
@@ -30,8 +33,13 @@ frappe.provide("kentender_core.cl_shell_router");
 				chrome: surface.chrome,
 			});
 			lastSurfaceId = surface.id;
-		} else if (lastSurfaceId || (sh.isNativeActive && sh.isNativeActive())) {
-			sh.leaveNative();
+		} else {
+			if (kentender_core.page_lifecycle) {
+				kentender_core.page_lifecycle.clearSurfaceBodyClasses();
+			}
+			if (lastSurfaceId || (sh.isNativeActive && sh.isNativeActive())) {
+				sh.leaveNative();
+			}
 			lastSurfaceId = null;
 		}
 	}

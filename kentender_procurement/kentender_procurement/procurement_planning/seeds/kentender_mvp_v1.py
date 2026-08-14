@@ -46,106 +46,291 @@ def _upsert(doctype: str, filters: dict[str, Any], values: dict[str, Any]) -> tu
 	return doc.name, True
 
 
-def clear_planning_fixture_rows() -> dict[str, int]:
-	"""Delete Planning MVP fixture graph by exact Contract codes."""
+def _set_fixture_namespace(doctype: str, names: list[str], namespace: str) -> None:
+	if not names or not frappe.db.exists("DocType", doctype):
+		return
+	if not frappe.db.has_column(doctype, "fixture_namespace"):
+		return
+	for name in dict.fromkeys(names):
+		if frappe.db.exists(doctype, name):
+			frappe.db.set_value(
+				doctype, name, "fixture_namespace", namespace, update_modified=False
+			)
+
+
+def mark_plan_graph_fixture(plan: str, namespace: str) -> None:
+	"""Tag a complete Planning graph for deterministic fixture cleanup."""
+	if not plan or not frappe.db.exists("Procurement Plan", plan):
+		return
+	versions = frappe.get_all(
+		"Procurement Plan Version", filters={"plan": plan}, pluck="name"
+	)
+	items = frappe.get_all("Procurement Plan Item", filters={"plan": plan}, pluck="name")
+	item_versions = []
+	allocations = []
+	for item in items:
+		item_versions.extend(
+			frappe.get_all(
+				"Procurement Plan Item Version", filters={"plan_item": item}, pluck="name"
+			)
+		)
+		allocations.extend(
+			frappe.get_all(
+				"Plan Demand Allocation", filters={"plan_item": item}, pluck="name"
+			)
+		)
+	for doctype, names in (
+		("Procurement Plan", [plan]),
+		("Procurement Plan Version", versions),
+		("Procurement Plan Item", items),
+		("Procurement Plan Item Version", item_versions),
+		("Plan Demand Allocation", allocations),
+		(
+			"Plan Decision",
+			frappe.get_all(
+				"Plan Decision", filters={"plan_version": ["in", versions]}, pluck="name"
+			)
+			if versions
+			else [],
+		),
+		(
+			"Plan Validation Result",
+			frappe.get_all(
+				"Plan Validation Result",
+				filters={"plan_version": ["in", versions]},
+				pluck="name",
+			)
+			if versions
+			else [],
+		),
+		(
+			"Publication Event",
+			frappe.get_all(
+				"Publication Event", filters={"plan_version": ["in", versions]}, pluck="name"
+			)
+			if versions
+			else [],
+		),
+		(
+			"Planning Handoff Snapshot",
+			frappe.get_all("Planning Handoff Snapshot", filters={"plan": plan}, pluck="name")
+			if frappe.db.exists("DocType", "Planning Handoff Snapshot")
+			else [],
+		),
+	):
+		_set_fixture_namespace(doctype, names, namespace)
+	if frappe.db.exists("DocType", "Planning Consumption"):
+		codes = frappe.get_all(
+			"Procurement Plan Item", filters={"name": ["in", items]}, pluck="plan_item_code"
+		) if items else []
+		consumptions = frappe.get_all(
+			"Planning Consumption", filters={"plan_item_code": ["in", codes]}, pluck="name"
+		) if codes else []
+		_set_fixture_namespace("Planning Consumption", consumptions, namespace)
+
+
+def _delete_named(doctype: str, names: list[str], deleted: dict[str, int]) -> None:
+	if not frappe.db.exists("DocType", doctype):
+		return
+	for name in dict.fromkeys(names):
+		if not frappe.db.exists(doctype, name):
+			continue
+		frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+		deleted[doctype] = deleted.get(doctype, 0) + 1
+
+
+def clear_planning_fixture_rows(
+	*, include_canonical: bool = True, include_playwright: bool = True
+) -> dict[str, int]:
+	"""Delete only explicitly owned canonical and browser-test Planning graphs."""
 	deleted: dict[str, int] = {}
 	if not frappe.db.exists("DocType", "Procurement Plan"):
 		return deleted
 
-	plan_codes = (C.PROCUREMENT_PLAN_CODE,)
-	plans = frappe.get_all(
-		"Procurement Plan",
-		filters={"plan_code": ["in", list(plan_codes)]},
-		pluck="name",
-	)
-	# Playwright / Gate tests leave extra PE-MOH and PE-CGKIS plans; reseed must wipe them.
-	if frappe.db.has_column("Procurement Plan", "procuring_entity"):
-		for pe in (C.PE_MOH, C.PE_CGKIS):
+	namespaces = []
+	if include_canonical:
+		namespaces.extend((C.FIXTURE_NS, C.LEGACY_FIXTURE_NS))
+	if include_playwright:
+		namespaces.append(C.PLAYWRIGHT_FIXTURE_NS)
+	plans: list[str] = []
+	if include_canonical:
+		plans.extend(
+			frappe.get_all(
+				"Procurement Plan",
+				filters={"plan_code": C.PROCUREMENT_PLAN_CODE},
+				pluck="name",
+			)
+		)
+	if frappe.db.has_column("Procurement Plan", "fixture_namespace"):
+		if namespaces:
 			plans.extend(
 				frappe.get_all(
 					"Procurement Plan",
-					filters={"procuring_entity": pe},
+					filters={"fixture_namespace": ["in", namespaces]},
 					pluck="name",
 				)
 			)
+	if include_playwright:
+		# Narrow legacy signatures used before Planning gained fixture_namespace.
+		plans.extend(
+			frappe.get_all(
+				"Procurement Plan",
+				filters={"plan_code": "PLN-MOH-UI-DRAFT-001"},
+				pluck="name",
+			)
+		)
+		plans.extend(
+			frappe.get_all(
+				"Procurement Plan",
+				filters={"title": ["in", ["Gate01 Annual Plan", "UI-09 Approved Plan"]]},
+				pluck="name",
+			)
+		)
+		plans.extend(
+			frappe.get_all(
+				"Procurement Plan",
+				filters={"title": ["like", "Playwright Create %"]},
+				pluck="name",
+			)
+		)
 	plans = list(dict.fromkeys(plans))
-	item_codes = (C.PLAN_ITEM_CODE, C.PLAN_ITEM_CODE_SCN)
-	items = frappe.get_all(
-		"Procurement Plan Item",
-		filters={"plan_item_code": ["in", list(item_codes)]},
-		pluck="name",
-	)
+	versions: list[str] = []
+	items: list[str] = []
 	for plan in plans:
-		for name in frappe.get_all(
-			"Procurement Plan Item", filters={"plan": plan}, pluck="name"
-		):
-			if name not in items:
-				items.append(name)
+		versions.extend(
+			frappe.get_all("Procurement Plan Version", filters={"plan": plan}, pluck="name")
+		)
+		items.extend(
+			frappe.get_all("Procurement Plan Item", filters={"plan": plan}, pluck="name")
+		)
+	if namespaces:
+		if frappe.db.has_column("Procurement Plan Version", "fixture_namespace"):
+			versions.extend(
+				frappe.get_all(
+					"Procurement Plan Version",
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
+			)
+		if frappe.db.has_column("Procurement Plan Item", "fixture_namespace"):
+			items.extend(
+				frappe.get_all(
+					"Procurement Plan Item",
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
+			)
+	if include_canonical:
+		items.extend(
+			frappe.get_all(
+				"Procurement Plan Item",
+				filters={"plan_item_code": ["in", [C.PLAN_ITEM_CODE, C.PLAN_ITEM_CODE_SCN]]},
+				pluck="name",
+			)
+		)
+	items = list(dict.fromkeys(items))
+	versions = list(dict.fromkeys(versions))
+	item_codes = (
+		frappe.get_all(
+			"Procurement Plan Item",
+			filters={"name": ["in", items]},
+			pluck="plan_item_code",
+		)
+		if items
+		else []
+	)
 
-	# Planning Consumption by plan item codes
 	if frappe.db.exists("DocType", "Planning Consumption"):
-		for code in item_codes:
-			for name in frappe.get_all(
-				"Planning Consumption", filters={"plan_item_code": code}, pluck="name"
-			):
-				frappe.delete_doc("Planning Consumption", name, force=1, ignore_permissions=True)
-				deleted["Planning Consumption"] = deleted.get("Planning Consumption", 0) + 1
+		consumptions = (
+			frappe.get_all(
+				"Planning Consumption",
+				filters={"plan_item_code": ["in", item_codes]},
+				pluck="name",
+			)
+			if item_codes
+			else []
+		)
+		if namespaces and frappe.db.has_column("Planning Consumption", "fixture_namespace"):
+			consumptions.extend(
+				frappe.get_all(
+					"Planning Consumption",
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
+			)
+		_delete_named("Planning Consumption", consumptions, deleted)
+
+	for doctype in ("Plan Decision", "Plan Validation Result", "Publication Event"):
+		names = (
+			frappe.get_all(doctype, filters={"plan_version": ["in", versions]}, pluck="name")
+			if versions and frappe.db.exists("DocType", doctype)
+			else []
+		)
+		if namespaces and frappe.db.has_column(doctype, "fixture_namespace"):
+			names.extend(
+				frappe.get_all(
+					doctype,
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
+			)
+		_delete_named(doctype, names, deleted)
+	for doctype in ("Planning Handoff Snapshot",):
+		names = []
+		if frappe.db.exists("DocType", doctype):
+			if plans:
+				names.extend(frappe.get_all(doctype, filters={"plan": ["in", plans]}, pluck="name"))
+			if items:
+				names.extend(frappe.get_all(doctype, filters={"plan_item": ["in", items]}, pluck="name"))
+			if namespaces and frappe.db.has_column(doctype, "fixture_namespace"):
+				names.extend(
+					frappe.get_all(
+						doctype,
+						filters={"fixture_namespace": ["in", namespaces]},
+						pluck="name",
+					)
+				)
+		_delete_named(doctype, names, deleted)
+	for doctype in ("Plan Demand Allocation", "Procurement Plan Item Version"):
+		names = (
+			frappe.get_all(doctype, filters={"plan_item": ["in", items]}, pluck="name")
+			if items
+			else []
+		)
+		if namespaces and frappe.db.has_column(doctype, "fixture_namespace"):
+			names.extend(
+				frappe.get_all(
+					doctype,
+					filters={"fixture_namespace": ["in", namespaces]},
+					pluck="name",
+				)
+			)
+		_delete_named(doctype, names, deleted)
 
 	for item in items:
-		for doctype in ("Plan Demand Allocation", "Procurement Plan Item Version"):
-			if not frappe.db.exists("DocType", doctype):
-				continue
-			for name in frappe.get_all(doctype, filters={"plan_item": item}, pluck="name"):
-				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
-				deleted[doctype] = deleted.get(doctype, 0) + 1
 		if frappe.db.exists("Procurement Plan Item", item):
-			frappe.delete_doc("Procurement Plan Item", item, force=1, ignore_permissions=True)
-			deleted["Procurement Plan Item"] = deleted.get("Procurement Plan Item", 0) + 1
-
+			frappe.db.set_value(
+				"Procurement Plan Item",
+				item,
+				{"current_approved_item_version": None, "draft_item_version": None},
+				update_modified=False,
+			)
+	_delete_named("Procurement Plan Item", items, deleted)
 	for plan in plans:
-		for doctype in (
-			"Plan Decision",
-			"Plan Validation Result",
-			"Publication Event",
-			"Planning Handoff Snapshot",
-			"Procurement Plan Version",
-		):
-			if not frappe.db.exists("DocType", doctype):
-				continue
-			field = "plan" if doctype != "Procurement Plan Version" else "plan"
-			if doctype == "Plan Decision":
-				# linked via plan_version
-				versions = frappe.get_all(
-					"Procurement Plan Version", filters={"plan": plan}, pluck="name"
-				)
-				for ver in versions:
-					for name in frappe.get_all(
-						"Plan Decision", filters={"plan_version": ver}, pluck="name"
-					):
-						frappe.delete_doc(
-							"Plan Decision", name, force=1, ignore_permissions=True
-						)
-						deleted["Plan Decision"] = deleted.get("Plan Decision", 0) + 1
-				continue
-			if doctype in (
-				"Plan Validation Result",
-				"Publication Event",
-				"Planning Handoff Snapshot",
-			):
-				# These may link via plan or plan_version — try plan first
-				filters = {"plan": plan} if frappe.get_meta(doctype).has_field("plan") else None
-				if filters:
-					for name in frappe.get_all(doctype, filters=filters, pluck="name"):
-						frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
-						deleted[doctype] = deleted.get(doctype, 0) + 1
-				continue
-			for name in frappe.get_all(doctype, filters={field: plan}, pluck="name"):
-				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
-				deleted[doctype] = deleted.get(doctype, 0) + 1
 		if frappe.db.exists("Procurement Plan", plan):
-			frappe.delete_doc("Procurement Plan", plan, force=1, ignore_permissions=True)
-			deleted["Procurement Plan"] = deleted.get("Procurement Plan", 0) + 1
-
+			frappe.db.set_value(
+				"Procurement Plan",
+				plan,
+				{"current_approved_version": None, "open_draft_version": None},
+				update_modified=False,
+			)
+	for version in versions:
+		if frappe.db.exists("Procurement Plan Version", version):
+			frappe.db.set_value(
+				"Procurement Plan Version", version, "source_version", None, update_modified=False
+			)
+	_delete_named("Procurement Plan Version", versions, deleted)
+	_delete_named("Procurement Plan", plans, deleted)
 	return deleted
 
 
@@ -276,6 +461,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"coordinating_org_unit": ou,
 			"lifecycle_state": PLAN_OPEN,
 			"publication_projection": PUB_NOT_SUBMITTED,
+			"fixture_namespace": C.FIXTURE_NS,
 		},
 	)
 
@@ -289,9 +475,10 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"version_reason": "Canonical Approved Version 1",
 			"validation_projection": VALIDATION_READY,
 			"effective_at": approved_at,
-			"approved_by": C.USER_PLAN_APPROVER,
+			"approved_by": C.USER_HOP,
 			"approved_at": approved_at,
 			"concurrency_token": new_concurrency_token(),
+			"fixture_namespace": C.FIXTURE_NS,
 		},
 	)
 
@@ -347,6 +534,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"delivery_org_unit": ou,
 			"baseline_state": ITEM_ACTIVE,
 			"tender_takeup_projection": TAKEUP_ACTIVE,
+			"fixture_namespace": C.FIXTURE_NS,
 		},
 	)
 
@@ -377,6 +565,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"ms_delivery_completion": "2028-03-31",
 			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
 			"validation_projection": VALIDATION_READY,
+			"fixture_namespace": C.FIXTURE_NS,
 		},
 	)
 	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
@@ -434,6 +623,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"proposed_in_version": version_name,
 				"effective_from_version": version_name,
 				"effective_at": approved_at,
+				"fixture_namespace": C.FIXTURE_NS,
 			}
 		)
 		alloc.insert(ignore_permissions=True)
@@ -452,6 +642,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"currency": di.currency or "KES",
 				"consumed_by": C.USER_PLANNING_OFFICER,
 				"consumed_at": approved_at,
+				"fixture_namespace": C.FIXTURE_NS,
 			}
 			if existing_pc:
 				frappe.db.set_value(
@@ -506,7 +697,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"plan_version": version_name,
 				"decision_type": "Approval",
 				"decision_stage": "Plan Version Approval",
-				"actor": C.USER_PLAN_APPROVER,
+			"actor": C.USER_HOP,
 				"actor_role": "Designated Approver",
 				"decision": "Approved",
 				"reason": "Canonical Approved Version 1",
@@ -531,6 +722,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 		iv_name=iv_name,
 		demand=demand,
 	)
+	mark_plan_graph_fixture(plan_name, C.FIXTURE_NS)
 
 	if commit:
 		frappe.db.commit()

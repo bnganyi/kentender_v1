@@ -96,10 +96,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_approved.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_approved.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_update.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_update.js')}",
 	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_item_editor_page.js?v={_desk_asset_v('public/js/planning_item_editor_page.js')}",
-	f"/assets/kentender_procurement/js/planning_review_page.js?v={_desk_asset_v('public/js/planning_review_page.js')}",
-	f"/assets/kentender_procurement/js/planning_approved_page.js?v={_desk_asset_v('public/js/planning_approved_page.js')}",
-	f"/assets/kentender_procurement/js/planning_update_page.js?v={_desk_asset_v('public/js/planning_update_page.js')}",
 	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	f"/assets/kentender_procurement/js/std_prod_engine.js?v={_desk_asset_v('public/js/std_prod_engine.js')}",
@@ -528,7 +524,6 @@ fixtures = [
 		"filters": [["name", "in", ["Procurement", "Tenders"]]],
 	},
 ]
-
 
 
 

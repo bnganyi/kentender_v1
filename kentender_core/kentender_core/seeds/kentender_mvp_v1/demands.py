@@ -24,7 +24,6 @@ def upsert_demands() -> dict[str, Any]:
 	principal = upsert_principal_approved_demand(commit=False)
 	returned = upsert_returned_scope_demand(commit=False)
 	county = upsert_county_draft_demand(commit=False)
-	frappe.db.commit()
 	return {
 		"ok": True,
 		"principal": principal,

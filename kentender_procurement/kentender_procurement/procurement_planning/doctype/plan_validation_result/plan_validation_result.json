@@ -14,9 +14,18 @@
   "business_message",
   "severity",
   "rule_set_version",
-  "recorded_at"
+  "recorded_at",
+  "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "plan_version",
    "fieldtype": "Link",

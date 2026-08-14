@@ -997,7 +997,9 @@ def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
 		)
 
 
-def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True) -> dict[str, Any]:
+def upsert_kentender_mvp_v1_portfolio(
+	*, include_test_edges: bool = True, commit: bool = True
+) -> dict[str, Any]:
 	"""Idempotent portfolio seed for BUD-UI-01 / Overview / Lines.
 
 	Canonical orchestrator passes include_test_edges=False.
@@ -1023,7 +1025,8 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True) -> dic
 		created.append(name)
 		if spec.get("fixture_namespace", FIXTURE_NS) == FIXTURE_NS and spec.get("pe_code") != C.PE_CGKIS:
 			_seed_budget_audit(name, spec["generated_reference"])
-	frappe.db.commit()
+	if commit:
+		frappe.db.commit()
 	return {
 		"ok": True,
 		"fixture_namespace": FIXTURE_NS,

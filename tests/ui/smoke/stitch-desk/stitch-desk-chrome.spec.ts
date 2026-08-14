@@ -179,7 +179,7 @@ const SURFACES = [
 		route: "/desk/planning-workspace",
 		rootTestId: "kt-pln-ui01-root",
 		liveAttr: "data-kt-pln-live",
-		primaryCtaTestId: "kt-pln-ui01-open-plan",
+		primaryCtaTestId: "kt-pln-ui01-primary-action",
 		selectSelector: '[data-kt-pln-filter="financial_year"]',
 	},
 	{
