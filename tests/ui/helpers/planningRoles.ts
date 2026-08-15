@@ -83,6 +83,34 @@ export async function preparePlanningScenarioStop(
 	return message;
 }
 
+/** Reset one authoritative PLN-CHG-015 workspace boundary. */
+export async function preparePlanningWorkspaceState(
+	page: Page,
+	workspaceState: "BASE" | "A" | "B" | "C" | "D" | "E" | "F",
+) {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	const message = await page.evaluate(async (workspace_state) => {
+		const response = await (
+			window as unknown as {
+				frappe: {
+					call: (options: {
+						method: string;
+						args: { workspace_state: string };
+					}) => Promise<{ message?: Record<string, unknown> }>;
+				};
+			}
+		).frappe.call({
+			method: 'kentender_procurement.procurement_planning.api.prepare_planning_workspace_ui',
+			args: { workspace_state },
+		});
+		return response.message || {};
+	}, workspaceState);
+	if (!message.ok) {
+		throw new Error(`prepare_planning_workspace_ui failed: ${JSON.stringify(message)}`);
+	}
+	return message;
+}
+
 export type PlanningGate04Prep = PlanningGate03Prep & {
 	eligible_demand?: string;
 	eligible_demand_code?: string;
@@ -279,24 +307,34 @@ export type PlanningScnAddPrep = {
 /** Admin-only prepare: canonical SCN-ADD Draft V2 @ 535m, V1 + Tender still live. */
 export async function preparePlanningScnAdd(
 	page: Page,
+	stopPoint?: "awaiting_finance" | "finance_confirmed",
 ): Promise<PlanningScnAddPrep> {
 	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
-	const message = await page.evaluate(async () => {
-		const r = await (
-			window as unknown as {
-				frappe: {
-					call: (o: { method: string }) => Promise<{ message?: PlanningScnAddPrep }>;
-				};
-			}
-		).frappe.call({
-			method: 'kentender_procurement.procurement_planning.api.prepare_planning_scn_add_ui',
-		});
+	const message = await page.evaluate(async (stopPointValue) => {
+		let r: { message?: PlanningScnAddPrep };
+		try {
+			r = await (
+				window as unknown as {
+					frappe: {
+						call: (o: { method: string; args?: Record<string, unknown> }) => Promise<{ message?: PlanningScnAddPrep }>;
+					};
+				}
+			).frappe.call({
+				method: 'kentender_procurement.procurement_planning.api.prepare_planning_scn_add_ui',
+				args: stopPointValue ? { stop_point: stopPointValue } : undefined,
+			});
+		} catch (error) {
+			const details = error && typeof error === "object"
+				? Object.fromEntries(Object.getOwnPropertyNames(error).map((key) => [key, (error as Record<string, unknown>)[key]]))
+				: error;
+			throw new Error(`prepare_planning_scn_add_ui request failed: ${JSON.stringify(details)}`);
+		}
 		const msg = r.message || {};
 		if (!msg.ok) {
 			throw new Error(`prepare_planning_scn_add_ui failed: ${JSON.stringify(msg)}`);
 		}
 		return msg;
-	});
+	}, stopPoint || "");
 	return message;
 }
 

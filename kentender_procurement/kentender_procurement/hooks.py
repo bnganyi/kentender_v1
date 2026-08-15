@@ -90,6 +90,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js?v={_desk_asset_v('public/js/planning_ui_fixtures/builder.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/add_demand_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/add_demand_dialog.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/remove_plan_item_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/remove_plan_item_dialog.js')}",
+	f"/assets/kentender_procurement/js/planning_ui_fixtures/empty_update_cancel.js?v={_desk_asset_v('public/js/planning_ui_fixtures/empty_update_cancel.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/finance_confirm_drawer.js?v={_desk_asset_v('public/js/planning_ui_fixtures/finance_confirm_drawer.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_item_editor.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_item_editor.js')}",
 	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_review.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_review.js')}",
@@ -97,6 +98,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",
 	f"/assets/kentender_procurement/js/planning_client_utils.js?v={_desk_asset_v('public/js/planning_client_utils.js')}",
 	f"/assets/kentender_procurement/js/planning_removal_dialog.js?v={_desk_asset_v('public/js/planning_removal_dialog.js')}",
+	f"/assets/kentender_procurement/js/planning_empty_update_dialog.js?v={_desk_asset_v('public/js/planning_empty_update_dialog.js')}",
 	f"/assets/kentender_procurement/js/planning_item_editor_bind.js?v={_desk_asset_v('public/js/planning_item_editor_bind.js')}",
 	f"/assets/kentender_procurement/js/planning_demand_dialog.js?v={_desk_asset_v('public/js/planning_demand_dialog.js')}",
 	f"/assets/kentender_procurement/js/planning_register_bind.js?v={_desk_asset_v('public/js/planning_register_bind.js')}",
@@ -531,7 +533,6 @@ fixtures = [
 		"filters": [["name", "in", ["Procurement", "Tenders"]]],
 	},
 ]
-
 
 
 

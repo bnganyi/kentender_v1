@@ -1,4 +1,4 @@
-"""Bounded initial-Draft builder projection for PLN-UI-03 and PLN-UI-05."""
+"""Ordinary Plan builder projection for PLN-UI-03 and every PLN-UI-05 Draft."""
 
 from __future__ import annotations
 

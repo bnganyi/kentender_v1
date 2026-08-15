@@ -49,11 +49,12 @@ test("Planning SPA navigation clears departing layout state", async ({ page }) =
 	await expect(page.locator("body")).not.toHaveClass(/kt-pln-editor-active/);
 	await expectSingleVisiblePage(page);
 
+	await page.locator('[data-kt-pln-action="change-context"]').click();
 	await page
 		.locator('[data-kt-pln-filter="financial_year"]')
 		.selectOption(prep.empty_draft_fy || "2029/30");
 	const continuePlanning = page.getByTestId("kt-pln-ui01-primary-action");
-	await expect(continuePlanning).toContainText(/Continue planning/i, { timeout: 30_000 });
+	await expect(continuePlanning).toContainText(/Continue (planning|plan update)/i, { timeout: 30_000 });
 	await continuePlanning.click();
 	await expect(page).toHaveURL(/\/desk\/procurement-plan-builder(?:[/?#]|$)/, {
 		timeout: 30_000,

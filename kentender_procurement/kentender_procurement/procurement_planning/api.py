@@ -32,6 +32,10 @@ from kentender_procurement.procurement_planning.services.get_planning_create_sco
 from kentender_procurement.procurement_planning.services.get_planning_workspace import (
 	get_planning_workspace as _get_planning_workspace,
 )
+from kentender_procurement.procurement_planning.services.planning_context import (
+	resolve_planning_context as _resolve_planning_context,
+	select_planning_context as _select_planning_context,
+)
 from kentender_procurement.procurement_planning.services.list_eligible_demands import (
 	list_eligible_demands as _list_eligible_demands,
 )
@@ -54,7 +58,8 @@ from kentender_procurement.procurement_planning.services.approve_plan_version im
 	return_plan_version as _return_plan_version,
 )
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
-	cancel_plan_update as _cancel_plan_update,
+	cancel_empty_plan_update as _cancel_empty_plan_update,
+	get_empty_plan_update_cancellation as _get_empty_plan_update_cancellation,
 	get_plan_item_removal as _get_plan_item_removal,
 	remove_plan_item_from_plan as _remove_plan_item_from_plan,
 )
@@ -129,6 +134,28 @@ def get_planning_workspace(
 		financial_year=financial_year,
 		work_filter=work_filter,
 		search=search,
+	)
+
+
+@frappe.whitelist()
+def resolve_planning_context(
+	procuring_entity: str | None = None,
+	financial_year: str | None = None,
+) -> dict[str, Any]:
+	return _resolve_planning_context(
+		procuring_entity=procuring_entity,
+		financial_year=financial_year,
+	)
+
+
+@frappe.whitelist()
+def select_planning_context(
+	procuring_entity: str | None = None,
+	financial_year: str | None = None,
+) -> dict[str, Any]:
+	return _select_planning_context(
+		procuring_entity=procuring_entity or "",
+		financial_year=financial_year or "",
 	)
 
 
@@ -286,14 +313,33 @@ def remove_plan_item_from_plan(
 
 
 @frappe.whitelist()
-def cancel_plan_update(
+def get_empty_plan_update_cancellation(
 	plan: str | None = None,
-	concurrency_token: str | None = None,
+	successor_version: str | None = None,
+) -> dict[str, Any]:
+	return _get_empty_plan_update_cancellation(
+		plan=plan or "", successor_version=successor_version or "",
+	)
+
+
+@frappe.whitelist()
+def cancel_empty_plan_update(
+	plan: str | None = None,
+	successor_version: str | None = None,
+	expected_version_token: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	try:
-		return _cancel_plan_update(plan=plan or "", concurrency_token=concurrency_token)
+		return _cancel_empty_plan_update(
+			plan=plan or "",
+			successor_version=successor_version or "",
+			expected_version_token=expected_version_token,
+			idempotency_key=idempotency_key,
+		)
 	except Exception as exc:
-		return {"ok": False, "errors": {"form": str(exc)}}
+		message = str(exc)
+		code = cstr(getattr(exc, "title", "")) or (message.split(":", 1)[0] if ":" in message else "")
+		return {"ok": False, "error_code": code or None, "errors": {"form": message}}
 
 
 @frappe.whitelist()
@@ -1124,6 +1170,97 @@ def prepare_planning_scn_add_ui(stop_point: str | None = None) -> dict[str, Any]
 		"tender_code": C.TENDER_CODE,
 		"draft_total": C.PLAN_AMOUNT_V2,
 		"approved_total": C.PLAN_AMOUNT_V1,
+	}
+
+
+@frappe.whitelist()
+def prepare_planning_workspace_ui(workspace_state: str | None = None) -> dict[str, Any]:
+	"""Reset a disposable browser boundary for PLN-UI-01 and PLN-UI-01A–F.
+
+	The selector belongs only to this Administrator fixture. Production workspace
+	state remains derived by ``get_planning_workspace`` from the resulting records.
+	"""
+	frappe.only_for(("System Manager", "Administrator"))
+	state = cstr(workspace_state).strip().upper()
+	allowed = {"BASE", "A", "B", "C", "D", "E", "F"}
+	if state not in allowed:
+		frappe.throw(f"Unknown Planning workspace fixture state: {state}")
+
+	if state in {"A", "B"}:
+		prepared = prepare_planning_gate04_ui(
+			with_plan_item=0,
+			need_item_count=1,
+			eligible_count=2,
+			mixed_ou=1,
+			item_total=48_000_000.0,
+		)
+		plan = cstr(prepared.get("empty_draft_plan"))
+		if state == "A" and plan:
+			versions = frappe.get_all("Procurement Plan Version", filters={"plan": plan}, pluck="name")
+			for version in versions:
+				for decision in frappe.get_all("Plan Decision", filters={"plan_version": version}, pluck="name"):
+					frappe.delete_doc("Plan Decision", decision, force=True, ignore_permissions=True)
+				frappe.delete_doc("Procurement Plan Version", version, force=True, ignore_permissions=True)
+			frappe.delete_doc("Procurement Plan", plan, force=True, ignore_permissions=True)
+			plan = ""
+		frappe.db.commit()
+		return {
+			"ok": True,
+			"fixture_state": state,
+			"financial_year": "2028/29",
+			"plan": plan,
+			"eligible_demands": [prepared.get("eligible_demand"), prepared.get("eligible_demand_2")],
+		}
+
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+	from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as scn
+
+	stop = {
+		"BASE": "ready_demand",
+		"C": "incomplete_item",
+		"D": "awaiting_finance",
+		"E": "submitted_review",
+	}.get(state)
+	result = scn.run(reset_first=True, force=True, stop_point=stop) if stop else scn.run(reset_first=True, force=True)
+	if not result.get("ok"):
+		frappe.throw(f"Workspace fixture preparation failed: {result}")
+	plan = cstr(frappe.db.get_value("Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"))
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import mark_plan_graph_fixture
+
+	mark_plan_graph_fixture(plan, C.FIXTURE_NS)
+	boundary = {
+		"C": "2027-08-19 09:05:00",
+		"D": "2027-08-20 10:00:00",
+		"E": "2027-08-20 10:30:00",
+		"F": "2027-08-20 11:05:00",
+	}.get(state)
+	if boundary:
+		plan_row = frappe.db.get_value("Procurement Plan", plan, ["open_draft_version", "current_approved_version"], as_dict=True)
+		focus = cstr(plan_row.open_draft_version or plan_row.current_approved_version)
+		frappe.db.set_value("Procurement Plan", plan, "modified", boundary, update_modified=False)
+		if focus:
+			values: dict[str, Any] = {"modified": boundary}
+			if state == "E":
+				values["submitted_at"] = boundary
+			frappe.db.set_value("Procurement Plan Version", focus, values, update_modified=False)
+			for item_version in frappe.get_all("Procurement Plan Item Version", filters={"plan_version": focus}, pluck="name"):
+				frappe.db.set_value("Procurement Plan Item Version", item_version, "modified", boundary, update_modified=False)
+	frappe.db.commit()
+	return {"ok": True, "fixture_state": state, "financial_year": "2027/28", "plan": plan, "stage": result.get("stage")}
+
+
+@frappe.whitelist()
+def prepare_planning_empty_update_ui() -> dict[str, Any]:
+	"""Administrator-only resettable PLN-UI-05B browser boundary."""
+	frappe.only_for(("System Manager", "Administrator"))
+	from kentender_procurement.procurement_planning.seeds.scn_pln_remove_001 import run
+
+	result = run(reset_first=True, force=True)
+	plan = cstr(result.get("plan"))
+	return {
+		"ok": bool(result.get("ok")),
+		"plan": plan,
+		"version": frappe.db.get_value("Procurement Plan", plan, "open_draft_version"),
 	}
 
 

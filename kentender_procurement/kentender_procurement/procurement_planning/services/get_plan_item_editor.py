@@ -13,12 +13,12 @@ from frappe.utils import cstr, date_diff, flt
 from kentender_procurement.procurement_planning.mvp1_constants import VERSION_EDITABLE_STATUSES
 from kentender_procurement.procurement_planning.services.plan_item_field_issues import MILESTONE_FIELDS, collect_plan_item_field_issues
 from kentender_procurement.procurement_planning.services.planning_permissions import READ_PLAN_ROLES, assert_planning_scope, is_planning_read_only, require_operational_roles
+from kentender_procurement.procurement_planning.services.procurement_method_catalogue import resolve_procurement_methods
 
 CATEGORY_OPTIONS = (
 	"Goods", "Works", "Non-Consulting Services",
 	"Training and professional development services", "Consulting Services",
 )
-METHOD_OPTIONS = ("Open tender",)
 
 
 def _money(amount: float, currency: str) -> str:
@@ -96,9 +96,11 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 	currency = cstr(iv.currency or plan.currency or "KES")
 	finance_status = cstr(iv.finance_status or "Not requested")
 	can_edit = bool(not is_planning_read_only(actor) and cstr(ver.status) in VERSION_EDITABLE_STATUSES and finance_status != "Awaiting confirmation")
+	method_contract = resolve_procurement_methods()
+	selected_method = cstr(iv.procurement_method).strip() or method_contract["recommended"]
 	fields = {
 		"requirement_description": cstr(iv.requirement_description), "procurement_category": cstr(iv.procurement_category),
-		"procurement_method": cstr(iv.procurement_method or "Open tender"), "arrangement": cstr(iv.arrangement or "Single year"),
+		"procurement_method": selected_method, "arrangement": cstr(iv.arrangement or "Single year"),
 		"multi_year_justification": cstr(iv.multi_year_justification), "annual_funding_schedule": cstr(iv.annual_funding_schedule),
 		"lotting_decision": cstr(iv.lotting_decision or "Single lot"), "expected_lot_count": int(iv.expected_lot_count or 1),
 		"lot_basis": cstr(iv.lot_basis), **{key: str(getattr(iv, key, None) or "") for key in MILESTONE_FIELDS},
@@ -126,8 +128,15 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"owner_org_unit_label": cstr(frappe.db.get_value("Organisation Unit", item.owner_org_unit, "unit_name") or item.owner_org_unit or frappe.db.get_value("Procuring Entity", plan.procuring_entity, "legal_name") or plan.procuring_entity),
 		"finance_status": finance_status, "finance_status_label": finance_status, "validation_projection": cstr(iv.validation_projection or "Not run"),
 		"can_edit": can_edit, "read_only": not can_edit, "attention_message": attention_message, "fields": fields, "field_issues": issues,
-		"category_options": list(CATEGORY_OPTIONS), "method_options": list(METHOD_OPTIONS),
-		"method_recommendation": "Open tender is the approved MVP procurement method for this Plan Item.",
+		"category_options": list(CATEGORY_OPTIONS), "method_options": method_contract["methods"],
+		"method_recommendation": method_contract["recommended"],
+		"method_recommendation_reason_code": method_contract["recommendation_reason_code"],
+		"method_catalogue_source": method_contract["source"],
+		"method_catalogue_degraded": method_contract["degraded"],
+		"method_recommendation_warning": (
+			"Selected method differs from the current catalogue recommendation."
+			if selected_method != method_contract["recommended"] else ""
+		),
 		"source_rows": sources, "source_count": len({row["demand"] for row in sources}), "need_item_count": len(sources),
 		"combined_sources": len({row["demand"] for row in sources}) > 1, "formation_reason": cstr(iv.aggregation_reason),
 		"derived_days_to_contract_signature": duration,

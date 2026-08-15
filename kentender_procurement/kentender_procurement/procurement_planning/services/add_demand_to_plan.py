@@ -151,7 +151,11 @@ def add_demand_to_plan(
 	available = {row["demand"]: row for row in all_rows}
 	missing = [name for name in names if name not in available]
 	if missing:
-		frappe.throw(frappe._("A selected Demand is no longer eligible or has no available Need Items."), title="PLN_DEMAND_CHANGED")
+		exclusion = list_eligible_demands(plan=plan_name, requested_demand=missing[0], user=actor).get("requested_exclusion") or {}
+		frappe.throw(
+			frappe._(exclusion.get("reason") or "A selected Demand is no longer eligible or has no available Need Items."),
+			title=exclusion.get("code") or "PLN_DEMAND_CHANGED",
+		)
 	selected = [available[name] for name in names]
 	for source in selected:
 		assert_planning_scope(procuring_entity=plan_doc.procuring_entity, org_unit=source["organisation_unit"], user=actor, require_write=True)

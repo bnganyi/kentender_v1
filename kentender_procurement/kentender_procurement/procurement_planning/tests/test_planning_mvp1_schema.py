@@ -36,6 +36,8 @@ class TestPlanningMvp1Schema(IntegrationTestCase):
 		)
 		self.assertIsNone(meta.get_field("status"))
 		self.assertIsNone(meta.get_field("coordinating_org_unit"))
+		for fieldname in ("closed_at", "cancelled_at", "cancellation_reason"):
+			self.assertIsNone(meta.get_field(fieldname))
 		for fieldname in ("title", "procuring_entity", "financial_year", "period_start", "period_end", "currency"):
 			self.assertTrue(meta.get_field(fieldname).read_only, msg=fieldname)
 

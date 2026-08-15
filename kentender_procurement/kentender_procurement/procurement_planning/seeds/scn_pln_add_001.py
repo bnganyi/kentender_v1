@@ -13,8 +13,10 @@ from frappe.utils import cstr, flt
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	FINANCE_AWAITING,
+	FINANCE_CONFIRMED,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
+	VALIDATION_READY,
 	VERSION_APPROVED,
 	VERSION_DRAFT,
 	VERSION_IN_REVIEW,
@@ -50,13 +52,33 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 
 SCN_TITLE = "Digital health technical staff certification programme"
 CORRECTED_AMOUNT = C.PLAN_ITEM_SCN_AMOUNT
-UPDATE_REASON = "SCN-PLN-ADD-001 post-approval addition"
+UPDATE_REASON = (
+	"Add the approved digital-health technical staff certification programme to the "
+	"FY 2027/28 Plan so delivery can begin before 31 December 2027."
+)
+
+
+def _clear_scenario_command_evidence() -> None:
+	"""Remove only resettable SCN-PLN-ADD-001 replay evidence."""
+	for name in frappe.get_all(
+		"Comment",
+		filters={"content": ["like", "%SCN-PLN-ADD-001-%"]},
+		pluck="name",
+	):
+		frappe.delete_doc("Comment", name, force=1, ignore_permissions=True)
+	for name in frappe.get_all(
+		"Plan Decision",
+		filters={"command_idempotency_key": ["like", "SCN-PLN-ADD-001-%"]},
+		pluck="name",
+	):
+		frappe.delete_doc("Plan Decision", name, force=1, ignore_permissions=True)
 
 
 def setup(*, force: bool = True) -> dict[str, Any]:
 	"""Ensure base Planning state (Approved V1 @ 455M)."""
 	frappe.only_for(("System Manager", "Administrator"))
 	frappe.set_user("Administrator")
+	_clear_scenario_command_evidence()
 	from kentender_core.seeds.kentender_mvp_v1.orchestrator import run_kentender_mvp_v1
 
 	base = run_kentender_mvp_v1(reset=True, force=force, validate=True)
@@ -378,6 +400,18 @@ def _ensure_submitted(plan_name: str) -> str:
 	return submitted.get("version") or v2_name
 
 
+def _ensure_successor_validation(plan_name: str) -> None:
+	"""Store the shared Ready fingerprint used by both exact UI-05 states."""
+	_complete_carry_forward_items(plan_name)
+	from kentender_procurement.procurement_planning.services.validate_plan import (
+		validate_plan,
+	)
+
+	result = validate_plan(plan=plan_name, user=C.USER_PLANNING_OFFICER)
+	if result.get("status") != VALIDATION_READY:
+		raise frappe.ValidationError(result.get("issues") or result)
+
+
 def _ensure_approved(plan_name: str) -> None:
 	v2_name = _ensure_submitted(plan_name)
 	status = frappe.db.get_value("Procurement Plan Version", v2_name, "status")
@@ -409,9 +443,10 @@ def run(
 	``stop_before_finance`` — Draft V2 + Proposed 022, no RSV-0002 (REMOVE / FUND-SHORT / AC-013).
 	``stop_before_approve`` — after Finance; RSV-0002 exists; V1 still Approved.
 	``stop_point`` — idempotent UI evidence boundary: ``ready_demand``,
-	``incomplete_item``, ``awaiting_finance`` or ``submitted_review``.
+	``incomplete_item``, ``awaiting_finance``, ``finance_confirmed`` or
+	``submitted_review``.
 	"""
-	allowed_stops = {"", "ready_demand", "incomplete_item", "awaiting_finance", "submitted_review"}
+	allowed_stops = {"", "ready_demand", "incomplete_item", "awaiting_finance", "finance_confirmed", "submitted_review"}
 	stop = cstr(stop_point or "").strip()
 	if stop not in allowed_stops:
 		raise frappe.ValidationError(f"Unknown SCN-PLN-ADD-001 stop point: {stop}")
@@ -467,6 +502,8 @@ def run(
 				return _snapshot(idempotent=True, stage=stop, stopped_before_finance=True)
 		if stop == "awaiting_finance" and v2 and v2.status == VERSION_DRAFT and item_finance == FINANCE_AWAITING:
 			return _snapshot(idempotent=True, stage=stop, stopped_before_approve=True)
+		if stop == "finance_confirmed" and v2 and v2.status == VERSION_DRAFT and item_finance == FINANCE_CONFIRMED and has_rsv:
+			return _snapshot(idempotent=True, stage=stop, stopped_before_approve=True)
 		if stop == "submitted_review" and v2 and v2.status == VERSION_IN_REVIEW:
 			return _snapshot(idempotent=True, stage=stop, stopped_before_approve=True)
 
@@ -501,12 +538,16 @@ def run(
 		if stop == "incomplete_item":
 			frappe.db.commit()
 			return _snapshot(idempotent=False, stage=stop, stopped_before_finance=True)
+		_ensure_successor_validation(plan_name)
 		if stop_before_finance:
 			frappe.db.commit()
 			return _snapshot(idempotent=False, stage="complete_item", stopped_before_finance=True)
 
 		_ensure_finance(item_022, plan_name, confirm=stop != "awaiting_finance")
 		if stop == "awaiting_finance":
+			frappe.db.commit()
+			return _snapshot(idempotent=False, stage=stop, stopped_before_approve=True)
+		if stop == "finance_confirmed":
 			frappe.db.commit()
 			return _snapshot(idempotent=False, stage=stop, stopped_before_approve=True)
 		if stop_before_approve:
@@ -529,6 +570,11 @@ def reset(*, force: bool = True) -> dict[str, Any]:
 	frappe.only_for(("System Manager", "Administrator"))
 	frappe.set_user("Administrator")
 	_ = force
+
+	# These records are fixture-owned replay evidence. The canonical graph reuses
+	# deterministic names, so retaining an earlier run's command marker would make
+	# a reset replay an obsolete result against the newly-created Draft.
+	_clear_scenario_command_evidence()
 
 	demand = frappe.db.get_value("Demand", {"demand_code": C.DEMAND_CODE_RETURNED}, "name")
 	if demand:

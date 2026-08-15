@@ -103,7 +103,10 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 	can_mutate = (not read_only) and bool(roles.intersection(ADD_DEMAND_ROLES))
 	lifecycle_open = cstr(plan_doc.lifecycle_state) == PLAN_OPEN
 	can_add_item = can_mutate and lifecycle_open
-	can_export = True
+	approved_route = f"/app/procurement-plan-approved?plan={plan_doc.name}"
+	actions: dict[str, dict[str, Any]] = {
+		"back": {"label": "Back to Procurement Planning", "route": "/app/procurement-planning"},
+	}
 
 	draft = cstr(plan_doc.open_draft_version or "").strip()
 	draft_number = 0
@@ -113,6 +116,12 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		)
 	approved_number = int(ver.version_number or 1)
 	has_successor = bool(draft)
+	if can_add_item:
+		actions["add_demand"] = {"label": "Add Plan Item", "route": f"{approved_route}&add_demand=1"}
+	if has_successor and can_mutate:
+		actions["continue_update"] = {
+			"label": "Continue update", "route": f"/app/procurement-plan-builder?plan={plan_doc.name}",
+		}
 	new_item_count = 0
 	if draft:
 		new_item_count = frappe.db.count(
@@ -170,6 +179,13 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		if iv.ms_delivery_completion:
 			milestone = f"Completion by {formatdate(iv.ms_delivery_completion, 'dd MMM yyyy')}"
 		can_propose = can_add_item and not has_handoff
+		item_actions: dict[str, dict[str, Any]] = {
+			"view": {"label": "View", "route": f"{approved_route}&plan_item={it.name}"},
+		}
+		if can_propose:
+			item_actions["propose_removal"] = {
+				"label": "Propose removal", "handler": "plan_item_removal", "plan_item": it.name,
+			}
 		item_row = {
 			"plan_item": it.name,
 			"plan_item_code": it.plan_item_code,
@@ -184,7 +200,6 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 			"actual_progress_label": "Tender active" if has_handoff else "Not started",
 			"variance_label": "On track" if has_handoff else "—",
 			"finance_status": effective_finance_status(iv),
-			"can_propose_removal": can_propose,
 			"removal_variant": "active" if can_propose else None,
 			"sources_label": _sources_label(it.name),
 			"finance_effect_copy": (
@@ -192,7 +207,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 				if can_propose
 				else ""
 			),
-			"view_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
+			"actions": item_actions,
 		}
 		items_out.append(item_row)
 
@@ -235,8 +250,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		"successor_label": successor_label,
 		"successor_copy": successor_copy,
 		"read_only": True,
-		"can_add_item": can_add_item,
-		"can_export": can_export,
+		"actions": actions,
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, currency),
 		"item_count": item_count,
@@ -247,9 +261,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		"reporting_period_label": f"FY {fy}" if fy else "",
 		"ou_options": ou_options,
 		"items": items_out,
-		"add_route": f"/app/procurement-plan-approved?plan={plan_doc.name}&add_demand=1",
-		"update_route": f"/app/procurement-plan-builder?plan={plan_doc.name}" if has_successor else "",
-		"approved_route": f"/app/procurement-plan-approved?plan={plan_doc.name}",
+		"approved_route": approved_route,
 		"version_history": [
 			{
 				"version": row.name,

@@ -11,6 +11,7 @@ kentender_procurement.patches.ensure_demands_module_def
 kentender_procurement.patches.mvp1_teardown_retire_demand_intake_pre_sync
 kentender_procurement.patches.c02_drop_departmental_submission
 kentender_procurement.patches.pln_revision_preflight
+kentender_procurement.patches.pln_chg_016_preflight
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
@@ -58,3 +59,4 @@ kentender_procurement.patches.clear_retired_statutory_questionnaire
 kentender_procurement.patches.pln_revision_schema_backfill
 kentender_procurement.patches.scope_pln_formation_batch_key
 kentender_procurement.patches.remove_planning_ui10_and_publication
+kentender_procurement.patches.pln_chg_016_schema_cleanup

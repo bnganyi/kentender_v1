@@ -17,10 +17,12 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as add_scn
 from kentender_procurement.procurement_planning.services.get_plan_builder import get_plan_builder
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
+	cancel_empty_plan_update,
 	remove_plan_item_from_plan,
 )
 
 REMOVE_REASON = "Added for demonstration; remove from this draft"
+POST_REMOVAL_AT_UTC = "2027-08-19 06:15:00"  # 09:15 EAT
 
 
 def setup(*, force: bool = True) -> dict[str, Any]:
@@ -70,8 +72,33 @@ def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	if not result.get("ok"):
 		raise frappe.ValidationError(result.get("errors") or result)
+	frappe.db.set_value("Procurement Plan", plan_name, "modified", POST_REMOVAL_AT_UTC, update_modified=False)
+	frappe.db.set_value("Procurement Plan Version", v2_name, "modified", POST_REMOVAL_AT_UTC, update_modified=False)
+	frappe.db.set_value("Procurement Plan Item", item_name, "modified", POST_REMOVAL_AT_UTC, update_modified=False)
+	for item_version in frappe.get_all("Procurement Plan Item Version", filters={"plan_version": v2_name}, pluck="name"):
+		frappe.db.set_value("Procurement Plan Item Version", item_version, "modified", POST_REMOVAL_AT_UTC, update_modified=False)
 	frappe.db.commit()
 	return _snapshot(plan_name, item_name, idempotent=False, remove_result=result)
+
+
+def cancel(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
+	"""Prepare and cancel the empty successor; repeat calls replay the same decision."""
+	removed = run(reset_first=reset_first, force=force)
+	plan_name = removed["plan"]
+	version = frappe.db.get_value("Procurement Plan Version", {"version_code": C.PROCUREMENT_PLAN_VERSION_V2}, "name")
+	if frappe.db.get_value("Procurement Plan Version", version, "status") == "Cancelled":
+		return {**removed, "cancelled": True, "idempotent": True}
+	frappe.set_user(C.USER_PLANNING_OFFICER)
+	result = cancel_empty_plan_update(
+		plan=plan_name,
+		successor_version=version,
+		expected_version_token=frappe.db.get_value("Procurement Plan Version", version, "concurrency_token"),
+		idempotency_key="SCN-PLN-REMOVE-001-CANCEL",
+		user=C.USER_PLANNING_OFFICER,
+	)
+	frappe.set_user("Administrator")
+	frappe.db.commit()
+	return {**removed, "cancelled": True, "cancel_result": result}
 
 
 def reset(*, force: bool = True) -> dict[str, Any]:

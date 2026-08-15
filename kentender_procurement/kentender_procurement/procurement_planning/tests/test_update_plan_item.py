@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import uuid
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -109,6 +110,34 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			},
 		)
 		self.assertTrue(result["ok"], result)
+
+	@patch(
+		"kentender_procurement.procurement_planning.services.update_plan_item.resolve_procurement_methods",
+		return_value={
+			"methods": ["Open tender", "Restricted tender"], "recommended": "Open tender",
+			"source": "catalogue", "degraded": False,
+			"recommendation_reason_code": "PROCUREMENT_METHOD_CONFIGURED_DEFAULT",
+		},
+	)
+	def test_catalogue_configured_method_is_persisted(self, _resolver) -> None:
+		planner, item = self._item()
+		result = update_plan_item(
+			plan_item=item, user=planner,
+			fields={"procurement_method": "Restricted tender"},
+		)
+		self.assertTrue(result["ok"], result)
+		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
+		self.assertEqual(frappe.db.get_value("Procurement Plan Item Version", iv, "procurement_method"), "Restricted tender")
+
+	@patch(
+		"kentender_procurement.procurement_planning.services.update_plan_item.resolve_procurement_methods",
+		return_value={"methods": ["Open tender"], "recommended": "Open tender", "source": "fallback", "degraded": True, "recommendation_reason_code": "PROCUREMENT_METHOD_FALLBACK_OPEN_TENDER"},
+	)
+	def test_method_outside_resolved_catalogue_is_rejected(self, _resolver) -> None:
+		planner, item = self._item()
+		result = update_plan_item(plan_item=item, user=planner, fields={"procurement_method": "Direct procurement"})
+		self.assertFalse(result["ok"], result)
+		self.assertEqual(result["error_code"], "PROCUREMENT_METHOD_NOT_CONFIGURED")
 
 	def test_strategy_and_pvc_writes_rejected_by_editor(self) -> None:
 		"""PLN-AC-018 — Planning cannot author strategy / PVC / treatment notes."""
@@ -217,7 +246,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		result = update_plan_item(
 			plan_item=item,
 			user=planner,
-			fields={"procurement_method": "Direct procurement"},
+			fields={"procurement_method": "Uncatalogued method test sentinel"},
 		)
 		self.assertFalse(result["ok"], result)
 		self.assertEqual(result.get("error_code"), "PROCUREMENT_METHOD_NOT_CONFIGURED")

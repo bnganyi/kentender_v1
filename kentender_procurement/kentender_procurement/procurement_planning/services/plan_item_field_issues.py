@@ -16,6 +16,7 @@ from frappe.utils import cstr, flt, getdate
 from kentender_procurement.procurement_planning.services.preference_reservation import (
 	validate_designation,
 )
+from kentender_procurement.procurement_planning.services.procurement_method_catalogue import procurement_method_is_allowed
 
 MILESTONE_FIELDS = (
 	"ms_invitation_published",
@@ -52,8 +53,8 @@ def collect_plan_item_field_issues(
 	issues: dict[str, str] = {}
 
 	method = cstr(_merged(iv, payload, "procurement_method") or "").strip()
-	if method and method != "Open tender":
-		issues["procurement_method"] = "Only the configured Open tender method is available in MVP."
+	if method and not procurement_method_is_allowed(method):
+		issues["procurement_method"] = "The selected procurement method is not enabled in the current catalogue."
 
 	lotting = cstr(_merged(iv, payload, "lotting_decision") or "").strip()
 	if lotting == "Multiple lots":

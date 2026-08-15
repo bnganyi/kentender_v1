@@ -30,7 +30,8 @@ from kentender_procurement.procurement_planning.services.open_or_create_plan_rev
 	open_or_create_plan_revision,
 )
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
-	cancel_plan_update,
+	cancel_empty_plan_update,
+	get_empty_plan_update_cancellation,
 	release_draft_finance_effects,
 	remove_plan_item_from_plan as _remove_plan_item_from_plan,
 )
@@ -423,6 +424,13 @@ class TestRemovePlanItem(IntegrationTestCase):
 		added2 = add_demand_to_plan(plan=plan["plan"], demand=d2["demand"], user=planner)
 		draft = frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
 		self.assertTrue(draft)
+		with self.assertRaises(frappe.ValidationError) as changed:
+			cancel_empty_plan_update(
+				plan=plan["plan"], successor_version=draft,
+				expected_version_token=self._token(draft),
+				idempotency_key=f"TEST-CANCEL-CHANGED-{draft}", user=planner,
+			)
+		self.assertIn("PLAN_UPDATE_NOT_EMPTY", str(changed.exception))
 		remove_plan_item_from_plan(
 			plan=plan["plan"],
 			plan_item=added2["plan_item"],
@@ -434,12 +442,55 @@ class TestRemovePlanItem(IntegrationTestCase):
 		self.assertTrue(builder.get("no_changes_remain"))
 		self.assertFalse(builder.get("can_submit"))
 		self.assertTrue(builder.get("can_cancel"))
-		cancelled = cancel_plan_update(
+		carry = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_version": draft, "carry_forward_unchanged": 1}, "name",
+		)
+		frappe.db.set_value("Procurement Plan Item Version", carry, "finance_task_state", "Open", update_modified=False)
+		with self.assertRaises(frappe.ValidationError) as active:
+			cancel_empty_plan_update(
+				plan=plan["plan"], successor_version=draft,
+				expected_version_token=builder["concurrency_token"],
+				idempotency_key=f"TEST-CANCEL-ACTIVE-{draft}", user=planner,
+			)
+		self.assertIn("PLAN_UPDATE_HAS_ACTIVE_TASK", str(active.exception))
+		frappe.db.set_value("Procurement Plan Item Version", carry, "finance_task_state", None, update_modified=False)
+		allocation = added2["allocation"]
+		demand_item = frappe.db.get_value("Plan Demand Allocation", allocation, "demand_item")
+		frappe.db.set_value("Plan Demand Allocation", allocation, {"status": "Draft", "active_hold_key": demand_item}, update_modified=False)
+		with self.assertRaises(frappe.ValidationError) as residual:
+			cancel_empty_plan_update(
+				plan=plan["plan"], successor_version=draft,
+				expected_version_token=builder["concurrency_token"],
+				idempotency_key=f"TEST-CANCEL-HOLD-{draft}", user=planner,
+			)
+		self.assertIn("PLAN_UPDATE_HAS_RESIDUAL_HOLD", str(residual.exception))
+		frappe.db.set_value("Plan Demand Allocation", allocation, {"status": "Reversed", "active_hold_key": None}, update_modified=False)
+		projection = get_empty_plan_update_cancellation(
+			plan=plan["plan"], successor_version=draft, user=planner,
+		)
+		self.assertTrue(projection["can_cancel"])
+		cancelled = cancel_empty_plan_update(
 			plan=plan["plan"],
-			concurrency_token=builder["concurrency_token"],
+			successor_version=draft,
+			expected_version_token=builder["concurrency_token"],
+			idempotency_key=f"TEST-CANCEL-{draft}",
 			user=planner,
 		)
 		self.assertTrue(cancelled["ok"])
+		self.assertEqual(cancelled["status"], "Cancelled")
+		self.assertEqual(cancelled["reason"], "No effective changes remained in the Draft update.")
+		self.assertEqual(cancelled["invariants"], {"draft_lock_cleared": True, "active_tasks": False, "residual_holds": False})
+		self.assertIn("procurement-plan-approved", cancelled["route"])
+		replayed = cancel_empty_plan_update(
+			plan=plan["plan"],
+			successor_version=draft,
+			expected_version_token=builder["concurrency_token"],
+			idempotency_key=f"TEST-CANCEL-{draft}",
+			user=planner,
+		)
+		self.assertTrue(replayed["idempotent"])
+		self.assertEqual(replayed["invariants"], cancelled["invariants"])
 		self.assertFalse(
 			frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
 		)
@@ -447,6 +498,12 @@ class TestRemovePlanItem(IntegrationTestCase):
 			frappe.db.get_value("Procurement Plan Version", draft, "status"),
 			"Cancelled",
 		)
+		decision = frappe.db.get_value(
+			"Plan Decision", {"command_idempotency_key": f"TEST-CANCEL-{draft}"},
+			["decision", "reason"], as_dict=True,
+		)
+		self.assertEqual(decision.decision, "Cancelled")
+		self.assertEqual(decision.reason, "No effective changes remained in the Draft update.")
 
 	def test_finance_release_hook_noop_and_idempotent(self) -> None:
 		planner = ensure_planner_user()

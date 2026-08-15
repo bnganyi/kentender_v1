@@ -9,6 +9,7 @@ import {
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 const ROOT = '[data-testid="kt-pln-ui09-root"]';
+const BUILDER = '[data-testid="kt-pln-ui03-root"]';
 
 test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 	test.beforeEach(async ({ page }) => {
@@ -85,6 +86,54 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			"data-kt-pln-builder-state",
 			"PLN-UI-05",
 		);
+	});
+
+	test("PLN-UI-05 successor awaiting Finance matches the approved state", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningScnAdd(page, "awaiting_finance");
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(prep.update_route || "", { waitUntil: "domcontentloaded" });
+		const builder = page.locator(`${BUILDER}[data-kt-pln-live="1"]`);
+		await expect(builder).toBeVisible({ timeout: 45_000 });
+		await expect(builder).toHaveAttribute("data-kt-pln-builder-state", "PLN-UI-05");
+		const summary = page.getByTestId("kt-pln-ui05-successor-summary");
+		await expect(summary).toContainText("Draft Plan Items");
+		await expect(summary).toContainText("2");
+		await expect(summary).toContainText("KES 535,000,000");
+		await expect(summary).toContainText("KES 80,000,000 added");
+		await expect(summary).toContainText("2 of 2");
+		await expect(summary).toContainText("1 of 2");
+		await expect(summary).toContainText("Needs attention");
+		await expect(builder).toContainText(
+			"Approved Version 1 remains active while this update is prepared and reviewed.",
+		);
+		await expect(builder.locator("[data-kt-pln-update-reason]")).toHaveValue(
+			"Add the approved digital-health technical staff certification programme to the FY 2027/28 Plan so delivery can begin before 31 December 2027.",
+		);
+		await expect(builder).toContainText("Funding confirmation is still required for PPI-MOH-2027-022");
+		await expect(builder).toContainText(
+			"1 unchanged Active Plan Item remains operational in Approved Version 1 · Tender TND-MOH-2027-008 remains active",
+		);
+		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText("View Plan Item");
+		await expect(builder.getByRole("button", { name: "Submit for review" })).toBeHidden();
+		await expect(builder.locator("nav")).toHaveCount(0);
+	});
+
+	test("PLN-UI-05 successor Ready exposes the single professional submission action", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningScnAdd(page, "finance_confirmed");
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(prep.update_route || "", { waitUntil: "domcontentloaded" });
+		const builder = page.locator(`${BUILDER}[data-kt-pln-live="1"]`);
+		await expect(builder).toBeVisible({ timeout: 45_000 });
+		const summary = page.getByTestId("kt-pln-ui05-successor-summary");
+		await expect(summary).toContainText("2 of 2");
+		await expect(summary).toContainText("Ready");
+		await expect(builder).toContainText("All required Planning validation and Finance confirmations are ready.");
+		await expect(builder.getByRole("button", { name: "Save draft" })).toBeVisible();
+		await expect(builder.getByRole("button", { name: "Submit for review" })).toBeVisible();
 	});
 
 	test("Viewer cannot add or propose removal but may export the Approved projection", async ({ page }) => {

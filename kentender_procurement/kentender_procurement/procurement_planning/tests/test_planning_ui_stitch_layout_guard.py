@@ -22,6 +22,7 @@ REVIEW_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "plan_review.js"
 REVIEW_PAGE = APP_PUBLIC / "js" / "planning_review_page.js"
 APPROVED_FIXTURE = APP_PUBLIC / "js" / "planning_ui_fixtures" / "plan_approved.js"
 APPROVED_PAGE = APP_PUBLIC / "js" / "planning_approved_page.js"
+APPROVED_BIND = APP_PUBLIC / "js" / "planning_approved_bind.js"
 LIVE_BIND = APP_PUBLIC / "js" / "planning_live_bind.js"
 GET_PLAN_BUILDER = (
 	Path(frappe.get_app_path("kentender_procurement"))
@@ -34,6 +35,23 @@ WS_PAGE = APP_PUBLIC / "js" / "planning_workspace_page.js"
 REG_PAGE = APP_PUBLIC / "js" / "planning_register_page.js"
 BLD_PAGE = APP_PUBLIC / "js" / "planning_builder_page.js"
 ED_PAGE = APP_PUBLIC / "js" / "planning_item_editor_page.js"
+REVISION_ROOT = Path(frappe.get_app_path("kentender_procurement")).parents[1] / "docs" / "mvp-1" / "04_planning" / "revision"
+REVISION_VARIANTS = {
+	"PLN-UI-01.html": WS_FIXTURE, "PLN-UI-01A.html": WS_FIXTURE,
+	"PLN-UI-01B.html": WS_FIXTURE, "PLN-UI-01C.html": WS_FIXTURE,
+	"PLN-UI-01D.html": WS_FIXTURE, "PLN-UI-01E.html": WS_FIXTURE,
+	"PLN-UI-01F.html": WS_FIXTURE, "PLN-UI-02.html": REG_FIXTURE,
+	"PLN-UI-03.html": BLD_FIXTURE, "PLN-UI-04.html": ADD_FIXTURE,
+	"PLN-UI-04A.html": ADD_FIXTURE, "PLN-UI-04B.html": ADD_FIXTURE,
+	"PLN-UI-04C.html": ADD_FIXTURE, "PLN-UI-05.html": BLD_FIXTURE,
+	"PLN-UI-05-1.html": BLD_FIXTURE, "PLN-UI-05A-1.html": REMOVE_FIXTURE,
+	"PLN-UI-05A-2.html": REMOVE_FIXTURE, "PLN-UI-05A-3.html": REMOVE_FIXTURE,
+	"PLN-UI-05A-4.html": REMOVE_FIXTURE, "PLN-UI-05B.html": BLD_FIXTURE,
+	"PLN-UI-06.html": ED_FIXTURE, "PLN-UI-07.html": FINANCE_FIXTURE,
+	"PLN-UI-07A-1.html": FINANCE_FIXTURE, "PLN-UI-07A-2.html": FINANCE_FIXTURE,
+	"PLN-UI-08-1.html": REVIEW_FIXTURE, "PLN-UI-08-2.html": REVIEW_FIXTURE,
+	"PLN-UI-09.html": APPROVED_FIXTURE,
+}
 
 
 def _read(path: Path) -> str:
@@ -63,6 +81,22 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		):
 			self.assertTrue(path.is_file(), path)
 
+	def test_revision_variant_matrix_has_an_executable_fixture_for_every_artifact(self):
+		artifacts = {path.name for path in REVISION_ROOT.glob("PLN-UI-*.html")}
+		self.assertEqual(set(REVISION_VARIANTS), artifacts)
+		for artifact, fixture in REVISION_VARIANTS.items():
+			self.assertTrue((REVISION_ROOT / artifact).is_file(), artifact)
+			self.assertTrue(fixture.is_file(), f"{artifact}: {fixture}")
+
+	def test_ui09_actions_are_route_contract_driven_and_export_is_not_executable(self):
+		bind = _read(APPROVED_BIND)
+		self.assertIn('routeAction(data.actions, "continue_update")', bind)
+		self.assertIn('routeAction(data.actions, "add_demand")', bind)
+		self.assertIn('routeAction(row.actions, "view")', bind)
+		self.assertNotIn("new Blob", bind)
+		self.assertNotIn("createObjectURL", bind)
+		self.assertNotIn("data.can_export", bind)
+
 	def test_workspace_fixture_markers(self):
 		text = _read(WS_FIXTURE)
 		self.assertIn("kt-stitch-canvas", text)
@@ -80,7 +114,7 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 			text,
 		)
 		self.assertIn('data-kt-pln-action="change-context"', text)
-		self.assertIn("All pending actions have been completed.", text)
+		self.assertNotIn("All pending actions have been completed.", text)
 		self.assertNotIn('aria-label="Breadcrumb"', text)
 		self.assertNotIn("chevron_right", text)
 		self.assertNotIn(">Current Plan<", text)
@@ -91,6 +125,8 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		# The exact four options are server-owned and bound into this select.
 		self.assertIn("data-kt-pln-work-body", text)
 		self.assertIn("data-kt-pln-waiting-body", text)
+		self.assertIn("data-kt-pln-context-helper", text)
+		self.assertIn("<th>Stage</th><th>Status</th><th>With</th>", text)
 		self.assertIn("Nothing is currently waiting on another reviewer.", text)
 		self.assertIn("data-kt-pln-loading", text)
 		self.assertIn("data-kt-pln-error", text)
@@ -100,6 +136,7 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn(".kt-pln-workspace-canvas", css)
 		self.assertIn(".kt-pln-summary-grid", css)
 		self.assertIn("grid-template-columns: repeat(4", css)
+		self.assertIn("grid-template-columns: repeat(6", css)
 		self.assertIn("@media (max-width: 599px)", css)
 		self.assertIn("font-family: \"JetBrains Mono\"", css)
 		self.assertIn(".kt-pln-icon-filled", css)
@@ -180,6 +217,18 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertNotIn(">Schedule</th>", text)
 		self.assertNotIn("<tfoot", text)
 		self.assertIn('data-kt-pln-builder-total', text)
+		self.assertIn('data-testid="kt-pln-ui05-successor-summary"', text)
+		self.assertIn("Draft Plan Items", text)
+		self.assertIn("Net change", text)
+		self.assertIn("Planning complete", text)
+		self.assertIn("Reason for Plan update", text)
+		self.assertIn("Explain why the Approved Plan needs to change.", text)
+		self.assertIn("View Approved Plan", text)
+		self.assertIn("Submit for review", text)
+		self.assertIn('data-kt-pln-action="cancel-update"', text)
+		self.assertNotIn("Back to approved plan", text)
+		self.assertNotIn("Submit for professional review", text)
+		self.assertNotIn("Unchanged Approved Plan context", text)
 		self.assertIn("data-kt-pln-dialog-host", text)
 		self.assertNotIn("kt-pln-wrap", text)
 		self.assertNotIn("cdn.tailwindcss.com", text)

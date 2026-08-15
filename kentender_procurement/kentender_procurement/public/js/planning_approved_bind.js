@@ -1,11 +1,101 @@
 frappe.provide("kentender_procurement.live");
-(function () { "use strict"; var client = function () { return kentender_procurement.planning_client; }; function esc(v) { return client().escapeHtml(v); }
-	function bindPlanningApproved($root, options) { if (!$root || !$root.length) return; $root.off(".ktPlnApprovedCurrent"); var plan = (options && options.plan) || client().routeContext().plan, dto = null;
-		function renderItems(rows) { $root.find("[data-kt-pln-ui09-body]").html((rows || []).map(function (r) { return '<tr data-kt-pln-ui09-row><td><strong>' + esc(r.title) + '</strong><div class="font-data-md text-xs">' + esc(r.plan_item_code) + '</div></td><td>' + esc(r.owner_org_unit_label) + '</td><td class="text-right font-data-md">' + esc(r.amount_display) + '</td><td>' + esc(r.takeup_label) + (r.tender_reference ? '<div class="font-data-md text-xs">' + esc(r.tender_reference) + '</div>' : '') + '</td><td>' + esc(r.milestone_label || "—") + '</td><td>' + esc(r.actual_progress_label) + '</td><td>' + esc(r.variance_label) + '</td><td><button class="text-primary" data-kt-plan-item-view="' + esc(r.view_route) + '">View</button>' + (r.can_propose_removal ? '<button class="ml-2" aria-label="Remove Plan Item" data-kt-pln-action="propose-removal" data-kt-plan-item-remove="' + esc(r.plan_item) + '"><span class="material-symbols-outlined">more_vert</span></button>' : '') + '</td></tr>'; }).join("") || '<tr><td colspan="8" class="p-8 text-center text-on-surface-variant">No Plan Items match these filters.</td></tr>'); }
-		function applyFilters() { if (!dto) return; var ou = $root.find('[data-kt-pln-ui09-filter="ou"]').val() || "", status = $root.find('[data-kt-pln-ui09-filter="status"]').val() || ""; renderItems((dto.items || []).filter(function (row) { return (!ou || row.owner_org_unit === ou) && (!status || row.actual_progress_label === status); })); }
-		function render(data) { dto = data; $root.attr("data-kt-pln-live", "1"); $root.find("[data-kt-pln-ui09-title]").text(data.title); $root.find("[data-kt-pln-ui09-version]").text(data.version_label); $root.find("[data-kt-pln-ui09-approved-evidence]").text(data.version_history && data.version_history[0] && data.version_history[0].approved_by ? "Approved by " + data.version_history[0].approved_by : ""); $root.find("[data-kt-pln-ui09-total]").text(data.planned_total_display); $root.find("[data-kt-pln-ui09-items]").text(data.item_count); $root.find("[data-kt-pln-ui09-finance]").text(data.items.filter(function (r) { return r.finance_status === "Confirmed"; }).length + " of " + data.item_count); $root.find("[data-kt-pln-ui09-takeup]").text(data.takeup_label); $root.find('[data-kt-pln-ui09-filter="period"]').html('<option>' + esc(data.reporting_period_label) + '</option>'); $root.find("[data-kt-pln-ui09-as-at]").text(data.as_at_display); $root.find('[data-kt-pln-ui09-filter="ou"]').html('<option value="">All permitted units</option>' + (data.ou_options || []).map(function (row) { return '<option value="' + esc(row.id) + '">' + esc(row.label) + '</option>'; }).join("")); var statuses = []; (data.items || []).forEach(function (row) { if (row.actual_progress_label && statuses.indexOf(row.actual_progress_label) < 0) statuses.push(row.actual_progress_label); }); $root.find('[data-kt-pln-ui09-filter="status"]').html('<option value="">All statuses</option>' + statuses.map(function (value) { return '<option value="' + esc(value) + '">' + esc(value) + '</option>'; }).join("")); renderItems(data.items || []); $root.find("[data-kt-pln-ui09-history]").html((data.version_history || []).map(function (r) { return '<div class="p-4 border-b border-subtle flex justify-between"><span class="font-data-md">' + esc(r.version_code) + '</span><span>' + esc(r.status) + '</span></div>'; }).join("")); $root.find("[data-kt-pln-ui09-successor]").toggleClass("hidden", !data.has_successor).prop("hidden", !data.has_successor); $root.find("[data-kt-pln-ui09-successor-copy]").text(data.successor_copy); $root.find("[data-kt-pln-action=add-demand]").toggle(!!data.can_add_item); $root.find("[data-kt-pln-action=export-approved]").toggle(!!data.can_export); }
-		client().call("get_plan_implementation", { plan: plan }).then(render).catch(function (e) { $root.html('<div role="alert" class="p-4 text-status-exhausted">' + esc(e.message) + '</div>'); });
-		$root.on("change.ktPlnApprovedCurrent", '[data-kt-pln-ui09-filter="ou"],[data-kt-pln-ui09-filter="status"]', applyFilters); $root.on("click.ktPlnApprovedCurrent", "[data-kt-pln-action=continue-update]", function () { client().navigate(dto.update_route); }); $root.on("click.ktPlnApprovedCurrent", "[data-kt-pln-action=add-demand]", function () { client().navigate('/app/procurement-plan-builder?plan=' + encodeURIComponent(plan) + '&add_demand=1'); }); $root.on("click.ktPlnApprovedCurrent", "[data-kt-pln-action=export-approved]", function () { if (!dto) return; var rows = [["Plan Item", "Requirement", "Organisation Unit", "Approved value", "Tender take-up"]].concat((dto.items || []).map(function (r) { return [r.plan_item_code, r.title, r.owner_org_unit_label, r.amount, r.takeup_label]; })); var csv = rows.map(function (row) { return row.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","); }).join("\n"); var url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); var a = document.createElement("a"); a.href = url; a.download = dto.plan_code + "-approved.csv"; a.click(); URL.revokeObjectURL(url); }); $root.on("click.ktPlnApprovedCurrent", "[data-kt-plan-item-view]", function () { client().navigate($(this).attr("data-kt-plan-item-view")); }); $root.on("click.ktPlnApprovedCurrent", "[data-kt-plan-item-remove]", function () { kentender_procurement.planning_removal.open({ $host: $root.find("[data-kt-pln-dialog-host]"), plan: plan, planItem: $(this).attr("data-kt-plan-item-remove"), opener: this, onRemoved: function (r) { client().navigate((r && r.destination) || '/app/procurement-plan-builder?plan=' + encodeURIComponent(plan)); } }); });
+
+(function () {
+	"use strict";
+	function client() { return kentender_procurement.planning_client; }
+	function esc(value) { return client().escapeHtml(value); }
+	function routeAction(actions, name) {
+		var action = actions && actions[name];
+		return action && typeof action.route === "string" && action.route ? action : null;
 	}
+	function handlerAction(actions, name, handler) {
+		var action = actions && actions[name];
+		return action && action.handler === handler ? action : null;
+	}
+
+	function bindPlanningApproved($root, options) {
+		if (!$root || !$root.length) return;
+		$root.off(".ktPlnApprovedCurrent");
+		$root.find("[data-kt-pln-action=export-approved]").remove();
+		var context = client().routeContext();
+		var plan = (options && options.plan) || context.plan;
+		var selectedPlanItem = (options && options.planItem) || context.plan_item;
+		var dto = null;
+
+		function openDemandDialog(preselect, opener) {
+			if (!dto || !routeAction(dto.actions, "add_demand")) return;
+			kentender_procurement.planning_dialog.open({
+				$host: $root.find("[data-kt-pln-dialog-host]"), plan: plan,
+				preselect: preselect || "", concurrencyToken: dto.concurrency_token, opener: opener,
+				onCreated: function (result) {
+					var continuation = routeAction(dto.actions, "continue_update");
+					var destination = result && result.builder_route;
+					if (destination || continuation) client().navigate(destination || continuation.route);
+				},
+			});
+		}
+
+		function renderItems(rows) {
+			var html = (rows || []).map(function (row) {
+				var view = routeAction(row.actions, "view");
+				var removal = handlerAction(row.actions, "propose_removal", "plan_item_removal");
+				var actionHtml = view ? '<button class="text-primary" data-kt-plan-item-view="' + esc(view.route) + '">' + esc(view.label || "View") + "</button>" : "";
+				if (removal) actionHtml += '<button class="ml-2" aria-label="' + esc(removal.label || "Propose removal") + '" data-kt-pln-action="propose-removal" data-kt-plan-item-remove="' + esc(removal.plan_item) + '"><span class="material-symbols-outlined">more_vert</span></button>';
+				return '<tr data-kt-pln-ui09-row data-plan-item="' + esc(row.plan_item) + '"><td><strong>' + esc(row.title) + '</strong><div class="font-data-md text-xs">' + esc(row.plan_item_code) + "</div></td><td>" + esc(row.owner_org_unit_label) + '</td><td class="text-right font-data-md">' + esc(row.amount_display) + "</td><td>" + esc(row.takeup_label) + (row.tender_reference ? '<div class="font-data-md text-xs">' + esc(row.tender_reference) + "</div>" : "") + "</td><td>" + esc(row.milestone_label || "—") + "</td><td>" + esc(row.actual_progress_label) + "</td><td>" + esc(row.variance_label) + "</td><td>" + actionHtml + "</td></tr>";
+			}).join("");
+			$root.find("[data-kt-pln-ui09-body]").html(html || '<tr><td colspan="8" class="p-8 text-center text-on-surface-variant">No Plan Items match these filters.</td></tr>');
+		}
+
+		function applyFilters() {
+			if (!dto) return;
+			var ou = $root.find('[data-kt-pln-ui09-filter="ou"]').val() || "";
+			var status = $root.find('[data-kt-pln-ui09-filter="status"]').val() || "";
+			renderItems((dto.items || []).filter(function (row) { return (!ou || row.owner_org_unit === ou) && (!status || row.actual_progress_label === status); }));
+		}
+
+		function render(data) {
+			dto = data;
+			$root.find("[data-kt-pln-action=export-approved]").remove();
+			$root.attr("data-kt-pln-live", "1");
+			$root.find("[data-kt-pln-ui09-title]").text(data.title);
+			$root.find("[data-kt-pln-ui09-version]").text(data.version_label);
+			$root.find("[data-kt-pln-ui09-approved-evidence]").text(data.version_history && data.version_history[0] && data.version_history[0].approved_by ? "Approved by " + data.version_history[0].approved_by : "");
+			$root.find("[data-kt-pln-ui09-total]").text(data.planned_total_display);
+			$root.find("[data-kt-pln-ui09-items]").text(data.item_count);
+			$root.find("[data-kt-pln-ui09-finance]").text(data.items.filter(function (row) { return row.finance_status === "Confirmed"; }).length + " of " + data.item_count);
+			$root.find("[data-kt-pln-ui09-takeup]").text(data.takeup_label);
+			$root.find('[data-kt-pln-ui09-filter="period"]').html("<option>" + esc(data.reporting_period_label) + "</option>");
+			$root.find("[data-kt-pln-ui09-as-at]").text(data.as_at_display);
+			$root.find('[data-kt-pln-ui09-filter="ou"]').html('<option value="">All permitted units</option>' + (data.ou_options || []).map(function (row) { return '<option value="' + esc(row.id) + '">' + esc(row.label) + "</option>"; }).join(""));
+			var statuses = [];
+			(data.items || []).forEach(function (row) { if (row.actual_progress_label && statuses.indexOf(row.actual_progress_label) < 0) statuses.push(row.actual_progress_label); });
+			$root.find('[data-kt-pln-ui09-filter="status"]').html('<option value="">All statuses</option>' + statuses.map(function (value) { return '<option value="' + esc(value) + '">' + esc(value) + "</option>"; }).join(""));
+			renderItems(selectedPlanItem ? (data.items || []).filter(function (row) { return row.plan_item === selectedPlanItem; }) : data.items || []);
+			$root.find("[data-kt-pln-ui09-history]").html((data.version_history || []).map(function (row) { return '<div class="p-4 border-b border-subtle flex justify-between"><span class="font-data-md">' + esc(row.version_code) + "</span><span>" + esc(row.status) + "</span></div>"; }).join(""));
+			var continuation = routeAction(data.actions, "continue_update");
+			$root.find("[data-kt-pln-ui09-successor]").toggleClass("hidden", !continuation).prop("hidden", !continuation);
+			$root.find("[data-kt-pln-ui09-successor-copy]").text(data.successor_copy);
+			$root.find("[data-kt-pln-action=add-demand]").toggle(!!routeAction(data.actions, "add_demand"));
+			if (context.add_demand && routeAction(data.actions, "add_demand")) {
+				var preselect = context.add_demand === "1" ? "" : context.add_demand;
+				context.add_demand = "";
+				openDemandDialog(preselect);
+			}
+		}
+
+		client().call("get_plan_implementation", { plan: plan }).then(render).catch(function (error) { $root.html('<div role="alert" class="p-4 text-status-exhausted">' + esc(error.message) + "</div>"); });
+		$root.on("change.ktPlnApprovedCurrent", '[data-kt-pln-ui09-filter="ou"],[data-kt-pln-ui09-filter="status"]', applyFilters);
+		$root.on("click.ktPlnApprovedCurrent", "[data-kt-pln-action=continue-update]", function () { var action = dto && routeAction(dto.actions, "continue_update"); if (action) client().navigate(action.route); });
+		$root.on("click.ktPlnApprovedCurrent", "[data-kt-pln-action=add-demand]", function () { openDemandDialog("", this); });
+		$root.on("click.ktPlnApprovedCurrent", "[data-kt-plan-item-view]", function () { var route = $(this).attr("data-kt-plan-item-view"); if (route) client().navigate(route); });
+		$root.on("click.ktPlnApprovedCurrent", "[data-kt-plan-item-remove]", function () {
+			kentender_procurement.planning_removal.open({
+				$host: $root.find("[data-kt-pln-dialog-host]"), plan: plan,
+				planItem: $(this).attr("data-kt-plan-item-remove"), opener: this,
+				onRemoved: function (result) { if (result && result.destination) client().navigate(result.destination); },
+			});
+		});
+	}
+
 	kentender_procurement.live.bindPlanningApproved = bindPlanningApproved;
 })();

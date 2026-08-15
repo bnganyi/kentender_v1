@@ -1,20 +1,17 @@
 # Procurement Planning Revision Ledger
 
-**Purpose:** Temporary assembly record for section-by-section review. It is not an implementation authority and does not replace the approved baselines.
-**Status:** Active review ledger
-**Started:** 14 August 2026
+**Purpose:** Integrated Procurement Planning governing record. Each change unit keeps requirements, exact static screen design, implementation rules, deterministic seed evidence and acceptance criteria together.  
+**Status:** Active integrated specification and review ledger  
+**Started:** 14 August 2026  
 
-## Locked baselines
+## Documentation authority
 
-| Layer | Baseline |
-|---|---|
-| Operating model | `KENTENDER-MVP-CMOM-1.1` |
-| Requirements | `PLANNING-MVP1-REQ-1.9` |
-| Stitch | `PLANNING-MVP1-STITCH-2.0` |
-| Implementation | `PLANNING-MVP1-CURSOR-1.8` |
-| Demo data | `KenTender MVP Canonical Demo Data Contract v2.7` |
+1. `KENTENDER-MVP-CMOM-1.1` controls the cross-module operating model.
+2. Approved records in this ledger control Procurement Planning requirements, static design, implementation, seed and acceptance together.
+3. Under-review records are proposals and are not implementation authority.
+4. Where an approved later record supersedes an earlier ledger record, the later record controls.
 
-The four baseline documents remain unchanged during review. Only change records marked **Approved** may be applied during final consolidation.
+The former standalone Requirements, Stitch, Cursor Implementation Pack and Demo Data Contract documents are retired from the Procurement Planning authority chain. They shall not be revised, reissued or treated as future consolidation targets. They may be retained only as historical source evidence. The final Procurement Planning issue shall preserve this integrated documentation structure rather than split the product contract back into separate layers.
 
 ## Status vocabulary
 
@@ -41,14 +38,18 @@ The four baseline documents remain unchanged during review. Only change records 
 | `PLN-CHG-012` | Current Approved Plan detail and Tender implementation handoff | Yes | Yes | Yes | Post-approval execution boundary | Approved |
 | `PLN-CHG-013` | Draft successor overview and submission readiness | Yes | Yes | Yes | Replaced by consolidation into the ordinary Plan builder | Superseded |
 | `PLN-CHG-014` | Consolidate Draft successors into PLN-UI-05 and retire PLN-UI-10 | Yes | Yes | Yes | Existing addition journey; no new records | Approved |
+| `PLN-CHG-015` | Procurement Planning workspace deferred state variants PLN-UI-01A–F | Yes | Yes | Yes | Existing scenarios plus resettable boundaries | Approved |
+| `PLN-CHG-016` | Financial-year context, Demand eligibility and lifecycle-state closure | Yes | Yes | Yes | Existing FY2027/28 and resettable FY2028/29 boundaries | Approved |
+| `PLN-CHG-017` | Remaining reachable PLN-UI-05 Plan-builder states | Yes | Yes | Yes | Existing canonical journey plus resettable variant branches | Approved |
+| `PLN-CHG-018` | MVP-1 release boundary, mandatory hardening and MVP-2 deferrals | Yes | Exact deltas and explicit no-new-frame decisions | Yes | Release smoke contract over canonical and isolated scenarios | Approved |
 
 ---
 
 ## PLN-CHG-001 — Procurement Planning workspace operational content
 
-**Status:** Approved
-**Approved:** 14 August 2026
-**Source:** Requirements §9.1; Stitch PLN-UI-01; Implementation Prompt 03
+**Status:** Approved  
+**Approved:** 14 August 2026  
+**Source:** Requirements §9.1; Stitch PLN-UI-01; Implementation Prompt 03  
 **Problem:** Requirements §9.1 concentrates on scope restrictions and does not define the workspace's operational content, states or next actions. Stitch has a partial illustrative layout, while the implementation pack requires only a vague current-Plan projection and compact queue. A sparse workspace can therefore appear conformant without helping the planner understand the Plan or act on work.
 
 ### Locked design boundary
@@ -271,9 +272,9 @@ None proposed. The correction deliberately avoids charts, trend analytics, deadl
 
 ## PLN-CHG-002 — Annual Plan registration without duplicate or invented metadata
 
-**Status:** Approved
-**Approved:** 14 August 2026
-**Source:** Requirements §9.2; Stitch PLN-UI-02; Implementation Prompt 03; Demo Contract §§7.5 and 7.6
+**Status:** Approved  
+**Approved:** 14 August 2026  
+**Source:** Requirements §9.2; Stitch PLN-UI-02; Implementation Prompt 03; Demo Contract §§7.5 and 7.6  
 **Problem:** The current registration requirements and prompt ask the planner to enter a title and select currency and a coordinating procurement unit. The Plan title, period and reporting currency are already governed by the selected PE/FY context, while the canonical organisation data contains no `Supply Chain Management Services` Organisation Unit. The prompt therefore invites duplicate metadata and an invented organisation record. It also repeats PE/FY selection after the workspace has already established that context.
 
 ### Locked design boundary
@@ -448,9 +449,9 @@ None proposed. Custom Plan titles, Plan-level multi-currency and planner-selecte
 
 ## PLN-CHG-003 — Separate static Stitch composition from executable behavior
 
-**Status:** Approved
-**Approved:** 14 August 2026
-**Source:** Documentation method; applies to PLN-CHG-001 and every subsequent Planning screen
+**Status:** Approved  
+**Approved:** 14 August 2026  
+**Source:** Documentation method; applies to PLN-CHG-001 and every subsequent Planning screen  
 **Problem:** Stitch prompts have been carrying interaction, authorization, validation, routing, persistence, loading and exclusion rules. Stitch produces static designs and cannot enforce those rules. When executable behavior appears only or primarily in Stitch, implementation can omit it while still claiming alignment.
 
 ### Artifact responsibility rule
@@ -502,9 +503,9 @@ None proposed. This is a documentation responsibility correction, not a new work
 
 ## PLN-CHG-004 — Empty Draft Plan builder after registration
 
-**Status:** Approved
-**Approved:** 14 August 2026
-**Source:** Requirements §9.2; Stitch PLN-UI-03; Implementation Prompt 03; Demo Contract §7.6
+**Status:** Approved  
+**Approved:** 14 August 2026  
+**Source:** Requirements §9.2; Stitch PLN-UI-03; Implementation Prompt 03; Demo Contract §7.6  
 **Problem:** PLN-UI-02 now creates the Ministry of Health FY2028/29 Plan, but the current PLN-UI-03 prompt unexpectedly shows FY2027/28. It also duplicates the primary **Add approved demands** action, shows filters over an empty table, exposes a redundant **View eligible Demands** link and displays disabled validation/submission actions before a Plan Item exists. The implementation pack treats PLN-UI-03 and PLN-UI-05 as one vague table contract and does not define the post-registration outcome.
 
 ### Locked design boundary
@@ -657,9 +658,9 @@ None proposed. PLN-UI-03 is deliberately a restrained empty state of the Plan bu
 
 ## PLN-CHG-005 — Approved Demand selection and one-step Plan Item formation
 
-**Status:** Approved
-**Approved:** 14 August 2026
-**Source:** Requirements §§9.3 and 9.5; Stitch PLN-UI-04; Implementation Prompt 03; Demo Contract §7.6
+**Status:** Approved  
+**Approved:** 14 August 2026  
+**Source:** Requirements §§9.3 and 9.5; Stitch PLN-UI-04; Implementation Prompt 03; Demo Contract §7.6  
 **Problem:** The current documents correctly allow one or more Approved Demands to be selected, but the reference screen uses `DMD-MOH-2027-014` as selectable even though that Demand is already fully allocated to an Active Plan Item. The same screen mixes several conditional states into one Stitch prompt and places interaction rules in a static-design artifact. The requirements also prohibit cross-OU combination without a legal or operational basis. This turns Organisation Unit ownership into an artificial packaging boundary and frustrates consolidated or common-user procurement.
 
 Kenya's Public Procurement and Asset Disposal Regulations require the consolidated annual Plan to identify items that may be aggregated into one procurement package or handled as common-user items. They do not make a shared owning Organisation Unit a condition of aggregation. The controlling boundaries are the Procuring Entity, lawful procurement design and retained source accountability, not an internal OU label. See [Regulations 40–41](https://new.kenyalaw.org/akn/ke/act/ln/2020/69/eng%402020-04-30).
@@ -947,9 +948,9 @@ None proposed. Detailed anti-splitting validation and indicative lotting remain 
 
 ## PLN-CHG-006 — Populated initial Draft Plan builder
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §§9.3 and 9.7; Stitch PLN-UI-05; Implementation Prompt 03; Demo Contract §7.6
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §§9.3 and 9.7; Stitch PLN-UI-05; Implementation Prompt 03; Demo Contract §7.6  
 **Problem:** The current PLN-UI-05 prompt shows `PPI-MOH-2027-021` as a Proposed item in Draft Version 1. Canonical data instead defines that item as Active in Approved Version 1 with an operational Tender. The screen therefore contradicts the source data. It also overlaps with PLN-UI-10, which already owns the Draft-successor update against an Approved Plan, and exposes method/schedule columns, duplicate status signals and premature disabled submission controls instead of directing the planner to the next item-completion task.
 
 ### Locked design boundary
@@ -1141,9 +1142,9 @@ None proposed. PLN-UI-05A removal confirmation is intentionally deferred to the 
 
 ## PLN-CHG-007 — Whole Plan Item removal confirmation and lifecycle effects
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §9.8; Stitch PLN-UI-05A; Implementation Prompt 06; demo scenario `SCN-PLN-REMOVE-001`
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §9.8; Stitch PLN-UI-05A; Implementation Prompt 06; demo scenario `SCN-PLN-REMOVE-001`  
 **Problem:** The baseline establishes whole-item, non-destructive removal, but its Stitch prompt mixes four materially different static states with mutation, routing and post-success behaviour. It also leaves several workflow boundaries implicit: when an Active-item removal may create a Draft successor, whether opening the dialog itself mutates the Plan, whether Finance must approve a release, and whether the removal reason duplicates the Plan-update reason.
 
 ### Locked design boundary
@@ -1400,9 +1401,9 @@ None proposed.
 
 ## PLN-CHG-008 — Focused Plan Item editor and admitted annual-plan fields
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §§9.4–9.5; Stitch PLN-UI-06; Implementation Prompt 04; demo scenario `SCN-PLN-ADD-001`
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §§9.4–9.5; Stitch PLN-UI-06; Implementation Prompt 04; demo scenario `SCN-PLN-ADD-001`  
 **Problem:** The baseline uses Active `PPI-MOH-2027-021` as though it were an editable Proposed item in Draft Version 1, even though the canonical record is already in Approved Version 1 and has a Tender. The field register also exposes a generic governing-regime field, omits the notification-of-award milestone required by the annual-plan format, and does not clearly define editor locking, Finance-request atomicity or the upstream-value boundary.
 
 ### Evidence and field-admission rule
@@ -1697,10 +1698,10 @@ No business decision is open. Exact static variants for combined-source context,
 
 ## PLN-CHG-009 — Finance funding confirmation with sufficient current allocation
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §9.6; Stitch PLN-UI-07; Implementation Prompt 05; demo scenario `SCN-PLN-ADD-001`
-**Scope:** PLN-UI-07 sufficient-funding state only. PLN-UI-07A shortfall is the next separate review slice.
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §9.6; Stitch PLN-UI-07; Implementation Prompt 05; demo scenario `SCN-PLN-ADD-001`  
+**Scope:** PLN-UI-07 sufficient-funding state only. PLN-UI-07A shortfall is the next separate review slice.  
 **Problem:** The baseline Finance screen presents Active `PPI-MOH-2027-021`, its KES 455,000,000 infrastructure Budget Line and a false Draft Version 1 context even though that item is already in Approved Version 1 and has an active Tender. It therefore does not continue the approved PLN-UI-06 journey. The requirements also omit allocation freshness, full-value confirmation, combined-source atomicity, task-iteration rules and the boundary between funding confirmation and Plan approval. The demo arithmetic prematurely treats the workforce amount as reserved before the Budget Officer acts.
 
 ### Locked decision boundary
@@ -1915,10 +1916,10 @@ No business decision is proposed for PLN-UI-07. The exact PLN-UI-07A shortfall f
 
 ## PLN-CHG-010 — Finance funding shortfall and governed resolution path
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §9.6; Stitch PLN-UI-07A; Implementation Prompt 05; demo scenario `SCN-PLN-FUND-SHORT-001`
-**Scope:** Insufficient-funding state of the existing PLN-UI-07 Finance task and its return-reason confirmation.
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §9.6; Stitch PLN-UI-07A; Implementation Prompt 05; demo scenario `SCN-PLN-FUND-SHORT-001`  
+**Scope:** Insufficient-funding state of the existing PLN-UI-07 Finance task and its return-reason confirmation.  
 **Problem:** The baseline identifies the correct arithmetic but mixes static screen content with instructions about hidden fields, workflow transitions, task persistence, permissions and Demand amendment. It also uses explanatory copy that describes implementation behavior rather than helping the Budget Officer decide what to do. The governed Budget resolution destination, preservation of the same Finance task and the boundary between Planning, Budget and Demand changes require explicit implementation ownership.
 
 ### Locked decision boundary
@@ -2159,10 +2160,10 @@ No business decision is proposed. Exact combined-source shortfall presentation r
 
 ## PLN-CHG-011 — Head-of-Procurement review of a Finance-confirmed Plan update
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §9.7; Stitch PLN-UI-08; Implementation Prompt 05; demo scenario `SCN-PLN-ADD-001`
-**Scope:** Ready-for-decision professional review of Draft Version 2 and the separate return-reason confirmation.
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §9.7; Stitch PLN-UI-08; Implementation Prompt 05; demo scenario `SCN-PLN-ADD-001`  
+**Scope:** Ready-for-decision professional review of Draft Version 2 and the separate return-reason confirmation.  
 **Problem:** The baseline PLN-UI-08 reviews Draft Version 1 and only `PPI-MOH-2027-021`, repeating an already approved historical state rather than continuing the post-approval addition journey. It does not show the submitted change against the operational Approved baseline, identifies the preparer as a generic function instead of the responsible planner, and leaves submission locking, protected task visibility, revalidation, return effects and atomic successor approval incomplete. The screen must not reintroduce Organisation Unit contributions or routine HoD planning sign-off.
 
 ### Locked decision boundary
@@ -2441,10 +2442,10 @@ No business decision is proposed. Exact blocked/stale review, initial-Plan appro
 
 ## PLN-CHG-012 — Current Approved Plan detail and Tender implementation handoff
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Requirements §9.9; Stitch PLN-UI-09; Implementation Prompt 06; approved PLN-CHG-001 and PLN-CHG-011
-**Scope:** The route from **View approved plan**, the current Approved Plan projection and downstream Tender-preparation/implementation visibility.
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Requirements §9.9; Stitch PLN-UI-09; Implementation Prompt 06; approved PLN-CHG-001 and PLN-CHG-011  
+**Scope:** The route from **View approved plan**, the current Approved Plan projection and downstream Tender-preparation/implementation visibility.  
 **Problem:** The baseline PLN-UI-09 is still fixed to Approved Version 1 at KES 455,000,000 even though the approved journey now makes Version 2 current at KES 535,000,000. The workspace action **View approved plan** has no explicit route contract, so an implementation can incorrectly open a Draft update or create one as a side effect. The screen also fails to show the newly Active item that has not yet entered Tender Management. The baseline additionally introduced Plan publication without a confirmed MVP requirement and used terminology that could be confused with publishing a Tender for bid submission.
 
 ### Locked decision boundary
@@ -2625,10 +2626,10 @@ No business decision remains open. Plan-publication/disclosure is excluded from 
 
 ## PLN-CHG-013 — Draft successor overview and submission readiness
 
-**Status:** Superseded
-**Superseded by:** PLN-CHG-014
-**Source:** Requirements §§9.7–9.8; Stitch PLN-UI-10; Implementation Prompt 06; approved PLN-CHG-007, PLN-CHG-009, PLN-CHG-011 and PLN-CHG-012
-**Scope:** The planner's overview of one Draft successor before Finance confirmation and when ready for professional review.
+**Status:** Superseded  
+**Superseded by:** PLN-CHG-014  
+**Source:** Requirements §§9.7–9.8; Stitch PLN-UI-10; Implementation Prompt 06; approved PLN-CHG-007, PLN-CHG-009, PLN-CHG-011 and PLN-CHG-012  
+**Scope:** The planner's overview of one Draft successor before Finance confirmation and when ready for professional review.  
 **Problem:** The baseline PLN-UI-10 uses inconsistent November dates, identifies the initiator as a generic department, labels the changed item both Finance **Awaiting confirmation** and validation **Ready**, and embeds conditional behavior and several later design states inside one Stitch prompt. It also exposes **Cancel update** without defining its confirmation boundary. The screen must clearly distinguish the operational Approved Version from the proposed Draft changes without becoming a version-management workbench or another approval stage.
 
 ### Locked decision boundary
@@ -2880,10 +2881,10 @@ No business decision is proposed. Returned, stale/blocked, multiple-change, prop
 
 ## PLN-CHG-014 — Consolidate Draft successors into PLN-UI-05 and retire PLN-UI-10
 
-**Status:** Approved
-**Approved:** 15 August 2026
-**Source:** Approved operating simplification; PLN-CHG-004, PLN-CHG-006 and superseded PLN-CHG-013
-**Scope:** Reuse the ordinary Plan-builder route for both initial Drafts and Draft successors; remove PLN-UI-10 from the product and documentation.
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Approved operating simplification; PLN-CHG-004, PLN-CHG-006 and superseded PLN-CHG-013  
+**Scope:** Reuse the ordinary Plan-builder route for both initial Drafts and Draft successors; remove PLN-UI-10 from the product and documentation.  
 **Problem:** PLN-UI-10 duplicates the Plan builder solely because the editable Version has an Approved predecessor. Version succession is a lifecycle condition, not a separate user task. Sending the planner through a second overview after PLN-UI-04 and PLN-UI-06 complicates the core journey, duplicates status/readiness logic and creates another surface that can drift from PLN-UI-05.
 
 ### Locked decision boundary
@@ -3124,3 +3125,1550 @@ PLN-CHG-014 is complete only when:
 ### F. Open decisions
 
 None. PLN-UI-10 is retired and PLN-CHG-013 is superseded.
+
+---
+
+## PLN-CHG-015 — Procurement Planning workspace deferred state variants PLN-UI-01A–F
+
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Approved PLN-CHG-001, PLN-CHG-002, PLN-CHG-004, PLN-CHG-005, PLN-CHG-009, PLN-CHG-011, PLN-CHG-012 and PLN-CHG-014  
+**Problem:** PLN-CHG-001 approved the operational workspace and one exact PLN-UI-01 reference frame, but deferred six materially different workspace states. Without exact state selection, data, copy and actions, the implementation can show the wrong primary action, expose another actor's task or leave the workspace sparse. Stitch would also have to infer missing records and presentation.
+
+### Locked design boundary
+
+PLN-UI-01 and PLN-UI-01A–F are mutually exclusive projections of one Procurement Planning workspace route. They are not separate workflows or persisted screen states.
+
+The approved base PLN-UI-01 remains the reference state for an Approved Plan with no open Draft and one Approved Demand ready for Planning. The six variants cover the remaining workspace states:
+
+| Variant | Governed state | Primary action |
+|---|---|---|
+| `PLN-UI-01A` | No logical annual Plan for the selected authorised PE/FY | **Create annual plan** |
+| `PLN-UI-01B` | Initial Draft Version 1 exists and has no Plan Items | **Continue planning** |
+| `PLN-UI-01C` | Current Approved Version plus an editable Draft successor with planner-action work | **Continue plan update** |
+| `PLN-UI-01D` | Draft successor has no planner-action work and is awaiting Finance confirmation | **View plan update** |
+| `PLN-UI-01E` | Draft successor is submitted and awaiting Head-of-Procurement review | **View approved plan** |
+| `PLN-UI-01F` | Current Approved Plan has no open Draft, actionable work or waiting work | **View approved plan** |
+
+The workspace may explain that work is with Finance or the Head of Procurement, but it shall never link the Procurement Planner to PLN-UI-07 or PLN-UI-08. The planner may view the current Approved Plan through PLN-UI-09 and may view an editable Draft through the ordinary PLN-UI-03/05 Plan-builder route. The submitted Version in PLN-UI-01E remains represented as neutral waiting context; the planner receives no professional-review form or decision action.
+
+### A. Requirements delta
+
+**Add the following after approved §9.1 and treat these rules as the authoritative workspace-state selection contract.**
+
+#### 9.1.1 Workspace state resolution
+
+| ID | Requirement |
+|---|---|
+| `PLN-FR-009A` | For the explicitly selected authorised PE/FY, the system shall derive one workspace state from authoritative Plan, Version, Plan Item, Demand, Finance-task and professional-review records. The client shall not select a variant or infer it from display labels. |
+| `PLN-FR-009B` | The state precedence shall be: no logical Plan → PLN-UI-01A; initial zero-item Draft → PLN-UI-01B; submitted Version awaiting professional review → PLN-UI-01E; open Draft with any planner-action work → PLN-UI-01C; open Draft with no planner-action work and one or more Finance confirmations outstanding → PLN-UI-01D; Approved Plan with eligible Approved Demand work → base PLN-UI-01; Approved Plan with no actionable or waiting work → PLN-UI-01F. |
+| `PLN-FR-009C` | A returned Finance task, returned professional review, incomplete Proposed Plan Item, planner-remediable validation issue or editable Draft with another outstanding planner correction shall resolve to PLN-UI-01C, not to a waiting state. If several Plan Items are at different stages, any planner-action work takes precedence while other actors' work remains visible only in **Waiting on others**. |
+| `PLN-FR-009D` | PLN-UI-01A shall show that no annual Plan exists, the count of Approved Demands that will be eligible after registration and one **Create annual plan** action. Approved Demands shall not appear as actionable rows until the annual Plan exists. |
+| `PLN-FR-009E` | PLN-UI-01B shall show the initial Draft identity, zero Plan Items, KES 0 Draft value, eligible Approved Demand count and Not run validation. **Continue planning** shall open the same Draft in PLN-UI-03; opening the workspace shall not create or change the Plan. |
+| `PLN-FR-009F` | PLN-UI-01C shall show both the current Approved predecessor and open Draft successor, approved and Draft values, net change, the highest-priority planner-action row and any separate neutral waiting rows. **Continue plan update** shall open the current Draft on the ordinary PLN-UI-05 route. |
+| `PLN-FR-009G` | PLN-UI-01D shall show the current Approved predecessor, open Draft successor, Draft value, Finance progress, validation state and one neutral waiting row for each outstanding Finance confirmation. It shall not expose a Finance decision action or route. **View plan update** shall open the exact approved PLN-UI-05 awaiting-Finance state; that builder may retain its permitted Draft update-reason save action but shall expose no Finance decision control. |
+| `PLN-FR-009H` | PLN-UI-01E shall show that the submitted Draft successor is awaiting Head-of-Procurement review and that the current Approved predecessor remains operational. It shall not expose the professional task, PLN-UI-08 or any Approve/Return action. The only header action shall be **View approved plan**, opening PLN-UI-09. |
+| `PLN-FR-009I` | PLN-UI-01F shall show the current Approved Plan and exact empty messages for both work sections. It shall not show **Add Plan Item** or open PLN-UI-04 when no eligible Approved Demand exists. **View approved plan** shall open PLN-UI-09. |
+| `PLN-FR-009J` | **Work requiring action** rows shall contain exactly one authorised specific action. **Waiting on others** rows are informational and shall contain no row action unless a separately approved neutral view exists. A disabled decision control shall not be used as a substitute for authorization. |
+| `PLN-FR-009K` | Counts, totals, Finance progress, validation, eligible-Demand count and queue membership shall be calculated from one consistent as-at projection and shall reconcile with PLN-UI-03/05, PLN-UI-07, PLN-UI-08 and PLN-UI-09 at the same scenario boundary. |
+| `PLN-FR-009L` | Opening, refreshing, changing the selected financial year or returning to any workspace variant shall perform no domain mutation, create no task, Version, reservation or audit decision and shall not change the selected record's workflow state. |
+
+**Consequential correction to approved PLN-CHG-001:**
+
+- Replace its blanket requirement that every workspace row has an action with `PLN-FR-009J`: actionable rows have one action; waiting rows are informational unless an approved neutral target exists.
+- Extend the permitted primary-action vocabulary with **View plan update** for a Draft whose next decision belongs to Finance.
+- Keep all Finance and Head-of-Procurement decision surfaces route-protected and absent for the Procurement Planner.
+
+### B. Stitch delta
+
+Each prompt below is one static desktop reference frame. Stitch shall preserve the existing Procurement navigation, top bar, branding and the same workspace layout established for PLN-UI-01. Stitch shall not design transitions, busy states, permissions, hidden states, alternate data or controls not explicitly listed.
+
+Across all six frames:
+
+- title: **Procurement Planning**;
+- description: **“Turn approved needs into funded, approved Plan Items ready for tendering.”**;
+- visible read-only Procuring Entity: **Ministry of Health**;
+- helper text below PE/FY context: **“These controls define the workspace view; they do not change record ownership.”**;
+- use one compact **Current Plan** panel, never a KPI-card grid;
+- use business titles as primary text and references as quiet secondary text;
+- do not add charts, trends, activity feeds, generic Review buttons, contribution workbenches, another actor's task controls or disabled unauthorised actions.
+
+#### PLN-UI-01A — no annual Plan
+
+Design the Procurement Planning workspace using only this exact state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2028/29**
+- Logical Plan: **None**
+- Approved Demands that will be eligible after Plan creation: **2**
+
+Header context:
+
+- Financial year select: **2028/29**
+- Primary button: **Create annual plan**
+
+Current Plan panel:
+
+- Heading: **Current Plan**
+- Empty-state heading: **No annual Procurement Plan**
+- Text: **“No Procurement Plan has been registered for Ministry of Health for FY 2028/29.”**
+- Supporting text: **“Create the annual Plan before adding the 2 Approved Demands ready for Planning.”**
+
+Section **Work requiring action**:
+
+- Do not render filters or a table.
+- Text: **“Create the annual Plan to begin Planning approved requirements.”**
+
+Section **Waiting on others**:
+
+- Text: **“Nothing is currently waiting on another reviewer.”**
+
+Do not show a Plan title, Plan reference, Version, Plan value, validation, Finance progress, Demand rows, **Add to plan**, **Continue planning** or **View approved plan**.
+
+#### PLN-UI-01B — initial Draft Plan
+
+Design the Procurement Planning workspace using only this exact post-registration state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2028/29**
+- Plan title: **Ministry of Health Annual Procurement Plan 2028/29**
+- Logical Plan reference: **PLN-MOH-2028-001**
+- Plan lifecycle: **Open**
+- Draft Version: **Version 1**
+- Draft Version reference: **PLN-MOH-2028-001-V1**
+- Plan Items: **0**
+- Draft planned value: **KES 0**
+- Approved Demands available: **2**
+- Validation: **Not run**
+
+Header context:
+
+- Financial year select: **2028/29**
+- Primary button: **Continue planning**
+
+Current Plan panel:
+
+- Plan title: **Ministry of Health Annual Procurement Plan 2028/29**
+- Quiet reference: **PLN-MOH-2028-001**
+- Status line: **Open Plan · Draft Version 1**
+- Supporting text: **“The annual Plan is ready for its first Approved Demands.”**
+- Summary values, in this order:
+  - **Plan Items:** 0
+  - **Draft planned value:** KES 0
+  - **Approved Demands available:** 2
+  - **Validation:** Not run
+
+Section **Work requiring action**:
+
+- Use the same compact table style as base PLN-UI-01 with columns: Work item, Type, Organisation Unit, Amount, Why it needs action, Status, Action.
+- Show exactly two rows:
+  1. **Clinical training laptops for digital health rollout**
+     - Quiet reference: **DMD-MOH-2028-001**
+     - Type: **Approved Demand**
+     - Organisation Unit: **Human Resources Management and Development**
+     - Amount: **KES 48,000,000**
+     - Why it needs action: **Approved Demand is ready to add to the FY 2028/29 Plan.**
+     - Status: **Ready for planning**
+     - Action: **Add to plan**
+  2. **Clinical deployment laptops for digital health rollout**
+     - Quiet reference: **DMD-MOH-2028-002**
+     - Type: **Approved Demand**
+     - Organisation Unit: **Directorate of Digital Health and Policy**
+     - Amount: **KES 72,000,000**
+     - Why it needs action: **Approved Demand is ready to add to the FY 2028/29 Plan.**
+     - Status: **Ready for planning**
+     - Action: **Add to plan**
+
+Section **Waiting on others**:
+
+- Text: **“Nothing is currently waiting on another reviewer.”**
+
+Do not show an Approved Version, Finance progress, **View approved plan**, submission controls or a second Draft action.
+
+#### PLN-UI-01C — Approved Plan with open Draft successor and planner-action work
+
+Design the Procurement Planning workspace using only this exact state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2027/28**
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Logical Plan reference: **PLN-MOH-2027-001**
+- Plan lifecycle: **Open**
+- Current Approved Version: **Version 1**
+- Approved Version reference: **PLN-MOH-2027-001-V1**
+- Approved planned value: **KES 455,000,000**
+- Open Draft successor: **Version 2**
+- Draft Version reference: **PLN-MOH-2027-001-V2**
+- Draft created: **19 August 2027, 09:00 EAT**
+- As at: **19 August 2027, 09:05 EAT**
+- Draft Plan Items: **2**
+- Draft planned value: **KES 535,000,000**
+- Net change: **KES 80,000,000 added**
+- Planning complete: **1 of 2**
+- Finance confirmed: **1 of 2**
+- Validation: **Needs attention**
+
+Header context:
+
+- Financial year select: **2027/28**
+- Primary button: **Continue plan update**
+
+Current Plan panel:
+
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Approved Version 1 · Draft Version 2**
+- Supporting text: **“Approved Version 1 remains active while Draft Version 2 is prepared.”**
+- Summary values, in this order:
+  - **Approved value:** KES 455,000,000
+  - **Draft value:** KES 535,000,000
+  - **Net change:** KES 80,000,000 added
+  - **Planning complete:** 1 of 2
+  - **Finance confirmed:** 1 of 2
+  - **Validation:** Needs attention
+
+Section **Work requiring action**:
+
+- Use the standard compact table columns.
+- Show exactly one row:
+  - Work item: **Digital health technical staff certification programme**
+  - Quiet reference: **PPI-MOH-2027-022**
+  - Type: **Plan Item**
+  - Organisation Unit: **Human Resources Management and Development**
+  - Amount: **KES 80,000,000**
+  - Why it needs action: **Complete the procurement method and schedule before requesting Finance confirmation.**
+  - Status: **Planning incomplete**
+  - Action: **Complete item**
+
+Section **Waiting on others**:
+
+- Text: **“Nothing is currently waiting on another reviewer.”**
+
+Do not show Finance task controls, professional-review controls, submission, the full Approved Plan Item table or raw Version diffs.
+
+#### PLN-UI-01D — work awaiting Finance confirmation
+
+Design the Procurement Planning workspace using only this exact state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2027/28**
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Logical Plan reference: **PLN-MOH-2027-001**
+- Current Approved Version: **Version 1**
+- Open Draft successor: **Version 2**
+- As at: **20 August 2027, 10:00 EAT**
+- Draft Plan Items: **2**
+- Draft planned value: **KES 535,000,000**
+- Net change: **KES 80,000,000 added**
+- Planning complete: **2 of 2**
+- Finance confirmed: **1 of 2**
+- Validation: **Needs attention**
+
+Header context:
+
+- Financial year select: **2027/28**
+- Primary button: **View plan update**
+
+Current Plan panel:
+
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Approved Version 1 · Draft Version 2**
+- Supporting text: **“Approved Version 1 remains active while Finance reviews the added Plan Item.”**
+- Summary values, in this order:
+  - **Draft Plan Items:** 2
+  - **Draft planned value:** KES 535,000,000
+  - **Net change:** KES 80,000,000 added
+  - **Planning complete:** 2 of 2
+  - **Finance confirmed:** 1 of 2
+  - **Validation:** Needs attention
+
+Section **Work requiring action**:
+
+- Do not render filters or a table.
+- Text: **“No planning work currently needs your action.”**
+
+Section **Waiting on others**:
+
+- Use a compact table with columns: Work item, Stage, Status, With.
+- Show exactly one row:
+  - Work item: **Digital health technical staff certification programme**
+  - Quiet reference: **PPI-MOH-2027-022**
+  - Stage: **Finance confirmation**
+  - Status: **Awaiting confirmation**
+  - With: **Budget Officer**
+
+Do not add a row action, Finance form link, Confirm, Return, disabled control, Budget allocation arithmetic or **Submit for review**.
+
+#### PLN-UI-01E — work awaiting Head-of-Procurement review
+
+Design the Procurement Planning workspace using only this exact state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2027/28**
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Logical Plan reference: **PLN-MOH-2027-001**
+- Current Approved Version: **Version 1**
+- Submitted successor: **Version 2**
+- Submitted Version reference: **PLN-MOH-2027-001-V2**
+- Version state: **In review**
+- Submitted at: **20 August 2027, 10:30 EAT**
+- Submitted by: **Mercy Kilonzo**
+- Submitted planned value: **KES 535,000,000**
+- Net change: **KES 80,000,000 added**
+- Finance confirmed: **2 of 2**
+- Validation: **Ready**
+
+Header context:
+
+- Financial year select: **2027/28**
+- Primary button: **View approved plan**
+
+Current Plan panel:
+
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Approved Version 1 · Version 2 in review**
+- Supporting text: **“Approved Version 1 remains active while Version 2 awaits Head-of-Procurement review.”**
+- Summary values, in this order:
+  - **Submitted value:** KES 535,000,000
+  - **Net change:** KES 80,000,000 added
+  - **Finance confirmed:** 2 of 2
+  - **Validation:** Ready
+
+Section **Work requiring action**:
+
+- Do not render filters or a table.
+- Text: **“No planning work currently needs your action.”**
+
+Section **Waiting on others**:
+
+- Use a compact table with columns: Work item, Stage, Status, With.
+- Show exactly one row:
+  - Work item: **Ministry of Health Annual Procurement Plan 2027/28 — Version 2**
+  - Quiet reference: **PLN-MOH-2027-001-V2**
+  - Stage: **Professional review**
+  - Status: **Awaiting review**
+  - With: **Head of Procurement**
+
+Do not add a row action, PLN-UI-08 link, Approve, Return, disabled decision control, editable Draft field or Tender action.
+
+#### PLN-UI-01F — no actionable or waiting work
+
+Design the Procurement Planning workspace using only this exact post-approval state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year selected: **2027/28**
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Logical Plan reference: **PLN-MOH-2027-001**
+- Plan lifecycle: **Open**
+- Current Approved Version: **Version 2**
+- Approved Version reference: **PLN-MOH-2027-001-V2**
+- Approved at: **20 August 2027, 11:00 EAT**
+- As at: **20 August 2027, 11:05 EAT**
+- Open Draft successor: **None**
+- Active Plan Items: **2**
+- Approved planned value: **KES 535,000,000**
+- Finance confirmed: **2 of 2**
+- Validation: **Ready**
+- Eligible Approved Demands: **0**
+
+Header context:
+
+- Financial year select: **2027/28**
+- Primary button: **View approved plan**
+
+Current Plan panel:
+
+- Plan title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Approved Version 2**
+- Supporting text: **“No plan update is currently in progress.”**
+- Summary values, in this order:
+  - **Plan Items:** 2 active
+  - **Approved value:** KES 535,000,000
+  - **Finance confirmed:** 2 of 2
+  - **Validation:** Ready
+
+Section **Work requiring action**:
+
+- Do not render filters or a table.
+- Text: **“No planning work currently needs your action.”**
+
+Section **Waiting on others**:
+
+- Do not render a table.
+- Text: **“Nothing is currently waiting on another reviewer.”**
+
+Do not show **Add Plan Item**, **Add to plan**, a Demand row, Draft Version, Tender take-up, Plan publication or Tender preparation action.
+
+### C. Implementation delta
+
+Extend the approved PLN-UI-01 implementation as one server-derived workspace projection.
+
+#### Projection contract
+
+Return one `workspace_state` enum with only:
+
+- `NO_PLAN` → PLN-UI-01A;
+- `INITIAL_DRAFT_EMPTY` → PLN-UI-01B;
+- `APPROVED_WITH_ACTIONABLE_WORK` → base PLN-UI-01;
+- `DRAFT_WITH_PLANNER_ACTION` → PLN-UI-01C;
+- `DRAFT_AWAITING_FINANCE` → PLN-UI-01D;
+- `VERSION_AWAITING_PROFESSIONAL_REVIEW` → PLN-UI-01E; and
+- `APPROVED_NO_WORK` → PLN-UI-01F.
+
+The response shall include:
+
+- selected authorised PE/FY context and available financial-year options;
+- logical Plan and current Approved/open Draft/submitted Version identities applicable to that state;
+- summary values applicable to that state;
+- one server-authorised primary action or no action;
+- ordered `work_requiring_action` rows;
+- ordered informational `waiting_on_others` rows;
+- one consistent `as_at` value and projection version/token.
+
+Do not persist `workspace_state`, variant identifiers, queue rows, counters or empty-state flags.
+
+#### State algorithm
+
+Within one consistent read boundary:
+
+1. Resolve the explicitly selected PE/FY and current user's Planning capability.
+2. If no logical Plan exists, return `NO_PLAN`.
+3. If the only open Version is initial Draft Version 1 with zero effective Plan Items, return `INITIAL_DRAFT_EMPTY`.
+4. If the successor Version is In review with an open professional-review task, return `VERSION_AWAITING_PROFESSIONAL_REVIEW`.
+5. Derive planner-action rows from incomplete items, Finance returns, professional returns, planner-remediable validation and other editable Draft corrections. If at least one exists, return `DRAFT_WITH_PLANNER_ACTION`.
+6. If an open Draft has no planner-action row and at least one open Finance task, return `DRAFT_AWAITING_FINANCE`.
+7. If no open Draft exists and at least one Approved Demand is eligible for Planning, return `APPROVED_WITH_ACTIONABLE_WORK`.
+8. Otherwise, return `APPROVED_NO_WORK`.
+
+For mixed Draft work, return PLN-UI-01C and include its planner-action rows plus informational Finance-waiting rows. Deduplicate each source record and retain only its highest-priority actionable reason.
+
+#### Actions and authorization
+
+- `NO_PLAN`: return **Create annual plan** only with create-plan capability; route to PLN-UI-02.
+- `INITIAL_DRAFT_EMPTY`: return **Continue planning**; route to the ordinary Plan-builder, which resolves PLN-UI-03.
+- `APPROVED_WITH_ACTIONABLE_WORK`: return **View approved plan** in the header and the specific **Add to plan** Demand-row action; route to PLN-UI-09 and PLN-UI-04 respectively.
+- `DRAFT_WITH_PLANNER_ACTION`: return **Continue plan update** and one specific action per actionable row; route to PLN-UI-05 or PLN-UI-06 as appropriate.
+- `DRAFT_AWAITING_FINANCE`: return **View plan update**; route to the exact approved PLN-UI-05 awaiting-Finance projection. Return no Finance task URL or decision action; retain only the Draft controls already authorised in that approved builder state.
+- `VERSION_AWAITING_PROFESSIONAL_REVIEW`: return **View approved plan** only; route to PLN-UI-09. Return no PLN-UI-08 URL or submitted-Version decision action.
+- `APPROVED_NO_WORK`: return **View approved plan** only; route to PLN-UI-09.
+
+Every target service shall re-evaluate capability, PE/FY scope, record state and assignment. A hidden or omitted client action is not authorization. Administrator status without operational assignment shall confer neither planner actions nor protected Finance/review task access.
+
+#### Data and behavior
+
+- Use the same Demand eligibility predicate as PLN-UI-04 and PLN-UI-03.
+- Use the same effective-Draft, Finance-freshness and validation predicates as PLN-UI-05.
+- Use the same current Approved-Version and Active-item predicates as PLN-UI-09.
+- Waiting rows shall disclose only business work, stage, neutral status and responsible role. Do not disclose protected decision-form payloads, comments or actions.
+- Do not create a neutral submitted-Version screen solely for PLN-UI-01E in MVP. The planner continues to view the operational Approved predecessor until the decision completes or the successor is returned.
+- Preserve the selected FY in the URL or governed user workspace preference. When absent, apply the approved financial-year defaulting rule; do not persist a variant choice.
+- Loading, empty and error states shall be accessible and shall not flash an unauthorised action before the server projection resolves.
+- Refresh, browser back/forward and repeated loader calls shall be read-only and idempotent.
+
+#### Focused tests
+
+1. Exact state selection and exact primary action for all seven workspace states, including the base PLN-UI-01 state.
+2. Precedence when planner-action and Finance-waiting work coexist.
+3. Finance-return and professional-return resolving to PLN-UI-01C.
+4. Exact PLN-UI-01A–F data, copy, rows and totals at their deterministic seed boundaries.
+5. PLN-UI-01D exposes no PLN-UI-07 route, allocation decision or Finance comment.
+6. PLN-UI-01E exposes no PLN-UI-08 route, submitted-Version decision or approval control.
+7. PLN-UI-01F exposes no unusable Add action when eligible Approved Demand count is zero.
+8. Reconciliation with PLN-UI-03/05/07/08/09 at the same `as_at` boundary.
+9. PE/FY, role, assignment and direct-route authorization, including cross-PE and Administrator-without-assignment denial.
+10. Refresh, re-entry and financial-year changes create no Plan, Version, item, task, reservation, decision or audit mutation.
+11. Bounded projection/query behavior without per-row queries or persisted counters.
+12. Keyboard navigation, screen-reader labels, responsive tables and purposeful loading/failure states.
+
+### D. Demo seed and scenario delta
+
+No new permanent record is required. Use resettable scenario boundaries and existing approved identities.
+
+| Variant | Exact seed boundary | Required assertions |
+|---|---|---|
+| `PLN-UI-01A` | Isolated Ministry of Health FY2028/29 pre-registration boundary from PLN-CHG-002 | No logical Plan; exactly two isolated Approved Demands will be eligible after registration; no workspace load creates the Plan. |
+| `PLN-UI-01B` | Same isolated transaction immediately after production registration and before source selection | `PLN-MOH-2028-001`; Draft `PLN-MOH-2028-001-V1`; zero items; KES 0; two exact eligible Approved Demands; validation Not run. |
+| `PLN-UI-01C` | `SCN-PLN-ADD-001` at 19 August 2027, 09:05 EAT after formation of `PPI-MOH-2027-022` and before completion | Version 1 remains current Approved; Version 2 Draft; KES 535,000,000; `PPI-MOH-2027-022` Planning incomplete; one **Complete item** row; no Finance task yet. |
+| `PLN-UI-01D` | Existing PLN-CHG-009 pre-confirmation boundary at 20 August 2027, 10:00 EAT | `PPI-MOH-2027-022` Planning complete; exactly one open Finance task; no `RSV-MOH-0002`; Finance 1 of 2; one informational Finance waiting row. |
+| `PLN-UI-01E` | Existing PLN-CHG-011 submitted boundary at 20 August 2027, 10:30 EAT | Version 2 In review; exactly one professional-review task for the Head of Procurement; Version 1 remains current Approved; Finance 2 of 2; no planner decision action. |
+| `PLN-UI-01F` | Existing PLN-CHG-012 post-approval boundary at 20 August 2027, 11:05 EAT, with no additional eligible Approved Demand in this resettable projection | Version 2 current Approved; Version 1 Superseded; two Active items; KES 535,000,000; Finance 2 of 2; no Draft, actionable row or waiting row. |
+
+The FY2028/29 fixture shall use the exact `DMD-MOH-2028-001` and `DMD-MOH-2028-002` records approved in PLN-CHG-005 and shall reset the Plan, Version, Demands and related allocations. The FY2027/28 boundaries shall reuse `SCN-PLN-ADD-001`; repeated preparation shall not duplicate Version 2, `PPI-MOH-2027-022`, Finance tasks, `RSV-MOH-0002`, review tasks or decisions.
+
+The PLN-UI-01F fixture may suppress unrelated later test Demands only by resetting to its declared scenario boundary. It shall not change an Approved Demand's state or introduce a stored `no_work` flag to force the screen.
+
+### E. Acceptance evidence
+
+`PLN-CHG-015` may be marked implemented only when:
+
+1. Each of PLN-UI-01A–F renders from exact authoritative data without a client-supplied variant flag.
+2. The seven-state precedence is deterministic and covers mixed planner/Finance work.
+3. Every frame has one correct header action and no competing, disabled or unauthorised decision action.
+4. PLN-UI-01D and PLN-UI-01E communicate waiting ownership without exposing protected task surfaces.
+5. PLN-UI-01F contains no false **Add Plan Item** path when nothing is eligible.
+6. All totals and statuses reconcile with the owning planning, Finance, review and Approved Plan screens.
+7. Workspace loading and navigation are mutation-free.
+8. Seed preparation is resettable, introduces no permanent screen-state record and leaves the canonical successful journey unchanged.
+
+### F. Open decisions
+
+None proposed. This record completes the workspace variant family without introducing a new workflow, task type, screen route or persistent status.
+
+---
+
+## PLN-CHG-016 — Financial-year context, Demand eligibility and lifecycle-state closure
+
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Approved Procurement Planning operating decisions, PLN-CHG-002, PLN-CHG-005, PLN-CHG-007, PLN-CHG-014, PLN-CHG-015 and closure findings `CL-01`/`CL-02`  
+**Problem:** The approved workspace requires an explicit PE/FY context and refers to an approved financial-year defaulting rule, but the rule is not yet authoritative. Demand eligibility also requires the Plan PE/FY without defining how an Approved Demand is assigned to a financial year. Separately, the inherited state model contains Logical Plan **Closed** and **Cancelled** states with no admitted MVP operation, while an empty Draft successor needs one governed cancellation outcome. Leaving these gaps encourages silent defaults, duplicate FY fields and unreachable lifecycle states.
+
+### Locked design boundary
+
+1. A user's explicit authorised context controls. Saved context is a convenience, never authority.
+2. A Demand maps to one Plan financial year from its approved required-by date and the governed, non-overlapping financial-year period. Planning does not add an editable Demand financial-year field.
+3. Future financial years that are configured and open for Planning remain selectable even when another year already has a Plan.
+4. The Logical Plan has one MVP lifecycle state: **Open**. No unsupported close/cancel workflow is introduced.
+5. **Cancelled** is retained only as an immutable Plan Version outcome when an empty Draft successor to an Approved Version is deliberately cancelled.
+6. Cancelling an empty successor is cleanup of an ineffective Draft, not another approval or a cancellation of the annual Plan. It requires one compact confirmation and no extra business-reason field.
+
+### A. Requirements
+
+#### A.1 Explicit and default workspace context
+
+| ID | Requirement |
+|---|---|
+| `PLN-FR-009M` | Every Planning request shall resolve the current user's authorised PE and configured financial-year context server-side. An explicit valid PE/FY route context shall apply to that request. It shall not become a saved preference unless the user deliberately selects or confirms it through the workspace context control. |
+| `PLN-FR-009N` | When no explicit context is supplied, the workspace shall restore the user's last deliberately saved PE/FY only when the user still has Planning visibility for the PE and the financial year remains configured and available for Planning or contains a permitted existing Plan. A stale, disabled or unauthorised saved context shall be ignored without granting access. |
+| `PLN-FR-009O` | If no valid explicit or saved PE exists, one eligible PE shall remain visibly selected and multiple eligible PEs shall require deliberate selection. Assignment order, alphabetical order, Administrator status, seed identity and list-filter state shall not select a PE. Zero eligible PEs shall block operational use with a clear explanation. |
+| `PLN-FR-009P` | After a PE is resolved and no valid explicit or saved FY exists, the system shall select a configured FY by this order: (1) the FY containing the current date when it has an Open Plan; (2) the nearest future FY with an Open Plan; (3) the most recent past FY with an Open Plan; (4) the FY containing the current date when it is enabled for Planning even though no Plan exists. If none applies, the user shall deliberately choose from configured FYs that are open for Planning. |
+| `PLN-FR-009Q` | The workspace financial-year control shall include the current enabled FY, configured future FYs whose Planning window is open and prior FYs containing a permitted Open Plan. An existing Plan for one year shall not suppress selection or Plan registration for another year. |
+| `PLN-FR-009R` | Changing PE or FY shall reload the workspace from that authorised context without creating or changing a Plan, Version, task, reservation, decision or audit event. A deliberate valid selection may update the user's workspace preference only after successful server validation. |
+| `PLN-FR-009S` | Every list, count, total, queue, action, export and direct route shall use the same resolved PE/FY context. Client display labels, cached rows or a saved preference shall never be accepted as mutation authority. |
+
+For FY ordering, **nearest future** means the configured open-for-Planning period with the earliest start date after the current date. **Most recent past** means the eligible period with the latest end date before the current date. Configured financial-year periods shall not overlap.
+
+#### A.2 Demand-to-Plan financial-year eligibility
+
+| ID | Requirement |
+|---|---|
+| `PLN-FR-020A` | An Approved Demand shall map to the one governed financial-year period whose inclusive start and end dates contain the Demand's approved `required_by_date`. The containing period supplies Planning FY eligibility; the user shall not select or edit a separate Demand financial year in Planning. |
+| `PLN-FR-020B` | PLN-UI-04 shall include a Demand only when its required-by-derived FY equals the selected Plan FY and all other approved eligibility conditions remain true. A Demand shall not appear in two Plan years, even when the resulting contract is multi-year. |
+| `PLN-FR-020C` | A missing required-by date, a date outside every configured financial-year period or overlapping financial-year configuration shall make the Demand unavailable for Planning and return a stable business-readable issue. Planning shall not guess the year or silently use the current FY. |
+| `PLN-FR-020D` | Correcting a Demand's required-by date is an upstream Demand amendment subject to its governed approval. Planning shall not move an allocated source to another FY by editing a Plan Item or allocation. |
+| `PLN-FR-020E` | A technical derived/indexed FY key may be maintained for bounded querying only when it is reproducible from the governed required-by date and financial-year periods. It shall not become a user-authored business field or override the source date. |
+| `PLN-FR-020F` | The required-by-derived FY controls source eligibility only. The planner's **Single year** or **Multi-year** contract-period decision and contract-completion date remain procurement-owned Plan Item treatment and shall not remap the source Demand to another annual Plan. |
+
+Stable issue identifiers:
+
+| Identifier | User-facing message |
+|---|---|
+| `DEMAND_REQUIRED_BY_MISSING` | **This Demand has no approved required-by date and cannot be added to a Plan. Amend and reapprove the Demand.** |
+| `DEMAND_REQUIRED_BY_OUTSIDE_CONFIGURED_FY` | **The approved required-by date does not fall within a configured Planning financial year.** |
+| `FINANCIAL_YEAR_CONFIGURATION_OVERLAP` | **Financial-year configuration overlaps and must be corrected before Planning can continue.** |
+| `DEMAND_FINANCIAL_YEAR_MISMATCH` | **This Demand belongs to a different financial year and cannot be added to the selected Plan.** |
+
+**Consequential current-state data correction:** The approved and corrected `DMD-MOH-2027-019` required-by date is **31 December 2027**, as used by PLN-CHG-008 through PLN-CHG-012 and the canonical source record. This later correction supersedes the **31 March 2028** value shown in the earlier PLN-CHG-005 PLN-UI-04 reference row. The current PLN-UI-04 frame, implementation projection and seed assertion shall use **31 December 2027**. The **31 March 2028** date belongs to the separate infrastructure Demand/Plan Item and shall not be copied to `DMD-MOH-2027-019`.
+
+#### A.3 Admitted lifecycle states
+
+| ID | Requirement |
+|---|---|
+| `PLN-FR-060A` | The Logical Plan shall use **Open** as its only MVP lifecycle state. **Closed** and **Cancelled** shall be removed from the MVP requirements, UI, commands, fixtures and tests until an evidenced Plan-level close/cancel operation is admitted. |
+| `PLN-FR-060B` | Plan Version states shall be **Draft**, **In review**, **Returned**, **Approved**, **Superseded** and **Cancelled**. A Cancelled Version shall be immutable and shall not count as the one open Draft successor. |
+| `PLN-FR-065C` | **Cancel empty update** shall be available only for a Draft or Returned successor to a current Approved Version when authoritative recalculation finds zero effective additions, changes or proposed removals. It shall not be available for initial Draft Version 1, an In-review Version, a Version with an effective change or a user without update-cancellation capability. |
+| `PLN-FR-065D` | Opening the cancellation confirmation shall perform no mutation. Confirmation shall lock and revalidate the logical Plan, current Approved predecessor, successor, effective changes, tasks, Draft holds and reservations. If any effective change, active Finance/review task or residual Draft hold/reservation exists, cancellation shall fail with a stable conflict and preserve the Version. The owning removal/correction command shall resolve that inconsistency; cancellation shall not conceal it. |
+| `PLN-FR-065E` | Successful cancellation shall atomically mark only the already-empty successor **Cancelled**, retain all prior decisions and removal evidence, and record actor and time once. It shall not close unrelated work, perform another release, change the Open logical Plan, current Approved Version, Active items, current Approved reservations, Demand approvals or Tender handoffs. |
+| `PLN-FR-065F` | Empty-successor cancellation shall not require another business reason. The authoritative audit reason shall be **No effective changes remained in the Draft update.** Existing Plan-update and item-removal reasons shall remain in history and shall not be overwritten. |
+| `PLN-FR-065G` | An idempotent repeat shall return the same Cancelled Version result without another event or release. A successful UI action shall open PLN-UI-09 for the unchanged current Approved Version; the restored eligible Demand may then appear in the Planning workspace through the normal live projection. |
+
+Stable cancellation conflicts:
+
+| Identifier | User-facing message |
+|---|---|
+| `PLAN_UPDATE_NOT_EMPTY` | **This Plan update contains effective changes and cannot be cancelled as empty.** |
+| `PLAN_UPDATE_HAS_ACTIVE_TASK` | **This Plan update still has active work. Resolve that work before cancelling the update.** |
+| `PLAN_UPDATE_HAS_RESIDUAL_HOLD` | **This Plan update still has a funding or allocation hold that must be resolved before cancellation.** |
+
+### B. Exact static screen design
+
+#### B.1 Workspace context impact
+
+No new PLN-UI-01 variant is required. Approved PLN-UI-01 and PLN-UI-01A–F already show the visible PE/FY context. Their exact frames remain unchanged.
+
+The FY-selection/default rules above are executable behaviour owned by Requirements and Implementation. Stitch shall not be asked to simulate saved context, URL precedence, default selection, authorization changes or persistence.
+
+#### B.2 PLN-UI-05B — cancel empty Plan update confirmation
+
+Design one compact confirmation modal over the dimmed ordinary PLN-UI-05 Plan builder. Preserve the existing Procurement navigation, top bar, Plan header and page density behind the overlay.
+
+Use only this exact resettable state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2027/28**
+- Logical Plan: **PLN-MOH-2027-001**
+- Logical Plan lifecycle: **Open**
+- Current Approved Version: **Version 1**
+- Approved value: **KES 455,000,000**
+- Draft successor: **Version 2**
+- Draft Version reference: **PLN-MOH-2027-001-V2**
+- Effective changes: **0**
+- Draft planned value: **KES 455,000,000**
+- Active Plan Items retained: **1**
+- Existing Tender retained: **TND-MOH-2027-008**
+- As at: **19 August 2027, 09:15 EAT**
+
+Modal content:
+
+- Title: **Cancel empty Plan update?**
+- Text: **“Draft Version 2 no longer contains any changes. Cancelling it will remove the empty Draft from current work and keep Approved Version 1 active.”**
+
+Show one compact summary:
+
+- **Current Approved Version:** Version 1
+- **Approved value:** KES 455,000,000
+- **Draft Version:** Version 2
+- **Effective changes:** 0
+
+Show this restrained information message:
+
+**This does not cancel the annual Plan or affect the Approved Plan Item, its funding or Tender TND-MOH-2027-008.**
+
+Footer buttons:
+
+- Secondary: **Keep draft**
+- Destructive confirmation: **Cancel empty update**
+
+Do not show a reason field, deletion language, Plan cancellation, item selection, reservation control, Finance decision, professional approval action, publication or Tender action.
+
+### C. Implementation contract
+
+#### C.1 Context resolver
+
+Implement one shared Planning context resolver used by workspace, Plan, Version, item, Finance/review projection and mutation entry points.
+
+The resolver shall:
+
+- accept optional stable PE/FY identifiers, never labels, from the route;
+- load current Planning visibility/capability assignments and configured financial-year periods;
+- validate explicit context first, then saved context, then apply the approved PE/FY selection order;
+- return `selection_required` rather than choosing among multiple PEs or when no safe FY default exists;
+- return `no_scope` when no PE is eligible;
+- expose the allowed FY options with stable identifiers, labels, period dates, `planning_open` and permitted Plan presence;
+- update saved context only through a deliberate successful context-selection command;
+- never use Administrator status, assignment order, seed constants, browser list state or the first query result as a default; and
+- apply the same resolved identifiers to rows, counts, actions and target services.
+
+Recommended response shape:
+
+```text
+planning_context
+  selected_pe_id
+  selected_financial_year_id
+  selection_source: explicit | saved | current_open_plan | future_open_plan | past_open_plan | current_enabled | user_required
+  eligible_pe_options[]
+  eligible_financial_year_options[]
+  selection_required
+  no_scope
+```
+
+The response shape is a projection contract, not a new persistent domain record.
+
+#### C.2 Demand FY eligibility
+
+Use the governed financial-year period containing `required_by_date` as an inclusive date-range predicate in PLN-UI-04 eligibility and workspace eligible-Demand counts.
+
+- Validate that configured financial-year periods do not overlap before deriving eligibility.
+- Do not accept a client FY, derived FY key or available-value claim as authority.
+- Recheck required-by date, source approval, PE, FY and allocation availability under lock during Plan Item formation.
+- If the approved date changed after the selection projection, keep the selection surface open, remove the ineligible source and return the stable mismatch issue; create no partial Plan Item.
+- If an indexed derived FY key is used, provide a deterministic rebuild and reconciliation test against the date-range predicate.
+- Use inclusive boundaries: a required-by date equal to the FY start or FY end belongs to that FY.
+
+#### C.3 Empty-successor cancellation
+
+Implement one governed `cancel_empty_plan_update` capability or map that semantic capability to one existing correctly named service.
+
+Request authority shall consist only of:
+
+- logical Plan identifier;
+- expected successor Version identifier;
+- expected concurrency token; and
+- idempotency key.
+
+The command shall not accept a client effective-change count, current Approved Version claim, Plan lifecycle result, release amount or audit reason.
+
+Under one transaction:
+
+1. authorize the planner for the Plan PE/FY and cancellation capability;
+2. lock the logical Plan, current Approved predecessor and successor;
+3. require an Open logical Plan and a Draft/Returned successor with an Approved predecessor;
+4. recalculate effective additions, changes and proposed removals;
+5. reject a non-empty or In-review successor;
+6. reject any active Finance/review task or residual Draft hold/reservation as an inconsistent empty-successor state;
+7. mark the successor Cancelled and immutable;
+8. record one event with the fixed audit reason and actor/time; and
+9. return the unchanged current Approved Version route.
+
+Do not hard-delete the Version, Plan Item, allocation, task, decision, reason or audit history. Do not release Approved/current reservations or disturb a Tender handoff.
+
+#### C.4 Focused tests
+
+1. Explicit valid route context takes precedence for the request and is re-authorized.
+2. Valid saved context restores; stale/disabled/unauthorised saved context does not.
+3. One PE remains visible; multiple PEs require choice; zero PEs block; Administrator gives no default.
+4. Current Open-Plan FY, nearest future Open-Plan FY, most recent past Open-Plan FY and current enabled no-Plan FY resolve in the approved order.
+5. Future FY remains selectable and can show PLN-UI-01A even when FY2027/28 has an Approved Plan.
+6. Changing context is mutation-free except for the deliberate validated preference update.
+7. FY periods reject overlap and include exact start/end boundary dates.
+8. A Demand appears in exactly one Plan FY from `required_by_date` and never from a client/saved FY claim.
+9. Missing, out-of-period and mismatched dates return the exact stable issues and create no Plan Item.
+10. A multi-year Plan Item remains sourced from the required-by-derived annual Plan.
+11. PLN-UI-05B opens without mutation only for an empty Draft/Returned successor with an Approved predecessor.
+12. Initial Draft Version 1, In-review, non-empty, unauthorised and stale-token cancellation requests fail.
+13. Successful cancellation preserves Approved Version 1, `PPI-MOH-2027-021`, `RSV-MOH-0001` and `TND-MOH-2027-008`.
+14. Cancellation produces one immutable Cancelled Version and one audit event; retry duplicates nothing.
+15. No Logical Plan Closed/Cancelled command, action, fixture or unreachable state remains.
+
+### D. Deterministic seed and scenario contract
+
+#### D.1 Financial-year context
+
+Use existing governed FY periods:
+
+| Financial year | Start | End | Planning use |
+|---|---|---|---|
+| FY 2027/28 | 1 July 2027 | 30 June 2028 | Contains current canonical Approved/Open Plan |
+| FY 2028/29 | 1 July 2028 | 30 June 2029 | Configured future year open for advance Planning in the resettable fixture |
+
+Assert:
+
+- `DMD-MOH-2027-019` required by 31 December 2027 maps to FY2027/28;
+- `DMD-MOH-2028-001` and `DMD-MOH-2028-002` required by 31 December 2028 map to FY2028/29;
+- a resettable boundary-date fixture at 1 July 2028 maps to FY2028/29;
+- a resettable boundary-date fixture at 30 June 2028 maps to FY2027/28; and
+- missing/out-of-period fixtures remain unavailable and are fully reset.
+
+Do not add an editable `financial_year` property to the canonical Demand fixture. If a derived index is used, assert that it rebuilds to the values above.
+
+#### D.2 Empty-successor cancellation
+
+Extend `SCN-PLN-REMOVE-001` with a resettable post-removal boundary at **19 August 2027, 09:15 EAT**:
+
+- Version 1 remains current Approved at KES 455,000,000;
+- Draft Version 2 has zero effective changes and KES 455,000,000 effective total;
+- `PPI-MOH-2027-022` is excluded/Removed from the Draft with its evidence retained;
+- `DMD-MOH-2027-019` is Planning eligible again;
+- no open Finance task or `RSV-MOH-0002` exists;
+- `PPI-MOH-2027-021`, `RSV-MOH-0001` and `TND-MOH-2027-008` remain operational; and
+- the logical Plan remains Open.
+
+Open PLN-UI-05B and assert no mutation. Confirm once as Mercy Kilonzo and assert:
+
+- Version 2 becomes immutable Cancelled;
+- Version 1 remains the sole current Approved Version;
+- no open successor remains;
+- the fixed cancellation audit reason is recorded once;
+- `DMD-MOH-2027-019` remains eligible for a later new update;
+- no approved reservation or Tender changes; and
+- an idempotent retry returns the same result.
+
+Reset shall restore the declared post-removal empty Draft boundary without duplicating Version, item, task, release or audit records.
+
+### E. Acceptance evidence
+
+`PLN-CHG-016` may be marked implemented only when:
+
+1. PE/FY context selection is explicit, deterministic, re-authorized and free of assignment/Administrator/seed fallbacks.
+2. Future-year advance Planning remains possible without disrupting the current year's Plan.
+3. Every Approved Demand maps to exactly one Plan FY from the governed required-by date and cannot be silently moved by Planning.
+4. Missing, out-of-period, mismatched and overlapping-FY cases fail with exact stable issues and no partial creation.
+5. The Logical Plan exposes only the admitted Open lifecycle in MVP.
+6. Cancelled Version is used only for a governed empty-successor cancellation.
+7. PLN-UI-05B contains exact static content, no reason field and no executable design instructions.
+8. Cancellation is atomic, immutable, scoped, concurrency-safe and idempotent and preserves all Approved/Tender operation.
+9. The integrated record supplies requirements, exact screen design, implementation, seed and tests without relying on a retired standalone document.
+
+### F. Open decisions
+
+None proposed. The unit deliberately removes unsupported Logical Plan close/cancel states and uses the approved required-by-date rule without adding another Demand field or approval.
+
+---
+
+## PLN-CHG-017 — Remaining reachable PLN-UI-05 Plan-builder states
+
+**Status:** Approved  
+**Approved:** 15 August 2026  
+**Source:** Approved PLN-CHG-007, PLN-CHG-008, PLN-CHG-009, PLN-CHG-011, PLN-CHG-014, PLN-CHG-016 and closure finding `CL-05`  
+**Problem:** The ordinary PLN-UI-05 Plan builder is authoritative for every populated editable Plan Version, but only the populated initial Draft, successor awaiting Finance and successor Ready frames are exact. Returned, Finance-stale, validation-blocked, multiple-change and removal-only successors are reachable under approved behaviour but have no exact static presentation. Stitch must not infer these states, and implementation must not encode separate readiness calculations or hidden workflow records to produce them.
+
+### Locked design boundary
+
+1. PLN-UI-05 remains one ordinary Plan-builder route. These are projections of authoritative Plan, Version, item, Finance, validation and removal records—not new screens, workflows or persistent UI states.
+2. The current Approved Version remains operational throughout every successor state.
+3. A Head-of-Procurement return reopens the same successor; it does not create another Version or approval stage.
+4. A stale Finance confirmation and a blocked Planning validation are different conditions and shall be described separately.
+5. Additions, changes and proposed removals may coexist in one successor. Whole-Version totals and readiness shall account for each change exactly once.
+6. A proposed removal does not require another Planning-completeness or Finance-confirmation task. Its existing Approved reservation remains operational until approval applies the removal.
+7. Empty-successor cancellation remains governed exclusively by PLN-CHG-016 and PLN-UI-05B; it is not repeated here.
+
+### A. Requirements
+
+| ID | Requirement |
+|---|---|
+| `PLN-FR-064C` | The ordinary Plan-builder projection shall derive one primary presentation state from authoritative records using this precedence: unresolved professional return; stale Finance basis; blocking validation; incomplete Planning; awaiting Finance; Ready. It shall also return every material issue so a lower-priority issue is not concealed. The state shall not be accepted from the route or stored as a UI flag. |
+| `PLN-FR-064D` | A Returned successor shall show the returning professional authority, return time and exact immutable return reason. The same Version shall become editable. Submission shall remain unavailable until the planner makes and successfully saves at least one permitted Draft correction after the return and current whole-Version readiness is recalculated. No separate response-to-return field is required. |
+| `PLN-FR-064E` | A current Finance confirmation whose governed basis no longer matches the item, source allocation or funding basis shall be shown as **Stale**, not Confirmed or Returned. The issue shall identify the affected Plan Item and state that Finance confirmation is required again. Historical confirmation and reservation evidence shall remain auditable; the builder shall expose no Budget Officer decision control. |
+| `PLN-FR-064F` | A Planning validation failure shall be shown as **Blocked** when submission cannot proceed until a planner-owned correction is made. The issue shall identify the affected Plan Item, exact business-readable correction and direct permitted Plan Item action. A blocking issue shall not silently invalidate an unrelated current Finance confirmation unless the governed Finance-freshness rule says its basis changed. |
+| `PLN-FR-064G` | A successor containing several effective changes shall show each actionable addition, changed item and proposed removal once. The summary shall show current Approved value, effective Draft value, additions, removals and net change. Changed-item count includes proposed removals; Planning and Finance denominators include only additions or changed items for which those controls are applicable. |
+| `PLN-FR-064H` | A proposed-removal row shall show the unchanged Approved item reference, title, owner, Approved planned value, **Proposed removal**, current Finance evidence and the effect that will occur only if the successor is approved. It shall not show the item as already Removed, release funding early, restore the source early or request another Finance confirmation. |
+| `PLN-FR-064I` | A removal-only successor may be Ready when it has one or more valid proposed removals, the required Plan-level reason, no downstream prohibition and no other blocking/stale issue. Planning-complete and Finance-confirmed denominators shall display **Not applicable** rather than `0 of 0`. Submission shall use the existing professional-review boundary. |
+| `PLN-FR-064J` | PLN-UI-05 actions shall remain state-specific and capability-backed. Returned, stale, blocked and incomplete rows shall route only to the permitted ordinary Plan Item detail/editor. Proposed-removal rows shall use neutral Plan Item detail. The builder shall never expose Finance decisions, professional decisions, Budget mutation, Tender preparation, Plan publication or routine OU/HoD Planning sign-off. |
+
+The approved ready-state submission rules, update-reason rules, removal rules and PLN-UI-05B empty-successor cancellation rules remain unchanged.
+
+### B. Exact static screen designs
+
+All five frames use the existing Procurement navigation, top bar, typography, table density and sticky footer of approved PLN-UI-05. They are separate static reference frames. Do not add tabs, a stepper, a version workbench, a raw diff, a workflow diagram or a second Plan-update screen.
+
+#### B.1 PLN-UI-05 — Returned successor requiring planner correction
+
+Use only this exact state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2027/28**
+- Plan: **PLN-MOH-2027-001**
+- Current Approved Version: **Version 1**
+- Editable Version: **Returned Version 2**
+- Returned by: **Grace Wanjiku · Head of Procurement**
+- Returned at: **20 August 2027, 11:00 EAT**
+- As at: **20 August 2027, 11:05 EAT**
+
+Header:
+
+- Breadcrumb: **Procurement Planning / Ministry of Health Annual Procurement Plan 2027/28**
+- Title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Returned Version 2**
+- Supporting line: **Approved Version 1 remains active while the returned update is corrected.**
+- Button: **Add approved Demands**
+
+Summary strip:
+
+1. **Draft Plan Items** — 2
+2. **Draft planned value** — KES 535,000,000
+3. **Net change** — KES 80,000,000 added
+4. **Planning complete** — 2 of 2
+5. **Finance confirmed** — 2 of 2
+6. **Validation** — Needs attention
+
+Section **Update reason** shows the approved existing reason:
+
+**Add the approved digital-health technical staff certification programme to the FY 2027/28 Plan so delivery can begin before 31 December 2027.**
+
+Show one prominent but restrained return notice:
+
+- Heading: **Returned for correction**
+- Metadata: **Grace Wanjiku · 20 August 2027, 11:00 EAT**
+- Reason: **Clarify the planned delivery sequence for the added certification programme before approval.**
+
+Section **Plan Items requiring action** shows exactly one row:
+
+- Plan Item: **PPI-MOH-2027-022 · Digital health technical staff certification programme**
+- Organisation Unit: **Human Resources Management and Development**
+- Planned value: **KES 80,000,000**
+- Planning: **Complete**
+- Finance: **Confirmed**
+- Validation: **Needs attention**
+- Action: **Edit Plan Item**
+
+Below the table show:
+
+**1 unchanged Active Plan Item remains operational in Approved Version 1 · Tender TND-MOH-2027-008 remains active**
+
+Text link: **View Approved Plan**
+
+Sticky footer:
+
+- Text button: **Back to Procurement Planning**
+- Primary button: **Save draft**
+
+Do not show **Submit for review**, a response field, Finance controls, Head-of-Procurement controls or cancellation.
+
+#### B.2 PLN-UI-05 — Finance confirmation stale
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2027/28**
+- Plan: **PLN-MOH-2027-001**
+- Current Approved Version: **Version 1**
+- Editable Version: **Draft Version 2**
+- As at: **20 August 2027, 10:25 EAT**
+
+Header:
+
+- Breadcrumb: **Procurement Planning / Ministry of Health Annual Procurement Plan 2027/28**
+- Title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Draft Version 2**
+- Supporting line: **Approved Version 1 remains active while this update is prepared and reviewed.**
+- Button: **Add approved Demands**
+
+Summary strip:
+
+1. **Draft Plan Items** — 2
+2. **Draft planned value** — KES 535,000,000
+3. **Net change** — KES 80,000,000 added
+4. **Planning complete** — 2 of 2
+5. **Finance confirmed** — 1 of 2
+6. **Validation** — Stale
+
+Section **Update reason** shows:
+
+**Add the approved digital-health technical staff certification programme to the FY 2027/28 Plan so delivery can begin before 31 December 2027.**
+
+Show this issue:
+
+**Finance confirmation for PPI-MOH-2027-022 is stale because its confirmed funding basis changed. Request Finance confirmation again before submitting this Plan update.**
+
+Show exactly one actionable row:
+
+- Plan Item: **PPI-MOH-2027-022 · Digital health technical staff certification programme**
+- Organisation Unit: **Human Resources Management and Development**
+- Planned value: **KES 80,000,000**
+- Planning: **Complete**
+- Finance: **Stale**
+- Validation: **Stale**
+- Action: **View Plan Item**
+
+Below the table show:
+
+**1 unchanged Active Plan Item remains operational in Approved Version 1 · Tender TND-MOH-2027-008 remains active**
+
+Text link: **View Approved Plan**
+
+Sticky footer:
+
+- Text button: **Back to Procurement Planning**
+- Primary button: **Save draft**
+
+Do not show **Submit for review**, the superseded Finance decision as current, a Budget Line editor or any Finance decision action.
+
+#### B.3 PLN-UI-05 — Planning validation blocked
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2027/28**
+- Plan: **PLN-MOH-2027-001**
+- Current Approved Version: **Version 1**
+- Editable Version: **Draft Version 2**
+- As at: **20 August 2027, 10:25 EAT**
+
+Header:
+
+- Breadcrumb: **Procurement Planning / Ministry of Health Annual Procurement Plan 2027/28**
+- Title: **Ministry of Health Annual Procurement Plan 2027/28**
+- Quiet reference: **PLN-MOH-2027-001**
+- Status line: **Open Plan · Draft Version 2**
+- Supporting line: **Approved Version 1 remains active while this update is prepared and reviewed.**
+- Button: **Add approved Demands**
+
+Summary strip:
+
+1. **Draft Plan Items** — 2
+2. **Draft planned value** — KES 535,000,000
+3. **Net change** — KES 80,000,000 added
+4. **Planning complete** — 1 of 2
+5. **Finance confirmed** — 2 of 2
+6. **Validation** — Blocked
+
+Section **Update reason** shows:
+
+**Add the approved digital-health technical staff certification programme to the FY 2027/28 Plan so delivery can begin before 31 December 2027.**
+
+Show this issue:
+
+**PPI-MOH-2027-022 cannot proceed because its planned contract completion date is 15 January 2028, after the Approved Demand required-by date of 31 December 2027. Correct the planned schedule.**
+
+Show exactly one actionable row:
+
+- Plan Item: **PPI-MOH-2027-022 · Digital health technical staff certification programme**
+- Organisation Unit: **Human Resources Management and Development**
+- Planned value: **KES 80,000,000**
+- Planning: **In progress**
+- Finance: **Confirmed**
+- Validation: **Blocked**
+- Action: **Correct schedule**
+
+Below the table show:
+
+**1 unchanged Active Plan Item remains operational in Approved Version 1 · Tender TND-MOH-2027-008 remains active**
+
+Text link: **View Approved Plan**
+
+Sticky footer:
+
+- Text button: **Back to Procurement Planning**
+- Primary button: **Save draft**
+
+Do not show **Submit for review**, another reason field or a disabled submission button.
+
+#### B.4 PLN-UI-05 — successor with an addition and a proposed removal
+
+Use only this resettable isolated state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2028/29**
+- Plan: **PLN-MOH-2028-001**
+- Current Approved Version: **Version 1**
+- Editable Version: **Draft Version 2**
+- As at: **10 September 2028, 09:00 EAT**
+- Current Approved value: **KES 72,000,000**
+- Effective Draft value: **KES 48,000,000**
+- Additions: **KES 48,000,000**
+- Proposed removals: **KES 72,000,000**
+- Net change: **KES 24,000,000 reduction**
+
+Header:
+
+- Breadcrumb: **Procurement Planning / Ministry of Health Annual Procurement Plan 2028/29**
+- Title: **Ministry of Health Annual Procurement Plan 2028/29**
+- Quiet reference: **PLN-MOH-2028-001**
+- Status line: **Open Plan · Draft Version 2**
+- Supporting line: **Approved Version 1 remains active while this update is prepared and reviewed.**
+- Button: **Add approved Demands**
+
+Summary strip:
+
+1. **Effective changes** — 2
+2. **Approved value** — KES 72,000,000
+3. **Draft value** — KES 48,000,000
+4. **Additions** — KES 48,000,000
+5. **Proposed removals** — KES 72,000,000
+6. **Net change** — KES 24,000,000 reduction
+7. **Validation** — Needs attention
+
+Section **Update reason** shows:
+
+**Replace the clinical deployment laptop requirement with the approved clinical training laptop requirement for the FY 2028/29 rollout.**
+
+Show this issue:
+
+**Complete Planning and Finance confirmation for PPI-MOH-2028-001 before submitting this Plan update.**
+
+Section **Plan Items requiring action** shows exactly two rows:
+
+1. **PPI-MOH-2028-001 · Clinical training laptops for digital health rollout**
+   - Organisation Unit: **Human Resources Management and Development**
+   - Planned value: **KES 48,000,000**
+   - Change: **Added**
+   - Planning: **Not started**
+   - Finance: **Not requested**
+   - Validation: **Needs attention**
+   - Action: **Complete item**
+2. **PPI-MOH-2028-002 · Clinical deployment laptops for digital health rollout**
+   - Organisation Unit: **Directorate of Digital Health and Policy**
+   - Planned value: **KES 72,000,000**
+   - Change: **Proposed removal**
+   - Planning: **Not applicable**
+   - Finance: **Confirmed**
+   - Validation: **Ready**
+   - Action: **View Plan Item**
+
+Use these table columns:
+
+- Plan Item
+- Organisation Unit
+- Planned value
+- Change
+- Planning
+- Finance
+- Validation
+- Action
+
+Sticky footer:
+
+- Text button: **Back to Procurement Planning**
+- Primary button: **Save draft**
+
+Do not show **Submit for review**, an immediate funding release, a restored Demand, source checkboxes or an **Undo** action.
+
+#### B.5 PLN-UI-05 — removal-only successor ready for review
+
+Use only this resettable isolated state:
+
+- Signed-in user: **Mercy Kilonzo**
+- Role: **Procurement Planner**
+- Procuring Entity: **Ministry of Health**
+- Financial year: **2028/29**
+- Plan: **PLN-MOH-2028-001**
+- Current Approved Version: **Version 1**
+- Editable Version: **Draft Version 2**
+- As at: **10 September 2028, 09:10 EAT**
+- Current Approved value: **KES 72,000,000**
+- Effective Draft value: **KES 0**
+- Proposed removals: **KES 72,000,000**
+- Net change: **KES 72,000,000 reduction**
+
+Header:
+
+- Breadcrumb: **Procurement Planning / Ministry of Health Annual Procurement Plan 2028/29**
+- Title: **Ministry of Health Annual Procurement Plan 2028/29**
+- Quiet reference: **PLN-MOH-2028-001**
+- Status line: **Open Plan · Draft Version 2**
+- Supporting line: **Approved Version 1 remains active while this update is prepared and reviewed.**
+- Button: **Add approved Demands**
+
+Summary strip:
+
+1. **Effective changes** — 1
+2. **Approved value** — KES 72,000,000
+3. **Draft value** — KES 0
+4. **Net change** — KES 72,000,000 reduction
+5. **Planning complete** — Not applicable
+6. **Finance confirmation** — Not required
+7. **Validation** — Ready
+
+Section **Update reason** shows:
+
+**Remove the clinical deployment laptop Plan Item because the approved requirement is no longer required and no Tender or downstream execution has started.**
+
+Show this readiness message:
+
+**The proposed removal is ready for Head-of-Procurement review. The item remains active until this Plan update is approved.**
+
+Show exactly one row:
+
+- Plan Item: **PPI-MOH-2028-002 · Clinical deployment laptops for digital health rollout**
+- Organisation Unit: **Directorate of Digital Health and Policy**
+- Planned value: **KES 72,000,000**
+- Change: **Proposed removal**
+- Planning: **Not applicable**
+- Finance: **Confirmed**
+- Validation: **Ready**
+- Action: **View Plan Item**
+
+Below the table show:
+
+**If this update is approved, KES 72,000,000 will be released and Demand DMD-MOH-2028-002 will become available for Planning again.**
+
+Sticky footer:
+
+- Text button: **Back to Procurement Planning**
+- Secondary button: **Save draft**
+- Primary button: **Submit update for review**
+
+Do not show the item as Removed, release funding, restore the Demand, create a Tender or expose a second removal/update reason.
+
+### C. Implementation contract
+
+#### C.1 One authoritative builder projection
+
+Extend the existing PLN-UI-05 projection; do not add variant routes or stored presentation states.
+
+The projection shall return:
+
+- Plan, current Approved Version and editable successor identities;
+- successor lifecycle and latest professional return evidence;
+- current Approved value, effective Draft value, addition value, removal value and net change;
+- one Plan-level update reason;
+- effective change rows with change type `added`, `changed` or `proposed_removal`;
+- applicable Planning and Finance denominators and statuses;
+- all current validation issues with severity, affected record and remediation owner;
+- compact unchanged-Approved operational context; and
+- state-appropriate capabilities and destinations.
+
+Calculate values from Version/item/allocation/removal records. Do not accept client totals, change types, readiness, return resolution, Finance freshness or validation state.
+
+#### C.2 State and readiness rules
+
+Apply the precedence in PLN-FR-064C only to the primary presentation. Retain all current issues in the projection and use the most severe applicable row status.
+
+- **Returned:** require the same Version in Returned state and its latest completed return decision. A post-return correction is satisfied only by a successful save of at least one admitted Draft field after `returned_at`; opening, refresh, navigation or saving an unchanged payload does not satisfy it.
+- **Stale:** compare current item/source/funding basis with the basis recorded by the latest Finance confirmation through the existing Finance-freshness service. A stale historical confirmation shall not count in the current denominator.
+- **Blocked:** use authoritative validation issues. The example required-by failure blocks submission but does not itself erase historical Finance evidence.
+- **Multiple change:** count every effective item once; calculate additions and removals separately; calculate `draft_value = approved_value + additions + approved changed-item deltas - removals`.
+- **Proposed removal:** exclude removal-only rows from Planning and new-Finance denominators. Preserve Active state and reservation until professional approval.
+- **Removal-only Ready:** require a current eligible removal, no downstream prohibition, non-empty Plan-level reason and no other blocking/stale issue.
+
+Submission shall continue to call the approved PLN-CHG-011 command under lock. A stale projection, unresolved return, lost Finance confirmation, new downstream handoff or invalid removal shall fail without partial mutation.
+
+#### C.3 Actions and authorization
+
+- Resolve each row destination server-side from the Plan Item and current capability.
+- **Edit Plan Item**, **Correct schedule** and **Complete item** open the existing PLN-UI-06 route for the same Draft item.
+- **View Plan Item** opens the existing neutral Plan Item projection and shall not expose editable Draft fields to a viewer lacking mutation capability.
+- **View Approved Plan** opens PLN-UI-09 for the current Approved Version.
+- **Submit update for review** is returned only for a Ready successor and never as a disabled control in other frames.
+- Direct mutation and route requests shall re-authorize PE/FY, Plan, Version and item scope.
+
+No action may decide Finance, decide professional review, mutate Budget, prepare a Tender, publish a Plan or repeat OU/HoD approval.
+
+#### C.4 Focused tests
+
+1. Exact B.1–B.5 projections and arithmetic.
+2. Primary-state precedence with all secondary issues retained.
+3. Return actor/time/reason are immutable and the same Version reopens.
+4. Refresh or unchanged save does not mark a return addressed; one admitted saved correction does.
+5. Stale Finance evidence remains historical and does not count as current confirmation.
+6. Required-by schedule failure is Blocked and routes to the affected item.
+7. Multiple additions/removals reconcile Approved value, Draft value and net change exactly once.
+8. Removal rows are excluded from inapplicable Planning/Finance denominators.
+9. Proposed removal keeps the Active item, reservation and source ineligibility until approval.
+10. Removal-only Ready submits through the existing professional-review command and creates one task.
+11. Concurrent Tender handoff, reservation consumption, stale token or changed removal eligibility rejects submission atomically.
+12. Cross-PE, unauthorised-role and direct-route attempts return no protected mutation surface.
+13. No new workflow record, persistent UI-state flag, response field, cancellation path or approval gate exists.
+14. Static designs contain no loading, save-transition or other executable simulation instruction for Stitch.
+
+### D. Deterministic seed and scenario contract
+
+No new permanent Plan, Version, Demand, Plan Item, Budget Line or user record is required.
+
+#### D.1 Returned successor
+
+Reuse the approved isolated return branch of `SCN-PLN-ADD-001`. Return Version 2 once at **20 August 2027, 11:00 EAT** with the exact approved reason. At **11:05 EAT**, assert B.1, Version 1 still current Approved, both reservations unchanged, no item activation and no new review task until a valid later resubmission.
+
+#### D.2 Finance-stale and validation-blocked branches
+
+Use two independently resettable branches from the approved **20 August 2027, 10:20 EAT** Ready boundary:
+
+1. Invoke the existing Finance-freshness test fixture to create one material mismatch between the basis recorded by the current confirmation for `PPI-MOH-2027-022` and the current governed funding basis. Preserve the KES 80,000,000 Plan Item value and historical `RSV-MOH-0002`; mark the confirmation Stale once and assert B.2. Reset restores the exact Ready boundary.
+2. Save contract completion **15 January 2028** for the Single-year `PPI-MOH-2027-022` while its Approved required-by date remains **31 December 2027**. Assert the exact Blocked issue and B.3. This schedule-only branch retains historical Finance evidence and creates no Finance task, reservation, review task or approval. Reset restores **31 December 2027**.
+
+The stale branch is implementation evidence for the already approved Finance-freshness rule. It shall not add a user-editable funding field, a synthetic business status or a second Budget Line.
+
+#### D.3 Multiple-change and removal-only branches
+
+Reuse the resettable FY2028/29 records:
+
+- current Approved Version 1 contains Active `PPI-MOH-2028-002` at KES 72,000,000 with one current unconsumed reservation and no Tender/downstream execution;
+- Draft Version 2 adds `PPI-MOH-2028-001` at KES 48,000,000 and proposes removal of `PPI-MOH-2028-002` for B.4;
+- the B.4 projection reconciles KES 72,000,000 Approved, KES 48,000,000 Draft, KES 48,000,000 additions, KES 72,000,000 removals and KES 24,000,000 reduction; and
+- the independent B.5 branch contains only the proposed removal, reconciles Draft value KES 0 and KES 72,000,000 reduction, and remains Ready without a new Finance task.
+
+Preparing or resetting either branch shall not change canonical FY2027/28 records or duplicate Version, item, allocation, reservation, removal, task or audit evidence.
+
+### E. Acceptance evidence
+
+`PLN-CHG-017` may be marked implemented only when:
+
+1. every reachable populated Draft/Returned PLN-UI-05 state resolves through the one ordinary builder route;
+2. B.1–B.5 render the exact identities, values, reasons, statuses, actions and exclusions specified above;
+3. return, stale Finance and blocked validation remain distinct and route only to the permitted remediation;
+4. additions and proposed removals reconcile to the effective Draft total without double counting;
+5. inapplicable removal-only Planning/Finance counts display **Not applicable**;
+6. no removal effect occurs before professional approval;
+7. submission is absent from every non-ready frame and present for the exact Ready removal-only frame;
+8. all mutations and destinations are capability-, PE/FY-, Version- and item-scoped;
+9. canonical and isolated scenarios reset idempotently without cross-fixture changes; and
+10. requirements, exact static design, implementation, seed and tests remain together in this ledger record without reliance on retired standalone documents.
+
+### F. Open decisions
+
+The Finance-stale frame relies on the already approved Finance-freshness service. No new funding-line edit or Budget workflow is proposed. No other business decision is open.
+
+---
+
+## PLN-CHG-018 — MVP-1 release boundary, mandatory hardening and MVP-2 deferrals
+
+**Status:** Approved  
+**Source:** Approved PLN-CHG-001 through PLN-CHG-017 and closure findings `CL-03` through `CL-06`  
+**Purpose:** Establish the smallest complete, truthful and secure Procurement Planning product that can ship as MVP-1. Replace the remaining variant-by-variant design programme with an explicit release profile, mandatory hardening, deterministic smoke contract and governed MVP-2 backlog.  
+**Problem:** Remaining audit items mix material functional boundaries with optional presentation variants. Treating every possible state as a separate MVP-1 design blocks shipment without improving the core product. Conversely, simply deferring reachable negative paths, authorization checks or visible dead-end actions would ship known defects. The release must distinguish these categories explicitly.
+
+### Locked release decision
+
+1. MVP-1 ships the complete ordinary annual-Plan journey for governed configured procurement methods, with Open tender as the safe baseline, Single-year and no-lots Plan Items.
+2. Single- and multi-Demand Plan Item formation, including mixed-OU combination, remain in MVP-1 because they are already approved user-facing capabilities.
+3. Finance confirmation, Finance shortfall, Finance return/re-request, initial Plan approval, successor approval, professional return/resubmission, whole-item removal and empty-update cancellation remain in MVP-1.
+4. Legal grounds and methods not enabled by the governed catalogue, Multi-year treatment, Lots expected, Approved-Plan export, historical-Version detail, ungoverned implementation links and overdue-milestone presentation are deferred to MVP-2.
+5. Deferred capabilities shall be absent from MVP-1 UI and command allow-lists. They shall not be displayed as disabled controls, placeholders, “coming soon” cards or partially functional fields.
+6. No new Stitch screen is required merely because an existing data-driven component contains several source rows or a known lifecycle state. Exact component deltas below are sufficient.
+7. Procurement Planning is documentation-closed for MVP-1 when this record is approved. Product release remains conditional on the smoke contract passing against production services and protected routes.
+
+### A. MVP-1 requirements and scope
+
+#### A.1 Supported release profile
+
+| ID | MVP-1 requirement |
+|---|---|
+| `PLN-RLS-001` | The MVP-1 Planning method allow-list shall be derived from the active governed catalogue. **Open tender** remains the safe fallback when catalogue/schema configuration is incomplete. Planning shall not create a local method or legal-grounds catalogue. |
+| `PLN-RLS-002` | PLN-UI-06 shall present the resolved governed method values and a recommendation reason code. Values outside that resolved allow-list fail with `PROCUREMENT_METHOD_NOT_CONFIGURED`. No local alternative-method ground or justification control shall appear in MVP-1. |
+| `PLN-RLS-003` | The MVP-1 contract-period allow-list shall contain **Single year** only, and the indicative-lotting allow-list shall contain **No lots expected** only. Both decisions shall be explicitly selected and persisted; neither shall be silently defaulted. |
+| `PLN-RLS-004` | A Plan Item shall not proceed to Finance unless its contract completion is within the selected Plan financial year and on or before the approved source required-by date, and the planner has explicitly selected **Single year** and **No lots expected**. |
+| `PLN-RLS-005` | Direct or stale-client requests for an unavailable method, Multi-year treatment, Lots expected, alternative-method ground or alternative-method justification shall be rejected server-side with stable release-scope outcomes and no partial save or task creation. |
+| `PLN-RLS-006` | Single-Demand, separate multi-Demand and combined multi-Demand formation remain supported. Combined items shall retain every Demand, Need Item, source OU, approved value and proposed funding allocation and shall be edited, funded, reviewed and approved as one Plan Item without losing source-level lineage. |
+| `PLN-RLS-007` | One combined Plan Item Finance task shall show every source funding allocation and confirm all source amounts atomically. Any short source shall produce the existing PLN-UI-07A insufficient-funding result and no source reservation or Finance decision shall be created in isolation. |
+| `PLN-RLS-008` | Finance **Return to planner** and one later re-request are mandatory MVP-1 paths. The returned item shall reopen only planner-owned fields, retain return evidence and create one linked task iteration only after a valid re-request. |
+| `PLN-RLS-009` | Head-of-Procurement approval and return shall work for both initial Version 1 and a successor Version. Initial approval has no predecessor panel or supersession effect. Successor approval preserves and supersedes the predecessor as already specified. Return/resubmission shall reuse the same Version and linked task history. |
+| `PLN-RLS-010` | Stale Finance, blocked validation, stale task, lost eligibility, concurrent handoff and unauthorized direct-route conditions shall remain server-enforced release blockers. A dedicated Stitch frame is not required when the existing component can present the approved status and issue contract. |
+| `PLN-RLS-011` | PLN-UI-09 shall retain only governed destinations: **Add Plan Item** for an authorized planner when eligible sources exist; eligible **Propose removal**; and neutral **View Plan Item**. Tender reference and status may remain visible. |
+| `PLN-RLS-012` | MVP-1 PLN-UI-09 shall remove **Export approved plan**, **View implementation** and **View historical version** as actions. Version-history rows and Tender references remain read-only text. No placeholder or disabled replacement shall be shown. |
+| `PLN-RLS-013` | Every retained list, task, detail and command route shall re-authorize user, role/capability, PE/FY, record ownership and current task/Version state before protected data or actions are returned. Administrator status, record visibility or knowledge of an identifier shall grant no workflow authority. |
+| `PLN-RLS-014` | The MVP-1 release shall contain no PLN-UI-10, Plan-publication concept, intermediate OU/HoD Planning sign-off, local legal catalogue, partial Finance confirmation, editable Approved Plan field or unsupported action destination. |
+
+Stable release-scope outcomes:
+
+| Identifier | User-facing message |
+|---|---|
+| `PROCUREMENT_METHOD_NOT_CONFIGURED` | **The selected procurement method is not enabled in the current catalogue.** |
+| `PLANNING_MULTI_YEAR_NOT_AVAILABLE_MVP1` | **Multi-year Plan Items are not available in this release. Leave this requirement out of the current Plan if it cannot be completed within the financial year.** |
+| `PLANNING_LOTS_NOT_AVAILABLE_MVP1` | **Plan Items requiring lots are not available in this release. Leave this requirement out of the current Plan if it cannot be procured without lots.** |
+| `PROCUREMENT_METHOD_FALLBACK_OPEN_TENDER` | **The governed method configuration is incomplete. Open tender remains available as the degraded fallback.** |
+
+These messages may appear only after a relevant rejected request or configuration failure. Do not add a permanent developer-oriented limitations panel to the workspace.
+
+#### A.2 Explicit MVP-2 deferrals
+
+| Deferred capability | MVP-1 treatment | MVP-2 admission condition |
+|---|---|---|
+| Procurement methods absent from the governed catalogue and legal grounds | No UI option or accepted command value | Governed method/threshold/grounds catalogue, legal ownership, exact UI and tests approved |
+| Multi-year Plan Item | No UI option or accepted command value | Period rules, funding-year treatment, schedule validation, exact UI and seed approved |
+| Lots expected | No UI option or accepted command value | Lot count/basis rules, anti-splitting controls, Tender handoff and exact UI approved |
+| Approved Plan export | Action absent | Format, fields, redaction, scope, authorization and audit contract approved |
+| Historical Version detail | History remains text only; link absent | Neutral immutable historical projection and route authorization approved |
+| View implementation link | Tender reference/status remains text only | Governed downstream neutral-detail destination and cross-module authorization approved |
+| Open-Draft notice on PLN-UI-09 | Deferred presentation | Exact non-mutating presentation admitted if user testing shows need |
+| Overdue-milestone presentation | Deferred presentation | Reporting-period, calendar, variance and downstream-actual rules approved |
+| Dedicated viewer-only screen variant | No separate layout; same neutral projection with actions omitted | Separate frame admitted only if usability testing requires it |
+
+Deferral does not permit a hidden route, accepted payload value, seed fixture or partially implemented command.
+
+### B. Exact static-design disposition
+
+#### B.1 PLN-UI-06 release delta
+
+Retain the approved canonical PLN-UI-06 layout and exact `PPI-MOH-2027-022` reference frame. Apply only these MVP-1 changes:
+
+- **Planned procurement method** remains a required select showing the resolved governed catalogue options, including the Open tender fallback.
+- **Contract period** remains required and shows one option: **Single year**.
+- **Indicative lotting** remains required and shows one option: **No lots expected**.
+- The three controls are empty until the planner selects their available value.
+- Remove **Multi-year**, **Lots expected**, estimated lot count, lotting basis, alternative-method ground and alternative-method justification from the MVP-1 composition.
+- Retain the seven milestone dates, planned-value read-only field, approved source section, description, category, Save draft and Request Finance confirmation.
+
+For combined `PPI-MOH-2028-003`, use the same PLN-UI-06 composition. Replace the one-source **Approved requirement** block with one section titled **Approved requirements** containing exactly:
+
+1. **DMD-MOH-2028-001 · Clinical training laptops for digital health rollout** — Human Resources Management and Development — 2 Need Items — KES 48,000,000 — Proposed funding: Digital health workforce development.
+2. **DMD-MOH-2028-002 · Clinical deployment laptops for digital health rollout** — Directorate of Digital Health and Policy — 2 Need Items — KES 72,000,000 — Proposed funding: Digital clinical systems infrastructure.
+
+Below the two sources show:
+
+- **Combined planned value:** KES 120,000,000
+- **Formation reason:** Procure one standard laptop specification and deployment service for the same national digital-health rollout.
+
+Do not add source editing, allocation controls, per-source method/schedule fields or a separate combined-item screen.
+
+#### B.2 PLN-UI-07/07A combined-source release delta
+
+Retain the approved PLN-UI-07 and PLN-UI-07A drawer composition. For combined `PPI-MOH-2028-003`, the **Plan Item** section shows both source rows from B.1 and **Amount requiring confirmation — KES 120,000,000**.
+
+The **Funding position** section shows exactly two read-only rows:
+
+1. **Digital health workforce development** — Required KES 48,000,000 — Available KES 48,000,000 — After confirmation KES 0.
+2. **Digital clinical systems infrastructure** — Required KES 72,000,000 — Available KES 72,000,000 — After confirmation KES 0.
+
+Summary: **Total required — KES 120,000,000 · Total available — KES 120,000,000 · Sufficient funding**.
+
+The isolated shortfall state changes only the second row to **Available KES 60,000,000 — Shortfall KES 12,000,000** and the summary to **Total available — KES 108,000,000 · Shortfall — KES 12,000,000 · Insufficient funding**. It shows the approved PLN-UI-07A actions only and no disabled **Confirm funding** button.
+
+No new drawer, tab, accordion or per-source decision action is permitted.
+
+#### B.3 PLN-UI-08 release delta
+
+Retain the approved PLN-UI-08 professional-review layout.
+
+- For initial Version 1, show **Submitted Version — Version 1**, omit the Approved-predecessor comparison entirely, show the submitted total and included items, and retain **Approve Plan** and **Return to planner**.
+- For a successor, retain the approved predecessor comparison and **Approve plan update**.
+- A Returned/resubmitted Version uses the same task layout and shows prior return evidence in the existing decision-history area.
+- A blocked or stale task uses the same read-only task layout, shows the authoritative issues and exposes no Approve action.
+
+No separate initial-approval, resubmission or blocked-review Stitch screen is required for MVP-1.
+
+#### B.4 PLN-UI-09 release delta
+
+Consequentially correct the approved PLN-UI-09 frame:
+
+- Remove the header button **Export approved plan**.
+- For `PPI-MOH-2027-021`, show **Tender active · TND-MOH-2027-008** as text and show no **View implementation** action.
+- Retain **View Plan Item** for `PPI-MOH-2027-022` and the authorized **Propose removal** overflow action.
+- In Version history, show Version 1 as **Superseded — KES 455,000,000 — Approved 18 August 2027** with no **View historical version** link.
+- Retain **Add Plan Item** only in the authorized planner reference frame.
+- A neutral viewer receives the same information architecture with every mutation action omitted; do not create a separate disabled-action frame.
+
+No new PLN-UI-09 static variant is required for MVP-1.
+
+### C. Implementation and release-hardening contract
+
+#### C.1 Release allow-lists
+
+Apply a server-owned MVP-1 release profile in the existing method, Plan Item validation and command services. It is configuration of admitted product capability, not a user-editable feature flag or domain status.
+
+- Resolve active governed catalogue values first, then schema Select options, then the Open tender fallback.
+- Return `PROCUREMENT_METHOD_FALLBACK_OPEN_TENDER` when configuration is degraded and `PROCUREMENT_METHOD_NOT_CONFIGURED` for payload values outside the resolved allow-list.
+- Validate the resolved method, Single year and No lots expected against the server-owned allow-list.
+- Reject unavailable values before persistence and before Finance-task creation.
+- Do not retain hidden alternative fields, accept-and-ignore behavior or client-only option filtering.
+- Preserve the deferred requirements as MVP-2 backlog; they are superseded only for the MVP-1 release profile.
+
+#### C.2 Combined-source hardening
+
+Use the already approved formation, item and Finance services.
+
+- PLN-UI-06 shall render all immutable source allocations and one whole-item editable procurement treatment.
+- One Finance task shall load every source funding allocation and authoritative balance.
+- Confirm funding shall lock all affected allocations and create all reservations in one transaction.
+- Any short, stale or unauthorized source shall roll back the entire confirmation.
+- Return to planner shall return the whole Plan Item once, create no reservation and retain every source row.
+- Plan approval shall activate the combined item once and retain all source/reservation lineage.
+
+#### C.3 Mandatory negative and return paths
+
+- Execute Finance return, planner correction and one linked Finance re-request through the existing production commands.
+- Execute initial Plan approval and initial Plan return/resubmission through the same professional-task service without a fabricated predecessor.
+- Execute successor return/resubmission through the same Version and linked task iterations.
+- Revalidate task currency, Finance freshness, Plan readiness, removal eligibility and Tender handoff immediately before each decision.
+- Reject direct routes before protected Finance/review data is serialized.
+- Never substitute disabled decision controls for denied task access.
+
+#### C.4 PLN-UI-09 route cleanup
+
+- Remove export, historical-detail and implementation-detail routes, controls, tests and seed expectations from MVP-1 Planning.
+- Do not leave aliases, empty handlers or placeholder modals.
+- Retain neutral Plan Item detail and authorized Add/removal routes only.
+- Tender reference/status is projection data; it shall not imply Tender access.
+
+#### C.5 Release evidence and failure policy
+
+MVP-1 is not releasable when any smoke test below fails, any deferred action remains visible/callable, a protected route leaks task data, combined funding partially reserves, or canonical arithmetic does not reconcile.
+
+A failure shall be corrected in the existing owning service or UI component. It shall not create another approval, workaround field, manual database step or new Planning screen.
+
+### D. Deterministic MVP-1 seed and smoke contract
+
+#### D.1 Canonical release journey
+
+Run the approved canonical FY2027/28 journey through production services:
+
+1. Resolve Mercy Kilonzo's authorized Ministry of Health FY2027/28 workspace.
+2. Open the current Plan or create the resettable initial Plan as applicable without navigation mutation.
+3. Add Approved `DMD-MOH-2027-019` to the existing Approved Plan and create/reuse Draft Version 2 and `PPI-MOH-2027-022` once.
+4. Complete PLN-UI-06 using explicitly selected Open tender, Single year and No lots expected plus the approved seven-date schedule.
+5. Request Finance once; exercise sufficient-funding confirmation and the independent shortfall and return/re-request branches.
+6. Submit once; exercise professional approval and the independent return/correction/resubmission branch.
+7. Assert current Approved Version 2 at KES 535,000,000, two Active items, Finance 2 of 2 and one existing Tender handoff.
+8. Exercise eligible removal and empty-successor cancellation without disturbing `PPI-MOH-2027-021`, `RSV-MOH-0001` or `TND-MOH-2027-008`.
+
+#### D.2 Combined-source release fixture
+
+Reuse `DMD-MOH-2028-001`, `DMD-MOH-2028-002` and combined `PPI-MOH-2028-003` with four immutable Need Item allocations and KES 120,000,000 total.
+
+Create these resettable scenario-owned governed funding lines only for the isolated release fixture:
+
+| Funding line | Approved | Reserved | Committed | Available |
+|---|---:|---:|---:|---:|
+| `MOH-BL-DHWD-2028` — Digital health workforce development | KES 48,000,000 | KES 0 | KES 0 | KES 48,000,000 |
+| `MOH-BL-DCSI-2028` — Digital clinical systems infrastructure | KES 72,000,000 | KES 0 | KES 0 | KES 72,000,000 |
+
+Assert:
+
+- the combined editor shows both source rows, four Need Items, the exact formation reason and KES 120,000,000 read-only value;
+- one Finance task shows both funding rows and KES 120,000,000 total;
+- successful confirmation creates exactly two source reservations and one Finance decision atomically;
+- an isolated shortfall branch applies one scenario-owned KES 12,000,000 hold to `MOH-BL-DCSI-2028`, displays KES 60,000,000 available and KES 12,000,000 shortfall on that row, and creates no reservation on either line; and
+- reset removes only fixture-owned Plan/Version/item/allocation/funding/task/reservation/decision records.
+
+#### D.3 Initial-Plan and route-security fixture
+
+Use resettable FY2028/29 Version 1 with separate `PPI-MOH-2028-001` and `PPI-MOH-2028-002`, both complete and fully Finance-confirmed under the MVP-1 treatment.
+
+- Submit Version 1 and assert one professional task with no Approved predecessor.
+- Return once with a required reason; correct and resubmit the same Version; assert linked history and one current task.
+- Approve once; assert Version 1 becomes current Approved and both Proposed items become Active without creating a Tender.
+- As Requester, HoD, Planner, Viewer and Administrator without explicit task authority, assert that Finance and professional-task routes return no protected task payload or decision form.
+- As a neutral permitted viewer, assert PLN-UI-09 read-only data with Add/removal actions omitted.
+
+#### D.4 Deferred-capability absence
+
+Assert across UI inventory, route inventory, command registry, seed and API tests:
+
+- no alternative-method, method-ground, Multi-year or Lots expected control/value is available;
+- direct payload attempts return the exact stable release-scope outcome and create no partial Draft/Finance state;
+- no Export approved plan, View historical version or View implementation action/route exists in Procurement Planning;
+- no PLN-UI-10, Plan-publication or intermediate OU/HoD Planning sign-off exists; and
+- repeated setup and smoke execution are idempotent.
+
+### E. MVP-1 release acceptance
+
+Procurement Planning may be marked **MVP-1 release-ready** only when:
+
+1. all approved PLN-UI-01 through PLN-UI-09 core routes load from authoritative PE/FY and record state;
+2. only resolved governed method values, Single year and No lots expected are admitted treatment values;
+3. single, separate multi-Demand and combined formation complete without lost source lineage;
+4. combined Finance confirmation is full-value, multi-source and atomic, including the shortfall rollback test;
+5. Finance return/re-request, initial Plan approval, successor approval and both professional-return/resubmission paths pass;
+6. stale, blocked, concurrent and unauthorized attempts fail without partial mutation or protected-data disclosure;
+7. Approved Version, reservation, removal and Tender-handoff invariants reconcile after every branch;
+8. every deferred control, command and route is absent rather than disabled or partially implemented;
+9. the exact canonical and isolated arithmetic, dates, identities and idempotency assertions pass; and
+10. no retired standalone document is needed to implement or test the release.
+
+Documentation approval of this record closes Procurement Planning scope for MVP-1. Implementation completion is evidenced by the smoke results; approval alone shall not claim that code has passed.
+
+### F. Governed MVP-2 backlog
+
+Carry forward only these explicit Procurement Planning candidates:
+
+1. legal grounds and procurement methods not enabled by the governed catalogue;
+2. Multi-year Plan Items and funding-period treatment;
+3. Lots expected and Tender-lot handoff;
+4. Approved Plan export;
+5. immutable historical-Version detail;
+6. governed downstream implementation-detail link;
+7. overdue-milestone presentation; and
+8. open-Draft or dedicated viewer presentation only if user testing demonstrates a need.
+
+Each candidate requires its own approved integrated ledger record before implementation. No deferred candidate is an implied MVP-1 requirement.
+
+### G. Open decisions
+
+None proposed. Approval of this record approves the stated MVP-1 limitation and defers the listed capabilities to MVP-2.
+
+## PLN-CHG-018 implementation closure evidence
+
+Status: implementation complete; release smoke validation remains a separate gate.
+
+| Closure item | Production evidence | Executable evidence | State / contract |
+|---|---|---|---|
+| `CL-01` | `planning_context.py`, `demand_financial_year.py`, `list_eligible_demands.py` | `test_planning_context_chg016.py` | selected / saved-default / legacy / demand-date FY mapping |
+| `CL-02` | `remove_plan_item.py`, `plan_builder_successor.py` | `test_remove_plan_item.py` | PLN-UI-05B to terminal Cancelled Version and PLN-UI-09 |
+| `CL-03` | `procurement_method_catalogue.py`, `get_plan_item_editor.py`, `update_plan_item.py` | `test_get_plan_item_editor.py`, `test_update_plan_item.py` | catalogue, schema-option and Open-tender fallback allow-list |
+| `CL-04` | `get_plan_implementation.py`, `planning_approved_bind.js` | `test_get_plan_implementation.py`, `test_planning_ui_stitch_layout_guard.py` | UI-09 server action and destination contract |
+| `CL-05` | `planning_ui_fixtures/*.js` | `test_planning_ui_stitch_layout_guard.py` revision variant matrix | PLN-UI-01 through PLN-UI-09 artifact coverage |
+| `CL-06` | this ledger plus the state, implementation and audit documents | the same CL-focused tests above | integrated handoff evidence |
+
+This evidence closes implementation traceability only. Procurement Planning is not MVP-1 release-ready until the named focused tests, asset build and protected-route smoke contract have passed and their results are recorded.

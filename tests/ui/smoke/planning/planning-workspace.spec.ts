@@ -5,7 +5,7 @@ import {
 	loginAsMohPlanningViewer,
 	loginAsPlanningSystemAdminNoScope,
 	preparePlanningGate03,
-	preparePlanningScenarioStop,
+	preparePlanningWorkspaceState,
 } from "../../helpers/planningRoles";
 import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
@@ -18,8 +18,7 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 
 	test("planner sees the approved Section 9.1 workspace composition", async ({ page }) => {
 		await loginAsAdministrator(page);
-		await preparePlanningGate03(page);
-		await preparePlanningScenarioStop(page, "ready_demand");
+		await preparePlanningWorkspaceState(page, "BASE");
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
 		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
@@ -120,7 +119,7 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 			timeout: 45_000,
 		});
 		await expect(page.getByTestId("kt-pln-ui04-dialog")).toBeVisible();
-		await expect(page.locator('[data-kt-pln-elig-check]:checked')).toHaveCount(1);
+		await expect(page.locator('[data-kt-demand-select]:checked')).toHaveCount(1);
 	});
 
 	test("search and work filters refresh without showing the initial loader or shifting the workspace", async ({
@@ -138,8 +137,7 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 			},
 		);
 		await loginAsAdministrator(page);
-		await preparePlanningGate03(page);
-		await preparePlanningScenarioStop(page, "ready_demand");
+		await preparePlanningWorkspaceState(page, "BASE");
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
 		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
@@ -225,4 +223,93 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		await expect(page.locator('[data-kt-pln-work-body] tr')).toHaveCount(0);
 		await expect(page.locator('[data-kt-pln-waiting-body] tr')).toHaveCount(0);
 	});
+
+	for (const scenario of [
+		{ fixture: "A", state: "NO_PLAN", fy: "2028/29", action: "Create annual plan" },
+		{ fixture: "B", state: "INITIAL_DRAFT_EMPTY", fy: "2028/29", action: "Continue planning" },
+		{ fixture: "C", state: "DRAFT_WITH_PLANNER_ACTION", fy: "2027/28", action: "Continue plan update" },
+		{ fixture: "D", state: "DRAFT_AWAITING_FINANCE", fy: "2027/28", action: "View plan update" },
+		{ fixture: "E", state: "VERSION_AWAITING_PROFESSIONAL_REVIEW", fy: "2027/28", action: "View approved plan" },
+		{ fixture: "F", state: "APPROVED_NO_WORK", fy: "2027/28", action: "View approved plan" },
+	] as const) {
+		test(`renders authoritative PLN-UI-01${scenario.fixture} state`, async ({ page }) => {
+			await loginAsAdministrator(page);
+			await preparePlanningWorkspaceState(page, scenario.fixture);
+			await page.context().clearCookies();
+			await loginAsMohPlanningOfficer(page);
+			await page.goto(`/desk/planning-workspace?procuring_entity=PE-MOH&financial_year=${encodeURIComponent(scenario.fy)}`, { waitUntil: "domcontentloaded" });
+			const root = page.getByTestId("kt-pln-ui01-root");
+			await expect(root).toHaveAttribute("data-kt-pln-live", "1", { timeout: 45_000 });
+			await expect(root).toHaveAttribute("data-kt-pln-state", scenario.state);
+			await expect(page.getByTestId("kt-pln-ui01-primary-action")).toHaveText(new RegExp(scenario.action, "i"));
+			await expect(page.locator("[data-kt-pln-context-helper]")).toContainText("do not change record ownership");
+
+			if (scenario.fixture === "A") {
+				await expect(page.locator("[data-kt-pln-no-plan-heading]")).toHaveText("No annual Procurement Plan");
+				await expect(root).toContainText("Create the annual Plan before adding the 2 Approved Demands ready for Planning.");
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
+				await expect(page.locator("[data-kt-pln-work-controls]")).toBeHidden();
+			}
+			if (scenario.fixture === "B") {
+				await expect(page.locator("[data-kt-pln-plan-reference]")).toHaveText("PLN-MOH-2028-001");
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(2);
+				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("DMD-MOH-2028-001");
+				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("DMD-MOH-2028-002");
+			}
+			if (scenario.fixture === "C") {
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(1);
+				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("PPI-MOH-2027-022");
+				await expect(page.locator("[data-kt-pln-row-action=complete_item]")).toBeVisible();
+			}
+			if (scenario.fixture === "D") {
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
+				await expect(page.getByTestId("kt-pln-ui01-waiting-table").locator("thead th")).toHaveCount(4);
+				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Awaiting confirmation");
+				await expect(page.locator("[data-kt-pln-waiting-body] button, [data-kt-pln-waiting-body] a")).toHaveCount(0);
+			}
+			if (scenario.fixture === "E") {
+				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Professional review");
+				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Head of Procurement");
+				await expect(page.locator("[data-kt-pln-waiting-body] button, [data-kt-pln-waiting-body] a")).toHaveCount(0);
+				await expect(page.getByRole("button", { name: /^(Approve|Return)$/i })).toHaveCount(0);
+			}
+			if (scenario.fixture === "F") {
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
+				await expect(page.locator("[data-kt-pln-waiting-body] tr")).toHaveCount(0);
+				await expect(root).not.toContainText(/Add Plan Item|Add to plan/i);
+				await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText("KES 535,000,000");
+			}
+		});
+	}
+
+	for (const mobile of [
+		{ fixture: "A", state: "NO_PLAN", family: "empty" },
+		{ fixture: "B", state: "INITIAL_DRAFT_EMPTY", family: "actionable" },
+		{ fixture: "D", state: "DRAFT_AWAITING_FINANCE", family: "waiting" },
+	] as const) {
+		test(`supports keyboard focus and mobile ${mobile.family} reflow`, async ({ page }) => {
+			await page.setViewportSize({ width: 390, height: 844 });
+			await loginAsAdministrator(page);
+			await preparePlanningWorkspaceState(page, mobile.fixture);
+			await page.context().clearCookies();
+			await loginAsMohPlanningOfficer(page);
+			const fy = mobile.fixture === "A" || mobile.fixture === "B" ? "2028/29" : "2027/28";
+			await page.goto(`/desk/planning-workspace?procuring_entity=PE-MOH&financial_year=${encodeURIComponent(fy)}`, { waitUntil: "domcontentloaded" });
+			const root = page.getByTestId("kt-pln-ui01-root");
+			await expect(root).toHaveAttribute("data-kt-pln-state", mobile.state, { timeout: 45_000 });
+			const primary = page.getByTestId("kt-pln-ui01-primary-action");
+			await primary.focus();
+			await expect(primary).toBeFocused();
+			const box = await root.boundingBox();
+			expect(box).not.toBeNull();
+			expect((box?.x || 0) + (box?.width || 0)).toBeLessThanOrEqual(391);
+			if (mobile.family === "actionable") {
+				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(2);
+			}
+			if (mobile.family === "waiting") {
+				await expect(page.locator("[data-kt-pln-waiting-table] thead th")).toHaveCount(4);
+				await expect(page.locator("[data-kt-pln-waiting-body] button")).toHaveCount(0);
+			}
+		});
+	}
 });

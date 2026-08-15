@@ -7,9 +7,7 @@ from __future__ import annotations
 
 # Logical Plan lifecycle (§9.1)
 PLAN_OPEN = "Open"
-PLAN_CLOSED = "Closed"
-PLAN_CANCELLED = "Cancelled"
-PLAN_LIFECYCLE_STATES = (PLAN_OPEN, PLAN_CLOSED, PLAN_CANCELLED)
+PLAN_LIFECYCLE_STATES = (PLAN_OPEN,)
 
 # Plan Version status (§9.2)
 VERSION_DRAFT = "Draft"

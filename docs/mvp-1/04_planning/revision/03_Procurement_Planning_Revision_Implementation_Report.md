@@ -295,3 +295,124 @@ An earlier focused Planning slice run passed 95 tests before the final lifecycle
 - Unrelated PDFs, `.playwright-mcp/`, deleted historical evidence screenshots, STD documentation, and `AGENTS.md` changes are excluded from the commit.
 - The historical portions of the approved revision ledger retain superseded UI-10 discussion as audit context. Active requirements, inventory, routes and implementation no longer depend on UI-10.
 - No unrelated route, fixture, screen, or regression failure was repaired.
+
+## 14. PLN-CHG-014 focused correction review cut
+
+The ordinary Plan builder now projects the two deterministic successor states from the same bulk-loaded item set used by the table. The awaiting-Finance state shows two Draft items, KES 535,000,000, KES 80,000,000 added, Planning 2 of 2, Finance 1 of 2 and validation **Needs attention**. The Finance-confirmed state shows Finance 2 of 2 and validation **Ready**, with the single professional submission action enabled only when the update reason and every shared readiness predicate pass.
+
+Additional focused corrections made in this review cut:
+
+- successor validation uses the bulk fingerprint helper, avoiding per-row validation queries;
+- the Approved predecessor and its Tender handoff are represented as one compact operational-context line rather than duplicated editable rows;
+- Draft save and empty-update cancellation require concurrency and idempotency evidence, resolve replay before stale-token rejection, and rotate the Draft token on first success;
+- submission no longer commits inside the service, preserving the request transaction across task, decision and notification evidence;
+- `SCN-PLN-ADD-001` now has resettable `awaiting_finance` and `finance_confirmed` boundaries and removes only its own replay markers when rebuilding deterministic records;
+- the successor banner, six metrics, update reason, changed-item table, readiness message and action bar are rendered in the ordinary PLN-UI-05 fixture. No UI-10 route or compatibility canvas was restored.
+
+Focused validation on 15 August 2026:
+
+- directly affected Frappe modules: 65/65 tests passed (`test_plan_builder_revision`, `test_remove_plan_item`, `test_scn_pln_add_001`, `test_submit_plan_for_review`, `test_plan_item_finance`, `test_get_plan_implementation`, and `test_planning_ui_stitch_layout_guard`);
+- Python compilation and JavaScript syntax checks passed for the changed service, seed and builder assets;
+- `./scripts/bench-with-node.sh build --app kentender_procurement` completed assets and translations with the documented temporary WSL `fork` setting; the first unadjusted translation attempt reproduced host `forkserver` error 95 after assets had already bundled;
+- focused Chromium: 6/6 clean checks passed for stale UI-10 absence, exact awaiting-Finance and Ready successor states, Finance confirmation returning to UI-05, professional approval opening UI-09, and professional return resuming UI-05;
+- an initial combined Chromium attempt exposed stale fixture-owned command markers after canonical reset. The scenario reset was corrected and both exact successor tests then passed without retries.
+- the final focused scenario cleanup restored Approved Version 1 and PPI-MOH-2027-021 and removed the Draft successor/browser evidence.
+
+The full MVP suite, module gates as a whole, accessibility suite as a whole and cross-module regression suites were not run, as explicitly requested. Unrelated worktree changes remain excluded.
+
+## 15. PLN-CHG-015 workspace state variants
+
+### Implemented contract
+
+The Planning workspace now derives exactly one unfiltered `workspace_state` from authoritative PE/FY, Plan, Version, item, Finance-task, professional-task, validation and Demand evidence:
+
+- `NO_PLAN`;
+- `INITIAL_DRAFT_EMPTY`;
+- `APPROVED_WITH_ACTIONABLE_WORK`;
+- `DRAFT_WITH_PLANNER_ACTION`;
+- `DRAFT_AWAITING_FINANCE`;
+- `VERSION_AWAITING_PROFESSIONAL_REVIEW`;
+- `APPROVED_NO_WORK`.
+
+The historical `PLN-UI-01C-NC` state is no longer emitted. No-effective-change Drafts are planner-action state with the protected Cancel-update route. Search and work filters operate only after state selection and cannot change the state. The response includes ordered state metrics, unfiltered/filtered counts, exact empty copy, `as_at`, and a non-persisted opaque `projection_token`. `work_queue` remains only as the temporary compatibility alias of `work_requiring_action`.
+
+The shared Demand eligibility projection is used both before Plan registration and after a Plan exists. The no-Plan response exposes only the eligible count; registered Plans may expose authorised Demand rows. Finance and review waiting rows contain neutral work identity, stage, status and responsible role only—no task identity, route, token, comment, allocation arithmetic or decision action.
+
+### UI and direct-entry changes
+
+One state-aware PLN-UI-01 controller renders the approved A–F compositions; no variant route or client-authored state exists. State-specific metric order, seven-column actionable tables, four-column waiting tables, exact empty panels, Manrope/Inter/JetBrains Mono typography and Material Symbols are retained from the approved HTML. Mock chrome, external assets, footers and in-canvas breadcrumbs remain excluded.
+
+Context changes use shared KenTender state and partial `aria-busy` refresh. Initial loading is not restored for search/filter requests, stale responses are ignored, and handlers are namespaced and torn down on page departure. Waiting rows do not synthesize View controls when the server provides no action.
+
+The Approved-plan direct entry now consumes the workspace's `add_demand` context, opens the existing PLN-UI-04 controller on PLN-UI-09, performs fresh server eligibility validation and preselects the requested Demand. The ordinary Add Plan Item action uses the same dialog without first creating a successor.
+
+### Deterministic fixtures and evidence
+
+The Administrator-only `prepare_planning_workspace_ui` test entry prepares BASE and A–F through production Plan/scenario services. A/B reuse the exact FY2028/29 Demand pair and registration boundary. C–F reuse `SCN-PLN-ADD-001` at incomplete, awaiting-Finance, submitted-review and approved boundaries, with scenario evidence stamped to the approved 09:05, 10:00, 10:30 and 11:05 times. Fixture preparation is idempotent and deletes only fixture-owned evidence.
+
+The active workspace-state specification was revised to the PLN-CHG-015 seven-state model. No schema, DocType, role, workflow state, task type, queue/counter model or persistent workspace flag was added.
+
+### Focused validation on 15 August 2026
+
+- `test_planning_workspace_api` — 10/10 passed, covering selection, permission isolation, filters, state priority, projection reconciliation and query growth.
+- `test_planning_workspace_states` — 5/5 passed, covering exact A–F/base boundaries, mutation-free repeated loads, informational task payloads and filtered-state stability.
+- `test_planning_ui_stitch_layout_guard` — 17/17 passed.
+- `test_scn_pln_add_001` — 8/8 passed after replacing superseded waiting-row actions and old awaiting-Finance primary copy with the PLN-CHG-015 contract.
+- `test_scn_pln_remove_001` — 5/5 passed, including no-effective-change projection as `DRAFT_WITH_PLANNER_ACTION`.
+- JavaScript syntax and Python compilation checks passed for the changed assets/services.
+- `./scripts/bench-with-node.sh build --app kentender_procurement` completed assets and translations with the documented temporary `/tmp` WSL `fork` setting. The first unadjusted attempt completed asset bundling but reproduced Python 3.14 `forkserver` error 95 during translation merge.
+- Focused Chromium A–F state checks — 6/6 passed.
+- Focused Chromium base workspace/Add-to-plan preselection — 1/1 passed.
+- Focused Chromium no-flash search/filter refresh — 1/1 passed.
+- Focused Chromium Planning navigation lifecycle — 1/1 passed after aligning the test with the approved Change-context interaction and live builder-state action vocabulary.
+- Focused Chromium keyboard-focus/mobile reflow checks for the empty, actionable-table and informational-waiting families — 3/3 passed at 390 × 844.
+
+An initial removal-scenario setup hit a transient row lock while another reseed-heavy process was closing; the isolated rerun passed 5/5. Initial Chromium attempts were blocked while port 8000 was not running; only the local Frappe web process was started for the successful focused runs and was stopped afterward.
+
+### Skipped and unrelated findings
+
+Per instruction, the full MVP suite, whole-module gates, whole accessibility gate, Finance/approval cross-module gates and all cross-module regression suites were not run.
+
+Browser server logs still show pre-existing requests to `/undefined` and `/desk/undefined` during adjacent editor/builder navigation. The focused lifecycle flow still passed, and this unrelated route-generation defect was not repaired in the PLN-CHG-015 slice. Unrelated dirty-worktree documentation, PDFs, deleted evidence images and prior Planning changes were preserved and not staged, committed or pushed.
+
+## 16. PLN-CHG-016 financial-year context and lifecycle closure
+
+Status: implementation ready for review; focused browser execution remains blocked by the local bench process failing to start because `logs/worker.log` is not writable.
+
+### Requirement traceability
+
+- The Core financial-context service now validates configured enabled Fiscal Years for invalid ranges and overlap, and projects stable IDs, governed inclusive dates, current/future/past indicators and Planning-open status.
+- `planning_context.resolve_planning_context` is the sole workspace PE/FY default resolver. It applies explicit, authorised context first; restores valid Frappe user defaults; never defaults among multiple PEs; and applies current Open Plan, nearest future Open Plan, most recent past Open Plan, then current enabled no-Plan precedence. `select_planning_context` is the only new preference mutation.
+- The workspace returns `planning_context` while retaining its temporary top-level selection fields. Browser `kt_state` is no longer treated as an authoritative PE/FY default, and deliberate selector changes call the server selection command.
+- Demand FY eligibility derives only from approved `required_by_date` against configured inclusive periods. PLN-UI-03/04/workspace share the projection and formation rechecks it after source locks. Locked missing/outside/mismatch codes and messages are returned without adding a Demand FY field.
+- Logical Plans now expose only `Open`; guarded pre/post-model-sync patches reject historical non-Open/close evidence and then remove the obsolete close/cancel columns. Version `Cancelled` remains immutable.
+- The old `cancel_plan_update` API, generic confirmation and Comment replay marker were removed. PLN-UI-05B uses a mutation-free projection and a locked `cancel_empty_plan_update` command with task/hold checks, replay-before-token handling, fixed Plan Decision reason and Approved-plan return.
+- The supplied `PLN-UI-05B.html` controls the modal hierarchy, summary, message, actions, typography and icon. Mock shell, breadcrumb and footer content were excluded.
+- `SCN-PLN-REMOVE-001` stamps the post-removal boundary at 19 August 2027 09:15 EAT and exposes an idempotent cancelled boundary. The canonical `DMD-MOH-2027-019` seed already used 31 December 2027 and required no correction.
+
+### Focused evidence
+
+- `pln_chg_016_preflight.execute`: passed against `kentender.midas.com`.
+- Targeted `Procurement Plan` DocType reload and guarded schema cleanup: passed.
+- Python/JSON/Node syntax checks: passed.
+- `test_planning_chg016_layout`: 2/2 passed.
+- `test_planning_context_chg016`: 3/3 passed.
+- `test_planning_workspace_states`: 5/5 passed.
+- `test_remove_plan_item`: 12/12 passed.
+- `test_scn_pln_remove_001`: 5/5 passed.
+- Procurement asset build through `./scripts/bench-with-node.sh build --app kentender_procurement`: passed.
+- Focused Playwright discovery/TypeScript transform for `planning-empty-update-cancel.spec.ts`: passed (1 Chromium test discovered).
+- `test_planning_mvp1_schema`: 5/6 passed; the unrelated pre-existing `uniq_pln_open_version` index is absent on the focused test site. It was not repaired in this slice.
+- Focused Chromium PLN-UI-05B test was added but not executed: `bench start` stopped because `/home/midasuser/frappe-bench/logs/worker.log` is not writable. No permission or unrelated bench-runtime repair was made.
+
+Full MVP, whole-module, whole accessibility, Finance/approval cross-module and cross-module regression suites were intentionally not run. Unrelated dirty-worktree files were preserved and no commit or push was performed.
+
+## 17. PLN-CHG-018 revision closure implementation
+
+The six closure items are now represented by production and executable evidence: FY source/mismatch projection (`CL-01`), deterministic empty-successor cancellation invariants (`CL-02`), shared live method allow-list and fallback (`CL-03`), server-owned UI-09 action destinations with no executable export (`CL-04`), a complete HTML-artifact-to-fixture matrix (`CL-05`), and aligned ledger/state/audit pointers (`CL-06`).
+
+Focused evidence files are `test_planning_context_chg016.py`, `test_remove_plan_item.py`, `test_get_plan_item_editor.py`, `test_update_plan_item.py`, `test_get_plan_implementation.py`, `test_planning_ui_05a_06_revision_services.py`, and `test_planning_ui_stitch_layout_guard.py`.
+
+Closure-edit focused results: method resolver 3/3 passed; UI-09 implementation DTO 4/4 passed; empty-successor removal/cancellation 12/12 passed; FY context 3/3 passed; revision layout/artifact matrix 19/19 passed; UI-05A/UI-06 revision services 5/5 passed. The updater module's 13 changed/adjacent cases passed, while its pre-existing in-review funding setup case failed in the full-module sequence because a source lacked a proposed Budget Line; that same case passed 1/1 in isolation. The updater module therefore is not recorded as a clean full-module pass.
+
+No asset build or browser smoke was executed as part of this closure edit. Release sign-off remains conditional on a clean updater module rerun, the build and protected-route smoke; prior historical results above are not claimed as validation of these new changes.

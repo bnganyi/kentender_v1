@@ -6,7 +6,9 @@ from collections import defaultdict
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, getdate
+from frappe.utils import cstr, flt
+
+from kentender_procurement.procurement_planning.services.demand_financial_year import resolve_demand_financial_year
 
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	READ_PLAN_ROLES,
@@ -87,9 +89,10 @@ def _project(*, plan: Any, actor: str, requested_demand: str = "") -> tuple[list
 		if not has_planning_scope(procuring_entity=plan.procuring_entity, org_unit=ou or None, user=actor, require_write=False):
 			continue
 		reason = None
-		required = getdate(demand.required_by_date) if demand.required_by_date else None
-		if not required or required < getdate(plan.period_start) or required > getdate(plan.period_end):
-			reason = f"Required-by date must fall within FY {plan.financial_year}."
+		fy_context = resolve_demand_financial_year(demand.required_by_date, cstr(plan.financial_year))
+		fy_issue = fy_context["issue"]
+		if fy_issue:
+			reason = fy_issue["reason"]
 		funding, funding_reason = _budget_context(funding_by_demand.get(demand.name), plan, budget_contexts)
 		reason = reason or funding_reason
 		available_items = items_by_demand.get(demand.name, [])
@@ -97,7 +100,13 @@ def _project(*, plan: Any, actor: str, requested_demand: str = "") -> tuple[list
 			reason = "All Need Items are already held by an open Draft or allocated to an Approved Plan."
 		if reason:
 			if requested == demand.name:
-				requested_reason = {"demand": demand.name, "code": "PLN_DEMAND_NOT_ELIGIBLE", "reason": reason}
+				requested_reason = {
+					"demand": demand.name,
+					"code": fy_issue["code"] if fy_issue else "PLN_DEMAND_NOT_ELIGIBLE",
+					"reason": reason,
+				}
+				if fy_issue and fy_issue.get("derived_financial_year"):
+					requested_reason["derived_financial_year"] = fy_issue["derived_financial_year"]
 			continue
 		need_items: list[dict[str, Any]] = []
 		available = 0.0
@@ -126,8 +135,40 @@ def _project(*, plan: Any, actor: str, requested_demand: str = "") -> tuple[list
 			"need_item_count": len(need_items), "need_items": need_items,
 			"proposed_funding": funding, "proposed_budget_line": funding.get("id"),
 			"proposed_budget_line_display": funding.get("display") or "—",
+			"derived_financial_year": fy_context["derived_financial_year"],
+			"financial_year_source": fy_context["resolved_source"],
+			"financial_year_issue_code": fy_context["issue_code"],
 		})
 	return out, requested_reason
+
+
+def project_eligible_demands_for_context(
+	*,
+	procuring_entity: str,
+	financial_year: str,
+	period_start: str,
+	period_end: str,
+	currency: str,
+	user: str | None = None,
+) -> list[dict[str, Any]]:
+	"""Project Planning-ready sources before a logical Plan is registered.
+
+	The lightweight context deliberately has the same governed attributes consumed
+	by ``_project`` so registration previews and PLN-UI-03/04 cannot drift onto
+	different Demand, Need Item, funding, or hold predicates.
+	"""
+	actor = (user or frappe.session.user or "").strip()
+	require_operational_roles(*READ_PLAN_ROLES, user=actor)
+	assert_planning_scope(procuring_entity=procuring_entity, user=actor, require_write=False)
+	context = frappe._dict(
+		procuring_entity=procuring_entity,
+		financial_year=financial_year,
+		period_start=period_start,
+		period_end=period_end,
+		currency=currency,
+	)
+	rows, _exclusion = _project(plan=context, actor=actor)
+	return rows
 
 
 def list_eligible_demands(

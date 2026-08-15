@@ -15,6 +15,7 @@ from kentender_procurement.procurement_planning.services._invariants import asse
 from kentender_procurement.procurement_planning.services.get_plan_item_editor import CATEGORY_OPTIONS
 from kentender_procurement.procurement_planning.services.plan_item_field_issues import MILESTONE_FIELDS, collect_plan_item_field_issues
 from kentender_procurement.procurement_planning.services.planning_permissions import assert_can_add_demand, assert_planning_scope
+from kentender_procurement.procurement_planning.services.procurement_method_catalogue import procurement_method_is_allowed, resolve_procurement_methods
 
 _WRITABLE = frozenset({
 	"requirement_description", "procurement_category", "procurement_method", "arrangement",
@@ -81,9 +82,6 @@ def update_plan_item(
 	unknown = sorted(set(payload) - _WRITABLE)
 	if unknown:
 		return {"ok": False, "error_code": "PLN_ITEM_FIELDS_NOT_PERMITTED", "errors": {key: HOD_IMMUTABLE_MSG for key in unknown}}
-	method = cstr(payload.get("procurement_method") or "Open tender").strip()
-	if method != "Open tender":
-		return {"ok": False, "error_code": "PROCUREMENT_METHOD_NOT_CONFIGURED", "errors": {"procurement_method": "Only Open tender is configured for the MVP."}}
 	category = cstr(payload.get("procurement_category") or "").strip()
 	if category and category not in CATEGORY_OPTIONS:
 		return {"ok": False, "error_code": "PROCUREMENT_CATEGORY_NOT_CONFIGURED", "errors": {"procurement_category": "Select an approved procurement category."}}
@@ -107,6 +105,13 @@ def update_plan_item(
 	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
 	if cstr(iv.finance_status) == "Awaiting confirmation":
 		return {"ok": False, "error_code": "PLN_ITEM_AWAITING_FINANCE", "errors": {"form": "This Plan Item is read-only while Finance confirmation is awaiting action."}}
+	method_contract = resolve_procurement_methods()
+	method = cstr(payload.get("procurement_method") or iv.procurement_method or method_contract["recommended"]).strip()
+	if not procurement_method_is_allowed(method, method_contract):
+		return {
+			"ok": False, "error_code": "PROCUREMENT_METHOD_NOT_CONFIGURED",
+			"errors": {"procurement_method": "The selected procurement method is not enabled in the current catalogue."},
+		}
 
 	field_issues = collect_plan_item_field_issues(iv=iv, payload=payload, include_preference=False)
 	for field in _WRITABLE:
@@ -124,7 +129,7 @@ def update_plan_item(
 			except Exception:
 				continue
 		iv.set(field, value)
-	iv.procurement_method = "Open tender"
+	iv.procurement_method = method
 	iv.validation_projection = VALIDATION_NOT_RUN
 	iv.save(ignore_permissions=True)
 	field_issues = collect_plan_item_field_issues(iv=iv, payload={}, include_preference=False)

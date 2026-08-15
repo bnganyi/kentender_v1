@@ -24,7 +24,9 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	MODE_DRAFT_EXCLUDE,
 	MODE_PROPOSE_ACTIVE,
 	VERSION_CANCELLED,
+	VERSION_DRAFT,
 	VERSION_EDITABLE_STATUSES,
+	VERSION_RETURNED,
 )
 from kentender_procurement.procurement_planning.services._invariants import (
 	assert_version_concurrency,
@@ -34,8 +36,21 @@ from kentender_procurement.procurement_planning.services._invariants import (
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	assert_can_add_demand,
 	assert_planning_scope,
+	actor_planning_roles,
+	ADD_DEMAND_ROLES,
 	is_planning_read_only,
+	require_operational_roles,
+	READ_PLAN_ROLES,
 )
+
+CANCEL_REASON = "No effective changes remained in the Draft update."
+ERR_UPDATE_NOT_EMPTY = "PLAN_UPDATE_NOT_EMPTY"
+ERR_UPDATE_ACTIVE_TASK = "PLAN_UPDATE_HAS_ACTIVE_TASK"
+ERR_UPDATE_RESIDUAL_HOLD = "PLAN_UPDATE_HAS_RESIDUAL_HOLD"
+
+
+def _cancel_error(code: str, message: str) -> None:
+	frappe.throw(f"{code}: {_(message)}", title=code)
 
 
 def item_has_downstream(plan_item: str) -> bool:
@@ -472,44 +487,152 @@ def apply_proposed_removals_on_approval(*, version: str, actor: str) -> list[str
 	return applied
 
 
-def cancel_plan_update(
+def get_empty_plan_update_cancellation(
 	*,
 	plan: str,
-	concurrency_token: str | None = None,
+	successor_version: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""Cancel an empty Draft successor when no effective changes remain."""
+	"""Mutation-free PLN-UI-05B projection."""
+	actor = cstr(user or frappe.session.user).strip()
+	require_operational_roles(*READ_PLAN_ROLES, user=actor)
+	plan_name = cstr(plan).strip()
+	version_name = cstr(successor_version).strip()
+	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name) or not version_name:
+		frappe.throw(_("Procurement Plan update not found."), title="PLN_PLAN_UPDATE_NOT_FOUND")
+	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
+	if not frappe.db.exists("Procurement Plan Version", {"name": version_name, "plan": plan_name}):
+		frappe.throw(_("Procurement Plan update not found."), title="PLN_PLAN_UPDATE_NOT_FOUND")
+	assert_planning_scope(
+		procuring_entity=cstr(plan_doc.procuring_entity), user=actor, require_write=False,
+	)
+	version = frappe.get_doc("Procurement Plan Version", version_name)
+	approved_name = cstr(plan_doc.current_approved_version).strip()
+	approved = frappe.get_doc("Procurement Plan Version", approved_name) if approved_name else None
+	approved_value = flt(frappe.db.sql(
+		"select coalesce(sum(confirmed_estimate),0) from `tabProcurement Plan Item Version` where plan_version=%s and proposed_removal=0",
+		approved_name,
+	)[0][0]) if approved else 0
+	tenders = frappe.get_all(
+		"Planning Handoff Snapshot",
+		filters={"plan": plan_name},
+		pluck="tender_reference",
+		limit_page_length=0,
+	) if frappe.db.exists("DocType", "Planning Handoff Snapshot") else []
+	draft_ivs = frappe.get_all(
+		"Procurement Plan Item Version", filters={"plan_version": version_name},
+		fields=["finance_task_state", "finance_reservation", "finance_owned_reservation", "carry_forward_unchanged"],
+		limit_page_length=0,
+	)
+	has_active_task = cstr(version.review_task_state) == "Open" or any(cstr(row.finance_task_state) == "Open" for row in draft_ivs)
+	has_residual_hold = bool(frappe.db.exists("Plan Demand Allocation", {"proposed_in_version": version_name, "status": "Draft"})) or any(
+		int(row.finance_owned_reservation or 0) and cstr(row.finance_reservation) and not int(row.carry_forward_unchanged or 0)
+		for row in draft_ivs
+	)
+	has_changes = draft_has_effective_changes(plan=plan_name, version=version_name)
+	can_cancel = bool(
+		cstr(plan_doc.lifecycle_state) == "Open"
+		and approved
+		and cstr(plan_doc.open_draft_version) == version_name
+		and cstr(version.status) in (VERSION_DRAFT, VERSION_RETURNED)
+		and not has_changes
+		and not has_active_task
+		and not has_residual_hold
+		and actor_planning_roles(actor).intersection(ADD_DEMAND_ROLES)
+		and not is_planning_read_only(actor)
+	)
+	return {
+		"ok": True, "plan": plan_name, "successor_version": version_name,
+		"approved_version": approved_name,
+		"approved_version_label": f"Version {approved.version_number}" if approved else "—",
+		"draft_version_label": f"Version {version.version_number}",
+		"approved_value": approved_value,
+		"approved_value_display": f"{cstr(plan_doc.currency or 'KES')} {approved_value:,.0f}",
+		"effective_change_count": 0 if not has_changes else 1,
+		"tender_references": [cstr(value) for value in tenders if value],
+		"tender_reference": cstr(tenders[0]) if tenders else "",
+		"concurrency_token": cstr(version.concurrency_token),
+		"can_cancel": can_cancel,
+		"approved_route": f"/app/procurement-plan-approved?plan={plan_name}",
+	}
+
+
+def cancel_empty_plan_update(
+	*, plan: str, successor_version: str, expected_version_token: str | None,
+	idempotency_key: str | None, user: str | None = None,
+) -> dict[str, Any]:
+	"""Cancel only an empty Draft/Returned successor, preserving its history."""
 	actor = assert_can_add_demand(user)
 	plan_name = cstr(plan).strip()
-	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name):
-		return {"ok": False, "errors": {"form": "Procurement Plan not found"}}
-
-	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
-	assert_planning_scope(
-		procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-		org_unit=None,
-		user=actor,
-		require_write=True,
-	)
-	draft = cstr(plan_doc.open_draft_version or "").strip()
-	if not draft:
-		return {"ok": False, "errors": {"form": "There is no Draft update to cancel."}}
-	if not cstr(plan_doc.current_approved_version or "").strip():
-		return {"ok": False, "errors": {"form": "The initial Draft cannot be cancelled this way."}}
-
-	assert_version_concurrency(draft, concurrency_token)
-	ver = frappe.get_doc("Procurement Plan Version", draft)
-	if cstr(ver.status) not in VERSION_EDITABLE_STATUSES:
-		return {"ok": False, "errors": {"form": "Only a Draft or Returned update can be cancelled."}}
-	if draft_has_effective_changes(plan=plan_name, version=draft):
+	version_name = cstr(successor_version).strip()
+	key = cstr(idempotency_key).strip()
+	if not plan_name or not version_name or not key:
+		frappe.throw(_("Plan, successor Version and idempotency key are required."), title="PLN_CANCEL_UPDATE_REQUIRED")
+	existing = frappe.db.get_value("Plan Decision", {"command_idempotency_key": key}, ["name", "plan_version"], as_dict=True)
+	if existing:
+		if cstr(existing.plan_version) != version_name:
+			frappe.throw(_("This command key was already used for another Plan update."), title="PLN_IDEMPOTENCY_CONFLICT")
+		actual_status = cstr(frappe.db.get_value("Procurement Plan Version", version_name, "status"))
+		open_draft = cstr(frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version"))
+		if actual_status != VERSION_CANCELLED or open_draft == version_name:
+			frappe.throw(_("The recorded cancellation is not in its terminal state."), title="PLN_CANCEL_UPDATE_INVARIANT")
 		return {
-			"ok": False,
-			"errors": {"form": "This update still has changes. Remove or complete them first."},
+			"ok": True, "idempotent": True, "plan": plan_name, "version": version_name,
+			"status": VERSION_CANCELLED, "reason": CANCEL_REASON,
+			"route": f"/app/procurement-plan-approved?plan={plan_name}",
+			"invariants": {"draft_lock_cleared": True, "active_tasks": False, "residual_holds": False},
 		}
+	if not frappe.db.exists("Procurement Plan", plan_name):
+		frappe.throw(_("Procurement Plan not found."), title="PLN_PLAN_NOT_FOUND")
+	frappe.db.sql("select name from `tabProcurement Plan` where name=%s for update", plan_name)
+	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
+	assert_planning_scope(procuring_entity=cstr(plan_doc.procuring_entity), user=actor, require_write=True)
+	if cstr(plan_doc.lifecycle_state) != "Open":
+		frappe.throw(_("Only an Open annual Plan may have an empty update cancelled."), title="PLN_PLAN_NOT_OPEN")
+	approved = cstr(plan_doc.current_approved_version).strip()
+	if not approved or cstr(plan_doc.open_draft_version).strip() != version_name:
+		frappe.throw(_("Only the current successor to an Approved Version may be cancelled."), title="PLN_CANCEL_UPDATE_NOT_SUCCESSOR")
+	frappe.db.sql("select name from `tabProcurement Plan Version` where name in (%s,%s) for update", (approved, version_name))
+	version = frappe.get_doc("Procurement Plan Version", version_name)
+	if cstr(version.status) not in (VERSION_DRAFT, VERSION_RETURNED):
+		frappe.throw(_("Only a Draft or Returned successor may be cancelled."), title="PLN_CANCEL_UPDATE_STATE")
+	assert_version_concurrency(version_name, expected_version_token)
+	item_versions = frappe.get_all("Procurement Plan Item Version", filters={"plan_version": version_name}, fields=["name", "plan_item", "finance_task_state", "finance_reservation", "finance_owned_reservation", "carry_forward_unchanged"])
+	if item_versions:
+		frappe.db.sql("select name from `tabProcurement Plan Item Version` where plan_version=%s for update", version_name)
+		item_names = sorted({cstr(row.plan_item) for row in item_versions if row.plan_item})
+		if item_names:
+			frappe.db.sql("select name from `tabProcurement Plan Item` where name in %(names)s for update", {"names": item_names})
+		reservation_candidates = sorted({
+			name.strip()
+			for row in item_versions for name in cstr(row.finance_reservation).split(",")
+			if name.strip()
+		})
+		reservation_names = frappe.get_all(
+			"Funding Reservation", filters={"name": ["in", reservation_candidates]}, pluck="name", limit_page_length=0,
+		) if reservation_candidates and frappe.db.exists("DocType", "Funding Reservation") else []
+		if reservation_names:
+			frappe.db.sql("select name from `tabFunding Reservation` where name in %(names)s for update", {"names": reservation_names})
+	has_active_task = cstr(version.review_task_state) == "Open" or any(cstr(row.finance_task_state) == "Open" for row in item_versions)
+	allocations = frappe.get_all("Plan Demand Allocation", filters={"proposed_in_version": version_name, "status": "Draft"}, pluck="name", limit_page_length=0)
+	if allocations:
+		frappe.db.sql("select name from `tabPlan Demand Allocation` where name in %(names)s for update", {"names": allocations})
+	residual_reservation = any(
+		int(row.finance_owned_reservation or 0)
+		and cstr(row.finance_reservation)
+		and not int(row.carry_forward_unchanged or 0)
+		for row in item_versions
+	)
+	if draft_has_effective_changes(plan=plan_name, version=version_name):
+		_cancel_error(ERR_UPDATE_NOT_EMPTY, "This Plan update contains effective changes and cannot be cancelled as empty.")
+	if has_active_task:
+		_cancel_error(ERR_UPDATE_ACTIVE_TASK, "This Plan update still has active work. Resolve that work before cancelling the update.")
+	if allocations or residual_reservation:
+		_cancel_error(ERR_UPDATE_RESIDUAL_HOLD, "This Plan update still has a funding or allocation hold that must be resolved before cancellation.")
 
 	frappe.db.set_value(
 		"Procurement Plan Version",
-		draft,
+		version_name,
 		{"status": VERSION_CANCELLED, "open_version_slot": None, "concurrency_token": new_concurrency_token()},
 		update_modified=True,
 	)
@@ -519,18 +642,39 @@ def cancel_plan_update(
 		{"open_draft_version": None},
 		update_modified=False,
 	)
-	for item in frappe.get_all(
-		"Procurement Plan Item",
-		filters={"plan": plan_name, "draft_item_version": ["is", "set"]},
-		pluck="name",
-	):
+	for row in item_versions:
+		item = row.plan_item
+		if cstr(frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")) != row.name:
+			continue
 		frappe.db.set_value(
 			"Procurement Plan Item",
 			item,
 			{"draft_item_version": None},
 			update_modified=False,
 		)
-	return {"ok": True, "plan": plan_name, "version": draft, "status": VERSION_CANCELLED}
+	frappe.get_doc({
+		"doctype": "Plan Decision", "plan_version": version_name,
+		"decision_type": "Plan update cancellation", "decision_stage": "Plan update",
+		"actor": actor, "actor_role": "Procurement Planner", "decision": "Cancelled",
+		"reason": CANCEL_REASON, "decided_at": now_datetime(), "command_idempotency_key": key,
+	}).insert(ignore_permissions=True)
+	terminal_status = cstr(frappe.db.get_value("Procurement Plan Version", version_name, "status"))
+	open_draft = cstr(frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version"))
+	residual_item_locks = frappe.db.exists(
+		"Procurement Plan Item", {"plan": plan_name, "draft_item_version": ["is", "set"]}
+	)
+	if terminal_status != VERSION_CANCELLED or open_draft == version_name or residual_item_locks:
+		frappe.throw(_("The empty update could not be closed safely."), title="PLN_CANCEL_UPDATE_INVARIANT")
+	return {
+		"ok": True,
+		"idempotent": False,
+		"plan": plan_name,
+		"version": version_name,
+		"status": VERSION_CANCELLED,
+		"reason": CANCEL_REASON,
+		"route": f"/app/procurement-plan-approved?plan={plan_name}",
+		"invariants": {"draft_lock_cleared": True, "active_tasks": False, "residual_holds": False},
+	}
 
 
 def remove_plan_item_from_plan(

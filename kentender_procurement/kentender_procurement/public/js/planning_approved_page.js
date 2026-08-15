@@ -47,6 +47,11 @@
 		}
 	}
 
+	function selectedPlanItem() {
+		var q = frappe.utils.get_query_params ? frappe.utils.get_query_params() : {};
+		return q && q.plan_item ? String(q.plan_item) : "";
+	}
+
 	function mount(page) {
 		activateSurface();
 		var sh = kentender_core.cl_shell;
@@ -72,7 +77,7 @@
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningApproved === "function"
 		) {
-			kentender_procurement.live.bindPlanningApproved($root, { plan: planFromRoute() });
+			kentender_procurement.live.bindPlanningApproved($root, { plan: planFromRoute(), planItem: selectedPlanItem() });
 		}
 	}
 
@@ -103,7 +108,7 @@
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningApproved === "function"
 		) {
-			kentender_procurement.live.bindPlanningApproved($root, { plan: planFromRoute() });
+			kentender_procurement.live.bindPlanningApproved($root, { plan: planFromRoute(), planItem: selectedPlanItem() });
 		}
 	};
 

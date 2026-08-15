@@ -623,9 +623,12 @@
 			return;
 		}
 		$root.attr("data-kt-pln-live", "0");
+		var savedContext = kentender_procurement.planning_client
+			? kentender_procurement.planning_client.routeContext()
+			: {};
 		var state = {
-			pe: $root.attr("data-kt-pln-pe") || "",
-			fy: $root.attr("data-kt-pln-fy") || "2027/28",
+			pe: $root.attr("data-kt-pln-pe") || savedContext.procuring_entity || "",
+			fy: $root.attr("data-kt-pln-fy") || savedContext.financial_year || "",
 			workFilter: $root.attr("data-kt-pln-work-filter") || "all",
 			search: "",
 			request: 0,
@@ -682,34 +685,26 @@
 		}
 
 		function renderSummary(plan) {
-			var approved = plan.approved;
-			var draft = plan.draft;
-			var html = "";
-			if (approved) {
-				html += metric("Plan Items", approved.item_count + " active", "count");
-				html += metric("Approved value", String(approved.planned_total_display || "").replace(/\.00$/, ""), "money");
-			}
-			if (draft) {
-				html += metric("Draft Plan Items", draft.item_count + " items", "count");
-				html += metric("Draft value", String(draft.planned_total_display || "").replace(/\.00$/, ""), "money");
-			}
-			var focus = draft || approved || {};
-			html += metric("Finance confirmed", focus.finance_confirmed_label || "0 of 0", "finance");
-			html += metric("Validation", focus.validation_projection || "Not run", "validation", focus.validation_projection || "Not run");
+			var html = (plan.summary_metrics || []).map(function (item) {
+				return metric(
+					item.label || "",
+					String(item.value || "").replace(/\.00\b/g, ""),
+					item.kind || "text",
+					item.status || item.value || ""
+				);
+			}).join("");
 			$root.find("[data-kt-pln-summary-grid]").html(html);
 		}
 
 		function renderStatusLine(plan) {
 			var html = '<span class="kt-pln-plan-state">' + esc((plan.lifecycle_state || "Open") + " Plan") + "</span>";
-			if (plan.approved) {
+			(plan.status_parts || []).slice(1).forEach(function (part) {
 				html += '<span class="kt-pln-status-separator" aria-hidden="true">·</span>';
-				html += '<span class="kt-pln-version-status"><span class="material-symbols-outlined kt-pln-icon-filled kt-pln-available" aria-hidden="true">check_circle</span>';
-				html += esc("Approved Version " + plan.approved.version_number) + "</span>";
-			}
-			if (plan.draft) {
-				html += '<span class="kt-pln-status-separator" aria-hidden="true">·</span>';
-				html += '<span class="kt-pln-version-status">' + esc("Draft Version " + plan.draft.version_number) + "</span>";
-			}
+				var approved = /^Approved Version/.test(part);
+				html += '<span class="kt-pln-version-status">' +
+					(approved ? '<span class="material-symbols-outlined kt-pln-icon-filled kt-pln-available" aria-hidden="true">check_circle</span>' : "") +
+					esc(part) + "</span>";
+			});
 			if (plan.supporting_text) {
 				html += '<span class="kt-pln-status-separator" aria-hidden="true">|</span><em>' + esc(plan.supporting_text) + "</em>";
 			}
@@ -727,11 +722,17 @@
 			return "primary";
 		}
 
-		function rowsHtml(rows, waiting) {
+		function rowsHtml(rows) {
 			return (rows || [])
 				.map(function (row) {
 					var action = row.action || {};
 					var tone = statusTone(row.status);
+					var actionHtml = action.route && action.label
+						? '<button type="button" class="kt-pln-row-action" data-kt-pln-route="' + esc(action.route) +
+							'" data-kt-pln-row-action="' + esc(action.code || "view") + '" aria-label="' +
+							esc(action.label + " " + (row.title || "")) + '">' + esc(action.label) +
+							'<span class="material-symbols-outlined text-xs" aria-hidden="true">arrow_forward</span></button>'
+						: "";
 					return (
 							'<tr data-kt-pln-row="' + esc(row.resource_key || "") + '"><td><div class="kt-pln-work-title">' +
 							esc(row.title || "") +
@@ -741,13 +742,19 @@
 							'</td><td class="text-right font-data-md kt-pln-data-value">' + esc(String(row.amount_display || "—").replace(/\.00$/, "")) +
 						"</td><td>" + esc(row.reason || "") + '</td><td><span class="kt-pln-status-pill kt-pln-status-' + tone + '">' +
 						esc(row.status || "") +
-						'</span></td><td><button type="button" class="kt-pln-row-action" data-kt-pln-route="' + esc(action.route || "") +
-						'" data-kt-pln-row-action="' + esc(action.code || "view") + '" aria-label="' +
-						esc((action.label || "View") + " " + (row.title || "")) + '">' + esc(action.label || "View") +
-							'<span class="material-symbols-outlined text-xs" aria-hidden="true">arrow_forward</span></button></td></tr>'
+						'</span></td><td>' + actionHtml + "</td></tr>"
 					);
 				})
 				.join("");
+		}
+
+		function waitingRowsHtml(rows) {
+			return (rows || []).map(function (row) {
+				return '<tr data-kt-pln-row="' + esc(row.resource_key || "") + '"><td><div class="kt-pln-work-title">' +
+					esc(row.title || "") + '</div><span class="font-data-md kt-pln-reference">' + esc(row.reference || "") +
+					'</span></td><td>' + esc(row.stage || "") + '</td><td><span class="kt-pln-status-pill kt-pln-status-' +
+					statusTone(row.status) + '">' + esc(row.status || "") + '</span></td><td>' + esc(row.with_role || "") + "</td></tr>";
+			}).join("");
 		}
 
 		function paint(dto) {
@@ -759,7 +766,8 @@
 				.attr("data-kt-pln-mode", dto.selection_mode || "")
 				.removeAttr("data-kt-pln-error");
 			setBackgroundRefreshing(false);
-			$root.attr("data-kt-pln-state", dto.state_id || "");
+			$root.attr("data-kt-pln-state", dto.workspace_state || "");
+			$root.attr("data-kt-pln-projection", dto.projection_token || "");
 			$root.attr("data-kt-pln-read-only", dto.read_only ? "1" : "0");
 			$root.attr("data-kt-pln-can-create", dto.can_create_plan ? "1" : "0");
 			$root.attr("data-kt-pln-pe", state.pe).attr("data-kt-pln-fy", state.fy);
@@ -786,15 +794,16 @@
 			fillSelect($root.find('[data-kt-pln-filter="financial_year"]'), dto.financial_years || [], state.fy);
 			fillSelect($root.find('[data-kt-pln-filter="work_type"]'), dto.filter_options || [], state.workFilter);
 			$root.find("[data-kt-pln-fy-readonly]").text(state.fy || "");
+			$root.find("[data-kt-pln-context-helper]").text(dto.helper_text || "");
 			var editingContext = $root.attr("data-kt-pln-context-editing") === "1";
 			var needsSelection = !dto.procuring_entity;
 			setHidden($root.find("[data-kt-pln-context-summary]"), needsSelection || editingContext);
 			setHidden($root.find("[data-kt-pln-context-controls]"), !needsSelection && !editingContext);
 
 			var plan = dto.current_plan;
-			setHidden($root.find("[data-kt-pln-plan-panel]"), dto.state_id === "selection_required");
+			setHidden($root.find("[data-kt-pln-plan-panel]"), !dto.procuring_entity);
 			setHidden($root.find("[data-kt-pln-current-plan]"), !plan);
-			setHidden($root.find("[data-kt-pln-no-plan]"), !!plan || dto.state_id === "selection_required");
+			setHidden($root.find("[data-kt-pln-no-plan]"), !!plan || !dto.procuring_entity);
 			if (plan) {
 				$root.attr("data-kt-pln-plan", plan.plan || "");
 				$root.find("[data-kt-pln-plan-reference]").text(plan.plan_code || plan.plan || "");
@@ -803,7 +812,10 @@
 				renderSummary(plan);
 			} else {
 				$root.removeAttr("data-kt-pln-plan");
-				$root.find("[data-kt-pln-no-plan-msg]").text((dto.empty_states || {}).current_plan || "No annual Procurement Plan exists for this context.");
+				var emptyStates = dto.empty_states || {};
+				$root.find("[data-kt-pln-no-plan-heading]").text(emptyStates.current_plan_heading || "No annual Procurement Plan");
+				$root.find("[data-kt-pln-no-plan-msg]").text(emptyStates.current_plan || "No annual Procurement Plan exists for this context.");
+				$root.find("[data-kt-pln-no-plan-supporting]").text(emptyStates.current_plan_supporting || "");
 			}
 			var primary = dto.primary_action;
 			setHidden($root.find("[data-kt-pln-primary-action]"), !primary);
@@ -814,14 +826,21 @@
 
 			var work = dto.work_requiring_action || dto.work_queue || [];
 			var waiting = dto.waiting_on_others || [];
-			$root.find("[data-kt-pln-work-body]").html(rowsHtml(work, false));
-			$root.find("[data-kt-pln-waiting-body]").html(rowsHtml(waiting, true));
+			setHidden($root.find("[data-kt-pln-work-controls]"), !dto.show_work_controls);
+			$root.find("[data-kt-pln-work-body]").html(rowsHtml(work));
+			$root.find("[data-kt-pln-waiting-body]").html(waitingRowsHtml(waiting));
 			setHidden($root.find("[data-kt-pln-work-table]"), !work.length);
 			setHidden($root.find("[data-kt-pln-work-empty]"), !!work.length);
 			setHidden($root.find("[data-kt-pln-waiting-table]"), !waiting.length);
 			setHidden($root.find("[data-kt-pln-waiting-empty]"), !!waiting.length);
 			$root.find("[data-kt-pln-work-empty-text]").text((dto.empty_states || {}).work_requiring_action || "Nothing currently requires your planning action.");
 			$root.find("[data-kt-pln-waiting-empty-text]").text((dto.empty_states || {}).waiting_on_others || "Nothing is currently waiting on another reviewer.");
+			if (state.persistContext && state.pe && state.fy) {
+				state.persistContext = false;
+				call("select_planning_context", { procuring_entity: state.pe, financial_year: state.fy }).catch(function (error) {
+					console.warn("Planning context selection could not be saved", error);
+				});
+			}
 		}
 
 		function refresh() {
@@ -865,11 +884,14 @@
 		$root.off(".ktPlnWs");
 		$root.on("change.ktPlnWs", '[data-kt-pln-filter="procuring_entity"]', function () {
 			state.pe = $(this).val() || "";
+			state.fy = "";
+			state.persistContext = true;
 			$root.attr("data-kt-pln-context-editing", "0");
 			refresh();
 		});
 		$root.on("change.ktPlnWs", '[data-kt-pln-filter="financial_year"]', function () {
-			state.fy = $(this).val() || "2027/28";
+			state.fy = $(this).val() || "";
+			state.persistContext = true;
 			$root.attr("data-kt-pln-context-editing", "0");
 			refresh();
 		});

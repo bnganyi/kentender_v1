@@ -192,12 +192,13 @@ class TestScnPlnAdd001(IntegrationTestCase):
 
 	def test_named_workspace_stop_points_are_idempotent(self) -> None:
 		expected = {
-			"ready_demand": ("View approved plan", "Add to plan", None),
-			"incomplete_item": ("Continue plan update", "Complete item", None),
-			"awaiting_finance": ("Continue plan update", None, "View item"),
-			"submitted_review": ("View approved plan", None, "View update"),
+			"ready_demand": ("APPROVED_WITH_ACTIONABLE_WORK", "View approved plan", "Add to plan"),
+			"incomplete_item": ("DRAFT_WITH_PLANNER_ACTION", "Continue plan update", "Complete item"),
+			"awaiting_finance": ("DRAFT_AWAITING_FINANCE", "View plan update", None),
+			"finance_confirmed": ("DRAFT_WITH_PLANNER_ACTION", "Continue plan update", "Continue update"),
+			"submitted_review": ("VERSION_AWAITING_PROFESSIONAL_REVIEW", "View approved plan", None),
 		}
-		for stop, (primary, work_action, waiting_action) in expected.items():
+		for stop, (workspace_state, primary, work_action) in expected.items():
 			with self.subTest(stop=stop):
 				first = scn.run(reset_first=True, force=True, stop_point=stop)
 				self.assertEqual(first.get("stage"), stop, first)
@@ -208,17 +209,15 @@ class TestScnPlnAdd001(IntegrationTestCase):
 					financial_year="2027/28",
 					user=C.USER_PLANNING_OFFICER,
 				)
+				self.assertEqual(workspace["workspace_state"], workspace_state)
 				self.assertEqual(workspace["primary_action"]["label"], primary)
 				work_labels = {
 					row["action"]["label"] for row in workspace["work_requiring_action"]
-				}
-				waiting_labels = {
-					row["action"]["label"] for row in workspace["waiting_on_others"]
+					if row.get("action")
 				}
 				if work_action:
 					self.assertIn(work_action, work_labels)
-				if waiting_action:
-					self.assertIn(waiting_action, waiting_labels)
+				self.assertTrue(all("action" not in row for row in workspace["waiting_on_others"]))
 		scn.reset(force=True)
 
 	def test_run_adds_022_and_535m(self) -> None:

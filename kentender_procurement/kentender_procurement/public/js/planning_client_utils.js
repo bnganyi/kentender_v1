@@ -21,13 +21,12 @@ frappe.provide("kentender_procurement.planning_client");
 
 	function routeContext() {
 		var params = new URLSearchParams(window.location.search || "");
-		var state = kentender_core.kt_state && kentender_core.kt_state.restore("procurement_planning");
 		return {
 			plan: params.get("plan") || (frappe.route_options && frappe.route_options.plan) || "",
 			task: params.get("task") || (frappe.route_options && frappe.route_options.task) || "",
 			finance_task: params.get("finance_task") || (frappe.route_options && frappe.route_options.finance_task) || "",
-			procuring_entity: params.get("procuring_entity") || (frappe.route_options && frappe.route_options.procuring_entity) || (state && state.procuring_entity) || "",
-			financial_year: params.get("financial_year") || (frappe.route_options && frappe.route_options.financial_year) || (state && state.financial_year) || "",
+			procuring_entity: params.get("procuring_entity") || (frappe.route_options && frappe.route_options.procuring_entity) || "",
+			financial_year: params.get("financial_year") || (frappe.route_options && frappe.route_options.financial_year) || "",
 			add_demand: params.get("add_demand") || (frappe.route_options && frappe.route_options.add_demand) || "",
 		};
 	}

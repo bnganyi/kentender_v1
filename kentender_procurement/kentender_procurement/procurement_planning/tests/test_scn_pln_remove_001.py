@@ -88,7 +88,7 @@ class TestScnPlnRemove001(IntegrationTestCase):
 		)
 
 	def test_workspace_projects_no_effective_changes_state(self) -> None:
-		"""PLN-UI-01C-NC remains an update surface, never a workspace mutation."""
+		"""A no-change Draft remains planner-action work, never a workspace mutation."""
 		scn.run(reset_first=False, force=True)
 		payload = get_planning_workspace(
 			procuring_entity=C.PE_MOH,
@@ -96,7 +96,7 @@ class TestScnPlnRemove001(IntegrationTestCase):
 			user=C.USER_PLANNING_OFFICER,
 		)
 
-		self.assertEqual(payload.get("state_id"), "PLN-UI-01C-NC")
+		self.assertEqual(payload.get("workspace_state"), "DRAFT_WITH_PLANNER_ACTION")
 		self.assertEqual(payload["current_plan"]["approved"]["planned_total"], C.PLAN_AMOUNT_V1)
 		self.assertEqual(payload["current_plan"]["draft"]["planned_total"], C.PLAN_AMOUNT_V1)
 		self.assertEqual(payload["primary_action"]["label"], "Continue plan update")

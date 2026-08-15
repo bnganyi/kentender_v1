@@ -46,7 +46,7 @@ def open_or_create_plan_revision(
 	)
 	if plan_doc.lifecycle_state != "Open":
 		frappe.throw(
-			_("Closed or Cancelled plans do not accept new revisions."),
+			_("Only an Open annual Plan accepts a new revision."),
 			title="PLN_PLAN_NOT_OPEN",
 		)
 

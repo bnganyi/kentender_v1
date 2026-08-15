@@ -20,6 +20,10 @@ def fiscal_year_label(start: date | str, end: date | str) -> str:
 	return f"{start_date.year}/{str(end_date.year)[-2:]}"
 
 
+FY_OVERLAP = "FINANCIAL_YEAR_CONFIGURATION_OVERLAP"
+FY_OVERLAP_MESSAGE = "Financial-year configuration overlaps and must be corrected before Planning can continue."
+
+
 def enabled_fiscal_years(*, include_past: bool = False) -> list[dict[str, Any]]:
 	if not frappe.db.exists("DocType", "Fiscal Year"):
 		frappe.throw(_("Fiscal Year configuration is unavailable."), title="KT_FY_CONFIG_MISSING")
@@ -34,9 +38,15 @@ def enabled_fiscal_years(*, include_past: bool = False) -> list[dict[str, Any]]:
 		order_by="year_start_date asc",
 	)
 	out: list[dict[str, Any]] = []
+	previous_end: date | None = None
 	for row in rows:
 		start = getdate(row.year_start_date)
 		end = getdate(row.year_end_date)
+		if start > end:
+			frappe.throw(_("Fiscal Year start date must not be after its end date."), title="KT_FY_CONFIG_INVALID")
+		if previous_end is not None and start <= previous_end:
+			frappe.throw(_(FY_OVERLAP_MESSAGE), title=FY_OVERLAP)
+		previous_end = end
 		out.append(
 			{
 				"id": fiscal_year_label(start, end),
@@ -46,6 +56,8 @@ def enabled_fiscal_years(*, include_past: bool = False) -> list[dict[str, Any]]:
 				"end_date": str(end),
 				"is_current": start <= today <= end,
 				"is_future": start > today,
+				"is_past": end < today,
+				"planning_open": end >= today,
 			}
 		)
 	return out

@@ -1,18 +1,20 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-SVC-001 — bounded, server-scoped Planning workspace projection."""
+"""PLN-CHG-015 — bounded, authoritative Procurement Planning workspace."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections import defaultdict
+from datetime import datetime
 from typing import Any
 from urllib.parse import quote
 
 import frappe
-from frappe.utils import cstr, flt, getdate
+from frappe.utils import cstr, flt
 
-from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_core.services.org_scope_access import descendant_org_units, user_scope_rows
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_DRAFT,
@@ -21,7 +23,6 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	FINANCE_CONFIRMED,
 	FINANCE_NOT_REQUESTED,
 	FINANCE_RETURNED,
-	FINANCE_STALE,
 	ITEM_ACTIVE,
 	ITEM_PROPOSED,
 	VALIDATION_BLOCKED,
@@ -29,19 +30,13 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VALIDATION_NOT_RUN,
 	VALIDATION_READY,
 	VALIDATION_STALE,
-	VERSION_DRAFT,
 	VERSION_IN_REVIEW,
 	VERSION_RETURNED,
 )
-from kentender_procurement.procurement_planning.services._invariants import (
-	period_dates_for_financial_year,
-)
-from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
-	MILESTONE_FIELDS,
-)
-from kentender_procurement.procurement_planning.services.plan_item_finance import (
-	effective_finance_status_from_values,
-)
+from kentender_procurement.procurement_planning.services._invariants import period_dates_for_financial_year
+from kentender_procurement.procurement_planning.services.plan_item_field_issues import MILESTONE_FIELDS
+from kentender_procurement.procurement_planning.services.plan_item_finance import effective_finance_status_from_values
+from kentender_procurement.procurement_planning.services.planning_context import resolve_planning_context
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	ADD_DEMAND_ROLES,
 	CREATE_PLAN_ROLES,
@@ -58,6 +53,14 @@ from kentender_procurement.procurement_planning.services.validate_plan import (
 	flt_str,
 )
 
+
+WORKSPACE_NO_PLAN = "NO_PLAN"
+WORKSPACE_INITIAL_DRAFT_EMPTY = "INITIAL_DRAFT_EMPTY"
+WORKSPACE_APPROVED_ACTIONABLE = "APPROVED_WITH_ACTIONABLE_WORK"
+WORKSPACE_DRAFT_ACTION = "DRAFT_WITH_PLANNER_ACTION"
+WORKSPACE_DRAFT_FINANCE = "DRAFT_AWAITING_FINANCE"
+WORKSPACE_REVIEW = "VERSION_AWAITING_PROFESSIONAL_REVIEW"
+WORKSPACE_APPROVED_NO_WORK = "APPROVED_NO_WORK"
 
 FILTER_OPTIONS = (
 	{"value": "all", "label": "All work"},
@@ -77,46 +80,9 @@ def plan_canvas_routes(plan_doc: Any) -> dict[str, str]:
 		"builder_route": f"/app/procurement-plan-builder?plan={plan_doc.name}",
 	}
 
-STATE_BLOCKED = "blocked_no_scope"
-STATE_SELECTION = "selection_required"
-STATE_NO_PLAN = "no_plan"
-STATE_INITIAL_DRAFT = "initial_draft"
-STATE_APPROVED = "approved_only"
-STATE_UPDATE = "approved_with_draft"
-STATE_NO_CHANGES = "no_effective_changes"
-
 
 def _money(amount: float, currency: str = "KES") -> str:
 	return f"{currency} {flt(amount):,.2f}"
-
-
-def _fy_options(selected: str) -> list[dict[str, str]]:
-	values = [{"id": row["id"], "label": row["label"]} for row in enabled_fiscal_years()]
-	if selected and selected not in {row["id"] for row in values}:
-		values.append({"id": selected, "label": selected})
-	return values
-
-
-def _default_fy(*, pe: str, requested: str, actor: str) -> str:
-	options = enabled_fiscal_years()
-	valid = {row["id"] for row in options}
-	if requested and requested in valid:
-		return requested
-	saved = cstr(frappe.defaults.get_user_default("KT Planning Financial Year", user=actor)).strip()
-	if saved in valid:
-		return saved
-	open_fys = set(frappe.get_all(
-		"Procurement Plan", filters={"procuring_entity": pe, "lifecycle_state": "Open"}, pluck="financial_year",
-	))
-	current = next((row["id"] for row in options if row["is_current"]), "")
-	if current and current in open_fys:
-		return current
-	for row in options:
-		if row["is_future"] and row["id"] in open_fys:
-			return row["id"]
-	if current:
-		return current
-	return options[0]["id"] if options else ""
 
 
 def _labels(doctype: str, names: set[str], label_field: str) -> dict[str, str]:
@@ -134,30 +100,29 @@ def _labels(doctype: str, names: set[str], label_field: str) -> dict[str, str]:
 def _entity_labels(names: set[str]) -> dict[str, str]:
 	if not names:
 		return {}
-	fields = ["name"]
 	meta = frappe.get_meta("Procuring Entity")
-	label_field = "entity_name" if meta.has_field("entity_name") else "procuring_entity_name"
-	fields.append(label_field)
+	label_field = "legal_name" if meta.has_field("legal_name") else (
+		"entity_name" if meta.has_field("entity_name") else "procuring_entity_name"
+	)
 	rows = frappe.get_all(
 		"Procuring Entity",
 		filters={"name": ["in", sorted(names)]},
-		fields=fields,
+		fields=["name", label_field],
 		limit_page_length=0,
 	)
 	return {row.name: cstr(row.get(label_field) or row.name) for row in rows}
 
 
 def _scope_index(actor: str) -> tuple[list[dict[str, str]], dict[str, set[str] | None]]:
-	"""Resolve Planning USA rows once; Administrator receives no implicit authority."""
 	rows = [
 		row
 		for row in user_scope_rows(actor)
 		if cstr(row.get("role")) in READ_PLAN_ROLES and cstr(row.get("procuring_entity"))
 	]
 	pes = {cstr(row.get("procuring_entity")) for row in rows}
-	pe_labels = _entity_labels(pes)
+	labels = _entity_labels(pes)
 	entities = [
-		{"id": pe, "code": pe, "name": pe_labels.get(pe, pe), "label": pe_labels.get(pe, pe)}
+		{"id": pe, "code": pe, "name": labels.get(pe, pe), "label": labels.get(pe, pe)}
 		for pe in sorted(pes)
 	]
 	scope: dict[str, set[str] | None] = {}
@@ -169,9 +134,8 @@ def _scope_index(actor: str) -> tuple[list[dict[str, str]], dict[str, set[str] |
 		units: set[str] = set()
 		for row in pe_rows:
 			unit = cstr(row.get("organisation_unit"))
-			if not unit:
-				continue
-			units |= descendant_org_units(unit) if int(row.get("include_descendants") or 0) else {unit}
+			if unit:
+				units |= descendant_org_units(unit) if int(row.get("include_descendants") or 0) else {unit}
 		scope[pe] = units
 	return entities, scope
 
@@ -184,43 +148,43 @@ def _in_scope(scope: dict[str, set[str] | None], pe: str, org_unit: str | None) 
 
 
 def _base_payload(
-	*,
-	mode: str,
-	entities: list[dict[str, str]],
-	pe: str | None,
-	pe_label: str,
-	fy: str,
-	read_only: bool,
-	state_id: str,
-	helper: str,
+	*, mode: str, entities: list[dict[str, str]], pe: str | None, pe_label: str,
+	fy: str, read_only: bool, helper: str,
 ) -> dict[str, Any]:
 	return {
 		"ok": True,
 		"selection_mode": mode,
+		"workspace_state": None,
 		"procuring_entities": entities,
 		"procuring_entity": pe,
 		"procuring_entity_label": pe_label,
-		"financial_years": _fy_options(fy),
+		"financial_years": [],
 		"financial_year": fy,
 		"read_only": read_only,
 		"helper_text": helper,
-		"state_id": state_id,
 		"error_id": None,
 		"blocked_reason": None,
 		"current_plan": None,
 		"primary_action": None,
 		"filter_options": list(FILTER_OPTIONS),
+		"show_work_controls": False,
 		"work_requiring_action": [],
 		"waiting_on_others": [],
 		"work_queue": [],
 		"counts": {"work_requiring_action": 0, "waiting_on_others": 0},
+		"filtered_counts": {"work_requiring_action": 0, "waiting_on_others": 0},
 		"empty_states": {
-			"work_requiring_action": "Nothing currently requires your planning action.",
+			"work_requiring_action": "No planning work currently needs your action.",
 			"waiting_on_others": "Nothing is currently waiting on another reviewer.",
 		},
 		"can_create_plan": False,
+		"eligible_demand_count": 0,
 		"register_route": "/app/procurement-plan-register",
 		"workspace_route": "/app/planning-workspace",
+		"as_at": None,
+		"as_at_display": "",
+		"projection_token": "",
+		"planning_context": None,
 	}
 
 
@@ -234,15 +198,19 @@ def _version_rows(names: set[str]) -> dict[str, Any]:
 	rows = frappe.get_all(
 		"Procurement Plan Version",
 		filters={"name": ["in", sorted(names)]},
-		fields=["name", "version_number", "status", "validation_projection"],
+		fields=[
+			"name", "version_code", "version_number", "status", "validation_projection",
+			"concurrency_token", "version_reason", "review_task_id", "review_task_state",
+			"review_task_assignee", "submitted_by", "submitted_at", "creation", "modified",
+		],
 		limit_page_length=0,
 	)
 	return {row.name: row for row in rows}
 
 
-def _validation_inputs(iv_rows: list[Any]) -> list[dict[str, Any]]:
+def _validation_inputs(ivs: list[Any]) -> list[dict[str, Any]]:
 	inputs = []
-	for iv in iv_rows:
+	for iv in ivs:
 		if int(iv.proposed_removal or 0):
 			continue
 		row = {
@@ -262,15 +230,13 @@ def _validation_inputs(iv_rows: list[Any]) -> list[dict[str, Any]]:
 
 def _load_graph(plan: Any) -> dict[str, Any]:
 	version_names = {
-		name
-		for name in (cstr(plan.current_approved_version), cstr(plan.open_draft_version))
-		if name
+		name for name in (cstr(plan.current_approved_version), cstr(plan.open_draft_version)) if name
 	}
 	versions = _version_rows(version_names)
 	items = frappe.get_all(
 		"Procurement Plan Item",
 		filters={"plan": plan.name, "baseline_state": ["in", [ITEM_ACTIVE, ITEM_PROPOSED]]},
-		fields=["name", "plan_item_code", "baseline_state", "owner_org_unit"],
+		fields=["name", "plan_item_code", "baseline_state", "owner_org_unit", "modified"],
 		order_by="creation asc",
 		limit_page_length=0,
 	)
@@ -278,9 +244,10 @@ def _load_graph(plan: Any) -> dict[str, Any]:
 	iv_fields = [
 		"name", "plan_item", "plan_version", "requirement_title", "confirmed_estimate",
 		"currency", "finance_status", "finance_snapshot_amount", "finance_snapshot_budget_line",
+		"finance_task_id", "finance_task_state", "finance_task_assignee",
 		"validation_projection", "procurement_method", "arrangement", "lotting_decision",
 		"lot_basis", "expected_lot_count", "proposed_removal", "carry_forward_unchanged",
-		"draft_change_label", "requirement_description", "procurement_category",
+		"draft_change_label", "requirement_description", "procurement_category", "modified",
 		*MILESTONE_FIELDS,
 	]
 	ivs = (
@@ -290,18 +257,16 @@ def _load_graph(plan: Any) -> dict[str, Any]:
 			fields=iv_fields,
 			limit_page_length=0,
 		)
-		if item_names and version_names
-		else []
+		if item_names and version_names else []
 	)
 	allocations = (
 		frappe.get_all(
 			"Plan Demand Allocation",
 			filters={"plan_item": ["in", item_names], "status": ["in", [ALLOC_DRAFT, ALLOC_EFFECTIVE]]},
-			fields=["plan_item", "demand", "status", "allocated_amount"],
+			fields=["plan_item", "demand", "status", "allocated_amount", "modified"],
 			limit_page_length=0,
 		)
-		if item_names
-		else []
+		if item_names else []
 	)
 	demand_names = {cstr(row.demand) for row in allocations if row.demand}
 	dfas = (
@@ -311,8 +276,7 @@ def _load_graph(plan: Any) -> dict[str, Any]:
 			fields=["demand", "budget_line"],
 			limit_page_length=0,
 		)
-		if demand_names and frappe.db.exists("DocType", "Demand Funding Allocation")
-		else []
+		if demand_names and frappe.db.exists("DocType", "Demand Funding Allocation") else []
 	)
 	line_by_demand = {row.demand: cstr(row.budget_line) for row in dfas}
 	demand_by_item: dict[str, str] = {}
@@ -327,17 +291,17 @@ def _load_graph(plan: Any) -> dict[str, Any]:
 			live_budget_line=line_by_demand.get(demand_by_item.get(iv.plan_item, ""), ""),
 		)
 	iv_by_version: dict[str, list[Any]] = defaultdict(list)
-	iv_by_key: dict[tuple[str, str], Any] = {}
 	for iv in ivs:
 		iv_by_version[iv.plan_version].append(iv)
-		iv_by_key[(iv.plan_item, iv.plan_version)] = iv
-	return {
-		"versions": versions,
-		"items": items,
-		"iv_by_version": iv_by_version,
-		"iv_by_key": iv_by_key,
-		"allocations": allocations,
-	}
+	return {"versions": versions, "items": items, "iv_by_version": iv_by_version, "allocations": allocations}
+
+
+def _is_incomplete(iv: Any) -> bool:
+	required = (
+		"requirement_description", "procurement_category", "procurement_method",
+		"arrangement", "lotting_decision", *MILESTONE_FIELDS,
+	)
+	return any(not cstr(iv.get(field) or "").strip() for field in required)
 
 
 def _version_projection(version: Any | None, ivs: list[Any], currency: str) -> dict[str, Any] | None:
@@ -345,6 +309,7 @@ def _version_projection(version: Any | None, ivs: list[Any], currency: str) -> d
 		return None
 	included = [iv for iv in ivs if not int(iv.proposed_removal or 0)]
 	confirmed = sum(iv.effective_finance_status == FINANCE_CONFIRMED for iv in included)
+	planning_complete = sum(not _is_incomplete(iv) for iv in included)
 	validation = effective_validation_status_from_rows(
 		version=version.name,
 		stored=version.validation_projection,
@@ -353,15 +318,22 @@ def _version_projection(version: Any | None, ivs: list[Any], currency: str) -> d
 	total = sum(flt(iv.confirmed_estimate) for iv in included)
 	return {
 		"version": version.name,
+		"version_code": cstr(version.version_code or version.name),
 		"version_number": int(version.version_number or 0),
 		"status": cstr(version.status),
 		"item_count": len(included),
 		"planned_total": total,
 		"planned_total_display": _money(total, currency),
+		"planning_complete_count": planning_complete,
+		"planning_complete_label": f"{planning_complete} of {len(included)}",
 		"finance_confirmed_count": confirmed,
 		"finance_item_count": len(included),
 		"finance_confirmed_label": f"{confirmed} of {len(included)}",
 		"validation_projection": validation,
+		"concurrency_token": cstr(version.concurrency_token),
+		"submitted_by": cstr(version.submitted_by),
+		"submitted_at": str(version.submitted_at or ""),
+		"modified": str(version.modified or ""),
 	}
 
 
@@ -375,23 +347,14 @@ def _has_effective_changes(items: list[Any], draft_ivs: list[Any]) -> bool:
 	)
 
 
-def _is_incomplete(iv: Any) -> bool:
-	required = (
-		"requirement_description", "procurement_category", "procurement_method",
-		"arrangement", "lotting_decision", *MILESTONE_FIELDS,
-	)
-	return any(not cstr(iv.get(field) or "").strip() for field in required)
-
-
-def _row(
-	*, resource_key: str, reference: str, title: str, work_type: str, org_unit: str,
-	org_label: str, amount: float, currency: str, reason: str, status: str,
-	filter_key: str, priority: int, action: dict[str, str],
+def _work_row(
+	*, resource_key: str, reference: str, title: str, work_type: str,
+	org_unit: str, org_label: str, amount: float, currency: str, reason: str,
+	status: str, filter_key: str, priority: int, action: dict[str, str],
 ) -> dict[str, Any]:
 	return {
 		"resource_key": resource_key,
 		"reference": reference,
-		"demand_code": reference,
 		"title": title,
 		"work_type": work_type,
 		"organisation_unit": org_unit,
@@ -403,41 +366,18 @@ def _row(
 		"filter_key": filter_key,
 		"priority": priority,
 		"action": action,
-		"action_label": action["label"],
 	}
 
 
-def _eligible_demands(
-	*, plan: Any, financial_year: str | None = None, scope: dict[str, set[str] | None], actor_roles: set[str], ou_labels: dict[str, str], actor: str = ""
-) -> list[dict[str, Any]]:
-	if not actor_roles.intersection(ADD_DEMAND_ROLES) or not frappe.db.exists("DocType", "Demand"):
-		return []
-	from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
-
-	rows = list_eligible_demands(plan=plan.name, user=actor)["demands"]
-	fy = cstr(financial_year or plan.financial_year)
-	route = plan_canvas_routes(plan)["builder_route"]
-	out = []
-	for demand in rows:
-		row = _row(
-				resource_key=f"demand:{demand['demand']}",
-				reference=cstr(demand["demand_code"] or demand["demand"]),
-				title=cstr(demand["title"] or demand["demand"]),
-				work_type="Approved Demand",
-				org_unit=cstr(demand["organisation_unit"]),
-				org_label=cstr(demand["organisation_unit_label"]),
-				amount=flt(demand["available_to_plan"]),
-				currency=cstr(demand["currency"] or plan.currency or "KES"),
-				reason=f"HoD-approved Demand is ready to add to the FY {fy} Plan.",
-				status="Ready for planning",
-				filter_key="approved_demands",
-				priority=40,
-				action=_action("add_to_plan", "Add to plan", f"{route}&add_demand={quote(demand['demand'])}"),
-			)
-		row["demand"] = demand["demand"]
-		row["builder_route"] = route
-		out.append(row)
-	return out
+def _waiting_row(*, resource_key: str, reference: str, title: str, stage: str, status: str, with_role: str) -> dict[str, str]:
+	return {
+		"resource_key": resource_key,
+		"reference": reference,
+		"title": title,
+		"stage": stage,
+		"status": status,
+		"with_role": with_role,
+	}
 
 
 def _matches(row: dict[str, Any], work_filter: str, search: str) -> bool:
@@ -452,13 +392,59 @@ def _matches(row: dict[str, Any], work_filter: str, search: str) -> bool:
 	return search.lower() in haystack
 
 
+def _metric(label: str, value: str, kind: str = "text", status: str = "") -> dict[str, str]:
+	return {"label": label, "value": value, "kind": kind, "status": status}
+
+
+def _as_at(values: list[Any]) -> tuple[str | None, str]:
+	candidates: list[datetime] = []
+	for value in values:
+		if not value:
+			continue
+		try:
+			candidates.append(frappe.utils.get_datetime(value))
+		except Exception:
+			continue
+	if not candidates:
+		return None, ""
+	value = max(candidates)
+	return str(value), f"{value.day} {value.strftime('%B %Y, %H:%M')} EAT"
+
+
+def _projection_token(payload: dict[str, Any], evidence: list[Any]) -> str:
+	canonical = {
+		"pe": payload.get("procuring_entity"),
+		"fy": payload.get("financial_year"),
+		"state": payload.get("workspace_state"),
+		"evidence": [cstr(value) for value in evidence if value],
+		"work": [row.get("resource_key") for row in payload.get("work_requiring_action") or []],
+		"waiting": [row.get("resource_key") for row in payload.get("waiting_on_others") or []],
+	}
+	return hashlib.sha256(json.dumps(canonical, sort_keys=True).encode()).hexdigest()[:24]
+
+
+def _eligible_source_rows(*, plan: Any, actor: str, actor_roles: set[str]) -> list[dict[str, Any]]:
+	if not actor_roles.intersection(ADD_DEMAND_ROLES):
+		return []
+	from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
+	return list_eligible_demands(plan=plan.name, user=actor)["demands"]
+
+
+def _eligible_context_rows(*, pe: str, fy: str, actor: str, actor_roles: set[str]) -> list[dict[str, Any]]:
+	if not actor_roles.intersection(ADD_DEMAND_ROLES):
+		return []
+	from kentender_procurement.procurement_planning.services.list_eligible_demands import project_eligible_demands_for_context
+	start, end = period_dates_for_financial_year(fy)
+	currency = cstr(frappe.db.get_value("Procuring Entity", pe, "reporting_currency") or "KES")
+	return project_eligible_demands_for_context(
+		procuring_entity=pe, financial_year=fy, period_start=start, period_end=end,
+		currency=currency, user=actor,
+	)
+
+
 def get_planning_workspace(
-	*,
-	procuring_entity: str | None = None,
-	financial_year: str | None = None,
-	work_filter: str | None = "all",
-	search: str | None = None,
-	user: str | None = None,
+	*, procuring_entity: str | None = None, financial_year: str | None = None,
+	work_filter: str | None = "all", search: str | None = None, user: str | None = None,
 ) -> dict[str, Any]:
 	actor = cstr(user or frappe.session.user).strip()
 	if not actor or actor == "Guest":
@@ -467,70 +453,57 @@ def get_planning_workspace(
 	actor_roles = actor_planning_roles(actor)
 	read_only = is_planning_read_only(actor)
 	entities, scope = _scope_index(actor)
-	requested_fy = cstr(financial_year).strip()
-	available_fys = enabled_fiscal_years()
-	fy = requested_fy or next((row["id"] for row in available_fys if row["is_current"]), (available_fys[0]["id"] if available_fys else ""))
+	context = resolve_planning_context(
+		procuring_entity=procuring_entity,
+		financial_year=financial_year,
+		user=actor,
+	)
+	fy = cstr(context.get("financial_year"))
 	helper = (
 		"Read-only support view. These controls filter visibility; they do not grant ownership or operational Planning authority."
-		if read_only
-		else "These controls define the workspace view; they do not change record ownership."
+		if read_only else "These controls define the workspace view; they do not change record ownership."
 	)
 	labels = {entity["id"]: entity["name"] for entity in entities}
 	if not entities:
-		payload = _base_payload(
-			mode=MODE_BLOCKED, entities=[], pe=None, pe_label="", fy=fy,
-			read_only=True, state_id=STATE_BLOCKED, helper=helper,
-		)
+		payload = _base_payload(mode=MODE_BLOCKED, entities=[], pe=None, pe_label="", fy=fy, read_only=True, helper=helper)
+		payload["planning_context"] = context
 		payload["blocked_reason"] = "No operational Planning assignment exists."
 		return payload
-	requested = cstr(procuring_entity).strip()
-	if len(entities) == 1:
-		pe = entities[0]["id"]
-		mode = MODE_SINGLE
-	elif not requested:
-		return _base_payload(
-			mode=MODE_MULTI, entities=entities, pe=None, pe_label="", fy=fy,
-			read_only=read_only, state_id=STATE_SELECTION, helper=helper,
-		)
-	elif requested not in labels:
-		frappe.throw(
-			frappe._("Selected Procuring Entity is not in your Planning scope."),
-			frappe.PermissionError,
-			title="PLN_SCOPE_DENIED",
-		)
-	else:
-		pe = requested
-		mode = MODE_MULTI
-	fy = _default_fy(pe=pe, requested=requested_fy, actor=actor)
-	payload = _base_payload(
-		mode=mode, entities=entities, pe=pe, pe_label=labels[pe], fy=fy,
-		read_only=read_only, state_id=STATE_NO_PLAN, helper=helper,
-	)
-	can_create = (not read_only) and bool(actor_roles.intersection(CREATE_PLAN_ROLES))
+	pe = cstr(context.get("procuring_entity")).strip()
+	mode = MODE_SINGLE if len(entities) == 1 else MODE_MULTI
+	if not pe or context.get("selection_required"):
+		payload = _base_payload(mode=MODE_MULTI, entities=entities, pe=None, pe_label="", fy=fy, read_only=read_only, helper=helper)
+		payload["planning_context"] = context
+		payload["financial_years"] = context.get("financial_years") or []
+		return payload
+	payload = _base_payload(mode=mode, entities=entities, pe=pe, pe_label=labels[pe], fy=fy, read_only=read_only, helper=helper)
+	payload["planning_context"] = context
+	payload["procuring_entities"] = context["procuring_entities"]
+	payload["financial_years"] = context["financial_years"]
+	can_create = not read_only and bool(actor_roles.intersection(CREATE_PLAN_ROLES))
 	payload["can_create_plan"] = can_create
-	plan = frappe.db.get_value(
-		"Procurement Plan",
-		{"procuring_entity": pe, "financial_year": fy},
-		[
-			"name", "plan_code", "title", "lifecycle_state", "currency",
-			"current_approved_version", "open_draft_version",
-			"financial_year", "period_start", "period_end",
-		],
+	plan_row = frappe.db.get_value(
+		"Procurement Plan", {"procuring_entity": pe, "financial_year": fy},
+		["name", "plan_code", "title", "lifecycle_state", "currency", "current_approved_version", "open_draft_version", "financial_year", "period_start", "period_end", "modified"],
 		as_dict=True,
 	)
-	if not plan:
-		payload["state_id"] = "PLN-UI-01A"
-		payload["empty_states"]["current_plan"] = "No annual Procurement Plan exists for this context."
+	if not plan_row:
+		eligible = _eligible_context_rows(pe=pe, fy=fy, actor=actor, actor_roles=actor_roles)
+		payload["workspace_state"] = WORKSPACE_NO_PLAN
+		payload["eligible_demand_count"] = len(eligible)
+		payload["empty_states"].update({
+			"current_plan_heading": "No annual Procurement Plan",
+			"current_plan": f"No Procurement Plan has been registered for {labels[pe]} for FY {fy}.",
+			"current_plan_supporting": f"Create the annual Plan before adding the {len(eligible)} Approved Demands ready for Planning.",
+			"work_requiring_action": "Create the annual Plan to begin Planning approved requirements.",
+		})
 		if can_create:
 			payload["primary_action"] = _action("create_plan", "Create annual plan", f"/app/procurement-plan-register?procuring_entity={quote(pe)}&financial_year={quote(fy)}")
+		payload["projection_token"] = _projection_token(payload, [pe, fy, len(eligible)])
 		return payload
-	plan = frappe.get_doc("Procurement Plan", plan.name)
-	# Scenario/UI fixtures may mutate the logical header earlier in the same request.
-	# Reload so the projection never reuses a stale document from frappe.local.
+
+	plan = frappe.get_doc("Procurement Plan", plan_row.name)
 	plan.reload()
-	eligible_rows = _eligible_demands(
-		plan=plan, financial_year=fy, scope=scope, actor_roles=actor_roles, ou_labels={}, actor=actor
-	)
 	graph = _load_graph(plan)
 	approved_version = graph["versions"].get(cstr(plan.current_approved_version))
 	draft_version = graph["versions"].get(cstr(plan.open_draft_version))
@@ -540,186 +513,135 @@ def get_planning_workspace(
 	draft = _version_projection(draft_version, draft_ivs, plan.currency or "KES")
 	routes = plan_canvas_routes(plan)
 	has_changes = bool(draft and approved and _has_effective_changes(graph["items"], draft_ivs))
-	if approved and draft:
-		state_id = STATE_UPDATE if has_changes else STATE_NO_CHANGES
-		supporting = (
-			f"Draft Version {draft['version_number']} has been submitted for professional review; Approved Version {approved['version_number']} remains current."
-			if cstr(draft_version.status) == VERSION_IN_REVIEW
-			else f"Draft Version {draft['version_number']} is being prepared; Approved Version {approved['version_number']} remains current."
-		)
-	elif draft:
-		state_id = STATE_INITIAL_DRAFT
-		supporting = "Complete the initial Draft before professional review."
-	else:
-		state_id = STATE_APPROVED
-		supporting = "No plan update is currently in progress."
-	status_parts = [f"{plan.lifecycle_state} Plan"]
-	if approved:
-		status_parts.append(f"Approved Version {approved['version_number']}")
-	if draft:
-		status_parts.append(f"Draft Version {draft['version_number']}")
-	focus = draft or approved or {
-		"item_count": 0, "planned_total": 0, "planned_total_display": _money(0, plan.currency),
-		"finance_confirmed_label": "0 of 0", "validation_projection": VALIDATION_NOT_RUN,
-	}
-	payload["state_id"] = state_id
-	if draft and not approved:
-		payload["state_id"] = "PLN-UI-01B"
-	elif approved and not draft:
-		payload["state_id"] = "PLN-UI-01" if eligible_rows else "PLN-UI-01F"
-	elif approved and draft and not has_changes:
-		payload["state_id"] = "PLN-UI-01C-NC"
-	elif approved and draft and cstr(draft_version.status) == VERSION_IN_REVIEW:
-		payload["state_id"] = "PLN-UI-01E"
-	elif approved and draft:
-		payload["state_id"] = "PLN-UI-01C"
-	payload["current_plan"] = {
-		"plan": plan.name,
-		"plan_code": plan.plan_code,
-		"title": plan.title,
-		"lifecycle_state": plan.lifecycle_state,
-		"currency": plan.currency or "KES",
-		"current_approved_version": plan.current_approved_version,
-		"open_draft_version": plan.open_draft_version,
-		"approved": approved,
-		"draft": draft,
-		"status_line": " · ".join(status_parts),
-		"supporting_text": supporting,
-		"item_count": focus["item_count"],
-		"planned_total": focus["planned_total"],
-		"planned_total_display": focus["planned_total_display"],
-		"finance_confirmed_label": focus["finance_confirmed_label"],
-		"validation_projection": focus["validation_projection"],
-		"routes": routes,
-		**routes,
-	}
-	if approved and draft and cstr(draft_version.status) == VERSION_IN_REVIEW:
-		payload["primary_action"] = _action("view_approved_plan", "View approved plan", routes["approved_route"])
-	elif approved and draft:
-		payload["primary_action"] = _action("continue_plan_update", "Continue plan update", routes["update_route"])
-	elif draft:
-		payload["primary_action"] = _action("continue_planning", "Continue planning", routes["builder_route"])
-	elif approved:
-		payload["primary_action"] = _action("view_approved_plan", "View approved plan", routes["approved_route"])
-	if read_only:
-		payload["primary_action"] = (
-			_action("view_approved_plan", "View approved plan", routes["approved_route"])
-			if approved else None
-		)
-		return payload
+	eligible_sources = _eligible_source_rows(plan=plan, actor=actor, actor_roles=actor_roles)
+	payload["eligible_demand_count"] = len(eligible_sources)
+
 	all_ous = {cstr(item.owner_org_unit) for item in graph["items"] if item.owner_org_unit}
-	if frappe.db.exists("DocType", "Demand"):
-		all_ous |= {
-			cstr(value)
-			for value in frappe.get_all("Demand", filters={"procuring_entity": pe}, pluck="owner_org_unit", limit_page_length=0)
-			if value
-		}
+	all_ous |= {cstr(row.get("organisation_unit")) for row in eligible_sources if row.get("organisation_unit")}
 	ou_labels = _labels("Organisation Unit", all_ous, "unit_name")
+	item_by_name = {item.name: item for item in graph["items"]}
 	work: list[dict[str, Any]] = []
-	waiting: list[dict[str, Any]] = []
-	if draft and actor_roles.intersection(ADD_DEMAND_ROLES):
-		item_by_name = {item.name: item for item in graph["items"]}
+	waiting: list[dict[str, str]] = []
+	if draft and not read_only and actor_roles.intersection(ADD_DEMAND_ROLES):
 		if cstr(draft_version.status) == VERSION_RETURNED:
-			work.append(
-				_row(
-					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit="",
-					org_label=payload["procuring_entity_label"],
-					amount=draft["planned_total"], currency=plan.currency, reason="The plan update was returned for correction.",
-					status="Returned", filter_key="returned_work", priority=10,
-					action=_action("address_return", "Address return", routes["update_route"]),
-				)
-			)
+			work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason="The plan update was returned by the Head of Procurement for correction.", status="Returned by Head of Procurement", filter_key="returned_work", priority=10, action=_action("address_return", "Address return", routes["update_route"])))
 		elif approved and not has_changes:
-			work.append(
-				_row(
-					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit="",
-					org_label=payload["procuring_entity_label"],
-					amount=draft["planned_total"], currency=plan.currency,
-					reason="No effective changes remain; the update cannot be submitted.", status="No changes",
-					filter_key="plan_items", priority=30,
-					action=_action("cancel_update", "Cancel update", routes["update_route"]),
-				)
-			)
+			work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason=f"No effective changes remain in Draft Version {draft['version_number']}.", status="No changes", filter_key="plan_items", priority=30, action=_action("cancel_update", "Cancel update", routes["update_route"])))
 		for iv in draft_ivs:
 			if int(iv.proposed_removal or 0):
 				continue
 			item = item_by_name.get(iv.plan_item)
 			if not item or not _in_scope(scope, pe, item.owner_org_unit):
 				continue
-			base = dict(
-				resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name),
-				title=cstr(iv.requirement_title or item.plan_item_code), work_type="Plan Item",
-				org_unit=cstr(item.owner_org_unit), org_label=ou_labels.get(cstr(item.owner_org_unit), cstr(item.owner_org_unit)),
-				amount=flt(iv.confirmed_estimate), currency=cstr(iv.currency or plan.currency or "KES"),
-			)
+			base = {"resource_key": f"item:{item.name}", "reference": cstr(item.plan_item_code or item.name), "title": cstr(iv.requirement_title or item.plan_item_code), "work_type": "Plan Item", "org_unit": cstr(item.owner_org_unit), "org_label": ou_labels.get(cstr(item.owner_org_unit), cstr(item.owner_org_unit)), "amount": flt(iv.confirmed_estimate), "currency": cstr(iv.currency or plan.currency or "KES")}
 			item_route = f"/app/procurement-plan-item-editor?plan_item={item.name}"
 			finance = cstr(iv.effective_finance_status or FINANCE_NOT_REQUESTED)
 			validation = cstr(iv.validation_projection or VALIDATION_NOT_RUN)
 			if finance == FINANCE_RETURNED:
-				work.append(_row(**base, reason="Finance returned this item for correction.", status="Returned by Finance", filter_key="returned_work", priority=10, action=_action("correct_item", "Correct item", item_route)))
+				work.append(_work_row(**base, reason="Finance returned this item for correction.", status="Returned by Finance", filter_key="returned_work", priority=10, action=_action("correct_item", "Correct item", item_route)))
 			elif validation in (VALIDATION_BLOCKED, VALIDATION_STALE):
-				work.append(_row(**base, reason="Blocking or stale validation must be resolved.", status=validation, filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
+				work.append(_work_row(**base, reason="Blocking or stale validation must be resolved.", status=validation, filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
 			elif item.baseline_state == ITEM_PROPOSED and _is_incomplete(iv):
-				work.append(_row(**base, reason="Complete the Plan Item before requesting Finance confirmation.", status="Incomplete", filter_key="plan_items", priority=30, action=_action("complete_item", "Complete item", item_route)))
-			elif validation == VALIDATION_NEEDS_ATTENTION:
-				work.append(_row(**base, reason="Planning validation needs attention.", status=validation, filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
+				work.append(_work_row(**base, reason="Complete the procurement method and schedule before requesting Finance confirmation.", status="Planning incomplete", filter_key="plan_items", priority=30, action=_action("complete_item", "Complete item", item_route)))
+			elif validation == VALIDATION_NEEDS_ATTENTION and finance != FINANCE_AWAITING:
+				work.append(_work_row(**base, reason="Planning validation needs attention.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
+			elif finance == FINANCE_AWAITING and cstr(iv.finance_task_state) == "Open":
+				waiting.append(_waiting_row(resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name), title=cstr(iv.requirement_title or item.plan_item_code), stage="Finance confirmation", status="Awaiting confirmation", with_role="Budget Officer"))
 			elif finance == FINANCE_AWAITING:
-				waiting.append(_row(**base, reason="Awaiting Finance confirmation.", status="Awaiting Finance", filter_key="plan_items", priority=30, action=_action("view_item", "View item", item_route)))
-		if cstr(draft_version.status) == VERSION_IN_REVIEW:
-			waiting = [
-				_row(
-					resource_key=f"review:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit="",
-					org_label=payload["procuring_entity_label"],
-					amount=draft["planned_total"], currency=plan.currency,
-					reason="Awaiting Head-of-Procurement review.", status="In professional review",
-					filter_key="plan_items", priority=30,
-					action=_action("view_update", "View update", routes["update_route"]),
-				)
-			]
-		elif approved and has_changes and not work and not waiting:
-			work.append(
-				_row(
-					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit="",
-					org_label=payload["procuring_entity_label"],
-					amount=draft["planned_total"], currency=plan.currency,
-					reason="This Draft update has outstanding planner work.", status="Draft update",
-					filter_key="plan_items", priority=30,
-					action=_action("continue_update", "Continue update", routes["update_route"]),
-				)
-			)
-	for row in eligible_rows:
-		row["organisation_unit_label"] = ou_labels.get(
-			row["organisation_unit"], row["organisation_unit"]
-		)
-	work.extend(eligible_rows)
-	# Highest-priority row wins when one source record meets multiple predicates.
+				work.append(_work_row(**base, reason="Finance confirmation evidence is incomplete; reopen the item to resolve it.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
+
+	open_review = bool(draft_version and cstr(draft_version.status) == VERSION_IN_REVIEW and cstr(draft_version.review_task_id) and cstr(draft_version.review_task_state) == "Open")
+	if open_review:
+		work = []
+		waiting = [_waiting_row(resource_key=f"review:{draft_version.name}", reference=cstr(draft_version.version_code or draft_version.name), title=f"{plan.title} — Version {int(draft_version.version_number or 0)}", stage="Professional review", status="Awaiting review", with_role="Head of Procurement")]
+	if draft and approved and has_changes and not work and not waiting and not open_review and not read_only:
+		work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason="This Draft update is ready for the next Planning action.", status="Needs attention", filter_key="plan_items", priority=30, action=_action("continue_update", "Continue update", routes["update_route"])))
+
+	if draft and not approved and draft["item_count"] == 0:
+		workspace_state = WORKSPACE_INITIAL_DRAFT_EMPTY
+	elif open_review:
+		workspace_state = WORKSPACE_REVIEW
+	elif draft and work:
+		workspace_state = WORKSPACE_DRAFT_ACTION
+	elif draft and waiting:
+		workspace_state = WORKSPACE_DRAFT_FINANCE
+	elif approved and not draft and eligible_sources and not read_only:
+		workspace_state = WORKSPACE_APPROVED_ACTIONABLE
+	elif draft:
+		workspace_state = WORKSPACE_DRAFT_ACTION
+	else:
+		workspace_state = WORKSPACE_APPROVED_NO_WORK
+
+	if workspace_state in (WORKSPACE_INITIAL_DRAFT_EMPTY, WORKSPACE_APPROVED_ACTIONABLE):
+		for demand in eligible_sources:
+			reason = f"Approved Demand is ready to add to the FY {fy} Plan." if workspace_state == WORKSPACE_INITIAL_DRAFT_EMPTY else f"HoD-approved Demand is ready to add to the FY {fy} Plan."
+			route = routes["approved_route"] if approved else routes["builder_route"]
+			row = _work_row(resource_key=f"demand:{demand['demand']}", reference=cstr(demand["demand_code"] or demand["demand"]), title=cstr(demand["title"] or demand["demand"]), work_type="Approved Demand", org_unit=cstr(demand["organisation_unit"]), org_label=cstr(demand["organisation_unit_label"]), amount=flt(demand["available_to_plan"]), currency=cstr(demand["currency"] or plan.currency or "KES"), reason=reason, status="Ready for planning", filter_key="approved_demands", priority=40, action=_action("add_to_plan", "Add to plan", f"{route}{'&' if '?' in route else '?'}add_demand={quote(demand['demand'])}"))
+			row["demand"] = demand["demand"]
+			work.append(row)
+
 	deduped: dict[str, dict[str, Any]] = {}
 	for row in sorted(work, key=lambda value: (value["priority"], value["reference"])):
 		deduped.setdefault(row["resource_key"], row)
+	unfiltered_work = list(deduped.values())
 	selected_filter = cstr(work_filter or "all").strip() or "all"
 	if selected_filter not in FILTER_KEYS:
 		selected_filter = "all"
 	needle = cstr(search).strip()
-	unfiltered_work = list(deduped.values())
-	work = [row for row in unfiltered_work if _matches(row, selected_filter, needle)][:50]
-	waiting.sort(key=lambda value: (value["priority"], value["reference"]))
-	payload["work_requiring_action"] = work
+	filtered_work = [row for row in unfiltered_work if _matches(row, selected_filter, needle)][:50]
+	payload["workspace_state"] = workspace_state
+	payload["show_work_controls"] = workspace_state == WORKSPACE_APPROVED_ACTIONABLE
+	payload["work_requiring_action"] = filtered_work
 	payload["waiting_on_others"] = waiting[:50]
-	payload["work_queue"] = work
-	payload["counts"] = {
-		"work_requiring_action": len(unfiltered_work),
-		"waiting_on_others": len(waiting),
+	payload["work_queue"] = filtered_work
+	payload["counts"] = {"work_requiring_action": len(unfiltered_work), "waiting_on_others": len(waiting)}
+	payload["filtered_counts"] = {"work_requiring_action": len(filtered_work), "waiting_on_others": len(waiting)}
+
+	status_parts = [f"{plan.lifecycle_state} Plan"]
+	if approved:
+		status_parts.append(f"Approved Version {approved['version_number']}")
+	if draft:
+		status_parts.append(f"Version {draft['version_number']} in review" if workspace_state == WORKSPACE_REVIEW else f"Draft Version {draft['version_number']}")
+	metrics: list[dict[str, str]] = []
+	if workspace_state == WORKSPACE_INITIAL_DRAFT_EMPTY:
+		supporting = "The annual Plan is ready for its first Approved Demands."
+		metrics = [_metric("Plan Items", "0"), _metric("Draft planned value", _money(0, plan.currency), "money"), _metric("Approved Demands available", str(len(eligible_sources))), _metric("Validation", "Not run", "validation", "Not run")]
+		payload["primary_action"] = None if read_only else _action("continue_planning", "Continue planning", routes["builder_route"])
+	elif workspace_state == WORKSPACE_DRAFT_ACTION:
+		supporting = f"No changes remain in Draft Version {draft['version_number']}." if approved and not has_changes else (f"Approved Version {approved['version_number']} remains active while Draft Version {draft['version_number']} is prepared." if approved else "The initial Draft is being prepared.")
+		if approved:
+			delta = draft["planned_total"] - approved["planned_total"]
+			metrics.extend([_metric("Approved value", approved["planned_total_display"], "money"), _metric("Draft value", draft["planned_total_display"], "money"), _metric("Net change", f"{_money(abs(delta), plan.currency)} {'added' if delta >= 0 else 'removed'}", "money")])
+		metrics.extend([_metric("Planning complete", draft["planning_complete_label"]), _metric("Finance confirmed", draft["finance_confirmed_label"], "finance"), _metric("Validation", VALIDATION_NEEDS_ATTENTION if work else draft["validation_projection"], "validation", VALIDATION_NEEDS_ATTENTION if work else draft["validation_projection"])])
+		payload["primary_action"] = None if read_only else _action("continue_plan_update", "Continue plan update", routes["update_route"])
+	elif workspace_state == WORKSPACE_DRAFT_FINANCE:
+		supporting = f"Approved Version {approved['version_number']} remains active while Finance reviews the added Plan Item."
+		delta = draft["planned_total"] - approved["planned_total"]
+		metrics = [_metric("Draft Plan Items", str(draft["item_count"])), _metric("Draft planned value", draft["planned_total_display"], "money"), _metric("Net change", f"{_money(abs(delta), plan.currency)} {'added' if delta >= 0 else 'removed'}", "money"), _metric("Planning complete", draft["planning_complete_label"]), _metric("Finance confirmed", draft["finance_confirmed_label"], "finance"), _metric("Validation", VALIDATION_NEEDS_ATTENTION, "validation", VALIDATION_NEEDS_ATTENTION)]
+		payload["primary_action"] = None if read_only else _action("view_plan_update", "View plan update", routes["update_route"])
+	elif workspace_state == WORKSPACE_REVIEW:
+		supporting = f"Approved Version {approved['version_number']} remains active while Version {draft['version_number']} awaits Head-of-Procurement review."
+		delta = draft["planned_total"] - approved["planned_total"]
+		metrics = [_metric("Submitted value", draft["planned_total_display"], "money"), _metric("Net change", f"{_money(abs(delta), plan.currency)} {'added' if delta >= 0 else 'removed'}", "money"), _metric("Finance confirmed", draft["finance_confirmed_label"], "finance"), _metric("Validation", VALIDATION_READY, "validation", VALIDATION_READY)]
+		payload["primary_action"] = _action("view_approved_plan", "View approved plan", routes["approved_route"])
+	else:
+		supporting = "No plan update is currently in progress."
+		metrics = [_metric("Plan Items", f"{approved['item_count']} active"), _metric("Approved value", approved["planned_total_display"], "money"), _metric("Finance confirmed", approved["finance_confirmed_label"], "finance"), _metric("Validation", approved["validation_projection"], "validation", approved["validation_projection"])]
+		payload["primary_action"] = _action("view_approved_plan", "View approved plan", routes["approved_route"])
+
+	payload["current_plan"] = {
+		"plan": plan.name, "plan_code": plan.plan_code, "title": plan.title,
+		"lifecycle_state": plan.lifecycle_state, "currency": plan.currency or "KES",
+		"current_approved_version": plan.current_approved_version, "open_draft_version": plan.open_draft_version,
+		"approved": approved, "draft": draft, "status_line": " · ".join(status_parts),
+		"status_parts": status_parts, "supporting_text": supporting, "summary_metrics": metrics, **routes,
 	}
-	payload["filtered_counts"] = {
-		"work_requiring_action": len(work),
-		"waiting_on_others": len(waiting),
-	}
-	if payload["state_id"] == "PLN-UI-01C" and not work and any(
-		row.get("status") == "Awaiting Finance" for row in waiting
-	):
-		payload["state_id"] = "PLN-UI-01D"
+	evidence = [plan.modified]
+	for version in (approved_version, draft_version):
+		if version:
+			evidence.extend([version.modified, version.concurrency_token, version.review_task_state, version.submitted_at])
+	for iv in approved_ivs + draft_ivs:
+		evidence.extend([iv.modified, iv.finance_task_state])
+	payload["as_at"], payload["as_at_display"] = _as_at(evidence)
+	payload["projection_token"] = _projection_token(payload, evidence)
 	return payload

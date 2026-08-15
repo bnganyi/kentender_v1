@@ -184,7 +184,6 @@ def submit_plan_for_review(
 		}
 	).insert(ignore_permissions=True)
 
-	frappe.db.commit()
 	from kentender_procurement.procurement_planning.services.planning_notification_service import (
 		notify_plan_submitted,
 	)

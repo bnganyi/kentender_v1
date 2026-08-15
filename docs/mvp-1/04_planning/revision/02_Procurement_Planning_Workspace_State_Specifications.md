@@ -1,101 +1,102 @@
 # Procurement Planning Workspace State Specifications
 
-**Document ID:** `PLANNING-MVP1-UI01-REV-1.0`  
-**Change:** `PLN-CHG-001`  
+**Document ID:** `PLANNING-MVP1-UI01-REV-2.0`
+**Change:** `PLN-CHG-015`
 **Status:** Approved  
-**Date:** 14 August 2026
+**Date:** 15 August 2026
 
 ## 1. Common contract
 
-PLN-UI-01 is the Procurement Planner's PE/FY-scoped operational landing page. It contains one current-Plan panel, one server-derived primary action, **Work requiring action**, and **Waiting on others**. It does not expose Finance or professional-review decision controls and does not persist workspace tasks or counters.
+PLN-UI-01 is the Procurement Planner's PE/FY-scoped operational landing page. The server derives one state from authoritative Planning, Demand, Finance-task and professional-review evidence. A workspace load never creates or mutates a Plan, Version, item, task, reservation or decision, and no variant, queue or counter is persisted.
 
-One eligible Procuring Entity is visible read-only. Multiple eligible entities require deliberate selection and provide no aggregate or default option. The financial year remains visibly selected. Every action is omitted unless its target service will authorise the same actor, PE, OU and record state.
+One eligible Procuring Entity is read-only. Multiple entities require deliberate selection and have no aggregate/default option. The selected financial year remains visible. Shared Desk chrome owns breadcrumbs and navigation.
 
-The work filter options are exactly **All work**, **Approved Demands**, **Plan Items**, and **Returned work**. The search placeholder is **Search work**. Both work sections use the columns **Work item**, **Type**, **Organisation Unit**, **Amount**, **Why it appears**, **Status**, and **Action**.
+Actionable rows have exactly one server-authorised action. Waiting rows are informational and expose no Finance or professional decision route. Search and the exact filters **All work**, **Approved Demands**, **Plan Items**, and **Returned work** affect returned work rows only; they never affect state selection.
 
-Priority is deterministic: returned work; blocking or stale work; incomplete or outstanding work; eligible Approved Demands. If one record meets more than one condition, only its highest-priority reason appears; secondary issues remain on record detail.
+## 2. State resolution
 
-## 2. Action vocabulary
-
-| Condition | Status | Action | Destination |
+| Workspace state | UI | Governing condition | Primary action |
 |---|---|---|---|
-| Approved, Planning Ready Demand | Ready for planning | **Add to plan** | Owning Plan surface with PLN-UI-04 open and the Demand freshly revalidated and selected |
-| Incomplete Proposed Plan Item | Incomplete | **Complete item** | PLN-UI-06 Plan Item editor |
-| Finance return | Returned by Finance | **Correct item** | PLN-UI-06 Plan Item editor |
-| Blocking or stale validation | Blocked / Stale | **Resolve issues** | PLN-UI-06 Plan Item editor |
-| Returned Plan Version | Returned by Head of Procurement | **Address return** | PLN-UI-05 Draft update |
-| Draft update needing planner action | Needs attention | **Continue update** | PLN-UI-05 Draft update |
-| Draft successor with no effective changes | No changes | **Cancel update** | PLN-UI-05, where cancellation is confirmed and authorised |
-| Awaiting Finance | Awaiting Finance confirmation | **View item** | Neutral Plan Item detail; never PLN-UI-07 |
-| Awaiting professional review | Awaiting Head-of-Procurement review | **View update** | Neutral submitted-update detail; never another actor's decision controls |
+| `NO_PLAN` | PLN-UI-01A | No logical Plan for selected PE/FY | **Create annual plan** |
+| `INITIAL_DRAFT_EMPTY` | PLN-UI-01B | Initial Draft Version 1, zero effective items | **Continue planning** |
+| `APPROVED_WITH_ACTIONABLE_WORK` | PLN-UI-01 | Approved Plan, no Draft, eligible Approved Demand | **View approved plan** |
+| `DRAFT_WITH_PLANNER_ACTION` | PLN-UI-01C | Editable Draft with any planner work | **Continue plan update** |
+| `DRAFT_AWAITING_FINANCE` | PLN-UI-01D | Draft has no planner work and one or more open Finance tasks | **View plan update** |
+| `VERSION_AWAITING_PROFESSIONAL_REVIEW` | PLN-UI-01E | In-review successor with an open professional task | **View approved plan** |
+| `APPROVED_NO_WORK` | PLN-UI-01F | Approved Plan, no Draft, actionable work or waiting work | **View approved plan** |
 
-## 3. Deterministic states
+Precedence is the order above except that submitted review is evaluated before Draft planner/Finance work. Returned Finance, returned professional review, incomplete items, planner-remediable validation and a Draft with no effective change all resolve to `DRAFT_WITH_PLANNER_ACTION`. Mixed planner and Finance work uses PLN-UI-01C and retains Finance as neutral waiting context.
 
-All states use Mercy Kilonzo, Procurement Planner, Ministry of Health, unless expressly stated otherwise. Common header description: **Turn approved needs into funded, approved Plan Items ready for tendering.** Common helper: **These controls define the workspace view; they do not change record ownership.**
+## 3. Exact deterministic frames
 
-### PLN-UI-01 — Approved Plan with one Approved Demand
+All states use Mercy Kilonzo, Procurement Planner, and Ministry of Health. Common description: **Turn approved needs into funded, approved Plan Items ready for tendering.** Common helper: **These controls define the workspace view; they do not change record ownership.**
 
-- FY 2027/28; `PLN-MOH-2027-001`, Open; Approved `PLN-MOH-2027-001-V1`; no Draft successor.
-- One active item; approved value KES 455,000,000; Finance confirmed 1 of 1; validation Ready.
-- Primary action: **View approved plan**.
-- Work contains `DMD-MOH-2027-019`, **Digital health technical staff certification programme**, Approved Demand, Human Resources Management and Development, KES 80,000,000, reason **HoD-approved Demand is ready to add to the FY 2027/28 Plan.**, status **Ready for planning**, action **Add to plan**.
-- Waiting empty text: **Nothing is currently waiting on another reviewer.**
+### PLN-UI-01 — Approved Plan with eligible Demand
+
+- FY2027/28, `PLN-MOH-2027-001`, Approved Version 1, no Draft.
+- One active item; KES 455,000,000; Finance 1 of 1; validation Ready.
+- One actionable row for `DMD-MOH-2027-019`, **Digital health technical staff certification programme**, KES 80,000,000, **Ready for planning**, **Add to plan**.
+- Waiting text: **Nothing is currently waiting on another reviewer.**
 
 ### PLN-UI-01A — No annual Plan
 
-- FY 2028/29; no logical Plan and no eligible Approved Demand.
-- Primary action: **Create annual plan**.
-- Current Plan empty text: **No annual Plan exists for Ministry of Health FY 2028/29.** Supporting text: **Create the annual Plan before adding approved Demands.**
-- Work empty text: **No approved Demands are ready for planning in FY 2028/29.**
-- Waiting empty text: **Nothing is currently waiting on another reviewer.**
+- FY2028/29, no logical Plan, with two Approved Demands eligible after registration.
+- Heading: **No annual Procurement Plan**.
+- Copy: **No Procurement Plan has been registered for Ministry of Health for FY 2028/29.**
+- Supporting copy: **Create the annual Plan before adding the 2 Approved Demands ready for Planning.**
+- Work text: **Create the annual Plan to begin Planning approved requirements.**
+- No Demand rows or Plan/version/Finance/validation values.
 
-### PLN-UI-01B — Initial Draft Plan
+### PLN-UI-01B — Initial Draft
 
-- FY 2029/30; `PLN-MOH-UI-DRAFT-001`, **Ministry of Health Annual Procurement Plan 2029/30**, Open; Draft Version 1; no Approved Version.
-- Zero items; Draft value KES 0; Finance confirmed 0 of 0; validation Not run.
-- Supporting text: **This initial Plan is in preparation and has not been approved.**
-- Primary action: **Continue planning**.
-- Work empty text: **No work currently requires your action.** Waiting uses the common empty text.
+- `PLN-MOH-2028-001`, Draft Version 1, zero items, KES 0, two eligible Demands, validation Not run.
+- Supporting copy: **The annual Plan is ready for its first Approved Demands.**
+- Exact Demand rows: `DMD-MOH-2028-001` at KES 48,000,000 and `DMD-MOH-2028-002` at KES 72,000,000, each with **Add to plan**.
+- No Approved Version, Finance progress or submission action.
 
-### PLN-UI-01C — Approved Plan with incomplete Draft addition
+### PLN-UI-01C — Draft requiring planner action
 
-- FY 2027/28; Approved Version 1 remains current; Draft Version 2 is open.
-- Approved: one item, KES 455,000,000. Draft: two items, KES 535,000,000. Finance confirmed 1 of 2. Validation Needs attention.
-- Supporting text: **Draft Version 2 is being prepared; Approved Version 1 remains current.**
-- Primary action: **Continue plan update**.
-- Work contains `PPI-MOH-2027-022`, **Digital health technical staff certification programme**, Plan Item, Human Resources Management and Development, KES 80,000,000, reason **Required planning details are incomplete.**, status **Incomplete**, action **Complete item**.
-- Waiting uses the common empty text.
+- Approved Version 1 remains operational; Draft Version 2 totals KES 535,000,000, net KES 80,000,000 added.
+- Planning 1 of 2; Finance 1 of 2; validation Needs attention.
+- One `PPI-MOH-2027-022` row: **Planning incomplete**, **Complete item**, reason **Complete the procurement method and schedule before requesting Finance confirmation.**
+- No-effective-change and returned states use this same workspace state with their highest-priority authorised row.
 
-### PLN-UI-01C-NC — No effective Draft changes
+### PLN-UI-01D — Awaiting Finance
 
-- `SCN-PLN-REMOVE-001` after the only Draft addition is removed. Approved Version 1 and Draft Version 2 each project KES 455,000,000; no effective Draft change remains.
-- Current Plan supporting text: **No changes remain in Draft Version 2.** Primary action: **Continue plan update**.
-- Work contains one Plan update row with reason **No effective changes remain in Draft Version 2.**, status **No changes**, action **Cancel update**. Submission is absent.
-- Waiting uses the common empty text.
+- Draft Version 2: two items, KES 535,000,000, net KES 80,000,000 added, Planning 2 of 2, Finance 1 of 2, validation Needs attention.
+- Work text: **No planning work currently needs your action.**
+- One four-column waiting row for `PPI-MOH-2027-022`: **Finance confirmation**, **Awaiting confirmation**, **Budget Officer**.
+- No row action or Finance-task route.
 
-### PLN-UI-01D — Awaiting Finance confirmation
+### PLN-UI-01E — Awaiting professional review
 
-- Approved Version 1 remains current; Draft Version 2 has two items and KES 535,000,000. Finance confirmed 1 of 2; validation Ready.
-- Primary action: **Continue plan update**. Work empty text: **No work currently requires your action.**
-- Waiting contains `PPI-MOH-2027-022`, Plan Item, KES 80,000,000, reason **Finance confirmation has been requested and is awaiting the Budget Officer.**, status **Awaiting Finance confirmation**, action **View item**.
+- Version 2 In review, KES 535,000,000, net KES 80,000,000 added, Finance 2 of 2, validation Ready.
+- Work text: **No planning work currently needs your action.**
+- One four-column waiting row: **Professional review**, **Awaiting review**, **Head of Procurement**.
+- No row action, task route, Approve or Return control.
 
-### PLN-UI-01E — Awaiting Head-of-Procurement review
+### PLN-UI-01F — Approved Plan with no work
 
-- Approved Version 1 remains current; Draft Version 2 is In review. Draft value KES 535,000,000; Finance confirmed 2 of 2; validation Ready.
-- Supporting text: **Draft Version 2 has been submitted for professional review; Approved Version 1 remains current.**
-- Primary action: **View approved plan**. Work uses the common no-action text.
-- Waiting contains the Plan update, KES 535,000,000, reason **Submitted plan update is awaiting Head-of-Procurement review.**, status **Awaiting Head-of-Procurement review**, action **View update**.
+- Current Approved Version 2; two active items; KES 535,000,000; Finance 2 of 2; validation Ready; no Draft or eligible Demand.
+- Work text: **No planning work currently needs your action.**
+- Waiting text: **Nothing is currently waiting on another reviewer.**
+- No Add Plan Item or Add to plan path.
 
-### PLN-UI-01F — Approved Plan with no current work
+## 4. Fixture and evidence boundary
 
-- Canonical base FY 2027/28: Approved Version 1, no Draft successor, one active item, KES 455,000,000, Finance confirmed 1 of 1, validation Ready.
-- Primary action: **View approved plan**.
-- Work empty text: **No work currently requires your action.** Waiting uses the common empty text.
+PLN-UI-01A/B use resettable FY2028/29 records `DMD-MOH-2028-001/002`. Base and C–F reuse named `SCN-PLN-ADD-001` boundaries. Preparation is idempotent, removes only fixture-owned evidence, and never stores a screen-state flag. Finance/professional returns remain isolated fixtures.
 
-## 4. Fixture boundary
+The approved HTML files control visual composition after applying the exact ledger content and the no-breadcrumb correction. PLN-CHG-015 is complete only when all seven projections reconcile with their owning builder, Finance, review and Approved-plan services and focused service/browser evidence passes.
 
-PLN-UI-01/F use the canonical base; PLN-UI-01 uses `SCN-PLN-ADD-001` after HoD reapproval; C/D/E use named stop points in that scenario; C-NC uses `SCN-PLN-REMOVE-001`; B uses the existing Playwright-owned empty Draft; A uses an unoccupied FY after canonical reset. Finance and professional returns use isolated transactional/UI fixtures. No permanent Demand, Plan Item, reservation, decision or workspace-task record is added for these states.
+## 5. Final route, FY and audit contract
 
-## 5. Approval evidence boundary
+| State | Server action | Destination / effect | Audit evidence |
+|---|---|---|---|
+| PLN-UI-03/05 Draft or Returned | Continue update | `/app/procurement-plan-builder?plan=<plan>` | Version concurrency and mutation history |
+| PLN-UI-05B empty successor | Cancel update | terminal Cancelled Version, then `/app/procurement-plan-approved?plan=<plan>` | Plan Decision with actor, time, fixed reason and idempotency key |
+| PLN-UI-09 Approved Plan | Back | `/app/procurement-planning` | no mutation |
+| PLN-UI-09 Approved Plan | Add Plan Item | approved workspace demand dialog, only when authorized | successor Version and allocation audit |
+| PLN-UI-09 Approved row | View | `/app/procurement-plan-approved?plan=<plan>&plan_item=<item>` | no mutation; approved workspace remains authoritative |
+| PLN-UI-09 eligible row | Propose removal | governed removal dialog/command | Plan Decision and successor mutation evidence |
 
-The deterministic state contracts above are approved implementation inputs. Generated Stitch canvases or screenshots remain manual visual evidence and must be attached before `PLN-CHG-001` is marked fully implemented; their absence does not authorise alternative content or labels.
+Actions not present in the server action map do not render or execute. Approved export is absent from the MVP-1 route contract. Financial-year context resolves in the order selected, saved default, then deterministic legacy/default; Demand dates report `inferred_from_demand_date` and explicit missing, outside-period or mismatch issue codes without cross-FY merging.
