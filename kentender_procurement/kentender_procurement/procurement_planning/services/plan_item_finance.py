@@ -41,6 +41,14 @@ from kentender_procurement.procurement_planning.services.plan_item_field_issues 
 from kentender_procurement.procurement_planning.services.update_plan_item import (
 	_request_finance_issues,
 )
+from kentender_procurement.procurement_planning.services._invariants import new_concurrency_token
+from kentender_procurement.procurement_planning.services.planning_tasks import (
+	assert_task_assignment,
+	assert_task_token,
+	idempotent_decision,
+	next_task_identity,
+	resolve_single_assignee,
+)
 
 
 def _money(amount: float, currency: str = "KES") -> str:
@@ -116,6 +124,42 @@ def _dfa_for_demand(demand: str) -> Any | None:
 	if not name:
 		return None
 	return frappe.get_doc("Demand Funding Allocation", name)
+
+
+def _source_finance_rows(plan_item: str) -> list[dict[str, Any]]:
+	allocs = frappe.get_all(
+		"Plan Demand Allocation",
+		filters={"plan_item": plan_item, "status": ["in", [ALLOC_DRAFT, ALLOC_EFFECTIVE]]},
+		fields=["name", "demand", "demand_item", "source_org_unit", "source_funding_allocation", "allocated_amount", "allocated_quantity"],
+		order_by="creation asc",
+	)
+	rows: list[dict[str, Any]] = []
+	for alloc in allocs:
+		demand = frappe.db.get_value("Demand", alloc.demand, ["demand_code", "title", "required_by_date"], as_dict=True) or {}
+		need = frappe.db.get_value("Demand Item", alloc.demand_item, ["description", "quantity", "uom"], as_dict=True) or {}
+		dfa_name = cstr(alloc.source_funding_allocation) or cstr(frappe.db.get_value("Demand Funding Allocation", {"demand": alloc.demand}, "name"))
+		dfa = frappe.get_doc("Demand Funding Allocation", dfa_name) if dfa_name and frappe.db.exists("Demand Funding Allocation", dfa_name) else None
+		line_id = cstr(dfa.budget_line if dfa else "")
+		rows.append({
+			"allocation": alloc.name, "demand": alloc.demand, "demand_code": cstr(demand.get("demand_code")), "demand_title": cstr(demand.get("title")),
+			"demand_item": alloc.demand_item, "need_item": cstr(need.get("description")), "quantity": flt(alloc.allocated_quantity or need.get("quantity")), "uom": cstr(need.get("uom")),
+			"required_by_date": str(demand.get("required_by_date") or ""), "source_org_unit": cstr(alloc.source_org_unit),
+			"funding_allocation": dfa_name, "budget_line_id": line_id, "budget_line": _budget_line_display(line_id), "amount": flt(alloc.allocated_amount),
+			"reservation": cstr(dfa.funding_reservation if dfa else ""),
+		})
+	return rows
+
+
+def _funding_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""Group Need Item rows by their authoritative Demand funding allocation."""
+	grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
+	for row in rows:
+		key = (cstr(row["funding_allocation"]), cstr(row["demand"]), cstr(row["budget_line_id"]))
+		if key not in grouped:
+			grouped[key] = dict(row)
+			grouped[key]["amount"] = 0.0
+		grouped[key]["amount"] += flt(row["amount"])
+	return list(grouped.values())
 
 
 def _budget_line_display(line_id: str) -> dict[str, str]:
@@ -268,7 +312,7 @@ def request_plan_item_finance(
 		return {"ok": False, "errors": {"form": "Removed Plan Items cannot request Finance."}}
 	assert_planning_scope(
 		procuring_entity=cstr(plan.procuring_entity).strip(),
-		org_unit=cstr(item.owner_org_unit or plan.coordinating_org_unit or "").strip() or None,
+		org_unit=cstr(item.owner_org_unit or "").strip() or None,
 		user=actor,
 		require_write=True,
 	)
@@ -292,6 +336,9 @@ def request_plan_item_finance(
 			"finance_status": FINANCE_AWAITING,
 			"plan_item": item_name,
 			"item_version": iv.name,
+			"task": cstr(getattr(iv, "finance_task_id", "")),
+			"task_token": cstr(getattr(iv, "finance_task_token", "")),
+			"assignee": cstr(getattr(iv, "finance_task_assignee", "")),
 			"actor": actor,
 		}
 	if status == FINANCE_CONFIRMED:
@@ -304,9 +351,23 @@ def request_plan_item_finance(
 			"item_version": iv.name,
 			"actor": actor,
 		}
+	assignee = resolve_single_assignee(
+		role=ROLE_BUDGET_OFFICER,
+		procuring_entity=cstr(plan.procuring_entity),
+		organisation_unit=cstr(item.owner_org_unit),
+	)
+	predecessor = cstr(getattr(iv, "finance_task_id", ""))
+	task_id, iteration, task_token = next_task_identity(
+		prefix="PLN-FIN", record=iv, id_field="finance_task_id", iteration_field="finance_task_iteration"
+	)
 	iv.finance_status = FINANCE_AWAITING
+	iv.finance_task_id = task_id
+	iv.finance_task_iteration = iteration
+	iv.finance_task_assignee = assignee
+	iv.finance_task_state = "Open"
+	iv.finance_task_predecessor = predecessor or None
+	iv.finance_task_token = task_token
 	iv.save(ignore_permissions=True)
-	frappe.db.commit()
 	from kentender_procurement.procurement_planning.services.planning_notification_service import (
 		notify_finance_requested,
 	)
@@ -319,6 +380,9 @@ def request_plan_item_finance(
 		"finance_status": FINANCE_AWAITING,
 		"plan_item": item_name,
 		"item_version": iv.name,
+		"task": task_id,
+		"task_token": task_token,
+		"assignee": assignee,
 		"actor": actor,
 	}
 
@@ -391,6 +455,8 @@ def _task_payload(
 		"plan_item": item.name,
 		"plan_item_code": item.plan_item_code,
 		"item_version": iv.name,
+		"task": cstr(iv.finance_task_id),
+		"task_token": cstr(iv.finance_task_token),
 		"requirement_title": iv.requirement_title,
 		"owner_org_unit": ou,
 		"owner_org_unit_label": ou_label,
@@ -418,7 +484,7 @@ def _task_payload(
 		"notice": notice,
 		"existing_reservation": cstr(existing_rsv.generated_reference if existing_rsv else "")
 		or cstr(existing_rsv.name if existing_rsv else ""),
-		"builder_route": f"/app/procurement-plan-builder?plan={plan.name}&finance_item={item.name}",
+		"builder_route": f"/app/procurement-plan-builder?plan={plan.name}",
 		"budget_funding_route": _budget_activity_route(line.get("id") if line else ""),
 	}
 
@@ -436,17 +502,21 @@ def _budget_activity_route(line_id: str) -> str:
 
 def get_plan_finance_task(
 	*,
-	plan_item: str,
+	task: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	actor = assert_can_open_finance_task(user)
-	item_name = cstr(plan_item).strip()
-	if not item_name or not frappe.db.exists("Procurement Plan Item", item_name):
-		return {"ok": False, "errors": {"form": "Plan Item not found"}}
+	task_id = cstr(task).strip()
+	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
+	if not iv_name:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+	assert_task_assignment(record=iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
+	item_name = cstr(iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan.procuring_entity).strip(),
-		org_unit=cstr(item.owner_org_unit or plan.coordinating_org_unit or "").strip() or None,
+		org_unit=cstr(item.owner_org_unit or "").strip() or None,
 		user=actor,
 		require_write=False,
 	)
@@ -472,7 +542,7 @@ def get_plan_finance_task(
 				demand=demand["demand"] if demand else None,
 				procuring_entity=cstr(plan.procuring_entity).strip(),
 			)
-	return _task_payload(
+	payload = _task_payload(
 		item=item,
 		plan=plan,
 		iv=iv,
@@ -482,6 +552,29 @@ def get_plan_finance_task(
 		line=line,
 		existing_rsv=existing,
 	)
+	sources = _source_finance_rows(item.name)
+	if sources:
+		from kentender_budget.services.budget_check_reserve_contracts import check_funding
+		for source in sources:
+			if not source["budget_line_id"]:
+				source["funding_check"] = {"sufficient": False, "available_before": 0, "available_after": 0, "shortfall": source["amount"]}
+				continue
+			with _as_user(actor):
+				source["funding_check"] = check_funding(budget_line=source["budget_line_id"], requested_amount=source["amount"], demand=source["demand"], procuring_entity=cstr(plan.procuring_entity))
+		payload["sources"] = sources
+		payload["sufficient"] = all(bool(s["funding_check"].get("sufficient")) for s in sources)
+		payload["variant"] = "sufficient" if payload["sufficient"] else "shortfall"
+		payload["can_confirm"] = bool(payload["can_confirm"] and payload["sufficient"])
+		payload["available_before"] = sum(flt(s["funding_check"].get("available_before")) for s in sources)
+		payload["available_after"] = sum(flt(s["funding_check"].get("available_after")) for s in sources)
+		payload["shortfall"] = sum(flt(s["funding_check"].get("shortfall")) for s in sources)
+		payload["available_before_display"] = _money(payload["available_before"], payload["currency"])
+		payload["available_after_display"] = _money(payload["available_after"], payload["currency"])
+		payload["shortfall_display"] = _money(payload["shortfall"], payload["currency"]) if payload["shortfall"] else ""
+		if not payload["sufficient"]:
+			payload["notice"] = f"This Plan Item cannot be confirmed because its source Budget Lines are short by {payload['shortfall_display']}."
+	payload.update({"task": task_id, "task_token": cstr(iv.finance_task_token), "task_iteration": int(iv.finance_task_iteration or 1), "assignee": actor})
+	return payload
 
 
 def _record_finance_decision(
@@ -492,6 +585,9 @@ def _record_finance_decision(
 	decision_type: str,
 	decision: str,
 	reason: str,
+	task_id: str,
+	task_iteration: int,
+	idempotency_key: str,
 ) -> None:
 	frappe.get_doc(
 		{
@@ -505,24 +601,37 @@ def _record_finance_decision(
 			"decision": decision,
 			"reason": reason,
 			"decided_at": now_datetime(),
+			"task_id": task_id,
+			"task_iteration": task_iteration,
+			"command_idempotency_key": idempotency_key,
 		}
 	).insert(ignore_permissions=True)
 
 
 def confirm_plan_item_funding(
 	*,
-	plan_item: str,
+	task: str,
+	expected_token: str | None = None,
 	note: str | None = None,
+	idempotency_key: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	actor = assert_can_confirm_plan_funding(user)
-	item_name = cstr(plan_item).strip()
-	if not item_name or not frappe.db.exists("Procurement Plan Item", item_name):
-		return {"ok": False, "errors": {"form": "Plan Item not found"}}
+	replay = idempotent_decision(idempotency_key)
+	if replay:
+		return replay
+	task_id = cstr(task).strip()
+	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
+	if not iv_name:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	task_iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+	assert_task_assignment(record=task_iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
+	assert_task_token(actual=task_iv.finance_task_token, expected=expected_token)
+	item_name = cstr(task_iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan.procuring_entity).strip(),
-		org_unit=cstr(item.owner_org_unit or plan.coordinating_org_unit or "").strip() or None,
+		org_unit=cstr(item.owner_org_unit or "").strip() or None,
 		user=actor,
 		require_write=False,
 	)
@@ -542,78 +651,51 @@ def confirm_plan_item_funding(
 			"actor": actor,
 		}
 
-	demand = _source_demand_row(item.name)
-	dfa = _dfa_for_demand(demand["demand"] if demand else "")
-	line_id = cstr(dfa.budget_line if dfa else "").strip()
-	if not line_id:
-		return {"ok": False, "errors": {"form": "A proposed Budget Line is required to confirm funding."}}
-	amount = flt(iv.confirmed_estimate)
-	existing = _existing_reservation(dfa, line_id, iv=iv)
+	sources = _funding_sources(_source_finance_rows(item.name))
+	if not sources or any(not row["budget_line_id"] for row in sources):
+		return {"ok": False, "errors": {"form": "Every source must have a proposed Budget Line before funding can be confirmed."}}
+	from kentender_budget.services.budget_check_reserve_contracts import check_funding, reserve_funding
+	checks = []
+	with _as_user(actor):
+		for source in sources:
+			dfa = frappe.get_doc("Demand Funding Allocation", source["funding_allocation"]) if source["funding_allocation"] else None
+			existing = _existing_reservation(dfa, source["budget_line_id"], iv=iv)
+			if existing and flt(existing.remaining_reserved) >= flt(source["amount"]):
+				check = {"sufficient": True, "shortfall": 0, "existing_reservation": existing.name}
+			else:
+				check = check_funding(budget_line=source["budget_line_id"], requested_amount=source["amount"], demand=source["demand"], procuring_entity=cstr(plan.procuring_entity))
+			checks.append(check)
+	if not all(check.get("sufficient") for check in checks):
+		shortfall = sum(flt(check.get("shortfall")) for check in checks)
+		return {"ok": False, "error_code": ERR_INSUFFICIENT_FUNDING, "errors": {"form": f"This Plan Item cannot be confirmed because its source Budget Lines are short by {_money(shortfall, cstr(iv.currency or plan.currency))}."}}
+	reservation_names: list[str] = []
+	reservation_codes: list[str] = []
 	owned = 0
-	reservation_name = ""
-	reservation_code = ""
-
-	if existing:
-		reservation_name = existing.name
-		reservation_code = cstr(existing.generated_reference or existing.name)
-	else:
-		from kentender_budget.services.budget_check_reserve_contracts import (
-			check_funding,
-			reserve_funding,
-		)
-
-		with _as_user(actor):
-			check = check_funding(
-				budget_line=line_id,
-				requested_amount=amount,
-				demand=demand["demand"] if demand else None,
-				procuring_entity=cstr(plan.procuring_entity).strip(),
-			)
-			if not check.get("sufficient"):
-				return {
-					"ok": False,
-					"error_code": ERR_INSUFFICIENT_FUNDING,
-					"errors": {
-						"form": (
-							"This Plan Item cannot be confirmed because the Budget Line is short by "
-							f"{check.get('shortfall_display') or _money(flt(check.get('shortfall') or 0))}."
-						)
-					},
-				}
-			idem = f"PLN|{item.name}|{iv.name}|{amount:.2f}|{line_id}"
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
+	with _as_user(actor):
+		for index, source in enumerate(sources):
+			dfa = frappe.get_doc("Demand Funding Allocation", source["funding_allocation"]) if source["funding_allocation"] else None
+			existing = _existing_reservation(dfa, source["budget_line_id"], iv=iv)
+			if existing and flt(existing.remaining_reserved) >= flt(source["amount"]):
+				reservation_names.append(cstr(existing.name))
+				reservation_codes.append(cstr(existing.generated_reference or existing.name))
+				continue
 			preferred_ref = None
-			from kentender_core.seeds.kentender_mvp_v1 import constants as C
-
-			if (
-				cstr(item.plan_item_code) == C.PLAN_ITEM_CODE
-				and not frappe.db.exists(
-					"Funding Reservation", {"generated_reference": C.RSV_CODE}
-				)
-			):
+			if len(sources) == 1 and cstr(item.plan_item_code) == C.PLAN_ITEM_CODE:
 				preferred_ref = C.RSV_CODE
-			elif (
-				cstr(item.plan_item_code) == C.PLAN_ITEM_CODE_SCN
-				and not frappe.db.exists(
-					"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
-				)
-			):
+			elif len(sources) == 1 and cstr(item.plan_item_code) == C.PLAN_ITEM_CODE_SCN:
 				preferred_ref = C.RSV_CODE_SCN
-			result = reserve_funding(
-				budget_line=line_id,
-				demand_name=demand["demand"] if demand else None,
-				requested_amount=amount,
-				idempotency_key=idem,
-				actor=actor,
-				procuring_entity=cstr(plan.procuring_entity).strip(),
-				generated_reference=preferred_ref,
-			)
-		reservation_name = cstr(result.get("reservation_id") or "")
-		reservation_code = cstr(result.get("reservation_code") or reservation_name)
-		owned = 0 if result.get("reused") else 1
-		if dfa and reservation_name:
-			dfa.funding_reservation = reservation_name
-			dfa.reservation_status = cstr(result.get("status") or "Reserved")
-			dfa.save(ignore_permissions=True)
+			result = reserve_funding(budget_line=source["budget_line_id"], demand_name=source["demand"], requested_amount=source["amount"], idempotency_key=f"{cstr(idempotency_key)}:source:{index}", actor=actor, procuring_entity=cstr(plan.procuring_entity), generated_reference=preferred_ref)
+			name = cstr(result.get("reservation_id"))
+			code = cstr(result.get("reservation_code") or name)
+			reservation_names.append(name); reservation_codes.append(code)
+			owned += 0 if result.get("reused") else 1
+			if source["funding_allocation"]:
+				frappe.db.set_value("Demand Funding Allocation", source["funding_allocation"], {"funding_reservation": name, "reservation_status": cstr(result.get("status") or "Reserved")}, update_modified=False)
+	amount = sum(row["amount"] for row in sources)
+	line_id = sources[0]["budget_line_id"] if len(sources) == 1 else "MULTIPLE"
+	reservation_name = ",".join(reservation_names)
+	reservation_code = ", ".join(reservation_codes)
 
 	iv.finance_status = FINANCE_CONFIRMED
 	iv.finance_snapshot_amount = amount
@@ -621,8 +703,10 @@ def confirm_plan_item_funding(
 	iv.finance_confirmed_at = now_datetime()
 	iv.finance_confirmed_by = actor
 	iv.finance_reservation = reservation_name or reservation_code
-	iv.finance_owned_reservation = owned
+	iv.finance_owned_reservation = 1 if owned else 0
 	iv.reservation_reference = reservation_code or reservation_name
+	iv.finance_task_state = "Confirmed"
+	iv.finance_task_token = new_concurrency_token()
 	iv.save(ignore_permissions=True)
 	_record_finance_decision(
 		plan_version=iv.plan_version,
@@ -631,6 +715,9 @@ def confirm_plan_item_funding(
 		decision_type=FINANCE_DECISION_CONFIRM,
 		decision=FINANCE_CONFIRMED,
 		reason=cstr(note or "").strip(),
+		task_id=task_id,
+		task_iteration=int(iv.finance_task_iteration or 1),
+		idempotency_key=cstr(idempotency_key),
 	)
 	frappe.db.commit()
 	return {
@@ -646,21 +733,31 @@ def confirm_plan_item_funding(
 
 def return_plan_item_from_finance(
 	*,
-	plan_item: str,
+	task: str,
+	expected_token: str | None = None,
 	reason: str | None = None,
+	idempotency_key: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	actor = assert_can_open_finance_task(user)
-	item_name = cstr(plan_item).strip()
+	replay = idempotent_decision(idempotency_key)
+	if replay:
+		return replay
+	task_id = cstr(task).strip()
 	note = cstr(reason or "").strip()
 	if not note:
 		return {"ok": False, "errors": {"reason": "A return reason is required."}}
-	if not item_name or not frappe.db.exists("Procurement Plan Item", item_name):
-		return {"ok": False, "errors": {"form": "Plan Item not found"}}
+	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
+	if not iv_name:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	task_iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+	assert_task_assignment(record=task_iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
+	assert_task_token(actual=task_iv.finance_task_token, expected=expected_token)
+	item_name = cstr(task_iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan.procuring_entity).strip(),
-		org_unit=cstr(item.owner_org_unit or plan.coordinating_org_unit or "").strip() or None,
+		org_unit=cstr(item.owner_org_unit or "").strip() or None,
 		user=actor,
 		require_write=False,
 	)
@@ -676,6 +773,8 @@ def return_plan_item_from_finance(
 	if status not in (FINANCE_AWAITING, FINANCE_STALE, FINANCE_CONFIRMED):
 		return {"ok": False, "errors": {"form": "This Finance task cannot be returned."}}
 	iv.finance_status = FINANCE_RETURNED
+	iv.finance_task_state = "Returned"
+	iv.finance_task_token = new_concurrency_token()
 	iv.save(ignore_permissions=True)
 	_record_finance_decision(
 		plan_version=iv.plan_version,
@@ -684,6 +783,9 @@ def return_plan_item_from_finance(
 		decision_type=FINANCE_DECISION_RETURN,
 		decision=FINANCE_RETURNED,
 		reason=note,
+		task_id=task_id,
+		task_iteration=int(iv.finance_task_iteration or 1),
+		idempotency_key=cstr(idempotency_key),
 	)
 	frappe.db.commit()
 	return {
@@ -730,12 +832,16 @@ def cancel_awaiting_or_release_owned(
 	if int(iv.finance_owned_reservation or 0) and cstr(iv.finance_reservation or "").strip():
 		from kentender_budget.api.dia_budget_control import release_reservation
 
-		release_reservation(reservation_id=cstr(iv.finance_reservation), reason="Plan Item removed from draft")
+		for reservation_id in filter(None, (part.strip() for part in cstr(iv.finance_reservation).split(","))):
+			release_reservation(reservation_id=reservation_id, reason="Plan Item removed from draft")
 		released = True
 		iv.finance_owned_reservation = 0
 	if status in (FINANCE_AWAITING, FINANCE_STALE, FINANCE_RETURNED, FINANCE_CONFIRMED):
 		cancelled = status in (FINANCE_AWAITING, FINANCE_STALE, FINANCE_RETURNED)
 		iv.finance_status = FINANCE_NOT_REQUESTED
+		if cstr(getattr(iv, "finance_task_state", "")) == "Open":
+			iv.finance_task_state = "Cancelled"
+			iv.finance_task_token = new_concurrency_token()
 		iv.save(ignore_permissions=True)
 	return {
 		"ok": True,

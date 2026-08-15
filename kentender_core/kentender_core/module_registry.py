@@ -85,11 +85,15 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 	"procurement_planning": {
 		"workspace_label": "Procurement Planning",
 		"sidebar_workspace_key": "procurement planning",
-		"desk_page": None,
+		"desk_page": "planning-workspace",
+		"builder_page": "procurement-plan-builder",
 		"form_doctype": "Procurement Plan",
 		"state_key": "kt_pp_workbench_state",
 		"select_key": "kt_pp_workspace_select",
 		"route_prefixes": (
+			"planning-workspace",
+			"procurement-plan-register",
+			"procurement-plan-builder",
 			"Form/Procurement Plan",
 		),
 		"sidebar_parent": "Procurement",

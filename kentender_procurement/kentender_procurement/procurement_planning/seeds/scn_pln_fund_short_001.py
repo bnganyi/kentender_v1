@@ -145,7 +145,9 @@ def _complete_and_request_finance(item_name: str) -> None:
 	if status == FINANCE_AWAITING:
 		return
 	result = update_plan_item(
-		plan_item=item_name, user=C.USER_PLANNING_OFFICER, request_finance=True
+		plan_item=item_name, user=C.USER_PLANNING_OFFICER, request_finance=True,
+		expected_version_token=frappe.db.get_value("Procurement Plan Version", frappe.db.get_value("Procurement Plan", frappe.db.get_value("Procurement Plan Item", item_name, "plan"), "open_draft_version"), "concurrency_token"),
+		idempotency_key="SCN-PLN-FUND-SHORT-001",
 	)
 	if result.get("ok") is False:
 		raise frappe.ValidationError(result.get("errors") or result)

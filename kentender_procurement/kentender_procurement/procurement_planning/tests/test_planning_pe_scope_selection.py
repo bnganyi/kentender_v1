@@ -8,8 +8,8 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.services.create_procurement_plan import (
-	create_procurement_plan,
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	create_procurement_plan_for_test as create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	MODE_BLOCKED,
@@ -55,32 +55,23 @@ class TestPlanningPeScopeSelection(IntegrationTestCase):
 			create_procurement_plan(
 				procuring_entity=PE_MOH,
 				financial_year="2150/51",
-				title="Zero scope",
-				currency="KES",
-				coordinating_org_unit=OU_MOH,
 				user=email,
 			)
 
-	def test_single_pe_forces_assignment(self) -> None:
-		"""PLN-AC-001 — one PE stays the assigned entity; caller cannot invent another."""
+	def test_single_pe_rejects_another_entity(self) -> None:
+		"""PLN-AC-001 — explicit PE context is always re-authorised."""
 		planner = ensure_moh_planner()
 		scope = resolve_pe_for_create(planner, selected_pe=None)
 		self.assertEqual(scope["selection_mode"], MODE_SINGLE)
 		self.assertEqual(scope["procuring_entity"], PE_MOH)
-		# Even if caller passes a different PE, create forces the assigned PE.
 		fy = unique_test_fy(base_year=2160, bucket=int(frappe.db.count("Procurement Plan") or 0))
 		purge_pe_fy(fy)
-		result = create_procurement_plan(
-			procuring_entity=PE_CGK,  # wrong — must be overridden
-			financial_year=fy,
-			title="Single PE force",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
-			user=planner,
-		)
-		self.assertTrue(result["ok"])
-		pe = frappe.db.get_value("Procurement Plan", result["plan"], "procuring_entity")
-		self.assertEqual(pe, PE_MOH)
+		with self.assertRaises(frappe.PermissionError):
+			create_procurement_plan(
+				procuring_entity=PE_CGK,
+				financial_year=fy,
+				user=planner,
+			)
 
 	def test_multi_pe_requires_explicit_selection(self) -> None:
 		email = "pln.gate02.multi.pe@test.local"

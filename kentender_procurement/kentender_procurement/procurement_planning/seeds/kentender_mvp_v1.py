@@ -18,7 +18,6 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	ITEM_ACTIVE,
 	PLAN_OPEN,
 	PLAN_TYPE_ANNUAL,
-	PUB_NOT_SUBMITTED,
 	TAKEUP_ACTIVE,
 	VALIDATION_READY,
 	VERSION_APPROVED,
@@ -379,6 +378,7 @@ def _ensure_v1_finance_and_handoff(
 	from kentender_procurement.procurement_planning.services.plan_item_finance import (
 		confirm_plan_item_funding,
 		effective_finance_status,
+		request_plan_item_finance,
 	)
 
 	owned = cstr(
@@ -391,10 +391,16 @@ def _ensure_v1_finance_and_handoff(
 		frappe.db.set_value(
 			"Procurement Plan Item Version",
 			iv_name,
-			{"finance_status": FINANCE_AWAITING},
+			{"finance_status": "Not requested"},
 			update_modified=False,
 		)
-		confirmed = confirm_plan_item_funding(plan_item=item_name, user=C.USER_BUD_OFFICER)
+		requested = request_plan_item_finance(plan_item=item_name, user=C.USER_PLANNING_OFFICER)
+		confirmed = confirm_plan_item_funding(
+			task=requested.get("task"),
+			expected_token=requested.get("task_token"),
+			idempotency_key=f"SEED-FINANCE-{iv_name}",
+			user=C.USER_BUD_OFFICER,
+		)
 		if not confirmed.get("ok"):
 			raise frappe.ValidationError(f"Planning seed Finance confirm failed: {confirmed}")
 		code = cstr(confirmed.get("reservation") or "")
@@ -458,9 +464,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"period_end": period_end,
 			"currency": "KES",
 			"plan_type": PLAN_TYPE_ANNUAL,
-			"coordinating_org_unit": ou,
 			"lifecycle_state": PLAN_OPEN,
-			"publication_projection": PUB_NOT_SUBMITTED,
 			"fixture_namespace": C.FIXTURE_NS,
 		},
 	)
@@ -561,6 +565,7 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 			"ms_tender_opening": "2027-10-20",
 			"ms_evaluation_completed": "2027-11-15",
 			"ms_award_approval": "2027-12-15",
+			"ms_notification_of_award": "2027-12-20",
 			"ms_contract_signature": "2028-01-15",
 			"ms_delivery_completion": "2028-03-31",
 			"finance_snapshot_amount": C.PLAN_AMOUNT_V1,
@@ -569,10 +574,10 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 		},
 	)
 	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
-		_demand_strategy_snapshots,
+		_strategy_snapshots,
 	)
 
-	strat, pvc = _demand_strategy_snapshots(demand)
+	strat, pvc = _strategy_snapshots([demand])
 	if strat or pvc:
 		updates: dict[str, str] = {}
 		if strat and not cstr(
@@ -616,6 +621,9 @@ def upsert_planning_base(*, commit: bool = True) -> dict[str, Any]:
 				"plan_item": item_name,
 				"demand": demand,
 				"demand_item": di.name,
+				"source_org_unit": ou,
+				"source_funding_allocation": frappe.db.get_value("Demand Funding Allocation", {"demand": demand}, "name"),
+				"active_hold_key": di.name,
 				"status": ALLOC_EFFECTIVE,
 				"allocated_amount": amt,
 				"currency": di.currency or "KES",

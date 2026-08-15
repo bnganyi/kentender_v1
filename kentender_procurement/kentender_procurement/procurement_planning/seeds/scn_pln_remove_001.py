@@ -15,12 +15,7 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	ITEM_REMOVED,
 )
 from kentender_procurement.procurement_planning.seeds import scn_pln_add_001 as add_scn
-from kentender_procurement.procurement_planning.services.get_plan_builder import (
-	get_plan_builder,
-)
-from kentender_procurement.procurement_planning.services.list_eligible_demands import (
-	_already_planned_amount,
-)
+from kentender_procurement.procurement_planning.services.get_plan_builder import get_plan_builder
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
 	remove_plan_item_from_plan,
 )
@@ -67,7 +62,9 @@ def run(*, reset_first: bool = False, force: bool = True) -> dict[str, Any]:
 		plan=plan_name,
 		plan_item=item_name,
 		reason=REMOVE_REASON,
-		concurrency_token=token,
+		draft_version=v2_name,
+		expected_version_token=token,
+		idempotency_key="SCN-PLN-REMOVE-001",
 		user=planner,
 	)
 	frappe.set_user("Administrator")
@@ -91,20 +88,30 @@ def _snapshot(
 	remove_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
 	planner = C.USER_PLANNING_OFFICER
-	builder = get_plan_builder(plan=plan_name, user=planner)
+	update = get_plan_builder(plan=plan_name, user=planner)
 	demand = frappe.db.get_value("Demand", {"demand_code": C.DEMAND_CODE_RETURNED}, "name")
 	# Eligibility is a Demand projection (status / usage / remaining allocs), not the
 	# DHP-scoped planner's list_eligible filter. 019 is HRMD-owned.
 	status = frappe.db.get_value("Demand", demand, "status") if demand else None
 	usage = frappe.db.get_value("Demand", demand, "planning_usage") if demand else None
 	ready = int(frappe.db.get_value("Demand", demand, "planning_ready") or 0) if demand else 0
-	planned_remaining = flt(_already_planned_amount(demand)) if demand else 0.0
+	need_items = (
+		frappe.get_all("Demand Item", filters={"demand": demand}, pluck="name")
+		if demand else []
+	)
+	has_active_hold = bool(
+		need_items
+		and frappe.db.exists(
+			"Plan Demand Allocation",
+			{"demand_item": ["in", need_items], "status": ["in", ["Draft", "Effective"]]},
+		)
+	)
 	demand_eligible = bool(
 		demand
 		and status == "Approved"
 		and ready
 		and usage != "Fully planned"
-		and planned_remaining <= 0.0001
+		and not has_active_hold
 	)
 	v1_status = frappe.db.get_value(
 		"Procurement Plan Version",
@@ -118,7 +125,7 @@ def _snapshot(
 		"plan_item": item_name,
 		"plan_item_code": C.PLAN_ITEM_CODE_SCN,
 		"baseline_state": frappe.db.get_value("Procurement Plan Item", item_name, "baseline_state"),
-		"planned_total": flt(builder.get("planned_total")),
+		"planned_total": flt(update.get("planned_total")),
 		"expected_total": C.PLAN_AMOUNT_V1,
 		"demand_code": C.DEMAND_CODE_RETURNED,
 		"demand_eligible": demand_eligible,

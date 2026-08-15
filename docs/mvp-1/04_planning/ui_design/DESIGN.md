@@ -116,7 +116,7 @@ spacing:
   stack-xs: 0.25rem
 ---
 
-**Approval:** Accompanying HTML `PLN-UI-01.html`…`PLN-UI-10.html` is the approved Planning MVP-1 visual contract (9 August 2026). Hand-port main content into the KenTender Desk shell; ignore mock “GovProcure Alpha” branding in the HTML.
+**Approval:** `PLN-UI-01.html`…`PLN-UI-04.html` remain the base visual inputs. The controlling HTML for PLN-UI-05 through PLN-UI-09 is under `../revision/` (`PLN-UI-05-1`, `05A-1…4`, `06`, `07`, `07A-1…2`, `08-1…2`, and `09`). PLN-UI-10 is retired. Hand-port application content into the KenTender Desk shell and omit mock chrome and in-canvas breadcrumbs.
 
 ## Brand & Style
 

@@ -15,16 +15,11 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 
 
 def period_dates_for_financial_year(financial_year: str) -> tuple[str, str]:
-	"""Map FY string ``YYYY/YY`` to period start/end (1 Jul → 30 Jun)."""
-	fy = (financial_year or "").strip()
-	if "/" not in fy:
-		frappe.throw(_("Financial year must use YYYY/YY format."), title="PLN_FY_FORMAT")
-	start_year_s, _end = fy.split("/", 1)
-	try:
-		start_year = int(start_year_s)
-	except ValueError:
-		frappe.throw(_("Financial year must use YYYY/YY format."), title="PLN_FY_FORMAT")
-	return f"{start_year}-07-01", f"{start_year + 1}-06-30"
+	"""Compatibility wrapper over Core's governed ERPNext Fiscal Year service."""
+	from kentender_core.services.financial_context import resolve_fiscal_year
+
+	context = resolve_fiscal_year(financial_year)
+	return context["start_date"], context["end_date"]
 
 
 def assert_planning_actor(user: str | None = None) -> str:
@@ -78,22 +73,15 @@ def ensure_unique_plan(procuring_entity: str, financial_year: str, *, exclude: s
 
 
 def next_plan_code(procuring_entity: str, financial_year: str) -> str:
-	pe = (procuring_entity or "").replace("PE-", "").strip() or "PE"
-	fy = (financial_year or "").strip().replace("/", "-")
-	base = f"PLN-{pe}-{fy}"
-	if not frappe.db.exists("Procurement Plan", {"plan_code": base}):
-		return base
-	for i in range(2, 100):
-		code = f"{base}-{i:02d}"
-		if not frappe.db.exists("Procurement Plan", {"plan_code": code}):
-			return code
-	return f"{base}-{frappe.generate_hash(length=4).upper()}"
+	pe = frappe.db.get_value("Procuring Entity", procuring_entity, "entity_code") or procuring_entity
+	pe_code = (pe or "PE").removeprefix("PE-").strip() or "PE"
+	fy_start = (financial_year or "").split("/", 1)[0]
+	return f"PLN-{pe_code}-{fy_start}-001"
 
 
 def next_plan_item_code(plan_code: str) -> str:
-	base = (plan_code or "PLN").replace("PLN-", "PPI-", 1)
-	if not base.startswith("PPI-"):
-		base = f"PPI-{base}"
+	parts = (plan_code or "").split("-")
+	base = f"PPI-{parts[1]}-{parts[2]}" if len(parts) >= 4 else (plan_code or "PLN").replace("PLN-", "PPI-", 1)
 	for i in range(1, 1000):
 		code = f"{base}-{i:03d}"
 		if not frappe.db.exists("Procurement Plan Item", {"plan_item_code": code}):

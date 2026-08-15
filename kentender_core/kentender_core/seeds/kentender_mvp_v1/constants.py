@@ -149,7 +149,6 @@ CANONICAL_USERS: Final[tuple[str, ...]] = (
 	USER_PLANNING_OFFICER,
 	USER_PLANNING_REVIEWER,
 	USER_ACCOUNTING_OFFICER,
-	USER_PLAN_APPROVER,
 	USER_TENDER_INITIATOR,
 	USER_COUNTY_PLANNER,
 	USER_BUSINESS_APPROVER,
@@ -168,6 +167,7 @@ RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (
 	"budget.authority@moh.test",
 	"budget.officer.authority@moh.test",
 	"budget.officer@moe.test",
+	USER_PLAN_APPROVER,
 	USER_OTHER_ENTITY,
 )
 

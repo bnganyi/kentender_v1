@@ -25,6 +25,25 @@ from kentender_core.seeds.kentender_mvp_v1.validate import (
 LATEST_STAGE = "planning"
 
 
+def _ensure_financial_years() -> list[str]:
+	"""Governed ERPNext Fiscal Years used by the deterministic Planning fixtures."""
+	created: list[str] = []
+	for start in (2026, 2027, 2028, 2029):
+		label = f"{start}/{str(start + 1)[-2:]}"
+		values = {
+			"year": label,
+			"year_start_date": f"{start}-07-01",
+			"year_end_date": f"{start + 1}-06-30",
+			"disabled": 0,
+		}
+		if frappe.db.exists("Fiscal Year", label):
+			frappe.db.set_value("Fiscal Year", label, "disabled", 0, update_modified=False)
+		else:
+			frappe.get_doc({"doctype": "Fiscal Year", **values}).insert(ignore_permissions=True)
+			created.append(label)
+	return created
+
+
 def _assert_demo_allowed(*, force: bool = False) -> None:
 	if force:
 		return
@@ -72,6 +91,7 @@ def run_kentender_mvp_v1(
 			)
 
 		result["org"] = upsert_org()
+		result["fiscal_years_created"] = _ensure_financial_years()
 		result["users"] = upsert_canonical_users(commit=False)
 		result["strategy"] = upsert_strategy(reset=False)
 		result["budget"] = upsert_budget()

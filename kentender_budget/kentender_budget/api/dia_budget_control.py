@@ -9,6 +9,7 @@ lifecycle and readiness while delegating to `check_funding` / `reserve_funding`.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
@@ -82,6 +83,54 @@ def get_budget_line_context(budget_line_id: str | None = None):
 			"amount_available": available,
 		}
 	)
+
+
+@frappe.whitelist()
+def get_budget_lines_context(budget_line_ids: list[str] | str | None = None):
+	"""Return bounded identity context for several Budget Lines in two queries.
+
+	Consumers use this published adapter instead of importing Budget DocType
+	internals or resolving one line per projected row.
+	"""
+	values = budget_line_ids
+	if isinstance(values, str):
+		try:
+			values = json.loads(values)
+		except json.JSONDecodeError:
+			values = [part.strip() for part in values.split(",")]
+	ids = list(dict.fromkeys(str(value).strip() for value in (values or []) if str(value).strip()))
+	if not ids:
+		return _ok({})
+	lines = frappe.get_all(
+		"Budget Line",
+		filters={"name": ["in", ids]},
+		fields=["name", "budget", "generated_reference", "title", "currency", "is_active"],
+		limit=len(ids),
+	)
+	budget_ids = list({row.budget for row in lines if row.budget})
+	budgets = {
+		row.name: row
+		for row in frappe.get_all(
+			"Budget",
+			filters={"name": ["in", budget_ids]},
+			fields=["name", "procuring_entity", "fiscal_period", "currency", "status"],
+			limit=len(budget_ids),
+		)
+	} if budget_ids else {}
+	data: dict[str, dict[str, Any]] = {}
+	for line in lines:
+		budget = budgets.get(line.budget)
+		data[line.name] = {
+			"budget_line_id": line.name,
+			"budget_line_code": line.generated_reference or "",
+			"budget_line_name": line.title or line.generated_reference or line.name,
+			"budget": line.budget,
+			"procuring_entity": budget.procuring_entity if budget else "",
+			"fiscal_year": budget.fiscal_period if budget else "",
+			"currency": (line.currency or (budget.currency if budget else "") or "KES"),
+			"is_active": 1 if line.is_active and budget and budget.status == "Active" else 0,
+		}
+	return _ok(data)
 
 
 @frappe.whitelist()

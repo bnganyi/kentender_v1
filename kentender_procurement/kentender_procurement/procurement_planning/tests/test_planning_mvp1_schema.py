@@ -35,11 +35,15 @@ class TestPlanningMvp1Schema(IntegrationTestCase):
 			meta.get_field("status") is None or meta.get_field("lifecycle_state") is not None
 		)
 		self.assertIsNone(meta.get_field("status"))
+		self.assertIsNone(meta.get_field("coordinating_org_unit"))
+		for fieldname in ("title", "procuring_entity", "financial_year", "period_start", "period_end", "currency"):
+			self.assertTrue(meta.get_field(fieldname).read_only, msg=fieldname)
 
 	def test_version_status_options(self) -> None:
 		meta = frappe.get_meta("Procurement Plan Version")
 		opts = set((meta.get_field("status").options or "").split("\n"))
 		self.assertEqual(opts, set(VERSION_STATUSES))
+		self.assertIsNotNone(meta.get_field("open_version_slot"))
 
 	def test_item_and_allocation_options(self) -> None:
 		item_opts = set(
@@ -52,6 +56,19 @@ class TestPlanningMvp1Schema(IntegrationTestCase):
 			(frappe.get_meta("Plan Demand Allocation").get_field("status").options or "").split("\n")
 		)
 		self.assertEqual(alloc_opts, set(ALLOCATION_STATUSES))
+		allocation = frappe.get_meta("Plan Demand Allocation")
+		for fieldname in ("source_org_unit", "source_funding_allocation", "active_hold_key"):
+			self.assertIsNotNone(allocation.get_field(fieldname), msg=fieldname)
+
+	def test_revision_database_indexes_are_installed(self) -> None:
+		expected = {
+			"tabProcurement Plan": "uniq_pln_pe_fy",
+			"tabProcurement Plan Version": "uniq_pln_open_version",
+			"tabProcurement Plan Item": "uniq_pln_formation_batch",
+			"tabPlan Demand Allocation": "uniq_pln_active_hold",
+		}
+		for table, key in expected.items():
+			self.assertTrue(frappe.db.sql(f"show index from `{table}` where Key_name=%s", key), msg=key)
 
 	def test_module_registry_points_at_plan(self) -> None:
 		from kentender_core.module_registry import KT_MODULES

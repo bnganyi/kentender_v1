@@ -14,7 +14,11 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 
 
 class ProcurementPlanVersion(Document):
+	def before_insert(self) -> None:
+		self._sync_open_slot()
+
 	def validate(self) -> None:
+		self._sync_open_slot()
 		if self.is_new():
 			return
 		prior = frappe.db.get_value("Procurement Plan Version", self.name, "status")
@@ -27,3 +31,6 @@ class ProcurementPlanVersion(Document):
 				frappe._("Approved, Superseded and Cancelled plan versions are immutable."),
 				title="PLN_VERSION_IMMUTABLE",
 			)
+
+	def _sync_open_slot(self) -> None:
+		self.open_version_slot = self.plan if self.status in ("Draft", "In review", "Returned") else None

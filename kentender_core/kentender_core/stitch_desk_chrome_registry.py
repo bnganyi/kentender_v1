@@ -194,7 +194,7 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"app": "kentender_procurement",
 		"fixture_rel": "public/js/planning_ui_fixtures/workspace.js",
 		"desk_route": "planning-workspace",
-		"primary_cta_testid": "kt-pln-ui01-open-plan",
+		"primary_cta_testid": "kt-pln-ui01-primary-action",
 		"select_filter_attr": "data-kt-pln-filter",
 		"headline_selector": ".kt-pln-root h1, [data-testid='kt-pln-ui01-root'] h1",
 	},

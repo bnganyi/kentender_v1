@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.update_plan_item import (

@@ -67,7 +67,7 @@ def record_plan_decision(
 	try:
 		assert_planning_scope(
 			procuring_entity=cstr(plan.procuring_entity).strip(),
-			org_unit=cstr(plan.coordinating_org_unit or "").strip() or None,
+			org_unit=None,
 			user=actor,
 			require_write=True,
 		)
@@ -110,6 +110,7 @@ def record_plan_decision(
 			version_name,
 			{
 				"status": VERSION_RETURNED,
+				"open_version_slot": plan.name,
 				"concurrency_token": token,
 			},
 			update_modified=True,

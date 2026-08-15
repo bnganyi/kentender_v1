@@ -14,7 +14,7 @@ export const PLANNING_USERS = {
 	accountingOfficer:
 		process.env.UI_PLN_AO_USER || 'moh.accounting.officer@example.test',
 	designatedApprover:
-		process.env.UI_PLN_APPROVER_USER || 'moh.plan.approver@example.test',
+		process.env.UI_PLN_APPROVER_USER || 'moh.procurement.authority@example.test',
 	tenderInitiator:
 		process.env.UI_PLN_TENDER_INITIATOR_USER || 'moh.tender.initiator@example.test',
 	countyPlanner:
@@ -103,10 +103,10 @@ export type PlanningGate05Prep = PlanningGate04Prep & {
 };
 
 export type PlanningGate05ApprovalPrep = PlanningGate05Prep & {
-	reviewer_user?: string;
 	approver_user?: string;
 	viewer_user?: string;
 	version?: string;
+	review_task?: string;
 	review_route?: string;
 	ready_for_approval?: boolean;
 };
@@ -120,7 +120,7 @@ export type PlanningGate06ApprovedPrep = PlanningGate05ApprovalPrep & {
 };
 
 export type PlanningFinancePrep = PlanningGate05Prep & {
-	finance_item?: string;
+	finance_task?: string;
 	finance_status?: string;
 };
 
@@ -199,7 +199,7 @@ export async function preparePlanningGate05(page: Page): Promise<PlanningGate05P
 	return message;
 }
 
-/** Admin-only prepare for PLN-UI-08 review/approval (In review + recommended). */
+/** Admin-only prepare for the assigned PLN-UI-08 professional decision task. */
 export async function preparePlanningGate05Approval(
 	page: Page,
 ): Promise<PlanningGate05ApprovalPrep> {

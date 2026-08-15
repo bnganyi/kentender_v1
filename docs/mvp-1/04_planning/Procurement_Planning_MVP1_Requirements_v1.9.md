@@ -87,7 +87,7 @@ The module is not a package, contribution or compliance-questionnaire workbench.
 | Indicative lots | Planner indicates likely Tender lots without creating extra Plan Items |
 | Preference and reservation monitoring | Derived Plan-level coverage only when supported by governed source data; no generic item treatment questionnaire |
 | Approval and accountability | Finance confirmation followed by configured professional approval, with actor, time, reason and immutable version |
-| Publication and reporting | Approved Plan export/publication evidence and downstream implementation projections |
+| Reporting and implementation | Approved Plan export and downstream implementation projections |
 | Tender eligibility | Only an Active item in the current Approved Version may create a Planning handoff |
 
 MVP shall not use opaque scoring or autonomous procurement decisions.
@@ -116,7 +116,6 @@ Planning owns:
 - procurement description, category, method, arrangement, schedule and indicative lotting;
 - multi-Demand Plan Item formation decision and reason evidence;
 - planning validation and professional decisions;
-- Plan publication evidence;
 - immutable Planning Handoff Snapshot; and
 - implementation projections and Planning audit events.
 
@@ -382,7 +381,7 @@ The ordinary editor shall not contain aggregation controls, Departmental Contrib
 | PLN-FR-060 | Approved Versions shall be immutable. |
 | PLN-FR-061 | Add Plan Item shall create or reuse one Draft successor without a manual revision step. |
 | PLN-FR-062 | The current Approved Version and existing Tender handoffs shall remain operational while the successor is Draft/In review/Returned. |
-| PLN-FR-063 | PLN-UI-10 shall focus on changed items and show unchanged operational items as read-only context. |
+| PLN-FR-063 | PLN-UI-05 shall focus on changed items and show unchanged operational items as read-only context. |
 | PLN-FR-064 | An addition after approval shall capture one concise update reason. |
 | PLN-FR-065 | Approval of the successor shall atomically replace the current Version without duplicating unchanged item identity or handoffs. |
 | PLN-FR-066 | A scoped Procurement Planner shall be able to remove a draft-only Proposed Plan Item from the editable Draft or propose removal of an eligible Active Plan Item through the Draft successor. |
@@ -468,7 +467,6 @@ Take-up requires:
 | Plan Demand Allocation | Need Item quantity/value lineage to one Plan Item |
 | Plan Decision | Professional review/return/approval evidence |
 | Plan Validation Result | Validation run and business-readable issues |
-| Publication Event | Approved Plan publication/export evidence |
 | Planning Handoff Snapshot | Immutable source for Tender take-up |
 
 Finance confirmation shall reuse the existing Demand Funding Allocation, Budget availability/reservation service and existing decision/audit foundation, extended with Plan Item/version context where required. It shall not introduce a generic approval engine or separate Finance workbench.
@@ -519,14 +517,13 @@ Repository public service names are authoritative when already used and semantic
 | PLN-UI-02 | Create annual Plan |
 | PLN-UI-03 | Empty Draft Plan builder |
 | PLN-UI-04 | Select one or more Approved Demands and choose separate or compatible combined formation when needed |
-| PLN-UI-05 | Draft Plan with Proposed Plan Item |
+| PLN-UI-05 | Unified populated Draft builder for initial and successor Versions |
 | PLN-UI-05A | Remove Plan Item confirmation dialog, reused for draft removal and proposed removal |
 | PLN-UI-06 | Focused Plan Item editor |
 | PLN-UI-07 | Finance funding confirmation task — sufficient-funding state |
 | PLN-UI-07A | Finance funding confirmation task — shortfall state |
 | PLN-UI-08 | Head-of-Procurement review and approval task |
 | PLN-UI-09 | Approved Plan and implementation |
-| PLN-UI-10 | Draft Plan update overview |
 
 Screen composition is controlled by Stitch v2.0. Requirements control behaviour, ownership, state and authority.
 
@@ -610,7 +607,7 @@ Screen composition is controlled by Stitch v2.0. Requirements control behaviour,
 | PLN-AC-020 | Canonical seed and post-approval scenario run twice without duplication and with correct arithmetic. |
 | PLN-AC-021 | Neutral record visibility does not expose Finance or approval task forms/actions. |
 | PLN-AC-022 | A shortfall state shows the exact deficit, prevents confirmation and overrides, and returns to Confirmable on the same task only after governed funding resolution. |
-| PLN-AC-023 | A planner can remove a draft-only Proposed item from PLN-UI-05/10 through one confirmation; the item disappears from the Draft projection, history remains and its source Demand becomes eligible again. |
+| PLN-AC-023 | A planner can remove a draft-only Proposed item from PLN-UI-05 through one confirmation; the item disappears from the Draft projection, history remains and its source Demand becomes eligible again. |
 | PLN-AC-024 | Removing a Finance-confirmed draft-only item cancels the open task and releases its reservation once; a retry creates no duplicate release or audit event. |
 | PLN-AC-025 | Proposing removal of an Active item creates/reuses a Draft successor while the current Approved item remains operational and its Demand remains unavailable for replanning. |
 | PLN-AC-026 | Successor approval makes an eligible proposed removal effective atomically; a concurrent/new Tender handoff blocks removal approval. |

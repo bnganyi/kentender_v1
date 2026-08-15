@@ -1,0 +1,372 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Draft Plan Workspace - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-tertiary-container": "#ccd2e7",
+                        "inverse-primary": "#b2c5ff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "secondary": "#00687b",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "surface-container-high": "#e7e8ea",
+                        "outline-variant": "#c3c6d6",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "surface-bright": "#f8f9fb",
+                        "surface-container": "#edeef0",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "data-committed": "#6366F1",
+                        "surface-variant": "#e1e2e4",
+                        "secondary-container": "#50dcff",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-tint": "#0c56d0",
+                        "surface-container-lowest": "#ffffff",
+                        "status-reserved": "#F59E0B",
+                        "primary-fixed": "#dae2ff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary": "#003d9b",
+                        "on-error": "#ffffff",
+                        "border-subtle": "#DFE1E6",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "on-primary-container": "#c4d2ff",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "on-primary-fixed": "#001848",
+                        "status-available": "#10B981",
+                        "tertiary": "#3d4354",
+                        "on-tertiary-fixed": "#151b2b",
+                        "surface": "#f8f9fb",
+                        "surface-dim": "#d9dadc",
+                        "tertiary-fixed": "#dce2f8",
+                        "on-secondary-fixed": "#001f27",
+                        "surface-container-low": "#f3f4f6",
+                        "background": "#f8f9fb",
+                        "on-surface-variant": "#434654",
+                        "outline": "#737685",
+                        "primary-container": "#0052cc",
+                        "tertiary-container": "#545a6c",
+                        "inverse-surface": "#2e3132",
+                        "secondary-fixed": "#afecff",
+                        "status-exhausted": "#E11D48",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#005f71",
+                        "on-background": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter-md": "1rem",
+                        "section-gap": "1.5rem",
+                        "stack-xs": "0.25rem",
+                        "container-padding": "1rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-lg": ["Manrope"],
+                        "data-md": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-bright dark:bg-inverse-surface border-b border-subtle dark:border-outline-variant flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50">
+<div class="flex items-center gap-6">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">KenTender</div>
+<nav aria-label="Main Navigation" class="hidden md:flex gap-1 h-full items-center">
+<a class="text-on-surface-variant dark:text-outline-variant px-3 py-2 rounded hover:bg-surface-container-low dark:hover:bg-on-surface-variant transition-colors font-label-caps text-label-caps flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    Dashboard
+                </a>
+<a class="text-on-surface-variant dark:text-outline-variant px-3 py-2 rounded hover:bg-surface-container-low dark:hover:bg-on-surface-variant transition-colors font-label-caps text-label-caps flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+                    Requisitions
+                </a>
+<a aria-current="page" class="text-primary font-bold border-b-2 border-primary px-3 py-2 flex items-center gap-2 font-label-caps text-label-caps h-full opacity-80 scale-95 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &quot;FILL&quot; 1;">assignment</span>
+                    Procurement Plan
+                </a>
+<a class="text-on-surface-variant dark:text-outline-variant px-3 py-2 rounded hover:bg-surface-container-low dark:hover:bg-on-surface-variant transition-colors font-label-caps text-label-caps flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+                    Vendor Registry
+                </a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-subtle rounded-full text-body-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 transition-all w-64 placeholder-on-surface-variant" placeholder="Search..." type="text">
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div aria-label="User profile avatar: Mercy Kilonzo" class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm select-none">
+                MK
+            </div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar (Hidden on Mobile, Visible on Desktop) -->
+<aside class="bg-surface-container-low dark:bg-inverse-surface border-r border-subtle dark:border-outline-variant fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 flex flex-col z-40 hidden lg:flex">
+<div class="p-4 pb-2 border-b border-subtle/50 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white border border-subtle flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-extrabold text-primary dark:text-inverse-primary truncate">KenTender</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Public Procurement Portal</p>
+</div>
+</div>
+</div>
+<div class="px-4 py-2">
+<button class="w-full bg-primary text-on-primary py-2.5 rounded font-label-caps text-label-caps flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    New Requisition
+                </button>
+</div>
+<nav aria-label="Sidebar Navigation" class="flex-1 overflow-y-auto py-2 flex flex-col gap-1 px-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">description</span>
+                    Requisitions
+                </a>
+<a aria-current="page" class="flex items-center gap-3 px-4 py-3 text-primary bg-surface-container-highest border-l-4 border-primary rounded-r font-body-md text-body-md font-medium translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">assignment</span>
+                    Procurement Plan
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Vendor Registry
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Audit Logs
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+<div class="p-2 border-t border-subtle mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded font-body-md text-body-md text-status-exhausted hover:bg-error-container/20" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+                    Logout
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto lg:ml-64 bg-background">
+<!-- Page Header Header -->
+<div class="bg-surface border-b border-subtle py-6 px-6 lg:px-8">
+<div class="max-w-7xl mx-auto flex flex-col gap-4">
+<!-- Breadcrumb -->
+<nav aria-label="Breadcrumb" class="flex items-center text-body-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Ministry of Health</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface font-medium">2028/29</span>
+</nav>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-1">Procurement Planning</h1>
+<div class="flex items-center gap-4 text-body-sm text-on-surface-variant">
+<span class="font-label-caps text-label-caps text-outline uppercase">PROCURING ENTITY:</span>
+<span class="font-medium">Ministry of Health</span>
+<span class="text-outline border-l border-subtle h-4 mx-1"></span>
+<span class="font-label-caps text-label-caps text-outline uppercase">FINANCIAL YEAR:</span>
+<span class="font-medium">2028/29</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-5 py-2.5 rounded font-label-caps text-label-caps flex items-center gap-2 hover:bg-primary/90 transition-colors whitespace-nowrap shadow-sm shadow-primary/20">
+                            Continue planning
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Dashboard Content Container -->
+<div class="p-6 lg:p-8 max-w-7xl mx-auto flex flex-col gap-section-gap">
+<!-- Current Plan Panel -->
+<section class="bg-white border border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="p-5 md:p-6 border-subtle bg-surface-bright flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Ministry of Health Annual Procurement Plan 2028/29</h2>
+<span class="font-data-md text-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded border border-subtle/50">PLN-MOH-2028-001</span>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-on-surface-variant mt-2"><span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-reserved"></span> Open Plan</span><span class="text-subtle">·</span><span class="">Draft Version 1</span><span class="text-subtle mx-1">|</span><span class="italic">"The annual Plan is ready for its first Approved Demands."</span></div>
+
+</div>
+</div>
+<!-- Summary Strip -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 p-section-gap border-t border-subtle">
+  <!-- Plan Items -->
+  <div class="flex flex-col gap-1">
+    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Plan Items</span>
+    <div class="mt-2">
+      <span class="font-data-md text-data-md text-on-surface">0</span>
+    </div>
+  </div>
+  <!-- Draft Planned Value -->
+  <div class="flex flex-col gap-1 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
+    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Draft Planned Value</span>
+    <div class="mt-2">
+      <span class="font-data-md text-data-md text-on-surface">KES 0</span>
+    </div>
+  </div>
+  <!-- Approved Demands Available -->
+  <div class="flex flex-col gap-1 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
+    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approved Demands Available</span>
+    <div class="mt-2">
+      <span class="font-data-md text-data-md text-primary">2</span>
+    </div>
+  </div>
+  <!-- Validation -->
+  <div class="flex flex-col gap-1 border-t md:border-t-0 md:border-l border-subtle pt-4 md:pt-0 md:pl-6">
+    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Validation</span>
+    <div class="flex items-center gap-2 mt-2">
+      <span class="material-symbols-outlined text-outline text-sm">pending_actions</span>
+      <span class="font-body-md text-body-md text-on-surface">Not run</span>
+    </div>
+  </div>
+</div>
+</section>
+<!-- Work Requiring Action Section -->
+<section class="flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-status-reserved">assignment_late</span>
+                        Work requiring action
+                    </h3>
+<div class="bg-white border border-subtle rounded-lg overflow-x-auto shadow-sm">
+<table class="w-full text-left border-collapse min-w-[900px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-subtle text-on-surface-variant">
+<th class="p-4 font-label-caps text-label-caps uppercase w-1/4">Work Item</th>
+<th class="p-4 font-label-caps text-label-caps uppercase">Type</th>
+<th class="p-4 font-label-caps text-label-caps uppercase">Organisation Unit</th>
+<th class="p-4 font-label-caps text-label-caps uppercase text-right">Amount</th>
+<th class="p-4 font-label-caps text-label-caps uppercase">Why it needs action</th>
+<th class="p-4 font-label-caps text-label-caps uppercase">Status</th>
+<th class="p-4 font-label-caps text-label-caps uppercase text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="p-4 align-top">
+<div class="font-body-md font-medium text-on-surface">Clinical training laptops for digital health rollout</div>
+<div class="font-data-md text-xs text-on-surface-variant mt-1">DMD-MOH-2028-001</div>
+</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Approved Demand</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Human Resources Management and Development</td>
+<td class="p-4 align-top font-data-md text-data-md text-on-surface text-right">KES 48,000,000</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Approved Demand is ready to add to the FY 2028/29 Plan.</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-1 rounded bg-status-available/10 text-status-available font-label-caps text-[10px] border border-status-available/20 whitespace-nowrap">
+                                            READY FOR PLANNING
+                                        </span>
+</td>
+<td class="p-4 align-top text-right">
+<button class="inline-flex items-center gap-1 text-primary hover:text-primary-container font-label-caps text-label-caps transition-colors group-hover:underline">
+                                            Add to plan
+                                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="p-4 align-top">
+<div class="font-body-md font-medium text-on-surface">Clinical deployment laptops for digital health rollout</div>
+<div class="font-data-md text-xs text-on-surface-variant mt-1">DMD-MOH-2028-002</div>
+</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Approved Demand</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Directorate of Digital Health and Policy</td>
+<td class="p-4 align-top font-data-md text-data-md text-on-surface text-right">KES 72,000,000</td>
+<td class="p-4 align-top font-body-sm text-on-surface-variant">Approved Demand is ready to add to the FY 2028/29 Plan.</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-1 rounded bg-status-available/10 text-status-available font-label-caps text-[10px] border border-status-available/20 whitespace-nowrap">
+                                            READY FOR PLANNING
+                                        </span>
+</td>
+<td class="p-4 align-top text-right">
+<button class="inline-flex items-center gap-1 text-primary hover:text-primary-container font-label-caps text-label-caps transition-colors group-hover:underline">
+                                            Add to plan
+                                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Waiting on Others Section -->
+<section class="flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">hourglass_empty</span>
+                        Waiting on others
+                    </h3>
+<div class="bg-white border border-subtle border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-outline-variant text-[48px] mb-3">check_circle</span>
+<p class="font-body-md text-on-surface-variant text-tertiary">Nothing is currently waiting on another reviewer.</p>
+</div>
+</section>
+</div>
+</main>
+</div>
+
+
+</body></html>

@@ -110,7 +110,8 @@
 		}
 	};
 
-	frappe.pages[PAGE_SLUG].on_page_hide = function () {
-		document.body.classList.remove("kt-pln-editor-active");
+	frappe.pages[PAGE_SLUG].on_page_hide = function (wrapper) {
+		if (wrapper && wrapper.page) wrapper.page.main.find('[data-testid="kt-pln-ui06-root"]').trigger("kt:teardown");
+		document.body.classList.remove("kt-pln-editor-active", "kt-pln-surface");
 	};
 })();

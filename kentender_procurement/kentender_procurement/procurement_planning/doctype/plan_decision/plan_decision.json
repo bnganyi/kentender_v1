@@ -16,6 +16,9 @@
   "decision",
   "reason",
   "decided_at",
+  "task_id",
+  "task_iteration",
+  "command_idempotency_key",
   "fixture_namespace"
  ],
  "fields": [
@@ -86,6 +89,29 @@
    "fieldtype": "Datetime",
    "label": "Decided At",
    "reqd": 1
+  },
+  {
+   "fieldname": "task_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Task ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "task_iteration",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Task Iteration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "command_idempotency_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Command Idempotency Key",
+   "read_only": 1,
+   "unique": 1
   }
  ],
  "links": [],

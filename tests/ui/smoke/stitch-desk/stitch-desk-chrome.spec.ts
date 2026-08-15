@@ -180,6 +180,8 @@ const SURFACES = [
 		rootTestId: "kt-pln-ui01-root",
 		liveAttr: "data-kt-pln-live",
 		primaryCtaTestId: "kt-pln-ui01-primary-action",
+		// PLN-UI-01.html uses Tailwind `rounded` (4px) for this CTA.
+		primaryRadiusMin: 4,
 		selectSelector: '[data-kt-pln-filter="financial_year"]',
 	},
 	{
@@ -221,14 +223,6 @@ const SURFACES = [
 		liveAttr: "data-kt-pln-live",
 		primaryCtaTestId: "kt-pln-ui09-add-item",
 		selectSelector: '[data-kt-pln-ui09-filter="ou"]',
-	},
-	{
-		id: "procurement-plan-update",
-		route: "/desk/procurement-plan-update",
-		rootTestId: "kt-pln-ui10-root",
-		liveAttr: "data-kt-pln-live",
-		primaryCtaTestId: "kt-pln-ui10-validate",
-		primaryCtaStyle: "bordered" as const,
 	},
 ] as const;
 
@@ -374,33 +368,6 @@ test.describe("Stitch Desk chrome baseline", () => {
 				expect(plan).toBeTruthy();
 				route = `/desk/procurement-plan-approved?plan=${encodeURIComponent(plan)}`;
 			}
-			if (surface.id === "procurement-plan-update") {
-				await page.goto("/desk", { waitUntil: "domcontentloaded" });
-				const prep = await page.evaluate(async () => {
-					const r = await (
-						window as unknown as {
-							frappe: {
-								call: (o: {
-									method: string;
-									args?: Record<string, unknown>;
-								}) => Promise<{
-									message?: { empty_draft_plan?: string };
-								}>;
-							};
-						}
-					).frappe.call({
-						method:
-							"kentender_procurement.procurement_planning.api.prepare_planning_gate06_approved_ui",
-						args: { with_successor: 1 },
-					});
-					return r.message || {};
-				});
-				await page.context().clearCookies();
-				await loginAsMohPlanningOfficer(page);
-				const plan = prep.empty_draft_plan || "";
-				expect(plan).toBeTruthy();
-				route = `/desk/procurement-plan-update?plan=${encodeURIComponent(plan)}`;
-			}
 			await page.goto(route, { waitUntil: "domcontentloaded" });
 			const root = page.locator(
 				`[data-testid="${surface.rootTestId}"][${surface.liveAttr}="1"]`,
@@ -421,6 +388,8 @@ test.describe("Stitch Desk chrome baseline", () => {
 					"assertEditableInputs" in surface ? surface.assertEditableInputs : false,
 				assertHeadline:
 					"assertHeadline" in surface ? surface.assertHeadline : true,
+				primaryRadiusMin:
+					"primaryRadiusMin" in surface ? surface.primaryRadiusMin : undefined,
 				headlineSelector:
 					surface.id === "budget-overview" ||
 					surface.id === "budget-lines" ||

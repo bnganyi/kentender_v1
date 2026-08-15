@@ -597,6 +597,13 @@ def assert_pe_resolved_for_create(
 			"Procuring Entity selection is required when multiple entities are assigned",
 		)
 	pe = (scope.get("procuring_entity") or "").strip()
+	requested = (selected_pe or "").strip()
+	if requested and pe and requested != pe:
+		throw_planning_error(
+			ERR_PE_SELECTION,
+			"Selected Procuring Entity is not an eligible Planning assignment",
+			exc=frappe.PermissionError,
+		)
 	if not pe:
 		throw_planning_error(
 			ERR_PE_BLOCKED,

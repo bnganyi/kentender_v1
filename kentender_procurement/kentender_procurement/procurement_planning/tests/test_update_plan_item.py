@@ -11,7 +11,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.mvp1_constants import VERSION_IN_REVIEW
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
@@ -21,10 +21,10 @@ from kentender_procurement.procurement_planning.services.submit_plan_for_review 
 	submit_plan_for_review,
 )
 from kentender_procurement.procurement_planning.services.update_plan_item import (
-	update_plan_item,
+	update_plan_item as _update_plan_item,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
-from frappe.utils import cstr
+from frappe.utils import add_days, cstr
 
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	complete_plan_item_for_signoff,
@@ -34,6 +34,16 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	ensure_scope,
 	make_approved_demand,
 )
+
+
+def update_plan_item(**kwargs):
+	"""Direct-test adapter for the approved editor concurrency/idempotency contract."""
+	item = kwargs["plan_item"]
+	plan = frappe.db.get_value("Procurement Plan Item", item, "plan")
+	focus = frappe.db.get_value("Procurement Plan", plan, "open_draft_version") or frappe.db.get_value("Procurement Plan", plan, "current_approved_version")
+	kwargs.setdefault("expected_version_token", frappe.db.get_value("Procurement Plan Version", focus, "concurrency_token"))
+	kwargs.setdefault("idempotency_key", f"TEST-UI06-{uuid.uuid4().hex}")
+	return _update_plan_item(**kwargs)
 
 
 def _unique_fy() -> str:
@@ -83,7 +93,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			user=planner,
 			fields={
 				"requirement_description": "Upgrade national DHI stack",
-				"procurement_category": "ICT",
+				"procurement_category": "Goods",
 				"procurement_method": "Open tender",
 				"arrangement": "Single year",
 				"lotting_decision": "Multiple lots",
@@ -93,13 +103,14 @@ class TestUpdatePlanItem(IntegrationTestCase):
 				"ms_tender_opening": "2027-10-20",
 				"ms_evaluation_completed": "2027-11-15",
 				"ms_award_approval": "2027-12-15",
+				"ms_notification_of_award": "2027-12-20",
 				"ms_contract_signature": "2028-01-15",
 				"ms_delivery_completion": "2028-03-31",
 			},
 		)
 		self.assertTrue(result["ok"], result)
 
-	def test_strategy_and_pvc_writes_ignored_from_editor(self) -> None:
+	def test_strategy_and_pvc_writes_rejected_by_editor(self) -> None:
 		"""PLN-AC-018 — Planning cannot author strategy / PVC / treatment notes."""
 		planner, item = self._item()
 		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
@@ -118,7 +129,8 @@ class TestUpdatePlanItem(IntegrationTestCase):
 				"value_treatment_note": "Planning treatment note — must not persist",
 			},
 		)
-		self.assertTrue(result["ok"], result)
+		self.assertFalse(result["ok"], result)
+		self.assertEqual(result.get("error_code"), "PLN_ITEM_FIELDS_NOT_PERMITTED")
 		after = frappe.db.get_value(
 			"Procurement Plan Item Version",
 			iv,
@@ -166,7 +178,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			before,
 		)
 
-	def test_preference_writes_ignored_from_editor(self) -> None:
+	def test_preference_writes_rejected_from_editor(self) -> None:
 		"""C02: preference keys no longer mutate Plan Item Version via update_plan_item."""
 		planner, item = self._item()
 		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
@@ -174,7 +186,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		)
 
 		before = get_plan_item_editor(plan_item=item, user=planner)
-		assigned_before = before["preference_reservation"]["assigned"]
+		self.assertNotIn("preference_reservation", before)
 		result = update_plan_item(
 			plan_item=item,
 			user=planner,
@@ -185,10 +197,10 @@ class TestUpdatePlanItem(IntegrationTestCase):
 				"planned_reserved_value": 9999,
 			},
 		)
-		self.assertTrue(result["ok"], result)
+		self.assertFalse(result["ok"], result)
+		self.assertEqual(result.get("error_code"), "PLN_ITEM_FIELDS_NOT_PERMITTED")
 		after = get_plan_item_editor(plan_item=item, user=planner)
-		self.assertEqual(after["preference_reservation"]["assigned"], assigned_before)
-		self.assertNotEqual(after["preference_reservation"].get("scheme"), "AGPO reservation")
+		self.assertNotIn("preference_reservation", after)
 
 	def test_retired_statutory_fields_absent_from_meta(self) -> None:
 		meta = frappe.get_meta("Procurement Plan Item Version")
@@ -200,17 +212,17 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		):
 			self.assertIsNone(meta.get_field(fieldname), fieldname)
 
-	def test_alternative_method_requires_grounds(self) -> None:
+	def test_alternative_method_is_not_configured(self) -> None:
 		planner, item = self._item()
 		result = update_plan_item(
 			plan_item=item,
 			user=planner,
 			fields={"procurement_method": "Direct procurement"},
 		)
-		self.assertTrue(result["ok"], result)
-		self.assertIn("method_override_grounds", result["field_issues"])
+		self.assertFalse(result["ok"], result)
+		self.assertEqual(result.get("error_code"), "PROCUREMENT_METHOD_NOT_CONFIGURED")
 
-	def test_multi_year_does_not_require_justification_fields(self) -> None:
+	def test_multi_year_requires_justification_fields(self) -> None:
 		planner, item = self._item()
 		result = update_plan_item(
 			plan_item=item,
@@ -218,8 +230,8 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			fields={"arrangement": "Multi-year"},
 		)
 		self.assertTrue(result["ok"], result)
-		self.assertNotIn("multi_year_justification", result["field_issues"])
-		self.assertNotIn("annual_funding_schedule", result["field_issues"])
+		self.assertIn("multi_year_justification", result["field_issues"])
+		self.assertIn("annual_funding_schedule", result["field_issues"])
 
 	def test_hod_owned_facts_rejected(self) -> None:
 		planner, item = self._item()
@@ -244,37 +256,35 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		)
 		self.assertTrue(result["ok"], result)
 		self.assertFalse(result.get("complete"))
-		self.assertIn(
-			"Confirm all milestone dates before requesting Finance confirmation.",
-			result.get("attention_message") or "",
-		)
+		self.assertIn("seven-date schedule", result.get("attention_message") or "")
 
 	def test_out_of_order_milestones_save_with_field_issues(self) -> None:
 		planner, item = self._item()
+		plan = frappe.db.get_value("Procurement Plan Item", item, "plan")
+		period_start = frappe.db.get_value("Procurement Plan", plan, "period_start")
 		result = update_plan_item(
 			plan_item=item,
 			user=planner,
 			fields={
-				"ms_invitation_published": "2027-09-15",
-				"ms_tender_opening": "2027-10-20",
-				"ms_evaluation_completed": "2027-10-10",
-				"ms_award_approval": "2027-12-15",
-				"ms_contract_signature": "2028-01-15",
-				"ms_delivery_completion": "2028-03-31",
+				"ms_invitation_published": add_days(period_start, 10),
+				"ms_tender_opening": add_days(period_start, 30),
+				"ms_evaluation_completed": add_days(period_start, 20),
+				"ms_award_approval": add_days(period_start, 35),
+				"ms_notification_of_award": add_days(period_start, 37),
+				"ms_contract_signature": add_days(period_start, 42),
+				"ms_delivery_completion": add_days(period_start, 90),
 			},
 		)
 		self.assertTrue(result["ok"], result)
 		self.assertIn("ms_evaluation_completed", result["field_issues"])
 		self.assertIn("chronolog", result["field_issues"]["ms_evaluation_completed"].lower())
-		import frappe
-
 		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
 		saved = frappe.db.get_value(
 			"Procurement Plan Item Version",
 			iv,
 			"ms_evaluation_completed",
 		)
-		self.assertEqual(str(saved), "2027-10-10")
+		self.assertEqual(str(saved), str(add_days(period_start, 20)))
 		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
 			get_plan_item_editor,
 		)
@@ -290,7 +300,14 @@ class TestUpdatePlanItem(IntegrationTestCase):
 		plan = frappe.db.get_value("Procurement Plan Item", item, "plan")
 		confirm_included_items_funding(plan=plan, planner=planner)
 		validate_plan(plan=plan, user=planner)
-		submit_plan_for_review(plan=plan, user=planner)
+		draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+		submitted = submit_plan_for_review(
+			plan=plan,
+			expected_token=frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token"),
+			idempotency_key=f"TEST-UI06-SUBMIT-{draft}",
+			user=planner,
+		)
+		self.assertTrue(submitted.get("ok"), submitted)
 		self.assertEqual(
 			frappe.db.get_value(
 				"Procurement Plan Version",
@@ -331,7 +348,7 @@ class TestUpdatePlanItem(IntegrationTestCase):
 			user=planner,
 			fields={
 				"requirement_description": "Saved without draft pointer",
-				"procurement_category": "ICT infrastructure and services",
+				"procurement_category": "Goods",
 			},
 		)
 		self.assertTrue(result["ok"], result)

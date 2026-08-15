@@ -22,6 +22,7 @@ MILESTONE_FIELDS = (
 	"ms_tender_opening",
 	"ms_evaluation_completed",
 	"ms_award_approval",
+	"ms_notification_of_award",
 	"ms_contract_signature",
 	"ms_delivery_completion",
 )
@@ -51,14 +52,8 @@ def collect_plan_item_field_issues(
 	issues: dict[str, str] = {}
 
 	method = cstr(_merged(iv, payload, "procurement_method") or "").strip()
-	recommended = cstr(getattr(iv, "recommended_method", None) or "Open tender").strip() or "Open tender"
-	if method and method != recommended:
-		if not cstr(_merged(iv, payload, "method_override_grounds") or "").strip():
-			issues["method_override_grounds"] = "Alternative method requires configured grounds."
-		if not cstr(_merged(iv, payload, "method_override_reason") or "").strip():
-			issues["method_override_reason"] = "Alternative method requires a reason."
-		if not cstr(_merged(iv, payload, "method_override_evidence") or "").strip():
-			issues["method_override_evidence"] = "Alternative method requires evidence."
+	if method and method != "Open tender":
+		issues["procurement_method"] = "Only the configured Open tender method is available in MVP."
 
 	lotting = cstr(_merged(iv, payload, "lotting_decision") or "").strip()
 	if lotting == "Multiple lots":
@@ -72,6 +67,13 @@ def collect_plan_item_field_issues(
 			)
 		if not cstr(_merged(iv, payload, "lot_basis") or "").strip():
 			issues["lot_basis"] = "Confirm the indicative lot basis before submit for review."
+
+	arrangement = cstr(_merged(iv, payload, "arrangement") or "").strip()
+	if arrangement == "Multi-year":
+		if not cstr(_merged(iv, payload, "multi_year_justification") or "").strip():
+			issues["multi_year_justification"] = "A multi-year arrangement requires a justification."
+		if not cstr(_merged(iv, payload, "annual_funding_schedule") or "").strip():
+			issues["annual_funding_schedule"] = "A multi-year arrangement requires an annual funding schedule."
 
 	dates: list[tuple[str, Any]] = []
 	for key in MILESTONE_FIELDS:

@@ -28,6 +28,12 @@
   "finance_confirmed_by",
   "finance_reservation",
   "finance_owned_reservation",
+  "finance_task_id",
+  "finance_task_iteration",
+  "finance_task_assignee",
+  "finance_task_state",
+  "finance_task_predecessor",
+  "finance_task_token",
   "strategy_snapshot",
   "pvc_snapshot",
   "validation_projection",
@@ -58,6 +64,7 @@
   "ms_tender_opening",
   "ms_evaluation_completed",
   "ms_award_approval",
+  "ms_notification_of_award",
   "ms_contract_signature",
   "ms_delivery_completion",
   "schedule_change_reason",
@@ -210,6 +217,51 @@
    "fieldtype": "Check",
    "label": "Planning-Owned Reservation",
    "default": 0
+  },
+  {
+   "fieldname": "finance_task_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Finance Task ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "finance_task_iteration",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Finance Task Iteration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_task_assignee",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Finance Task Assignee",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_task_state",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Finance Task State",
+   "options": "\nOpen\nConfirmed\nReturned\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_task_predecessor",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Finance Task Predecessor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_task_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Finance Task Token",
+   "read_only": 1
   },
   {
    "fieldname": "strategy_snapshot",
@@ -384,6 +436,11 @@
    "fieldname": "ms_award_approval",
    "fieldtype": "Date",
    "label": "Award Approval"
+  },
+  {
+   "fieldname": "ms_notification_of_award",
+   "fieldtype": "Date",
+   "label": "Notification of Award"
   },
   {
    "fieldname": "ms_contract_signature",

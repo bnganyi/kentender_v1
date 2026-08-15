@@ -12,12 +12,9 @@ from frappe.utils import cstr, flt, formatdate, nowdate
 
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	DOCTYPE_HANDOFF,
-	DOCTYPE_PUBLICATION,
 	FINANCE_CONFIRMED,
 	ITEM_ACTIVE,
 	PLAN_OPEN,
-	PUB_FAILED,
-	PUB_PUBLISHED,
 	TAKEUP_ACTIVE,
 	TAKEUP_NOT_TAKEN,
 	VERSION_APPROVED,
@@ -48,59 +45,6 @@ def _ou_label(ou: str) -> str:
 	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou)
 
 
-def _publication_dto(*, plan_version: str) -> dict[str, Any]:
-	empty = {
-		"status": "Not published",
-		"status_raw": "",
-		"destination": "Tender Portal",
-		"published_at": "",
-		"published_at_display": "",
-		"external_reference": "",
-		"failure_reason": "",
-		"event": "",
-		"published": False,
-	}
-	if not plan_version or not frappe.db.exists("DocType", DOCTYPE_PUBLICATION):
-		return empty
-	row = frappe.get_all(
-		DOCTYPE_PUBLICATION,
-		filters={"plan_version": plan_version},
-		fields=[
-			"name",
-			"channel",
-			"status",
-			"published_at",
-			"external_reference",
-			"failure_reason",
-		],
-		order_by="modified desc",
-		limit=1,
-	)
-	if not row:
-		return empty
-	ev = row[0]
-	status = cstr(ev.status)
-	if status == PUB_PUBLISHED:
-		label = "Published"
-	elif status == PUB_FAILED:
-		label = "Failed"
-	else:
-		label = status or "Not published"
-	return {
-		"status": label,
-		"status_raw": status,
-		"destination": cstr(ev.channel) or "Tender Portal",
-		"published_at": str(ev.published_at or ""),
-		"published_at_display": formatdate(ev.published_at, "dd MMM yyyy")
-		if ev.published_at
-		else "",
-		"external_reference": cstr(ev.external_reference or ""),
-		"failure_reason": cstr(ev.failure_reason or ""),
-		"event": ev.name,
-		"published": status == PUB_PUBLISHED,
-	}
-
-
 def _handoff_for_item(plan_item: str) -> dict[str, Any] | None:
 	if not plan_item or not frappe.db.exists("DocType", DOCTYPE_HANDOFF):
 		return None
@@ -128,7 +72,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	pe = cstr(plan_doc.procuring_entity).strip()
-	ou = cstr(plan_doc.coordinating_org_unit or "").strip() or None
+	ou = None
 	require_capability(
 		CAP_PLAN_VIEW,
 		procuring_entity=pe,
@@ -159,7 +103,7 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 	can_mutate = (not read_only) and bool(roles.intersection(ADD_DEMAND_ROLES))
 	lifecycle_open = cstr(plan_doc.lifecycle_state) == PLAN_OPEN
 	can_add_item = can_mutate and lifecycle_open
-	can_export = can_mutate and lifecycle_open
+	can_export = True
 
 	draft = cstr(plan_doc.open_draft_version or "").strip()
 	draft_number = 0
@@ -237,6 +181,8 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 			"takeup_label": takeup_label,
 			"tender_reference": tender_ref,
 			"milestone_label": milestone or None,
+			"actual_progress_label": "Tender active" if has_handoff else "Not started",
+			"variance_label": "On track" if has_handoff else "—",
 			"finance_status": effective_finance_status(iv),
 			"can_propose_removal": can_propose,
 			"removal_variant": "active" if can_propose else None,
@@ -252,8 +198,6 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 
 	item_count = len(items_out)
 	takeup_label = f"{taken_up} of {item_count}" if item_count else "0 of 0"
-	publication = _publication_dto(plan_version=approved)
-
 	successor_label = ""
 	successor_copy = ""
 	if has_successor:
@@ -299,19 +243,24 @@ def get_plan_implementation(*, plan: str, user: str | None = None) -> dict[str, 
 		"takeup_count": taken_up,
 		"takeup_label": takeup_label,
 		"has_downstream_actuals": False,
-		"publication": publication,
-		"publication_status_label": publication["status"],
 		"as_at_display": f"As at: {as_at}",
 		"reporting_period_label": f"FY {fy}" if fy else "",
 		"ou_options": ou_options,
 		"items": items_out,
-		"add_route": f"/app/procurement-plan-approved?plan={plan_doc.name}",
-		"update_route": (
-			f"/app/procurement-plan-update?plan={plan_doc.name}"
-			if has_successor
-			else f"/app/procurement-plan-approved?plan={plan_doc.name}"
-		),
+		"add_route": f"/app/procurement-plan-approved?plan={plan_doc.name}&add_demand=1",
+		"update_route": f"/app/procurement-plan-builder?plan={plan_doc.name}" if has_successor else "",
 		"approved_route": f"/app/procurement-plan-approved?plan={plan_doc.name}",
+		"version_history": [
+			{
+				"version": row.name,
+				"version_code": row.version_code,
+				"version_number": int(row.version_number),
+				"status": row.status,
+				"approved_by": cstr(row.approved_by),
+				"approved_at": str(row.approved_at or ""),
+			}
+			for row in frappe.get_all("Procurement Plan Version", filters={"plan": plan_doc.name, "status": ["in", ["Approved", "Superseded"]]}, fields=["name", "version_code", "version_number", "status", "approved_by", "approved_at"], order_by="version_number desc")
+		],
 		"secondary_line": (
 			f"Open Plan · Approved Version {approved_number} · Approved baseline is read-only"
 		),

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdministrator, loginAsBudgetOfficerAuthority } from "../../helpers/auth";
+import { loginAsAdministrator } from "../../helpers/auth";
 import {
+	loginAsMohBudgetOfficer,
 	loginAsMohPlanningOfficer,
 	loginAsMohPlanningViewer,
 	preparePlanningFinance,
@@ -10,8 +11,8 @@ import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 const ROOT = '[data-testid="kt-pln-ui03-root"]';
 
-function builderFinanceUrl(plan: string, item: string) {
-	return `/desk/procurement-plan-builder?plan=${encodeURIComponent(plan)}&finance_item=${encodeURIComponent(item)}`;
+function builderFinanceUrl(plan: string, task: string) {
+	return `/desk/procurement-plan-builder?plan=${encodeURIComponent(plan)}&finance_task=${encodeURIComponent(task)}`;
 }
 
 test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
@@ -23,10 +24,10 @@ test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinance(page);
 		expect(prep.empty_draft_plan).toBeTruthy();
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
-		await loginAsBudgetOfficerAuthority(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -58,10 +59,10 @@ test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
 	test("Viewer cannot open the Finance Confirm drawer", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinance(page);
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
 		await loginAsMohPlanningViewer(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -75,10 +76,10 @@ test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
 	test("planner cannot open the Finance drawer", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinance(page);
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -95,10 +96,10 @@ test.describe("PLN-UI-07 Finance confirmation (sufficient)", () => {
 	}) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinance(page);
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
-		await loginAsBudgetOfficerAuthority(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -123,10 +124,10 @@ test.describe("PLN-UI-07A Finance confirmation (shortfall)", () => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinanceShortfall(page);
 		expect(prep.empty_draft_plan).toBeTruthy();
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
-		await loginAsBudgetOfficerAuthority(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -154,7 +155,7 @@ test.describe("PLN-UI-07A Finance confirmation (shortfall)", () => {
 		});
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -172,10 +173,10 @@ test.describe("PLN-UI-07A Finance confirmation (shortfall)", () => {
 	}) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinanceShortfall(page);
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		await page.context().clearCookies();
-		await loginAsBudgetOfficerAuthority(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -195,11 +196,11 @@ test.describe("PLN-UI-07A Finance confirmation (shortfall)", () => {
 	}) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningFinanceShortfall(page);
-		expect(prep.finance_item).toBeTruthy();
+		expect(prep.finance_task).toBeTruthy();
 		const hold = prep.hold || "RSV-MOH-SHORT-001";
 		await page.context().clearCookies();
-		await loginAsBudgetOfficerAuthority(page);
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await loginAsMohBudgetOfficer(page);
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -223,7 +224,7 @@ test.describe("PLN-UI-07A Finance confirmation (shortfall)", () => {
 			return r.message || {};
 		}, hold);
 		expect(released.ok).toBeTruthy();
-		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_item || ""), {
+		await page.goto(builderFinanceUrl(prep.empty_draft_plan || "", prep.finance_task || ""), {
 			waitUntil: "domcontentloaded",
 		});
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({

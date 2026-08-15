@@ -14,7 +14,6 @@ from kentender_core.seeds.kentender_mvp_v1.constants import PLAYWRIGHT_FIXTURE_N
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	PLAN_OPEN,
 	PLAN_TYPE_ANNUAL,
-	PUB_NOT_SUBMITTED,
 	VALIDATION_NOT_RUN,
 	VERSION_DRAFT,
 )
@@ -80,9 +79,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 				"period_end": period_end,
 				"currency": "KES",
 				"plan_type": PLAN_TYPE_ANNUAL,
-				"coordinating_org_unit": UI_OU,
 				"lifecycle_state": PLAN_OPEN,
-				"publication_projection": PUB_NOT_SUBMITTED,
 				"fixture_namespace": PLAYWRIGHT_FIXTURE_NS,
 			}
 		)
@@ -97,7 +94,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 		frappe.db.set_value(
 			"Procurement Plan Version",
 			version_name,
-			{"status": VERSION_DRAFT, "validation_projection": VALIDATION_NOT_RUN},
+			{"status": VERSION_DRAFT, "open_version_slot": plan_name, "validation_projection": VALIDATION_NOT_RUN},
 			update_modified=False,
 		)
 	else:
@@ -108,6 +105,7 @@ def ensure_empty_draft_plan_fixture(*, commit: bool = True) -> dict[str, Any]:
 				"version_number": 1,
 				"version_code": version_code,
 				"status": VERSION_DRAFT,
+				"open_version_slot": plan_name,
 				"version_reason": "PLN-SEED-004 empty draft for UI",
 				"validation_projection": VALIDATION_NOT_RUN,
 				"concurrency_token": new_concurrency_token(),

@@ -1,53 +1,39 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-SVC-004 / Pack v1.3 — add Demand formation without cosmetic Keep separate."""
+"""Approved PLN-UI-04/04A/04B one-step formation contract."""
 
 from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import flt
 
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
-	add_demand_to_plan,
-)
-from kentender_procurement.procurement_planning.services.get_plan_builder import (
-	get_plan_builder,
-)
+from kentender_procurement.procurement_planning.services.add_demand_to_plan import add_demand_to_plan
+from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
-	approve_plan_via_gate05,
 	create_plan_as_planner,
-	ensure_approver_user,
 	ensure_planner_user,
 	ensure_scope,
 	make_approved_demand,
 )
+from kentender_procurement.procurement_planning.tests._gate02_helpers import PE_MOH, _ensure_ou
 
 
-def _attach_demand_snapshots(
-	demand: str, *, strategy_label: str, pvc_label: str
-) -> None:
-	frappe.get_doc(
-		{
-			"doctype": "Demand Strategy Reference",
-			"demand": demand,
-			"reference_type": "Primary",
-			"snapshot_label": strategy_label,
-		}
-	).insert(ignore_permissions=True)
-	pvc = frappe.db.get_value("Plan Value Commitment", {}, "name")
-	treatment = frappe.get_doc(
-		{
-			"doctype": "Demand Value Treatment",
-			"demand": demand,
-			"plan_value_commitment": pvc or "",
-			"treatment": "Pass-through from Approved Demand",
-			"pvc_snapshot": pvc_label,
-		}
+def _token(plan: str) -> str:
+	version = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+	return frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
+
+
+def _form(*, plan: str, demands: list[str], key: str, mode: str | None = None, reason: str | None = None):
+	return add_demand_to_plan(
+		plan=plan,
+		demands=demands,
+		expected_version_token=_token(plan),
+		formation_mode=mode,
+		formation_reason=reason,
+		idempotency_key=key,
+		user=ensure_planner_user(),
 	)
-	treatment.flags.ignore_mandatory = True
-	treatment.insert(ignore_permissions=True)
 
 
 class TestAddDemandToPlanGate04(IntegrationTestCase):
@@ -56,365 +42,112 @@ class TestAddDemandToPlanGate04(IntegrationTestCase):
 		super().setUpClass()
 		ensure_scope()
 
-	def _assert_no_keep_separate(self, item_version: str) -> None:
-		decision = (
-			frappe.db.get_value(
-				"Procurement Plan Item Version", item_version, "aggregation_decision"
-			)
-			or ""
-		)
-		self.assertNotEqual(decision, "Keep separate")
-
-	def test_creates_proposed_item_and_draft_allocation_without_demand_mutation(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Add demand gate04")
-		d = make_approved_demand(title="Add path demand")
-		before = frappe.db.get_value(
-			"Demand",
-			d["demand"],
-			["status", "planning_usage", "confirmed_estimate", "modified"],
-			as_dict=True,
-		)
-		result = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
-		self.assertTrue(result["ok"])
-		self.assertTrue(result["plan_item"])
-		self.assertEqual(result["allocation_status"], "Draft")
-		after = frappe.db.get_value(
-			"Demand",
-			d["demand"],
-			["status", "planning_usage", "confirmed_estimate", "modified"],
-			as_dict=True,
-		)
-		self.assertEqual(before.status, after.status)
-		self.assertEqual(before.planning_usage, after.planning_usage)
-		self.assertEqual(flt(before.confirmed_estimate), flt(after.confirmed_estimate))
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item", result["plan_item"], "baseline_state"),
-			"Proposed",
-		)
-		iv0 = frappe.db.get_value(
-			"Procurement Plan Item", result["plan_item"], "draft_item_version"
-		)
-		# Ordinary one-Demand path: no aggregation metadata.
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv0, "aggregation_decision")
-			or "",
-			"",
-		)
-		self._assert_no_keep_separate(iv0)
-
-	def test_rejects_over_allocation(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Over alloc plan")
-		d = make_approved_demand(title="Cap demand")
-		with self.assertRaises(Exception) as ctx:
-			add_demand_to_plan(
-				plan=plan["plan"],
-				demand=d["demand"],
-				allocated_amount=50_000_000,
-				user=planner,
-			)
-		self.assertIn("exceeds approved available", str(ctx.exception).lower())
-
-	def test_opens_draft_revision_when_plan_only_has_approved_version(self) -> None:
-		"""PLN-FR-018 / REQ §add flow step 2 — do not require a pre-opened Draft UI."""
-		planner = ensure_planner_user()
-		approver = ensure_approver_user()
-		plan = create_plan_as_planner(title="Approved then add")
-		first = make_approved_demand(title="Seed approved item")
-		added = add_demand_to_plan(plan=plan["plan"], demand=first["demand"], user=planner)
-		self.assertTrue(added["ok"])
-		approve_plan_via_gate05(
-			plan=plan["plan"], version=plan["version"], user=approver
-		)
-		self.assertFalse(
-			frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
-		)
-		builder = get_plan_builder(plan=plan["plan"], user=planner)
-		self.assertTrue(
-			builder["can_add_demand"],
-			"Add Demand must stay available on Open plans with an Approved version",
-		)
-		second = make_approved_demand(title="Post-approval add")
-		result = add_demand_to_plan(plan=plan["plan"], demand=second["demand"], user=planner)
-		self.assertTrue(result["ok"])
-		self.assertTrue(
-			frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
-		)
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item", result["plan_item"], "baseline_state"),
-			"Proposed",
-		)
-		iv = frappe.db.get_value(
-			"Procurement Plan Item", result["plan_item"], "draft_item_version"
-		)
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_decision")
-			or "",
-			"",
-		)
-
-	def test_default_one_plan_item_for_multi_need_no_aggregation_metadata(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Multi need default")
-		d = make_approved_demand(title="Two need default", need_item_count=2)
-		result = add_demand_to_plan(
-			plan=plan["plan"],
-			demand=d["demand"],
-			formation_mode="one_plan_item",
-			user=planner,
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result.get("formation_mode"), "one_plan_item")
-		self.assertEqual(len(result.get("plan_items") or [result["plan_item"]]), 1)
-		allocs = frappe.get_all(
-			"Plan Demand Allocation",
-			filters={"plan_item": result["plan_item"], "status": "Draft"},
-		)
-		self.assertEqual(len(allocs), 2)
-		iv = frappe.db.get_value(
-			"Procurement Plan Item", result["plan_item"], "draft_item_version"
-		)
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_decision")
-			or "",
-			"",
-		)
-		self._assert_no_keep_separate(iv)
-
-	def test_separate_per_need_item_requires_reason_and_creates_n_items(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Multi need separate")
-		d = make_approved_demand(title="Two need separate", need_item_count=2)
-		with self.assertRaises(Exception) as ctx:
-			add_demand_to_plan(
-				plan=plan["plan"],
-				demand=d["demand"],
-				formation_mode="separate_per_need_item",
-				user=planner,
-			)
-		self.assertIn("reason", str(ctx.exception).lower())
-		result = add_demand_to_plan(
-			plan=plan["plan"],
-			demand=d["demand"],
-			formation_mode="separate_per_need_item",
-			separation_reason="Distinct delivery and tender packages for ICT vs works",
-			user=planner,
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result.get("formation_mode"), "separate_per_need_item")
-		self.assertEqual(len(result["plan_items"]), 2)
-		self.assertTrue(result.get("builder_route"))
-		self.assertFalse(result.get("editor_route"))
-		for pi in result["plan_items"]:
-			allocs = frappe.get_all(
-				"Plan Demand Allocation",
-				filters={"plan_item": pi, "status": "Draft"},
-				fields=["demand_item"],
-			)
-			self.assertEqual(len(allocs), 1)
-			iv = frappe.db.get_value("Procurement Plan Item", pi, "draft_item_version")
-			# Real separate items — division reason only; never cosmetic Keep separate.
-			self.assertEqual(
-				frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_decision")
-				or "",
-				"",
-			)
-			self._assert_no_keep_separate(iv)
-			self.assertTrue(
-				frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_reason")
-			)
-
-	def test_ungoverned_second_add_blocked_by_anti_split(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Anti split add")
-		d = make_approved_demand(title="Anti split demand", need_item_count=2)
-		first = add_demand_to_plan(
-			plan=plan["plan"],
-			demand=d["demand"],
-			formation_mode="one_plan_item",
-			user=planner,
-		)
-		self.assertTrue(first["ok"])
-		with self.assertRaises(Exception) as ctx:
-			add_demand_to_plan(
-				plan=plan["plan"],
-				demand=d["demand"],
-				formation_mode="separate_per_need_item",
-				separation_reason="Should be blocked — already packaged",
-				user=planner,
-			)
-		self.assertIn("split", str(ctx.exception).lower())
-
-	def test_schema_does_not_default_keep_separate(self) -> None:
-		meta = frappe.get_meta("Procurement Plan Item Version")
-		field = meta.get_field("aggregation_decision")
-		self.assertIsNotNone(field)
-		self.assertNotIn("Keep separate", field.options or "")
-		self.assertIn((field.default or ""), ("", None))
-
-	def test_multi_demand_separate_creates_n_items(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Multi demand separate")
-		a = make_approved_demand(title="Separate A")
-		b = make_approved_demand(title="Separate B")
-		result = add_demand_to_plan(
-			plan=plan["plan"],
-			demands=[a["demand"], b["demand"]],
-			formation_mode="separate",
-			user=planner,
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result.get("formation_mode"), "separate")
-		self.assertEqual(len(result["plan_items"]), 2)
-		self.assertFalse(result.get("editor_route"))
-
-	def test_multi_demand_combined_same_ou_requires_reason(self) -> None:
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Multi demand combine")
-		a = make_approved_demand(title="Combine A")
-		b = make_approved_demand(title="Combine B")
-		with self.assertRaises(Exception) as ctx:
-			add_demand_to_plan(
-				plan=plan["plan"],
-				demands=[a["demand"], b["demand"]],
-				formation_mode="combined",
-				user=planner,
-			)
-		self.assertIn("reason", str(ctx.exception).lower())
-		result = add_demand_to_plan(
-			plan=plan["plan"],
-			demands=[a["demand"], b["demand"]],
-			formation_mode="combined",
-			formation_reason="Shared digital health programme package",
-			user=planner,
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result.get("formation_mode"), "combined")
+	def test_single_demand_creates_one_item_and_holds_every_need_item(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		demand = make_approved_demand(title="Single source", need_item_count=2)
+		result = _form(plan=plan, demands=[demand["demand"]], key="single")
+		self.assertEqual(result["formation_mode"], "separate")
 		self.assertEqual(len(result["plan_items"]), 1)
-		self.assertTrue(result.get("editor_route"))
-		iv = result["item_version"]
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv, "aggregation_decision"),
-			"Combine",
-		)
-		allocs = frappe.get_all(
+		allocations = frappe.get_all(
 			"Plan Demand Allocation",
-			filters={"plan_item": result["plan_item"], "status": "Draft"},
-			fields=["demand"],
+			filters={"plan_item": result["plan_item"]},
+			fields=["demand_item", "source_org_unit", "active_hold_key", "status"],
 		)
-		self.assertEqual({a["demand"] for a in allocs}, {a["demand"], b["demand"]})
-
-	def test_multi_demand_combined_mixed_ou_rejected(self) -> None:
-		"""PLN-AC-016 — mixed-OU Combine must throw PLN_COMBINE_INCOMPATIBLE."""
-		from kentender_procurement.procurement_planning.services.planning_permissions import (
-			ROLE_PLANNER,
-		)
-		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
-			PE_MOH,
-			_ensure_ou,
-			ensure_user_with_roles,
+		self.assertEqual(len(allocations), 2)
+		self.assertTrue(all(row.active_hold_key == row.demand_item for row in allocations))
+		self.assertTrue(all(row.status == "Draft" for row in allocations))
+		self.assertNotIn(
+			demand["demand"],
+			{row["demand"] for row in list_eligible_demands(plan=plan, user=ensure_planner_user())["demands"]},
 		)
 
-		ou_hrmd = "MOH-DIR-HRMD"
-		_ensure_ou(ou_hrmd, "Human Resource Management", PE_MOH)
-		pe_planner = ensure_user_with_roles(
-			"pln.ac016.planner@test.local",
-			roles=(ROLE_PLANNER,),
-			pe=PE_MOH,
-			org_unit=None,
-			include_descendants=0,
-		)
-		plan = create_plan_as_planner(title="Mixed OU combine reject")
-		a = make_approved_demand(title="DHP combine source", ou="MOH-DIR-DHP")
-		b = make_approved_demand(title="HRMD combine source", ou=ou_hrmd)
-		before = frappe.db.count("Procurement Plan Item", {"plan": plan["plan"]})
-		with self.assertRaises(Exception) as ctx:
-			add_demand_to_plan(
-				plan=plan["plan"],
-				demands=[a["demand"], b["demand"]],
-				formation_mode="combined",
-				formation_reason="Should be rejected — mixed Organisation Units",
-				user=pe_planner,
-			)
-		blob = (
-			(getattr(ctx.exception, "title", None) or "") + " " + str(ctx.exception)
-		)
-		self.assertIn("cannot be combined", blob.lower())
-		self.assertTrue(
-			"PLN_COMBINE_INCOMPATIBLE" in blob.upper()
-			or "organisation units" in blob.lower(),
-			blob,
-		)
-		self.assertEqual(
-			frappe.db.count("Procurement Plan Item", {"plan": plan["plan"]}),
-			before,
-		)
+	def test_single_demand_rejects_formation_choice(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		demand = make_approved_demand(title="No choice")
+		with self.assertRaises(frappe.ValidationError):
+			_form(plan=plan, demands=[demand["demand"]], key="single-mode", mode="combined")
 
-	def test_multi_demand_separate_mixed_ou_creates_two_items(self) -> None:
-		"""PLN-AC-016 — Separate mode still creates one item per Demand across OUs."""
-		from kentender_procurement.procurement_planning.services.planning_permissions import (
-			ROLE_PLANNER,
+	def test_multiple_separate_creates_one_item_per_demand(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		a = make_approved_demand(title="Separate A", need_item_count=2)
+		b = make_approved_demand(title="Separate B", need_item_count=2)
+		result = _form(
+			plan=plan, demands=[a["demand"], b["demand"]], key="separate", mode="separate"
 		)
-		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
-			PE_MOH,
-			_ensure_ou,
-			ensure_user_with_roles,
-		)
-
-		ou_hrmd = "MOH-DIR-HRMD"
-		_ensure_ou(ou_hrmd, "Human Resource Management", PE_MOH)
-		pe_planner = ensure_user_with_roles(
-			"pln.ac016.planner@test.local",
-			roles=(ROLE_PLANNER,),
-			pe=PE_MOH,
-			org_unit=None,
-			include_descendants=0,
-		)
-		plan = create_plan_as_planner(title="Mixed OU separate ok")
-		a = make_approved_demand(title="DHP separate source", ou="MOH-DIR-DHP")
-		b = make_approved_demand(title="HRMD separate source", ou=ou_hrmd)
-		result = add_demand_to_plan(
-			plan=plan["plan"],
-			demands=[a["demand"], b["demand"]],
-			formation_mode="separate",
-			user=pe_planner,
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result.get("formation_mode"), "separate")
 		self.assertEqual(len(result["plan_items"]), 2)
-
-	def test_copies_demand_strategy_and_pvc_snapshots(self) -> None:
-		"""PLN-AC-018 — Strategy targets and PVC labels pass through onto the IV."""
-		planner = ensure_planner_user()
-		plan = create_plan_as_planner(title="Strategy snapshot add")
-		d = make_approved_demand(title="Demand with strategy PVC")
-		strategy_label = "Increase service availability (MOH-TGT-AVAIL-2028)"
-		pvc_label = "MOH-PVC-EFT-01 — Efficiency treatment"
-		_attach_demand_snapshots(
-			d["demand"], strategy_label=strategy_label, pvc_label=pvc_label
-		)
-		result = add_demand_to_plan(plan=plan["plan"], demand=d["demand"], user=planner)
-		self.assertTrue(result["ok"])
-		iv = result["item_version"]
+		self.assertIsNone(result["editor_route"])
 		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv, "strategy_snapshot"),
-			strategy_label,
-		)
-		self.assertEqual(
-			frappe.db.get_value("Procurement Plan Item Version", iv, "pvc_snapshot"),
-			pvc_label,
-		)
-		dto = get_plan_builder(plan=plan["plan"], user=planner)
-		self.assertTrue(dto.get("ok") or dto.get("items") is not None)
-		from kentender_procurement.procurement_planning.services.get_plan_item_editor import (
-			get_plan_item_editor,
+			frappe.db.count("Plan Demand Allocation", {"plan_item": ["in", result["plan_items"]]}),
+			4,
 		)
 
-		editor = get_plan_item_editor(plan_item=result["plan_item"], user=planner)
-		route = editor.get("demand_route") or ""
-		self.assertIn("/desk/demand-detail/", route)
-		self.assertNotIn("/app/demand/", route)
-		src = editor.get("approved_source") or {}
-		self.assertEqual(src.get("strategy_snapshot"), strategy_label)
-		self.assertEqual(src.get("pvc_snapshot"), pvc_label)
+	def test_combined_same_ou_retains_owner_and_requires_reason(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		a = make_approved_demand(title="Combined A")
+		b = make_approved_demand(title="Combined B")
+		with self.assertRaises(frappe.ValidationError):
+			_form(plan=plan, demands=[a["demand"], b["demand"]], key="no-reason", mode="combined")
+		result = _form(
+			plan=plan,
+			demands=[a["demand"], b["demand"]],
+			key="combined",
+			mode="combined",
+			reason="Common supply and delivery basis",
+		)
+		self.assertEqual(len(result["plan_items"]), 1)
+		self.assertEqual(
+			frappe.db.get_value("Procurement Plan Item", result["plan_item"], "owner_org_unit"),
+			"MOH-DIR-DHP",
+		)
+
+	def test_combined_mixed_ou_is_pe_owned_with_source_lineage(self) -> None:
+		other_ou = "MOH-DIR-HRMD"
+		_ensure_ou(other_ou, "Human Resources Management and Development", PE_MOH)
+		plan = create_plan_as_planner()["plan"]
+		a = make_approved_demand(title="Digital source")
+		b = make_approved_demand(title="HR source", ou=other_ou)
+		result = _form(
+			plan=plan,
+			demands=[a["demand"], b["demand"]],
+			key="mixed",
+			mode="combined",
+			reason="Common market and coordinated delivery basis",
+		)
+		self.assertIsNone(
+			frappe.db.get_value("Procurement Plan Item", result["plan_item"], "owner_org_unit")
+		)
+		self.assertEqual(
+			set(frappe.get_all(
+				"Plan Demand Allocation", filters={"plan_item": result["plan_item"]}, pluck="source_org_unit"
+			)),
+			{"MOH-DIR-DHP", other_ou},
+		)
+
+	def test_idempotent_replay_precedes_stale_token_rejection(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		demand = make_approved_demand(title="Replay")
+		result = _form(plan=plan, demands=[demand["demand"]], key="replay")
+		replayed = add_demand_to_plan(
+			plan=plan,
+			demands=[demand["demand"]],
+			expected_version_token="stale",
+			idempotency_key="replay",
+			user=ensure_planner_user(),
+		)
+		self.assertTrue(replayed["replayed"])
+		self.assertEqual(replayed["plan_item"], result["plan_item"])
+
+	def test_duplicate_selection_and_missing_token_are_rejected(self) -> None:
+		plan = create_plan_as_planner()["plan"]
+		demand = make_approved_demand(title="Strict formation input")
+		with self.assertRaises(frappe.ValidationError):
+			add_demand_to_plan(
+				plan=plan, demands=[demand["demand"], demand["demand"]],
+				expected_version_token=_token(plan), formation_mode="separate",
+				idempotency_key="duplicate-input", user=ensure_planner_user(),
+			)
+		with self.assertRaises(frappe.ValidationError):
+			add_demand_to_plan(
+				plan=plan, demands=[demand["demand"]], expected_version_token=None,
+				idempotency_key="missing-token", user=ensure_planner_user(),
+			)

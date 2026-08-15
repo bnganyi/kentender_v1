@@ -19,7 +19,6 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 )
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	FORMATION_COMBINED,
-	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder,
@@ -33,9 +32,10 @@ from kentender_procurement.procurement_planning.services.open_or_create_plan_rev
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
 	cancel_plan_update,
 	release_draft_finance_effects,
-	remove_plan_item_from_plan,
+	remove_plan_item_from_plan as _remove_plan_item_from_plan,
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	add_demand_to_plan,
 	approve_plan_via_gate05,
 	complete_plan_item_for_signoff,
 	create_plan_as_planner,
@@ -45,6 +45,19 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 )
 
 
+def remove_plan_item_from_plan(**kwargs):
+	"""Direct-test adapter for the approved concurrency/idempotency command contract."""
+	plan = kwargs["plan"]
+	plan_item = kwargs["plan_item"]
+	draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+	focus = draft or frappe.db.get_value("Procurement Plan", plan, "current_approved_version")
+	legacy_token = kwargs.pop("concurrency_token", None)
+	kwargs.setdefault("draft_version", draft)
+	kwargs.setdefault("expected_version_token", legacy_token or frappe.db.get_value("Procurement Plan Version", focus, "concurrency_token"))
+	kwargs.setdefault("idempotency_key", f"TEST-REMOVE-{plan_item}-{kwargs.get('reason') or 'missing'}")
+	return _remove_plan_item_from_plan(**kwargs)
+
+
 class TestRemovePlanItem(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -52,7 +65,7 @@ class TestRemovePlanItem(IntegrationTestCase):
 		ensure_scope()
 
 	def _eligible_ids(self, plan: str, planner: str) -> set[str]:
-		payload = list_eligible_demands(plan=plan, user=planner, remaining_only=True)
+		payload = list_eligible_demands(plan=plan, user=planner)
 		return {r["demand"] for r in payload.get("demands") or []}
 
 	def _token(self, version: str) -> str:
@@ -188,8 +201,11 @@ class TestRemovePlanItem(IntegrationTestCase):
 			frappe.db.get_value("Procurement Plan Item", added["plan_item"], "baseline_state"),
 			ITEM_ACTIVE,
 		)
-		builder = get_plan_builder(plan=plan["plan"], user=planner)
-		row = next(r for r in builder["items"] if r["plan_item"] == added["plan_item"])
+		update = get_plan_builder(plan=plan["plan"], user=planner)
+		row = next(
+			r for r in update["unchanged_items"]
+			if r["plan_item"] == added["plan_item"]
+		)
 		self.assertFalse(row.get("can_remove_from_draft"))
 		self.assertFalse(row.get("can_propose_removal"))
 
@@ -398,7 +414,12 @@ class TestRemovePlanItem(IntegrationTestCase):
 		added1 = add_demand_to_plan(plan=plan["plan"], demand=d1["demand"], user=planner)
 		complete_plan_item_for_signoff(plan_item=added1["plan_item"], user=planner)
 		approve_plan_via_gate05(plan=plan["plan"], version=plan["version"])
-		d2 = make_approved_demand(title="Add then remove")
+		d2 = make_approved_demand(
+			title="Add then remove",
+			required_by_date=frappe.db.get_value(
+				"Procurement Plan", plan["plan"], "period_start"
+			),
+		)
 		added2 = add_demand_to_plan(plan=plan["plan"], demand=d2["demand"], user=planner)
 		draft = frappe.db.get_value("Procurement Plan", plan["plan"], "open_draft_version")
 		self.assertTrue(draft)
@@ -411,8 +432,8 @@ class TestRemovePlanItem(IntegrationTestCase):
 		)
 		builder = get_plan_builder(plan=plan["plan"], user=planner)
 		self.assertTrue(builder.get("no_changes_remain"))
-		self.assertFalse(builder.get("can_submit_for_review"))
-		self.assertTrue(builder.get("can_cancel_update"))
+		self.assertFalse(builder.get("can_submit"))
+		self.assertTrue(builder.get("can_cancel"))
 		cancelled = cancel_plan_update(
 			plan=plan["plan"],
 			concurrency_token=builder["concurrency_token"],

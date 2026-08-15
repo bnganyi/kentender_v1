@@ -9,7 +9,7 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt
+from frappe.utils import add_days, cstr, flt
 
 from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
 	add_demand_to_plan as _add_demand_to_plan,
@@ -49,14 +49,13 @@ from kentender_procurement.procurement_planning.services.validate_plan import (
 from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 	submit_plan_for_review as _submit_plan_for_review,
 )
-from kentender_procurement.procurement_planning.services.record_plan_decision import (
-	record_plan_decision as _record_plan_decision,
-)
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version as _approve_plan_version,
+	return_plan_version as _return_plan_version,
 )
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
 	cancel_plan_update as _cancel_plan_update,
+	get_plan_item_removal as _get_plan_item_removal,
 	remove_plan_item_from_plan as _remove_plan_item_from_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_review import (
@@ -65,12 +64,8 @@ from kentender_procurement.procurement_planning.services.get_plan_review import 
 from kentender_procurement.procurement_planning.services.get_plan_implementation import (
 	get_plan_implementation as _get_plan_implementation,
 )
-from kentender_procurement.procurement_planning.services.get_plan_update import (
-	get_plan_update as _get_plan_update,
-	save_plan_update as _save_plan_update,
-)
-from kentender_procurement.procurement_planning.services.publish_approved_plan import (
-	publish_approved_plan as _publish_approved_plan,
+from kentender_procurement.procurement_planning.services.plan_builder_successor import (
+	save_plan_draft as _save_plan_draft,
 )
 from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
 	create_planning_handoff_snapshot as _create_planning_handoff_snapshot,
@@ -125,7 +120,7 @@ def _mark_playwright_plan_graph(plan: str, *demands: str | None) -> None:
 @frappe.whitelist()
 def get_planning_workspace(
 	procuring_entity: str | None = None,
-	financial_year: str | None = "2027/28",
+	financial_year: str | None = None,
 	work_filter: str | None = "all",
 	search: str | None = None,
 ) -> dict[str, Any]:
@@ -139,12 +134,12 @@ def get_planning_workspace(
 
 @frappe.whitelist()
 def get_planning_create_scope(
-	selected_pe: str | None = None,
-	financial_year: str | None = "2027/28",
+	procuring_entity: str | None = None,
+	financial_year: str | None = None,
 ) -> dict[str, Any]:
 	return _get_planning_create_scope(
-		selected_pe=selected_pe,
-		financial_year=financial_year,
+		procuring_entity=procuring_entity or "",
+		financial_year=financial_year or "",
 	)
 
 
@@ -152,31 +147,13 @@ def get_planning_create_scope(
 def create_procurement_plan(
 	procuring_entity: str | None = None,
 	financial_year: str | None = None,
-	title: str | None = None,
-	currency: str | None = "KES",
-	coordinating_org_unit: str | None = None,
 ) -> dict[str, Any]:
-	"""Structured validation for Desk form — field errors, not Message dialogs."""
+	"""Register from governed PE/FY identity; no client-authored snapshots."""
 	errors: dict[str, str] = {}
+	if not (procuring_entity or "").strip():
+		errors["procuring_entity"] = "Procuring Entity is required"
 	if not (financial_year or "").strip():
 		errors["financial_year"] = "Financial year is required"
-	if not (title or "").strip():
-		errors["title"] = "Plan title is required"
-	if not (coordinating_org_unit or "").strip():
-		errors["coordinating_org_unit"] = "Coordinating procurement unit is required"
-	if not (currency or "").strip():
-		errors["currency"] = "Currency is required"
-	elif cstr(currency).strip().upper() != "KES":
-		errors["currency"] = "Kenya MVP plans use KES only"
-	# PE required when multi; create service resolves single/forced.
-	from kentender_procurement.procurement_planning.services.planning_permissions import (
-		MODE_MULTI,
-		resolve_pe_for_create,
-	)
-
-	scope = resolve_pe_for_create(frappe.session.user, procuring_entity)
-	if scope["selection_mode"] == MODE_MULTI and not (procuring_entity or "").strip():
-		errors["procuring_entity"] = "Procuring Entity selection is required"
 	if errors:
 		return {"ok": False, "errors": errors}
 
@@ -184,9 +161,6 @@ def create_procurement_plan(
 		result = _create_procurement_plan(
 			procuring_entity=procuring_entity or "",
 			financial_year=financial_year or "",
-			title=title or "",
-			currency=currency or "KES",
-			coordinating_org_unit=coordinating_org_unit or "",
 		)
 	except frappe.PermissionError as exc:
 		return {
@@ -206,21 +180,24 @@ def create_procurement_plan(
 			or "duplicate" in lower
 		):
 			field = "financial_year"
-		elif "organisation unit" in lower or "coordinating" in lower:
-			field = "coordinating_org_unit"
-		elif "title" in lower:
-			field = "title"
 		elif not isinstance(exc, (frappe.ValidationError, frappe.DuplicateEntryError)):
 			raise
 		return {"ok": False, "errors": {field: msg}}
 
-	result["redirect"] = f"/app/procurement-plan-builder?plan={result['plan']}"
+	result["redirect"] = result.get("route") or f"/app/procurement-plan-builder?plan={result['plan']}"
 	return result
 
 
 @frappe.whitelist()
-def get_plan_builder(plan: str | None = None) -> dict[str, Any]:
-	return _get_plan_builder(plan=plan or "")
+def get_plan_builder(
+	plan: str | None = None,
+	organisation_unit: str | None = None,
+	status: str | None = None,
+	search: str | None = None,
+) -> dict[str, Any]:
+	return _get_plan_builder(
+		plan=plan or "", organisation_unit=organisation_unit, status=status, search=search
+	)
 
 
 @frappe.whitelist()
@@ -228,56 +205,50 @@ def list_eligible_demands(
 	plan: str | None = None,
 	search: str | None = None,
 	organisation_unit: str | None = None,
-	category: str | None = None,
-	remaining_only: int | str | None = 1,
+	requested_demand: str | None = None,
 ) -> dict[str, Any]:
 	return _list_eligible_demands(
 		plan=plan or "",
 		search=search,
 		organisation_unit=organisation_unit,
-		category=category,
-		remaining_only=remaining_only if remaining_only is not None else 1,
+		requested_demand=requested_demand,
 	)
 
 
 @frappe.whitelist()
 def add_demand_to_plan(
 	plan: str | None = None,
-	demand: str | None = None,
 	demands: str | list | None = None,
-	demand_item: str | None = None,
-	allocated_amount: float | str | None = None,
-	package_mode: str | None = None,
+	expected_version_token: str | None = None,
 	formation_mode: str | None = None,
-	separation_reason: str | None = None,
 	formation_reason: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-	try:
-		amt = float(allocated_amount) if allocated_amount not in (None, "") else None
-	except (TypeError, ValueError):
-		amt = None
 	try:
 		return _add_demand_to_plan(
 			plan=plan or "",
-			demand=demand or "",
 			demands=demands,
-			demand_item=demand_item,
-			allocated_amount=amt,
-			package_mode=package_mode,
+			expected_version_token=expected_version_token,
 			formation_mode=formation_mode,
-			separation_reason=separation_reason,
 			formation_reason=formation_reason,
+			idempotency_key=idempotency_key,
 		)
 	except Exception as exc:
 		msg = str(exc)
 		title = getattr(exc, "title", None) or ""
 		errors: dict[str, str] = {"form": msg}
 		title_u = cstr(title).upper()
-		if "SEPARATION_REASON" in title_u or "separation reason" in msg.lower():
-			errors["separation_reason"] = msg
 		if "FORMATION_REASON" in title_u or "reason for combining" in msg.lower():
 			errors["formation_reason"] = msg
 		return {"ok": False, "errors": errors}
+
+
+@frappe.whitelist()
+def get_plan_item_removal(
+	plan: str | None = None,
+	plan_item: str | None = None,
+) -> dict[str, Any]:
+	return _get_plan_item_removal(plan=plan or "", plan_item=plan_item or "")
 
 
 @frappe.whitelist()
@@ -285,6 +256,9 @@ def remove_plan_item_from_plan(
 	plan: str | None = None,
 	plan_item: str | None = None,
 	reason: str | None = None,
+	draft_version: str | None = None,
+	expected_version_token: str | None = None,
+	idempotency_key: str | None = None,
 	concurrency_token: str | None = None,
 ) -> dict[str, Any]:
 	try:
@@ -292,6 +266,9 @@ def remove_plan_item_from_plan(
 			plan=plan or "",
 			plan_item=plan_item or "",
 			reason=reason,
+			draft_version=draft_version,
+			expected_version_token=expected_version_token,
+			idempotency_key=idempotency_key,
 			concurrency_token=concurrency_token,
 		)
 	except frappe.PermissionError as exc:
@@ -324,6 +301,8 @@ def update_plan_item(
 	plan_item: str | None = None,
 	fields: str | dict | None = None,
 	request_finance: int | str | None = None,
+	expected_version_token: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	payload: dict[str, Any]
 	if isinstance(fields, str):
@@ -340,6 +319,8 @@ def update_plan_item(
 			plan_item=plan_item or "",
 			fields=payload,
 			request_finance=request_finance,
+			expected_version_token=expected_version_token,
+			idempotency_key=idempotency_key,
 		)
 	except frappe.PermissionError:
 		raise
@@ -348,24 +329,28 @@ def update_plan_item(
 
 
 @frappe.whitelist()
-def get_plan_finance_task(plan_item: str | None = None) -> dict[str, Any]:
-	return _get_plan_finance_task(plan_item=plan_item or "")
+def get_plan_finance_task(task: str | None = None) -> dict[str, Any]:
+	return _get_plan_finance_task(task=task or "")
 
 
 @frappe.whitelist()
 def confirm_plan_item_funding(
-	plan_item: str | None = None,
+	task: str | None = None,
+	expected_token: str | None = None,
 	note: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-	return _confirm_plan_item_funding(plan_item=plan_item or "", note=note)
+	return _confirm_plan_item_funding(task=task or "", expected_token=expected_token, note=note, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
 def return_plan_item_from_finance(
-	plan_item: str | None = None,
+	task: str | None = None,
+	expected_token: str | None = None,
 	reason: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-	return _return_plan_item_from_finance(plan_item=plan_item or "", reason=reason)
+	return _return_plan_item_from_finance(task=task or "", expected_token=expected_token, reason=reason, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
@@ -381,40 +366,30 @@ def validate_plan(plan: str | None = None) -> dict[str, Any]:
 @frappe.whitelist()
 def submit_plan_for_review(
 	plan: str | None = None,
+	expected_token: str | None = None,
+	idempotency_key: str | None = None,
 	concurrency_token: str | None = None,
 ) -> dict[str, Any]:
 	return _submit_plan_for_review(
 		plan=plan or "",
-		concurrency_token=concurrency_token,
-	)
-
-
-@frappe.whitelist()
-def record_plan_decision(
-	version: str | None = None,
-	decision: str | None = None,
-	comment: str | None = None,
-	concurrency_token: str | None = None,
-) -> dict[str, Any]:
-	return _record_plan_decision(
-		version=version or "",
-		decision=decision or "",
-		comment=comment,
-		concurrency_token=concurrency_token,
+		expected_token=expected_token or concurrency_token,
+		idempotency_key=idempotency_key,
 	)
 
 
 @frappe.whitelist()
 def approve_plan_version(
-	version: str | None = None,
-	concurrency_token: str | None = None,
-	reason: str | None = None,
+	task: str | None = None,
+	expected_token: str | None = None,
+	note: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	try:
 		return _approve_plan_version(
-			version=version or "",
-			concurrency_token=concurrency_token,
-			reason=reason,
+			task=task or "",
+			expected_token=expected_token,
+			reason=note,
+			idempotency_key=idempotency_key,
 		)
 	except frappe.PermissionError as exc:
 		return {
@@ -426,8 +401,23 @@ def approve_plan_version(
 
 
 @frappe.whitelist()
-def get_plan_review(plan: str | None = None) -> dict[str, Any]:
-	return _get_plan_review(plan=plan or "")
+def return_plan_version(
+	task: str | None = None,
+	expected_token: str | None = None,
+	reason: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	try:
+		return _return_plan_version(task=task or "", expected_token=expected_token, reason=reason, idempotency_key=idempotency_key)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return {"ok": False, "errors": {"form": str(exc)}}
+
+
+@frappe.whitelist()
+def get_plan_review(task: str | None = None) -> dict[str, Any]:
+	return _get_plan_review(task=task or "")
 
 
 @frappe.whitelist()
@@ -436,21 +426,18 @@ def get_plan_implementation(plan: str | None = None) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def get_plan_update(plan: str | None = None) -> dict[str, Any]:
-	return _get_plan_update(plan=plan or "")
-
-
-@frappe.whitelist()
-def save_plan_update(
+def save_plan_draft(
 	plan: str | None = None,
 	update_reason: str | None = None,
-	concurrency_token: str | None = None,
+	expected_version_token: str | None = None,
+	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	try:
-		return _save_plan_update(
+		return _save_plan_draft(
 			plan=plan or "",
 			update_reason=update_reason,
-			concurrency_token=concurrency_token,
+			expected_version_token=expected_version_token,
+			idempotency_key=idempotency_key,
 		)
 	except frappe.PermissionError as exc:
 		return {
@@ -459,15 +446,6 @@ def save_plan_update(
 		}
 	except Exception as exc:
 		return {"ok": False, "errors": {"form": str(exc)}}
-
-
-@frappe.whitelist()
-def publish_approved_plan(
-	plan: str | None = None,
-	channel: str | None = None,
-) -> dict[str, Any]:
-	return _publish_approved_plan(plan=plan or "", channel=channel)
-
 
 @frappe.whitelist()
 def create_planning_handoff_snapshot(
@@ -507,8 +485,9 @@ def prepare_planning_gate04_ui(
 	need_item_count: int | str | None = 1,
 	eligible_count: int | str | None = 1,
 	mixed_ou: int | str | None = 0,
+	item_total: float | str | None = 48_000_000.0,
 ) -> dict[str, Any]:
-	"""Empty Draft + eligible Approved Demand in planner scope for Gate 04 UI tests.
+	"""Resettable FY2028/29 initial Plan and exact approved-Demand sources.
 
 	When ``with_plan_item`` is truthy, also adds the Demand as the seeded planner so
 	editor / populated-builder Playwright can open a Plan Item immediately.
@@ -521,22 +500,45 @@ def prepare_planning_gate04_ui(
 		add_demand_to_plan,
 	)
 	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+		attach_demand_funding,
 		make_approved_demand,
+		make_test_budget_line,
 	)
 
-	base = prepare_planning_gate03_ui()
-	plan = base["empty_draft_plan"]
+	base = prepare_planning_gate03_ui(clear_create_fy="2028/29")
+	planner = "moh.planning.officer@example.test"
+	created = _create_procurement_plan(
+		procuring_entity=base["pe_moh"], financial_year="2028/29", user=planner
+	)
+	plan = created["plan"]
 	n_items = max(1, int(need_item_count or 1))
 	n_eligible = max(1, int(eligible_count or 1))
-	# Demand in MOH-DIR-DHP (same as empty draft coordinating OU).
+	first_total = flt(item_total) or 48_000_000.0
+	# The first exact design source is HRMD. Optional arguments retain the
+	# narrower one-source variants used by focused interaction tests.
+	from kentender_procurement.procurement_planning.tests._gate02_helpers import _ensure_ou
+	_ensure_ou("MOH-DIR-HRMD", "Human Resources Management and Development", base["pe_moh"])
 	d = make_approved_demand(
 		pe=base["pe_moh"],
-		ou="MOH-DIR-DHP",
-		title="Gate04 eligible digital health need",
+		ou="MOH-DIR-HRMD",
+		title="Clinical training laptops for digital health rollout",
 		need_item_count=n_items,
+		item_amounts=([first_total / n_items] * n_items),
+		demand_code="DMD-MOH-2028-001",
+		required_by_date="2028-12-31",
 	)
+	funding1 = make_test_budget_line(
+		approved_amount=first_total, fiscal_period="2028/29",
+		start_date="2028-07-01", end_date="2029-06-30",
+		title="Digital health workforce development",
+		fixture_namespace="KENTENDER_PLAYWRIGHT",
+	)
+	attach_demand_funding(demand=d["demand"], budget_line=funding1["budget_line"], budget=funding1["budget"], amount=first_total)
 	out: dict[str, Any] = {
 		**base,
+		"empty_draft_plan": plan,
+		"empty_draft_plan_code": created["plan_code"],
+		"empty_draft_fy": "2028/29",
 		"eligible_demand": d["demand"],
 		"eligible_demand_code": d["demand_code"],
 		"need_item_count": n_items,
@@ -544,32 +546,43 @@ def prepare_planning_gate04_ui(
 		"builder_route": f"/app/procurement-plan-builder?plan={plan}",
 	}
 	if n_eligible >= 2:
-		second_ou = "MOH-DIR-DHP"
-		if int(mixed_ou or 0):
-			from kentender_procurement.procurement_planning.tests._gate02_helpers import (
-				_ensure_ou,
-			)
-
-			second_ou = "MOH-DIR-HRMD"
-			_ensure_ou(second_ou, "Human Resource Management", base["pe_moh"])
+		second_ou = "MOH-DIR-DHP" if int(mixed_ou or 0) else "MOH-DIR-HRMD"
 		d2 = make_approved_demand(
 			pe=base["pe_moh"],
 			ou=second_ou,
-			title=(
-				"Gate04 HRMD eligible need"
-				if int(mixed_ou or 0)
-				else "Gate04 second digital health need"
-			),
-			need_item_count=1,
+			title="Clinical deployment laptops for digital health rollout",
+			need_item_count=2,
+			item_amounts=[36_000_000.0, 36_000_000.0],
+			demand_code="DMD-MOH-2028-002",
+			required_by_date="2028-12-31",
 		)
+		funding2 = make_test_budget_line(
+			approved_amount=72_000_000.0, fiscal_period="2028/29",
+			start_date="2028-07-01", end_date="2029-06-30",
+			title="Digital clinical systems infrastructure",
+			fixture_namespace="KENTENDER_PLAYWRIGHT",
+		)
+		attach_demand_funding(demand=d2["demand"], budget_line=funding2["budget_line"], budget=funding2["budget"], amount=72_000_000.0)
 		out["eligible_demand_2"] = d2["demand"]
 		out["eligible_demand_code_2"] = d2["demand_code"]
 		out["mixed_ou"] = bool(int(mixed_ou or 0))
 		out["eligible_demand_2_ou"] = second_ou
 	if int(with_plan_item or 0):
-		planner = "moh.planning.officer@example.test"
-		added = add_demand_to_plan(plan=plan, demand=d["demand"], user=planner)
+		focus = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+		token = frappe.db.get_value("Procurement Plan Version", focus, "concurrency_token")
+		selected_demands = [d["demand"]]
+		if n_eligible >= 2:
+			selected_demands.append(d2["demand"])
+		added = add_demand_to_plan(
+			plan=plan,
+			demands=selected_demands,
+			expected_version_token=token,
+			formation_mode="separate" if len(selected_demands) > 1 else None,
+			idempotency_key=f"PW-GATE04-{plan}-{d['demand']}",
+			user=planner,
+		)
 		out["plan_item"] = added.get("plan_item")
+		out["plan_items"] = added.get("plan_items") or []
 		out["editor_route"] = added.get("editor_route")
 		out["plan_item_code"] = added.get("plan_item_code")
 	_mark_playwright_plan_graph(
@@ -582,7 +595,7 @@ def prepare_planning_gate04_ui(
 
 
 @frappe.whitelist()
-def prepare_planning_gate05_ui() -> dict[str, Any]:
+def prepare_planning_gate05_ui(item_total: float | str | None = 48_000_000.0) -> dict[str, Any]:
 	"""Ready Plan Item Draft for builder / review prep (C02: no contribution)."""
 	from kentender_procurement.procurement_planning.services.planning_permissions import (
 		ensure_planning_roles,
@@ -596,7 +609,7 @@ def prepare_planning_gate05_ui() -> dict[str, Any]:
 
 	frappe.only_for(("System Manager", "Administrator"))
 	ensure_planning_roles()
-	base = prepare_planning_gate04_ui(with_plan_item=1, need_item_count=1)
+	base = prepare_planning_gate04_ui(with_plan_item=1, need_item_count=1, item_total=item_total)
 	plan = base["empty_draft_plan"]
 	plan_item = base.get("plan_item")
 	planner = "moh.planning.officer@example.test"
@@ -685,7 +698,11 @@ def prepare_planning_finance_ui() -> dict[str, Any]:
 				budget=funding["budget"],
 				amount=amount,
 			)
-		update_plan_item(plan_item=plan_item, user=planner, request_finance=True)
+		draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+		token = frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token")
+		requested = update_plan_item(plan_item=plan_item, user=planner, request_finance=True, expected_version_token=token, idempotency_key=f"PW-GATE05-FINANCE-{plan_item}-{token}")
+		if not requested.get("ok"):
+			frappe.throw(f"Finance fixture request failed: {requested}")
 	# BO must open SCREEN_5 (builder) and the workspace queue — Page.roles gate Desk.
 	for page_name in ("procurement-plan-builder", "planning-workspace"):
 		if not frappe.db.exists("Page", page_name):
@@ -696,11 +713,17 @@ def prepare_planning_finance_ui() -> dict[str, Any]:
 			page.append("roles", {"role": "Budget Officer"})
 			page.save(ignore_permissions=True)
 	_mark_playwright_plan_graph(plan, demand)
+	item_version = frappe.db.get_value(
+		"Procurement Plan Item", plan_item, "draft_item_version"
+	) if plan_item else None
+	finance_task = frappe.db.get_value(
+		"Procurement Plan Item Version", item_version, "finance_task_id"
+	) if item_version else None
 	frappe.db.commit()
 	return {
 		**base,
-		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_item={plan_item or ''}",
-		"finance_item": plan_item,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_task={finance_task or ''}",
+		"finance_task": finance_task,
 		"finance_status": "Awaiting confirmation",
 		"viewer_user": viewer,
 	}
@@ -713,15 +736,10 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services.update_plan_item import (
 		update_plan_item,
 	)
-	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
-		attach_demand_funding,
-		make_test_budget_line,
-	)
-
 	frappe.only_for(("System Manager", "Administrator"))
 	amount = flt(C.PLAN_ITEM_SCN_AMOUNT)
 	hold_amount = 55_000_000.0
-	base = prepare_planning_gate05_ui()
+	base = prepare_planning_gate05_ui(item_total=amount)
 	plan = base["empty_draft_plan"]
 	plan_item = base.get("plan_item")
 	demand = base.get("eligible_demand")
@@ -730,28 +748,17 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 	budget_code = ""
 	demand_row: dict[str, Any] = {}
 	if plan_item and demand:
-		iv_name = frappe.db.get_value(
-			"Procurement Plan Item Version", {"plan_item": plan_item}, "name"
-		)
-		if iv_name:
-			frappe.db.set_value(
-				"Procurement Plan Item Version",
-				iv_name,
-				"confirmed_estimate",
-				amount,
-				update_modified=False,
-			)
-		funding = make_test_budget_line(approved_amount=amount)
+		funding = frappe.db.get_value(
+			"Demand Funding Allocation",
+			{"demand": demand},
+			["budget", "budget_line"],
+			as_dict=True,
+		) or {}
 		budget_code = cstr(
-			frappe.db.get_value("Budget", funding["budget"], "generated_reference") or ""
+			frappe.db.get_value("Budget", funding.get("budget"), "generated_reference") or ""
 		)
-		if not frappe.db.exists("Demand Funding Allocation", {"demand": demand}):
-			attach_demand_funding(
-				demand=demand,
-				budget_line=funding["budget_line"],
-				budget=funding["budget"],
-				amount=amount,
-			)
+		# prepare_planning_gate05_ui created the exact KES 80m source and funding
+		# lineage. The shortfall fixture adds only the isolated competing hold.
 		demand_row = frappe.db.get_value(
 			"Demand", demand, ["demand_code", "title"], as_dict=True
 		) or {}
@@ -760,8 +767,8 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 			{
 				"doctype": "Funding Reservation",
 				"generated_reference": hold_code,
-				"budget": funding["budget"],
-				"budget_line": funding["budget_line"],
+				"budget": funding.get("budget"),
+				"budget_line": funding.get("budget_line"),
 				"original_amount": hold_amount,
 				"remaining_reserved": hold_amount,
 				"status": "Reserved",
@@ -774,12 +781,16 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 		).insert(ignore_permissions=True)
 		frappe.db.set_value(
 			"Budget Line",
-			funding["budget_line"],
+			funding.get("budget_line"),
 			"amount_reserved",
 			hold_amount,
 			update_modified=True,
 		)
-		update_plan_item(plan_item=plan_item, user=planner, request_finance=True)
+		draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+		token = frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token")
+		requested = update_plan_item(plan_item=plan_item, user=planner, request_finance=True, expected_version_token=token, idempotency_key=f"PW-GATE05-SHORT-{plan_item}-{token}")
+		if not requested.get("ok"):
+			frappe.throw(f"Finance shortfall fixture request failed: {requested}")
 	for page_name in ("procurement-plan-builder", "planning-workspace"):
 		if not frappe.db.exists("Page", page_name):
 			continue
@@ -789,13 +800,19 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 			page.append("roles", {"role": "Budget Officer"})
 			page.save(ignore_permissions=True)
 	_mark_playwright_plan_graph(plan, demand)
+	item_version = frappe.db.get_value(
+		"Procurement Plan Item", plan_item, "draft_item_version"
+	) if plan_item else None
+	finance_task = frappe.db.get_value(
+		"Procurement Plan Item Version", item_version, "finance_task_id"
+	) if item_version else None
 	frappe.db.commit()
 	return {
 		"ok": True,
 		"empty_draft_plan": plan,
 		"plan": plan,
-		"finance_item": plan_item,
-		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_item={plan_item or ''}",
+		"finance_task": finance_task,
+		"builder_route": f"/app/procurement-plan-builder?plan={plan}&finance_task={finance_task or ''}",
 		"budget_funding_route": (
 			f"/app/budget-funding-activity/{budget_code}" if budget_code else "/app/budget-funding"
 		),
@@ -810,18 +827,14 @@ def prepare_planning_finance_shortfall_ui() -> dict[str, Any]:
 
 @frappe.whitelist()
 def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
-	"""In-review + recommended plan + Reviewer/Approver users for PLN-UI-08 Playwright."""
+	"""In-review professional task for the focused PLN-UI-08 browser fixture."""
 	from frappe.utils.password import update_password
 
 	from kentender_core.seeds.constants import TEST_PASSWORD
 	from kentender_procurement.procurement_planning.services.planning_permissions import (
 		ROLE_DESIGNATED_APPROVER,
-		ROLE_REVIEWER,
 		ROLE_VIEWER,
 		ensure_planning_roles,
-	)
-	from kentender_procurement.procurement_planning.services.record_plan_decision import (
-		record_plan_decision,
 	)
 	from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 		submit_plan_for_review,
@@ -848,16 +861,14 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 
 	version = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
 	token = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
-	sub = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
+	sub = submit_plan_for_review(plan=plan, expected_token=token, idempotency_key=f"PW-GATE05-SUBMIT-{version}", user=planner)
 	if not sub.get("ok"):
 		frappe.throw(f"Gate05 approval prep: submit for review failed: {sub}")
 
-	reviewer = "moh.planning.reviewer@example.test"
-	approver = "moh.plan.approver@example.test"
+	approver = "moh.procurement.authority@example.test"
 	viewer = "pln.ui.viewer@example.test"
 	for email, role, first, last in (
-		(reviewer, ROLE_REVIEWER, "MOH", "Reviewer"),
-		(approver, ROLE_DESIGNATED_APPROVER, "MOH", "Approver"),
+		(approver, ROLE_DESIGNATED_APPROVER, "Grace", "Wanjiku"),
 		(viewer, ROLE_VIEWER, "MOH", "Viewer"),
 	):
 		if not frappe.db.exists("User", email):
@@ -915,48 +926,15 @@ def prepare_planning_gate05_approval_ui() -> dict[str, Any]:
 				}
 			).insert(ignore_permissions=True)
 
-	token2 = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
-	rec = record_plan_decision(
-		version=version,
-		decision="recommend",
-		comment="Ready for designated approval",
-		concurrency_token=token2,
-		user=reviewer,
-	)
-	if not rec.get("ok"):
-		frappe.throw(f"Gate05 approval prep: recommend failed: {rec}")
-
-	# Ensure review page admits these roles
-	if frappe.db.exists("Page", "procurement-plan-review"):
-		page = frappe.get_doc("Page", "procurement-plan-review")
-		existing = {r.role for r in page.roles}
-		for role in (
-			"Procurement Planner",
-			"Planning Reviewer",
-			"Designated Approver",
-			"Accounting Officer",
-			"Planning Authority",
-			"Planning Viewer",
-			"Budget Officer",
-			"Head of User Department",
-			"Requester",
-			"Desk User",
-			"Administrator",
-			"System Manager",
-		):
-			if role not in existing:
-				page.append("roles", {"role": role})
-		page.save(ignore_permissions=True)
-
 	_mark_playwright_plan_graph(plan, base.get("eligible_demand"))
 	frappe.db.commit()
 	return {
 		**base,
-		"reviewer_user": reviewer,
 		"approver_user": approver,
 		"viewer_user": viewer,
 		"version": version,
-		"review_route": f"/app/procurement-plan-review?plan={plan}",
+		"review_task": sub.get("task"),
+		"review_route": f"/app/procurement-plan-review?task={sub.get('task')}",
 		"ready_for_approval": True,
 	}
 
@@ -1036,8 +1014,16 @@ def prepare_planning_gate06_approved_ui(
 	created = create_plan_as_planner(title="UI-09 Approved Plan", financial_year=fy)
 	plan = created["plan"]
 	version = created["version"]
-	demand = make_approved_demand(title="UI-09 approved Demand")
-	added = add_demand_to_plan(plan=plan, demand=demand["demand"], user=planner)
+	required_by = add_days(frappe.db.get_value("Procurement Plan", plan, "period_start"), 180)
+	demand = make_approved_demand(title="UI-09 approved Demand", required_by_date=required_by)
+	token = frappe.db.get_value("Procurement Plan Version", version, "concurrency_token")
+	added = add_demand_to_plan(
+		plan=plan,
+		demands=[demand["demand"]],
+		expected_version_token=token,
+		idempotency_key=f"PW-GATE06-{plan}-{demand['demand']}",
+		user=planner,
+	)
 	plan_item = added.get("plan_item")
 	if plan_item:
 		complete_plan_item_for_signoff(plan_item=plan_item, user=planner)
@@ -1045,28 +1031,6 @@ def prepare_planning_gate06_approved_ui(
 	approved = approve_plan_via_gate05(plan=plan, version=version)
 	if not approved.get("ok"):
 		frappe.throw(f"Gate06 approved prep: approve failed: {approved}")
-
-	for page_name in ("procurement-plan-approved", "procurement-plan-update"):
-		if not frappe.db.exists("Page", page_name):
-			continue
-		page = frappe.get_doc("Page", page_name)
-		existing = {r.role for r in page.roles}
-		for role in (
-			"Procurement Planner",
-			"Planning Reviewer",
-			"Designated Approver",
-			"Accounting Officer",
-			"Planning Authority",
-			"Planning Viewer",
-			"Head of User Department",
-			"Requester",
-			"Desk User",
-			"Administrator",
-			"System Manager",
-		):
-			if role not in existing:
-				page.append("roles", {"role": role})
-		page.save(ignore_permissions=True)
 
 	want_successor = str(with_successor or "0") not in ("0", "", "None")
 	want_handoff = str(with_handoff or "0") not in ("0", "", "None")
@@ -1086,8 +1050,19 @@ def prepare_planning_gate06_approved_ui(
 			frappe.throw(f"Gate06 approved prep: handoff failed: {snap}")
 
 	if want_successor:
-		extra = make_approved_demand(title="Gate06 successor Demand")
-		added2 = add_demand_to_plan(plan=plan, demand=extra["demand"], user=planner)
+		extra = make_approved_demand(
+			title="Gate06 successor Demand",
+			required_by_date=required_by,
+		)
+		focus = frappe.db.get_value("Procurement Plan", plan, "open_draft_version") or version
+		token = frappe.db.get_value("Procurement Plan Version", focus, "concurrency_token")
+		added2 = add_demand_to_plan(
+			plan=plan,
+			demands=[extra["demand"]],
+			expected_version_token=token,
+			idempotency_key=f"PW-GATE06-SUCCESSOR-{plan}-{extra['demand']}",
+			user=planner,
+		)
 		if not added2.get("ok"):
 			frappe.throw(f"Gate06 approved prep: successor add failed: {added2}")
 
@@ -1108,7 +1083,7 @@ def prepare_planning_gate06_approved_ui(
 		"viewer_user": viewer,
 		"has_successor": want_successor,
 		"has_handoff": want_handoff,
-		"update_route": f"/app/procurement-plan-update?plan={plan}"
+		"update_route": f"/app/procurement-plan-builder?plan={plan}"
 		if want_successor
 		else f"/app/procurement-plan-approved?plan={plan}",
 	}
@@ -1145,7 +1120,7 @@ def prepare_planning_scn_add_ui(stop_point: str | None = None) -> dict[str, Any]
 		"plan_code": C.PROCUREMENT_PLAN_CODE,
 		"stopped_before_finance": bool(prepared.get("stopped_before_finance")),
 		"approved_route": f"/app/procurement-plan-approved?plan={plan}",
-		"update_route": f"/app/procurement-plan-update?plan={plan}",
+		"update_route": f"/app/procurement-plan-builder?plan={plan}",
 		"tender_code": C.TENDER_CODE,
 		"draft_total": C.PLAN_AMOUNT_V2,
 		"approved_total": C.PLAN_AMOUNT_V1,
@@ -1173,6 +1148,9 @@ def prepare_planning_gate03_ui(clear_create_fy: str | None = None) -> dict[str, 
 	)
 
 	frappe.only_for(("System Manager", "Administrator"))
+	from kentender_core.seeds.kentender_mvp_v1.clear import purge_kentender_playwright_data
+
+	purge_kentender_playwright_data(commit=False)
 	ensure_planning_roles()
 	pe_moh = UI_PE
 	pe_cgk = "PE-CGKIS"

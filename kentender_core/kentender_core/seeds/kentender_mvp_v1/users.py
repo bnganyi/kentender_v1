@@ -131,14 +131,6 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
-		C.USER_PLAN_APPROVER,
-		"MOH Plan Approver",
-		(ROLE_DESIGNATED_APPROVER,),
-		C.PE_MOH,
-		None,
-		0,
-	),
-	(
 		C.USER_TENDER_INITIATOR,
 		"MOH Tender Initiator",
 		(ROLE_TENDER_INITIATOR,),

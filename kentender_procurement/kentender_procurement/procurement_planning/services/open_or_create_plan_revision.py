@@ -41,9 +41,8 @@ def open_or_create_plan_revision(
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-		org_unit=cstr(plan_doc.coordinating_org_unit or "").strip() or None,
 		user=actor,
-		require_write=True,
+		require_write=False,
 	)
 	if plan_doc.lifecycle_state != "Open":
 		frappe.throw(
@@ -84,6 +83,7 @@ def open_or_create_plan_revision(
 			"version_number": next_num,
 			"version_code": version_code,
 			"status": VERSION_DRAFT,
+			"open_version_slot": plan_name,
 			"version_reason": cstr(version_reason or "Post-approval revision"),
 			"source_version": src.name,
 			"validation_projection": VALIDATION_NOT_RUN,
@@ -129,6 +129,7 @@ def open_or_create_plan_revision(
 				"ms_tender_opening": src_iv_doc.ms_tender_opening,
 				"ms_evaluation_completed": src_iv_doc.ms_evaluation_completed,
 				"ms_award_approval": src_iv_doc.ms_award_approval,
+				"ms_notification_of_award": src_iv_doc.ms_notification_of_award,
 				"ms_contract_signature": src_iv_doc.ms_contract_signature,
 				"ms_delivery_completion": src_iv_doc.ms_delivery_completion,
 				"reservation_reference": src_iv_doc.reservation_reference,

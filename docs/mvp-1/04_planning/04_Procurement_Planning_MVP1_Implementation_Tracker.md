@@ -1,8 +1,8 @@
 # Procurement Planning MVP-1 Implementation Tracker
 
-**Document ID:** PLANNING-MVP1-IMPL-TRACKER-2.0  
-**Status:** Active — C00–C07 Done; PLN-NFR-001–005 Done  
-**Date:** 13 August 2026  
+**Document ID:** PLANNING-MVP1-IMPL-TRACKER-2.0
+**Status:** Active — C00–C07 Done; PLN-NFR-001–005 Done
+**Date:** 13 August 2026
 **Supersedes:** [retired/04_Procurement_Planning_MVP1_Implementation_Tracker.md](retired/04_Procurement_Planning_MVP1_Implementation_Tracker.md) (REQ ≤1.5 / contribution-era Gate 05)
 
 ## Goal
@@ -100,7 +100,7 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 | PLN-UI-07A Finance confirm (shortfall) | C05 | Yes — full task surface |
 | PLN-UI-08 HoP review / approve | C05 | Yes — full canvas |
 | PLN-UI-09 Approved Plan + implementation | C06 | Yes — full canvas |
-| PLN-UI-10 Draft update overview | C06 | Yes — full canvas |
+| PLN-UI-05 Draft update overview | C06 | Yes — full canvas |
 
 ---
 
@@ -129,7 +129,7 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 | PLN-GATE-C03 | **Full re-implement** PLN-UI-01…05 (+ formation services) | Prompt 03 | C02 | Done | UI-01…05 Stitch v1.9 ports; layout guard + Playwright + `make ui-planning-builder-gate` green; AC-016 Done (server reject + Combine disabled) |
 | PLN-GATE-C04 | **Full re-implement** PLN-UI-06 Plan Item editor | Prompt 04 | C03 | Done | Literal Stitch v1.9 editor; layout guard + `planning-plan-item-editor.spec.ts` + `test_update_plan_item` (8) + `make ui-planning-builder-gate` green; Request Finance completeness only (no SVC-007 task) |
 | PLN-GATE-C05 | **Full re-implement** PLN-UI-07 / 07A / 08 + Finance/professional services | Prompt 05 | C04 | Done | UI-07 + UI-07A + UI-08 literal Stitch; SVC-007…011; `test_submit_plan_for_review` 4/4; `test_record_plan_decision` 5/5; `test_approve_plan_version_gate05` 5/5; layout guard UI-08; Playwright `planning-plan-review.spec.ts` 3/3 + `assertStitchDeskChrome`; `planning-finance-confirm.spec.ts` |
-| PLN-GATE-C06 | **Full re-implement** PLN-UI-09 / 10 + successor/publish/handoff | Prompt 06 | C05 | Done | **UI-09 + UI-10 Done** (literal Stitch + SVC-012…015 + `get_plan_update` / `save_plan_update`). Seed SCN-ADD arithmetic closed in C07 |
+| PLN-GATE-C06 | **Full re-implement** PLN-UI-09 / 10 + successor/publish/handoff | Prompt 06 | C05 | Done | **UI-09 + UI-10 Done** (literal Stitch + SVC-012…015 + `get_plan_builder` / `save_plan_draft`). Seed SCN-ADD arithmetic closed in C07 |
 | PLN-GATE-C07 | Canonical seed + regression close-out | Prompt 07 | C06 | Done | SEED-001/002/004/005 + REM-009 + SVC-016 + AC-013/020; `test_scn_pln_add_001` 7/7; `test_planning_mvp_seed_contract`; `make ui-planning-mvp1-gate`. **NFR-001–004 Done** (`planning-a11y.spec.ts` 4/4; `make ui-planning-a11y-gate`) |
 
 **Makefile targets:** `ui-planning-contribution-gate` removed (C02); absence covered by `test_planning_contribution_absent` inside `ui-planning-approval-gate`. **`ui-planning-finance-gate` added (C05 UI-07)**. **`ui-planning-mvp1-gate` added (C07)** — chrome once + seed/SCN/REM + AC-013 Playwright.
@@ -181,7 +181,7 @@ Apply on **every** `PLN-UI-*` / `PLN-UIC-*` row. Violations = not Done.
 | PLN-SVC-010 | Record professional decision | Return / Approve trail | C05 | Done | `test_record_plan_decision` 5/5 (recommend / return comment / role deny / stale token); Stitch **Return to planner** |
 | PLN-SVC-011 | Approve Plan Version | Atomic lock / Effective / supersede | C05 | Done | `test_approve_plan_version_gate05` 5/5 (`test_approve_denied_when_finance_not_confirmed`); Finance re-check on approve |
 | PLN-SVC-012 | Open/reuse/cancel Draft successor | Quiet successor | C06 | Done | Reuses `open_or_create_plan_revision` + `add_demand_to_plan`; UI-09 Add Plan Item; `test_get_plan_implementation.test_successor_notice_after_add_to_approved`; Playwright successor banner |
-| PLN-SVC-013 | Publish / export Approved | Publication evidence | C06 | Done | `test_publish_approved_plan` 2/2 (Published event; failure keeps Approved); UI-09 Export CTA |
+| PLN-SVC-013 | Export Approved | Current Approved projection | C06 | Done | Client export is derived from `get_plan_implementation`; Planning publication was retired by PLN-CHG-014. |
 | PLN-SVC-014 | Tender handoff snapshot | Immutable handoff; **Tender Initiator only** (`CAP_PLAN_HANDOFF`); Finance + Strategy/PVC lineage in `snapshot_json` | C06 | Done | `test_create_planning_handoff_snapshot` 4/4 (Initiator happy/idempotent + `plan_version_code` / `finance` / `strategy_snapshot` / `pvc_snapshot` / alloc `demand_code`; Planner deny; Viewer deny; draft deny); `test_planning_task_capability.test_tender_initiator_can_handoff_planner_cannot`; UI-09 take-up read — no TM2 Tender create. PLN-GAP-PERM-001 + PLN-GAP-FR-002. |
 | PLN-SVC-015 | Implementation / audit projections | Derived downstream; omit unsupported actuals | C06 | Done | `test_get_plan_implementation` 4/4; omit `progress_label` / `variance_label` / `on_schedule_label` when no Tender/contract actuals (`has_downstream_actuals=False`); no invented `"—"` KPIs. PLN-GAP-FR-004. |
 | PLN-SVC-016 | Capability → service map | Cursor §5 naming rule — one public name per behaviour | C07 | Done | See C07 close-out capability map (report only; no alias services) |
@@ -208,7 +208,7 @@ Stitch source: `ui_design/PLN-UI-XX.html` (07A: `PLN-UI-07A.html`).
 | PLN-UI-07A | Finance confirm — shortfall | `PLN-UI-07A.html` | SVC-008 | Done | Same-task 07A drawer (no Confirm node); live 80/25/55 + Insufficient funding; Resolve `budget_funding_route` → Budget activity; `ktFormErrors` return; SCN-PLN-FUND-SHORT-001 + recovery; Playwright `planning-finance-confirm.spec.ts` 07A 3/3; `make ui-planning-finance-gate` green |
 | PLN-UI-08 | HoP review / approve | `PLN-UI-08.html` | SVC-009…011 | Done | Literal Stitch `procurement-plan-review`; `surface: task` only In review + capability (PLN-GAP-PERM-004); BO has no Recommend/Approve (PERM-006); live subtitle = plan title + status Version N (UI-002); `planning-plan-review.spec.ts` + `assertStitchDeskChrome` |
 | PLN-UI-09 | Approved Plan + implementation | `PLN-UI-09.html` | SVC-012…015 | Done | Literal Stitch `procurement-plan-approved`; omit On schedule KPI + Actual progress/Variance when no downstream actuals (PLN-GAP-FR-004); Playwright asserts live title ≠ fixture “Annual Procurement Plan”; `planning-plan-approved.spec.ts` + `assertStitchDeskChrome` |
-| PLN-UI-10 | Draft update overview | `PLN-UI-10.html` | SVC-012, UI-04 | Done | Literal Stitch `procurement-plan-update`: title **Plan update**, Draft · Needs attention, Run validation, Approved-remains-active banner, dual totals + change, Update context + reason, 7-col Changes table, unchanged expand, issue strip, Cancel / Save / Submit; never-approved Drafts stay on builder; successor builder redirects here; `test_get_plan_update` 7/7; layout guard `test_plan_update_fixture_markers`; Playwright `planning-plan-update.spec.ts` 3/3 + `assertStitchDeskChrome`; UI-09 Continue → `/procurement-plan-update` |
+| PLN-UI-05 | Draft update overview | `PLN-UI-05.html` | SVC-012, UI-04 | Done | Literal Stitch `procurement-plan-builder`: title **Plan update**, Draft · Needs attention, Run validation, Approved-remains-active banner, dual totals + change, Update context + reason, 7-col Changes table, unchanged expand, issue strip, Cancel / Save / Submit; never-approved Drafts stay on builder; successor builder redirects here; `test_get_plan_builder` 7/7; layout guard `test_plan_update_fixture_markers`; Playwright `planning-plan-update.spec.ts` 3/3 + `assertStitchDeskChrome`; UI-09 Continue → `/procurement-plan-builder` |
 | PLN-UIC-001 | Stitch Desk chrome for **all** Planning routes | Registry + gates | Each UI | Done | 7 Planning Desk routes in `STITCH_DESK_SURFACES` + `stitch-desk-chrome.spec.ts`; overlays keep host-spec `assertStitchDeskChrome`; `make ui-stitch-desk-chrome-gate` green (Python 3/3 + Playwright 26/26) |
 | PLN-UIC-002 | Inline form errors (return/confirm notes, formation reason, removal reason) | ktFormErrors | UI-02/04/05A/07/08 | Done | UI-02/05A/07/07A/08 + UI-04 Combine empty reason → `[data-kt-field-error="formation_reason"]`; no Message dialog (`planning-add-demand.spec.ts`) |
 | PLN-UIC-003 | Layout / Stitch contract guards | `test_planning_ui_stitch_layout_guard` | Each UI | Done | UI-01…10 + 05A + 07A markers; `data-kt-field-error` on formation_reason / update_reason; approved + update page JS in `test_assets_exist`; 17/17 green |
@@ -270,7 +270,7 @@ Map to REQ v1.9 §16. Mark Done only with test IDs.
 |---|---|---|---|---|---|
 | PLN-NFR-001 | Server-side scope on every read/mutation | C01 | Done | `test_moh_planner_cannot_access_county_scope`; `test_county_planner_cannot_mutate_moh_plan`; `test_county_planner_cannot_read_moh_builder_review_or_update`; `test_county_planner_cannot_publish_or_handoff_moh_plan`; `test_planning_permissions_matrix` 6/6; workspace soft-filter `test_planning_workspace_api` (no `PLN_SCOPE_DENIED` on list load) |
 | PLN-NFR-002 | Atomic Finance / approve / handoff + idempotent retry | C05–C06 | Done | `test_request_finance_creates_awaiting_idempotently`; `test_confirm_reserves_and_retry_is_idempotent`; `test_happy_path_effective_once`; handoff second call `idempotent` in `test_creates_immutable_snapshot_and_blocks_propose_removal`; `test_publish_keeps_plan_approved` retry `idempotent`; `test_idempotent_retry_no_second_audit`; SCN `test_second_run_idempotent`; seed `test_idempotent_second_run` |
-| PLN-NFR-003 | Concurrency / stale version protection | C05 | Done | `test_09_stale_version_protection`; `test_stale_concurrency_token_rejected` (remove); `test_stale_after_amount_change`; `test_save_plan_update_stale_token_rejected`; `test_stale_concurrency_token_rejected` (decision) |
+| PLN-NFR-003 | Concurrency / stale version protection | C05 | Done | `test_09_stale_version_protection`; `test_stale_concurrency_token_rejected` (remove); `test_stale_after_amount_change`; `test_save_plan_draft_stale_token_rejected`; `test_stale_concurrency_token_rejected` (decision) |
 | PLN-NFR-004 | a11y: labels, keyboard, focus, error association | **Each** UI-01…10/07A re-impl | Done | `planning-a11y.spec.ts` 4/4 (UI-01 labels/keyboard/focus; UI-02/06/08 `aria-invalid` + `aria-describedby`); `ktFormErrors` associates error slots; `make ui-planning-a11y-gate`. Not WCAG 2.1 AA / axe-core |
 | PLN-NFR-005 | No Message dialog for field validation | UIC-002 | Done | UI-02/04/05A/07/07A/08 Playwright: empty required field → inline `ktFormErrors`; no Message dialog |
 
@@ -307,10 +307,10 @@ Map to REQ v1.9 §16. Mark Done only with test IDs.
 
 Domain gates C01–C02 are Done. Remaining work **must** re-implement **every** Stitch screen — not a subset.
 
-1. **C03 — PLN-UI-01, 02, 03, 04, 05** — Full literal ports for workspace, register, empty builder, add-Demand/formation dialog, populated builder (plus SVC-001…004).  
-2. **C04 — PLN-UI-06** — Done (literal Stitch v1.9 editor + SVC-005 field register).  
-3. **C05 — PLN-UI-07, 07A, 08** — Done (Finance drawers + HoP review canvas; SVC-007…011; Finance submit/approve gates).  
-4. **C06 — PLN-UI-09, 10** — Done (approved canvas + draft-update overview; SVC-012…015 + `get_plan_update` / `save_plan_update`).  
+1. **C03 — PLN-UI-01, 02, 03, 04, 05** — Full literal ports for workspace, register, empty builder, add-Demand/formation dialog, populated builder (plus SVC-001…004).
+2. **C04 — PLN-UI-06** — Done (literal Stitch v1.9 editor + SVC-005 field register).
+3. **C05 — PLN-UI-07, 07A, 08** — Done (Finance drawers + HoP review canvas; SVC-007…011; Finance submit/approve gates).
+4. **C06 — PLN-UI-09, 10** — Done (approved canvas + draft-update overview; SVC-012…015 + `get_plan_builder` / `save_plan_draft`).
 5. **C07** — Done (Demo v2.7 seed + SCN-ADD live services + AC-013/020). NFR-004 a11y remains open.
 
 **Anti-pattern (forbidden):** treating C03 as “UI-04 multi-select only”, C05 as “wire Finance strip into old UI-08”, or skipping UI-01/02/03/09/10 because “fixtures already exist”.
@@ -344,10 +344,10 @@ Do not mark any UI Done without literal Stitch match + Playwright + chrome where
 | Record professional decision | `record_plan_decision` | `test_record_plan_decision` |
 | Approve Plan Version | `approve_plan_version` | `test_approve_plan_version_gate05` |
 | Open/reuse Draft successor | `open_or_create_plan_revision` | `test_get_plan_implementation` |
-| Publish / export Approved | `publish_approved_plan` | `test_publish_approved_plan` |
+| Export Approved | `get_plan_implementation` | `test_get_plan_implementation` |
 | Tender handoff snapshot | `create_planning_handoff_snapshot` | `test_create_planning_handoff_snapshot` |
 | Implementation projection | `get_plan_implementation` | `test_get_plan_implementation` |
-| Draft update overview / save | `get_plan_update` / `save_plan_update` | `test_get_plan_update` |
+| Draft update overview / save | `get_plan_builder` / `save_plan_draft` | `test_get_plan_builder` |
 | Remove Plan Item | `remove_plan_item_from_plan` | `test_remove_plan_item` |
 
 **Deferred:** none for NFR-004 (Prompt 07 item 13 closed). SVC-001/002/006 remain Keep/Correct (revalidate, not open tickets). Demands `approve_and_reserve` still reserves (Demands leftover; not rewritten).
@@ -368,8 +368,8 @@ Do not mark any UI Done without literal Stitch match + Playwright + chrome where
 | 2026-08-13 | **PLN-AC-001 / 011 / 016 / 018 / 021 / 026 / 027 + PERM-005 Done** — mixed-OU Combine reject + UI disable; Demand strategy/PVC pass-through (ignore Planning writes); PE/immutability/neutral/removal evidence; Reviewer cannot Approve. **NFR-004 remains Not started.** |
 | 2026-08-13 | **PLN-GATE-C07 / SEED-001/002/004/005 / REM-009 / SVC-016 / AC-013 / AC-020 Done** — Demo v2.7 canonical seed; SCN-ADD live services (no Demand-stage RSV-0002); Draft 535m while V1 + `TND-MOH-2027-008` live; Finance then RSV-0002; double-run idempotent; `validate.py` SCN-ADD mode; USA personas; REM-009 grep; `make ui-planning-mvp1-gate`. **NFR-004 remains Not started.** |
 | 2026-08-13 | **PLN-UIC-001 / UIC-002 / UIC-003 / NFR-005 Done** — `make ui-stitch-desk-chrome-gate` green (26 Playwright surfaces); UI-04 Combine without reason shows inline `formation_reason` (no Message); layout guard asserts UI-01…10 + 05A/07A error slots and approved/update page assets. **SEED-002 / AC-013 / AC-020 / C07 remain open.** |
-| 2026-08-13 | **PLN-UI-10 / PLN-GATE-C06 Done** — literal Stitch Draft Plan update (`procurement-plan-update`); `get_plan_update` / `save_plan_update`; successor submit requires planner reason; Added labels; UI-09 Continue/View → UI-10; builder successor redirects here; `test_get_plan_update` 6/6; `test_submit_plan_for_review` 4/4; layout guard `test_plan_update_fixture_markers`; Playwright `planning-plan-update.spec.ts` 3/3 + UI-09 Continue → `/procurement-plan-update`. **SEED-002 / AC-013 / AC-020 / C07 remain open** (canonical 535m arithmetic). |
-| 2026-08-13 | **PLN-UI-09 / PLN-SVC-012…015 / PLN-AC-012 / AC-019 / AC-025 Done** — literal Stitch Approved Plan (`procurement-plan-approved`); quiet successor + publish/export + handoff snapshot + implementation DTO; workspace Approved → UI-09; Add → UI-04; Propose → 05A; Continue → builder until UI-10; `test_get_plan_implementation` 4/4; `test_publish_approved_plan` 2/2; `test_create_planning_handoff_snapshot` 2/2; layout guard; Playwright `planning-plan-approved.spec.ts` 4/4 + `assertStitchDeskChrome`. **UI-10 and GATE-C06 remain open.** |
+| 2026-08-13 | **PLN-UI-05 / PLN-GATE-C06 Done** — literal Stitch Draft Plan update (`procurement-plan-builder`); `get_plan_builder` / `save_plan_draft`; successor submit requires planner reason; Added labels; UI-09 Continue/View → UI-10; builder successor redirects here; `test_get_plan_builder` 6/6; `test_submit_plan_for_review` 4/4; layout guard `test_plan_update_fixture_markers`; Playwright `planning-plan-update.spec.ts` 3/3 + UI-09 Continue → `/procurement-plan-builder`. **SEED-002 / AC-013 / AC-020 / C07 remain open** (canonical 535m arithmetic). |
+| 2026-08-13 | **PLN-UI-09 / PLN-SVC-012…015 / PLN-AC-012 / AC-019 / AC-025 Done** — literal Stitch Approved Plan (`procurement-plan-approved`); quiet successor + export + handoff snapshot + implementation DTO; workspace Approved → UI-09; Add → UI-04; Propose → 05A; Continue → builder until UI-10; `test_get_plan_implementation` 4/4; `test_create_planning_handoff_snapshot` 2/2; layout guard; Playwright `planning-plan-approved.spec.ts` 4/4 + `assertStitchDeskChrome`. **GATE-C06 evidence recorded.** |
 | 2026-08-13 | **PLN-UI-08 / PLN-SVC-009…011 / PLN-AC-009 / AC-010 / AC-017 / PLN-GATE-C05 Done** — literal Stitch HoP review (`Review and approve procurement plan`, Finance Confirmed strip + Finance column, issues first, gavel rail, Return to planner); submit/approve require current Finance Confirmed; coverage omit-if-empty; `test_submit_plan_for_review` 4/4; `test_record_plan_decision` 4/4; `test_approve_plan_version_gate05` 5/5; layout guard; Playwright `planning-plan-review.spec.ts` 3/3 + `assertStitchDeskChrome`. UI-09/10 remain C06. |
 | 2026-08-13 | **PLN-UI-05A / PLN-SVC-017 Done** — Plan Item removal (REQ v1.9 / Stitch v2.0 / Cursor v1.8 / Demo v2.7): `remove_plan_item_from_plan` (no hard-delete; server-derived mode); UI-05 overflow + 05A Draft/Finance/Active overlay; `ktFormErrors` reason; SCN-PLN-REMOVE-001 3/3; `test_remove_plan_item` 12/12; layout + Playwright 05A; `make ui-planning-builder-gate` green. UI-09 Propose entry remains C06. |
 | 2026-08-12 | **PLN-UI-06 Done** / **PLN-GATE-C04 Done** — literal Stitch v1.9 Plan Item editor (Procurement approach, Indicative lotting, Planned schedule, Approved source, Request Finance completeness; Desk crumbs only); SVC-005 + AC-003/004/005; layout guard + `planning-plan-item-editor.spec.ts` + `make ui-planning-builder-gate` green; visual vs `PLN-UI-06.html`; Finance task / UI-07 remains C05 |

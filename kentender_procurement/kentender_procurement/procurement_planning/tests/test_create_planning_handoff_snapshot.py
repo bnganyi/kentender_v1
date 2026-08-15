@@ -11,7 +11,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.mvp1_constants import TAKEUP_ACTIVE
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (

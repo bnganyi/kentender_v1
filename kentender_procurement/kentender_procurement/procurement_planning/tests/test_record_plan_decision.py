@@ -14,7 +14,7 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_IN_REVIEW,
 	VERSION_RETURNED,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.record_plan_decision import (

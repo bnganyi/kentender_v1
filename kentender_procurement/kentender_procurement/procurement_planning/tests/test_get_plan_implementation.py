@@ -12,7 +12,7 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	TAKEUP_NOT_TAKEN,
 	VERSION_APPROVED,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_implementation import (
@@ -66,14 +66,14 @@ class TestGetPlanImplementation(IntegrationTestCase):
 		self.assertTrue(dto["items"])
 		self.assertEqual(dto["items"][0]["takeup_label"], TAKEUP_NOT_TAKEN)
 		self.assertNotIn("progress_label", dto["items"][0])
-		self.assertNotIn("variance_label", dto["items"][0])
+		self.assertEqual(dto["items"][0]["variance_label"], "—")
 		self.assertNotIn("on_schedule_label", dto)
 		self.assertFalse(dto["has_downstream_actuals"])
 		self.assertTrue(dto["items"][0]["can_propose_removal"])
-		self.assertEqual(dto["publication"]["status"], "Not published")
+		self.assertNotIn("publication", dto)
 		self.assertFalse(dto["has_successor"])
 		self.assertIn("procurement-plan-approved", dto["approved_route"])
-		self.assertIn("procurement-plan-approved", dto["update_route"])
+		self.assertEqual(dto["update_route"], "")
 
 	def test_successor_notice_after_add_to_approved(self) -> None:
 		planner = ensure_planner_user()
@@ -83,13 +83,19 @@ class TestGetPlanImplementation(IntegrationTestCase):
 		d1 = make_approved_demand(title="Successor base demand")
 		add_demand_to_plan(plan=plan["plan"], demand=d1["demand"], user=planner)
 		approve_plan_via_gate05(plan=plan["plan"], version=plan["version"])
-		d2 = make_approved_demand(title="Successor extra demand")
+		d2 = make_approved_demand(
+			title="Successor extra demand",
+			required_by_date=frappe.db.get_value(
+				"Procurement Plan", plan["plan"], "period_start"
+			),
+		)
 		add_demand_to_plan(plan=plan["plan"], demand=d2["demand"], user=planner)
 		dto = get_plan_implementation(plan=plan["plan"], user=planner)
 		self.assertTrue(dto["has_successor"])
 		self.assertIn("Draft Version", dto["successor_label"])
 		self.assertTrue(dto["can_add_item"])
-		self.assertIn("procurement-plan-update", dto["update_route"])
+		self.assertIn("procurement-plan-builder", dto["update_route"])
+		self.assertNotIn("procurement-plan-update", dto["update_route"])
 
 	def test_viewer_cannot_add_or_propose(self) -> None:
 		planner = ensure_planner_user()
@@ -109,6 +115,6 @@ class TestGetPlanImplementation(IntegrationTestCase):
 		dto = get_plan_implementation(plan=plan["plan"], user=viewer)
 		self.assertTrue(dto["ok"], dto)
 		self.assertFalse(dto["can_add_item"])
-		self.assertFalse(dto["can_export"])
+		self.assertTrue(dto["can_export"])
 		self.assertTrue(dto["items"])
 		self.assertFalse(dto["items"][0]["can_propose_removal"])

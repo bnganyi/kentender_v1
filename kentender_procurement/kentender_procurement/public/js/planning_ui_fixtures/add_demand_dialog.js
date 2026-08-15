@@ -1,4 +1,4 @@
-// PLN-UI-04 — literal Stitch modal from docs/mvp-1/04_planning/ui_design/PLN-UI-04.html
+// PLN-UI-04 — literal Stitch modal from docs/mvp-1/04_planning/revision/PLN-UI-04.html
 // Corrected: no absolute selection <td>; Proposed Funding wraps (no truncate).
 frappe.provide("kentender_procurement.ui_fixtures");
 
@@ -56,7 +56,8 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 <th class="w-12 px-container-padding py-3" scope="col"><span class="sr-only">Select</span></th>
 <th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase" scope="col">Demand</th>
 <th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase" scope="col">Organisation Unit</th>
-<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase text-right" scope="col">Approved Value</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase text-right" scope="col">Available Need Items</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase text-right" scope="col">Available value</th>
 <th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase" scope="col">Required By</th>
 <th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase" scope="col">Proposed Funding</th>
 <th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase" scope="col">Status</th>
@@ -84,11 +85,11 @@ kentender_procurement.ui_fixtures.planning_add_demand_dialog = function () {
 <div class="flex flex-col gap-2">
 <label class="flex items-center gap-2 cursor-pointer">
 <input class="w-4 h-4 text-primary border-outline focus:ring-primary" name="kt-pln-formation" type="radio" value="separate" data-kt-pln-formation-mode checked/>
-<span class="font-body-md text-on-surface">Create separate Plan Items</span>
+<span class="font-body-md text-on-surface">One Plan Item for each Demand</span>
 </label>
 <label class="flex items-center gap-2" data-kt-pln-formation-combine-label>
 <input class="w-4 h-4 text-primary border-outline focus:ring-primary" name="kt-pln-formation" type="radio" value="combined" data-kt-pln-formation-mode data-testid="kt-pln-ui04-formation-combine"/>
-<span class="font-body-md text-on-surface">Combine into one Plan Item</span>
+<span class="font-body-md text-on-surface">One combined Plan Item for all selected Demands</span>
 </label>
 </div>
 <div class="hidden" data-kt-pln-formation-reason-wrap data-testid="kt-pln-ui04-formation-reason-wrap" hidden>

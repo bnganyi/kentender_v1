@@ -96,7 +96,7 @@ class TestScnPlnRemove001(IntegrationTestCase):
 			user=C.USER_PLANNING_OFFICER,
 		)
 
-		self.assertEqual(payload.get("state_id"), "no_effective_changes")
+		self.assertEqual(payload.get("state_id"), "PLN-UI-01C-NC")
 		self.assertEqual(payload["current_plan"]["approved"]["planned_total"], C.PLAN_AMOUNT_V1)
 		self.assertEqual(payload["current_plan"]["draft"]["planned_total"], C.PLAN_AMOUNT_V1)
 		self.assertEqual(payload["primary_action"]["label"], "Continue plan update")

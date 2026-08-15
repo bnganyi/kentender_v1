@@ -55,7 +55,7 @@ def create_planning_handoff_snapshot(
 	plan_name = cstr(item.plan)
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	pe = cstr(plan_doc.procuring_entity).strip()
-	ou = cstr(plan_doc.coordinating_org_unit or "").strip() or None
+	ou = cstr(item.owner_org_unit or "").strip() or None
 	try:
 		require_capability(
 			CAP_PLAN_HANDOFF,

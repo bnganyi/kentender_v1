@@ -1,0 +1,281 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Confirm Plan Item Funding - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#434654",
+                        "tertiary-container": "#545a6c",
+                        "on-secondary-container": "#005f71",
+                        "status-exhausted": "#E11D48",
+                        "on-background": "#191c1e",
+                        "primary-container": "#0052cc",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-bright": "#f8f9fb",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface-tint": "#0c56d0",
+                        "status-available": "#10B981",
+                        "secondary-fixed": "#afecff",
+                        "outline-variant": "#c3c6d6",
+                        "tertiary": "#3d4354",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary-fixed": "#151b2b",
+                        "inverse-primary": "#b2c5ff",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191c1e",
+                        "on-primary-container": "#c4d2ff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-container-low": "#f3f4f6",
+                        "on-secondary-fixed": "#001f27",
+                        "primary": "#003d9b",
+                        "surface-dim": "#d9dadc",
+                        "secondary": "#00687b",
+                        "primary-fixed": "#dae2ff",
+                        "error": "#ba1a1a",
+                        "data-committed": "#6366F1",
+                        "outline": "#737685",
+                        "secondary-container": "#50dcff",
+                        "border-subtle": "#DFE1E6",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ccd2e7",
+                        "on-primary-fixed": "#001848",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "on-error": "#ffffff",
+                        "surface": "#f8f9fb",
+                        "on-error-container": "#93000a",
+                        "status-reserved": "#F59E0B",
+                        "background": "#f8f9fb",
+                        "tertiary-fixed": "#dce2f8",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "1.5rem",
+                        "stack-xs": "0.25rem",
+                        "gutter-md": "1rem",
+                        "stack-sm": "0.5rem",
+                        "container-padding": "1rem"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen overflow-hidden flex font-body-sm relative">
+<!-- Background Screen Context (Dimmed) -->
+<div class="absolute inset-0 z-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply bg-surface-variant">
+<img alt="Procurement Plan Alpha Workspace" class="w-full h-full object-cover grayscale" data-alt="A detailed, blurred screenshot of a complex corporate procurement planning web interface with tables and navigation, rendered in soft grays." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUnNTFE-f_EZ_F4aRvv3532xrcN3lukdle_MSgUm74pPQDV56MjP5j6IZdnSgnlJzmQgIzeP3da9hy0NTNz4rvM1umDJnJZc5rmwE2OL1l512ee39zjJwRyWLP2_8hEz487RsT4SLB-3SqqR-H6VIAhFz8U0IWffIr_zXvC7wQB615yYlJE3QNEzDkVCqkruZoD_-cWCrcp37wNqQ3zRVlH9oZajlvJEus8VBfE67lHQZvrWO48hx7">
+</div>
+<!-- Dimmer Overlay -->
+<div class="absolute inset-0 bg-on-background/30 z-10 backdrop-blur-[2px]"></div>
+<!-- Right Side Drawer -->
+<div class="absolute right-0 top-0 h-full w-[600px] max-w-full bg-surface-container-lowest shadow-2xl z-20 flex flex-col transform transition-transform duration-300 translate-x-0 border-l border-subtle">
+<!-- Drawer Header -->
+<header class="px-6 py-5 border-b border-subtle bg-surface flex flex-col gap-3 flex-shrink-0">
+<div class="flex items-start justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Confirm Plan Item funding</h2>
+<div class="flex items-center gap-2 mt-2">
+<span class="font-data-md text-data-md text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded text-sm">PPI-MOH-2027-022</span>
+<span class="font-body-sm text-body-sm text-outline">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ministry of Health Annual Procurement Plan 2027/28 · Draft Version 2</span>
+</div>
+</div>
+<button aria-label="Close drawer" class="text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-full hover:bg-surface-container-high flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pt-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-container/10 text-primary">
+                    Awaiting confirmation
+                </span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-status-available/10 text-status-available">
+                    Sufficient funding
+                </span>
+</div>
+</header>
+<!-- Drawer Content (Scrollable) -->
+<div class="flex-1 overflow-y-auto px-6 py-6 space-y-8 bg-surface-container-lowest">
+<!-- Section: Plan Item -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-label-caps text-label-caps text-tertiary uppercase tracking-wider">Plan Item Details</h3>
+<a class="font-body-sm text-body-sm font-medium text-primary hover:underline flex items-center gap-1" href="#">
+                        View Plan Item
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<div class="bg-surface rounded-lg border border-subtle p-5 space-y-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Digital health technical staff certification programme</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+                            Human Resources Management and Development
+                        </p>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-subtle pt-4">
+<div>
+<span class="block font-label-caps text-label-caps text-outline mb-1">Source Demand</span>
+<span class="font-body-sm text-body-sm text-on-surface flex items-start gap-1.5"><span class="material-symbols-outlined text-[16px] text-primary mt-0.5">description</span>
+<div class="flex flex-col">
+    <span class="font-body-md text-on-surface">Digital health technical staff certification programme</span>
+    <span class="font-data-md text-xs text-on-surface-variant">DMD-MOH-2027-019</span>
+</div></span>
+</div>
+<div>
+<span class="block font-label-caps text-label-caps text-outline mb-1">Need Item</span>
+<span class="font-body-sm text-body-sm text-on-surface">Accredited digital-health technical staff certification programme</span>
+</div>
+<div>
+<span class="block font-label-caps text-label-caps text-outline mb-1">Quantity</span>
+<span class="font-body-sm text-body-sm text-on-surface">1 Programme</span>
+</div>
+<div>
+<span class="block font-label-caps text-label-caps text-outline mb-1">Required By</span>
+<span class="font-body-sm text-body-sm text-on-surface">31 December 2027</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded p-4 flex items-center justify-between border border-subtle mt-2">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Amount requiring confirmation</span>
+<span class="font-data-lg text-data-lg text-on-surface">KES 80,000,000</span>
+</div>
+</div>
+</section>
+<!-- Section: Funding position -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-label-caps text-label-caps text-tertiary uppercase tracking-wider">Funding Position</h3>
+<a class="font-body-sm text-body-sm font-medium text-primary hover:underline flex items-center gap-1" href="#">
+                        View Budget Line
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<div class="bg-surface rounded-lg border border-subtle p-5">
+<div class="mb-5 pb-4 border-b border-subtle">
+<span class="block font-label-caps text-label-caps text-outline mb-1">Budget Line</span>
+<div class="flex items-center gap-2">
+<span class="font-data-md text-data-md text-on-surface-variant bg-surface-container-high px-1.5 rounded">MOH-BL-HWD-2027</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Digital Health Workforce Capacity Development</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Approved allocation</span>
+<span class="font-data-md text-data-md text-on-surface">KES 80,000,000</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Reserved</span>
+<span class="font-data-md text-data-md text-on-surface">KES 0</span>
+</div>
+<div class="flex justify-between items-center text-sm pb-3 border-b border-subtle">
+<span class="text-on-surface-variant">Committed</span>
+<span class="font-data-md text-data-md text-on-surface">KES 0</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-medium text-on-surface">Available now</span>
+<span class="font-data-md text-data-md text-status-available font-bold">KES 80,000,000</span>
+</div>
+<div class="flex justify-between items-center text-sm bg-surface-container-low p-2 rounded -mx-2 mt-2">
+<span class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">arrow_forward</span>
+                                Amount to reserve
+                            </span>
+<span class="font-data-md text-data-md text-on-surface">KES 80,000,000</span>
+</div>
+<div class="flex justify-between items-center pt-2">
+<span class="text-on-surface-variant">Available after confirmation</span>
+<span class="font-data-md text-data-md text-on-surface-variant">KES 0</span>
+</div>
+</div>
+<div class="mt-5 pt-4 border-t border-subtle text-right">
+<span class="font-body-sm text-body-sm text-outline text-xs flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            As at: 20 August 2027, 10:00 EAT
+                        </span>
+</div>
+</div>
+</section>
+<!-- Informational Notice -->
+<div class="bg-primary-container/5 border border-primary-container/20 rounded p-4 flex gap-3">
+<span class="material-symbols-outlined text-primary flex-shrink-0 mt-0.5">info</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+                    Confirming funding will reserve <strong>KES 80,000,000</strong> on MOH-BL-HWD-2027 for this Plan Item. It does not approve Draft Version 2.
+                </p>
+</div>
+<!-- Input Field -->
+<div class="space-y-1.5 pb-8">
+<label class="block font-label-caps text-label-caps text-on-surface" for="finance-note">Finance note</label>
+<textarea class="w-full rounded border border-subtle bg-surface-container-lowest p-3 font-body-sm text-body-sm text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all placeholder-outline-variant" id="finance-note" placeholder="Add a note..." rows="3"></textarea>
+<p class="font-body-sm text-body-sm text-outline text-xs">Optional when confirming. Required when returning to the planner.</p>
+</div>
+</div>
+<!-- Drawer Footer -->
+<footer class="px-6 py-4 border-t border-subtle bg-surface flex items-center justify-between flex-shrink-0">
+<button class="font-body-md text-body-md font-medium text-status-exhausted hover:bg-status-exhausted/5 px-4 py-2 rounded transition-colors">
+                Cancel
+            </button>
+<div class="flex gap-3">
+<button class="font-body-md text-body-md font-medium text-primary border border-subtle bg-surface-container-lowest hover:bg-surface-container-low px-4 py-2 rounded transition-colors shadow-sm">
+                    Return to planner
+                </button>
+<button class="font-body-md text-body-md font-medium text-on-primary bg-primary hover:bg-primary/90 px-6 py-2 rounded transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                    Confirm funding
+                </button>
+</div>
+</footer>
+</div>
+
+
+</body></html>

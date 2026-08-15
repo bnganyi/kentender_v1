@@ -97,14 +97,15 @@ frappe.provide("kentender_core.module_registry");
 		},
 		procurement_planning: {
 			id: "procurement_planning",
-			workspaceRoute: ["Workspaces", "Procurement Planning"],
+			workspaceSlug: "planning-workspace",
+			builderPage: "procurement-plan-builder",
 			workbenchLabel: __("Procurement Planning"),
 			backLabel: __("Back to Procurement Planning"),
 			sidebarWorkspaceKey: "procurement planning",
 			formDoctype: "Procurement Plan",
 			stateKey: "kt_pp_workbench_state",
 			selectKey: "kt_pp_workspace_select",
-			routePrefixes: ["Form/Procurement Plan"],
+			routePrefixes: ["planning-workspace", "procurement-plan-register", "procurement-plan-builder", "Form/Procurement Plan"],
 			taskLabels: {
 				form: __("Edit Plan"),
 			},

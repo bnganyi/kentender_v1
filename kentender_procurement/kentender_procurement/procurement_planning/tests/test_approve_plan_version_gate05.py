@@ -14,7 +14,7 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_APPROVED,
 	VERSION_IN_REVIEW,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
@@ -67,7 +67,7 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 			msg,
 		)
 
-	def test_approve_requires_recommendation(self) -> None:
+	def test_professional_task_replaces_recommendation(self) -> None:
 		planner = ensure_planner_user()
 		approver = ensure_approver_user()
 		fy = unique_test_fy(base_year=2800, bucket=1)
@@ -82,21 +82,19 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 			"Procurement Plan Version", plan["version"], "concurrency_token"
 		)
 		sub = submit_plan_for_review(
-			plan=plan["plan"], concurrency_token=token, user=planner
+			plan=plan["plan"], expected_token=token,
+			idempotency_key=f"TEST-SUBMIT-{plan['version']}", user=planner
 		)
 		self.assertTrue(sub["ok"], sub)
 		self.assertEqual(
 			frappe.db.get_value("Procurement Plan Version", plan["version"], "status"),
 			VERSION_IN_REVIEW,
 		)
-		token2 = frappe.db.get_value(
-			"Procurement Plan Version", plan["version"], "concurrency_token"
+		approved = approve_plan_version(
+			task=sub["task"], expected_token=sub["task_token"],
+			idempotency_key=f"TEST-APPROVE-{sub['task']}", user=sub["assignee"]
 		)
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			approve_plan_version(
-				version=plan["version"], concurrency_token=token2, user=approver
-			)
-		self.assertIn("RECOMMENDATION", str(ctx.exception).upper())
+		self.assertEqual(approved["status"], VERSION_APPROVED)
 
 	def test_happy_path_effective_once(self) -> None:
 		planner = ensure_planner_user()
@@ -141,13 +139,8 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 		advanced = advance_draft_to_recommended(
 			plan=plan["plan"], version=plan["version"]
 		)
-		as_reviewer = get_plan_review(plan=plan["plan"], user=advanced["reviewer"])
-		self.assertEqual(as_reviewer["surface"], "task")
-		self.assertEqual(as_reviewer["rail_mode"], "reviewer")
-		self.assertTrue(as_reviewer["can_recommend"] or as_reviewer["has_recommendation"])
-		as_approver = get_plan_review(plan=plan["plan"], user=approver)
+		as_approver = get_plan_review(task=advanced["task"], user=advanced["assignee"])
 		self.assertEqual(as_approver["surface"], "task")
-		self.assertEqual(as_approver["rail_mode"], "approver")
 		self.assertTrue(as_approver["can_approve"])
 		self.assertTrue(as_approver["items"])
 		self.assertEqual(as_approver["statutory_coverage"], [])
@@ -183,12 +176,10 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 			FINANCE_AWAITING,
 			update_modified=False,
 		)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", advanced["version"], "concurrency_token"
-		)
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			approve_plan_version(
-				version=advanced["version"], concurrency_token=token, user=approver
+				task=advanced["task"], expected_token=advanced["task_token"],
+				idempotency_key=f"TEST-DENY-{advanced['task']}", user=advanced["assignee"]
 			)
 		msg = str(ctx.exception).upper()
 		self.assertTrue("FINANCE" in msg or "PLN_FINANCE_NOT_CONFIRMED" in msg, msg)

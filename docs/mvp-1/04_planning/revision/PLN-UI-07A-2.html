@@ -1,0 +1,244 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Return Plan Item</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#ffffff",
+                      "on-surface-variant": "#434654",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "primary": "#003d9b",
+                      "tertiary-container": "#545a6c",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "status-reserved": "#F59E0B",
+                      "on-background": "#191c1e",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e1e2e4",
+                      "surface": "#f8f9fb",
+                      "secondary-container": "#50dcff",
+                      "on-surface": "#191c1e",
+                      "surface-container": "#edeef0",
+                      "surface-bright": "#f8f9fb",
+                      "outline": "#737685",
+                      "on-primary-container": "#c4d2ff",
+                      "outline-variant": "#c3c6d6",
+                      "data-committed": "#6366F1",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "border-subtle": "#DFE1E6",
+                      "on-tertiary-container": "#ccd2e7",
+                      "on-secondary-fixed": "#001f27",
+                      "surface-container-high": "#e7e8ea",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#b2c5ff",
+                      "primary-fixed": "#dae2ff",
+                      "surface-tint": "#0c56d0",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "surface-dim": "#d9dadc",
+                      "tertiary": "#3d4354",
+                      "inverse-surface": "#2e3132",
+                      "status-available": "#10B981",
+                      "on-primary-fixed": "#001848",
+                      "tertiary-fixed": "#dce2f8",
+                      "secondary-fixed": "#afecff",
+                      "on-error": "#ffffff",
+                      "primary-container": "#0052cc",
+                      "on-secondary-container": "#005f71",
+                      "background": "#f8f9fb",
+                      "on-tertiary-fixed": "#151b2b",
+                      "on-secondary": "#ffffff",
+                      "surface-container-highest": "#e1e2e4",
+                      "inverse-on-surface": "#f0f1f3",
+                      "surface-container-low": "#f3f4f6",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "error": "#ba1a1a",
+                      "status-exhausted": "#E11D48",
+                      "secondary": "#00687b",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed-dim": "#48d7f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "0.5rem",
+                      "stack-xs": "0.25rem",
+                      "gutter-md": "1rem",
+                      "section-gap": "1.5rem",
+                      "container-padding": "1rem"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased relative min-h-screen">
+<!-- Dimmed Background Area (simulating {{DATA:SCREEN:SCREEN_5}}) -->
+<div aria-hidden="true" class="fixed inset-0 bg-on-background/50 backdrop-blur-sm z-40"></div>
+<!-- Modal Container -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-container-padding overflow-y-auto">
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(0,61,155,0.1)] w-full max-w-2xl overflow-hidden border border-border-subtle flex flex-col max-h-[90vh]">
+<!-- Modal Header -->
+<div class="px-section-gap py-gutter-md border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-headline-md text-headline-md text-on-surface">Return Plan Item to planner?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-stack-xs">The Plan Item will return to the planner for correction. No funding will be reserved.</p>
+</div>
+<!-- Modal Body -->
+<div class="px-section-gap py-section-gap flex-1 overflow-y-auto flex flex-col gap-section-gap bg-surface">
+<!-- Read-only Item Section -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-gutter-md">
+<div class="flex flex-col gap-stack-sm">
+<span class="font-data-md text-data-md text-primary bg-primary-fixed text-on-primary-fixed px-stack-sm py-1 rounded inline-flex w-fit">PPI-MOH-2027-022</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Digital health technical staff certification programme</h3>
+<div class="flex items-center gap-stack-sm text-on-surface-variant mt-stack-xs">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+<span class="font-body-sm text-body-sm">Ministry of Health</span>
+</div>
+</div>
+</div>
+<!-- Read-only Shortfall Section -->
+<div class="bg-error-container/30 border border-error-container rounded-lg p-gutter-md flex items-center gap-gutter-md">
+<span class="material-symbols-outlined text-status-exhausted text-[24px]">warning</span>
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block mb-stack-xs">Current Funding Shortfall</span>
+<span class="font-data-lg text-data-lg text-status-exhausted">KES 55,000,000</span>
+</div>
+</div>
+<!-- Required Multiline Field -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider flex items-center gap-1" for="return_reason">
+                        Reason for return <span class="text-status-exhausted">*</span>
+</label>
+<textarea class="w-full rounded-lg border-border-subtle bg-surface-container-lowest px-4 py-3 font-body-md text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none resize-y" id="return_reason" placeholder="Explain what the planner needs to address." required="" rows="4"></textarea>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-section-gap py-gutter-md border-t border-border-subtle bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-stack-sm">
+
+<div>
+
+
+</div>
+</div>
+<div class="flex items-center gap-stack-sm">
+<button class="px-4 py-2 rounded-lg font-body-md text-body-md font-medium text-on-surface-variant hover:bg-surface-container-high transition-colors border border-transparent" type="button">
+                        Cancel
+                    </button>
+<button class="px-4 py-2 rounded-lg font-body-md text-body-md font-medium text-status-exhausted bg-surface-container-lowest border border-status-exhausted hover:bg-error-container transition-colors shadow-sm" type="button">
+                        Return to planner
+                    </button>
+</div>
+</div>
+</div>
+</div>
+
+
+</body></html>

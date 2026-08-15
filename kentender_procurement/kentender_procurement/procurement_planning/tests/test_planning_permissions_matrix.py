@@ -11,8 +11,8 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version,
 )
-from kentender_procurement.procurement_planning.services.create_procurement_plan import (
-	create_procurement_plan,
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	create_procurement_plan_for_test as create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	assert_can_approve_plan,
@@ -22,6 +22,8 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	advance_draft_to_recommended,
 	approve_plan_via_gate05,
 	make_approved_demand,
+	purge_pe_fy,
+	unique_test_fy,
 )
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	OU_MOH,
@@ -32,7 +34,7 @@ from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	ensure_org,
 	ensure_user_with_roles,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 
@@ -49,9 +51,6 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 			create_procurement_plan(
 				procuring_entity=PE_MOH,
 				financial_year="2180/81",
-				title="Admin create",
-				currency="KES",
-				coordinating_org_unit=OU_MOH,
 				user=admin,
 			)
 
@@ -63,15 +62,11 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 	def test_planner_can_create(self) -> None:
 		planner = ensure_moh_planner()
 		assert_can_create_plan(planner)
-		fy = f"2181/{frappe.generate_hash(length=2)}"
-		# unique FY
-		fy = f"218{frappe.db.count('Procurement Plan') % 9}/{str(frappe.db.count('Procurement Plan') + 10)[-2:]}"
+		fy = unique_test_fy(base_year=2180, bucket=1)
+		purge_pe_fy(fy)
 		result = create_procurement_plan(
 			procuring_entity=PE_MOH,
 			financial_year=fy,
-			title="Planner create OK",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
 			user=planner,
 		)
 		self.assertTrue(result["ok"])
@@ -81,12 +76,11 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			assert_can_approve_plan(planner)
 
+		fy = unique_test_fy(base_year=2170, bucket=2)
+		purge_pe_fy(fy)
 		created = create_procurement_plan(
 			procuring_entity=PE_MOH,
-			financial_year=f"217{frappe.db.count('Procurement Plan') % 9}/90",
-			title="Planner approve deny",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
+			financial_year=fy,
 			user=planner,
 		)
 		demand = make_approved_demand(title="Planner approve deny demand")
@@ -111,12 +105,11 @@ class TestPlanningPermissionsMatrix(IntegrationTestCase):
 	def test_designated_approver_can_approve(self) -> None:
 		planner = ensure_moh_planner()
 		approver = ensure_moh_approver()
+		fy = unique_test_fy(base_year=2160, bucket=3)
+		purge_pe_fy(fy)
 		created = create_procurement_plan(
 			procuring_entity=PE_MOH,
-			financial_year=f"216{frappe.db.count('Procurement Plan') % 9}/90",
-			title="Approver OK",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
+			financial_year=fy,
 			user=planner,
 		)
 		demand = make_approved_demand(title="Approver OK demand")

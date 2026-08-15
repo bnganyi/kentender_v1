@@ -37,6 +37,8 @@ from kentender_procurement.procurement_planning.services.remove_plan_item import
 def submit_plan_for_review(
 	*,
 	plan: str,
+	expected_token: str | None = None,
+	idempotency_key: str | None = None,
 	concurrency_token: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
@@ -49,7 +51,7 @@ def submit_plan_for_review(
 	try:
 		assert_planning_scope(
 			procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-			org_unit=cstr(plan_doc.coordinating_org_unit or "").strip() or None,
+			org_unit=None,
 			user=actor,
 			require_write=True,
 		)
@@ -75,12 +77,18 @@ def submit_plan_for_review(
 			},
 		}
 
+	key = cstr(idempotency_key).strip()
+	if not key:
+		return {"ok": False, "errors": {"form": "An idempotency key is required."}}
+	existing = frappe.db.get_value("Plan Decision", {"command_idempotency_key": key}, "name")
+	if existing:
+		return {"ok": True, "idempotent": True, "decision": existing, "version": version_name, "task": cstr(ver.review_task_id)}
 	try:
-		assert_version_concurrency(version_name, concurrency_token)
+		assert_version_concurrency(version_name, expected_token or concurrency_token)
 	except frappe.ValidationError as exc:
 		return {"ok": False, "errors": {"form": str(exc) or "Concurrency conflict"}}
 
-	from kentender_procurement.procurement_planning.services.get_plan_update import (
+	from kentender_procurement.procurement_planning.services.plan_builder_successor import (
 		planner_update_reason,
 	)
 
@@ -135,13 +143,26 @@ def submit_plan_for_review(
 
 	now = now_datetime()
 	token = new_concurrency_token()
+	from kentender_procurement.procurement_planning.services.planning_tasks import next_task_identity, resolve_single_assignee
+	assignee = resolve_single_assignee(role="Designated Approver", procuring_entity=cstr(plan_doc.procuring_entity))
+	predecessor = cstr(getattr(ver, "review_task_id", ""))
+	task_id, iteration, task_token = next_task_identity(prefix="PLN-REV", record=ver, id_field="review_task_id", iteration_field="review_task_iteration")
 	frappe.db.set_value(
 		"Procurement Plan Version",
 		version_name,
 		{
 			"status": VERSION_IN_REVIEW,
+			"open_version_slot": plan_doc.name,
 			"validation_projection": VALIDATION_READY,
 			"concurrency_token": token,
+			"review_task_id": task_id,
+			"review_task_iteration": iteration,
+			"review_task_assignee": assignee,
+			"review_task_state": "Open",
+			"review_task_predecessor": predecessor or None,
+			"review_task_token": task_token,
+			"submitted_by": actor,
+			"submitted_at": now,
 		},
 		update_modified=True,
 	)
@@ -157,6 +178,9 @@ def submit_plan_for_review(
 			"decision": DECISION_SUBMITTED_FOR_REVIEW,
 			"reason": "Submitted for professional review",
 			"decided_at": now,
+			"task_id": task_id,
+			"task_iteration": iteration,
+			"command_idempotency_key": key,
 		}
 	).insert(ignore_permissions=True)
 
@@ -171,7 +195,11 @@ def submit_plan_for_review(
 		"plan": plan_name,
 		"version": version_name,
 		"status": VERSION_IN_REVIEW,
+		"open_version_slot": plan_doc.name,
 		"concurrency_token": token,
+		"task": task_id,
+		"task_token": task_token,
+		"assignee": assignee,
 		"submitted_by": actor,
 		"submitted_at": str(now),
 	}

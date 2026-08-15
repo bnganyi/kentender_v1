@@ -12,6 +12,7 @@ from urllib.parse import quote
 import frappe
 from frappe.utils import cstr, flt, getdate
 
+from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_core.services.org_scope_access import descendant_org_units, user_scope_rows
 from kentender_procurement.procurement_planning.mvp1_constants import (
 	ALLOC_DRAFT,
@@ -34,9 +35,6 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 )
 from kentender_procurement.procurement_planning.services._invariants import (
 	period_dates_for_financial_year,
-)
-from kentender_procurement.procurement_planning.services.get_plan_update import (
-	plan_canvas_routes,
 )
 from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
 	MILESTONE_FIELDS,
@@ -69,6 +67,16 @@ FILTER_OPTIONS = (
 )
 FILTER_KEYS = frozenset(option["value"] for option in FILTER_OPTIONS)
 
+
+def plan_canvas_routes(plan_doc: Any) -> dict[str, str]:
+	approved = cstr(plan_doc.current_approved_version).strip()
+	draft = cstr(plan_doc.open_draft_version).strip()
+	return {
+		"approved_route": f"/app/procurement-plan-approved?plan={plan_doc.name}" if approved else "",
+		"update_route": f"/app/procurement-plan-builder?plan={plan_doc.name}" if draft else "",
+		"builder_route": f"/app/procurement-plan-builder?plan={plan_doc.name}",
+	}
+
 STATE_BLOCKED = "blocked_no_scope"
 STATE_SELECTION = "selection_required"
 STATE_NO_PLAN = "no_plan"
@@ -83,10 +91,32 @@ def _money(amount: float, currency: str = "KES") -> str:
 
 
 def _fy_options(selected: str) -> list[dict[str, str]]:
-	values = ["2027/28", "2028/29", "2029/30"]
-	if selected and selected not in values:
-		values.append(selected)
-	return [{"id": value, "label": value} for value in values]
+	values = [{"id": row["id"], "label": row["label"]} for row in enabled_fiscal_years()]
+	if selected and selected not in {row["id"] for row in values}:
+		values.append({"id": selected, "label": selected})
+	return values
+
+
+def _default_fy(*, pe: str, requested: str, actor: str) -> str:
+	options = enabled_fiscal_years()
+	valid = {row["id"] for row in options}
+	if requested and requested in valid:
+		return requested
+	saved = cstr(frappe.defaults.get_user_default("KT Planning Financial Year", user=actor)).strip()
+	if saved in valid:
+		return saved
+	open_fys = set(frappe.get_all(
+		"Procurement Plan", filters={"procuring_entity": pe, "lifecycle_state": "Open"}, pluck="financial_year",
+	))
+	current = next((row["id"] for row in options if row["is_current"]), "")
+	if current and current in open_fys:
+		return current
+	for row in options:
+		if row["is_future"] and row["id"] in open_fys:
+			return row["id"]
+	if current:
+		return current
+	return options[0]["id"] if options else ""
 
 
 def _labels(doctype: str, names: set[str], label_field: str) -> dict[str, str]:
@@ -378,66 +408,33 @@ def _row(
 
 
 def _eligible_demands(
-	*, plan: Any, financial_year: str | None = None, scope: dict[str, set[str] | None], actor_roles: set[str], ou_labels: dict[str, str]
+	*, plan: Any, financial_year: str | None = None, scope: dict[str, set[str] | None], actor_roles: set[str], ou_labels: dict[str, str], actor: str = ""
 ) -> list[dict[str, Any]]:
 	if not actor_roles.intersection(ADD_DEMAND_ROLES) or not frappe.db.exists("DocType", "Demand"):
 		return []
-	pe = cstr(plan.get("procuring_entity") if isinstance(plan, dict) else plan.procuring_entity)
-	fy = cstr(financial_year or (plan.get("financial_year") if isinstance(plan, dict) else plan.financial_year))
-	start, end = period_dates_for_financial_year(fy)
-	rows = frappe.get_all(
-		"Demand",
-		filters={
-			"procuring_entity": pe,
-			"status": "Approved",
-			"planning_ready": 1,
-		},
-		fields=[
-			"name", "demand_code", "title", "owner_org_unit", "confirmed_estimate",
-			"requester_estimate", "currency", "planning_usage", "required_by_date",
-		],
-		order_by="modified desc",
-		limit_page_length=0,
-	)
-	rows = [
-		row for row in rows
-		if row.required_by_date
-		and getdate(start) <= getdate(row.required_by_date) <= getdate(end)
-		and _in_scope(scope, pe, row.owner_org_unit)
-	]
-	if not rows:
-		return []
-	allocations = frappe.get_all(
-		"Plan Demand Allocation",
-		filters={"demand": ["in", [row.name for row in rows]], "status": ["in", [ALLOC_DRAFT, ALLOC_EFFECTIVE]]},
-		fields=["demand", "allocated_amount"],
-		limit_page_length=0,
-	)
-	allocated: dict[str, float] = defaultdict(float)
-	for allocation in allocations:
-		allocated[allocation.demand] += flt(allocation.allocated_amount)
+	from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
+
+	rows = list_eligible_demands(plan=plan.name, user=actor)["demands"]
+	fy = cstr(financial_year or plan.financial_year)
 	route = plan_canvas_routes(plan)["builder_route"]
 	out = []
 	for demand in rows:
-		amount = flt(demand.confirmed_estimate or demand.requester_estimate)
-		if cstr(demand.planning_usage) == "Fully planned" or allocated[demand.name] + 0.005 >= amount:
-			continue
 		row = _row(
-				resource_key=f"demand:{demand.name}",
-				reference=cstr(demand.demand_code or demand.name),
-				title=cstr(demand.title or demand.name),
+				resource_key=f"demand:{demand['demand']}",
+				reference=cstr(demand["demand_code"] or demand["demand"]),
+				title=cstr(demand["title"] or demand["demand"]),
 				work_type="Approved Demand",
-				org_unit=cstr(demand.owner_org_unit),
-				org_label=ou_labels.get(cstr(demand.owner_org_unit), cstr(demand.owner_org_unit)),
-				amount=amount - allocated[demand.name],
-				currency=cstr(demand.currency or plan.currency or "KES"),
+				org_unit=cstr(demand["organisation_unit"]),
+				org_label=cstr(demand["organisation_unit_label"]),
+				amount=flt(demand["available_to_plan"]),
+				currency=cstr(demand["currency"] or plan.currency or "KES"),
 				reason=f"HoD-approved Demand is ready to add to the FY {fy} Plan.",
 				status="Ready for planning",
 				filter_key="approved_demands",
 				priority=40,
-				action=_action("add_to_plan", "Add to plan", f"{route}&add_demand={quote(demand.name)}"),
+				action=_action("add_to_plan", "Add to plan", f"{route}&add_demand={quote(demand['demand'])}"),
 			)
-		row["demand"] = demand.name
+		row["demand"] = demand["demand"]
 		row["builder_route"] = route
 		out.append(row)
 	return out
@@ -458,7 +455,7 @@ def _matches(row: dict[str, Any], work_filter: str, search: str) -> bool:
 def get_planning_workspace(
 	*,
 	procuring_entity: str | None = None,
-	financial_year: str | None = "2027/28",
+	financial_year: str | None = None,
 	work_filter: str | None = "all",
 	search: str | None = None,
 	user: str | None = None,
@@ -470,7 +467,9 @@ def get_planning_workspace(
 	actor_roles = actor_planning_roles(actor)
 	read_only = is_planning_read_only(actor)
 	entities, scope = _scope_index(actor)
-	fy = cstr(financial_year or "2027/28").strip() or "2027/28"
+	requested_fy = cstr(financial_year).strip()
+	available_fys = enabled_fiscal_years()
+	fy = requested_fy or next((row["id"] for row in available_fys if row["is_current"]), (available_fys[0]["id"] if available_fys else ""))
 	helper = (
 		"Read-only support view. These controls filter visibility; they do not grant ownership or operational Planning authority."
 		if read_only
@@ -502,6 +501,7 @@ def get_planning_workspace(
 	else:
 		pe = requested
 		mode = MODE_MULTI
+	fy = _default_fy(pe=pe, requested=requested_fy, actor=actor)
 	payload = _base_payload(
 		mode=mode, entities=entities, pe=pe, pe_label=labels[pe], fy=fy,
 		read_only=read_only, state_id=STATE_NO_PLAN, helper=helper,
@@ -513,22 +513,23 @@ def get_planning_workspace(
 		{"procuring_entity": pe, "financial_year": fy},
 		[
 			"name", "plan_code", "title", "lifecycle_state", "currency",
-			"current_approved_version", "open_draft_version", "coordinating_org_unit",
+			"current_approved_version", "open_draft_version",
 			"financial_year", "period_start", "period_end",
 		],
 		as_dict=True,
 	)
 	if not plan:
+		payload["state_id"] = "PLN-UI-01A"
 		payload["empty_states"]["current_plan"] = "No annual Procurement Plan exists for this context."
 		if can_create:
-			payload["primary_action"] = _action("create_plan", "Create annual plan", "/app/procurement-plan-register")
+			payload["primary_action"] = _action("create_plan", "Create annual plan", f"/app/procurement-plan-register?procuring_entity={quote(pe)}&financial_year={quote(fy)}")
 		return payload
 	plan = frappe.get_doc("Procurement Plan", plan.name)
 	# Scenario/UI fixtures may mutate the logical header earlier in the same request.
 	# Reload so the projection never reuses a stale document from frappe.local.
 	plan.reload()
 	eligible_rows = _eligible_demands(
-		plan=plan, financial_year=fy, scope=scope, actor_roles=actor_roles, ou_labels={}
+		plan=plan, financial_year=fy, scope=scope, actor_roles=actor_roles, ou_labels={}, actor=actor
 	)
 	graph = _load_graph(plan)
 	approved_version = graph["versions"].get(cstr(plan.current_approved_version))
@@ -541,7 +542,11 @@ def get_planning_workspace(
 	has_changes = bool(draft and approved and _has_effective_changes(graph["items"], draft_ivs))
 	if approved and draft:
 		state_id = STATE_UPDATE if has_changes else STATE_NO_CHANGES
-		supporting = "A Draft plan update is in progress." if has_changes else "No effective changes remain in this plan update."
+		supporting = (
+			f"Draft Version {draft['version_number']} has been submitted for professional review; Approved Version {approved['version_number']} remains current."
+			if cstr(draft_version.status) == VERSION_IN_REVIEW
+			else f"Draft Version {draft['version_number']} is being prepared; Approved Version {approved['version_number']} remains current."
+		)
 	elif draft:
 		state_id = STATE_INITIAL_DRAFT
 		supporting = "Complete the initial Draft before professional review."
@@ -558,6 +563,16 @@ def get_planning_workspace(
 		"finance_confirmed_label": "0 of 0", "validation_projection": VALIDATION_NOT_RUN,
 	}
 	payload["state_id"] = state_id
+	if draft and not approved:
+		payload["state_id"] = "PLN-UI-01B"
+	elif approved and not draft:
+		payload["state_id"] = "PLN-UI-01" if eligible_rows else "PLN-UI-01F"
+	elif approved and draft and not has_changes:
+		payload["state_id"] = "PLN-UI-01C-NC"
+	elif approved and draft and cstr(draft_version.status) == VERSION_IN_REVIEW:
+		payload["state_id"] = "PLN-UI-01E"
+	elif approved and draft:
+		payload["state_id"] = "PLN-UI-01C"
 	payload["current_plan"] = {
 		"plan": plan.name,
 		"plan_code": plan.plan_code,
@@ -608,8 +623,8 @@ def get_planning_workspace(
 			work.append(
 				_row(
 					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit=cstr(plan.coordinating_org_unit),
-					org_label=ou_labels.get(cstr(plan.coordinating_org_unit), cstr(plan.coordinating_org_unit)),
+					work_type="Plan update", org_unit="",
+					org_label=payload["procuring_entity_label"],
 					amount=draft["planned_total"], currency=plan.currency, reason="The plan update was returned for correction.",
 					status="Returned", filter_key="returned_work", priority=10,
 					action=_action("address_return", "Address return", routes["update_route"]),
@@ -619,8 +634,8 @@ def get_planning_workspace(
 			work.append(
 				_row(
 					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit=cstr(plan.coordinating_org_unit),
-					org_label=ou_labels.get(cstr(plan.coordinating_org_unit), cstr(plan.coordinating_org_unit)),
+					work_type="Plan update", org_unit="",
+					org_label=payload["procuring_entity_label"],
 					amount=draft["planned_total"], currency=plan.currency,
 					reason="No effective changes remain; the update cannot be submitted.", status="No changes",
 					filter_key="plan_items", priority=30,
@@ -656,8 +671,8 @@ def get_planning_workspace(
 			waiting = [
 				_row(
 					resource_key=f"review:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit=cstr(plan.coordinating_org_unit),
-					org_label=ou_labels.get(cstr(plan.coordinating_org_unit), cstr(plan.coordinating_org_unit)),
+					work_type="Plan update", org_unit="",
+					org_label=payload["procuring_entity_label"],
 					amount=draft["planned_total"], currency=plan.currency,
 					reason="Awaiting Head-of-Procurement review.", status="In professional review",
 					filter_key="plan_items", priority=30,
@@ -668,8 +683,8 @@ def get_planning_workspace(
 			work.append(
 				_row(
 					resource_key=f"plan:{plan.name}", reference=plan.plan_code, title=plan.title,
-					work_type="Plan update", org_unit=cstr(plan.coordinating_org_unit),
-					org_label=ou_labels.get(cstr(plan.coordinating_org_unit), cstr(plan.coordinating_org_unit)),
+					work_type="Plan update", org_unit="",
+					org_label=payload["procuring_entity_label"],
 					amount=draft["planned_total"], currency=plan.currency,
 					reason="This Draft update has outstanding planner work.", status="Draft update",
 					filter_key="plan_items", priority=30,
@@ -689,13 +704,22 @@ def get_planning_workspace(
 	if selected_filter not in FILTER_KEYS:
 		selected_filter = "all"
 	needle = cstr(search).strip()
-	work = [row for row in deduped.values() if _matches(row, selected_filter, needle)][:50]
+	unfiltered_work = list(deduped.values())
+	work = [row for row in unfiltered_work if _matches(row, selected_filter, needle)][:50]
 	waiting.sort(key=lambda value: (value["priority"], value["reference"]))
 	payload["work_requiring_action"] = work
 	payload["waiting_on_others"] = waiting[:50]
 	payload["work_queue"] = work
 	payload["counts"] = {
+		"work_requiring_action": len(unfiltered_work),
+		"waiting_on_others": len(waiting),
+	}
+	payload["filtered_counts"] = {
 		"work_requiring_action": len(work),
 		"waiting_on_others": len(waiting),
 	}
+	if payload["state_id"] == "PLN-UI-01C" and not work and any(
+		row.get("status") == "Awaiting Finance" for row in waiting
+	):
+		payload["state_id"] = "PLN-UI-01D"
 	return payload

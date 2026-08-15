@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Remove Plan Item - GovProcure Alpha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "status-reserved": "#F59E0B",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "surface": "#f8f9fb",
+                      "on-secondary-fixed": "#001f27",
+                      "surface-container-low": "#f3f4f6",
+                      "tertiary": "#3d4354",
+                      "inverse-on-surface": "#f0f1f3",
+                      "outline": "#737685",
+                      "background": "#f8f9fb",
+                      "on-secondary": "#ffffff",
+                      "border-subtle": "#DFE1E6",
+                      "on-primary-fixed": "#001848",
+                      "surface-bright": "#f8f9fb",
+                      "on-surface-variant": "#434654",
+                      "tertiary-container": "#545a6c",
+                      "primary-fixed": "#dae2ff",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "surface-tint": "#0c56d0",
+                      "surface-container": "#edeef0",
+                      "surface-container-highest": "#e1e2e4",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "primary": "#003d9b",
+                      "on-error-container": "#93000a",
+                      "status-exhausted": "#E11D48",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-high": "#e7e8ea",
+                      "tertiary-fixed": "#dce2f8",
+                      "on-tertiary-container": "#ccd2e7",
+                      "error": "#ba1a1a",
+                      "secondary-container": "#50dcff",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "outline-variant": "#c3c6d6",
+                      "secondary-fixed": "#afecff",
+                      "on-error": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "inverse-primary": "#b2c5ff",
+                      "primary-container": "#0052cc",
+                      "surface-variant": "#e1e2e4",
+                      "status-available": "#10B981",
+                      "on-surface": "#191c1e",
+                      "on-secondary-container": "#005f71",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "data-committed": "#6366F1",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "surface-dim": "#d9dadc",
+                      "secondary": "#00687b",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-background": "#191c1e",
+                      "on-tertiary-fixed": "#151b2b",
+                      "on-primary-container": "#c4d2ff",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "1rem",
+                      "gutter-md": "1rem",
+                      "section-gap": "1.5rem",
+                      "stack-xs": "0.25rem",
+                      "stack-sm": "0.5rem"
+              },
+              "fontFamily": {
+                      "label-caps": ["Inter"],
+                      "data-md": ["JetBrains Mono"],
+                      "body-lg": ["Inter"],
+                      "data-lg": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "headline-sm": ["Manrope"],
+                      "headline-md": ["Manrope"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Manrope"]
+              },
+              "fontSize": {
+                      "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                      "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                      "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                      "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                      "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                      "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                      "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { background-color: #e1e2e4; } /* Simulated background of the app */
+    </style>
+</head>
+<body class="font-body-md text-on-surface antialiased h-screen w-screen overflow-hidden relative flex items-center justify-center">
+<!-- Dimmed Background Overlay -->
+<div class="absolute inset-0 bg-on-surface/50 backdrop-blur-[2px] z-40 flex items-center justify-center p-4 sm:p-6 md:p-8">
+<!-- Modal Dialog -->
+<div class="bg-surface-container-lowest w-full max-w-[800px] rounded-xl shadow-2xl border border-subtle flex flex-col max-h-full overflow-hidden transform transition-all">
+<!-- Modal Header -->
+<div class="p-6 border-b border-subtle flex items-start justify-between bg-surface">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container/30 flex items-center justify-center text-status-exhausted border border-error-container">
+<span class="material-symbols-outlined">delete_sweep</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Remove Plan Item from draft?</h2>
+</div>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container rounded p-1 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Scrollable Content Area -->
+<div class="p-6 overflow-y-auto flex-1 flex flex-col gap-6"><p class="font-body-md text-on-surface-variant">This removes the complete combined Plan Item from Draft Version 1.</p>
+<div class="bg-surface border border-subtle rounded p-5 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+<div class="col-span-1 md:col-span-2 mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Title</p>
+<p class="font-body-md font-medium text-on-surface">Clinical training and deployment laptops for digital health rollout</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Reference</p>
+<p class="font-data-md text-data-md text-on-surface">PPI-MOH-2028-003</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Planned Value</p>
+<p class="font-data-md text-data-md text-on-surface font-semibold bg-surface-container px-2 py-0.5 rounded inline-block">KES 120,000,000</p>
+</div>
+<div class="col-span-1 md:col-span-2 border-t border-subtle pt-4 mt-2">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Organisation Unit</p>
+<p class="font-body-sm text-on-surface">Ministry of Health</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Finance Status</p>
+<p class="font-body-sm text-on-surface">Not requested</p>
+</div>
+</div>
+</div>
+</div>
+</div><div class="flex flex-col gap-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Included Demand sources</h3>
+<div class="flex flex-col gap-2">
+<!-- Source 1 -->
+<div class="p-3 bg-surface-container-low border border-subtle rounded flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="font-data-md text-body-sm text-primary">DMD-MOH-2028-001</span>
+<span class="font-data-md text-body-sm font-semibold">KES 48,000,000</span>
+</div>
+<p class="font-body-sm text-on-surface font-medium">Clinical training laptops for digital health rollout</p>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">Human Resources Management and Development</span>
+<span class="font-label-caps text-[10px] bg-surface-container px-1.5 py-0.5 rounded">2 Need Items</span>
+</div>
+</div>
+<!-- Source 2 -->
+<div class="p-3 bg-surface-container-low border border-subtle rounded flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="font-data-md text-body-sm text-primary">DMD-MOH-2028-002</span>
+<span class="font-data-md text-body-sm font-semibold">KES 72,000,000</span>
+</div>
+<p class="font-body-sm text-on-surface font-medium">Clinical deployment laptops for digital health rollout</p>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">Directorate of Digital Health and Policy</span>
+<span class="font-label-caps text-[10px] bg-surface-container px-1.5 py-0.5 rounded">2 Need Items</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-bright border border-subtle rounded p-4 flex gap-3 items-start">
+<span class="material-symbols-outlined text-secondary mt-0.5">info</span>
+<div>
+<p class="font-label-caps text-label-caps text-secondary mb-1">Removal Effect</p>
+<p class="font-body-sm text-on-surface-variant leading-relaxed">
+    The whole Plan Item and all 4 source allocations will be removed together. Both Approved Demands will be available for planning again.
+</p>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface mb-2" for="removal-reason">
+    Reason for removal <span class="text-status-exhausted">*</span>
+</label>
+<textarea class="w-full bg-surface-container-lowest border border-subtle rounded p-3 font-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" id="removal-reason" placeholder="Briefly explain why this item should be removed from the draft." required="" rows="3"></textarea>
+</div></div>
+<!-- Modal Footer -->
+<div class="px-6 py-5 bg-surface border-t border-subtle flex flex-col sm:flex-row items-center gap-4 shrink-0 justify-end"><button class="px-5 py-2.5 border border-subtle text-primary bg-surface hover:bg-surface-container-low rounded font-label-caps text-label-caps transition-colors">Keep item</button>
+<button class="px-5 py-2.5 bg-error-container text-on-error-container hover:bg-status-exhausted hover:text-on-error border border-error-container hover:border-status-exhausted rounded font-label-caps text-label-caps transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">playlist_remove</span>
+    Remove from draft
+</button></div>
+</div>
+</div>
+</body></html>

@@ -9,6 +9,9 @@
   "plan_item",
   "demand",
   "demand_item",
+  "source_org_unit",
+  "source_funding_allocation",
+  "active_hold_key",
   "col_a",
   "status",
   "allocated_amount",
@@ -56,7 +59,31 @@
    "fieldtype": "Link",
    "label": "Demand Item",
    "options": "Demand Item",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_org_unit",
+   "fieldtype": "Link",
+   "label": "Source Organisation Unit",
+   "options": "Organisation Unit",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_funding_allocation",
+   "fieldtype": "Link",
+   "label": "Source Funding Allocation",
+   "options": "Demand Funding Allocation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "active_hold_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Active Hold Key",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "col_a",

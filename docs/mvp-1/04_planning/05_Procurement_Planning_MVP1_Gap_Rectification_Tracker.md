@@ -149,7 +149,7 @@ Three clusters matter most:
 | PLN-UI-07 / 07A | Literal | Anti-truncate on identity (correct vs Stitch ellipsis). |
 | PLN-UI-08 | Literal | Trail empty until bind; subtitle = GAP-UI-002. |
 | PLN-UI-09 | Literal shell | Title live-bound; Stitch `truncate` on requirement **must not** be copied. Downstream `"—"` = GAP-FR-004. |
-| PLN-UI-10 | Literal | Subtitle = GAP-UI-002. |
+| PLN-UI-05 | Literal | Subtitle = GAP-UI-002. |
 
 No fixture uses invented BEM in place of Stitch utilities. No fixture truncates legal identity. Business codes (PPI / DMD / TND) are correct; raw hashes must stay hidden.
 

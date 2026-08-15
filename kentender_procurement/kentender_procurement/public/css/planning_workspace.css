@@ -29,6 +29,80 @@
 	position: relative;
 }
 
+/* PLN-UI-02–05 revision surfaces — exact typography and spatial hierarchy from
+ * the approved HTML, scoped so later Planning detail surfaces are unchanged. */
+.kt-pln-register-revision,
+.kt-pln-builder-revision,
+[data-kt-pln-add-demand-dialog] {
+	font-family: Inter, var(--font-stack), sans-serif;
+	color: #1a1c1e;
+}
+.kt-pln-register-revision h1,
+.kt-pln-register-revision h2,
+.kt-pln-builder-revision h1,
+.kt-pln-builder-revision h2,
+.kt-pln-builder-revision h3,
+[data-kt-pln-add-demand-dialog] h2,
+[data-kt-pln-add-demand-dialog] h3 {
+	font-family: Manrope, Inter, var(--font-stack), sans-serif;
+}
+.kt-pln-register-revision .font-data-md,
+.kt-pln-builder-revision .font-data-md,
+.kt-pln-builder-revision .font-data-lg,
+[data-kt-pln-add-demand-dialog] .font-data-md {
+	font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+	font-variant-numeric: tabular-nums;
+}
+.kt-pln-register-revision main,
+.kt-pln-builder-revision main { background: #f7f8fa; }
+.kt-pln-builder-revision [data-kt-pln-summary-populated] > div:not(:first-child) {
+	border-left: 1px solid #dfe2e7;
+	padding-left: 1.5rem;
+}
+.kt-pln-metric-label {
+	display: block;
+	font: 700 12px/16px Inter, sans-serif;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+	color: #59606a;
+	margin-bottom: .5rem;
+}
+.kt-pln-metric-value {
+	display: block;
+	font: 600 16px/24px "JetBrains Mono", monospace;
+	color: #1a1c1e;
+}
+.kt-pln-control {
+	width: 100%;
+	min-height: 42px;
+	border: 1px solid #c7cbd1;
+	border-radius: .5rem;
+	background: #fff;
+	padding: .5rem 2.25rem .5rem .75rem;
+	font: 400 14px/20px Inter, sans-serif;
+}
+.kt-pln-control-icon { position: absolute; right: .65rem; top: .6rem; pointer-events: none; color: #59606a; }
+.kt-pln-search-icon { position: absolute; left: .7rem; top: .6rem; color: #59606a; }
+.kt-pln-builder-revision table th {
+	padding: .85rem 1rem;
+	font: 700 12px/16px Inter, sans-serif;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+	color: #414750;
+}
+.kt-pln-builder-revision table td { padding: 1rem; font: 400 14px/20px Inter, sans-serif; vertical-align: middle; }
+.kt-pln-status-chip { display: inline-flex; padding: .2rem .55rem; border-radius: .25rem; background: #e5edf9; color: #003d9b; font: 600 12px/18px Inter, sans-serif; }
+[data-kt-pln-add-demand-dialog] [role="dialog"] { max-height: 90vh; border-radius: .5rem; }
+[data-kt-pln-add-demand-dialog] table { min-width: 1180px; }
+@media (max-width: 767px) {
+	.kt-pln-builder-revision [data-kt-pln-summary-populated] > div:not(:first-child) { border-left: 0; padding-left: 0; }
+	.kt-pln-register-revision main,
+	.kt-pln-builder-revision main { padding: 1rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.kt-pln-register-revision *, .kt-pln-builder-revision *, [data-kt-pln-add-demand-dialog] * { transition: none !important; animation: none !important; }
+}
+
 .kt-cl-shell .kt-pln-root *,
 .kt-cl-shell .kt-pln-root *::before,
 .kt-cl-shell .kt-pln-root *::after {
@@ -1671,3 +1745,27 @@ body.kt-pln-editor-active.kt-pln-surface .kt-pln-root > main {
 	}
 	.kt-cl-shell .kt-pln-root .kt-pln-metric:first-child { border-top: 0; }
 }
+.kt-stitch-canvas [data-kt-pln-elig-body] tr.kt-pln-selected-row {
+	box-shadow: inset 4px 0 0 var(--kt-pln-primary, #004aad);
+}
+.kt-pln-root .kt-pln-card {
+	background: var(--kt-pln-surface, #fff);
+	border: 1px solid var(--kt-pln-border, #dfe1e7);
+	border-radius: 12px;
+	padding: 16px;
+}
+.kt-cl-shell .kt-pln-root .kt-pln-button-primary,
+.kt-cl-shell .kt-pln-root .kt-pln-button-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 8px 16px;
+	border-radius: 8px !important;
+	font-family: Inter, sans-serif;
+	font-weight: 600;
+}
+.kt-cl-shell .kt-pln-root .kt-pln-button-primary { background: var(--kt-pln-primary, #003d9b) !important; color: #fff !important; border: 1px solid var(--kt-pln-primary, #003d9b) !important; }
+.kt-cl-shell .kt-pln-root .kt-pln-button-secondary { background: #fff !important; color: var(--kt-pln-primary, #003d9b) !important; border: 1px solid #c3c6d6 !important; }
+.kt-pln-root button:disabled { cursor: not-allowed; opacity: .5; }

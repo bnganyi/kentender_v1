@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import cstr, flt
@@ -18,24 +20,24 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	FINANCE_RETURNED,
 	FINANCE_STALE,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder,
 )
 from kentender_procurement.procurement_planning.services.plan_item_finance import (
-	confirm_plan_item_funding,
-	get_plan_finance_task,
+	confirm_plan_item_funding as _confirm_plan_item_funding,
+	get_plan_finance_task as _get_plan_finance_task,
 	request_plan_item_finance,
-	return_plan_item_from_finance,
+	return_plan_item_from_finance as _return_plan_item_from_finance,
 )
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
 	release_draft_finance_effects,
 	remove_plan_item_from_plan,
 )
 from kentender_procurement.procurement_planning.services.update_plan_item import (
-	update_plan_item,
+	update_plan_item as _update_plan_item,
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	attach_demand_funding,
@@ -47,6 +49,55 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	make_approved_demand,
 	make_test_budget_line,
 )
+
+
+def update_plan_item(**kwargs):
+	plan_item = kwargs["plan_item"]
+	plan = frappe.db.get_value("Procurement Plan Item", plan_item, "plan")
+	draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
+	kwargs.setdefault(
+		"expected_version_token",
+		frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token"),
+	)
+	kwargs.setdefault("idempotency_key", f"TEST-FINANCE-{uuid.uuid4().hex}")
+	return _update_plan_item(**kwargs)
+
+
+def _finance_task_args(plan_item: str) -> tuple[str, str]:
+	iv = frappe.db.get_value("Procurement Plan Item", plan_item, "draft_item_version")
+	row = frappe.db.get_value(
+		"Procurement Plan Item Version",
+		iv,
+		["finance_task_id", "finance_task_token"],
+		as_dict=True,
+	)
+	return cstr(row.finance_task_id), cstr(row.finance_task_token)
+
+
+def get_plan_finance_task(*, plan_item: str, user: str):
+	task, _token = _finance_task_args(plan_item)
+	return _get_plan_finance_task(task=task, user=user)
+
+
+def confirm_plan_item_funding(*, plan_item: str, user: str):
+	task, token = _finance_task_args(plan_item)
+	return _confirm_plan_item_funding(
+		task=task,
+		expected_token=token,
+		idempotency_key=f"TEST-CONFIRM-{task}",
+		user=user,
+	)
+
+
+def return_plan_item_from_finance(*, plan_item: str, reason: str, user: str):
+	task, token = _finance_task_args(plan_item)
+	return _return_plan_item_from_finance(
+		task=task,
+		expected_token=token,
+		reason=reason,
+		idempotency_key=f"TEST-RETURN-{task}",
+		user=user,
+	)
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	ensure_admin_only,
 	ensure_user_with_roles,
@@ -67,7 +118,7 @@ class TestPlanItemFinance(IntegrationTestCase):
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Finance confirm plan")
 		d = make_approved_demand(title="Finance demand", item_amount=amount)
-		funding = make_test_budget_line(approved_amount=approved)
+		funding = make_test_budget_line(approved_amount=approved, plan=plan["plan"])
 		attach_demand_funding(
 			demand=d["demand"],
 			budget_line=funding["budget_line"],
@@ -121,12 +172,9 @@ class TestPlanItemFinance(IntegrationTestCase):
 		builder = get_plan_builder(plan=ctx["plan"]["plan"], user=ctx["planner"])
 		row = next(r for r in builder["items"] if r["plan_item"] == ctx["plan_item"])
 		self.assertEqual(row["finance_status_label"], FINANCE_AWAITING)
-		bo_builder = get_plan_builder(plan=ctx["plan"]["plan"], user=ctx["bo"])
-		self.assertTrue(bo_builder.get("ok"), bo_builder)
-		self.assertTrue(bo_builder.get("read_only"))
-		bo_row = next(r for r in bo_builder["items"] if r["plan_item"] == ctx["plan_item"])
-		self.assertTrue(bo_row.get("can_open_finance_task"))
-		self.assertFalse(bo_builder.get("can_add_demand"))
+		# Finance operates through its protected task surface, not the Planner builder.
+		with self.assertRaises(frappe.PermissionError):
+			get_plan_builder(plan=ctx["plan"]["plan"], user=ctx["bo"])
 
 	def test_finance_request_emits_pe_scoped_notification(self) -> None:
 		"""PLN-GAP-FR-006 — Budget Officer on the PE gets a Notification Log; Kisumu does not."""
@@ -221,7 +269,11 @@ class TestPlanItemFinance(IntegrationTestCase):
 		planner = ensure_planner_user()
 		plan = create_plan_as_planner(title="Reuse RSV plan")
 		d = make_approved_demand(title="Reuse RSV demand", item_amount=1_000_000)
-		funding = make_test_budget_line(approved_amount=10_000_000, reserved_amount=1_000_000)
+		funding = make_test_budget_line(
+			approved_amount=10_000_000,
+			reserved_amount=1_000_000,
+			plan=plan["plan"],
+		)
 		rsv = frappe.get_doc(
 			{
 				"doctype": "Funding Reservation",
@@ -337,8 +389,10 @@ class TestPlanItemFinance(IntegrationTestCase):
 		remove = remove_plan_item_from_plan(
 			plan=ctx["plan"]["plan"],
 			plan_item=ctx["plan_item"],
+			draft_version=ctx["plan"]["version"],
 			reason="Added for finance cancel coverage",
-			concurrency_token=self._token(ctx["plan"]["version"]),
+			expected_version_token=self._token(ctx["plan"]["version"]),
+			idempotency_key=f"TEST-REMOVE-{uuid.uuid4().hex}",
 			user=ctx["planner"],
 		)
 		self.assertTrue(remove["ok"], remove)
@@ -351,7 +405,9 @@ class TestPlanItemFinance(IntegrationTestCase):
 		item = frappe.db.get_value(
 			"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}, "name"
 		)
-		return {"plan_item": item, "bo": C.USER_BUD_DUAL, "seed": result}
+		iv = frappe.db.get_value("Procurement Plan Item", item, "draft_item_version")
+		assignee = frappe.db.get_value("Procurement Plan Item Version", iv, "finance_task_assignee")
+		return {"plan_item": item, "bo": assignee, "seed": result}
 
 	def test_scn_shortfall_task_is_80_25_55(self) -> None:
 		ctx = self._scn_shortfall_item()

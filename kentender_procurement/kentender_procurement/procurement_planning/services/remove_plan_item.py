@@ -34,13 +34,22 @@ from kentender_procurement.procurement_planning.services._invariants import (
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	assert_can_add_demand,
 	assert_planning_scope,
+	is_planning_read_only,
 )
 
 
 def item_has_downstream(plan_item: str) -> bool:
-	if not plan_item or not frappe.db.exists("DocType", DOCTYPE_HANDOFF):
+	if not plan_item:
 		return False
-	return bool(frappe.db.exists(DOCTYPE_HANDOFF, {"plan_item": plan_item}))
+	takeup = cstr(
+		frappe.db.get_value("Procurement Plan Item", plan_item, "tender_takeup_projection") or ""
+	).strip()
+	if takeup and takeup != "Not taken up":
+		return True
+	return bool(
+		frappe.db.exists("DocType", DOCTYPE_HANDOFF)
+		and frappe.db.exists(DOCTYPE_HANDOFF, {"plan_item": plan_item})
+	)
 
 
 def release_draft_finance_effects(*, plan_item: str, version: str) -> dict[str, Any]:
@@ -120,11 +129,13 @@ def removal_capabilities_for_item(
 		"finance_effect_copy": "No funding confirmed; no reservation to release",
 		"sources_label": _sources_label(plan_item) if plan_item else "",
 	}
-	if read_only or not draft_version:
+	if read_only:
 		return out
 	if item_has_downstream(plan_item):
 		return out
 	if baseline_state == ITEM_PROPOSED:
+		if not draft_version:
+			return out
 		out["can_remove_from_draft"] = True
 		out["removal_variant"] = "draft"
 		return out
@@ -134,13 +145,182 @@ def removal_capabilities_for_item(
 			{"plan_item": plan_item, "plan_version": draft_version},
 			["name", "proposed_removal"],
 			as_dict=True,
-		)
+		) if draft_version else None
 		if iv and int(iv.proposed_removal or 0):
 			return out
 		out["can_propose_removal"] = True
 		out["removal_variant"] = "active"
 		return out
 	return out
+
+
+def _money(amount: float, currency: str) -> str:
+	return f"{currency} {flt(amount):,.0f}"
+
+
+def _removal_sources(plan_item: str, currency: str) -> list[dict[str, Any]]:
+	allocs = frappe.get_all(
+		"Plan Demand Allocation",
+		filters={"plan_item": plan_item, "status": ["in", [ALLOC_DRAFT, ALLOC_EFFECTIVE]]},
+		fields=["demand", "demand_item", "allocated_amount", "source_org_unit"],
+		order_by="creation asc",
+	)
+	grouped: dict[str, dict[str, Any]] = {}
+	for alloc in allocs:
+		demand = cstr(alloc.demand).strip()
+		if demand not in grouped:
+			drow = frappe.db.get_value(
+				"Demand", demand, ["demand_code", "title", "owner_org_unit"], as_dict=True
+			) or frappe._dict()
+			ou = cstr(alloc.source_org_unit or drow.owner_org_unit or "").strip()
+			grouped[demand] = {
+				"demand": demand,
+				"demand_code": cstr(drow.demand_code or demand),
+				"title": cstr(drow.title),
+				"organisation_unit": ou,
+				"organisation_unit_label": cstr(
+					frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou
+				),
+				"need_item_count": 0,
+				"amount": 0.0,
+			}
+		grouped[demand]["need_item_count"] += 1
+		grouped[demand]["amount"] += flt(alloc.allocated_amount)
+	for row in grouped.values():
+		row["amount_display"] = _money(row["amount"], currency)
+	return list(grouped.values())
+
+
+def get_plan_item_removal(
+	*, plan: str, plan_item: str, user: str | None = None
+) -> dict[str, Any]:
+	"""Mutation-free authoritative PLN-UI-05A projection."""
+	actor = cstr(user or frappe.session.user).strip()
+	plan_name = cstr(plan).strip()
+	item_name = cstr(plan_item).strip()
+	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name):
+		frappe.throw(_("Procurement Plan not found."), title="PLN_PLAN_NOT_FOUND")
+	if not item_name or not frappe.db.exists("Procurement Plan Item", item_name):
+		frappe.throw(_("Plan Item not found."), title="PLN_ITEM_NOT_FOUND")
+	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
+	item = frappe.get_doc("Procurement Plan Item", item_name)
+	if cstr(item.plan) != plan_name:
+		frappe.throw(_("Plan Item does not belong to this Plan."), title="PLN_ITEM_NOT_IN_PLAN")
+	assert_planning_scope(
+		procuring_entity=cstr(plan_doc.procuring_entity),
+		org_unit=cstr(item.owner_org_unit or "") or None,
+		user=actor,
+		require_write=False,
+	)
+	draft = cstr(plan_doc.open_draft_version or "").strip()
+	state = cstr(item.baseline_state).strip()
+	focus = draft if state == ITEM_PROPOSED else cstr(item.current_approved_item_version or "").strip()
+	iv_name = cstr(item.draft_item_version or focus).strip()
+	if state == ITEM_ACTIVE and draft:
+		iv_name = cstr(
+			frappe.db.get_value(
+				"Procurement Plan Item Version",
+				{"plan_item": item_name, "plan_version": draft},
+				"name",
+			)
+			or item.current_approved_item_version
+		).strip()
+	if not iv_name:
+		frappe.throw(_("Plan Item Version not found."), title="PLN_ITEM_VERSION_NOT_FOUND")
+	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
+	read_only = is_planning_read_only(actor)
+	editable_draft = bool(draft) and cstr(
+		frappe.db.get_value("Procurement Plan Version", draft, "status") or ""
+	) in VERSION_EDITABLE_STATUSES
+	plan_open = cstr(plan_doc.lifecycle_state) == "Open"
+	blocked = item_has_downstream(item_name)
+	mode = MODE_DRAFT_EXCLUDE if state == ITEM_PROPOSED else MODE_PROPOSE_ACTIVE
+	can_remove = bool(
+		plan_open
+		and not read_only
+		and not blocked
+		and state in (ITEM_PROPOSED, ITEM_ACTIVE)
+		and (editable_draft if state == ITEM_PROPOSED else (not draft or editable_draft))
+	)
+	currency = cstr(iv.currency or plan_doc.currency or "KES")
+	sources = _removal_sources(item_name, currency)
+	amount = flt(iv.confirmed_estimate)
+	finance_status = cstr(iv.finance_status or "Not requested")
+	reservation = cstr(iv.finance_reservation or iv.reservation_reference or "").strip()
+	reservation_code = reservation
+	if reservation and frappe.db.exists("Funding Reservation", reservation):
+		reservation_code = cstr(
+			frappe.db.get_value("Funding Reservation", reservation, "generated_reference") or reservation
+		)
+	combined = len(sources) > 1
+	need_count = sum(int(row["need_item_count"]) for row in sources)
+	if mode == MODE_PROPOSE_ACTIVE:
+		intro = "The item remains active until the plan update is approved."
+		effect = (
+			f"If the update is approved, the item will be removed, {_money(amount, currency)} "
+			"will be released and the source Demand will be available for planning again."
+		)
+		title = "Remove Plan Item from approved plan?"
+		confirm_label = "Add removal to plan update"
+		placeholder = "Briefly explain why this item should be removed from the approved plan."
+	elif combined:
+		intro = f"This removes the complete combined Plan Item from Draft Version {int(frappe.db.get_value('Procurement Plan Version', draft, 'version_number') or 1)}."
+		effect = (
+			f"The whole Plan Item and all {need_count} source allocations will be removed together. "
+			"Both Approved Demands will be available for planning again."
+		)
+		title = "Remove Plan Item from draft?"
+		confirm_label = "Remove from draft"
+		placeholder = "Briefly explain why this item should be removed from the draft."
+	elif finance_status == "Confirmed" and reservation_code:
+		intro = "This removes the item from Draft Version 2 and makes its Approved Demand available for planning again."
+		effect = f"Finance confirmation will be reversed and reservation {reservation_code} for {_money(amount, currency)} will be released."
+		title = "Remove Plan Item from draft?"
+		confirm_label = "Remove from draft"
+		placeholder = "Briefly explain why this item should be removed from the draft."
+	else:
+		ver_no = int(frappe.db.get_value("Procurement Plan Version", draft, "version_number") or 1) if draft else 1
+		intro = f"This removes the item from Draft Version {ver_no}. Its Approved Demand will be available for planning again."
+		effect = "No Finance confirmation or reservation will be reversed."
+		title = "Remove Plan Item from draft?"
+		confirm_label = "Remove from draft"
+		placeholder = "Briefly explain why this item should be removed from the draft."
+	owner = cstr(item.owner_org_unit or "").strip()
+	return {
+		"ok": True,
+		"can_remove": can_remove,
+		"error_code": "PLN_ITEM_NOT_REMOVABLE" if not can_remove else None,
+		"mode": mode,
+		"variant": "active" if mode == MODE_PROPOSE_ACTIVE else ("combined" if combined else ("finance_confirmed" if finance_status == "Confirmed" else "draft")),
+		"plan": plan_name,
+		"draft_version": draft or None,
+		"expected_version_token": cstr(
+			frappe.db.get_value("Procurement Plan Version", draft or plan_doc.current_approved_version, "concurrency_token") or ""
+		),
+		"plan_item": item_name,
+		"plan_item_code": cstr(item.plan_item_code),
+		"title": cstr(iv.requirement_title),
+		"ownership_label": cstr(frappe.db.get_value("Organisation Unit", owner, "unit_name") or owner or frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "legal_name") or plan_doc.procuring_entity),
+		"planned_value": amount,
+		"planned_value_display": _money(amount, currency),
+		"currency": currency,
+		"finance_status": finance_status,
+		"reservation_reference": reservation_code,
+		"sources": sources,
+		"need_item_count": need_count,
+		"combined": combined,
+		"dialog_title": title,
+		"intro_copy": intro,
+		"effect_copy": effect,
+		"reason_placeholder": placeholder,
+		"confirm_label": confirm_label,
+		"cancel_label": "Keep item",
+		"resulting_destination": (
+			f"/app/procurement-plan-builder?plan={plan_name}"
+			if mode == MODE_PROPOSE_ACTIVE
+			else f"/app/procurement-plan-builder?plan={plan_name}"
+		),
+	}
 
 
 def _sources_label(plan_item: str) -> str:
@@ -208,6 +388,7 @@ def _reverse_allocations(
 			row.name,
 			{
 				"status": ALLOC_REVERSED,
+				"active_hold_key": None,
 				"reversed_by_version": version,
 				"reversed_at": now,
 				"reason": reason,
@@ -306,7 +487,7 @@ def cancel_plan_update(
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-		org_unit=cstr(plan_doc.coordinating_org_unit or "").strip() or None,
+		org_unit=None,
 		user=actor,
 		require_write=True,
 	)
@@ -329,7 +510,7 @@ def cancel_plan_update(
 	frappe.db.set_value(
 		"Procurement Plan Version",
 		draft,
-		{"status": VERSION_CANCELLED, "concurrency_token": new_concurrency_token()},
+		{"status": VERSION_CANCELLED, "open_version_slot": None, "concurrency_token": new_concurrency_token()},
 		update_modified=True,
 	)
 	frappe.db.set_value(
@@ -357,21 +538,27 @@ def remove_plan_item_from_plan(
 	plan: str,
 	plan_item: str,
 	reason: str | None = None,
+	draft_version: str | None = None,
+	expected_version_token: str | None = None,
+	idempotency_key: str | None = None,
 	concurrency_token: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""Public capability: exclude a draft-only item or propose Active removal.
 
-	Client may send only plan, plan_item, reason, concurrency_token.
+	Client may send only identifiers, expected concurrency, reason and idempotency.
 	Mode, finance, eligibility and downstream checks are derived server-side.
 	"""
 	actor = assert_can_add_demand(user)
 	reason_text = cstr(reason or "").strip()
+	key = cstr(idempotency_key or "").strip()
 	if not reason_text:
 		return {
 			"ok": False,
 			"errors": {"reason": "A reason for removal is required."},
 		}
+	if not key:
+		return {"ok": False, "errors": {"form": "An idempotency key is required."}}
 
 	plan_name = cstr(plan).strip()
 	item_name = cstr(plan_item).strip()
@@ -383,7 +570,7 @@ def remove_plan_item_from_plan(
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-		org_unit=cstr(plan_doc.coordinating_org_unit or "").strip() or None,
+		org_unit=None,
 		user=actor,
 		require_write=True,
 	)
@@ -391,6 +578,23 @@ def remove_plan_item_from_plan(
 	if cstr(item.plan) != plan_name:
 		frappe.throw(_("Plan Item does not belong to this Plan."), title="PLN_ITEM_NOT_IN_PLAN")
 
+	marker = f"PLN_REMOVE|{key}"
+	existing_marker = frappe.db.exists(
+		"Comment",
+		{
+			"reference_doctype": "Procurement Plan Item",
+			"reference_name": item_name,
+			"content": marker,
+		},
+	)
+	if existing_marker:
+		return _removal_result(plan_doc=plan_doc, item_name=item_name, mode=(MODE_PROPOSE_ACTIVE if cstr(item.baseline_state) == ITEM_ACTIVE else MODE_DRAFT_EXCLUDE), idempotent=True)
+
+	# Lock the logical graph before deriving the command mode.
+	frappe.db.sql("select name from `tabProcurement Plan` where name=%s for update", plan_name)
+	frappe.db.sql("select name from `tabProcurement Plan Item` where name=%s for update", item_name)
+	plan_doc.reload()
+	item.reload()
 	draft = cstr(plan_doc.open_draft_version or "").strip()
 	state = cstr(item.baseline_state)
 
@@ -407,13 +611,18 @@ def remove_plan_item_from_plan(
 			else True,
 		}
 
+	client_token = expected_version_token or concurrency_token
+	created_revision = False
 	if state == ITEM_ACTIVE and not draft:
+		approved = cstr(plan_doc.current_approved_version or "").strip()
+		assert_version_concurrency(approved, client_token)
 		from kentender_procurement.procurement_planning.services.open_or_create_plan_revision import (
 			open_or_create_plan_revision,
 		)
 
-		rev = open_or_create_plan_revision(plan=plan_name, user=actor)
+		rev = open_or_create_plan_revision(plan=plan_name, version_reason=reason_text, user=actor)
 		draft = rev["version"]
+		created_revision = bool(rev.get("created"))
 		plan_doc.reload()
 
 	if not draft:
@@ -422,7 +631,15 @@ def remove_plan_item_from_plan(
 			title="PLN_NO_DRAFT_VERSION",
 		)
 
-	assert_version_concurrency(draft, concurrency_token)
+	if state == ITEM_PROPOSED and cstr(draft_version or "").strip() != draft:
+		frappe.throw(_("The Draft Version has changed."), title="PLN_VERSION_STALE")
+	if not created_revision:
+		assert_version_concurrency(draft, client_token)
+	frappe.db.sql("select name from `tabProcurement Plan Version` where name=%s for update", draft)
+	frappe.db.sql(
+		"select name from `tabPlan Demand Allocation` where plan_item=%s and status in ('Draft','Effective') for update",
+		item_name,
+	)
 	ver = frappe.get_doc("Procurement Plan Version", draft)
 	assert_version_mutable(cstr(ver.status))
 	if cstr(ver.status) not in VERSION_EDITABLE_STATUSES:
@@ -489,16 +706,54 @@ def remove_plan_item_from_plan(
 		{"concurrency_token": new_concurrency_token()},
 		update_modified=True,
 	)
+	frappe.get_doc(
+		{
+			"doctype": "Comment",
+			"comment_type": "Info",
+			"reference_doctype": "Procurement Plan Item",
+			"reference_name": item_name,
+			"content": marker,
+		}
+	).insert(ignore_permissions=True)
 
-	no_changes = not draft_has_effective_changes(plan=plan_name, version=draft)
+	return _removal_result(plan_doc=plan_doc, item_name=item_name, mode=mode, idempotent=False)
+
+
+def _removal_result(*, plan_doc: Any, item_name: str, mode: str, idempotent: bool) -> dict[str, Any]:
+	draft = cstr(plan_doc.open_draft_version or "").strip()
+	initial = not cstr(plan_doc.current_approved_version or "").strip()
+	remaining: list[Any] = []
+	if draft:
+		for row in frappe.get_all(
+			"Procurement Plan Item Version",
+			filters={"plan_version": draft},
+			fields=["plan_item", "confirmed_estimate", "proposed_removal"],
+		):
+			state = frappe.db.get_value("Procurement Plan Item", row.plan_item, "baseline_state")
+			if state != ITEM_REMOVED and not int(row.proposed_removal or 0):
+				remaining.append(row)
+	total = sum(flt(row.confirmed_estimate) for row in remaining)
+	no_changes = not draft_has_effective_changes(plan=plan_doc.name, version=draft) if draft else True
+	if initial and not remaining:
+		destination = f"/app/procurement-plan-builder?plan={plan_doc.name}"
+		state_id = "PLN-UI-03"
+	else:
+		destination = f"/app/procurement-plan-builder?plan={plan_doc.name}"
+		state_id = "PLN-UI-05"
 	return {
 		"ok": True,
-		"idempotent": False,
+		"idempotent": idempotent,
 		"mode": mode,
-		"plan": plan_name,
+		"plan": plan_doc.name,
 		"plan_item": item_name,
-		"version": draft,
+		"version": draft or None,
+		"item_count": len(remaining),
+		"planned_total": total,
+		"planned_total_display": _money(total, cstr(plan_doc.currency or "KES")),
 		"no_changes_remain": no_changes,
+		"state_id": state_id,
+		"destination": destination,
+		"message": "Plan Item removal recorded.",
 	}
 
 

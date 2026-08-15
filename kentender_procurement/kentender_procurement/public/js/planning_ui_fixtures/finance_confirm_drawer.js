@@ -42,6 +42,7 @@ kentender_procurement.ui_fixtures.planning_finance_confirm_drawer = function () 
 </section>
 <section class="space-y-stack-sm">
 <h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2 mb-4">Funding to confirm</h3>
+<div class="space-y-2 mb-4" data-kt-pln-07-sources></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-container-padding">
 <div class="space-y-1">
 <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Source Demand</p>
@@ -130,6 +131,7 @@ kentender_procurement.ui_fixtures.planning_finance_confirm_drawer = function () 
 </section>
 <section class="space-y-stack-sm">
 <h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2 mb-4">Funding required</h3>
+<div class="space-y-2 mb-4" data-kt-pln-07-sources></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-container-padding">
 <div class="space-y-1">
 <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Source Demand</p>

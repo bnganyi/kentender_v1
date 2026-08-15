@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import add_days, cstr
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
 from kentender_procurement.procurement_planning.services.planning_permissions import (
@@ -24,7 +24,7 @@ OU = "MOH-DIR-DHP"
 FY = "2027/28"
 PLANNER_ROLE = ROLE_PLANNER
 PLANNER_USER = "pln.gate01.planner@test.local"
-APPROVER_USER = "pln.gate01.approver@test.local"
+APPROVER_USER = "moh.procurement.authority@example.test"
 INITIATOR_USER = "pln.gate01.initiator@test.local"
 VIEWER_USER = "pln.gate01.viewer@test.local"
 
@@ -32,9 +32,12 @@ VIEWER_USER = "pln.gate01.viewer@test.local"
 def _ensure_usa(user: str, role: str, pe: str, org_unit: str | None) -> None:
 	if not frappe.db.exists("DocType", "User Scope Assignment"):
 		return
-	filters = {"user": user, "role": role, "procuring_entity": pe}
-	if org_unit:
-		filters["organisation_unit"] = org_unit
+	filters = {
+		"user": user,
+		"role": role,
+		"procuring_entity": pe,
+		"organisation_unit": org_unit or "",
+	}
 	if frappe.db.exists("User Scope Assignment", filters):
 		return
 	frappe.get_doc(
@@ -69,6 +72,9 @@ def ensure_planner_user() -> str:
 	if PLANNER_ROLE not in roles:
 		frappe.get_doc("User", PLANNER_USER).add_roles(PLANNER_ROLE)
 	_ensure_usa(PLANNER_USER, PLANNER_ROLE, PE, OU)
+	# Registration and mixed-OU formation are PE-owned capabilities. Keep the
+	# unit assignment for scoped row tests and add the explicit entity grant.
+	_ensure_usa(PLANNER_USER, PLANNER_ROLE, PE, None)
 	return PLANNER_USER
 
 
@@ -146,27 +152,40 @@ def complete_plan_item_for_signoff(*, plan_item: str, user: str) -> dict:
 		update_plan_item,
 	)
 
+	plan_name = frappe.db.get_value("Procurement Plan Item", plan_item, "plan")
+	plan_start = frappe.db.get_value("Procurement Plan", plan_name, "period_start")
+	draft = frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version")
+	version_token = frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token")
 	return update_plan_item(
 		plan_item=plan_item,
 		user=user,
+		expected_version_token=version_token,
+		idempotency_key=f"TEST-COMPLETE-{plan_item}-{version_token}",
 		fields={
-			"requirement_description": "Complete for submit for review",
-			"procurement_category": "ICT infrastructure and services",
+			"requirement_description": "Procure one accredited digital-health certification programme, including training and examinations, for the FY 2027/28 workforce-development requirement.",
+			"procurement_category": "Training and professional development services",
 			"procurement_method": "Open tender",
 			"arrangement": "Single year",
 			"lotting_decision": "Single lot",
-			"ms_invitation_published": "2027-09-15",
-			"ms_tender_opening": "2027-10-20",
-			"ms_evaluation_completed": "2027-11-15",
-			"ms_award_approval": "2027-12-15",
-			"ms_contract_signature": "2028-01-15",
-			"ms_delivery_completion": "2028-03-31",
+			"ms_invitation_published": str(add_days(plan_start, 130)),
+			"ms_tender_opening": str(add_days(plan_start, 151)),
+			"ms_evaluation_completed": str(add_days(plan_start, 160)),
+			"ms_award_approval": str(add_days(plan_start, 165)),
+			"ms_notification_of_award": str(add_days(plan_start, 167)),
+			"ms_contract_signature": str(add_days(plan_start, 172)),
+			"ms_delivery_completion": str(add_days(plan_start, 183)),
 		},
 	)
 
 
 def ensure_approver_user() -> str:
 	ensure_planning_roles()
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": "pln.gate01.approver@test.local", "role": ROLE_DESIGNATED_APPROVER, "procuring_entity": PE},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=True, ignore_permissions=True)
 	if not frappe.db.exists("User", APPROVER_USER):
 		frappe.get_doc(
 			{
@@ -231,12 +250,13 @@ def confirm_included_items_funding(*, plan: str, planner: str | None = None) -> 
 	)
 
 	actor = planner or ensure_planner_user()
-	bo = ensure_budget_officer_user()
+	ensure_budget_officer_user()
+	draft = frappe.db.get_value("Procurement Plan", plan, "open_draft_version")
 	items = frappe.get_all(
-		"Procurement Plan Item",
-		filters={"plan": plan, "baseline_state": ["in", ["Proposed", "Active"]]},
-		pluck="name",
-	)
+		"Procurement Plan Item Version",
+		filters={"plan_version": draft},
+		pluck="plan_item",
+	) if draft else []
 	for plan_item in items:
 		complete_plan_item_for_signoff(plan_item=plan_item, user=actor)
 		iv_name = frappe.db.get_value(
@@ -251,15 +271,25 @@ def confirm_included_items_funding(*, plan: str, planner: str | None = None) -> 
 		demand = cstr(demand_row["demand"] if demand_row else "").strip()
 		amount = flt(iv.confirmed_estimate) or 1_000_000
 		if demand and not frappe.db.exists("Demand Funding Allocation", {"demand": demand}):
-			funding = make_test_budget_line(approved_amount=max(amount * 2, 10_000_000))
+			funding = make_test_budget_line(
+				approved_amount=max(amount * 2, 10_000_000),
+				plan=plan,
+			)
 			attach_demand_funding(
 				demand=demand,
 				budget_line=funding["budget_line"],
 				budget=funding["budget"],
 				amount=amount,
 			)
+		version_token = frappe.db.get_value(
+			"Procurement Plan Version",
+			frappe.db.get_value("Procurement Plan", plan, "open_draft_version"),
+			"concurrency_token",
+		)
 		requested = update_plan_item(
-			plan_item=plan_item, user=actor, request_finance=True
+			plan_item=plan_item, user=actor, request_finance=True,
+			expected_version_token=version_token,
+			idempotency_key=f"TEST-FINANCE-{plan_item}-{version_token}",
 		)
 		if not requested.get("ok"):
 			raise frappe.ValidationError(f"Request finance failed: {requested}")
@@ -271,20 +301,18 @@ def confirm_included_items_funding(*, plan: str, planner: str | None = None) -> 
 			raise frappe.ValidationError(
 				f"Request finance did not open a confirmation task: {requested}"
 			)
-		confirmed = confirm_plan_item_funding(plan_item=plan_item, user=bo)
+		confirmed = confirm_plan_item_funding(
+			task=iv.finance_task_id,
+			expected_token=iv.finance_task_token,
+			idempotency_key=f"TEST-CONFIRM-{iv.finance_task_id}",
+			user=iv.finance_task_assignee,
+		)
 		if not confirmed.get("ok"):
 			raise frappe.ValidationError(f"Confirm finance failed: {confirmed}")
 
 
 def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> dict[str, Any]:
-	"""Complete items → Finance confirm → validate → submit for review → recommend.
-
-	Required before ``approve_plan_version`` under Gate 05 rules.
-	C02: no departmental contribution step.
-	"""
-	from kentender_procurement.procurement_planning.services.record_plan_decision import (
-		record_plan_decision,
-	)
+	"""Complete items, confirm Finance, validate, and create the professional task."""
 	from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 		submit_plan_for_review,
 	)
@@ -309,7 +337,7 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 	validate_plan(plan=plan, user=planner)
 
 	if cstr(plan_doc.current_approved_version or "").strip():
-		from kentender_procurement.procurement_planning.services.get_plan_update import (
+		from kentender_procurement.procurement_planning.services.plan_builder_successor import (
 			planner_update_reason,
 		)
 
@@ -325,26 +353,22 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 			)
 
 	token = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
-	submitted = submit_plan_for_review(plan=plan, concurrency_token=token, user=planner)
+	submitted = submit_plan_for_review(
+		plan=plan,
+		expected_token=token,
+		idempotency_key=f"TEST-SUBMIT-{ver}",
+		user=planner,
+	)
 	if not submitted.get("ok"):
 		raise frappe.ValidationError(f"Submit for review failed: {submitted}")
-
-	token2 = frappe.db.get_value("Procurement Plan Version", ver, "concurrency_token")
-	rec = record_plan_decision(
-		version=ver,
-		decision="recommend",
-		comment="Ready for approval",
-		concurrency_token=token2,
-		user=reviewer,
-	)
-	if not rec.get("ok"):
-		raise frappe.ValidationError(f"Recommend failed: {rec}")
 	return {
 		"plan": plan,
 		"version": ver,
 		"planner": planner,
 		"reviewer": reviewer,
-		"concurrency_token": rec.get("concurrency_token"),
+		"task": submitted.get("task"),
+		"task_token": submitted.get("task_token"),
+		"assignee": submitted.get("assignee"),
 	}
 
 
@@ -355,13 +379,11 @@ def approve_plan_via_gate05(*, plan: str, version: str, user: str | None = None)
 	)
 
 	advanced = advance_draft_to_recommended(plan=plan, version=version)
-	approver = user or ensure_approver_user()
-	token = frappe.db.get_value(
-		"Procurement Plan Version", advanced["version"], "concurrency_token"
-	)
+	approver = user or advanced.get("assignee") or ensure_approver_user()
 	return approve_plan_version(
-		version=advanced["version"],
-		concurrency_token=token,
+		task=advanced["task"],
+		expected_token=advanced["task_token"],
+		idempotency_key=f"TEST-APPROVE-{advanced['task']}",
 		user=approver,
 	)
 
@@ -393,7 +415,6 @@ def ensure_scope() -> dict[str, str]:
 			}
 		).insert(ignore_permissions=True)
 	ensure_planner_user()
-	ensure_approver_user()
 	ensure_reviewer_user()
 	return {"pe": PE, "ou": OU, "fy": FY}
 
@@ -405,12 +426,25 @@ def make_approved_demand(
 	title: str = "Gate01 Demand",
 	need_item_count: int = 1,
 	item_amount: float = 1_000_000,
-) -> dict[str, str]:
+	demand_code: str | None = None,
+	required_by_date: str | None = None,
+	item_amounts: list[float] | None = None,
+) -> dict[str, Any]:
 	ensure_scope()
 	planner = ensure_planner_user()
-	code = f"DEM-G01-{frappe.generate_hash(length=6).upper()}"
-	n = max(1, int(need_item_count or 1))
-	total = float(item_amount) * n
+	code = cstr(demand_code).strip() or f"DEM-G01-{frappe.generate_hash(length=6).upper()}"
+	amounts = [float(amount) for amount in (item_amounts or [])]
+	n = len(amounts) or max(1, int(need_item_count or 1))
+	if not amounts:
+		amounts = [float(item_amount)] * n
+	total = sum(amounts)
+	period_start = frappe.db.get_value(
+		"Procurement Plan",
+		{"procuring_entity": pe, "open_draft_version": ["is", "set"]},
+		"period_start",
+		order_by="creation desc",
+	)
+	required_by = required_by_date or (add_days(period_start, 180) if period_start else "2027-12-31")
 	demand = frappe.get_doc(
 		{
 			"doctype": "Demand",
@@ -424,6 +458,7 @@ def make_approved_demand(
 			"current_stage": "Complete",
 			"planning_ready": 1,
 			"planning_usage": "Not taken up",
+			"required_by_date": required_by,
 			"currency": "KES",
 			"confirmed_estimate": total,
 			"requester_estimate": total,
@@ -440,8 +475,8 @@ def make_approved_demand(
 				"demand": demand.name,
 				"item_code": item_code,
 				"description": f"{title} — need {i + 1}",
-				"confirmed_estimate": float(item_amount),
-				"requester_estimate": float(item_amount),
+				"confirmed_estimate": amounts[i],
+				"requester_estimate": amounts[i],
 				"currency": "KES",
 				"quantity": 1,
 				"confirmed_quantity": 1,
@@ -459,6 +494,35 @@ def make_approved_demand(
 	}
 
 
+def add_demand_to_plan(
+	*, plan: str, demand: str | None = None, demands: list[str] | None = None,
+	user: str | None = None, expected_version_token: str | None = None,
+	idempotency_key: str | None = None, **kwargs: Any,
+) -> dict[str, Any]:
+	"""Test-only adapter that supplies the revised formation concurrency contract."""
+	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+		add_demand_to_plan as form_demands,
+	)
+
+	names = list(demands or ([demand] if demand else []))
+	focus = frappe.db.get_value(
+		"Procurement Plan", plan, "open_draft_version"
+	) or frappe.db.get_value("Procurement Plan", plan, "current_approved_version")
+	token = expected_version_token or frappe.db.get_value(
+		"Procurement Plan Version", focus, "concurrency_token"
+	)
+	# Retired per-item source arguments must not regain production authority.
+	kwargs.pop("demand_item", None)
+	return form_demands(
+		plan=plan,
+		demands=names,
+		expected_version_token=token,
+		idempotency_key=idempotency_key or f"TEST-{plan}-{frappe.generate_hash(length=12)}",
+		user=user,
+		**kwargs,
+	)
+
+
 def create_plan_as_planner(**overrides: Any) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services.create_procurement_plan import (
 		create_procurement_plan,
@@ -466,21 +530,64 @@ def create_plan_as_planner(**overrides: Any) -> dict[str, Any]:
 
 	scope = ensure_scope()
 	planner = ensure_planner_user()
-	fy = overrides.pop("financial_year", None)
-	if not fy:
-		# Count-based FY collided with leftover PE+FY rows after heavy Gate runs.
-		fy = unique_test_fy(base_year=2200, bucket=int(frappe.db.count("Procurement Plan") or 0))
+	# Historical tests may still pass a display title. The approved production
+	# service intentionally accepts only stable PE/FY identity.
+	overrides.pop("title", None)
+	requested_fy = overrides.pop("financial_year", None)
+	for attempt in range(20):
+		fy = requested_fy or unique_test_fy(
+			base_year=2200,
+			bucket=int(frappe.db.count("Procurement Plan") or 0) + attempt,
+		)
 		purge_pe_fy(fy)
-	kwargs = {
-		"procuring_entity": scope["pe"],
-		"financial_year": fy,
-		"title": "Gate01 Annual Plan",
-		"currency": "KES",
-		"coordinating_org_unit": scope["ou"],
-		"user": planner,
-	}
-	kwargs.update(overrides)
-	return create_procurement_plan(**kwargs)
+		fy = ensure_test_fiscal_year(fy)
+		result = create_procurement_plan(
+			procuring_entity=scope["pe"], financial_year=fy, user=planner
+		)
+		if result.get("created") and result.get("version"):
+			return result
+		if requested_fy:
+			return result
+	raise frappe.ValidationError("Could not allocate an isolated financial year for the test Plan.")
+
+
+def ensure_test_fiscal_year(financial_year: str) -> str:
+	fy = cstr(financial_year).strip()
+	start_year = int(fy.split("/", 1)[0])
+	governed_label = f"{start_year}/{str(start_year + 1)[-2:]}"
+	start_date = f"{start_year}-07-01"
+	end_date = f"{start_year + 1}-06-30"
+	existing = frappe.db.get_value(
+		"Fiscal Year",
+		{"year_start_date": start_date, "year_end_date": end_date},
+		"name",
+	)
+	if existing:
+		frappe.db.set_value("Fiscal Year", existing, "disabled", 0, update_modified=False)
+		return governed_label
+	if not frappe.db.exists("Fiscal Year", governed_label):
+		frappe.get_doc({
+			"doctype": "Fiscal Year",
+			"year": governed_label,
+			"year_start_date": start_date,
+			"year_end_date": end_date,
+			"disabled": 0,
+		}).insert(ignore_permissions=True)
+	return governed_label
+
+
+def create_procurement_plan_for_test(
+	*, procuring_entity: str, financial_year: str, user: str, **_retired_values: Any,
+) -> dict[str, Any]:
+	"""Test-only entry that establishes governed FY configuration first."""
+	from kentender_procurement.procurement_planning.services.create_procurement_plan import (
+		create_procurement_plan,
+	)
+
+	governed_fy = ensure_test_fiscal_year(financial_year)
+	return create_procurement_plan(
+		procuring_entity=procuring_entity, financial_year=governed_fy, user=user
+	)
 
 
 def unique_test_fy(*, base_year: int = 2600, bucket: int = 0) -> str:
@@ -498,44 +605,71 @@ def purge_pe_fy(financial_year: str) -> None:
 	"""Delete PE+FY plans and orphan versions left by force-clears."""
 	scope = ensure_scope()
 	pe = scope["pe"]
-	for name in frappe.get_all(
+	plans = frappe.get_all(
 		"Procurement Plan",
 		filters={"procuring_entity": pe, "financial_year": financial_year},
 		pluck="name",
-	):
-		frappe.delete_doc("Procurement Plan", name, force=True, ignore_permissions=True)
-	fy_slug = (financial_year or "").replace("/", "-")
-	if frappe.db.exists("DocType", "Planning Handoff Snapshot"):
-		for name in frappe.get_all(
-			"Planning Handoff Snapshot",
-			filters={"plan_item": ("like", f"%{fy_slug}%")},
-			pluck="name",
-		):
-			frappe.delete_doc(
-				"Planning Handoff Snapshot", name, force=True, ignore_permissions=True
-			)
-	for name in frappe.get_all(
-		"Procurement Plan Version",
-		filters={"name": ("like", f"PLN-%{fy_slug}%")},
-		pluck="name",
-	):
-		frappe.delete_doc("Procurement Plan Version", name, force=True, ignore_permissions=True)
-	for name in frappe.get_all(
-		"Procurement Plan Item",
-		filters={"plan_item_code": ("like", f"PPI-%{fy_slug}%")},
-		pluck="name",
-	):
-		for doctype in (
-			"Planning Handoff Snapshot",
-			"Plan Demand Allocation",
-			"Procurement Plan Item Version",
-		):
+	)
+	versions = (
+		frappe.get_all("Procurement Plan Version", filters={"plan": ["in", plans]}, pluck="name")
+		if plans else []
+	)
+	items = (
+		frappe.get_all("Procurement Plan Item", filters={"plan": ["in", plans]}, pluck="name")
+		if plans else []
+	)
+	if items:
+		item_codes = frappe.get_all(
+			"Procurement Plan Item", filters={"name": ["in", items]}, pluck="plan_item_code"
+		)
+		if frappe.db.exists("DocType", "Planning Consumption"):
+			for name in frappe.get_all(
+				"Planning Consumption", filters={"plan_item_code": ["in", item_codes]}, pluck="name"
+			):
+				frappe.delete_doc("Planning Consumption", name, force=True, ignore_permissions=True)
+		for doctype in ("Planning Handoff Snapshot", "Plan Demand Allocation", "Procurement Plan Item Version"):
 			if not frappe.db.exists("DocType", doctype):
 				continue
-			for child in frappe.get_all(doctype, filters={"plan_item": name}, pluck="name"):
+			for child in frappe.get_all(doctype, filters={"plan_item": ["in", items]}, pluck="name"):
 				frappe.delete_doc(doctype, child, force=True, ignore_permissions=True)
-		frappe.delete_doc("Procurement Plan Item", name, force=True, ignore_permissions=True)
-	frappe.db.commit()
+		for item in items:
+			frappe.db.set_value(
+				"Procurement Plan Item", item,
+				{"current_approved_item_version": None, "draft_item_version": None},
+				update_modified=False,
+			)
+			frappe.delete_doc("Procurement Plan Item", item, force=True, ignore_permissions=True)
+	if versions:
+		for doctype in ("Plan Decision", "Plan Validation Result", "Publication Event"):
+			if not frappe.db.exists("DocType", doctype):
+				continue
+			for child in frappe.get_all(doctype, filters={"plan_version": ["in", versions]}, pluck="name"):
+				frappe.delete_doc(doctype, child, force=True, ignore_permissions=True)
+	for plan in plans:
+		frappe.db.set_value(
+			"Procurement Plan", plan,
+			{"current_approved_version": None, "open_draft_version": None},
+			update_modified=False,
+		)
+	for version in versions:
+		frappe.db.set_value("Procurement Plan Version", version, "source_version", None, update_modified=False)
+		frappe.delete_doc("Procurement Plan Version", version, force=True, ignore_permissions=True)
+	for plan in plans:
+		frappe.delete_doc("Procurement Plan", plan, force=True, ignore_permissions=True)
+	# A failed earlier registration can leave the deterministic V1 name without
+	# its Plan. Remove only the exact PE/year registration namespace.
+	start_year = cstr(financial_year).split("/", 1)[0]
+	pe_code = cstr(frappe.db.get_value("Procuring Entity", pe, "entity_code") or pe).removeprefix("PE-")
+	for version in frappe.get_all(
+		"Procurement Plan Version",
+		filters={"version_code": ["like", f"PLN-{pe_code}-{start_year}-001-V%"]},
+		pluck="name",
+	):
+		if not frappe.db.exists("Procurement Plan", frappe.db.get_value("Procurement Plan Version", version, "plan")):
+			frappe.delete_doc("Procurement Plan Version", version, force=True, ignore_permissions=True)
+	# Keep cleanup inside the caller's test/request transaction. Committing here
+	# caused later test-created Fiscal Years and Plans to escape Frappe's normal
+	# rollback boundary when another case reused this helper.
 
 
 def ensure_budget_officer_user() -> str:
@@ -550,14 +684,29 @@ def ensure_budget_officer_user() -> str:
 		"pln.c05.bo@test.local",
 		roles=(ROLE_OFFICER,),
 		pe=PE,
-		org_unit=None,
+		org_unit=OU,
 		include_descendants=0,
 	)
 
 
-def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.0) -> dict[str, str]:
+def make_test_budget_line(
+	*, approved_amount: float, reserved_amount: float = 0.0,
+	fiscal_period: str = "2027/28", start_date: str = "2027-07-01",
+	end_date: str = "2028-06-30", title: str = "Planning finance test line",
+	fixture_namespace: str | None = None, plan: str | None = None,
+) -> dict[str, str]:
 	"""Isolated Active Budget Line so Finance tests do not mutate the MOH seed portfolio."""
 	ensure_scope()
+	if plan:
+		plan_context = frappe.db.get_value(
+			"Procurement Plan", plan,
+			["financial_year", "period_start", "period_end"],
+			as_dict=True,
+		)
+		if plan_context:
+			fiscal_period = plan_context.financial_year
+			start_date = cstr(plan_context.period_start)
+			end_date = cstr(plan_context.period_end)
 	token = frappe.generate_hash(length=8).upper()
 	bud = frappe.get_doc(
 		{
@@ -565,9 +714,9 @@ def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.
 			"generated_reference": f"MOH-BUD-PLN-{token}",
 			"title": f"Planning finance test {token}",
 			"procuring_entity": PE,
-			"fiscal_period": "2027/28",
-			"start_date": "2027-07-01",
-			"end_date": "2028-06-30",
+			"fiscal_period": fiscal_period,
+			"start_date": start_date,
+			"end_date": end_date,
 			"currency": "KES",
 			"budget_owner": "Budget Officer",
 			"registration_source": "Direct capture",
@@ -576,6 +725,7 @@ def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.
 			"external_approved_total": approved_amount,
 			"approval_evidence": "/files/pln-fin-test.pdf",
 			"status": "Active",
+			"fixture_namespace": fixture_namespace,
 		}
 	)
 	bud.flags.ignore_validate = True
@@ -585,7 +735,7 @@ def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.
 			"doctype": "Budget Line",
 			"budget": bud.name,
 			"generated_reference": f"MOH-BL-PLN-{token}",
-			"title": "Planning finance test line",
+			"title": title,
 			"organisational_owner": "Directorate of Digital Health and Policy",
 			"classification": "Capital expenditure",
 			"funding_source_type": "Exchequer",
@@ -595,6 +745,7 @@ def make_test_budget_line(*, approved_amount: float, reserved_amount: float = 0.
 			"amount_committed": 0,
 			"currency": "KES",
 			"is_active": 1,
+			"fixture_namespace": fixture_namespace,
 		}
 	)
 	line.flags.skip_budget_strategy_validate = True

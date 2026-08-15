@@ -42,6 +42,7 @@ def ensure_procuring_entity(
 		"entity_name": entity_name,
 		"legal_name": entity_name,
 		"status": "Active",
+		"reporting_currency": "KES",
 	}
 	if entity_type:
 		values["entity_type"] = entity_type
@@ -49,6 +50,9 @@ def ensure_procuring_entity(
 		values["short_name"] = short_name
 	if frappe.db.exists("Procuring Entity", entity_code):
 		doc = frappe.get_doc("Procuring Entity", entity_code)
+		# Seed/test setup may have just backfilled currency in the same process.
+		# Reload before the idempotent update to avoid a stale modified timestamp.
+		doc.reload()
 		doc.update({k: v for k, v in values.items() if k != "entity_code"})
 		doc.save(ignore_permissions=True)
 		return doc.name

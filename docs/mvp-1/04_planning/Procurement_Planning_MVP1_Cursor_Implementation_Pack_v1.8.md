@@ -1,12 +1,12 @@
 # KenTender Procurement Planning — Cursor Implementation Pack
 
-**Document ID:** PLANNING-MVP1-CURSOR-1.8  
-**Version:** 1.8  
-**Status:** Approved implementation baseline for direct MVP correction  
-**Date:** 12 August 2026  
-**Supersedes:** `PLANNING-MVP1-CURSOR-1.7`  
-**Requirements:** `Procurement_Planning_MVP1_Requirements_v1.9.md`  
-**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v2.0.md` and approved outputs PLN-UI-01 through PLN-UI-10, including PLN-UI-05A and PLN-UI-07A  
+**Document ID:** PLANNING-MVP1-CURSOR-1.8
+**Version:** 1.8
+**Status:** Approved implementation baseline for direct MVP correction
+**Date:** 12 August 2026
+**Supersedes:** `PLANNING-MVP1-CURSOR-1.7`
+**Requirements:** `Procurement_Planning_MVP1_Requirements_v1.9.md`
+**Design:** `Procurement_Planning_MVP1_Stitch_Prompts_v2.0.md`, base outputs PLN-UI-01 through PLN-UI-04, and the controlling revision HTML for PLN-UI-05 through PLN-UI-09, including PLN-UI-05A and PLN-UI-07A
 **Operating model:** `KenTender_MVP_Cross_Module_Operating_Model_v1.1.md`
 
 **Revision 1.8:** Implements controlled whole-Plan-Item removal. Draft-only items are removed from the Draft with preserved history and immediate task/funding reversal; eligible Active items are proposed for removal in a Draft successor and become Removed only on successor approval. Executed items are protected. All v1.7 Finance-shortfall and earlier workflow corrections remain in force.
@@ -301,7 +301,7 @@ PLN-UI-04 direct formation path:
 - preview the exact resulting item count and value before confirmation;
 - submit the whole selection through one server capability and one atomic transaction;
 - on an Approved Plan, create or reuse the single Draft successor and create all resulting items/allocations in that same transaction;
-- route a single or combined result to PLN-UI-06; route multiple separate results to PLN-UI-05 or PLN-UI-10 with the new items visible;
+- route a single or combined result to PLN-UI-06; route multiple separate results to PLN-UI-05 with the new items visible;
 - no create-one-then-return, Add another Demand or later aggregation step;
 - no method, schedule or lotting controls in the dialog.
 
@@ -458,15 +458,15 @@ Add role/scope Playwright tests and transactional tests for sufficient confirmat
 
 ---
 
-# Cursor Prompt 06 — Approved Plan, Draft successor, publication and Tender handoff
+# Cursor Prompt 06 — Approved Plan, unified Draft builder and Tender handoff
 
 ```text
-Implement PLN-UI-09 and PLN-UI-10 plus the downstream boundaries.
+Implement PLN-UI-09 and PLN-UI-05 plus the downstream boundaries.
 
 PLN-UI-09:
 - current Approved baseline read-only;
 - implementation and actual milestones derived from downstream records;
-- show reporting period, As at, totals, publication and variance as projections;
+- show reporting period, As at, totals and implementation variance as projections;
 - Add Plan Item available only for an Open Plan and authorised planner;
 - user never creates a revision manually;
 - existing Draft successor shown as one Continue update / View changes notice;
@@ -476,13 +476,13 @@ Approved-Plan Add path:
 1. PLN-UI-09 Add Plan Item opens ordinary PLN-UI-04.
 2. The planner selects one or more eligible Approved Demands and, for multiple selections, chooses separate or compatible combined formation.
 3. One atomic confirmation creates/reuses the Draft successor and creates every resulting Proposed Plan Item/allocation.
-4. Open PLN-UI-06 for the single/combined item, or PLN-UI-10 with all separate items visible, without repeating source selection or formation.
+4. Open PLN-UI-06 for the single/combined item, or PLN-UI-05 with all separate items visible, without repeating source selection or formation.
 5. Complete each new item and request Finance confirmation.
-6. PLN-UI-10 shows each changed item as Awaiting confirmation until PLN-UI-07 confirms it.
-7. Once all changed items are current and Finance-confirmed, PLN-UI-10 enables Submit for review.
+6. PLN-UI-05 shows each changed item as Awaiting confirmation until PLN-UI-07 confirms it.
+7. Once all changed items are current and Finance-confirmed, PLN-UI-05 enables Submit for review.
 8. PLN-UI-08 approves the successor.
 
-PLN-UI-10:
+PLN-UI-05:
 - show Approved Version 1 and Draft Version 2 totals;
 - make added/changed Plan Items primary;
 - show unchanged operational items as collapsed read-only context;
@@ -492,7 +492,7 @@ PLN-UI-10:
 - do not expose version-management controls, formation controls, raw diffs, second HoD sign-off or editable Approved fields.
 
 PLN-UI-05A and removal service:
-- use one compact confirmation dialog from PLN-UI-05/10 and from an eligible Active-item row on PLN-UI-09;
+- use one compact confirmation dialog from PLN-UI-05 and from an eligible Active-item row on PLN-UI-09;
 - require one non-empty business reason and show item, owner OU, value, all source Demands, Finance state and the exact lifecycle effect read-only;
 - the public capability accepts Plan, Draft Version, Plan Item, expected version/concurrency token and reason; it derives the removal mode and financial effects server-side;
 - never accept client-supplied release amount, Demand-eligibility flag, item status or `has_downstream` authority;
@@ -509,7 +509,6 @@ PLN-UI-05A and removal service:
 Publication:
 - publish/export current Approved Version only;
 - retain destination, status, time and evidence;
-- publication failure creates an issue without reversing approval.
 
 Tender handoff:
 - eligible Active item in current Approved Version only;
@@ -530,7 +529,7 @@ Prove removal separately:
 - Draft total returns from KES 535,000,000 to KES 455,000,000, `DMD-MOH-2027-019` is eligible again, and Approved Version 1 plus `TND-MOH-2027-008` remain unchanged;
 - add transactional tests for the Finance-confirmed draft-only branch and the Active-item proposed-removal branch without altering the canonical base story.
 
-Add service, transaction and Playwright tests for the complete route, removal variants, refresh/back, double-submit, concurrency and publication/Tender contracts.
+Add service, transaction and Playwright tests for the complete route, removal variants, refresh/back, double-submit, concurrency and Tender contracts.
 ```
 
 **Section acceptance**
@@ -568,13 +567,13 @@ Run final verification:
 2. unit and transactional tests;
 3. role/scope matrix including negative direct-route/API tests;
 4. service contract tests;
-5. Playwright journeys PLN-UI-01 through PLN-UI-10;
+5. Playwright journeys PLN-UI-01 through PLN-UI-05;
 6. initial Plan journey;
 7. post-approval-addition journey;
 8. multi-Demand separate formation, compatible same-OU combined formation and cross-OU combined rejection;
 9. Finance confirmation/staleness;
 10. Head-of-Procurement approval and unauthorised viewer behaviour;
-11. publication and Tender handoff;
+11. Tender handoff;
 12. PLN-UI-07A shortfall, no-override/no-partial-confirmation and same-task recovery tests;
 13. accessibility checks for labels, keyboard, focus and error association.
 14. draft-only removal before/after Finance confirmation, Active-item proposed removal, executed-item denial, whole-combined-item removal, no-op Draft handling, double-submit and approval-time race tests.

@@ -1,0 +1,503 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Approved Plan Implementation - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#dce2f8",
+                    "surface-tint": "#0c56d0",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "secondary-fixed-dim": "#48d7f9",
+                    "secondary-container": "#50dcff",
+                    "on-tertiary-fixed": "#151b2b",
+                    "status-available": "#10B981",
+                    "inverse-on-surface": "#f0f1f3",
+                    "secondary-fixed": "#afecff",
+                    "outline-variant": "#c3c6d6",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e1e2e4",
+                    "on-secondary-fixed": "#001f27",
+                    "inverse-primary": "#b2c5ff",
+                    "error-container": "#ffdad6",
+                    "background": "#f8f9fb",
+                    "on-surface-variant": "#434654",
+                    "tertiary-container": "#545a6c",
+                    "on-error": "#ffffff",
+                    "status-exhausted": "#E11D48",
+                    "primary-container": "#0052cc",
+                    "data-committed": "#6366F1",
+                    "border-subtle": "#DFE1E6",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed-variant": "#404658",
+                    "on-tertiary-container": "#ccd2e7",
+                    "on-secondary-fixed-variant": "#004e5d",
+                    "status-reserved": "#F59E0B",
+                    "error": "#ba1a1a",
+                    "surface-container": "#edeef0",
+                    "primary": "#003d9b",
+                    "on-primary-fixed": "#001848",
+                    "on-error-container": "#93000a",
+                    "on-secondary-container": "#005f71",
+                    "on-surface": "#191c1e",
+                    "outline": "#737685",
+                    "on-background": "#191c1e",
+                    "surface-bright": "#f8f9fb",
+                    "tertiary": "#3d4354",
+                    "on-primary-container": "#c4d2ff",
+                    "surface-container-low": "#f3f4f6",
+                    "inverse-surface": "#2e3132",
+                    "surface": "#f8f9fb",
+                    "surface-container-highest": "#e1e2e4",
+                    "on-tertiary": "#ffffff",
+                    "secondary": "#00687b",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#d9dadc",
+                    "surface-container-high": "#e7e8ea"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "1.5rem",
+                    "stack-xs": "0.25rem",
+                    "container-padding": "1rem",
+                    "stack-sm": "0.5rem",
+                    "gutter-md": "1rem"
+            },
+            "fontFamily": {
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "headline-sm": [
+                            "Manrope"
+                    ],
+                    "data-md": [
+                            "JetBrains Mono"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "data-lg": [
+                            "JetBrains Mono"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Manrope"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Manrope"
+                    ]
+            },
+            "fontSize": {
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "data-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "data-lg": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "30px",
+                            {
+                                    "lineHeight": "38px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        /* Custom Scrollbar for horizontal scrolling tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c3c6d6;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #737685;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- JSON: SideNavBar -->
+<nav class="bg-surface-container-low text-primary hidden md:flex flex-col h-screen fixed left-0 top-0 pt-16 z-40 w-64 border-r border-subtle">
+<div class="px-container-padding mb-8">
+<h1 class="font-headline-sm text-headline-sm font-black text-primary">KenTender</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Public Procurement</p>
+</div>
+<button class="mx-container-padding mb-6 bg-primary text-on-primary font-body-md text-body-md py-2 px-4 rounded-lg shadow-sm hover:bg-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+            New Requisition
+        </button>
+<ul class="flex flex-col gap-1 px-2">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-caps text-label-caps">Requisitions</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-container text-on-primary-container border-l-4 border-primary font-bold opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps">Procurement Plan</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-caps text-label-caps">Vendor Registry</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto p-4 border-t border-subtle">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-primary font-bold">
+                    MK
+                </div>
+<div>
+<p class="font-label-caps text-label-caps">Mercy Kilonzo</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Procurement Planner</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- JSON: TopNavBar (Mobile Only Fallback/Header) -->
+<header class="md:hidden bg-surface text-primary flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50 border-b border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-headline-md text-headline-md font-bold">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-primary font-bold">MK</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-64 p-container-padding md:p-section-gap overflow-x-hidden">
+<!-- Header Section -->
+<header class="mb-section-gap">
+<nav aria-label="Breadcrumb" class="flex items-center text-on-surface-variant font-body-sm text-body-sm mb-stack-sm">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Ministry of Health</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface">2027/28</span>
+</nav>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs">Ministry of Health Annual Procurement Plan 2027/28</h1>
+<div class="flex flex-wrap items-center gap-3 mb-stack-sm">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-secondary-container text-on-secondary-container border border-secondary-fixed-dim shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-on-secondary-container mr-1.5"></span>
+                            Open Plan
+                        </span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-emerald-100 text-status-available border border-emerald-200 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-available mr-1.5"></span>
+                            Approved Version 2
+                        </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        Approved by Grace Wanjiku on 20 August 2027 at 11:00 EAT
+                    </p>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<button class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-body-md text-body-md font-medium border border-subtle text-primary bg-surface hover:bg-surface-container transition-colors shadow-sm">
+<span class="material-symbols-outlined">download</span>
+                        Export approved plan
+                    </button>
+<button class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-body-md text-body-md font-medium bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined">add</span>
+                        Add Plan Item
+                    </button>
+</div>
+</div>
+</header>
+<!-- Summary Strip (Bento-lite) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-md mb-section-gap">
+<div class="bg-surface border border-subtle rounded-xl p-container-padding flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-stack-xs relative z-10">Approved plan value</p>
+<p class="font-data-lg text-data-lg text-on-surface relative z-10">KES 535,000,000</p>
+</div>
+<div class="bg-surface border border-subtle rounded-xl p-container-padding flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-stack-xs relative z-10">Active Plan Items</p>
+<p class="font-headline-md text-headline-md text-on-surface relative z-10">2</p>
+</div>
+<div class="bg-surface border border-subtle rounded-xl p-container-padding flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-stack-xs relative z-10">Finance confirmed</p>
+<div class="flex items-baseline gap-2 relative z-10">
+<p class="font-headline-md text-headline-md text-on-surface">2</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">of 2</p>
+</div>
+<div class="w-full h-1 bg-surface-variant rounded-full mt-2 relative z-10 overflow-hidden">
+<div class="h-full bg-status-available w-full"></div>
+</div>
+</div>
+<div class="bg-surface border border-subtle rounded-xl p-container-padding flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-stack-xs relative z-10">Tender take-up</p>
+<div class="flex items-baseline gap-2 relative z-10">
+<p class="font-headline-md text-headline-md text-on-surface">1</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">of 2</p>
+</div>
+<div class="w-full h-1 bg-surface-variant rounded-full mt-2 relative z-10 overflow-hidden">
+<div class="h-full bg-data-committed w-1/2"></div>
+</div>
+</div>
+</div>
+<!-- Main Content Area: Implementation & Filters -->
+<div class="bg-surface border border-subtle rounded-xl shadow-sm mb-section-gap overflow-hidden flex flex-col">
+<!-- Filter Row -->
+<div class="p-container-padding border-b border-subtle bg-surface-bright flex flex-col justify-between gap-4">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-on-surface-variant">monitoring</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Plan implementation</h2>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full">
+<div class="relative">
+<select class="appearance-none bg-surface border border-subtle rounded-lg py-1.5 pl-3 pr-8 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary cursor-pointer shadow-sm">
+<option>Q1 · FY 2027/28</option>
+<option>Q2 · FY 2027/28</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant hidden xl:inline">As at 20 August 2027, 11:05 EAT</span>
+<div class="relative">
+<select class="appearance-none bg-surface border border-subtle rounded-lg py-1.5 pl-3 pr-8 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary cursor-pointer shadow-sm">
+<option>All permitted units</option>
+<option>Directorate of Digital Health</option>
+<option>HR Management</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface border border-subtle rounded-lg py-1.5 pl-3 pr-8 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary cursor-pointer shadow-sm">
+<option>All statuses</option>
+<option>Tender active</option>
+<option>Not started</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-subtle">
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider w-[25%]">REQUIREMENT</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider">ORGANISATION UNIT</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider text-right">APPROVED VALUE</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider">TENDER TAKE-UP</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider">NEXT PLANNED MILESTONE</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider">ACTUAL PROGRESS</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider">VARIANCE</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant font-medium tracking-wider text-right">ACTION</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-subtle bg-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4 align-top"><div class="font-body-md text-body-md font-medium text-primary">National digital health infrastructure upgrade</div><div class="font-data-md text-[12px] text-on-surface-variant mt-1">PPI-MOH-2027-021</div></td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface">Directorate of Digital Health and Policy</td>
+<td class="p-4 align-top font-data-md text-data-md text-on-surface text-right whitespace-nowrap">KES 455,000,000</td>
+<td class="p-4 align-top">
+<div class="flex flex-col gap-1.5 items-start">
+<span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-indigo-50 text-data-committed border border-indigo-200">Tender active</span>
+<span class="font-data-md text-body-sm text-on-surface-variant">TND-MOH-2027-008</span>
+</div>
+</td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface">Evaluation complete by 15 November 2027</td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface">Tender in progress</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center gap-1 font-body-sm text-body-sm text-status-available">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    On schedule
+                                </span>
+</td>
+<td class="p-4 align-top text-right">
+<a class="inline-flex font-body-sm text-body-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors items-center gap-1" href="#">
+                                    View implementation
+                                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4 align-top border-l-4 border-transparent"><div class="font-body-md text-body-md font-medium text-primary">Digital health technical staff certification programme</div><div class="font-data-md text-[12px] text-on-surface-variant mt-1">PPI-MOH-2027-022</div></td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface">Human Resources Management and Development</td>
+<td class="p-4 align-top font-data-md text-data-md text-on-surface text-right whitespace-nowrap">KES 80,000,000</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-surface-variant text-on-surface-variant border border-subtle">Not started</span>
+</td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface">Tender advertisement by 8 November 2027</td>
+<td class="p-4 align-top font-body-sm text-body-sm text-on-surface-variant italic">No Tender started</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center gap-1 font-body-sm text-body-sm text-status-available">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    On schedule
+                                </span>
+</td>
+<td class="p-4 align-top text-right">
+<div class="flex items-center justify-end gap-3">
+<a class="font-body-sm text-body-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors" href="#">View Plan Item</a>
+<button aria-label="More actions" class="text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Version History Section -->
+<section class="bg-surface border border-subtle rounded-xl p-container-padding shadow-sm"><h2 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-on-surface-variant">history</span>
+    Version history
+</h2>
+<div class="relative border-l-2 border-subtle ml-3 space-y-8 py-2">
+    <!-- Version 2 (Approved) -->
+    <div class="relative pl-8">
+        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-primary border-4 border-surface-container-lowest shadow-sm"></div>
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-3">
+                <p class="text-body-md font-semibold text-on-surface">Version 2</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-emerald-50 text-status-available border border-emerald-100">Approved</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1">
+                <p class="font-data-md text-sm text-on-surface">KES 535,000,000</p>
+                <span class="text-outline-variant">•</span>
+                <p class="font-body-sm text-on-surface-variant">Approved 20 August 2027</p>
+            </div>
+        </div>
+    </div>
+    <!-- Version 1 (Superseded) -->
+    <div class="relative pl-8">
+        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-surface-variant border-4 border-surface-container-lowest shadow-sm"></div>
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-3">
+                <p class="text-body-md font-semibold text-on-surface-variant">Version 1</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded font-label-caps text-[10px] bg-surface-container text-on-surface-variant border border-subtle">Superseded</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1">
+                <p class="font-data-md text-sm text-on-surface-variant">KES 455,000,000</p>
+                <span class="text-outline-variant">•</span>
+                <a class="font-body-sm font-medium text-primary hover:underline flex items-center gap-1" href="#">
+                    View historical version
+                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div></section>
+</main>
+
+
+</body></html>

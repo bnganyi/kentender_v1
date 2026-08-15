@@ -16,12 +16,12 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_DRAFT,
 	VERSION_SUPERSEDED,
 )
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import add_demand_to_plan
+from kentender_procurement.procurement_planning.tests._gate01_helpers import add_demand_to_plan
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version,
 )
-from kentender_procurement.procurement_planning.services.create_procurement_plan import (
-	create_procurement_plan,
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	create_procurement_plan_for_test as create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.open_or_create_plan_revision import (
 	open_or_create_plan_revision,
@@ -57,22 +57,16 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		a = create_procurement_plan(
 			procuring_entity=PE,
 			financial_year=fy,
-			title="Dup A",
-			currency="KES",
-			coordinating_org_unit=scope["ou"],
 			user=planner,
 		)
 		self.assertTrue(a["ok"])
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			create_procurement_plan(
-				procuring_entity=PE,
-				financial_year=fy,
-				title="Dup B",
-				currency="KES",
-				coordinating_org_unit=scope["ou"],
-				user=planner,
-			)
-		self.assertIn("already exists", str(ctx.exception).lower())
+		duplicate = create_procurement_plan(
+			procuring_entity=PE,
+			financial_year=fy,
+			user=planner,
+		)
+		self.assertFalse(duplicate["created"])
+		self.assertEqual(duplicate["plan"], a["plan"])
 
 	def test_02_at_most_one_current_approved(self) -> None:
 		planner = ensure_planner_user()
@@ -88,6 +82,12 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 		approve_plan_via_gate05(plan=created["plan"], version=created["version"], user=approver)
 		rev = open_or_create_plan_revision(plan=created["plan"], user=planner)
 		self.assertTrue(rev["created"])
+		change = make_approved_demand(title="Approve chain revision demand")
+		add_demand_to_plan(
+			plan=created["plan"],
+			demand=change["demand"],
+			user=planner,
+		)
 		approve_plan_via_gate05(plan=created["plan"], version=rev["version"], user=approver)
 		plan = frappe.get_doc("Procurement Plan", created["plan"])
 		self.assertEqual(plan.current_approved_version, rev["version"])
@@ -223,7 +223,7 @@ class TestPlanningMvp1Invariants(IntegrationTestCase):
 				demand=foreign["demand"],
 				user=planner,
 			)
-		self.assertIn("must match", str(ctx.exception).lower())
+		self.assertIn("no longer eligible", str(ctx.exception).lower())
 
 	def test_09_stale_version_protection(self) -> None:
 		planner = ensure_planner_user()

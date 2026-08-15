@@ -12,6 +12,8 @@
   "procuring_entity",
   "owner_org_unit",
   "delivery_org_unit",
+  "formation_idempotency_key",
+  "formation_batch_index",
   "section_state",
   "baseline_state",
   "current_approved_item_version",
@@ -63,14 +65,28 @@
    "fieldname": "owner_org_unit",
    "fieldtype": "Link",
    "label": "Owner Organisation Unit",
-   "options": "Organisation Unit",
-   "reqd": 1
+   "options": "Organisation Unit"
   },
   {
    "fieldname": "delivery_org_unit",
    "fieldtype": "Link",
    "label": "Delivery Organisation Unit",
    "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "formation_idempotency_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Formation Idempotency Key",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "formation_batch_index",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Formation Batch Index",
+   "read_only": 1
   },
   {
    "fieldname": "section_state",

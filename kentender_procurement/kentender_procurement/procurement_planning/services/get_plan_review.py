@@ -19,17 +19,8 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_IN_REVIEW,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
-	APPROVE_PLAN_ROLES,
 	CAP_PLAN_VIEW,
-	RECOMMEND_PLAN_ROLES,
-	RETURN_PLAN_ROLES,
-	SUBMIT_FOR_REVIEW_ROLES,
-	CAP_PLAN_APPROVE,
-	CAP_PLAN_RECOMMEND,
-	CAP_PLAN_RETURN,
 	actor_planning_roles,
-	get_available_actions,
-	has_review_task_capability,
 	is_planning_read_only,
 	require_capability,
 )
@@ -41,9 +32,7 @@ from kentender_procurement.procurement_planning.services.preference_reservation 
 	plan_coverage,
 	scheme_is_assigned,
 )
-from kentender_procurement.procurement_planning.services.record_plan_decision import (
-	has_recommendation,
-)
+from kentender_procurement.procurement_planning.services.planning_tasks import assert_task_assignment
 from kentender_procurement.procurement_planning.services.validate_plan import (
 	effective_validation_status,
 )
@@ -59,7 +48,7 @@ def _ou_label(ou: str) -> str:
 	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou)
 
 
-def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
+def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 	actor = (user or frappe.session.user or "").strip()
 	if not actor or actor == "Guest":
 		frappe.throw(
@@ -68,13 +57,17 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			title="PLN_LOGIN_REQUIRED",
 		)
 
-	plan_name = cstr(plan).strip()
-	if not plan_name or not frappe.db.exists("Procurement Plan", plan_name):
-		frappe.throw(frappe._("Procurement Plan not found."), title="PLN_PLAN_NOT_FOUND")
+	task_id = cstr(task).strip()
+	version_name = frappe.db.get_value("Procurement Plan Version", {"review_task_id": task_id}, "name")
+	if not version_name:
+		frappe.throw(frappe._("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	task_version = frappe.get_doc("Procurement Plan Version", version_name)
+	assert_task_assignment(record=task_version, task=task_id, id_field="review_task_id", assignee_field="review_task_assignee", state_field="review_task_state", actor=actor)
+	plan_name = cstr(task_version.plan)
 
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	pe = cstr(plan_doc.procuring_entity).strip()
-	ou = cstr(plan_doc.coordinating_org_unit or "").strip() or None
+	ou = None
 	# Record visibility first; task vs neutral branched below (PLN-FR-080…083).
 	require_capability(
 		CAP_PLAN_VIEW,
@@ -84,8 +77,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		require_write=False,
 	)
 
-	# Prefer open draft/in-review version; else current approved for read-only trail.
-	focus = cstr(plan_doc.open_draft_version or plan_doc.current_approved_version or "").strip()
+	focus = version_name
 	if not focus:
 		frappe.throw(frappe._("No Plan Version available for review."), title="PLN_VERSION_NOT_FOUND")
 
@@ -105,11 +97,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	if not ver:
 		frappe.throw(frappe._("Plan Version not found."), title="PLN_VERSION_NOT_FOUND")
 
-	surface = (
-		"task"
-		if has_review_task_capability(actor) and cstr(ver.status) == VERSION_IN_REVIEW
-		else "neutral"
-	)
+	surface = "task"
 
 	currency = plan_doc.currency or "KES"
 	items_out: list[dict[str, Any]] = []
@@ -214,34 +202,15 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	else:
 		issues_message = "Resolve validation issues before recording this decision."
 
-	recommended = has_recommendation(version=focus)
 	roles = actor_planning_roles(actor)
 	read_only_actor = is_planning_read_only(actor)
 	task_surface = surface == "task" and not read_only_actor
-
-	review_actions = get_available_actions(
-		actor,
-		{
-			"kind": "plan_version",
-			"version_status": cstr(ver.status),
-			"recommended": recommended,
-			"issues_ready": issues_ready,
-			"finance_complete": finance_complete,
-		},
-	)
-	action_codes = {cstr(a.get("code")) for a in review_actions}
-	can_recommend = task_surface and CAP_PLAN_RECOMMEND in action_codes
-	can_return = task_surface and CAP_PLAN_RETURN in action_codes
-	can_approve = task_surface and CAP_PLAN_APPROVE in action_codes
-	can_submit_for_review = (
-		task_surface
-		and bool(roles.intersection(SUBMIT_FOR_REVIEW_ROLES))
-		and cstr(ver.status) in ("Draft", "Returned")
-		and issues_ready
-		and bool(items_out)
-		and ready_count == len(items_out)
-		and finance_complete
-	)
+	can_return = task_surface and cstr(ver.status) == VERSION_IN_REVIEW
+	can_approve = task_surface and cstr(ver.status) == VERSION_IN_REVIEW and issues_ready and finance_complete
+	review_actions = [
+		*([{"code": "approve", "label": "Approve update"}] if can_approve else []),
+		*([{"code": "return", "label": "Return to planner"}] if can_return else []),
+	]
 
 	if not task_surface:
 		rail_mode = "readonly"
@@ -249,20 +218,10 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 			"In review" if cstr(ver.status) == VERSION_IN_REVIEW else cstr(ver.status)
 		)
 		primary_cta_label = ""
-	elif can_approve or (
-		bool(roles.intersection(APPROVE_PLAN_ROLES)) and cstr(ver.status) == VERSION_IN_REVIEW
-	):
+	elif can_approve or cstr(ver.status) == VERSION_IN_REVIEW:
 		rail_mode = "approver"
-		current_decision_label = (
-			"Final approval" if recommended else "Awaiting recommendation"
-		)
-		primary_cta_label = "Approve plan" if can_approve else ""
-	elif can_recommend or (
-		bool(roles.intersection(RECOMMEND_PLAN_ROLES)) and cstr(ver.status) == VERSION_IN_REVIEW
-	):
-		rail_mode = "reviewer"
 		current_decision_label = "Professional review"
-		primary_cta_label = "Recommend approval" if can_recommend else ""
+		primary_cta_label = "Approve update" if can_approve else ""
 	else:
 		rail_mode = "readonly"
 		current_decision_label = (
@@ -280,7 +239,7 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		frappe.db.get_value("Procuring Entity", plan_doc.procuring_entity, "entity_name")
 		or plan_doc.procuring_entity
 	)
-	prepared_by = _ou_label(cstr(plan_doc.coordinating_org_unit or "")) or pe_label
+	prepared_by = pe_label
 
 	trail: list[dict[str, str]] = []
 	for row in frappe.get_all(
@@ -314,6 +273,11 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"version_status": cstr(ver.status),
 		"validation_projection": validation,
 		"concurrency_token": cstr(ver.concurrency_token or ""),
+		"task": task_id,
+		"task_token": cstr(task_version.review_task_token),
+		"task_iteration": int(task_version.review_task_iteration or 1),
+		"submitted_by": cstr(task_version.submitted_by),
+		"submitted_at": str(task_version.submitted_at or ""),
 		"item_count": len(items_out),
 		"planned_total": planned_total,
 		"planned_total_display": _money(planned_total, currency),
@@ -339,9 +303,6 @@ def get_plan_review(*, plan: str, user: str | None = None) -> dict[str, Any]:
 		"rail_mode": rail_mode,
 		"primary_cta_label": primary_cta_label,
 		"prior_decision_trail": trail,
-		"has_recommendation": recommended,
-		"can_submit_for_review": bool(can_submit_for_review),
-		"can_recommend": bool(can_recommend),
 		"can_return": bool(can_return),
 		"can_approve": bool(can_approve),
 		"available_actions": review_actions,

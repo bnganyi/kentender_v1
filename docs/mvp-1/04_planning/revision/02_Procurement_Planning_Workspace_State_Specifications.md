@@ -23,9 +23,9 @@ Priority is deterministic: returned work; blocking or stale work; incomplete or 
 | Incomplete Proposed Plan Item | Incomplete | **Complete item** | PLN-UI-06 Plan Item editor |
 | Finance return | Returned by Finance | **Correct item** | PLN-UI-06 Plan Item editor |
 | Blocking or stale validation | Blocked / Stale | **Resolve issues** | PLN-UI-06 Plan Item editor |
-| Returned Plan Version | Returned by Head of Procurement | **Address return** | PLN-UI-10 Draft update |
-| Draft update needing planner action | Needs attention | **Continue update** | PLN-UI-10 Draft update |
-| Draft successor with no effective changes | No changes | **Cancel update** | PLN-UI-10, where cancellation is confirmed and authorised |
+| Returned Plan Version | Returned by Head of Procurement | **Address return** | PLN-UI-05 Draft update |
+| Draft update needing planner action | Needs attention | **Continue update** | PLN-UI-05 Draft update |
+| Draft successor with no effective changes | No changes | **Cancel update** | PLN-UI-05, where cancellation is confirmed and authorised |
 | Awaiting Finance | Awaiting Finance confirmation | **View item** | Neutral Plan Item detail; never PLN-UI-07 |
 | Awaiting professional review | Awaiting Head-of-Procurement review | **View update** | Neutral submitted-update detail; never another actor's decision controls |
 

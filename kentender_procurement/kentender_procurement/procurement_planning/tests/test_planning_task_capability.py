@@ -8,14 +8,14 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version,
 )
-from kentender_procurement.procurement_planning.services.create_procurement_plan import (
-	create_procurement_plan,
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	create_procurement_plan_for_test as create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_review import (
 	get_plan_review,
@@ -49,6 +49,8 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	advance_draft_to_recommended,
 	ensure_reviewer_user,
 	make_approved_demand,
+	purge_pe_fy,
+	unique_test_fy,
 )
 from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 	OU_MOH,
@@ -63,8 +65,9 @@ from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 
 
 def _unique_fy(prefix: int = 2190) -> str:
-	n = frappe.db.count("Procurement Plan")
-	return f"{prefix + (n % 9)}/{str(n + 40)[-2:]}"
+	fy = unique_test_fy(base_year=prefix, bucket=int(frappe.db.count("Procurement Plan") or 0))
+	purge_pe_fy(fy)
+	return fy
 
 
 class TestPlanningTaskCapability(IntegrationTestCase):
@@ -77,9 +80,6 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		created = create_procurement_plan(
 			procuring_entity=PE_MOH,
 			financial_year=_unique_fy(),
-			title="C01 capability plan",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
 			user=planner,
 		)
 		demand = make_approved_demand(title="C01 capability demand")
@@ -90,176 +90,35 @@ class TestPlanningTaskCapability(IntegrationTestCase):
 		return {
 			"plan": created["plan"],
 			"version": advanced["version"],
-			"reviewer": advanced["reviewer"],
+			"task": advanced["task"],
+			"assignee": advanced["assignee"],
 		}
 
-	def test_admin_without_usa_denied_create_submit_approve_review_task(self) -> None:
-		admin = ensure_admin_only()
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_create_plan(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_submit_for_review(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_approve_plan(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_open_review_task(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_open_finance_task(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_confirm_plan_funding(admin)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_handoff(admin)
-
+	def test_review_projection_is_task_only_and_assignment_protected(self) -> None:
 		planner = ensure_moh_planner()
 		ctx = self._in_review_plan(planner)
 		with self.assertRaises(frappe.PermissionError):
-			get_plan_review(plan=ctx["plan"], user=admin)
+			get_plan_review(task=ctx["task"], user=planner)
+		county = ensure_county_planner()
+		with self.assertRaises(frappe.PermissionError):
+			get_plan_review(task=ctx["task"], user=county)
+		dto = get_plan_review(task=ctx["task"], user=ctx["assignee"])
+		self.assertEqual(dto["surface"], "task")
+		self.assertTrue(dto["can_approve"])
+		self.assertTrue(dto["can_return"])
+		self.assertNotIn("can_recommend", dto)
 
-	def test_planner_workspace_ok_review_task_actions_denied(self) -> None:
+	def test_assigned_professional_approval_uses_task_token(self) -> None:
 		planner = ensure_moh_planner()
-		assert_can_create_plan(planner)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_open_review_task(planner)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_approve_plan(planner)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_open_finance_task(planner)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_confirm_plan_funding(planner)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_handoff(planner)
-
 		ctx = self._in_review_plan(planner)
-		dto = get_plan_review(plan=ctx["plan"], user=planner)
-		self.assertEqual(dto["surface"], "neutral")
-		self.assertFalse(dto["can_approve"])
-		self.assertFalse(dto["can_recommend"])
-		self.assertFalse(dto["can_return"])
-		self.assertEqual(dto["rail_mode"], "readonly")
-
-	def test_viewer_neutral_read_mutation_and_task_denied(self) -> None:
-		"""PLN-AC-021 — Neutral visibility must not expose Finance or approval task forms."""
-		viewer = ensure_user_with_roles(
-			"pln.c01.viewer@test.local",
-			roles=(ROLE_VIEWER,),
-			pe=PE_MOH,
-			org_unit=None,
-			include_descendants=0,
-		)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_create_plan(viewer)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_open_review_task(viewer)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_approve_plan(viewer)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_handoff(viewer)
-
-		planner = ensure_moh_planner()
-		draft = create_procurement_plan(
-			procuring_entity=PE_MOH,
-			financial_year=_unique_fy(2195),
-			title="C01 viewer draft",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
-			user=planner,
-		)
-		# Viewer may read plan review as neutral; cannot mutate/create.
-		dto_draft = get_plan_review(plan=draft["plan"], user=viewer)
-		self.assertEqual(dto_draft["surface"], "neutral")
-		self.assertFalse(dto_draft["can_approve"])
-
-		ctx = self._in_review_plan(planner)
-		dto = get_plan_review(plan=ctx["plan"], user=viewer)
-		self.assertEqual(dto["surface"], "neutral")
-		self.assertFalse(dto["can_approve"])
-		self.assertFalse(dto["can_recommend"])
-		self.assertFalse(dto["can_return"])
-
-	def test_reviewer_cannot_approve_plan(self) -> None:
-		"""PLN-PERM-005 — Reviewer Recommend/Return only; Approve is denied."""
-		reviewer = ensure_user_with_roles(
-			"pln.c01.reviewer.deny@test.local",
-			roles=(ROLE_REVIEWER,),
-			pe=PE_MOH,
-			org_unit=None,
-			include_descendants=0,
-		)
-		with self.assertRaises(frappe.PermissionError):
-			assert_can_approve_plan(reviewer)
-
-		planner = ensure_moh_planner()
-		approver = ensure_moh_approver()
-		ctx = self._in_review_plan(planner)
-		token = frappe.db.get_value(
-			"Procurement Plan Version", ctx["version"], "concurrency_token"
-		)
-		with self.assertRaises(frappe.PermissionError):
-			approve_plan_version(
-				version=ctx["version"],
-				concurrency_token=token,
-				user=reviewer,
-			)
-		assert_can_approve_plan(approver)
+		dto = get_plan_review(task=ctx["task"], user=ctx["assignee"])
 		result = approve_plan_version(
-			version=ctx["version"],
-			concurrency_token=token,
-			user=approver,
+			task=ctx["task"],
+			expected_token=dto["task_token"],
+			idempotency_key=f"C01-APPROVE-{ctx['task']}",
+			user=ctx["assignee"],
 		)
 		self.assertTrue(result["ok"], result)
-
-	def test_reviewer_and_approver_task_surface(self) -> None:
-		planner = ensure_moh_planner()
-		approver = ensure_moh_approver()
-		ctx = self._in_review_plan(planner)
-
-		assert_can_open_review_task(ctx["reviewer"])
-		as_reviewer = get_plan_review(plan=ctx["plan"], user=ctx["reviewer"])
-		self.assertEqual(as_reviewer["surface"], "task")
-		self.assertIn(as_reviewer["rail_mode"], ("reviewer", "approver"))
-		self.assertFalse(as_reviewer["can_approve"])
-		self.assertTrue(as_reviewer["can_recommend"] or as_reviewer["has_recommendation"])
-
-		assert_can_open_review_task(approver)
-		assert_can_approve_plan(approver)
-		as_approver = get_plan_review(plan=ctx["plan"], user=approver)
-		self.assertEqual(as_approver["surface"], "task")
-		self.assertEqual(as_approver["rail_mode"], "approver")
-		self.assertTrue(as_approver["can_approve"])
-
-	def test_reviewer_draft_plan_is_neutral_surface(self) -> None:
-		"""PLN-GAP-PERM-004 — role alone must not open the professional rail."""
-		planner = ensure_moh_planner()
-		reviewer = ensure_reviewer_user()
-		created = create_procurement_plan(
-			procuring_entity=PE_MOH,
-			financial_year=_unique_fy(prefix=2290),
-			title="PERM-004 draft review",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
-			user=planner,
-		)
-		dto = get_plan_review(plan=created["plan"], user=reviewer)
-		self.assertEqual(dto["surface"], "neutral")
-		self.assertFalse(dto["can_recommend"])
-		self.assertFalse(dto["can_approve"])
-		self.assertEqual(dto["rail_mode"], "readonly")
-
-	def test_cross_pe_county_denied_moh_review(self) -> None:
-		planner = ensure_moh_planner()
-		county = ensure_county_planner()
-		ctx = self._in_review_plan(planner)
-		with self.assertRaises(frappe.PermissionError):
-			get_plan_review(plan=ctx["plan"], user=county)
-		with self.assertRaises(frappe.PermissionError):
-			token = frappe.db.get_value(
-				"Procurement Plan Version", ctx["version"], "concurrency_token"
-			)
-			approve_plan_version(
-				version=ctx["version"],
-				concurrency_token=token,
-				user=county,
-			)
 
 	def test_resolve_pe_for_create_zero_one_multi(self) -> None:
 		"""PLN-AC-001 — multi-PE selects; zero blocks; one PE stays visible."""

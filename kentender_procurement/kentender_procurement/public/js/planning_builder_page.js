@@ -71,6 +71,7 @@
 		});
 		var $root = page.main.find('[data-testid="kt-pln-ui03-root"]');
 		page._ktPlnBuilderMounted = true;
+		page._ktPlnBuilderActive = true;
 		if (
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningBuilder === "function"
@@ -102,6 +103,10 @@
 			return;
 		}
 		enterShell();
+		if (wrapper.page._ktPlnBuilderActive) {
+			return;
+		}
+		wrapper.page._ktPlnBuilderActive = true;
 		if (
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningBuilder === "function"
@@ -110,7 +115,9 @@
 		}
 	};
 
-	frappe.pages[PAGE_SLUG].on_page_hide = function () {
-		document.body.classList.remove("kt-pln-builder-active");
+	frappe.pages[PAGE_SLUG].on_page_hide = function (wrapper) {
+		if (wrapper.page) wrapper.page._ktPlnBuilderActive = false;
+		$('[data-testid="kt-pln-ui03-root"]').trigger("kt:teardown").off(".ktPlnBuilderRevision").attr("data-kt-request-id", "-1");
+		document.body.classList.remove("kt-pln-builder-active", "kt-pln-surface");
 	};
 })();

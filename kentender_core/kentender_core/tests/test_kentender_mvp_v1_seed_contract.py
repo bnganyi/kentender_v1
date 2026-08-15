@@ -230,7 +230,6 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				"period_end": "2100-06-30",
 				"currency": "KES",
 				"plan_type": "Annual",
-				"coordinating_org_unit": C.OU_DIR_DHP,
 				"lifecycle_state": "Open",
 				"fixture_namespace": C.PLAYWRIGHT_FIXTURE_NS,
 			}
@@ -482,7 +481,6 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				"period_end": "2099-06-30",
 				"currency": "KES",
 				"plan_type": "Annual",
-				"coordinating_org_unit": C.OU_DIR_DHP,
 				"lifecycle_state": "Open",
 			}
 		).insert(ignore_permissions=True)

@@ -163,6 +163,13 @@ def _delete_test_users(users: list[str]) -> dict[str, int]:
 			for name in frappe.get_all("User Permission", filters={"user": user}, pluck="name"):
 				frappe.delete_doc("User Permission", name, force=1, ignore_permissions=True)
 				deleted["User Permission"] = deleted.get("User Permission", 0) + 1
+		# Frappe may create a Contact linked to a disposable System User. Keeping
+		# that Contact while recreating the same browser persona causes the User
+		# insert hook to race its own contact update and raises TimestampMismatch.
+		if frappe.db.exists("DocType", "Contact") and frappe.db.has_column("Contact", "user"):
+			for name in frappe.get_all("Contact", filters={"user": user}, pluck="name"):
+				frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
+				deleted["Contact"] = deleted.get("Contact", 0) + 1
 		if frappe.db.exists("User", user):
 			frappe.delete_doc("User", user, force=1, ignore_permissions=True)
 			deleted["User"] = deleted.get("User", 0) + 1

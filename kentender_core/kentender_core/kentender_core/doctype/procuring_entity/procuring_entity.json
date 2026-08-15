@@ -12,6 +12,7 @@
   "entity_name",
   "short_name",
   "entity_type",
+  "reporting_currency",
   "column_break_pe",
   "status",
   "external_reference",
@@ -59,6 +60,13 @@
    "label": "Entity Type",
    "options": "\nMinistry\nCounty Government\nJudiciary\nCommission\nState Corporation\nPublic University\nOther",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "reporting_currency",
+   "fieldtype": "Link",
+   "label": "Reporting Currency",
+   "options": "Currency",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_pe",

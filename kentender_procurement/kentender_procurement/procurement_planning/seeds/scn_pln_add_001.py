@@ -29,8 +29,8 @@ from kentender_procurement.procurement_planning.services.add_demand_to_plan impo
 from kentender_procurement.procurement_planning.services.approve_plan_version import (
 	approve_plan_version,
 )
-from kentender_procurement.procurement_planning.services.get_plan_update import (
-	save_plan_update,
+from kentender_procurement.procurement_planning.services.plan_builder_successor import (
+	save_plan_draft,
 )
 from kentender_procurement.procurement_planning.services.plan_item_finance import (
 	confirm_plan_item_funding,
@@ -247,15 +247,26 @@ def _ensure_draft_item(*, demand: str, plan_name: str, complete: bool = True) ->
 	)
 	planner = C.USER_PLANNING_OFFICER
 	if not item_022:
-		added = add_demand_to_plan(plan=plan_name, demand=demand, user=planner)
+		focus = frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version") or frappe.db.get_value("Procurement Plan", plan_name, "current_approved_version")
+		token = frappe.db.get_value("Procurement Plan Version", focus, "concurrency_token")
+		added = add_demand_to_plan(
+			plan=plan_name,
+			demands=[demand],
+			expected_version_token=token,
+			idempotency_key="SCN-PLN-ADD-001-022",
+			user=planner,
+		)
 		if not added.get("ok"):
 			raise frappe.ValidationError(added.get("errors") or added)
 		item_022 = _pin_scn_item_identity(added["plan_item"])
 	if complete:
 		_complete_item_if_needed(item_022)
-	saved = save_plan_update(
+	draft = frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version")
+	saved = save_plan_draft(
 		plan=plan_name,
 		update_reason=UPDATE_REASON,
+		expected_version_token=frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token"),
+		idempotency_key="SCN-PLN-ADD-001-SAVE-DRAFT",
 		user=planner,
 	)
 	if not saved.get("ok"):
@@ -272,7 +283,12 @@ def _ensure_finance(item_022: str, plan_name: str, *, confirm: bool = True) -> N
 	iv = frappe.db.get_value("Procurement Plan Item", item_022, "draft_item_version")
 	status = frappe.db.get_value("Procurement Plan Item Version", iv, "finance_status") if iv else None
 	if status != FINANCE_AWAITING:
-		req = update_plan_item(plan_item=item_022, user=planner, request_finance=True)
+		draft = frappe.db.get_value("Procurement Plan", plan_name, "open_draft_version")
+		req = update_plan_item(
+			plan_item=item_022, user=planner, request_finance=True,
+			expected_version_token=frappe.db.get_value("Procurement Plan Version", draft, "concurrency_token"),
+			idempotency_key="SCN-PLN-ADD-001-FINANCE-022",
+		)
 		if req.get("ok") is False:
 			raise frappe.ValidationError(req.get("errors") or req)
 		if not req.get("complete"):
@@ -280,8 +296,10 @@ def _ensure_finance(item_022: str, plan_name: str, *, confirm: bool = True) -> N
 	if not confirm:
 		return
 	confirmed = confirm_plan_item_funding(
-		plan_item=item_022,
+		task=frappe.db.get_value("Procurement Plan Item Version", iv, "finance_task_id"),
+		expected_token=frappe.db.get_value("Procurement Plan Item Version", iv, "finance_task_token"),
 		note="SCN-PLN-ADD-001 post-Planning Finance",
+		idempotency_key="SCN-PLN-ADD-001-CONFIRM-022",
 		user=C.USER_BUD_OFFICER,
 	)
 	if not confirmed.get("ok"):
@@ -345,7 +363,10 @@ def _ensure_submitted(plan_name: str) -> str:
 
 	validation = validate_plan(plan=plan_name, user=planner)
 	submitted = submit_plan_for_review(
-		plan=plan_name, concurrency_token=token, user=planner
+		plan=plan_name,
+		expected_token=token,
+		idempotency_key="SCN-PLN-ADD-001-SUBMIT-V2",
+		user=planner,
 	)
 	if not submitted.get("ok"):
 		raise frappe.ValidationError(
@@ -362,23 +383,14 @@ def _ensure_approved(plan_name: str) -> None:
 	status = frappe.db.get_value("Procurement Plan Version", v2_name, "status")
 	if status == VERSION_APPROVED:
 		return
-	token = frappe.db.get_value("Procurement Plan Version", v2_name, "concurrency_token")
-	recommended = record_plan_decision(
-		version=v2_name,
-		decision="recommend",
-		concurrency_token=token,
-		user=C.USER_PLANNING_REVIEWER,
-	)
-	if not recommended.get("ok"):
-		raise frappe.ValidationError(recommended.get("errors") or recommended)
-	token = recommended.get("concurrency_token") or frappe.db.get_value(
-		"Procurement Plan Version", v2_name, "concurrency_token"
-	)
+	task = frappe.db.get_value("Procurement Plan Version", v2_name, "review_task_id")
+	token = frappe.db.get_value("Procurement Plan Version", v2_name, "review_task_token")
 	approved = approve_plan_version(
-		version=v2_name,
-		concurrency_token=token,
+		task=task,
+		expected_token=token,
+		idempotency_key="SCN-PLN-ADD-001-APPROVE-V2",
 		reason=UPDATE_REASON,
-		user=C.USER_HOP,
+		user=frappe.db.get_value("Procurement Plan Version", v2_name, "review_task_assignee"),
 	)
 	if not approved.get("ok"):
 		raise frappe.ValidationError(approved.get("errors") or approved)

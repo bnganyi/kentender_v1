@@ -32,6 +32,7 @@ _MILESTONE_FIELDS = (
 	("ms_tender_opening", "Tender opening"),
 	("ms_evaluation_completed", "Evaluation completed"),
 	("ms_award_approval", "Award approval"),
+	("ms_notification_of_award", "Notification of award"),
 	("ms_contract_signature", "Contract signature"),
 	("ms_delivery_completion", "Delivery and completion"),
 )
@@ -197,7 +198,7 @@ def validate_plan(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	assert_planning_scope(
 		procuring_entity=cstr(plan_doc.procuring_entity).strip(),
-		org_unit=cstr(plan_doc.coordinating_org_unit or "").strip() or None,
+		org_unit=None,
 		user=actor,
 		require_write=False,
 	)

@@ -8,14 +8,14 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
 	create_planning_handoff_snapshot,
 )
-from kentender_procurement.procurement_planning.services.create_procurement_plan import (
-	create_procurement_plan,
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+	create_procurement_plan_for_test as create_procurement_plan,
 )
 from kentender_procurement.procurement_planning.services.get_plan_builder import (
 	get_plan_builder,
@@ -23,17 +23,8 @@ from kentender_procurement.procurement_planning.services.get_plan_builder import
 from kentender_procurement.procurement_planning.services.get_plan_implementation import (
 	get_plan_implementation,
 )
-from kentender_procurement.procurement_planning.services.get_plan_review import (
-	get_plan_review,
-)
-from kentender_procurement.procurement_planning.services.get_plan_update import (
-	get_plan_update,
-)
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	assert_planning_scope,
-)
-from kentender_procurement.procurement_planning.services.publish_approved_plan import (
-	publish_approved_plan,
 )
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	make_approved_demand,
@@ -80,9 +71,6 @@ class TestPlanningCrossEntityIsolation(IntegrationTestCase):
 		created = create_procurement_plan(
 			procuring_entity=PE_MOH,
 			financial_year=fy,
-			title="MOH isolation plan",
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
 			user=moh_planner,
 		)
 		demand = make_approved_demand(title="Isolation demand")
@@ -101,28 +89,21 @@ class TestPlanningCrossEntityIsolation(IntegrationTestCase):
 		created = create_procurement_plan(
 			procuring_entity=PE_MOH,
 			financial_year=fy,
-			title=title,
-			currency="KES",
-			coordinating_org_unit=OU_MOH,
 			user=moh_planner,
 		)
 		self.assertTrue(created["ok"], created)
 		return moh_planner, county, created
 
-	def test_county_planner_cannot_read_moh_builder_review_or_update(self) -> None:
+	def test_county_planner_cannot_read_moh_builder_or_approved_plan(self) -> None:
 		"""PLN-NFR-001 — county planner is denied MOH plan reads."""
 		_moh, county, created = self._moh_plan(title="MOH NFR-001 reads")
 		with self.assertRaises(frappe.PermissionError):
 			get_plan_builder(plan=created["plan"], user=county)
 		with self.assertRaises(frappe.PermissionError):
-			get_plan_review(plan=created["plan"], user=county)
-		with self.assertRaises(frappe.PermissionError):
 			get_plan_implementation(plan=created["plan"], user=county)
-		with self.assertRaises(frappe.PermissionError):
-			get_plan_update(plan=created["plan"], user=county)
 
-	def test_county_planner_cannot_publish_or_handoff_moh_plan(self) -> None:
-		"""PLN-NFR-001 — county planner is denied MOH publish / handoff."""
+	def test_county_planner_cannot_handoff_moh_plan(self) -> None:
+		"""PLN-NFR-001 — county planner is denied MOH Tender handoff."""
 		moh_planner, county, created = self._moh_plan(title="MOH NFR-001 mutate")
 		demand = make_approved_demand(title="NFR-001 handoff demand")
 		added = add_demand_to_plan(
@@ -131,9 +112,6 @@ class TestPlanningCrossEntityIsolation(IntegrationTestCase):
 			user=moh_planner,
 		)
 		self.assertTrue(added.get("ok"), added)
-		published = publish_approved_plan(plan=created["plan"], user=county)
-		self.assertFalse(published.get("ok"), published)
-		self.assertIn("form", published.get("errors") or {})
 		handoff = create_planning_handoff_snapshot(
 			plan_item=added["plan_item"],
 			user=county,
@@ -153,9 +131,6 @@ class TestPlanningCrossEntityIsolation(IntegrationTestCase):
 		result = create_procurement_plan(
 			procuring_entity=PE_CGK,
 			financial_year=fy,
-			title="County plan",
-			currency="KES",
-			coordinating_org_unit=OU_CGK,
 			user=county,
 		)
 		self.assertTrue(result["ok"])

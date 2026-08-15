@@ -15,7 +15,14 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 		await page.setViewportSize({ width: 1400, height: 900 });
 	});
 
-	test("Planner sees Stitch approved canvas; publication is not invented", async ({
+	test("retired UI-10 route is absent and has no compatibility canvas", async ({ page }) => {
+		await loginAsMohPlanningOfficer(page);
+		await page.goto("/desk/procurement-plan-update", { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-pln-ui10-root"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="kt-pln-ui03-root"]')).toHaveCount(0);
+	});
+
+	test("Planner sees the current Approved Version without Planning publication", async ({
 		page,
 	}) => {
 		await loginAsAdministrator(page);
@@ -40,32 +47,22 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 		expect(liveTitle.trim()).toBeTruthy();
 		expect(liveTitle.trim()).not.toBe("Annual Procurement Plan");
 		expect(liveTitle.trim()).not.toBe("Approved procurement plan");
-		await expect(page.locator("[data-kt-pln-ui09-on-schedule-kpi]")).toBeHidden();
-		await expect(page.locator("[data-kt-pln-ui09-progress-col]")).toBeHidden();
-		await expect(page.locator("[data-kt-pln-ui09-variance-col]")).toBeHidden();
 		await expect(page.locator("[data-kt-pln-ui09-version]")).toContainText(
 			"Approved Version",
 		);
-		await expect(page.getByText("Approved baseline is read-only")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-add-item")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-export")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-summary")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-filters")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-implementation-table")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui09-publication")).toBeVisible();
-		await expect(
-			page.getByRole("heading", { name: "Publication Evidence" }),
-		).toBeVisible();
-		await expect(page.locator("[data-kt-pln-ui09-pub-status]")).toHaveText(
-			"Not published",
-		);
-		await expect(page.getByText("Published", { exact: true })).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: "Version history" })).toBeVisible();
+		await expect(page.getByText("Publication Evidence")).toHaveCount(0);
 		await expect(page.locator(`${ROOT} nav`)).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui09-successor-notice")).toBeHidden();
 		await expect(page.getByText("Create Tender")).toHaveCount(0);
 	});
 
-	test("Successor banner Continue update opens the draft update canvas", async ({
+	test("Successor banner Continue update opens the ordinary populated builder", async ({
 		page,
 	}) => {
 		await loginAsAdministrator(page);
@@ -83,10 +80,14 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 		await expect(page.getByTestId("kt-pln-ui09-successor-notice")).toBeVisible();
 		await expect(page.getByText(/Draft Version .* in progress/i)).toBeVisible();
 		await page.getByTestId("kt-pln-ui09-continue").click();
-		await expect(page).toHaveURL(/procurement-plan-update/, { timeout: 45_000 });
+		await expect(page).toHaveURL(/procurement-plan-builder/, { timeout: 45_000 });
+		await expect(page.locator('[data-testid="kt-pln-ui03-root"]')).toHaveAttribute(
+			"data-kt-pln-builder-state",
+			"PLN-UI-05",
+		);
 	});
 
-	test("Viewer cannot add, export, or propose removal", async ({ page }) => {
+	test("Viewer cannot add or propose removal but may export the Approved projection", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningGate06Approved(page);
 		expect(prep.empty_draft_plan).toBeTruthy();
@@ -100,7 +101,7 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			timeout: 45_000,
 		});
 		await expect(page.getByTestId("kt-pln-ui09-add-item")).toBeHidden();
-		await expect(page.getByTestId("kt-pln-ui09-export")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui09-export")).toBeVisible();
 		await expect(
 			page.locator(
 				`${ROOT} [data-kt-pln-ui09-row] [data-kt-pln-action="propose-removal"]`,

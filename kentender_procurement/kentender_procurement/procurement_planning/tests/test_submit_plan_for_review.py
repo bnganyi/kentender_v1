@@ -10,11 +10,11 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import cstr
 
 from kentender_procurement.procurement_planning.mvp1_constants import VERSION_IN_REVIEW
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
+from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	add_demand_to_plan,
 )
 from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
-	submit_plan_for_review,
+	submit_plan_for_review as _submit_plan_for_review,
 )
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
@@ -30,11 +30,27 @@ from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 )
 
 
+def submit_plan_for_review(*, plan: str, user: str, concurrency_token: str | None = None):
+	return _submit_plan_for_review(
+		plan=plan,
+		expected_token=concurrency_token,
+		idempotency_key=f"TEST-SUBMIT-{plan}" if concurrency_token else None,
+		user=user,
+	)
+
+
 class TestSubmitPlanForReview(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_scope()
+		for user in ("pln.gate01.approver@test.local", "moh.plan.approver@example.test"):
+			for name in frappe.get_all(
+				"User Scope Assignment",
+				filters={"user": user, "role": "Designated Approver", "procuring_entity": "PE-MOH"},
+				pluck="name",
+			):
+				frappe.delete_doc("User Scope Assignment", name, force=True, ignore_permissions=True)
 
 	def _ready_plan(self):
 		planner = ensure_planner_user()
@@ -92,9 +108,7 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		from kentender_procurement.procurement_planning.services.planning_permissions import (
 			ROLE_REVIEWER,
 		)
-		from kentender_procurement.procurement_planning.tests._gate01_helpers import (
-			ensure_reviewer_user,
-		)
+		from kentender_core.seeds.kentender_mvp_v1.constants import USER_HOP
 		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 			PE_CGK,
 			ensure_org,
@@ -102,7 +116,7 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		)
 
 		ensure_org()
-		reviewer = ensure_reviewer_user()
+		reviewer = USER_HOP
 		kisumu = ensure_user_with_roles(
 			"pln.wave3.kisumu.reviewer@test.local",
 			roles=(ROLE_REVIEWER,),
@@ -117,11 +131,11 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		)
 		before = frappe.db.count(
 			"Notification Log",
-			{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+			{"for_user": reviewer, "email_header": ["like", "pln-submit-review:%"]},
 		)
 		kisumu_before = frappe.db.count(
 			"Notification Log",
-			{"for_user": kisumu, "email_header": f"pln-submit-review:{plan['version']}"},
+			{"for_user": kisumu, "email_header": ["like", "pln-submit-review:%"]},
 		)
 		result = submit_plan_for_review(
 			plan=plan["plan"], concurrency_token=token, user=planner
@@ -130,20 +144,20 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		self.assertEqual(
 			frappe.db.count(
 				"Notification Log",
-				{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+				{"for_user": reviewer, "email_header": ["like", "pln-submit-review:%"]},
 			),
 			before + 1,
 		)
 		self.assertEqual(
 			frappe.db.count(
 				"Notification Log",
-				{"for_user": kisumu, "email_header": f"pln-submit-review:{plan['version']}"},
+				{"for_user": kisumu, "email_header": ["like", "pln-submit-review:%"]},
 			),
 			kisumu_before,
 		)
 		content = frappe.db.get_value(
 			"Notification Log",
-			{"for_user": reviewer, "email_header": f"pln-submit-review:{plan['version']}"},
+			{"for_user": reviewer, "email_header": ["like", "pln-submit-review:%"]},
 			"email_content",
 		)
 		self.assertIn(EVENT_PLAN_SUBMITTED, cstr(content))

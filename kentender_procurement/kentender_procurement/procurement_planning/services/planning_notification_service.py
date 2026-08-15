@@ -50,7 +50,8 @@ def notify_finance_requested(
 	actor: str,
 ) -> None:
 	pe = cstr(getattr(plan, "procuring_entity", "") or "")
-	recipients = usa_users_for_role(role=ROLE_BUDGET_OFFICER, procuring_entity=pe)
+	assignee = cstr(getattr(iv, "finance_task_assignee", "") or "")
+	recipients = {assignee} if assignee else set()
 	_emit_to(
 		recipients,
 		actor=actor,
@@ -61,14 +62,15 @@ def notify_finance_requested(
 		document_name=cstr(plan.name),
 		event_type=EVENT_FINANCE_REQUESTED,
 		entity_scope=pe,
-		route=f"/desk/procurement-plan-builder?plan={plan.name}&finance_item={item.name}",
-		correlation_key=f"pln-finance-request:{cstr(iv.name)}",
+		route=f"/desk/procurement-plan-builder?plan={plan.name}&finance_task={cstr(getattr(iv, 'finance_task_id', ''))}",
+		correlation_key=f"pln-finance-request:{cstr(getattr(iv, 'finance_task_id', '') or iv.name)}",
 	)
 
 
 def notify_plan_submitted(*, plan: Any, version_name: str, actor: str) -> None:
 	pe = cstr(getattr(plan, "procuring_entity", "") or "")
-	recipients = usa_users_for_role(role=ROLE_REVIEWER, procuring_entity=pe)
+	row = frappe.db.get_value("Procurement Plan Version", version_name, ["review_task_id", "review_task_assignee"], as_dict=True)
+	recipients = {cstr(row.review_task_assignee)} if row and row.review_task_assignee else set()
 	_emit_to(
 		recipients,
 		actor=actor,
@@ -79,8 +81,8 @@ def notify_plan_submitted(*, plan: Any, version_name: str, actor: str) -> None:
 		document_name=cstr(plan.name),
 		event_type=EVENT_PLAN_SUBMITTED,
 		entity_scope=pe,
-		route=f"/desk/procurement-plan-review?plan={plan.name}",
-		correlation_key=f"pln-submit-review:{cstr(version_name)}",
+		route=f"/desk/procurement-plan-review?task={cstr(row.review_task_id if row else '')}",
+		correlation_key=f"pln-submit-review:{cstr(row.review_task_id if row else version_name)}",
 	)
 
 
