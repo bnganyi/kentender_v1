@@ -46,6 +46,17 @@
 		}
 	}
 
+	function canonicalizePlanItemRoute(planItem) {
+		if (!planItem || !window.history || typeof window.history.replaceState !== "function") {
+			return;
+		}
+		var prefix = window.location.pathname.indexOf("/desk/") === 0 ? "/desk/" : "/app/";
+		var canonicalPath = prefix + PAGE_SLUG + "/" + encodeURIComponent(planItem);
+		if (window.location.pathname !== canonicalPath || window.location.search) {
+			window.history.replaceState(window.history.state, "", canonicalPath);
+		}
+	}
+
 	function mount(page) {
 		activateSurface();
 		var sh = kentender_core.cl_shell;
@@ -67,12 +78,14 @@
 		});
 		var $root = page.main.find('[data-testid="kt-pln-ui06-root"]');
 		page._ktPlnEditorMounted = true;
+		var planItem = planItemFromRoute();
+		canonicalizePlanItemRoute(planItem);
 		if (
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningItemEditor === "function"
 		) {
 			kentender_procurement.live.bindPlanningItemEditor($root, {
-				plan_item: planItemFromRoute(),
+				plan_item: planItem,
 			});
 		}
 	}
@@ -100,12 +113,14 @@
 			return;
 		}
 		enterShell();
+		var planItem = planItemFromRoute();
+		canonicalizePlanItemRoute(planItem);
 		if (
 			kentender_procurement.live &&
 			typeof kentender_procurement.live.bindPlanningItemEditor === "function"
 		) {
 			kentender_procurement.live.bindPlanningItemEditor($root, {
-				plan_item: planItemFromRoute(),
+				plan_item: planItem,
 			});
 		}
 	};

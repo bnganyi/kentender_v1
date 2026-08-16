@@ -188,7 +188,14 @@ def get_successor_builder(*, plan_doc: Any, actor: str, organisation_unit: str |
 	elif not reason:
 		issues.append("Enter the reason for this Plan update before submitting it for review.")
 	elif not all_complete:
-		issues.append("Complete every changed Plan Item before submitting this Plan for review.")
+		incomplete_count = included_count - planning_complete
+		item_label = "Plan Item" if incomplete_count == 1 else "Plan Items"
+		pronoun = "it" if incomplete_count == 1 else "them"
+		verb = "needs" if incomplete_count == 1 else "need"
+		issues.append(
+			f"{incomplete_count} {item_label} {verb} planning details. "
+			f"Complete {pronoun} before requesting Finance confirmation or submitting this Plan for review."
+		)
 	elif not all_finance:
 		missing = next((row["plan_item_code"] for row in all_changed if row["change_label"] != "Proposed removal" and row["finance_status"] != "Confirmed"), "")
 		issues.append(f"Funding confirmation is still required for {missing} before this Plan can be submitted for review." if missing else "Funding confirmation is still required before this Plan can be submitted for review.")

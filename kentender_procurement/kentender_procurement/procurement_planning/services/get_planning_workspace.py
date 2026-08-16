@@ -39,11 +39,13 @@ from kentender_procurement.procurement_planning.services.plan_item_finance impor
 from kentender_procurement.procurement_planning.services.planning_context import resolve_planning_context
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	ADD_DEMAND_ROLES,
+	CONFIRM_PLAN_FUNDING_ROLES,
 	CREATE_PLAN_ROLES,
 	MODE_BLOCKED,
 	MODE_MULTI,
 	MODE_SINGLE,
 	READ_PLAN_ROLES,
+	actor_funding_roles,
 	actor_planning_roles,
 	is_planning_read_only,
 	require_operational_roles,
@@ -117,7 +119,7 @@ def _scope_index(actor: str) -> tuple[list[dict[str, str]], dict[str, set[str] |
 	rows = [
 		row
 		for row in user_scope_rows(actor)
-		if cstr(row.get("role")) in READ_PLAN_ROLES and cstr(row.get("procuring_entity"))
+		if cstr(row.get("role")) in (READ_PLAN_ROLES | CONFIRM_PLAN_FUNDING_ROLES) and cstr(row.get("procuring_entity"))
 	]
 	pes = {cstr(row.get("procuring_entity")) for row in rows}
 	labels = _entity_labels(pes)
@@ -449,15 +451,47 @@ def get_planning_workspace(
 	actor = cstr(user or frappe.session.user).strip()
 	if not actor or actor == "Guest":
 		frappe.throw(frappe._("Login required."), frappe.PermissionError, title="PLN_LOGIN_REQUIRED")
-	require_operational_roles(*READ_PLAN_ROLES, user=actor)
 	actor_roles = actor_planning_roles(actor)
-	read_only = is_planning_read_only(actor)
+	finance_roles = actor_funding_roles(actor)
+	finance_actor = bool(finance_roles.intersection(CONFIRM_PLAN_FUNDING_ROLES))
+	if not finance_actor:
+		require_operational_roles(*READ_PLAN_ROLES, user=actor)
+	read_only = True if finance_actor and not actor_roles else is_planning_read_only(actor)
 	entities, scope = _scope_index(actor)
+	finance_pe = cstr(procuring_entity).strip()
+	finance_fy = cstr(financial_year).strip()
+	if finance_actor and (not finance_pe or not finance_fy):
+		assigned_version = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"finance_task_assignee": actor, "finance_task_state": "Open"},
+			"plan_version",
+		)
+		assigned_plan = (
+			frappe.db.get_value(
+				"Procurement Plan",
+				{"open_draft_version": assigned_version},
+				["procuring_entity", "financial_year"],
+				as_dict=True,
+			)
+			if assigned_version else None
+		)
+		if assigned_plan:
+			finance_pe = finance_pe or cstr(assigned_plan.procuring_entity)
+			finance_fy = finance_fy or cstr(assigned_plan.financial_year)
 	context = resolve_planning_context(
-		procuring_entity=procuring_entity,
-		financial_year=financial_year,
+		procuring_entity=finance_pe if finance_actor else procuring_entity,
+		financial_year=finance_fy if finance_actor else financial_year,
 		user=actor,
 	)
+	if finance_actor and finance_pe in scope:
+		context.update({
+			"procuring_entity": finance_pe,
+			"financial_year": finance_fy,
+			"procuring_entities": entities,
+			"selection_source": "selected" if procuring_entity else "assigned_finance_task",
+			"selection_required": False,
+			"no_scope": False,
+		})
 	fy = cstr(context.get("financial_year"))
 	helper = (
 		"Read-only support view. These controls filter visibility; they do not grant ownership or operational Planning authority."
@@ -522,10 +556,10 @@ def get_planning_workspace(
 	item_by_name = {item.name: item for item in graph["items"]}
 	work: list[dict[str, Any]] = []
 	waiting: list[dict[str, str]] = []
-	if draft and not read_only and actor_roles.intersection(ADD_DEMAND_ROLES):
-		if cstr(draft_version.status) == VERSION_RETURNED:
+	if draft and (not read_only or finance_actor):
+		if not read_only and actor_roles.intersection(ADD_DEMAND_ROLES) and cstr(draft_version.status) == VERSION_RETURNED:
 			work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason="The plan update was returned by the Head of Procurement for correction.", status="Returned by Head of Procurement", filter_key="returned_work", priority=10, action=_action("address_return", "Address return", routes["update_route"])))
-		elif approved and not has_changes:
+		elif not read_only and actor_roles.intersection(ADD_DEMAND_ROLES) and approved and not has_changes:
 			work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason=f"No effective changes remain in Draft Version {draft['version_number']}.", status="No changes", filter_key="plan_items", priority=30, action=_action("cancel_update", "Cancel update", routes["update_route"])))
 		for iv in draft_ivs:
 			if int(iv.proposed_removal or 0):
@@ -534,6 +568,10 @@ def get_planning_workspace(
 			if not item or not _in_scope(scope, pe, item.owner_org_unit):
 				continue
 			base = {"resource_key": f"item:{item.name}", "reference": cstr(item.plan_item_code or item.name), "title": cstr(iv.requirement_title or item.plan_item_code), "work_type": "Plan Item", "org_unit": cstr(item.owner_org_unit), "org_label": ou_labels.get(cstr(item.owner_org_unit), cstr(item.owner_org_unit)), "amount": flt(iv.confirmed_estimate), "currency": cstr(iv.currency or plan.currency or "KES")}
+			if finance_actor:
+				if cstr(iv.finance_task_state) == "Open" and cstr(iv.finance_task_assignee) == actor and cstr(iv.finance_task_id):
+					work.append(_work_row(**base, reason="Confirm that the full source-approved value is available for reservation.", status="Awaiting confirmation", filter_key="plan_items", priority=5, action=_action("review_funding", "Review funding", f"/app/procurement-plan-builder?plan={plan.name}&finance_task={cstr(iv.finance_task_id)}")))
+				continue
 			item_route = f"/app/procurement-plan-item-editor?plan_item={item.name}"
 			finance = cstr(iv.effective_finance_status or FINANCE_NOT_REQUESTED)
 			validation = cstr(iv.validation_projection or VALIDATION_NOT_RUN)
@@ -546,7 +584,10 @@ def get_planning_workspace(
 			elif validation == VALIDATION_NEEDS_ATTENTION and finance != FINANCE_AWAITING:
 				work.append(_work_row(**base, reason="Planning validation needs attention.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
 			elif finance == FINANCE_AWAITING and cstr(iv.finance_task_state) == "Open":
-				waiting.append(_waiting_row(resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name), title=cstr(iv.requirement_title or item.plan_item_code), stage="Finance confirmation", status="Awaiting confirmation", with_role="Budget Officer"))
+				if finance_actor and cstr(iv.finance_task_assignee) == actor:
+					work.append(_work_row(**base, reason="Confirm that the full source-approved value is available for reservation.", status="Awaiting confirmation", filter_key="plan_items", priority=5, action=_action("review_funding", "Review funding", f"/app/procurement-plan-builder?plan={plan.name}&finance_task={cstr(iv.finance_task_id)}")))
+				elif not finance_actor:
+					waiting.append(_waiting_row(resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name), title=cstr(iv.requirement_title or item.plan_item_code), stage="Finance confirmation", status="Awaiting confirmation", with_role="Budget Officer"))
 			elif finance == FINANCE_AWAITING:
 				work.append(_work_row(**base, reason="Finance confirmation evidence is incomplete; reopen the item to resolve it.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
 
@@ -554,6 +595,9 @@ def get_planning_workspace(
 	if open_review:
 		work = []
 		waiting = [_waiting_row(resource_key=f"review:{draft_version.name}", reference=cstr(draft_version.version_code or draft_version.name), title=f"{plan.title} — Version {int(draft_version.version_number or 0)}", stage="Professional review", status="Awaiting review", with_role="Head of Procurement")]
+	if finance_actor:
+		work = [row for row in work if cstr((row.get("action") or {}).get("code")) == "review_funding"]
+		waiting = []
 	if draft and approved and has_changes and not work and not waiting and not open_review and not read_only:
 		work.append(_work_row(resource_key=f"plan:{plan.name}", reference=cstr(draft["version_code"]), title=plan.title, work_type="Plan update", org_unit="", org_label=labels[pe], amount=draft["planned_total"], currency=plan.currency, reason="This Draft update is ready for the next Planning action.", status="Needs attention", filter_key="plan_items", priority=30, action=_action("continue_update", "Continue update", routes["update_route"])))
 

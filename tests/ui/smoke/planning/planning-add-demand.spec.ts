@@ -34,14 +34,13 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 		await expect(page.locator(DIALOG)).toBeVisible({ timeout: 15_000 });
 		await expect(page.locator(DIALOG)).toContainText(/Add approved Demands/i);
 		await expect(page.locator(DIALOG)).toContainText(
-			/Select from pre-approved strategic demands to allocate to this procurement plan/i,
+			/A Draft plan update will contain this addition\. Approved Version 1 remains active\./i,
 		);
 		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-ou]`)).toContainText(
 			/All permitted units/i,
 		);
-		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-category]`)).toContainText(
-			/All categories/i,
-		);
+		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-category]`)).toHaveCount(0);
+		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-remaining]`)).toBeVisible();
 		await expect(page.locator(`${DIALOG} label`).filter({ hasText: /Search approved Demands/i })).toBeVisible();
 		await expect(page.locator(`${DIALOG} [data-kt-pln-elig-row]`).first()).toBeVisible({
 			timeout: 20_000,
@@ -52,7 +51,7 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 			assertHeadline: false,
 		});
 		await expect(page.getByTestId("kt-pln-ui04-package")).toHaveCount(0);
-		await expect(page.locator(`${DIALOG} thead`)).toContainText(/Approved Value/i);
+		await expect(page.locator(`${DIALOG} thead`)).toContainText(/Available value/i);
 		await expect(page.locator(`${DIALOG} thead`)).toContainText(/Proposed Funding/i);
 		await expect(page.locator(`${DIALOG} thead`)).toContainText(/Validation Status|Status/i);
 		await expect(page.locator(`${DIALOG} thead`)).not.toContainText(/Already planned/i);
@@ -88,6 +87,31 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 		expect(spacing?.header?.pt).toBe(16);
 		expect(spacing?.filters?.pt).toBe(16);
 		expect(spacing?.footer?.pt).toBe(16);
+		const visualContract = await page.locator(DIALOG).evaluate((root) => {
+			const panel = root.querySelector('[role="dialog"]') as HTMLElement;
+			const filters = root.querySelector('.kt-pln-demand-filter-grid') as HTMLElement;
+			const tableWrap = root.querySelector('.kt-pln-demand-table-wrap') as HTMLElement;
+			const title = root.querySelector('h2') as HTMLElement;
+			const rect = panel.getBoundingClientRect();
+			return {
+				panelLeft: rect.left,
+				panelRight: rect.right,
+				panelTop: rect.top,
+				panelBottom: rect.bottom,
+				filterColumns: getComputedStyle(filters).gridTemplateColumns.split(' ').length,
+				overflowX: getComputedStyle(tableWrap).overflowX,
+				titleFamily: getComputedStyle(title).fontFamily,
+				titleSize: getComputedStyle(title).fontSize,
+			};
+		});
+		expect(visualContract.panelLeft).toBeGreaterThanOrEqual(0);
+		expect(visualContract.panelRight).toBeLessThanOrEqual(1400);
+		expect(visualContract.panelTop).toBeGreaterThanOrEqual(0);
+		expect(visualContract.panelBottom).toBeLessThanOrEqual(900);
+		expect(visualContract.filterColumns).toBe(3);
+		expect(visualContract.overflowX).toMatch(/auto|scroll/);
+		expect(visualContract.titleFamily).toContain('Manrope');
+		expect(visualContract.titleSize).toBe('24px');
 		expect(spacing?.footer?.gap).toBe(16);
 		expect(spacing?.summary?.pt).toBe(24);
 		expect(spacing?.summary?.pl).toBe(24);
@@ -100,16 +124,15 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 			/1 Approved Demand selected/i,
 		);
 		await expect(page.getByTestId("kt-pln-ui04-formation")).toBeHidden();
-		await expect(page.locator(DIALOG)).toContainText(/End of available demands/i);
 		const firstRow = page.locator(`${DIALOG} [data-kt-pln-elig-row]`).first();
-		await expect(firstRow).toHaveClass(/is-selected/);
+		await expect(firstRow).toHaveClass(/kt-pln-selected-row/);
 		const aligned = await page.evaluate(() => {
 			const dialog = document.querySelector('[data-testid="kt-pln-ui04-dialog"]');
 			if (!dialog) return { ok: false, reason: "no dialog" };
 			const ths = Array.from(dialog.querySelectorAll("thead th"));
 			const row = dialog.querySelector("[data-kt-pln-elig-row]");
 			const tds = row ? Array.from(row.querySelectorAll("td")) : [];
-			if (ths.length !== 7 || tds.length !== 7) {
+			if (ths.length !== 8 || tds.length !== 8) {
 				return { ok: false, reason: "bad column count", thCount: ths.length, tdCount: tds.length };
 			}
 			const drifts = ths.map((th, i) => {
@@ -123,19 +146,21 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 					drift: Math.round(tdr.left - thr.left),
 				};
 			});
-			const ok = drifts.every((d) => Math.abs(d.drift) <= 6);
-			const moneySample = tds[3]?.textContent?.replace(/\s+/g, " ").trim() || "";
+			const cells = tds.map((td) => td.getBoundingClientRect());
+			const overlaps = cells.slice(0, -1).map((cell, i) => Math.ceil(cell.right - cells[i + 1].left));
+			const ok = drifts.every((d) => Math.abs(d.drift) <= 6) && overlaps.every((overlap) => overlap <= 0);
+			const moneySample = tds[4]?.textContent?.replace(/\s+/g, " ").trim() || "";
 			const headers = ths.map((th) => (th.textContent || "").trim());
-			return { ok, drifts, moneySample, tdCount: tds.length, headers };
+			return { ok, drifts, overlaps, moneySample, tdCount: tds.length, headers };
 		});
-		expect(aligned.tdCount, "row must have exactly 7 columns").toBe(7);
+		expect(aligned.tdCount, "row must have one selector plus 7 governed columns").toBe(8);
 		expect(aligned.ok, `Column misaligned: ${JSON.stringify(aligned)}`).toBeTruthy();
 		expect(aligned.moneySample || "").toMatch(/^KES\s[\d,]+/);
-		expect(aligned.headers?.join(" ")).toMatch(/Approved Value/i);
+		expect(aligned.headers?.join(" ")).toMatch(/Available value/i);
 		const type = await page.evaluate(() => {
 			const dialog = document.querySelector('[data-testid="kt-pln-ui04-dialog"]');
 			const title = dialog?.querySelector("[data-kt-pln-elig-title]");
-			const money = dialog?.querySelector("[data-kt-pln-elig-row] td:nth-child(4) .font-data-md");
+			const money = dialog?.querySelector("[data-kt-pln-elig-row] [data-kt-pln-elig-row-amount]");
 			const footer = dialog?.querySelector("[data-kt-pln-elig-amount]");
 			const ou = dialog?.querySelector("[data-kt-pln-elig-ou-cell]");
 			const funding = dialog?.querySelector("[data-kt-pln-elig-funding-cell]");
@@ -161,7 +186,7 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 				),
 			};
 		});
-		expect(type.title?.fontSize, `title size: ${JSON.stringify(type.title)}`).toBeGreaterThanOrEqual(15.5);
+		expect(type.title?.fontSize, `title size: ${JSON.stringify(type.title)}`).toBe(14);
 		expect(type.title?.fontWeight || 0, "title weight").toBeGreaterThanOrEqual(500);
 		expect(type.titleColor || "", "Demand title must stay on-surface (not link blue)").toMatch(
 			/rgb\(\s*25,\s*28,\s*30\s*\)|#191c1e/i,
@@ -177,6 +202,12 @@ test.describe("PLN-UI-04 Add approved Demands dialog", () => {
 		await expect(page.locator(`${ROOT_EDITOR}[data-kt-pln-live="1"]`)).toBeVisible({
 			timeout: 45_000,
 		});
+		await expect(page).toHaveURL(/\/procurement-plan-item-editor\/[^/?#]+$/);
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await expect(page.locator(`${ROOT_EDITOR}[data-kt-pln-live="1"]`)).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(page.getByText("PLN_ITEM_NOT_FOUND", { exact: true })).toHaveCount(0);
 		await expect(page.locator(ROOT_EDITOR)).not.toContainText("Combine in this Plan Item");
 		await expect(page.locator(ROOT_EDITOR)).not.toContainText("Keep separate");
 	});

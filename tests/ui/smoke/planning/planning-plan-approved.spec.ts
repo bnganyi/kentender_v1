@@ -52,7 +52,7 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			"Approved Version",
 		);
 		await expect(page.getByTestId("kt-pln-ui09-add-item")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui09-export")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui09-export")).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui09-summary")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-filters")).toBeVisible();
 		await expect(page.getByTestId("kt-pln-ui09-implementation-table")).toBeVisible();
@@ -136,7 +136,7 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 		await expect(builder.getByRole("button", { name: "Submit for review" })).toBeVisible();
 	});
 
-	test("Viewer cannot add or propose removal but may export the Approved projection", async ({ page }) => {
+	test("Viewer cannot add, export, or propose removal from the Approved projection", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const prep = await preparePlanningGate06Approved(page);
 		expect(prep.empty_draft_plan).toBeTruthy();
@@ -150,7 +150,7 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			timeout: 45_000,
 		});
 		await expect(page.getByTestId("kt-pln-ui09-add-item")).toBeHidden();
-		await expect(page.getByTestId("kt-pln-ui09-export")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui09-export")).toHaveCount(0);
 		await expect(
 			page.locator(
 				`${ROOT} [data-kt-pln-ui09-row] [data-kt-pln-action="propose-removal"]`,
@@ -177,8 +177,8 @@ test.describe("PLN-UI-09 Approved Plan and implementation", () => {
 			page.locator(`${ROOT} [data-kt-pln-ui09-row]`).getByText("TND-MOH-TEST-008"),
 		).toHaveCount(1);
 		await expect(
-			page.locator(`${ROOT} [data-kt-pln-ui09-row]`).getByText("Tender active"),
-		).toBeVisible();
+			page.locator(`${ROOT} [data-kt-pln-ui09-row] .kt-pln-takeup.is-active`),
+		).toHaveText("Tender active");
 		await expect(
 			page.locator(
 				`${ROOT} [data-kt-pln-ui09-row] [data-kt-pln-action="propose-removal"]`,

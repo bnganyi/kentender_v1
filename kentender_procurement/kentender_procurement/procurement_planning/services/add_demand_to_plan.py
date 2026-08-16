@@ -41,7 +41,7 @@ def _replay(plan: str, key: str) -> dict[str, Any] | None:
 	return {
 		"ok": True, "replayed": True, "plan": plan, "plan_item": first.name,
 		"plan_item_code": first.plan_item_code, "plan_items": [r.name for r in items],
-		"editor_route": f"/app/procurement-plan-item-editor?plan_item={first.name}" if len(items) == 1 else None,
+		"editor_route": f"/app/procurement-plan-item-editor/{first.name}" if len(items) == 1 else None,
 		"builder_route": (
 			f"/app/procurement-plan-builder?plan={plan}"
 			if has_approved else f"/app/procurement-plan-builder?plan={plan}"
@@ -197,7 +197,7 @@ def add_demand_to_plan(
 		"allocation": allocations[0] if len(allocations) == 1 else None,
 		"allocation_status": ALLOC_DRAFT,
 		"allocated_amount": sum(row["allocated_amount"] for row in created),
-		"editor_route": f"/app/procurement-plan-item-editor?plan_item={items[0]}" if len(items) == 1 else None,
+		"editor_route": f"/app/procurement-plan-item-editor/{items[0]}" if len(items) == 1 else None,
 		"builder_route": (
 			f"/app/procurement-plan-builder?plan={plan_name}"
 			if plan_doc.current_approved_version

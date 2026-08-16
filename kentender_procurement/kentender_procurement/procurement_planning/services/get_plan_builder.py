@@ -183,7 +183,7 @@ def get_plan_builder(
 			"validation_status": cstr(iv.validation_projection or "Not run"),
 			"validation_status_label": cstr(iv.validation_projection or "Not run"),
 			"source_count": alloc_counts.get(item.name, 0), "action": action, "action_label": action_label,
-			"route": f"/app/procurement-plan-item-editor?plan_item={item.name}",
+			"route": f"/app/procurement-plan-item-editor/{item.name}",
 			"can_remove": can_remove,
 			**removal,
 		})

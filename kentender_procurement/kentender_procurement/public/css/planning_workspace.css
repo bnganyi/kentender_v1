@@ -29,6 +29,173 @@
 	position: relative;
 }
 
+/* PLN-UI-06 authoritative Frappe integration contract.
+ * Preserve the Stitch 56rem content measure while keeping Desk wrappers from
+ * creating an empty flex row or clipping the editor's content. */
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-head {
+	display: none !important;
+}
+
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-body,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-wrapper,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-content,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main-section-wrapper,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main-section,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .kt-cl-native-canvas {
+	height: auto !important;
+	min-height: 0 !important;
+	overflow: visible !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	display: block !important;
+	height: auto !important;
+	min-height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	overflow: visible !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	display: block !important;
+	height: auto !important;
+	min-height: 0 !important;
+	overflow: visible !important;
+	padding: 24px 32px 112px !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] .kt-pln-editor-column {
+	width: min(100%, 56rem) !important;
+	margin-inline: auto !important;
+}
+
+@media (max-width: 767px) {
+	.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+		padding: 20px 16px 104px !important;
+	}
+}
+
+/* PLN-UI-06 artifact geometry.
+ * Do not depend on generated utility classes here: this page is mounted into
+ * Frappe Desk and must retain the PLN-UI-06.html composition in production. */
+[data-testid="kt-pln-ui06-root"] {
+	box-sizing: border-box;
+	background: #f7f8fa;
+}
+
+[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	box-sizing: border-box;
+	width: 100% !important;
+	padding: 32px 32px 112px !important;
+}
+
+[data-testid="kt-pln-ui06-root"] .kt-pln-editor-column {
+	box-sizing: border-box;
+	width: 100% !important;
+	max-width: 56rem !important;
+	margin-right: auto !important;
+	margin-left: auto !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 24px !important;
+}
+
+.kt-pln-root[data-testid="kt-pln-ui06-root"] [data-kt-pln-editor-sources] {
+	display: grid !important;
+	grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	column-gap: 32px !important;
+	row-gap: 24px !important;
+	align-items: start !important;
+}
+
+.kt-pln-root[data-testid="kt-pln-ui06-root"] [data-kt-pln-editor-sources] > * {
+	min-width: 0 !important;
+	overflow-wrap: anywhere;
+}
+
+/* The live renderer groups each source row. The approved artifact lays the
+ * row's nine facts directly onto this grid, so the grouping element must not
+ * generate its own box. */
+.kt-pln-root[data-testid="kt-pln-ui06-root"] [data-kt-pln-source-row] {
+	display: contents !important;
+}
+
+[data-testid="kt-pln-ui06-root"] section:first-of-type {
+	position: relative !important;
+	overflow: hidden !important;
+}
+
+[data-testid="kt-pln-ui06-root"] section:first-of-type::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 128px;
+	height: 128px;
+	border-bottom-left-radius: 999px;
+	background: rgb(0 74 173 / 5%);
+	pointer-events: none;
+}
+
+[data-testid="kt-pln-ui06-root"] section:first-of-type > * {
+	position: relative;
+	z-index: 1;
+}
+
+[data-testid="kt-pln-ui06-root"] section {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+@media (max-width: 1023px) {
+	.kt-pln-root[data-testid="kt-pln-ui06-root"] [data-kt-pln-editor-sources] {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 767px) {
+	[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+		padding: 20px 16px 104px !important;
+	}
+
+	.kt-pln-root[data-testid="kt-pln-ui06-root"] [data-kt-pln-editor-sources] {
+		grid-template-columns: minmax(0, 1fr) !important;
+		row-gap: 20px !important;
+	}
+}
+
+/* PLN-UI-06 scrolling and footer contract. */
+.kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	position: relative !important;
+	display: flex !important;
+	flex-direction: column !important;
+	height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	min-height: 0 !important;
+	max-height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	overflow: hidden !important;
+}
+
+.kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	display: block !important;
+	flex: 1 1 auto !important;
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+}
+
+.kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-footer {
+	position: absolute !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	z-index: 30 !important;
+	background: #fff !important;
+	box-shadow: 0 -8px 24px rgb(25 28 30 / 8%);
+}
+
 /* PLN-UI-02–05 revision surfaces — exact typography and spatial hierarchy from
  * the approved HTML, scoped so later Planning detail surfaces are unchanged. */
 .kt-pln-register-revision,
@@ -1808,3 +1975,465 @@ body.kt-pln-editor-active.kt-pln-surface .kt-pln-root > main {
 .kt-pln-05b-actions button { padding: .5rem 1rem; border: 0; border-radius: .5rem; background: transparent; font-family: Inter, sans-serif; }
 .kt-pln-05b-actions .kt-pln-05b-confirm { background: #b3261e; color: #fff; }
 .kt-pln-05b-actions button:disabled { opacity: .55; }
+
+/* Revision fidelity layer --------------------------------------------------
+ * The HTML artifacts define the visual system. These final-scope rules undo
+ * compact Civic Ledger defaults without duplicating its navigation chrome. */
+.kt-cl-shell .kt-pln-root {
+	--kt-pln-background: #f8f9fb;
+	--kt-pln-surface: #f8f9fb;
+	--kt-pln-surface-lowest: #fff;
+	--kt-pln-surface-low: #f3f4f6;
+	--kt-pln-surface-container: #edeef0;
+	--kt-pln-surface-high: #e7e8ea;
+	--kt-pln-surface-highest: #e1e2e4;
+	background: var(--kt-pln-background);
+	font-family: Inter, "Public Sans", system-ui, sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+	-webkit-font-smoothing: antialiased;
+}
+.kt-cl-shell .kt-pln-root .font-headline-lg,
+.kt-cl-shell .kt-pln-root .font-headline-md,
+.kt-cl-shell .kt-pln-root .font-headline-sm { font-family: Manrope, Inter, sans-serif !important; }
+.kt-cl-shell .kt-pln-root .text-headline-lg { font-size: 30px !important; line-height: 38px !important; letter-spacing: -.02em !important; font-weight: 700 !important; }
+.kt-cl-shell .kt-pln-root .text-headline-md { font-size: 24px !important; line-height: 32px !important; font-weight: 600 !important; }
+.kt-cl-shell .kt-pln-root .text-headline-sm { font-size: 20px !important; line-height: 28px !important; font-weight: 600 !important; }
+.kt-cl-shell .kt-pln-root .font-body-lg,
+.kt-cl-shell .kt-pln-root .font-body-md,
+.kt-cl-shell .kt-pln-root .font-body-sm { font-family: Inter, "Public Sans", sans-serif !important; }
+.kt-cl-shell .kt-pln-root .text-body-lg { font-size: 18px !important; line-height: 28px !important; font-weight: 400 !important; }
+.kt-cl-shell .kt-pln-root .text-body-md { font-size: 16px !important; line-height: 24px !important; font-weight: 400 !important; }
+.kt-cl-shell .kt-pln-root .text-body-sm { font-size: 14px !important; line-height: 20px !important; font-weight: 400 !important; }
+.kt-cl-shell .kt-pln-root .font-label-caps,
+.kt-cl-shell .kt-pln-root .text-label-caps,
+.kt-cl-shell .kt-pln-root .kt-pln-metric-label { font-family: Inter, sans-serif !important; font-size: 12px !important; line-height: 16px !important; letter-spacing: .05em !important; font-weight: 700 !important; text-transform: uppercase; }
+.kt-cl-shell .kt-pln-root .font-data-lg,
+.kt-cl-shell .kt-pln-root .text-data-lg { font-family: "JetBrains Mono", monospace !important; font-size: 24px !important; line-height: 32px !important; font-weight: 600 !important; font-variant-numeric: tabular-nums; }
+.kt-cl-shell .kt-pln-root .font-data-md,
+.kt-cl-shell .kt-pln-root .text-data-md { font-family: "JetBrains Mono", monospace !important; font-size: 16px !important; line-height: 24px !important; font-weight: 500 !important; font-variant-numeric: tabular-nums; }
+.kt-cl-shell .kt-pln-root .material-symbols-outlined {
+	font-family: "Material Symbols Outlined" !important;
+	font-size: 24px;
+	font-weight: normal !important;
+	font-style: normal;
+	line-height: 1;
+	letter-spacing: normal;
+	text-transform: none;
+	display: inline-block;
+	white-space: nowrap;
+	word-wrap: normal;
+	direction: ltr;
+	font-feature-settings: "liga";
+	-webkit-font-smoothing: antialiased;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.kt-cl-shell .kt-pln-root .bg-surface-container { background-color: var(--kt-pln-surface-container) !important; }
+.kt-cl-shell .kt-pln-root .bg-surface-container-high { background-color: var(--kt-pln-surface-high) !important; }
+.kt-cl-shell .kt-pln-root .bg-surface-container-highest,
+.kt-cl-shell .kt-pln-root .bg-surface-variant { background-color: var(--kt-pln-surface-highest) !important; }
+.kt-cl-shell .kt-pln-root .rounded { border-radius: .25rem !important; }
+.kt-cl-shell .kt-pln-root .rounded-lg { border-radius: .5rem !important; }
+.kt-cl-shell .kt-pln-root .rounded-xl { border-radius: .75rem !important; }
+body.kt-pln-surface .kt-pln-root main.p-container-padding,
+body.kt-pln-surface .kt-pln-root main.md\:p-section-gap,
+body.kt-pln-surface .kt-pln-root main.p-section-gap,
+body.kt-pln-surface .kt-pln-root main.py-section-gap,
+body.kt-pln-surface .kt-pln-root main.py-8,
+body.kt-pln-surface .kt-pln-root main > .max-w-7xl,
+body.kt-pln-surface .kt-pln-root .max-w-4xl.px-container-padding { padding-top: 1.5rem !important; }
+
+.kt-pln-chip { display: inline-flex; align-items: center; gap: .375rem; padding: .25rem .625rem; border: 1px solid; border-radius: 9999px; font: 700 12px/16px Inter, sans-serif; letter-spacing: .05em; }
+.kt-pln-chip .material-symbols-outlined { font-size: 14px !important; }
+.kt-pln-chip-primary { color: #003d9b; background: rgb(0 61 155 / 10%); border-color: rgb(0 61 155 / 20%); }
+.kt-pln-chip-secondary { color: #005f71; background: #50dcff; border-color: #48d7f9; }
+.kt-pln-chip-success { color: #10b981; background: #d1fae5; border-color: #a7f3d0; }
+.kt-pln-dot { width: .375rem; height: .375rem; border-radius: 9999px; background: currentColor; }
+.kt-pln-timeline { position: relative; margin-left: .75rem; padding: .5rem 0; border-left: 2px solid #dfe1e6; }
+.kt-pln-timeline-entry { position: relative; padding-left: 2rem; padding-bottom: 2rem; }
+.kt-pln-timeline-entry:last-child { padding-bottom: 0; }
+.kt-pln-timeline-entry::before { content: ""; position: absolute; left: -9px; top: .375rem; width: 1rem; height: 1rem; border: 4px solid #fff; border-radius: 9999px; background: #003d9b; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+
+/* PLN-UI-08 */
+.kt-pln-ui08-canvas { padding: 2rem; }
+.kt-pln-review-layout { max-width: 1400px; margin: 0 auto; display: flex; align-items: flex-start; gap: 1.5rem; }
+.kt-pln-review-canvas { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+.kt-pln-review-heading { display: flex; flex-direction: column; gap: .5rem; }
+.kt-pln-review-heading h1, .kt-pln-review-heading p { margin: 0; }
+.kt-pln-review-badges { display: flex; gap: .75rem; margin-top: .5rem; }
+.kt-pln-review-notice { display: flex; align-items: flex-start; gap: .75rem; margin-top: .5rem; padding: 1rem; border: 1px solid #dfe1e6; border-radius: .5rem; background: #edeef0; color: #434654; }
+.kt-pln-review-notice p { margin: 0; font: 400 14px/20px Inter, sans-serif; }
+.kt-pln-review-summary { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding: 1rem; border: 1px solid #dfe1e6; border-radius: .5rem; background: #fff; }
+.kt-pln-review-summary > div { min-width: 9rem; padding-right: 2rem; border-right: 1px solid #dfe1e6; }
+.kt-pln-review-summary > div:last-child { border-right: 0; padding-right: 0; }
+.kt-pln-review-summary strong { display: block; margin-top: .25rem; color: #191c1e; }
+.kt-pln-review-items, .kt-pln-review-history { overflow: hidden; border: 1px solid #dfe1e6; border-radius: .5rem; background: #fff; }
+.kt-pln-review-section-head { padding: 1.5rem; border-bottom: 1px solid #dfe1e6; }
+.kt-pln-review-section-head h2, .kt-pln-review-history h2 { margin: 0; }
+.kt-pln-review-table { min-width: 1120px; text-align: left; }
+.kt-pln-review-table thead { background: #f3f4f6; }
+.kt-pln-review-table th { padding: 1rem; border-bottom: 1px solid #dfe1e6; color: #434654; font: 700 12px/16px Inter, sans-serif; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+.kt-pln-review-table td { padding: 1rem; border-bottom: 1px solid #dfe1e6; color: #191c1e; font: 400 14px/20px Inter, sans-serif; vertical-align: middle; }
+.kt-pln-review-table tbody tr:last-child td { border-bottom: 0; }
+.kt-pln-review-checks { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem; border: 1px solid rgb(16 185 129 / 20%); border-radius: .5rem; background: rgb(16 185 129 / 10%); }
+.kt-pln-review-checks > .material-symbols-outlined { color: #10b981; }
+.kt-pln-review-checks h3 { margin: 0; font: 700 14px/20px Manrope, sans-serif; }
+.kt-pln-review-checks p { margin: .25rem 0 0; color: #434654; font: 400 14px/20px Inter, sans-serif; }
+.kt-pln-review-history { padding: 1.5rem; }
+.kt-pln-review-history .kt-pln-timeline { margin-top: 1rem; }
+.kt-pln-review-rail { width: 20rem; flex: 0 0 20rem; position: sticky; top: 1.5rem; }
+.kt-pln-review-decision { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem; border: 1px solid #dfe1e6; border-radius: .5rem; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.kt-pln-review-decision h2, .kt-pln-review-decision dl { margin: 0; }
+.kt-pln-review-decision dl { display: flex; flex-direction: column; gap: 1rem; }
+.kt-pln-review-decision dt { margin-bottom: .25rem; color: #434654; font: 700 12px/16px Inter, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.kt-pln-review-decision dd { margin: 0; font: 500 16px/24px Inter, sans-serif; }
+.kt-pln-review-decision dd.text-status-available { display: flex; align-items: center; gap: .375rem; }
+.kt-pln-review-decision dd .material-symbols-outlined { font-size: 16px !important; }
+.kt-pln-review-decision label { margin-bottom: -1rem; font: 500 14px/20px Inter, sans-serif; }
+.kt-pln-review-decision textarea { min-height: 100px; resize: vertical; padding: .75rem; border: 1px solid #c3c6d6; border-radius: .375rem; background: #fff; color: #191c1e; font: 400 14px/20px Inter, sans-serif; }
+.kt-pln-review-actions { display: flex; flex-direction: column; gap: .75rem; }
+.kt-pln-review-actions button { width: 100%; }
+.kt-pln-field-error { margin: 0; color: #e11d48; font: 400 14px/20px Inter, sans-serif; }
+
+/* PLN-UI-09 */
+.kt-pln-ui09-canvas { padding: 1.5rem; }
+.kt-pln-approved-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.kt-pln-approved-heading h1 { margin: 0 0 .25rem; }
+.kt-pln-approved-badges { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .5rem; }
+.kt-pln-approved-evidence { display: flex; align-items: center; gap: .375rem; margin: 0; color: #434654; font: 400 14px/20px Inter, sans-serif; }
+.kt-pln-approved-evidence .material-symbols-outlined { font-size: 16px !important; }
+.kt-pln-successor { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #b2c5ff; border-radius: .5rem; background: #dae2ff; }
+.kt-pln-successor p { margin: 0; }
+.kt-pln-approved-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.kt-pln-approved-summary article { position: relative; display: flex; min-height: 7rem; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 1rem; border: 1px solid #dfe1e6; border-radius: .75rem; background: #f8f9fb; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.kt-pln-approved-summary article > *:not(.kt-pln-summary-hover) { position: relative; z-index: 1; }
+.kt-pln-approved-summary p, .kt-pln-approved-summary strong { margin: 0; }
+.kt-pln-summary-hover { position: absolute; inset: 0; opacity: 0; transition: opacity .2s; }
+.kt-pln-approved-summary article:hover .kt-pln-summary-hover { opacity: 1; }
+.kt-pln-summary-primary { background: rgb(0 61 155 / 5%); }
+.kt-pln-summary-secondary { background: rgb(0 104 123 / 5%); }
+.kt-pln-summary-success { background: #ecfdf5; }
+.kt-pln-summary-committed { background: #eef2ff; }
+.kt-pln-progress { display: block; height: .25rem; margin-top: .5rem; overflow: hidden; border-radius: 9999px; background: #e1e2e4; }
+.kt-pln-progress i { display: block; height: 100%; width: 100%; }
+.kt-pln-progress-success { background: #10b981; }
+.kt-pln-progress-committed { background: #6366f1; }
+.kt-pln-approved-implementation { display: flex; flex-direction: column; overflow: hidden; margin-bottom: 1.5rem; border: 1px solid #dfe1e6; border-radius: .75rem; background: #f8f9fb; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.kt-pln-approved-filters { padding: 1rem; border-bottom: 1px solid #dfe1e6; background: #f8f9fb; }
+.kt-pln-approved-section-title { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.kt-pln-approved-section-title h2 { margin: 0; }
+.kt-pln-approved-section-title > .material-symbols-outlined { color: #434654; }
+.kt-pln-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.kt-pln-filter-row select { width: auto !important; min-width: 11rem; min-height: 0 !important; padding: .375rem 2rem .375rem .75rem !important; border-color: #dfe1e6 !important; background-color: #f8f9fb !important; font: 400 14px/20px Inter, sans-serif !important; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.kt-pln-approved-table { min-width: 1200px; text-align: left; }
+.kt-pln-approved-table thead { background: #f3f4f6; }
+.kt-pln-approved-table th { padding: .75rem; border-bottom: 1px solid #dfe1e6; color: #434654; font: 500 12px/16px Inter, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.kt-pln-approved-table td { padding: 1rem; border-bottom: 1px solid #dfe1e6; color: #191c1e; font: 400 14px/20px Inter, sans-serif; vertical-align: top; }
+.kt-pln-approved-table tbody tr:last-child td { border-bottom: 0; }
+.kt-pln-approved-table tbody tr:hover { background: #fff; }
+.kt-pln-approved-table .kt-pln-row-title { color: #003d9b; font: 500 16px/24px Inter, sans-serif; }
+.kt-pln-approved-table .kt-pln-row-code { margin-top: .25rem; color: #434654; font: 500 12px/16px "JetBrains Mono", monospace; }
+.kt-pln-approved-table .kt-pln-takeup { display: inline-flex; padding: .125rem .5rem; border: 1px solid #dfe1e6; border-radius: .25rem; background: #e1e2e4; color: #434654; font: 700 10px/16px Inter, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.kt-pln-approved-table .kt-pln-takeup.is-active { border-color: #c7d2fe; background: #eef2ff; color: #6366f1; }
+.kt-pln-approved-table .kt-pln-variance { display: inline-flex; align-items: center; gap: .25rem; color: #10b981; }
+.kt-pln-approved-table .kt-pln-variance .material-symbols-outlined { font-size: 16px !important; }
+.kt-pln-approved-table button[data-kt-plan-item-view] { font-weight: 500; }
+.kt-pln-approved-table button[data-kt-plan-item-remove] { color: #434654; }
+.kt-pln-approved-history { padding: 1rem; border: 1px solid #dfe1e6; border-radius: .75rem; background: #f8f9fb; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.kt-pln-approved-history h2 { display: flex; align-items: center; gap: .5rem; margin: 0 0 1.5rem; }
+.kt-pln-approved-history h2 .material-symbols-outlined { color: #434654; }
+
+@media (max-width: 1023px) {
+	.kt-pln-ui08-canvas { padding: 1.5rem; }
+	.kt-pln-review-layout { flex-direction: column; }
+	.kt-pln-review-rail { position: static; width: 100%; flex-basis: auto; }
+	.kt-pln-approved-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+	.kt-pln-ui08-canvas, .kt-pln-ui09-canvas { padding: 1rem; }
+	.kt-pln-approved-heading { flex-direction: column; }
+	.kt-pln-approved-heading > button { width: 100%; }
+	.kt-pln-approved-summary { grid-template-columns: 1fr; }
+	.kt-pln-review-summary { flex-direction: column; }
+	.kt-pln-review-summary > div { padding: 0 0 1rem; border-right: 0; border-bottom: 1px solid #dfe1e6; }
+	.kt-pln-review-summary > div:last-child { padding-bottom: 0; border-bottom: 0; }
+	.kt-pln-successor { align-items: stretch; flex-direction: column; }
+}
+
+/* UI01/UI03/UI04 page contracts -----------------------------------------
+ * These are component contracts, not Tailwind emulation. Keeping layout
+ * here prevents an absent utility or a later shared rule from changing an
+ * approved revision screen. */
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table {
+	width: 100%;
+	min-width: 1120px;
+	table-layout: fixed;
+}
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(1) { width: 22%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(2) { width: 11%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(3) { width: 16%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(4) { width: 13%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(5) { width: 20%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(6) { width: 11%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(7) { width: 7%; }
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table .kt-pln-reference {
+	margin-top: 2px;
+	font-size: 12px !important;
+	line-height: 16px !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table td:nth-child(4),
+.kt-cl-shell [data-testid="kt-pln-ui01-root"] .kt-pln-work-table th:nth-child(4) {
+	text-align: right;
+}
+
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-canvas {
+	padding: 24px 32px 96px !important;
+	background: #f8f9fb;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-hero {
+	padding: 24px !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-hero-row {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 24px !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-hero-row > div {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-add {
+	width: auto !important;
+	min-width: 238px;
+	flex: 0 0 auto;
+	padding: 8px 24px !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics {
+	display: grid !important;
+	grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+	gap: 1px !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics[hidden],
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics.hidden {
+	display: none !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics > div {
+	min-width: 0;
+	padding: 16px !important;
+	border-left: 0 !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics .kt-pln-metric-value {
+	font-size: 16px !important;
+	line-height: 24px !important;
+	overflow-wrap: anywhere;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] [data-kt-pln-summary-populated] {
+	display: grid !important;
+	grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] [data-kt-pln-summary-populated][hidden],
+.kt-cl-shell [data-testid="kt-pln-ui03-root"] [data-kt-pln-summary-populated].hidden {
+	display: none !important;
+}
+
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-modal {
+	width: min(1152px, calc(100vw - 48px)) !important;
+	max-width: 1152px !important;
+	max-height: 90vh !important;
+	border-radius: 8px !important;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-filter-grid {
+	display: grid !important;
+	grid-template-columns: minmax(280px, 1fr) minmax(250px, 320px) auto !important;
+	align-items: end !important;
+	gap: 16px !important;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-available {
+	min-height: 40px;
+	padding: 0 0 8px !important;
+	white-space: nowrap;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-table-wrap {
+	min-height: 176px;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-table {
+	width: max-content !important;
+	min-width: 100% !important;
+	table-layout: auto !important;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-table th {
+	white-space: normal !important;
+	overflow-wrap: normal;
+	vertical-align: bottom;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-table td {
+	overflow-wrap: anywhere;
+}
+
+/* Reusable content-aware table sizing. Text columns consume spare space;
+ * governed scalar values reserve enough characters to remain indivisible. */
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="select"] { width: 44px; min-width: 44px; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="primary"] { min-width: 18rem; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="text"] { min-width: 13rem; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="count"] { min-width: 12ch; white-space: nowrap !important; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="money"] { min-width: 19ch; white-space: nowrap !important; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="date"] { min-width: 13ch; white-space: nowrap !important; }
+.kt-cl-shell .kt-pln-fluid-table [data-kt-col="status"] { min-width: 13ch; white-space: nowrap !important; }
+.kt-cl-shell .kt-pln-fluid-table td[data-kt-col="primary"],
+.kt-cl-shell .kt-pln-fluid-table td[data-kt-col="text"] { max-width: 24rem; }
+.kt-cl-shell [data-kt-pln-add-demand-dialog] [data-kt-pln-elig-title] {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 500 !important;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-empty td {
+	height: 176px;
+	padding: 24px !important;
+	text-align: center;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-empty td > * {
+	display: block;
+	margin: 0 auto;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-empty .material-symbols-outlined {
+	margin-bottom: 8px;
+	color: #737685;
+	font-size: 32px !important;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-empty strong {
+	color: #191c1e;
+	font: 600 16px/24px Manrope, Inter, sans-serif;
+}
+.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-empty strong + span {
+	max-width: 520px;
+	margin-top: 4px;
+	color: #434654;
+	font: 400 14px/20px Inter, sans-serif;
+}
+
+@media (max-width: 1023px) {
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-canvas { padding: 24px !important; }
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] [data-kt-pln-summary-populated] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+	.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-filter-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 767px) {
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-hero-row { align-items: stretch !important; flex-direction: column !important; }
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-builder-add { width: 100% !important; }
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] .kt-pln-successor-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+	.kt-cl-shell [data-testid="kt-pln-ui03-root"] [data-kt-pln-summary-populated] { grid-template-columns: 1fr !important; }
+	.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-modal { width: calc(100vw - 24px) !important; }
+	.kt-cl-shell [data-kt-pln-add-demand-dialog] .kt-pln-demand-filter-grid { grid-template-columns: 1fr !important; }
+}
+
+/* PLN-UI-06 final integration layer. These rules intentionally come after the
+ * legacy editor sizing block so the Frappe shell cannot reserve a blank row,
+ * clip the form, or place the action footer over editor content. */
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-head {
+	display: none !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-body,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-wrapper,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .page-content,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main-section-wrapper,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .layout-main-section,
+body.kt-pln-editor-active .page-container[data-page-route="procurement-plan-item-editor"] .kt-cl-native-canvas {
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow: visible !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	display: block !important;
+	height: auto !important;
+	min-height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	max-height: none !important;
+	overflow: visible !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	display: block !important;
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow: visible !important;
+	padding: 24px 32px 112px !important;
+}
+
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] .kt-pln-editor-column {
+	width: min(100%, 56rem) !important;
+	margin-inline: auto !important;
+}
+
+@media (max-width: 767px) {
+	.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+		padding: 20px 16px 104px !important;
+	}
+}
+
+/* PLN-UI-06 FINAL scroll ownership contract. Keep this after legacy utilities. */
+.kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	position: relative !important;
+	display: flex !important;
+	flex-direction: column !important;
+	height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	min-height: 0 !important;
+	max-height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	overflow: hidden !important;
+}
+.kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	display: block !important;
+	flex: 1 1 auto !important;
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+}
+.kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-footer {
+	position: absolute !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	z-index: 30 !important;
+	background: #fff !important;
+	box-shadow: 0 -8px 24px rgb(25 28 30 / 8%);
+}
+
+/* PLN-UI-06 shell-specific final override; matches legacy selector weight. */
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	min-height: 0 !important;
+	max-height: calc(100vh - var(--kt-cl-header-height, 64px)) !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-main {
+	flex: 1 1 auto !important;
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+}
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] > .kt-pln-editor-footer {
+	z-index: 30 !important;
+	background: #fff !important;
+}
+
+/* Complete the bounded UI-06 flex canvas at legacy shell specificity. */
+.kt-cl-shell .kt-pln-root[data-testid="kt-pln-ui06-root"] {
+	position: relative !important;
+	display: flex !important;
+	flex-direction: column !important;
+}

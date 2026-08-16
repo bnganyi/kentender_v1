@@ -4,15 +4,15 @@ frappe.provide("kentender_procurement.ui_fixtures");
 
 kentender_procurement.ui_fixtures.planning_builder = function () {
 	return `<div class="kt-pln-root kt-stitch-canvas kt-pln-builder-revision" data-testid="kt-pln-ui03-root" data-kt-pln-builder-state="loading">
-<main class="flex-grow overflow-y-auto p-container-padding lg:p-section-gap lg:px-8" data-testid="kt-pln-ui03-main">
-<section class="bg-surface-container-lowest border border-subtle rounded-lg p-container-padding lg:p-section-gap mb-section-gap" data-testid="kt-pln-builder-header">
-<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+<main class="kt-pln-builder-canvas flex-grow overflow-y-auto p-container-padding lg:p-section-gap lg:px-8" data-testid="kt-pln-ui03-main">
+<section class="kt-pln-builder-hero bg-surface-container-lowest border border-subtle rounded-lg p-container-padding lg:p-section-gap mb-section-gap" data-testid="kt-pln-builder-header">
+<div class="kt-pln-builder-hero-row flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
 <div class="flex-grow"><p class="font-data-md text-data-md text-outline mb-1 uppercase tracking-wider" data-kt-pln-builder-code>—</p>
 <h1 class="font-headline-lg text-headline-lg-mobile lg:text-headline-lg text-on-surface mb-2" data-kt-pln-builder-title>Annual Procurement Plan</h1>
 <div class="flex flex-wrap items-center gap-4 text-on-surface-variant font-body-sm text-body-sm"><span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-reserved"></span><span data-kt-pln-builder-version>Open Plan · Draft Version 1</span></span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">calendar_today</span><span data-kt-pln-builder-period>—</span></span></div><p class="hidden mt-3 font-body-md text-body-md text-on-surface-variant" data-kt-pln-successor-context data-kt-pln-successor-banner hidden>Approved Version 1 remains active while this update is prepared and reviewed.</p></div>
-<button type="button" class="w-full lg:w-auto bg-primary text-on-primary font-body-md text-body-md py-2 px-6 rounded hover:bg-primary-container transition-colors shadow-sm inline-flex items-center justify-center gap-2" data-kt-pln-action="add-demand" data-testid="kt-pln-ui03-add-demand-header"><span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1">add_circle</span>Add approved Demands</button>
+<button type="button" class="kt-pln-builder-add w-full lg:w-auto bg-primary text-on-primary font-body-md text-body-md py-2 px-6 rounded hover:bg-primary-container transition-colors shadow-sm inline-flex items-center justify-center gap-2" data-kt-pln-action="add-demand" data-testid="kt-pln-ui03-add-demand-header"><span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1">add_circle</span>Add approved Demands</button>
 </div></section>
-<section class="hidden grid grid-cols-2 md:grid-cols-6 gap-px bg-subtle rounded-lg overflow-hidden border border-subtle mb-section-gap" data-kt-pln-successor-summary hidden data-testid="kt-pln-ui05-successor-summary">
+<section class="kt-pln-successor-metrics hidden grid grid-cols-2 md:grid-cols-6 gap-px bg-subtle rounded-lg overflow-hidden border border-subtle mb-section-gap" data-kt-pln-successor-summary hidden data-testid="kt-pln-ui05-successor-summary">
 <div class="bg-surface p-4 flex flex-col gap-1"><span class="kt-pln-metric-label">Draft Plan Items</span><strong class="kt-pln-metric-value" data-kt-pln-successor-items>0</strong></div>
 <div class="bg-surface p-4 flex flex-col gap-1"><span class="kt-pln-metric-label">Draft planned value</span><strong class="kt-pln-metric-value" data-kt-pln-draft-total>KES 0</strong></div>
 <div class="bg-surface p-4 flex flex-col gap-1"><span class="kt-pln-metric-label">Net change</span><strong class="kt-pln-metric-value text-data-committed" data-kt-pln-net-change>KES 0</strong></div>

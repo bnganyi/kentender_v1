@@ -142,4 +142,5 @@ def get_plan_item_editor(*, plan_item: str, user: str | None = None) -> dict[str
 		"derived_days_to_contract_signature": duration,
 		"finance_return_context": _finance_return_context(item_name) if finance_status == "Returned" else None,
 		"back_route": f"/app/procurement-plan-builder?plan={plan.name}",
+		"workspace_route": f"/app/planning-workspace?procuring_entity={plan.procuring_entity}&financial_year={plan.financial_year}",
 	}

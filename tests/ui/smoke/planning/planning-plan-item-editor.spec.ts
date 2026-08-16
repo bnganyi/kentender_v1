@@ -23,7 +23,7 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
 		await page.goto(
-			`/desk/procurement-plan-item-editor?plan_item=${encodeURIComponent(prep.plan_item || "")}`,
+			`/desk/procurement-plan-item-editor/${encodeURIComponent(prep.plan_item || "")}`,
 			{ waitUntil: "domcontentloaded" },
 		);
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
@@ -153,6 +153,75 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await expect(page.getByTestId("kt-pln-ui06-package-structure")).toHaveCount(0);
 	});
 
+	test("matches the approved UI-06 canvas and requirement-grid geometry", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const prep = await preparePlanningGate04(page, { withPlanItem: true });
+		expect(prep.plan_item).toBeTruthy();
+		await page.context().clearCookies();
+		await loginAsMohPlanningOfficer(page);
+		await page.goto(
+			`/desk/procurement-plan-item-editor/${encodeURIComponent(prep.plan_item || "")}`,
+			{ waitUntil: "domcontentloaded" },
+		);
+
+		const root = page.locator(`${ROOT}[data-kt-pln-live="1"]`);
+		await expect(root).toBeVisible({ timeout: 45_000 });
+		const column = root.locator(".kt-pln-editor-column");
+		const sources = root.locator("[data-kt-pln-editor-sources]");
+		const sourceRow = root.locator("[data-kt-pln-source-row]").first();
+
+		const columnBox = await column.boundingBox();
+		expect(columnBox).not.toBeNull();
+		expect(Math.round(columnBox?.width || 0)).toBe(896);
+		await expect(sourceRow).toHaveCSS("display", "contents");
+		const gridColumns = await sources.evaluate(
+			(element) => getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean),
+		);
+		const matchingGridRules = await sources.evaluate((element) => {
+			const matches: string[] = [];
+			const inspect = (rules: CSSRuleList, source: string) => {
+				for (const rule of Array.from(rules)) {
+					if (rule instanceof CSSStyleRule) {
+						if (
+							rule.style.gridTemplateColumns &&
+							Array.from(element.ownerDocument.querySelectorAll(rule.selectorText)).includes(element)
+						) {
+							matches.push(`${source} :: ${rule.cssText}`);
+						}
+					} else if ("cssRules" in rule) {
+						inspect((rule as CSSMediaRule).cssRules, `${source} :: ${rule.cssText.split("{")[0]}`);
+					}
+				}
+			};
+			for (const sheet of Array.from(element.ownerDocument.styleSheets)) {
+				try {
+					inspect(sheet.cssRules, sheet.href || "inline");
+				} catch (_error) {
+					// Cross-origin sheets are unrelated to the app-owned planning rules.
+				}
+			}
+			return matches;
+		});
+		expect(gridColumns, matchingGridRules.join("\n")).toHaveLength(3);
+
+		const main = root.locator("> .kt-pln-editor-main");
+		const footer = page.getByTestId("kt-pln-ui06-footer");
+		await expect(main).toHaveCSS("overflow-y", "auto");
+		await expect(footer).toHaveCSS("background-color", "rgb(255, 255, 255)");
+		const scrollState = await main.evaluate((element) => {
+			const before = element.scrollTop;
+			element.scrollTop = 400;
+			return {
+				before,
+				after: element.scrollTop,
+				clientHeight: element.clientHeight,
+				scrollHeight: element.scrollHeight,
+			};
+		});
+		expect(scrollState.scrollHeight).toBeGreaterThan(scrollState.clientHeight);
+		expect(scrollState.after).toBeGreaterThan(scrollState.before);
+	});
+
 	test("In review Plan Item shows why Save is blocked — no silent no-op", async ({
 		page,
 	}) => {
@@ -162,7 +231,7 @@ test.describe("PLN-UI-06 Plan Item editor", () => {
 		await page.context().clearCookies();
 		await loginAsMohPlanningOfficer(page);
 		await page.goto(
-			`/desk/procurement-plan-item-editor?plan_item=${encodeURIComponent(prep.plan_item || "")}`,
+			`/desk/procurement-plan-item-editor/${encodeURIComponent(prep.plan_item || "")}`,
 			{ waitUntil: "domcontentloaded" },
 		);
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({

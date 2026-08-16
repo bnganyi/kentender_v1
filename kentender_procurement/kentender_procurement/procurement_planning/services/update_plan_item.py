@@ -77,7 +77,7 @@ def update_plan_item(
 	if _marker_exists(item_name, marker):
 		item = frappe.get_doc("Procurement Plan Item", item_name)
 		plan = frappe.get_doc("Procurement Plan", item.plan)
-		return {"ok": True, "idempotent": True, "plan_item": item_name, "finance_status": frappe.db.get_value("Procurement Plan Item Version", item.draft_item_version, "finance_status"), "concurrency_token": frappe.db.get_value("Procurement Plan Version", plan.open_draft_version, "concurrency_token")}
+		return {"ok": True, "idempotent": True, "complete": want_finance, "plan_item": item_name, "finance_status": frappe.db.get_value("Procurement Plan Item Version", item.draft_item_version, "finance_status"), "concurrency_token": frappe.db.get_value("Procurement Plan Version", plan.open_draft_version, "concurrency_token"), "workspace_route": f"/app/planning-workspace?procuring_entity={plan.procuring_entity}&financial_year={plan.financial_year}"}
 
 	unknown = sorted(set(payload) - _WRITABLE)
 	if unknown:
@@ -169,4 +169,5 @@ def update_plan_item(
 		"finance_status": finance_status, "field_issues": field_issues,
 		"concurrency_token": new_token,
 		"back_route": f"/app/procurement-plan-builder?plan={plan.name}",
+		"workspace_route": f"/app/planning-workspace?procuring_entity={plan.procuring_entity}&financial_year={plan.financial_year}",
 	}

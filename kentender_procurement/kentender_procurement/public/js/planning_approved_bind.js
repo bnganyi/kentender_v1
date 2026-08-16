@@ -39,9 +39,10 @@ frappe.provide("kentender_procurement.live");
 			var html = (rows || []).map(function (row) {
 				var view = routeAction(row.actions, "view");
 				var removal = handlerAction(row.actions, "propose_removal", "plan_item_removal");
-				var actionHtml = view ? '<button class="text-primary" data-kt-plan-item-view="' + esc(view.route) + '">' + esc(view.label || "View") + "</button>" : "";
+				var actionHtml = view ? '<button class="text-primary" data-kt-plan-item-view="' + esc(view.route) + '">' + esc(view.label || "View Plan Item") + "</button>" : "";
 				if (removal) actionHtml += '<button class="ml-2" aria-label="' + esc(removal.label || "Propose removal") + '" data-kt-pln-action="propose-removal" data-kt-plan-item-remove="' + esc(removal.plan_item) + '"><span class="material-symbols-outlined">more_vert</span></button>';
-				return '<tr data-kt-pln-ui09-row data-plan-item="' + esc(row.plan_item) + '"><td><strong>' + esc(row.title) + '</strong><div class="font-data-md text-xs">' + esc(row.plan_item_code) + "</div></td><td>" + esc(row.owner_org_unit_label) + '</td><td class="text-right font-data-md">' + esc(row.amount_display) + "</td><td>" + esc(row.takeup_label) + (row.tender_reference ? '<div class="font-data-md text-xs">' + esc(row.tender_reference) + "</div>" : "") + "</td><td>" + esc(row.milestone_label || "—") + "</td><td>" + esc(row.actual_progress_label) + "</td><td>" + esc(row.variance_label) + "</td><td>" + actionHtml + "</td></tr>";
+				var active = row.takeup_label === "Tender active";
+				return '<tr data-kt-pln-ui09-row data-plan-item="' + esc(row.plan_item) + '"><td><div class="kt-pln-row-title">' + esc(row.title) + '</div><div class="kt-pln-row-code">' + esc(row.plan_item_code) + "</div></td><td>" + esc(row.owner_org_unit_label) + '</td><td class="text-right font-data-md whitespace-nowrap">' + esc(row.amount_display) + '</td><td><span class="kt-pln-takeup' + (active ? " is-active" : "") + '">' + esc(row.takeup_label) + "</span>" + (row.tender_reference ? '<div class="font-data-md text-sm text-on-surface-variant mt-1">' + esc(row.tender_reference) + "</div>" : "") + "</td><td>" + esc(row.milestone_label || "—") + "</td><td>" + esc(row.actual_progress_label) + '</td><td><span class="kt-pln-variance"><span class="material-symbols-outlined">check_circle</span>' + esc(row.variance_label) + '</span></td><td class="text-right"><div class="flex items-center justify-end gap-3">' + actionHtml + "</div></td></tr>";
 			}).join("");
 			$root.find("[data-kt-pln-ui09-body]").html(html || '<tr><td colspan="8" class="p-8 text-center text-on-surface-variant">No Plan Items match these filters.</td></tr>');
 		}
@@ -71,7 +72,9 @@ frappe.provide("kentender_procurement.live");
 			(data.items || []).forEach(function (row) { if (row.actual_progress_label && statuses.indexOf(row.actual_progress_label) < 0) statuses.push(row.actual_progress_label); });
 			$root.find('[data-kt-pln-ui09-filter="status"]').html('<option value="">All statuses</option>' + statuses.map(function (value) { return '<option value="' + esc(value) + '">' + esc(value) + "</option>"; }).join(""));
 			renderItems(selectedPlanItem ? (data.items || []).filter(function (row) { return row.plan_item === selectedPlanItem; }) : data.items || []);
-			$root.find("[data-kt-pln-ui09-history]").html((data.version_history || []).map(function (row) { return '<div class="p-4 border-b border-subtle flex justify-between"><span class="font-data-md">' + esc(row.version_code) + "</span><span>" + esc(row.status) + "</span></div>"; }).join(""));
+			$root.find("[data-kt-pln-ui09-history]").html((data.version_history || []).map(function (row) {
+				return '<div class="kt-pln-timeline-entry"><div class="flex items-center gap-3"><strong class="text-body-md">Version ' + esc(row.version_number) + '</strong><span class="kt-pln-chip ' + (row.status === "Approved" ? "kt-pln-chip-success" : "kt-pln-chip-primary") + '">' + esc(row.status) + '</span></div><div class="font-body-sm text-body-sm text-on-surface-variant mt-1">' + (row.approved_at ? "Approved " + esc(row.approved_at) : esc(row.version_code)) + "</div></div>";
+			}).join(""));
 			var continuation = routeAction(data.actions, "continue_update");
 			$root.find("[data-kt-pln-ui09-successor]").toggleClass("hidden", !continuation).prop("hidden", !continuation);
 			$root.find("[data-kt-pln-ui09-successor-copy]").text(data.successor_copy);

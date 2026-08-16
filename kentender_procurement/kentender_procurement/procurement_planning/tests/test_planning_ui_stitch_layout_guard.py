@@ -292,21 +292,21 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn('data-testid="kt-pln-ui04-add"', text)
 		self.assertIn("Add approved Demands", text)
 		self.assertIn(
-			"Select from pre-approved strategic demands to allocate to this procurement plan.",
+			"A Draft plan update will contain this addition. Approved Version 1 remains active.",
 			text,
 		)
 		self.assertIn("data-kt-pln-elig-body", text)
 		self.assertIn("data-kt-pln-elig-search", text)
 		self.assertIn("Search approved Demands", text)
 		self.assertIn("All permitted units", text)
-		self.assertIn("All categories", text)
+		self.assertNotIn("All categories", text)
 		self.assertIn("arrow_drop_down", text)
 		self.assertIn("bg-surface-bright", text)
 		self.assertIn("Available to plan only", text)
 		self.assertIn("font-headline-md", text)
 		self.assertIn("bg-surface-container-lowest", text)
-		self.assertIn("max-h-[921px]", text)
-		self.assertIn("shadow-[0_8px_30px_rgb(0,61,155,0.1)]", text)
+		self.assertIn("kt-pln-demand-modal", text)
+		self.assertIn("shadow-xl", text)
 		# Revision HTML: checkbox plus seven governed source columns.
 		self.assertIn(">Demand</th>", text)
 		self.assertIn(">Organisation Unit</th>", text)
@@ -346,9 +346,12 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		# Regression: never ship the inflated 2rem section-gap that crushed dialog rhythm.
 		self.assertNotIn(".p-section-gap { padding: 2rem !important; }", css)
 		self.assertNotIn(".gap-gutter-md { gap: 1.5rem !important; }", css)
-		# Desk chrome already has crumbs — canvas top under the toolbar stays tight.
+		# Desk owns navigation chrome, while the artifact's 24px canvas rhythm remains intact.
 		self.assertIn("main > .max-w-7xl", css)
-		self.assertIn("padding-top: 0.5rem !important;", css)
+		self.assertIn("padding-top: 1.5rem !important;", css)
+		self.assertIn("font-size: 30px !important", css)
+		self.assertIn('font-family: Manrope, Inter, sans-serif !important', css)
+		self.assertIn('font-family: "Material Symbols Outlined" !important', css)
 
 	def test_stitch_ui04_table_columns_aligned(self):
 		"""Stitch authority must keep equal th/td counts (no absolute selection td)."""
@@ -387,10 +390,12 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		)
 		self.assertIn("kt-pln-selected-row", live)
 		self.assertIn(
-			"Select from pre-approved strategic demands to allocate to this procurement plan.",
+			"A Draft plan update will contain this addition. Approved Version 1 remains active.",
 			live,
 		)
-		self.assertIn('font-data-md text-data-md', live)
+		self.assertIn('font-data-md text-xs', live)
+		self.assertIn("data-kt-pln-elig-row", live)
+		self.assertIn("No Approved Demands are available to add", live)
 		self.assertIn("organisation_unit_label", live)
 		self.assertIn("proposed_budget_line_display", live)
 		self.assertIn("Planning Ready", live)
@@ -503,8 +508,9 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		text = _read(REVIEW_FIXTURE)
 		self.assertIn("kt-stitch-canvas", text)
 		self.assertIn('data-testid="kt-pln-ui08-root"', text)
-		self.assertIn("Review Plan update", text)
-		self.assertIn("Professional decision", text)
+		self.assertIn("Review procurement plan update", text)
+		self.assertIn("kt-pln-review-rail", text)
+		self.assertIn("Plan Items in submitted version", text)
 		self.assertIn("Return to planner", text)
 		self.assertIn("Approve update", text)
 		self.assertIn("Decision history", text)
@@ -521,7 +527,9 @@ class TestPlanningUiStitchLayoutGuard(IntegrationTestCase):
 		self.assertIn('data-testid="kt-pln-ui09-root"', text)
 		self.assertIn('data-testid="kt-pln-ui09-summary"', text)
 		self.assertIn("Add Plan Item", text)
-		self.assertIn("Export approved plan", text)
+		self.assertNotIn("Export approved plan", text)
+		self.assertIn("kt-pln-approved-summary", text)
+		self.assertIn("kt-pln-approved-table", text)
 		self.assertIn("Plan implementation", text)
 		self.assertIn("Version history", text)
 		self.assertNotIn("Publication", text)

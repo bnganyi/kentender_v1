@@ -56,6 +56,22 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		);
 		await expect(page.getByTestId("kt-pln-ui01-table").locator("thead th")).toHaveCount(7);
 		await expect(page.locator('[data-kt-pln-work-body]')).toContainText(/Add to plan/i);
+		const workVisual = await page.getByTestId("kt-pln-ui01-table").evaluate((table) => {
+			const title = table.querySelector('.kt-pln-work-title') as HTMLElement;
+			const reference = table.querySelector('.kt-pln-reference') as HTMLElement;
+			return {
+				minWidth: parseFloat(getComputedStyle(table).minWidth),
+				tableLayout: getComputedStyle(table).tableLayout,
+				titleFamily: getComputedStyle(title).fontFamily,
+				referenceFamily: getComputedStyle(reference).fontFamily,
+				referenceSize: getComputedStyle(reference).fontSize,
+			};
+		});
+		expect(workVisual.minWidth).toBe(1120);
+		expect(workVisual.tableLayout).toBe('fixed');
+		expect(workVisual.titleFamily).toContain('Inter');
+		expect(workVisual.referenceFamily).toContain('JetBrains Mono');
+		expect(workVisual.referenceSize).toBe('12px');
 		await expect(page.getByTestId("kt-pln-ui01-waiting-section")).toBeVisible();
 		await expect(page.getByRole("dialog", { name: /^Message$/i })).toHaveCount(0);
 		const sourceStyles = await page.locator(ROOT).evaluate((root) => {

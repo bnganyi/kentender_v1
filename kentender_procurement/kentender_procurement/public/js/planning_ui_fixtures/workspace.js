@@ -76,7 +76,7 @@ kentender_procurement.ui_fixtures.planning_workspace = function () {
 	<div class="kt-pln-search-wrap"><span class="material-symbols-outlined" aria-hidden="true">search</span><label class="sr-only" for="kt-pln-work-search">Search work</label><input id="kt-pln-work-search" type="text" placeholder="Search work" data-kt-pln-work-search data-testid="kt-pln-ui01-work-search"></div>
 </div>
 <div class="kt-pln-table-block" data-kt-pln-work-table>
-<div class="overflow-x-auto"><table data-testid="kt-pln-ui01-table">
+<div class="overflow-x-auto"><table class="kt-pln-work-table" data-testid="kt-pln-ui01-table">
 <thead><tr><th>Work item</th><th>Type</th><th>Organisation Unit</th><th class="text-right">Amount</th><th>Why it needs action</th><th>Status</th><th>Action</th></tr></thead>
 <tbody data-kt-pln-work-body></tbody>
 </table></div>

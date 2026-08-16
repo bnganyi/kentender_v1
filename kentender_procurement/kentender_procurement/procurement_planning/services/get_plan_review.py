@@ -141,6 +141,8 @@ def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 			{
 				"plan_item": it.name,
 				"plan_item_code": it.plan_item_code,
+				"baseline_state": cstr(it.baseline_state),
+				"change_label": "Added" if cstr(it.baseline_state) == ITEM_PROPOSED else "Unchanged",
 				"title": cstr(iv.requirement_title or it.plan_item_code),
 				"owner_org_unit": ou,
 				"owner_org_unit_label": _ou_label(ou),
@@ -151,7 +153,7 @@ def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 				"validation_projection": validation,
 				"finance_status": finance_status,
 				"finance_status_label": finance_status,
-				"editor_route": f"/app/procurement-plan-item-editor?plan_item={it.name}",
+				"editor_route": f"/app/procurement-plan-item-editor/{it.name}",
 			}
 		)
 

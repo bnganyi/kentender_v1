@@ -88,26 +88,29 @@ test.describe("PLN-UI-05 Populated Draft plan builder", () => {
 		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
 			timeout: 45_000,
 		});
-		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-builder-state", "populated");
+		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-builder-state", "PLN-UI-05");
 		await expect(page.getByTestId("kt-pln-ui03-empty")).toBeHidden();
-		await expect(page.getByTestId("kt-pln-ui03-header")).toBeHidden();
-		await expect(page.getByTestId("kt-pln-ui05-header")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui05-header").locator("nav[aria-label='Breadcrumb']")).toHaveCount(0);
+		await expect(page.getByTestId("kt-pln-builder-header")).toBeVisible();
 		await expect(page.locator(`${ROOT} nav[aria-label='Breadcrumb']`)).toHaveCount(0);
-		const popPadTop = await page
-			.locator(`${ROOT} main > .max-w-7xl`)
+		const popPadTop = await page.getByTestId("kt-pln-ui03-main")
 			.evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
-		expect(popPadTop).toBeLessThanOrEqual(8);
-		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Add approved demands/i);
-		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Open Plan/i);
-		await expect(page.getByTestId("kt-pln-ui05-header")).toContainText(/Draft Version/i);
-		await expect(page.getByTestId("kt-pln-ui05-lifecycle")).toContainText(/Open Plan/i);
-		await expect(page.getByTestId("kt-pln-ui03-items")).toBeVisible();
+		expect(popPadTop).toBe(24);
+		await expect(page.getByTestId("kt-pln-builder-header")).toContainText(/Add approved demands/i);
+		await expect(page.getByTestId("kt-pln-builder-header")).toContainText(/Open Plan/i);
+		await expect(page.getByTestId("kt-pln-builder-header")).toContainText(/Draft Version/i);
+		await expect(page.getByTestId("kt-pln-ui05-items")).toBeVisible();
+		await expect(page.getByTestId("kt-pln-ui05-summary")).toBeVisible();
+		const summaryColumns = await page.getByTestId("kt-pln-ui05-summary")
+			.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
+		expect(summaryColumns).toBe(5);
+		const addDemandWidth = await page.getByTestId("kt-pln-ui03-add-demand-header")
+			.evaluate((el) => el.getBoundingClientRect().width);
+		expect(addDemandWidth).toBeLessThan(300);
 		await expect(page.getByTestId("kt-pln-ui05-table")).toBeVisible();
 		const headers = page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead th`);
-		await expect(headers).toHaveCount(8);
+		await expect(headers).toHaveCount(7);
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(
-			/Requirement/i,
+			/Plan Item/i,
 		);
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(
 			/Organisation Unit/i,
@@ -115,10 +118,7 @@ test.describe("PLN-UI-05 Populated Draft plan builder", () => {
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(
 			/Planned Value/i,
 		);
-		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(/Method/i);
-		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(
-			/Schedule/i,
-		);
+		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(/Planning/i);
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(/Finance/i);
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] thead`)).toContainText(
 			/Validation/i,
@@ -129,32 +129,13 @@ test.describe("PLN-UI-05 Populated Draft plan builder", () => {
 		);
 		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui05-table"] tfoot`)).toHaveCount(0);
 		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(/Not requested/i);
-		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(/Not completed/i);
-		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(
-			/No further plan items added yet/i,
-		);
-		await expect(page.getByTestId("kt-pln-ui05-run-validation")).toBeEnabled();
-		await expect(page.getByTestId("kt-pln-ui05-row-continue").first()).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui05-issue-strip")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui05-issue-strip")).toContainText(
-			/Complete the Plan Item before requesting Finance confirmation/i,
-		);
-		await page.getByTestId("kt-pln-ui05-run-validation").click();
-		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible();
-		await expect(page.locator("[data-kt-pln-builder-version]").first()).toContainText(/Draft Version/i);
-		await expect(page.getByTestId("kt-pln-ui05-submit-review")).toContainText(/Submit for review/i);
-		await expect(page.getByTestId("kt-pln-ui05-submit-review")).toBeDisabled();
-		await expect(page.locator(`${ROOT} [data-testid="kt-pln-ui03-summary"]`)).not.toContainText(
-			/Preference and reservation/i,
-		);
-		await expect(page.getByTestId("kt-pln-ui03-filters")).toBeHidden();
+		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(/Not run/i);
+		await expect(page.getByTestId("kt-pln-ui05-table")).toContainText(/Incomplete/i);
+		const completeItem = page.locator(`${ROOT} [data-kt-pln-row-route]`).first();
+		await expect(completeItem).toBeVisible();
+		await expect(page.locator(`${ROOT} [data-kt-pln-outstanding]`)).toBeVisible();
 		await expect(page.getByRole("dialog", { name: "Message" })).toHaveCount(0);
-		await assertStitchDeskChrome(page, {
-			rootTestId: "kt-pln-ui03-root",
-			primaryCtaTestId: "kt-pln-ui05-add-demand",
-			assertHeadline: false,
-		});
-		await page.getByTestId("kt-pln-ui05-row-continue").first().click();
+		await completeItem.click();
 		await expect(page).toHaveURL(/procurement-plan-item-editor/, { timeout: 30_000 });
 	});
 
