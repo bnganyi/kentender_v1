@@ -745,7 +745,7 @@ def get_budget_overview(budget: str) -> dict[str, Any]:
 			"lines_summary": f"{lines_linked} of {lines_total} lines linked to an Active primary target",
 			"pvc_treated": pvc_treated,
 			"pvc_applicable": pvc_applicable,
-			"pvc_summary": f"{pvc_treated} applicable Plan Value Commitments treated",
+			"pvc_summary": f"{pvc_treated} applicable Strategy Value Commitments treated",
 		},
 		"attention": {
 			"kind": attn["attention_kind"],

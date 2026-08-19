@@ -10,7 +10,6 @@ from frappe import _
 
 CODE_RE = re.compile(r"^[A-Z0-9-]+$")
 IMMUTABLE_PLAN = frozenset({"Approved", "Active", "Superseded", "Archived"})
-IMMUTABLE_PVO = frozenset({"Active", "Superseded", "Retired"})
 
 PLAN_TYPE_ENTITY = "Entity Strategic Plan"
 PLAN_TYPE_PROGRAMME = "Programme Strategy"
@@ -247,32 +246,8 @@ def validate_performance_target(doc) -> None:
 		frappe.throw(_("Target period start must be on or before period end"))
 
 
-def validate_public_value_objective(doc) -> None:
-	_require_code(doc.objective_code, "Objective Code")
-	if doc.scope == "Procuring entity" and not doc.procuring_entity:
-		frappe.throw(_("Entity-scoped objectives require a Procuring Entity"))
-	if not doc.is_new():
-		prev = frappe.db.get_value("Public Value Objective", doc.name, "status")
-		if prev in IMMUTABLE_PVO:
-			for f in ("objective_code", "title", "pillar", "description", "source_type"):
-				if doc.has_value_changed(f):
-					frappe.throw(_("Active Public Value Objective versions are immutable"))
-
-
-def validate_objective_applicability_trigger(doc) -> None:
-	if not doc.trigger_type or not doc.trigger_value:
-		frappe.throw(_("Trigger type and value are required"))
-
-
-def validate_plan_value_commitment(doc) -> None:
+def validate_strategy_value_commitment(doc) -> None:
 	_assert_plan_editable(doc.plan_version)
-	pvo_status = frappe.db.get_value(
-		"Public Value Objective", doc.public_value_objective_version, "status"
-	)
-	if pvo_status != "Active" and doc.status != "Locked":
-		# Allow load of historical locked commitments; new/edit require Active PVO
-		if doc.is_new() or doc.has_value_changed("public_value_objective_version"):
-			frappe.throw(_("Only Active Public Value Objectives may be selected"))
 	for link in doc.get("links") or []:
 		if link.link_type == "Strategic Outcome" and not link.linked_outcome:
 			frappe.throw(_("Commitment link requires a Strategic Outcome"))
@@ -280,7 +255,7 @@ def validate_plan_value_commitment(doc) -> None:
 			frappe.throw(_("Commitment link requires a Performance Target"))
 
 
-def validate_plan_value_commitment_link(doc) -> None:
+def validate_strategy_value_commitment_link(doc) -> None:
 	pass
 
 

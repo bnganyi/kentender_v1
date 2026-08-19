@@ -271,7 +271,7 @@
   {
    "fieldname": "pvc_snapshot",
    "fieldtype": "Small Text",
-   "label": "Plan Value Commitment Snapshot"
+   "label": "Strategy Value Commitment Snapshot"
   },
   {
    "fieldname": "validation_projection",

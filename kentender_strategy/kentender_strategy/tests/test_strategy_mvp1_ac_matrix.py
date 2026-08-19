@@ -11,8 +11,8 @@ Coverage map (001–030):
   007 yes — test_strategy_plan_activation_concurrency
   008 yes — this module
   009 yes — this module
-  010 yes — this module
-  011 yes — this module (consideration ≠ tender criterion)
+  010 retired — PVO applicability-trigger engine removed (STR-CHG-001 §1.3, no MVP replacement)
+  011 retired — PVO applicability-trigger engine removed (STR-CHG-001 §1.3, no MVP replacement)
   012 yes — this module (Sep/Oct distinct measurement records)
   013 yes — duplicate block + supersede allow (this module)
   014 yes — test_strategy_measurement_verify
@@ -29,7 +29,7 @@ Coverage map (001–030):
   025 yes — test_strategy_performance outcome distribution
   026 yes — test_strategy_performance distinct exception kinds + routes
   027 partial — performance projection (residual polish)
-  028 yes — test_strategy_performance PVC adoption
+  028 retired — Demand Value Treatment/PVC-adoption feature removed (Phase 0/2, cancelled XMOD-STR-008)
   029 yes — performance export meta
   030 yes — test_strategy_performance export wrong-PE + role PW
   Deferred: due/overdue notification job (XMOD-STR-009); full §12 role matrix.
@@ -46,7 +46,6 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 	upsert_works_master_strategy_hierarchy,
 )
 from kentender_strategy.services.strategy_contracts import (
-	list_applicable_value_commitments,
 	list_active_targets,
 	list_measurements,
 	validate_strategy_reference,
@@ -105,35 +104,6 @@ class TestStrategyMvp1AcMatrix(FrappeTestCase):
 		rows = list_active_targets(procuring_entity=self.seed["procuring_entity"])
 		self.assertTrue(all(r.get("node_code") for r in rows))
 		self.assertTrue(any(r["node_code"] == TARGET_CODE for r in rows))
-
-	def test_str_ac_010_applicability_filter(self):
-		with_ict = list_applicable_value_commitments(
-			plan_version=self.seed["plan"], procurement_category="ICT"
-		)
-		without = list_applicable_value_commitments(
-			plan_version=self.seed["plan"], procurement_category="Works"
-		)
-		codes_ict = {(c.get("objective") or {}).get("code") for c in with_ict}
-		codes_works = {(c.get("objective") or {}).get("code") for c in without}
-		self.assertIn("MOH-PVC-ECO-01", codes_ict)
-		self.assertNotIn("PVO-SUS-01", codes_works)
-
-	def test_str_ac_011_consideration_not_tender_criterion(self):
-		rows = list_applicable_value_commitments(
-			plan_version=self.seed["plan"], procurement_category="ICT"
-		)
-		self.assertTrue(rows)
-		forbidden = {
-			"tender_criterion",
-			"evaluation_criterion",
-			"auto_include_in_tender",
-			"tender_requirement",
-		}
-		for row in rows:
-			self.assertIn("consideration_level", row)
-			self.assertTrue(row.get("consideration_level"))
-			self.assertFalse(forbidden.intersection(row.keys()))
-			self.assertNotIn("tender", str(row.get("consideration_level") or "").lower())
 
 	def test_str_ac_013_duplicate_period_blocked(self):
 		tgt = self.seed["target"]

@@ -23,12 +23,6 @@ EVENT_PLAN_APPROVED = "plan_approved"
 EVENT_PLAN_ACTIVATED = "plan_activated"
 EVENT_PLAN_SUPERSEDED = "plan_superseded"
 
-EVENT_PVO_SUBMITTED = "pvo_submitted"
-EVENT_PVO_RETURNED = "pvo_returned"
-EVENT_PVO_ACTIVATED = "pvo_activated"
-EVENT_PVO_RETIRED = "pvo_retired"
-EVENT_PVO_SUPERSEDED = "pvo_superseded"
-
 EVENT_MEASUREMENT_SUBMITTED = "measurement_submitted"
 EVENT_MEASUREMENT_RETURNED = "measurement_returned"
 EVENT_MEASUREMENT_VERIFIED = "measurement_verified"
@@ -44,7 +38,6 @@ _ROUTE_ALIGNMENT = "/app/strategy-alignment"
 _SKIP_ACTOR_EVENTS = frozenset(
 	{
 		EVENT_PLAN_SUBMITTED,
-		EVENT_PVO_SUBMITTED,
 		EVENT_MEASUREMENT_SUBMITTED,
 		EVENT_CA_SUBMITTED,
 	}
@@ -107,22 +100,20 @@ def _recipients_for_event(event_type: str, *, context: dict) -> list[str]:
 	submitted_by = (context.get("submitted_by") or "").strip()
 	owner = (context.get("owner") or "").strip()
 
-	if event_type in (EVENT_PLAN_SUBMITTED, EVENT_PVO_SUBMITTED):
+	if event_type == EVENT_PLAN_SUBMITTED:
 		users = _filter_by_entity(_users_with_roles([ROLE_REVIEWER, ROLE_PLANNING]), pe)
 	elif event_type == EVENT_PLAN_APPROVED:
 		users = _filter_by_entity(_users_with_roles([ROLE_PLANNING, ROLE_MANAGER]), pe)
 		if submitted_by:
 			users.add(submitted_by)
-	elif event_type in (EVENT_PLAN_ACTIVATED, EVENT_PLAN_SUPERSEDED, EVENT_PVO_ACTIVATED):
+	elif event_type in (EVENT_PLAN_ACTIVATED, EVENT_PLAN_SUPERSEDED):
 		users = {u for u in (submitted_by, owner) if u}
 		if not users:
 			users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
-	elif event_type in (EVENT_PLAN_RETURNED, EVENT_PVO_RETURNED):
+	elif event_type == EVENT_PLAN_RETURNED:
 		users = {submitted_by} if submitted_by else _filter_by_entity(
 			_users_with_roles([ROLE_MANAGER]), pe
 		)
-	elif event_type in (EVENT_PVO_RETIRED, EVENT_PVO_SUPERSEDED):
-		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
 	elif event_type == EVENT_MEASUREMENT_SUBMITTED:
 		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
 	elif event_type in (
@@ -150,7 +141,6 @@ def _recipients_for_event(event_type: str, *, context: dict) -> list[str]:
 def _route_for_event(event_type: str, *, context: dict) -> str:
 	plan_code = (context.get("plan_code") or "").strip()
 	target_code = (context.get("target_code") or "").strip()
-	pvo_code = (context.get("objective_code") or "").strip()
 
 	if event_type in (
 		EVENT_PLAN_SUBMITTED,
@@ -160,16 +150,6 @@ def _route_for_event(event_type: str, *, context: dict) -> str:
 		return f"/app/strategy-plan-review/{plan_code}" if plan_code else _ROUTE_ALIGNMENT
 	if event_type in (EVENT_PLAN_ACTIVATED, EVENT_PLAN_SUPERSEDED):
 		return f"/app/strategy-plan-overview/{plan_code}" if plan_code else _ROUTE_ALIGNMENT
-	if event_type in (
-		EVENT_PVO_SUBMITTED,
-		EVENT_PVO_RETURNED,
-		EVENT_PVO_ACTIVATED,
-		EVENT_PVO_RETIRED,
-		EVENT_PVO_SUPERSEDED,
-	):
-		if pvo_code:
-			return f"/app/strategy-pvo-editor/{pvo_code}"
-		return "/app/strategy-pvo-catalogue"
 	if event_type == EVENT_MEASUREMENT_SUBMITTED:
 		if plan_code and target_code:
 			return f"/app/strategy-measurement-verify/{plan_code}/{target_code}"
@@ -220,26 +200,6 @@ def _subject_message(event_type: str, *, context: dict) -> tuple[str, str]:
 			_("Strategic plan {0} superseded").format(label),
 			_("Plan {0} was superseded by a new Active version.").format(label),
 		),
-		EVENT_PVO_SUBMITTED: (
-			_("Public value objective {0} submitted").format(label),
-			_("Objective {0} awaits review.").format(label),
-		),
-		EVENT_PVO_RETURNED: (
-			_("Public value objective {0} returned").format(label),
-			_("Objective {0} was returned for correction.").format(label),
-		),
-		EVENT_PVO_ACTIVATED: (
-			_("Public value objective {0} activated").format(label),
-			_("Objective {0} is now Active.").format(label),
-		),
-		EVENT_PVO_RETIRED: (
-			_("Public value objective {0} retired").format(label),
-			_("Objective {0} was retired.").format(label),
-		),
-		EVENT_PVO_SUPERSEDED: (
-			_("Public value objective {0} superseded").format(label),
-			_("Objective {0} was superseded.").format(label),
-		),
 		EVENT_MEASUREMENT_SUBMITTED: (
 			_("Measurement {0} submitted").format(label),
 			_("A performance measurement awaits verification.").format(label),
@@ -287,7 +247,6 @@ def notify_strategy_users(
 	procuring_entity: str | None = None,
 	plan_code: str | None = None,
 	target_code: str | None = None,
-	objective_code: str | None = None,
 	submitted_by: str | None = None,
 	owner: str | None = None,
 	label: str | None = None,
@@ -299,10 +258,9 @@ def notify_strategy_users(
 			"procuring_entity": procuring_entity,
 			"plan_code": plan_code,
 			"target_code": target_code,
-			"objective_code": objective_code,
 			"submitted_by": submitted_by,
 			"owner": owner,
-			"label": label or plan_code or objective_code or document_name,
+			"label": label or plan_code or document_name,
 			"document_name": document_name,
 		}
 		recipients = _recipients_for_event(event_type, context=context)
@@ -362,30 +320,6 @@ def notify_plan_transition(plan_doc, action: str) -> list[str | None]:
 		submitted_by=getattr(plan_doc, "submitted_by", None),
 		label=_plan_code(plan_doc),
 		correlation_suffix=f"{plan_doc.status}:{getattr(plan_doc, 'modified', '')}",
-	)
-
-
-def notify_pvo_transition(pvo_doc, action: str) -> list[str | None]:
-	action_map = {
-		"Submit": EVENT_PVO_SUBMITTED,
-		"Return": EVENT_PVO_RETURNED,
-		"Activate": EVENT_PVO_ACTIVATED,
-		"Retire": EVENT_PVO_RETIRED,
-		"Supersede": EVENT_PVO_SUPERSEDED,
-	}
-	event = action_map.get(action)
-	if not event:
-		return []
-	code = getattr(pvo_doc, "objective_code", None) or pvo_doc.name
-	return notify_strategy_users(
-		event,
-		document_type="Public Value Objective",
-		document_name=pvo_doc.name,
-		procuring_entity=getattr(pvo_doc, "procuring_entity", None),
-		objective_code=code,
-		submitted_by=getattr(pvo_doc, "submitted_by", None),
-		label=code,
-		correlation_suffix=f"{pvo_doc.status}:{getattr(pvo_doc, 'modified', '')}",
 	)
 
 

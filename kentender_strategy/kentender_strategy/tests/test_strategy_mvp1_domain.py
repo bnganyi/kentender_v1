@@ -41,7 +41,10 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 		self.assertEqual(plan.plan_code, STRATEGY_PLAN_CODE)
 		self.assertEqual(plan.status, "Active")
 		self.assertTrue(frappe.db.exists("Performance Target", {"target_code": TARGET_CODE}))
-		self.assertEqual(frappe.db.count("Public Value Objective", {"status": "Active"}), 8)
+		self.assertEqual(
+			frappe.db.count("Strategy Value Commitment", {"plan_version": plan.name, "status": "Locked"}),
+			8,
+		)
 		self.assertEqual(
 			frappe.db.count("Performance Measurement", {"plan_version": plan.name, "workflow_status": "Verified"}),
 			2,

@@ -18,19 +18,16 @@ REF_TYPE_META: dict[str, tuple[str, str]] = {
 	"OUT": ("Strategic Outcome", "outcome_code"),
 	"IND": ("Performance Indicator", "indicator_code"),
 	"TGT": ("Performance Target", "target_code"),
-	"OBJ": ("Public Value Objective", "objective_code"),
 	"MSR": ("Performance Measurement", "measurement_code"),
 	"CA": ("Strategy Corrective Action", "corrective_action_code"),
-	"PVC": ("Plan Value Commitment", "commitment_code"),
+	"PVC": ("Strategy Value Commitment", "commitment_code"),
 }
 
 DOCTYPE_REF: dict[str, tuple[str, str]] = {
 	dt: (token, field) for token, (dt, field) in REF_TYPE_META.items()
 }
 
-# Catalogue PVO codes stay author-controlled (controlled obligation catalogue).
-CATALOGUE_OBJ_RE = re.compile(r"^PVO-[A-Z0-9-]+$")
-REF_RE = re.compile(r"^[A-Z0-9]+-(SP|PROG|SUB|OUT|IND|TGT|OBJ|MSR|CA|PVC)-\d{4}$")
+REF_RE = re.compile(r"^[A-Z0-9]+-(SP|PROG|SUB|OUT|IND|TGT|MSR|CA|PVC)-\d{4}$")
 
 
 def pe_slug(procuring_entity: str | None) -> str:
@@ -134,9 +131,6 @@ def ensure_doc_reference(doc, type_token: str, procuring_entity: str | None, fie
 	"""Assign reference on insert when empty. Returns the reference value."""
 	current = (doc.get(field) or "").strip()
 	if current:
-		# Catalogue PVO codes and explicit seed codes are kept.
-		if type_token == "OBJ" and CATALOGUE_OBJ_RE.match(current):
-			return current
 		return current
 	if not doc.is_new() and current:
 		return current
@@ -197,7 +191,7 @@ def correct_reference(
 		frappe.throw(_("Unsupported DocType for reference correction"))
 	_token, field = meta
 	new_code = (new_code or "").strip().upper()
-	if not REF_RE.match(new_code) and not (doctype == "Public Value Objective" and CATALOGUE_OBJ_RE.match(new_code)):
+	if not REF_RE.match(new_code):
 		frappe.throw(_("Reference format is invalid"))
 	reason = (reason or "").strip()
 	if not reason:

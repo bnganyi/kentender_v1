@@ -10,7 +10,7 @@ frappe.provide("kentender_strategy.alignment");
 	var PLAN_TABS = [
 		{ label: "Overview", slug: "strategy-plan-overview" },
 		{ label: "Structure", slug: "strategy-plan-structure" },
-		{ label: "Value Commitments", slug: "strategy-plan-value-commitments" },
+		{ label: "Value Commitments", slug: "strategy-value-commitments" },
 		{ label: "Measurement", slug: "strategy-plan-measurements" },
 		{ label: "Downstream Usage", slug: "strategy-plan-downstream-usage" },
 		{ label: "Review", slug: "strategy-plan-review" },
@@ -404,11 +404,6 @@ frappe.provide("kentender_strategy.alignment");
 			if (text.indexOf("Resolve off-track target") >= 0) {
 				e.preventDefault();
 				frappe.set_route("strategy-corrective-actions");
-				return;
-			}
-			if (text.indexOf("Learn about Strategic Pillars") >= 0) {
-				e.preventDefault();
-				frappe.set_route("strategy-pvo-catalogue");
 			}
 		});
 	}
@@ -448,7 +443,7 @@ frappe.provide("kentender_strategy.alignment");
 				frappe.set_route("strategy-plan-structure", token);
 			} else if (action === "view-commitments" || text === "View commitments") {
 				e.preventDefault();
-				frappe.set_route("strategy-plan-value-commitments", token);
+				frappe.set_route("strategy-value-commitments", token);
 			} else if (
 				(action === "view-measurement" ||
 					action === "submit-measurement" ||
@@ -599,11 +594,6 @@ frappe.provide("kentender_strategy.alignment");
 				frappe.set_route("strategy-plan-overview", FIXTURE_PLAN);
 				return;
 			}
-			if (action === "create-pvo") {
-				e.preventDefault();
-				frappe.set_route("strategy-pvo-editor");
-				return;
-			}
 			if (action === "submit-measurement") {
 				e.preventDefault();
 				frappe.show_alert({
@@ -626,21 +616,6 @@ frappe.provide("kentender_strategy.alignment");
 					message: __("Draft saved (UI fixture) — no backend yet."),
 					indicator: "blue",
 				});
-			}
-		});
-	}
-
-	function bindCatalogueNav($root) {
-		$root.off("click.ktStrPvo").on("click.ktStrPvo", "button, a", function (e) {
-			var text = $(this).text().replace(/\s+/g, " ").trim();
-			if (/create|new|add/i.test(text) && /objective|pvo/i.test(text + " objective")) {
-				e.preventDefault();
-				frappe.set_route("strategy-pvo-editor");
-				return;
-			}
-			if (text === "Create" || /Create public value/i.test(text) || /New objective/i.test(text)) {
-				e.preventDefault();
-				frappe.set_route("strategy-pvo-editor");
 			}
 		});
 	}
@@ -893,7 +868,7 @@ frappe.provide("kentender_strategy.alignment");
 				if (pageSlug === "strategy-plan-structure") {
 					bindStructureNav($root, $body);
 				}
-				if (pageSlug === "strategy-plan-value-commitments") {
+				if (pageSlug === "strategy-value-commitments") {
 					bindValueCommitmentsNav($root);
 				}
 				if (pageSlug === "strategy-plan-measurements") {
@@ -921,12 +896,7 @@ frappe.provide("kentender_strategy.alignment");
 				}
 			}
 
-			if (mountedFixtureKey === "pvo_catalogue") {
-				bindCatalogueNav($root);
-				bindSatelliteNav($root);
-			}
 			if (
-				mountedFixtureKey === "pvo_editor" ||
 				mountedFixtureKey === "measurement_submit" ||
 				mountedFixtureKey === "measurement_verify" ||
 				mountedFixtureKey === "corrective_actions"

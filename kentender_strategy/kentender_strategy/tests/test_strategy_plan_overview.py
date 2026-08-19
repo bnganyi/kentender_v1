@@ -52,7 +52,7 @@ def _delete_plan_version(plan_id: str | None):
 		return
 	# Child records first
 	for dt, filt in (
-		("Plan Value Commitment", {"plan_version": plan_id}),
+		("Strategy Value Commitment", {"plan_version": plan_id}),
 		("Performance Target", {"plan_version": plan_id}),
 		("Performance Indicator", {"plan_version": plan_id}),
 		("Strategic Outcome", {"plan_version": plan_id}),
@@ -168,7 +168,7 @@ class TestStrategyPlanOverview(FrappeTestCase):
 		frappe.set_user("str.officer.succ@example.com")
 		src_tree = get_strategy_tree(plan_version=self.plan_id)
 		src_counts = src_tree["counts"]
-		src_commitments = frappe.db.count("Plan Value Commitment", {"plan_version": self.plan_id})
+		src_commitments = frappe.db.count("Strategy Value Commitment", {"plan_version": self.plan_id})
 
 		result = create_successor_version(self.plan_id)
 		self.assertTrue(result.get("ok"))
@@ -187,7 +187,7 @@ class TestStrategyPlanOverview(FrappeTestCase):
 		self.assertEqual(new_tree["counts"]["targets"], src_counts["targets"])
 		self.assertEqual(new_tree["counts"]["outcomes"], src_counts["outcomes"])
 		self.assertEqual(
-			frappe.db.count("Plan Value Commitment", {"plan_version": new_plan["id"]}),
+			frappe.db.count("Strategy Value Commitment", {"plan_version": new_plan["id"]}),
 			src_commitments,
 		)
 		# Measurements stay on the Active version only

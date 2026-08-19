@@ -196,7 +196,7 @@ Add supporting target
 <section data-testid="kt-bud-line-section-pvc">
 <div class="flex items-center gap-2 mb-4 pb-2 border-b border-outline-variant">
 <span class="material-symbols-outlined text-primary text-[20px]">fact_check</span>
-<h3 class="font-headline-sm text-headline-sm font-semibold text-primary">Plan Value Commitment treatment</h3>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-primary">Strategy Value Commitment treatment</h3>
 </div>
 <div class="space-y-4" data-testid="kt-bud-line-pvc-list" data-kt-bud-line-pvc-list></div>
 </section>

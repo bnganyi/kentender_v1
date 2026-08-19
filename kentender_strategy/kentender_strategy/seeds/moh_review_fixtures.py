@@ -43,7 +43,7 @@ def ensure_review_blockers_draft(procuring_entity: str | None = None) -> dict[st
 			"Strategic Outcome",
 			"Strategy Sub Programme",
 			"Strategy Programme",
-			"Plan Value Commitment",
+			"Strategy Value Commitment",
 		):
 			for row in frappe.get_all(dt, filters={"plan_version": name}, pluck="name"):
 				frappe.delete_doc(dt, row, force=True, ignore_permissions=True)
@@ -96,7 +96,7 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 		for dt in (
 			"Performance Measurement",
 			"Strategy Corrective Action",
-			"Plan Value Commitment",
+			"Strategy Value Commitment",
 			"Performance Target",
 			"Performance Indicator",
 			"Strategic Outcome",

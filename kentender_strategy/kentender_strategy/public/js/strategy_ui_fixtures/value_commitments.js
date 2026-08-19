@@ -1,4 +1,4 @@
-// Extracted from plan_value_commitments_ministry_of_health_draft_v2/code.html
+// Extracted from strategy_value_commitments_ministry_of_health_draft_v2/code.html
 // Canvas + add-commitment drawer. Table/drawer bodies are live-bound (STR-UI-07).
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.value_commitments = function () {
@@ -7,8 +7,8 @@ kentender_strategy.ui_fixtures.value_commitments = function () {
 <div class="flex-1 px-8 pt-4 pb-8 max-w-[1400px] transition-all duration-300" id="main-canvas" data-testid="kt-str-vc-canvas">
 <header class="mb-section-gap flex justify-between items-start gap-4" data-testid="kt-str-vc-header">
 <div class="min-w-0 flex-1">
-<h3 class="font-headline-md text-headline-md text-on-surface">Plan value commitments</h3>
-<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mt-1">Select the public-value objectives this plan will carry forward and connect each commitment to a strategic outcome or target.</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">Strategy value commitments</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mt-1">Record the value this plan commits to and connect each commitment to a strategic outcome or target.</p>
 <div class="mt-4 flex items-center gap-3" data-kt-str-vc-progress>
 <div class="w-48 h-2 bg-surface-container-highest rounded-full overflow-hidden">
 <div class="h-full bg-status-available" data-kt-str-vc-progress-bar style="width:0%"></div>
@@ -25,7 +25,7 @@ kentender_strategy.ui_fixtures.value_commitments = function () {
 <span class="material-symbols-outlined text-secondary mt-0.5">info</span>
 <div>
 <span class="font-body-md text-on-surface font-medium block mb-1">Required consideration</span>
-<p class="font-body-md text-on-surface-variant text-sm">A downstream value case must include this objective or record an approved not-applicable reason.</p>
+<p class="font-body-md text-on-surface-variant text-sm">A downstream value case must include this commitment or record an approved not-applicable reason.</p>
 </div>
 </div>
 <div class="bg-surface-container-lowest rounded-xl border border-surface-container-high shadow-sm overflow-hidden">
@@ -53,40 +53,18 @@ kentender_strategy.ui_fixtures.value_commitments = function () {
 <div class="px-6 py-5 border-b border-surface-container-high flex justify-between items-center bg-surface-bright">
 <div>
 <h2 class="font-headline-sm text-headline-sm text-on-surface" data-kt-str-vc-drawer-title>Add Commitment</h2>
-<p class="text-sm text-on-surface-variant mt-1" data-kt-str-vc-drawer-subtitle>Select and configure an objective</p>
+<p class="text-sm text-on-surface-variant mt-1" data-kt-str-vc-drawer-subtitle>Describe the commitment and link it to plan structure</p>
 </div>
 <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors" data-kt-str-action="close-vc-drawer" aria-label="Close">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
 <div class="flex-1 overflow-y-auto" data-testid="kt-str-vc-drawer-scroll">
-<div class="p-6 border-b border-surface-container-high bg-surface-container-low/50" data-kt-str-vc-drawer-library>
-<div class="relative mb-4">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" placeholder="Search objectives library..." type="text" data-kt-str-vc-drawer-search/>
-</div>
-<div class="grid grid-cols-2 gap-2" data-testid="kt-str-vc-drawer-filters">
-<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary min-w-0 w-full text-on-surface-variant outline-none" data-kt-str-vc-drawer-pillar>
-<option value="">Pillar: All</option>
-</select>
-<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary min-w-0 w-full text-on-surface-variant outline-none" data-kt-str-vc-drawer-source>
-<option value="">Source: All</option>
-</select>
-</div>
-<div class="mt-4 max-h-40 overflow-y-auto space-y-1" data-kt-str-vc-drawer-pvo-list></div>
-</div>
 <div class="p-6">
-<div class="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-6 hidden" data-kt-str-vc-drawer-preview>
-<div class="flex items-start justify-between mb-2">
-<span class="font-data-mono text-data-mono text-primary font-bold" data-kt-str-vc-drawer-pvo-code></span>
-<span class="text-[11px] font-semibold tracking-wider uppercase text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded" data-kt-str-vc-drawer-pvo-pillar></span>
-</div>
-<h3 class="font-headline-sm text-[16px] leading-tight text-on-surface mb-3" data-kt-str-vc-drawer-pvo-title></h3>
-</div>
 <form class="space-y-5" data-kt-str-vc-drawer-form>
 <div>
-<label class="block text-sm font-semibold text-on-surface mb-1.5">Plan Rationale <span class="text-error">*</span></label>
-<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all placeholder:text-outline outline-none" placeholder="Explain how this commitment applies to the current strategic plan..." rows="3" data-kt-str-vc-drawer-rationale name="rationale"></textarea>
+<label class="block text-sm font-semibold text-on-surface mb-1.5">Commitment Statement <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all placeholder:text-outline outline-none" placeholder="State the value this commitment delivers for the current strategic plan..." rows="3" data-kt-str-vc-drawer-rationale name="rationale"></textarea>
 </div>
 <div class="grid grid-cols-2 gap-4">
 <div>

@@ -39,7 +39,7 @@ def _wall_clock_stale_as_at():
 	return add_days(today(), -(int(ACTUAL_STALE_DAYS) + 1))
 
 
-# Contract §6 — treatments keyed by Plan Value Commitment codes.
+# Contract §6 — treatments keyed by Strategy Value Commitment codes.
 _PVC_TREATMENTS_DHI = (
 	{
 		"pvc_code": "MOH-PVC-EFT-01",
@@ -518,27 +518,7 @@ def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
 
 
 def _resolve_pvc_id(code: str) -> str:
-	"""Prefer Plan Value Commitment.commitment_code; fall back to PVO code lookup."""
-	pvc = frappe.db.get_value("Plan Value Commitment", {"commitment_code": code}, "name")
-	if pvc:
-		return pvc
-	name = frappe.db.get_value(
-		"Public Value Objective",
-		{"objective_code": code, "status": "Active"},
-		"name",
-	)
-	if not name:
-		name = frappe.db.get_value("Public Value Objective", {"objective_code": code}, "name")
-	if not name:
-		return ""
-	return (
-		frappe.db.get_value(
-			"Plan Value Commitment",
-			{"public_value_objective_version": name},
-			"name",
-		)
-		or ""
-	)
+	return frappe.db.get_value("Strategy Value Commitment", {"commitment_code": code}, "name") or ""
 
 
 def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:

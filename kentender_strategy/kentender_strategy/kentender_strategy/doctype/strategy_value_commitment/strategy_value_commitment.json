@@ -8,7 +8,6 @@
  "field_order": [
   "plan_version",
   "commitment_code",
-  "public_value_objective_version",
   "rationale",
   "consideration_level",
   "responsible_owner",
@@ -35,13 +34,6 @@
    "reqd": 1,
    "search_index": 1,
    "in_list_view": 1
-  },
-  {
-   "fieldname": "public_value_objective_version",
-   "fieldtype": "Link",
-   "label": "Public Value Objective Version",
-   "options": "Public Value Objective",
-   "reqd": 1
   },
   {
    "fieldname": "rationale",
@@ -79,7 +71,7 @@
    "fieldname": "links",
    "fieldtype": "Table",
    "label": "Links",
-   "options": "Plan Value Commitment Link"
+   "options": "Strategy Value Commitment Link"
   },
   {
    "fieldname": "section_fixture_ownership",
@@ -108,7 +100,7 @@
  "modified": "2026-08-02 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
- "name": "Plan Value Commitment",
+ "name": "Strategy Value Commitment",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [

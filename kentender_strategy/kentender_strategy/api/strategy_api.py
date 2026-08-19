@@ -91,21 +91,6 @@ def list_active_targets(procuring_entity: str | None = None, plan_code: str | No
 
 
 @frappe.whitelist()
-def list_applicable_value_commitments(
-	plan_version: str | None = None,
-	procurement_category: str | None = None,
-	procurement_type: str | None = None,
-	asset_condition: str | None = None,
-):
-	return contracts.list_applicable_value_commitments(
-		plan_version=plan_version or None,
-		procurement_category=procurement_category or None,
-		procurement_type=procurement_type or None,
-		asset_condition=asset_condition or None,
-	)
-
-
-@frappe.whitelist()
 def validate_strategy_reference(reference=None):
 	return contracts.validate_strategy_reference(_obj(reference) or {})
 
@@ -162,43 +147,15 @@ def delete_structure_node(node_type: str, name: str):
 
 
 @frappe.whitelist()
-def list_public_value_objectives(
-	procuring_entity: str | None = None,
-	status: str | None = None,
-	search: str | None = None,
-):
-	return contracts.list_public_value_objectives(
-		procuring_entity=procuring_entity or None,
-		status=status or None,
-		search=search or None,
-	)
-
-
-@frappe.whitelist()
-def get_pvo(name: str | None = None, objective_code: str | None = None):
-	return writes.get_pvo(name=name or None, objective_code=objective_code or None)
-
-
-@frappe.whitelist()
-def upsert_pvo(payload=None):
-	return writes.upsert_pvo(_obj(payload) or {})
-
-
-@frappe.whitelist()
-def transition_pvo(name: str, action: str, reason: str | None = None):
-	return transitions.transition_pvo(name, action, reason=reason or None)
-
-
-@frappe.whitelist()
-def list_plan_value_commitments(plan_version: str | None = None, plan_code: str | None = None):
-	return contracts.list_plan_value_commitments(
+def list_strategy_value_commitments(plan_version: str | None = None, plan_code: str | None = None):
+	return contracts.list_strategy_value_commitments(
 		plan_version=plan_version or None, plan_code=plan_code or None
 	)
 
 
 @frappe.whitelist()
-def upsert_plan_value_commitment(payload=None):
-	return writes.upsert_plan_value_commitment(_obj(payload) or {})
+def upsert_strategy_value_commitment(payload=None):
+	return writes.upsert_strategy_value_commitment(_obj(payload) or {})
 
 
 @frappe.whitelist()

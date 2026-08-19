@@ -69,7 +69,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByRole("heading", { name: /Outcome Performance/ })).toBeVisible();
 		await expect(page.getByText("Funding Snapshot", { exact: true })).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Aligned Procurement Pipeline" })).toBeVisible();
-		await expect(page.getByRole("heading", { name: "Plan Value Commitments" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Strategy Value Commitments" })).toBeVisible();
 		await expect(page.getByRole("columnheader", { name: /FUNDING TREATMENT/i })).toBeVisible();
 		await expect(page.getByRole("columnheader", { name: /DOWNSTREAM ADOPTION/i })).toBeVisible();
 		// Context filter grid is 4 columns at desktop (not stacked full-width cards).
@@ -592,7 +592,7 @@ test.describe("Strategy Alignment UI shell", () => {
 	test("VC and Measurements section titles share headline-md density", async ({ page }) => {
 		const samples: { path: string; live: string; title: string }[] = [
 			{
-				path: `/desk/strategy-plan-value-commitments/${PLAN}`,
+				path: `/desk/strategy-value-commitments/${PLAN}`,
 				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
 				title: "Plan value commitments",
 			},
@@ -694,7 +694,7 @@ test.describe("Strategy Alignment UI shell", () => {
 			{ path: `/desk/strategy-plan-overview/${PLAN}`, live: '[data-testid="kt-str-overview"][data-kt-str-live="1"]' },
 			{ path: `/desk/strategy-plan-structure/${PLAN}`, live: '[data-testid="kt-str-structure"][data-kt-str-live="1"]' },
 			{
-				path: `/desk/strategy-plan-value-commitments/${PLAN}`,
+				path: `/desk/strategy-value-commitments/${PLAN}`,
 				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
 			},
 			{
@@ -816,7 +816,7 @@ test.describe("Strategy Alignment UI shell", () => {
 			{ slug: "strategy-plan-downstream-usage", live: '[data-testid="kt-str-downstream"][data-kt-str-live="1"]' },
 			{ slug: "strategy-plan-structure", live: '[data-testid="kt-str-structure"][data-kt-str-live="1"]' },
 			{
-				slug: "strategy-plan-value-commitments",
+				slug: "strategy-value-commitments",
 				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
 			},
 			{ slug: "strategy-plan-measurements", live: '[data-testid="kt-str-measurements"][data-kt-str-live="1"]' },
@@ -980,7 +980,7 @@ test.describe("Strategy Alignment UI shell", () => {
 	});
 
 	test("value commitments Active plan is live and read-only", async ({ page }) => {
-		await page.goto(`/desk/strategy-plan-value-commitments/${PLAN}`, {
+		await page.goto(`/desk/strategy-value-commitments/${PLAN}`, {
 			waitUntil: "domcontentloaded",
 		});
 		const vc = page.locator(
@@ -1030,7 +1030,7 @@ test.describe("Strategy Alignment UI shell", () => {
 	});
 
 	test("value commitments Draft can add commitment via drawer", async ({ page }) => {
-		// Successor Draft inherits structure + existing commitments; add an unused Active PVO.
+		// Successor Draft inherits structure + existing commitments; add a new commitment directly.
 		// Serial suite may already have an open successor — reuse it when Create is hidden.
 		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
@@ -1066,7 +1066,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		}
 		expect(draftId).toBeTruthy();
 
-		await page.goto(`/desk/strategy-plan-value-commitments/${draftId}`, {
+		await page.goto(`/desk/strategy-value-commitments/${draftId}`, {
 			waitUntil: "domcontentloaded",
 		});
 		const vc = page.locator(
@@ -1102,43 +1102,13 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(drawer).toHaveClass(/is-open/);
 		await expect(drawer.getByText("Add Commitment")).toBeVisible();
 
-		// Pillar/Source equal columns; Source stays clear of drawer scrollbar.
-		const filterGeom = await drawer.evaluate((el) => {
-			const scroll = el.querySelector(
-				'[data-testid="kt-str-vc-drawer-scroll"]'
-			) as HTMLElement | null;
-			const pillar = el.querySelector(
-				"[data-kt-str-vc-drawer-pillar]"
-			) as HTMLElement | null;
-			const source = el.querySelector(
-				"[data-kt-str-vc-drawer-source]"
-			) as HTMLElement | null;
-			if (!scroll || !pillar || !source) return { ok: false as const };
-			const sr = scroll.getBoundingClientRect();
-			const pr = pillar.getBoundingClientRect();
-			const so = source.getBoundingClientRect();
-			const clientRight = sr.left + scroll.clientWidth;
-			return {
-				ok: true as const,
-				widthDelta: Math.abs(pr.width - so.width),
-				sourceInset: clientRight - so.right,
-				pillarWidth: pr.width,
-				sourceWidth: so.width,
-			};
-		});
-		expect(filterGeom.ok).toBe(true);
-		expect(filterGeom.widthDelta).toBeLessThanOrEqual(8);
-		expect(filterGeom.sourceInset).toBeGreaterThanOrEqual(16);
-
-		const pvoBtn = drawer.locator("[data-kt-str-action='select-pvo']").filter({ hasText: "MOH-PVC-LOC-01" });
-		await expect(pvoBtn).toBeVisible({ timeout: 15_000 });
-		await pvoBtn.click();
-		await drawer.locator("[data-kt-str-vc-drawer-rationale]").fill("UI07 live wire rationale");
+		const rationaleText = `UI07 live wire rationale ${Date.now()}`;
+		await drawer.locator("[data-kt-str-vc-drawer-rationale]").fill(rationaleText);
 		await drawer.locator("[data-kt-str-vc-drawer-owner]").fill("Director, Digital Health");
 		await drawer.locator("[data-kt-str-vc-drawer-links] input[type='checkbox']").first().check();
 		await drawer.getByRole("button", { name: /Save Commitment/i }).click();
 		await expect(drawer).toHaveClass(/translate-x-full/, { timeout: 15_000 });
-		await expect(vc.locator('[data-kt-str-vc-code="MOH-PVC-LOC-01"]')).toBeVisible({
+		await expect(vc.getByText(rationaleText)).toBeVisible({
 			timeout: 15_000,
 		});
 		await expect(page.getByText(/Commitment saved \(UI fixture\)/i)).toHaveCount(0);
@@ -1154,7 +1124,7 @@ test.describe("Strategy Alignment UI shell", () => {
 			{ label: "Structure", slug: "strategy-plan-structure", testid: "kt-str-structure" },
 			{
 				label: "Value Commitments",
-				slug: "strategy-plan-value-commitments",
+				slug: "strategy-value-commitments",
 				testid: "kt-str-value-commitments",
 			},
 			{
@@ -1428,14 +1398,6 @@ test.describe("Strategy Alignment UI shell", () => {
 	});
 
 	test("satellite surfaces open", async ({ page }) => {
-		await page.goto("/desk/strategy-pvo-catalogue", { waitUntil: "domcontentloaded" });
-		await expect(page.getByTestId("kt-str-pvo-catalogue")).toBeVisible({ timeout: 30_000 });
-		await expect(page.getByRole("button", { name: /Create objective/i })).toBeVisible();
-
-		await page.goto("/desk/strategy-pvo-editor", { waitUntil: "domcontentloaded" });
-		await expect(page.getByTestId("kt-str-pvo-editor")).toBeVisible({ timeout: 30_000 });
-		await expect(page.getByRole("button", { name: /Save objective/i })).toBeVisible();
-
 		await page.goto(`/desk/strategy-measurement-submit/${TARGET}`, {
 			waitUntil: "domcontentloaded",
 		});

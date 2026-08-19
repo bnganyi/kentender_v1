@@ -200,7 +200,7 @@ Available
 <!-- Section 4 — Public-value Commitments (Full Width) -->
 <div class="lg:col-span-2 data-block overflow-hidden flex flex-col" data-testid="kt-str-perf-commitments">
 <div class="bg-surface-container-low px-card-padding py-4 border-b border-outline-variant flex justify-between items-center">
-<h2 class="font-headline-sm text-headline-sm text-on-surface">Plan Value Commitments</h2>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Strategy Value Commitments</h2>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full data-table whitespace-nowrap">

@@ -17,7 +17,6 @@ from kentender_strategy.services.strategy_permissions import (
 	ROLE_MANAGER,
 	ROLE_OFFICER,
 	ROLE_PLANNING,
-	ROLE_REVIEWER,
 )
 from kentender_strategy.services.strategy_readiness import assert_plan_ready_for_submit
 
@@ -31,16 +30,6 @@ PLAN_TRANSITIONS = {
 	("Active", "Supersede"): "Superseded",
 	("Active", "Archive"): "Archived",
 	("Approved", "Withdraw approval"): "Draft",
-}
-
-PVO_TRANSITIONS = {
-	("Draft", "Submit"): "Submitted",
-	("Submitted", "Return"): "Returned",
-	("Returned", "Submit"): "Submitted",
-	("Submitted", "Approve"): "Approved",
-	("Approved", "Activate"): "Active",
-	("Active", "Supersede"): "Superseded",
-	("Active", "Retire"): "Retired",
 }
 
 MEASUREMENT_TRANSITIONS = {
@@ -157,55 +146,6 @@ def _activate_plan(doc) -> None:
 	doc.status = "Active"
 	doc.activated_by = frappe.session.user
 	doc.activated_at = frappe.utils.now_datetime()
-	doc.save(ignore_permissions=True)
-
-
-def transition_pvo(name: str, action: str, reason: str | None = None) -> dict:
-	doc = frappe.get_doc("Public Value Objective", name)
-	key = (doc.status, action)
-	if key not in PVO_TRANSITIONS:
-		frappe.throw(_("Invalid PVO transition: {0} / {1}").format(doc.status, action))
-	if action == "Submit":
-		require_any_role(ROLE_MANAGER, "System Manager")
-	elif action == "Return":
-		require_any_role(ROLE_REVIEWER, ROLE_PLANNING, "System Manager")
-		if not reason:
-			frappe.throw(_("Return reason is required"))
-	elif action in ("Approve", "Activate", "Retire", "Supersede"):
-		require_any_role(ROLE_PLANNING, "System Manager")
-		if action == "Approve" and doc.get("submitted_by") == frappe.session.user:
-			pass  # PVO has no submitted_by field; segregation via roles
-		if action == "Retire" and not reason:
-			frappe.throw(_("Retirement reason is required"))
-	prior = doc.status
-	doc.status = PVO_TRANSITIONS[key]
-	if action == "Activate":
-		_activate_pvo(doc)
-	else:
-		doc.save(ignore_permissions=True)
-	record_event(
-		entity_type="Public Value Objective",
-		entity_name=doc.name,
-		event_type=action,
-		prior_state=prior,
-		new_state=doc.status,
-		reason=reason,
-	)
-	from kentender_strategy.services.strategy_notification_service import notify_pvo_transition
-
-	notify_pvo_transition(doc, action)
-	return {"name": doc.name, "status": doc.status, "objective_code": doc.objective_code}
-
-
-def _activate_pvo(doc) -> None:
-	filters = {"objective_code": doc.objective_code, "status": "Active", "name": ["!=", doc.name]}
-	if doc.procuring_entity:
-		filters["procuring_entity"] = doc.procuring_entity
-	for name in frappe.get_all("Public Value Objective", filters=filters, pluck="name"):
-		other = frappe.get_doc("Public Value Objective", name)
-		other.status = "Superseded"
-		other.save(ignore_permissions=True)
-	doc.status = "Active"
 	doc.save(ignore_permissions=True)
 
 

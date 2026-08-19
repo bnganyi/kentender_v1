@@ -285,34 +285,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(__("Plan Structure"), "", trailStrategyPlan(__("Plan Structure")), []),
 		},
-		"STR-UI-05": {
-			id: "STR-UI-05",
-			label: "Public Value Objective Catalogue",
-			routePrefixes: ["strategy-pvo-catalogue"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Public Value Objective Catalogue"),
-				"",
-				trailStrategyPlan(__("Public Value Objectives")),
-				[]
-			),
-		},
-		"STR-UI-06": {
-			id: "STR-UI-06",
-			label: "Public Value Objective Editor",
-			routePrefixes: ["strategy-pvo-editor"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Public Value Objective"),
-				"",
-				trailStrategyPlan(__("Public Value Objective")),
-				[]
-			),
-		},
 		"STR-UI-07": {
 			id: "STR-UI-07",
-			label: "Plan Value Commitments",
-			routePrefixes: ["strategy-plan-value-commitments"],
+			label: "Strategy Value Commitments",
+			routePrefixes: ["strategy-value-commitments"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Value Commitments"),

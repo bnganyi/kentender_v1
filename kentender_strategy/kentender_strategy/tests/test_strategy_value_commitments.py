@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-UI-07 Plan Value Commitments — list DTO, upsert, Active lock."""
+"""STR-UI-07 Strategy Value Commitments — list DTO, upsert, Active lock."""
 
 from __future__ import annotations
 
@@ -11,9 +11,9 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 	STRATEGY_PLAN_CODE,
 	upsert_works_master_strategy_hierarchy,
 )
-from kentender_strategy.services.strategy_contracts import create_plan, list_plan_value_commitments
+from kentender_strategy.services.strategy_contracts import create_plan, list_strategy_value_commitments
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
-from kentender_strategy.services.strategy_writes import upsert_plan_value_commitment
+from kentender_strategy.services.strategy_writes import upsert_strategy_value_commitment
 
 
 def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = None) -> str:
@@ -52,7 +52,7 @@ def _delete_plan_cascade(plan_id: str | None):
 	if not plan_id or not frappe.db.exists("Strategic Plan", plan_id):
 		return
 	for dt in (
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
 		"Strategic Outcome",
@@ -65,16 +65,7 @@ def _delete_plan_cascade(plan_id: str | None):
 	frappe.delete_doc("Strategic Plan", plan_id, force=True, ignore_permissions=True)
 
 
-def _active_pvo(code: str) -> str:
-	name = frappe.db.get_value(
-		"Public Value Objective", {"objective_code": code, "status": "Active"}, "name"
-	)
-	if not name:
-		name = frappe.db.get_value("Public Value Objective", {"objective_code": code}, "name")
-	return name
-
-
-class TestStrategyPlanValueCommitments(FrappeTestCase):
+class TestStrategyValueCommitments(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -94,15 +85,15 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 	def test_active_moh_list_enriched_and_read_only(self):
 		_ensure_user("str.officer.vc@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.vc@example.com")
-		dto = list_plan_value_commitments(plan_code=STRATEGY_PLAN_CODE)
+		dto = list_strategy_value_commitments(plan_code=STRATEGY_PLAN_CODE)
 		self.assertIsInstance(dto, dict)
 		self.assertEqual(dto["plan"]["code"], STRATEGY_PLAN_CODE)
 		self.assertEqual(dto["plan"]["status"], "Active")
 		self.assertFalse(dto["capabilities"]["editable"])
 		codes = {r["objective"]["code"] for r in dto["rows"]}
-		self.assertIn("PVO-EFT-01", codes)
-		self.assertIn("PVO-ECO-01", codes)
-		eft = next(r for r in dto["rows"] if r["objective"]["code"] == "PVO-EFT-01")
+		self.assertIn("MOH-PVC-EFT-01", codes)
+		self.assertIn("MOH-PVC-ECO-01", codes)
+		eft = next(r for r in dto["rows"] if r["objective"]["code"] == "MOH-PVC-EFT-01")
 		self.assertTrue(eft["complete"])
 		link_codes = {lnk.get("code") for lnk in eft["links"]}
 		self.assertIn(OBJECTIVE_CODE, link_codes)
@@ -150,12 +141,9 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 				"responsible_function": "ICT",
 			}
 		)
-		pvo = _active_pvo("MOH-PVC-LOC-01")
-		self.assertTrue(pvo)
-		res = upsert_plan_value_commitment(
+		res = upsert_strategy_value_commitment(
 			{
 				"plan_version": plan_id,
-				"public_value_objective_version": pvo,
 				"rationale": "Local capability for this plan",
 				"consideration_level": "recommended",
 				"responsible_owner": "Director, Digital Health",
@@ -164,24 +152,22 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 			}
 		)
 		self.assertTrue(res.get("id"))
-		dto = list_plan_value_commitments(plan_version=plan_id)
+		dto = list_strategy_value_commitments(plan_version=plan_id)
 		self.assertTrue(dto["capabilities"]["editable"])
 		self.assertEqual(dto["progress"]["total"], 1)
 		self.assertEqual(dto["progress"]["complete"], 1)
 		row = dto["rows"][0]
-		self.assertEqual(row["objective"]["code"], "PVO-LOC-01")
+		self.assertRegex(row["objective"]["code"], r"^[A-Z0-9]+-PVC-\d{4}$")
 		self.assertTrue(row["complete"])
 		self.assertEqual(row["links"][0]["code"], f"{code}-O")
 
 	def test_active_plan_blocks_upsert(self):
 		_ensure_user("str.officer.vc.lock@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.vc.lock@example.com")
-		pvo = _active_pvo("PVO-SUS-01")
 		with self.assertRaises(frappe.ValidationError):
-			upsert_plan_value_commitment(
+			upsert_strategy_value_commitment(
 				{
 					"plan_version": self.plan_id,
-					"public_value_objective_version": pvo,
 					"rationale": "Should fail",
 					"consideration_level": "Required consideration",
 					"responsible_owner": "Owner",
@@ -192,12 +178,10 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 	def test_viewer_cannot_upsert(self):
 		_ensure_user("str.viewer.vc@example.com", ["Strategy Viewer"], self.pe)
 		frappe.set_user("str.viewer.vc@example.com")
-		pvo = _active_pvo("PVO-SUS-01")
 		with self.assertRaises(frappe.PermissionError):
-			upsert_plan_value_commitment(
+			upsert_strategy_value_commitment(
 				{
 					"plan_version": self.plan_id,
-					"public_value_objective_version": pvo,
 					"rationale": "Nope",
 					"consideration_level": "Available",
 					"responsible_owner": "X",
@@ -221,12 +205,10 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 		)
 		plan_id = created["plan"]["id"]
 		self.addCleanup(lambda: _delete_plan_cascade(plan_id))
-		pvo = _active_pvo("MOH-PVC-SUS-02")
 		doc = frappe.get_doc(
 			{
-				"doctype": "Plan Value Commitment",
+				"doctype": "Strategy Value Commitment",
 				"plan_version": plan_id,
-				"public_value_objective_version": pvo,
 				"rationale": "Needs a link",
 				"consideration_level": "Required consideration",
 				"responsible_owner": "Owner",
@@ -235,7 +217,7 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 		)
 		doc.insert(ignore_permissions=True)
 		frappe.set_user("str.manager.vc@example.com")
-		dto = list_plan_value_commitments(plan_version=plan_id)
+		dto = list_strategy_value_commitments(plan_version=plan_id)
 		row = dto["rows"][0]
 		self.assertFalse(row["complete"])
 		self.assertEqual(dto["progress"]["complete"], 0)

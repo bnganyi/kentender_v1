@@ -21,7 +21,7 @@ from kentender_strategy.services.strategy_contracts import (
 	_ref,
 	_resolve_plan,
 	get_strategy_usage,
-	list_plan_value_commitments,
+	list_strategy_value_commitments,
 )
 from kentender_strategy.services.strategy_permissions import (
 	ROLE_AUDITOR,
@@ -95,7 +95,7 @@ def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
 	"""DEM-INT-008 — addressed PVCs from MVP Demand related records.
 
 	Returns ``(aligned_demand_count, treated_counts)`` where counts are keyed by
-	Plan Value Commitment id. Alignment comes from Demand Strategy Reference;
+	Strategy Value Commitment id. Alignment comes from Demand Strategy Reference;
 	adoption comes from Demand Value Treatment. A deferred or not-applicable
 	treatment is addressed only when it carries the reason required by DIA-FR-069.
 	"""
@@ -118,7 +118,7 @@ def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
 	rows = frappe.get_all(
 		"Demand Value Treatment",
 		filters={"demand": ["in", demand_names]},
-		fields=["demand", "plan_value_commitment", "treatment", "rationale"],
+		fields=["demand", "strategy_value_commitment", "treatment", "rationale"],
 		limit=2000,
 	)
 	by_key: dict[str, set[str]] = defaultdict(set)
@@ -129,7 +129,7 @@ def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
 			ok = bool((r.rationale or "").strip())
 		if not ok:
 			continue
-		pvc_id = (r.plan_value_commitment or "").strip()
+		pvc_id = (r.strategy_value_commitment or "").strip()
 		if pvc_id:
 			by_key[pvc_id].add(r.demand)
 	return aligned, {k: len(v) for k, v in by_key.items()}
@@ -549,7 +549,7 @@ def get_strategy_performance(
 		)
 
 	# PVC / public value — STR-AC-028 treatment vs achievement (XMOD-STR-007).
-	pvc = list_plan_value_commitments(plan_version=plan.name)
+	pvc = list_strategy_value_commitments(plan_version=plan.name)
 	commitments_out = []
 	aligned_demands, treated_by_key = _demand_pvc_treatment_counts(plan.name)
 	for row in pvc.get("rows") or []:
@@ -588,7 +588,7 @@ def get_strategy_performance(
 					"due_or_age": "Outstanding",
 					"age_days": None,
 					"next_action": "Review treatment",
-					"route": ["strategy-plan-value-commitments", plan.plan_code],
+					"route": ["strategy-value-commitments", plan.plan_code],
 				}
 			)
 		# Funding treatment is plan-derived only (no invented totals). Prefer explicit
@@ -612,7 +612,7 @@ def get_strategy_performance(
 				"verified_evidence": evidence,
 				"attention": attention,
 				"action_label": "Review commitment" if attention != "None" else "Review commitment",
-				"route": ["strategy-plan-value-commitments", plan.plan_code],
+				"route": ["strategy-value-commitments", plan.plan_code],
 			}
 		)
 

@@ -211,12 +211,12 @@ def get_plan_readiness(plan_name: str) -> dict:
 	_check_unique_codes(issues, "Strategic Outcome", plan_name, "outcome_code")
 
 	commitments = frappe.get_all(
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		filters={"plan_version": plan_name},
-		fields=["name", "rationale", "responsible_owner", "public_value_objective_version"],
+		fields=["name", "rationale", "responsible_owner"],
 	)
 	for c in commitments:
-		links = frappe.get_all("Plan Value Commitment Link", filters={"parent": c.name})
+		links = frappe.get_all("Strategy Value Commitment Link", filters={"parent": c.name})
 		if not c.rationale or not c.responsible_owner:
 			issues.append(
 				_issue(
@@ -224,9 +224,9 @@ def get_plan_readiness(plan_name: str) -> dict:
 					"blocker",
 					c.name,
 					c.name,
-					"Plan Value Commitment without rationale, owner or linked outcome/target",
+					"Strategy Value Commitment without rationale, owner or linked outcome/target",
 					"Complete commitment rationale and owner",
-					"strategy-plan-value-commitments",
+					"strategy-value-commitments",
 				)
 			)
 		elif not links:
@@ -236,27 +236,11 @@ def get_plan_readiness(plan_name: str) -> dict:
 					"blocker",
 					c.name,
 					c.name,
-					"Plan Value Commitment without rationale, owner or linked outcome/target",
+					"Strategy Value Commitment without rationale, owner or linked outcome/target",
 					"Link the commitment to an outcome or target",
-					"strategy-plan-value-commitments",
+					"strategy-value-commitments",
 				)
 			)
-		pvo_status = frappe.db.get_value(
-			"Public Value Objective", c.public_value_objective_version, "status"
-		)
-		if pvo_status != "Active":
-			issues.append(
-				_issue(
-					"Value Commitments",
-					"blocker",
-					c.name,
-					c.name,
-					"Referenced Public Value Objective not Active at time of selection",
-					"Select an Active Public Value Objective",
-					"strategy-plan-value-commitments",
-				)
-			)
-
 	if plan.start_date and plan.end_date and plan.start_date > plan.end_date:
 		issues.append(
 			_issue(

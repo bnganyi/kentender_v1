@@ -13,27 +13,16 @@ from kentender_core.seeds.kentender_mvp_v1 import constants as C
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 from kentender_strategy.services.strategy_transitions import transition_plan
 
-PVO_FIXTURE = [
-	("PVO-EFT-01", "Strategic and service outcomes", "Improve availability of critical health services"),
-	("PVO-ECO-01", "Economy and whole-life value", "Reduce whole-life infrastructure cost"),
-	("PVO-EFY-01", "Process efficiency", "Reduce implementation and service-restoration time"),
-	("PVO-RES-01", "Contract performance and resilience", "Improve continuity of critical services"),
-	("PVO-LOC-01", "Inclusion and economic development", "Develop internal and local technical capability"),
-	("PVO-SUS-01", "Sustainability and asset stewardship", "Reduce infrastructure energy consumption"),
-	("PVO-SUS-02", "Sustainability and asset stewardship", "Ensure compliant handling of replaced ICT equipment"),
-	("PVO-INT-01", "Integrity and accountability", "Minimise uncontrolled contract changes"),
-]
-
-# (commitment_code, pvo_objective_code, requirement_level)
+# (commitment_code, commitment statement, requirement_level) — STR-CHG-001 §5: no PVO catalogue.
 PVC_FIXTURE = (
-	("MOH-PVC-EFT-01", "PVO-EFT-01", "Required consideration"),
-	("MOH-PVC-ECO-01", "PVO-ECO-01", "Required consideration"),
-	("MOH-PVC-EFY-01", "PVO-EFY-01", "Recommended consideration"),
-	("MOH-PVC-RES-01", "PVO-RES-01", "Recommended consideration"),
-	("MOH-PVC-LOC-01", "PVO-LOC-01", "Required consideration"),
-	("MOH-PVC-SUS-01", "PVO-SUS-01", "Recommended consideration"),
-	("MOH-PVC-SUS-02", "PVO-SUS-02", "Required consideration"),
-	("MOH-PVC-INT-01", "PVO-INT-01", "Required consideration"),
+	("MOH-PVC-EFT-01", "Improve availability of critical health services", "Required consideration"),
+	("MOH-PVC-ECO-01", "Reduce whole-life infrastructure cost", "Required consideration"),
+	("MOH-PVC-EFY-01", "Reduce implementation and service-restoration time", "Recommended consideration"),
+	("MOH-PVC-RES-01", "Improve continuity of critical services", "Recommended consideration"),
+	("MOH-PVC-LOC-01", "Develop internal and local technical capability", "Required consideration"),
+	("MOH-PVC-SUS-01", "Reduce infrastructure energy consumption", "Recommended consideration"),
+	("MOH-PVC-SUS-02", "Ensure compliant handling of replaced ICT equipment", "Required consideration"),
+	("MOH-PVC-INT-01", "Minimise uncontrolled contract changes", "Required consideration"),
 )
 
 OWN_DHP = {"owner_org_unit": C.OU_DIR_DHP, "fixture_namespace": C.FIXTURE_NS}
@@ -121,45 +110,6 @@ def _upsert(doctype: str, code_field: str, code: str, values: dict) -> str:
 	return doc.name
 
 
-def _ensure_pvos(pe: str) -> dict[str, str]:
-	out: dict[str, str] = {}
-	for code, pillar, title in PVO_FIXTURE:
-		name = frappe.db.get_value(
-			"Public Value Objective", {"objective_code": code, "version_number": 1}, "name"
-		)
-		if name:
-			frappe.db.set_value(
-				"Public Value Objective", name, "status", "Active", update_modified=False
-			)
-			out[code] = name
-			continue
-		doc = frappe.get_doc(
-			{
-				"doctype": "Public Value Objective",
-				"objective_code": code,
-				"version_number": 1,
-				"title": title,
-				"pillar": pillar,
-				"status": "Active",
-				"scope": "Procuring entity",
-				"procuring_entity": pe,
-				"description": title,
-				"source_type": "Entity Strategy",
-				"source_reference": "MOH Public Value Framework",
-				"applicability_mode": "Universal consideration",
-				"measure_guidance": "Track via plan measurement framework",
-				"evidence_guidance": "Approved monitoring report",
-				"responsible_function": "Digital Health Directorate",
-				"default_enforcement_guidance": "Reporting obligation",
-				"effective_from": "2026-07-01",
-				"effective_to": "2030-06-30",
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		out[code] = doc.name
-	return out
-
-
 def clear_kentender_mvp_v1_strategy(
 	*, include_canonical: bool = True, include_playwright: bool = True
 ) -> dict[str, Any]:
@@ -204,7 +154,7 @@ def clear_kentender_mvp_v1_strategy(
 		"Strategy Audit Event",
 		"Strategy Corrective Action",
 		"Performance Measurement",
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
 		"Strategic Outcome",
@@ -267,7 +217,6 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"Strategic Plan", legacy, "plan_code", C.PLAN_CODE, update_modified=False
 		)
 
-	pvos = _ensure_pvos(pe)
 	plan_name = frappe.db.get_value(
 		"Strategic Plan", {"plan_code": C.PLAN_CODE, "version_number": 1}, "name"
 	)
@@ -589,13 +538,13 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 
 	# PVCs
 	pvcs: dict[str, str] = {}
-	for pvc_code, pvo_code, level in PVC_FIXTURE:
+	for pvc_code, statement, level in PVC_FIXTURE:
 		existing = frappe.db.get_value(
-			"Plan Value Commitment", {"commitment_code": pvc_code}, "name"
+			"Strategy Value Commitment", {"commitment_code": pvc_code}, "name"
 		)
 		if existing:
 			frappe.db.set_value(
-				"Plan Value Commitment",
+				"Strategy Value Commitment",
 				existing,
 				{"fixture_namespace": C.FIXTURE_NS, "status": "Locked"},
 				update_modified=False,
@@ -604,11 +553,10 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			continue
 		doc = frappe.get_doc(
 			{
-				"doctype": "Plan Value Commitment",
+				"doctype": "Strategy Value Commitment",
 				"commitment_code": pvc_code,
 				"plan_version": plan_name,
-				"public_value_objective_version": pvos[pvo_code],
-				"rationale": f"Adopt {pvo_code} into Active Plan",
+				"rationale": statement,
 				"consideration_level": level,
 				"responsible_owner": C.DIR_DHP_NAME,
 				"status": "Locked",
@@ -655,7 +603,7 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 		plan_version=plan_name,
 	)
 
-	cgk = _seed_kisumu_strategy(pvos)
+	cgk = _seed_kisumu_strategy()
 
 	return {
 		"ok": True,
@@ -664,14 +612,13 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 		"plan_code": C.PLAN_CODE,
 		"target_avail": tgt_avail,
 		"measurements": meas,
-		"pvos": pvos,
 		"pvcs": pvcs,
 		"procuring_entity": pe,
 		"kisumu": cgk,
 	}
 
 
-def _seed_kisumu_strategy(pvos: dict[str, str]) -> dict[str, Any]:
+def _seed_kisumu_strategy() -> dict[str, Any]:
 	"""Contract §5.8–5.9 minimal county Strategy fixture."""
 	pe = _pe_cgk()
 	plan_name = frappe.db.get_value(
@@ -805,18 +752,18 @@ def _seed_kisumu_strategy(pvos: dict[str, str]) -> dict[str, Any]:
 	)
 
 	cgk_pvcs = (
-		("CGK-PVC-EFT-01", "PVO-EFT-01", "Required consideration"),
-		("CGK-PVC-ECO-01", "PVO-ECO-01", "Required consideration"),
-		("CGK-PVC-SUS-01", "PVO-SUS-01", "Recommended consideration"),
+		("CGK-PVC-EFT-01", "Improve availability of critical health services", "Required consideration"),
+		("CGK-PVC-ECO-01", "Reduce whole-life infrastructure cost", "Required consideration"),
+		("CGK-PVC-SUS-01", "Reduce infrastructure energy consumption", "Recommended consideration"),
 	)
 	pvcs: dict[str, str] = {}
-	for pvc_code, pvo_code, level in cgk_pvcs:
+	for pvc_code, statement, level in cgk_pvcs:
 		existing = frappe.db.get_value(
-			"Plan Value Commitment", {"commitment_code": pvc_code}, "name"
+			"Strategy Value Commitment", {"commitment_code": pvc_code}, "name"
 		)
 		if existing:
 			frappe.db.set_value(
-				"Plan Value Commitment",
+				"Strategy Value Commitment",
 				existing,
 				{"fixture_namespace": C.FIXTURE_NS, "status": "Locked", **OWN_CGK},
 				update_modified=False,
@@ -825,11 +772,10 @@ def _seed_kisumu_strategy(pvos: dict[str, str]) -> dict[str, Any]:
 			continue
 		doc = frappe.get_doc(
 			{
-				"doctype": "Plan Value Commitment",
+				"doctype": "Strategy Value Commitment",
 				"commitment_code": pvc_code,
 				"plan_version": plan_name,
-				"public_value_objective_version": pvos[pvo_code],
-				"rationale": f"Adopt {pvo_code} into Kisumu Active Plan",
+				"rationale": statement,
 				"consideration_level": level,
 				"responsible_owner": C.OU_CGK_HEALTH_NAME,
 				"status": "Locked",

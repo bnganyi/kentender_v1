@@ -302,7 +302,7 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn('data-testid="kt-bud-line-save"', fixture)
 		self.assertIn("Edit Budget Line", fixture)
 		self.assertIn("Funding details", fixture)
-		self.assertIn("Plan Value Commitment treatment", fixture)
+		self.assertIn("Strategy Value Commitment treatment", fixture)
 		self.assertIn("expand_more", fixture)
 		self.assertNotIn("cdn.tailwindcss.com", fixture)
 		self.assertNotIn("GovProcure Suite", fixture)

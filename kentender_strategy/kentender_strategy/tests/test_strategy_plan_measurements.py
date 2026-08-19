@@ -25,7 +25,7 @@ def _delete_plan_cascade(plan_id: str | None) -> None:
 		return
 	for dt in (
 		"Performance Measurement",
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
 		"Strategic Outcome",

@@ -148,8 +148,7 @@ Open Strategy Performance
 <div class="bg-surface-container-low border border-outline-variant rounded-lg p-card-padding" data-testid="kt-str-pf-quick-help">
 <h4 class="font-label-caps text-label-caps text-on-surface-variant mb-2">QUICK HELP</h4>
 <p class="text-body-md text-on-surface-variant leading-relaxed">
-            Strategic alignment ensures all procurement activities map back to national priorities. 
-            <a class="text-secondary font-semibold hover:underline" href="#" data-kt-str-action="pvo-catalogue">Learn about Strategic Pillars →</a>
+            Strategic alignment ensures all procurement activities map back to national priorities.
 </p>
 </div>
 </div>

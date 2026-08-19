@@ -42,10 +42,6 @@
 			}
 			if (action === "review-plan" && code) {
 				frappe.set_route("strategy-plan-review", code);
-				return;
-			}
-			if (action === "pvo-catalogue") {
-				frappe.set_route("strategy-pvo-catalogue");
 			}
 		});
 	}

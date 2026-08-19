@@ -238,30 +238,6 @@
 }
 .kt-cl-shell .kt-str-root [data-testid="kt-str-vc-table"] { width: 100% !important; }
 
-/* Drawer PVO picker — clear selected indicator (utility border-primary is not mapped). */
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-option {
-  border: 1px solid #e8e7ed !important;
-  background: #ffffff !important;
-  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease !important;
-}
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-option:hover {
-  background: #f4f3f9 !important;
-  border-color: #c3c6d1 !important;
-}
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-option.is-selected,
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-option[data-kt-str-vc-pvo-selected="1"] {
-  border-color: #003d9b !important;
-  background: color-mix(in srgb, #003d9b 6%, #ffffff) !important;
-	box-shadow: none !important;
-}
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-selected-badge {
-  color: #003d9b !important;
-}
-.kt-cl-shell .kt-str-root .kt-str-vc-pvo-selected-badge .material-symbols-outlined {
-  font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 20 !important;
-}
-
-
 .kt-cl-shell .kt-str-root .bg-error-container\/5{background-color:color-mix(in srgb, #ffdad6 5%, transparent) !important}
 .kt-cl-shell .kt-str-root .bg-status-reserved{background-color:#F59E0B !important}
 .kt-cl-shell .kt-str-root .border-l-2{border-left-width:2px !important;border-left-style:solid !important}

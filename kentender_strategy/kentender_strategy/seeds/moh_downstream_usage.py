@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Link MOH demo Demand / Budget Line records to MOH-TGT-AVAIL-2028 for Downstream Usage."""
+"""Link MOH demo Budget Line records to MOH-TGT-AVAIL-2028 for Downstream Usage."""
 
 from __future__ import annotations
 
@@ -7,39 +7,16 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-	demand_doctype_available,
-)
 from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 	STRATEGY_PLAN_CODE,
 	TARGET_CODE,
 )
 from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
 
-# Canonical Demands MVP-1 principal fixture (DEM-SEED-001).
-SEED_DEMAND_CODES = ("DMD-MOH-2027-014",)
 # Canonical MVP-1 Budget Line (Budget portfolio fixture).
 SEED_BUDGET_LINE_CODE = "MOH-BL-DHI-2027"
 # PP2 WORKS master package (PACKAGE_DRAFT+).
 SEED_PACKAGE_CODE = "PKG-MOH-2026-001"
-CANONICAL_DEMAND_TREATMENTS = {
-	"MOH-PVC-EFT-01": (
-		"Embedded in specification",
-		"Infrastructure supports reliable critical health services",
-	),
-	"MOH-PVC-ECO-01": (
-		"To be determined in Planning",
-		"Whole-life costing, energy use and lifecycle optimisation must be resolved during plan preparation",
-	),
-	"MOH-PVC-RES-01": (
-		"Contract obligation",
-		"Redundancy, continuity and support requirements must carry forward",
-	),
-	"MOH-PVC-SUS-02": (
-		"Delivery or disposal obligation",
-		"Replaced ICT equipment requires controlled end-of-life handling",
-	),
-}
 
 
 def _link_consumer(doctype: str, name: str, target_name: str) -> bool:
@@ -59,96 +36,6 @@ def _link_consumer(doctype: str, name: str, target_name: str) -> bool:
 		update_modified=True,
 	)
 	return True
-
-
-def _link_demand(name: str, plan_name: str, target_name: str) -> bool:
-	"""Upsert the MVP Demand Strategy Reference related record."""
-	target = frappe.db.get_value(
-		"Performance Target",
-		target_name,
-		["target_code", "title"],
-		as_dict=True,
-	)
-	if not target:
-		return False
-	values = {
-		"plan": plan_name,
-		"plan_version_id": plan_name,
-		"target_id": target_name,
-		"target_code": target.target_code,
-		"target_name": target.title,
-		"snapshot_label": f"{target.target_code} — {target.title}",
-		"selection_source": "Canonical fixture",
-	}
-	reference = frappe.db.get_value(
-		"Demand Strategy Reference",
-		{"demand": name, "reference_type": "Primary"},
-		"name",
-	)
-	if reference:
-		frappe.db.set_value(
-			"Demand Strategy Reference",
-			reference,
-			values,
-			update_modified=False,
-		)
-	else:
-		frappe.get_doc(
-			{
-				"doctype": "Demand Strategy Reference",
-				"demand": name,
-				"reference_type": "Primary",
-				**values,
-			}
-		).insert(ignore_permissions=True)
-	return True
-
-
-def _apply_canonical_value_treatments(
-	demand_name: str | None, plan_name: str | None
-) -> int:
-	"""Upsert the four canonical principal-Demand PVC treatments."""
-	if not demand_name or not plan_name:
-		return 0
-	commitments = frappe.get_all(
-		"Plan Value Commitment",
-		filters={
-			"plan_version": plan_name,
-			"commitment_code": ["in", list(CANONICAL_DEMAND_TREATMENTS)],
-		},
-		fields=["name", "commitment_code"],
-	)
-	for pvc in commitments:
-		treatment, rationale = CANONICAL_DEMAND_TREATMENTS[pvc.commitment_code]
-		values = {
-			"pvc_version_id": pvc.name,
-			"pvc_snapshot": pvc.commitment_code,
-			"applicability": "Applicable",
-			"treatment": treatment,
-			"rationale": rationale,
-		}
-		existing = frappe.db.get_value(
-			"Demand Value Treatment",
-			{"demand": demand_name, "plan_value_commitment": pvc.name},
-			"name",
-		)
-		if existing:
-			frappe.db.set_value(
-				"Demand Value Treatment",
-				existing,
-				values,
-				update_modified=False,
-			)
-		else:
-			frappe.get_doc(
-				{
-					"doctype": "Demand Value Treatment",
-					"demand": demand_name,
-					"plan_value_commitment": pvc.name,
-					**values,
-				}
-			).insert(ignore_permissions=True)
-	return len(commitments)
 
 
 def _link_budget_line(name: str, plan_name: str, target_name: str) -> bool:
@@ -215,12 +102,7 @@ def seed_moh_downstream_usage_refs(
 	if not plan_name or not target_name:
 		return {"ok": False, "reason": "Missing Active MOH plan or target", "linked": linked}
 
-	if demand_doctype_available():
-		for code in SEED_DEMAND_CODES:
-			demand_name = frappe.db.get_value("Demand", {"demand_code": code}, "name")
-			if demand_name and _link_demand(demand_name, plan_name, target_name):
-				linked["demand"] = demand_name
-				break
+	# Demands package retired; no demand consumer link (STR-FR-020).
 
 	# Prefer Budget portfolio fixture; ensure primary_* points at MOH strategy plan/target.
 	if frappe.db.exists("DocType", "Budget Line"):
@@ -242,26 +124,6 @@ def seed_moh_downstream_usage_refs(
 	# XMOD-STR-006 — PP2 Procurement Package retired; skip package consumer link.
 
 	return {
-		"ok": bool(linked["demand"] or linked["budget_line"] or linked.get("package")),
+		"ok": bool(linked["budget_line"] or linked.get("package")),
 		"linked": linked,
-	}
-
-
-def seed_moh_performance_contribution_depth(
-	plan_name: str | None = None,
-	target_name: str | None = None,
-) -> dict[str, Any]:
-	"""DEM-INT-008 — link MVP Demand refs and address Required PVCs."""
-	base = seed_moh_downstream_usage_refs(plan_name=plan_name, target_name=target_name)
-	linked = dict(base.get("linked") or {})
-	treated = _apply_canonical_value_treatments(
-		linked.get("demand"),
-		linked.get("plan"),
-	)
-
-
-	return {
-		"ok": bool(base.get("ok")),
-		"linked": linked,
-		"required_treatments_applied": treated,
 	}

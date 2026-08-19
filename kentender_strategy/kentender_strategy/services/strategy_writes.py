@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Write companions for Strategy hierarchy, PVO, commitments, measurements."""
+"""Write companions for Strategy hierarchy, commitments, measurements."""
 
 from __future__ import annotations
 
@@ -274,40 +274,6 @@ def delete_structure_node(node_type: str, name: str) -> dict:
 	return {"ok": True}
 
 
-def upsert_pvo(payload: dict) -> dict:
-	require_any_role(ROLE_OFFICER, ROLE_MANAGER, "System Manager")
-	name = payload.get("id") or payload.get("name")
-	triggers = payload.pop("triggers", None)
-	fields = {k: v for k, v in payload.items() if k not in ("id", "name", "doctype")}
-	if name and frappe.db.exists("Public Value Objective", name):
-		doc = frappe.get_doc("Public Value Objective", name)
-		if doc.status in ("Active", "Superseded", "Retired"):
-			frappe.throw(_("Active Public Value Objectives are immutable; create a successor"))
-		# Objective codes are immutable after create (catalogue or system).
-		fields.pop("objective_code", None)
-		doc.update(fields)
-		if triggers is not None:
-			doc.set("triggers", [])
-			for tr in triggers:
-				doc.append("triggers", tr)
-		doc.save()
-	else:
-		fields["doctype"] = "Public Value Objective"
-		# Empty → system MOH-OBJ-####; catalogue seeds may pass PVO-* explicitly.
-		if not (fields.get("objective_code") or "").strip():
-			fields["objective_code"] = None
-		doc = frappe.get_doc(fields)
-		for tr in triggers or []:
-			doc.append("triggers", tr)
-		doc.insert()
-	return {
-		"id": doc.name,
-		"code": doc.objective_code,
-		"name": doc.title,
-		"status": doc.status,
-	}
-
-
 _CONSIDERATION_LEVEL_MAP = {
 	"required": "Required consideration",
 	"required consideration": "Required consideration",
@@ -333,7 +299,7 @@ def _normalize_consideration_level(raw) -> str | None:
 	frappe.throw(_("Invalid consideration level: {0}").format(raw))
 
 
-def upsert_plan_value_commitment(payload: dict) -> dict:
+def upsert_strategy_value_commitment(payload: dict) -> dict:
 	if not can_edit_draft_plan():
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	name = payload.get("id") or payload.get("name")
@@ -346,8 +312,8 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 		fields["consideration_level"] = _normalize_consideration_level(fields["consideration_level"])
 
 	plan_version = fields.get("plan_version")
-	if not plan_version and name and frappe.db.exists("Plan Value Commitment", name):
-		plan_version = frappe.db.get_value("Plan Value Commitment", name, "plan_version")
+	if not plan_version and name and frappe.db.exists("Strategy Value Commitment", name):
+		plan_version = frappe.db.get_value("Strategy Value Commitment", name, "plan_version")
 		fields["plan_version"] = plan_version
 	if not plan_version:
 		frappe.throw(_("Plan version is required"))
@@ -356,14 +322,6 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 	if pe:
 		assert_entity_in_scope(pe)
 
-	pvo_id = fields.get("public_value_objective_version")
-	if not name and not pvo_id:
-		frappe.throw(_("Public Value Objective is required"))
-	if pvo_id:
-		pvo_status = frappe.db.get_value("Public Value Objective", pvo_id, "status")
-		if pvo_status != "Active" and not name:
-			frappe.throw(_("Only Active Public Value Objectives may be selected"))
-
 	# Require ≥1 link on create; on update when links explicitly provided
 	if links is not None:
 		if not links:
@@ -371,8 +329,8 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 	elif not name:
 		frappe.throw(_("Link at least one Strategic Outcome or Performance Target"))
 
-	if name and frappe.db.exists("Plan Value Commitment", name):
-		doc = frappe.get_doc("Plan Value Commitment", name)
+	if name and frappe.db.exists("Strategy Value Commitment", name):
+		doc = frappe.get_doc("Strategy Value Commitment", name)
 		doc.update(fields)
 		if links is not None:
 			doc.set("links", [])
@@ -380,7 +338,7 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 				doc.append("links", link)
 		doc.save(ignore_permissions=True)
 	else:
-		fields["doctype"] = "Plan Value Commitment"
+		fields["doctype"] = "Strategy Value Commitment"
 		fields.setdefault("status", "Draft")
 		fields["commitment_code"] = None
 		doc = frappe.get_doc(fields)
@@ -393,7 +351,7 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 def set_commitment_links(commitment_name: str, links: list[dict]) -> dict:
 	if not can_edit_draft_plan():
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	doc = frappe.get_doc("Plan Value Commitment", commitment_name)
+	doc = frappe.get_doc("Strategy Value Commitment", commitment_name)
 	_assert_plan_editable(doc.plan_version)
 	pe = frappe.db.get_value("Strategic Plan", doc.plan_version, "procuring_entity")
 	if pe:
@@ -482,44 +440,6 @@ def update_plan_identity(plan_name: str, payload: dict) -> dict:
 			doc.set(key, payload[key])
 	doc.save()
 	return {"id": doc.name, "code": doc.plan_code, "name": doc.title, "status": doc.status}
-
-
-def get_pvo(name: str | None = None, objective_code: str | None = None) -> dict:
-	if not name and objective_code:
-		name = frappe.db.get_value(
-			"Public Value Objective",
-			{"objective_code": objective_code, "status": "Active"},
-			"name",
-		) or frappe.db.get_value("Public Value Objective", {"objective_code": objective_code}, "name")
-	doc = frappe.get_doc("Public Value Objective", name)
-	return {
-		"id": doc.name,
-		"code": doc.objective_code,
-		"name": doc.title,
-		"version_number": doc.version_number,
-		"pillar": doc.pillar,
-		"status": doc.status,
-		"scope": doc.scope,
-		"procuring_entity": doc.procuring_entity,
-		"description": doc.description,
-		"source_type": doc.source_type,
-		"source_reference": doc.source_reference,
-		"applicability_mode": doc.applicability_mode,
-		"measure_guidance": doc.measure_guidance,
-		"evidence_guidance": doc.evidence_guidance,
-		"responsible_function": doc.responsible_function,
-		"default_enforcement_guidance": doc.default_enforcement_guidance,
-		"effective_from": doc.effective_from,
-		"effective_to": doc.effective_to,
-		"triggers": [
-			{
-				"trigger_type": t.trigger_type,
-				"trigger_value": t.trigger_value,
-				"include": t.include,
-			}
-			for t in (doc.triggers or [])
-		],
-	}
 
 
 def _resolve_target_name_for_code(target_code: str, plan_code: str | None = None) -> str | None:
@@ -900,11 +820,11 @@ def create_successor_version(plan_version: str) -> dict:
 		id_map[old.name] = clone.name
 
 	for cname in frappe.get_all(
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		filters={"plan_version": src.name},
 		pluck="name",
 	):
-		old = frappe.get_doc("Plan Value Commitment", cname)
+		old = frappe.get_doc("Strategy Value Commitment", cname)
 		links = []
 		for link in old.get("links") or []:
 			row = {
@@ -915,9 +835,8 @@ def create_successor_version(plan_version: str) -> dict:
 			links.append(row)
 		clone = frappe.get_doc(
 			{
-				"doctype": "Plan Value Commitment",
+				"doctype": "Strategy Value Commitment",
 				"plan_version": new_plan.name,
-				"public_value_objective_version": old.public_value_objective_version,
 				"rationale": old.rationale,
 				"consideration_level": old.consideration_level,
 				"responsible_owner": old.responsible_owner,

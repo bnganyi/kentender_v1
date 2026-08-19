@@ -429,7 +429,7 @@ def validate_kentender_mvp_v1(
 		checks.append(
 			_check(
 				f"strategy.pvc.{pvc}",
-				bool(frappe.db.exists("Plan Value Commitment", {"commitment_code": pvc})),
+				bool(frappe.db.exists("Strategy Value Commitment", {"commitment_code": pvc})),
 			)
 		)
 

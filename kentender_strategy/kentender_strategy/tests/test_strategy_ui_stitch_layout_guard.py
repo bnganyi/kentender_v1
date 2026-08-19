@@ -257,7 +257,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("kt-str-vc-drawer-filters", vc_css)
 		self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", vc_css)
 		vc_fx = _read(FIXTURES / "value_commitments.js")
-		self.assertIn("Plan value commitments", vc_fx)
+		self.assertIn("Strategy value commitments", vc_fx)
 		# Section title matches Measurements (headline-md / 600), not plan chrome headline-lg.
 		self.assertIn("font-headline-md text-headline-md text-on-surface", vc_fx)
 		self.assertNotIn("font-headline-lg text-headline-lg text-primary", vc_fx)
@@ -269,15 +269,8 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("kt-str-vc-table", vc_fx)
 		self.assertIn("kt-str-vc-drawer", vc_fx)
 		self.assertIn('data-testid="kt-str-vc-drawer-scroll"', vc_fx)
-		self.assertIn('data-testid="kt-str-vc-drawer-filters"', vc_fx)
-		self.assertIn("grid grid-cols-2 gap-2", vc_fx)
 		self.assertIn("Add commitment", vc_fx)
 		self.assertNotIn("toggleDrawer()", vc_fx)
-		# Pillar/Source must not use flex-1 without min-w-0 (unequal columns).
-		self.assertNotRegex(
-			vc_fx,
-			r'data-kt-str-vc-drawer-pillar[^>]+\bflex-1\b',
-		)
 		self.assertIn("text-headline-md", vc_css)
 		self.assertTrue(REMAINING_CSS.is_file())
 		remaining_css = _read(REMAINING_CSS)
@@ -440,7 +433,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		util_css = _read(UTILITIES)
 		self.assertIn(".kt-str-footer-page-btn.is-active", util_css)
 		self.assertIn("kt-str-footer-page-size-select", util_css)
-		for name in ("portfolio.js", "pvo_catalogue.js", "measurements.js", "audit.js"):
+		for name in ("portfolio.js", "measurements.js", "audit.js"):
 			fx = _read(FIXTURES / name)
 			self.assertIn(
 				"tablePaginationFooterHtml",
@@ -453,10 +446,6 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("function attachTablePagination", live_js)
 		self.assertIn("data-kt-str-footer-page-num", live_js)
 		self.assertIn('pageSize: 20', live_js)
-		pvo_cat = _read(FIXTURES / "pvo_catalogue.js")
-		self.assertIn('data-kt-str-action="create-pvo"', pvo_cat)
-		self.assertIn("min-w-0 flex-1", pvo_cat)
-		self.assertNotIn('<div class="max-w-3xl">', pvo_cat)
 		review_blockers = _read(FIXTURES / "review_blockers.js")
 		self.assertIn("kt-str-review-blockers", review_blockers)
 		self.assertIn("data-kt-str-review-group", review_blockers)
@@ -549,8 +538,6 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 			"overview.js": ("kt-str-overview", "Plan Details", "kt-str-successor-modal"),
 			"structure.js": ("kt-str-structure", "Structure", "Add Structure Item"),
 			"structure_drawer.js": ("kt-str-structure-drawer", "fixed inset-0", "Target"),
-			"pvo_catalogue.js": ("kt-str-pvo-catalogue", "public value", "PVO-"),
-			"pvo_editor.js": ("kt-str-pvo-editor", "public value", "Pillar"),
 			"value_commitments.js": ("kt-str-value-commitments", "Value", "Commitment"),
 			"measurements.js": ("kt-str-measurements", "Measurement", "data-kt-str-meas-tbody"),
 			"measurement_submit.js": (
@@ -579,7 +566,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 				"Outcome Performance",
 				"Funding Snapshot",
 				"Aligned Procurement Pipeline",
-				"Plan Value Commitments",
+				"Strategy Value Commitments",
 				"FUNDING TREATMENT",
 				"DOWNSTREAM ADOPTION",
 				"md:grid-cols-4",
@@ -601,13 +588,11 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 			"strategy-plan-create",
 			"strategy-plan-overview",
 			"strategy-plan-structure",
-			"strategy-plan-value-commitments",
+			"strategy-value-commitments",
 			"strategy-plan-measurements",
 			"strategy-plan-downstream-usage",
 			"strategy-plan-review",
 			"strategy-plan-audit",
-			"strategy-pvo-catalogue",
-			"strategy-pvo-editor",
 			"strategy-measurement-submit",
 			"strategy-measurement-verify",
 			"strategy-corrective-actions",

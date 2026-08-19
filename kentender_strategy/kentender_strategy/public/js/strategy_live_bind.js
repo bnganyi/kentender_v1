@@ -1089,7 +1089,7 @@ frappe.provide("kentender_strategy.live");
 				}
 				if (action === "view-commitments") {
 					e.preventDefault();
-					frappe.set_route("strategy-plan-value-commitments", token);
+					frappe.set_route("strategy-value-commitments", token);
 					return;
 				}
 				if (
@@ -2120,7 +2120,7 @@ frappe.provide("kentender_strategy.live");
 			var args = { plan_code: state.routeToken || planCode };
 			return Promise.all([
 				call("get_strategy_tree", args),
-				call("list_plan_value_commitments", args).catch(function () {
+				call("list_strategy_value_commitments", args).catch(function () {
 					return { rows: [] };
 				}),
 				call("get_plan_readiness_api", args).catch(function () {
@@ -2289,82 +2289,6 @@ frappe.provide("kentender_strategy.live");
 		return reload(null);
 	}
 
-	function renderPvoCatalogueRows(rows) {
-		if (!(rows || []).length) {
-			return (
-				'<tr data-kt-str-empty="1"><td class="py-6 px-4 text-body-md text-on-surface-variant" colspan="8">' +
-				esc(__("No public-value objectives match the current filters.")) +
-				"</td></tr>"
-			);
-		}
-		return rows
-			.map(function (r) {
-				var status = r.status || "Active";
-				var active = String(status).toLowerCase() === "active";
-				var pillCls = active
-					? "bg-status-available/10 text-status-available border border-status-available/20"
-					: "bg-status-reserved/10 text-status-reserved border border-status-reserved/20";
-				var dotCls = active ? "bg-status-available" : "bg-status-reserved";
-				var actionLabel = active ? __("View") : __("Review");
-				var actionCls = active
-					? "text-primary hover:text-primary-container"
-					: "text-secondary hover:text-secondary-container";
-				return (
-					'<tr class="hover:bg-surface-container/50 transition-colors group" data-pvo-id="' +
-					esc(r.id) +
-					'" data-pvo-code="' +
-					esc(r.code) +
-					'">' +
-					'<td class="py-3 px-4"><div class="flex flex-col">' +
-					'<span class="font-data-mono text-data-mono text-primary font-bold">' +
-					esc(r.code) +
-					"</span>" +
-					'<span class="font-body-md text-on-surface font-medium mt-1">' +
-					esc(r.name) +
-					"</span></div></td>" +
-					'<td class="py-3 px-4"><span class="font-body-md text-[13px] text-on-surface">' +
-					esc(r.pillar || "—") +
-					"</span></td>" +
-					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface-variant">' +
-					esc(r.source_type || "—") +
-					"</td>" +
-					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface">' +
-					esc(r.applicability_mode || "—") +
-					"</td>" +
-					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface-variant">—</td>' +
-					'<td class="py-3 px-4 font-data-mono text-data-mono text-on-surface-variant">v1</td>' +
-					'<td class="py-3 px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ' +
-					pillCls +
-					' font-body-md text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full ' +
-					dotCls +
-					'"></span>' +
-					esc(status) +
-					"</span></td>" +
-					'<td class="py-3 px-4 text-right"><button type="button" class="' +
-					actionCls +
-					' font-body-md text-sm font-medium transition-colors" data-kt-str-action="open-pvo" data-pvo-code="' +
-					esc(r.code) +
-					'">' +
-					esc(actionLabel) +
-					"</button></td></tr>"
-				);
-			})
-			.join("");
-	}
-
-	function bindPvoCatalogue($root) {
-		return call("list_public_value_objectives").then(function (rows) {
-			$root.attr("data-kt-str-live", "1");
-			var pager = attachTablePagination($root, {
-				renderPage: function (pageRows) {
-					$root.find("[data-kt-str-pvo-tbody]").html(renderPvoCatalogueRows(pageRows));
-				},
-			});
-			pager.setRows(rows || [], true);
-			return rows;
-		});
-	}
-
 	function flattenTreeLinks(nodes, out) {
 		out = out || { outcomes: [], targets: [] };
 		(nodes || []).forEach(function (n) {
@@ -2383,12 +2307,10 @@ frappe.provide("kentender_strategy.live");
 		var state = {
 			dto: null,
 			tree: null,
-			pvos: [],
 			editable: false,
 			routeToken: planCode,
 			drawerMode: "add",
 			editId: null,
-			selectedPvoId: null,
 			selectedLinks: [],
 		};
 
@@ -2522,111 +2444,6 @@ frappe.provide("kentender_strategy.live");
 			);
 		}
 
-		function committedPvoIds() {
-			return ((state.dto && state.dto.rows) || []).map(function (r) {
-				return r.objective && r.objective.id;
-			});
-		}
-
-		function filteredPvos() {
-			var q = String($root.find("[data-kt-str-vc-drawer-search]").val() || "")
-				.trim()
-				.toLowerCase();
-			var pillar = $root.find("[data-kt-str-vc-drawer-pillar]").val() || "";
-			var source = $root.find("[data-kt-str-vc-drawer-source]").val() || "";
-			var taken = {};
-			if (state.drawerMode === "add") {
-				committedPvoIds().forEach(function (id) {
-					if (id) {
-						taken[id] = true;
-					}
-				});
-			}
-			return (state.pvos || []).filter(function (p) {
-				if (taken[p.id] && p.id !== state.selectedPvoId) {
-					return false;
-				}
-				if (pillar && p.pillar !== pillar) {
-					return false;
-				}
-				if (source && p.source_type !== source) {
-					return false;
-				}
-				if (!q) {
-					return true;
-				}
-				return (
-					String(p.code || "")
-						.toLowerCase()
-						.indexOf(q) >= 0 ||
-					String(p.name || "")
-						.toLowerCase()
-						.indexOf(q) >= 0
-				);
-			});
-		}
-
-		function paintPvoList() {
-			var list = filteredPvos();
-			var $host = $root.find("[data-kt-str-vc-drawer-pvo-list]");
-			if (!list.length) {
-				$host.html(
-					'<div class="text-sm text-on-surface-variant py-2">' +
-						esc(__("No matching Active objectives")) +
-						"</div>"
-				);
-				return;
-			}
-			$host.html(
-				list
-					.map(function (p) {
-						var sel = p.id === state.selectedPvoId;
-						return (
-							'<button type="button" class="kt-str-vc-pvo-option w-full text-left px-3 py-2 rounded-lg border' +
-							(sel ? " is-selected" : "") +
-							'" data-kt-str-action="select-pvo" data-kt-str-pvo-id="' +
-							esc(p.id) +
-							'" data-kt-str-vc-pvo-selected="' +
-							(sel ? "1" : "0") +
-							'" aria-pressed="' +
-							(sel ? "true" : "false") +
-							'">' +
-							'<div class="flex items-start justify-between gap-2">' +
-							"<div>" +
-							'<div class="font-data-mono text-xs text-secondary">' +
-							esc(p.code || "") +
-							"</div>" +
-							'<div class="text-sm font-medium text-on-surface">' +
-							esc(p.name || "") +
-							"</div></div>" +
-							(sel
-								? '<span class="kt-str-vc-pvo-selected-badge inline-flex items-center gap-1 shrink-0 text-xs font-semibold text-primary" aria-hidden="true">' +
-									'<span class="material-symbols-outlined text-[16px]">check_circle</span>' +
-									esc(__("Selected")) +
-									"</span>"
-								: "") +
-							"</div></button>"
-						);
-					})
-					.join("")
-			);
-		}
-
-		function paintPreview() {
-			var p = (state.pvos || []).find(function (x) {
-				return x.id === state.selectedPvoId;
-			});
-			var $prev = $root.find("[data-kt-str-vc-drawer-preview]");
-			if (!p) {
-				$prev.addClass("hidden");
-				return;
-			}
-			$prev.removeClass("hidden");
-			$root.find("[data-kt-str-vc-drawer-pvo-code]").text(p.code || "");
-			$root.find("[data-kt-str-vc-drawer-pvo-title]").text(p.name || "");
-			$root.find("[data-kt-str-vc-drawer-pvo-pillar]").text(p.pillar || "");
-		}
-
 		function paintLinkPicker() {
 			var flat = flattenTreeLinks((state.tree && state.tree.tree) || []);
 			var selected = {};
@@ -2694,48 +2511,12 @@ frappe.provide("kentender_strategy.live");
 			$root.find("[data-kt-str-vc-drawer-links]").html(html);
 		}
 
-		function fillPillarSourceFilters() {
-			var pillars = {};
-			var sources = {};
-			(state.pvos || []).forEach(function (p) {
-				if (p.pillar) {
-					pillars[p.pillar] = true;
-				}
-				if (p.source_type) {
-					sources[p.source_type] = true;
-				}
-			});
-			var $pillar = $root.find("[data-kt-str-vc-drawer-pillar]");
-			var curP = $pillar.val();
-			$pillar.html('<option value="">Pillar: All</option>');
-			Object.keys(pillars)
-				.sort()
-				.forEach(function (p) {
-					$pillar.append($("<option/>").val(p).text(p));
-				});
-			if (curP) {
-				$pillar.val(curP);
-			}
-			var $src = $root.find("[data-kt-str-vc-drawer-source]");
-			var curS = $src.val();
-			$src.html('<option value="">Source: All</option>');
-			Object.keys(sources)
-				.sort()
-				.forEach(function (s) {
-					$src.append($("<option/>").val(s).text(s));
-				});
-			if (curS) {
-				$src.val(curS);
-			}
-		}
-
 		function openDrawer(mode, row) {
 			if (!state.editable && mode === "add") {
 				return;
 			}
 			state.drawerMode = mode;
 			state.editId = row ? row.id : null;
-			state.selectedPvoId = row && row.objective ? row.objective.id : null;
 			state.selectedLinks = row
 				? (row.links || []).map(function (l) {
 						return {
@@ -2753,9 +2534,8 @@ frappe.provide("kentender_strategy.live");
 				.text(
 					mode === "edit"
 						? __("Update rationale, level, owner, and links")
-						: __("Select and configure an objective")
+						: __("Describe the commitment and link it to plan structure")
 				);
-			$root.find("[data-kt-str-vc-drawer-search]").val("");
 			$root.find("[data-kt-str-vc-drawer-rationale]").val((row && row.rationale) || "");
 			$root
 				.find("[data-kt-str-vc-drawer-level]")
@@ -2763,21 +2543,12 @@ frappe.provide("kentender_strategy.live");
 			$root
 				.find("[data-kt-str-vc-drawer-owner]")
 				.val((row && row.responsible_owner) || "");
-			var $lib = $root.find("[data-kt-str-vc-drawer-library]");
-			if (mode === "edit") {
-				$lib.addClass("hidden");
-			} else {
-				$lib.removeClass("hidden");
-			}
 			var $save = $root.find("[data-kt-str-vc-drawer-save]");
 			if (state.editable) {
 				$save.removeClass("hidden").prop("disabled", false);
 			} else {
 				$save.addClass("hidden");
 			}
-			fillPillarSourceFilters();
-			paintPvoList();
-			paintPreview();
 			paintLinkPicker();
 			setDrawerOpen(true);
 		}
@@ -2805,14 +2576,6 @@ frappe.provide("kentender_strategy.live");
 			if (!plan) {
 				return;
 			}
-			var pvoId = state.selectedPvoId;
-			if (!pvoId && state.drawerMode === "add") {
-				frappe.show_alert({
-					message: __("Select an Active public-value objective"),
-					indicator: "orange",
-				});
-				return;
-			}
 			var rationale = String($root.find("[data-kt-str-vc-drawer-rationale]").val() || "").trim();
 			var owner = String($root.find("[data-kt-str-vc-drawer-owner]").val() || "").trim();
 			var level = $root.find("[data-kt-str-vc-drawer-level]").val();
@@ -2833,7 +2596,6 @@ frappe.provide("kentender_strategy.live");
 			}
 			var payload = {
 				plan_version: plan.id,
-				public_value_objective_version: pvoId,
 				rationale: rationale,
 				consideration_level: level,
 				responsible_owner: owner,
@@ -2843,7 +2605,7 @@ frappe.provide("kentender_strategy.live");
 			if (state.drawerMode === "edit" && state.editId) {
 				payload.id = state.editId;
 			}
-			call("upsert_plan_value_commitment", { payload: payload })
+			call("upsert_strategy_value_commitment", { payload: payload })
 				.then(function () {
 					setDrawerOpen(false);
 					frappe.show_alert({ message: __("Commitment saved"), indicator: "green" });
@@ -2892,17 +2654,13 @@ frappe.provide("kentender_strategy.live");
 		function reload() {
 			var args = { plan_code: state.routeToken || planCode };
 			return Promise.all([
-				call("list_plan_value_commitments", args),
+				call("list_strategy_value_commitments", args),
 				call("get_strategy_tree", args).catch(function () {
 					return null;
-				}),
-				call("list_public_value_objectives", { status: "Active" }).catch(function () {
-					return [];
 				}),
 			]).then(function (results) {
 				state.dto = results[0];
 				state.tree = results[1];
-				state.pvos = results[2] || [];
 				if (!state.dto || !state.dto.plan) {
 					return;
 				}
@@ -2940,23 +2698,7 @@ frappe.provide("kentender_strategy.live");
 				}
 				return;
 			}
-			if (action === "select-pvo") {
-				e.preventDefault();
-				state.selectedPvoId = $el.attr("data-kt-str-pvo-id");
-				paintPvoList();
-				paintPreview();
-			}
 		});
-
-		$root
-			.off("input.ktStrVcFilter change.ktStrVcFilter")
-			.on(
-				"input.ktStrVcFilter change.ktStrVcFilter",
-				"[data-kt-str-vc-drawer-search], [data-kt-str-vc-drawer-pillar], [data-kt-str-vc-drawer-source]",
-				function () {
-					paintPvoList();
-				}
-			);
 
 		setDrawerOpen(false);
 		return reload();
@@ -3992,32 +3734,6 @@ frappe.provide("kentender_strategy.live");
 		});
 	}
 
-	function bindPvoEditor($root) {
-		var route = frappe.get_route() || [];
-		var code = route.length > 1 ? route[1] : null;
-		if (!code) {
-			$root.attr("data-kt-str-live", "1");
-			return Promise.resolve(null);
-		}
-		return call("get_pvo", { objective_code: code }).then(function (pvo) {
-			if (!pvo) {
-				return;
-			}
-			$root.attr("data-kt-str-live", "1");
-			$root.find("input, textarea").each(function () {
-				var $el = $(this);
-				var name = ($el.attr("name") || $el.attr("data-field") || "").toLowerCase();
-				if (name.indexOf("title") >= 0) {
-					$el.val(pvo.name);
-				}
-				if (name.indexOf("code") >= 0) {
-					$el.val(pvo.code);
-				}
-			});
-			return pvo;
-		});
-	}
-
 	function resultTone(status) {
 		var lower = String(status || "")
 			.trim()
@@ -4729,13 +4445,7 @@ frappe.provide("kentender_strategy.live");
 		if (pageSlug === "strategy-plan-structure") {
 			return live.bindStructure($root, planCode);
 		}
-		if (pageSlug === "strategy-pvo-catalogue") {
-			return live.bindPvoCatalogue($root);
-		}
-		if (pageSlug === "strategy-pvo-editor") {
-			return live.bindPvoEditor($root);
-		}
-		if (pageSlug === "strategy-plan-value-commitments") {
+		if (pageSlug === "strategy-value-commitments") {
 			return live.bindCommitments($root, planCode);
 		}
 		if (pageSlug === "strategy-plan-measurements") {
@@ -5230,8 +4940,6 @@ frappe.provide("kentender_strategy.live");
 		bindCreatePlan: bindCreatePlan,
 		bindOverview: bindOverview,
 		bindStructure: bindStructure,
-		bindPvoCatalogue: bindPvoCatalogue,
-		bindPvoEditor: bindPvoEditor,
 		bindCommitments: bindCommitments,
 		bindMeasurements: bindMeasurements,
 		bindMeasurementForm: bindMeasurementForm,

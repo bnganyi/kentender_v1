@@ -52,7 +52,7 @@ def _delete_plan_cascade(plan_id: str | None):
 	if not plan_id or not frappe.db.exists("Strategic Plan", plan_id):
 		return
 	for dt in (
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
 		"Strategic Outcome",

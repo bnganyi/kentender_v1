@@ -864,7 +864,7 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 
 	pe_id = plan_doc.procuring_entity
 	pe_ref = _ref(pe_id, _entity_code(pe_id), _entity_label(pe_id))
-	commitments_dto = list_plan_value_commitments(plan_version=plan_id)
+	commitments_dto = list_strategy_value_commitments(plan_version=plan_id)
 	commitments = commitments_dto.get("rows") or []
 	required = sum(1 for c in commitments if (c.get("consideration_level") or "").startswith("Required"))
 	recommended = sum(
@@ -1014,63 +1014,6 @@ def list_active_targets(procuring_entity: str | None = None, plan_code: str | No
 		fields=["name", "target_code", "title", "plan_version"],
 	)
 	return [build_strategy_reference(t.plan_version, t.name) for t in targets]
-
-
-def list_applicable_value_commitments(
-	plan_version: str | None = None,
-	procurement_category: str | None = None,
-	procurement_type: str | None = None,
-	asset_condition: str | None = None,
-) -> list[dict]:
-	if not plan_version:
-		return []
-	rows = frappe.get_all(
-		"Plan Value Commitment",
-		filters={"plan_version": plan_version},
-		fields=[
-			"name",
-			"public_value_objective_version",
-			"rationale",
-			"consideration_level",
-			"responsible_owner",
-			"status",
-		],
-	)
-	out = []
-	for r in rows:
-		pvo = frappe.get_doc("Public Value Objective", r.public_value_objective_version)
-		if pvo.status != "Active" and r.status != "Locked":
-			continue
-		if pvo.applicability_mode != "Universal consideration":
-			if pvo.applicability_mode == "Demand-selected":
-				# Always return; demand records selection separately
-				pass
-			else:
-				triggers = pvo.get("triggers") or []
-				ok = False
-				for tr in triggers:
-					if not tr.include:
-						continue
-					if tr.trigger_type == "Procurement Category" and procurement_category == tr.trigger_value:
-						ok = True
-					if tr.trigger_type == "Procurement Type" and procurement_type == tr.trigger_value:
-						ok = True
-					if tr.trigger_type == "Asset Condition" and asset_condition == tr.trigger_value:
-						ok = True
-				# When filters supplied, require a matching include trigger
-				if (procurement_category or procurement_type or asset_condition) and not ok:
-					continue
-		out.append(
-			{
-				"id": r.name,
-				"consideration_level": r.consideration_level,
-				"rationale": r.rationale,
-				"responsible_owner": r.responsible_owner,
-				"objective": _ref(pvo.name, pvo.objective_code, pvo.title),
-				"pillar": pvo.pillar,
-			}
-		)
-	return out
 
 
 def _usage_target_ref(target_id: str | None, snapshot_label: str | None = None) -> dict | None:
@@ -1300,7 +1243,7 @@ def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = 
 	}
 	rows: list[dict] = []
 
-	if frappe.db.has_column("Demand", "strategy_plan_version"):
+	if frappe.db.exists("DocType", "Demand") and frappe.db.has_column("Demand", "strategy_plan_version"):
 		for d in frappe.get_all(
 			"Demand",
 			filters={"strategy_plan_version": plan.name},
@@ -1761,49 +1704,14 @@ def create_plan(payload: dict) -> dict:
 	}
 
 
-def list_public_value_objectives(
-	procuring_entity: str | None = None,
-	status: str | None = None,
-	search: str | None = None,
-) -> list[dict]:
-	filters: dict[str, Any] = {}
-	pe = procuring_entity or entity_for_user()
-	or_filters = None
-	if pe:
-		filters["procuring_entity"] = pe
-	if status:
-		filters["status"] = status
-	if search:
-		or_filters = [["objective_code", "like", f"%{search}%"], ["title", "like", f"%{search}%"]]
-	rows = frappe.get_all(
-		"Public Value Objective",
-		filters=filters,
-		or_filters=or_filters,
-		fields=["name", "objective_code", "title", "pillar", "status", "source_type", "applicability_mode"],
-		order_by="objective_code asc",
-	)
-	return [
-		{
-			"id": r.name,
-			"code": r.objective_code,
-			"name": r.title,
-			"pillar": r.pillar,
-			"status": r.status,
-			"source_type": r.source_type,
-			"applicability_mode": r.applicability_mode,
-		}
-		for r in rows
-	]
-
-
-def list_plan_value_commitments(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+def list_strategy_value_commitments(plan_version: str | None = None, plan_code: str | None = None) -> dict:
 	plan = _resolve_plan(plan_version, plan_code)
 	rows = frappe.get_all(
-		"Plan Value Commitment",
+		"Strategy Value Commitment",
 		filters={"plan_version": plan.name},
 		fields=[
 			"name",
-			"public_value_objective_version",
+			"commitment_code",
 			"rationale",
 			"consideration_level",
 			"responsible_owner",
@@ -1813,14 +1721,8 @@ def list_plan_value_commitments(plan_version: str | None = None, plan_code: str 
 	)
 	out = []
 	for r in rows:
-		pvo = frappe.db.get_value(
-			"Public Value Objective",
-			r.public_value_objective_version,
-			["objective_code", "title", "pillar", "status"],
-			as_dict=True,
-		)
 		raw_links = frappe.get_all(
-			"Plan Value Commitment Link",
+			"Strategy Value Commitment Link",
 			filters={"parent": r.name},
 			fields=["link_type", "linked_outcome", "linked_target"],
 		)
@@ -1866,12 +1768,7 @@ def list_plan_value_commitments(plan_version: str | None = None, plan_code: str 
 		out.append(
 			{
 				"id": r.name,
-				"objective": _ref(
-					r.public_value_objective_version,
-					pvo.objective_code if pvo else None,
-					pvo.title if pvo else None,
-				),
-				"objective_pillar": pvo.pillar if pvo else None,
+				"objective": _ref(r.name, r.commitment_code, r.rationale),
 				"rationale": r.rationale,
 				"consideration_level": r.consideration_level,
 				"responsible_owner": r.responsible_owner,
@@ -1930,14 +1827,12 @@ __all__ = [
 	"get_strategy_tree",
 	"validate_strategy_reference",
 	"list_active_targets",
-	"list_applicable_value_commitments",
 	"get_strategy_usage",
 	"list_measurements",
 	"create_plan",
 	"get_create_plan_context",
 	"get_plan_readiness",
-	"list_public_value_objectives",
-	"list_plan_value_commitments",
+	"list_strategy_value_commitments",
 	"list_audit_events",
 	"build_strategy_reference",
 ]
