@@ -7,6 +7,7 @@ from frappe.utils import cstr, flt, formatdate
 
 from kentender_core.services.authorization_diagnostics import authorize_support_record_view
 from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability, resolve_effective_access
+from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_procurement.departmental_needs.constants import (
 	CAP_CREATE,
 	CAP_EDIT_OWN,
@@ -89,6 +90,7 @@ def get_workspace(*, procuring_entity: str = "", organisation_unit: str = "", fi
 			"ok": False,
 			"outcome": "NO_ACTIVE_OPERATIONAL_ASSIGNMENT" if not contexts else "CONTEXT_SELECTION_REQUIRED",
 			"contexts": contexts,
+			"financial_years": [row for row in enabled_fiscal_years() if not row.get("is_future") and not row.get("is_past")],
 			"needs": [], "work_requiring_action": [], "summary": {}, "actions": [],
 		}
 	fy = cstr(financial_year).strip()
@@ -117,8 +119,9 @@ def get_workspace(*, procuring_entity: str = "", organisation_unit: str = "", fi
 	work = [row for row in needs if row["status"] == STATE_SUBMITTED and any(a["code"] == "review" for a in row["actions"])]
 	visible = [row for row in needs if row["status"] != STATE_WITHDRAWN]
 	can_create = evaluate_capability(principal, CAP_CREATE, ResourceContext("Departmental Need", "new", selected["procuring_entity"], fy, selected["organisation_unit"])).allowed
+	fy_options = [row for row in enabled_fiscal_years() if not row.get("is_future") and not row.get("is_past")]
 	return {
-		"ok": True, "outcome": "READY", "contexts": contexts,
+		"ok": True, "outcome": "READY", "contexts": contexts, "financial_years": fy_options,
 		"context": {**selected, "financial_year": fy},
 		"summary": {
 			"total_needs": len(visible),

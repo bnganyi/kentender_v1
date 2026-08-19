@@ -176,6 +176,10 @@
 .body-sidebar .sidebar-item-container[data-id="Budget & Funding"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "account_balance_wallet";
 }
+.body-sidebar .sidebar-item-container[data-id="Departmental Needs"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* Glyph per docs/mvp-1-r1/01_departmental_needs/NDS-UI-01.html's own sidebar spec. */
+	content: "account_tree";
+}
 .body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }

@@ -20,6 +20,9 @@ from kentender_core.seeds.kentender_mvp_v1.users import upsert_canonical_users
 from kentender_core.seeds.kentender_mvp_v1.validate import (
 	validate_kentender_mvp_v1 as _validate,
 )
+from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
+	upsert_departmental_needs,
+)
 
 # Latest seeded module stage (extend when the next MVP module lands).
 LATEST_STAGE = "planning"
@@ -95,6 +98,10 @@ def run_kentender_mvp_v1(
 		result["users"] = upsert_canonical_users(commit=False)
 		result["strategy"] = upsert_strategy(reset=False)
 		result["budget"] = upsert_budget()
+		# Departmental Needs is a greenfield module seeded independently of the
+		# legacy Demands stage below; its own commit persists even if a later
+		# stage in this already out-of-scope chain fails.
+		result["departmental_needs"] = upsert_departmental_needs(commit=True)
 		result["demands"] = upsert_demands()
 		result["planning"] = upsert_planning()
 

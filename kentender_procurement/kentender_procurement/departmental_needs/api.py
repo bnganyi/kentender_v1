@@ -15,17 +15,14 @@ from kentender_procurement.departmental_needs.services.lifecycle import (
 from kentender_procurement.departmental_needs.services.workspace import get_need, get_support_need, get_workspace
 
 
-for _fn in (
-	resolve_creation_context, get_workspace, get_need, get_support_need,
-	_create_need, _update_need, _submit_need, _review_need, _withdraw_need,
-	_request_withdrawal, _approve_withdrawal,
-):
-	frappe.whitelist()(_fn)
-
-create_need = _create_need
-update_need = _update_need
-submit_need = _submit_need
-review_need = _review_need
-withdraw_need = _withdraw_need
-request_withdrawal = _request_withdrawal
-approve_withdrawal = _approve_withdrawal
+resolve_creation_context = frappe.whitelist()(resolve_creation_context)
+get_workspace = frappe.whitelist()(get_workspace)
+get_need = frappe.whitelist()(get_need)
+get_support_need = frappe.whitelist()(get_support_need)
+create_need = frappe.whitelist()(_create_need)
+update_need = frappe.whitelist()(_update_need)
+submit_need = frappe.whitelist()(_submit_need)
+review_need = frappe.whitelist()(_review_need)
+withdraw_need = frappe.whitelist()(_withdraw_need)
+request_withdrawal = frappe.whitelist()(_request_withdrawal)
+approve_withdrawal = frappe.whitelist()(_approve_withdrawal)

@@ -34,14 +34,18 @@ test.describe('NDS-UI-01 Departmental Needs workspace', () => {
 	test('renders the exact scoped fixture and authorized review action', async ({ page }) => {
 		await openWorkspace(page);
 		await expect(page.getByRole('heading', { name: 'Departmental Needs', level: 1 })).toBeVisible();
-		await expect(page.getByText('Ministry of Health')).toBeVisible();
-		await expect(page.getByText('Directorate of Digital Health and Policy')).toBeVisible();
-		await expect(page.getByText('2027/28')).toBeVisible();
+		// The context switcher's <select> options duplicate this text while hidden —
+		// disambiguate to the visible summary line.
+		await expect(page.getByText('Ministry of Health').first()).toBeVisible();
+		await expect(page.getByText('Directorate of Digital Health and Policy').first()).toBeVisible();
+		await expect(page.getByText('2027/28').first()).toBeVisible();
 		await expect(page.getByTestId('nds-summary-total')).toContainText('3');
 		await expect(page.getByTestId('nds-summary-waiting')).toContainText('1');
 		await expect(page.getByTestId('nds-summary-accepted')).toContainText('1');
 		await expect(page.getByTestId('nds-summary-included')).toContainText('1');
-		await expect(page.getByText('NDS-MOH-2027-002')).toBeVisible();
+		// NDS-MOH-2027-002 legitimately appears in both the work-requiring-action
+		// and departmental-needs tables per the NDS-UI-01 fixture — disambiguate.
+		await expect(page.getByText('NDS-MOH-2027-002').first()).toBeVisible();
 		await expect(page.getByRole('button', { name: /Review/ }).first()).toBeVisible();
 		await expect(page.getByRole('button', { name: /Create need/ })).toHaveCount(0);
 	});

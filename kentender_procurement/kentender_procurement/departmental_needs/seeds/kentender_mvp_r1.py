@@ -41,7 +41,7 @@ def _user(email: str, full_name: str, roles: tuple[str, ...]) -> str:
 		frappe.db.set_value("User", email, {"enabled": 1, "full_name": full_name}, update_modified=False)
 	doc = frappe.get_doc("User", email)
 	doc.add_roles("Desk User", *roles)
-	update_password(email, "admin")
+	update_password(email, "Test@123")
 	return email
 
 
