@@ -54,6 +54,7 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
+	f"/assets/kentender_core/css/authorization_surfaces.css",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
@@ -67,6 +68,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
+	f"/assets/kentender_procurement/css/departmental_needs.css?v={_desk_asset_v('public/css/departmental_needs.css')}",
 	f"/assets/kentender_procurement/css/demands_workspace.css?v={_desk_asset_v('public/css/demands_workspace.css')}",
 	f"/assets/kentender_procurement/css/demands_record_chrome.css?v={_desk_asset_v('public/css/demands_record_chrome.css')}",
 	f"/assets/kentender_procurement/css/demands_form.css?v={_desk_asset_v('public/css/demands_form.css')}",
@@ -116,6 +118,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
+	f"/assets/kentender_procurement/js/support_plan_view.js?v={_desk_asset_v('public/js/support_plan_view.js')}",
 ]
 
 # include js, css files in header of web template
@@ -225,6 +228,8 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
+	"support-plan-view": "public/js/support_plan_view.js",
+	"departmental-needs": "public/js/departmental_needs_page.js",
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
@@ -533,9 +538,6 @@ fixtures = [
 		"filters": [["name", "in", ["Procurement", "Tenders"]]],
 	},
 ]
-
-
-
 
 
 

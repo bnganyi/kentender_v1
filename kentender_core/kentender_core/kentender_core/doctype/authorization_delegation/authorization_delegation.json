@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:delegation_id",
+ "creation": "2026-08-16 21:37:32.090692",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "delegation_id",
+  "delegator_user_id",
+  "delegate_user_id",
+  "capability_profile_id",
+  "procuring_entity_id",
+  "organisation_unit_id",
+  "effective_from",
+  "effective_to",
+  "reason",
+  "status",
+  "approved_by",
+  "approved_at",
+  "concurrency_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "delegation_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Delegation ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "delegator_user_id",
+   "fieldtype": "Link",
+   "label": "Delegator",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delegate_user_id",
+   "fieldtype": "Link",
+   "label": "Delegate",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "capability_profile_id",
+   "fieldtype": "Link",
+   "label": "Capability Profile",
+   "options": "Capability Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procuring_entity_id",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation_unit_id",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "default": "Scheduled",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Scheduled\nActive\nEnded\nRevoked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At"
+  },
+  {
+   "fieldname": "concurrency_token",
+   "fieldtype": "Data",
+   "label": "Concurrency Token",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-16 21:37:32.090692",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Authorization Delegation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

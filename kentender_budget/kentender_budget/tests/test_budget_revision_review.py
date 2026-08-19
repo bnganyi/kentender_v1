@@ -11,6 +11,11 @@ from frappe.utils import flt
 
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.seeds.budget_authorization_seed import (
+	assign_budget_test_user,
+	upsert_budget_authorization,
+	upsert_budget_test_authorization,
+)
 from kentender_budget.services.budget_revision_contracts import (
 	apply_budget_revision,
 	create_budget_revision,
@@ -28,6 +33,8 @@ class TestBudgetRevisionReview(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
+		upsert_budget_authorization()
+		upsert_budget_test_authorization()
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def setUp(self):
@@ -71,7 +78,14 @@ class TestBudgetRevisionReview(FrappeTestCase):
 			).insert(ignore_permissions=True)
 		return email
 
+	def _task_payload(self, code: str) -> dict:
+		revision = frappe.db.get_value("Budget Revision", {"generated_reference": code}, "name")
+		name = frappe.db.get_value("Workflow Task", {"subject_type": "Budget Revision", "subject_id": revision, "state": "Open"}, "name")
+		task = frappe.get_doc("Workflow Task", name)
+		return {"revision": code, "task_id": task.name, "concurrency_token": task.concurrency_token}
+
 	def _create_and_submit_as(self, user: str, change: float = 3_000_000) -> str:
+		assign_budget_test_user(user, "officer")
 		frappe.set_user(user)
 		try:
 			saved = create_budget_revision(
@@ -102,8 +116,9 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		self.assertIn("BR-MOH-0002", by_code)
 		seed = by_code["BR-MOH-0002"]
 		self.assertEqual(seed["status"], "Submitted")
-		self.assertEqual(seed["open_action"], "review")
-		self.assertEqual(seed["action_label"], "Review revision")
+		self.assertEqual(seed["open_action"], "")
+		self.assertEqual(seed["action_label"], "")
+		self.assertEqual(seed["task_id"], "")
 		self.assertEqual(seed["status_label"], "Pending Review")
 		self.assertEqual(by_code["BR-MOH-0001"]["open_action"], "edit")
 		self.assertEqual(by_code["BR-MOH-0001"]["action_label"], "Edit revision")
@@ -115,10 +130,11 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		self.assertEqual(ctx["revision"]["status"], "Submitted")
 		self.assertEqual(ctx["financial"]["additions_display"], "KES 5,000,000")
 		self.assertFalse(ctx["blockers"])
-		# Seed submitted_by is Officer — Admin/Authority can Apply.
-		self.assertTrue(ctx["capabilities"]["can_apply"])
-		self.assertTrue(ctx["capabilities"]["can_return"])
-		self.assertTrue(ctx["capabilities"]["can_reject"])
+		# Status and technical administration no longer imply task authority.
+		self.assertFalse(ctx["capabilities"]["can_apply"])
+		self.assertFalse(ctx["capabilities"]["can_return"])
+		self.assertFalse(ctx["capabilities"]["can_reject"])
+		self.assertEqual(ctx["capabilities"]["task_id"], "")
 		alias = review_budget_revision("BR-MOH-0002")
 		self.assertEqual(alias["revision"]["code"], "BR-MOH-0002")
 
@@ -126,11 +142,11 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		code = self._create_and_submit_as(
 			self._make_officer("budget.rev.return@example.com"), change=2_000_000
 		)
-		missing = return_budget_revision({"revision": code, "comment": ""})
+		missing = return_budget_revision({**self._task_payload(code), "comment": ""})
 		self.assertFalse(missing.get("ok"))
 		self.assertIn("comment", missing.get("errors") or {})
 
-		ok = return_budget_revision({"revision": code, "comment": "Please attach clearer evidence."})
+		ok = return_budget_revision({**self._task_payload(code), "comment": "Please attach clearer evidence."})
 		self.assertTrue(ok.get("ok"), ok)
 		self.assertEqual(ok["revision"]["status"], "Returned")
 
@@ -162,10 +178,10 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		code = self._create_and_submit_as(
 			self._make_officer("budget.rev.reject@example.com"), change=1_500_000
 		)
-		missing = reject_budget_revision({"revision": code})
+		missing = reject_budget_revision(self._task_payload(code))
 		self.assertFalse(missing.get("ok"))
 		self.assertIn("comment", missing.get("errors") or {})
-		ok = reject_budget_revision({"revision": code, "comment": "Out of policy."})
+		ok = reject_budget_revision({**self._task_payload(code), "comment": "Out of policy."})
 		self.assertTrue(ok.get("ok"), ok)
 		self.assertEqual(ok["revision"]["status"], "Rejected")
 
@@ -175,7 +191,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		frappe.set_user(officer)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				apply_budget_revision({"revision": code})
+				apply_budget_revision(self._task_payload(code))
 		finally:
 			frappe.set_user("Administrator")
 
@@ -185,7 +201,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 			"submitted_by",
 			"Administrator",
 		)
-		denied = apply_budget_revision({"revision": code})
+		denied = apply_budget_revision(self._task_payload(code))
 		self.assertFalse(denied.get("ok"))
 		self.assertIn("status", denied.get("errors") or {})
 
@@ -199,7 +215,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 				"approved_amount",
 			)
 		)
-		ok = apply_budget_revision({"revision": code})
+		ok = apply_budget_revision(self._task_payload(code))
 		self.assertTrue(ok.get("ok"), ok)
 		self.assertEqual(ok["revision"]["status"], "Applied")
 		self.assertEqual(ok["revision"]["applied_by"], "Administrator")
@@ -223,7 +239,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 			ctx = get_budget_revision_review_context(code)
 			self.assertTrue(ctx["blockers"])
 			self.assertFalse(ctx["capabilities"]["can_apply"])
-			denied = apply_budget_revision({"revision": code})
+			denied = apply_budget_revision(self._task_payload(code))
 			self.assertFalse(denied.get("ok"))
 			self.assertIn("blockers", denied.get("errors") or {})
 		finally:

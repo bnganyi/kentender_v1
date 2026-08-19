@@ -454,6 +454,15 @@ def get_planning_workspace(
 	actor_roles = actor_planning_roles(actor)
 	finance_roles = actor_funding_roles(actor)
 	finance_actor = bool(finance_roles.intersection(CONFIRM_PLAN_FUNDING_ROLES))
+	if finance_actor and not actor_roles:
+		frappe.throw(
+			frappe._("Finance decision work is available from My work, not the Procurement Planning workspace."),
+			frappe.PermissionError,
+			title="PLN_USE_MY_WORK",
+		)
+	# A combined-role actor may use the Planner workspace, but task decisions remain
+	# available only from the shared My work projection and protected task loader.
+	finance_actor = False
 	if not finance_actor:
 		require_operational_roles(*READ_PLAN_ROLES, user=actor)
 	read_only = True if finance_actor and not actor_roles else is_planning_read_only(actor)
@@ -584,17 +593,18 @@ def get_planning_workspace(
 			elif validation == VALIDATION_NEEDS_ATTENTION and finance != FINANCE_AWAITING:
 				work.append(_work_row(**base, reason="Planning validation needs attention.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
 			elif finance == FINANCE_AWAITING and cstr(iv.finance_task_state) == "Open":
-				if finance_actor and cstr(iv.finance_task_assignee) == actor:
-					work.append(_work_row(**base, reason="Confirm that the full source-approved value is available for reservation.", status="Awaiting confirmation", filter_key="plan_items", priority=5, action=_action("review_funding", "Review funding", f"/app/procurement-plan-builder?plan={plan.name}&finance_task={cstr(iv.finance_task_id)}")))
-				elif not finance_actor:
-					waiting.append(_waiting_row(resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name), title=cstr(iv.requirement_title or item.plan_item_code), stage="Finance confirmation", status="Awaiting confirmation", with_role="Budget Officer"))
+				task_owner = frappe.db.get_value("Workflow Task", cstr(iv.finance_task_id), ["assigned_user_id", "queue_id"], as_dict=True)
+				with_actor = cstr((task_owner or {}).get("assigned_user_id") or (task_owner or {}).get("queue_id") or "Routing unavailable")
+				waiting.append(_waiting_row(resource_key=f"item:{item.name}", reference=cstr(item.plan_item_code or item.name), title=cstr(iv.requirement_title or item.plan_item_code), stage="Finance confirmation", status="Awaiting confirmation", with_role=with_actor))
 			elif finance == FINANCE_AWAITING:
 				work.append(_work_row(**base, reason="Finance confirmation evidence is incomplete; reopen the item to resolve it.", status="Needs attention", filter_key="plan_items", priority=20, action=_action("resolve_issues", "Resolve issues", item_route)))
 
 	open_review = bool(draft_version and cstr(draft_version.status) == VERSION_IN_REVIEW and cstr(draft_version.review_task_id) and cstr(draft_version.review_task_state) == "Open")
 	if open_review:
 		work = []
-		waiting = [_waiting_row(resource_key=f"review:{draft_version.name}", reference=cstr(draft_version.version_code or draft_version.name), title=f"{plan.title} — Version {int(draft_version.version_number or 0)}", stage="Professional review", status="Awaiting review", with_role="Head of Procurement")]
+		task_owner = frappe.db.get_value("Workflow Task", cstr(draft_version.review_task_id), ["assigned_user_id", "queue_id"], as_dict=True)
+		with_actor = cstr((task_owner or {}).get("assigned_user_id") or (task_owner or {}).get("queue_id") or "Routing unavailable")
+		waiting = [_waiting_row(resource_key=f"review:{draft_version.name}", reference=cstr(draft_version.version_code or draft_version.name), title=f"{plan.title} — Version {int(draft_version.version_number or 0)}", stage="Professional review", status="Awaiting review", with_role=with_actor)]
 	if finance_actor:
 		work = [row for row in work if cstr((row.get("action") or {}).get("code")) == "review_funding"]
 		waiting = []

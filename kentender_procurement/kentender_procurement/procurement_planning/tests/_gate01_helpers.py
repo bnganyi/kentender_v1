@@ -5,10 +5,11 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
-from frappe.utils import add_days, cstr
+from frappe.utils import add_days, cstr, now_datetime
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
 from kentender_procurement.procurement_planning.services.planning_permissions import (
@@ -27,6 +28,101 @@ PLANNER_USER = "pln.gate01.planner@test.local"
 APPROVER_USER = "moh.procurement.authority@example.test"
 INITIATOR_USER = "pln.gate01.initiator@test.local"
 VIEWER_USER = "pln.gate01.viewer@test.local"
+
+
+def _ensure_shared_authorization(
+	*, user: str, profile_id: str, capabilities: tuple[str, ...],
+	task_routes: tuple[tuple[str, str], ...] = (), financial_year: str = "",
+) -> None:
+	"""Create canonical Gate 02 assignment and routing fixtures for Planning tests."""
+	profile_name = frappe.db.get_value("Capability Profile", {"profile_id": profile_id}, "name")
+	if profile_name:
+		frappe.db.set_value(
+			"Capability Profile", profile_name,
+			{"capabilities": json.dumps(list(capabilities)), "status": "Active"},
+			update_modified=False,
+		)
+	else:
+		profile_name = frappe.get_doc(
+			{
+				"doctype": "Capability Profile",
+				"profile_id": profile_id,
+				"profile_name": profile_id,
+				"capabilities": json.dumps(list(capabilities)),
+				"allows_entity_wide": 1,
+				"status": "Active",
+				"effective_from": add_days(now_datetime(), -1),
+			}
+		).insert(ignore_permissions=True).name
+	assignment_filters = {
+		"user_id": user,
+		"capability_profile_id": profile_name,
+		"procuring_entity_id": PE,
+		"status": "Active",
+	}
+	assignment_id = f"OSA-{profile_id}"
+	assignment_name = frappe.db.get_value(
+		"Operational Scope Assignment", {"assignment_id": assignment_id}, "name"
+	)
+	if assignment_name:
+		frappe.db.set_value(
+			"Operational Scope Assignment", assignment_name,
+			{
+				**assignment_filters,
+				"include_descendants": 1,
+				"effective_from": add_days(now_datetime(), -1),
+			},
+			update_modified=False,
+		)
+	elif not frappe.db.exists("Operational Scope Assignment", assignment_filters):
+		frappe.get_doc(
+			{
+				"doctype": "Operational Scope Assignment",
+				"assignment_id": assignment_id,
+				**assignment_filters,
+				"include_descendants": 1,
+				"effective_from": add_days(now_datetime(), -1),
+				"assigned_by": "Administrator",
+				"assigned_at": now_datetime(),
+			}
+		).insert(ignore_permissions=True)
+	for task_type, capability in task_routes:
+		rule_id = f"RTR-{task_type.replace('.', '-').upper()}-{profile_id}"
+		rule_name = frappe.db.get_value(
+			"Workflow Routing Rule", {"routing_rule_id": rule_id}, "name"
+		)
+		if rule_name:
+			frappe.db.set_value(
+				"Workflow Routing Rule", rule_name,
+				{
+					"required_capability": capability,
+					"assignee_user_id": user,
+					"priority": 100,
+					"status": "Active",
+				},
+				update_modified=False,
+			)
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Workflow Routing Rule",
+				"routing_version_id": f"RTV-{task_type.replace('.', '-').upper()}-{profile_id}",
+				"routing_rule_id": rule_id,
+				"version": 1,
+				"module_name": "Procurement Planning",
+				"task_type": task_type,
+				"procuring_entity_id": PE,
+				"financial_year_id": financial_year or None,
+				"required_capability": capability,
+				"assignee_strategy": "Named user",
+				"assignee_user_id": user,
+				"priority": 100,
+				"effective_from": add_days(now_datetime(), -1),
+				"status": "Active",
+				"approved_by": "Administrator",
+				"approved_at": now_datetime(),
+			}
+		).insert(ignore_permissions=True)
 
 
 def _ensure_usa(user: str, role: str, pe: str, org_unit: str | None) -> None:
@@ -201,6 +297,12 @@ def ensure_approver_user() -> str:
 	if ROLE_DESIGNATED_APPROVER not in roles:
 		frappe.get_doc("User", APPROVER_USER).add_roles(ROLE_DESIGNATED_APPROVER)
 	_ensure_usa(APPROVER_USER, ROLE_DESIGNATED_APPROVER, PE, None)
+	_ensure_shared_authorization(
+		user=APPROVER_USER,
+		profile_id="CP-PLN-G01-APPROVER",
+		capabilities=("plan.approve", "plan.return"),
+		task_routes=(("plan.approve", "plan.approve"),),
+	)
 	return APPROVER_USER
 
 
@@ -228,6 +330,12 @@ def ensure_reviewer_user() -> str:
 	if ROLE_REVIEWER not in roles:
 		frappe.get_doc("User", REVIEWER_USER).add_roles(ROLE_REVIEWER)
 	_ensure_usa(REVIEWER_USER, ROLE_REVIEWER, PE, None)
+	_ensure_shared_authorization(
+		user=REVIEWER_USER,
+		profile_id="CP-PLN-G01-REVIEWER",
+		capabilities=("plan.review", "plan.recommend", "plan.return"),
+		task_routes=(("plan.review", "plan.review"),),
+	)
 	return REVIEWER_USER
 
 
@@ -317,9 +425,13 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 		submit_plan_for_review,
 	)
 	from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
+	from kentender_procurement.procurement_planning.services.record_plan_decision import (
+		record_plan_decision,
+	)
 
 	planner = ensure_planner_user()
 	reviewer = ensure_reviewer_user()
+	ensure_approver_user()
 	plan_doc = frappe.get_doc("Procurement Plan", plan)
 	ver = cstr(version or plan_doc.open_draft_version or "").strip()
 	if not ver:
@@ -361,14 +473,25 @@ def advance_draft_to_recommended(*, plan: str, version: str | None = None) -> di
 	)
 	if not submitted.get("ok"):
 		raise frappe.ValidationError(f"Submit for review failed: {submitted}")
+	recommended = record_plan_decision(
+		version=ver,
+		decision="recommend",
+		concurrency_token=submitted.get("concurrency_token"),
+		task=submitted.get("task"),
+		expected_task_token=submitted.get("task_token"),
+		user=submitted.get("assignee"),
+	)
+	if not recommended.get("ok"):
+		raise frappe.ValidationError(f"Recommend approval failed: {recommended}")
+	approval_task = cstr(recommended.get("task"))
 	return {
 		"plan": plan,
 		"version": ver,
 		"planner": planner,
 		"reviewer": reviewer,
-		"task": submitted.get("task"),
-		"task_token": submitted.get("task_token"),
-		"assignee": submitted.get("assignee"),
+		"task": approval_task,
+		"task_token": recommended.get("task_token"),
+		"assignee": frappe.db.get_value("Workflow Task", approval_task, "assigned_user_id"),
 	}
 
 
@@ -416,6 +539,13 @@ def ensure_scope() -> dict[str, str]:
 		).insert(ignore_permissions=True)
 	ensure_planner_user()
 	ensure_reviewer_user()
+	seed_rule = frappe.db.get_value(
+		"Workflow Routing Rule",
+		{"routing_rule_id": "RTR-PLAN-FINANCE-TASK-CP-PLN-SEED-FINANCE"},
+		"name",
+	)
+	if seed_rule:
+		frappe.db.set_value("Workflow Routing Rule", seed_rule, "status", "Inactive", update_modified=False)
 	return {"pe": PE, "ou": OU, "fy": FY}
 
 
@@ -618,6 +748,30 @@ def purge_pe_fy(financial_year: str) -> None:
 		frappe.get_all("Procurement Plan Item", filters={"plan": ["in", plans]}, pluck="name")
 		if plans else []
 	)
+	item_versions = (
+		frappe.get_all(
+			"Procurement Plan Item Version",
+			filters={"plan_item": ["in", items]},
+			pluck="name",
+		)
+		if items else []
+	)
+	if frappe.db.exists("DocType", "Workflow Task"):
+		task_names = []
+		if versions:
+			task_names.extend(frappe.get_all(
+				"Workflow Task",
+				filters={"subject_type": "Procurement Plan Version", "subject_id": ["in", versions]},
+				pluck="name",
+			))
+		if item_versions:
+			task_names.extend(frappe.get_all(
+				"Workflow Task",
+				filters={"subject_type": "Procurement Plan Item Version", "subject_id": ["in", item_versions]},
+				pluck="name",
+			))
+		for task_name in dict.fromkeys(task_names):
+			frappe.delete_doc("Workflow Task", task_name, force=True, ignore_permissions=True)
 	if items:
 		item_codes = frappe.get_all(
 			"Procurement Plan Item", filters={"name": ["in", items]}, pluck="plan_item_code"
@@ -674,19 +828,27 @@ def purge_pe_fy(financial_year: str) -> None:
 
 def ensure_budget_officer_user() -> str:
 	from kentender_budget.services.budget_permissions import ROLE_OFFICER, ensure_budget_roles
+	from kentender_core.seeds.kentender_mvp_v1 import constants as C
 	from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 		ensure_user_with_roles,
 	)
 
 	ensure_budget_roles()
 	ensure_scope()
-	return ensure_user_with_roles(
-		"pln.c05.bo@test.local",
+	user = ensure_user_with_roles(
+		C.USER_BUD_OFFICER,
 		roles=(ROLE_OFFICER,),
 		pe=PE,
 		org_unit=OU,
 		include_descendants=0,
 	)
+	_ensure_shared_authorization(
+		user=user,
+		profile_id="CP-PLN-G01-FINANCE",
+		capabilities=("plan.finance.task", "plan.finance.confirm", "plan.finance.return"),
+		task_routes=(("plan.finance.task", "plan.finance.task"),),
+	)
+	return user
 
 
 def make_test_budget_line(

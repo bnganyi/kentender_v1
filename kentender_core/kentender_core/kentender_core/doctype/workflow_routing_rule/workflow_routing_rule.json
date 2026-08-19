@@ -1,0 +1,212 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:routing_version_id",
+ "creation": "2026-08-16 21:37:31.831367",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "routing_version_id",
+  "routing_rule_id",
+  "version",
+  "module_name",
+  "task_type",
+  "procuring_entity_id",
+  "organisation_unit_id",
+  "include_descendants",
+  "resource_scope_type",
+  "resource_scope_id",
+  "required_capability",
+  "assignee_strategy",
+  "assignee_user_id",
+  "queue_id",
+  "priority",
+  "effective_from",
+  "effective_to",
+  "fallback_rule_id",
+  "status",
+  "approved_by",
+  "approved_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "routing_version_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Routing Version ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "routing_rule_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Routing Rule ID",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module_name",
+   "fieldtype": "Data",
+   "label": "Module",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_type",
+   "fieldtype": "Data",
+   "label": "Task Type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity_id",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "organisation_unit_id",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_descendants",
+   "fieldtype": "Check",
+   "label": "Include Descendants"
+  },
+  {
+   "fieldname": "resource_scope_type",
+   "fieldtype": "Link",
+   "label": "Resource Scope Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "resource_scope_id",
+   "fieldtype": "Dynamic Link",
+   "label": "Resource Scope ID",
+   "options": "resource_scope_type"
+  },
+  {
+   "fieldname": "required_capability",
+   "fieldtype": "Data",
+   "label": "Required Capability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee_strategy",
+   "fieldtype": "Select",
+   "label": "Assignee Strategy",
+   "options": "Named user\nNamed claimable queue",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee_user_id",
+   "fieldtype": "Link",
+   "label": "Assigned User",
+   "options": "User"
+  },
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Link",
+   "label": "Queue",
+   "options": "Workflow Queue"
+  },
+  {
+   "default": "100",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "label": "Priority",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "fallback_rule_id",
+   "fieldtype": "Data",
+   "label": "Fallback Rule"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nSuperseded\nEnded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-16 21:37:31.831367",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Workflow Routing Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

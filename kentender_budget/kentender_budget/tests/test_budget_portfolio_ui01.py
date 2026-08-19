@@ -51,7 +51,8 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 		self.assertEqual(submitted["status"], "Submitted")
 		self.assertEqual(submitted["status_label"], "Under review")
 		self.assertEqual(submitted["available_display"], "Not active")
-		self.assertEqual(submitted["action"], "review")
+		# State alone must not expose Review without a current assigned task.
+		self.assertEqual(submitted["action"], "view")
 
 		closed_rows = list_budgets(
 			procuring_entity=self.seed["procuring_entity"],

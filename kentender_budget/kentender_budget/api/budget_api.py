@@ -154,20 +154,20 @@ def submit_budget_revision(payload: dict | str | None = None):
 
 
 @frappe.whitelist()
-def get_budget_revision_review_context(revision: str | None = None):
+def get_budget_revision_review_context(revision: str | None = None, task_id: str | None = None):
 	ensure_budget_roles()
 	from kentender_budget.services import budget_revision_contracts as revisions
 
-	return revisions.get_budget_revision_review_context(revision or "")
+	return revisions.get_budget_revision_review_context(revision or "", task_id=task_id)
 
 
 @frappe.whitelist()
-def review_budget_revision(revision: str | None = None):
+def review_budget_revision(revision: str | None = None, task_id: str | None = None):
 	"""Pack §8 alias for get_budget_revision_review_context."""
 	ensure_budget_roles()
 	from kentender_budget.services import budget_revision_contracts as revisions
 
-	return revisions.review_budget_revision(revision or "")
+	return revisions.review_budget_revision(revision or "", task_id=task_id)
 
 
 @frappe.whitelist()
@@ -201,11 +201,11 @@ def apply_budget_revision(payload: dict | str | None = None):
 
 
 @frappe.whitelist()
-def get_budget_readiness(budget: str | None = None):
+def get_budget_readiness(budget: str | None = None, task_id: str | None = None):
 	ensure_budget_roles()
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
-	return readiness.get_budget_readiness(budget or "")
+	return readiness.get_budget_readiness(budget or "", task_id=task_id)
 
 
 @frappe.whitelist()

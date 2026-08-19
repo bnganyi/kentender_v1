@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_id",
+ "creation": "2026-08-16 21:37:32.198038",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_id",
+  "rule_name",
+  "first_capability",
+  "second_capability",
+  "enforcement_level",
+  "module_name",
+  "status",
+  "effective_from",
+  "effective_to",
+  "approved_by",
+  "approved_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "first_capability",
+   "fieldtype": "Data",
+   "label": "First Capability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "second_capability",
+   "fieldtype": "Data",
+   "label": "Second Capability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enforcement_level",
+   "fieldtype": "Select",
+   "label": "Enforcement Level",
+   "options": "Assignment\nWorkflow instance\nBoth",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module_name",
+   "fieldtype": "Data",
+   "label": "Module"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nSuspended\nEnded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-16 21:37:32.198038",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Separation of Duties Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

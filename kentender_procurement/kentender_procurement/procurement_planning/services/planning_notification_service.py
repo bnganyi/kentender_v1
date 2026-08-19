@@ -42,6 +42,25 @@ def usa_users_for_role(*, role: str, procuring_entity: str) -> set[str]:
 	return users
 
 
+def _task_recipients(task_id: str) -> set[str]:
+	if not task_id or not frappe.db.exists("Workflow Task", task_id):
+		return set()
+	task = frappe.get_doc("Workflow Task", task_id)
+	if task.state != "Open":
+		return set()
+	if task.assignee_type == "User":
+		return {cstr(task.assigned_user_id)} if task.assigned_user_id else set()
+	return {
+		cstr(user)
+		for user in frappe.get_all(
+			"Workflow Queue Membership",
+			filters={"queue_id": task.queue_id, "status": "Active"},
+			pluck="user_id",
+		)
+		if cstr(user)
+	}
+
+
 def notify_finance_requested(
 	*,
 	plan: Any,
@@ -50,8 +69,8 @@ def notify_finance_requested(
 	actor: str,
 ) -> None:
 	pe = cstr(getattr(plan, "procuring_entity", "") or "")
-	assignee = cstr(getattr(iv, "finance_task_assignee", "") or "")
-	recipients = {assignee} if assignee else set()
+	task_id = cstr(getattr(iv, "finance_task_id", "") or "")
+	recipients = _task_recipients(task_id)
 	_emit_to(
 		recipients,
 		actor=actor,
@@ -62,7 +81,7 @@ def notify_finance_requested(
 		document_name=cstr(plan.name),
 		event_type=EVENT_FINANCE_REQUESTED,
 		entity_scope=pe,
-		route=f"/desk/procurement-plan-builder?plan={plan.name}&finance_task={cstr(getattr(iv, 'finance_task_id', ''))}",
+		route=f"/desk/procurement-plan-builder?plan={plan.name}&finance_task={task_id}",
 		correlation_key=f"pln-finance-request:{cstr(getattr(iv, 'finance_task_id', '') or iv.name)}",
 	)
 
@@ -70,7 +89,7 @@ def notify_finance_requested(
 def notify_plan_submitted(*, plan: Any, version_name: str, actor: str) -> None:
 	pe = cstr(getattr(plan, "procuring_entity", "") or "")
 	row = frappe.db.get_value("Procurement Plan Version", version_name, ["review_task_id", "review_task_assignee"], as_dict=True)
-	recipients = {cstr(row.review_task_assignee)} if row and row.review_task_assignee else set()
+	recipients = _task_recipients(cstr(row.review_task_id if row else ""))
 	_emit_to(
 		recipients,
 		actor=actor,

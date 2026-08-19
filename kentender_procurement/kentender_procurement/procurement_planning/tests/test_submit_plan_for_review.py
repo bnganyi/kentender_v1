@@ -108,7 +108,9 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		from kentender_procurement.procurement_planning.services.planning_permissions import (
 			ROLE_REVIEWER,
 		)
-		from kentender_core.seeds.kentender_mvp_v1.constants import USER_HOP
+		from kentender_procurement.procurement_planning.tests._gate01_helpers import (
+			ensure_reviewer_user,
+		)
 		from kentender_procurement.procurement_planning.tests._gate02_helpers import (
 			PE_CGK,
 			ensure_org,
@@ -116,7 +118,7 @@ class TestSubmitPlanForReview(IntegrationTestCase):
 		)
 
 		ensure_org()
-		reviewer = USER_HOP
+		reviewer = ensure_reviewer_user()
 		kisumu = ensure_user_with_roles(
 			"pln.wave3.kisumu.reviewer@test.local",
 			roles=(ROLE_REVIEWER,),

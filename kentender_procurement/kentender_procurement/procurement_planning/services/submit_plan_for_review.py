@@ -143,10 +143,17 @@ def submit_plan_for_review(
 
 	now = now_datetime()
 	token = new_concurrency_token()
-	from kentender_procurement.procurement_planning.services.planning_tasks import next_task_identity, resolve_single_assignee
-	assignee = resolve_single_assignee(role="Designated Approver", procuring_entity=cstr(plan_doc.procuring_entity))
+	from kentender_procurement.procurement_planning.services.planning_tasks import create_governed_planning_task, task_owner
 	predecessor = cstr(getattr(ver, "review_task_id", ""))
-	task_id, iteration, task_token = next_task_identity(prefix="PLN-REV", record=ver, id_field="review_task_id", iteration_field="review_task_iteration")
+	task, iteration = create_governed_planning_task(
+		prefix="PLN-REV", record=ver, id_field="review_task_id", iteration_field="review_task_iteration",
+		task_type="plan.review", subject_type="Procurement Plan Version", subject_id=version_name,
+		procuring_entity=cstr(plan_doc.procuring_entity), financial_year=cstr(plan_doc.financial_year),
+		predecessor_task_id=predecessor, idempotency_key=f"planning:review:{version_name}:{key}", actor=actor,
+	)
+	task_id = task.name
+	task_token = cstr(task.concurrency_token)
+	assignee = task_owner(task)
 	frappe.db.set_value(
 		"Procurement Plan Version",
 		version_name,

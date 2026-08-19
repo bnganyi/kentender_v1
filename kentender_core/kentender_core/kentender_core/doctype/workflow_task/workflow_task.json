@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:task_id",
+ "creation": "2026-08-16 21:37:31.954543",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "task_id",
+  "task_iteration",
+  "module_name",
+  "task_type",
+  "subject_type",
+  "subject_id",
+  "related_record_refs",
+  "procuring_entity_id",
+  "financial_year_id",
+  "organisation_unit_id",
+  "resource_scopes",
+  "routing_rule_id",
+  "routing_rule_version",
+  "assignee_type",
+  "assigned_user_id",
+  "queue_id",
+  "claimed_by",
+  "claimed_at",
+  "state",
+  "predecessor_task_id",
+  "created_by_actor",
+  "created_at",
+  "due_at",
+  "concurrency_token",
+  "idempotency_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "task_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Task ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "task_iteration",
+   "fieldtype": "Int",
+   "label": "Task Iteration",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module_name",
+   "fieldtype": "Data",
+   "label": "Module",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Task Type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "subject_type",
+   "fieldtype": "Link",
+   "label": "Subject Type",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_id",
+   "fieldtype": "Dynamic Link",
+   "label": "Subject ID",
+   "options": "subject_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "related_record_refs",
+   "fieldtype": "JSON",
+   "label": "Related Record References"
+  },
+  {
+   "fieldname": "procuring_entity_id",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "financial_year_id",
+   "fieldtype": "Data",
+   "label": "Financial Year",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "organisation_unit_id",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "resource_scopes",
+   "fieldtype": "JSON",
+   "label": "Resource Scopes"
+  },
+  {
+   "fieldname": "routing_rule_id",
+   "fieldtype": "Data",
+   "label": "Routing Rule ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "routing_rule_version",
+   "fieldtype": "Int",
+   "label": "Routing Rule Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee_type",
+   "fieldtype": "Select",
+   "label": "Assignee Type",
+   "options": "User\nQueue",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_user_id",
+   "fieldtype": "Link",
+   "label": "Assigned User",
+   "options": "User",
+   "search_index": 1
+  },
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Link",
+   "label": "Queue",
+   "options": "Workflow Queue",
+   "search_index": 1
+  },
+  {
+   "fieldname": "claimed_by",
+   "fieldtype": "Link",
+   "label": "Claimed By",
+   "options": "User",
+   "search_index": 1
+  },
+  {
+   "fieldname": "claimed_at",
+   "fieldtype": "Datetime",
+   "label": "Claimed At"
+  },
+  {
+   "default": "Open",
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "State",
+   "options": "Open\nCompleted\nReturned\nCancelled\nSuperseded\nStale",
+   "reqd": 1
+  },
+  {
+   "fieldname": "predecessor_task_id",
+   "fieldtype": "Link",
+   "label": "Predecessor Task",
+   "options": "Workflow Task"
+  },
+  {
+   "fieldname": "created_by_actor",
+   "fieldtype": "Link",
+   "label": "Created By Actor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_at",
+   "fieldtype": "Datetime",
+   "label": "Due At"
+  },
+  {
+   "fieldname": "concurrency_token",
+   "fieldtype": "Data",
+   "label": "Concurrency Token",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-16 21:37:31.954543",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Workflow Task",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

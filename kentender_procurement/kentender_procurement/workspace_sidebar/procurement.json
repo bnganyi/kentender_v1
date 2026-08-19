@@ -63,12 +63,12 @@
    "icon": "file",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Demands",
-   "link_to": "demands-workspace",
+   "label": "Departmental Needs",
+   "link_to": "departmental-needs",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/demands-workspace"
+   "url": "/desk/departmental-needs"
   },
   {
    "child": 0,
@@ -233,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-15 02:58:21.441620",
+ "modified": "2026-08-18 23:45:09.565798",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

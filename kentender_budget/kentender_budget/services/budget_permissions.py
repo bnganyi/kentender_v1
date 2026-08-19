@@ -8,6 +8,8 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability
+
 ROLE_VIEWER = "Budget Viewer"
 ROLE_OFFICER = "Budget Officer"
 ROLE_REVIEWER = "Budget Reviewer"
@@ -81,17 +83,20 @@ def can_review_budget() -> bool:
 
 
 def can_export_funding_performance(user: str | None = None) -> bool:
-	"""REQ §9 — Officer may not export; Viewer/Reviewer/Authority/Auditor may."""
-	roles = user_roles(user)
-	if "System Manager" in roles or (user or frappe.session.user) == "Administrator":
-		return True
-	if ROLE_OFFICER in roles and not roles.intersection(
-		{ROLE_VIEWER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR}
-	):
+	"""Export is an assignment-scoped capability, never a presentation-role grant."""
+	actor = user or frappe.session.user
+	pe = entity_for_user(actor) or ""
+	if not pe:
 		return False
-	return bool(
-		roles.intersection({ROLE_VIEWER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR})
-	)
+	return evaluate_capability(
+		actor,
+		"budget.export",
+		ResourceContext(
+			resource_type="Budget Funding Performance",
+			resource_id=pe,
+			procuring_entity_id=pe,
+		),
+	).allowed
 
 
 def entity_for_user(user: str | None = None) -> str | None:

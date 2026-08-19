@@ -23,6 +23,7 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_VIEWER,
 	require_any_role,
 )
+from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, can_budget
 
 _USAGE_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 
@@ -34,6 +35,7 @@ def list_downstream_usage(budget: str) -> dict[str, Any]:
 	currency = life["budget"].get("currency") or "KES"
 	rows = _usage_rows_from_lifecycle(life["events"], currency)
 	bud = life["budget"]
+	budget_doc = frappe.get_doc("Budget", bud["id"])
 	return {
 		"budget": {
 			"id": bud["id"],
@@ -54,8 +56,16 @@ def list_downstream_usage(budget: str) -> dict[str, Any]:
 			"label": f"Showing 1 to {len(rows)} of {len(rows)} entries" if rows else "Showing 0 entries",
 		},
 		"capabilities": {
-			"primary_action": "request_revision" if bud["status"] == "Active" else "",
-			"primary_label": "Request revision" if bud["status"] == "Active" else "",
+			"primary_action": (
+				"request_revision"
+				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
+				else ""
+			),
+			"primary_label": (
+				"Request revision"
+				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
+				else ""
+			),
 			"view_funding_performance": True,
 			"read_only": True,
 		},

@@ -23,6 +23,8 @@ from kentender_budget.services.budget_audit_contracts import (
 )
 from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
 from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.services.budget_authorization import create_budget_task
+from kentender_budget.seeds.budget_authorization_seed import upsert_budget_test_authorization
 from kentender_budget.services.budget_readiness_contracts import (
 	activate_budget,
 	mark_budget_reviewed,
@@ -34,10 +36,30 @@ class TestBudgetAudit(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
+		upsert_budget_test_authorization()
 		cls.seed = upsert_budget_activity_test_fixture()
 
 	def setUp(self):
 		upsert_budget_activity_test_fixture()
+		frappe.db.delete("Budget Audit Event", {"record_code": "RSV-MOH-0001"})
+
+	def _task_payload(self, budget: str) -> dict:
+		name = frappe.db.get_value("Budget", {"generated_reference": budget}, "name")
+		task_name = frappe.db.get_value(
+			"Workflow Task",
+			{
+				"subject_type": "Budget",
+				"subject_id": name,
+				"state": "Open",
+				"assigned_user_id": frappe.session.user,
+			},
+			"name",
+		)
+		if not task_name:
+			task = create_budget_task(frappe.get_doc("Budget", name), capability="budget.review", task_type="budget.review", iteration=0)
+		else:
+			task = frappe.get_doc("Workflow Task", task_name)
+		return {"budget": budget, "task_id": task.name, "concurrency_token": task.concurrency_token}
 
 	def test_seeded_moh_0001_ledger_pack_codes_and_full_money(self):
 		dto = get_budget_audit("MOH-BUD-2027-2028")
@@ -89,8 +111,8 @@ class TestBudgetAudit(FrappeTestCase):
 			},
 		)
 		before = frappe.db.count("Budget Audit Event", {"budget": name})
-		self.assertTrue(mark_budget_reviewed({"budget": "MOH-BUD-0002"}).get("ok"))
-		self.assertTrue(activate_budget({"budget": "MOH-BUD-0002"}).get("ok"))
+		self.assertTrue(mark_budget_reviewed(self._task_payload("MOH-BUD-0002")).get("ok"))
+		self.assertTrue(activate_budget(self._task_payload("MOH-BUD-0002")).get("ok"))
 		after = frappe.db.count("Budget Audit Event", {"budget": name})
 		self.assertGreater(after, before)
 		types = frappe.get_all(

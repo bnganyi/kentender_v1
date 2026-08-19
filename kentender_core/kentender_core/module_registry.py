@@ -63,23 +63,15 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		),
 		"sidebar_parent": "Procurement",
 	},
-	"demands": {
-		# MVP-1 Demands — keep in sync with kt_module_registry.js; pages land in Wave 4.
-		"workspace_label": "Demands",
+	"departmental_needs": {
+		"workspace_label": "Departmental Needs",
 		"sidebar_workspace_key": "procurement",
 		"builder_page": "",
-		"desk_page": "demands-workspace",
-		"form_doctype": "Demand",
-		"state_key": "kt_demands_workbench_state",
-		"select_key": "kt_demands_workspace_select",
-		"route_prefixes": (
-			"demands-workspace",
-			"demand-form",
-			"demand-review",
-			"demand-detail",
-			"demand-performance",
-			"Form/Demand",
-		),
+		"desk_page": "departmental-needs",
+		"form_doctype": "Departmental Need",
+		"state_key": "kt_departmental_needs_state",
+		"select_key": "kt_departmental_needs_select",
+		"route_prefixes": ("departmental-needs",),
 		"sidebar_parent": "Procurement",
 	},
 	"procurement_planning": {

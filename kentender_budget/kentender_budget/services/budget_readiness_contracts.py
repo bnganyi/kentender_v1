@@ -12,6 +12,19 @@ from frappe import _
 from frappe.utils import flt, format_datetime, now_datetime
 
 from kentender_budget.services.budget_contracts import _resolve_budget, resolve_scoped_entity
+from kentender_budget.services.budget_authorization import (
+	CAP_BUDGET_APPROVE,
+	CAP_BUDGET_REVIEW,
+	CAP_BUDGET_RETURN,
+	CAP_BUDGET_SUBMIT,
+	CAP_BUDGET_VIEW,
+	authorized_budget_task,
+	can_budget,
+	complete_budget_task,
+	create_budget_task,
+	require_budget_capability,
+	require_budget_task,
+)
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
 	ROLE_AUTHORITY,
@@ -427,15 +440,17 @@ def _evaluate_readiness(doc) -> tuple[list[dict[str, Any]], list[dict[str, Any]]
 	return groups, blockers
 
 
-def _capabilities(doc, blockers: list[dict[str, Any]]) -> dict[str, Any]:
-	roles = user_roles()
-	is_officer = bool(roles.intersection({ROLE_OFFICER, "System Manager"})) or (
-		frappe.session.user == "Administrator"
+def _capabilities(doc, blockers: list[dict[str, Any]], task_id: str = "") -> dict[str, Any]:
+	is_officer = can_budget(CAP_BUDGET_SUBMIT, doc)
+	task, commands = authorized_budget_task(
+		actor=frappe.session.user,
+		subject_type="Budget",
+		subject_id=doc.name,
+		capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_RETURN, CAP_BUDGET_APPROVE),
+		task_id=task_id,
 	)
-	is_reviewer = can_review_budget()
-	is_authority = bool(
-		roles.intersection({ROLE_AUTHORITY, "System Manager"})
-	) or frappe.session.user == "Administrator"
+	is_reviewer = CAP_BUDGET_REVIEW in commands or CAP_BUDGET_RETURN in commands
+	is_authority = CAP_BUDGET_APPROVE in commands
 	status = doc.status
 	has_blockers = bool(blockers)
 	reviewed = bool((doc.reviewed_by or "").strip())
@@ -444,7 +459,7 @@ def _capabilities(doc, blockers: list[dict[str, Any]]) -> dict[str, Any]:
 
 	can_submit = (
 		status in ("Draft", "Returned")
-		and (is_officer or can_register_budget())
+		and is_officer
 		and not has_blockers
 	)
 	can_return = status == "Submitted" and is_reviewer
@@ -477,13 +492,16 @@ def _capabilities(doc, blockers: list[dict[str, Any]]) -> dict[str, Any]:
 		# Active: same chrome Request revision as Overview/Lines. Draft/Submitted use in-tab actions.
 		"primary_action": "request_revision" if status == "Active" else "",
 		"primary_label": "Request revision" if status == "Active" else "",
+		"task_id": task.name if task else "",
+		"concurrency_token": task.concurrency_token if task else "",
 	}
 
 
-def get_budget_readiness(budget: str) -> dict[str, Any]:
+def get_budget_readiness(budget: str, task_id: str | None = None) -> dict[str, Any]:
 	"""Grouped readiness checklist + capabilities for the Review tab."""
 	require_any_role(*_READ_ROLES)
 	doc = _resolve_budget(budget)
+	require_budget_capability(CAP_BUDGET_VIEW, doc)
 	resolve_scoped_entity(doc.procuring_entity)
 	allowed = visible_statuses_for_user()
 	if allowed is not None and doc.status not in allowed:
@@ -493,7 +511,7 @@ def get_budget_readiness(budget: str) -> dict[str, Any]:
 		)
 
 	groups, blockers = _evaluate_readiness(doc)
-	caps = _capabilities(doc, blockers)
+	caps = _capabilities(doc, blockers, (task_id or "").strip())
 
 	# Keep portfolio attention counter in sync with live issue count for Draft/Returned.
 	live_count = len(blockers)
@@ -545,13 +563,9 @@ def get_budget_readiness(budget: str) -> dict[str, Any]:
 
 def submit_budget(payload: dict | str | None = None) -> dict[str, Any]:
 	"""Draft/Returned → Submitted when readiness passes."""
-	require_any_role(*_SUBMIT_ROLES)
-	if not can_register_budget():
-		frappe.throw(_("Not permitted to submit budgets"), frappe.PermissionError)
-
 	payload = _as_dict(payload)
 	doc = _resolve_budget(payload.get("budget") or "")
-	resolve_scoped_entity(doc.procuring_entity)
+	require_budget_capability(CAP_BUDGET_SUBMIT, doc)
 
 	if doc.status not in ("Draft", "Returned"):
 		return {
@@ -568,6 +582,12 @@ def submit_budget(payload: dict | str | None = None) -> dict[str, Any]:
 			"readiness": get_budget_readiness(doc.generated_reference),
 		}
 
+	task = create_budget_task(
+		doc,
+		capability=CAP_BUDGET_REVIEW,
+		task_type="budget.review",
+		iteration=0,
+	)
 	prior = doc.status
 	doc.status = "Submitted"
 	doc.submitted_by = frappe.session.user
@@ -600,18 +620,19 @@ def submit_budget(payload: dict | str | None = None) -> dict[str, Any]:
 	)
 
 	notify_budget_users(EVENT_BUDGET_SUBMITTED, budget_doc=doc)
-	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
+	return {"ok": True, "task_id": task.name, "readiness": get_budget_readiness(doc.generated_reference)}
 
 
 def return_budget(payload: dict | str | None = None) -> dict[str, Any]:
 	"""Submitted → Returned; Reviewer/Authority; comment required."""
-	require_any_role(*_REVIEW_ROLES)
-	if not can_review_budget():
-		frappe.throw(_("Not permitted to return budgets"), frappe.PermissionError)
-
 	payload = _as_dict(payload)
 	doc = _resolve_budget(payload.get("budget") or "")
-	resolve_scoped_entity(doc.procuring_entity)
+	task, token = require_budget_task(
+		payload,
+		capability=CAP_BUDGET_RETURN,
+		subject_type="Budget",
+		subject_id=doc.name,
+	)
 
 	if doc.status != "Submitted":
 		return {
@@ -626,6 +647,7 @@ def return_budget(payload: dict | str | None = None) -> dict[str, Any]:
 			"errors": {"comment": _("Comment is required when returning a Budget")},
 		}
 
+	complete_budget_task(task, token, capability=CAP_BUDGET_RETURN, target_state="Returned")
 	doc.status = "Returned"
 	doc.return_reason = comment
 	doc.reviewed_by = None
@@ -660,13 +682,14 @@ def return_budget(payload: dict | str | None = None) -> dict[str, Any]:
 
 def mark_budget_reviewed(payload: dict | str | None = None) -> dict[str, Any]:
 	"""Record reviewer completion; status remains Submitted."""
-	require_any_role(*_REVIEW_ROLES)
-	if not can_review_budget():
-		frappe.throw(_("Not permitted to mark budgets reviewed"), frappe.PermissionError)
-
 	payload = _as_dict(payload)
 	doc = _resolve_budget(payload.get("budget") or "")
-	resolve_scoped_entity(doc.procuring_entity)
+	task, token = require_budget_task(
+		payload,
+		capability=CAP_BUDGET_REVIEW,
+		subject_type="Budget",
+		subject_id=doc.name,
+	)
 
 	if doc.status != "Submitted":
 		return {
@@ -682,6 +705,14 @@ def mark_budget_reviewed(payload: dict | str | None = None) -> dict[str, Any]:
 			"blockers": blockers,
 		}
 
+	complete_budget_task(task, token, capability=CAP_BUDGET_REVIEW)
+	authority_task = create_budget_task(
+		doc,
+		capability=CAP_BUDGET_APPROVE,
+		task_type="budget.approve",
+		predecessor_task_id=task.name,
+		iteration=0,
+	)
 	doc.reviewed_by = frappe.session.user
 	doc.reviewed_at = now_datetime()
 	doc.save(ignore_permissions=True)
@@ -708,22 +739,19 @@ def mark_budget_reviewed(payload: dict | str | None = None) -> dict[str, Any]:
 	)
 
 	notify_budget_users(EVENT_BUDGET_REVIEWED, budget_doc=doc)
-	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
+	return {"ok": True, "task_id": authority_task.name, "readiness": get_budget_readiness(doc.generated_reference)}
 
 
 def activate_budget(payload: dict | str | None = None) -> dict[str, Any]:
 	"""Submitted → Active; Authority; reviewed; AC-018 submitter lock."""
-	require_any_role(*_ACTIVATE_ROLES)
-	roles = user_roles()
-	if not (
-		roles.intersection({ROLE_AUTHORITY, "System Manager"})
-		or frappe.session.user == "Administrator"
-	):
-		frappe.throw(_("Not permitted to activate budgets"), frappe.PermissionError)
-
 	payload = _as_dict(payload)
 	doc = _resolve_budget(payload.get("budget") or "")
-	resolve_scoped_entity(doc.procuring_entity)
+	task, token = require_budget_task(
+		payload,
+		capability=CAP_BUDGET_APPROVE,
+		subject_type="Budget",
+		subject_id=doc.name,
+	)
 
 	if doc.status != "Submitted":
 		return {
@@ -759,6 +787,15 @@ def activate_budget(payload: dict | str | None = None) -> dict[str, Any]:
 			},
 		}
 
+	complete_budget_task(
+		task,
+		token,
+		capability=CAP_BUDGET_APPROVE,
+		prior_actions=[
+			{"user": doc.submitted_by or "", "capability": CAP_BUDGET_SUBMIT},
+			{"user": doc.reviewed_by or "", "capability": CAP_BUDGET_REVIEW},
+		],
+	)
 	doc.status = "Active"
 	doc.activated_by = frappe.session.user
 	doc.activated_at = now_datetime()

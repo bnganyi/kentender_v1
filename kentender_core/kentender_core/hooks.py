@@ -37,6 +37,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = [
+	f"/assets/kentender_core/css/authorization_surfaces.css?v={_asset_version('public/css/authorization_surfaces.css')}",
 	"/assets/kentender_core/css/kentender_desk_builder_layout.css",
 	f"/assets/kentender_core/css/kt_module_shell.css?v={_asset_version('public/css/kt_module_shell.css')}",
 	f"/assets/kentender_core/css/kt_workbench_typography.css?v={_asset_version('public/css/kt_workbench_typography.css')}",
@@ -49,6 +50,8 @@ app_include_css = [
 	# Shared Stitch list-table footer (Showing X of Y + Rows per page + pager).
 	f"/assets/kentender_core/css/kt_stitch_table_footer.css?v={_asset_version('public/css/kt_stitch_table_footer.css')}",
 ]
+boot_session = ["kentender_core.services.my_work.patch_bootinfo_home"]
+
 app_include_js = [
 	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
 	# Field-error helper — load early so Strategy / workbench binders can use ktFormErrors.
@@ -82,6 +85,9 @@ app_include_js = [
 # Never append ?v= to page_js values — Frappe resolves them as disk paths.
 page_js = {
 	"kt-cl-components": "public/js/kt_cl_components_gallery_page.js",
+	"user-operational-acc": "public/js/authorization_admin_pages.js",
+	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
+	"access-diagnostic": "public/js/authorization_admin_pages.js",
 }
 
 # include js in doctype views
@@ -176,13 +182,40 @@ after_migrate = "kentender_core.install.after_migrate"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Capability Profile": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Operational Scope Assignment": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Queue": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Queue Membership": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Routing Rule": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Task": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Authorization Delegation": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Separation of Duties Rule": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+}
 
 # Scheduled Tasks
 # ---------------

@@ -78,3 +78,4 @@ page_js = {
 }
 
 after_migrate = "kentender_budget.install.after_migrate"
+before_tests = "kentender_budget.install.before_tests"

@@ -28,6 +28,12 @@ from kentender_budget.services.budget_permissions import (
 	require_any_role,
 )
 from kentender_budget.services.budget_reference import allocate_budget_line_reference
+from kentender_budget.services.budget_authorization import (
+	CAP_BUDGET_EDIT,
+	CAP_BUDGET_VIEW,
+	can_budget,
+	require_budget_capability,
+)
 
 ACTUAL_STALE_DAYS = 2
 _EDITABLE_STATUSES = ("Draft", "Returned")
@@ -40,21 +46,22 @@ def format_kes_full(amount: float | None, *, currency: str = "KES") -> str:
 	return f"{currency} {flt(amount):,.0f}"
 
 
-def _lines_capabilities(status: str) -> dict[str, Any]:
+def _lines_capabilities(status: str, budget) -> dict[str, Any]:
+	can_edit = can_budget(CAP_BUDGET_EDIT, budget)
 	if status == "Active":
 		return {
-			"primary_action": "request_revision",
-			"primary_label": "Request revision",
+			"primary_action": "request_revision" if can_edit else "",
+			"primary_label": "Request revision" if can_edit else "",
 			"can_add_line": False,
 			"can_edit_lines": False,
 			"view_funding_performance": True,
 		}
 	if status in _EDITABLE_STATUSES:
 		return {
-			"primary_action": "add_line",
-			"primary_label": "Add budget line",
-			"can_add_line": True,
-			"can_edit_lines": True,
+			"primary_action": "add_line" if can_edit else "",
+			"primary_label": "Add budget line" if can_edit else "",
+			"can_add_line": can_edit,
+			"can_edit_lines": can_edit,
 			"view_funding_performance": True,
 		}
 	return {
@@ -275,6 +282,7 @@ def list_budget_lines(budget: str) -> dict[str, Any]:
 		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
 	)
 	doc = _resolve_budget(budget)
+	require_budget_capability(CAP_BUDGET_VIEW, doc)
 	resolve_scoped_entity(doc.procuring_entity)
 	currency = doc.currency or "KES"
 	rows = frappe.get_all(
@@ -308,7 +316,7 @@ def list_budget_lines(budget: str) -> dict[str, Any]:
 			"total": len(lines),
 			"label": f"Showing 1-{len(lines)} of {len(lines)} lines" if lines else "Showing 0 of 0 lines",
 		},
-		"capabilities": _lines_capabilities(doc.status),
+		"capabilities": _lines_capabilities(doc.status, doc),
 	}
 
 
@@ -319,6 +327,7 @@ def get_budget_line(line: str) -> dict[str, Any]:
 	)
 	doc = _resolve_line(line)
 	budget = frappe.get_doc("Budget", doc.budget)
+	require_budget_capability(CAP_BUDGET_VIEW, budget)
 	resolve_scoped_entity(budget.procuring_entity)
 	assert_org_unit_in_scope(
 		budget.procuring_entity, getattr(doc, "owner_org_unit", None), require_write=False
@@ -328,7 +337,7 @@ def get_budget_line(line: str) -> dict[str, Any]:
 	treatments = _treatment_dtos(doc)
 	dedicated = _dedicated_total(treatments)
 	approved = flt(doc.approved_amount)
-	can_edit = budget.status in _EDITABLE_STATUSES
+	can_edit = budget.status in _EDITABLE_STATUSES and can_budget(CAP_BUDGET_EDIT, budget)
 	return {
 		**list_row,
 		"budget_code": budget.generated_reference,
@@ -518,6 +527,7 @@ def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
 	payload = payload or {}
 	budget_key = (payload.get("budget") or payload.get("budget_code") or "").strip()
 	budget = _resolve_budget(budget_key)
+	require_budget_capability(CAP_BUDGET_EDIT, budget)
 	resolve_scoped_entity(budget.procuring_entity)
 
 	if budget.status not in _EDITABLE_STATUSES:

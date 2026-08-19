@@ -26,6 +26,16 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_VIEWER,
 )
 from kentender_budget.services.budget_reference import allocate_budget_reference
+from kentender_budget.services.budget_authorization import (
+	CAP_BUDGET_CREATE,
+	CAP_BUDGET_EDIT,
+	CAP_BUDGET_LIST,
+	CAP_BUDGET_REVIEW,
+	CAP_BUDGET_VIEW,
+	authorized_budget_task,
+	can_budget,
+	require_budget_capability,
+)
 
 _FY_RE = re.compile(r"^(\d{4})/(\d{2})$")
 _BLOCKING_STATUSES = ("Draft", "Submitted", "Returned", "Active")
@@ -195,7 +205,22 @@ def _approved_for_portfolio(row, line_approved: float) -> float:
 def _row_dto(row) -> dict[str, Any]:
 	totals = _line_totals(row.name)
 	attn = _attention(row)
-	action = _action_for_status(row.status)
+	action = {"action": "", "action_label": "", "action_muted": True}
+	if can_budget(CAP_BUDGET_VIEW, row):
+		action = {"action": "view", "action_label": "View", "action_muted": True}
+	if row.status in ("Draft", "Returned") and can_budget(CAP_BUDGET_EDIT, row):
+		action = {"action": "open", "action_label": "Open", "action_muted": False}
+	elif row.status == "Active" and can_budget(CAP_BUDGET_VIEW, row):
+		action = {"action": "open", "action_label": "Open", "action_muted": False}
+	elif row.status == "Submitted":
+		task, commands = authorized_budget_task(
+			actor=frappe.session.user,
+			subject_type="Budget",
+			subject_id=row.name,
+			capabilities=(CAP_BUDGET_REVIEW,),
+		)
+		if task and commands:
+			action = {"action": "review", "action_label": "Review", "action_muted": False, "task_id": task.name}
 	status_ui = _STATUS_UI.get(row.status, row.status)
 	source_ui = _SOURCE_UI.get(row.registration_source, row.registration_source or "Direct capture")
 	currency = row.currency or "KES"
@@ -298,7 +323,7 @@ def list_budgets(
 		order_by="fiscal_period desc, modified desc",
 		limit_page_length=200,
 	)
-	return [_row_dto(r) for r in rows]
+	return [_row_dto(r) for r in rows if can_budget(CAP_BUDGET_LIST, r) and can_budget(CAP_BUDGET_VIEW, r)]
 
 
 def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
@@ -316,7 +341,7 @@ def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
 	rows = frappe.get_all(
 		"Budget",
 		filters=filters,
-		fields=["name", "status", "attention_note", "readiness_issue_count"],
+		fields=["name", "procuring_entity", "fiscal_period", "status", "attention_note", "readiness_issue_count"],
 	)
 	counts = {
 		"active": 0,
@@ -326,6 +351,7 @@ def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
 		"draft": 0,
 		"closed": 0,
 	}
+	rows = [r for r in rows if can_budget(CAP_BUDGET_LIST, r) and can_budget(CAP_BUDGET_VIEW, r)]
 	for r in rows:
 		st = r.status or ""
 		if st == "Active":
@@ -348,9 +374,9 @@ def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
 		"procuring_entity_name": _entity_label(pe),
 		"counts": counts,
 		"capabilities": {
-			"register_budget": can_register_budget(),
-			"review_budget": can_review_budget(),
-			"view_funding_performance": True,
+			"register_budget": bool(pe) and can_budget(CAP_BUDGET_CREATE, frappe._dict(name=pe, procuring_entity=pe, fiscal_period="", status="")),
+			"review_budget": any((row.status == "Submitted" and _row_dto(row).get("action") == "review") for row in rows),
+			"view_funding_performance": bool(rows),
 		},
 		"budgets": list_budgets(procuring_entity=pe),
 	}
@@ -661,6 +687,7 @@ def get_budget_overview(budget: str) -> dict[str, Any]:
 		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
 	)
 	doc = _resolve_budget(budget)
+	require_budget_capability(CAP_BUDGET_VIEW, doc)
 	# Hard PE scope for non-admin session users.
 	resolve_scoped_entity(doc.procuring_entity)
 

@@ -28,12 +28,12 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	ITEM_REMOVED,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
+	CAP_PLAN_FINANCE_CONFIRM,
+	CAP_PLAN_FINANCE_RETURN,
+	CAP_PLAN_FINANCE_TASK,
 	ROLE_BUDGET_OFFICER,
 	assert_can_add_demand,
-	assert_can_confirm_plan_funding,
-	assert_can_open_finance_task,
 	assert_planning_scope,
-	has_finance_task_capability,
 )
 from kentender_procurement.procurement_planning.services.plan_item_field_issues import (
 	collect_plan_item_field_issues,
@@ -43,11 +43,13 @@ from kentender_procurement.procurement_planning.services.update_plan_item import
 )
 from kentender_procurement.procurement_planning.services._invariants import new_concurrency_token
 from kentender_procurement.procurement_planning.services.planning_tasks import (
-	assert_task_assignment,
-	assert_task_token,
+	authorize_planning_task,
+	create_governed_planning_task,
 	idempotent_decision,
-	next_task_identity,
-	resolve_single_assignee,
+	invalidate_planning_task,
+	planning_task_action_allowed,
+	task_owner,
+	transition_planning_task,
 )
 
 
@@ -351,15 +353,17 @@ def request_plan_item_finance(
 			"item_version": iv.name,
 			"actor": actor,
 		}
-	assignee = resolve_single_assignee(
-		role=ROLE_BUDGET_OFFICER,
-		procuring_entity=cstr(plan.procuring_entity),
-		organisation_unit=cstr(item.owner_org_unit),
-	)
 	predecessor = cstr(getattr(iv, "finance_task_id", ""))
-	task_id, iteration, task_token = next_task_identity(
-		prefix="PLN-FIN", record=iv, id_field="finance_task_id", iteration_field="finance_task_iteration"
+	task, iteration = create_governed_planning_task(
+		prefix="PLN-FIN", record=iv, id_field="finance_task_id", iteration_field="finance_task_iteration",
+		task_type=CAP_PLAN_FINANCE_TASK, subject_type="Procurement Plan Item Version", subject_id=iv.name,
+		procuring_entity=cstr(plan.procuring_entity), financial_year=cstr(plan.financial_year),
+		organisation_unit=cstr(item.owner_org_unit), predecessor_task_id=predecessor,
+		idempotency_key=f"planning:finance:{iv.name}:{int(iv.finance_task_iteration or 0) + 1}", actor=actor,
 	)
+	task_id = task.name
+	task_token = cstr(task.concurrency_token)
+	assignee = task_owner(task)
 	iv.finance_status = FINANCE_AWAITING
 	iv.finance_task_id = task_id
 	iv.finance_task_iteration = iteration
@@ -418,11 +422,11 @@ def _task_payload(
 		available_after = flt(check.get("available_after") or 0)
 	variant = "sufficient" if sufficient else "shortfall"
 	can_confirm = (
-		has_finance_task_capability(actor)
+		planning_task_action_allowed(task_id=cstr(iv.finance_task_id), actor=actor, capability=CAP_PLAN_FINANCE_CONFIRM)
 		and status in (FINANCE_AWAITING, FINANCE_STALE)
 		and sufficient
 	)
-	can_return = has_finance_task_capability(actor) and status in (
+	can_return = planning_task_action_allowed(task_id=cstr(iv.finance_task_id), actor=actor, capability=CAP_PLAN_FINANCE_RETURN) and status in (
 		FINANCE_AWAITING,
 		FINANCE_STALE,
 	)
@@ -505,13 +509,16 @@ def get_plan_finance_task(
 	task: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	actor = assert_can_open_finance_task(user)
+	actor = (user or frappe.session.user or "").strip()
 	task_id = cstr(task).strip()
-	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
-	if not iv_name:
-		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_FINANCE_TASK,
+		subject_type="Procurement Plan Item Version",
+	)
+	iv_name = cstr(workflow_task.subject_id)
 	iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
-	assert_task_assignment(record=iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
+	if cstr(iv.finance_task_id) != task_id:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
 	item_name = cstr(iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
@@ -616,17 +623,21 @@ def confirm_plan_item_funding(
 	idempotency_key: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	actor = assert_can_confirm_plan_funding(user)
-	replay = idempotent_decision(idempotency_key)
+	actor = (user or frappe.session.user or "").strip()
+	task_id = cstr(task).strip()
+	replay = idempotent_decision(
+		idempotency_key, actor=actor, task_id=task_id, capability=CAP_PLAN_FINANCE_CONFIRM
+	)
 	if replay:
 		return replay
-	task_id = cstr(task).strip()
-	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
-	if not iv_name:
-		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_FINANCE_CONFIRM,
+		subject_type="Procurement Plan Item Version",
+	)
+	iv_name = cstr(workflow_task.subject_id)
 	task_iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
-	assert_task_assignment(record=task_iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
-	assert_task_token(actual=task_iv.finance_task_token, expected=expected_token)
+	if cstr(task_iv.finance_task_id) != task_id:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
 	item_name = cstr(task_iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
@@ -697,6 +708,10 @@ def confirm_plan_item_funding(
 	reservation_name = ",".join(reservation_names)
 	reservation_code = ", ".join(reservation_codes)
 
+	completed_task = transition_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_FINANCE_CONFIRM,
+		target_state="Completed", expected_token=cstr(expected_token),
+	)
 	iv.finance_status = FINANCE_CONFIRMED
 	iv.finance_snapshot_amount = amount
 	iv.finance_snapshot_budget_line = line_id
@@ -706,7 +721,7 @@ def confirm_plan_item_funding(
 	iv.finance_owned_reservation = 1 if owned else 0
 	iv.reservation_reference = reservation_code or reservation_name
 	iv.finance_task_state = "Confirmed"
-	iv.finance_task_token = new_concurrency_token()
+	iv.finance_task_token = cstr(completed_task.concurrency_token)
 	iv.save(ignore_permissions=True)
 	_record_finance_decision(
 		plan_version=iv.plan_version,
@@ -739,20 +754,24 @@ def return_plan_item_from_finance(
 	idempotency_key: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	actor = assert_can_open_finance_task(user)
-	replay = idempotent_decision(idempotency_key)
-	if replay:
-		return replay
+	actor = (user or frappe.session.user or "").strip()
 	task_id = cstr(task).strip()
 	note = cstr(reason or "").strip()
 	if not note:
 		return {"ok": False, "errors": {"reason": "A return reason is required."}}
-	iv_name = frappe.db.get_value("Procurement Plan Item Version", {"finance_task_id": task_id}, "name")
-	if not iv_name:
-		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	replay = idempotent_decision(
+		idempotency_key, actor=actor, task_id=task_id, capability=CAP_PLAN_FINANCE_RETURN
+	)
+	if replay:
+		return replay
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_FINANCE_RETURN,
+		subject_type="Procurement Plan Item Version",
+	)
+	iv_name = cstr(workflow_task.subject_id)
 	task_iv = frappe.get_doc("Procurement Plan Item Version", iv_name)
-	assert_task_assignment(record=task_iv, task=task_id, id_field="finance_task_id", assignee_field="finance_task_assignee", state_field="finance_task_state", actor=actor)
-	assert_task_token(actual=task_iv.finance_task_token, expected=expected_token)
+	if cstr(task_iv.finance_task_id) != task_id:
+		frappe.throw("Task not found.", frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
 	item_name = cstr(task_iv.plan_item)
 	item, plan, iv = _iv_for_item(item_name)
 	assert_planning_scope(
@@ -772,9 +791,13 @@ def return_plan_item_from_finance(
 		}
 	if status not in (FINANCE_AWAITING, FINANCE_STALE, FINANCE_CONFIRMED):
 		return {"ok": False, "errors": {"form": "This Finance task cannot be returned."}}
+	returned_task = transition_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_FINANCE_RETURN,
+		target_state="Returned", expected_token=cstr(expected_token),
+	)
 	iv.finance_status = FINANCE_RETURNED
 	iv.finance_task_state = "Returned"
-	iv.finance_task_token = new_concurrency_token()
+	iv.finance_task_token = cstr(returned_task.concurrency_token)
 	iv.save(ignore_permissions=True)
 	_record_finance_decision(
 		plan_version=iv.plan_version,
@@ -840,6 +863,11 @@ def cancel_awaiting_or_release_owned(
 		cancelled = status in (FINANCE_AWAITING, FINANCE_STALE, FINANCE_RETURNED)
 		iv.finance_status = FINANCE_NOT_REQUESTED
 		if cstr(getattr(iv, "finance_task_state", "")) == "Open":
+			invalidate_planning_task(
+				task_id=cstr(iv.finance_task_id), subject_type="Procurement Plan Item Version",
+				subject_id=iv.name, actor=frappe.session.user,
+				reason="Plan Item removed from draft",
+			)
 			iv.finance_task_state = "Cancelled"
 			iv.finance_task_token = new_concurrency_token()
 		iv.save(ignore_permissions=True)

@@ -25,14 +25,15 @@ The former standalone scope model, authorization-surface pack, module Requiremen
 
 | Change ID | Subject | Requirements | Static design | Implementation | Seed and tests | Status |
 |---|---|---:|---:|---:|---:|---|
-| `AUTH-CHG-001` | Operational scope, workflow routing, role-aware work discovery and support visibility | Yes | Yes | Yes | Canonical and isolated role/scope/task scenarios | Under review |
+| `AUTH-CHG-001` | Operational scope, workflow routing, role-aware work discovery and support visibility | Yes | Yes | Yes | Canonical and isolated role/scope/task scenarios | Approved |
 
 ---
 
 ## AUTH-CHG-001 — Operational scope, workflow routing, role-aware work discovery and support visibility
 
-**Status:** Under review  
+**Status:** Approved  
 **Proposed:** 16 August 2026  
+**Approved:** 16 August 2026  
 **Source:** Role-based MVP testing on 16 August 2026; approved cross-module operating model; approved Procurement Planning ledger; historical PE/OU scope and authorization-surface evidence  
 
 **Observed defect:** A signed-in `MOH Budget Officer+Authority` account opens the Procurement Planning workspace without a resolved Procuring Entity or financial year and sees no actionable work. The same live Planning state shows an open Finance-confirmation task to the Procurement Planner as **Awaiting confirmation — With Budget Officer**. The canonical scenario, however, assigns that task specifically to Peter Otieno. The interface therefore allows one actor to see that work exists while the purported operational actor cannot discover whether it is assigned to them, to another user, to a queue or to nobody. The same access model prevents a System Administrator without an operational assignment from opening even a neutral Plan projection, while providing no sufficient assignment or routing diagnostic.
@@ -805,4 +806,3 @@ Upon approval:
 1. Whether the production System Administrator receives only authorization metadata by default, as proposed, or also receives a default national `support.record.view` assignment. The safer proposed rule is explicit support-record assignment; the deterministic test environment includes a separate System Support Viewer account.
 2. Whether any MVP workflow requires a named claimable queue rather than a named user. The shared model admits both; every admitted module route must choose explicitly.
 3. Whether the `MOH Budget Officer+Authority` account has a legitimate production use. Until proved, it remains a negative SoD and misconfiguration test rather than a canonical operator.
-

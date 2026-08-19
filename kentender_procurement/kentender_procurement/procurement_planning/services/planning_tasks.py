@@ -5,7 +5,113 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.services.authorization_policy import evaluate_capability
+from kentender_core.services.workflow_routing import RoutingContext
+from kentender_core.services.workflow_tasks import (
+	TaskSpec,
+	create_routed_task,
+	get_authorized_task,
+	invalidate_task,
+	transition_task,
+)
 from kentender_procurement.procurement_planning.services._invariants import new_concurrency_token
+
+
+def task_owner(task) -> str:
+	return cstr(task.claimed_by or task.assigned_user_id or task.queue_id)
+
+
+def create_governed_planning_task(
+	*,
+	prefix: str,
+	record: object,
+	id_field: str,
+	iteration_field: str,
+	task_type: str,
+	subject_type: str,
+	subject_id: str,
+	procuring_entity: str,
+	financial_year: str,
+	organisation_unit: str = "",
+	predecessor_task_id: str = "",
+	idempotency_key: str,
+	actor: str,
+):
+	task_id, iteration, _token = next_task_identity(
+		prefix=prefix,
+		record=record,
+		id_field=id_field,
+		iteration_field=iteration_field,
+	)
+	task = create_routed_task(
+		TaskSpec(
+			routing=RoutingContext(
+				module_name="Procurement Planning",
+				task_type=task_type,
+				procuring_entity_id=procuring_entity,
+				financial_year_id=financial_year,
+				organisation_unit_id=organisation_unit,
+			),
+			subject_type=subject_type,
+			subject_id=subject_id,
+			idempotency_key=idempotency_key,
+			task_iteration=iteration,
+			predecessor_task_id=predecessor_task_id,
+			task_id=task_id,
+		),
+		actor=actor,
+	)
+	return task, iteration
+
+
+def authorize_planning_task(
+	*, task_id: str, actor: str, capability: str | None, subject_type: str, subject_id: str = ""
+):
+	task = get_authorized_task(task_id, actor=actor, capability=capability)
+	if task.subject_type != subject_type or (subject_id and task.subject_id != subject_id):
+		frappe.throw(frappe._("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	return task
+
+
+def planning_task_action_allowed(*, task_id: str, actor: str, capability: str) -> bool:
+	if not task_id or not frappe.db.exists("Workflow Task", task_id):
+		return False
+	task = frappe.get_doc("Workflow Task", task_id)
+	if task.state != "Open":
+		return False
+	resource = {
+		"resource_type": task.subject_type,
+		"resource_id": task.subject_id,
+		"procuring_entity_id": task.procuring_entity_id,
+		"financial_year_id": task.financial_year_id,
+		"organisation_unit_id": task.organisation_unit_id,
+	}
+	return evaluate_capability(actor, capability, resource, task_id=task.name).allowed
+
+
+def transition_planning_task(
+	*, task_id: str, actor: str, capability: str, target_state: str, expected_token: str, prior_actions=None
+):
+	return transition_task(
+		task_id,
+		actor=actor,
+		capability=capability,
+		target_state=target_state,
+		expected_token=expected_token,
+		prior_actions=prior_actions,
+	)
+
+
+def invalidate_planning_task(*, task_id: str, subject_type: str, subject_id: str, actor: str, reason: str):
+	return invalidate_task(
+		task_id,
+		subject_type=subject_type,
+		subject_id=subject_id,
+		actor=actor,
+		reason=reason,
+	)
+
+
 def resolve_single_assignee(*, role: str, procuring_entity: str, organisation_unit: str | None = None) -> str:
 	rows = frappe.get_all(
 		"User Scope Assignment",
@@ -90,9 +196,35 @@ def assert_task_token(*, actual: str | None, expected: str | None) -> None:
 		frappe.throw(frappe._("The task changed while you were working. Reload and try again."), title="PLN_TASK_STALE")
 
 
-def idempotent_decision(key: str | None) -> dict | None:
+def idempotent_decision(
+	key: str | None, *, actor: str = "", task_id: str = "", capability: str = ""
+) -> dict | None:
 	key = cstr(key).strip()
 	if not key:
 		frappe.throw(frappe._("An idempotency key is required."), title="PLN_IDEMPOTENCY_REQUIRED")
-	name = frappe.db.get_value("Plan Decision", {"command_idempotency_key": key}, "name")
-	return {"ok": True, "idempotent": True, "decision": name} if name else None
+	decision = frappe.db.get_value(
+		"Plan Decision",
+		{"command_idempotency_key": key},
+		["name", "actor", "task_id"],
+		as_dict=True,
+	)
+	if not decision:
+		return None
+	if actor and cstr(decision.actor) != cstr(actor):
+		frappe.throw(frappe._("Not permitted for this action."), frappe.PermissionError)
+	if task_id and cstr(decision.task_id) != cstr(task_id):
+		frappe.throw(frappe._("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	if capability:
+		task = frappe.get_doc("Workflow Task", cstr(decision.task_id))
+		if cstr(task.claimed_by or task.assigned_user_id) != cstr(actor):
+			frappe.throw(frappe._("Not permitted for this action."), frappe.PermissionError)
+		resource = {
+			"resource_type": task.subject_type,
+			"resource_id": task.subject_id,
+			"procuring_entity_id": task.procuring_entity_id,
+			"financial_year_id": task.financial_year_id,
+			"organisation_unit_id": task.organisation_unit_id,
+		}
+		if not evaluate_capability(actor, capability, resource).allowed:
+			frappe.throw(frappe._("Not permitted for this action."), frappe.PermissionError)
+	return {"ok": True, "idempotent": True, "decision": decision.name}

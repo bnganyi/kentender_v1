@@ -10,6 +10,12 @@ from frappe.tests.utils import FrappeTestCase
 
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
 from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.services.budget_authorization import create_budget_task
+from kentender_budget.seeds.budget_authorization_seed import (
+	assign_budget_test_user,
+	upsert_budget_authorization,
+	upsert_budget_test_authorization,
+)
 from kentender_budget.services.budget_readiness_contracts import (
 	activate_budget,
 	get_budget_readiness,
@@ -24,11 +30,29 @@ class TestBudgetReadiness(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
+		upsert_budget_authorization()
+		upsert_budget_test_authorization()
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def setUp(self):
 		# Keep Draft/Submitted seeds stable across mutation tests.
 		upsert_moh_mvp_v1_portfolio()
+		name = frappe.db.get_value("Budget", {"generated_reference": "MOH-BUD-0002"}, "name")
+		if name and not frappe.db.exists(
+			"Workflow Task",
+			{
+				"subject_type": "Budget",
+				"subject_id": name,
+				"state": "Open",
+				"assigned_user_id": frappe.session.user,
+			},
+		):
+			create_budget_task(
+				frappe.get_doc("Budget", name),
+				capability="budget.review",
+				task_type="budget.review",
+				iteration=0,
+			)
 
 	def _ensure_user(self, email: str, *roles: str) -> str:
 		if not frappe.db.exists("User", email):
@@ -61,6 +85,21 @@ class TestBudgetReadiness(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		return email
+
+	def _task_payload(self, budget: str) -> dict:
+		name = frappe.db.get_value("Budget", {"generated_reference": budget}, "name")
+		task_name = frappe.db.get_value(
+			"Workflow Task",
+			{
+				"subject_type": "Budget",
+				"subject_id": name,
+				"state": "Open",
+				"assigned_user_id": frappe.session.user,
+			},
+			"name",
+		)
+		task = frappe.get_doc("Workflow Task", task_name)
+		return {"budget": budget, "task_id": task.name, "concurrency_token": task.concurrency_token}
 
 	def test_draft_seed_has_grouped_blockers(self):
 		dto = get_budget_readiness("MOH-BUD-0004")
@@ -95,7 +134,8 @@ class TestBudgetReadiness(FrappeTestCase):
 		self.assertTrue(dto["governance"]["activated_at"])
 
 	def test_submitted_seed_ready_for_review_path(self):
-		dto = get_budget_readiness("MOH-BUD-0002")
+		task = self._task_payload("MOH-BUD-0002")
+		dto = get_budget_readiness("MOH-BUD-0002", task_id=task["task_id"])
 		self.assertEqual(dto["budget"]["status"], "Submitted")
 		self.assertEqual(dto["blocker_count"], 0)
 		self.assertTrue(dto["capabilities"]["can_return"])
@@ -103,7 +143,7 @@ class TestBudgetReadiness(FrappeTestCase):
 		self.assertFalse(dto["capabilities"]["can_activate"])  # not yet reviewed
 
 	def test_return_requires_reason(self):
-		res = return_budget({"budget": "MOH-BUD-0002", "comment": ""})
+		res = return_budget({**self._task_payload("MOH-BUD-0002"), "comment": ""})
 		self.assertFalse(res.get("ok"))
 		self.assertIn("comment", res.get("errors") or {})
 
@@ -120,13 +160,13 @@ class TestBudgetReadiness(FrappeTestCase):
 				"reviewed_at": None,
 			},
 		)
-		marked = mark_budget_reviewed({"budget": "MOH-BUD-0002"})
+		marked = mark_budget_reviewed(self._task_payload("MOH-BUD-0002"))
 		self.assertTrue(marked.get("ok"), marked)
 		self.assertTrue(marked["readiness"]["governance"]["reviewed_by"])
 		self.assertEqual(marked["readiness"]["budget"]["status"], "Submitted")
 		self.assertTrue(marked["readiness"]["capabilities"]["can_activate"])
 
-		activated = activate_budget({"budget": "MOH-BUD-0002"})
+		activated = activate_budget(self._task_payload("MOH-BUD-0002"))
 		self.assertTrue(activated.get("ok"), activated)
 		self.assertEqual(activated["readiness"]["budget"]["status"], "Active")
 		self.assertTrue(activated["readiness"]["capabilities"]["show_activation_record"])
@@ -163,6 +203,7 @@ class TestBudgetReadiness(FrappeTestCase):
 				)
 			line.save(ignore_permissions=True)
 
+		assign_budget_test_user(officer, "officer")
 		frappe.set_user(officer)
 		try:
 			ok = submit_budget({"budget": "MOH-BUD-0004"})
@@ -171,12 +212,13 @@ class TestBudgetReadiness(FrappeTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
-		mark_budget_reviewed({"budget": "MOH-BUD-0004"})
+		mark_budget_reviewed(self._task_payload("MOH-BUD-0004"))
+		authority_task = self._task_payload("MOH-BUD-0004")
 		frappe.set_user(officer)
 		try:
 			# Officer is not Authority — expect permission or ok:false.
 			try:
-				res = activate_budget({"budget": "MOH-BUD-0004"})
+				res = activate_budget(authority_task)
 				self.assertFalse(res.get("ok"))
 				self.assertIn("AC-018", str(res.get("errors") or {}))
 			except frappe.PermissionError:
@@ -211,7 +253,7 @@ class TestBudgetReadiness(FrappeTestCase):
 				)
 			line.save(ignore_permissions=True)
 		submit_budget({"budget": "MOH-BUD-0004"})
-		mark_budget_reviewed({"budget": "MOH-BUD-0004"})
+		mark_budget_reviewed(self._task_payload("MOH-BUD-0004"))
 		# Force submitter == actor
 		frappe.db.set_value(
 			"Budget",
@@ -219,7 +261,7 @@ class TestBudgetReadiness(FrappeTestCase):
 			"submitted_by",
 			"Administrator",
 		)
-		res = activate_budget({"budget": "MOH-BUD-0004"})
+		res = activate_budget(self._task_payload("MOH-BUD-0004"))
 		self.assertFalse(res.get("ok"))
 		self.assertIn("AC-018", str((res.get("errors") or {}).get("status") or ""))
 

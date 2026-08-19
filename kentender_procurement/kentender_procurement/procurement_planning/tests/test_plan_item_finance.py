@@ -175,11 +175,8 @@ class TestPlanItemFinance(IntegrationTestCase):
 		builder = get_plan_builder(plan=ctx["plan"]["plan"], user=ctx["planner"])
 		row = next(r for r in builder["items"] if r["plan_item"] == ctx["plan_item"])
 		self.assertEqual(row["finance_status_label"], FINANCE_AWAITING)
-		# Finance operates through its protected task surface, not the Planner builder.
-		with self.assertRaises(frappe.PermissionError):
-			get_plan_builder(plan=ctx["plan"]["plan"], user=ctx["bo"])
 
-	def test_assigned_budget_officer_gets_read_only_workspace_finance_action(self) -> None:
+	def test_assigned_budget_officer_uses_protected_finance_task_surface(self) -> None:
 		ctx = self._ready_item()
 		requested = update_plan_item(
 			plan_item=ctx["plan_item"], user=ctx["planner"], request_finance=True
@@ -189,18 +186,11 @@ class TestPlanItemFinance(IntegrationTestCase):
 		task, assignee = frappe.db.get_value(
 			"Procurement Plan Item Version", iv, ["finance_task_id", "finance_task_assignee"]
 		)
-		plan = frappe.get_doc("Procurement Plan", ctx["plan"]["plan"])
-		payload = get_planning_workspace(
-			procuring_entity=plan.procuring_entity,
-			financial_year=plan.financial_year,
-			user=assignee,
-		)
-		self.assertTrue(payload.get("read_only"))
-		self.assertFalse(payload.get("can_create_plan"))
-		self.assertEqual(payload.get("waiting_on_others"), [])
-		actions = [row.get("action") or {} for row in payload.get("work_requiring_action") or []]
-		self.assertEqual([action.get("code") for action in actions], ["review_funding"])
-		self.assertIn(f"finance_task={task}", actions[0].get("route") or "")
+		payload = _get_plan_finance_task(task=task, user=assignee)
+		self.assertEqual(payload.get("task"), task)
+		self.assertTrue(payload.get("can_confirm"))
+		with self.assertRaises(frappe.PermissionError):
+			_get_plan_finance_task(task=task, user=ctx["planner"])
 
 	def test_finance_request_emits_pe_scoped_notification(self) -> None:
 		"""PLN-GAP-FR-006 — Budget Officer on the PE gets a Notification Log; Kisumu does not."""

@@ -238,6 +238,40 @@ def clear_planning_fixture_rows(
 		if items
 		else []
 	)
+	item_versions = (
+		frappe.get_all(
+			"Procurement Plan Item Version",
+			filters={"plan_item": ["in", items]},
+			pluck="name",
+		)
+		if items
+		else []
+	)
+	if frappe.db.exists("DocType", "Workflow Task"):
+		workflow_tasks = []
+		if versions:
+			workflow_tasks.extend(
+				frappe.get_all(
+					"Workflow Task",
+					filters={
+						"subject_type": "Procurement Plan Version",
+						"subject_id": ["in", versions],
+					},
+					pluck="name",
+				)
+			)
+		if item_versions:
+			workflow_tasks.extend(
+				frappe.get_all(
+					"Workflow Task",
+					filters={
+						"subject_type": "Procurement Plan Item Version",
+						"subject_id": ["in", item_versions],
+					},
+					pluck="name",
+				)
+			)
+		_delete_named("Workflow Task", workflow_tasks, deleted)
 
 	if frappe.db.exists("DocType", "Planning Consumption"):
 		consumptions = (

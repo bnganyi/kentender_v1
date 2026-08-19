@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl.exe -e bash -lc \"cd /home/midasuser/frappe-bench && ls sites | grep -v assets\")"
+    ]
+  }
+}

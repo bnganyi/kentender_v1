@@ -25,6 +25,7 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_VIEWER,
 	require_any_role,
 )
+from kentender_budget.services.budget_authorization import CAP_BUDGET_VIEW, require_budget_capability
 
 _READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 
@@ -53,6 +54,7 @@ def list_funding_lifecycle(
 	"""Normalize authoritative lifecycle/audit records into one ordered event stream."""
 	require_any_role(*_READ_ROLES)
 	doc = _resolve_budget(budget)
+	require_budget_capability(CAP_BUDGET_VIEW, doc)
 	resolve_scoped_entity(doc.procuring_entity)
 	if isinstance(filters, str):
 		filters = frappe.parse_json(filters) if filters else {}

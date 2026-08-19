@@ -19,6 +19,7 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_VIEWER,
 	require_any_role,
 )
+from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, CAP_BUDGET_EXPORT, can_budget
 
 _READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 
@@ -122,6 +123,7 @@ def get_budget_audit(
 
 	life = list_funding_lifecycle(budget, life_filters or None)
 	bud = life["budget"]
+	budget_doc = frappe.get_doc("Budget", bud["id"])
 	actor_q = (actor or "").strip().lower()
 
 	out_rows = []
@@ -184,10 +186,18 @@ def get_budget_audit(
 		},
 		"capabilities": {
 			"read_only": True,
-			"can_export": True,
+			"can_export": can_budget(CAP_BUDGET_EXPORT, budget_doc),
 			"view_funding_performance": True,
-			"primary_action": "request_revision" if bud["status"] == "Active" else "",
-			"primary_label": "Request revision" if bud["status"] == "Active" else "",
+			"primary_action": (
+				"request_revision"
+				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
+				else ""
+			),
+			"primary_label": (
+				"Request revision"
+				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
+				else ""
+			),
 		},
 	}
 
@@ -213,7 +223,10 @@ def _empty_dto(doc) -> dict[str, Any]:
 			"label": "Showing 0 entries",
 		},
 		"filters": {"event_types": [], "actors": []},
-		"capabilities": {"read_only": True, "can_export": True},
+		"capabilities": {
+			"read_only": True,
+			"can_export": can_budget(CAP_BUDGET_EXPORT, doc),
+		},
 	}
 
 

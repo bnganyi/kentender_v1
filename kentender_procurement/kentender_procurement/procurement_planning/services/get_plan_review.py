@@ -19,10 +19,10 @@ from kentender_procurement.procurement_planning.mvp1_constants import (
 	VERSION_IN_REVIEW,
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
-	CAP_PLAN_VIEW,
+	CAP_PLAN_APPROVE,
+	CAP_PLAN_RETURN,
+	CAP_PLAN_REVIEW,
 	actor_planning_roles,
-	is_planning_read_only,
-	require_capability,
 )
 from kentender_procurement.procurement_planning.services.plan_item_finance import (
 	effective_finance_status,
@@ -32,7 +32,10 @@ from kentender_procurement.procurement_planning.services.preference_reservation 
 	plan_coverage,
 	scheme_is_assigned,
 )
-from kentender_procurement.procurement_planning.services.planning_tasks import assert_task_assignment
+from kentender_procurement.procurement_planning.services.planning_tasks import (
+	authorize_planning_task,
+	planning_task_action_allowed,
+)
 from kentender_procurement.procurement_planning.services.validate_plan import (
 	effective_validation_status,
 )
@@ -58,25 +61,19 @@ def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 		)
 
 	task_id = cstr(task).strip()
-	version_name = frappe.db.get_value("Procurement Plan Version", {"review_task_id": task_id}, "name")
-	if not version_name:
-		frappe.throw(frappe._("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=None,
+		subject_type="Procurement Plan Version",
+	)
+	version_name = cstr(workflow_task.subject_id)
 	task_version = frappe.get_doc("Procurement Plan Version", version_name)
-	assert_task_assignment(record=task_version, task=task_id, id_field="review_task_id", assignee_field="review_task_assignee", state_field="review_task_state", actor=actor)
+	if cstr(task_version.review_task_id) != task_id:
+		frappe.throw(frappe._("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
 	plan_name = cstr(task_version.plan)
 
 	plan_doc = frappe.get_doc("Procurement Plan", plan_name)
 	pe = cstr(plan_doc.procuring_entity).strip()
 	ou = None
-	# Record visibility first; task vs neutral branched below (PLN-FR-080…083).
-	require_capability(
-		CAP_PLAN_VIEW,
-		procuring_entity=pe,
-		org_unit=ou,
-		user=actor,
-		require_write=False,
-	)
-
 	focus = version_name
 	if not focus:
 		frappe.throw(frappe._("No Plan Version available for review."), title="PLN_VERSION_NOT_FOUND")
@@ -205,10 +202,13 @@ def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 		issues_message = "Resolve validation issues before recording this decision."
 
 	roles = actor_planning_roles(actor)
-	read_only_actor = is_planning_read_only(actor)
-	task_surface = surface == "task" and not read_only_actor
-	can_return = task_surface and cstr(ver.status) == VERSION_IN_REVIEW
-	can_approve = task_surface and cstr(ver.status) == VERSION_IN_REVIEW and issues_ready and finance_complete
+	task_surface = surface == "task"
+	can_return = task_surface and cstr(ver.status) == VERSION_IN_REVIEW and planning_task_action_allowed(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_RETURN
+	)
+	can_approve = task_surface and cstr(ver.status) == VERSION_IN_REVIEW and issues_ready and finance_complete and planning_task_action_allowed(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_APPROVE
+	)
 	review_actions = [
 		*([{"code": "approve", "label": "Approve update"}] if can_approve else []),
 		*([{"code": "return", "label": "Return to planner"}] if can_return else []),
@@ -276,7 +276,7 @@ def get_plan_review(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"validation_projection": validation,
 		"concurrency_token": cstr(ver.concurrency_token or ""),
 		"task": task_id,
-		"task_token": cstr(task_version.review_task_token),
+		"task_token": cstr(workflow_task.concurrency_token),
 		"task_iteration": int(task_version.review_task_iteration or 1),
 		"submitted_by": cstr(task_version.submitted_by),
 		"submitted_at": str(task_version.submitted_at or ""),

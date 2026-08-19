@@ -24,6 +24,12 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_VIEWER,
 	require_any_role,
 )
+from kentender_budget.services.budget_authorization import (
+	CAP_BUDGET_EDIT,
+	CAP_BUDGET_VIEW,
+	can_budget,
+	require_budget_capability,
+)
 
 _ACTIVITY_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 _ACTIVITY_TYPES = frozenset({"reservation", "commitment", "actual"})
@@ -33,6 +39,7 @@ def list_funding_activity(budget: str) -> dict[str, Any]:
 	"""Return balance strip + chronological funding activity for a Budget."""
 	require_any_role(*_ACTIVITY_ROLES)
 	doc = _resolve_budget(budget)
+	require_budget_capability(CAP_BUDGET_VIEW, doc)
 	resolve_scoped_entity(doc.procuring_entity)
 	currency = doc.currency or "KES"
 	totals = _line_totals(doc.name)
@@ -89,8 +96,12 @@ def list_funding_activity(budget: str) -> dict[str, Any]:
 			"label": f"Showing 1 to {len(rows)} of {len(rows)} entries" if rows else "Showing 0 entries",
 		},
 		"capabilities": {
-			"primary_action": "request_revision" if doc.status == "Active" else "",
-			"primary_label": "Request revision" if doc.status == "Active" else "",
+			"primary_action": (
+				"request_revision" if doc.status == "Active" and can_budget(CAP_BUDGET_EDIT, doc) else ""
+			),
+			"primary_label": (
+				"Request revision" if doc.status == "Active" and can_budget(CAP_BUDGET_EDIT, doc) else ""
+			),
 			"view_funding_performance": True,
 			"read_only": True,
 		},

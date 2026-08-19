@@ -23,6 +23,10 @@ from kentender_budget.services.budget_notification_service import (
 	notify_budget_users,
 )
 from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.services.budget_authorization import create_budget_task
+from kentender_budget.seeds.budget_authorization_seed import (
+	configure_budget_test_workflow,
+)
 from kentender_budget.services.budget_readiness_contracts import (
 	activate_budget,
 	mark_budget_reviewed,
@@ -44,15 +48,10 @@ class TestBudgetNotifications(FrappeTestCase):
 		super().setUpClass()
 		ensure_budget_roles()
 		cls.seed = upsert_moh_mvp_v1_portfolio()
-		cls.reviewer = cls._ensure_user(
-			"budget.notify.reviewer@example.com", "Budget Reviewer"
-		)
-		cls.authority = cls._ensure_user(
-			"budget.notify.authority@example.com", "Budget Authority"
-		)
-		cls.officer = cls._ensure_user(
-			"budget.notify.officer@example.com", "Budget Officer"
-		)
+		cls.reviewer = "moh.budget.reviewer@example.test"
+		cls.authority = "moh.budget.authority@example.test"
+		cls.officer = "moh.medicalservices.officer@example.test"
+		configure_budget_test_workflow(reviewer=cls.reviewer, authority=cls.authority)
 
 	@staticmethod
 	def _ensure_user(email: str, *roles: str) -> str:
@@ -89,7 +88,9 @@ class TestBudgetNotifications(FrappeTestCase):
 		return email
 
 	def setUp(self):
+		frappe.set_user("Administrator")
 		upsert_moh_mvp_v1_portfolio()
+		configure_budget_test_workflow(reviewer=self.reviewer, authority=self.authority)
 		for name in frappe.get_all(
 			"Notification Log",
 			filters={"email_header": ["like", "kt-budget:%"]},
@@ -104,6 +105,28 @@ class TestBudgetNotifications(FrappeTestCase):
 		if for_user:
 			filters["for_user"] = for_user
 		return frappe.db.count("Notification Log", filters)
+
+	def _task_payload(self, subject_type: str, subject_id: str) -> dict:
+		if subject_type == "Budget":
+			name = frappe.db.get_value("Budget", {"generated_reference": subject_id}, "name")
+		else:
+			name = frappe.db.get_value("Budget Revision", {"generated_reference": subject_id}, "name")
+		task_name = frappe.db.get_value(
+			"Workflow Task",
+			{
+				"subject_type": subject_type,
+				"subject_id": name,
+				"state": "Open",
+				"assigned_user_id": frappe.session.user,
+			},
+			"name",
+		)
+		if not task_name and subject_type == "Budget":
+			task = create_budget_task(frappe.get_doc("Budget", name), capability="budget.review", task_type="budget.review", iteration=0)
+		else:
+			task = frappe.get_doc("Workflow Task", task_name)
+		key = "budget" if subject_type == "Budget" else "revision"
+		return {key: subject_id, "task_id": task.name, "concurrency_token": task.concurrency_token}
 
 	def _prepare_draft_0004(self):
 		doc = frappe.get_doc("Budget", {"generated_reference": "MOH-BUD-0004"})
@@ -161,9 +184,9 @@ class TestBudgetNotifications(FrappeTestCase):
 				"status": "Submitted",
 			},
 		)
-		returned = return_budget(
-			{"budget": "MOH-BUD-0002", "comment": "Fix evidence attachment."}
-		)
+		frappe.set_user(self.reviewer)
+		returned = return_budget({**self._task_payload("Budget", "MOH-BUD-0002"), "comment": "Fix evidence attachment."})
+		frappe.set_user("Administrator")
 		self.assertTrue(returned.get("ok"), returned)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_BUDGET_RETURNED, self.officer), 1
@@ -184,13 +207,17 @@ class TestBudgetNotifications(FrappeTestCase):
 				"status": "Submitted",
 			},
 		)
-		marked = mark_budget_reviewed({"budget": "MOH-BUD-0002"})
+		frappe.set_user(self.reviewer)
+		marked = mark_budget_reviewed(self._task_payload("Budget", "MOH-BUD-0002"))
+		frappe.set_user("Administrator")
 		self.assertTrue(marked.get("ok"), marked)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_BUDGET_REVIEWED, self.authority), 1
 		)
 
-		activated = activate_budget({"budget": "MOH-BUD-0002"})
+		frappe.set_user(self.authority)
+		activated = activate_budget(self._task_payload("Budget", "MOH-BUD-0002"))
+		frappe.set_user("Administrator")
 		self.assertTrue(activated.get("ok"), activated)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_BUDGET_ACTIVATED, self.officer), 1
@@ -223,9 +250,9 @@ class TestBudgetNotifications(FrappeTestCase):
 			self._count_event(EVENT_REVISION_SUBMITTED, self.reviewer), 1
 		)
 
-		returned = return_budget_revision(
-			{"revision": code, "comment": "Clarify reason text."}
-		)
+		frappe.set_user(self.authority)
+		returned = return_budget_revision({**self._task_payload("Budget Revision", code), "comment": "Clarify reason text."})
+		frappe.set_user("Administrator")
 		self.assertTrue(returned.get("ok"), returned)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_REVISION_RETURNED, self.officer), 1
@@ -252,9 +279,9 @@ class TestBudgetNotifications(FrappeTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
-		rejected = reject_budget_revision(
-			{"revision": code2, "comment": "Out of policy for notify test."}
-		)
+		frappe.set_user(self.authority)
+		rejected = reject_budget_revision({**self._task_payload("Budget Revision", code2), "comment": "Out of policy for notify test."})
+		frappe.set_user("Administrator")
 		self.assertTrue(rejected.get("ok"), rejected)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_REVISION_REJECTED, self.officer), 1
@@ -281,7 +308,9 @@ class TestBudgetNotifications(FrappeTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
-		applied = apply_budget_revision({"revision": code3})
+		frappe.set_user(self.authority)
+		applied = apply_budget_revision(self._task_payload("Budget Revision", code3))
+		frappe.set_user("Administrator")
 		self.assertTrue(applied.get("ok"), applied)
 		self.assertGreaterEqual(
 			self._count_event(EVENT_REVISION_APPLIED, self.officer), 1
@@ -326,11 +355,11 @@ class TestBudgetNotifications(FrappeTestCase):
 				"status": "Submitted",
 			},
 		)
+		frappe.set_user(self.reviewer)
 		with patch(
 			"kentender_budget.services.budget_notification_service.emit_notification_log",
 			side_effect=RuntimeError("boom"),
 		):
-			res = return_budget(
-				{"budget": "MOH-BUD-0002", "comment": "Notify failure must not reverse."}
-			)
+			res = return_budget({**self._task_payload("Budget", "MOH-BUD-0002"), "comment": "Notify failure must not reverse."})
+		frappe.set_user("Administrator")
 		self.assertTrue(res.get("ok"), res)

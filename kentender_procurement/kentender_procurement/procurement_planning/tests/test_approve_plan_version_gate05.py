@@ -23,6 +23,9 @@ from kentender_procurement.procurement_planning.services.approve_plan_version im
 from kentender_procurement.procurement_planning.services.submit_plan_for_review import (
 	submit_plan_for_review,
 )
+from kentender_procurement.procurement_planning.services.record_plan_decision import (
+	record_plan_decision,
+)
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 	advance_draft_to_recommended,
@@ -57,13 +60,13 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 		token = frappe.db.get_value(
 			"Procurement Plan Version", plan["version"], "concurrency_token"
 		)
-		with self.assertRaises(frappe.ValidationError) as ctx:
+		with self.assertRaises(frappe.PermissionError) as ctx:
 			approve_plan_version(
 				version=plan["version"], concurrency_token=token, user=approver
 			)
 		msg = str(ctx.exception).lower()
 		self.assertTrue(
-			"in review" in msg or "not_approvable" in msg or "approvable" in msg,
+			"task" in msg,
 			msg,
 		)
 
@@ -90,9 +93,19 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 			frappe.db.get_value("Procurement Plan Version", plan["version"], "status"),
 			VERSION_IN_REVIEW,
 		)
+		with self.assertRaises(frappe.PermissionError):
+			approve_plan_version(
+				task=sub["task"], expected_token=sub["task_token"],
+				idempotency_key=f"TEST-DIRECT-APPROVE-{sub['task']}", user=approver,
+			)
+		recommended = record_plan_decision(
+			version=plan["version"], decision="recommend",
+			concurrency_token=sub["concurrency_token"], task=sub["task"],
+			expected_task_token=sub["task_token"], user=sub["assignee"],
+		)
 		approved = approve_plan_version(
-			task=sub["task"], expected_token=sub["task_token"],
-			idempotency_key=f"TEST-APPROVE-{sub['task']}", user=sub["assignee"]
+			task=recommended["task"], expected_token=recommended["task_token"],
+			idempotency_key=f"TEST-APPROVE-{recommended['task']}", user=approver,
 		)
 		self.assertEqual(approved["status"], VERSION_APPROVED)
 
@@ -114,7 +127,7 @@ class TestApprovePlanVersionGate05(IntegrationTestCase):
 			ALLOC_EFFECTIVE,
 		)
 		# Idempotent: second approve fails
-		with self.assertRaises(frappe.ValidationError):
+		with self.assertRaises(frappe.PermissionError):
 			approve_plan_version(
 				version=plan["version"],
 				concurrency_token=frappe.db.get_value(

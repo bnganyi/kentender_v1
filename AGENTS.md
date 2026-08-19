@@ -106,6 +106,13 @@ Use Plan mode for ambiguous, multi-app, migration, workflow, permission, or arch
 3. Never claim a test or manual flow passed unless it was actually run. Report blocked or skipped validation with the reason.
 4. Confirm that the result matches the named requirement or acceptance criteria—not merely that the code compiles.
 
+### Hard completion-status rule
+
+- Never mark a gate, tracker row, requirement, acceptance criterion, module wave, plan step, or task as `Done`, `Complete`, or equivalent unless its entire stated scope and every applicable acceptance criterion have actually been implemented and the required validation evidence has passed.
+- A prerequisite, partial slice, narrow happy path, scaffold, passing subset of tests, or implementation that still requires material integration or verification must remain `Partial`, `In progress`, or `Planned` as appropriate.
+- Do not infer completion from progress. Before changing any persistent status to complete, compare the implementation and executed evidence against the full controlling contract item by item.
+- If a completion status was recorded prematurely, correct it immediately and explicitly identify the remaining work. Never preserve an inaccurate completion status for presentation, momentum, or convenience.
+
 ## Frappe engineering rules
 
 - Keep business logic in explicit Python service modules, not in DocType controllers, page JavaScript, or client-only handlers.

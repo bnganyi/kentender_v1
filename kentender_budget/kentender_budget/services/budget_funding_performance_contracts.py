@@ -23,6 +23,7 @@ from kentender_budget.services.budget_permissions import (
 	entity_for_user,
 	require_any_role,
 )
+from kentender_core.services.authorization_policy import ResourceContext, require_capability
 
 DISCLAIMER = (
 	"Strategy alignment shows intended support. "
@@ -160,6 +161,15 @@ def get_funding_performance(
 	if not pe:
 		# Administrator with no PE: prefer PE-MOH seed entity when present.
 		pe = frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name") or ""
+	require_capability(
+		frappe.session.user,
+		"budget.view",
+		ResourceContext(
+			resource_type="Budget Funding Performance",
+			resource_id=pe,
+			procuring_entity_id=pe,
+		),
+	)
 
 	entity = _entity_ref(pe)
 	programme_key = (programme or "").strip()

@@ -482,6 +482,9 @@ def apply_proposed_removals_on_approval(*, version: str, actor: str) -> list[str
 			reason=reason,
 			statuses=(ALLOC_EFFECTIVE, ALLOC_DRAFT),
 		)
+		from kentender_procurement.procurement_planning.services.need_allocations import reverse_need_allocations
+
+		reverse_need_allocations(plan_item=iv.plan_item, version=version, reason=reason)
 		release_draft_finance_effects(plan_item=iv.plan_item, version=version)
 		applied.append(iv.plan_item)
 	return applied

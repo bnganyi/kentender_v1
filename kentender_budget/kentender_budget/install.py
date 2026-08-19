@@ -42,6 +42,9 @@ def after_migrate():
 		from kentender_budget.seeds.budget_role_users import upsert_budget_role_users
 
 		upsert_budget_role_users()
+		from kentender_budget.seeds.budget_authorization_seed import upsert_budget_authorization
+
+		upsert_budget_authorization()
 	except Exception:
 		frappe.log_error(title="BUD-SUP-002 budget role users seed failed")
 
@@ -85,3 +88,13 @@ def after_migrate():
 		},
 		update_modified=False,
 	)
+
+
+def before_tests():
+	from kentender_budget.seeds.budget_authorization_seed import (
+		upsert_budget_authorization,
+		upsert_budget_test_authorization,
+	)
+
+	upsert_budget_authorization()
+	upsert_budget_test_authorization()

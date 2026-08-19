@@ -2387,6 +2387,8 @@ frappe.provide("kentender_budget.live");
 			var rev = (dto && dto.revision) || {};
 			var budget = (dto && dto.budget) || {};
 			var caps = (dto && dto.capabilities) || {};
+			$root.attr("data-kt-bud-task-id", caps.task_id || "");
+			$root.attr("data-kt-bud-task-token", caps.concurrency_token || "");
 			var financial = (dto && dto.financial) || {};
 			var blockers = (dto && dto.blockers) || [];
 			$root.attr("data-kt-bud-budget-code", budget.code || "");
@@ -2569,7 +2571,11 @@ frappe.provide("kentender_budget.live");
 					: action === "reject"
 						? "reject_budget_revision"
 						: "apply_budget_revision";
-			var payload = { revision: revisionCode };
+			var payload = {
+				revision: revisionCode,
+				task_id: $root.attr("data-kt-bud-task-id") || "",
+				concurrency_token: $root.attr("data-kt-bud-task-token") || "",
+			};
 			if (action === "return" || action === "reject") {
 				payload.comment = comment || "";
 			}
@@ -3005,6 +3011,8 @@ frappe.provide("kentender_budget.live");
 		var caps = dto.capabilities || {};
 		var gov = dto.governance || {};
 		var status = budget.status || "";
+		$root.attr("data-kt-bud-task-id", caps.task_id || "");
+		$root.attr("data-kt-bud-task-token", caps.concurrency_token || "");
 
 		paintBudgetWorkspaceChrome(
 			$root,
@@ -3110,7 +3118,11 @@ frappe.provide("kentender_budget.live");
 		showReviewFooterError($root, "");
 
 		function reload() {
-			return call("get_budget_readiness", { budget: budgetCode }).then(function (dto) {
+			var routeTask =
+				(frappe.route_options && frappe.route_options.task_id) ||
+				$root.attr("data-kt-bud-task-id") ||
+				"";
+			return call("get_budget_readiness", { budget: budgetCode, task_id: routeTask }).then(function (dto) {
 				if (String($root.attr("data-kt-bud-bind-token")) !== String(token)) {
 					return dto;
 				}
@@ -3127,6 +3139,9 @@ frappe.provide("kentender_budget.live");
 		function mutate(method, payload) {
 			showReviewFooterError($root, "");
 			var body = payload || { budget: budgetCode };
+			body.task_id = body.task_id || $root.attr("data-kt-bud-task-id") || "";
+			body.concurrency_token =
+				body.concurrency_token || $root.attr("data-kt-bud-task-token") || "";
 			return call(method, { payload: body })
 				.then(function (res) {
 					if (String($root.attr("data-kt-bud-bind-token")) !== String(token)) {

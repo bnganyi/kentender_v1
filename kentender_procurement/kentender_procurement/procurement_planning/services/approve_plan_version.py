@@ -27,16 +27,22 @@ from kentender_procurement.procurement_planning.services._invariants import (
 )
 from kentender_procurement.procurement_planning.services.planning_permissions import (
 	APPROVE_PLAN_ROLES,
+	CAP_PLAN_APPROVE,
+	CAP_PLAN_RETURN,
 	actor_planning_roles,
-	assert_can_approve_plan,
 	assert_planning_scope,
 )
-from kentender_procurement.procurement_planning.services.planning_tasks import assert_task_assignment, assert_task_token, idempotent_decision
+from kentender_procurement.procurement_planning.services.planning_tasks import (
+	authorize_planning_task,
+	idempotent_decision,
+	transition_planning_task,
+)
 from kentender_procurement.procurement_planning.services.validate_plan import validate_plan
 from kentender_procurement.procurement_planning.services.remove_plan_item import (
 	apply_proposed_removals_on_approval,
 	assert_no_handoff_for_proposed_removals,
 )
+from kentender_procurement.procurement_planning.services.need_allocations import activate_need_allocations
 
 
 def approve_plan_version(
@@ -49,24 +55,22 @@ def approve_plan_version(
 	reason: str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	actor = assert_can_approve_plan(user)
+	actor = (user or frappe.session.user or "").strip()
 	task_id = cstr(task).strip()
-	if task_id or idempotency_key:
-		replay = idempotent_decision(idempotency_key)
-		if replay:
-			return replay
-	version_name = cstr(version).strip()
-	if task_id:
-		version_name = cstr(frappe.db.get_value("Procurement Plan Version", {"review_task_id": task_id}, "name"))
-	if not version_name or not frappe.db.exists("Procurement Plan Version", version_name):
-		frappe.throw(_("Plan Version not found."), title="PLN_VERSION_NOT_FOUND")
+	if not task_id:
+		frappe.throw(_("A current review task is required."), frappe.PermissionError, title="PLN_TASK_REQUIRED")
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_APPROVE,
+		subject_type="Procurement Plan Version",
+	)
+	version_name = cstr(workflow_task.subject_id)
+	replay = idempotent_decision(idempotency_key)
+	if replay:
+		return replay
 
 	ver = frappe.get_doc("Procurement Plan Version", version_name)
-	if task_id:
-		assert_task_assignment(record=ver, task=task_id, id_field="review_task_id", assignee_field="review_task_assignee", state_field="review_task_state", actor=actor)
-		assert_task_token(actual=ver.review_task_token, expected=expected_token)
-	else:
-		assert_version_concurrency(version_name, concurrency_token or expected_token)
+	if cstr(ver.review_task_id) != task_id:
+		frappe.throw(_("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
 	if ver.status not in VERSION_APPROVABLE_STATUSES:
 		frappe.throw(
 			_("Only an In review version can be approved."),
@@ -102,6 +106,18 @@ def approve_plan_version(
 		)
 
 	assert_no_handoff_for_proposed_removals(version=ver.name)
+	prior_actions = []
+	for decision in frappe.get_all("Plan Decision", filters={"plan_version": ver.name}, fields=["actor", "decision"]):
+		capability = {
+			"Recommended approval": "plan.recommend",
+			"Submitted for review": "plan.submit",
+		}.get(cstr(decision.decision))
+		if capability:
+			prior_actions.append({"user": cstr(decision.actor), "capability": capability})
+	completed_task = transition_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_APPROVE,
+		target_state="Completed", expected_token=cstr(expected_token), prior_actions=prior_actions,
+	)
 
 	now = now_datetime()
 	prior = cstr(plan.current_approved_version or "").strip()
@@ -143,6 +159,7 @@ def approve_plan_version(
 		alloc.effective_at = now
 		alloc.save(ignore_permissions=True)
 		_write_planning_consumption(alloc)
+	need_allocs = activate_need_allocations(version=ver.name)
 
 	# Activate items that have item versions on this plan version (skip proposed removals)
 	item_versions = frappe.get_all(
@@ -178,7 +195,7 @@ def approve_plan_version(
 			"approved_at": now,
 			"concurrency_token": new_concurrency_token(),
 			"review_task_state": "Approved" if task_id else ver.review_task_state,
-			"review_task_token": new_concurrency_token() if task_id else ver.review_task_token,
+			"review_task_token": cstr(completed_task.concurrency_token),
 		},
 		update_modified=True,
 	)
@@ -216,7 +233,8 @@ def approve_plan_version(
 		"version": ver.name,
 		"version_code": ver.version_code,
 		"status": VERSION_APPROVED,
-		"allocations_effective": len(draft_allocs),
+		"allocations_effective": len(draft_allocs) + len(need_allocs),
+		"need_allocations_effective": len(need_allocs),
 		"superseded_version": prior or None,
 		"approved_by": actor,
 		"approved_at": str(now),
@@ -225,24 +243,30 @@ def approve_plan_version(
 
 
 def return_plan_version(*, task: str, expected_token: str | None, reason: str | None, idempotency_key: str | None, user: str | None = None) -> dict[str, Any]:
-	actor = assert_can_approve_plan(user)
-	replay = idempotent_decision(idempotency_key)
-	if replay:
-		return replay
+	actor = (user or frappe.session.user or "").strip()
 	note = cstr(reason).strip()
 	if not note:
 		return {"ok": False, "errors": {"reason": "A return reason is required."}}
 	task_id = cstr(task).strip()
-	version_name = cstr(frappe.db.get_value("Procurement Plan Version", {"review_task_id": task_id}, "name"))
-	if not version_name:
-		frappe.throw(_("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	workflow_task = authorize_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_RETURN,
+		subject_type="Procurement Plan Version",
+	)
+	version_name = cstr(workflow_task.subject_id)
 	ver = frappe.get_doc("Procurement Plan Version", version_name)
-	assert_task_assignment(record=ver, task=task_id, id_field="review_task_id", assignee_field="review_task_assignee", state_field="review_task_state", actor=actor)
-	assert_task_token(actual=ver.review_task_token, expected=expected_token)
+	if cstr(ver.review_task_id) != task_id:
+		frappe.throw(_("Task not found."), frappe.PermissionError, title="PLN_TASK_NOT_FOUND")
+	replay = idempotent_decision(idempotency_key)
+	if replay:
+		return replay
 	plan = frappe.get_doc("Procurement Plan", ver.plan)
 	assert_planning_scope(procuring_entity=plan.procuring_entity, org_unit=None, user=actor, require_write=True)
+	returned_task = transition_planning_task(
+		task_id=task_id, actor=actor, capability=CAP_PLAN_RETURN,
+		target_state="Returned", expected_token=cstr(expected_token),
+	)
 	now = now_datetime()
-	frappe.db.set_value("Procurement Plan Version", ver.name, {"status": "Returned", "review_task_state": "Returned", "review_task_token": new_concurrency_token(), "concurrency_token": new_concurrency_token()}, update_modified=True)
+	frappe.db.set_value("Procurement Plan Version", ver.name, {"status": "Returned", "review_task_state": "Returned", "review_task_token": cstr(returned_task.concurrency_token), "concurrency_token": new_concurrency_token()}, update_modified=True)
 	frappe.get_doc({"doctype": "Plan Decision", "plan_version": ver.name, "decision_type": "Professional review", "decision_stage": "Professional decision", "actor": actor, "actor_role": _primary_planning_role(actor), "decision": "Returned", "reason": note, "decided_at": now, "task_id": task_id, "task_iteration": int(ver.review_task_iteration or 1), "command_idempotency_key": cstr(idempotency_key)}).insert(ignore_permissions=True)
 	return {"ok": True, "plan": plan.name, "version": ver.name, "status": "Returned", "route": f"/app/procurement-plan-builder?plan={plan.name}"}
 

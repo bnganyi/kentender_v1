@@ -75,6 +75,29 @@ from kentender_procurement.procurement_planning.services.plan_builder_successor 
 from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
 	create_planning_handoff_snapshot as _create_planning_handoff_snapshot,
 )
+from kentender_procurement.procurement_planning.services.get_support_plan import (
+	get_support_plan as _get_support_plan,
+)
+from kentender_procurement.procurement_planning.services.need_allocations import (
+	allocate_need_lines as _allocate_need_lines,
+	list_eligible_needs as _list_eligible_needs,
+)
+
+
+@frappe.whitelist()
+def get_support_plan(plan: str, purpose: str = "Access diagnostic support"):
+	return _get_support_plan(plan=plan, purpose=purpose)
+
+
+@frappe.whitelist()
+def list_eligible_needs(plan: str):
+	return _list_eligible_needs(plan=plan)
+
+
+@frappe.whitelist()
+def allocate_need_lines(plan: str, plan_item: str, allocations, expected_version_token: str, idempotency_key: str, reason: str = ""):
+	return _allocate_need_lines(plan=plan, plan_item=plan_item, allocations=allocations,
+		expected_version_token=expected_version_token, idempotency_key=idempotency_key, reason=reason)
 
 
 def _mark_playwright_demand_graph(demand: str) -> None:
