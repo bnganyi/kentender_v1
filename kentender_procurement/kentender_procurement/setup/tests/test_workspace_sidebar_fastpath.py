@@ -128,7 +128,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertEqual(len(page_std_library), 1)
 
 	def test_procurement_boot_sidebar_includes_strategy_alignment_and_budget_links(self):
-		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before Demands."""
+		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before Departmental Needs."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		bootinfo: dict = {"workspace_sidebar_item": {}}
@@ -147,14 +147,14 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 		try:
 			i_strat = labels.index("Strategy Alignment")
-			i_dia = labels.index("Demands")
+			i_dia = labels.index("Departmental Needs")
 			self.assertLess(
 				i_strat,
 				i_dia,
-				msg="Strategy Alignment must appear before Demands in the Procurement rail",
+				msg="Strategy Alignment must appear before Departmental Needs in the Procurement rail",
 			)
 		except ValueError:
-			self.fail("Demands sidebar label not found — cannot verify G0-012 order")
+			self.fail("Departmental Needs sidebar label not found — cannot verify G0-012 order")
 
 	def test_bootinfo_includes_builder_route_sidebar_keys(self):
 		"""Context-preserving navigation: builder/form routes must map to Procurement sidebar."""

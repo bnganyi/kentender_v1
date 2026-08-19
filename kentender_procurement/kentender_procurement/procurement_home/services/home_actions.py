@@ -11,9 +11,6 @@ from typing import Any
 import frappe
 from frappe.utils import getdate
 
-from kentender_procurement.demands.services.demand_lifecycle import (
-	list_demands_for_workspace,
-)
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
 from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 	demand_doctype_available,
@@ -55,63 +52,11 @@ def _fmt_due(due: date | None) -> str | None:
 
 
 def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[str, Any]]:
+	_ = user, procuring_entity, today
+	# Demands package retired; guard is permanently unreachable but kept explicit.
 	if not demand_doctype_available():
 		return []
-
-	payload = list_demands_for_workspace(user=user, filters={"limit": 500})
-	aliases = set(pe_aliases(procuring_entity))
-	items: list[dict[str, Any]] = []
-	review_stages = {
-		"Business Review",
-		"Procurement Enrichment",
-		"Budget Confirmation",
-		"Final Approval",
-	}
-	for row in payload.get("rows") or []:
-		if row.get("procuring_entity") not in aliases:
-			continue
-		status = (row.get("status") or "").strip()
-		stage = (row.get("current_stage") or "").strip()
-		is_requester_work = (
-			row.get("requester") == user
-			and stage == "Request Preparation"
-			and status in {"Draft", "Returned"}
-		)
-		is_assigned_review = (
-			row.get("current_owner") == user
-			and stage in review_stages
-			and status in {"In Review", "Returned"}
-		)
-		if not is_requester_work and not is_assigned_review:
-			continue
-
-		due = getdate(row.get("required_by_date")) if row.get("required_by_date") else None
-		returned = status == "Returned"
-		items.append(
-			{
-				"title": row.get("title") or row.get("demand_code") or row.name,
-				"reference": row.get("demand_code") or row.name,
-				"stage": stage or "Demand",
-				"action_required": (
-					"Returned for correction"
-					if returned
-					else "Continue draft"
-					if is_requester_work
-					else f"{stage} required"
-				),
-				"urgency": "Returned" if returned else _urgency(due, today),
-				"due_date": _fmt_due(due),
-				"action_label": "Continue" if is_requester_work else "Review",
-				"target_url": (
-					f"/desk/demand-form/{row.name}"
-					if is_requester_work
-					else f"/desk/demand-review/{row.name}"
-				),
-				"_due_date": due,
-				"_modified": row.get("modified"),
-			}
-		)
-	return items
+	return []
 
 
 def _package_actions(*_args, **_kwargs) -> list[dict[str, Any]]:

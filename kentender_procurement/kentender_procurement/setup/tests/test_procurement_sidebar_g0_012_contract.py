@@ -18,7 +18,7 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Analytics",
 	"Strategy Alignment",
 	"Budget & Funding",
-	"Demands",
+	"Departmental Needs",
 	"Procurement Plans",
 	"Tender Management",
 	"Tender Configurations",
@@ -133,6 +133,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			"Awards",
 			"Contract Management",
 			"STD Versions",
+			"Procurement Plans",
 		}
 		for row in data.get("items") or []:
 			label = row.get("label") or ""

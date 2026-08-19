@@ -125,9 +125,10 @@ def resolve_home_context(
 	if not entities:
 		frappe.throw(_("No Procuring Entity is available for this user."), frappe.PermissionError)
 
+	allowed_ids = {e["id"] for e in entities}
 	requested_pe = _norm(procuring_entity)
 	if requested_pe:
-		if not pp_scope.entity_in_user_scope(requested_pe, user=user):
+		if requested_pe not in allowed_ids:
 			frappe.throw(_("You do not have access to that Procuring Entity."), frappe.PermissionError)
 		selected_pe = requested_pe
 	else:
@@ -135,7 +136,7 @@ def resolve_home_context(
 		default_pe = ""
 		if frappe.db.has_column("User", "kt_procuring_entity"):
 			default_pe = _norm(frappe.db.get_value("User", user, "kt_procuring_entity"))
-		if default_pe and pp_scope.entity_in_user_scope(default_pe, user=user):
+		if default_pe and default_pe in allowed_ids:
 			selected_pe = default_pe
 		else:
 			# Prefer canonical MOH codes over alphabetically-first demo entities.

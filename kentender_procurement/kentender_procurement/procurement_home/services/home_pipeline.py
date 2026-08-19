@@ -10,9 +10,6 @@ from typing import Any
 import frappe
 from frappe.utils import get_datetime, now_datetime
 
-from kentender_procurement.demands.services.demand_lifecycle import (
-	list_demands_for_workspace,
-)
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
 from kentender_procurement.procurement_lifecycle.demand_module_gate import (
 	demand_doctype_available,
@@ -45,38 +42,19 @@ _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
 def _count_demands_under_review(pe: str, user: str) -> int:
+	_ = pe, user
+	# Demands package retired; guard is permanently unreachable but kept explicit.
 	if not demand_doctype_available():
 		return 0
-	payload = list_demands_for_workspace(
-		user=user,
-		filters={"limit": 500},
-	)
-	aliases = set(pe_aliases(pe))
-	return sum(
-		1
-		for row in payload.get("rows") or []
-		if row.get("procuring_entity") in aliases and row.get("status") == "In Review"
-	)
+	return 0
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
-	"""PP2 queue retired — count Approved + planning_ready Demands directly."""
+	_ = pe, user
+	# Demands package retired; guard is permanently unreachable but kept explicit.
 	if not demand_doctype_available():
 		return 0
-	aliases = pe_aliases(pe)
-	filters: dict[str, Any] = {"status": "Approved"}
-	if frappe.db.has_column("Demand", "procuring_entity"):
-		filters["procuring_entity"] = ["in", aliases]
-	rows = frappe.get_all("Demand", filters=filters, fields=["name", "planning_ready", "planning_usage"], limit=2000)
-	count = 0
-	for r in rows:
-		if frappe.db.has_column("Demand", "planning_ready") and not int(r.get("planning_ready") or 0):
-			continue
-		usage = (r.get("planning_usage") or "").strip()
-		if usage == "Fully taken up":
-			continue
-		count += 1
-	return count
+	return 0
 
 
 def _packages_with_tender_initiation(pe: str) -> set[str]:

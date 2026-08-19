@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Demand consumer gate after Demands MVP-1 rewires (DEM-INT-011).
+"""Demand consumer gate after the legacy Demands package retirement.
 
 Consumers are live when the Demand DocType exists. ``CONSUMERS_LIVE`` remains as
 an explicit package flag (True) for callers/tests that still import it.
@@ -14,7 +14,7 @@ from frappe import _
 
 RETIRED_MESSAGE = (
 	"Demand DocType is not available on this site "
-	"(see docs/mvp-1/03_demands/05_Demands_Teardown_Dependency_Inventory.md)."
+	"(see docs/mvp-1-r1/01_departmental_needs/06_Departmental_Needs_Greenfield_Rebuild_Tracker.md)."
 )
 
 

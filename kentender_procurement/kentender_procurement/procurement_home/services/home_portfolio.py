@@ -113,34 +113,11 @@ def _finance_sums_for_context(
 
 
 def _unfunded_approved_demand(pe: str) -> float:
-	"""Sum any funding shortfall that violates the approved-Demand invariant."""
+	_ = pe
+	# Demands package retired; guard is permanently unreachable but kept explicit.
 	if not demand_doctype_available():
 		return 0.0
-	rows = frappe.get_all(
-		"Demand",
-		filters={"procuring_entity": ["in", pe_aliases(pe)], "status": "Approved"},
-		fields=["name", "confirmed_estimate"],
-		limit=500,
-	)
-	total_shortfall = 0.0
-	for r in rows:
-		need = flt(r.get("confirmed_estimate"))
-		if need <= 0:
-			continue
-		confirmed = sum(
-			flt(allocation.get("allocation_amount"))
-			for allocation in frappe.get_all(
-				"Demand Funding Allocation",
-				filters={
-					"demand": r.name,
-					"bo_confirmation_status": ["in", ["Confirmed", "Adjusted"]],
-				},
-				fields=["allocation_amount"],
-				limit=100,
-			)
-		)
-		total_shortfall += max(0.0, need - confirmed)
-	return total_shortfall
+	return 0.0
 
 
 def _tender_counts(pe: str) -> tuple[int, int]:
