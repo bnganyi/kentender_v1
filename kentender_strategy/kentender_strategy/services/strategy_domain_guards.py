@@ -94,35 +94,21 @@ def validate_plan_activation(doc) -> None:
 		if not doc.scope_type or not doc.scope_id:
 			frappe.throw(_("Entity Strategic Plan scope could not be resolved"))
 
-	# Overlap: Active plans with same entity + type + scope (excluding same plan_code supersession)
-	others = frappe.get_all(
-		"Strategic Plan",
-		filters={
-			"procuring_entity": doc.procuring_entity,
-			"plan_type": plan_type,
-			"scope_type": doc.scope_type,
-			"scope_id": doc.scope_id,
-			"status": "Active",
-			"name": ["!=", doc.name],
-		},
-		fields=["name", "plan_code", "title", "start_date", "end_date"],
-	)
-	for row in others:
-		if row.plan_code == doc.plan_code:
-			# Same logical plan — will be superseded atomically
-			continue
-		if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
-			frappe.throw(
-				_(
-					"Cannot activate: Active plan {0} ({1}) already covers an overlapping "
-					"period for the same entity, plan type and scope"
-				).format(row.plan_code, row.title or row.name)
-			)
-
-	# ESP uniqueness is covered by entity+type+scope (scope_id = procuring_entity),
-	# but keep an explicit second pass for clarity / legacy rows with blank scope.
+	# Overlap: at most one Active plan per entity+type(+scope) for an overlapping
+	# period (excluding same plan_code, which supersedes atomically below).
+	#
+	# ESP's scope is always the whole procuring_entity — normalize_plan_scope()
+	# derives scope_id from procuring_entity unconditionally, so ESP uniqueness
+	# is really entity+type alone. Filtering by scope_type/scope_id here would
+	# silently miss a same-entity Active ESP row whose scope fields are blank:
+	# those columns are optional at the schema level (see Strategic Plan
+	# scope_type/scope_id, both non-reqd), so a row written by any path that
+	# skips the doctype's own validate()-time normalization would never be
+	# re-normalized once Active (Active plans are immutable). Omitting the
+	# scope filter for ESP closes that gap by construction rather than by an
+	# extra safety-net query.
 	if plan_type == PLAN_TYPE_ENTITY:
-		esp_others = frappe.get_all(
+		others = frappe.get_all(
 			"Strategic Plan",
 			filters={
 				"procuring_entity": doc.procuring_entity,
@@ -132,7 +118,7 @@ def validate_plan_activation(doc) -> None:
 			},
 			fields=["name", "plan_code", "title", "start_date", "end_date"],
 		)
-		for row in esp_others:
+		for row in others:
 			if row.plan_code == doc.plan_code:
 				continue
 			if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
@@ -141,6 +127,32 @@ def validate_plan_activation(doc) -> None:
 						"Only one Active Entity Strategic Plan may cover a given date "
 						"for this entity. Active plan {0} already overlaps."
 					).format(row.plan_code)
+				)
+	else:
+		# Subordinate plans: uniqueness additionally depends on organisational
+		# scope, which is required and validated above before we ever reach here.
+		others = frappe.get_all(
+			"Strategic Plan",
+			filters={
+				"procuring_entity": doc.procuring_entity,
+				"plan_type": plan_type,
+				"scope_type": doc.scope_type,
+				"scope_id": doc.scope_id,
+				"status": "Active",
+				"name": ["!=", doc.name],
+			},
+			fields=["name", "plan_code", "title", "start_date", "end_date"],
+		)
+		for row in others:
+			if row.plan_code == doc.plan_code:
+				# Same logical plan — will be superseded atomically
+				continue
+			if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
+				frappe.throw(
+					_(
+						"Cannot activate: Active plan {0} ({1}) already covers an overlapping "
+						"period for the same entity, plan type and scope"
+					).format(row.plan_code, row.title or row.name)
 				)
 
 

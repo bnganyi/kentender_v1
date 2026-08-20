@@ -104,16 +104,14 @@ def desk_visibility(procuring_entity_name: str) -> dict[str, str]:
 
 
 def resolve_procuring_entity_moh() -> str | None:
+	"""STR-CHG-001 §13 — no first-PE fallback. Named lookups only; returns None
+	(never an arbitrary Procuring Entity) when neither resolves."""
 	for code in ("PE-MOH", "MOH"):
 		name = frappe.db.get_value("Procuring Entity", {"entity_code": code}, "name")
 		if name:
 			return name
-	# Fallback: any PE containing Health
-	name = frappe.db.get_value("Procuring Entity", {"entity_name": ["like", "%Health%"]}, "name")
-	if name:
-		return name
-	rows = frappe.get_all("Procuring Entity", pluck="name", limit=1)
-	return rows[0] if rows else None
+	# Fallback: a PE named for Health — still a discriminating lookup, not "any PE".
+	return frappe.db.get_value("Procuring Entity", {"entity_name": ["like", "%Health%"]}, "name")
 
 
 def _upsert_by_code(doctype: str, code_field: str, code: str, values: dict) -> str:

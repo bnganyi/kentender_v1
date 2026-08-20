@@ -484,22 +484,20 @@ EDGE_BUDGETS = (
 
 
 def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
-	"""Prefer live Active Performance Target on an Active plan; fall back to pack snapshot."""
-	try:
-		from kentender_strategy.services.strategy_consumer import resolve_performance_target_id
+	"""Prefer live Active Performance Target on an Active plan; fall back to pack snapshot.
 
-		target_id = resolve_performance_target_id(target_code=code)
-	except ImportError:
-		target_id = frappe.db.get_value(
-			"Performance Target", {"target_code": code, "status": "Active"}, "name"
-		)
+	STR-CHG-001 §12 — always resolves through the Strategy integration-contract
+	boundary (strategy_consumer). No direct Performance Target table read: a
+	broken import must fail loudly, not silently substitute a raw query.
+	"""
+	from kentender_strategy.services.strategy_consumer import (
+		resolve_performance_target_id,
+		target_snapshot_fields,
+	)
+
+	target_id = resolve_performance_target_id(target_code=code)
 	if target_id:
-		row = frappe.db.get_value(
-			"Performance Target",
-			target_id,
-			["name", "title", "plan_version", "target_code"],
-			as_dict=True,
-		)
+		row = target_snapshot_fields(target_id)
 		if row:
 			return {
 				"id": row.name,
@@ -518,7 +516,9 @@ def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
 
 
 def _resolve_pvc_id(code: str) -> str:
-	return frappe.db.get_value("Strategy Value Commitment", {"commitment_code": code}, "name") or ""
+	from kentender_strategy.services.strategy_consumer import resolve_commitment_id
+
+	return resolve_commitment_id(code) or ""
 
 
 def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:

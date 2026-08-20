@@ -11,6 +11,7 @@ from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfo
 from kentender_budget.services.budget_line_contracts import save_budget_line
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_strategy.seeds.works_master_strategy_hierarchy import upsert_works_master_strategy_hierarchy
+from kentender_strategy.services.strategy_consumer import target_snapshot_fields
 
 
 class TestBudgetLineStrategyValidate(FrappeTestCase):
@@ -59,7 +60,7 @@ class TestBudgetLineStrategyValidate(FrappeTestCase):
 			"approved_amount": 25_000_000,
 			"primary_target": {
 				"id": self.strategy["target"],
-				"code": frappe.db.get_value("Performance Target", self.strategy["target"], "target_code"),
+				"code": target_snapshot_fields(self.strategy["target"])["target_code"],
 			},
 			"value_treatments": [],
 		}
@@ -127,9 +128,7 @@ class TestBudgetLineStrategyValidate(FrappeTestCase):
 				title="Historical keep updated",
 				primary_target={
 					"id": self.strategy["target"],
-					"code": frappe.db.get_value(
-						"Performance Target", self.strategy["target"], "target_code"
-					),
+					"code": target_snapshot_fields(self.strategy["target"])["target_code"],
 				},
 			)
 		)

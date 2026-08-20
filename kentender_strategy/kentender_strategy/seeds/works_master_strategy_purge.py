@@ -10,3 +10,7 @@ def purge_non_works_strategy_hierarchy(*_args, **_kwargs):
 
 def purge_works_master_strategy_hierarchy(*_args, **_kwargs):
 	return {"ok": True, "skipped": True, "reason": "mvp1-strategy-teardown"}
+
+
+def verify_works_master_strategy_seed(*_args, **_kwargs):
+	return {"ok": True, "skipped": True, "reason": "mvp1-strategy-teardown"}

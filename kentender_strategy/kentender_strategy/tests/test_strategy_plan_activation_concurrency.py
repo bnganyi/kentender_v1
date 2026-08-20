@@ -42,6 +42,15 @@ def _force_status(plan_name: str, status: str) -> None:
 	frappe.db.set_value("Strategic Plan", plan_name, "status", status, update_modified=False)
 
 
+def _force_blank_scope(plan_name: str) -> None:
+	"""Simulate a pre-normalization legacy row — bypasses the controller's own
+	validate()-time scope_type/scope_id fill, which is otherwise unconditional
+	for every Entity Strategic Plan on every save."""
+	frappe.db.set_value(
+		"Strategic Plan", plan_name, {"scope_type": None, "scope_id": None}, update_modified=False
+	)
+
+
 class TestStrategyPlanActivationConcurrency(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -92,6 +101,33 @@ class TestStrategyPlanActivationConcurrency(FrappeTestCase):
 			transition_plan(plan_id, "Activate")
 		msg = str(ctx.exception).lower()
 		self.assertTrue("overlapping" in msg or "entity strategic plan" in msg, msg)
+
+	def test_legacy_blank_scope_esp_still_blocks_overlap(self):
+		"""SCL-601 — an existing Active ESP row with blank scope_type/scope_id
+		(simulating a record that predates the doctype's own scope-normalization
+		save hook) must still be treated as occupying its period; a new
+		overlapping ESP for the same entity cannot activate."""
+		legacy = self._create_approved(
+			plan_code=f"ESP-LEGACY-{frappe.generate_hash(length=4).upper()}",
+			start_date="2040-01-01",
+			end_date="2041-12-31",
+		)
+		frappe.set_user("str.mgr.conc@example.com")
+		self.assertEqual(transition_plan(legacy, "Activate")["status"], "Active")
+		frappe.set_user("Administrator")
+		_force_blank_scope(legacy)
+		self.assertFalse(frappe.db.get_value("Strategic Plan", legacy, "scope_type"))
+
+		challenger = self._create_approved(
+			plan_code=f"ESP-CHAL-{frappe.generate_hash(length=4).upper()}",
+			start_date="2040-06-01",
+			end_date="2042-06-30",
+		)
+		frappe.set_user("str.mgr.conc@example.com")
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			transition_plan(challenger, "Activate")
+		msg = str(ctx.exception).lower()
+		self.assertTrue("overlaps" in msg or "entity strategic plan" in msg, msg)
 
 	def test_subordinate_without_parent_rejected(self):
 		# create_plan requires parent — build via ORM for this negative activate case
