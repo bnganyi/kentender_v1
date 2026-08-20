@@ -403,7 +403,7 @@ frappe.provide("kentender_strategy.alignment");
 			}
 			if (text.indexOf("Resolve off-track target") >= 0) {
 				e.preventDefault();
-				frappe.set_route("strategy-corrective-actions");
+				frappe.set_route("strategy-plan-measurements", FIXTURE_PLAN);
 			}
 		});
 	}
@@ -898,8 +898,7 @@ frappe.provide("kentender_strategy.alignment");
 
 			if (
 				mountedFixtureKey === "measurement_submit" ||
-				mountedFixtureKey === "measurement_verify" ||
-				mountedFixtureKey === "corrective_actions"
+				mountedFixtureKey === "measurement_verify"
 			) {
 				bindSatelliteNav($root);
 			}

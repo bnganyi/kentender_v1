@@ -27,7 +27,6 @@ frappe.provide("kentender_core.module_registry");
 				"strategy-plan-audit",
 				"strategy-measurement-submit",
 				"strategy-measurement-verify",
-				"strategy-corrective-actions",
 			],
 			taskLabels: {
 				builder: __("Manage Structure"),

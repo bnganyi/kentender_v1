@@ -45,6 +45,11 @@ def get_plan_readiness(plan_name: str) -> dict:
 			)
 		)
 
+	objectives = frappe.get_all(
+		"Strategic Objective",
+		filters={"plan_version": plan_name},
+		fields=["name", "objective_code", "title", "programme", "responsible_function"],
+	)
 	outcomes = frappe.get_all(
 		"Strategic Outcome",
 		filters={"plan_version": plan_name},
@@ -57,6 +62,7 @@ def get_plan_readiness(plan_name: str) -> dict:
 			"name",
 			"indicator_code",
 			"title",
+			"strategic_objective",
 			"strategic_outcome",
 			"definition",
 			"measurement_type",
@@ -91,17 +97,20 @@ def get_plan_readiness(plan_name: str) -> dict:
 	outcomes_by_prog: dict[str, list] = {}
 	for o in outcomes:
 		outcomes_by_prog.setdefault(o.programme, []).append(o)
+	objectives_by_prog: dict[str, list] = {}
+	for obj in objectives:
+		objectives_by_prog.setdefault(obj.programme, []).append(obj)
 
 	for p in programmes:
-		if not outcomes_by_prog.get(p.name):
+		if not outcomes_by_prog.get(p.name) and not objectives_by_prog.get(p.name):
 			issues.append(
 				_issue(
 					"Structure",
 					"blocker",
 					p.name,
 					p.programme_code,
-					"Programme without an Outcome",
-					f"{p.title} has no Strategic Outcome",
+					"Programme without an Outcome or Objective",
+					f"{p.title} has no Strategic Outcome or Strategic Objective",
 					"strategy-plan-structure",
 				)
 			)
@@ -119,8 +128,12 @@ def get_plan_readiness(plan_name: str) -> dict:
 			)
 
 	inds_by_out = {}
+	inds_by_obj = {}
 	for i in indicators:
-		inds_by_out.setdefault(i.strategic_outcome, []).append(i)
+		if i.strategic_objective:
+			inds_by_obj.setdefault(i.strategic_objective, []).append(i)
+		else:
+			inds_by_out.setdefault(i.strategic_outcome, []).append(i)
 	tgts_by_ind = {}
 	for t in targets:
 		tgts_by_ind.setdefault(t.performance_indicator, []).append(t)
@@ -135,6 +148,20 @@ def get_plan_readiness(plan_name: str) -> dict:
 					o.outcome_code,
 					"Outcome without an Indicator",
 					f"{o.title} has no Performance Indicator",
+					"strategy-plan-structure",
+				)
+			)
+
+	for obj in objectives:
+		if not inds_by_obj.get(obj.name):
+			issues.append(
+				_issue(
+					"Structure",
+					"blocker",
+					obj.name,
+					obj.objective_code,
+					"Objective without an Indicator",
+					f"{obj.title} has no Performance Indicator",
 					"strategy-plan-structure",
 				)
 			)
@@ -208,6 +235,7 @@ def get_plan_readiness(plan_name: str) -> dict:
 
 	# code uniqueness within plan
 	_check_unique_codes(issues, "Strategy Programme", plan_name, "programme_code")
+	_check_unique_codes(issues, "Strategic Objective", plan_name, "objective_code")
 	_check_unique_codes(issues, "Strategic Outcome", plan_name, "outcome_code")
 
 	commitments = frappe.get_all(

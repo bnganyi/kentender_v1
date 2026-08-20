@@ -15,9 +15,6 @@ from kentender_strategy.services.strategy_permissions import (
 	assert_org_unit_in_scope,
 	can_create_successor_plan,
 	can_edit_draft_plan,
-	require_any_role,
-	ROLE_MANAGER,
-	ROLE_OFFICER,
 )
 from kentender_strategy.services.strategy_measurement import derive_measurement_result
 
@@ -38,6 +35,7 @@ _META_SKIP = frozenset(
 NODE_DOCTYPE = {
 	"Programme": ("Strategy Programme", "programme_code"),
 	"SubProgramme": ("Strategy Sub Programme", "sub_programme_code"),
+	"StrategicObjective": ("Strategic Objective", "objective_code"),
 	"StrategicOutcome": ("Strategic Outcome", "outcome_code"),
 	"PerformanceIndicator": ("Performance Indicator", "indicator_code"),
 	"PerformanceTarget": ("Performance Target", "target_code"),
@@ -60,13 +58,16 @@ def _next_order_index(doctype: str, plan_version: str, parent_filters: dict | No
 def _parent_filter_for_order(node_type: str, data: dict) -> dict | None:
 	if node_type == "SubProgramme" and data.get("programme"):
 		return {"programme": data["programme"]}
-	if node_type == "StrategicOutcome":
+	if node_type in ("StrategicObjective", "StrategicOutcome"):
 		if data.get("sub_programme"):
 			return {"sub_programme": data["sub_programme"]}
 		if data.get("programme"):
 			return {"programme": data["programme"]}
-	if node_type == "PerformanceIndicator" and data.get("strategic_outcome"):
-		return {"strategic_outcome": data["strategic_outcome"]}
+	if node_type == "PerformanceIndicator":
+		if data.get("strategic_objective"):
+			return {"strategic_objective": data["strategic_objective"]}
+		if data.get("strategic_outcome"):
+			return {"strategic_outcome": data["strategic_outcome"]}
 	if node_type == "PerformanceTarget" and data.get("performance_indicator"):
 		return {"performance_indicator": data["performance_indicator"]}
 	return None
@@ -86,11 +87,21 @@ def _validate_structure_node_fields(node_type: str, data: dict) -> dict[str, str
 	if _blank(data.get("title")):
 		errors["title"] = _("Title is required")
 
-	if node_type in ("Programme", "SubProgramme", "StrategicOutcome"):
+	if node_type in ("Programme", "SubProgramme", "StrategicObjective", "StrategicOutcome"):
 		if _blank(data.get("responsible_function")):
 			errors["responsible_function"] = _("Responsible function is required")
 
 	if node_type == "PerformanceIndicator":
+		has_objective = not _blank(data.get("strategic_objective"))
+		has_outcome = not _blank(data.get("strategic_outcome"))
+		if has_objective and has_outcome:
+			errors["strategic_outcome"] = _(
+				"Choose either a Strategic Objective or a Strategic Outcome, not both"
+			)
+		elif not has_objective and not has_outcome:
+			errors["strategic_outcome"] = _(
+				"A Strategic Objective or a Strategic Outcome is required"
+			)
 		if _blank(data.get("definition")):
 			errors["definition"] = _("Definition is required")
 		if _blank(data.get("measurement_type")):
@@ -137,6 +148,7 @@ def upsert_structure_node(payload: dict) -> dict:
 		"order_index",
 		"programme",
 		"sub_programme",
+		"strategic_objective",
 		"strategic_outcome",
 		"performance_indicator",
 		"executive_owner",
@@ -186,12 +198,14 @@ def upsert_structure_node(payload: dict) -> dict:
 	# Inherit parent links / plan from parent when omitted
 	if node_type == "SubProgramme" and data.get("programme"):
 		data["plan_version"] = plan_version
-	elif node_type == "StrategicOutcome":
+	elif node_type in ("StrategicObjective", "StrategicOutcome"):
 		if data.get("sub_programme") and not data.get("programme"):
 			data["programme"] = frappe.db.get_value(
 				"Strategy Sub Programme", data["sub_programme"], "programme"
 			)
-	elif node_type == "PerformanceIndicator" and data.get("strategic_outcome"):
+	elif node_type == "PerformanceIndicator" and (
+		data.get("strategic_objective") or data.get("strategic_outcome")
+	):
 		data["plan_version"] = plan_version
 	elif node_type == "PerformanceTarget" and data.get("performance_indicator"):
 		data["plan_version"] = plan_version
@@ -259,15 +273,23 @@ def delete_structure_node(node_type: str, name: str) -> dict:
 	if node_type == "PerformanceIndicator":
 		if frappe.db.exists("Performance Target", {"performance_indicator": name}):
 			frappe.throw(_("Delete child targets first"))
+	if node_type == "StrategicObjective":
+		if frappe.db.exists("Performance Indicator", {"strategic_objective": name}):
+			frappe.throw(_("Delete child indicators first"))
 	if node_type == "StrategicOutcome":
 		if frappe.db.exists("Performance Indicator", {"strategic_outcome": name}):
 			frappe.throw(_("Delete child indicators first"))
 	if node_type == "SubProgramme":
-		if frappe.db.exists("Strategic Outcome", {"sub_programme": name}):
+		if (
+			frappe.db.exists("Strategic Outcome", {"sub_programme": name})
+			or frappe.db.exists("Strategic Objective", {"sub_programme": name})
+		):
 			frappe.throw(_("Delete child outcomes first"))
 	if node_type == "Programme":
-		if frappe.db.exists("Strategy Sub Programme", {"programme": name}) or frappe.db.exists(
-			"Strategic Outcome", {"programme": name}
+		if (
+			frappe.db.exists("Strategy Sub Programme", {"programme": name})
+			or frappe.db.exists("Strategic Outcome", {"programme": name})
+			or frappe.db.exists("Strategic Objective", {"programme": name})
 		):
 			frappe.throw(_("Delete child structure first"))
 	frappe.delete_doc(doctype, name, ignore_permissions=True)
@@ -407,26 +429,6 @@ def save_measurement_draft(payload: dict) -> dict:
 		"result_status": doc.result_status,
 		"variance": doc.variance,
 	}
-
-
-def upsert_corrective_action(payload: dict) -> dict:
-	require_any_role(
-		ROLE_OFFICER,
-		ROLE_MANAGER,
-		"System Manager",
-	)
-	name = payload.get("id") or payload.get("name")
-	fields = {k: v for k, v in payload.items() if k not in ("id", "name", "doctype")}
-	if name and frappe.db.exists("Strategy Corrective Action", name):
-		doc = frappe.get_doc("Strategy Corrective Action", name)
-		doc.update(fields)
-		doc.save(ignore_permissions=True)
-	else:
-		fields["doctype"] = "Strategy Corrective Action"
-		fields["corrective_action_code"] = None
-		doc = frappe.get_doc(fields)
-		doc.insert(ignore_permissions=True)
-	return {"id": doc.name, "code": doc.get("corrective_action_code"), "status": doc.status}
 
 
 def update_plan_identity(plan_name: str, payload: dict) -> dict:
@@ -629,59 +631,6 @@ def get_measurement(
 	frappe.throw(_("Performance Measurement not found"), frappe.DoesNotExistError)
 
 
-def list_corrective_actions(
-	plan_version: str | None = None,
-	plan_code: str | None = None,
-	status: str | None = None,
-) -> list[dict]:
-	from kentender_strategy.services.strategy_contracts import _resolve_plan
-
-	filters: dict[str, Any] = {}
-	if plan_version or plan_code:
-		plan = _resolve_plan(plan_version, plan_code)
-		filters["plan_version"] = plan.name
-	if status:
-		filters["status"] = status
-	rows = frappe.get_all(
-		"Strategy Corrective Action",
-		filters=filters,
-		fields=[
-			"name",
-			"action",
-			"owner",
-			"due_date",
-			"status",
-			"performance_target",
-			"performance_measurement",
-			"expected_result",
-		],
-		order_by="modified desc",
-		limit_page_length=200,
-	)
-	out = []
-	for r in rows:
-		tgt = frappe.db.get_value(
-			"Performance Target", r.performance_target, ["target_code", "title"], as_dict=True
-		)
-		out.append(
-			{
-				"id": r.name,
-				"action": r.action,
-				"owner": r.owner,
-				"due_date": r.due_date,
-				"status": r.status,
-				"expected_result": r.expected_result,
-				"target": {
-					"id": r.performance_target,
-					"code": tgt.target_code if tgt else None,
-					"name": tgt.title if tgt else None,
-				},
-				"measurement_id": r.performance_measurement,
-			}
-		)
-	return out
-
-
 def _clone_fields(doc) -> dict:
 	data = {}
 	for df in doc.meta.fields:
@@ -770,6 +719,23 @@ def create_successor_version(plan_version: str) -> dict:
 		clone.insert(ignore_permissions=True)
 		id_map[old.name] = clone.name
 
+	for obj in frappe.get_all(
+		"Strategic Objective",
+		filters={"plan_version": src.name},
+		fields=["name"],
+		order_by="order_index asc",
+	):
+		old = frappe.get_doc("Strategic Objective", obj.name)
+		data = _clone_fields(old)
+		data["doctype"] = "Strategic Objective"
+		data["plan_version"] = new_plan.name
+		data["programme"] = id_map.get(old.programme) or old.programme
+		if old.sub_programme:
+			data["sub_programme"] = id_map.get(old.sub_programme) or old.sub_programme
+		clone = frappe.get_doc(data)
+		clone.insert(ignore_permissions=True)
+		id_map[old.name] = clone.name
+
 	for out in frappe.get_all(
 		"Strategic Outcome",
 		filters={"plan_version": src.name},
@@ -797,7 +763,10 @@ def create_successor_version(plan_version: str) -> dict:
 		data = _clone_fields(old)
 		data["doctype"] = "Performance Indicator"
 		data["plan_version"] = new_plan.name
-		data["strategic_outcome"] = id_map.get(old.strategic_outcome) or old.strategic_outcome
+		if old.strategic_objective:
+			data["strategic_objective"] = id_map.get(old.strategic_objective) or old.strategic_objective
+		if old.strategic_outcome:
+			data["strategic_outcome"] = id_map.get(old.strategic_outcome) or old.strategic_outcome
 		clone = frappe.get_doc(data)
 		clone.insert(ignore_permissions=True)
 		id_map[old.name] = clone.name

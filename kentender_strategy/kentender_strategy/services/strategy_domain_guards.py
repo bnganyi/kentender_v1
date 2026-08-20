@@ -193,6 +193,23 @@ def validate_strategy_sub_programme(doc) -> None:
 		frappe.throw(_("Sub-programme parent must belong to the same plan version"))
 
 
+def validate_strategic_objective(doc) -> None:
+	_require_code(doc.objective_code, "Objective Code")
+	_assert_plan_editable(doc.plan_version)
+	prog_plan = frappe.db.get_value("Strategy Programme", doc.programme, "plan_version")
+	if prog_plan != doc.plan_version:
+		frappe.throw(_("Objective programme must belong to the same plan version"))
+	if doc.sub_programme:
+		row = frappe.db.get_value(
+			"Strategy Sub Programme",
+			doc.sub_programme,
+			["plan_version", "programme"],
+			as_dict=True,
+		)
+		if not row or row.plan_version != doc.plan_version or row.programme != doc.programme:
+			frappe.throw(_("Sub-programme must belong to the objective's programme and plan version"))
+
+
 def validate_strategic_outcome(doc) -> None:
 	_require_code(doc.outcome_code, "Outcome Code")
 	_assert_plan_editable(doc.plan_version)
@@ -212,13 +229,26 @@ def validate_strategic_outcome(doc) -> None:
 
 def validate_performance_indicator(doc) -> None:
 	_require_code(doc.indicator_code, "Indicator Code")
-	outcome = frappe.db.get_value(
-		"Strategic Outcome", doc.strategic_outcome, ["plan_version"], as_dict=True
-	)
-	if not outcome:
-		frappe.throw(_("Strategic Outcome is required"))
-	if doc.plan_version != outcome.plan_version:
-		frappe.throw(_("Indicator must belong to the same plan version as its outcome"))
+	if doc.strategic_objective and doc.strategic_outcome:
+		frappe.throw(_("Indicator must measure a Strategic Objective or a Strategic Outcome, not both"))
+	if doc.strategic_objective:
+		parent = frappe.db.get_value(
+			"Strategic Objective", doc.strategic_objective, ["plan_version"], as_dict=True
+		)
+		if not parent:
+			frappe.throw(_("Strategic Objective is required"))
+		if doc.plan_version != parent.plan_version:
+			frappe.throw(_("Indicator must belong to the same plan version as its objective"))
+	elif doc.strategic_outcome:
+		parent = frappe.db.get_value(
+			"Strategic Outcome", doc.strategic_outcome, ["plan_version"], as_dict=True
+		)
+		if not parent:
+			frappe.throw(_("Strategic Outcome is required"))
+		if doc.plan_version != parent.plan_version:
+			frappe.throw(_("Indicator must belong to the same plan version as its outcome"))
+	else:
+		frappe.throw(_("Indicator must measure a Strategic Objective or a Strategic Outcome"))
 	_assert_plan_editable(doc.plan_version)
 	if doc.measurement_type not in ("Milestone", "Boolean") and not doc.unit:
 		frappe.throw(_("Unit is required for this measurement type"))
@@ -276,15 +306,6 @@ def validate_performance_measurement(doc) -> None:
 			):
 				if doc.has_value_changed(f):
 					frappe.throw(_("Verified measurements are immutable"))
-
-
-def validate_strategy_corrective_action(doc) -> None:
-	if doc.performance_measurement and not doc.performance_target:
-		doc.performance_target = frappe.db.get_value(
-			"Performance Measurement", doc.performance_measurement, "performance_target"
-		)
-	if doc.status == "Submitted for verification" and not doc.completion_evidence:
-		frappe.throw(_("Completion evidence is required before verification"))
 
 
 def validate_strategy_audit_event(doc) -> None:

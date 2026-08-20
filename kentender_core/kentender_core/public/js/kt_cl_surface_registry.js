@@ -328,18 +328,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
-		"STR-UI-11": {
-			id: "STR-UI-11",
-			label: "Corrective Actions",
-			routePrefixes: ["strategy-corrective-actions"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Corrective Actions"),
-				"",
-				trailStrategyPlan(__("Corrective Actions")),
-				[]
-			),
-		},
 		"STR-UI-12": {
 			id: "STR-UI-12",
 			label: "Downstream Usage",

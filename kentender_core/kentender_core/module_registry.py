@@ -30,7 +30,6 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 			"strategy-plan-audit",
 			"strategy-measurement-submit",
 			"strategy-measurement-verify",
-			"strategy-corrective-actions",
 		),
 		"sidebar_parent": "Procurement",
 	},

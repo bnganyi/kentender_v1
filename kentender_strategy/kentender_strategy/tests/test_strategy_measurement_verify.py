@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-UI-10 Verify Measurement — transitions, SoD, Off-track CA / authorised exception."""
+"""STR-UI-10 Verify Measurement — transitions, SoD, Off-track authorised exception."""
 
 from __future__ import annotations
 
@@ -51,12 +51,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 def _cleanup_measurement(name: str | None) -> None:
 	if not name or not frappe.db.exists("Performance Measurement", name):
 		return
-	for ca in frappe.get_all(
-		"Strategy Corrective Action",
-		filters={"performance_measurement": name},
-		pluck="name",
-	):
-		frappe.delete_doc("Strategy Corrective Action", ca, force=True, ignore_permissions=True)
 	frappe.delete_doc("Performance Measurement", name, force=True, ignore_permissions=True)
 
 
@@ -164,7 +158,7 @@ class TestStrategyMeasurementVerify(FrappeTestCase):
 		# Restore officer-only roles for later tests.
 		_ensure_user(self.officer, ["Strategy Officer"], self.pe)
 
-	def test_off_track_verify_creates_corrective_action(self):
+	def test_off_track_verify_without_exception_clears_flag(self):
 		# Target 99.9 / tol 0.1 → below 99.8 is Off track.
 		mid = self._submit_measurement(
 			actual=99.5, period_start="2027-01-01", period_end="2027-01-31"
@@ -173,13 +167,10 @@ class TestStrategyMeasurementVerify(FrappeTestCase):
 		tr = transition_measurement(mid, "Verify")
 		self.assertEqual(tr["workflow_status"], "Verified")
 		self.assertEqual(tr["result_status"], "Off track")
-		ca = frappe.db.exists(
-			"Strategy Corrective Action",
-			{"performance_measurement": mid, "status": ["not in", ["Cancelled"]]},
-		)
-		self.assertTrue(ca)
+		doc = frappe.get_doc("Performance Measurement", mid)
+		self.assertFalse(doc.authorised_exception)
 
-	def test_off_track_verify_authorised_exception_skips_ca(self):
+	def test_off_track_verify_authorised_exception_recorded(self):
 		mid = self._submit_measurement(
 			actual=99.4, period_start="2027-02-01", period_end="2027-02-28"
 		)
@@ -196,8 +187,3 @@ class TestStrategyMeasurementVerify(FrappeTestCase):
 		doc = frappe.get_doc("Performance Measurement", mid)
 		self.assertTrue(doc.authorised_exception)
 		self.assertEqual(doc.exception_reason, "Authorised seasonal maintenance window")
-		ca = frappe.db.exists(
-			"Strategy Corrective Action",
-			{"performance_measurement": mid, "status": ["not in", ["Cancelled"]]},
-		)
-		self.assertFalse(ca)

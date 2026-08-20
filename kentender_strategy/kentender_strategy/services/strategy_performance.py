@@ -12,9 +12,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
-from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-	demand_doctype_available,
-)
 from kentender_strategy.services.strategy_contracts import (
 	_entity_code,
 	_entity_label,
@@ -34,11 +31,6 @@ from kentender_strategy.services.strategy_permissions import (
 	entity_for_user,
 	has_cross_entity_authority,
 	user_roles,
-)
-from kentender_strategy.services.strategy_writes import list_corrective_actions
-
-OPEN_CA_STATUSES = frozenset(
-	{"Open", "In progress", "Submitted for verification"}
 )
 EXPORT_ROLES = frozenset(
 	{
@@ -89,50 +81,6 @@ def _fmt_kes(n: float) -> str:
 	if abs_n >= 1_000_000:
 		return f"KES {abs_n / 1_000_000:.0f}M" if abs_n % 1_000_000 == 0 else f"KES {abs_n / 1_000_000:.1f}M"
 	return f"KES {abs_n:,.0f}"
-
-
-def _demand_pvc_treatment_counts(plan_name: str) -> tuple[int, dict[str, int]]:
-	"""DEM-INT-008 — addressed PVCs from MVP Demand related records.
-
-	Returns ``(aligned_demand_count, treated_counts)`` where counts are keyed by
-	Strategy Value Commitment id. Alignment comes from Demand Strategy Reference;
-	adoption comes from Demand Value Treatment. A deferred or not-applicable
-	treatment is addressed only when it carries the reason required by DIA-FR-069.
-	"""
-	if not plan_name or not demand_doctype_available():
-		return 0, {}
-	if not frappe.db.exists("DocType", "Demand Strategy Reference"):
-		return 0, {}
-
-	references = frappe.get_all(
-		"Demand Strategy Reference",
-		filters={"plan_version_id": plan_name},
-		fields=["demand"],
-		limit=200,
-	)
-	demand_names = sorted({r.demand for r in references if r.demand})
-	aligned = len(demand_names)
-	if not demand_names or not frappe.db.exists("DocType", "Demand Value Treatment"):
-		return aligned, {}
-
-	rows = frappe.get_all(
-		"Demand Value Treatment",
-		filters={"demand": ["in", demand_names]},
-		fields=["demand", "strategy_value_commitment", "treatment", "rationale"],
-		limit=2000,
-	)
-	by_key: dict[str, set[str]] = defaultdict(set)
-	for r in rows:
-		treatment = (r.treatment or "").strip()
-		ok = bool(treatment)
-		if treatment in {"Not applicable", "To be determined in Planning"}:
-			ok = bool((r.rationale or "").strip())
-		if not ok:
-			continue
-		pvc_id = (r.strategy_value_commitment or "").strip()
-		if pvc_id:
-			by_key[pvc_id].add(r.demand)
-	return aligned, {k: len(v) for k, v in by_key.items()}
 
 
 def _planning_package_contribution(plan_name: str) -> tuple[int, float]:
@@ -376,7 +324,6 @@ def get_strategy_performance(
 		"off_track": 0,
 		"no_data": 0,
 		"not_due": 0,
-		"ca_overdue": 0,
 	}
 	today = getdate()
 	for tid in target_ids:
@@ -394,43 +341,7 @@ def get_strategy_performance(
 		}.get(st, "no_data")
 		strip[key] += 1
 
-	# Corrective actions
-	cas = list_corrective_actions(plan_version=plan.name)
 	exceptions: list[dict] = []
-	ca_by_target: dict[str, list] = defaultdict(list)
-	for ca in cas:
-		tid = (ca.get("target") or {}).get("id")
-		if tid and tid in target_ids:
-			ca_by_target[tid].append(ca)
-		status = ca.get("status") or ""
-		due = ca.get("due_date")
-		overdue = bool(due and getdate(due) < today and status in OPEN_CA_STATUSES)
-		if overdue:
-			strip["ca_overdue"] += 1
-		if status in OPEN_CA_STATUSES:
-			age = None
-			due_label = "—"
-			if due:
-				d = getdate(due)
-				days = (today - d).days
-				if days > 0:
-					due_label = f"{days} day{'s' if days != 1 else ''} overdue"
-					age = days
-				else:
-					due_label = f"Due {d.strftime('%d %b %Y')}"
-			tgt = ca.get("target") or {}
-			exceptions.append(
-				{
-					"type": "Corrective action overdue" if overdue else "Corrective action open",
-					"kind": "corrective_action",
-					"affected": _ref(tgt.get("id"), tgt.get("code"), tgt.get("name")),
-					"owner": ca.get("owner") or "—",
-					"due_or_age": due_label,
-					"age_days": age,
-					"next_action": "Review action",
-					"route": ["strategy-corrective-actions", plan.plan_code],
-				}
-			)
 
 	# Measurement workflow exceptions (non-Verified)
 	meas_rows = frappe.get_all(
@@ -526,9 +437,6 @@ def get_strategy_performance(
 				dist[st] += 1
 			if st in ("At risk", "Off track"):
 				attention_bits.append(f"{st} target")
-			for ca in ca_by_target.get(tid) or []:
-				if ca.get("status") in OPEN_CA_STATUSES:
-					attention_bits.append("Corrective action open")
 		needs_attention = bool(
 			dist["At risk"] or dist["Off track"] or any("missing" in a.lower() for a in attention_bits)
 		)
@@ -548,19 +456,12 @@ def get_strategy_performance(
 			}
 		)
 
-	# PVC / public value — STR-AC-028 treatment vs achievement (XMOD-STR-007).
+	# Value commitments — verified achievement only (no treatment/adoption tracking).
 	pvc = list_strategy_value_commitments(plan_version=plan.name)
 	commitments_out = []
-	aligned_demands, treated_by_key = _demand_pvc_treatment_counts(plan.name)
 	for row in pvc.get("rows") or []:
 		obj = row.get("objective") or {}
 		level = row.get("consideration_level") or ""
-		pvc_id = (row.get("id") or "").strip()
-		treated = treated_by_key.get(pvc_id) or 0
-		if aligned_demands == 0:
-			treatment = "No aligned Value Cases"
-		else:
-			treatment = f"{treated} of {aligned_demands} aligned Value Cases addressed"
 		# Verified evidence from linked targets (achievement — not treatment)
 		evidence = "No verified outcome measure"
 		attention = "None"
@@ -575,43 +476,16 @@ def get_strategy_performance(
 			if m:
 				evidence = f"{(target_meta.get(tid) or {}).get('target').target_code if target_meta.get(tid) else tid}: {m.result_status}"
 				if m.result_status in ("At risk", "Off track"):
-					attention = "Corrective action open" if ca_by_target.get(tid) else m.result_status
+					attention = m.result_status
 				break
-		if level.startswith("Required") and aligned_demands > 0 and treated == 0:
-			attention = "1 treatment outstanding"
-			exceptions.append(
-				{
-					"type": "Required value commitment not addressed",
-					"kind": "value_commitment",
-					"affected": _ref(obj.get("id"), obj.get("code"), obj.get("name")),
-					"owner": row.get("responsible_owner") or "—",
-					"due_or_age": "Outstanding",
-					"age_days": None,
-					"next_action": "Review treatment",
-					"route": ["strategy-value-commitments", plan.plan_code],
-				}
-			)
-		# Funding treatment is plan-derived only (no invented totals). Prefer explicit
-		# allocation language in rationale when present; otherwise an honest placeholder.
-		rationale = (row.get("rationale") or "").strip()
-		if "KES" in rationale.upper() or "allocation" in rationale.lower():
-			funding_treatment = rationale[:120]
-		elif level.lower().startswith("required"):
-			funding_treatment = "Embedded in plan commitment"
-		else:
-			funding_treatment = "Optional — no dedicated allocation recorded"
 		commitments_out.append(
 			{
 				"id": row.get("id"),
 				"objective": obj,
 				"consideration_level": level,
-				"funding_treatment": funding_treatment,
-				"downstream_adoption": treatment,
-				# Keep legacy key for export/tests during transition.
-				"downstream_treatment": treatment,
 				"verified_evidence": evidence,
 				"attention": attention,
-				"action_label": "Review commitment" if attention != "None" else "Review commitment",
+				"action_label": "Review commitment",
 				"route": ["strategy-value-commitments", plan.plan_code],
 			}
 		)
@@ -955,9 +829,7 @@ def export_strategy_performance_report(
 		)
 	w.writerow([])
 	w.writerow(["Commitments"])
-	w.writerow(
-		["Code", "Name", "Level", "Funding treatment", "Downstream adoption", "Evidence", "Attention"]
-	)
+	w.writerow(["Code", "Name", "Level", "Evidence", "Attention"])
 	for c in dto.get("commitments") or []:
 		obj = c.get("objective") or {}
 		w.writerow(
@@ -965,8 +837,6 @@ def export_strategy_performance_report(
 				_safe_csv_cell(obj.get("code")),
 				_safe_csv_cell(obj.get("name")),
 				_safe_csv_cell(c.get("consideration_level")),
-				_safe_csv_cell(c.get("funding_treatment")),
-				_safe_csv_cell(c.get("downstream_adoption") or c.get("downstream_treatment")),
 				_safe_csv_cell(c.get("verified_evidence")),
 				_safe_csv_cell(c.get("attention")),
 			]

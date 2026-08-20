@@ -15,7 +15,6 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 	upsert_works_master_strategy_hierarchy,
 )
 from kentender_strategy.services.strategy_notification_service import (
-	EVENT_CA_ASSIGNED,
 	EVENT_MEASUREMENT_SUBMITTED,
 	EVENT_MEASUREMENT_VERIFIED,
 	EVENT_PLAN_RETURNED,
@@ -75,12 +74,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 def _cleanup_measurement(name: str | None) -> None:
 	if not name or not frappe.db.exists("Performance Measurement", name):
 		return
-	for ca in frappe.get_all(
-		"Strategy Corrective Action",
-		filters={"performance_measurement": name},
-		pluck="name",
-	):
-		frappe.delete_doc("Strategy Corrective Action", ca, force=True, ignore_permissions=True)
 	frappe.delete_doc("Performance Measurement", name, force=True, ignore_permissions=True)
 
 
@@ -204,27 +197,6 @@ class TestStrategyNotifications(FrappeTestCase):
 		self.assertGreaterEqual(
 			self._count_event(EVENT_MEASUREMENT_VERIFIED, self.officer), 1
 		)
-
-	def test_off_track_verify_assigns_ca_notification(self):
-		frappe.set_user(self.officer)
-		saved = save_measurement_draft(
-			{
-				"performance_target": self.target_id,
-				"plan_version": self.plan_id,
-				"measurement_period_start": "2028-02-01",
-				"measurement_period_end": "2028-02-28",
-				"measurement_date": "2028-02-28",
-				"actual_numeric": 10.0,
-				"evidence_source": "Notify CA test",
-				"evidence_reference": "NOTIFY-CA",
-			}
-		)
-		mid = saved["id"]
-		self.addCleanup(lambda: _cleanup_measurement(mid))
-		transition_measurement(mid, "Submit")
-		frappe.set_user(self.verifier)
-		transition_measurement(mid, "Verify")
-		self.assertGreaterEqual(self._count_event(EVENT_CA_ASSIGNED, self.officer), 1)
 
 	def test_notify_failure_does_not_break_transition(self):
 		frappe.set_user(self.officer)

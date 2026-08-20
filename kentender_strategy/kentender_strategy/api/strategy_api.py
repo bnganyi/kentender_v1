@@ -201,29 +201,6 @@ def get_measurement(
 
 
 @frappe.whitelist()
-def list_corrective_actions(
-	plan_version: str | None = None,
-	plan_code: str | None = None,
-	status: str | None = None,
-):
-	return writes.list_corrective_actions(
-		plan_version=plan_version or None,
-		plan_code=plan_code or None,
-		status=status or None,
-	)
-
-
-@frappe.whitelist()
-def upsert_corrective_action(payload=None):
-	return writes.upsert_corrective_action(_obj(payload) or {})
-
-
-@frappe.whitelist()
-def transition_corrective_action(name: str, action: str, reason: str | None = None):
-	return transitions.transition_corrective_action(name, action, reason=reason or None)
-
-
-@frappe.whitelist()
 def list_audit_events(plan_version: str | None = None, plan_code: str | None = None):
 	return contracts.list_audit_events(plan_version=plan_version or None, plan_code=plan_code or None)
 

@@ -13,10 +13,6 @@ from kentender_strategy.services.strategy_permissions import (
 	can_submit_measurement,
 	can_submit_plan,
 	can_verify_measurement,
-	require_any_role,
-	ROLE_MANAGER,
-	ROLE_OFFICER,
-	ROLE_PLANNING,
 )
 from kentender_strategy.services.strategy_readiness import assert_plan_ready_for_submit
 
@@ -38,15 +34,6 @@ MEASUREMENT_TRANSITIONS = {
 	("Submitted", "Return"): "Returned",
 	("Submitted", "Verify"): "Verified",
 	("Submitted", "Reject"): "Rejected",
-}
-
-CA_TRANSITIONS = {
-	("Open", "Start"): "In progress",
-	("In progress", "Submit completion"): "Submitted for verification",
-	("Submitted for verification", "Return"): "In progress",
-	("Submitted for verification", "Verify"): "Verified complete",
-	("Open", "Cancel"): "Cancelled",
-	("In progress", "Cancel"): "Cancelled",
 }
 
 
@@ -191,7 +178,6 @@ def transition_measurement(
 				else:
 					doc.authorised_exception = 0
 					doc.exception_reason = None
-					_ensure_corrective_or_exception(doc)
 			else:
 				doc.authorised_exception = 0
 				doc.exception_reason = None
@@ -221,67 +207,3 @@ def _as_bool(value) -> bool:
 	return False
 
 
-def _ensure_corrective_or_exception(doc) -> None:
-	existing = frappe.db.exists(
-		"Strategy Corrective Action",
-		{"performance_measurement": doc.name, "status": ["not in", ["Cancelled"]]},
-	)
-	if existing:
-		return
-	# Auto-open corrective action shell when verifying Off track without authorised exception
-	assignee = doc.submitted_by or frappe.session.user
-	ca = frappe.get_doc(
-		{
-			"doctype": "Strategy Corrective Action",
-			"performance_measurement": doc.name,
-			"performance_target": doc.performance_target,
-			"plan_version": doc.plan_version,
-			"action": "Address verified underperformance",
-			"owner": assignee,
-			"due_date": frappe.utils.add_days(frappe.utils.today(), 30),
-			"expected_result": "Return to On track performance",
-			"status": "Open",
-		}
-	)
-	ca.insert(ignore_permissions=True)
-	from kentender_strategy.services.strategy_notification_service import notify_ca_assigned
-
-	notify_ca_assigned(ca, assignee=assignee)
-
-
-def transition_corrective_action(name: str, action: str, reason: str | None = None) -> dict:
-	doc = frappe.get_doc("Strategy Corrective Action", name)
-	key = (doc.status, action)
-	if key not in CA_TRANSITIONS:
-		frappe.throw(_("Invalid corrective-action transition: {0} / {1}").format(doc.status, action))
-	if action == "Cancel":
-		require_any_role(ROLE_PLANNING, "System Manager")
-		if not reason:
-			frappe.throw(_("Cancellation reason is required"))
-		doc.cancellation_reason = reason
-		doc.cancelled_by = frappe.session.user
-	elif action == "Verify":
-		if not can_verify_measurement():
-			frappe.throw(_("Only Strategy Manager may verify actions"), frappe.PermissionError)
-		doc.verified_by = frappe.session.user
-		doc.verified_at = frappe.utils.now_datetime()
-	elif action in ("Start", "Submit completion"):
-		require_any_role(ROLE_OFFICER, ROLE_MANAGER, "System Manager")
-		if action == "Submit completion" and not doc.completion_evidence:
-			frappe.throw(_("Completion evidence is required"))
-	prior = doc.status
-	doc.status = CA_TRANSITIONS[key]
-	doc.save(ignore_permissions=True)
-	record_event(
-		entity_type="Strategy Corrective Action",
-		entity_name=doc.name,
-		event_type=action,
-		prior_state=prior,
-		new_state=doc.status,
-		reason=reason,
-		plan_version=doc.plan_version,
-	)
-	from kentender_strategy.services.strategy_notification_service import notify_ca_transition
-
-	notify_ca_transition(doc, action)
-	return {"name": doc.name, "status": doc.status}

@@ -430,7 +430,7 @@ def _my_work(pe: str | None) -> list[dict]:
 				"count": n,
 				"target": _ref(m.performance_target, m.target_code, m.title),
 				"plan_code": m.plan_code,
-				"route": ["strategy-corrective-actions", m.plan_code],
+				"route": ["strategy-plan-measurements", m.plan_code],
 			}
 		)
 	return items[:12]
@@ -467,6 +467,23 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 		],
 		order_by="order_index asc",
 	)
+	objectives = frappe.get_all(
+		"Strategic Objective",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"objective_code",
+			"title",
+			"programme",
+			"sub_programme",
+			"description",
+			"responsible_function",
+			"executive_owner",
+			"order_index",
+			"owner_org_unit",
+		],
+		order_by="order_index asc",
+	)
 	outcomes = frappe.get_all(
 		"Strategic Outcome",
 		filters={"plan_version": plan.name},
@@ -491,6 +508,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"name",
 			"indicator_code",
 			"title",
+			"strategic_objective",
 			"strategic_outcome",
 			"definition",
 			"measurement_type",
@@ -534,6 +552,13 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 	subs_by_p = {}
 	for s in subs:
 		subs_by_p.setdefault(s.programme, []).append(s)
+	objs_by_p = {}
+	objs_by_sub = {}
+	for obj in objectives:
+		if obj.sub_programme:
+			objs_by_sub.setdefault(obj.sub_programme, []).append(obj)
+		else:
+			objs_by_p.setdefault(obj.programme, []).append(obj)
 	outs_by_p = {}
 	outs_by_sub = {}
 	for o in outcomes:
@@ -541,9 +566,13 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			outs_by_sub.setdefault(o.sub_programme, []).append(o)
 		else:
 			outs_by_p.setdefault(o.programme, []).append(o)
+	inds_by_obj = {}
 	inds_by_o = {}
 	for i in indicators:
-		inds_by_o.setdefault(i.strategic_outcome, []).append(i)
+		if i.strategic_objective:
+			inds_by_obj.setdefault(i.strategic_objective, []).append(i)
+		else:
+			inds_by_o.setdefault(i.strategic_outcome, []).append(i)
 	tgts_by_i = {}
 	for t in targets:
 		tgts_by_i.setdefault(t.performance_indicator, []).append(t)
@@ -573,6 +602,8 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 		p_children = []
 		for s in subs_by_p.get(p.name, []):
 			s_children = []
+			for obj in objs_by_sub.get(s.name, []):
+				s_children.append(_objective_node(obj, inds_by_obj, tgts_by_i))
 			for o in outs_by_sub.get(s.name, []):
 				s_children.append(_outcome_node(o, inds_by_o, tgts_by_i))
 			p_children.append(
@@ -591,6 +622,8 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 					},
 				)
 			)
+		for obj in objs_by_p.get(p.name, []):
+			p_children.append(_objective_node(obj, inds_by_obj, tgts_by_i))
 		for o in outs_by_p.get(p.name, []):
 			p_children.append(_outcome_node(o, inds_by_o, tgts_by_i))
 		tree.append(
@@ -631,6 +664,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 		"counts": {
 			"programmes": len(programmes),
 			"sub_programmes": len(subs),
+			"objectives": len(objectives),
 			"outcomes": len(outcomes),
 			"indicators": len(indicators),
 			"targets": len(targets),
@@ -668,6 +702,64 @@ def _target_node(t, unit=None):
 			"status": t.status,
 			"owner_org_unit": getattr(t, "owner_org_unit", None) or "",
 			"ownership_path": ownership_path_for_unit(getattr(t, "owner_org_unit", None)),
+		},
+	}
+
+
+def _objective_node(obj, inds_by_obj, tgts_by_i):
+	warnings = []
+	obj_children = []
+	inds = inds_by_obj.get(obj.name, [])
+	if not inds:
+		warnings.append("Indicator required")
+	for i in inds:
+		i_children = []
+		for t in tgts_by_i.get(i.name, []):
+			i_children.append(_target_node(t, unit=i.unit))
+		warn_ind = []
+		if not i_children:
+			warn_ind.append("Target required")
+		obj_children.append(
+			{
+				"type": "PerformanceIndicator",
+				"id": i.name,
+				"code": i.indicator_code,
+				"name": i.title,
+				"children": i_children,
+				"warnings": warn_ind,
+				"fields": {
+					"strategic_objective": i.strategic_objective,
+					"definition": i.definition,
+					"measurement_type": i.measurement_type,
+					"unit": i.unit,
+					"measurement_frequency": i.measurement_frequency,
+					"data_source": i.data_source,
+					"responsible_function": i.responsible_function,
+					"order_index": i.order_index,
+					"owner_org_unit": getattr(i, "owner_org_unit", None) or "",
+					"ownership_path": ownership_path_for_unit(getattr(i, "owner_org_unit", None)),
+				},
+			}
+		)
+	return {
+		"type": "StrategicObjective",
+		"id": obj.name,
+		"code": obj.objective_code,
+		"name": obj.title,
+		"children": obj_children,
+		"warnings": warnings,
+		"responsible_function": obj.responsible_function,
+		"executive_owner": obj.executive_owner,
+		"description": obj.description,
+		"fields": {
+			"description": obj.description,
+			"responsible_function": obj.responsible_function,
+			"executive_owner": obj.executive_owner,
+			"programme": obj.programme,
+			"sub_programme": obj.sub_programme,
+			"order_index": obj.order_index,
+			"owner_org_unit": getattr(obj, "owner_org_unit", None) or "",
+			"ownership_path": ownership_path_for_unit(getattr(obj, "owner_org_unit", None)),
 		},
 	}
 
@@ -957,19 +1049,34 @@ def build_strategy_reference(plan_version_id: str, target_id: str) -> dict:
 	plan = frappe.get_doc("Strategic Plan", plan_version_id)
 	tgt = frappe.get_doc("Performance Target", target_id)
 	ind = frappe.get_doc("Performance Indicator", tgt.performance_indicator)
-	out = frappe.get_doc("Strategic Outcome", ind.strategic_outcome)
-	prog = frappe.get_doc("Strategy Programme", out.programme)
+	if ind.strategic_objective:
+		parent = frappe.get_doc("Strategic Objective", ind.strategic_objective)
+		parent_node = {
+			"type": "StrategicObjective",
+			"id": parent.name,
+			"code": parent.objective_code,
+			"name": parent.title,
+		}
+	else:
+		parent = frappe.get_doc("Strategic Outcome", ind.strategic_outcome)
+		parent_node = {
+			"type": "StrategicOutcome",
+			"id": parent.name,
+			"code": parent.outcome_code,
+			"name": parent.title,
+		}
+	prog = frappe.get_doc("Strategy Programme", parent.programme)
 	path = [
 		{"type": "Programme", "id": prog.name, "code": prog.programme_code, "name": prog.title},
 	]
-	if out.sub_programme:
-		sub = frappe.get_doc("Strategy Sub Programme", out.sub_programme)
+	if parent.sub_programme:
+		sub = frappe.get_doc("Strategy Sub Programme", parent.sub_programme)
 		path.append(
 			{"type": "SubProgramme", "id": sub.name, "code": sub.sub_programme_code, "name": sub.title}
 		)
 	path.extend(
 		[
-			{"type": "StrategicOutcome", "id": out.name, "code": out.outcome_code, "name": out.title},
+			parent_node,
 			{
 				"type": "PerformanceIndicator",
 				"id": ind.name,
@@ -1356,14 +1463,6 @@ def _measurement_next_action(workflow: str | None) -> str | None:
 	return None
 
 
-def _corrective_action_label(workflow: str | None, ca_open: bool) -> str:
-	if ca_open:
-		return "Open"
-	if workflow == "Submitted":
-		return "Pending verification"
-	return "None required"
-
-
 def list_measurements(
 	plan_version: str | None = None,
 	plan_code: str | None = None,
@@ -1408,11 +1507,6 @@ def list_measurements(
 		unit = None
 		if tgt and tgt.performance_indicator:
 			unit = frappe.db.get_value("Performance Indicator", tgt.performance_indicator, "unit")
-		ca = frappe.db.exists(
-			"Strategy Corrective Action",
-			{"performance_measurement": r.name, "status": ["not in", ["Cancelled", "Verified complete"]]},
-		)
-		ca_open = bool(ca)
 		wf = r.workflow_status
 		out.append(
 			{
@@ -1437,8 +1531,6 @@ def list_measurements(
 				"actual_display": _format_actual_display(r.actual_numeric, unit),
 				"workflow_status": wf,
 				"result_status": r.result_status,
-				"corrective_action_open": ca_open,
-				"corrective_action_label": _corrective_action_label(wf, ca_open),
 				"next_action": _measurement_next_action(wf),
 			}
 		)
@@ -1451,11 +1543,9 @@ def list_measurements(
 			1
 			for r in out
 			if r["workflow_status"] in ("Draft", "Returned")
-			or r["corrective_action_open"]
 			or (
 				r["workflow_status"] == "Verified"
 				and r["result_status"] in ("At risk", "Off track")
-				and r["corrective_action_open"]
 			)
 		),
 	}

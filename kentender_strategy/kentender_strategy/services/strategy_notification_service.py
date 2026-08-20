@@ -28,18 +28,12 @@ EVENT_MEASUREMENT_RETURNED = "measurement_returned"
 EVENT_MEASUREMENT_VERIFIED = "measurement_verified"
 EVENT_MEASUREMENT_REJECTED = "measurement_rejected"
 
-EVENT_CA_ASSIGNED = "ca_assigned"
-EVENT_CA_SUBMITTED = "ca_submitted"
-EVENT_CA_RETURNED = "ca_returned"
-EVENT_CA_VERIFIED = "ca_verified"
-
 _ROUTE_ALIGNMENT = "/app/strategy-alignment"
 
 _SKIP_ACTOR_EVENTS = frozenset(
 	{
 		EVENT_PLAN_SUBMITTED,
 		EVENT_MEASUREMENT_SUBMITTED,
-		EVENT_CA_SUBMITTED,
 	}
 )
 
@@ -122,12 +116,6 @@ def _recipients_for_event(event_type: str, *, context: dict) -> list[str]:
 		EVENT_MEASUREMENT_REJECTED,
 	):
 		users = {submitted_by} if submitted_by else set()
-	elif event_type == EVENT_CA_ASSIGNED:
-		users = {owner} if owner else ({submitted_by} if submitted_by else set())
-	elif event_type == EVENT_CA_SUBMITTED:
-		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
-	elif event_type in (EVENT_CA_RETURNED, EVENT_CA_VERIFIED):
-		users = {owner} if owner else set()
 	else:
 		users = set()
 
@@ -167,13 +155,6 @@ def _route_for_event(event_type: str, *, context: dict) -> str:
 			)
 			return f"/app/{slug}/{plan_code}/{target_code}"
 		return _ROUTE_ALIGNMENT
-	if event_type in (
-		EVENT_CA_ASSIGNED,
-		EVENT_CA_SUBMITTED,
-		EVENT_CA_RETURNED,
-		EVENT_CA_VERIFIED,
-	):
-		return f"/app/strategy-corrective-actions/{plan_code}" if plan_code else _ROUTE_ALIGNMENT
 	return _ROUTE_ALIGNMENT
 
 
@@ -215,22 +196,6 @@ def _subject_message(event_type: str, *, context: dict) -> tuple[str, str]:
 		EVENT_MEASUREMENT_REJECTED: (
 			_("Measurement {0} rejected").format(label),
 			_("A performance measurement was rejected.").format(label),
-		),
-		EVENT_CA_ASSIGNED: (
-			_("Corrective action assigned on {0}").format(label),
-			_("A corrective action was opened for verified underperformance.").format(label),
-		),
-		EVENT_CA_SUBMITTED: (
-			_("Corrective action submitted on {0}").format(label),
-			_("A corrective action awaits verification.").format(label),
-		),
-		EVENT_CA_RETURNED: (
-			_("Corrective action returned on {0}").format(label),
-			_("A corrective action was returned to the owner.").format(label),
-		),
-		EVENT_CA_VERIFIED: (
-			_("Corrective action verified on {0}").format(label),
-			_("A corrective action was verified complete.").format(label),
 		),
 	}
 	return mapping.get(
@@ -360,61 +325,4 @@ def notify_measurement_transition(meas_doc, action: str) -> list[str | None]:
 		submitted_by=getattr(meas_doc, "submitted_by", None),
 		label=label,
 		correlation_suffix=f"{meas_doc.workflow_status}:{getattr(meas_doc, 'modified', '')}",
-	)
-
-
-def notify_ca_transition(ca_doc, action: str) -> list[str | None]:
-	action_map = {
-		"Submit completion": EVENT_CA_SUBMITTED,
-		"Return": EVENT_CA_RETURNED,
-		"Verify": EVENT_CA_VERIFIED,
-	}
-	event = action_map.get(action)
-	if not event:
-		return []
-	plan_code = (
-		frappe.db.get_value("Strategic Plan", ca_doc.plan_version, "plan_code")
-		if ca_doc.plan_version
-		else None
-	)
-	pe = (
-		frappe.db.get_value("Strategic Plan", ca_doc.plan_version, "procuring_entity")
-		if ca_doc.plan_version
-		else None
-	)
-	return notify_strategy_users(
-		event,
-		document_type="Strategy Corrective Action",
-		document_name=ca_doc.name,
-		procuring_entity=pe,
-		plan_code=plan_code,
-		owner=getattr(ca_doc, "owner", None),
-		submitted_by=getattr(ca_doc, "owner", None),
-		label=plan_code or ca_doc.name,
-		correlation_suffix=f"{ca_doc.status}:{getattr(ca_doc, 'modified', '')}",
-	)
-
-
-def notify_ca_assigned(ca_doc, *, assignee: str | None = None) -> list[str | None]:
-	plan_code = (
-		frappe.db.get_value("Strategic Plan", ca_doc.plan_version, "plan_code")
-		if ca_doc.plan_version
-		else None
-	)
-	pe = (
-		frappe.db.get_value("Strategic Plan", ca_doc.plan_version, "procuring_entity")
-		if ca_doc.plan_version
-		else None
-	)
-	# Prefer explicit assignee: DocType field "owner" collides with Frappe standard owner.
-	owner = (assignee or "").strip() or (getattr(ca_doc, "owner", None) or "").strip()
-	return notify_strategy_users(
-		EVENT_CA_ASSIGNED,
-		document_type="Strategy Corrective Action",
-		document_name=ca_doc.name,
-		procuring_entity=pe,
-		plan_code=plan_code,
-		owner=owner,
-		label=plan_code or ca_doc.name,
-		correlation_suffix=f"assigned:{ca_doc.name}",
 	)

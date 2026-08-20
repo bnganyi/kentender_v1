@@ -198,6 +198,10 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		live_js = _read(APP_PUBLIC / "js" / "strategy_live_bind.js")
 		self.assertIn("get_plan_overview", live_js)
 		self.assertIn("create_successor_version", live_js)
+		# STR-CHG-001 §6.2 / STR-AC-009 — Strategic Objective is a distinct structure
+		# node type in the builder UI, not folded into Strategic Outcome.
+		self.assertIn("StrategicObjective", live_js)
+		self.assertIn('"StrategicOutcome"', live_js)
 		self.assertTrue(STRUCTURE_CSS.is_file())
 		structure_css = _read(STRUCTURE_CSS)
 		self.assertIn("kt-str-structure-split", structure_css)
@@ -378,7 +382,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("bindPlanChrome($root, plan)", down_bind)
 		self.assertNotIn(".toUpperCase()", down_bind)
 		self.assertNotIn('"v" + plan.version_number', down_bind)
-		audit_bind = live_js[live_js.index("function bindAudit") : live_js.index("function bindCorrective")]
+		audit_bind = live_js[live_js.index("function bindAudit") : live_js.index("function bindMeasurementForm")]
 		self.assertIn("bindPlanChrome($root, plan)", audit_bind)
 		self.assertIn("get_plan_overview", audit_bind)
 		review_paint = live_js[
@@ -550,7 +554,6 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 				"kt-str-meas-verify-compare",
 				"Back to measurements",
 			),
-			"corrective_actions.js": ("kt-str-corrective-actions", "Corrective", "action"),
 			"downstream.js": ("kt-str-downstream", "data-kt-str-down-tbody", "Downstream usage"),
 			"review_blockers.js": ("kt-str-review-blockers", "data-kt-str-review-group", "run-readiness"),
 			"review_ready.js": ("kt-str-review-ready", "Ready for submission", "submit-for-review"),
@@ -567,11 +570,8 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 				"Funding Snapshot",
 				"Aligned Procurement Pipeline",
 				"Strategy Value Commitments",
-				"FUNDING TREATMENT",
-				"DOWNSTREAM ADOPTION",
 				"md:grid-cols-4",
 				"bg-[#f0fdf4]",
-				"Corrective actions overdue",
 			),
 		}
 		for name, markers in cases.items():
@@ -595,7 +595,6 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 			"strategy-plan-audit",
 			"strategy-measurement-submit",
 			"strategy-measurement-verify",
-			"strategy-corrective-actions",
 		]
 		for name in expected:
 			self.assertTrue(frappe.db.exists("Page", name), f"Page missing: {name}")

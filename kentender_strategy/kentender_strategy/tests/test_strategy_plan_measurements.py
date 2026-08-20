@@ -117,7 +117,6 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 			self.assertIn(r["workflow_status"], ("Verified", "Submitted", "Draft", "Returned", "Rejected"))
 			self.assertTrue(r.get("result_status"))
 			self.assertIn(r.get("next_action"), ("view", "review", "submit", None))
-			self.assertIn("corrective_action_label", r)
 
 		verified = [r for r in rows if r["workflow_status"] == "Verified"]
 		self.assertGreaterEqual(len(verified), 2)

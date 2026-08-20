@@ -2,41 +2,24 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "hash",
- "creation": "2026-08-02 00:00:00.000000",
+ "creation": "2026-08-20 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "strategic_objective",
-  "strategic_outcome",
   "plan_version",
-  "indicator_code",
+  "programme",
+  "sub_programme",
+  "objective_code",
   "title",
-  "definition",
-  "measurement_type",
-  "unit",
-  "measurement_frequency",
-  "data_source",
+  "description",
   "responsible_function",
+  "executive_owner",
   "order_index",
   "section_fixture_ownership",
   "fixture_namespace",
   "owner_org_unit"
  ],
  "fields": [
-  {
-   "fieldname": "strategic_objective",
-   "fieldtype": "Link",
-   "label": "Strategic Objective",
-   "options": "Strategic Objective",
-   "search_index": 1
-  },
-  {
-   "fieldname": "strategic_outcome",
-   "fieldtype": "Link",
-   "label": "Strategic Outcome",
-   "options": "Strategic Outcome",
-   "search_index": 1
-  },
   {
    "fieldname": "plan_version",
    "fieldtype": "Link",
@@ -46,9 +29,22 @@
    "search_index": 1
   },
   {
-   "fieldname": "indicator_code",
+   "fieldname": "programme",
+   "fieldtype": "Link",
+   "label": "Programme",
+   "options": "Strategy Programme",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sub_programme",
+   "fieldtype": "Link",
+   "label": "Sub Programme",
+   "options": "Strategy Sub Programme"
+  },
+  {
+   "fieldname": "objective_code",
    "fieldtype": "Data",
-   "label": "Indicator Code",
+   "label": "Objective Code",
    "reqd": 1,
    "in_list_view": 1
   },
@@ -60,41 +56,20 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "definition",
+   "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Definition",
-   "reqd": 1
-  },
-  {
-   "fieldname": "measurement_type",
-   "fieldtype": "Select",
-   "label": "Measurement Type",
-   "options": "Numeric\nPercentage\nCurrency\nDuration\nCount\nMilestone\nBoolean",
-   "reqd": 1
-  },
-  {
-   "fieldname": "unit",
-   "fieldtype": "Data",
-   "label": "Unit"
-  },
-  {
-   "fieldname": "measurement_frequency",
-   "fieldtype": "Select",
-   "label": "Measurement Frequency",
-   "options": "Monthly\nQuarterly\nAnnual\nDue date\nPlan end",
-   "reqd": 1
-  },
-  {
-   "fieldname": "data_source",
-   "fieldtype": "Data",
-   "label": "Data Source",
-   "reqd": 1
+   "label": "Description"
   },
   {
    "fieldname": "responsible_function",
    "fieldtype": "Data",
    "label": "Responsible Function",
    "reqd": 1
+  },
+  {
+   "fieldname": "executive_owner",
+   "fieldtype": "Data",
+   "label": "Executive Owner"
   },
   {
    "fieldname": "order_index",
@@ -127,10 +102,10 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-02 00:00:00.000000",
+ "modified": "2026-08-20 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
- "name": "Performance Indicator",
+ "name": "Strategic Objective",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
@@ -177,5 +152,5 @@
  "track_changes": 1,
  "is_submittable": 0,
  "title_field": "title",
- "search_fields": "indicator_code,title"
+ "search_fields": "objective_code,title"
 }

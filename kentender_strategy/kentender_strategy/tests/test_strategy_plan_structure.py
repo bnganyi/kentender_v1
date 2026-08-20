@@ -55,6 +55,7 @@ def _delete_plan_cascade(plan_id: str | None):
 		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
+		"Strategic Objective",
 		"Strategic Outcome",
 		"Strategy Sub Programme",
 		"Strategy Programme",
@@ -487,3 +488,119 @@ class TestStrategyPlanStructure(FrappeTestCase):
 		outcome = tree["tree"][0]["children"][0]
 		self.assertEqual(outcome["type"], "StrategicOutcome")
 		self.assertIn("Indicator required", outcome.get("warnings") or [])
+
+	def test_str_ac_403_indicator_measures_objective_xor_outcome(self):
+		"""STR-CHG-001 §6.2 / SCL-403 — an Indicator measures one Strategic Objective
+		or Strategic Outcome, never both, never neither, and is never itself an objective.
+
+		Runs as Administrator throughout — deliberately avoids the pre-existing,
+		unrelated org-scope bug (see test_officer_can_build_hierarchy_on_draft and
+		neighbouring tests in this file) that blocks non-Administrator upsert_structure_node
+		calls when owner_org_unit is unset. That bug is out of scope for this test.
+		"""
+		frappe.set_user("Administrator")
+		code = f"STR-OBJ-{frappe.generate_hash(length=5).upper()}"
+		created = create_plan(
+			{
+				"plan_code": code,
+				"title": "Objective invariant Draft",
+				"plan_type": "Entity Strategic Plan",
+				"procuring_entity": self.pe,
+				"start_date": "2026-07-01",
+				"end_date": "2030-06-30",
+			}
+		)
+		plan_id = created["plan"]["id"]
+		self.addCleanup(lambda: _delete_plan_cascade(plan_id))
+		prog = upsert_structure_node(
+			{
+				"type": "Programme",
+				"plan_version": plan_id,
+				"code": f"{code}-P",
+				"title": "Prog",
+				"responsible_function": "ICT",
+			}
+		)
+		obj = upsert_structure_node(
+			{
+				"type": "StrategicObjective",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"code": f"{code}-OBJ",
+				"title": "Strengthen interoperability",
+				"description": "Objective description",
+				"responsible_function": "ICT",
+			}
+		)
+		self.assertTrue(obj.get("id"))
+		out = upsert_structure_node(
+			{
+				"type": "StrategicOutcome",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"code": f"{code}-OUT",
+				"title": "Reliable services",
+				"description": "Outcome description",
+				"responsible_function": "ICT",
+			}
+		)
+
+		def _indicator_fields(**overrides):
+			fields = {
+				"plan_version": plan_id,
+				"code": f"{code}-IND",
+				"title": "Adoption",
+				"definition": "Adoption of interoperable services",
+				"measurement_type": "Percentage",
+				"unit": "%",
+				"measurement_frequency": "Monthly",
+				"data_source": "Report",
+				"responsible_function": "ICT",
+			}
+			fields.update(overrides)
+			return {"type": "PerformanceIndicator", **fields}
+
+		# Neither Objective nor Outcome — rejected.
+		neither = upsert_structure_node(_indicator_fields())
+		self.assertFalse(neither.get("ok", True))
+		self.assertIn("strategic_outcome", neither.get("errors") or {})
+
+		# Both Objective and Outcome — rejected.
+		both = upsert_structure_node(
+			_indicator_fields(strategic_objective=obj["id"], strategic_outcome=out["id"])
+		)
+		self.assertFalse(both.get("ok", True))
+		self.assertIn("strategic_outcome", both.get("errors") or {})
+
+		# Objective only — accepted, and the indicator carries no outcome link.
+		ind_obj = upsert_structure_node(_indicator_fields(strategic_objective=obj["id"]))
+		self.assertTrue(ind_obj.get("id"))
+		doc = frappe.get_doc("Performance Indicator", ind_obj["id"])
+		self.assertEqual(doc.strategic_objective, obj["id"])
+		self.assertFalse(doc.strategic_outcome)
+
+		# Outcome only — accepted (existing, still-valid path), no objective link.
+		ind_out = upsert_structure_node(
+			_indicator_fields(code=f"{code}-IND2", strategic_outcome=out["id"])
+		)
+		self.assertTrue(ind_out.get("id"))
+		doc2 = frappe.get_doc("Performance Indicator", ind_out["id"])
+		self.assertEqual(doc2.strategic_outcome, out["id"])
+		self.assertFalse(doc2.strategic_objective)
+
+		# A Performance Indicator is never itself usable as an objective — distinct
+		# doctype, distinct reference token, no shared identity.
+		self.assertNotEqual(doc.doctype, "Strategic Objective")
+		from kentender_strategy.services.strategy_reference import REF_TYPE_META
+
+		self.assertEqual(REF_TYPE_META["OBJ"][0], "Strategic Objective")
+		self.assertEqual(REF_TYPE_META["IND"][0], "Performance Indicator")
+
+		# Tree contract exposes the Objective as a distinct node type, sibling to Outcome.
+		tree = get_strategy_tree(plan_version=plan_id)
+		p_children = tree["tree"][0]["children"]
+		types = {c["type"] for c in p_children}
+		self.assertEqual(types, {"StrategicObjective", "StrategicOutcome"})
+		obj_node = next(c for c in p_children if c["type"] == "StrategicObjective")
+		self.assertEqual(len(obj_node["children"]), 1)
+		self.assertEqual(obj_node["children"][0]["id"], ind_obj["id"])

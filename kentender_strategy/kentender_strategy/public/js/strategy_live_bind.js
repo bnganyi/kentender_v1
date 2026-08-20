@@ -1150,6 +1150,7 @@ frappe.provide("kentender_strategy.live");
 	var STRUCTURE_TYPE_META = {
 		Programme: { tag: "PROG", label: "Programme", badge: "bg-primary text-on-primary" },
 		SubProgramme: { tag: "SUB-P", label: "Sub-programme", badge: "bg-secondary text-on-secondary" },
+		StrategicObjective: { tag: "OBJ", label: "Strategic Objective", badge: "bg-tertiary text-on-tertiary" },
 		StrategicOutcome: { tag: "OUT", label: "Strategic Outcome", badge: "bg-tertiary text-on-tertiary" },
 		PerformanceIndicator: {
 			tag: "IND",
@@ -1165,9 +1166,14 @@ frappe.provide("kentender_strategy.live");
 	var STRUCTURE_CHILD_TYPES = {
 		Programme: [
 			{ type: "SubProgramme", label: "Sub-programme" },
+			{ type: "StrategicObjective", label: "Strategic Objective" },
 			{ type: "StrategicOutcome", label: "Strategic Outcome" },
 		],
-		SubProgramme: [{ type: "StrategicOutcome", label: "Strategic Outcome" }],
+		SubProgramme: [
+			{ type: "StrategicObjective", label: "Strategic Objective" },
+			{ type: "StrategicOutcome", label: "Strategic Outcome" },
+		],
+		StrategicObjective: [{ type: "PerformanceIndicator", label: "Indicator" }],
 		StrategicOutcome: [{ type: "PerformanceIndicator", label: "Indicator" }],
 		PerformanceIndicator: [{ type: "PerformanceTarget", label: "Performance Target" }],
 		PerformanceTarget: [],
@@ -1233,11 +1239,14 @@ frappe.provide("kentender_strategy.live");
 						: "text-outline"
 					: "text-outline opacity-0";
 				var codeCls =
-					selected || n.type === "Programme" || n.type === "StrategicOutcome"
+					selected || n.type === "Programme" || n.type === "StrategicObjective" || n.type === "StrategicOutcome"
 						? "font-data-mono text-xs text-primary font-bold"
 						: "font-data-mono text-xs text-on-surface-variant";
 				var titleCls =
-					n.type === "Programme" || n.type === "SubProgramme" || n.type === "StrategicOutcome"
+					n.type === "Programme" ||
+					n.type === "SubProgramme" ||
+					n.type === "StrategicObjective" ||
+					n.type === "StrategicOutcome"
 						? "font-medium text-sm text-on-surface" + (selected ? " text-primary" : "")
 						: "text-sm text-on-surface";
 				var html =
@@ -1457,7 +1466,7 @@ frappe.provide("kentender_strategy.live");
 				})
 			);
 		}
-		if (type === "StrategicOutcome") {
+		if (type === "StrategicObjective" || type === "StrategicOutcome") {
 			return (
 				refBlock +
 				fieldInput("title", "Title", fields.title, { required: true }) +
@@ -1580,7 +1589,7 @@ frappe.provide("kentender_strategy.live");
 		var kids = node.children || [];
 		var indCount = 0;
 		var tgtCount = 0;
-		if (node.type === "StrategicOutcome") {
+		if (node.type === "StrategicObjective" || node.type === "StrategicOutcome") {
 			indCount = kids.length;
 			kids.forEach(function (c) {
 				tgtCount += (c.children || []).length;
@@ -1605,7 +1614,12 @@ frappe.provide("kentender_strategy.live");
 				'<span class="material-symbols-outlined">delete</span></button></div>';
 		}
 		var metaGrid = "";
-		if (node.type === "StrategicOutcome" || node.type === "Programme" || node.type === "SubProgramme") {
+		if (
+			node.type === "StrategicObjective" ||
+			node.type === "StrategicOutcome" ||
+			node.type === "Programme" ||
+			node.type === "SubProgramme"
+		) {
 			metaGrid =
 				'<div class="grid grid-cols-2 gap-4">' +
 				'<div class="bg-surface p-3 rounded-lg border border-surface-variant">' +
@@ -1672,9 +1686,14 @@ frappe.provide("kentender_strategy.live");
 				"</div></div><hr class=\"border-outline-variant\"/>";
 		}
 		var childSummary = "";
-		if (node.type === "StrategicOutcome" || node.type === "PerformanceIndicator" || node.type === "Programme") {
+		if (
+			node.type === "StrategicObjective" ||
+			node.type === "StrategicOutcome" ||
+			node.type === "PerformanceIndicator" ||
+			node.type === "Programme"
+		) {
 			var summaryBits = "";
-			if (node.type === "StrategicOutcome") {
+			if (node.type === "StrategicObjective" || node.type === "StrategicOutcome") {
 				summaryBits =
 					'<div class="flex items-center gap-2 text-sm text-on-surface bg-surface-container px-3 py-1 rounded">' +
 					'<span class="material-symbols-outlined text-[18px] text-surface-tint">analytics</span>' +
@@ -1955,13 +1974,15 @@ frappe.provide("kentender_strategy.live");
 			}
 			if (type === "SubProgramme" && parent.type === "Programme") {
 				links.programme = parent.id;
-			} else if (type === "StrategicOutcome") {
+			} else if (type === "StrategicObjective" || type === "StrategicOutcome") {
 				if (parent.type === "SubProgramme") {
 					links.sub_programme = parent.id;
 					links.programme = (parent.fields && parent.fields.programme) || null;
 				} else if (parent.type === "Programme") {
 					links.programme = parent.id;
 				}
+			} else if (type === "PerformanceIndicator" && parent.type === "StrategicObjective") {
+				links.strategic_objective = parent.id;
 			} else if (type === "PerformanceIndicator" && parent.type === "StrategicOutcome") {
 				links.strategic_outcome = parent.id;
 			} else if (type === "PerformanceTarget" && parent.type === "PerformanceIndicator") {
@@ -2860,7 +2881,7 @@ frappe.provide("kentender_strategy.live");
 			var $tbody = $root.find("[data-kt-str-meas-tbody]");
 			if (!pageRows.length) {
 				$tbody.html(
-					'<tr data-kt-str-meas-empty="1"><td colspan="8" class="py-8 px-4 text-center text-on-surface-variant text-sm">' +
+					'<tr data-kt-str-meas-empty="1"><td colspan="7" class="py-8 px-4 text-center text-on-surface-variant text-sm">' +
 						esc(__("No performance measurements for this plan yet.")) +
 						"</td></tr>"
 				);
@@ -2870,14 +2891,6 @@ frappe.provide("kentender_strategy.live");
 				pageRows
 					.map(function (r) {
 						var tgt = r.target || {};
-						var ca = r.corrective_action_label || "—";
-						var caHtml = r.corrective_action_open
-							? '<span class="text-secondary font-medium">' + esc(ca) + "</span>"
-							: '<span class="text-on-surface-variant' +
-								(ca === "None required" ? " italic" : "") +
-								'">' +
-								esc(ca) +
-								"</span>";
 						return (
 							'<tr class="hover:bg-surface-container transition-colors group" data-kt-str-measurement-id="' +
 							esc(r.id) +
@@ -2903,9 +2916,6 @@ frappe.provide("kentender_strategy.live");
 							"</td>" +
 							'<td class="py-4 px-4 align-top whitespace-nowrap">' +
 							measWorkflowPill(r.workflow_status) +
-							"</td>" +
-							'<td class="py-4 px-4 align-top text-body-md">' +
-							caHtml +
 							"</td>" +
 							'<td class="py-4 px-4 align-top text-right whitespace-nowrap">' +
 							actionButton(r) +
@@ -3726,14 +3736,6 @@ frappe.provide("kentender_strategy.live");
 		});
 	}
 
-	function bindCorrective($root, planCode) {
-		return call("list_corrective_actions", { plan_code: planCode }).then(function (rows) {
-			$root.attr("data-kt-str-live", "1");
-			$root.attr("data-kt-str-ca-count", String((rows || []).length));
-			return rows;
-		});
-	}
-
 	function resultTone(status) {
 		var lower = String(status || "")
 			.trim()
@@ -3855,16 +3857,10 @@ frappe.provide("kentender_strategy.live");
 		}
 
 		var rs = String(m.result_status || "").toLowerCase();
-		var $ca = $root.find("[data-kt-str-meas-ca-box]");
 		var $exc = $root.find("[data-kt-str-meas-exception-box]");
-		if (rs === "at risk") {
-			$ca.removeClass("hidden").show();
-			$exc.addClass("hidden").hide();
-		} else if (rs === "off track") {
-			$ca.addClass("hidden").hide();
+		if (rs === "off track") {
 			$exc.removeClass("hidden").css("display", "flex");
 		} else {
-			$ca.addClass("hidden").hide();
 			$exc.addClass("hidden").hide();
 		}
 
@@ -4357,41 +4353,6 @@ frappe.provide("kentender_strategy.live");
 							.then(function (tr) {
 								// Apply decision UI immediately and never navigate away.
 								applyVerifyDecision($root, m, tr);
-								if (apiAction === "Verify") {
-									var wantCa =
-										String(tr.result_status || m.result_status || "")
-											.toLowerCase() === "at risk" &&
-										$root.find("[data-kt-str-meas-create-ca]").is(":checked");
-									if (wantCa) {
-										return call("upsert_corrective_action", {
-											payload: {
-												performance_measurement: m.id,
-												performance_target: tgt.id,
-												plan_version: m.plan_version,
-												action: "Address at-risk performance",
-												owner: m.submitted_by || frappe.session.user,
-												due_date: frappe.datetime.add_days(
-													frappe.datetime.get_today(),
-													30
-												),
-												expected_result: "Return to On track performance",
-												status: "Open",
-											},
-										})
-											.then(function () {
-												return tr;
-											})
-											.catch(function () {
-												frappe.show_alert({
-													message: __(
-														"Measurement verified, but corrective action could not be created"
-													),
-													indicator: "orange",
-												});
-												return tr;
-											});
-									}
-								}
 								return tr;
 							})
 							.then(function (tr) {
@@ -4456,9 +4417,6 @@ frappe.provide("kentender_strategy.live");
 		}
 		if (pageSlug === "strategy-measurement-verify") {
 			return live.bindMeasurementForm($root, targetCode, "verify", planCode);
-		}
-		if (pageSlug === "strategy-corrective-actions") {
-			return live.bindCorrective($root, planCode || kentender_strategy.alignment.FIXTURE_PLAN);
 		}
 		if (pageSlug === "strategy-plan-review") {
 			return live.bindReview($root, planCode);
@@ -4612,11 +4570,7 @@ frappe.provide("kentender_strategy.live");
 						.map(function (ex) {
 							var aff = ex.affected || {};
 							var route = (ex.route || []).join("/");
-							var tone =
-								(ex.kind === "value_commitment" ||
-									(ex.type || "").indexOf("not addressed") >= 0)
-									? "text-[#92400e]"
-									: "text-[#991b1b]";
+							var tone = "text-[#991b1b]";
 							return (
 								"<tr>" +
 								'<td class="text-xs font-semibold ' +
@@ -4784,7 +4738,7 @@ frappe.provide("kentender_strategy.live");
 			var $c = $root.find('[data-kt-str-perf-tbody="commitments"]');
 			if (!commits.length) {
 				$c.html(
-					'<tr data-kt-str-empty="1"><td colspan="7" class="text-on-surface-variant text-sm py-6 text-center">' +
+					'<tr data-kt-str-empty="1"><td colspan="5" class="text-on-surface-variant text-sm py-6 text-center">' +
 						esc(__("No plan value commitments")) +
 						"</td></tr>"
 				);
@@ -4794,14 +4748,8 @@ frappe.provide("kentender_strategy.live");
 						.map(function (row) {
 							var obj = row.objective || {};
 							var route = (row.route || []).join("/");
-							var adoption =
-								row.downstream_adoption || row.downstream_treatment || "—";
 							var attnTone =
-								row.attention && row.attention !== "None"
-									? row.attention.indexOf("outstanding") >= 0
-										? "text-[#92400e]"
-										: "text-[#991b1b]"
-									: "";
+								row.attention && row.attention !== "None" ? "text-[#991b1b]" : "";
 							return (
 								"<tr>" +
 								"<td><div class=\"font-semibold\">" +
@@ -4812,14 +4760,6 @@ frappe.provide("kentender_strategy.live");
 								'<td><span class="status-pill bg-surface-container-highest text-on-surface-variant">' +
 								esc((row.consideration_level || "").toUpperCase() || "—") +
 								"</span></td>" +
-								'<td class="text-xs">' +
-								esc(row.funding_treatment || "—") +
-								"</td>" +
-								'<td class="text-xs" data-kt-str-perf-adoption="' +
-								esc(obj.code || "") +
-								'">' +
-								esc(adoption) +
-								"</td>" +
 								'<td class="text-xs">' +
 								esc(row.verified_evidence || "—") +
 								"</td>" +
@@ -4946,7 +4886,6 @@ frappe.provide("kentender_strategy.live");
 		bindReview: bindReview,
 		bindDownstream: bindDownstream,
 		bindAudit: bindAudit,
-		bindCorrective: bindCorrective,
 		bindStrategyPerformance: bindStrategyPerformance,
 		afterMount: afterMount,
 	};

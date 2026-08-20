@@ -88,7 +88,6 @@ kentender_strategy.ui_fixtures.measurements = function () {
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right w-32">Actual</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-32">Result</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-32">Workflow</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-40">Corrective action</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right">Action</th>
 </tr>
 </thead>

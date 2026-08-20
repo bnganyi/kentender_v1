@@ -61,6 +61,9 @@ CGK_PLAN_TITLE: Final[str] = "Kisumu County Health Services Operational Plan FY 
 
 PROG_DH: Final[str] = "MOH-PROG-DH"
 SUB_HIS: Final[str] = "MOH-SUB-HIS"
+OBJ_INTEROP: Final[str] = "MOH-OBJ-INTEROP-01"
+IND_INTEROP: Final[str] = "MOH-IND-INTEROP-01"
+TGT_INTEROP_2028: Final[str] = "MOH-TGT-INTEROP-2028"
 OUT_RELIABILITY: Final[str] = "MOH-OUT-RELIABILITY"
 IND_AVAIL: Final[str] = "MOH-IND-AVAIL-01"
 IND_RESTORE: Final[str] = "MOH-IND-RESTORE-01"

@@ -53,7 +53,6 @@ app_include_js = [
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/measurements.js?v={_v('public/js/strategy_ui_fixtures/measurements.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/measurement_submit.js?v={_v('public/js/strategy_ui_fixtures/measurement_submit.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/measurement_verify.js?v={_v('public/js/strategy_ui_fixtures/measurement_verify.js')}",
-	f"/assets/kentender_strategy/js/strategy_ui_fixtures/corrective_actions.js?v={_v('public/js/strategy_ui_fixtures/corrective_actions.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/downstream.js?v={_v('public/js/strategy_ui_fixtures/downstream.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/review_blockers.js?v={_v('public/js/strategy_ui_fixtures/review_blockers.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/review_ready.js?v={_v('public/js/strategy_ui_fixtures/review_ready.js')}",
@@ -78,5 +77,4 @@ page_js = {
 	"strategy-plan-audit": "public/js/strategy_plan_audit_page.js",
 	"strategy-measurement-submit": "public/js/strategy_measurement_submit_page.js",
 	"strategy-measurement-verify": "public/js/strategy_measurement_verify_page.js",
-	"strategy-corrective-actions": "public/js/strategy_corrective_actions_page.js",
 }

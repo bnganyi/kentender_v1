@@ -57,6 +57,8 @@ class TestStrategyPerformance(FrappeTestCase):
 		ensure_strategy_roles()
 		cls.seed = upsert_works_master_strategy_hierarchy()
 		cls.pe = cls.seed["procuring_entity"]
+		cls.plan_id = cls.seed["plan"]
+		cls.target_id = cls.seed["target"]
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -200,15 +202,38 @@ class TestStrategyPerformance(FrappeTestCase):
 		# Seed has at least one Verified On-track outcome contribution.
 		self.assertGreaterEqual(sum(int((o.get("distribution") or {}).get("On track") or 0) for o in outcomes), 1)
 
-	def test_str_ac_026_exceptions_distinct_kinds_with_routes(self):
-		"""STR-AC-026 — exceptions carry distinct kinds and drill routes."""
+	def test_str_ac_026_exceptions_carry_kind_and_route(self):
+		"""STR-AC-026 — exceptions carry a kind and a drill route."""
+		from kentender_strategy.services.strategy_writes import save_measurement_draft
+
+		_ensure_user("str.ac026.officer@example.com", ["Strategy Officer"], self.pe)
+		frappe.set_user("str.ac026.officer@example.com")
+		saved = save_measurement_draft(
+			{
+				"performance_target": self.target_id,
+				"plan_version": self.plan_id,
+				"measurement_period_start": "2029-01-01",
+				"measurement_period_end": "2029-01-31",
+				"measurement_date": "2029-01-31",
+				"actual_numeric": 90.0,
+				"evidence_source": "AC-026 fixture",
+				"evidence_reference": "AC026-FIX",
+			}
+		)
+		mid = saved["id"]
+		self.addCleanup(
+			lambda: frappe.delete_doc(
+				"Performance Measurement", mid, force=True, ignore_permissions=True
+			)
+			if frappe.db.exists("Performance Measurement", mid)
+			else None
+		)
+
 		_ensure_user("str.ac026.viewer@example.com", ["Strategy Viewer"], self.pe)
 		frappe.set_user("str.ac026.viewer@example.com")
 		dto = get_strategy_performance(procuring_entity=self.pe, plan_code=STRATEGY_PLAN_CODE)
 		exceptions = dto.get("exceptions") or []
-		self.assertTrue(exceptions, msg="expected seeded open CA / measurement exceptions")
-		kinds = {e.get("kind") or e.get("type") for e in exceptions}
-		self.assertGreaterEqual(len(kinds), 2, msg=f"expected distinct kinds; got {kinds}")
+		self.assertTrue(exceptions, msg="expected a measurement-workflow exception")
 		for e in exceptions:
 			route = e.get("route") or []
 			self.assertTrue(route, msg=f"exception missing route: {e}")

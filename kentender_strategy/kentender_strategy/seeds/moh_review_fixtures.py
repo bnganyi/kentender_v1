@@ -95,7 +95,6 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 		# Wipe and rebuild so status/hierarchy are deterministic
 		for dt in (
 			"Performance Measurement",
-			"Strategy Corrective Action",
 			"Strategy Value Commitment",
 			"Performance Target",
 			"Performance Indicator",

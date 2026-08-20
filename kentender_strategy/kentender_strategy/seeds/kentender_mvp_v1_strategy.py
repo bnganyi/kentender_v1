@@ -152,11 +152,11 @@ def clear_kentender_mvp_v1_strategy(
 
 	child_doctypes = (
 		"Strategy Audit Event",
-		"Strategy Corrective Action",
 		"Performance Measurement",
 		"Strategy Value Commitment",
 		"Performance Target",
 		"Performance Indicator",
+		"Strategic Objective",
 		"Strategic Outcome",
 		"Strategy Sub Programme",
 		"Strategy Programme",
@@ -433,6 +433,65 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 0.25,
 			"period_start": "2028-07-01",
 			"period_end": "2029-06-30",
+			"benefit_owner": "Administrator",
+			"measurement_verifier": "Administrator",
+			"status": "Active",
+			**OWN_DHP,
+		},
+	)
+
+	# Strategic Objective sits alongside the Outcome above (STR-CHG-001 §6.2): an
+	# Indicator may measure a Strategic Objective directly instead of an Outcome.
+	obj_interop = _upsert(
+		"Strategic Objective",
+		"objective_code",
+		C.OBJ_INTEROP,
+		{
+			"plan_version": plan_name,
+			"programme": prog,
+			"sub_programme": sub_his,
+			"title": "Strengthen interoperable national digital health services",
+			"description": "Strengthen interoperable national digital health services",
+			"responsible_function": C.DIR_DHP_NAME,
+			"order_index": 2,
+			**OWN_DHP,
+		},
+	)
+	ind_interop = _upsert(
+		"Performance Indicator",
+		"indicator_code",
+		C.IND_INTEROP,
+		{
+			"plan_version": plan_name,
+			"strategic_objective": obj_interop,
+			"title": "Percentage of priority facilities using interoperable digital health services",
+			"definition": "Percentage of priority facilities exchanging data via interoperable digital health services.",
+			"measurement_type": "Percentage",
+			"unit": "%",
+			"measurement_frequency": "Quarterly",
+			"data_source": "Approved interoperability-adoption report",
+			"responsible_function": C.DIR_DHP_NAME,
+			"order_index": 1,
+			**OWN_DHP,
+		},
+	)
+	_upsert(
+		"Performance Target",
+		"target_code",
+		C.TGT_INTEROP_2028,
+		{
+			"plan_version": plan_name,
+			"performance_indicator": ind_interop,
+			"title": "At least 80% of priority facilities interoperable by 30 June 2028",
+			"comparison_direction": "At least",
+			"target_numeric": 80.0,
+			"baseline_status": "Known",
+			"baseline_numeric": 42.0,
+			"baseline_as_of": "2026-06-30",
+			"baseline_source": "FY2025/26 interoperability-adoption report",
+			"tolerance_value": 1.0,
+			"period_start": "2026-07-01",
+			"period_end": "2028-06-30",
 			"benefit_owner": "Administrator",
 			"measurement_verifier": "Administrator",
 			"status": "Active",
@@ -899,7 +958,7 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 				"measurement_date": "2027-11-05",
 				"evidence_reference": "INFRA-MON-2027-10",
 				"evidence_source": "Approved infrastructure-monitoring report",
-				"commentary": "Stabilised after corrective action",
+				"commentary": "Stabilised after remediation",
 				"variance": 99.96 - 99.9,
 				"result_status": "On track",
 				"workflow_status": "Verified",
@@ -915,33 +974,4 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 			"Performance Measurement", oct, OWN_DHP, update_modified=False
 		)
 	ids["oct"] = oct
-
-	ca = frappe.db.get_value(
-		"Strategy Corrective Action", {"performance_measurement": sep}, "name"
-	)
-	if not ca:
-		ca_doc = frappe.get_doc(
-			{
-				"doctype": "Strategy Corrective Action",
-				"corrective_action_code": "MOH-CA-AVAIL-2027-09",
-				"performance_measurement": sep,
-				"performance_target": target_name,
-				"plan_version": plan_name,
-				"action": "Resolve storage-controller instability",
-				"owner": C.DIR_DHP_NAME,
-				"due_date": "2027-10-31",
-				"expected_result": "Return availability to On track",
-				"status": "Verified complete",
-				"completion_evidence": "Controller firmware patch and failover test signed off",
-				"verified_by": "Administrator",
-				**OWN_DHP,
-			}
-		)
-		ca_doc.insert(ignore_permissions=True)
-		ca = ca_doc.name
-	else:
-		frappe.db.set_value(
-			"Strategy Corrective Action", ca, OWN_DHP, update_modified=False
-		)
-	ids["ca"] = ca
 	return ids

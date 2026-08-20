@@ -165,24 +165,14 @@ kentender_strategy.ui_fixtures.measurement_verify = function () {
 </label>
 <textarea class="w-full rounded-lg border-outline-variant focus:border-primary focus:ring focus:ring-primary/20 text-sm p-3 bg-surface text-on-surface placeholder-on-surface-variant transition-colors" id="verification-comments" data-kt-str-meas-verify-comments placeholder="Enter your findings or reasons for your decision here..." rows="3"></textarea>
 </div>
-<!-- Follow-up: At risk optional CA -->
-<div class="flex items-start bg-amber-50/50 p-3 rounded border border-amber-100" data-kt-str-meas-ca-box>
-<div class="flex items-center h-5">
-<input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2" id="create-corrective" type="checkbox" data-kt-str-meas-create-ca checked>
-</div>
-<div class="ml-3 text-sm">
-<label class="font-medium text-on-surface cursor-pointer" for="create-corrective">Create corrective action after verification</label>
-<p class="text-on-surface-variant mt-1">Recommended because the submitted result is categorized as 'At risk'.</p>
-</div>
-</div>
 <!-- Off track authorised exception -->
 <div class="hidden flex items-start bg-error-container/40 p-3 rounded border border-error/20" data-kt-str-meas-exception-box>
 <div class="flex items-center h-5">
 <input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2" id="authorised-exception" type="checkbox" data-kt-str-meas-exception>
 </div>
 <div class="ml-3 text-sm flex-1">
-<label class="font-medium text-on-surface cursor-pointer" for="authorised-exception">Record authorised exception (skip corrective action)</label>
-<p class="text-on-surface-variant mt-1">Required for Off track verification without opening a corrective action.</p>
+<label class="font-medium text-on-surface cursor-pointer" for="authorised-exception">Record authorised exception</label>
+<p class="text-on-surface-variant mt-1">Required for Off track verification to record an authorised exception.</p>
 <textarea class="mt-2 w-full rounded-lg border-outline-variant text-sm p-2 bg-surface hidden" data-kt-str-meas-exception-reason rows="2" placeholder="Exception reason (required when exception is selected)"></textarea>
 </div>
 </div>

@@ -1409,10 +1409,6 @@ test.describe("Strategy Alignment UI shell", () => {
 		});
 		await expect(page.getByTestId("kt-str-measurement-verify")).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByRole("button", { name: /Verify Measurement/i })).toBeVisible();
-
-		await page.goto("/desk/strategy-corrective-actions", { waitUntil: "domcontentloaded" });
-		await expect(page.getByTestId("kt-str-corrective-actions")).toBeVisible({ timeout: 30_000 });
-		await expect(page.getByRole("button", { name: /Create corrective action/i })).toBeVisible();
 	});
 
 	test("measurements register is live for Active plan", async ({ page }) => {

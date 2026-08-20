@@ -15,11 +15,11 @@ REF_TYPE_META: dict[str, tuple[str, str]] = {
 	"SP": ("Strategic Plan", "plan_code"),
 	"PROG": ("Strategy Programme", "programme_code"),
 	"SUB": ("Strategy Sub Programme", "sub_programme_code"),
+	"OBJ": ("Strategic Objective", "objective_code"),
 	"OUT": ("Strategic Outcome", "outcome_code"),
 	"IND": ("Performance Indicator", "indicator_code"),
 	"TGT": ("Performance Target", "target_code"),
 	"MSR": ("Performance Measurement", "measurement_code"),
-	"CA": ("Strategy Corrective Action", "corrective_action_code"),
 	"PVC": ("Strategy Value Commitment", "commitment_code"),
 }
 
@@ -27,7 +27,7 @@ DOCTYPE_REF: dict[str, tuple[str, str]] = {
 	dt: (token, field) for token, (dt, field) in REF_TYPE_META.items()
 }
 
-REF_RE = re.compile(r"^[A-Z0-9]+-(SP|PROG|SUB|OUT|IND|TGT|MSR|CA|PVC)-\d{4}$")
+REF_RE = re.compile(r"^[A-Z0-9]+-(SP|PROG|SUB|OBJ|OUT|IND|TGT|MSR|PVC)-\d{4}$")
 
 
 def pe_slug(procuring_entity: str | None) -> str:
@@ -151,8 +151,6 @@ def resolve_pe_for_doc(doc) -> str | None:
 		if pv:
 			doc.plan_version = pv
 			return frappe.db.get_value("Strategic Plan", pv, "procuring_entity")
-	if doc.doctype == "Strategy Corrective Action" and doc.get("plan_version"):
-		return frappe.db.get_value("Strategic Plan", doc.plan_version, "procuring_entity")
 	return None
 
 
