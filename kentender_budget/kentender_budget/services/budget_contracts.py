@@ -27,7 +27,6 @@ from kentender_budget.services.budget_permissions import (
 )
 from kentender_budget.services.budget_reference import allocate_budget_reference
 from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_CREATE,
 	CAP_BUDGET_EDIT,
 	CAP_BUDGET_LIST,
 	CAP_BUDGET_REVIEW,
@@ -93,14 +92,10 @@ def resolve_scoped_entity(
 	roles: set[str] | None = None,
 ) -> str:
 	"""BUD-FR-001/002 — hard entity scope; no unscoped / cross-entity list for officers."""
-	explicit_roles = roles is not None
 	roles = roles if roles is not None else user_roles()
 	user_pe = user_entity if user_entity is not None else entity_for_user()
 	req = (requested or "").strip() or None
 	is_admin = "System Manager" in roles or "Administrator" in roles
-	# When roles are injected (unit tests), do not also trust session Administrator.
-	if not explicit_roles and frappe.session.user == "Administrator":
-		is_admin = True
 	if is_admin:
 		return req or user_pe or ""
 	if not user_pe:
@@ -108,6 +103,63 @@ def resolve_scoped_entity(
 	if req and req != user_pe:
 		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError)
 	return user_pe
+
+
+def resolve_budget_context(
+	procuring_entity: str | None = None,
+	fiscal_period: str | None = None,
+	owner_org_unit: str | None = None,
+) -> dict[str, Any]:
+	"""BUD-CHG-001 §12 `resolve_budget_context` — the Active baseline for a PE/FY,
+	or a typed zero/multiple/ineligible error (BUD-CHG-001 §8: never a first-PE,
+	first-record or Administrator fallback).
+	"""
+	require_any_role(
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+	)
+	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
+	if not pe:
+		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError, title=_("Ineligible"))
+
+	fy = (fiscal_period or "").strip()
+	if not fy:
+		frappe.throw(_("Fiscal period is required"), frappe.ValidationError, title=_("Ineligible"))
+
+	if owner_org_unit:
+		from kentender_budget.services.budget_permissions import assert_org_unit_in_scope
+
+		assert_org_unit_in_scope(pe, owner_org_unit, require_write=False)
+
+	names = frappe.get_all(
+		"Budget",
+		filters={"procuring_entity": pe, "fiscal_period": fy, "status": "Active"},
+		pluck="name",
+	)
+	if not names:
+		frappe.throw(
+			_("No Active Budget baseline for this procuring entity and fiscal period"),
+			frappe.DoesNotExistError,
+			title=_("No Active baseline"),
+		)
+	if len(names) > 1:
+		frappe.throw(
+			_("Multiple Active Budget baselines found for this procuring entity and fiscal period"),
+			frappe.ValidationError,
+			title=_("Multiple Active baselines"),
+		)
+
+	doc = frappe.get_doc("Budget", names[0])
+	pe_code = frappe.db.get_value("Procuring Entity", pe, "entity_code") or pe
+	return {
+		"id": doc.name,
+		"code": doc.generated_reference,
+		"name": doc.title,
+		"status": doc.status,
+		"procuring_entity": {"id": pe, "code": pe_code, "name": _entity_label(pe)},
+		"fiscal_period": doc.fiscal_period,
+		"currency": doc.currency or "KES",
+		"owner_org_unit": owner_org_unit or "",
+	}
 
 
 def _line_totals(budget_name: str) -> dict[str, float]:
@@ -374,7 +426,13 @@ def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
 		"procuring_entity_name": _entity_label(pe),
 		"counts": counts,
 		"capabilities": {
-			"register_budget": bool(pe) and can_budget(CAP_BUDGET_CREATE, frappe._dict(name=pe, procuring_entity=pe, fiscal_period="", status="")),
+			# Registering a budget names its own PE inside the form (BUD-FR-001)
+			# — it never requires a pre-resolved portfolio-scope PE, exactly like
+			# `get_register_form_context()` (the page this button opens) already
+			# gates on `can_register_budget()` alone. Requiring `pe` here made the
+			# button invisible for a genuinely PE-unscoped-but-role-qualified user
+			# even though navigating straight to the register page would work.
+			"register_budget": can_register_budget(),
 			"review_budget": any((row.status == "Submitted" and _row_dto(row).get("action") == "review") for row in rows),
 			"view_funding_performance": bool(rows),
 		},
@@ -704,8 +762,6 @@ def get_budget_overview(budget: str) -> dict[str, Any]:
 	attn = _attention(doc)
 	lines_total = int(line["lines_total"])
 	lines_linked = int(line["lines_strategy_linked"])
-	pvc_treated = int(getattr(doc, "strategy_pvc_treated", 0) or 0)
-	pvc_applicable = int(getattr(doc, "strategy_pvc_applicable", 0) or 0)
 
 	return {
 		"id": doc.name,
@@ -743,9 +799,6 @@ def get_budget_overview(budget: str) -> dict[str, Any]:
 			"lines_linked": lines_linked,
 			"lines_total": lines_total,
 			"lines_summary": f"{lines_linked} of {lines_total} lines linked to an Active primary target",
-			"pvc_treated": pvc_treated,
-			"pvc_applicable": pvc_applicable,
-			"pvc_summary": f"{pvc_treated} applicable Strategy Value Commitments treated",
 		},
 		"attention": {
 			"kind": attn["attention_kind"],

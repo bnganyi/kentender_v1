@@ -55,7 +55,7 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertIn("No commitments", l2["attention"])
 		self.assertEqual(l2["action"], "view")
 
-	def test_get_line_editor_dto_and_pvc(self):
+	def test_get_line_editor_dto(self):
 		line = get_budget_line("MOH-BL-DHI-2027")
 		self.assertEqual(line["code"], "MOH-BL-DHI-2027")
 		self.assertEqual(line["external_financial_line_reference"], "HLTH-INF-2027-004")
@@ -65,14 +65,6 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertEqual(len(line["supporting_targets"]), 1)
 		self.assertEqual(line["supporting_targets"][0]["code"], "MOH-TGT-RESTORE-2028")
 		self.assertTrue(line["supporting_targets"][0]["reason"])
-		self.assertEqual(len(line["value_treatments"]), 4)
-		codes = {t["code"] for t in line["value_treatments"]}
-		self.assertEqual(codes, {"MOH-PVC-EFT-01", "MOH-PVC-ECO-01", "MOH-PVC-RES-01", "MOH-PVC-SUS-02"})
-		eco = next(t for t in line["value_treatments"] if t["code"] == "MOH-PVC-ECO-01")
-		self.assertEqual(eco["treatment"], "Dedicated allocation")
-		self.assertEqual(flt(eco["dedicated_amount"]), 40_000_000)
-		self.assertEqual(flt(line["dedicated_total"]), 40_000_000)
-		self.assertEqual(flt(line["not_dedicated"]), 440_000_000)
 
 	def test_active_save_denied(self):
 		with self.assertRaises(frappe.PermissionError):
@@ -87,74 +79,8 @@ class TestBudgetLines(FrappeTestCase):
 					"funding_source_name": "Government of Kenya Development Budget",
 					"approved_amount": 480_000_000,
 					"primary_target": {"code": "MOH-TGT-AVAIL-2028", "name": "Target"},
-					"value_treatments": [],
 				}
 			)
-
-	def test_draft_save_dedicated_over_approved_fails(self):
-		pe = self.seed["procuring_entity"]
-		# Isolate a Draft budget for edit tests.
-		for name in frappe.get_all(
-			"Budget",
-			filters={
-				"procuring_entity": pe,
-				"fiscal_period": "2046/47",
-				"status": ["in", ["Draft", "Submitted", "Returned", "Active"]],
-			},
-			pluck="name",
-		):
-			for ln in frappe.get_all("Budget Line", filters={"budget": name}, pluck="name"):
-				frappe.delete_doc("Budget Line", ln, force=True, ignore_permissions=True)
-			frappe.delete_doc("Budget", name, force=True, ignore_permissions=True)
-
-		draft = frappe.get_doc(
-			{
-				"doctype": "Budget",
-				"generated_reference": "MOH-BUD-TEST-LINES",
-				"title": "Draft lines edit test",
-				"procuring_entity": pe,
-				"fiscal_period": "2046/47",
-				"start_date": "2046-07-01",
-				"end_date": "2047-06-30",
-				"currency": "KES",
-				"budget_owner": "Budget Officer",
-				"registration_source": "Direct capture",
-				"authoritative_reference": "MOH-TEST-LINES",
-				"approval_date": "2046-06-01",
-				"external_approved_total": 100_000_000,
-				"approval_evidence": "/files/test.pdf",
-				"status": "Draft",
-			}
-		)
-		draft.insert(ignore_permissions=True)
-
-		result = save_budget_line(
-			{
-				"budget": draft.generated_reference,
-				"title": "Over dedicated line",
-				"organisational_owner": "Head, ICT",
-				"classification": "Capital expenditure",
-				"funding_source_type": "Exchequer",
-				"funding_source_name": "Exchequer",
-				"approved_amount": 50_000_000,
-				"primary_target": {
-					"code": "MOH-TGT-AVAIL-2028",
-					"name": "Availability target",
-				},
-				"value_treatments": [
-					{
-						"code": "MOH-PVC-ECO-01",
-						"name": "Whole-life cost",
-						"requirement_level": "Required",
-						"treatment": "Dedicated allocation",
-						"dedicated_amount": 60_000_000,
-						"rationale": "Too much",
-					}
-				],
-			}
-		)
-		self.assertFalse(result["ok"])
-		self.assertIn("dedicated_total", result["errors"])
 
 	def _ensure_draft_budget(self, pe: str, code: str = "MOH-BUD-TEST-LINES") -> str:
 		name = frappe.db.get_value("Budget", {"generated_reference": code}, "name")
@@ -202,24 +128,6 @@ class TestBudgetLines(FrappeTestCase):
 					"name": "Availability target",
 				},
 				"supporting_targets": [],
-				"value_treatments": [
-					{
-						"code": "MOH-PVC-EFT-01",
-						"name": "Efficiency",
-						"requirement_level": "Required",
-						"treatment": "Embedded in line",
-						"dedicated_amount": 0,
-						"rationale": "Included",
-					},
-					{
-						"code": "MOH-PVC-ECO-01",
-						"name": "Whole-life cost",
-						"requirement_level": "Required",
-						"treatment": "Dedicated allocation",
-						"dedicated_amount": 10_000_000,
-						"rationale": "Dedicated slice",
-					},
-				],
 			}
 		)
 		self.assertTrue(result.get("ok"), result)
@@ -229,7 +137,6 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertEqual(line["title"], "Editable draft line")
 		self.assertEqual(len(line["supporting_targets"]), 0)
 		self.assertEqual(line.get("primary_target_code") or (line.get("primary_target") or {}).get("code"), "MOH-TGT-AVAIL-2028")
-		self.assertEqual(flt(line["dedicated_total"]), 10_000_000)
 		self.assertTrue(line["capabilities"]["can_save"])
 
 	def test_pe_scope_denial(self):

@@ -107,18 +107,6 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
-			if not line.get("value_treatments"):
-				line.append(
-					"value_treatments",
-					{
-						"pvc_code": "MOH-PVC-EFT-01",
-						"pvc_name": "Improve infrastructure efficiency",
-						"requirement_level": "Required",
-						"treatment": "Embedded in line",
-						"dedicated_amount": 0,
-						"rationale": "Included in line delivery.",
-					},
-				)
 			line.save(ignore_permissions=True)
 		return doc
 

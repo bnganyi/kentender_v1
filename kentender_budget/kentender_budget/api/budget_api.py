@@ -99,20 +99,11 @@ def list_funding_activity(budget: str | None = None):
 
 
 @frappe.whitelist()
-def list_downstream_usage(budget: str | None = None):
+def get_funding_lineage(budget: str | None = None):
 	ensure_budget_roles()
 	from kentender_budget.services import budget_downstream_contracts as downstream
 
-	return downstream.list_downstream_usage(budget or "")
-
-
-@frappe.whitelist()
-def get_budget_usage(budget: str | None = None):
-	"""Pack §8 alias for list_downstream_usage."""
-	ensure_budget_roles()
-	from kentender_budget.services import budget_downstream_contracts as downstream
-
-	return downstream.get_budget_usage(budget or "")
+	return downstream.get_funding_lineage(budget or "")
 
 
 @frappe.whitelist()
@@ -329,6 +320,7 @@ def check_funding(
 @frappe.whitelist()
 def reserve_funding(
 	budget_line: str | None = None,
+	plan_item_code: str | None = None,
 	demand_name: str | None = None,
 	requested_amount: float | None = None,
 	idempotency_key: str | None = None,
@@ -340,6 +332,7 @@ def reserve_funding(
 
 	return cr.reserve_funding(
 		budget_line=budget_line,
+		plan_item_code=plan_item_code,
 		demand_name=demand_name,
 		requested_amount=requested_amount,
 		idempotency_key=idempotency_key,
@@ -349,14 +342,136 @@ def reserve_funding(
 
 
 @frappe.whitelist()
-def list_active_lines_for_check(
+def list_eligible_budget_lines(
 	procuring_entity: str | None = None,
 	fiscal_period: str | None = None,
+	min_amount: float | None = None,
+	classification: str | None = None,
 ):
 	ensure_budget_roles()
 	from kentender_budget.services import budget_check_reserve_contracts as cr
 
-	return cr.list_active_lines_for_check(
+	return cr.list_eligible_budget_lines(
 		procuring_entity=procuring_entity,
 		fiscal_period=fiscal_period,
+		min_amount=min_amount,
+		classification=classification,
+	)
+
+
+@frappe.whitelist()
+def release_reservation(
+	reservation: str | None = None,
+	reason: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.release_reservation(
+		reservation=reservation,
+		reason=reason,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def resolve_budget_context(
+	procuring_entity: str | None = None,
+	fiscal_period: str | None = None,
+	owner_org_unit: str | None = None,
+):
+	ensure_budget_roles()
+	return contracts.resolve_budget_context(
+		procuring_entity=procuring_entity,
+		fiscal_period=fiscal_period,
+		owner_org_unit=owner_org_unit,
+	)
+
+
+@frappe.whitelist()
+def revalidate_reservation(
+	reservation: str | None = None,
+	material_event: str | None = None,
+	new_estimated_amount: float | None = None,
+	evidence: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.revalidate_reservation(
+		reservation=reservation,
+		material_event=material_event,
+		new_estimated_amount=new_estimated_amount,
+		evidence=evidence,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def convert_reservation(
+	reservation: str | None = None,
+	contract_code: str | None = None,
+	contract_title: str | None = None,
+	commitment_amount: float | None = None,
+	idempotency_key: str | None = None,
+	actor: str | None = None,
+	generated_reference: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.convert_reservation(
+		reservation=reservation,
+		contract_code=contract_code,
+		contract_title=contract_title,
+		commitment_amount=commitment_amount,
+		idempotency_key=idempotency_key,
+		actor=actor,
+		generated_reference=generated_reference,
+	)
+
+
+@frappe.whitelist()
+def adjust_commitment(
+	commitment: str | None = None,
+	new_amount: float | None = None,
+	reason: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.adjust_commitment(
+		commitment=commitment,
+		new_amount=new_amount,
+		reason=reason,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def ingest_expenditure_snapshot(
+	budget_line: str | None = None,
+	commitment: str | None = None,
+	amount: float | None = None,
+	source_system: str | None = None,
+	source_reference: str | None = None,
+	source_as_at: str | None = None,
+	idempotency_key: str | None = None,
+	generated_reference: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.ingest_expenditure_snapshot(
+		budget_line=budget_line,
+		commitment=commitment,
+		amount=amount,
+		source_system=source_system,
+		source_reference=source_reference,
+		source_as_at=source_as_at,
+		idempotency_key=idempotency_key,
+		generated_reference=generated_reference,
 	)

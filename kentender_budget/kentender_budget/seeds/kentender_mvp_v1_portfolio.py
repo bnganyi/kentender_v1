@@ -39,106 +39,6 @@ def _wall_clock_stale_as_at():
 	return add_days(today(), -(int(ACTUAL_STALE_DAYS) + 1))
 
 
-# Contract §6 — treatments keyed by Strategy Value Commitment codes.
-_PVC_TREATMENTS_DHI = (
-	{
-		"pvc_code": "MOH-PVC-EFT-01",
-		"pvc_name": "Improve availability of critical health services",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Infrastructure supports reliable critical health services",
-	},
-	{
-		"pvc_code": "MOH-PVC-ECO-01",
-		"pvc_name": "Reduce whole-life infrastructure cost",
-		"requirement_level": "Required",
-		"treatment": "Dedicated allocation",
-		"dedicated_amount": 40_000_000,
-		"rationale": (
-			"KES 40,000,000 for whole-life costing, energy efficiency and lifecycle optimisation"
-		),
-	},
-	{
-		"pvc_code": "MOH-PVC-RES-01",
-		"pvc_name": "Improve continuity of critical services",
-		"requirement_level": "Recommended",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Redundancy, continuity and support requirements are included",
-	},
-	{
-		"pvc_code": "MOH-PVC-SUS-02",
-		"pvc_name": "Ensure compliant handling of replaced ICT equipment",
-		"requirement_level": "Required",
-		"treatment": "No direct allocation required",
-		"dedicated_amount": 0,
-		"rationale": "Disposal cost is included in funded asset-replacement activities",
-	},
-)
-
-_PVC_TREATMENTS_HWD = (
-	{
-		"pvc_code": "MOH-PVC-LOC-01",
-		"pvc_name": "Develop internal and local technical capability",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Training and certification build internal technical capability",
-	},
-	{
-		"pvc_code": "MOH-PVC-EFT-01",
-		"pvc_name": "Improve availability of critical health services",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Capability supports continuity of digital clinical services",
-	},
-	{
-		"pvc_code": "MOH-PVC-ECO-01",
-		"pvc_name": "Reduce whole-life infrastructure cost",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Training and certification costs are included in the line amount",
-	},
-	{
-		"pvc_code": "MOH-PVC-RES-01",
-		"pvc_name": "Improve continuity of critical services",
-		"requirement_level": "Recommended",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Continuity capability is included in the training programme",
-	},
-)
-
-_PVC_TREATMENTS_CGK = (
-	{
-		"pvc_code": "CGK-PVC-EFT-01",
-		"pvc_name": "Improve availability of critical health services",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Equipment supports reliable vaccine services",
-	},
-	{
-		"pvc_code": "CGK-PVC-ECO-01",
-		"pvc_name": "Reduce whole-life infrastructure cost",
-		"requirement_level": "Required",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Acquisition, maintenance and operating cost are considered together",
-	},
-	{
-		"pvc_code": "CGK-PVC-SUS-01",
-		"pvc_name": "Reduce infrastructure energy consumption",
-		"requirement_level": "Recommended",
-		"treatment": "Embedded in line",
-		"dedicated_amount": 0,
-		"rationale": "Solar power reduces reliance on unstable grid supply and operating energy",
-	},
-)
-
 BUDGETS = (
 	{
 		"generated_reference": C.BUD_ACTIVE,
@@ -154,8 +54,6 @@ BUDGETS = (
 		"external_approved_total": 560_000_000,
 		"attention_note": "",
 		"readiness_issue_count": 0,
-		"strategy_pvc_treated": 4,
-		"strategy_pvc_applicable": 4,
 		"submitted_by": C.USER_MEDICAL,
 		"reviewed_by": C.USER_BUD_REVIEWER,
 		"activated_by": C.USER_BUD_AUTHORITY,
@@ -185,7 +83,6 @@ BUDGETS = (
 						"reason": "Infrastructure investment supports service restoration and continuity.",
 					},
 				),
-				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
 			},
 			{
@@ -203,7 +100,6 @@ BUDGETS = (
 				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": C.TGT_SKILLS_2029,
 				"primary_target_name": "Train and certify 150 digital-health technical staff by 30 June 2029",
-				"value_treatments": _PVC_TREATMENTS_HWD,
 				"order_index": 2,
 			},
 		),
@@ -278,7 +174,6 @@ BUDGETS = (
 						"reason": "Successor restoration target for FY 2028/29 infrastructure line.",
 					},
 				),
-				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
 			},
 			{
@@ -294,7 +189,6 @@ BUDGETS = (
 				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": C.TGT_SKILLS_2030,
 				"primary_target_name": "Train and certify 220 digital-health technical staff by 30 June 2030",
-				"value_treatments": _PVC_TREATMENTS_HWD,
 				"order_index": 2,
 			},
 		),
@@ -327,7 +221,6 @@ BUDGETS = (
 				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": C.TGT_AVAIL_2028,
 				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
-				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
 			},
 		),
@@ -346,8 +239,6 @@ BUDGETS = (
 		"external_approved_total": 24_000_000,
 		"attention_note": "",
 		"readiness_issue_count": 0,
-		"strategy_pvc_treated": 3,
-		"strategy_pvc_applicable": 3,
 		"pe_code": C.PE_CGKIS,
 		"pe_name": C.PE_CGKIS_NAME,
 		"submitted_by": C.USER_KISUMU_OFFICER,
@@ -369,7 +260,6 @@ BUDGETS = (
 				"primary_target_name": (
 					"At least 95% of supported facilities meet the uptime standard by 30 June 2028"
 				),
-				"value_treatments": _PVC_TREATMENTS_CGK,
 				"order_index": 1,
 			},
 		),
@@ -411,7 +301,6 @@ EDGE_BUDGETS = (
 				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": C.TGT_AVAIL_2029,
 				"primary_target_name": "Maintain at least 99.95% annual availability by 30 June 2029",
-				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
 			},
 			{
@@ -427,7 +316,6 @@ EDGE_BUDGETS = (
 				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": C.TGT_SKILLS_2029,
 				"primary_target_name": "Train and certify 150 digital-health technical staff by 30 June 2029",
-				"value_treatments": _PVC_TREATMENTS_HWD,
 				"order_index": 2,
 			},
 		),
@@ -515,12 +403,6 @@ def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
 	}
 
 
-def _resolve_pvc_id(code: str) -> str:
-	from kentender_strategy.services.strategy_consumer import resolve_commitment_id
-
-	return resolve_commitment_id(code) or ""
-
-
 def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 	ns = spec.get("fixture_namespace") or FIXTURE_NS
 	existing = frappe.db.get_value(
@@ -544,8 +426,6 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		"status": spec["status"],
 		"attention_note": spec.get("attention_note") or "",
 		"readiness_issue_count": int(spec.get("readiness_issue_count") or 0),
-		"strategy_pvc_treated": int(spec.get("strategy_pvc_treated") or 0),
-		"strategy_pvc_applicable": int(spec.get("strategy_pvc_applicable") or 0),
 		"fixture_namespace": ns,
 		"return_reason": "",
 	}
@@ -623,21 +503,6 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 				}
 			)
 
-		treatments = []
-		for tr in line.get("value_treatments") or ():
-			treatments.append(
-				{
-					"pvc_id": _resolve_pvc_id(tr["pvc_code"]),
-					"pvc_code": tr["pvc_code"],
-					"pvc_name": tr["pvc_name"],
-					"requirement_level": tr.get("requirement_level") or "",
-					"treatment": tr["treatment"],
-					"dedicated_amount": tr.get("dedicated_amount") or 0,
-					"rationale": tr.get("rationale") or "",
-					"reviewer_accepted": int(tr.get("reviewer_accepted") or 0),
-				}
-			)
-
 		line_doc = frappe.get_doc(
 			{
 				"doctype": "Budget Line",
@@ -664,7 +529,6 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 				"primary_snapshot_label": (primary or {}).get("snapshot_label") or "",
 				"primary_strategy_linked": 1 if primary else 0,
 				"supporting_targets": supporting,
-				"value_treatments": treatments,
 				"currency": "KES",
 				"is_active": 1,
 				"order_index": line.get("order_index") or 0,

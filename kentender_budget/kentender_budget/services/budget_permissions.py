@@ -38,14 +38,14 @@ def ensure_budget_roles() -> None:
 
 def user_roles(user: str | None = None) -> set[str]:
 	user = user or frappe.session.user
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+	if "System Manager" in frappe.get_roles(user):
 		return set(ALL_BUDGET_ROLES) | {"System Manager"}
 	return set(frappe.get_roles(user))
 
 
 def require_any_role(*roles: str) -> None:
 	have = user_roles()
-	if "System Manager" in have or frappe.session.user == "Administrator":
+	if "System Manager" in have:
 		return
 	if not have.intersection(roles):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -53,7 +53,7 @@ def require_any_role(*roles: str) -> None:
 
 def visible_statuses_for_roles(roles: set[str]) -> list[str] | None:
 	"""Return status allow-list, or None when all statuses are visible."""
-	if "System Manager" in roles or "Administrator" in roles:
+	if "System Manager" in roles:
 		return None
 	elevated = {ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR}
 	if roles.intersection(elevated):
@@ -69,7 +69,7 @@ def visible_statuses_for_user(user: str | None = None) -> list[str] | None:
 
 def can_register_budget_for_roles(roles: set[str]) -> bool:
 	"""BUD-FR create Draft — Budget Officer (and System Manager), not Authority alone."""
-	if "System Manager" in roles or "Administrator" in roles:
+	if "System Manager" in roles:
 		return True
 	return ROLE_OFFICER in roles
 
@@ -82,10 +82,16 @@ def can_review_budget() -> bool:
 	return bool(user_roles().intersection({ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager"}))
 
 
-def can_export_funding_performance(user: str | None = None) -> bool:
-	"""Export is an assignment-scoped capability, never a presentation-role grant."""
+def can_export_funding_performance(user: str | None = None, pe: str | None = None) -> bool:
+	"""Export is an assignment-scoped capability, never a presentation-role grant.
+
+	`pe` should be the procuring entity already resolved for the current
+	request (e.g. via `resolve_scoped_entity`) — an explicitly-requested PE
+	must be honoured here too, not silently re-derived from the actor's own
+	implicit scope (which is blank for an unrestricted Administrator).
+	"""
 	actor = user or frappe.session.user
-	pe = entity_for_user(actor) or ""
+	pe = pe or entity_for_user(actor) or ""
 	if not pe:
 		return False
 	return evaluate_capability(
@@ -100,15 +106,21 @@ def can_export_funding_performance(user: str | None = None) -> bool:
 
 
 def entity_for_user(user: str | None = None) -> str | None:
-	"""Best-effort procuring entity from User Scope Assignment / User Permission."""
+	"""Best-effort procuring entity from User Scope Assignment / User Permission.
+
+	Returns None when no single procuring entity can be determined — including
+	for an unrestricted (Administrator / System Manager) user, who is not
+	implicitly scoped to any one entity. Callers decide whether a blank scope
+	is acceptable (e.g. an admin-level cross-entity read) or must fail closed.
+	"""
 	user = user or frappe.session.user
-	if user in ("Administrator", "Guest"):
-		return frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name")
+	if user == "Guest":
+		return None
 	from kentender_core.services.org_scope_access import permitted_procuring_entities
 
 	pes = permitted_procuring_entities(user)
 	if pes is None:
-		return frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name")
+		return None
 	if len(pes) == 1:
 		return next(iter(pes))
 	if pes:

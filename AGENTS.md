@@ -212,7 +212,7 @@ Do not edit the bench-local `apps/frappe` copy as an untracked shortcut.
 ## Current temporary and retired areas
 
 - The IT Tender Configuration Wizard v1/v2 was retired in July 2026. Historical code is under `archive/it-std-wizard-retired-2026-07/`. Do not reactivate or extend it. The STD Engine remains active.
-- The August 2026 MVP-1 Budget teardown removed legacy Budget DocTypes and `kentender_budget.seed.*` implementations. Budget seed entry points intentionally return a skipped result with reason `mvp1-budget-teardown` until the rebuild under `docs/mvp-1/02_budget/` is implemented.
+- The August 2026 MVP-1 Budget teardown removed legacy Budget DocTypes and `kentender_budget.seed.*` implementations. The rebuild is complete against `docs/mvp-1-r1/03_budget/KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1.0.md` (approved 2026-08-20) — `kentender_budget.seeds.kentender_mvp_v1_portfolio.upsert_kentender_mvp_v1_portfolio` is the active, real seed entry point (called via `kentender_core/seeds/kentender_mvp_v1/budget.py::upsert_budget()`). It no longer returns a skipped `mvp1-budget-teardown` result. `docs/mvp-1/02_budget/` is superseded — do not treat it as the live authority for new Budget work.
 - `kentender_budget.seeds.works_master_budget_seed.upsert_works_master_budget` remains only as a compatibility skip stub. Do not treat it as an active seeding implementation.
 
 ## Completion report

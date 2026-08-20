@@ -287,16 +287,6 @@
 	margin-top: 0.125rem !important;
 }
 
-.kt-cl-shell .kt-bud-root .kt-bud-perf-treatment {
-	display: inline-flex !important;
-	align-items: center !important;
-	padding: 0.125rem 0.5rem !important;
-	border-radius: 9999px !important;
-	font-size: 0.75rem !important;
-	font-weight: 500 !important;
-	background: #7bbeff !important;
-	color: #004c7c !important;
-}
 
 .kt-cl-shell .kt-bud-root .kt-bud-perf-action {
 	border: 0 !important;

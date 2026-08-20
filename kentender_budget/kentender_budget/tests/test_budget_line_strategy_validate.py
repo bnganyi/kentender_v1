@@ -62,7 +62,6 @@ class TestBudgetLineStrategyValidate(FrappeTestCase):
 				"id": self.strategy["target"],
 				"code": target_snapshot_fields(self.strategy["target"])["target_code"],
 			},
-			"value_treatments": [],
 		}
 		payload.update(overrides)
 		return payload
@@ -134,3 +133,51 @@ class TestBudgetLineStrategyValidate(FrappeTestCase):
 		)
 		self.assertTrue(result.get("ok"), result)
 		self.assertEqual(result["line"]["title"], "Historical keep updated")
+
+	def test_zero_strategy_references_saves_cleanly(self):
+		"""BUD-CHG-001 §5/§9 — zero-or-more approved Strategy references; no mandatory primary."""
+		budget_code = self._ensure_draft_budget("MOH-BUD-STR-VAL-ZERO")
+		result = save_budget_line(
+			self._base_payload(
+				budget_code,
+				title="No strategy reference yet",
+				primary_target={},
+				supporting_targets=[],
+			)
+		)
+		self.assertTrue(result.get("ok"), result)
+		line = result["line"]
+		self.assertEqual(line["title"], "No strategy reference yet")
+		self.assertFalse((line.get("primary_target_code") or "").strip())
+		doc = frappe.get_doc("Budget Line", {"generated_reference": line["code"]})
+		self.assertFalse((doc.primary_target_id or "").strip())
+		self.assertFalse((doc.primary_target_code or "").strip())
+		self.assertEqual(int(doc.primary_strategy_linked or 0), 0)
+		self.assertEqual(len(doc.get("supporting_targets") or []), 0)
+
+	def test_zero_strategy_reference_line_can_later_add_primary(self):
+		"""A Draft line with no Strategy reference can still be edited to add one later."""
+		budget_code = self._ensure_draft_budget("MOH-BUD-STR-VAL-ZERO2")
+		created = save_budget_line(
+			self._base_payload(budget_code, title="Starts unlinked", primary_target={})
+		)
+		self.assertTrue(created.get("ok"), created)
+		self.assertFalse((created["line"].get("primary_target_code") or "").strip())
+		doc = frappe.get_doc("Budget Line", {"generated_reference": created["line"]["code"]})
+		self.assertEqual(int(doc.primary_strategy_linked or 0), 0)
+
+		result = save_budget_line(
+			self._base_payload(
+				budget_code,
+				line=created["line"]["code"],
+				title="Now linked",
+				primary_target={
+					"id": self.strategy["target"],
+					"code": target_snapshot_fields(self.strategy["target"])["target_code"],
+				},
+			)
+		)
+		self.assertTrue(result.get("ok"), result)
+		self.assertTrue((result["line"].get("primary_target_code") or "").strip())
+		doc.reload()
+		self.assertEqual(int(doc.primary_strategy_linked or 0), 1)

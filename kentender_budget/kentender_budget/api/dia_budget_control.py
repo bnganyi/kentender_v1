@@ -176,11 +176,19 @@ def get_available_budget(budget_line_id: str | None = None):
 		return _fail(str(exc), {"amount_available": 0})
 
 
+_PLAN_ITEM_SOURCE_DOCTYPES = ("Procurement Plan Item", "Plan Item")
+
+
 @frappe.whitelist()
 def create_reservation(*args, **kwargs):
 	"""Accept legacy positional/keyword shapes; delegate to reserve_funding.
 
 	Legacy: create_reservation(budget_line, source_doctype, source_docname, amount, actor=..., source_business_id=...)
+
+	BUD-FR-009/010 — a reservation requires a Plan Item reference. When
+	`source_doctype` names a Plan Item, `source_docname` is taken as the Plan
+	Item code directly; otherwise callers must pass `plan_item_code` explicitly
+	(a bare Demand-shaped source, on its own, is no longer sufficient).
 	"""
 	from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
 
@@ -191,6 +199,7 @@ def create_reservation(*args, **kwargs):
 	actor = kwargs.get("actor")
 	source_business_id = kwargs.get("source_business_id")
 	idempotency_key = kwargs.get("idempotency_key")
+	plan_item_code = kwargs.get("plan_item_code")
 
 	if args:
 		if len(args) >= 1 and not budget_line:
@@ -202,7 +211,10 @@ def create_reservation(*args, **kwargs):
 		if len(args) >= 4 and amount is None:
 			amount = args[3]
 
-	demand_name = source_docname or source_business_id
+	if not plan_item_code and source_doctype in _PLAN_ITEM_SOURCE_DOCTYPES:
+		plan_item_code = source_docname
+
+	demand_name = None if source_doctype in _PLAN_ITEM_SOURCE_DOCTYPES else (source_docname or source_business_id)
 	if source_business_id and not idempotency_key:
 		idempotency_key = f"Demand:{source_business_id}:{budget_line}:{flt(amount):.2f}"
 	elif source_docname and not idempotency_key:
@@ -211,7 +223,8 @@ def create_reservation(*args, **kwargs):
 	try:
 		result = reserve_funding(
 			budget_line=budget_line,
-			demand_name=demand_name or source_business_id,
+			plan_item_code=plan_item_code,
+			demand_name=demand_name,
 			requested_amount=amount,
 			idempotency_key=idempotency_key,
 			actor=actor,
@@ -237,34 +250,20 @@ def release_reservation(
 	reservation_id: str | None = None, reason: str | None = None, actor: str | None = None
 ):
 	"""MVP-1: mark reservation Released and restore line reserved balance."""
-	_ = reason, actor
+	from kentender_budget.services.budget_check_reserve_contracts import (
+		release_reservation as _release_reservation,
+	)
+
 	key = (reservation_id or "").strip()
 	if not key:
 		return _fail(_("Reservation is required"))
-	name = key
-	if not frappe.db.exists("Funding Reservation", name):
-		name = frappe.db.get_value(
-			"Funding Reservation", {"generated_reference": key}, "name"
-		)
-	if not name:
-		return _fail(_("Reservation not found"))
-	doc = frappe.get_doc("Funding Reservation", name)
-	if doc.status in ("Released", "Cancelled"):
-		return _ok({"status": doc.status, "reservation_id": doc.generated_reference})
-	remaining = flt(doc.remaining_reserved)
-	doc.status = "Released"
-	doc.remaining_reserved = 0
-	doc.save(ignore_permissions=True)
-	if remaining and doc.budget_line:
-		cur = flt(frappe.db.get_value("Budget Line", doc.budget_line, "amount_reserved"))
-		frappe.db.set_value(
-			"Budget Line",
-			doc.budget_line,
-			"amount_reserved",
-			max(0.0, cur - remaining),
-			update_modified=True,
-		)
-	return _ok({"status": "Released", "reservation_id": doc.generated_reference})
+	try:
+		result = _release_reservation(reservation=key, reason=reason, actor=actor)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return _fail(str(exc) or _("Reservation not found"))
+	return _ok({"status": result.get("status") or "Released", "reservation_id": result.get("reservation_code")})
 
 
 @frappe.whitelist()
@@ -327,9 +326,9 @@ def search_budget_lines(
 	procuring_entity: str | None = None,
 	limit: int = 10,
 ):
-	from kentender_budget.services.budget_check_reserve_contracts import list_active_lines_for_check
+	from kentender_budget.services.budget_check_reserve_contracts import list_eligible_budget_lines
 
-	rows = list_active_lines_for_check(procuring_entity=procuring_entity)
+	rows = list_eligible_budget_lines(procuring_entity=procuring_entity)
 	q = (query or "").strip().lower()
 	if budget_id:
 		rows = [r for r in rows if r.get("budget") == budget_id]

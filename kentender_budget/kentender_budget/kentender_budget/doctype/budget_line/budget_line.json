@@ -31,8 +31,6 @@
   "primary_snapshot_label",
   "primary_strategy_linked",
   "supporting_targets",
-  "section_pvc",
-  "value_treatments",
   "currency",
   "order_index",
   "fixture_namespace",
@@ -193,17 +191,6 @@
    "fieldtype": "Table",
    "label": "Supporting Targets",
    "options": "Budget Line Supporting Target"
-  },
-  {
-   "fieldname": "section_pvc",
-   "fieldtype": "Section Break",
-   "label": "Value Treatments"
-  },
-  {
-   "fieldname": "value_treatments",
-   "fieldtype": "Table",
-   "label": "Value Treatments",
-   "options": "Budget Line Value Treatment"
   },
   {
    "fieldname": "currency",

@@ -17,10 +17,10 @@ from kentender_budget.services.budget_contracts import (
 	resolve_scoped_entity,
 )
 from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_APPROVE,
 	CAP_BUDGET_EDIT,
 	CAP_BUDGET_REVIEW,
 	CAP_BUDGET_RETURN,
+	CAP_BUDGET_REVISION_APPLY,
 	CAP_BUDGET_SUBMIT,
 	CAP_BUDGET_VIEW,
 	authorized_budget_task,
@@ -39,14 +39,12 @@ from kentender_budget.services.budget_permissions import (
 	can_register_budget,
 	can_review_budget,
 	require_any_role,
-	user_roles,
 )
 from kentender_budget.services.budget_reference import allocate_budget_revision_reference
 
 _READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 _WRITE_ROLES = (ROLE_OFFICER,)
 _REVIEW_ROLES = (ROLE_REVIEWER, ROLE_AUTHORITY)
-_APPLY_ROLES = (ROLE_AUTHORITY,)
 _EDITABLE_STATUSES = ("Draft", "Returned")
 _IMMUTABLE_STATUSES = ("Submitted", "Applied", "Rejected", "Cancelled")
 
@@ -91,7 +89,7 @@ def list_budget_revisions(budget: str) -> dict[str, Any]:
 					actor=frappe.session.user,
 					subject_type="Budget Revision",
 					subject_id=r.name,
-					capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_APPROVE),
+					capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_REVISION_APPLY),
 				)
 				if task and commands:
 					open_action = "review"
@@ -403,8 +401,8 @@ def submit_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 
 	task = create_budget_task(
 		budget,
-		capability=CAP_BUDGET_APPROVE,
-		task_type="budget.approve",
+		capability=CAP_BUDGET_REVISION_APPLY,
+		task_type="budget.revision.apply",
 		subject_type="Budget Revision",
 		subject_id=rev.name,
 		iteration=0,
@@ -450,10 +448,10 @@ def get_budget_revision_review_context(
 		actor=frappe.session.user,
 		subject_type="Budget Revision",
 		subject_id=rev.name,
-		capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_APPROVE),
+		capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_REVISION_APPLY),
 		task_id=(task_id or "").strip(),
 	)
-	is_authority = CAP_BUDGET_APPROVE in commands
+	is_authority = CAP_BUDGET_REVISION_APPLY in commands
 	is_reviewer = CAP_BUDGET_REVIEW in commands or is_authority
 	is_submitter = bool(rev.submitted_by) and rev.submitted_by == frappe.session.user
 	can_apply = (
@@ -575,22 +573,14 @@ def return_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 
 
 def reject_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Submitted → Rejected; Authority; comment required."""
-	require_any_role(*_APPLY_ROLES)
-	roles = user_roles()
-	if not (
-		roles.intersection({ROLE_AUTHORITY, "System Manager"})
-		or frappe.session.user == "Administrator"
-	):
-		frappe.throw(_("Not permitted to reject budget revisions"), frappe.PermissionError)
-
+	"""Submitted → Rejected; Revision Authority; comment required."""
 	payload = _as_dict(payload)
 	rev, budget, err = _load_submitted_for_action(payload)
 	if err:
 		return err
 	task, token = require_budget_task(
 		payload,
-		capability=CAP_BUDGET_APPROVE,
+		capability=CAP_BUDGET_REVISION_APPLY,
 		subject_type="Budget Revision",
 		subject_id=rev.name,
 	)
@@ -602,7 +592,7 @@ def reject_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 			"errors": {"comment": _("Comment is required when rejecting a revision")},
 		}
 
-	complete_budget_task(task, token, capability=CAP_BUDGET_APPROVE, target_state="Completed")
+	complete_budget_task(task, token, capability=CAP_BUDGET_REVISION_APPLY, target_state="Completed")
 	rev.status = "Rejected"
 	rev.review_comment = comment
 	rev.save(ignore_permissions=True)
@@ -621,22 +611,14 @@ def reject_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 
 
 def apply_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Submitted → Applied; Authority; AC-016/018; atomic line updates."""
-	require_any_role(*_APPLY_ROLES)
-	roles = user_roles()
-	if not (
-		roles.intersection({ROLE_AUTHORITY, "System Manager"})
-		or frappe.session.user == "Administrator"
-	):
-		frappe.throw(_("Not permitted to apply budget revisions"), frappe.PermissionError)
-
+	"""Submitted → Applied; Revision Authority; AC-016/018; atomic line updates."""
 	payload = _as_dict(payload)
 	rev, budget, err = _load_submitted_for_action(payload)
 	if err:
 		return err
 	task, token = require_budget_task(
 		payload,
-		capability=CAP_BUDGET_APPROVE,
+		capability=CAP_BUDGET_REVISION_APPLY,
 		subject_type="Budget Revision",
 		subject_id=rev.name,
 	)
@@ -709,7 +691,7 @@ def apply_budget_revision(payload: dict | str | None = None) -> dict[str, Any]:
 		complete_budget_task(
 			task,
 			token,
-			capability=CAP_BUDGET_APPROVE,
+			capability=CAP_BUDGET_REVISION_APPLY,
 			prior_actions=[
 				{"user": rev.submitted_by or "", "capability": CAP_BUDGET_SUBMIT},
 			],
@@ -916,7 +898,7 @@ def _build_review_groups(rev, budget, currency: str):
 				"severity": "warning",
 				"title": _("Review Strategy coverage after apply"),
 				"message": _(
-					"Funding reductions may affect Strategy Value Commitment treatments."
+					"Funding reductions may affect Strategy Value Commitment coverage."
 				),
 			}
 		)

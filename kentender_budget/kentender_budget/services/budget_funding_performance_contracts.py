@@ -74,27 +74,6 @@ def _is_stale_actual(line) -> bool:
 	return getdate(as_at) < cutoff
 
 
-def _value_treatment_summary(line_name: str) -> str:
-	rows = frappe.get_all(
-		"Budget Line Value Treatment",
-		filters={"parent": line_name, "parenttype": "Budget Line"},
-		fields=["treatment"],
-		order_by="idx asc",
-	)
-	labels = []
-	seen = set()
-	for r in rows:
-		t = (r.treatment or "").strip()
-		if t and t not in seen:
-			seen.add(t)
-			labels.append(t)
-	if not labels:
-		return "—"
-	if len(labels) == 1:
-		return labels[0]
-	return f"{labels[0]} +{len(labels) - 1}"
-
-
 def _active_budgets(pe: str, fiscal_period: str | None = None) -> list[Any]:
 	filters: dict[str, Any] = {"status": "Active"}
 	if pe:
@@ -156,11 +135,8 @@ def get_funding_performance(
 		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
 	)
 	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
-	if not pe and frappe.session.user != "Administrator" and "System Manager" not in frappe.get_roles():
-		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError)
 	if not pe:
-		# Administrator with no PE: prefer PE-MOH seed entity when present.
-		pe = frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name") or ""
+		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError)
 	require_capability(
 		frappe.session.user,
 		"budget.view",
@@ -280,7 +256,7 @@ def get_funding_performance(
 		"disclaimer": DISCLAIMER,
 		"capabilities": {
 			"read_only": True,
-			"can_export": can_export_funding_performance(),
+			"can_export": can_export_funding_performance(pe=pe),
 			"view_funding_performance": True,
 		},
 	}
@@ -294,7 +270,10 @@ def export_funding_performance(
 	procuring_entity: str | None = None,
 ) -> dict[str, Any]:
 	"""Export payload for filtered Funding Performance (client builds CSV)."""
-	if not can_export_funding_performance():
+	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
+	if not pe:
+		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError)
+	if not can_export_funding_performance(pe=pe):
 		frappe.throw(_("Not permitted to export Funding Performance"), frappe.PermissionError)
 	dto = get_funding_performance(
 		fiscal_period=fiscal_period,
@@ -341,7 +320,6 @@ def _coverage_rows(lines, budget_by_name, currency: str) -> list[dict[str, Any]]
 				"attention": False,
 				"budget_code": "",
 				"line_codes": [],
-				"treatments": [],
 			}
 			groups[code] = g
 		g["line_count"] += 1
@@ -355,17 +333,11 @@ def _coverage_rows(lines, budget_by_name, currency: str) -> list[dict[str, Any]]
 		if bud and not g["budget_code"]:
 			g["budget_code"] = bud.generated_reference or ""
 		g["line_codes"].append(ln.generated_reference or ln.name)
-		tr = _value_treatment_summary(ln.name)
-		if tr and tr != "—" and tr not in g["treatments"]:
-			g["treatments"].append(tr)
 
 	out = []
 	for code in sorted(groups.keys()):
 		g = groups[code]
 		available = g["approved"] - g["reserved"] - g["committed"]
-		treatment = g["treatments"][0] if len(g["treatments"]) == 1 else (
-			f"{g['treatments'][0]} +{len(g['treatments']) - 1}" if g["treatments"] else "—"
-		)
 		out.append(
 			{
 				"target_id": g["target_id"],
@@ -380,7 +352,6 @@ def _coverage_rows(lines, budget_by_name, currency: str) -> list[dict[str, Any]]
 				"reserved_display": format_kes_full(g["reserved"], currency=currency),
 				"committed_display": format_kes_full(g["committed"], currency=currency),
 				"available_display": format_kes_full(available, currency=currency),
-				"value_treatment": treatment,
 				"attention": g["attention"],
 				"attention_label": _("Stale") if g["attention"] else "—",
 				"budget_code": g["budget_code"],
@@ -461,6 +432,6 @@ def _empty_dto(entity, fiscal_period, primary_target, funding_status) -> dict[st
 		"disclaimer": DISCLAIMER,
 		"capabilities": {
 			"read_only": True,
-			"can_export": can_export_funding_performance(),
+			"can_export": can_export_funding_performance(pe=entity.get("id")),
 		},
 	}

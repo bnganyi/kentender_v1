@@ -106,6 +106,7 @@ class TestBudgetFundingLifecycle(FrappeTestCase):
 		key = "TEST:LIFECYCLE-DEDUP:MOH-BL-HWD-2027:15000000.00"
 		result = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-LIFECYCLE-DEDUP",
 			demand_name="DMD-TEST-LIFECYCLE-DEDUP",
 			requested_amount=15_000_000,
 			idempotency_key=key,
@@ -151,7 +152,7 @@ class TestBudgetFundingLifecycle(FrappeTestCase):
 		self.assertIs(act_mod.list_funding_lifecycle, list_funding_lifecycle)
 		self.assertIs(down_mod.list_funding_lifecycle, list_funding_lifecycle)
 		self.assertIn("list_funding_lifecycle", act_mod.list_funding_activity.__code__.co_names)
-		self.assertIn("list_funding_lifecycle", down_mod.list_downstream_usage.__code__.co_names)
+		self.assertIn("list_funding_lifecycle", down_mod.get_funding_lineage.__code__.co_names)
 		self.assertIn("list_funding_lifecycle", audit_mod.get_budget_audit.__code__.co_names)
 
 	def test_pe_moe_officer_denied_moh_budget(self):
@@ -190,6 +191,7 @@ class TestBudgetFundingLifecycle(FrappeTestCase):
 		key = "TEST:LIFECYCLE-ACT:MOH-BL-HWD-2027:12000000.00"
 		result = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-LIFECYCLE-ACT",
 			demand_name="DMD-TEST-LIFECYCLE-ACT",
 			requested_amount=12_000_000,
 			idempotency_key=key,

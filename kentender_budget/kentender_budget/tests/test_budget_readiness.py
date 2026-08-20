@@ -179,7 +179,7 @@ class TestBudgetReadiness(FrappeTestCase):
 		doc = frappe.get_doc("Budget", {"generated_reference": "MOH-BUD-0004"})
 		doc.approval_evidence = "/private/files/moh-bud-0004-fixed.pdf"
 		doc.save(ignore_permissions=True)
-		# Fix line primary + treatments so readiness passes.
+		# Fix line primary so readiness passes.
 		for ln in frappe.get_all(
 			"Budget Line", filters={"budget": doc.name}, pluck="name"
 		):
@@ -188,19 +188,6 @@ class TestBudgetReadiness(FrappeTestCase):
 				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
-			if not line.get("value_treatments"):
-				line.append(
-					"value_treatments",
-					{
-						"pvc_code": "MOH-PVC-EFT-01",
-						"pvc_name": "Improve infrastructure efficiency",
-						"requirement_level": "Required",
-						"treatment": "Embedded in line",
-						"dedicated_amount": 0,
-						"rationale": "Included in line delivery.",
-						"reviewer_accepted": 0,
-					},
-				)
 			line.save(ignore_permissions=True)
 
 		assign_budget_test_user(officer, "officer")
@@ -239,18 +226,6 @@ class TestBudgetReadiness(FrappeTestCase):
 				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
-			if not line.get("value_treatments"):
-				line.append(
-					"value_treatments",
-					{
-						"pvc_code": "MOH-PVC-EFT-01",
-						"pvc_name": "Improve infrastructure efficiency",
-						"requirement_level": "Required",
-						"treatment": "Embedded in line",
-						"dedicated_amount": 0,
-						"rationale": "Included in line delivery.",
-					},
-				)
 			line.save(ignore_permissions=True)
 		submit_budget({"budget": "MOH-BUD-0004"})
 		mark_budget_reviewed(self._task_payload("MOH-BUD-0004"))

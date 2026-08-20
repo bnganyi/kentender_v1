@@ -119,13 +119,12 @@ Export report
 <th class="py-3 px-4 text-right">Reserved</th>
 <th class="py-3 px-4 text-right">Committed</th>
 <th class="py-3 px-4 text-right">Available</th>
-<th class="py-3 px-4">Value Treatment</th>
 <th class="py-3 px-4 text-center">Attention</th>
 <th class="py-3 px-4 text-right">Action</th>
 </tr>
 </thead>
 <tbody data-testid="kt-bud-performance-coverage-tbody" data-kt-bud-perf-coverage-tbody>
-<tr><td colspan="9" class="px-4 py-8 text-center text-on-surface-variant">Loading coverage…</td></tr>
+<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Loading coverage…</td></tr>
 </tbody>
 </table>
 </div>

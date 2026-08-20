@@ -192,14 +192,6 @@ Add supporting target
 </button>
 </div>
 </section>
-<!-- PVC -->
-<section data-testid="kt-bud-line-section-pvc">
-<div class="flex items-center gap-2 mb-4 pb-2 border-b border-outline-variant">
-<span class="material-symbols-outlined text-primary text-[20px]">fact_check</span>
-<h3 class="font-headline-sm text-headline-sm font-semibold text-primary">Strategy Value Commitment treatment</h3>
-</div>
-<div class="space-y-4" data-testid="kt-bud-line-pvc-list" data-kt-bud-line-pvc-list></div>
-</section>
 <div class="h-8"></div>
 </div>
 <div class="kt-bud-line-drawer-footer sticky bottom-0 bg-surface-container-lowest border-t border-outline-variant px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 z-10" data-testid="kt-bud-line-drawer-footer">
@@ -209,18 +201,7 @@ Add supporting target
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase text-[10px]">Approved amount</span>
 <span class="font-data-mono text-data-mono text-on-surface text-[13px]" data-kt-bud-line-field="approved_compact">—</span>
 </div>
-<div class="text-outline-variant font-light">-</div>
-<div class="flex flex-col">
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase text-[10px]">Dedicated treatments</span>
-<span class="font-data-mono text-data-mono text-status-committed text-[13px]" data-kt-bud-line-field="dedicated_compact">—</span>
 </div>
-<div class="text-outline-variant font-light">=</div>
-<div class="flex flex-col border-l border-outline-variant pl-4">
-<span class="font-label-caps text-label-caps text-primary uppercase text-[10px] font-bold">Not dedicated</span>
-<span class="font-data-mono text-data-mono text-primary font-bold text-[14px]" data-kt-bud-line-field="not_dedicated_compact">—</span>
-</div>
-</div>
-<p class="text-[12px] text-on-surface-variant italic px-1">Dedicated treatment is a designation within this budget line; it is not the line’s Available funding balance.</p>
 </div>
 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
 <button type="button" class="px-5 py-2.5 rounded-lg border border-transparent font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-container transition-colors" data-testid="kt-bud-line-cancel" data-kt-bud-line-cancel>Cancel</button>

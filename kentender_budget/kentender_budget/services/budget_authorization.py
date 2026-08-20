@@ -19,6 +19,11 @@ CAP_BUDGET_REVIEW = "budget.review"
 CAP_BUDGET_RETURN = "budget.return"
 CAP_BUDGET_APPROVE = "budget.approve"
 CAP_BUDGET_EXPORT = "budget.export"
+# BUD-CHG-001 §8 — Budget Activation Authority (CAP_BUDGET_APPROVE, above) is
+# distinct from Revision Authority and Finance Confirmation Officer: each is an
+# independently assignable capability, not a shared role.
+CAP_BUDGET_REVISION_APPLY = "budget.revision.apply"
+CAP_BUDGET_RESERVE = "budget.reserve"
 
 
 def budget_resource(budget, *, resource_type: str = "Budget", resource_id: str = "") -> ResourceContext:

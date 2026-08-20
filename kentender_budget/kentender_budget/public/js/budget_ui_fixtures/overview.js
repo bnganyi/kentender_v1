@@ -107,10 +107,6 @@ kentender_budget.ui_fixtures.overview = function () {
 <span class="material-symbols-outlined text-[16px] mt-0.5 text-primary">adjust</span>
 <span data-kt-bud-ov="strategy_lines">—</span>
 </li>
-<li class="flex items-start gap-2">
-<span class="material-symbols-outlined text-[16px] mt-0.5 text-primary">playlist_add_check</span>
-<span data-kt-bud-ov="strategy_pvc">—</span>
-</li>
 </ul>
 <button type="button" class="text-primary font-body-md font-medium flex items-center gap-1 hover:underline" data-kt-bud-action="open-lines" data-testid="kt-bud-overview-view-lines">
 View budget lines <span class="material-symbols-outlined text-[16px]">arrow_forward</span>

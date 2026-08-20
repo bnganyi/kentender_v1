@@ -490,8 +490,8 @@ Budget seed is deterministic, configuration-first and independently runnable. It
 
 | **Decision**                                    | **Status**       | **Owner/evidence**                                                                 |
 | ----------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
-| Approve BUD-CHG-001 as implementation authority | Pending          | Product-owner approval recorded in Revision Ledger.                                |
-| Retire conflicting Budget documentation         | Pending approval | Legacy requirements, prompts, packs and demo contracts are superseded on approval. |
+| Approve BUD-CHG-001 as implementation authority | Approved         | Product-owner approval — bnganyi, 2026-08-20.                                      |
+| Retire conflicting Budget documentation         | Approved         | Legacy requirements, prompts, packs and demo contracts superseded effective 2026-08-20. |
 | Implementation completion                       | Not started      | Requires every acceptance criterion and smoke gate.                                |
 
 # Sources

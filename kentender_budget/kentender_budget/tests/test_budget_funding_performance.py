@@ -35,7 +35,7 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		return [r for r in dto["coverage_rows"] if r.get("budget_code") == "MOH-BUD-2027-2028"]
 
 	def test_moh_strip_totals_full_money(self):
-		dto = get_funding_performance()
+		dto = get_funding_performance(procuring_entity="PE-MOH")
 		canonical = self._canonical_coverage(dto)
 		self.assertTrue(canonical)
 		self.assertEqual(sum(flt(r["approved"]) for r in canonical), 560_000_000)
@@ -52,7 +52,7 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertNotIn("560M", joined)
 
 	def test_coverage_includes_pack_target_codes(self):
-		dto = get_funding_performance()
+		dto = get_funding_performance(procuring_entity="PE-MOH")
 		codes = {r["target_code"] for r in dto["coverage_rows"]}
 		self.assertIn("MOH-TGT-AVAIL-2028", codes)
 		self.assertNotIn("MOH-ST-04", codes)
@@ -65,7 +65,7 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 
 	def test_stale_expenditure_exception(self):
 		upsert_budget_activity_test_fixture()
-		dto = get_funding_performance()
+		dto = get_funding_performance(procuring_entity="PE-MOH")
 		self.assertGreaterEqual(len(dto["exception_rows"]), 1)
 		exc = dto["exception_rows"][0]
 		self.assertIn("stale", exc["exception"].lower())
@@ -74,23 +74,25 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertIn("Review", exc["action_label"])
 
 	def test_filter_by_primary_target(self):
-		dto = get_funding_performance(primary_target="MOH-TGT-SKILLS-2029")
+		dto = get_funding_performance(
+			primary_target="MOH-TGT-SKILLS-2029", procuring_entity="PE-MOH"
+		)
 		self.assertTrue(dto["coverage_rows"])
 		for r in dto["coverage_rows"]:
 			self.assertEqual(r["target_code"], "MOH-TGT-SKILLS-2029")
 		self.assertEqual(flt(dto["kpis"]["approved"]), 80_000_000)
 
 	def test_filter_by_fiscal_period(self):
-		dto = get_funding_performance(fiscal_period="2027/28")
+		dto = get_funding_performance(fiscal_period="2027/28", procuring_entity="PE-MOH")
 		canonical = self._canonical_coverage(dto)
 		self.assertEqual(sum(flt(r["approved"]) for r in canonical), 560_000_000)
 		self.assertGreaterEqual(flt(dto["kpis"]["approved"]), 560_000_000)
-		empty = get_funding_performance(fiscal_period="2099/00")
+		empty = get_funding_performance(fiscal_period="2099/00", procuring_entity="PE-MOH")
 		self.assertEqual(flt(empty["kpis"]["approved"]), 0)
 		self.assertEqual(empty["coverage_rows"], [])
 
 	def test_export_payload_lineage_and_codes(self):
-		exp = export_funding_performance()
+		exp = export_funding_performance(procuring_entity="PE-MOH")
 		self.assertTrue(exp["lineage"]["as_at_display"])
 		self.assertTrue(exp["lineage"]["entity_name"])
 		self.assertIn("source_coverage", exp["lineage"])

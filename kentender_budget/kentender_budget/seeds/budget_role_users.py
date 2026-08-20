@@ -39,6 +39,23 @@ BUDGET_ROLE_USERS: tuple[tuple[Any, ...], ...] = (
 		PE_MOH_CODE,
 	),
 	("other.entity.officer@example.test", "Budget Officer MOE", (ROLE_OFFICER,), PE_MOE_CODE),
+	# BUD-CHG-001 §8 — Revision Authority and Finance Confirmation Officer are
+	# independently assignable capabilities, distinct from Budget Activation
+	# Authority (moh.budget.authority@example.test, above). The Frappe role
+	# below only grants desk page access; budget_authorization_seed.py grants
+	# the actual, separately-scoped capability via Operational Scope Assignment.
+	(
+		"moh.budget.revision.authority@example.test",
+		"Budget Revision Authority MOH",
+		(ROLE_REVIEWER,),
+		PE_MOH_CODE,
+	),
+	(
+		"moh.budget.finance.officer@example.test",
+		"Budget Finance Confirmation Officer MOH",
+		(ROLE_REVIEWER,),
+		PE_MOH_CODE,
+	),
 )
 
 

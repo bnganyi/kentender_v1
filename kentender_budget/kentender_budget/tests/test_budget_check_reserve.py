@@ -1,9 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-UI-06 Check and Reserve — check_funding + reserve_funding."""
+"""BUD-UI-06 Finance Confirmation ("Check and Reserve" screen/route name) —
+check_funding + reserve_funding."""
 
 from __future__ import annotations
+
+import threading
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -11,6 +14,7 @@ from frappe.utils import flt
 
 from kentender_budget.api import dia_budget_control as dia
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
+from kentender_budget.seeds.budget_authorization_seed import upsert_budget_test_authorization
 from kentender_budget.services.budget_check_reserve_contracts import (
 	DECISION_AVAILABLE,
 	DECISION_INSUFFICIENT,
@@ -30,6 +34,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_budget_roles()
+		upsert_budget_test_authorization()
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def setUp(self):
@@ -100,6 +105,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		before = flt(frappe.db.get_value("Budget Line", line, "amount_reserved"))
 		result = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-RSV-001",
 			demand_name="DMD-TEST-RSV-001",
 			requested_amount=40_000_000,
 			idempotency_key="TEST:DMD-TEST-RSV-001:MOH-BL-HWD-2027:40000000.00",
@@ -122,6 +128,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		key = "TEST:DMD-TEST-RSV-AUDIT:MOH-BL-HWD-2027:9000000.00"
 		result = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-RSV-AUDIT",
 			demand_name="DMD-TEST-RSV-AUDIT",
 			requested_amount=9_000_000,
 			idempotency_key=key,
@@ -144,6 +151,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		)
 		reuse = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-RSV-AUDIT",
 			demand_name="DMD-TEST-RSV-AUDIT",
 			requested_amount=9_000_000,
 			idempotency_key=key,
@@ -160,6 +168,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		key = "TEST:DMD-TEST-IDEM:MOH-BL-HWD-2027:20000000.00"
 		first = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-IDEM",
 			demand_name="DMD-TEST-IDEM",
 			requested_amount=20_000_000,
 			idempotency_key=key,
@@ -167,6 +176,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		reserved_after_first = flt(frappe.db.get_value("Budget Line", line, "amount_reserved"))
 		second = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-IDEM",
 			demand_name="DMD-TEST-IDEM",
 			requested_amount=20_000_000,
 			idempotency_key=key,
@@ -182,6 +192,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			reserve_funding(
 				budget_line="MOH-BL-DHI-2027",
+				plan_item_code="PPI-TEST-INSUFF",
 				demand_name="DMD-TEST-INSUFF",
 				requested_amount=455_000_000,
 				idempotency_key="TEST:DMD-TEST-INSUFF:fail",
@@ -233,6 +244,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 
 		kwargs = dict(
 			budget_line="MOH-BL-DHI-2027",
+			plan_item_code="PPI-TEST-INSUFF-NTF",
 			demand_name="DMD-TEST-INSUFF-NTF",
 			requested_amount=455_000_000,
 			idempotency_key="TEST:DMD-TEST-INSUFF-NTF:fail",
@@ -264,14 +276,104 @@ class TestBudgetCheckReserve(FrappeTestCase):
 
 		res = dia.create_reservation(
 			"MOH-BL-HWD-2027",
-			"Demand",
-			"DMD-TEST-DIA-001",
+			"Procurement Plan Item",
+			"PPI-TEST-DIA-001",
 			30_000_000,
 			actor="Administrator",
-			source_business_id="DMD-TEST-DIA-001",
 		)
 		self.assertTrue(res["ok"])
 		self.assertTrue((res.get("data") or {}).get("reservation_id"))
+
+	def test_reserve_requires_plan_item_not_demand_alone(self):
+		"""BUD-FR-009/010 — no reservation from a Demand reference alone."""
+		with self.assertRaises(frappe.ValidationError):
+			reserve_funding(
+				budget_line="MOH-BL-HWD-2027",
+				demand_name="DMD-TEST-NO-PLAN-ITEM",
+				requested_amount=1_000_000,
+				idempotency_key="TEST:DMD-TEST-NO-PLAN-ITEM:fail",
+			)
+
+	def test_dia_shim_rejects_demand_only_source(self):
+		"""BUD-FR-009/010 — the DIA shim's legacy Demand-shaped call no longer suffices."""
+		res = dia.create_reservation(
+			"MOH-BL-HWD-2027",
+			"Demand",
+			"DMD-TEST-DIA-NO-PLAN-ITEM",
+			1_000_000,
+			actor="Administrator",
+		)
+		self.assertFalse(res["ok"])
+
+	def test_concurrent_reserve_cannot_oversubscribe_line(self):
+		"""BUD-FR-011/012, BUD-AC-011 — two simultaneous reserve_funding calls
+		against the same line for more than its available balance must not
+		both succeed; the `FOR UPDATE` row lock in reserve_funding serialises
+		them so exactly one wins and the line never goes negative-available."""
+		line_name = _line("MOH-BL-HWD-2027")
+
+		def _drop_conc_artifacts():
+			for name in frappe.get_all(
+				"Funding Reservation",
+				filters={"plan_item_code": ["like", "PPI-TEST-CONC-%"]},
+				pluck="name",
+			):
+				frappe.delete_doc("Funding Reservation", name, force=True, ignore_permissions=True)
+			frappe.db.commit()
+
+		_drop_conc_artifacts()
+		self.addCleanup(_drop_conc_artifacts)
+		frappe.db.set_value(
+			"Budget Line", line_name, {"amount_reserved": 0, "amount_committed": 0}
+		)
+		frappe.db.commit()
+		site = frappe.local.site
+		errors: list[BaseException] = []
+		results: list[dict] = []
+
+		def worker(suffix: str):
+			try:
+				frappe.init(site=site)
+				frappe.connect()
+				frappe.set_user("Administrator")
+				res = reserve_funding(
+					budget_line="MOH-BL-HWD-2027",
+					plan_item_code=f"PPI-TEST-CONC-{suffix}",
+					requested_amount=50_000_000,
+					idempotency_key=f"TEST:CONC:{suffix}",
+				)
+				frappe.db.commit()
+				results.append(res)
+			except BaseException as exc:  # noqa: BLE001 — collect for assertion
+				errors.append(exc)
+				try:
+					frappe.db.rollback()
+				except Exception:
+					pass
+			finally:
+				frappe.destroy()
+
+		t1 = threading.Thread(target=worker, args=("A",))
+		t2 = threading.Thread(target=worker, args=("B",))
+		t1.start()
+		t2.start()
+		t1.join(timeout=30)
+		t2.join(timeout=30)
+
+		frappe.connect()
+		frappe.set_user("Administrator")
+		self.assertEqual(len(results), 1, f"expected exactly one winner, got {results}")
+		self.assertEqual(len(errors), 1, f"expected exactly one insufficient-funds failure, got {errors}")
+		self.assertIsInstance(errors[0], frappe.ValidationError)
+
+		line = frappe.get_doc("Budget Line", line_name)
+		self.assertEqual(flt(line.amount_reserved), 50_000_000)
+		reservations = frappe.get_all(
+			"Funding Reservation",
+			filters={"budget_line": line_name, "plan_item_code": ["like", "PPI-TEST-CONC-%"]},
+			pluck="name",
+		)
+		self.assertEqual(len(reservations), 1)
 
 	def test_pe_scope_denial(self):
 		email = "budget.check.pe.deny@example.com"

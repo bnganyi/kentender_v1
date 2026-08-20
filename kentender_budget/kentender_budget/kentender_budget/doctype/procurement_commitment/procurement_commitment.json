@@ -22,6 +22,7 @@
   "actual_expenditure",
   "outstanding_amount",
   "currency",
+  "idempotency_key",
   "fixture_namespace"
  ],
  "fields": [
@@ -130,6 +131,12 @@
    "label": "Currency",
    "options": "Currency",
    "reqd": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "unique": 1
   },
   {
    "fieldname": "fixture_namespace",

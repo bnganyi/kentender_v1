@@ -37,8 +37,6 @@ from kentender_budget.services.budget_authorization import (
 
 ACTUAL_STALE_DAYS = 2
 _EDITABLE_STATUSES = ("Draft", "Returned")
-_TREATMENTS_NEEDING_RATIONALE = ("No direct allocation required", "Not applicable")
-_DEDICATED = "Dedicated allocation"
 
 
 def format_kes_full(amount: float | None, *, currency: str = "KES") -> str:
@@ -184,35 +182,6 @@ def _supporting_dtos(doc) -> list[dict[str, Any]]:
 	return out
 
 
-def _treatment_dtos(doc) -> list[dict[str, Any]]:
-	out = []
-	for row in doc.get("value_treatments") or []:
-		out.append(
-			{
-				"id": row.pvc_id or "",
-				"code": row.pvc_code or "",
-				"name": row.pvc_name or "",
-				"requirement_level": row.requirement_level or "",
-				"treatment": row.treatment or "",
-				"dedicated_amount": flt(row.dedicated_amount),
-				"dedicated_display": format_kes_full(row.dedicated_amount)
-				if flt(row.dedicated_amount) > 0
-				else "",
-				"rationale": row.rationale or "",
-				"reviewer_accepted": int(row.reviewer_accepted or 0),
-			}
-		)
-	return out
-
-
-def _dedicated_total(treatments: list[dict[str, Any]]) -> float:
-	total = 0.0
-	for t in treatments:
-		if (t.get("treatment") or "") == _DEDICATED:
-			total += flt(t.get("dedicated_amount"))
-	return total
-
-
 def _resolve_line(line: str):
 	key = (line or "").strip()
 	if not key:
@@ -334,8 +303,6 @@ def get_budget_line(line: str) -> dict[str, Any]:
 	)
 	currency = doc.currency or budget.currency or "KES"
 	list_row = _line_list_dto(doc, budget.status, currency)
-	treatments = _treatment_dtos(doc)
-	dedicated = _dedicated_total(treatments)
 	approved = flt(doc.approved_amount)
 	can_edit = budget.status in _EDITABLE_STATUSES and can_budget(CAP_BUDGET_EDIT, budget)
 	return {
@@ -346,11 +313,6 @@ def get_budget_line(line: str) -> dict[str, Any]:
 		or "",
 		"primary_target": _target_ref(doc),
 		"supporting_targets": _supporting_dtos(doc),
-		"value_treatments": treatments,
-		"dedicated_total": dedicated,
-		"not_dedicated": max(0.0, approved - dedicated),
-		"dedicated_total_display": format_kes_compact(dedicated, currency=currency),
-		"not_dedicated_display": format_kes_compact(max(0.0, approved - dedicated), currency=currency),
 		"approved_compact_display": format_kes_compact(approved, currency=currency),
 		"capabilities": {
 			"can_edit": can_edit,
@@ -383,8 +345,6 @@ def _validate_save_payload(payload: dict[str, Any], *, is_create: bool) -> dict[
 		errors["approved_amount"] = _("Approved amount must be positive")
 
 	primary = payload.get("primary_target") or {}
-	if not (primary.get("code") or primary.get("id") or "").strip():
-		errors["primary_target"] = _("Primary strategic target is required")
 
 	seen_targets: set[str] = set()
 	p_code = (primary.get("code") or "").strip()
@@ -400,37 +360,6 @@ def _validate_save_payload(payload: dict[str, Any], *, is_create: bool) -> dict[
 		if code and not reason:
 			errors[f"supporting_targets.{i}.reason"] = _("Supporting targets require a reason")
 
-	dedicated_sum = 0.0
-	for i, tr in enumerate(payload.get("value_treatments") or []):
-		treatment = (tr.get("treatment") or "").strip()
-		level = (tr.get("requirement_level") or "").strip().lower()
-		rationale = (tr.get("rationale") or "").strip()
-		amount = flt(tr.get("dedicated_amount"))
-		is_required = level.startswith("required")
-		if is_required and not treatment:
-			errors[f"value_treatments.{i}"] = _("Required value treatments must be complete")
-		if treatment == _DEDICATED:
-			if amount <= 0:
-				errors[f"value_treatments.{i}.dedicated_amount"] = _(
-					"Dedicated allocation requires a positive amount"
-				)
-			dedicated_sum += amount
-		elif amount > 0:
-			errors[f"value_treatments.{i}.dedicated_amount"] = _(
-				"Only Dedicated allocation may claim a distinct amount"
-			)
-		if treatment in _TREATMENTS_NEEDING_RATIONALE and not rationale:
-			errors[f"value_treatments.{i}.rationale"] = _("Rationale is required for this treatment")
-		if treatment == "Not applicable" and not int(tr.get("reviewer_accepted") or 0):
-			# Soft for Draft save — pack requires before activation; still flag for Required.
-			if is_required:
-				errors[f"value_treatments.{i}.reviewer_accepted"] = _(
-					"Not applicable requires reviewer acceptance"
-				)
-
-	if dedicated_sum > approved + 0.0001:
-		errors["dedicated_total"] = _("Dedicated treatments must not exceed the approved amount")
-
 	# Ignore any client-supplied generated_reference on create/edit (BUD-FR-020).
 	# is_create reserved for future create-only rules.
 	return errors
@@ -445,18 +374,29 @@ def _apply_strategy_fields(doc, payload: dict[str, Any]) -> None:
 	)
 
 	primary = payload.get("primary_target") or {}
-	resolved_primary = resolve_performance_target_id(
-		target_id=(primary.get("id") or "").strip() or None,
-		target_code=(primary.get("code") or "").strip() or None,
-	)
-	if not resolved_primary:
-		frappe.throw(_("Unknown or missing primary Performance Target"), frappe.ValidationError)
-
-	prior_primary = (getattr(doc, "primary_target_id", None) or "").strip()
-	require_active = doc.is_new() or resolved_primary != prior_primary
+	primary_id = (primary.get("id") or "").strip()
+	primary_code = (primary.get("code") or "").strip()
 	# Avoid double Active enforcement inside BudgetLine.validate after this apply.
 	doc.flags.skip_budget_strategy_validate = True
-	apply_budget_primary_strategy_reference(doc, resolved_primary, require_active=require_active)
+
+	if not primary_id and not primary_code:
+		# BUD-CHG-001 §5/§9 — zero-or-more approved Strategy references; no mandatory primary.
+		doc.primary_target_id = ""
+		doc.primary_target_code = ""
+		doc.primary_target_name = ""
+		doc.primary_plan_version_id = ""
+		doc.primary_snapshot_label = ""
+		doc.primary_strategy_linked = 0
+	else:
+		resolved_primary = resolve_performance_target_id(
+			target_id=primary_id or None, target_code=primary_code or None
+		)
+		if not resolved_primary:
+			frappe.throw(_("Unknown primary Performance Target"), frappe.ValidationError)
+
+		prior_primary = (getattr(doc, "primary_target_id", None) or "").strip()
+		require_active = doc.is_new() or resolved_primary != prior_primary
+		apply_budget_primary_strategy_reference(doc, resolved_primary, require_active=require_active)
 
 	prior_supporting = {
 		(getattr(row, "target_id", None) or "").strip()
@@ -478,47 +418,6 @@ def _apply_strategy_fields(doc, payload: dict[str, Any]) -> None:
 			require_active=st_require_active,
 		)
 		doc.append("supporting_targets", row)
-
-	doc.set("value_treatments", [])
-	for tr in payload.get("value_treatments") or []:
-		code = (tr.get("code") or "").strip()
-		if not code:
-			continue
-		doc.append(
-			"value_treatments",
-			{
-				"pvc_id": (tr.get("id") or "").strip(),
-				"pvc_code": code,
-				"pvc_name": (tr.get("name") or "").strip() or code,
-				"requirement_level": (tr.get("requirement_level") or "").strip(),
-				"treatment": (tr.get("treatment") or "").strip(),
-				"dedicated_amount": flt(tr.get("dedicated_amount")),
-				"rationale": (tr.get("rationale") or "").strip(),
-				"reviewer_accepted": int(tr.get("reviewer_accepted") or 0),
-			},
-		)
-
-
-def _refresh_budget_pvc_counts(budget_name: str) -> None:
-	"""Roll up unique PVC codes with treatments onto Budget header (Overview 4/4)."""
-	line_names = frappe.get_all("Budget Line", filters={"budget": budget_name}, pluck="name")
-	applicable: set[str] = set()
-	treated: set[str] = set()
-	for ln in line_names:
-		doc = frappe.get_doc("Budget Line", ln)
-		for row in doc.get("value_treatments") or []:
-			code = (row.pvc_code or "").strip()
-			if not code:
-				continue
-			applicable.add(code)
-			if (row.treatment or "").strip():
-				treated.add(code)
-	frappe.db.set_value(
-		"Budget",
-		budget_name,
-		{"strategy_pvc_treated": len(treated), "strategy_pvc_applicable": len(applicable)},
-		update_modified=False,
-	)
 
 
 def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
@@ -607,5 +506,4 @@ def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
 	else:
 		doc.save()
 
-	_refresh_budget_pvc_counts(budget.name)
 	return {"ok": True, "line": get_budget_line(doc.generated_reference)}

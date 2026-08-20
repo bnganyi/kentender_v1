@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Downstream Usage list contract — BUD-UI-10 / BUD-FR-105 / pack get_budget_usage.
+"""get_funding_lineage — BUD-CHG-001 §12 logical integration contract.
 
 Lineage rows project from the shared Funding Lifecycle read model (BUD-SUP-005).
 """
@@ -28,8 +28,8 @@ from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, can_
 _USAGE_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
 
 
-def list_downstream_usage(budget: str) -> dict[str, Any]:
-	"""Read-only Budget Line → Demand → Plan item → Tender → Contract lineage."""
+def get_funding_lineage(budget: str) -> dict[str, Any]:
+	"""Read-only Budget Line → Reservation → Plan item → Tender → Contract lineage."""
 	require_any_role(*_USAGE_ROLES)
 	life = list_funding_lifecycle(budget)
 	currency = life["budget"].get("currency") or "KES"
@@ -70,11 +70,6 @@ def list_downstream_usage(budget: str) -> dict[str, Any]:
 			"read_only": True,
 		},
 	}
-
-
-def get_budget_usage(budget: str) -> dict[str, Any]:
-	"""Pack §8 alias for list_downstream_usage."""
-	return list_downstream_usage(budget)
 
 
 def _usage_rows_from_lifecycle(events: list[dict[str, Any]], currency: str) -> list[dict[str, Any]]:

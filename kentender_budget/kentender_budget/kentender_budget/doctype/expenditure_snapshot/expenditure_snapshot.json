@@ -21,6 +21,7 @@
   "col_b",
   "source_as_at",
   "received_at",
+  "idempotency_key",
   "fixture_namespace"
  ],
  "fields": [
@@ -117,6 +118,12 @@
    "fieldname": "received_at",
    "fieldtype": "Datetime",
    "label": "Received At"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "unique": 1
   },
   {
    "fieldname": "fixture_namespace",

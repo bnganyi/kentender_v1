@@ -49,7 +49,7 @@
    "fieldname": "event_type",
    "fieldtype": "Select",
    "label": "Event Type",
-   "options": "Baseline registered\nBudget submitted\nBudget returned\nBudget reviewed\nBudget activated\nFunding reserved\nReservation partially converted\nContract commitment recorded\nExpenditure snapshot recorded\nRevision applied\nLine changed\nValue treatment changed",
+   "options": "Baseline registered\nBudget submitted\nBudget returned\nBudget reviewed\nBudget activated\nFunding reserved\nReservation released\nReservation revalidated\nReservation partially converted\nContract commitment recorded\nCommitment adjusted\nExpenditure snapshot recorded\nRevision applied\nLine changed",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1

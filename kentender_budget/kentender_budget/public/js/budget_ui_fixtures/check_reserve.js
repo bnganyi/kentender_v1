@@ -52,7 +52,7 @@ kentender_budget.ui_fixtures.check_reserve = function () {
 </div>
 
 <div class="kt-bud-cr-allocation" data-testid="kt-bud-check-reserve-allocation">
-<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Budget Allocation</h2>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Budget Line Selection</h2>
 <div class="kt-bud-cr-select-wrap" data-testid="kt-bud-check-reserve-line-wrap">
 <select aria-label="Budget line" data-testid="kt-bud-check-reserve-line" data-kt-bud-cr-line data-kt-bud-cr-filter="budget_line">
 <option value="">Select a budget line</option>

@@ -713,7 +713,6 @@ frappe.provide("kentender_budget.live");
 					.attr("title", "Available: " + (totals.available_display || ""));
 
 				setOv($root, "strategy_lines", strategy.lines_summary || "—");
-				setOv($root, "strategy_pvc", strategy.pvc_summary || "—");
 				setOv($root, "definition", ov.definitional_note || "");
 
 				var $attn = $root.find('[data-testid="kt-bud-overview-attention"]');
@@ -836,73 +835,6 @@ frappe.provide("kentender_budget.live");
 		);
 	}
 
-	function pvcCardHtml(tr, readOnly) {
-		var level = (tr.requirement_level || "").toLowerCase().indexOf("recommend") >= 0
-			? "Recommended"
-			: "Required";
-		var badgeClass =
-			level === "Recommended"
-				? "bg-secondary-fixed text-on-secondary-fixed-variant border-secondary-fixed-dim"
-				: "bg-primary-fixed/20 text-primary border-primary/20";
-		var amount =
-			tr.treatment === "Dedicated allocation" && tr.dedicated_amount
-				? '<div class="text-right"><div class="font-label-caps text-[10px] text-on-surface-variant uppercase">Dedicated Amount</div>' +
-					'<div class="font-data-mono text-primary font-bold">' +
-					esc(tr.dedicated_display || formatMoneyInput(tr.dedicated_amount)) +
-					"</div></div>"
-				: "";
-		var rationale =
-			tr.rationale &&
-			(tr.treatment === "No direct allocation required" || tr.treatment === "Not applicable")
-				? '<div class="font-body-md text-on-surface-variant text-[13px] italic flex gap-1 items-start bg-surface-container-low p-2 rounded">' +
-					'<span class="material-symbols-outlined text-[16px] mt-0.5">info</span><span>Rationale: ' +
-					esc(tr.rationale) +
-					"</span></div>"
-				: "";
-		var treatmentControl = readOnly
-			? '<span class="text-on-surface">' + esc(tr.treatment || "—") + "</span>"
-			: '<div class="relative flex-1"><select class="w-full bg-surface border border-outline-variant rounded-lg py-1.5 px-2 text-sm appearance-none" data-kt-bud-pvc-treatment="' +
-				esc(tr.code) +
-				'">' +
-				["Dedicated allocation", "Embedded in line", "No direct allocation required", "Not applicable"]
-					.map(function (opt) {
-						return (
-							'<option value="' +
-							esc(opt) +
-							'"' +
-							(opt === tr.treatment ? " selected" : "") +
-							">" +
-							esc(opt) +
-							"</option>"
-						);
-					})
-					.join("") +
-				'</select><span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[18px]">expand_more</span></div>';
-		return (
-			'<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col gap-3" data-kt-bud-pvc-card data-pvc-code="' +
-			esc(tr.code) +
-			'">' +
-			'<div class="flex justify-between items-start"><div class="space-y-1"><div class="flex items-center gap-2">' +
-			'<span class="font-body-md text-on-surface font-semibold">' +
-			esc(tr.name) +
-			'</span><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase border ' +
-			badgeClass +
-			'">' +
-			esc(level) +
-			"</span></div>" +
-			'<div class="font-data-mono text-[11px] text-on-surface-variant">' +
-			esc(tr.code) +
-			"</div></div>" +
-			amount +
-			"</div>" +
-			'<div class="flex items-center gap-2 text-body-md"><span class="text-on-surface-variant font-label-caps text-[11px] uppercase">Treatment:</span>' +
-			treatmentControl +
-			"</div>" +
-			rationale +
-			"</div>"
-		);
-	}
-
 	function supportingCardHtml(st, readOnly) {
 		return (
 			'<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col gap-2" data-kt-bud-supporting-card data-target-code="' +
@@ -986,21 +918,9 @@ frappe.provide("kentender_budget.live");
 			$sup.append(supportingCardHtml(st, readOnly));
 		});
 
-		var $pvc = $drawer.find("[data-kt-bud-line-pvc-list]");
-		$pvc.empty();
-		(lineDto.value_treatments || []).forEach(function (tr) {
-			$pvc.append(pvcCardHtml(tr, readOnly));
-		});
-
 		$drawer.find('[data-kt-bud-line-field="approved_compact"]').text(
 			lineDto.approved_compact_display || formatMoneyInput(lineDto.approved).replace(/,000,000$/, "M")
 		);
-		$drawer
-			.find('[data-kt-bud-line-field="dedicated_compact"]')
-			.text(lineDto.dedicated_total_display || "KES 0");
-		$drawer
-			.find('[data-kt-bud-line-field="not_dedicated_compact"]')
-			.text(lineDto.not_dedicated_display || "KES 0");
 
 		var $save = $drawer.find("[data-kt-bud-line-save]");
 		var $rev = $drawer.find("[data-kt-bud-line-request-revision]");
@@ -1040,26 +960,6 @@ frappe.provide("kentender_budget.live");
 				reason: ($c.text().match(/Reason:\s*(.*)/) || [])[1] || "",
 			});
 		});
-		var treatments = [];
-		$drawer.find("[data-kt-bud-pvc-card]").each(function () {
-			var $c = $(this);
-			var code = $c.attr("data-pvc-code");
-			var prev = (dto.value_treatments || []).find(function (t) {
-				return t.code === code;
-			}) || {};
-			var treatment =
-				$c.find("[data-kt-bud-pvc-treatment]").val() || prev.treatment || "Embedded in line";
-			treatments.push({
-				id: prev.id || "",
-				code: code,
-				name: prev.name || $c.find(".font-semibold").first().text().trim(),
-				requirement_level: prev.requirement_level || "Required",
-				treatment: treatment,
-				dedicated_amount: prev.dedicated_amount || 0,
-				rationale: prev.rationale || "",
-				reviewer_accepted: prev.reviewer_accepted || 0,
-			});
-		});
 		return {
 			budget: budgetCode,
 			line: $drawer.attr("data-line-code") || "",
@@ -1082,7 +982,6 @@ frappe.provide("kentender_budget.live");
 				snapshot_label: primaryMeta.snapshot_label || "",
 			},
 			supporting_targets: supporting,
-			value_treatments: treatments,
 		};
 	}
 
@@ -1445,12 +1344,7 @@ frappe.provide("kentender_budget.live");
 				external_financial_line_reference: "",
 				primary_target: {},
 				supporting_targets: [],
-				value_treatments: [],
-				dedicated_total: 0,
-				not_dedicated: 0,
 				approved_compact_display: "KES 0",
-				dedicated_total_display: "KES 0",
-				not_dedicated_display: "KES 0",
 				capabilities: { read_only: false, can_save: true, show_request_revision: false },
 				_targetOptions: targets,
 			};
@@ -2777,7 +2671,7 @@ frappe.provide("kentender_budget.live");
 		}
 		var gen = $root.attr("data-kt-bud-mount-gen") || "0";
 		hideDownstreamNotice($root);
-		return call("list_downstream_usage", { budget: budgetCode })
+		return call("get_funding_lineage", { budget: budgetCode })
 			.then(function (dto) {
 				if (($root.attr("data-kt-bud-mount-gen") || "0") !== gen) {
 					return dto;
@@ -3668,9 +3562,6 @@ frappe.provide("kentender_budget.live");
 			'<td class="text-right kt-bud-perf-mono text-status-available">' +
 			esc(r.available_display || "—") +
 			"</td>" +
-			'<td><span class="kt-bud-perf-treatment">' +
-			esc(r.value_treatment || "—") +
-			"</span></td>" +
 			'<td class="text-center">' +
 			esc(r.attention_label || "—") +
 			"</td>" +
@@ -3772,7 +3663,7 @@ frappe.provide("kentender_budget.live");
 			var coverage = dto.coverage_rows || [];
 			if (!coverage.length) {
 				$ct.html(
-					'<tr><td colspan="9" class="px-4 py-8 text-center text-on-surface-variant">No strategy funding coverage for the current filters.</td></tr>'
+					'<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">No strategy funding coverage for the current filters.</td></tr>'
 				);
 			} else {
 				$ct.html(coverage.map(coverageRowHtml).join(""));
@@ -3826,7 +3717,6 @@ frappe.provide("kentender_budget.live");
 					"Reserved",
 					"Committed",
 					"Available",
-					"Value treatment",
 					"Attention",
 					"Exception",
 					"Budget line",
@@ -3869,7 +3759,6 @@ frappe.provide("kentender_budget.live");
 							r.reserved_display,
 							r.committed_display,
 							r.available_display,
-							r.value_treatment,
 							r.attention_label,
 							"",
 							"",
@@ -3884,7 +3773,6 @@ frappe.provide("kentender_budget.live");
 					lines.push(
 						[
 							"Exception",
-							"",
 							"",
 							"",
 							"",
@@ -4234,7 +4122,7 @@ frappe.provide("kentender_budget.live");
 			});
 		});
 
-		return call("list_active_lines_for_check", {})
+		return call("list_eligible_budget_lines", {})
 			.then(function (rows) {
 				fillLines(rows || []);
 				if (!state.budgetLine && state.lines.length) {

@@ -13,11 +13,15 @@ from kentender_budget.seeds.budget_role_users import BUDGET_ROLE_USERS, _ensure_
 
 PROFILE_CAPABILITIES = {
 	"viewer": ["budget.list", "budget.view"],
-	"officer": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit"],
-	"reviewer": ["budget.list", "budget.view", "budget.review", "budget.return"],
-	"authority": ["budget.list", "budget.view", "budget.approve", "budget.return", "budget.export"],
-	"officer_authority": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit", "budget.approve", "budget.return", "budget.export"],
-	"test_admin": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit", "budget.review", "budget.return", "budget.approve", "budget.export"],
+	"officer": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit", "budget.reserve"],
+	"reviewer": ["budget.list", "budget.view", "budget.review", "budget.return", "budget.reserve"],
+	"authority": ["budget.list", "budget.view", "budget.approve", "budget.revision.apply", "budget.return", "budget.export", "budget.reserve"],
+	"officer_authority": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit", "budget.approve", "budget.revision.apply", "budget.return", "budget.export", "budget.reserve"],
+	"test_admin": ["budget.list", "budget.view", "budget.create", "budget.edit", "budget.submit", "budget.review", "budget.return", "budget.approve", "budget.revision.apply", "budget.reserve", "budget.export"],
+	# BUD-CHG-001 §8 — Revision Authority and Finance Confirmation Officer as
+	# distinct, independently assignable capabilities (not folded into "authority").
+	"revision_authority": ["budget.list", "budget.view", "budget.revision.apply"],
+	"finance_confirmation": ["budget.list", "budget.view", "budget.reserve"],
 }
 
 USER_PROFILE = {
@@ -27,6 +31,8 @@ USER_PROFILE = {
 	"moh.budget.authority@example.test": "authority",
 	"moh.budget.officer.authority@example.test": "officer_authority",
 	"other.entity.officer@example.test": "officer",
+	"moh.budget.revision.authority@example.test": "revision_authority",
+	"moh.budget.finance.officer@example.test": "finance_confirmation",
 }
 
 
@@ -109,8 +115,14 @@ def upsert_budget_authorization():
 		_assignment(user, profiles[USER_PROFILE[email]], entities[entity_code])
 	_route(entities["PE-MOH"], "budget.review", "budget.review", "moh.budget.reviewer@example.test")
 	_route(entities["PE-MOH"], "budget.approve", "budget.approve", "moh.budget.authority@example.test")
+	_route(
+		entities["PE-MOH"],
+		"budget.revision.apply",
+		"budget.revision.apply",
+		"moh.budget.revision.authority@example.test",
+	)
 	frappe.db.commit()
-	return {"ok": True, "profiles": list(profiles), "assignments": len(USER_PROFILE), "routes": 2}
+	return {"ok": True, "profiles": list(profiles), "assignments": len(USER_PROFILE), "routes": 3}
 
 
 def upsert_budget_test_authorization():
@@ -118,7 +130,11 @@ def upsert_budget_test_authorization():
 	pe = _ensure_pe("PE-MOH", "Ministry of Health")
 	profile = _profile("test_admin")
 	_assignment("Administrator", profile, pe)
-	for task_type, capability in (("budget.review", "budget.review"), ("budget.approve", "budget.approve")):
+	for task_type, capability in (
+		("budget.review", "budget.review"),
+		("budget.approve", "budget.approve"),
+		("budget.revision.apply", "budget.revision.apply"),
+	):
 		_route(pe, task_type, capability, "Administrator")
 	return {"ok": True, "assignment": "OSA-BUD-ADMINISTRATOR"}
 
@@ -140,4 +156,5 @@ def configure_budget_test_workflow(*, reviewer: str, authority: str):
 		_assignment(authority, _profile("authority"), pe)
 	_route(pe, "budget.review", "budget.review", reviewer)
 	_route(pe, "budget.approve", "budget.approve", authority)
+	_route(pe, "budget.revision.apply", "budget.revision.apply", authority)
 	return {"reviewer": reviewer, "authority": authority}

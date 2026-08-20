@@ -163,6 +163,7 @@ class TestBudgetAudit(FrappeTestCase):
 		key = "TEST:AUDIT-RSV:MOH-BL-HWD-2027:11000000.00"
 		result = reserve_funding(
 			budget_line=line,
+			plan_item_code="PPI-TEST-AUDIT-RSV",
 			demand_name="DMD-TEST-AUDIT-RSV",
 			requested_amount=11_000_000,
 			idempotency_key=key,

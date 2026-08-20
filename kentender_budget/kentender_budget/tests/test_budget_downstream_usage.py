@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-UI-10 Downstream Usage service contract tests."""
+"""BUD-UI-10 / BUD-CHG-001 §12 `get_funding_lineage` service contract tests."""
 
 from __future__ import annotations
 
@@ -17,10 +17,7 @@ from kentender_budget.seeds.budget_activity_test_fixture import (
 	TEST_TENDER_CODE,
 	upsert_budget_activity_test_fixture,
 )
-from kentender_budget.services.budget_downstream_contracts import (
-	get_budget_usage,
-	list_downstream_usage,
-)
+from kentender_budget.services.budget_downstream_contracts import get_funding_lineage
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 
 
@@ -32,7 +29,7 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		cls.seed = upsert_budget_activity_test_fixture()
 
 	def test_list_seeded_lineage_row_pack_93(self):
-		dto = list_downstream_usage("MOH-BUD-2027-2028")
+		dto = get_funding_lineage("MOH-BUD-2027-2028")
 		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertTrue(dto["capabilities"]["read_only"])
 		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
@@ -53,14 +50,8 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		# Pack §9.3: remaining reserved + commitment = original reservation.
 		self.assertEqual(flt(row["reserved_balance"]) + flt(row["commitment"]), 455_000_000)
 
-	def test_get_budget_usage_alias(self):
-		a = list_downstream_usage("MOH-BUD-2027-2028")
-		b = get_budget_usage("MOH-BUD-2027-2028")
-		self.assertEqual(a["row_count"], b["row_count"])
-		self.assertEqual(a["rows"][0]["code"], b["rows"][0]["code"])
-
 	def test_empty_budget_without_reservations(self):
-		dto = list_downstream_usage("MOH-BUD-0002")
+		dto = get_funding_lineage("MOH-BUD-0002")
 		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0002")
 		self.assertEqual(dto["row_count"], 0)
 		self.assertEqual(dto["rows"], [])
@@ -83,6 +74,6 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				list_downstream_usage("MOH-BUD-2027-2028")
+				get_funding_lineage("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

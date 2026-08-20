@@ -104,3 +104,27 @@ def allocate_reservation_reference(procuring_entity: str) -> str:
 		if not frappe.db.exists("Funding Reservation", {"generated_reference": candidate}):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Funding Reservation reference"))
+
+
+def allocate_commitment_reference(procuring_entity: str) -> str:
+	"""Allocate next never-reuse `COM-{PE}-####` (BUD-CHG-001 §12 convert_reservation)."""
+	slug = pe_slug(procuring_entity)
+	prefix = f"COM-{slug}-"
+	_sync_series(prefix, _max_seq("Procurement Commitment", "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists("Procurement Commitment", {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique Procurement Commitment reference"))
+
+
+def allocate_expenditure_snapshot_reference(procuring_entity: str) -> str:
+	"""Allocate next never-reuse `EXP-{PE}-####` (BUD-CHG-001 §12 ingest_expenditure_snapshot)."""
+	slug = pe_slug(procuring_entity)
+	prefix = f"EXP-{slug}-"
+	_sync_series(prefix, _max_seq("Expenditure Snapshot", "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists("Expenditure Snapshot", {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique Expenditure Snapshot reference"))

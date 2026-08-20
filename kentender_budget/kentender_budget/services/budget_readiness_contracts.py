@@ -39,11 +39,6 @@ from kentender_budget.services.budget_permissions import (
 )
 
 _READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
-_SUBMIT_ROLES = (ROLE_OFFICER,)
-_REVIEW_ROLES = (ROLE_REVIEWER, ROLE_AUTHORITY)
-_ACTIVATE_ROLES = (ROLE_AUTHORITY,)
-_DEDICATED = "Dedicated allocation"
-_TREATMENTS_NEEDING_RATIONALE = ("No direct allocation required", "Not applicable")
 
 _STATUS_CHIP = {
 	"Draft": "Draft State",
@@ -260,11 +255,10 @@ def _evaluate_readiness(doc) -> tuple[list[dict[str, Any]], list[dict[str, Any]]
 	else:
 		line_complete += 1
 
-	# Strategy + PVC
+	# Strategy
 	strategy_issues: list[dict[str, Any]] = []
 	strategy_complete = 0
 	strategy_total = 0
-	incomplete_treatments = 0
 	for ln_name in [r.name for r in lines]:
 		line_doc = frappe.get_doc("Budget Line", ln_name)
 		for st in line_doc.get("supporting_targets") or []:
@@ -276,81 +270,16 @@ def _evaluate_readiness(doc) -> tuple[list[dict[str, Any]], list[dict[str, Any]]
 						_("Supporting Strategy target without a reason on {0}").format(
 							line_doc.generated_reference
 						),
-						action_label=_("Review treatments"),
+						action_label=_("Review budget line"),
 						action_route=lines_route,
 						group="strategy",
 					)
 				)
 			else:
 				strategy_complete += 1
-
-		dedicated_sum = 0.0
-		treatments = list(line_doc.get("value_treatments") or [])
-		if treatments:
-			for tr in treatments:
-				level = (tr.requirement_level or "").strip().lower()
-				is_required = level.startswith("required")
-				treatment = (tr.treatment or "").strip()
-				rationale = (tr.rationale or "").strip()
-				amount = flt(tr.dedicated_amount)
-				strategy_total += 1
-				ok = True
-				if is_required and not treatment:
-					ok = False
-				if treatment == _DEDICATED and amount <= 0:
-					ok = False
-				if treatment in _TREATMENTS_NEEDING_RATIONALE and not rationale:
-					ok = False
-				if (
-					treatment == "Not applicable"
-					and is_required
-					and not int(tr.reviewer_accepted or 0)
-				):
-					ok = False
-				if treatment == _DEDICATED:
-					dedicated_sum += amount
-				if ok:
-					strategy_complete += 1
-				else:
-					incomplete_treatments += 1
-			strategy_total += 1
-			if dedicated_sum > flt(line_doc.approved_amount) + 0.0001:
-				strategy_issues.append(
-					_issue(
-						f"strategy.dedicated.{line_doc.generated_reference}",
-						_("Dedicated treatment amounts exceed the line approved amount on {0}").format(
-							line_doc.generated_reference
-						),
-						action_label=_("Review treatments"),
-						action_route=lines_route,
-						group="strategy",
-					)
-				)
-			else:
-				strategy_complete += 1
-		else:
-			# No treatments captured — Required PVC incomplete when applicable count seeded > 0
-			# or when at least one line exists without treatments (honest incomplete).
-			strategy_total += 1
-			incomplete_treatments += 1
-
-	if incomplete_treatments:
-		strategy_issues.append(
-			_issue(
-				"strategy.pvc",
-				_("Required value treatment incomplete on {0} line").format(1)
-				if incomplete_treatments == 1
-				else _("Required value treatment incomplete on {0} items").format(
-					incomplete_treatments
-				),
-				action_label=_("Review treatments"),
-				action_route=lines_route,
-				group="strategy",
-			)
-		)
 
 	if strategy_total == 0:
-		# No strategy rows to evaluate — treat as complete empty-ok for Active seeds with treatments.
+		# No strategy rows to evaluate — treat as complete empty-ok.
 		strategy_total = 1
 		strategy_complete = 1
 

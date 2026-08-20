@@ -59,7 +59,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Reserved\nPartially converted\nConverted\nReleased\nCancelled\nExpired",
+   "options": "Reserved\nPartially converted\nConverted\nNeeds attention\nReleased\nCancelled\nExpired",
    "reqd": 1,
    "default": "Reserved",
    "in_list_view": 1
@@ -78,14 +78,12 @@
   {
    "fieldname": "demand_code",
    "fieldtype": "Data",
-   "label": "Demand Code",
-   "reqd": 1
+   "label": "Demand Code"
   },
   {
    "fieldname": "demand_title",
    "fieldtype": "Data",
    "label": "Demand Title",
-   "reqd": 1,
    "in_list_view": 1
   },
   {
@@ -122,7 +120,9 @@
   {
    "fieldname": "plan_item_code",
    "fieldtype": "Data",
-   "label": "Procurement Plan Item Code"
+   "label": "Procurement Plan Item Code",
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "current_downstream_reference",

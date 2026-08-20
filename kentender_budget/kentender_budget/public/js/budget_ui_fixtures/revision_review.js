@@ -111,7 +111,7 @@ View affected line item
 <section class="kt-bud-rev-review-group" data-testid="kt-bud-rev-review-strategy">
 <header>
 <span class="material-symbols-outlined" aria-hidden="true">flag</span>
-<h2>Strategy and value-treatment impact</h2>
+<h2>Strategy impact</h2>
 </header>
 <div class="kt-bud-rev-review-group-body" data-kt-bud-rev-review-strategy-items></div>
 </section>
