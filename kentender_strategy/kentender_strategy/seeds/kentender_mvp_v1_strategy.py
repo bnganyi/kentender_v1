@@ -30,6 +30,33 @@ OWN_HRMD = {"owner_org_unit": C.OU_DIR_HRMD, "fixture_namespace": C.FIXTURE_NS}
 OWN_CGK = {"owner_org_unit": C.OU_CGK_HEALTH, "fixture_namespace": C.FIXTURE_NS}
 OWN_ENTITY = {"owner_org_unit": "", "fixture_namespace": C.FIXTURE_NS}
 
+# Real Strategy personas (STR-CHG-001 §5: "Administrator has neutral read access
+# only unless explicitly assigned") — replace the placeholder "Administrator"
+# actor previously stamped on seeded submitted_by/verified_by/measurement_verifier.
+USER_STR_OFFICER = "moh.strategy.officer@example.test"
+USER_STR_OFFICER_NAME = "MOH Strategy Officer"
+USER_STR_MANAGER = "moh.strategy.manager@example.test"
+USER_STR_MANAGER_NAME = "MOH Strategy Manager"
+
+
+def _ensure_strategy_personas() -> None:
+	from kentender_core.seeds._common import upsert_seed_user
+
+	upsert_seed_user(
+		USER_STR_OFFICER,
+		USER_STR_OFFICER_NAME,
+		"Strategy Officer",
+		entity_name=C.PE_MOH,
+		department_docname=None,
+	)
+	upsert_seed_user(
+		USER_STR_MANAGER,
+		USER_STR_MANAGER_NAME,
+		"Strategy Manager",
+		entity_name=C.PE_MOH,
+		department_docname=None,
+	)
+
 
 def _pe_moh() -> str:
 	from kentender_core.seeds._common import ensure_procuring_entity
@@ -207,6 +234,7 @@ def clear_kentender_mvp_v1_strategy(
 def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 	ensure_strategy_roles()
 	pe = _pe_moh()
+	_ensure_strategy_personas()
 	if reset:
 		clear_kentender_mvp_v1_strategy()
 
@@ -363,8 +391,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 0.1,
 			"period_start": "2026-07-01",
 			"period_end": "2028-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_DHP,
 		},
@@ -386,8 +414,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 0.5,
 			"period_start": "2026-07-01",
 			"period_end": "2028-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_DHP,
 		},
@@ -410,8 +438,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 0.05,
 			"period_start": "2028-07-01",
 			"period_end": "2029-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_DHP,
 		},
@@ -433,8 +461,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 0.25,
 			"period_start": "2028-07-01",
 			"period_end": "2029-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_DHP,
 		},
@@ -492,8 +520,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 1.0,
 			"period_start": "2026-07-01",
 			"period_end": "2028-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_DHP,
 		},
@@ -565,8 +593,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 5,
 			"period_start": "2026-07-01",
 			"period_end": "2029-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_HRMD,
 		},
@@ -588,8 +616,8 @@ def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
 			"tolerance_value": 5,
 			"period_start": "2029-07-01",
 			"period_end": "2030-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_HRMD,
 		},
@@ -803,8 +831,8 @@ def _seed_kisumu_strategy() -> dict[str, Any]:
 			"tolerance_value": 2.0,
 			"period_start": "2027-07-01",
 			"period_end": "2028-06-30",
-			"benefit_owner": "Administrator",
-			"measurement_verifier": "Administrator",
+			"benefit_owner": USER_STR_OFFICER_NAME,
+			"measurement_verifier": USER_STR_MANAGER,
 			"status": "Active",
 			**OWN_CGK,
 		},
@@ -923,8 +951,8 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 				"variance": 99.82 - 99.9,
 				"result_status": "At risk",
 				"workflow_status": "Verified",
-				"submitted_by": "Administrator",
-				"verified_by": "Administrator",
+				"submitted_by": USER_STR_OFFICER,
+				"verified_by": USER_STR_MANAGER,
 				**OWN_DHP,
 			}
 		)
@@ -962,8 +990,8 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 				"variance": 99.96 - 99.9,
 				"result_status": "On track",
 				"workflow_status": "Verified",
-				"submitted_by": "Administrator",
-				"verified_by": "Administrator",
+				"submitted_by": USER_STR_OFFICER,
+				"verified_by": USER_STR_MANAGER,
 				**OWN_DHP,
 			}
 		)

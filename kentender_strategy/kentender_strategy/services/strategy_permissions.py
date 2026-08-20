@@ -37,15 +37,18 @@ def ensure_strategy_roles() -> None:
 
 
 def user_roles(user: str | None = None) -> set[str]:
+	"""STR-CHG-001 §5 — Administrator has neutral read access only unless
+	explicitly assigned; System Manager (an explicit, assignable capability,
+	not a hardcoded identity) still carries every Strategy role."""
 	user = user or frappe.session.user
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+	if "System Manager" in frappe.get_roles(user):
 		return set(ALL_STRATEGY_ROLES) | {"System Manager"}
 	return set(frappe.get_roles(user))
 
 
 def require_any_role(*roles: str) -> None:
 	have = user_roles()
-	if "System Manager" in have or "Administrator" == frappe.session.user:
+	if "System Manager" in have:
 		return
 	if not have.intersection(roles):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -86,9 +89,7 @@ def can_verify_measurement() -> bool:
 def has_cross_entity_authority(user: str | None = None) -> bool:
 	"""STR-FR-002 — cross-entity context switch (Planning Authority / System Manager)."""
 	roles = user_roles(user)
-	return bool(roles.intersection({ROLE_PLANNING, ROLE_AUDITOR, "System Manager"})) or (
-		(user or frappe.session.user) == "Administrator"
-	)
+	return bool(roles.intersection({ROLE_PLANNING, ROLE_AUDITOR, "System Manager"}))
 
 
 def entity_for_user(user: str | None = None) -> str | None:

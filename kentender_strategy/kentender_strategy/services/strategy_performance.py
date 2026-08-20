@@ -55,14 +55,14 @@ VIEW_ROLES = (
 
 def can_view_strategy_performance() -> bool:
 	roles = user_roles()
-	if "System Manager" in roles or frappe.session.user == "Administrator":
+	if "System Manager" in roles:
 		return True
 	return bool(roles.intersection(set(VIEW_ROLES)))
 
 
 def can_export_strategy_performance() -> bool:
 	roles = user_roles()
-	if "System Manager" in roles or frappe.session.user == "Administrator":
+	if "System Manager" in roles:
 		return True
 	return bool(roles.intersection(EXPORT_ROLES))
 
@@ -673,7 +673,6 @@ def get_strategy_performance(
 		roles.intersection(
 			{ROLE_OFFICER, ROLE_MANAGER, ROLE_REVIEWER, ROLE_PLANNING, "System Manager"}
 		)
-		or frappe.session.user == "Administrator"
 	)
 
 	empty_verified = strip["on_track"] + strip["at_risk"] + strip["off_track"] == 0

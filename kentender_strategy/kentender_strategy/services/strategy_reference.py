@@ -8,7 +8,7 @@ import re
 import frappe
 from frappe import _
 
-from kentender_strategy.services.strategy_permissions import user_roles
+from kentender_strategy.services.strategy_permissions import ROLE_PLANNING, user_roles
 
 # Type token → (DocType, fieldname)
 REF_TYPE_META: dict[str, tuple[str, str]] = {
@@ -108,9 +108,10 @@ def allocate_reference(procuring_entity: str, type_token: str) -> str:
 
 
 def can_correct_reference(user: str | None = None) -> bool:
-	"""Strategy Administrator stand-in: System Manager / Administrator only."""
+	"""STR-CHG-001 §5/§8 — explicit Strategy Approval Authority capability, not a
+	hardcoded Administrator/System Manager identity stand-in."""
 	have = user_roles(user)
-	return "System Manager" in have or frappe.session.user == "Administrator"
+	return "System Manager" in have or ROLE_PLANNING in have
 
 
 def assert_reference_immutable(doc, field: str) -> None:
@@ -139,19 +140,29 @@ def ensure_doc_reference(doc, type_token: str, procuring_entity: str | None, fie
 	return ref
 
 
-def resolve_pe_for_doc(doc) -> str | None:
-	"""Best-effort procuring entity for allocation."""
-	if doc.get("procuring_entity"):
-		return doc.procuring_entity
-	plan_version = doc.get("plan_version")
-	if plan_version:
-		return frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
-	if doc.doctype == "Performance Measurement" and doc.get("performance_target"):
-		pv = frappe.db.get_value("Performance Target", doc.performance_target, "plan_version")
-		if pv:
-			doc.plan_version = pv
-			return frappe.db.get_value("Strategic Plan", pv, "procuring_entity")
-	return None
+def resolve_pe_for_doc(doc) -> str:
+	"""Procuring entity for reference allocation.
+
+	Fail-closed (STR-CHG-001 §6 — every owned record carries one procuring_entity):
+	raises rather than silently returning an unusable value.
+	"""
+	pe = doc.get("procuring_entity")
+	if not pe:
+		plan_version = doc.get("plan_version")
+		if not plan_version and doc.doctype == "Performance Measurement" and doc.get("performance_target"):
+			plan_version = frappe.db.get_value(
+				"Performance Target", doc.performance_target, "plan_version"
+			)
+			if plan_version:
+				doc.plan_version = plan_version
+		if plan_version:
+			pe = frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
+	if not pe:
+		frappe.throw(
+			_("Could not resolve a procuring entity for {0}").format(frappe.unscrub(doc.doctype)),
+			frappe.ValidationError,
+		)
+	return pe
 
 
 def before_insert_assign_reference(doc) -> None:
@@ -181,9 +192,11 @@ def correct_reference(
 	reason: str,
 	plan_version: str | None = None,
 ) -> dict:
-	"""Pre-activation admin correction with audit trail."""
+	"""Pre-activation correction with audit trail."""
 	if not can_correct_reference():
-		frappe.throw(_("Only a Strategy Administrator may correct references"), frappe.PermissionError)
+		frappe.throw(
+			_("Only a Strategy Approval Authority may correct references"), frappe.PermissionError
+		)
 	meta = DOCTYPE_REF.get(doctype)
 	if not meta:
 		frappe.throw(_("Unsupported DocType for reference correction"))

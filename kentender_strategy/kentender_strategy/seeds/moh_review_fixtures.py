@@ -10,6 +10,10 @@ from typing import Any, Final
 
 import frappe
 
+from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
+	USER_STR_MANAGER,
+	_ensure_strategy_personas,
+)
 from kentender_strategy.seeds.works_master_strategy_hierarchy import resolve_procuring_entity_moh
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 
@@ -85,6 +89,7 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 	pe = procuring_entity or resolve_procuring_entity_moh()
 	if not pe:
 		return {"ok": False, "reason": "no-procuring-entity", "plan": None, "plan_code": REVIEW_TX_PLAN_CODE}
+	_ensure_strategy_personas()
 
 	name = frappe.db.get_value(
 		"Strategic Plan",
@@ -183,7 +188,7 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 			"period_start": "2026-07-01",
 			"period_end": "2027-06-30",
 			"benefit_owner": "Director, Digital Health",
-			"measurement_verifier": "Administrator",
+			"measurement_verifier": USER_STR_MANAGER,
 			"target_numeric": 95,
 			"comparison_direction": "At least",
 			"order_index": 1,

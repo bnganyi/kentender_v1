@@ -31,6 +31,38 @@ TYPE_RE = {
 }
 
 
+def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = None) -> str:
+	ensure_strategy_roles()
+	if not frappe.db.exists("User", email):
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": email.split("@")[0],
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		)
+		user.insert(ignore_permissions=True)
+	user = frappe.get_doc("User", email)
+	user.enabled = 1
+	user.save(ignore_permissions=True)
+	have = set(frappe.get_roles(email))
+	for role in (
+		"Strategy Viewer",
+		"Strategy Officer",
+		"Strategy Manager",
+		"Strategy Reviewer",
+		"Planning Authority",
+	):
+		if role in have and role not in roles:
+			user.remove_roles(role)
+	user.add_roles(*roles)
+	if procuring_entity:
+		frappe.defaults.set_user_default("Procuring Entity", procuring_entity, user=email)
+	return email
+
+
 class TestStrategyReference(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -169,3 +201,52 @@ class TestStrategyReference(FrappeTestCase):
 				f"{pe_slug(self.pe)}-SP-7777",
 				"Should be rejected after activation",
 			)
+
+	def test_planning_authority_can_correct_reference(self):
+		"""STR-CHG-001 §5/§8 / SCL-501 — explicit capability, not a hardcoded
+		System Manager/Administrator identity stand-in."""
+		_ensure_user("str.planning.correct@example.com", ["Planning Authority"], self.pe)
+		draft = frappe.get_doc(
+			{
+				"doctype": "Strategic Plan",
+				"title": "Planning Authority Correction Draft",
+				"procuring_entity": self.pe,
+				"plan_type": "Entity Strategic Plan",
+				"scope_type": "Procuring Entity",
+				"scope_id": self.pe,
+				"start_date": "2028-07-01",
+				"end_date": "2032-06-30",
+				"status": "Draft",
+				"version_number": 1,
+			}
+		)
+		draft.insert(ignore_permissions=True)
+		self.addCleanup(
+			lambda: frappe.delete_doc("Strategic Plan", draft.name, force=True, ignore_permissions=True)
+		)
+		new_code = f"{pe_slug(self.pe)}-SP-8899"
+		if frappe.db.exists("Strategic Plan", {"plan_code": new_code}):
+			new_code = f"{pe_slug(self.pe)}-SP-8898"
+		frappe.set_user("str.planning.correct@example.com")
+		try:
+			result = correct_reference(
+				"Strategic Plan", draft.name, new_code, "Planning Authority correction"
+			)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(result["code"], new_code)
+
+	def test_officer_cannot_correct_reference(self):
+		"""A Strategy Officer (no Planning Authority / System Manager) is denied."""
+		_ensure_user("str.officer.noplan@example.com", ["Strategy Officer"], self.pe)
+		frappe.set_user("str.officer.noplan@example.com")
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				correct_reference(
+					"Strategic Plan",
+					self.plan,
+					f"{pe_slug(self.pe)}-SP-8897",
+					"Should be denied",
+				)
+		finally:
+			frappe.set_user("Administrator")
