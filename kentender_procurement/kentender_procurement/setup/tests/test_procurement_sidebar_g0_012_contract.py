@@ -18,7 +18,7 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Analytics",
 	"Strategy Alignment",
 	"Budget & Funding",
-	"Demands",
+	"Departmental Needs",
 	"Procurement Plans",
 	"Tender Management",
 	"Tender Configurations",
@@ -133,6 +133,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			"Awards",
 			"Contract Management",
 			"STD Versions",
+			"Procurement Plans",
 		}
 		for row in data.get("items") or []:
 			label = row.get("label") or ""
@@ -231,3 +232,25 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 					frappe.db.exists("DocType", target),
 					msg=f"Sidebar links to missing DocType: {target!r}",
 				)
+
+	def test_sidebar_setup_patch_shows_rail_after_desk_home(self):
+		"""Desktop leaves the rail hidden; setup() must .show() it (first-open bug)."""
+		header_js = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"public",
+			"js",
+			"procurement_sidebar_header.js",
+		)
+		home_js = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"public",
+			"js",
+			"procurement_home_page.js",
+		)
+		with open(header_js, encoding="utf-8") as f:
+			header = f.read()
+		with open(home_js, encoding="utf-8") as f:
+			home = f.read()
+		self.assertIn("patchSetupShowsRail", header)
+		self.assertIn("wrapper.show()", header)
+		self.assertIn("sidebar.wrapper.show()", home)

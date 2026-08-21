@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 17:37:05.971862",
+ "creation": "2026-08-19 20:39:15.373809",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -38,11 +38,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Strategy Alignment",
-   "link_to": "Strategy Management",
-   "link_type": "Workspace",
+   "link_to": "strategy-alignment",
+   "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/strategy-management"
+   "url": "/desk/strategy-alignment"
   },
   {
    "child": 0,
@@ -55,20 +55,20 @@
    "link_type": "Workspace",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/budget-hub"
+   "url": "/desk/budget-management"
   },
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "clipboard",
+   "icon": "list",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Demands",
-   "link_to": "Demand Intake and Approval",
-   "link_type": "Workspace",
+   "label": "Departmental Needs",
+   "link_to": "departmental-needs",
+   "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/demand-hub"
+   "url": "/desk/departmental-needs"
   },
   {
    "child": 0,
@@ -77,11 +77,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Procurement Plans",
-   "link_to": "Procurement Planning",
-   "link_type": "Workspace",
+   "link_to": "coming-soon",
+   "link_type": "Page",
+   "route_options": "{\"feature\": \"Procurement Plans\"}",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/planning-hub"
+   "type": "Link"
   },
   {
    "child": 0,
@@ -233,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-31 17:37:05.971862",
+ "modified": "2026-08-21 13:04:49.747944",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

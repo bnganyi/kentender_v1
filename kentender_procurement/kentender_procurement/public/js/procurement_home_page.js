@@ -230,7 +230,7 @@
 			rows +
 			"</tbody></table></div>" +
 			'<div class="kt-ph-footer-link"><button type="button" class="kt-ph-link-btn" data-kt-ph-nav="' +
-			_esc(section.view_all_url || "/desk/demand-hub") +
+			_esc(section.view_all_url || "/desk/demands-workspace") +
 			'">View all work <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_forward</span></button></div>';
 	}
 
@@ -402,12 +402,23 @@
 		});
 	}
 
-	function _setupSidebar() {
-		setTimeout(function () {
-			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-				frappe.app.sidebar.setup("Procurement");
+	function _setupSidebar(attempt) {
+		attempt = attempt || 0;
+		var sidebar = frappe.app && frappe.app.sidebar;
+		if (sidebar && typeof sidebar.setup === "function") {
+			sidebar.setup("Procurement");
+			// Desk home hides the rail; setup alone does not restore display.
+			var page = frappe.container && frappe.container.page && frappe.container.page.page;
+			if ((!page || !page.hide_sidebar) && sidebar.wrapper && typeof sidebar.wrapper.show === "function") {
+				sidebar.wrapper.show();
 			}
-		}, 0);
+			return;
+		}
+		if (attempt < 40) {
+			setTimeout(function () {
+				_setupSidebar(attempt + 1);
+			}, 50);
+		}
 	}
 
 	function _setBrowserTitle() {

@@ -1,0 +1,125 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:queue_id",
+ "creation": "2026-08-16 21:37:31.634637",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "queue_id",
+  "queue_name",
+  "module_name",
+  "required_capability",
+  "procuring_entity_id",
+  "status",
+  "effective_from",
+  "effective_to",
+  "concurrency_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "queue_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module_name",
+   "fieldtype": "Data",
+   "label": "Module",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_capability",
+   "fieldtype": "Data",
+   "label": "Required Capability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procuring_entity_id",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nSuspended\nEnded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "concurrency_token",
+   "fieldtype": "Data",
+   "label": "Concurrency Token",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-16 21:37:31.634637",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Workflow Queue",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "queue_name",
+ "track_changes": 1
+}

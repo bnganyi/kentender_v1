@@ -11,7 +11,6 @@ import frappe
 from frappe.utils import cstr, format_datetime, get_datetime
 
 from kentender_procurement.tender_configurations.constants import (
-	ELIGIBLE_PACKAGE_STATUSES,
 	STD_FAMILY_LABELS,
 	STATUS_COMPLETED,
 	STATUS_IN_PROGRESS,
@@ -29,16 +28,6 @@ from kentender_procurement.tender_configurations.constants import (
 	TAB_READY_TO_CONFIGURE,
 	TAB_TO_STATUS,
 	UI_01_ROUTE,
-)
-from kentender_procurement.tender_configurations.services.eligibility import (
-	list_eligible_procurement_packages,
-	packages_with_active_configuration,
-	resolve_applicable_std_document,
-	serialize_eligible_package,
-)
-from kentender_procurement.tender_configurations.services.std_family_map import (
-	resolve_family_from_package,
-	resolve_procuring_entity_name,
 )
 
 
@@ -112,26 +101,13 @@ def _paginate(rows: list, page: int, page_size: int) -> tuple[list, dict[str, An
 
 
 def _summary_counts() -> dict[str, int]:
-	configured = packages_with_active_configuration()
-	eligible = frappe.get_all(
-		"Procurement Package",
-		filters={"status": ("in", list(ELIGIBLE_PACKAGE_STATUSES)), "is_active": 1},
-		pluck="name",
-	)
-	ready = 0
-	for name in eligible:
-		if name in configured:
-			continue
-		pkg = frappe.get_doc("Procurement Package", name)
-		std = resolve_applicable_std_document(pkg)
-		if std.get("ok"):
-			ready += 1
+	"""Package-ready queue retired with PP2; configuration tabs still count live CFGs."""
 
 	def count_status(*statuses: str) -> int:
 		return frappe.db.count("Tender Configuration", {"status": ("in", list(statuses))})
 
 	return {
-		"ready_to_configure_count": ready,
+		"ready_to_configure_count": 0,
 		"in_progress_count": count_status(STATUS_IN_PROGRESS),
 		"needs_attention_count": count_status(STATUS_NEEDS_ATTENTION),
 		"ready_for_review_count": count_status(STATUS_READY_FOR_REVIEW, STATUS_UNDER_REVIEW),
@@ -150,35 +126,17 @@ def _filter_options() -> dict[str, list]:
 	entity_names = sorted(
 		{cstr(r.procuring_entity_name) for r in entities if r.procuring_entity_name}
 	)
-	# Also from eligible packages
-	pkg_entities = frappe.get_all(
-		"Procurement Package",
-		filters={"status": ("in", list(ELIGIBLE_PACKAGE_STATUSES))},
-		fields=["procuring_entity_code"],
-		limit=200,
+	methods = sorted(
+		{
+			cstr(m)
+			for m in frappe.get_all(
+				"Tender Configuration",
+				fields=["procurement_method"],
+				pluck="procurement_method",
+			)
+			if m
+		}
 	)
-	for r in pkg_entities:
-		label = resolve_procuring_entity_name(r.procuring_entity_code)
-		if label and label not in entity_names:
-			entity_names.append(label)
-	entity_names = sorted(set(entity_names))
-
-	methods = set(
-		frappe.get_all(
-			"Tender Configuration",
-			fields=["procurement_method"],
-			pluck="procurement_method",
-		)
-	)
-	methods |= set(
-		frappe.get_all(
-			"Procurement Package",
-			filters={"status": ("in", list(ELIGIBLE_PACKAGE_STATUSES))},
-			pluck="procurement_method",
-		)
-	)
-	methods = sorted(cstr(m) for m in methods if m)
-
 	return {
 		"std_families": list(STD_FAMILY_LABELS),
 		"procuring_entities": entity_names,
@@ -193,73 +151,8 @@ def _package_rows(
 	procuring_entity: str,
 	procurement_method: str,
 ) -> list[dict[str, Any]]:
-	configured = packages_with_active_configuration()
-	packages = frappe.get_all(
-		"Procurement Package",
-		filters={"status": ("in", list(ELIGIBLE_PACKAGE_STATUSES)), "is_active": 1},
-		fields=[
-			"name",
-			"package_code",
-			"package_name",
-			"status",
-			"procurement_method",
-			"procurement_category",
-			"required_std_category",
-			"required_std_template_version_code",
-			"procuring_entity_code",
-			"approved_at",
-			"modified",
-		],
-		order_by="approved_at desc, modified desc",
-		limit=500,
-	)
-
-	rows: list[dict[str, Any]] = []
-	for pkg in packages:
-		if pkg.name in configured:
-			continue
-		std = resolve_applicable_std_document(pkg)
-		if not std.get("ok"):
-			continue
-		ser = serialize_eligible_package(pkg, configured)
-		if std_family and std_family.lower() not in ("all", "all families"):
-			if cstr(ser.get("std_family_label")).lower() != std_family.lower():
-				continue
-		if procuring_entity and procuring_entity.lower() not in ("all", "all entities"):
-			if cstr(ser.get("procuring_entity_name")).lower() != procuring_entity.lower():
-				continue
-		if procurement_method and procurement_method.lower() not in ("all", "all methods"):
-			method_hay = {
-				cstr(ser.get("procurement_method_label")).lower(),
-				cstr(pkg.procurement_method).lower(),
-			}
-			if procurement_method.lower() not in method_hay:
-				continue
-		if not _match_search(
-			[
-				ser.get("planning_package_ref"),
-				ser.get("procurement_title"),
-				ser.get("procuring_entity_name"),
-			],
-			search,
-		):
-			continue
-		rows.append(
-			{
-				"row_type": "approved_procurement_package",
-				"package_id": ser["package_id"],
-				"procurement_package_ref": ser["planning_package_ref"],
-				"package_title": ser["procurement_title"],
-				"std_family": ser["std_family_label"],
-				"standard_tender_document_label": ser.get("applicable_std_document_label"),
-				"procuring_entity_name": ser["procuring_entity_name"],
-				"procurement_method_label": ser["procurement_method_label"],
-				"approval_date": ser.get("approval_date"),
-				"action_label": TAB_ACTION_LABELS[TAB_READY_TO_CONFIGURE],
-				"action_route": "open_create_configuration_modal",
-			}
-		)
-	return rows
+	"""PP2 Package ready-to-configure queue retired."""
+	return []
 
 
 def _configuration_rows(

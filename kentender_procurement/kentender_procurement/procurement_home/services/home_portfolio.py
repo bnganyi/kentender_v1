@@ -10,7 +10,18 @@ from typing import Any
 import frappe
 from frappe.utils import flt
 
+from kentender_procurement.procurement_home.services.home_context import year_from_fiscal_period
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
+
+
+def _budget_fiscal_year(budget: dict[str, Any]) -> int | None:
+	"""Prefer legacy fiscal_year; otherwise parse Budget.fiscal_period."""
+	if budget.get("fiscal_year") not in (None, ""):
+		return year_from_fiscal_period(budget.get("fiscal_year"))
+	return year_from_fiscal_period(budget.get("fiscal_period"))
 
 
 def _can_see_finance(user: str) -> bool:
@@ -84,7 +95,7 @@ def _finance_sums_for_context(
 	approved = 0.0
 	available = 0.0
 	for b in budgets or []:
-		if fiscal_year is not None and int(b.get("fiscal_year") or 0) != int(fiscal_year):
+		if fiscal_year is not None and _budget_fiscal_year(b) != int(fiscal_year):
 			continue
 		pe_val = (b.get("procuring_entity") or "").strip()
 		if pe_val and pe_val not in aliases:
@@ -102,36 +113,11 @@ def _finance_sums_for_context(
 
 
 def _unfunded_approved_demand(pe: str) -> float:
-	"""Sum shortfall on approved demands without sufficient funding (best-effort)."""
-	rows = frappe.get_all(
-		"Demand",
-		filters={"procuring_entity": ["in", pe_aliases(pe)], "status": "Approved"},
-		fields=["name", "total_amount", "budget_line"],
-		limit=500,
-	)
-	total_shortfall = 0.0
-	for r in rows:
-		bl = r.get("budget_line")
-		need = flt(r.get("total_amount"))
-		if not bl or need <= 0:
-			# No confirmed funding line → treat full amount as unfunded
-			if not bl and need > 0:
-				total_shortfall += need
-			continue
-		try:
-			from kentender_budget.api.dia_budget_control import get_budget_line_availability
-
-			avail = get_budget_line_availability(bl)
-			if isinstance(avail, dict):
-				available = flt(avail.get("available") or avail.get("amount_available") or 0)
-				if available < need:
-					total_shortfall += need - available
-		except Exception:
-			# Fallback: if reservation_status Failed, count full amount
-			rs = frappe.db.get_value("Demand", r.name, "reservation_status")
-			if rs in ("Failed", "None", None) and need > 0:
-				total_shortfall += need
-	return total_shortfall
+	_ = pe
+	# Demands package retired; guard is permanently unreachable but kept explicit.
+	if not demand_doctype_available():
+		return 0.0
+	return 0.0
 
 
 def _tender_counts(pe: str) -> tuple[int, int]:
@@ -178,6 +164,7 @@ def get_home_portfolio(
 
 	if show_finance:
 		try:
+			# MVP-1 Budget teardown: landing returns empty budgets until rebuild.
 			from kentender_budget.api.landing import get_budget_landing_data
 
 			data = get_budget_landing_data() or {}
@@ -200,7 +187,7 @@ def get_home_portfolio(
 						"display": _fmt_money(approved, currency),
 						"currency": currency,
 						"tone": "default",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "allocated_plans",
@@ -209,7 +196,7 @@ def get_home_portfolio(
 						"display": _fmt_money(allocated, currency),
 						"currency": currency,
 						"tone": "committed",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "available_balance",
@@ -218,7 +205,7 @@ def get_home_portfolio(
 						"display": _fmt_money(available, currency),
 						"currency": currency,
 						"tone": "available",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "unfunded_demand",
@@ -227,7 +214,7 @@ def get_home_portfolio(
 						"display": _fmt_money(unfunded, currency),
 						"currency": currency,
 						"tone": "exhausted",
-						"url": "/desk/demand-hub",
+						"url": "/desk/demands-workspace",
 					},
 				]
 			)

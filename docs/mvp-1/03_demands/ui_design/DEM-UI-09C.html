@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Approved Demand - Funding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-secondary-fixed-variant": "#004a78",
+                            "surface-container-lowest": "#ffffff",
+                            "inverse-primary": "#abc7ff",
+                            "error-container": "#ffdad6",
+                            "secondary-fixed-dim": "#99cbff",
+                            "primary-fixed": "#d7e2ff",
+                            "on-surface-variant": "#434750",
+                            "on-primary-fixed": "#001b3f",
+                            "on-secondary": "#ffffff",
+                            "border-subtle": "#E2E8F0",
+                            "on-secondary-container": "#004c7c",
+                            "outline": "#737781",
+                            "error": "#ba1a1a",
+                            "on-primary": "#ffffff",
+                            "background": "#f9f9fe",
+                            "inverse-on-surface": "#f1f0f6",
+                            "secondary": "#01629d",
+                            "data-block-bg": "#FFFFFF",
+                            "status-exhausted": "#EF4444",
+                            "status-committed": "#6366F1",
+                            "on-error": "#ffffff",
+                            "primary-fixed-dim": "#abc7ff",
+                            "tertiary-fixed-dim": "#b7c8e2",
+                            "on-error-container": "#93000a",
+                            "primary-container": "#00346f",
+                            "tertiary": "#102135",
+                            "surface": "#f9f9fe",
+                            "on-secondary-fixed": "#001d34",
+                            "on-background": "#1a1b20",
+                            "surface-container": "#eeedf3",
+                            "on-tertiary-fixed": "#0b1c30",
+                            "surface-variant": "#e2e2e8",
+                            "surface-container-low": "#f4f3f9",
+                            "outline-variant": "#c3c6d1",
+                            "primary": "#001f48",
+                            "surface-dim": "#dad9df",
+                            "surface-bright": "#f9f9fe",
+                            "secondary-fixed": "#cfe5ff",
+                            "on-tertiary": "#ffffff",
+                            "surface-container-high": "#e8e7ed",
+                            "on-primary-fixed-variant": "#1d4681",
+                            "status-reserved": "#F59E0B",
+                            "tertiary-container": "#26364b",
+                            "surface-tint": "#395e9b",
+                            "inverse-surface": "#2f3035",
+                            "on-surface": "#1a1b20",
+                            "on-tertiary-fixed-variant": "#38485e",
+                            "secondary-container": "#7bbeff",
+                            "on-primary-container": "#7b9ee0",
+                            "status-available": "#10B981",
+                            "tertiary-fixed": "#d3e4ff",
+                            "surface-container-highest": "#e2e2e8",
+                            "on-tertiary-container": "#8f9fb8"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "section-gap": "24px",
+                            "container-padding": "16px",
+                            "gutter": "12px",
+                            "unit": "4px",
+                            "base-unit": "4px",
+                            "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                            "data-mono": [
+                                    "JetBrains Mono"
+                            ],
+                            "headline-md": [
+                                    "Manrope"
+                            ],
+                            "label-caps": [
+                                    "Inter"
+                            ],
+                            "headline-lg-mobile": [
+                                    "Manrope"
+                            ],
+                            "body-lg": [
+                                    "Inter"
+                            ],
+                            "headline-sm": [
+                                    "Manrope"
+                            ],
+                            "headline-lg": [
+                                    "Manrope"
+                            ],
+                            "body-md": [
+                                    "Inter"
+                            ]
+                    },
+                    "fontSize": {
+                            "data-mono": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "20px",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "22px",
+                                    {
+                                            "lineHeight": "30px",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "label-caps": [
+                                    "12px",
+                                    {
+                                            "lineHeight": "16px",
+                                            "letterSpacing": "0.05em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "headline-lg-mobile": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "32px",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-lg": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "24px",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "headline-sm": [
+                                    "18px",
+                                    {
+                                            "lineHeight": "24px",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "headline-lg": [
+                                    "28px",
+                                    {
+                                            "lineHeight": "36px",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-md": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "20px",
+                                            "fontWeight": "400"
+                                    }
+                            ]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md text-body-md antialiased">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-low border-b border-border-subtle dark:border-outline-variant flex justify-between items-center w-full px-6 py-2 z-50">
+<div class="flex items-center gap-4">
+<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex gap-4">
+<button class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+</button>
+</div>
+<img alt="User profile" class="w-8 h-8 rounded-full bg-surface-variant object-cover" data-alt="A small circular avatar placeholder indicating the user profile image, positioned in the top right of a modern digital interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmNo35LPBonQK8AdKSX5aKY6bZJvgc2lbwLxsVqLqPtXRIrzFvgOiBxLtPQo0Zcp-AlivxWAkxhTil0RUmaqZ-nzZadOR3wKIz12h8LoHnFfJ1pk9ZHFaG7zL-kphmSaofck2l03YqDdiWhLAZ2jIPWrrj90lc76wCNwU-nADnYEZvGfjmjaSuY3ti1x7es65u2_9vhFUWyMCCxz53BF6D06Jd6Tvlk1jBt6-QuY1_97Fxb4tdqlnJDQ"/>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-surface-container-low dark:bg-surface-container-lowest border-r border-border-subtle dark:border-outline-variant flex flex-col h-full py-6 px-4 space-y-2 w-64 hidden md:flex shrink-0">
+<div class="mb-6 px-2">
+<div class="flex items-center gap-3">
+<img alt="KenTender Logo" class="w-10 h-10 rounded bg-primary-container object-cover" data-alt="A small placeholder logo for the procurement portal, displayed at the top of the side navigation menu in a corporate software setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU5SCDB9AdCBBziRX7gD1kfE7F3CZ1xb7vQZ7ml8lxjY0KZVoG6J1ciYwJViM61efFIDsV-L-fJwDSjz75q07SO3YQxmvjGTMRpGk21wBYThgk-v-6hRXTbwGoFjPu1EQwdCM3377HqnbCPr4cyCXpGxDWwnFBJFExfVRXjUuuphZtkkLy5EdQ3KkVaPeemaXHW9S4W1JHxzLRLOwkD9WmkgdAREbnKXsICLnB04x4-MjwaYqbtAMMYA"/>
+<div>
+<div class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary">KenTender</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant dark:text-surface-variant">Procurement Portal</div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col space-y-1">
+<a class="bg-primary-container text-on-primary-container font-bold rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">event_note</span>
+<span class="text-body-md font-body-md">Planning</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment_turned_in</span>
+<span class="text-body-md font-body-md">Requisition</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">gavel</span>
+<span class="text-body-md font-body-md">Tendering</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="text-body-md font-body-md">Evaluation</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">verified_user</span>
+<span class="text-body-md font-body-md">Award</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history_edu</span>
+<span class="text-body-md font-body-md">Contract Management</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">archive</span>
+<span class="text-body-md font-body-md">Closeout</span>
+</a>
+</div>
+<div class="mt-auto border-t border-border-subtle dark:border-outline-variant pt-4 flex flex-col space-y-1">
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="text-body-md font-body-md">Settings</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 rounded-lg px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">receipt_long</span>
+<span class="text-body-md font-body-md">Audit Log</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding md:p-6 lg:px-8 max-w-7xl mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-section-gap">
+<div class="flex items-start justify-between mb-2">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h1 class="text-headline-lg md:font-headline-lg font-headline-lg-mobile text-primary">DMD-MOH-2027-014</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-caps font-label-caps bg-status-committed text-on-primary">Approved</span>
+</div>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Approved Demand • Confirmed Estimate: <span class="font-data-mono text-data-mono text-primary">KES 455,000,000</span></p>
+</div>
+</div>
+<!-- Warning Message -->
+<div class="bg-surface-container-low border border-status-reserved rounded-lg p-3 flex items-center gap-3 mt-4">
+<span class="material-symbols-outlined text-status-reserved" style="font-variation-settings: 'FILL' 1;">lock</span>
+<p class="text-body-md font-body-md text-on-surface"><strong>Locked Baseline:</strong> This demand is approved. Further edits to core metadata or values are restricted.</p>
+</div>
+</div>
+<!-- In-page Navigation -->
+<div class="border-b border-border-subtle mb-section-gap">
+<nav aria-label="Tabs" class="-mb-px flex space-x-8">
+<a class="border-transparent text-on-surface-variant hover:text-primary hover:border-border-subtle whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md" href="#">Overview</a>
+<a class="border-transparent text-on-surface-variant hover:text-primary hover:border-border-subtle whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md" href="#">Items</a>
+<a class="border-transparent text-on-surface-variant hover:text-primary hover:border-border-subtle whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md" href="#">Strategy &amp; Value</a>
+<a aria-current="page" class="border-primary text-primary whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md font-bold" href="#">Funding</a>
+<a class="border-transparent text-on-surface-variant hover:text-primary hover:border-border-subtle whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md" href="#">Downstream</a>
+<a class="border-transparent text-on-surface-variant hover:text-primary hover:border-border-subtle whitespace-nowrap py-4 px-1 border-b-2 text-body-md font-body-md" href="#">Audit</a>
+</nav>
+</div>
+<!-- Tab Content: Funding -->
+<div class="space-y-section-gap">
+<!-- Confirmed Allocation -->
+<section>
+<h2 class="text-headline-sm font-headline-sm text-primary mb-4">Confirmed Allocation</h2>
+<div class="bg-data-block-bg border border-border-subtle rounded-lg p-card-padding shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Budget</div>
+<div class="text-body-md font-body-md text-on-surface">Ministry of Health Procurement Budget FY 2027/28</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Budget Line</div>
+<div class="text-body-md font-body-md text-on-surface">Digital clinical systems infrastructure</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Confirmed Allocation</div>
+<div class="font-data-mono text-data-mono text-primary text-lg">KES 455,000,000</div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Budget Officer</div>
+<div class="text-body-md font-body-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0; font-size: 18px;">person</span>
+                                    Peter Otieno
+                                </div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Confirmed On</div>
+<div class="text-body-md font-body-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0; font-size: 18px;">calendar_today</span>
+                                    15 August 2027
+                                </div>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">Strategy Consistency</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-available" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-body-md text-on-surface">Aligned</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Reservation Position -->
+<section>
+<h2 class="text-headline-sm font-headline-sm text-primary mb-4">Reservation Position</h2>
+<div class="bg-data-block-bg border border-border-subtle rounded-lg p-card-padding shadow-sm overflow-hidden relative">
+<!-- Decorative background element for sophisticated feel -->
+<div class="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-surface-container-low to-transparent pointer-events-none opacity-50"></div>
+<div class="flex items-center justify-between mb-6 pb-4 border-b border-border-subtle relative z-10">
+<div>
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Reservation ID</span>
+<div class="text-headline-sm font-headline-sm text-primary mt-1">RSV-MOH-0001</div>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-caps font-label-caps bg-status-reserved bg-opacity-10 text-status-reserved border border-status-reserved border-opacity-20">
+<span class="w-2 h-2 rounded-full bg-status-reserved"></span>
+                                    Partially Converted
+                                </span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
+<div class="bg-surface rounded p-4 border border-border-subtle">
+<div class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">Original Reservation</div>
+<div class="font-data-mono text-data-mono text-on-surface text-lg">KES 455,000,000</div>
+</div>
+<div class="bg-surface rounded p-4 border border-border-subtle">
+<div class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">Converted to Commitment</div>
+<div class="font-data-mono text-data-mono text-status-committed text-lg">KES 310,000,000</div>
+</div>
+<div class="bg-surface rounded p-4 border border-status-reserved border-opacity-50 shadow-[inset_2px_0_0_0_#F59E0B]">
+<div class="text-label-caps font-label-caps text-status-reserved uppercase mb-1">Remaining Reserved</div>
+<div class="font-data-mono text-data-mono text-on-surface text-lg">KES 145,000,000</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4 mb-4 text-center border border-border-subtle relative z-10">
+<div class="font-data-mono text-data-mono text-on-surface flex flex-wrap justify-center items-center gap-2">
+<span class="bg-white px-2 py-1 rounded border border-border-subtle">KES 455,000,000 <span class="text-on-surface-variant font-body-md text-sm">original</span></span>
+<span class="text-outline">=</span>
+<span class="bg-white px-2 py-1 rounded border border-border-subtle">KES 310,000,000 <span class="text-on-surface-variant font-body-md text-sm">committed</span></span>
+<span class="text-outline">+</span>
+<span class="bg-white px-2 py-1 rounded border border-status-reserved border-opacity-50">KES 145,000,000 <span class="text-on-surface-variant font-body-md text-sm">remaining reserved</span></span>
+</div>
+</div>
+<p class="text-[12px] leading-[16px] text-on-surface-variant flex items-start gap-2 relative z-10">
+<span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+                            The reservation identity carries forward through Planning and Tendering. Contract and downstream record details are shown under Lifecycle.
+                        </p>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

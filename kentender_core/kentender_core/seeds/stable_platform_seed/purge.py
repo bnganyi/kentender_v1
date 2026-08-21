@@ -23,20 +23,17 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	WORKS_PKG_CODE,
 	WORKS_PLAN_CODE,
 )
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_ID as WORKS_DEMAND_ID
 from kentender_procurement.procurement_lifecycle.seeds.works_master_handoff_payloads import (
 	BASE_HANDOFF_CODES,
 	JOURNEY_CODE,
 	OPENING_HANDOFF_CODES,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.constants import (
-	PKG_CODE as WORKS_PKG_CODE_LEGACY,
-	PLAN_CODE,
-)
+WORKS_PKG_CODE_LEGACY = "PKG-MOH-2026-001"
+PLAN_CODE = "PLAN-MOH-2026"
 from kentender_procurement.tender_management.seeds.purge_smoke_test_tenders import run as purge_smoke_tenders
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
 
-_KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, WORKS_DEMAND_ID, IT_DEMAND_CODE})
+_KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, IT_DEMAND_CODE})
 _KEEP_BUDGET_NAMES: Final[frozenset[str]] = frozenset({BUDGET_NAME})
 _KEEP_BUDGET_LINE_CODES: Final[frozenset[str]] = frozenset({WORKS_BUDGET_LINE_CODE, IT_BUDGET_LINE_CODE})
 _KEEP_PLAN_CODES: Final[frozenset[str]] = frozenset({WORKS_PLAN_CODE, PLAN_CODE})
@@ -73,6 +70,19 @@ def _tm2_module_available() -> bool:
 def _doctype_exists(doctype: str) -> bool:
 	return bool(frappe.db.exists("DocType", doctype))
 
+
+def _hard_delete(doctype: str, name: str) -> None:
+	"""Force-delete without flooding Redis RQ (bulk seed purge)."""
+	if not frappe.db.exists(doctype, name):
+		return
+	# frappe.delete_doc enqueues link cleanup unless in_test (now=True).
+	was = bool(getattr(frappe.flags, "in_test", False))
+	frappe.flags.in_test = True
+	try:
+		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+	finally:
+		frappe.flags.in_test = was
+
 _PKG_CHILD_DOCTYPES: Final[tuple[tuple[str, str], ...]] = (
 	("Package Review Decision", "package_code"),
 	("Package Readiness Result", "package_code"),
@@ -82,64 +92,53 @@ _PKG_CHILD_DOCTYPES: Final[tuple[tuple[str, str], ...]] = (
 
 
 def _delete_package_lines(package_code: str) -> None:
-	for line_name in frappe.get_all(
-		"Procurement Package Line",
-		filters={"package_id": package_code},
-		pluck="name",
-	):
-		frappe.flags.skip_package_line_rollup = True
-		try:
-			if frappe.db.exists("Procurement Package Line", line_name):
-				frappe.delete_doc("Procurement Package Line", line_name, force=True, ignore_permissions=True)
-		finally:
-			frappe.flags.pop("skip_package_line_rollup", None)
+	"""PP2 Package Line DocType retired."""
+	return
 
 
 def _delete_package_cascade(package_code: str) -> None:
-	pkg = (package_code or "").strip()
-	if not pkg:
-		return
-	for doctype, field in _PKG_CHILD_DOCTYPES:
-		for name in frappe.get_all(doctype, filters={field: pkg}, pluck="name"):
-			if frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
-	_delete_package_lines(pkg)
-	if frappe.db.exists("Procurement Package", pkg):
-		frappe.delete_doc("Procurement Package", pkg, force=True, ignore_permissions=True)
+	"""PP2 Package DocType retired."""
+	return
 
 
 def _purge_budgets(*, dry_run: bool) -> list[str]:
+	# MVP-1 Budget: identity is generated_reference (legacy field was budget_name).
+	if not _doctype_exists("Budget"):
+		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget", fields=["name", "budget_name"]):
-		if (row.get("budget_name") or "").strip() in _KEEP_BUDGET_NAMES:
+	for row in frappe.get_all("Budget", fields=["name", "generated_reference", "title"]):
+		code = (row.get("generated_reference") or row.get("title") or "").strip()
+		if code in _KEEP_BUDGET_NAMES or row["name"] in _KEEP_BUDGET_NAMES:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
 		frappe.db.sql("UPDATE `tabBudget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
 		for line in frappe.get_all("Budget Line", filters={"budget": row["name"]}, pluck="name"):
-			if frappe.db.exists("Budget Line", line):
-				frappe.flags.budget_line_force_delete = True
-				try:
-					frappe.delete_doc("Budget Line", line, force=True, ignore_permissions=True)
-				finally:
-					frappe.flags.budget_line_force_delete = False
-		if frappe.db.exists("Budget", row["name"]):
-			frappe.delete_doc("Budget", row["name"], force=True, ignore_permissions=True)
+			frappe.flags.budget_line_force_delete = True
+			try:
+				_hard_delete("Budget Line", line)
+			finally:
+				frappe.flags.budget_line_force_delete = False
+		_hard_delete("Budget", row["name"])
 	return removed
 
 
 def _purge_budget_lines(*, dry_run: bool) -> list[str]:
+	# MVP-1 Budget Line: identity is generated_reference (legacy was budget_line_code).
+	if not _doctype_exists("Budget Line"):
+		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget Line", fields=["name", "budget_line_code"]):
-		if (row.get("budget_line_code") or "").strip() in _KEEP_BUDGET_LINE_CODES:
+	for row in frappe.get_all("Budget Line", fields=["name", "generated_reference", "title"]):
+		code = (row.get("generated_reference") or row.get("title") or "").strip()
+		if code in _KEEP_BUDGET_LINE_CODES:
 			continue
 		removed.append(row["name"])
-		if dry_run or not frappe.db.exists("Budget Line", row["name"]):
+		if dry_run:
 			continue
 		frappe.flags.budget_line_force_delete = True
 		try:
-			frappe.delete_doc("Budget Line", row["name"], force=True, ignore_permissions=True)
+			_hard_delete("Budget Line", row["name"])
 		finally:
 			frappe.flags.budget_line_force_delete = False
 	return removed
@@ -147,41 +146,35 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 
 def _purge_demands(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	for row in frappe.get_all("Demand", fields=["name", "demand_id"]):
-		if (row.get("demand_id") or "").strip() in _KEEP_DEMAND_CODES:
+	for row in frappe.get_all("Demand", fields=["name", "demand_code", "demand_id"]):
+		code = (row.get("demand_code") or row.get("demand_id") or "").strip()
+		if code in _KEEP_DEMAND_CODES:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
 		frappe.db.delete("Demand Item", {"parent": row["name"]})
-		if frappe.db.exists("Demand", row["name"]):
-			frappe.delete_doc("Demand", row["name"], force=True, ignore_permissions=True)
+		_hard_delete("Demand", row["name"])
 	return removed
 
 
 def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
+	if not _doctype_exists("Procurement Plan"):
+		return removed
 	for row in frappe.get_all("Procurement Plan", fields=["name", "plan_code"]):
 		code = (row.get("plan_code") or row.get("name") or "").strip()
 		if code in _KEEP_PLAN_CODES:
 			continue
 		removed.append(row["name"])
-		if not dry_run and frappe.db.exists("Procurement Plan", row["name"]):
-			frappe.delete_doc("Procurement Plan", row["name"], force=True, ignore_permissions=True)
+		if not dry_run:
+			_hard_delete("Procurement Plan", row["name"])
 	return removed
 
 
 def _purge_procurement_packages(*, dry_run: bool) -> list[str]:
-	removed: list[str] = []
-	for row in frappe.get_all("Procurement Package", fields=["name", "package_code"]):
-		code = (row.get("package_code") or row.get("name") or "").strip()
-		if code in _KEEP_PKG_CODES:
-			continue
-		removed.append(row["name"])
-		if dry_run:
-			continue
-		_delete_package_cascade(code)
-	return removed
+	"""PP2 Package DocType retired."""
+	return []
 
 
 def _purge_non_master_tenders(*, dry_run: bool) -> list[str]:
@@ -268,14 +261,14 @@ def _purge_plc_outside_stable_registry(*, dry_run: bool) -> dict[str, Any]:
 	for h in handoffs_to_remove:
 		name = h["name"]
 		if frappe.db.exists("Procurement Handoff Card", name):
-			frappe.delete_doc("Procurement Handoff Card", name, force=True, ignore_permissions=True)
+			_hard_delete("Procurement Handoff Card", name)
 			deleted_handoffs.append(name)
 
 	deleted_journeys: list[str] = []
 	for j in journeys_to_remove:
 		name = j["name"]
 		if frappe.db.exists("Procurement Journey", name):
-			frappe.delete_doc("Procurement Journey", name, force=True, ignore_permissions=True)
+			_hard_delete("Procurement Journey", name)
 			deleted_journeys.append(name)
 
 	return {

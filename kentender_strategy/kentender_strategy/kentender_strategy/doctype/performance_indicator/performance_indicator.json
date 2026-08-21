@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "strategic_objective",
+  "strategic_outcome",
+  "plan_version",
+  "indicator_code",
+  "title",
+  "definition",
+  "measurement_type",
+  "unit",
+  "measurement_frequency",
+  "data_source",
+  "responsible_function",
+  "order_index",
+  "section_fixture_ownership",
+  "fixture_namespace",
+  "owner_org_unit"
+ ],
+ "fields": [
+  {
+   "fieldname": "strategic_objective",
+   "fieldtype": "Link",
+   "label": "Strategic Objective",
+   "options": "Strategic Objective",
+   "search_index": 1
+  },
+  {
+   "fieldname": "strategic_outcome",
+   "fieldtype": "Link",
+   "label": "Strategic Outcome",
+   "options": "Strategic Outcome",
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Strategic Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "indicator_code",
+   "fieldtype": "Data",
+   "label": "Indicator Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "definition",
+   "fieldtype": "Small Text",
+   "label": "Definition",
+   "reqd": 1
+  },
+  {
+   "fieldname": "measurement_type",
+   "fieldtype": "Select",
+   "label": "Measurement Type",
+   "options": "Numeric\nPercentage\nCurrency\nDuration\nCount\nMilestone\nBoolean",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit"
+  },
+  {
+   "fieldname": "measurement_frequency",
+   "fieldtype": "Select",
+   "label": "Measurement Frequency",
+   "options": "Monthly\nQuarterly\nAnnual\nDue date\nPlan end",
+   "reqd": 1
+  },
+  {
+   "fieldname": "data_source",
+   "fieldtype": "Data",
+   "label": "Data Source",
+   "reqd": 1
+  },
+  {
+   "fieldname": "responsible_function",
+   "fieldtype": "Data",
+   "label": "Responsible Function",
+   "reqd": 1
+  },
+  {
+   "fieldname": "order_index",
+   "fieldtype": "Int",
+   "label": "Order Index",
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "section_fixture_ownership",
+   "fieldtype": "Section Break",
+   "label": "Fixture Ownership",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "search_index": 1
+  },
+  {
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "Performance Indicator",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "title",
+ "search_fields": "indicator_code,title"
+}

@@ -22,9 +22,6 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_SUB_PROGRAM_CODE,
 	IT_TARGET_CODE,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.clear import (
-	run_clear as clear_pp2_works_planning,
-)
 
 
 def _dev_or_test_clear_allowed() -> bool:
@@ -45,39 +42,8 @@ def _delete_doc(doctype: str, name: str, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_planning(*, deleted: dict[str, int]) -> None:
-	for doctype, filter_field in (
-		("Package Method Decision", "package_code"),
-		("Package Readiness Result", "package_code"),
-		("Package Review Decision", "package_code"),
-	):
-		for name in frappe.get_all(doctype, filters={filter_field: IT_PKG_CODE}, pluck="name"):
-			_delete_doc(doctype, name, deleted)
-
-	line_name = frappe.db.get_value(
-		"Procurement Package Line",
-		{"package_line_code": IT_PKG_LINE_CODE},
-		"name",
-	)
-	if line_name:
-		frappe.flags.skip_package_line_rollup = True
-		try:
-			_delete_doc("Procurement Package Line", line_name, deleted)
-		finally:
-			frappe.flags.pop("skip_package_line_rollup", None)
-
-	for line_name in frappe.get_all(
-		"Procurement Package Line",
-		filters={"package_id": IT_PKG_CODE},
-		pluck="name",
-	):
-		frappe.flags.skip_package_line_rollup = True
-		try:
-			_delete_doc("Procurement Package Line", line_name, deleted)
-		finally:
-			frappe.flags.pop("skip_package_line_rollup", None)
-
-	_delete_doc("Procurement Package", IT_PKG_CODE, deleted)
-	_delete_doc("Procurement Handoff Card", IT_INCLUSION_CODE, deleted)
+	"""PP2 IT planning supplement retired."""
+	return
 
 
 def _clear_it_demand(*, deleted: dict[str, int]) -> None:
@@ -89,66 +55,13 @@ def _clear_it_demand(*, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_budget_line(*, deleted: dict[str, int]) -> None:
-	line_name = frappe.db.get_value("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}, "name")
-	if not line_name:
-		return
-	frappe.flags.budget_line_force_delete = True
-	try:
-		_delete_doc("Budget Line", line_name, deleted)
-	finally:
-		frappe.flags.budget_line_force_delete = False
+	"""No-op: legacy Budget DocTypes removed in MVP-1 preparatory teardown."""
+	deleted["Budget (teardown)"] = deleted.get("Budget (teardown)", 0)
 
 
 def _clear_it_strategy(*, deleted: dict[str, int]) -> None:
-	plan_name = None
-	program_name = frappe.db.get_value(
-		"Strategy Program",
-		{"program_code": IT_PROGRAM_CODE},
-		"name",
-	)
-	if program_name:
-		plan_name = frappe.db.get_value("Strategy Program", program_name, "strategic_plan")
-
-	prev_status = None
-	if plan_name and frappe.db.exists("Strategic Plan", plan_name):
-		prev_status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-		if (prev_status or "").strip() != "Draft":
-			frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
-
-	sub_program_name = None
-	if program_name:
-		sub_program_name = frappe.db.get_value(
-			"Sub Program",
-			{"program": program_name, "sub_program_code": IT_SUB_PROGRAM_CODE},
-			"name",
-		)
-
-	objective_name = None
-	if sub_program_name:
-		objective_name = frappe.db.get_value(
-			"Strategy Objective",
-			{"sub_program": sub_program_name, "objective_code": IT_OBJECTIVE_CODE},
-			"name",
-		)
-
-	target_name = None
-	if objective_name:
-		target_name = frappe.db.get_value(
-			"Strategy Target",
-			{"objective": objective_name, "target_code": IT_TARGET_CODE},
-			"name",
-		)
-
-	for doctype, name in (
-		("Strategy Target", target_name),
-		("Strategy Objective", objective_name),
-		("Sub Program", sub_program_name),
-		("Strategy Program", program_name),
-	):
-		_delete_doc(doctype, name or "", deleted)
-
-	if plan_name and prev_status and (prev_status or "").strip() != "Draft":
-		frappe.db.set_value("Strategic Plan", plan_name, "status", prev_status, update_modified=False)
+	"""No-op: legacy Strategy DocTypes removed in MVP-1 preparatory teardown."""
+	deleted["Strategy (teardown)"] = deleted.get("Strategy (teardown)", 0)
 
 
 def _clear_it_std_draft() -> dict[str, Any]:
@@ -192,7 +105,7 @@ def clear_stable_platform_seed(
 	_clear_it_budget_line(deleted=deleted)
 	_clear_it_strategy(deleted=deleted)
 
-	pp2_clear = clear_pp2_works_planning(skip_guard=skip_guard)
+	pp2_clear = {"ok": True, "skipped": True, "reason": "PP2_PLANNING_RETIRED"}
 	for doctype, count in (pp2_clear.get("deleted") or {}).items():
 		deleted[doctype] = deleted.get(doctype, 0) + int(count)
 

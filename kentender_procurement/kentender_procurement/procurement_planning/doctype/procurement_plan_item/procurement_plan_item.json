@@ -1,0 +1,262 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:plan_item_code",
+ "creation": "2026-08-09 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "plan",
+  "plan_item_code",
+  "col_a",
+  "procuring_entity",
+  "owner_org_unit",
+  "delivery_org_unit",
+  "formation_idempotency_key",
+  "formation_batch_index",
+  "section_state",
+  "baseline_state",
+  "current_approved_item_version",
+  "draft_item_version",
+  "tender_takeup_projection",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "label": "Procurement Plan",
+   "options": "Procurement Plan",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plan_item_code",
+   "fieldtype": "Data",
+   "label": "Plan Item Code",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "delivery_org_unit",
+   "fieldtype": "Link",
+   "label": "Delivery Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "formation_idempotency_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Formation Idempotency Key",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "formation_batch_index",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Formation Batch Index",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "Baseline"
+  },
+  {
+   "fieldname": "baseline_state",
+   "fieldtype": "Select",
+   "label": "Baseline State",
+   "options": "Proposed\nActive\nRemoved",
+   "default": "Proposed",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_approved_item_version",
+   "fieldtype": "Link",
+   "label": "Current Approved Item Version",
+   "options": "Procurement Plan Item Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "draft_item_version",
+   "fieldtype": "Link",
+   "label": "Draft Item Version",
+   "options": "Procurement Plan Item Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_takeup_projection",
+   "fieldtype": "Select",
+   "label": "Tender Take-up Projection",
+   "options": "Not taken up\nTender in preparation\nTender active\nContracted\nClosed downstream",
+   "default": "Not taken up"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-09 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Procurement Plan Item",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Contributor",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Reviewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Designated Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tender Initiator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "plan_item_code",
+ "show_title_field_in_link": 1,
+ "search_fields": "plan_item_code"
+}

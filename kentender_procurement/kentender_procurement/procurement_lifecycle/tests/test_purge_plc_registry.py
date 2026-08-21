@@ -20,7 +20,7 @@ def _minimal_evidence():
 				"label": "x",
 				"object_type": "Demand",
 				"object_code": "DEM-PURGE-TEST",
-				"module": "Demand Intake and Approval",
+				"module": "Demands",
 				"route": "/desk/",
 				"visibility": "Internal",
 			}

@@ -11,15 +11,18 @@ import frappe
 from frappe.utils import get_datetime, now_datetime
 
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
-from kentender_procurement.procurement_planning.pp2_constants import (
-	PKG_APPROVED,
-	PKG_READY_FOR_RELEASE,
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
 )
 
 PIPELINE_STAGES = (
-	("demands_under_review", "Demands under review", "/desk/demand-hub"),
-	("approved_awaiting_planning", "Approved demands awaiting planning", "/desk/planning-hub"),
-	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk/planning-hub"),
+	("demands_under_review", "Demands under review", "/desk/demands-workspace"),
+	(
+		"approved_awaiting_planning",
+		"Approved demands awaiting planning",
+		"/desk/demands-workspace",
+	),
+	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk"),
 	("tenders_in_preparation", "Tenders in preparation", "/desk/tender-management-v2"),
 	("published_and_open", "Published and open", "/desk/publications"),
 	("closed_awaiting_next", "Closed awaiting next stage", "/desk/tender-management-v2"),
@@ -38,46 +41,20 @@ _TM_CLOSED_AWAITING = frozenset(("Closed", "Closed - No Valid Submissions", "Ope
 _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
-def _count_demands_under_review(pe: str) -> int:
-	return int(
-		frappe.db.count(
-			"Demand",
-			{
-				"procuring_entity": ["in", pe_aliases(pe)],
-				"status": ["in", ["Pending HoD Approval", "Pending Finance Approval"]],
-			},
-		)
-	)
+def _count_demands_under_review(pe: str, user: str) -> int:
+	_ = pe, user
+	# Demands package retired; guard is permanently unreachable but kept explicit.
+	if not demand_doctype_available():
+		return 0
+	return 0
 
 
 def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
-	try:
-		from kentender_procurement.procurement_planning.services.approved_demand_queue import (
-			get_approved_demands_awaiting_planning,
-		)
-
-		actor = (user or frappe.session.user or "").strip() or "Administrator"
-		payload = get_approved_demands_awaiting_planning(
-			{"procuring_entity": pe},
-			actor,
-		) or {}
-		rows = payload.get("items") or payload.get("demands") or payload.get("rows") or []
-		if isinstance(rows, list) and rows:
-			return len(rows)
-		if isinstance(payload.get("total"), (int, float)):
-			return int(payload["total"])
-	except Exception:
-		pass
-	return int(
-		frappe.db.count(
-			"Demand",
-			{
-				"procuring_entity": ["in", pe_aliases(pe)],
-				"status": "Approved",
-				"planning_status": ["in", ["Not Planned", "Partially Planned", "Planning Ready"]],
-			},
-		)
-	)
+	_ = pe, user
+	# Demands package retired; guard is permanently unreachable but kept explicit.
+	if not demand_doctype_available():
+		return 0
+	return 0
 
 
 def _packages_with_tender_initiation(pe: str) -> set[str]:
@@ -116,31 +93,8 @@ def _packages_with_tender_initiation(pe: str) -> set[str]:
 
 
 def _count_plan_awaiting_tender(pe: str) -> int:
-	"""Approved plan items that do not yet have a tender / CFG record (PRD §9)."""
-	if not frappe.db.exists("DocType", "Procurement Package"):
-		return 0
-	filters: dict[str, Any] = {
-		"status": ["in", [PKG_APPROVED, PKG_READY_FOR_RELEASE]],
-	}
-	if frappe.db.has_column("Procurement Package", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(pe)]
-	elif frappe.db.has_column("Procurement Package", "procuring_entity"):
-		filters["procuring_entity"] = pe
-	rows = frappe.get_all(
-		"Procurement Package",
-		filters=filters,
-		fields=["name", "package_code"],
-		limit=2000,
-	)
-	claimed = _packages_with_tender_initiation(pe)
-	count = 0
-	for r in rows:
-		name = (r.get("name") or "").strip()
-		code = (r.get("package_code") or "").strip()
-		if name in claimed or (code and code in claimed):
-			continue
-		count += 1
-	return count
+	"""PP2 Package queue retired — MVP-1 Plan Item take-up not yet live."""
+	return 0
 
 
 def _tm_filters(pe: str) -> dict[str, Any]:
@@ -223,7 +177,7 @@ def get_home_pipeline(
 		procuring_entity
 	)
 	counts = {
-		"demands_under_review": _count_demands_under_review(procuring_entity),
+		"demands_under_review": _count_demands_under_review(procuring_entity, user),
 		"approved_awaiting_planning": _count_approved_awaiting_planning(procuring_entity, user),
 		"plan_awaiting_tender": _count_plan_awaiting_tender(procuring_entity),
 		"tenders_in_preparation": _count_tenders_in_preparation(procuring_entity),

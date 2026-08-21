@@ -25,14 +25,14 @@ from typing import Any, Final
 import frappe
 
 from kentender_budget.seeds.works_master_budget_seed import BUDGET_LINE_CODE, BUDGET_NAME
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_ID
+from kentender_procurement.procurement_lifecycle.legacy_demand_codes import (
+	WORKS_DEMAND_ID as DEMAND_ID,
+)
 from kentender_procurement.procurement_lifecycle.seeds.purge_plc_outside_works_master_registry import (
 	purge_procurement_lifecycle_plc_outside_works_master_registry,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.constants import (
-	PKG_CODE,
-	PLAN_CODE,
-)
+PKG_CODE = "PKG-MOH-2026-001"
+PLAN_CODE = "PLAN-MOH-2026"
 from kentender_procurement.tender_management.seeds.purge_smoke_test_tenders import run as purge_smoke_tenders
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
 
@@ -78,13 +78,23 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 
 def _purge_demands(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	for row in frappe.get_all("Demand", fields=["name", "demand_id"]):
-		if (row.get("demand_id") or "").strip() == DEMAND_ID:
+	from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+		demand_doctype_available,
+	)
+
+	if not demand_doctype_available():
+		return removed
+	for row in frappe.get_all("Demand", fields=["name", "demand_code"]):
+		code = (row.get("demand_code") or "").strip()
+		if code == DEMAND_ID:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
-		frappe.db.delete("Demand Item", {"parent": row["name"]})
+		for item in frappe.get_all(
+			"Demand Item", filters={"demand": row["name"]}, pluck="name"
+		):
+			frappe.delete_doc("Demand Item", item, force=True, ignore_permissions=True)
 		if frappe.db.exists("Demand", row["name"]):
 			frappe.delete_doc("Demand", row["name"], force=True, ignore_permissions=True)
 	return removed
@@ -92,6 +102,8 @@ def _purge_demands(*, dry_run: bool) -> list[str]:
 
 def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
+	if not frappe.db.exists("DocType", "Procurement Plan"):
+		return removed
 	for row in frappe.get_all("Procurement Plan", fields=["name", "plan_code"]):
 		if (row.get("plan_code") or row.get("name") or "").strip() == PLAN_CODE:
 			continue
@@ -102,27 +114,8 @@ def _purge_procurement_plans(*, dry_run: bool) -> list[str]:
 
 
 def _purge_procurement_packages(*, dry_run: bool) -> list[str]:
-	removed: list[str] = []
-	for row in frappe.get_all("Procurement Package", fields=["name", "package_code"]):
-		if (row.get("package_code") or row.get("name") or "").strip() == PKG_CODE:
-			continue
-		removed.append(row["name"])
-		if dry_run:
-			continue
-		for line_name in frappe.get_all(
-			"Procurement Package Line",
-			filters={"package_id": row["name"]},
-			pluck="name",
-		):
-			frappe.flags.skip_package_line_rollup = True
-			try:
-				if frappe.db.exists("Procurement Package Line", line_name):
-					frappe.delete_doc("Procurement Package Line", line_name, force=True, ignore_permissions=True)
-			finally:
-				frappe.flags.pop("skip_package_line_rollup", None)
-		if frappe.db.exists("Procurement Package", row["name"]):
-			frappe.delete_doc("Procurement Package", row["name"], force=True, ignore_permissions=True)
-	return removed
+	"""PP2 Package DocType retired — no-op purge."""
+	return []
 
 
 def _purge_non_master_tenders(*, dry_run: bool) -> list[str]:

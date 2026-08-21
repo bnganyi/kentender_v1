@@ -1,0 +1,53 @@
+{
+ "content": null,
+ "creation": "2026-08-04 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-08-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "strategy-performance",
+ "owner": "Administrator",
+ "page_name": "strategy-performance",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Strategy Viewer"
+  },
+  {
+   "role": "Strategy Manager"
+  },
+  {
+   "role": "Strategy Officer"
+  },
+  {
+   "role": "Strategy Reviewer"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Performance Officer"
+  },
+  {
+   "role": "Performance Verifier"
+  },
+  {
+   "role": "Auditor"
+  },
+  {
+   "role": "Procurement Officer"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Strategy Performance"
+}

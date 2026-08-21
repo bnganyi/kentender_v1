@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "autoname": "field:review_reference",
+ "creation": "2026-08-18 23:19:25.816993",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "review_reference",
+  "departmental_need",
+  "action",
+  "prior_state",
+  "result_state",
+  "reason",
+  "actor",
+  "effective_assignment",
+  "scope",
+  "workflow_task",
+  "occurred_at",
+  "request_id",
+  "source_ip",
+  "session_id",
+  "before_state_hash",
+  "after_state_hash",
+  "idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "review_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Review Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Action",
+   "options": "Create\nUpdate\nSubmit\nResubmit\nReturn for correction\nAccept for planning\nDo not take forward\nWithdraw\nRequest withdrawal\nApprove withdrawal\nAttach document\nRemove document",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "prior_state",
+   "fieldtype": "Data",
+   "label": "Prior State",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_state",
+   "fieldtype": "Data",
+   "label": "Result State",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_assignment",
+   "fieldtype": "Data",
+   "label": "Effective Assignment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Scope",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_task",
+   "fieldtype": "Link",
+   "label": "Workflow Task",
+   "options": "Workflow Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "label": "Occurred At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_id",
+   "fieldtype": "Data",
+   "label": "Request ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "Source IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "label": "Session ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "before_state_hash",
+   "fieldtype": "Data",
+   "label": "Before State Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "after_state_hash",
+   "fieldtype": "Data",
+   "label": "After State Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-18 23:19:25.816993",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Review",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

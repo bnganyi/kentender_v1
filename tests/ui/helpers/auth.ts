@@ -56,6 +56,87 @@ export async function loginAsStrategyManager(page: Page) {
 	);
 }
 
+/** STR-SUP-005 — Strategy Viewer (see strategy_role_users seed). */
+export async function loginAsStrategyViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_VIEWER_USER || 'moh.viewer@example.test',
+		process.env.UI_STRATEGY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** STR-SUP-005 — Strategy Officer (MOH). */
+export async function loginAsStrategyOfficer(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_OFFICER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_STRATEGY_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** NDS-CHG-002 §10.1 — Departmental Need Requester (Grace Wanjiku). */
+export async function loginAsDepartmentalNeedsRequester(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_REQUESTER_USER || 'grace.wanjiku@moh.example.test',
+		process.env.UI_NDS_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.5 — single-scope Demand Requester (Dr Miriam Njeri). */
+export async function loginAsDemandRequester(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_REQUESTER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_DEMAND_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.5 — multi-scope System Manager + two Requester pairs. */
+export async function loginAsDemandMultiscopeAdmin(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_MULTISCOPE_USER || 'kentender.multiscope.admin@example.test',
+		process.env.UI_DEMAND_MULTISCOPE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.5 — System Manager with no Demand Requester assignment. */
+export async function loginAsDemandNoScopeAdmin(page: Page) {
+	await login(
+		page,
+		process.env.UI_DEMAND_NOSCOPE_USER || 'kentender.system.admin@example.test',
+		process.env.UI_DEMAND_NOSCOPE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Contract v2.2 §7.1 — Business Approver (James Mwangi). */
+export async function loginAsBusinessApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUSINESS_USER || 'moh.business.approver@example.test',
+		process.env.UI_BUSINESS_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** DEM-UI-05 — Procurement Approval Authority (Amina Otieno). */
+export async function loginAsProcurementApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_PROCUREMENT_APPROVER_USER || 'moh.procurement.approver@example.test',
+		process.env.UI_PROCUREMENT_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
+export async function loginAsStrategyViewerOtherPe(page: Page) {
+	await login(
+		page,
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'kisumu.health.officer@example.test',
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 export async function loginAsPlanningAuthority(page: Page) {
 	await login(
 		page,
@@ -119,6 +200,60 @@ export async function loginAsAuditor(page: Page) {
 		page,
 		process.env.UI_AUDITOR_USER || 'auditor@moh.test',
 		process.env.UI_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Viewer (PE-MOH). */
+export async function loginAsBudgetViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_VIEWER_USER || 'moh.viewer@example.test',
+		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Officer (PE-MOH). */
+export async function loginAsBudgetOfficer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OFFICER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Reviewer (PE-MOH). */
+export async function loginAsBudgetReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_REVIEWER_USER || 'moh.budget.reviewer@example.test',
+		process.env.UI_BUDGET_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Authority (PE-MOH). */
+export async function loginAsBudgetAuthority(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_AUTHORITY_USER || 'moh.budget.authority@example.test',
+		process.env.UI_BUDGET_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — dual Officer+Authority for AC-018 SoD (PE-MOH). */
+export async function loginAsBudgetOfficerAuthority(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'moh.budget.officer.authority@example.test',
+		process.env.UI_BUDGET_OFFICER_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** BUD-SUP-002 — Budget Officer scoped to PE-MOE (cross-entity denial vs PE-MOH). */
+export async function loginAsBudgetOtherEntity(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'kisumu.health.officer@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

@@ -1,7 +1,21 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P1-002 / PP4 nav IA — single Planning Workbench entry contract."""
+"""P1-002 / PP4 nav IA — single Planning Workbench entry contract.
+
+TEMPORARY DECOMMISSION (2026-08-19): Planning Home is broken against the
+Demands doctypes deleted by the Departmental Needs greenfield rebuild
+(RBD-3xx, deferred out of scope — see
+docs/mvp-1-r1/01_departmental_needs/06_Departmental_Needs_Greenfield_Rebuild_Tracker.md).
+Until Planning is rebuilt, the "Procurement Plans" rail entry is routed to
+the shared "coming-soon" capability overview (same mechanism as Analytics /
+Evaluation / Awards / Contract Management / STD Versions) instead of
+`planning-workspace`. This file asserts that decommissioned state. To
+restore the original contract, revert `link_to`/`route_options`/`url` back
+to `planning-workspace` / `/desk/planning-workspace` in
+`workspace_sidebar/procurement.json` and remove "Procurement Plans" from
+`PLANNED_SIDEBAR_LABELS` in `setup/sidebar_availability.py`.
+"""
 
 from __future__ import annotations
 
@@ -36,8 +50,6 @@ _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	}
 )
 
-_ALLOWED_PLANNING_URL = "/desk/planning-hub"
-
 _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS: tuple[str, ...] = (
 	"/procurement-planning/approved-demands",
 	"/procurement-planning/evidence",
@@ -51,17 +63,20 @@ _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS: tuple[str, ...] = (
 )
 
 
+def _load_items() -> list[dict]:
+	path = os.path.join(
+		frappe.get_app_path("kentender_procurement"),
+		"workspace_sidebar",
+		"procurement.json",
+	)
+	with open(path, encoding="utf-8") as f:
+		data = json.load(f)
+	return data.get("items") or []
+
+
 class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 	def test_procurement_sidebar_has_single_planning_workbench_link(self):
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"workspace_sidebar",
-			"procurement.json",
-		)
-		self.assertTrue(os.path.isfile(path), msg=f"Missing sidebar export: {path}")
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
-		items = data.get("items") or []
+		items = _load_items()
 		planning_rows = [
 			row
 			for row in items
@@ -73,18 +88,16 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			msg="Procurement rail must expose exactly one Planning Workbench link.",
 		)
 		row = planning_rows[0]
-		self.assertEqual((row.get("link_to") or "").strip(), "Procurement Planning")
-		self.assertEqual((row.get("url") or "").strip(), _ALLOWED_PLANNING_URL)
+		self.assertEqual((row.get("link_to") or "").strip(), "coming-soon")
+		self.assertEqual((row.get("link_type") or "").strip(), "Page")
+		self.assertIn(_EXPECTED_PLANNING_LABEL, row.get("route_options") or "")
 		self.assertEqual(int(row.get("child") or 0), 0)
 		self.assertEqual(int(row.get("indent") or 0), 0)
 
 	def test_planning_workbench_link_excludes_evidence_route(self):
-		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
 		planning_rows = [
 			row
-			for row in data.get("items") or []
+			for row in _load_items()
 			if row.get("type") == "Link" and (row.get("label") or "") == _EXPECTED_PLANNING_LABEL
 		]
 		evidence_urls = [
@@ -97,171 +110,46 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			msg=f"Planning Evidence route must not appear in persistent Planning nav: {evidence_urls}",
 		)
 
-	def test_planning_workbench_link_uses_only_root_canonical_url(self):
-		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
+	def test_planning_workbench_link_has_no_forbidden_child_url(self):
+		"""Decommissioned entry carries no `url` at all; guard survives if one is ever restored."""
 		planning_rows = [
 			row
-			for row in data.get("items") or []
+			for row in _load_items()
 			if row.get("type") == "Link" and (row.get("label") or "") == _EXPECTED_PLANNING_LABEL
 		]
-		urls = [(row.get("url") or "").strip() for row in planning_rows]
-		for url in urls:
-			self.assertEqual(url, _ALLOWED_PLANNING_URL)
-		for url in urls:
-			lower = url.lower()
+		for row in planning_rows:
+			url = (row.get("url") or "").strip().lower()
 			for forbidden in _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS:
 				self.assertNotIn(
 					forbidden,
-					lower,
+					url,
 					msg=f"Forbidden detail route substring {forbidden!r} in Planning nav URL {url!r}",
 				)
 
 	def test_planning_workbench_link_excludes_forbidden_labels(self):
-		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
-		labels = {
-			row.get("label") or ""
-			for row in data.get("items") or []
-			if row.get("type") == "Link" and (row.get("url") or "").strip().startswith("/desk/planning-hub")
-		}
+		labels = {row.get("label") or "" for row in _load_items() if row.get("type") == "Link"}
 		forbidden = labels & _FORBIDDEN_PP2_LABELS
 		self.assertFalse(
 			forbidden,
 			msg=f"Forbidden permanent Planning nav labels present: {sorted(forbidden)}",
 		)
 
-	def test_procurement_rail_entry_targets_planning_workspace(self):
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"workspace_sidebar",
-			"procurement.json",
-		)
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
+	def test_procurement_rail_entry_routes_to_coming_soon_while_decommissioned(self):
 		pp_links = [
 			row
-			for row in data.get("items") or []
+			for row in _load_items()
 			if row.get("type") == "Link" and row.get("label") == _EXPECTED_PLANNING_LABEL
 		]
 		self.assertEqual(len(pp_links), 1)
-		self.assertEqual((pp_links[0].get("link_to") or "").strip(), "Procurement Planning")
-		self.assertEqual((pp_links[0].get("url") or "").strip(), _ALLOWED_PLANNING_URL)
+		self.assertEqual((pp_links[0].get("link_to") or "").strip(), "coming-soon")
+		self.assertIn(_EXPECTED_PLANNING_LABEL, pp_links[0].get("route_options") or "")
 
-	def test_pp2_planning_router_has_no_forbidden_implementation_copy(self):
-		import re
-
+	def test_pp2_planning_router_removed(self):
+		"""PP2 retirement — legacy router asset must not remain on disk."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"public",
 			"js",
 			"pp2_planning_router.js",
 		)
-		self.assertTrue(os.path.isfile(path), msg=f"Missing router asset: {path}")
-		source = open(path, encoding="utf-8").read()
-		translated = re.findall(r'__\(\s*"([^"]+)"\s*\)', source)
-		translated += re.findall(r"__\(\s*'([^']+)'\s*\)", source)
-		forbidden = (
-			"shell baseline",
-			"feature content deferred",
-			"stub content",
-			"P5 surfaces completed",
-			"this will be implemented later",
-			"technical placeholder",
-			"Choose a planning workspace action",
-			"Open a planning queue from the sidebar",
-			"Canonical PP2 rendering is active",
-		)
-		hits = [
-			text
-			for text in translated
-			if any(token.lower() in text.lower() for token in forbidden)
-		]
-		self.assertFalse(hits, msg=f"Forbidden implementation copy in router __() strings: {hits}")
-
-	def test_pp2_planning_router_forbids_packages_as_persistent_nav(self):
-		import re
-
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"public",
-			"js",
-			"pp2_planning_router.js",
-		)
-		self.assertTrue(os.path.isfile(path), msg=f"Missing router asset: {path}")
-		source = open(path, encoding="utf-8").read()
-		labels_block = re.search(
-			r"const\s+FORBIDDEN_PLANNING_NAV_LABELS\s*=\s*\{(?P<body>.*?)\}\s*;",
-			source,
-			re.DOTALL,
-		)
-		self.assertIsNotNone(
-			labels_block,
-			msg="FORBIDDEN_PLANNING_NAV_LABELS block missing in pp2_planning_router.js",
-		)
-		label_body = labels_block.group("body")
-		self.assertTrue(
-			'"packages": true' in label_body or "packages: true" in label_body,
-			msg="Packages must be explicitly forbidden as ordinary persistent Planning nav label (P1-005).",
-		)
-		hrefs_block = re.search(
-			r"const\s+FORBIDDEN_PLANNING_HREF_SUBSTRINGS\s*=\s*\[(?P<body>.*?)\]\s*;",
-			source,
-			re.DOTALL,
-		)
-		self.assertIsNotNone(
-			hrefs_block,
-			msg="FORBIDDEN_PLANNING_HREF_SUBSTRINGS block missing in pp2_planning_router.js",
-		)
-		self.assertIn(
-			'"/procurement-planning/packages"',
-			hrefs_block.group("body"),
-			msg="Packages route must be explicitly forbidden as ordinary persistent Planning nav href (P1-005).",
-		)
-
-	def test_pp2_planning_router_forbids_planning_evidence_as_persistent_nav(self):
-		import re
-
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"public",
-			"js",
-			"pp2_planning_router.js",
-		)
-		self.assertTrue(os.path.isfile(path), msg=f"Missing router asset: {path}")
-		source = open(path, encoding="utf-8").read()
-		labels_block = re.search(
-			r"const\s+FORBIDDEN_PLANNING_NAV_LABELS\s*=\s*\{(?P<body>.*?)\}\s*;",
-			source,
-			re.DOTALL,
-		)
-		self.assertIsNotNone(
-			labels_block,
-			msg="FORBIDDEN_PLANNING_NAV_LABELS block missing in pp2_planning_router.js",
-		)
-		label_body = labels_block.group("body")
-		self.assertTrue(
-			'"planning evidence": true' in label_body or "planning evidence: true" in label_body,
-			msg="Planning Evidence must be explicitly forbidden as ordinary persistent Planning nav label (P1-006).",
-		)
-		hrefs_block = re.search(
-			r"const\s+FORBIDDEN_PLANNING_HREF_SUBSTRINGS\s*=\s*\[(?P<body>.*?)\]\s*;",
-			source,
-			re.DOTALL,
-		)
-		self.assertIsNotNone(
-			hrefs_block,
-			msg="FORBIDDEN_PLANNING_HREF_SUBSTRINGS block missing in pp2_planning_router.js",
-		)
-		self.assertIn(
-			'"/procurement-planning/evidence"',
-			hrefs_block.group("body"),
-			msg="Planning Evidence route must be explicitly forbidden as ordinary persistent Planning nav href (P1-006).",
-		)
-		self.assertIn(
-			"isForbiddenPlanningNavLink",
-			source,
-			msg="Router must keep stale sidebar guard function for planning evidence links.",
-		)
+		self.assertFalse(os.path.isfile(path), msg=f"Legacy PP2 router must be deleted: {path}")

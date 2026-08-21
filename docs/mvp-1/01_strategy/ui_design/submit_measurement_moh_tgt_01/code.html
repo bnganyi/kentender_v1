@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Submit Performance Measurement</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-secondary-fixed": "#001d34",
+                        "on-background": "#1a1b20",
+                        "secondary-container": "#7bbeff",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "surface-dim": "#dad9df",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e8e7ed",
+                        "outline-variant": "#c3c6d1",
+                        "primary-container": "#00346f",
+                        "inverse-primary": "#abc7ff",
+                        "surface-container": "#eeedf3",
+                        "surface-container-highest": "#e2e2e8",
+                        "tertiary-fixed": "#d3e4ff",
+                        "tertiary": "#26364b",
+                        "on-secondary-container": "#004c7c",
+                        "on-surface": "#1a1b20",
+                        "on-surface-variant": "#434750",
+                        "status-reserved": "#F59E0B",
+                        "outline": "#737781",
+                        "status-exhausted": "#EF4444",
+                        "secondary-fixed": "#cfe5ff",
+                        "status-committed": "#6366F1",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#7b9ee0",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-primary-fixed": "#001b3f",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "primary-fixed": "#d7e2ff",
+                        "status-available": "#10B981",
+                        "inverse-surface": "#2f3035",
+                        "tertiary-container": "#26364b",
+                        "surface-container-low": "#f4f3f9",
+                        "surface-tint": "#395e9b",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "secondary": "#01629d",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "background": "#f9f9fe",
+                        "surface-variant": "#e2e2e8",
+                        "surface-bright": "#f9f9fe",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f9f9fe",
+                        "inverse-on-surface": "#f1f0f6",
+                        "primary": "#001f48"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "card-padding": "20px",
+                        "container-padding": "16px",
+                        "gutter": "12px",
+                        "base-unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-sm": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9fe; color: #1a1b20; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-block { background-color: #ffffff; border: 1px solid #c3c6d1; border-radius: 0.5rem; padding: 20px; }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col">
+<!-- Top Navigation (Shell suppressed based on instructions for linear task, but keeping simple header) -->
+<header class="bg-surface-container-lowest border-b border-outline-variant h-16 flex items-center px-section-gap sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary">Submit performance measurement</h1>
+</div>
+</div>
+</header>
+<main class="flex-grow p-section-gap max-w-5xl mx-auto w-full flex flex-col gap-section-gap">
+<!-- Context Header -->
+<section>
+<div class="text-sm text-on-surface-variant mb-1 flex items-center gap-2">
+<span>Digital Health Services</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span>Health Information Systems</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-medium text-on-surface">Reliable and accessible digital clinical services</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">MOH-TGT-01</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2">At least 99.9% annual availability by 30 June 2028</p>
+</section>
+<!-- Read-only Reference Data Block -->
+<section class="data-block bg-surface-container-lowest">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-4 flex items-center gap-2 border-b border-surface-variant pb-2">
+<span class="material-symbols-outlined">info</span> Target Reference
+            </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Indicator</span>
+<span class="font-body-md text-body-md text-on-surface">Availability of core clinical information systems</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Target</span>
+<span class="font-data-mono text-data-mono text-status-available">≥ 99.9%</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Tolerance</span>
+<span class="font-data-mono text-data-mono text-status-reserved">99.8%</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Baseline</span>
+<span class="font-data-mono text-data-mono text-on-surface">97.8% (30 Jun 2026)</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Frequency</span>
+<span class="font-body-md text-body-md text-on-surface">Monthly</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Data Source</span>
+<span class="font-body-md text-body-md text-on-surface">Approved infrastructure-monitoring report</span>
+</div>
+</div>
+</section>
+<!-- Measurement Form -->
+<section class="data-block bg-surface-container-lowest">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-6 border-b border-surface-variant pb-2">Record Measurement</h3>
+<div class="bg-surface-container p-3 rounded mb-6 flex items-start gap-3 border border-outline-variant">
+<span class="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
+<p class="font-body-md text-body-md text-on-surface">Ensure measurements are not duplicated for the same target and period. Only one official measurement is permitted per period unless superseding a prior record.</p>
+</div>
+<form class="grid grid-cols-1 md:grid-cols-2 gap-section-gap">
+<!-- Measurement Period -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Measurement Period <span class="text-error">*</span></label>
+<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="September 2027"/>
+</div>
+<!-- Measurement Date -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Measurement Date <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors pr-10" type="text" value="3 October 2027"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 transform -translate-y-1/2 text-outline">calendar_today</span>
+</div>
+</div>
+<!-- Actual Value -->
+<div class="md:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<div class="lg:col-span-1">
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Actual Value <span class="text-error">*</span></label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface border border-outline-variant rounded-l p-2 font-data-mono text-data-mono text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" step="0.01" type="number" value="99.82"/>
+<span class="bg-surface-container-high border border-l-0 border-outline-variant rounded-r p-2 font-data-mono text-data-mono text-on-surface-variant flex items-center justify-center min-w-[40px]">%</span>
+</div>
+</div>
+<!-- Derived Preview Block (Interactive visual feedback) -->
+<div class="lg:col-span-2 bg-surface p-4 rounded border border-status-reserved bg-opacity-10 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-reserved"></div>
+<div class="flex items-center gap-3 mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Derived Result</span>
+<span class="bg-status-reserved text-on-tertiary px-2 py-0.5 rounded-full font-label-caps text-[10px] tracking-wider">AT RISK</span>
+</div>
+<div class="flex items-baseline gap-4 mb-2">
+<div class="font-data-mono text-data-mono text-status-reserved flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_down</span> -0.08 pp
+                            </div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant italic text-sm">Actual is below the 99.9% target but remains within the 99.8% tolerance.</p>
+</div>
+</div>
+<!-- Evidence Source -->
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Evidence Source</label>
+<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Infrastructure monitoring platform"/>
+</div>
+<!-- Evidence Reference Upload -->
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Evidence Reference</label>
+<div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary mb-2 text-3xl">upload_file</span>
+<p class="font-body-md text-body-md text-on-surface mb-1">Drag and drop file here or click to browse</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Select or attach existing authorised evidence</p>
+</div>
+</div>
+<!-- Commentary -->
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Commentary <span class="text-on-surface-variant font-normal normal-case">(Optional)</span></label>
+<textarea class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-y" placeholder="Add any contextual notes regarding this measurement..." rows="3"></textarea>
+</div>
+</form>
+</section>
+<!-- Action Footer -->
+<footer class="flex items-center justify-end gap-4 mt-4 pt-4 border-t border-outline-variant mb-8">
+<button class="font-body-md font-semibold text-on-surface-variant hover:text-primary px-4 py-2 rounded transition-colors">
+                Cancel
+            </button>
+<button class="font-body-md font-semibold text-primary border border-primary px-4 py-2 rounded-lg hover:bg-surface-container transition-colors">
+                Save draft
+            </button>
+<button class="font-body-md font-semibold bg-primary text-on-primary px-6 py-2 rounded-lg hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2">
+                Submit measurement
+            </button>
+</footer>
+</main>
+</body></html>

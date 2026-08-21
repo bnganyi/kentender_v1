@@ -1,0 +1,414 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Create demand - Budget Catalyst</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Style Guidance -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2f3035",
+                        "on-background": "#1a1b20",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#7bbeff",
+                        "primary-fixed-dim": "#abc7ff",
+                        "status-available": "#10B981",
+                        "on-primary-container": "#7b9ee0",
+                        "primary-container": "#00346f",
+                        "status-reserved": "#F59E0B",
+                        "on-surface": "#1a1b20",
+                        "tertiary-container": "#26364b",
+                        "surface-dim": "#dad9df",
+                        "on-secondary-container": "#004c7c",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c3c6d1",
+                        "surface": "#f9f9fe",
+                        "secondary-fixed": "#cfe5ff",
+                        "primary": "#001f48",
+                        "on-secondary-fixed": "#001d34",
+                        "surface-variant": "#e2e2e8",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "surface-container-low": "#f4f3f9",
+                        "status-exhausted": "#EF4444",
+                        "surface-container": "#eceef0",
+                        "status-committed": "#6366F1",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "outline": "#737781",
+                        "background": "#f9f9fe",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#26364b",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "surface-bright": "#f9f9fe",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d7e2ff",
+                        "surface-container-high": "#e8e7ed",
+                        "inverse-on-surface": "#f1f0f6",
+                        "secondary-fixed-dim": "#99cbff",
+                        "inverse-primary": "#abc7ff",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#395e9b",
+                        "tertiary-fixed": "#d3e4ff",
+                        "on-surface-variant": "#434750",
+                        "on-primary-fixed": "#001b3f",
+                        "secondary": "#01629d",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-primary-fixed-variant": "#1d4681"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "base-unit": "4px",
+                        "card-padding": "20px",
+                        "container-padding": "16px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-sm": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface min-h-screen text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-on-surface-variant flex justify-between items-center px-container-padding h-16 w-full z-50 fixed top-0 docked full-width flat no shadows">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors rounded-full p-2 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors rounded-full p-2 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors rounded-full p-2 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden ml-2 cursor-pointer active:opacity-80 transition-all border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A small, professional headshot of an executive in a modern office environment. Soft, even lighting, neutral background, conveying trust and reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0tUXDT7yoEEVmjRLdRKd-ISxqp_8BuAgAMEEM6CPpTuykso-gm79x7hQZbRwHKJHmehDqszTJl19PfJMvVbAmpv2r80Ck2oS9A5FAHtGfG9O8gA9AajTvGcpDgIOUVS1Qu-z5XZuLtkOesVWdqTIVDLQq59LNXLPjdtoolJGauMc7pOaduMh-d5KshzRBvTTBpoBpLdmNq_kXFr7lbpCxzjK7tP9mwF3EQYnp6MQ1OGWlcAau4o1fWw">
+</div>
+</div>
+</header>
+<!-- Side Navigation Bar -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 pt-16 pb-4 border-r border-outline-variant dark:border-on-surface-variant bg-surface-container-low dark:bg-tertiary-container docked w-64 z-40 flat no shadows">
+<div class="p-4 border-b border-outline-variant/30 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">assured_workload</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-on-primary-fixed leading-tight">Budget Catalyst</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Procurement Portal</div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary-fixed text-on-primary-fixed font-semibold scale-100 active:scale-[0.98] transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">description</span>
+<span class="font-label-caps text-label-caps">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps text-label-caps">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-caps text-label-caps">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-caps text-label-caps">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">task_alt</span>
+<span class="font-label-caps text-label-caps">Closeout</span>
+</a>
+</nav>
+<div class="px-2 pt-4 border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all scale-100 active:scale-[0.98] duration-200" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-16 pb-24 min-h-screen flex flex-col relative">
+<!-- Header -->
+<div class="bg-surface-container-lowest border-b border-outline-variant px-6 py-8">
+<div class="max-w-4xl mx-auto">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-md mb-2">
+<span class="material-symbols-outlined text-sm">account_balance</span>
+<span class="">Ministry of Health</span>
+<span class="">·</span>
+<span class="">Directorate of Digital Health and Policy</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Create demand</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Describe what is needed, why it is needed and when it is required.</p>
+</div>
+</div>
+<!-- Form Canvas -->
+<div class="flex-1 p-6">
+<div class="max-w-4xl mx-auto space-y-section-gap pb-8">
+<!-- Section 1: Need -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Need</h2>
+</div>
+<div class="p-card-padding space-y-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Demand title</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" value="National digital health infrastructure upgrade">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">What is needed?</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" rows="3">Upgrade resilient compute, storage, network and monitoring infrastructure supporting national digital health services.</textarea>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Why is it needed?</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" rows="3">Existing infrastructure is approaching capacity and has recurring controller instability affecting service continuity.</textarea>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Expected outcome</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" rows="2">Reliable and accessible digital clinical services with reduced service interruption and faster restoration.</textarea>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Beneficiaries</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" rows="2">Public health facilities, clinical users and patients using national digital health services.</textarea>
+</div>
+</div>
+</section>
+<!-- Section 2: Delivery need -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">local_shipping</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Delivery</h2>
+</div>
+<div class="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Required by</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" value="30 September 2027">
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">calendar_month</span>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Delivery location</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" value="National Data Centre and designated health facilities">
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Demand route</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow">
+<option selected="">Standard</option>
+<option>Urgent</option>
+<option>Emergency</option>
+</select>
+<svg class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" fill="none" stroke="#434750" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<p class="mt-2 text-xs text-on-surface-variant">The route describes the need. Procurement Planning determines the procurement method later.</p>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Technical contact <span class="font-normal normal-case text-on-surface-variant/70">(Optional)</span></label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow text-on-surface-variant">
+<option disabled="" selected="" value="">Select internal contact</option>
+<option value="1">Dr. Jane Smith</option>
+</select>
+<svg class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" fill="none" stroke="#434750" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Need items -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Need items</h2>
+</div>
+</div>
+<div class="p-0 overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface">
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant font-medium">Description</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant font-medium w-24">Quantity</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant font-medium w-32">Unit</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant font-medium w-48">Est. amount (Optional)</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant font-medium w-16 text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-3 px-4">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-on-surface" type="text" value="Resilient compute and storage platform">
+</td>
+<td class="py-3 px-4">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-mono text-data-mono text-on-surface" type="number" value="1">
+</td>
+<td class="py-3 px-4">
+<div class="relative"><select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 pr-8 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-on-surface appearance-none"><option selected="">Lot</option><option>Pieces</option><option>Months</option></select><svg class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4" fill="none" stroke="#434750" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+</td>
+<td class="py-3 px-4 relative">
+<span class="absolute left-6 top-[21px] font-data-mono text-data-mono text-on-surface-variant text-sm z-10">KES</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded pl-12 pr-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-mono text-data-mono text-on-surface text-right" type="text" value="300,000,000">
+</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 rounded">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-3 px-4">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-on-surface" type="text" value="Network, monitoring and implementation services">
+</td>
+<td class="py-3 px-4">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-mono text-data-mono text-on-surface" type="number" value="1">
+</td>
+<td class="py-3 px-4">
+<div class="relative"><select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1.5 pr-8 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-on-surface appearance-none"><option selected="">Lot</option><option>Pieces</option><option>Months</option></select><svg class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4" fill="none" stroke="#434750" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+</td>
+<td class="py-3 px-4 relative">
+<span class="absolute left-6 top-[21px] font-data-mono text-data-mono text-on-surface-variant text-sm z-10">KES</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded pl-12 pr-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-mono text-data-mono text-on-surface text-right" type="text" value="155,000,000">
+</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 rounded">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 border-t border-outline-variant bg-surface flex justify-center">
+<button class="flex items-center gap-2 text-primary hover:bg-primary/5 px-4 py-2 rounded-lg font-body-md font-medium transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                            Add item
+                        </button>
+</div>
+</section>
+<!-- Section 4: Estimate and supporting information -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">calculate</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Estimate &amp; supporting info</h2>
+</div>
+<div class="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="md:col-span-2 flex flex-col md:flex-row md:items-end gap-6 pb-4 border-b border-outline-variant/50">
+<div class="flex-1">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Requester estimate</label>
+<div class="text-xs text-on-surface-variant mb-2">Calculated from items above</div>
+<div class="flex items-baseline gap-2">
+<span class="font-data-mono text-on-surface-variant">KES</span>
+<span class="font-headline-lg text-headline-lg text-on-surface font-data-mono">455,000,000</span>
+</div>
+</div>
+<div class="w-full md:w-64">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Confidence</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow">
+<option>High</option>
+<option selected="">Medium</option>
+<option>Low</option>
+</select>
+<svg class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" fill="none" stroke="#434750" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Estimate basis</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" rows="2">Indicative market research and current infrastructure assessment</textarea>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Supporting documents <span class="font-normal normal-case text-on-surface-variant/70">(Optional)</span></label>
+<div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-lowest transition-colors cursor-pointer bg-surface">
+<span class="material-symbols-outlined text-outline text-3xl mb-2">upload_file</span>
+<div class="font-body-md text-on-surface font-medium">Click to upload or drag and drop</div>
+<div class="font-body-sm text-sm text-on-surface-variant mt-1">PDF, DOCX, XLSX (Max. 10MB)</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Sticky Action Bar -->
+<div class="fixed bottom-0 left-0 md:left-64 right-0 bg-surface-container-lowest border-t border-outline-variant p-4 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="max-w-4xl mx-auto flex items-center justify-between">
+<button class="px-5 py-2.5 rounded-lg border border-transparent hover:bg-surface-container text-on-surface-variant font-body-md font-medium transition-colors">
+                    Cancel
+                </button>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface font-body-md font-medium transition-colors">
+                        Save draft
+                    </button>
+<button class="px-5 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary/90 font-body-md font-medium transition-colors flex items-center gap-2 shadow-sm">
+                        Submit for business review
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

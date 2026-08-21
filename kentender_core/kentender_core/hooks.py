@@ -37,6 +37,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = [
+	f"/assets/kentender_core/css/authorization_surfaces.css?v={_asset_version('public/css/authorization_surfaces.css')}",
 	"/assets/kentender_core/css/kentender_desk_builder_layout.css",
 	f"/assets/kentender_core/css/kt_module_shell.css?v={_asset_version('public/css/kt_module_shell.css')}",
 	f"/assets/kentender_core/css/kt_workbench_typography.css?v={_asset_version('public/css/kt_workbench_typography.css')}",
@@ -44,17 +45,29 @@ app_include_css = [
 	f"/assets/kentender_core/css/civic_ledger.css?v={_asset_version('public/css/civic_ledger.css')}",
 	f"/assets/kentender_core/css/kt_cl_code_layout.css?v={_asset_version('public/css/kt_cl_code_layout.css')}",
 	f"/assets/kentender_core/css/kt_native_sidebar_civic.css?v={_asset_version('public/css/kt_native_sidebar_civic.css')}",
+	# Stitch Desk chrome baseline — Desk bleed defeat (Win98 buttons, select chevron, Espresso 400).
+	f"/assets/kentender_core/css/kt_stitch_desk_chrome.css?v={_asset_version('public/css/kt_stitch_desk_chrome.css')}",
+	# Shared Stitch list-table footer (Showing X of Y + Rows per page + pager).
+	f"/assets/kentender_core/css/kt_stitch_table_footer.css?v={_asset_version('public/css/kt_stitch_table_footer.css')}",
 ]
+boot_session = ["kentender_core.services.my_work.patch_bootinfo_home"]
+
 app_include_js = [
 	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
+	# Field-error helper — load early so Strategy / workbench binders can use ktFormErrors.
+	f"/assets/kentender_core/js/kt_form_errors.js?v={_asset_version('public/js/kt_form_errors.js')}",
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
 	f"/assets/kentender_core/js/kt_module_shell.js?v={_asset_version('public/js/kt_module_shell.js')}",
 	f"/assets/kentender_core/js/kt_cl_code_spec.js?v={_asset_version('public/js/kt_cl_code_spec.js')}",
 	f"/assets/kentender_core/js/kt_cl_components.js?v={_asset_version('public/js/kt_cl_components.js')}",
 	f"/assets/kentender_core/js/kt_cl_sidebar.js?v={_asset_version('public/js/kt_cl_sidebar.js')}",
 	f"/assets/kentender_core/js/kt_cl_shell.js?v={_asset_version('public/js/kt_cl_shell.js')}",
+	f"/assets/kentender_core/js/kt_page_lifecycle.js?v={_asset_version('public/js/kt_page_lifecycle.js')}",
 	f"/assets/kentender_core/js/kt_cl_surface_registry.js?v={_asset_version('public/js/kt_cl_surface_registry.js')}",
 	f"/assets/kentender_core/js/kt_cl_shell_router.js?v={_asset_version('public/js/kt_cl_shell_router.js')}",
+	f"/assets/kentender_core/js/kt_stitch_table_footer.js?v={_asset_version('public/js/kt_stitch_table_footer.js')}",
+	f"/assets/kentender_core/js/kt_stitch_table_pager.js?v={_asset_version('public/js/kt_stitch_table_pager.js')}",
+	f"/assets/kentender_core/js/kt_ds_recipes.js?v={_asset_version('public/js/kt_ds_recipes.js')}",
 ]
 
 # include js, css files in header of web template
@@ -72,6 +85,9 @@ app_include_js = [
 # Never append ?v= to page_js values — Frappe resolves them as disk paths.
 page_js = {
 	"kt-cl-components": "public/js/kt_cl_components_gallery_page.js",
+	"user-operational-acc": "public/js/authorization_admin_pages.js",
+	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
+	"access-diagnostic": "public/js/authorization_admin_pages.js",
 }
 
 # include js in doctype views
@@ -166,13 +182,40 @@ after_migrate = "kentender_core.install.after_migrate"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Capability Profile": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Operational Scope Assignment": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Queue": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Queue Membership": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Routing Rule": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Workflow Task": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Authorization Delegation": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+	"Separation of Duties Rule": {
+		"validate": "kentender_core.services.authorization_records.validate_authorization_record",
+		"on_update": "kentender_core.services.authorization_records.invalidate_authorization_cache",
+	},
+}
 
 # Scheduled Tasks
 # ---------------
@@ -283,4 +326,3 @@ after_migrate = "kentender_core.install.after_migrate"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

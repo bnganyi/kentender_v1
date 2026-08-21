@@ -1,0 +1,352 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Verify Performance Measurement - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#1a1b20",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-secondary-container": "#004c7c",
+                        "status-exhausted": "#EF4444",
+                        "status-reserved": "#F59E0B",
+                        "inverse-primary": "#abc7ff",
+                        "secondary-container": "#7bbeff",
+                        "secondary-fixed": "#cfe5ff",
+                        "surface-bright": "#f9f9fe",
+                        "tertiary-fixed": "#d3e4ff",
+                        "status-available": "#10B981",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "status-committed": "#6366F1",
+                        "secondary": "#01629d",
+                        "primary": "#001f48",
+                        "tertiary": "#26364b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2f3035",
+                        "on-background": "#1a1b20",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface": "#f9f9fe",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-primary-container": "#7b9ee0",
+                        "surface-container-highest": "#e2e2e8",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-primary": "#ffffff",
+                        "background": "#f9f9fe",
+                        "outline": "#737781",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "tertiary-container": "#26364b",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#001b3f",
+                        "surface-tint": "#395e9b",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c3c6d1",
+                        "surface-dim": "#dad9df",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001d34",
+                        "primary-container": "#00346f",
+                        "on-surface-variant": "#434750",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "surface-container-low": "#f4f3f9",
+                        "surface-container-high": "#e8e7ed",
+                        "on-tertiary-container": "#8f9fb8",
+                        "surface-variant": "#e2e2e8",
+                        "primary-fixed": "#d7e2ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "20px",
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "base-unit": "4px",
+                        "unit": "4px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-section-gap w-full bg-surface-container-lowest h-16 border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl icon-fill">gavel</span>
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary">KenTender</span>
+</div>
+<nav class="hidden md:flex ml-8 h-full">
+<a class="flex items-center h-full px-4 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">Dashboard</a>
+<a class="flex items-center h-full px-4 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">Tenders</a>
+<a class="flex items-center h-full px-4 text-primary dark:text-inverse-primary border-b-2 border-primary hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">Contract Management</a>
+<a class="flex items-center h-full px-4 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps uppercase tracking-wider" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant focus-within:border-primary focus-within:bg-surface-container-lowest transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input class="bg-transparent border-none outline-none text-sm text-on-surface placeholder-on-surface-variant w-48 focus:ring-0" placeholder="Search..." type="text">
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm cursor-pointer ml-2">
+                KO
+            </div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-container-padding md:p-section-gap">
+<div class="max-w-7xl mx-auto space-y-section-gap">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<a class="text-secondary hover:underline flex items-center text-sm" href="#">
+<span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                                Back to Contract MOH-2023-089
+                            </a>
+</div>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Verify performance measurement</h1>
+<p class="text-on-surface-variant font-body-lg">
+<span class="font-semibold text-on-surface">Target:</span> MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028
+                        </p>
+</div>
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+<div class="flex items-center gap-2 bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full border border-secondary-fixed">
+<span class="material-symbols-outlined text-sm">hourglass_empty</span>
+<span class="font-label-caps text-label-caps uppercase">Submitted</span>
+</div>
+<div class="flex items-center gap-2 bg-amber-50 text-status-reserved px-3 py-1.5 rounded-full border border-amber-200">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span class="font-label-caps text-label-caps uppercase">At Risk</span>
+</div>
+</div>
+</div>
+<!-- Comparison Region -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Left Column: Approved Target -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg flex flex-col h-full shadow-sm">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant rounded-t-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">fact_check</span>
+                                Approved Target Reference
+                            </h2>
+</div>
+<div class="p-card-padding space-y-4 flex-1">
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Indicator</div>
+<div class="col-span-2 text-on-surface">Availability of core clinical information systems</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Target</div>
+<div class="col-span-2 text-on-surface font-semibold bg-surface-container-low inline-block px-2 py-1 rounded w-max">≥99.9%</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Tolerance</div>
+<div class="col-span-2 text-on-surface">99.8%</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Baseline</div>
+<div class="col-span-2 text-on-surface">97.8% as at 30 June 2026</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Period</div>
+<div class="col-span-2 text-on-surface">September 2027</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Expected Data Source</div>
+<div class="col-span-2 text-on-surface">Approved infrastructure-monitoring report</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Submitted Result -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg flex flex-col h-full shadow-sm relative overflow-hidden">
+<!-- Guardrail indicator for 'At Risk' -->
+<div class="absolute top-0 left-0 w-1 h-full bg-status-reserved"></div>
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant rounded-t-lg ml-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">upload_file</span>
+                                Submitted Result
+                            </h2>
+</div>
+<div class="p-card-padding space-y-4 flex-1 ml-1 bg-amber-50/20">
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant/60 pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium flex items-center">Actual</div>
+<div class="col-span-2">
+<span class="font-data-mono text-data-mono text-status-reserved font-bold bg-white px-2 py-1 rounded border border-amber-200 shadow-sm">99.82%</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant/60 pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium flex items-center">Variance</div>
+<div class="col-span-2 font-data-mono text-data-mono text-status-reserved bg-white px-2 py-1 rounded inline-block border border-amber-100 shadow-sm">
+                                    −0.08 percentage points
+                                </div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant/60 pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Measurement Date</div>
+<div class="col-span-2 text-on-surface">3 October 2027</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant/60 pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Evidence Source</div>
+<div class="col-span-2 text-on-surface">Infrastructure monitoring platform</div>
+</div>
+<div class="grid grid-cols-3 gap-4 border-b border-outline-variant/60 pb-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Submitted By</div>
+<div class="col-span-2 text-on-surface flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant">
+                                        KU
+                                    </div>
+                                    Ken Officer, Admin Unit
+                                </div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="col-span-1 text-on-surface-variant text-sm font-medium">Commentary</div>
+<div class="col-span-2 text-on-surface italic bg-white p-3 rounded border border-outline-variant/60 shadow-inner text-sm">
+                                    "System underwent scheduled maintenance which slightly exceeded the window."
+                                </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Evidence Viewer Area -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
+<div class="px-card-padding py-3 border-b border-outline-variant">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">attach_file</span>
+                            Attached Evidence
+                        </h3>
+</div>
+<div class="p-card-padding">
+<div class="flex items-center justify-between p-4 border border-outline-variant rounded-lg bg-surface hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-error/10 text-error rounded flex items-center justify-center">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="font-medium text-on-surface text-sm">MOH_Infra_Sept2027_Monitoring.pdf</p>
+<p class="text-xs text-on-surface-variant mt-0.5">2.4 MB • Uploaded 3 Oct 2027, 09:15 AM</p>
+</div>
+</div>
+<button class="text-primary hover:text-primary-container font-medium text-sm flex items-center gap-1 px-3 py-1.5 rounded hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                View Evidence
+                            </button>
+</div>
+</div>
+</div>
+<!-- Decision Area -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">rule</span>
+                            Verification Decision
+                        </h3>
+</div>
+<div class="p-card-padding space-y-6">
+<!-- Segregation of Duties Alert -->
+<div class="bg-primary/5 border-l-4 border-primary p-4 rounded-r">
+<div class="flex items-start">
+<span class="material-symbols-outlined text-primary mt-0.5 mr-3">info</span>
+<div>
+<h4 class="text-sm font-semibold text-primary-container">Segregation of Duties Enforced</h4>
+<p class="text-sm text-on-surface-variant mt-1">
+                                        Verifiers must be independent of the submitter</p>
+</div>
+</div>
+</div>
+<!-- Comments -->
+<div>
+<label class="block text-sm font-medium text-on-surface mb-2" for="verification-comments">
+                                Verification comments <span class="text-on-surface-variant font-normal">(required for rejections or corrections)</span>
+</label>
+<textarea class="w-full rounded-lg border-outline-variant focus:border-primary focus:ring focus:ring-primary/20 text-sm p-3 bg-surface text-on-surface placeholder-on-surface-variant transition-colors" id="verification-comments" placeholder="Enter your findings or reasons for your decision here..." rows="3"></textarea>
+</div>
+<!-- Follow-up Checkbox (Conditional based on 'At Risk') -->
+<div class="flex items-start bg-amber-50/50 p-3 rounded border border-amber-100">
+<div class="flex items-center h-5">
+<input checked="" class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary focus:ring-2" id="create-corrective" type="checkbox">
+</div>
+<div class="ml-3 text-sm">
+<label class="font-medium text-on-surface cursor-pointer" for="create-corrective">Create corrective action after verification</label>
+<p class="text-on-surface-variant mt-1">Recommended because the submitted result is categorized as 'At risk'.</p>
+</div>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="bg-surface-container px-card-padding py-4 border-t border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none justify-center px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-variant transition-colors font-medium text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                                Reject
+                            </button>
+<button class="flex-1 sm:flex-none justify-center px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-variant transition-colors font-medium text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">replay</span>
+                                Return for correction
+                            </button>
+</div>
+<button class="w-full sm:w-auto justify-center px-6 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-container transition-colors font-medium text-sm flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                            Verify Measurement
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bottom spacing -->
+<div class="h-12"></div>
+</main>
+</div>
+
+
+</body></html>

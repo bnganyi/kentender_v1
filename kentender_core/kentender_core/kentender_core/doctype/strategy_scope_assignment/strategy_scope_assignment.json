@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "strategy_doctype",
+  "strategy_item",
+  "strategy_item_code",
+  "procuring_entity",
+  "organisation_unit",
+  "include_descendants",
+  "applicability",
+  "column_break_ssa",
+  "effective_from",
+  "effective_to",
+  "plan_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "strategy_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategy DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "strategy_item",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Strategy Item",
+   "options": "strategy_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "strategy_item_code",
+   "fieldtype": "Data",
+   "label": "Strategy Item Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "organisation_unit",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit",
+   "search_index": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "include_descendants",
+   "fieldtype": "Check",
+   "label": "Include Descendants"
+  },
+  {
+   "default": "Required",
+   "fieldname": "applicability",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applicability",
+   "options": "Required\nRecommended\nAvailable",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ssa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Strategic Plan",
+   "search_index": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "search_index": 1
+  }
+ ],
+ "module": "Kentender Core",
+ "name": "Strategy Scope Assignment",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Administrator"
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

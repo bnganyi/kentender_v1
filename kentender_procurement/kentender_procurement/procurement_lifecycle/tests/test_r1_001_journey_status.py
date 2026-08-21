@@ -8,16 +8,15 @@ from __future__ import annotations
 import unittest
 from enum import StrEnum
 
-from kentender_procurement.procurement_planning.pp2_constants import (
-	PKG_APPROVED,
-	PKG_CANCELLED,
-	PKG_CONSUMED,
-	PKG_DRAFT,
-	PKG_IN_REVIEW,
-	PKG_READY_FOR_RELEASE,
-	PKG_RELEASED,
-	PKG_RETURNED,
-)
+# Historical PP2 Package status strings (DocType retired).
+PKG_APPROVED = "Approved"
+PKG_CANCELLED = "Cancelled"
+PKG_CONSUMED = "Consumed"
+PKG_DRAFT = "Draft"
+PKG_IN_REVIEW = "In Review"
+PKG_READY_FOR_RELEASE = "Ready for Release"
+PKG_RELEASED = "Released"
+PKG_RETURNED = "Returned"
 
 from kentender_procurement.procurement_lifecycle import (
 	JOURNEY_STATUS_CATEGORY_VALUES,

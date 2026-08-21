@@ -1,0 +1,332 @@
+/* BUD-UI-06 — Check and Reserve modal (Stitch hand-port). Desk has no Tailwind. */
+
+.kt-bud-check-reserve-host {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 1200 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 1rem !important;
+	box-sizing: border-box !important;
+}
+
+.kt-bud-check-reserve-host[hidden] {
+	display: none !important;
+}
+
+.kt-bud-check-reserve-scrim {
+	position: absolute !important;
+	inset: 0 !important;
+	background: rgba(47, 48, 53, 0.4) !important;
+	backdrop-filter: blur(2px);
+}
+
+.kt-bud-root.kt-bud-check-reserve {
+	--kt-bud-primary: #003d9b;
+	position: relative !important;
+	z-index: 1 !important;
+	width: 100% !important;
+	max-width: 48rem !important;
+	max-height: 90vh !important;
+	display: flex !important;
+	flex-direction: column !important;
+	background: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	box-shadow: 0 20px 40px rgba(26, 27, 32, 0.18) !important;
+	overflow: hidden !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-header {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-start !important;
+	gap: 1rem !important;
+	padding: 1.25rem 1.5rem !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	background: #f4f3f9 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-header h1 {
+	font-family: Manrope, Inter, system-ui, sans-serif !important;
+	font-size: 30px !important;
+	line-height: 38px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+	color: #1a1b20 !important;
+	margin: 0 0 0.25rem 0 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-close {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 2.25rem !important;
+	height: 2.25rem !important;
+	border: none !important;
+	border-radius: 999px !important;
+	background: transparent !important;
+	color: #434750 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-body {
+	overflow-y: auto !important;
+	padding: 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-context,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-allocation {
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 1.25rem !important;
+	background: #ffffff !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-context h2,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-allocation h2 {
+	margin: 0 0 1rem 0 !important;
+	font-size: 12px !important;
+	letter-spacing: 0.05em !important;
+	font-weight: 700 !important;
+	color: #434750 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-context-grid {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1rem 2rem !important;
+}
+
+@media (min-width: 768px) {
+	.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-context-grid {
+		grid-template-columns: 1fr 1fr !important;
+	}
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-requested {
+	color: #003d9b !important;
+	font-weight: 600 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-muted {
+	font-size: 0.8125rem !important;
+	color: #737781 !important;
+	margin-top: 0.125rem !important;
+}
+
+/* Win98 Desk select bleed — Material chevron only */
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-select-wrap {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-select-wrap select,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-select-wrap select:has(+ .material-symbols-outlined) {
+	display: block !important;
+	width: 100% !important;
+	height: 3.25rem !important;
+	padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+	border: 2px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #ffffff !important;
+	background-image: none !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font-size: 1rem !important;
+	color: #1a1b20 !important;
+	cursor: pointer !important;
+	box-sizing: border-box !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-select-wrap > .material-symbols-outlined {
+	position: absolute !important;
+	right: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	color: #434750 !important;
+	font-size: 20px !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-line-hint {
+	margin: 0.5rem 0 0 0 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision {
+	border-radius: 0.5rem !important;
+	overflow: hidden !important;
+	border: 1px solid #10b981 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision--insufficient {
+	border-color: #ba1a1a !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision[hidden],
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision.hidden {
+	display: none !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	padding: 0.75rem 1.25rem !important;
+	background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision-head--error {
+	background: rgba(186, 26, 26, 0.1) !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision-head .material-symbols-outlined {
+	color: #10b981 !important;
+	font-size: 1.5rem !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision-head--error .material-symbols-outlined {
+	color: #ba1a1a !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-decision-body {
+	padding: 1.25rem !important;
+	background: #ffffff !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-amount-row {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-end !important;
+	padding-bottom: 0.5rem !important;
+	margin-bottom: 0.5rem !important;
+	border-bottom: 1px solid rgba(195, 198, 209, 0.5) !important;
+	color: #434750 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-amount-row--strong {
+	border-bottom: none !important;
+	margin-bottom: 0 !important;
+	padding-top: 0.25rem !important;
+	color: #1a1b20 !important;
+	font-weight: 500 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-amount-neg {
+	color: #ef4444 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-amount-ok {
+	color: #10b981 !important;
+	font-weight: 700 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-amount-err {
+	color: #ba1a1a !important;
+	font-weight: 700 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-bar {
+	display: flex !important;
+	width: 100% !important;
+	height: 0.5rem !important;
+	border-radius: 999px !important;
+	overflow: hidden !important;
+	background: #e2e2e8 !important;
+	margin: 1.25rem 0 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-bar-used {
+	height: 100% !important;
+	background: #6366f1 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-bar-free {
+	height: 100% !important;
+	background: #10b981 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-bar-short {
+	height: 100% !important;
+	background: rgba(186, 26, 26, 0.45) !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-lineage,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-warn,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-notice {
+	display: flex !important;
+	gap: 0.75rem !important;
+	align-items: flex-start !important;
+	padding: 1rem !important;
+	border-radius: 0.5rem !important;
+	background: #f4f3f9 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-warn {
+	background: rgba(186, 26, 26, 0.08) !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-notice[hidden],
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-notice.hidden {
+	display: none !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	justify-content: flex-end !important;
+	gap: 1rem !important;
+	margin-top: 1.25rem !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	height: 2.5rem !important;
+	padding: 0 1.5rem !important;
+	border-radius: 0.5rem !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	box-sizing: border-box !important;
+	box-shadow: none !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--primary {
+	background-color: #003d9b !important;
+	color: #ffffff !important;
+	border: 1px solid #003d9b !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--secondary {
+	background: #ffffff !important;
+	color: #1a1b20 !important;
+	border: 1px solid #c3c6d1 !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--outline {
+	background: #ffffff !important;
+	color: #003d9b !important;
+	border: 1px solid #003d9b !important;
+}
+
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn--disabled,
+.kt-bud-root.kt-bud-check-reserve .kt-bud-cr-btn:disabled {
+	background: #e2e2e8 !important;
+	color: rgba(67, 71, 80, 0.5) !important;
+	border: 1px solid #e2e2e8 !important;
+	cursor: not-allowed !important;
+}

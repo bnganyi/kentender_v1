@@ -8,9 +8,13 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+
+def _pp2_pkg_available() -> bool:
+	return bool(frappe.db.exists("DocType", "Procurement Package"))
+
 from frappe.utils import nowdate
 
-from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.tender_configurations.constants import (
 	STATUS_IN_PROGRESS,
 	STATUS_NEEDS_ATTENTION,
@@ -73,7 +77,7 @@ def _clear_mock() -> None:
 		pluck="name",
 	)
 	for code in set(pkgs):
-		if frappe.db.exists("Procurement Package", code):
+		if (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), code):
 			frappe.delete_doc("Procurement Package", code, force=True, ignore_permissions=True)
 
 
@@ -95,7 +99,7 @@ def _ensure_pe() -> str:
 
 
 def _insert_package(*, code: str, title: str, entity: str) -> str:
-	if frappe.db.exists("Procurement Package", code):
+	if (_pp2_pkg_available() and frappe.db.exists("Procurement Package"), code):
 		frappe.db.set_value(
 			"Procurement Package",
 			code,

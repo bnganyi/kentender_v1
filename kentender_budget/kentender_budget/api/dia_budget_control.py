@@ -1,368 +1,393 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BX3 — Budget control HTTP adapters for Demand Intake (mini-PRD §11–12).
+"""Budget control adapters for Demand/Planning — thin shims over MVP-1 contracts.
 
-Thin HTTP layer over ``kentender_budget.services.budget_service``.
-All balance mutations delegate to the service; this module only handles
-HTTP-layer concerns (whitelist decoration, response shaping).
-
-Parent Budget ``status`` is not enforced for reads or reservations in v1:
-governance is Budget Line active flag, balances, and downstream references.
+Preserves legacy response shapes (`ok` / `data` / `sufficient`) used by DIA
+lifecycle and readiness while delegating to `check_funding` / `reserve_funding`.
 """
+
+from __future__ import annotations
+
+import json
+from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, now_datetime
-
-from kentender_budget.services.budget_service import (
-    release as _svc_release,
-    reserve as _svc_reserve,
-    snapshot as _svc_snapshot,
-)
+from frappe.utils import flt
 
 
-def _success(data: dict, message: str) -> dict:
-	return {"ok": True, "data": data, "message": message}
+def _ok(data: dict[str, Any] | None = None, message: str | None = None) -> dict[str, Any]:
+	return {
+		"ok": True,
+		"skipped": False,
+		"data": data or {},
+		"message": message or "",
+	}
 
 
-def _error(error_code: str, message: str) -> dict:
-	return {"ok": False, "error_code": error_code, "message": str(message)}
-
-
-def _line_financials(bl_doc) -> tuple[float, float, float, float, float]:
-	"""Return (allocated, reserved, committed, consumed, available).
-
-	Formula (per Budget Domain Revision):
-	  available = allocated − reserved − committed − consumed
-	"""
-	alloc = flt(bl_doc.amount_allocated)
-	res   = flt(bl_doc.amount_reserved)
-	com   = flt(getattr(bl_doc, "amount_committed", None) or 0)
-	con   = flt(bl_doc.amount_consumed or 0)
-	avail = flt(alloc - res - com - con)
-	return alloc, res, com, con, avail
-
-
-def _get_line_doc_or_error(budget_line_id: str | None):
-	if not budget_line_id:
-		return None, _error("BUDGET_LINE_NOT_FOUND", _("Budget Line is required."))
-	if not frappe.db.exists("Budget Line", budget_line_id):
-		return None, _error("BUDGET_LINE_NOT_FOUND", _("Budget Line not found."))
-	return frappe.get_doc("Budget Line", budget_line_id), None
+def _fail(message: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+	return {
+		"ok": False,
+		"skipped": False,
+		"data": data or {},
+		"message": message,
+	}
 
 
 @frappe.whitelist()
 def get_budget_line_context(budget_line_id: str | None = None):
-	"""Strict service contract: load Budget Line operational context."""
-	bl, err = _get_line_doc_or_error(budget_line_id)
-	if err:
-		return err
-	if not bl.is_active:
-		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active (BL-015)."))
-	alloc, res, com, con, avail = _line_financials(bl)
-	return _success(
+	"""Real Budget Line context for Demand PE / readiness checks."""
+	from kentender_budget.services.budget_check_reserve_contracts import _resolve_line
+
+	bl = (budget_line_id or "").strip()
+	if not bl:
+		return _fail(_("Budget Line is required"))
+	try:
+		line = _resolve_line(bl)
+		bud = frappe.get_doc("Budget", line.budget)
+	except Exception as exc:
+		return _fail(str(exc) or _("Budget Line not found"))
+
+	pe = bud.procuring_entity or ""
+	pe_code = frappe.db.get_value("Procuring Entity", pe, "entity_code") or pe
+	pe_name = frappe.db.get_value("Procuring Entity", pe, "entity_name") or pe_code
+	available = flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
+	return _ok(
 		{
-			"budget_line_id": bl.name,
-			"budget_line_code": bl.budget_line_code,
-			"budget_line_name": bl.budget_line_name,
-			"budget": bl.budget,
-			"budget_id": bl.budget,
-			"budget_name": frappe.db.get_value("Budget", bl.budget, "budget_name") if bl.budget else "",
-			"budget_code": bl.budget,
-			"procuring_entity": bl.procuring_entity,
-			"procuring_entity_name": frappe.db.get_value(
-				"Procuring Entity", bl.procuring_entity, "entity_name"
-			)
-			if bl.procuring_entity
-			else "",
-			"procuring_entity_code": frappe.db.get_value(
-				"Procuring Entity", bl.procuring_entity, "entity_code"
-			)
-			if bl.procuring_entity
-			else "",
-			"fiscal_year": cint(bl.fiscal_year),
-			"currency": bl.currency,
-			"funding_source": bl.funding_source,
-			"funding_source_title": bl.funding_source or "",
+			"budget_line_id": line.name,
+			"budget_line_code": line.generated_reference or "",
+			"budget_line_name": line.title or line.generated_reference or "",
+			"budget": bud.name,
+			"budget_id": bud.name,
+			"budget_name": bud.title or "",
+			"budget_code": bud.generated_reference or "",
+			"procuring_entity": pe,
+			"procuring_entity_name": pe_name,
+			"procuring_entity_code": pe_code,
+			"fiscal_year": bud.fiscal_period,
+			"currency": bud.currency or "KES",
+			"funding_source": None,
+			"funding_source_title": line.funding_source_name or "",
 			"funding_source_code": "",
-			"strategic_plan": bl.strategic_plan,
-			"strategic_plan_name": frappe.db.get_value(
-				"Strategic Plan", bl.strategic_plan, "strategic_plan_name"
-			)
-			if bl.strategic_plan
-			else "",
-			"strategic_plan_code": "",
-			"program": bl.program,
-			"program_title": frappe.db.get_value("Strategy Program", bl.program, "program_title")
-			if bl.program
-			else "",
-			"program_code": frappe.db.get_value("Strategy Program", bl.program, "program_code")
-			if bl.program
-			else "",
-			"sub_program": bl.sub_program,
-			"sub_program_title": frappe.db.get_value("Sub Program", bl.sub_program, "title")
-			if bl.sub_program
-			else "",
-			"sub_program_code": frappe.db.get_value("Sub Program", bl.sub_program, "sub_program_code")
-			if bl.sub_program
-			else "",
-			"output_indicator": bl.output_indicator,
-			"output_indicator_title": frappe.db.get_value(
-				"Strategy Objective", bl.output_indicator, "objective_title"
-			)
-			if bl.output_indicator
-			else "",
-			"output_indicator_code": frappe.db.get_value(
-				"Strategy Objective", bl.output_indicator, "objective_code"
-			)
-			if bl.output_indicator
-			else "",
-			"performance_target": bl.performance_target,
-			"performance_target_title": frappe.db.get_value(
-				"Strategy Target", bl.performance_target, "target_title"
-			)
-			if bl.performance_target
-			else "",
-			"performance_target_code": frappe.db.get_value(
-				"Strategy Target", bl.performance_target, "target_code"
-			)
-			if bl.performance_target
-			else "",
-			"amount_allocated": alloc,
-			"amount_reserved": res,
-			"amount_committed": com,
-			"amount_consumed": con,
-			"amount_available": avail,
-			"is_active": bool(bl.is_active),
-		},
-		_("Budget line context loaded"),
+			"strategic_plan": None,
+			"program": None,
+			"sub_program": None,
+			"output_indicator": None,
+			"performance_target": line.primary_target_code or None,
+			"is_active": 1 if line.is_active else 0,
+			"amount_allocated": flt(line.approved_amount),
+			"amount_reserved": flt(line.amount_reserved),
+			"amount_committed": flt(line.amount_committed),
+			"amount_consumed": flt(line.amount_actual),
+			"amount_available": available,
+		}
 	)
+
+
+@frappe.whitelist()
+def get_budget_lines_context(budget_line_ids: list[str] | str | None = None):
+	"""Return bounded identity context for several Budget Lines in two queries.
+
+	Consumers use this published adapter instead of importing Budget DocType
+	internals or resolving one line per projected row.
+	"""
+	values = budget_line_ids
+	if isinstance(values, str):
+		try:
+			values = json.loads(values)
+		except json.JSONDecodeError:
+			values = [part.strip() for part in values.split(",")]
+	ids = list(dict.fromkeys(str(value).strip() for value in (values or []) if str(value).strip()))
+	if not ids:
+		return _ok({})
+	lines = frappe.get_all(
+		"Budget Line",
+		filters={"name": ["in", ids]},
+		fields=["name", "budget", "generated_reference", "title", "currency", "is_active"],
+		limit=len(ids),
+	)
+	budget_ids = list({row.budget for row in lines if row.budget})
+	budgets = {
+		row.name: row
+		for row in frappe.get_all(
+			"Budget",
+			filters={"name": ["in", budget_ids]},
+			fields=["name", "procuring_entity", "fiscal_period", "currency", "status"],
+			limit=len(budget_ids),
+		)
+	} if budget_ids else {}
+	data: dict[str, dict[str, Any]] = {}
+	for line in lines:
+		budget = budgets.get(line.budget)
+		data[line.name] = {
+			"budget_line_id": line.name,
+			"budget_line_code": line.generated_reference or "",
+			"budget_line_name": line.title or line.generated_reference or line.name,
+			"budget": line.budget,
+			"procuring_entity": budget.procuring_entity if budget else "",
+			"fiscal_year": budget.fiscal_period if budget else "",
+			"currency": (line.currency or (budget.currency if budget else "") or "KES"),
+			"is_active": 1 if line.is_active and budget and budget.status == "Active" else 0,
+		}
+	return _ok(data)
 
 
 @frappe.whitelist()
 def check_available_budget(budget_line_id: str | None = None, amount: float | None = None):
-	"""Strict service contract: check sufficiency without mutation."""
-	amt = flt(amount)
-	if amt <= 0:
-		return _error("INVALID_AMOUNT", _("Amount must be greater than zero."))
-	bl, err = _get_line_doc_or_error(budget_line_id)
-	if err:
-		return err
-	if not bl.is_active:
-		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active."))
-	_alloc, _res, _com, _con, avail = _line_financials(bl)
-	shortfall = flt(max(0.0, amt - avail))
-	return _success(
-		{
-			"budget_line_id": bl.name,
-			"requested_amount": amt,
-			"amount_available": avail,
-			"currency": bl.currency,
-			"is_sufficient": bool(avail + 1e-9 >= amt),
-			"shortfall": shortfall,
-		},
-		_("Budget availability checked"),
-	)
+	"""Map to check_funding — ok=False when insufficient (readiness + approve_finance)."""
+	from kentender_budget.services.budget_check_reserve_contracts import check_funding
+
+	try:
+		dto = check_funding(budget_line=budget_line_id, requested_amount=amount)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return _fail(str(exc) or _("Funding check failed"))
+
+	data = {
+		"available": dto["sufficient"],
+		"amount_available": dto["available_before"],
+		"is_sufficient": dto["sufficient"],
+		"sufficient": dto["sufficient"],
+		"currency": (dto.get("budget") or {}).get("currency") or "KES",
+		"shortfall": dto["shortfall"],
+		"decision": dto["decision"],
+		"available_before_display": dto["available_before_display"],
+		"requested_display": dto["requested_display"],
+	}
+	if not dto["sufficient"]:
+		return _fail(
+			_("Insufficient funding. Shortfall: {0}").format(dto["shortfall_display"]),
+			data,
+		)
+	return _ok(data)
 
 
 @frappe.whitelist()
 def get_available_budget(budget_line_id: str | None = None):
-	"""Strict service contract: authoritative Budget Line snapshot (active lines only)."""
-	bl, err = _get_line_doc_or_error(budget_line_id)
-	if err:
-		return err
-	if not bl.is_active:
-		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active."))
-	alloc, res, com, con, avail = _line_financials(bl)
-	return _success(
+	from kentender_budget.services.budget_check_reserve_contracts import _resolve_line
+
+	try:
+		line = _resolve_line(budget_line_id or "")
+		available = flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
+		return _ok({"amount_available": available})
+	except Exception as exc:
+		return _fail(str(exc), {"amount_available": 0})
+
+
+_PLAN_ITEM_SOURCE_DOCTYPES = ("Procurement Plan Item", "Plan Item")
+
+
+@frappe.whitelist()
+def create_reservation(*args, **kwargs):
+	"""Accept legacy positional/keyword shapes; delegate to reserve_funding.
+
+	Legacy: create_reservation(budget_line, source_doctype, source_docname, amount, actor=..., source_business_id=...)
+
+	BUD-FR-009/010 — a reservation requires a Plan Item reference. When
+	`source_doctype` names a Plan Item, `source_docname` is taken as the Plan
+	Item code directly; otherwise callers must pass `plan_item_code` explicitly
+	(a bare Demand-shaped source, on its own, is no longer sufficient).
+	"""
+	from kentender_budget.services.budget_check_reserve_contracts import reserve_funding
+
+	budget_line = kwargs.get("budget_line") or kwargs.get("budget_line_id")
+	source_doctype = kwargs.get("source_doctype")
+	source_docname = kwargs.get("source_docname") or kwargs.get("demand_name")
+	amount = kwargs.get("amount") or kwargs.get("requested_amount")
+	actor = kwargs.get("actor")
+	source_business_id = kwargs.get("source_business_id")
+	idempotency_key = kwargs.get("idempotency_key")
+	plan_item_code = kwargs.get("plan_item_code")
+
+	if args:
+		if len(args) >= 1 and not budget_line:
+			budget_line = args[0]
+		if len(args) >= 2 and not source_doctype:
+			source_doctype = args[1]
+		if len(args) >= 3 and not source_docname:
+			source_docname = args[2]
+		if len(args) >= 4 and amount is None:
+			amount = args[3]
+
+	if not plan_item_code and source_doctype in _PLAN_ITEM_SOURCE_DOCTYPES:
+		plan_item_code = source_docname
+
+	demand_name = None if source_doctype in _PLAN_ITEM_SOURCE_DOCTYPES else (source_docname or source_business_id)
+	if source_business_id and not idempotency_key:
+		idempotency_key = f"Demand:{source_business_id}:{budget_line}:{flt(amount):.2f}"
+	elif source_docname and not idempotency_key:
+		idempotency_key = f"{source_doctype or 'Demand'}:{source_docname}:{budget_line}:{flt(amount):.2f}"
+
+	try:
+		result = reserve_funding(
+			budget_line=budget_line,
+			plan_item_code=plan_item_code,
+			demand_name=demand_name,
+			requested_amount=amount,
+			idempotency_key=idempotency_key,
+			actor=actor,
+		)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return _fail(str(exc) or _("Reservation creation failed"))
+
+	return _ok(
 		{
-			"budget_line_id": bl.name,
-			"amount_allocated": alloc,
-			"amount_reserved": res,
-			"amount_committed": com,
-			"amount_consumed": con,
-			"amount_available": avail,
-			"currency": bl.currency,
-		},
-		_("Available budget loaded"),
+			"reservation_id": result.get("reservation_code") or result.get("reservation_id"),
+			"reservation_name": result.get("reservation_id"),
+			"status": result.get("status") or "Reserved",
+			"reused": result.get("reused"),
+			"original_amount": result.get("original_amount"),
+		}
 	)
 
 
 @frappe.whitelist()
-def create_reservation(
-	budget_line_id: str | None = None,
-	source_doctype: str | None = None,
-	source_docname: str | None = None,
-	amount: float | None = None,
-	actor: str | None = None,
-	source_business_id: str | None = None,
+def release_reservation(
+	reservation_id: str | None = None, reason: str | None = None, actor: str | None = None
 ):
-	"""Strict service contract: create reservation atomically. Delegates to budget_service."""
-	return _svc_reserve(
-		budget_line_id=budget_line_id or "",
-		source_doctype=source_doctype or "",
-		source_docname=source_docname or "",
-		amount=flt(amount),
-		actor=actor,
-		source_business_id=source_business_id,
+	"""MVP-1: mark reservation Released and restore line reserved balance."""
+	from kentender_budget.services.budget_check_reserve_contracts import (
+		release_reservation as _release_reservation,
 	)
+
+	key = (reservation_id or "").strip()
+	if not key:
+		return _fail(_("Reservation is required"))
+	try:
+		result = _release_reservation(reservation=key, reason=reason, actor=actor)
+	except frappe.PermissionError:
+		raise
+	except Exception as exc:
+		return _fail(str(exc) or _("Reservation not found"))
+	return _ok({"status": result.get("status") or "Released", "reservation_id": result.get("reservation_code")})
 
 
 @frappe.whitelist()
-def release_reservation(reservation_id: str | None = None, reason: str | None = None, actor: str | None = None):
-	"""Strict service contract: release reservation atomically. Delegates to budget_service."""
-	return _svc_release(
-		reservation_id=reservation_id or "",
-		reason=reason or "",
-		actor=actor,
-	)
-
-
-@frappe.whitelist()
-def get_active_reservation_for_source(source_doctype: str | None = None, source_docname: str | None = None):
-	"""Lookup active reservation by source transaction."""
-	if not (source_doctype or "").strip() or not (source_docname or "").strip():
-		return _error("SOURCE_REFERENCE_INVALID", _("Source reference is required."))
+def get_active_reservation_for_source(
+	source_doctype: str | None = None, source_docname: str | None = None
+):
+	_ = source_doctype
+	code = (source_docname or "").strip()
+	if not code:
+		return _ok({"reservation": None})
+	# Match demand name or business code.
 	name = frappe.db.get_value(
-		"Budget Reservation",
-		{"source_doctype": source_doctype, "source_docname": source_docname, "status": "Active"},
+		"Funding Reservation",
+		{"demand_code": code, "status": ["in", ["Reserved", "Partially converted"]]},
 		"name",
 	)
+	if not name and frappe.db.exists("Demand", code):
+		biz = frappe.db.get_value("Demand", code, "demand_id") or code
+		name = frappe.db.get_value(
+			"Funding Reservation",
+			{"demand_code": biz, "status": ["in", ["Reserved", "Partially converted"]]},
+			"name",
+		)
 	if not name:
-		return _success({"reservation_id": None, "status": None}, _("Active reservation lookup complete"))
-	row = frappe.get_doc("Budget Reservation", name)
-	bl_code = frappe.db.get_value("Budget Line", row.budget_line, "budget_line_code")
-	return _success(
+		return _ok({"reservation": None})
+	doc = frappe.get_doc("Funding Reservation", name)
+	return _ok(
 		{
-			"reservation_id": row.reservation_id,
-			"status": row.status,
-			"amount": flt(row.amount),
-			"budget_line_id": row.budget_line,
-			"budget_line_code": bl_code,
-		},
-		_("Active reservation lookup complete"),
+			"reservation": {
+				"name": doc.name,
+				"code": doc.generated_reference,
+				"status": doc.status,
+				"remaining_reserved": flt(doc.remaining_reserved),
+			}
+		}
 	)
 
 
 @frappe.whitelist()
 def list_reservations_for_budget_line(budget_line_id: str | None = None):
-	"""List Budget Reservation records for a budget line, newest first."""
-	_checked_line, err = _get_line_doc_or_error(budget_line_id)
-	if err:
-		return err
+	from kentender_budget.services.budget_check_reserve_contracts import _resolve_line
+
+	try:
+		line = _resolve_line(budget_line_id or "")
+	except Exception as exc:
+		return _fail(str(exc), {"reservations": []})
 	rows = frappe.get_all(
-		"Budget Reservation",
-		filters={"budget_line": budget_line_id},
-		fields=[
-			"reservation_id",
-			"source_doctype",
-			"source_docname",
-			"source_business_id",
-			"amount",
-			"status",
-			"created_at",
-		],
-		order_by="creation desc",
-		limit=200,
+		"Funding Reservation",
+		filters={"budget_line": line.name},
+		fields=["name", "generated_reference", "status", "remaining_reserved", "demand_code"],
+		order_by="event_date desc",
 	)
-	return _success({"budget_line_id": budget_line_id, "reservations": rows}, _("Reservation history loaded"))
+	return _ok({"reservations": rows})
 
 
 @frappe.whitelist()
-def search_budget_lines(query: str | None = None, budget_id: str | None = None, procuring_entity: str | None = None, limit: int = 10):
-	"""Search active Budget Lines by name or code for the Finance Reviewer picker.
-	Optionally filter by budget_id and/or procuring_entity for the 2-step cascade picker."""
-	q = (query or "").strip()
-	bid = (budget_id or "").strip()
-	pe = (procuring_entity or "").strip()
+def search_budget_lines(
+	query: str | None = None,
+	budget_id: str | None = None,
+	procuring_entity: str | None = None,
+	limit: int = 10,
+):
+	from kentender_budget.services.budget_check_reserve_contracts import list_eligible_budget_lines
 
-	filters: dict = {"is_active": 1}
-	if bid:
-		filters["budget"] = bid
-	if pe:
-		filters["procuring_entity"] = pe
-
+	rows = list_eligible_budget_lines(procuring_entity=procuring_entity)
+	q = (query or "").strip().lower()
+	if budget_id:
+		rows = [r for r in rows if r.get("budget") == budget_id]
 	if q:
-		rows = frappe.db.get_all(
-			"Budget Line",
-			fields=["name", "budget_line_code", "budget_line_name", "amount_allocated",
-					"amount_reserved", "amount_committed", "amount_consumed"],
-			filters=filters,
-			or_filters=[
-				["budget_line_name", "like", f"%{q}%"],
-				["budget_line_code", "like", f"%{q}%"],
-			],
-			order_by="budget_line_name asc",
-			limit=int(limit),
-		)
-	else:
-		rows = frappe.db.get_all(
-			"Budget Line",
-			fields=["name", "budget_line_code", "budget_line_name", "amount_allocated",
-					"amount_reserved", "amount_committed", "amount_consumed"],
-			filters=filters,
-			order_by="budget_line_name asc",
-			limit=int(limit),
-		)
-
-	# Compute available for each line
-	for r in rows:
-		r["amount_available"] = (
-			flt(r.get("amount_allocated")) - flt(r.get("amount_reserved"))
-			- flt(r.get("amount_committed")) - flt(r.get("amount_consumed"))
-		)
-	return {"ok": True, "results": rows}
+		rows = [
+			r
+			for r in rows
+			if q in (r.get("name") or "").lower() or q in (r.get("code") or "").lower()
+		]
+	return _ok({"results": rows[: max(1, int(limit or 10))]})
 
 
 @frappe.whitelist()
-def get_budgets_for_picker(query: str | None = None, procuring_entity: str | None = None, limit: int = 20):
-	"""Return budgets that have at least one active Budget Line, for the cascade picker.
-	Filtered to the demand's procuring entity when provided."""
-	q = (query or "").strip()
-	pe = (procuring_entity or "").strip()
+def get_budgets_for_picker(
+	query: str | None = None, procuring_entity: str | None = None, limit: int = 20
+):
+	from kentender_budget.services.budget_contracts import resolve_scoped_entity
+	from kentender_budget.services.budget_permissions import entity_for_user
 
-	line_filters: dict = {"is_active": 1}
-	if pe:
-		line_filters["procuring_entity"] = pe
-
-	having_lines = frappe.db.get_all("Budget Line", filters=line_filters, pluck="budget")
-	budget_ids = list(set(having_lines))
-	if not budget_ids:
-		return {"ok": True, "results": []}
-
-	filters: dict = {"name": ["in", budget_ids]}
+	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
+	filters: dict[str, Any] = {"status": "Active"}
 	if pe:
 		filters["procuring_entity"] = pe
+	rows = frappe.get_all(
+		"Budget",
+		filters=filters,
+		fields=["name", "generated_reference", "title", "fiscal_period"],
+		order_by="modified desc",
+		limit_page_length=max(1, int(limit or 20)),
+	)
+	q = (query or "").strip().lower()
 	if q:
-		rows = frappe.db.get_all(
-			"Budget",
-			fields=["name", "budget_name", "fiscal_year", "status", "procuring_entity"],
-			filters=filters,
-			or_filters=[["budget_name", "like", f"%{q}%"]],
-			order_by="fiscal_year desc, budget_name asc",
-			limit=int(limit),
-		)
-	else:
-		rows = frappe.db.get_all(
-			"Budget",
-			fields=["name", "budget_name", "fiscal_year", "status", "procuring_entity"],
-			filters=filters,
-			order_by="fiscal_year desc, budget_name asc",
-			limit=int(limit),
-		)
-
-	pe_names = list({r["procuring_entity"] for r in rows if r.get("procuring_entity")})
-	if pe_names:
-		pe_map = {
-			r["name"]: r["entity_name"]
-			for r in frappe.db.get_all(
-				"Procuring Entity",
-				filters={"name": ["in", pe_names]},
-				fields=["name", "entity_name"],
-			)
+		rows = [
+			r
+			for r in rows
+			if q in (r.title or "").lower() or q in (r.generated_reference or "").lower()
+		]
+	return _ok(
+		{
+			"results": [
+				{
+					"id": r.name,
+					"code": r.generated_reference,
+					"name": r.title,
+					"fiscal_period": r.fiscal_period,
+				}
+				for r in rows
+			]
 		}
-		for r in rows:
-			r["entity_name"] = pe_map.get(r["procuring_entity"], r["procuring_entity"])
+	)
 
-	return {"ok": True, "results": rows}
+
+def get_budget_line_availability(budget_line_id: str | None = None) -> dict[str, Any]:
+	"""Non-whitelisted helper used by Home portfolio (best-effort)."""
+	try:
+		from kentender_budget.services.budget_check_reserve_contracts import _resolve_line
+
+		line = _resolve_line(budget_line_id or "")
+		available = flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
+		return {"available": available, "amount_available": available, "skipped": False}
+	except Exception:
+		return {"available": 0, "amount_available": 0, "skipped": True}

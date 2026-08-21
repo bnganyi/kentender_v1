@@ -2,202 +2,154 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "field:plan_code",
- "creation": "2026-04-23 12:00:00.000000",
+ "creation": "2026-08-09 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_identity",
-  "plan_name",
   "plan_code",
-  "plan_description",
-  "column_context",
-  "fiscal_year",
-  "planning_cycle_code",
+  "title",
+  "col_ctx",
   "procuring_entity",
+  "financial_year",
+  "period_start",
+  "period_end",
+  "section_meta",
   "currency",
-  "section_state",
-  "status",
-  "workflow_reason",
-  "is_active",
-  "is_master_seed",
-  "total_planned_value",
-  "submit_package_integrity_hash",
+  "plan_type",
+  "col_state",
+  "lifecycle_state",
+  "current_approved_version",
+  "open_draft_version",
   "section_audit",
-  "created_by",
-  "created_at",
-  "column_approval",
-  "approved_by",
-  "approved_at",
-  "rejected_by",
-  "rejected_at"
+  "fixture_namespace"
  ],
  "fields": [
   {
-   "fieldname": "section_identity",
-   "fieldtype": "Section Break",
-   "label": "1. Plan identity"
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
   },
   {
-   "fieldname": "plan_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Plan Name",
-   "reqd": 1,
-   "search_index": 1
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
   },
   {
    "fieldname": "plan_code",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Plan Code",
+   "unique": 1,
    "reqd": 1,
-   "search_index": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "plan_description",
-   "fieldtype": "Long Text",
-   "label": "Plan Description"
-  },
-  {
-   "fieldname": "column_context",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "fiscal_year",
-   "fieldtype": "Int",
+   "read_only": 1,
    "in_list_view": 1,
-   "label": "Fiscal Year",
-   "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "planning_cycle_code",
+   "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Planning Cycle Code",
-   "search_index": 1
+   "label": "Title",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_ctx",
+   "fieldtype": "Column Break",
+   "label": ""
   },
   {
    "fieldname": "procuring_entity",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Procuring Entity",
    "options": "Procuring Entity",
    "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Data",
+   "label": "Financial Year",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Plan metadata"
   },
   {
    "fieldname": "currency",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Currency",
    "options": "Currency",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_state",
-   "fieldtype": "Section Break",
-   "label": "2. Planning state"
-  },
-  {
-   "default": "Draft",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Draft\nActive\nClosed\nCancelled\nSuperseded",
    "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "description": "Required when cancelling the plan or reverting Ready for Release to Approved (Planning Authority). May be set by workflow APIs before save.",
-   "fieldname": "workflow_reason",
-   "fieldtype": "Long Text",
-   "label": "Workflow Reason"
-  },
-  {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "label": "Is Active",
-   "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_master_seed",
-   "fieldtype": "Check",
-   "label": "Is Master Seed"
-  },
-  {
-   "default": "0",
-   "fieldname": "total_planned_value",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Total Planned Value",
    "read_only": 1
   },
   {
-   "description": "SHA-256 fingerprint of active packages at last plan activation (governance).",
-   "fieldname": "submit_package_integrity_hash",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Submit Package Integrity Hash",
+   "fieldname": "plan_type",
+   "fieldtype": "Select",
+   "label": "Plan Type",
+   "options": "Annual",
+   "default": "Annual",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_state",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "lifecycle_state",
+   "fieldtype": "Select",
+   "label": "Lifecycle State",
+   "options": "Open",
+   "default": "Open",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_approved_version",
+   "fieldtype": "Link",
+   "label": "Current Approved Version",
+   "options": "Procurement Plan Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "open_draft_version",
+   "fieldtype": "Link",
+   "label": "Open Draft Version",
+   "options": "Procurement Plan Version",
    "read_only": 1
   },
   {
    "fieldname": "section_audit",
    "fieldtype": "Section Break",
-   "label": "3. Audit metadata",
+   "label": "Audit",
    "collapsible": 1
-  },
-  {
-   "fieldname": "created_by",
-   "fieldtype": "Link",
-   "label": "Created By",
-   "options": "User",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "created_at",
-   "fieldtype": "Datetime",
-   "label": "Created At",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_approval",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "approved_by",
-   "fieldtype": "Link",
-   "label": "Approved By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "approved_at",
-   "fieldtype": "Datetime",
-   "label": "Approved At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "rejected_by",
-   "fieldtype": "Link",
-   "label": "Rejected By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "rejected_at",
-   "fieldtype": "Datetime",
-   "label": "Rejected At",
-   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2026-04-23 20:00:00.000000",
+ "modified": "2026-08-09 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Procurement Plan",
@@ -216,15 +168,27 @@
    "write": 1
   },
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Administrator",
-   "share": 1,
+   "role": "Planning Contributor",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
    "write": 1
   },
   {
@@ -236,44 +200,8 @@
    "read": 1,
    "report": 1,
    "role": "Procurement Planner",
-   "share": 1,
+   "share": 0,
    "write": 1
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Procurement Officer",
-   "share": 1,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Tender Manager",
-   "share": 1,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Officer",
-   "share": 1,
-   "write": 0
   },
   {
    "create": 0,
@@ -284,19 +212,7 @@
    "read": 1,
    "report": 1,
    "role": "Planning Reviewer",
-   "share": 1,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Planning Authority",
-   "share": 1,
+   "share": 0,
    "write": 1
   },
   {
@@ -307,16 +223,64 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Auditor",
-   "share": 1,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Designated Approver",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tender Initiator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Viewer",
+   "share": 0,
    "write": 0
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "track_changes": 1,
+ "title_field": "title",
  "show_title_field_in_link": 1,
- "search_fields": "plan_code,plan_name",
- "title_field": "plan_name",
- "track_changes": 1
+ "search_fields": "plan_code,title,financial_year"
 }

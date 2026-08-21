@@ -1,0 +1,376 @@
+/*
+ * Stitch Desk chrome baseline (permanent).
+ *
+ * Authority: apps/kentender_v1/docs/mvp-1/00_common/design_system_refactor/
+ * (kentender_design.md + sample_code_1.html + sample_code_2.html).
+ *
+ * Defeats Frappe Desk / Bootstrap bleed that Strategy paid to discover:
+ * - Win98 outset black buttons
+ * - missing Tailwind Forms select chevrons
+ * - Espresso --weight-regular: 420 + tracking on body/labels
+ *
+ * DS recipes (use these class names in fixtures):
+ * - .kt-ds-section-title — form section h3 + bottom border (sample_1)
+ * - .kt-ds-data-block — white card, border-subtle, rounded (no square lock)
+ * - .kt-ds-toolbar-band — muted list/filter toolbar (~30% surface-low)
+ * - .kt-ds-table-head — muted table thead (~50% surface-low)
+ *
+ * Opt-in: add class `kt-stitch-canvas` on the Stitch main root
+ * (alongside module root, e.g. kt-str-root / kt-bud-root).
+ *
+ * Module CSS may extend tokens; it must NOT omit this baseline or remove
+ * the class. Enforced by kentender_core.tests.test_stitch_desk_chrome_gate.
+ */
+
+.kt-cl-shell .kt-stitch-canvas {
+	/* DS tokens — design_system_refactor sample Tailwind config */
+	--kt-stitch-primary: #003d9b;
+	--kt-stitch-primary-container: #0052cc;
+	--kt-stitch-primary-active: #002a6e;
+	--kt-stitch-on-primary: #ffffff;
+	--kt-stitch-on-primary-container: #c4d2ff;
+	--kt-stitch-primary-fixed: #dae2ff;
+	--kt-stitch-primary-fixed-dim: #b2c5ff;
+	--kt-stitch-secondary: #00687b;
+	--kt-stitch-on-surface: #191c1e;
+	--kt-stitch-on-surface-variant: #434654;
+	--kt-stitch-outline: #737685;
+	--kt-stitch-outline-variant: #c3c6d6;
+	--kt-stitch-border-subtle: #dfe1e6;
+	--kt-stitch-surface: #f8f9fb;
+	--kt-stitch-surface-lowest: #ffffff;
+	--kt-stitch-surface-container-low: #f3f4f6;
+	/* Solid stand-ins for Tailwind surface-container-low/30 and /50 */
+	--kt-stitch-toolbar-band: #f8f8fa;
+	--kt-stitch-table-head: #f7f8f9;
+	--kt-stitch-status-available: #10b981;
+	--kt-stitch-status-reserved: #f59e0b;
+	--kt-stitch-status-exhausted: #e11d48;
+	/* Desk Espresso uses 420 — Stitch body is 400. */
+	--weight-regular: 400;
+	color: var(--kt-stitch-on-surface);
+	font-family: Inter, "Public Sans", system-ui, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+/*
+ * DS section/table chrome (muted heads + rounded cards).
+ * Do not re-pin primary-fixed blue bands or square .rounded-xl.
+ * Do not globally remap .bg-surface-container-low — that paints muted inputs.
+ * Card borders use outline-variant / border-subtle; outline stays for muted text.
+ */
+.kt-cl-shell .kt-stitch-canvas .rounded-lg {
+	border-radius: 0.5rem !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .rounded-xl,
+.kt-cl-shell .kt-stitch-canvas .rounded-t-xl {
+	border-radius: 0.75rem !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .rounded-xl.border,
+.kt-cl-shell .kt-stitch-canvas .rounded-lg.border {
+	border-color: var(--kt-stitch-outline-variant, #c3c6d6) !important;
+}
+
+/* Legacy band markup: keep muted (sample_2), never primary-fixed */
+.kt-cl-shell .kt-stitch-canvas .rounded-xl > .bg-surface-container-low,
+.kt-cl-shell .kt-stitch-canvas .rounded-lg > .bg-surface-container-low {
+	background-color: var(--kt-stitch-toolbar-band, #f8f8fa) !important;
+	border-bottom-color: var(--kt-stitch-border-subtle, #dfe1e6) !important;
+	box-shadow: none !important;
+}
+
+/* Table column headers — muted surface (sample_2) */
+.kt-cl-shell .kt-stitch-canvas thead.bg-surface-container-low,
+.kt-cl-shell .kt-stitch-canvas thead tr.bg-surface-container-low,
+.kt-cl-shell .kt-stitch-canvas thead .bg-surface-container-low,
+.kt-cl-shell .kt-stitch-canvas thead tr.kt-ds-table-head,
+.kt-cl-shell .kt-stitch-canvas thead.kt-ds-table-head {
+	background-color: var(--kt-stitch-table-head, #f7f8f9) !important;
+	border-bottom-color: var(--kt-stitch-border-subtle, #dfe1e6) !important;
+}
+
+/* Recipe: form section title (sample_1) */
+.kt-cl-shell .kt-stitch-canvas .kt-ds-section-title {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 20px !important;
+	line-height: 28px !important;
+	font-weight: 600 !important;
+	color: var(--kt-stitch-on-surface) !important;
+	margin: 0 0 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+	border-bottom: 1px solid var(--kt-stitch-border-subtle, #dfe1e6) !important;
+	box-shadow: none !important;
+	background: transparent !important;
+}
+
+/* Recipe: data block card */
+.kt-cl-shell .kt-stitch-canvas .kt-ds-data-block {
+	background-color: var(--kt-stitch-surface-lowest, #ffffff) !important;
+	border: 1px solid var(--kt-stitch-border-subtle, #dfe1e6) !important;
+	border-radius: 0.5rem !important;
+	overflow: hidden;
+}
+
+/* Recipe: list/toolbar band (~30% surface-low) */
+.kt-cl-shell .kt-stitch-canvas .kt-ds-toolbar-band {
+	background-color: var(--kt-stitch-toolbar-band, #f8f8fa) !important;
+	border-bottom: 1px solid var(--kt-stitch-border-subtle, #dfe1e6) !important;
+}
+
+/* Recipe: table thead muted (~50% surface-low) */
+.kt-cl-shell .kt-stitch-canvas .kt-ds-table-head {
+	background-color: var(--kt-stitch-table-head, #f7f8f9) !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas *,
+.kt-cl-shell .kt-stitch-canvas *::before,
+.kt-cl-shell .kt-stitch-canvas *::after {
+	box-sizing: border-box;
+}
+
+/* Desk/Bootstrap must not paint Win98 outset black boxes on Stitch buttons. */
+.kt-cl-shell .kt-stitch-canvas button,
+.kt-cl-shell .kt-stitch-canvas .btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	border-width: 0 !important;
+	border-style: none !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
+	border-radius: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+	line-height: inherit;
+	min-height: 0;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.bg-primary {
+	background-color: var(--kt-stitch-primary) !important;
+	color: var(--kt-stitch-on-primary) !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+	padding: 0.5rem 1rem !important;
+}
+
+/* Filled primary hover: keep on-primary white (never on-primary-container ink).
+ * Also defeat Desk `button.bg-primary:hover { background: black }` and opacity washes. */
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus-visible,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary.hover\:opacity-90:hover {
+	background-color: #0052cc !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover .material-symbols-outlined,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus .material-symbols-outlined,
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:focus-visible .material-symbols-outlined {
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:active {
+	background-color: #002a6e !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:active .material-symbols-outlined {
+	color: #ffffff !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.border {
+	border: 1px solid var(--kt-stitch-outline-variant, #c3c6d6) !important;
+	background: var(--kt-stitch-surface-lowest) !important;
+	color: var(--kt-stitch-on-surface) !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 1rem !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.border:hover {
+	background-color: #e2e2e8 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.rounded-lg {
+	border-radius: 0.5rem !important;
+}
+
+/* Row / text actions stay chromeless. */
+.kt-cl-shell .kt-stitch-canvas td button.text-primary,
+.kt-cl-shell .kt-stitch-canvas button.text-primary:not(.bg-primary):not(.border):not(.kt-bud-tab):not(.kt-str-tab) {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	color: var(--kt-stitch-primary) !important;
+	border-radius: 0 !important;
+}
+
+/* Editable inputs: white fill (never surface #f8f9fb — that reads as disabled). */
+.kt-cl-shell .kt-stitch-canvas select,
+.kt-cl-shell .kt-stitch-canvas input[type="text"],
+.kt-cl-shell .kt-stitch-canvas input[type="number"],
+.kt-cl-shell .kt-stitch-canvas input[type="date"],
+.kt-cl-shell .kt-stitch-canvas input[type="email"],
+.kt-cl-shell .kt-stitch-canvas input[type="search"],
+.kt-cl-shell .kt-stitch-canvas input:not([type]),
+.kt-cl-shell .kt-stitch-canvas textarea {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font: inherit;
+	color: #191c1e !important;
+	caret-color: #003d9b !important;
+	margin: 0;
+	outline: none;
+	border-width: 1px !important;
+	border-style: solid !important;
+	border-color: #c3c6d6 !important;
+	background-color: #ffffff !important;
+	border-radius: 0.5rem !important;
+	box-shadow: none !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas select::placeholder,
+.kt-cl-shell .kt-stitch-canvas input::placeholder,
+.kt-cl-shell .kt-stitch-canvas textarea::placeholder {
+	color: #737685 !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:hover:not(:disabled):not([readonly]),
+.kt-cl-shell .kt-stitch-canvas input:hover:not(:disabled):not([readonly]),
+.kt-cl-shell .kt-stitch-canvas textarea:hover:not(:disabled):not([readonly]) {
+	border-color: #434654 !important;
+	background-color: #ffffff !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:focus,
+.kt-cl-shell .kt-stitch-canvas select:focus-visible,
+.kt-cl-shell .kt-stitch-canvas input:focus,
+.kt-cl-shell .kt-stitch-canvas input:focus-visible,
+.kt-cl-shell .kt-stitch-canvas textarea:focus,
+.kt-cl-shell .kt-stitch-canvas textarea:focus-visible {
+	border-color: #00687b !important;
+	background-color: #ffffff !important;
+	box-shadow: 0 0 0 1px #00687b !important;
+	outline: none !important;
+}
+.kt-cl-shell .kt-stitch-canvas select:disabled,
+.kt-cl-shell .kt-stitch-canvas select[readonly],
+.kt-cl-shell .kt-stitch-canvas select[aria-disabled="true"],
+.kt-cl-shell .kt-stitch-canvas input:disabled,
+.kt-cl-shell .kt-stitch-canvas input[readonly],
+.kt-cl-shell .kt-stitch-canvas input[aria-disabled="true"],
+.kt-cl-shell .kt-stitch-canvas textarea:disabled,
+.kt-cl-shell .kt-stitch-canvas textarea[readonly],
+.kt-cl-shell .kt-stitch-canvas textarea[aria-disabled="true"] {
+	background-color: #e2e2e8 !important;
+	border-color: #c3c6d6 !important;
+	color: #737685 !important;
+	cursor: not-allowed !important;
+	box-shadow: none !important;
+}
+
+/*
+ * Tailwind Forms select chevron stand-in.
+ * Stitch CDN injects this; Desk does not.
+ *
+ * CHRONIC BUG (do not reintroduce): SVG Forms chevron + Material expand_more
+ * sibling stacked → garbled "~" / "∨∨" glyph. Permanent kill uses :has() below
+ * so every Stitch filter bar is safe without per-screen CSS.
+ */
+.kt-cl-shell .kt-stitch-canvas select {
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23434654' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+	background-position: right 0.75rem center !important;
+	background-repeat: no-repeat !important;
+	background-size: 1.25rem 1.25rem !important;
+	padding-right: 2.5rem !important;
+	cursor: pointer !important;
+}
+
+/* Permanent: Material expand_more sibling owns the chevron — suppress SVG. */
+.kt-cl-shell .kt-stitch-canvas select:has(+ .material-symbols-outlined),
+.kt-cl-shell .kt-stitch-canvas select:has(+ div .material-symbols-outlined),
+.kt-cl-shell .kt-str-root select:has(+ .material-symbols-outlined),
+.kt-cl-shell .kt-bud-root select:has(+ .material-symbols-outlined) {
+	background-image: none !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas h1,
+.kt-cl-shell .kt-stitch-canvas h2,
+.kt-cl-shell .kt-stitch-canvas h3,
+.kt-cl-shell .kt-stitch-canvas h4,
+.kt-cl-shell .kt-stitch-canvas p {
+	margin: 0;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-headline-lg,
+.kt-cl-shell .kt-stitch-canvas .font-headline-md,
+.kt-cl-shell .kt-stitch-canvas .font-headline-sm {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-body-lg,
+.kt-cl-shell .kt-stitch-canvas .font-body-md {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-weight: 400 !important;
+	letter-spacing: normal !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-label-caps,
+.kt-cl-shell .kt-stitch-canvas .text-label-caps {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.75rem !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-headline-lg {
+	font-size: 30px !important;
+	line-height: 38px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-headline-sm {
+	font-size: 20px !important;
+	line-height: 28px !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-body-lg {
+	font-size: 16px !important;
+	line-height: 24px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-body-md {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-data-mono,
+.kt-cl-shell .kt-stitch-canvas .text-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .material-symbols-outlined {
+	font-family: "Material Symbols Outlined", sans-serif !important;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+	display: inline-block !important;
+	vertical-align: middle !important;
+	line-height: 1 !important;
+}

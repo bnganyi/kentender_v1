@@ -107,7 +107,7 @@ class TestR3003BudgetFundingHandoff(IntegrationTestCase):
         self.assertIsNotNone(card, "BUDCONF card must exist in DB")
         self.assertEqual(card["handoff_title"], "Budget Funding Confirmation")
         self.assertEqual(card["source_module"], "Budget")
-        self.assertEqual(card["target_module"], "Demand Intake and Approval")
+        self.assertEqual(card["target_module"], "Demands")
         self.assertEqual(card["source_object_type"], "Budget Line")
         self.assertEqual(card["source_object_code"], _BUDGET_LINE_CODE)
         self.assertEqual(card["status"], "Consumed")

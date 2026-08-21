@@ -1,0 +1,450 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Strategy Performance Dashboard - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&amp;family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#e8e7ed",
+                    "surface-container": "#eceef0",
+                    "primary-container": "#00346f",
+                    "surface-variant": "#e2e2e8",
+                    "outline-variant": "#c3c6d1",
+                    "on-background": "#1a1b20",
+                    "on-error": "#ffffff",
+                    "status-available": "#10B981",
+                    "status-committed": "#6366F1",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "on-primary-container": "#7b9ee0",
+                    "inverse-primary": "#abc7ff",
+                    "secondary-fixed-dim": "#99cbff",
+                    "tertiary-container": "#26364b",
+                    "on-surface-variant": "#434750",
+                    "primary-fixed": "#d7e2ff",
+                    "on-tertiary-container": "#8f9fb8",
+                    "on-primary-fixed": "#001b3f",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f9f9fe",
+                    "surface-container-low": "#f4f3f9",
+                    "inverse-surface": "#2f3035",
+                    "tertiary-fixed": "#d3e4ff",
+                    "surface-dim": "#dad9df",
+                    "error-container": "#ffdad6",
+                    "outline": "#737781",
+                    "surface-container-highest": "#e2e2e8",
+                    "status-reserved": "#F59E0B",
+                    "surface-tint": "#395e9b",
+                    "on-secondary-container": "#004c7c",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#001f48",
+                    "on-primary": "#ffffff",
+                    "background": "#f9f9fe",
+                    "secondary-fixed": "#cfe5ff",
+                    "primary-fixed-dim": "#abc7ff",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "on-error-container": "#93000a",
+                    "status-exhausted": "#EF4444",
+                    "secondary": "#01629d",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-bright": "#f9f9fe",
+                    "on-surface": "#1a1b20",
+                    "error": "#ba1a1a",
+                    "inverse-on-surface": "#f1f0f6",
+                    "tertiary": "#26364b",
+                    "on-secondary-fixed-variant": "#004a78"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "section-gap": "24px",
+                    "card-padding": "20px",
+                    "gutter": "12px",
+                    "container-padding": "16px",
+                    "base-unit": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope", "sans-serif"],
+                    "headline-sm": ["Manrope", "sans-serif"],
+                    "headline-lg-mobile": ["Manrope", "sans-serif"],
+                    "label-caps": ["Inter", "sans-serif"],
+                    "headline-lg": ["Manrope", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "data-mono": ["JetBrains Mono", "monospace"],
+                    "body-md": ["Inter", "sans-serif"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: theme('colors.surface'); color: theme('colors.on-surface'); }
+        .data-block { background-color: theme('colors.surface-container-lowest'); border: 1px solid theme('colors.outline-variant'); border-radius: theme('borderRadius.lg'); }
+        .data-table th { background-color: theme('colors.surface-container-low'); color: theme('colors.on-surface-variant'); font-family: theme('fontFamily.label-caps'); font-size: theme('fontSize.label-caps')[0]; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 16px; text-align: left; border-bottom: 1px solid theme('colors.outline-variant'); }
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid theme('colors.surface-variant'); font-family: theme('fontFamily.body-md'); font-size: theme('fontSize.body-md')[0]; color: theme('colors.on-surface'); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background-color: theme('colors.surface-container'); }
+        .status-pill { display: inline-flex; items-center; padding: 2px 8px; border-radius: theme('borderRadius.full'); font-family: theme('fontFamily.label-caps'); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .status-on-track { background-color: #d1fae5; color: #065f46; } /* Emeral-100/800 approximate for visibility */
+        .status-at-risk { background-color: #fef3c7; color: #92400e; } /* Amber-100/800 */
+        .status-off-track { background-color: #fee2e2; color: #991b1b; } /* Red-100/800 */
+        .status-no-data { background-color: theme('colors.surface-variant'); color: theme('colors.on-surface-variant'); }
+        
+        /* Utility for Webkit Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: theme('colors.outline-variant'); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: theme('colors.outline'); }
+    </style>
+</head>
+<body class="font-body-md text-body-md antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest text-primary font-headline-md text-headline-md fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16 border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg text-primary tracking-tight">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search bar on right logic implies it could be here, but omitting for strict adherence to provided JSON array if not explicitly detailed, adding a placeholder -->
+<div class="hidden md:flex items-center bg-surface-container rounded-full px-4 py-1.5 border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" style="font-size: 20px;">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md placeholder-on-surface-variant w-48" disabled="" placeholder="Search..." type="text">
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors scale-95 active:opacity-80">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors scale-95 active:opacity-80">
+<span class="material-symbols-outlined text-primary">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-AU1Y6bOEmSp4hZGmHF5NwBvuyc6uOKNmYLr1j_tw1TGi_ia0-HAkS_v7M2hgP2zHjC8RqEt89-xWGAS9fX0Q_5QxB3IxhNUD-5O0V4T7ORqiUB0wkHU_zMY2L-ytcFT9opFGY38KxbWlb8SkxF_lSGsvk18XfAULJRXnlyabTEv80GVoUC7NG5sPugMzJhn8bXWq_S7oHXMES5QWsnZE6-u-madEsYPab6DRIpNsDwWNTdA5RzTuww">
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col p-4 z-40 overflow-y-auto fixed left-0 top-16 bottom-0 w-64 bg-surface-container-low text-primary font-label-caps text-label-caps border-r border-outline-variant">
+<div class="mb-8 px-3">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center text-on-primary-container font-bold">GoK</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">Procurement Portal</div>
+<div class="text-on-surface-variant font-body-md text-xs">Government of Kenya</div>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="">Planning</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="">Requisition</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="">Tendering</span>
+</a>
+<!-- Highlighted Analytics/Evaluation to denote Strategy Performance -->
+<a class="flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-3 py-2 font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">analytics</span>
+<span class="">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+<span class="">Award</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">lock</span>
+<span class="">Closeout</span>
+</a>
+</div>
+<div class="mt-auto space-y-1 pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="">Support</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-3 py-2 hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span class="">Archive</span>
+</a>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="md:ml-64 pt-16 min-h-screen pb-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-section-gap">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Strategy Performance</h1>
+<p class="text-on-surface-variant text-body-lg">Monitor strategic results and the procurement activity supporting them.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-primary hover:bg-surface-container px-4 py-2 rounded-lg font-label-caps text-label-caps transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                        Open Strategy Portfolio
+                    </button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export report
+                    </button>
+</div>
+</div>
+<!-- Context Strip & Filters -->
+<div class="data-block p-card-padding">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-4">
+<div class="col-span-1">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Procuring Entity</label>
+<div class="font-body-md text-on-surface bg-surface-container-low px-3 py-2 rounded border border-surface-variant cursor-not-allowed">Ministry of Health</div>
+</div>
+<div class="col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Active Plan</label>
+<div class="font-data-mono text-data-mono text-on-surface bg-surface-container-low px-3 py-2 rounded border border-surface-variant cursor-not-allowed truncate" title="MOH-SP-2026-2030 — Ministry of Health Strategic Plan 2026–2030"><div class="font-body-md">Ministry of Health Strategic Plan 2026–2030</div><div class="text-[10px] text-on-surface-variant font-data-mono">MOH-SP-2026-2030</div></div>
+</div>
+<div class="col-span-1">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Reporting Period</label>
+<div class="font-body-md text-on-surface bg-surface-container-low px-3 py-2 rounded border border-surface-variant cursor-not-allowed">FY 2027/28 — Quarter 2</div>
+</div>
+</div>
+<div class="flex flex-wrap items-end gap-gutter pt-4 border-t border-surface-variant">
+<div class="flex-1 min-w-[200px]">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Programme</label>
+<select class="w-full font-body-md border-outline-variant rounded focus:ring-primary focus:border-primary bg-surface-container-lowest">
+<option>All Programmes</option>
+</select>
+</div>
+<div class="flex-1 min-w-[200px]">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1">Sub-programme</label>
+<select class="w-full font-body-md border-outline-variant rounded focus:ring-primary focus:border-primary bg-surface-container-lowest">
+<option>All Sub-programmes</option>
+</select>
+</div>
+<div class="flex gap-2">
+<button class="border border-outline-variant text-primary px-4 py-2 rounded-lg font-label-caps text-label-caps hover:bg-surface-container transition-colors disabled:opacity-50" disabled="">Clear filters</button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-caps text-label-caps hover:opacity-90 transition-opacity disabled:opacity-50" disabled="">Apply filters</button>
+</div>
+</div>
+<div class="mt-4 text-xs text-on-surface-variant flex items-center justify-between">
+<span class="">As at 31 October 2027, 16:30 EAT</span>
+<span class="">Sources available: Strategy, Budget &amp; Funding, Demands, Procurement Plans, Tenders and Contracts</span>
+</div>
+</div>
+<!-- Performance Strip -->
+<div class="flex flex-wrap gap-2"><div class="flex-1 min-w-[140px] bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex flex-col justify-center items-center"><span class="font-headline-md text-headline-md text-on-surface">8</span><span class="font-label-caps text-label-caps text-on-surface-variant text-center mt-1">Active targets</span></div><div class="flex-1 min-w-[140px] bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3 flex flex-col justify-center items-center"><span class="font-headline-md text-headline-md text-[#166534]">5</span><span class="font-label-caps text-label-caps text-[#166534] text-center mt-1">On track</span></div><div class="flex-1 min-w-[140px] bg-[#fffbeb] border border-[#fde68a] rounded-lg p-3 flex flex-col justify-center items-center"><span class="font-headline-md text-headline-md text-[#92400e]">1</span><span class="font-label-caps text-label-caps text-[#92400e] text-center mt-1">At risk</span></div><div class="flex-1 min-w-[140px] bg-[#fef2f2] border border-[#fecaca] rounded-lg p-3 flex flex-col justify-center items-center"><span class="font-headline-md text-headline-md text-[#991b1b]">1</span><span class="font-label-caps text-label-caps text-[#991b1b] text-center mt-1">Off track</span></div><div class="flex-1 min-w-[140px] bg-surface-container border border-outline-variant rounded-lg p-3 flex flex-col justify-center items-center"><span class="font-headline-md text-headline-md text-on-surface-variant">1</span><span class="font-label-caps text-label-caps text-on-surface-variant text-center mt-1">No data</span></div><div class="flex-1 min-w-[140px] bg-[#fef2f2] border border-[#fecaca] rounded-lg p-3 flex flex-col justify-center items-center relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-[#ef4444]"></div><span class="font-headline-md text-headline-md text-[#991b1b]">1</span><span class="font-label-caps text-label-caps text-[#991b1b] text-center mt-1">Corrective actions overdue</span></div></div>
+<!-- Bento Grid Layout for Tables to avoid standard stack -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-section-gap">
+<!-- Section 1 — Exceptions Requiring Intervention (Full Width) -->
+<div class="data-block overflow-hidden flex flex-col lg:col-span-2">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-error flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+                            Exceptions Requiring Intervention
+                        </h2>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full data-table">
+<thead>
+<tr>
+<th class="">Exception</th>
+<th class="">Affected record</th>
+<th class="hidden xl:table-cell">Owner</th>
+<th class="">Due or age</th>
+<th class="text-right">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="text-xs font-semibold text-[#991b1b]">Measurement overdue</td>
+<td class="">
+<div class="font-body-md font-semibold mb-0.5 truncate max-w-[200px]" title="Restore critical services within 4 hours">Restore critical services within 4 hours</div>
+<div class="text-xs text-on-surface-variant font-data-mono text-data-mono">MOH-TGT-02</div>
+</td>
+<td class="text-xs hidden xl:table-cell">Director, Digital Health</td>
+<td class="text-xs text-[#991b1b] font-semibold">5 days overdue</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps whitespace-nowrap">Record measurement</button></td>
+</tr>
+<tr>
+<td class="text-xs font-semibold text-[#991b1b]">Corrective action overdue</td>
+<td class="">
+<div class="font-body-md font-semibold mb-0.5 truncate max-w-[200px]" title="At least 99.9% annual service availability">At least 99.9% annual service availability</div>
+<div class="text-xs text-on-surface-variant font-data-mono text-data-mono">MOH-TGT-01</div>
+</td>
+<td class="text-xs hidden xl:table-cell">Head, ICT Infrastructure</td>
+<td class="text-xs text-[#991b1b] font-semibold">1 day overdue</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps whitespace-nowrap">Review corrective action</button></td>
+</tr>
+<tr>
+<td class="text-xs font-semibold text-[#92400e]">Required value commitment not addressed</td>
+<td class="">
+<div class="font-body-md font-semibold mb-0.5 truncate max-w-[200px]" title="Reduce whole-life infrastructure cost">Reduce whole-life infrastructure cost</div>
+<div class="text-xs text-on-surface-variant font-data-mono text-data-mono">PVO-ECO-01</div>
+</td>
+<td class="text-xs hidden xl:table-cell">Demand Sponsor</td>
+<td class="text-xs text-[#92400e] font-semibold">3 days outstanding</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps whitespace-nowrap">Review value treatment</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div class="lg:col-span-2 data-block overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-outline-variant">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Outcome Performance <span class="text-on-surface-variant font-body-md ml-2 font-normal">6 strategic outcomes</span></h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full data-table whitespace-nowrap">
+<thead><tr><th class="">STRATEGIC OUTCOME</th><th class="">TARGET STATUS</th><th class="">DIRECTION</th><th class="">SUPPORTING PROCUREMENT ACTIVITY</th><th class="">MANAGEMENT ATTENTION</th><th class="text-right">ACTION</th></tr></thead>
+<tbody><tr><td class=""><div class="font-semibold">Reliable digital health infrastructure</div><div class="text-xs text-on-surface-variant font-data-mono">MOH-OUT-01</div></td><td class=""><span class="status-pill status-on-track mr-1">2 ON TRACK</span><span class="status-pill status-at-risk">1 AT RISK</span></td><td class=""><div class="flex items-center gap-1 text-[#166534]"><span class="material-symbols-outlined text-[16px]">trending_up</span><span class="">Improving</span></div></td><td class="text-xs">2 approved demands, 1 tender, 1 active contract</td><td class="text-[#991b1b] text-xs font-semibold">Availability corrective action overdue</td><td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">Review performance</button></td></tr><tr><td class=""><div class="font-semibold">Responsive critical-service recovery</div><div class="text-xs text-on-surface-variant font-data-mono">MOH-OUT-02</div></td><td class=""><span class="status-pill status-on-track mr-1">1 ON TRACK</span><span class="status-pill status-no-data">1 NO DATA</span></td><td class=""><div class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">trending_flat</span><span class="">Stable</span></div></td><td class="text-xs">1 approved demand, 1 procurement-plan item</td><td class="text-[#991b1b] text-xs font-semibold">Q2 recovery-time measurement overdue</td><td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">Review performance</button></td></tr><tr><td class=""><div class="font-semibold">Sustainable digital health capability</div><div class="text-xs text-on-surface-variant font-data-mono">MOH-OUT-03</div></td><td class=""><span class="status-pill status-on-track mr-1">1 ON TRACK</span><span class="status-pill status-off-track">1 OFF TRACK</span></td><td class=""><div class="flex items-center gap-1 text-[#991b1b]"><span class="material-symbols-outlined text-[16px]">trending_down</span><span class="">Declining</span></div></td><td class="text-xs">1 active contract</td><td class="text-[#991b1b] text-xs font-semibold">Skills-transfer milestone overdue</td><td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">Review performance</button></td></tr></tbody>
+</table>
+</div>
+<div class="px-card-padding py-3 text-xs text-on-surface-variant bg-surface-container-low border-t border-outline-variant flex justify-between items-center"><span class="">Showing 3 of 6 outcomes</span><button class="text-primary hover:underline font-label-caps text-label-caps">View all outcomes</button></div></div>
+<!-- Section 2 — Exceptions Requiring Intervention -->
+<!-- Section 3 — Procurement Contribution & Funding -->
+<div class="data-block overflow-hidden flex flex-col lg:col-span-2">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-outline-variant">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Procurement Contribution &amp; Funding Snapshot</h2>
+</div>
+<div class="p-4 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-semibold text-on-surface">Funding Snapshot</span>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">Approved budget</span>
+<span class="font-data-mono text-data-mono">KES 480M</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-3 mb-4 flex overflow-hidden">
+<div class="bg-status-committed h-full" style="width: 64.58%" title="Committed: KES 310M"></div>
+<div class="bg-status-reserved h-full" style="width: 30.21%" title="Reserved: KES 145M"></div>
+<div class="bg-surface-container-highest h-full border-l border-outline-variant" style="width: 5.21%" title="Available: KES 25M"></div>
+</div>
+<div class="flex justify-between items-start mb-6">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant mb-1">
+<div class="w-2.5 h-2.5 rounded-full bg-status-committed"></div>
+Committed
+</div>
+<span class="font-data-mono text-data-mono">KES 310M</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant mb-1">
+<div class="w-2.5 h-2.5 rounded-full bg-status-reserved"></div>
+Reserved
+</div>
+<span class="font-data-mono text-data-mono">KES 145M</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant mb-1">
+<div class="w-2.5 h-2.5 rounded-full bg-surface-container-highest border border-outline-variant"></div>
+Available
+</div>
+<span class="font-data-mono text-data-mono text-status-available font-bold text-lg">KES 25M</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-4 pt-4 border-t border-surface-variant mb-4">
+<div class="flex-1 bg-surface-container-low rounded p-3">
+<div class="text-xs text-on-surface-variant mb-1">Actual expenditure</div>
+<div class="font-data-mono text-data-mono">KES 180M</div>
+</div>
+<div class="flex-1 bg-surface-container-low rounded p-3">
+<div class="text-xs text-on-surface-variant mb-1">Outstanding commitment</div>
+<div class="font-data-mono text-data-mono">KES 130M</div>
+</div>
+</div>
+<div class="text-[10px] text-on-surface-variant bg-surface-container-low p-2 rounded flex items-start gap-2">
+<span class="material-symbols-outlined text-[14px]">info</span>
+<span class="">Available funding equals approved budget less active reservations and contract commitments. Actual expenditure is reported separately because it is already included within the committed contract obligation.</span>
+</div>
+</div>
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps text-on-surface">Aligned Procurement Pipeline</h3>
+</div>
+<div class="overflow-x-auto flex-1 bg-surface-container-low/30">
+<table class="w-full data-table">
+<thead>
+<tr>
+<th class="">Lifecycle stage</th>
+<th class="text-left">Aligned records</th>
+<th class="text-right">Current value</th>
+<th class="text-right">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="text-xs font-semibold">Approved demand</td>
+<td class="text-xs text-left">3</td>
+<td class="font-data-mono text-data-mono text-right">KES 455M</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">View demands</button></td>
+</tr>
+<tr>
+<td class="text-xs font-semibold text-on-surface-variant pl-6">Procurement plan</td>
+<td class="text-xs text-on-surface-variant text-left">2</td>
+<td class="font-data-mono text-data-mono text-right text-on-surface-variant">KES 440M</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">View plan items</button></td>
+</tr>
+<tr>
+<td class="text-xs font-semibold text-on-surface-variant pl-6">Tender</td>
+<td class="text-xs text-on-surface-variant text-left">1</td>
+<td class="font-data-mono text-data-mono text-right text-on-surface-variant">KES 420M</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">View tender</button></td>
+</tr>
+<tr>
+<td class="text-xs font-semibold text-on-surface-variant pl-6">Contract</td>
+<td class="text-xs text-on-surface-variant text-left">2</td>
+<td class="font-data-mono text-data-mono text-right text-on-surface-variant">KES 310M</td>
+<td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">View contracts</button></td>
+</tr>
+</tbody>
+</table>
+<div class="px-4 py-3 text-[10px] text-on-surface-variant bg-surface-container-low border-t border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">info</span>
+                            Pipeline values represent overlapping procurement lifecycle stages and must not be added together.
+                        </div>
+</div>
+</div>
+<!-- Section 4 — Public-value Commitments (Full Width) -->
+<div class="lg:col-span-2 data-block overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Plan Value Commitments</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full data-table whitespace-nowrap">
+<thead><tr class=""><th class="">COMMITMENT</th><th class="">REQUIREMENT LEVEL</th><th class="">FUNDING TREATMENT</th><th class="">DOWNSTREAM ADOPTION</th><th class="">VERIFIED RESULT</th><th class="">ATTENTION</th><th class="text-right">ACTION</th></tr></thead>
+<tbody><tr class=""><td class=""><div class="font-semibold">Improve infrastructure efficiency</div><div class="text-xs text-on-surface-variant font-data-mono">PVO-EFT-01</div></td><td class=""><span class="status-pill bg-surface-container-highest text-on-surface-variant">REQUIRED</span></td><td class="text-xs">Embedded in budget line</td><td class="text-xs"><span class="text-[#166534] font-semibold">4 of 4</span> applicable Value Cases addressed</td><td class="text-xs">Availability 99.6% against 99.9% target — Q2 FY 2027/28</td><td class="text-[#991b1b] text-xs font-semibold">Corrective action overdue</td><td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">Review commitment</button></td></tr><tr class=""><td class=""><div class="font-semibold">Reduce whole-life infrastructure cost</div><div class="text-xs text-on-surface-variant font-data-mono">PVO-ECO-01</div></td><td class=""><span class="status-pill bg-surface-container-highest text-on-surface-variant">REQUIRED</span></td><td class="text-xs">Dedicated allocation — KES 40M</td><td class="text-xs"><span class="text-[#92400e] font-semibold">3 of 4</span> applicable Value Cases addressed</td><td class="text-xs text-on-surface-variant">No verified Q2 measure</td><td class="text-[#92400e] text-xs font-semibold">1 treatment outstanding</td><td class="text-right"><button class="text-primary hover:underline font-label-caps text-label-caps">Review treatment</button></td></tr></tbody>
+</table>
+</div>
+<div class="px-card-padding py-3 text-[10px] text-on-surface-variant bg-surface-container-low border-t border-outline-variant flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">info</span>
+                        “Addressed” means the commitment was considered and treated downstream; it does not prove achievement.</div>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

@@ -212,11 +212,148 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
+	function crumbStrategyAlignment() {
+		return crumb(__("Strategy Alignment"), ["strategy-alignment"]);
+	}
+	function trailStrategy() {
+		return [crumbDashboard(), crumbStrategyAlignment()];
+	}
+	function trailStrategyPlan(leafLabel) {
+		return [crumbDashboard(), crumbStrategyAlignment(), crumb(leafLabel)];
+	}
+
+	function crumbBudgetFunding() {
+		return crumb(__("Budget & Funding"), ["budget-funding"]);
+	}
+	function trailBudget() {
+		return [crumbDashboard(), crumbBudgetFunding()];
+	}
+	function trailBudgetLeaf(leafLabel) {
+		return [crumbDashboard(), crumbBudgetFunding(), crumb(leafLabel)];
+	}
+
+	function crumbDemands() {
+		return crumb(__("Demands"), ["demands-workspace"]);
+	}
+	function trailDemands() {
+		return [crumbDashboard(), crumbDemands()];
+	}
+	function trailDemandsLeaf(leafLabel) {
+		return [crumbDashboard(), crumbDemands(), crumb(leafLabel)];
+	}
+
+	function crumbPlanning() {
+		return crumb(__("Procurement Planning"), ["planning-workspace"]);
+	}
+	function trailPlanning() {
+		return [crumbDashboard(), crumbPlanning()];
+	}
+	function trailPlanningLeaf(leafLabel) {
+		return [crumbDashboard(), crumbPlanning(), crumb(leafLabel)];
+	}
+
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
 	 */
 	var surfaces = {
+		"STR-UI-01": {
+			id: "STR-UI-01",
+			label: "Strategy Portfolio",
+			routePrefixes: ["strategy-alignment"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Strategy Alignment"),
+				__(
+					"Govern strategic outcomes, public-value commitments and performance targets used across procurement."
+				),
+				trailStrategy(),
+				[]
+			),
+		},
+		"STR-UI-02": {
+			id: "STR-UI-02",
+			label: "Plan Overview",
+			routePrefixes: ["strategy-plan-overview"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Plan Overview"), "", trailStrategyPlan(__("Plan Overview")), []),
+		},
+		"STR-UI-03": {
+			id: "STR-UI-03",
+			label: "Plan Structure",
+			routePrefixes: ["strategy-plan-structure"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Plan Structure"), "", trailStrategyPlan(__("Plan Structure")), []),
+		},
+		"STR-UI-07": {
+			id: "STR-UI-07",
+			label: "Strategy Value Commitments",
+			routePrefixes: ["strategy-value-commitments"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Value Commitments"),
+				"",
+				trailStrategyPlan(__("Value Commitments")),
+				[]
+			),
+		},
+		"STR-UI-08": {
+			id: "STR-UI-08",
+			label: "Measurement Register",
+			routePrefixes: ["strategy-plan-measurements"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Measurements"), "", trailStrategyPlan(__("Measurements")), []),
+		},
+		"STR-UI-09": {
+			id: "STR-UI-09",
+			label: "Submit Measurement",
+			routePrefixes: ["strategy-measurement-submit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Submit Measurement"),
+				"",
+				trailStrategyPlan(__("Submit Measurement")),
+				[]
+			),
+		},
+		"STR-UI-10": {
+			id: "STR-UI-10",
+			label: "Verify Measurement",
+			routePrefixes: ["strategy-measurement-verify"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Verify Measurement"),
+				"",
+				trailStrategyPlan(__("Verify Measurement")),
+				[]
+			),
+		},
+		"STR-UI-12": {
+			id: "STR-UI-12",
+			label: "Downstream Usage",
+			routePrefixes: ["strategy-plan-downstream-usage"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Downstream Usage"),
+				"",
+				trailStrategyPlan(__("Downstream Usage")),
+				[]
+			),
+		},
+		"STR-UI-13": {
+			id: "STR-UI-13",
+			label: "Readiness and Review",
+			routePrefixes: ["strategy-plan-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Review"), "", trailStrategyPlan(__("Review")), []),
+		},
+		"STR-UI-14": {
+			id: "STR-UI-14",
+			label: "Audit History",
+			routePrefixes: ["strategy-plan-audit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Audit"), "", trailStrategyPlan(__("Audit")), []),
+		},
 		"UI-00": {
 			id: "UI-00",
 			label: "Tender Configurations Dashboard",
@@ -481,6 +618,337 @@ frappe.provide("kentender_core.cl_surface_registry");
 					"Review the published tender, documents, and deadlines before starting or continuing a bid."
 				),
 				trailBwA1Overview(),
+				[]
+			),
+		},
+		/* Budget MVP-1 — must be registered so cl_shell_router does not leaveNative
+		   after page scripts call enterNative (strips kt-cl-shell → Win98 CTA bleed). */
+		"BUD-UI-01": {
+			id: "BUD-UI-01",
+			label: "Budget & Funding Portfolio",
+			routePrefixes: ["budget-funding"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Budget & Funding"),
+				__(
+					"Manage approved procurement funding and monitor its use across the procurement lifecycle."
+				),
+				trailBudget(),
+				[]
+			),
+		},
+		"BUD-UI-02": {
+			id: "BUD-UI-02",
+			label: "Funding Performance",
+			routePrefixes: ["budget-funding-performance"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Funding Performance"),
+				__("Monitor procurement funding coverage, commitments and exceptions."),
+				trailBudgetLeaf(__("Funding Performance")),
+				[]
+			),
+		},
+		"BUD-UI-06": {
+			id: "BUD-UI-06",
+			label: "Check and Reserve Funding",
+			routePrefixes: ["budget-check-reserve"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Check and reserve funding"),
+				__("Confirm that approved procurement funding is available before this requirement proceeds."),
+				trailBudgetLeaf(__("Check and reserve funding")),
+				[]
+			),
+		},
+		"BUD-REGISTER": {
+			id: "BUD-REGISTER",
+			label: "Register Approved Budget",
+			routePrefixes: ["budget-register"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Register approved budget"),
+				__("Register an approved financial baseline for procurement use in KenTender."),
+				trailBudgetLeaf(__("Register approved budget")),
+				[]
+			),
+		},
+		"BUD-UI-08-CREATE": {
+			id: "BUD-UI-08-CREATE",
+			label: "Create Budget Revision",
+			routePrefixes: ["budget-revision-create"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Create budget revision"),
+				__("Record an externally approved change to the active procurement budget."),
+				trailBudgetLeaf(__("Create budget revision")),
+				[]
+			),
+		},
+		"BUD-UI-09": {
+			id: "BUD-UI-09",
+			label: "Review Budget Revision",
+			routePrefixes: ["budget-revision-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Review budget revision"),
+				__("Review financial, Strategy and downstream impact before applying an externally approved revision."),
+				trailBudgetLeaf(__("Review budget revision")),
+				[]
+			),
+		},
+		"BUD-UI-04": {
+			id: "BUD-UI-04",
+			label: "Budget Overview",
+			routePrefixes: [
+				"budget-overview",
+				"budget-lines",
+				"budget-funding-activity",
+				"budget-revisions",
+				"budget-downstream",
+				"budget-review",
+				"budget-audit",
+			],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Budget overview"), "", trailBudgetLeaf(__("Budget overview")), []),
+		},
+		/* Demands MVP-1 — DEM-UI-01 workspace + stub routes keep shell on refresh. */
+		"DEM-UI-01": {
+			id: "DEM-UI-01",
+			label: "Demands",
+			routePrefixes: ["demands-workspace"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			/* Title/CTA live in Stitch canvas (Budget portfolio pattern). */
+			chrome: chrome(
+				__("Demands"),
+				__("Capture, review and fund business needs before Procurement Planning."),
+				trailDemands(),
+				[]
+			),
+		},
+		"DEM-UI-02": {
+			id: "DEM-UI-02",
+			label: "Demand Form",
+			routePrefixes: ["demand-form"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			/* Title/CTA live in Stitch canvas (Budget register pattern). */
+			chrome: chrome(
+				__("Demand Form"),
+				__("Create or correct a Demand before submission."),
+				trailDemandsLeaf(__("Demand Form")),
+				[]
+			),
+		},
+		"DEM-UI-04": {
+			id: "DEM-UI-04",
+			label: "Demand Review",
+			routePrefixes: ["demand-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Review"),
+				__("Review and decide on Demands in the current stage."),
+				trailDemandsLeaf(__("Demand Review")),
+				[]
+			),
+		},
+		"DEM-UI-09": {
+			id: "DEM-UI-09",
+			label: "Demand Detail",
+			routePrefixes: ["demand-detail"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Detail"),
+				__("Approved Demand overview and lifecycle tabs."),
+				trailDemandsLeaf(__("Demand Detail")),
+				[]
+			),
+		},
+		"DEM-UI-10": {
+			id: "DEM-UI-10",
+			label: "Demand Performance",
+			routePrefixes: ["demand-performance"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Demand Performance"),
+				__("Monitor Demand throughput, returns, and funding outcomes."),
+				trailDemandsLeaf(__("Demand Performance")),
+				[]
+			),
+		},
+		/* Procurement Planning MVP-1 — registered so the global shell router
+		   preserves native Civic Ledger chrome during client-side transitions. */
+		"PLN-UI-01": {
+			id: "PLN-UI-01",
+			label: "Procurement Planning",
+			routePrefixes: ["planning-workspace"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Procurement Planning"),
+				__("Turn approved needs into funded, approved Plan Items ready for tendering."),
+				trailPlanning(),
+				[]
+			),
+		},
+		"PLN-UI-02": {
+			id: "PLN-UI-02",
+			label: "Register Procurement Plan",
+			routePrefixes: ["procurement-plan-register"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Register procurement plan"),
+				__("Register an annual procurement plan for one Procuring Entity and financial year."),
+				trailPlanningLeaf(__("Register procurement plan")),
+				[]
+			),
+		},
+		"PLN-UI-03-05": {
+			id: "PLN-UI-03-05",
+			label: "Procurement Plan Builder",
+			routePrefixes: ["procurement-plan-builder"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Procurement plan builder"),
+				__("Build and validate the current procurement plan version."),
+				trailPlanningLeaf(__("Plan builder")),
+				[]
+			),
+		},
+		"PLN-UI-06": {
+			id: "PLN-UI-06",
+			label: "Plan Item Editor",
+			routePrefixes: ["procurement-plan-item-editor"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Plan Item editor"),
+				__("Complete the procurement facts and funding position for this Plan Item."),
+				trailPlanningLeaf(__("Plan Item")),
+				[]
+			),
+		},
+		"PLN-UI-08": {
+			id: "PLN-UI-08",
+			label: "Procurement Plan Review",
+			routePrefixes: ["procurement-plan-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Procurement plan review"),
+				__("Review validation evidence and decide whether the plan can proceed."),
+				trailPlanningLeaf(__("Plan review")),
+				[]
+			),
+		},
+		"PLN-UI-09": {
+			id: "PLN-UI-09",
+			label: "Approved Procurement Plan",
+			routePrefixes: ["procurement-plan-approved"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Approved procurement plan"),
+				__("Review the approved baseline and its downstream position."),
+				trailPlanningLeaf(__("Approved plan")),
+				[]
+			),
+		},
+		"PLN-UI-10": {
+			id: "PLN-UI-10",
+			label: "Procurement Plan Update",
+			routePrefixes: ["procurement-plan-update"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Procurement plan update"),
+				__("Prepare a governed update without mutating the approved baseline."),
+				trailPlanningLeaf(__("Plan update")),
+				[]
+			),
+		},
+		/* Departmental Needs (NDS-CHG-002) — previously unregistered here, so
+		 * onRouteChange's resolveFromRoute() found no match on every route
+		 * settle and called leaveNative() unconditionally, including right
+		 * after a page's own enterShell() had just correctly entered native
+		 * mode (observed on browser back-navigation, where onRouteChange's
+		 * frappe.router "change" listener fires after the target page's own
+		 * on_page_show). Registering strips document.body of kt-cl-shell/
+		 * kt-cl-shell-native on every such route settle, which is why the
+		 * workspace's "Create need" button (and the rest of its chrome)
+		 * rendered as an unstyled black default button after navigating
+		 * away and back. Each page still calls its own enterShell() with a
+		 * dynamic per-record breadcrumb leaf (matching every other module's
+		 * dual-registration pattern, e.g. Budget/Strategy) — the static
+		 * trail below is only the fallback shown on the rare race where
+		 * onRouteChange's repaint wins. */
+		"NDS-UI-01": {
+			id: "NDS-UI-01",
+			label: "Departmental Needs",
+			routePrefixes: ["departmental-needs"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental Needs"),
+				__("Capture and review departmental requirements for procurement planning."),
+				[crumb(__("Home"), ["Workspaces", "Procurement Home"]), crumb(__("Departmental Needs"))],
+				[]
+			),
+		},
+		"NDS-UI-02A": {
+			id: "NDS-UI-02A",
+			label: "Create Departmental Need",
+			routePrefixes: ["departmental-needs-new"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Create departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Create need")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-02B": {
+			id: "NDS-UI-02B",
+			label: "Edit Departmental Need",
+			routePrefixes: ["departmental-needs-edit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Edit departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Edit need")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-02C": {
+			id: "NDS-UI-02C",
+			label: "Departmental Need Review",
+			routePrefixes: ["departmental-needs-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental need review"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Review")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-03": {
+			id: "NDS-UI-03",
+			label: "Departmental Need Detail",
+			routePrefixes: ["departmental-needs-detail"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Need")),
+				],
 				[]
 			),
 		},

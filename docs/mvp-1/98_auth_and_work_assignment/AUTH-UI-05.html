@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Support View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Inter:wght@400;700&family=JetBrains+Mono:wght@500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Manrope:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#191c1e",
+                    "background": "#f8f9fb",
+                    "status-reserved": "#F59E0B",
+                    "surface-dim": "#d9dadc",
+                    "primary": "#003d9b",
+                    "tertiary": "#3d4354",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f8f9fb",
+                    "border-subtle": "#DFE1E6",
+                    "outline": "#737685",
+                    "surface-container": "#edeef0",
+                    "status-exhausted": "#E11D48",
+                    "surface-variant": "#e1e2e4",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#191c1e",
+                    "on-surface-variant": "#434654",
+                    "secondary": "#00687b",
+                    "data-committed": "#6366F1",
+                    "surface-container-high": "#e7e8ea",
+                    "status-available": "#10B981",
+                    "surface-container-highest": "#e1e2e4",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#0052cc",
+                    "surface-container-low": "#f3f4f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "0.5rem",
+                    "container-padding": "1rem",
+                    "stack-xs": "0.25rem",
+                    "gutter-md": "1rem",
+                    "section-gap": "1.5rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "data-md": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["Inter"],
+                    "data-lg": ["JetBrains Mono"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "data-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="docked full-width top-0 sticky z-50 bg-surface border-b border-border-subtle flex justify-between items-center w-full px-gutter-md h-16">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-extrabold text-primary">KenTender</span>
+<div class="hidden md:flex gap-6 ml-8">
+<!-- Top Nav suppression: Intent is transactional/support view. The prompt explicitly says "System Support Viewer" and "read-only Plan view". We still render Support as active if we must render nav, but prompt instructs clean canvas. We render the generic nav as requested by JSON but with Support Active -->
+<a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Support</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-on-surface-variant" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer text-on-surface-variant" data-icon="help_outline">help_outline</span>
+<img alt="User Profile Avatar" class="w-8 h-8 rounded-full border border-border-subtle object-cover" data-alt="A small circular profile avatar of a diverse professional in a modern corporate setting. Professional lighting, neutral grey background, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx6kSM9XddahHuzFiJ_VR1A0m9uKbteOl0qZkHvXqg00So-AnwTDvIPnGG68yPwMi2Xrr2NfU8LiGXx55Ho9yR1lmtu9LgJo4x2Q5dnld4n9lYdYKbIo9G2hxvLGSn4nkL-hHiHVpE-TXCnUJEgXw0IMgEZ9Rgr-J5LCeBKVfbCONdwflo9147sPXTZ9AJW48yL5uz-G84ZkrJvkf68gwOMQ8RBH3Y4J4yoa8_TPMvBPp3UNQd3ozw"/>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-container-padding py-section-gap flex flex-col gap-section-gap">
+<!-- Support Read-Only Banner -->
+<div class="bg-surface-container-high border border-border-subtle rounded-lg p-4 flex items-start gap-4">
+<span class="material-symbols-outlined text-outline mt-1" style="font-variation-settings: 'FILL' 1;">info</span>
+<div>
+<h2 class="font-label-caps text-label-caps text-on-surface uppercase mb-1">Support Read-Only</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">You can inspect this neutral Plan projection for support. You cannot perform Planning, Finance or approval actions. This access is audited.</p>
+</div>
+</div>
+<!-- Header Section -->
+<header class="flex flex-col gap-stack-sm">
+<div class="font-data-md text-data-md text-outline">PLN-MOH-2027-001</div>
+<h1 class="font-headline-md text-headline-md text-on-background">Ministry of Health Annual Procurement Plan 2027/28</h1>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2">
+<span>Open Plan</span>
+<span>·</span>
+<span>Approved Version 1</span>
+<span>·</span>
+<span>Draft Version 2</span>
+</div>
+</header>
+<!-- Compact Summary Strip (Bento-style Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- Approved Value -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-4 flex flex-col gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approved value</span>
+<span class="font-data-lg text-data-lg text-on-background">KES 455,000,000</span>
+</div>
+<!-- Draft Value -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-4 flex flex-col gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Draft value</span>
+<span class="font-data-lg text-data-lg text-on-background">KES 535,000,000</span>
+</div>
+<!-- Finance Confirmed -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-4 flex flex-col justify-center gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Finance confirmed</span>
+<span class="font-body-lg text-body-lg font-medium text-on-background">1 of 2</span>
+</div>
+<!-- Validation Status -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-4 flex flex-col justify-center items-start gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Validation</span>
+<!-- Semantic Amber Chip -->
+<div class="bg-status-reserved/10 text-status-reserved px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                    Needs attention
+                </div>
+</div>
+</div>
+<!-- Compact Identifiers Section -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-6">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 border-b border-border-subtle pb-2">Plan Identifiers</h3>
+<dl class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+<div class="flex flex-col gap-1">
+<dt class="font-body-sm text-body-sm text-outline">Procuring Entity</dt>
+<dd class="font-body-md text-body-md text-on-background">Ministry of Health</dd>
+</div>
+<div class="flex flex-col gap-1">
+<dt class="font-body-sm text-body-sm text-outline">Financial year</dt>
+<dd class="font-body-md text-body-md text-on-background">2027/28</dd>
+</div>
+<div class="flex flex-col gap-1">
+<dt class="font-body-sm text-body-sm text-outline">Current Approved Version reference</dt>
+<dd class="font-data-md text-data-md text-on-background">PLN-MOH-2027-001-V1</dd>
+</div>
+<div class="flex flex-col gap-1">
+<dt class="font-body-sm text-body-sm text-outline">Open Draft Version reference</dt>
+<dd class="font-data-md text-data-md text-on-background">PLN-MOH-2027-001-V2</dd>
+</div>
+</dl>
+</div>
+<!-- Page Action -->
+<div class="mt-8 flex justify-start">
+<button class="px-6 py-2 border border-border-subtle rounded text-primary font-body-md text-body-md hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to access diagnostic
+            </button>
+</div>
+</main>
+</body></html>

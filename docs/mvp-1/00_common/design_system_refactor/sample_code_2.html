@@ -1,0 +1,307 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>GovProcure Alpha - Procurement Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#005f71",
+                        "error": "#ba1a1a",
+                        "status-exhausted": "#E11D48",
+                        "surface-container-high": "#e7e8ea",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "on-primary-fixed": "#001848",
+                        "surface-container-highest": "#e1e2e4",
+                        "primary-fixed": "#dae2ff",
+                        "secondary-fixed": "#afecff",
+                        "background": "#f8f9fb",
+                        "on-error": "#ffffff",
+                        "surface": "#f8f9fb",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface-bright": "#f8f9fb",
+                        "inverse-primary": "#b2c5ff",
+                        "on-tertiary-fixed": "#151b2b",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "surface-container-low": "#f3f4f6",
+                        "tertiary-container": "#545a6c",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-tint": "#0c56d0",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c3c6d6",
+                        "surface-container": "#edeef0",
+                        "secondary": "#00687b",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "data-committed": "#6366F1",
+                        "secondary-container": "#50dcff",
+                        "status-available": "#10B981",
+                        "on-tertiary-container": "#ccd2e7",
+                        "tertiary": "#3d4354",
+                        "inverse-surface": "#2e3132",
+                        "surface-dim": "#d9dadc",
+                        "tertiary-fixed": "#dce2f8",
+                        "primary": "#003d9b",
+                        "surface-variant": "#e1e2e4",
+                        "primary-container": "#0052cc",
+                        "on-primary-container": "#c4d2ff",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "status-reserved": "#F59E0B",
+                        "on-secondary-fixed": "#001f27",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "inverse-on-surface": "#f0f1f3",
+                        "outline": "#737685",
+                        "on-error-container": "#93000a",
+                        "border-subtle": "#DFE1E6",
+                        "on-surface-variant": "#434654"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "1.5rem",
+                        "gutter-md": "1rem",
+                        "container-padding": "1rem",
+                        "stack-sm": "0.5rem",
+                        "stack-xs": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "data-lg": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "data-md": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "data-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-low border-b border-subtle dark:border-outline-variant w-full px-section-gap h-16 flex justify-between items-center shrink-0 relative z-20">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">GovProcure Alpha</span>
+<nav class="hidden md:flex gap-6 items-center ml-8">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-caps text-label-caps" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-caps text-label-caps" href="#">Requisitions</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-caps text-label-caps" href="#">Tenders</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-caps text-label-caps" href="#">Awards</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-subtle overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A highly detailed close-up of a professional corporate headshot of a business woman in modern office lighting. The aesthetic is bright, clean, and minimalist, typical of high-end tech platform user profile placeholders. Soft key light, deep blacks and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmbDs7B3b5byozopAaArE8WUAfLh9DU2vHaPP1PTfGyMWXy3ZJ3enRvIIyl6E1AtX_C_7qArWPoKGl-7VMmkAMvkCLIiHbIpvdBYRIvr2l5EtPzxouQf4Tyo6YslIZNjMHs9qgADGoVLgtP7NVMjR4R0RPtZFxOdAq9vx1dAN8UN6T8TzQ4LLxEH1s7wk2osHwcfSBwdeXkbRdIF3JYfjqU7GQoRnIJpL8-VAIb4DXXxVNYYIxHUNm">
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-dim border-r border-subtle dark:border-outline-variant w-64 h-full flex flex-col py-section-gap shrink-0 hidden md:flex z-10 relative">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-high border border-subtle flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">National Treasury</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Procurement Unit</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span> Budget Control
+                </a>
+<a class="flex items-center gap-stack-sm bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary border-l-4 border-primary dark:border-primary-fixed-dim px-4 py-3 font-label-caps text-label-caps mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">event_note</span> Procurement Plan
+                </a>
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span> Vendor Registry
+                </a>
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">history_edu</span> Audit Logs
+                </a>
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps mx-2 rounded-lg mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+</div>
+<div class="mt-4 border-t border-subtle pt-4 mx-2">
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span> Support
+                </a>
+<a class="flex items-center gap-stack-sm text-on-surface-variant dark:text-on-surface-variant px-4 py-3 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors font-label-caps text-label-caps rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span> Log Out
+                </a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto bg-background p-container-padding md:p-section-gap relative z-0">
+<!-- Page Header Section -->
+<div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-section-gap">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Ministry of Health | 2027/28</p><h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Procurement Planning</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Turn approved and funded needs into an approved annual procurement plan.</p>
+</div>
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+
+<button class="bg-primary text-on-primary font-body-sm text-body-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-container transition-colors whitespace-nowrap shadow-sm shadow-primary/10">
+                        Open current plan
+                    </button>
+</div>
+</div>
+<!-- Current Plan Panel -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-6 mb-section-gap shadow-sm">
+<div class="flex justify-between items-start mb-6 border-b border-subtle pb-4">
+<div class="flex items-center gap-3">
+<h2 class="font-headline-md text-headline-md text-on-surface">Ministry of Health Annual Procurement Plan 2027/28</h2>
+<span class="bg-surface-container text-on-surface font-label-caps text-label-caps px-2 py-1 rounded-full border border-subtle">Draft</span>
+</div>
+<button class="border border-subtle text-primary font-body-sm text-body-sm font-semibold px-4 py-2 rounded-lg hover:bg-surface-container-low transition-colors">
+                        Continue planning
+                    </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Plan Items</p>
+<p class="font-data-lg text-data-lg text-primary">0</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Planned Total</p>
+<p class="font-data-lg text-data-lg text-primary">KES 0</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps mb-1 uppercase text-status-reserved">Validation</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-outline text-[18px]">rule</span>
+<p class="font-body-sm text-body-sm text-status-reserved">Not run</p>
+</div>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Contributions</p>
+<p class="font-body-md text-body-md mt-1 text-secondary">0 of 1 submitted</p>
+</div>
+</div>
+</div>
+<!-- Work Requiring Action Section -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm overflow-hidden">
+<div class="p-4 border-b border-subtle flex flex-col gap-4 bg-surface-container-low/30">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Work Requiring Action</h3>
+<div class="flex gap-4">
+<a class="font-label-caps text-label-caps text-primary border-b-2 border-primary pb-1" href="#">All work</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface transition-colors pb-1" href="#">Approved Demands</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface transition-colors pb-1" href="#">Returned</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface transition-colors pb-1" href="#">Needs attention</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface transition-colors pb-1" href="#">Approved not started</a>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-subtle bg-surface-container-low/50">
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider">Work item</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider">Organisation Unit</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider text-right">Amount</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider">Reason</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider">Status</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-semibold uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-subtle">
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<p class="font-body-sm text-body-sm font-medium text-on-surface">National digital health infrastructure upgrade</p>
+</td>
+<td class="p-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Directorate of Digital Health and Policy</p>
+</td>
+<td class="p-4 text-right">
+<p class="font-data-md text-data-md text-on-surface">KES 455,000,000</p>
+</td>
+<td class="p-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Approved Demand ready for planning</p>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 bg-status-available/10 text-status-available px-2 py-1 rounded-full font-label-caps text-label-caps border border-status-available/20">
+                                        Ready
+                                    </span>
+</td>
+<td class="p-4 text-right">
+<a class="font-body-sm text-body-sm text-primary font-medium hover:underline inline-flex items-center gap-1" href="#">
+                                        Add to plan <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<p class="font-body-sm text-body-sm font-medium text-on-surface">Medical equipment maintenance framework</p>
+</td>
+<td class="p-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Healthcare Services</p>
+</td>
+<td class="p-4 text-right">
+<p class="font-data-md text-data-md text-on-surface">KES 80,000,000</p>
+</td>
+<td class="p-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Returned for correction</p>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 bg-status-exhausted/10 text-status-exhausted px-2 py-1 rounded-full font-label-caps text-label-caps border border-status-exhausted/20">
+                                        Returned
+                                    </span>
+</td>
+<td class="p-4 text-right">
+<a class="font-body-sm text-body-sm text-primary font-medium hover:underline inline-flex items-center gap-1" href="#">
+                                        View return <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>

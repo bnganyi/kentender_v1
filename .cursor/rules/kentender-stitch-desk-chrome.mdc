@@ -1,0 +1,76 @@
+---
+description: Hard lock — Stitch Desk chrome baseline (Win98 buttons, select chevron, Espresso, DS tokens). Shared CSS + registry + gate before UI Done.
+globs: apps/kentender_v1/**/public/js/**/*ui_fixtures*/**,apps/kentender_v1/**/public/css/**/*stitch*,apps/kentender_v1/**/public/css/**/*alignment*,apps/kentender_v1/**/public/css/**/*funding*,apps/kentender_v1/docs/mvp-1/**/ui_design/**/*,apps/kentender_v1/tests/ui/smoke/**/*
+alwaysApply: false
+---
+
+# Stitch Desk chrome baseline (hard — permanent)
+
+Strategy paid many iterations to defeat Frappe Desk bleed. **Do not re-learn this per module.** Soft “regions visible” gates are not UI Done.
+
+**Visual authority:** `apps/kentender_v1/docs/mvp-1/00_common/design_system_refactor/` (`kentender_design.md`, `sample_code_1.html`, `sample_code_2.html`). Shared tokens/recipes live in `kentender_core/public/css/kt_stitch_desk_chrome.css` (+ `kt_ds_recipes.js`).
+
+## Non-negotiable
+
+1. **Shared baseline CSS** — `kentender_core/public/css/kt_stitch_desk_chrome.css` (loaded via `kentender_core` `app_include_css`). Covers:
+   - button reset (no Win98 `outset` black boxes)
+   - primary CTA `#003d9b` / `rgb(0, 61, 155)` (DS)
+   - bordered secondary CTA
+   - Tailwind Forms select chevron SVG stand-in
+   - Espresso isolation `--weight-regular: 400` + Inter/Manrope pins
+   - DS muted section/table heads + rounded cards (`rounded-lg` 0.5rem / `rounded-xl` 0.75rem)
+   - Recipes: `.kt-ds-section-title`, `.kt-ds-toolbar-band`, `.kt-ds-table-head`, `.kt-ds-data-block`
+2. **Opt-in class on every Stitch main root** — add `kt-stitch-canvas` beside the module root (`kt-str-root`, `kt-bud-root`, …).
+3. **Registry** — append the surface to `kentender_core/stitch_desk_chrome_registry.py` in the **same change** as the fixture.
+4. **Playwright** — call `assertStitchDeskChrome` from `tests/ui/helpers/stitchDeskChrome.ts` in the screen’s smoke spec (not visibility-only). Use `assertStitchSectionTableChrome` for muted heads + rounded cards.
+5. **Makefile** — `make ui-stitch-desk-chrome-gate` must be green before claiming Stitch Desk UI Done for a registered surface.
+
+## Construction order (mandatory)
+
+Before writing module-specific portfolio CSS or claiming Done:
+
+1. Port Stitch `<main>` into fixture.
+2. Add `kt-stitch-canvas` on the root.
+3. Register the surface.
+4. Call `assertStitchDeskChrome` in Playwright.
+5. Only then add module-specific layout (grids, tables, bento).
+
+## Definition of Done (Stitch Desk UI)
+
+```
+UI Done for Stitch Desk surface S
+  ⇔ S in stitch_desk_chrome_registry
+  ∧ fixture has kt-stitch-canvas
+  ∧ make ui-stitch-desk-chrome-gate green
+  ∧ screen layout/Playwright gate green (regions + live data)
+  ∧ assertStitchDeskChrome green in that Playwright suite
+Domain green ≠ UI Done
+Region/title visible ≠ chrome Done
+```
+
+## Demand review (DEM-UI-04/05/06)
+
+Section headers + card corners on `demand-review`:
+
+- **DS muted** toolbar/section bands and **rounded** cards win for all section heads (including DEM-UI-06 recommendation head — same band height as Funding Summary).
+- Do **not** re-pin primary-fixed `#d7e2ff` / `#dae2ff` bands, navy inset, or square `border-radius: 0` on section cards.
+- **Recommendation body** (progress bar + money tiles) follows Stitch `DEM-UI-06.html` — Desk has no Tailwind, so tile padding/gaps/borders must be explicit CSS.
+- Nested muted tiles / strategy comparison box may stay soft gray (not section direct-child heads).
+- Static gate: `kentender_procurement.demands.tests.test_demands_review_chrome_gate` (via `make ui-demands-review-gate`).
+
+## Disallowed
+
+- Thin “screen polish” CSS stubs that skip button/select/typography Desk defeat.
+- Claiming Budget/Strategy/… portfolio Done from layout markers alone.
+- Removing `kt-stitch-canvas` or weakening shared CSS markers to match Desk defaults.
+- Re-introducing primary-fixed blue section/table heads or square-card locks that fight DS.
+- New Stitch Desk fixture without registry + chrome Playwright assert in the same PR.
+
+## Commands
+
+```bash
+# From apps/kentender_v1/
+make ui-stitch-desk-chrome-gate
+```
+
+After CSS edits: `bench --site kentender.midas.com clear-cache`. Hard-refresh Desk.

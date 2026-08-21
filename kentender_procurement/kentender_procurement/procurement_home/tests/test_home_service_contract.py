@@ -47,6 +47,25 @@ class TestHomeServiceContract(IntegrationTestCase):
 		self.assertNotIn("award", labels)
 		self.assertNotIn("contract", labels)
 
+	def test_list_fiscal_years_uses_budget_fiscal_period(self):
+		"""Budget DocType stores fiscal_period (e.g. 2026/27), not fiscal_year."""
+		from kentender_procurement.procurement_home.services.home_context import (
+			list_available_fiscal_years,
+			year_from_fiscal_period,
+		)
+
+		self.assertEqual(year_from_fiscal_period("2026/27"), 2026)
+		self.assertEqual(year_from_fiscal_period("2027/28"), 2027)
+		self.assertEqual(year_from_fiscal_period("2026/2027"), 2026)
+		if not frappe.db.exists("DocType", "Budget"):
+			self.skipTest("Budget DocType missing")
+		self.assertTrue(frappe.db.has_column("Budget", "fiscal_period"))
+		self.assertFalse(frappe.db.has_column("Budget", "fiscal_year"))
+		years = list_available_fiscal_years("PE-MOH")
+		self.assertIsInstance(years, list)
+		self.assertTrue(years)
+		self.assertTrue(all(isinstance(y, int) for y in years))
+
 	def test_build_home_shape_for_administrator(self):
 		frappe.set_user("Administrator")
 		payload = build_procurement_home()
@@ -133,7 +152,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 			{
 				"name": "BUD-MOH",
 				"status": "Approved",
-				"fiscal_year": 2026,
+				"fiscal_period": "2026/27",
 				"procuring_entity": "MOH",  # alias of PE-MOH
 				"total_budget_amount": 8_000_000,
 				"allocated_amount": 100_000,
@@ -142,7 +161,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 			{
 				"name": "BUD-OLD-FY",
 				"status": "Approved",
-				"fiscal_year": 2025,
+				"fiscal_period": "2025/26",
 				"procuring_entity": "PE-MOH",
 				"total_budget_amount": 1_000_000,
 				"allocated_amount": 500_000,

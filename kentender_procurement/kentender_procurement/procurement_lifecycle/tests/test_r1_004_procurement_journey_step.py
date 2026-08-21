@@ -94,7 +94,7 @@ class TestR1004JourneyWithSteps(IntegrationTestCase):
 		owners = (
 			"Strategy",
 			"Budget",
-			"Demand Intake and Approval",
+			"Demands",
 			"Procurement Planning",
 			"Procurement Planning",
 			"STD Engine / Tender Management",

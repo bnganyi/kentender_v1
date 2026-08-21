@@ -52,12 +52,6 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
     upsert_works_master_strategy_hierarchy,
 )
 from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-from kentender_procurement.demand_intake.seeds.works_master_demand_seed import (
-    upsert_works_master_demand,
-)
-from kentender_procurement.procurement_planning.seeds.works_master_planning_seed import (
-    upsert_works_master_planning,
-)
 from kentender_procurement.tender_management.seeds.works_master_std_seed import (
     upsert_works_master_std,
 )
@@ -169,14 +163,18 @@ def run_works_master_full_seed(
         return {**bud, "stage_failed": "budget", "warnings": warnings}
     warnings.extend(bud.get("warnings") or [])
 
-    # ── Step 5-6: demand ─────────────────────────────────────────────────────
+    # ── Step 5-6: demand (MVP Demand DocType — DEM-INT-010) ─────────────────
+    from kentender_procurement.demands.seeds.works_master_demand import (
+        upsert_works_master_demand,
+    )
+
     dem = upsert_works_master_demand()
     if not dem.get("ok"):
         return {**dem, "stage_failed": "demand", "warnings": warnings}
     warnings.extend(dem.get("warnings") or [])
 
     # ── Step 7-9: planning ───────────────────────────────────────────────────
-    pln = upsert_works_master_planning()
+    pln = {"ok": True, "skipped": True, "reason": "PP2_PLANNING_RETIRED"}
     if not pln.get("ok"):
         return {**pln, "stage_failed": "planning", "warnings": warnings}
     warnings.extend(pln.get("warnings") or [])

@@ -1,0 +1,419 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Measurement Tab - Performance Measurements</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#434750",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "background": "#f9f9fe",
+                    "surface": "#f9f9fe",
+                    "primary": "#001f48",
+                    "surface-dim": "#dad9df",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#d3e4ff",
+                    "primary-container": "#00346f",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "surface-variant": "#e2e2e8",
+                    "surface-container": "#eeedf3",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-primary-fixed": "#001b3f",
+                    "surface-container-low": "#f4f3f9",
+                    "surface-tint": "#395e9b",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "status-available": "#10B981",
+                    "primary-fixed": "#d7e2ff",
+                    "inverse-surface": "#2f3035",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-bright": "#f9f9fe",
+                    "inverse-on-surface": "#f1f0f6",
+                    "status-exhausted": "#EF4444",
+                    "on-primary-container": "#7b9ee0",
+                    "error": "#ba1a1a",
+                    "status-committed": "#6366F1",
+                    "surface-container-high": "#e8e7ed",
+                    "status-reserved": "#F59E0B",
+                    "on-surface": "#1a1b20",
+                    "outline": "#737781",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "surface-container-highest": "#e2e2e8",
+                    "secondary-fixed-dim": "#99cbff",
+                    "secondary-fixed": "#cfe5ff",
+                    "tertiary": "#26364b",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#004c7c",
+                    "tertiary-container": "#26364b",
+                    "on-background": "#1a1b20",
+                    "secondary": "#01629d",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#8f9fb8",
+                    "inverse-primary": "#abc7ff",
+                    "outline-variant": "#c3c6d1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "section-gap": "24px",
+                    "container-padding": "16px",
+                    "card-padding": "20px",
+                    "base-unit": "4px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col md:flex-row antialiased">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden sticky top-0 z-50 flex items-center justify-between px-container-padding w-full h-16 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80 transition-all" data-icon="menu" style="font-variation-settings: &quot;FILL&quot; 0;">menu</span>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">KenTender</h1>
+</div>
+<div class="flex items-center gap-gutter text-primary">
+<span class="material-symbols-outlined cursor-pointer active:opacity-80 transition-all" data-icon="notifications" style="font-variation-settings: &quot;FILL&quot; 0;">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A small circular user profile placeholder image with a generic silhouette against a light gray background, indicating an anonymous user state." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4SZgisEeOij_NaKLdGg5HVICoylYB3sX4yJjhe-3lbpkBEfQ9tHo77JW8XXLqMqpNVNWaPOpNySgI_9FXAEcOnSuJv6e5LHRHBUi-ZxyullARE2zAaYpPvJdhL6n-ULd7UafEKG6gGms-lMG45f7P8cL8Fgx2qe_VRuDVa_tibZhBe83HsA2TyBxClITZ0LP-uHLBqm-YUDt6v7CFi1NyfG5F08WQ__CNxoG68dRwrqHbSa-_Xfjuzg">
+</div>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface border-r border-outline-variant py-container-padding gap-unit z-40">
+<!-- Header -->
+<div class="px-container-padding pb-section-gap flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div class="overflow-hidden">
+<h1 class="text-headline-sm font-headline-sm text-primary truncate">Procurement Portal</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant truncate">Enterprise Management</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-container-padding pb-gutter">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded-lg font-body-md font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Procurement
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex-1 overflow-y-auto px-unit flex flex-col gap-unit">
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="event_note">event_note</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Planning</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Requisition</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="gavel">gavel</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Tendering</span>
+</a>
+<!-- Active Tab Semantic Match -->
+<a class="flex items-center gap-gutter px-container-padding py-2 text-primary font-bold bg-secondary-fixed rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="analytics" style="font-variation-settings: &quot;FILL&quot; 1;">analytics</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Evaluation</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="verified_user">verified_user</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Award</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="handshake">handshake</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Contract Management</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="archive">archive</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Closeout</span>
+</a>
+</div>
+<!-- Footer Tabs -->
+<div class="px-unit pt-gutter border-t border-outline-variant flex flex-col gap-unit">
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="support_agent">support_agent</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Support</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="menu_book">menu_book</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">User Manual</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-container-padding md:p-section-gap flex flex-col gap-section-gap max-w-[1600px] mx-auto w-full">
+<!-- Workspace Header -->
+<div class="flex flex-col gap-gutter">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-caps text-label-caps">
+<span class="">MOH-SP-2026-2030</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-status-reserved">DRAFT</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="">v2</span>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Ministry of Health Strategic Plan 2026–2030</h2>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex items-center gap-6 border-b border-outline-variant overflow-x-auto scrollbar-hide">
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Overview</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Structure</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Value Commitments</button>
+<button class="pb-3 text-body-md font-bold text-primary border-b-2 border-primary whitespace-nowrap">Measurement</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Downstream Usage</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Review</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Audit</button>
+</div>
+<!-- Tab Content Area -->
+<div class="flex flex-col gap-section-gap">
+<!-- Page Header -->
+<section class="flex flex-col md:flex-row md:items-start justify-between gap-gutter">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Performance measurements</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Submit and verify period results against approved performance targets.</p>
+</div>
+<div class="shrink-0 mt-4 md:mt-0">
+<button class="w-full md:w-auto bg-primary text-on-primary py-2 px-6 rounded-lg font-body-md font-medium hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+                    Submit measurement
+                </button>
+</div>
+</section>
+<!-- Data Container -->
+<section class="bg-surface-container-lowest rounded-xl border border-subtle border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<!-- Filter Strip & Counts -->
+<div class="bg-surface-container-low p-container-padding border-b border-outline-variant flex flex-col gap-gutter">
+<!-- Compact Counts -->
+<div class="flex flex-wrap gap-gutter text-body-md">
+<div class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-full px-3 py-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-status-reserved"></span>
+<span class="text-on-surface-variant">Due:</span>
+<span class="font-data-mono font-medium text-on-surface">2</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-full px-3 py-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-status-committed"></span>
+<span class="text-on-surface-variant">Submitted:</span>
+<span class="font-data-mono font-medium text-on-surface">1</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-full px-3 py-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+<span class="text-on-surface-variant">Verified:</span>
+<span class="font-data-mono font-medium text-on-surface">8</span>
+</div>
+<div class="flex items-center gap-2 bg-error-container border border-error/20 rounded-full px-3 py-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-error font-medium">Needs attention:</span>
+<span class="font-data-mono font-bold text-error">1</span>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-2 mt-2">
+<div class="relative flex-1 min-w-[200px] max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full pl-10 pr-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search target..." type="text">
+</div>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Programme</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Measurement period</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Workflow status</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Result status</option>
+</select>
+<button class="text-secondary font-medium text-body-md hover:underline px-2 py-1.5 ml-auto">
+                        Clear filters
+                    </button>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto w-full scrollbar-hide border-t border-outline-variant">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider w-1/3">Target</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-32">Period</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right w-32">Target value</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right w-32">Actual</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-32">Result</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-32">Workflow</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-40">Corrective action</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant bg-surface-container-lowest">
+<!-- Row 1: Verified (Read-only) -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">MOH-TGT-01</span><span class="text-body-md text-on-surface-variant">At least 99.9% annual availability by 30 June 2028</span></div></td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">September 2027</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">≥99.9%</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">99.82%</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-error-container text-on-error-container px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-error/20">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    AT RISK
+                                </div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-on-surface px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified">verified</span>
+                                    VERIFIED
+                                </div>
+</td>
+<td class="py-4 px-4 align-top text-body-md">
+<a class="text-secondary hover:underline flex items-center gap-1" href="#">Open <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span></a>
+</td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary font-medium text-body-md hover:underline px-2 py-1">View</button>
+</td>
+</tr>
+<!-- Row 2: Verified (Read-only) -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">MOH-TGT-01</span><span class="text-body-md text-on-surface-variant">At least 99.9% annual availability by 30 June 2028</span></div></td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">October 2027</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">≥99.9%</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">99.96%</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-status-available px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-status-available/30">
+<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>
+                                    ON TRACK
+                                </div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-on-surface px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified">verified</span>
+                                    VERIFIED
+                                </div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface-variant italic">
+                                None required
+                            </td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary font-medium text-body-md hover:underline px-2 py-1">View</button>
+</td>
+</tr>
+<!-- Row 3: Actionable (Due) -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-bright border-l-4 border-l-status-reserved">
+<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">MOH-TGT-02</span><span class="text-body-md text-on-surface-variant">Restore critical service within 4 hours</span></div></td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">October 2027</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">≤4 hours</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-outline text-right whitespace-nowrap">—</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded-full font-label-caps text-[11px] text-outline font-bold border border-outline-variant border-dashed">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                    NO DATA
+                                </div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-status-reserved px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-status-reserved/30">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+                                    DUE
+                                </div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-outline font-data-mono">
+                                —
+                            </td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="bg-surface-container-lowest border border-primary text-primary hover:bg-primary-fixed py-1.5 px-3 rounded text-body-md font-medium transition-colors shadow-sm">Submit measurement</button>
+</td>
+</tr>
+<!-- Row 4: Submitted -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">MOH-TGT-03</span><span class="text-body-md text-on-surface-variant">Complete regional deployment by 31 December 2027</span></div></td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">Q2 2027/28</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">Achieve by date</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">80% milestones</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-error-container text-on-error-container px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-error/20">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    AT RISK
+                                </div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed-variant px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold border border-tertiary-fixed-dim">
+<span class="material-symbols-outlined text-[14px]" data-icon="send">send</span>
+                                    SUBMITTED
+                                </div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface-variant">
+                                Pending verification
+                            </td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary font-medium text-body-md hover:underline px-2 py-1">Review</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Footer -->
+<div class="bg-surface-container-low p-container-padding border-t border-outline-variant flex items-center justify-between text-body-md text-on-surface-variant">
+<span class="">Showing 1 to 4 of 4 entries</span>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded hover:bg-surface-container disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+
+
+</body></html>

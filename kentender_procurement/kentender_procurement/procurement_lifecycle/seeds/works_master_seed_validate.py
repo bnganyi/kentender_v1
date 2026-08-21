@@ -100,7 +100,7 @@ def _parse_dt(val: Any) -> datetime | None:
 
 
 def _demand_name() -> str | None:
-	return frappe.db.get_value("Demand", {"demand_id": _CODES["demand"]}, "name")
+	return frappe.db.get_value("Demand", {"demand_code": _CODES["demand"]}, "name")
 
 
 def _budget_line_name() -> str | None:

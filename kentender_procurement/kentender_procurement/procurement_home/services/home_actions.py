@@ -12,7 +12,9 @@ import frappe
 from frappe.utils import getdate
 
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
-from kentender_procurement.procurement_planning.pp2_constants import PKG_IN_REVIEW, PKG_RETURNED
+from kentender_procurement.procurement_lifecycle.demand_module_gate import (
+	demand_doctype_available,
+)
 
 ACTION_LIMIT = 8
 DUE_SOON_DAYS = 3
@@ -50,136 +52,16 @@ def _fmt_due(due: date | None) -> str | None:
 
 
 def _demand_actions(user: str, procuring_entity: str, today: date) -> list[dict[str, Any]]:
-	roles = _roles(user)
-	items: list[dict[str, Any]] = []
-	filters: dict[str, Any] = {"procuring_entity": ["in", pe_aliases(procuring_entity)]}
-	fields = [
-		"name",
-		"demand_id",
-		"title",
-		"status",
-		"return_reason",
-		"requested_by",
-		"modified",
-		"finance_approved_at",
-	]
-
-	if "Department Approver" in roles or "System Manager" in roles or user == "Administrator":
-		rows = frappe.get_all(
-			"Demand",
-			filters={**filters, "status": "Pending HoD Approval"},
-			fields=fields,
-			limit=20,
-		)
-		for r in rows:
-			items.append(
-				{
-					"title": r.get("title") or r.get("demand_id") or r.name,
-					"reference": r.get("demand_id") or r.name,
-					"stage": "Demand",
-					"action_required": "Approval required",
-					"urgency": "Due soon",
-					"due_date": None,
-					"action_label": "Review",
-					"target_url": f"/desk/demand-workbench/{r.name}",
-					"_due_date": None,
-					"_modified": r.get("modified"),
-				}
-			)
-
-	if "Finance Reviewer" in roles or "Budget Officer" in roles or "System Manager" in roles or user == "Administrator":
-		rows = frappe.get_all(
-			"Demand",
-			filters={**filters, "status": "Pending Finance Approval"},
-			fields=fields,
-			limit=20,
-		)
-		for r in rows:
-			items.append(
-				{
-					"title": r.get("title") or r.get("demand_id") or r.name,
-					"reference": r.get("demand_id") or r.name,
-					"stage": "Demand",
-					"action_required": "Finance approval required",
-					"urgency": "Due soon",
-					"due_date": None,
-					"action_label": "Review",
-					"target_url": f"/desk/demand-workbench/{r.name}",
-					"_due_date": None,
-					"_modified": r.get("modified"),
-				}
-			)
-
-	# Returned to owner
-	rows = frappe.get_all(
-		"Demand",
-		filters={**filters, "status": "Draft", "requested_by": user},
-		fields=fields,
-		limit=20,
-	)
-	for r in rows:
-		if not (r.get("return_reason") or "").strip():
-			continue
-		items.append(
-			{
-				"title": r.get("title") or r.get("demand_id") or r.name,
-				"reference": r.get("demand_id") or r.name,
-				"stage": "Demand",
-				"action_required": "Returned for correction",
-				"urgency": "Returned",
-				"due_date": None,
-				"action_label": "Continue",
-				"target_url": f"/desk/demand-workbench/{r.name}",
-				"_due_date": None,
-				"_modified": r.get("modified"),
-			}
-		)
-	return items
-
-
-def _package_actions(user: str, procuring_entity: str) -> list[dict[str, Any]]:
-	roles = _roles(user)
-	pp_roles = {
-		"Procurement Planner",
-		"Planning Reviewer",
-		"Planning Authority",
-		"Procurement Officer",
-		"System Manager",
-	}
-	if user != "Administrator" and not (roles & pp_roles):
+	_ = user, procuring_entity, today
+	# Demands package retired; guard is permanently unreachable but kept explicit.
+	if not demand_doctype_available():
 		return []
-	if not frappe.db.exists("DocType", "Procurement Package"):
-		return []
-	filters: dict[str, Any] = {"status": ["in", [PKG_IN_REVIEW, PKG_RETURNED]]}
-	if frappe.db.has_column("Procurement Package", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(procuring_entity)]
-	elif frappe.db.has_column("Procurement Package", "procuring_entity"):
-		filters["procuring_entity"] = procuring_entity
-	rows = frappe.get_all(
-		"Procurement Package",
-		filters=filters,
-		fields=["name", "package_code", "package_name", "status", "modified"],
-		limit=20,
-	)
-	items: list[dict[str, Any]] = []
-	for r in rows:
-		returned = r.get("status") == PKG_RETURNED
-		items.append(
-			{
-				"title": r.get("package_name") or r.get("package_code") or r.name,
-				"reference": r.get("package_code") or r.name,
-				"stage": "Procurement Planning",
-				"action_required": "Returned for correction" if returned else "Plan review required",
-				"urgency": "Returned" if returned else "Due soon",
-				"due_date": None,
-				"action_label": "Continue" if returned else "Review",
-				"target_url": "/desk/planning-hub",
-				"_due_date": None,
-				"_modified": r.get("modified"),
-			}
-		)
-	return items
+	return []
 
+
+def _package_actions(*_args, **_kwargs) -> list[dict[str, Any]]:
+	"""PP2 Package actions retired."""
+	return []
 
 def _tender_actions(user: str, procuring_entity: str) -> list[dict[str, Any]]:
 	roles = _roles(user)
@@ -261,6 +143,6 @@ def get_home_actions(
 		"ok": True,
 		"items": capped,
 		"pending_count": len(capped),
-		"view_all_url": "/desk/demand-hub",
+		"view_all_url": "/desk/demands-workspace",
 		"empty": len(capped) == 0,
 	}

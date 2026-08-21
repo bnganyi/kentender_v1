@@ -1,0 +1,477 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Thin whitelisted wrappers for Budget MVP-1 portfolio / register services."""
+
+from __future__ import annotations
+
+import frappe
+
+from kentender_budget.services import budget_contracts as contracts
+from kentender_budget.services.budget_permissions import ensure_budget_roles
+
+
+@frappe.whitelist()
+def get_budget_portfolio(procuring_entity: str | None = None):
+	ensure_budget_roles()
+	return contracts.get_budget_portfolio(procuring_entity=procuring_entity or None)
+
+
+@frappe.whitelist()
+def list_budgets(
+	procuring_entity: str | None = None,
+	status: str | None = None,
+	fiscal_period: str | None = None,
+	search: str | None = None,
+	registration_source: str | None = None,
+):
+	ensure_budget_roles()
+	return contracts.list_budgets(
+		procuring_entity=procuring_entity or None,
+		status=status or None,
+		fiscal_period=fiscal_period or None,
+		search=search or None,
+		registration_source=registration_source or None,
+	)
+
+
+@frappe.whitelist()
+def get_register_form_context():
+	ensure_budget_roles()
+	return contracts.get_register_form_context()
+
+
+@frappe.whitelist()
+def register_budget(payload: dict | str | None = None):
+	ensure_budget_roles()
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return contracts.register_budget(payload or {})
+
+
+@frappe.whitelist()
+def get_budget_overview(budget: str | None = None):
+	ensure_budget_roles()
+	return contracts.get_budget_overview(budget or "")
+
+
+@frappe.whitelist()
+def list_budget_lines(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	return line_contracts.list_budget_lines(budget or "")
+
+
+@frappe.whitelist()
+def get_budget_line(line: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	return line_contracts.get_budget_line(line or "")
+
+
+@frappe.whitelist()
+def save_budget_line(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return line_contracts.save_budget_line(payload or {})
+
+
+@frappe.whitelist()
+def list_funding_lifecycle(budget: str | None = None, filters: dict | str | None = None):
+	"""BUD-SUP-005 shared Funding Lifecycle read model."""
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_lifecycle as lifecycle
+
+	return lifecycle.list_funding_lifecycle(budget or "", filters=filters)
+
+
+@frappe.whitelist()
+def list_funding_activity(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_activity as activity
+
+	return activity.list_funding_activity(budget or "")
+
+
+@frappe.whitelist()
+def get_funding_lineage(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_downstream_contracts as downstream
+
+	return downstream.get_funding_lineage(budget or "")
+
+
+@frappe.whitelist()
+def list_budget_revisions(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	return revisions.list_budget_revisions(budget or "")
+
+
+@frappe.whitelist()
+def get_budget_revision_create_context(
+	budget: str | None = None, revision: str | None = None
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	return revisions.get_budget_revision_create_context(budget or "", revision)
+
+
+@frappe.whitelist()
+def create_budget_revision(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return revisions.create_budget_revision(payload or {})
+
+
+@frappe.whitelist()
+def submit_budget_revision(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return revisions.submit_budget_revision(payload or {})
+
+
+@frappe.whitelist()
+def get_budget_revision_review_context(revision: str | None = None, task_id: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	return revisions.get_budget_revision_review_context(revision or "", task_id=task_id)
+
+
+@frappe.whitelist()
+def review_budget_revision(revision: str | None = None, task_id: str | None = None):
+	"""Pack §8 alias for get_budget_revision_review_context."""
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	return revisions.review_budget_revision(revision or "", task_id=task_id)
+
+
+@frappe.whitelist()
+def return_budget_revision(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return revisions.return_budget_revision(payload or {})
+
+
+@frappe.whitelist()
+def reject_budget_revision(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return revisions.reject_budget_revision(payload or {})
+
+
+@frappe.whitelist()
+def apply_budget_revision(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_revision_contracts as revisions
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return revisions.apply_budget_revision(payload or {})
+
+
+@frappe.whitelist()
+def get_budget_readiness(budget: str | None = None, task_id: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	return readiness.get_budget_readiness(budget or "", task_id=task_id)
+
+
+@frappe.whitelist()
+def submit_budget(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return readiness.submit_budget(payload or {})
+
+
+@frappe.whitelist()
+def return_budget(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return readiness.return_budget(payload or {})
+
+
+@frappe.whitelist()
+def mark_budget_reviewed(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return readiness.mark_budget_reviewed(payload or {})
+
+
+@frappe.whitelist()
+def activate_budget(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return readiness.activate_budget(payload or {})
+
+
+@frappe.whitelist()
+def get_budget_audit(
+	budget: str | None = None,
+	event_type: str | None = None,
+	actor: str | None = None,
+	date_from: str | None = None,
+	date_to: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_audit_contracts as audit
+
+	return audit.get_budget_audit(
+		budget or "",
+		event_type=event_type or None,
+		actor=actor or None,
+		date_from=date_from or None,
+		date_to=date_to or None,
+	)
+
+
+@frappe.whitelist()
+def get_funding_performance(
+	fiscal_period: str | None = None,
+	programme: str | None = None,
+	primary_target: str | None = None,
+	funding_status: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_performance_contracts as perf
+
+	return perf.get_funding_performance(
+		fiscal_period=fiscal_period or None,
+		programme=programme or None,
+		primary_target=primary_target or None,
+		funding_status=funding_status or None,
+		procuring_entity=procuring_entity or None,
+	)
+
+
+@frappe.whitelist()
+def export_funding_performance(
+	fiscal_period: str | None = None,
+	programme: str | None = None,
+	primary_target: str | None = None,
+	funding_status: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_performance_contracts as perf
+
+	return perf.export_funding_performance(
+		fiscal_period=fiscal_period or None,
+		programme=programme or None,
+		primary_target=primary_target or None,
+		funding_status=funding_status or None,
+		procuring_entity=procuring_entity or None,
+	)
+
+
+@frappe.whitelist()
+def check_funding(
+	budget_line: str | None = None,
+	requested_amount: float | None = None,
+	demand: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.check_funding(
+		budget_line=budget_line,
+		requested_amount=requested_amount,
+		demand=demand,
+		procuring_entity=procuring_entity,
+	)
+
+
+@frappe.whitelist()
+def reserve_funding(
+	budget_line: str | None = None,
+	plan_item_code: str | None = None,
+	demand_name: str | None = None,
+	requested_amount: float | None = None,
+	idempotency_key: str | None = None,
+	actor: str | None = None,
+	procuring_entity: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.reserve_funding(
+		budget_line=budget_line,
+		plan_item_code=plan_item_code,
+		demand_name=demand_name,
+		requested_amount=requested_amount,
+		idempotency_key=idempotency_key,
+		actor=actor,
+		procuring_entity=procuring_entity,
+	)
+
+
+@frappe.whitelist()
+def list_eligible_budget_lines(
+	procuring_entity: str | None = None,
+	fiscal_period: str | None = None,
+	min_amount: float | None = None,
+	classification: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.list_eligible_budget_lines(
+		procuring_entity=procuring_entity,
+		fiscal_period=fiscal_period,
+		min_amount=min_amount,
+		classification=classification,
+	)
+
+
+@frappe.whitelist()
+def release_reservation(
+	reservation: str | None = None,
+	reason: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.release_reservation(
+		reservation=reservation,
+		reason=reason,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def resolve_budget_context(
+	procuring_entity: str | None = None,
+	fiscal_period: str | None = None,
+	owner_org_unit: str | None = None,
+):
+	ensure_budget_roles()
+	return contracts.resolve_budget_context(
+		procuring_entity=procuring_entity,
+		fiscal_period=fiscal_period,
+		owner_org_unit=owner_org_unit,
+	)
+
+
+@frappe.whitelist()
+def revalidate_reservation(
+	reservation: str | None = None,
+	material_event: str | None = None,
+	new_estimated_amount: float | None = None,
+	evidence: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_check_reserve_contracts as cr
+
+	return cr.revalidate_reservation(
+		reservation=reservation,
+		material_event=material_event,
+		new_estimated_amount=new_estimated_amount,
+		evidence=evidence,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def convert_reservation(
+	reservation: str | None = None,
+	contract_code: str | None = None,
+	contract_title: str | None = None,
+	commitment_amount: float | None = None,
+	idempotency_key: str | None = None,
+	actor: str | None = None,
+	generated_reference: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.convert_reservation(
+		reservation=reservation,
+		contract_code=contract_code,
+		contract_title=contract_title,
+		commitment_amount=commitment_amount,
+		idempotency_key=idempotency_key,
+		actor=actor,
+		generated_reference=generated_reference,
+	)
+
+
+@frappe.whitelist()
+def adjust_commitment(
+	commitment: str | None = None,
+	new_amount: float | None = None,
+	reason: str | None = None,
+	actor: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.adjust_commitment(
+		commitment=commitment,
+		new_amount=new_amount,
+		reason=reason,
+		actor=actor,
+	)
+
+
+@frappe.whitelist()
+def ingest_expenditure_snapshot(
+	budget_line: str | None = None,
+	commitment: str | None = None,
+	amount: float | None = None,
+	source_system: str | None = None,
+	source_reference: str | None = None,
+	source_as_at: str | None = None,
+	idempotency_key: str | None = None,
+	generated_reference: str | None = None,
+):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_commitment_contracts as commit
+
+	return commit.ingest_expenditure_snapshot(
+		budget_line=budget_line,
+		commitment=commitment,
+		amount=amount,
+		source_system=source_system,
+		source_reference=source_reference,
+		source_as_at=source_as_at,
+		idempotency_key=idempotency_key,
+		generated_reference=generated_reference,
+	)

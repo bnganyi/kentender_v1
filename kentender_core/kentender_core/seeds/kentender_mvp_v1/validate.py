@@ -1,0 +1,1159 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Contract v2.7 §9 verification report for KENTENDER_MVP_V1."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+from frappe.utils import flt
+
+from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_core.services.org_scope_access import (
+	can_access_owned_record,
+	strategy_items_for_unit,
+)
+
+
+def _check(name: str, ok: bool, detail: str = "") -> dict[str, Any]:
+	return {"name": name, "ok": bool(ok), "detail": detail}
+
+
+def _scn_draft_total(plan_name: str, version_name: str) -> float:
+	total = 0.0
+	for it in frappe.get_all(
+		"Procurement Plan Item",
+		filters={"plan": plan_name, "baseline_state": ["in", ["Proposed", "Active"]]},
+		pluck="name",
+	):
+		amt = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"plan_item": it, "plan_version": version_name},
+			"confirmed_estimate",
+		)
+		total += flt(amt)
+	return total
+
+
+def _append_scn_add_checks(checks: list[dict[str, Any]]) -> None:
+	"""Optional SCN-PLN-ADD-001 mode: 535m draft or approved; V1 matches stop point."""
+	v1 = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
+		["name", "status"],
+		as_dict=True,
+	)
+	v2 = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_V2},
+		["name", "status"],
+		as_dict=True,
+	)
+	item_022 = frappe.db.get_value(
+		"Procurement Plan Item",
+		{"plan_item_code": C.PLAN_ITEM_CODE_SCN},
+		["name", "baseline_state"],
+		as_dict=True,
+	)
+	rsv_count = frappe.db.count(
+		"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+	)
+	plan = frappe.db.get_value(
+		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
+	)
+	checks.append(_check("planning.scn.item_022", bool(item_022), str(item_022)))
+	checks.append(_check("planning.scn.v2_exists", bool(v2), str(v2)))
+	if not v2 or not item_022 or not v1:
+		return
+	if v2.status == "Draft":
+		total = _scn_draft_total(plan, v2.name) if plan else 0.0
+		checks.append(
+			_check(
+				"planning.scn.draft_535m",
+				abs(total - C.PLAN_AMOUNT_V2) < 0.01,
+				str(total),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.v1_approved_while_draft",
+				v1.status == "Approved",
+				str(v1.status),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.022_proposed",
+				item_022.baseline_state == "Proposed",
+				str(item_022.baseline_state),
+			)
+		)
+		if rsv_count:
+			checks.append(
+				_check("planning.scn.one_rsv_0002", rsv_count == 1, str(rsv_count))
+			)
+		else:
+			checks.append(_check("planning.scn.no_rsv_before_finance", rsv_count == 0))
+	elif v2.status == "Approved":
+		checks.append(
+			_check(
+				"planning.scn.v1_superseded",
+				v1.status == "Superseded",
+				str(v1.status),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.scn.022_active",
+				item_022.baseline_state == "Active",
+				str(item_022.baseline_state),
+			)
+		)
+		checks.append(
+			_check("planning.scn.one_rsv_0002", rsv_count == 1, str(rsv_count))
+		)
+		total = 0.0
+		for item in frappe.get_all(
+			"Procurement Plan Item",
+			filters={"plan": plan, "baseline_state": "Active"},
+			pluck="name",
+		):
+			iv = frappe.db.get_value(
+				"Procurement Plan Item", item, "current_approved_item_version"
+			)
+			if iv:
+				total += flt(
+					frappe.db.get_value(
+						"Procurement Plan Item Version", iv, "confirmed_estimate"
+					)
+				)
+		checks.append(
+			_check(
+				"planning.scn.approved_535m",
+				abs(total - C.PLAN_AMOUNT_V2) < 0.01,
+				str(total),
+			)
+		)
+
+
+def _append_scn_fund_short_checks(checks: list[dict[str, Any]]) -> None:
+	"""Demo §9 — SCN-PLN-FUND-SHORT-001: one 55m hold, no RSV-0002, HWD 25m."""
+	short_count = frappe.db.count(
+		"Funding Reservation", {"generated_reference": C.RSV_SHORT_CODE}
+	)
+	checks.append(
+		_check(
+			"planning.scn.fund_short.one_hold",
+			short_count == 1,
+			str(short_count),
+		)
+	)
+	hold = frappe.db.get_value(
+		"Funding Reservation",
+		{"generated_reference": C.RSV_SHORT_CODE},
+		["remaining_reserved", "status"],
+		as_dict=True,
+	)
+	checks.append(
+		_check(
+			"planning.scn.fund_short.hold_55m",
+			bool(
+				hold
+				and hold.status == "Reserved"
+				and abs(flt(hold.remaining_reserved) - 55_000_000) < 0.01
+			),
+			str(hold),
+		)
+	)
+	checks.append(
+		_check(
+			"planning.scn.fund_short.no_rsv_0002",
+			not frappe.db.exists(
+				"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+			),
+		)
+	)
+	hwd = frappe.db.get_value(
+		"Budget Line",
+		{"generated_reference": C.BL_HWD_2027},
+		["approved_amount", "amount_reserved", "amount_committed"],
+		as_dict=True,
+	)
+	hwd_available = (
+		flt(hwd.approved_amount) - flt(hwd.amount_reserved) - flt(hwd.amount_committed)
+		if hwd
+		else -1.0
+	)
+	checks.append(
+		_check(
+			"planning.scn.fund_short.hwd_available_25m",
+			abs(hwd_available - 25_000_000) < 0.01,
+			str(hwd_available),
+		)
+	)
+
+
+def _append_scn_remove_checks(checks: list[dict[str, Any]]) -> None:
+	"""Demo §9 — SCN-PLN-REMOVE-001: no Proposed 022, Draft 455m, 019 eligible."""
+	item_022 = frappe.db.get_value(
+		"Procurement Plan Item",
+		{"plan_item_code": C.PLAN_ITEM_CODE_SCN},
+		["name", "baseline_state"],
+		as_dict=True,
+	)
+	checks.append(
+		_check(
+			"planning.scn.remove.no_proposed_022",
+			not item_022 or item_022.baseline_state != "Proposed",
+			str(item_022),
+		)
+	)
+	plan = frappe.db.get_value(
+		"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}, "name"
+	)
+	v2 = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_V2},
+		"name",
+	)
+	total = _scn_draft_total(plan, v2) if plan and v2 else 0.0
+	checks.append(
+		_check(
+			"planning.scn.remove.draft_455m",
+			abs(total - C.PLAN_AMOUNT_V1) < 0.01,
+			str(total),
+		)
+	)
+	demand = frappe.db.get_value(
+		"Demand", {"demand_code": C.DEMAND_CODE_RETURNED}, "name"
+	)
+	status = frappe.db.get_value("Demand", demand, "status") if demand else None
+	usage = frappe.db.get_value("Demand", demand, "planning_usage") if demand else None
+	ready = int(frappe.db.get_value("Demand", demand, "planning_ready") or 0) if demand else 0
+	planned = 0.0
+	if demand:
+		planned = sum(
+			flt(r.allocated_amount)
+			for r in frappe.get_all(
+				"Plan Demand Allocation",
+				filters={"demand": demand, "status": "Effective"},
+				fields=["allocated_amount"],
+			)
+		)
+	checks.append(
+		_check(
+			"planning.scn.remove.019_eligible",
+			bool(
+				demand
+				and status == "Approved"
+				and ready
+				and usage != "Fully planned"
+				and planned <= 0.0001
+			),
+			f"status={status} usage={usage} ready={ready} planned={planned}",
+		)
+	)
+	v1_status = frappe.db.get_value(
+		"Procurement Plan Version",
+		{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
+		"status",
+	)
+	checks.append(
+		_check(
+			"planning.scn.remove.v1_approved",
+			v1_status == "Approved",
+			str(v1_status),
+		)
+	)
+	checks.append(
+		_check(
+			"planning.scn.remove.rsv_0001",
+			frappe.db.count("Funding Reservation", {"generated_reference": C.RSV_CODE})
+			== 1,
+		)
+	)
+	checks.append(
+		_check(
+			"planning.scn.remove.tnd_008",
+			bool(
+				frappe.db.exists(
+					"Planning Handoff Snapshot", {"tender_reference": C.TENDER_CODE}
+				)
+			),
+		)
+	)
+
+
+def validate_kentender_mvp_v1(
+	*,
+	include_demands: bool = True,
+	include_planning: bool = False,
+	include_scn_add: bool = False,
+	include_scn_fund_short: bool = False,
+	include_scn_remove: bool = False,
+) -> dict[str, Any]:
+	checks: list[dict[str, Any]] = []
+
+	# --- Identity / org ---
+	for code, label in ((C.PE_MOH, "moh"), (C.PE_CGKIS, "cgkis")):
+		checks.append(
+			_check(
+				f"org.pe.{label}",
+				frappe.db.count("Procuring Entity", {"entity_code": code}) == 1,
+			)
+		)
+
+	for code in (
+		C.OU_SDMS,
+		C.OU_DIR_DHP,
+		C.OU_SDPHPS,
+		C.OU_DIR_HRMD,
+		C.OU_CGK_HEALTH,
+	):
+		row = frappe.db.get_value(
+			"Organisation Unit",
+			code,
+			["procuring_entity", "parent_org_unit", "unit_type"],
+			as_dict=True,
+		)
+		checks.append(_check(f"org.unit.{code}", bool(row)))
+		if row and row.parent_org_unit:
+			parent_pe = frappe.db.get_value(
+				"Organisation Unit", row.parent_org_unit, "procuring_entity"
+			)
+			checks.append(
+				_check(
+					f"org.unit_parent_same_pe.{code}",
+					parent_pe == row.procuring_entity,
+					f"parent_pe={parent_pe} child_pe={row.procuring_entity}",
+				)
+			)
+
+	# --- Strategy ---
+	plan = frappe.db.get_value(
+		"Strategic Plan",
+		{"plan_code": C.PLAN_CODE, "version_number": 1},
+		["name", "status", "fixture_namespace", "owner_org_unit"],
+		as_dict=True,
+	)
+	checks.append(
+		_check(
+			"strategy.plan_active",
+			bool(plan and plan.status == "Active"),
+			f"status={getattr(plan, 'status', None)}",
+		)
+	)
+	checks.append(
+		_check(
+			"strategy.plan_namespace",
+			bool(plan and plan.fixture_namespace == C.FIXTURE_NS),
+		)
+	)
+	checks.append(
+		_check(
+			"strategy.plan_entity_owned",
+			bool(plan and not (plan.owner_org_unit or "").strip()),
+		)
+	)
+
+	cgk_plan = frappe.db.get_value(
+		"Strategic Plan",
+		{"plan_code": C.CGK_PLAN_CODE, "version_number": 1},
+		["name", "status", "owner_org_unit", "procuring_entity"],
+		as_dict=True,
+	)
+	checks.append(
+		_check(
+			"strategy.cgk_plan_active",
+			bool(cgk_plan and cgk_plan.status == "Active"),
+		)
+	)
+	checks.append(
+		_check(
+			"strategy.cgk_owner_unit",
+			bool(cgk_plan and cgk_plan.owner_org_unit == C.OU_CGK_HEALTH),
+		)
+	)
+
+	for code in (
+		C.PROG_DH,
+		C.SUB_HIS,
+		C.SUB_DHC,
+		C.OUT_RELIABILITY,
+		C.OUT_CAPABILITY,
+		C.IND_AVAIL,
+		C.IND_RESTORE,
+		C.IND_SKILLS,
+		C.TGT_AVAIL_2028,
+		C.TGT_RESTORE_2028,
+		C.TGT_AVAIL_2029,
+		C.TGT_SKILLS_2029,
+		C.TGT_SKILLS_2030,
+		C.CGK_OUT_COLDCHAIN,
+		C.CGK_IND_COLDCHAIN,
+		C.CGK_TGT_COLDCHAIN,
+	):
+		exists = bool(
+			frappe.db.exists("Strategy Programme", {"programme_code": code})
+			or frappe.db.exists("Strategy Sub Programme", {"sub_programme_code": code})
+			or frappe.db.exists("Strategic Outcome", {"outcome_code": code})
+			or frappe.db.exists("Performance Indicator", {"indicator_code": code})
+			or frappe.db.exists("Performance Target", {"target_code": code})
+		)
+		checks.append(_check(f"strategy.ref.{code}", exists))
+
+	tgt_dhp = frappe.db.get_value(
+		"Performance Target",
+		{"target_code": C.TGT_AVAIL_2028},
+		"owner_org_unit",
+	)
+	checks.append(_check("strategy.tgt_dhp_owner", tgt_dhp == C.OU_DIR_DHP))
+	tgt_hrmd = frappe.db.get_value(
+		"Performance Target",
+		{"target_code": C.TGT_SKILLS_2029},
+		"owner_org_unit",
+	)
+	checks.append(_check("strategy.tgt_hrmd_owner", tgt_hrmd == C.OU_DIR_HRMD))
+
+	for pvc in (
+		"MOH-PVC-EFT-01",
+		"MOH-PVC-ECO-01",
+		"MOH-PVC-LOC-01",
+		"MOH-PVC-SUS-02",
+		"CGK-PVC-EFT-01",
+		"CGK-PVC-ECO-01",
+		"CGK-PVC-SUS-01",
+	):
+		checks.append(
+			_check(
+				f"strategy.pvc.{pvc}",
+				bool(frappe.db.exists("Strategy Value Commitment", {"commitment_code": pvc})),
+			)
+		)
+
+	sdms_items = strategy_items_for_unit(C.OU_SDMS)
+	checks.append(
+		_check(
+			"strategy.scope.sdms_has_prog",
+			any(r.get("strategy_item_code") == C.PROG_DH for r in sdms_items),
+		)
+	)
+	cgk_items = strategy_items_for_unit(C.OU_CGK_HEALTH)
+	checks.append(
+		_check(
+			"strategy.scope.cgk_has_coldchain",
+			any(r.get("strategy_item_code") == C.CGK_OUT_COLDCHAIN for r in cgk_items),
+		)
+	)
+	checks.append(
+		_check(
+			"strategy.scope.cgk_excludes_moh_prog",
+			not any(r.get("strategy_item_code") == C.PROG_DH for r in cgk_items),
+		)
+	)
+
+	# --- Budget ---
+	bud = frappe.db.get_value(
+		"Budget",
+		{"generated_reference": C.BUD_ACTIVE},
+		["name", "status", "external_approved_total"],
+		as_dict=True,
+	)
+	checks.append(_check("budget.active_exists", bool(bud and bud.status == "Active")))
+
+	lines = (
+		frappe.get_all(
+			"Budget Line",
+			filters={"budget": bud.name} if bud else {"name": ["is", "not set"]},
+			fields=[
+				"generated_reference",
+				"approved_amount",
+				"amount_reserved",
+				"amount_committed",
+				"amount_actual",
+				"owner_org_unit",
+			],
+		)
+		if bud
+		else []
+	)
+	by_code = {r.generated_reference: r for r in lines}
+	dhi = by_code.get(C.BL_DHI_2027)
+	hwd = by_code.get(C.BL_HWD_2027)
+	approved = sum(flt(r.approved_amount) for r in lines)
+	reserved = sum(flt(r.amount_reserved) for r in lines)
+	committed = sum(flt(r.amount_committed) for r in lines)
+	available = approved - reserved - committed
+	checks.append(_check("budget.lines_total_560m", abs(approved - 560_000_000) < 0.01, str(approved)))
+	if include_planning:
+		expect_reserved = 535_000_000 if include_scn_add else 455_000_000
+		expect_available = 25_000_000 if include_scn_add else 105_000_000
+		if include_scn_add and not frappe.db.exists(
+			"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+		):
+			expect_reserved = 455_000_000
+			expect_available = 105_000_000
+		if include_scn_fund_short:
+			expect_reserved = 510_000_000
+			expect_available = 50_000_000
+	else:
+		expect_reserved = 0.0
+		expect_available = 560_000_000
+	checks.append(
+		_check(
+			"budget.reserved_after_finance" if include_planning else "budget.reserved_before_finance",
+			abs(reserved - expect_reserved) < 0.01,
+			str(reserved),
+		)
+	)
+	checks.append(
+		_check(
+			"budget.committed_before_tender",
+			abs(committed - 0) < 0.01,
+			str(committed),
+		)
+	)
+	checks.append(
+		_check(
+			"budget.available_after_finance" if include_planning else "budget.available_before_finance",
+			abs(available - expect_available) < 0.01,
+			str(available),
+		)
+	)
+	checks.append(
+		_check(
+			"budget.dhi_actual_none",
+			bool(dhi and abs(flt(dhi.amount_actual) - 0) < 0.01),
+			str(dhi.amount_actual if dhi else None),
+		)
+	)
+	checks.append(_check("budget.dhi_owner_dhp", bool(dhi and dhi.owner_org_unit == C.OU_DIR_DHP)))
+	checks.append(_check("budget.hwd_owner_hrmd", bool(hwd and hwd.owner_org_unit == C.OU_DIR_HRMD)))
+
+	checks.append(
+		_check(
+			"budget.draft_exists",
+			bool(frappe.db.exists("Budget", {"generated_reference": C.BUD_DRAFT, "status": "Draft"})),
+		)
+	)
+	checks.append(
+		_check(
+			"budget.closed_exists",
+			bool(frappe.db.exists("Budget", {"generated_reference": C.BUD_CLOSED, "status": "Closed"})),
+		)
+	)
+
+	cgk_bud = frappe.db.get_value(
+		"Budget",
+		{"generated_reference": C.CGK_BUD_ACTIVE},
+		["name", "status", "external_approved_total"],
+		as_dict=True,
+	)
+	checks.append(
+		_check("budget.cgk_active", bool(cgk_bud and cgk_bud.status == "Active"))
+	)
+	cgk_line = frappe.db.get_value(
+		"Budget Line",
+		{"generated_reference": C.CGK_BL_COLDCHAIN},
+		["approved_amount", "amount_reserved", "amount_committed", "owner_org_unit", "primary_target_code"],
+		as_dict=True,
+	)
+	checks.append(
+		_check(
+			"budget.cgk_24m_available",
+			bool(
+				cgk_line
+				and abs(flt(cgk_line.approved_amount) - 24_000_000) < 0.01
+				and flt(cgk_line.amount_reserved) == 0
+				and flt(cgk_line.amount_committed) == 0
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"budget.cgk_owner_and_target",
+			bool(
+				cgk_line
+				and cgk_line.owner_org_unit == C.OU_CGK_HEALTH
+				and cgk_line.primary_target_code == C.CGK_TGT_COLDCHAIN
+			),
+		)
+	)
+
+	rsv = frappe.db.get_value(
+		"Funding Reservation",
+		{"generated_reference": C.RSV_CODE},
+		["original_amount", "remaining_reserved", "status"],
+		as_dict=True,
+	)
+	if include_planning:
+		checks.append(
+			_check(
+				"funding.reservation",
+				bool(
+					rsv
+					and abs(flt(rsv.original_amount) - 455_000_000) < 0.01
+					and abs(flt(rsv.remaining_reserved) - 455_000_000) < 0.01
+				),
+				str(rsv),
+			)
+		)
+	else:
+		checks.append(
+			_check(
+				"funding.no_canonical_rsv",
+				frappe.db.count(
+					"Funding Reservation",
+					{
+						"generated_reference": C.RSV_CODE,
+						"fixture_namespace": C.FIXTURE_NS,
+					},
+				)
+				== 0,
+			)
+		)
+	checks.append(
+		_check(
+			"funding.no_canonical_commitment",
+			frappe.db.count(
+				"Procurement Commitment",
+				{"generated_reference": C.COM_CODE, "fixture_namespace": C.FIXTURE_NS},
+			)
+			== 0,
+		)
+	)
+	checks.append(
+		_check(
+			"funding.no_canonical_expenditure",
+			frappe.db.count(
+				"Expenditure Snapshot",
+				{"generated_reference": C.EXP_CODE, "fixture_namespace": C.FIXTURE_NS},
+			)
+			== 0,
+		)
+	)
+
+	for email in C.CANONICAL_USERS:
+		checks.append(
+			_check(
+				f"user.enabled.{email}",
+				bool(frappe.db.get_value("User", email, "enabled")),
+			)
+		)
+		usa = frappe.db.count(
+			"User Scope Assignment", {"user": email, "fixture_namespace": C.FIXTURE_NS}
+		)
+		# System admin proves zero operational USA (Contract §4.6 / §7.5).
+		if email == C.USER_SYSTEM_ADMIN:
+			checks.append(_check(f"user.scope.{email}", usa == 0, str(usa)))
+		else:
+			checks.append(_check(f"user.scope.{email}", usa >= 1, str(usa)))
+
+	# --- Ownership isolation (§9) ---
+	pe_moh = frappe.db.get_value("Procuring Entity", {"entity_code": C.PE_MOH}, "name")
+	pe_cgk = frappe.db.get_value("Procuring Entity", {"entity_code": C.PE_CGKIS}, "name")
+
+	checks.append(
+		_check(
+			"isolation.medical_can_dhp_write",
+			can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_DHP,
+				user=C.USER_MEDICAL,
+				require_write=True,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.medical_denied_hrmd_write",
+			not can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_HRMD,
+				user=C.USER_MEDICAL,
+				require_write=True,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.public_can_hrmd_write",
+			can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_HRMD,
+				user=C.USER_PUBLIC,
+				require_write=True,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.public_denied_dhp_write",
+			not can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_DHP,
+				user=C.USER_PUBLIC,
+				require_write=True,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.reviewer_entity_wide",
+			can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_HRMD,
+				user=C.USER_STR_REVIEWER,
+				require_write=False,
+			)
+			and can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_DHP,
+				user=C.USER_STR_REVIEWER,
+				require_write=False,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.kisumu_can_county_write",
+			can_access_owned_record(
+				procuring_entity=pe_cgk,
+				owner_org_unit=C.OU_CGK_HEALTH,
+				user=C.USER_KISUMU_OFFICER,
+				require_write=True,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.kisumu_denied_moh",
+			not can_access_owned_record(
+				procuring_entity=pe_moh,
+				owner_org_unit=C.OU_DIR_DHP,
+				user=C.USER_KISUMU_OFFICER,
+				require_write=False,
+			),
+		)
+	)
+	checks.append(
+		_check(
+			"isolation.moh_denied_kisumu",
+			not can_access_owned_record(
+				procuring_entity=pe_cgk,
+				owner_org_unit=C.OU_CGK_HEALTH,
+				user=C.USER_MEDICAL,
+				require_write=False,
+			),
+		)
+	)
+
+	# --- Demands (Contract §7 / Demands-only boundary) ---
+	if include_demands and frappe.db.exists("DocType", "Demand"):
+		principal = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE},
+			[
+				"name",
+				"status",
+				"current_stage",
+				"confirmed_estimate",
+				"planning_usage",
+				"owner_org_unit",
+			],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"demands.principal.exists_approved",
+				bool(
+					principal
+					and principal.status == "Approved"
+					and principal.current_stage == "Complete"
+					and abs(flt(principal.confirmed_estimate) - 455_000_000) < 0.01
+				),
+				str(principal),
+			)
+		)
+		expected_usage = "Fully planned" if include_planning else "Not taken up"
+		checks.append(
+			_check(
+				"demands.principal.planning_usage",
+				bool(principal and principal.planning_usage == expected_usage),
+				getattr(principal, "planning_usage", None),
+			)
+		)
+		if principal:
+			item_total = sum(
+				flt(r.confirmed_estimate)
+				for r in frappe.get_all(
+					"Demand Item",
+					filters={"demand": principal.name},
+					fields=["confirmed_estimate"],
+				)
+			)
+			checks.append(
+				_check(
+					"demands.principal.items_455m",
+					abs(item_total - 455_000_000) < 0.01,
+					str(item_total),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.principal.strategy_primary_supporting",
+					frappe.db.count(
+						"Demand Strategy Reference",
+						{"demand": principal.name, "reference_type": "Primary"},
+					)
+					== 1
+					and frappe.db.count(
+						"Demand Strategy Reference",
+						{"demand": principal.name, "reference_type": "Supporting"},
+					)
+					== 1,
+				)
+			)
+			alloc = frappe.db.get_value(
+				"Demand Funding Allocation",
+				{"demand": principal.name},
+				["allocation_amount", "bo_confirmation_status", "funding_reservation"],
+				as_dict=True,
+			)
+			checks.append(
+				_check(
+					"demands.principal.allocation_455",
+					bool(
+						alloc
+						and abs(flt(alloc.allocation_amount) - 455_000_000) < 0.01
+					),
+					str(alloc),
+				)
+			)
+			if include_planning:
+				rsv_name = frappe.db.get_value(
+					"Funding Reservation",
+					{"generated_reference": C.RSV_CODE},
+					"name",
+				)
+				checks.append(
+					_check(
+						"demands.principal.single_rsv",
+						frappe.db.count(
+							"Funding Reservation", {"generated_reference": C.RSV_CODE}
+						)
+						== 1,
+					)
+				)
+			else:
+				checks.append(
+					_check(
+						"demands.principal.no_rsv_link",
+						bool(
+							alloc
+							and not alloc.funding_reservation
+							and alloc.bo_confirmation_status != "Confirmed"
+						),
+						str(alloc),
+					)
+				)
+				checks.append(
+					_check(
+						"budget.canonical.no_rsv_0001",
+						frappe.db.count(
+							"Funding Reservation",
+							{
+								"generated_reference": C.RSV_CODE,
+								"fixture_namespace": C.FIXTURE_NS,
+							},
+						)
+						== 0,
+					)
+				)
+
+		returned = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE_RETURNED},
+			["name", "status", "current_stage", "confirmed_estimate", "current_owner"],
+			as_dict=True,
+		)
+		if include_scn_add or include_scn_fund_short or include_scn_remove:
+			checks.append(
+				_check(
+					"demands.scn_019_planning_ready",
+					bool(
+						returned
+						and returned.status == "Approved"
+						and abs(flt(returned.confirmed_estimate) - C.PLAN_ITEM_SCN_AMOUNT)
+						< 0.01
+					),
+					str(returned),
+				)
+			)
+		else:
+			checks.append(
+				_check(
+					"demands.returned.exists",
+					bool(
+						returned
+						and returned.status == "Returned"
+						and returned.current_stage == "Request Preparation"
+						and abs(flt(returned.confirmed_estimate) - 95_000_000) < 0.01
+						and returned.current_owner == C.USER_PUBLIC
+					),
+					str(returned),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.returned.no_rsv",
+					frappe.db.count(
+						"Funding Reservation", {"demand_code": C.DEMAND_CODE_RETURNED}
+					)
+					== 0,
+				)
+			)
+		if returned and not (
+			include_scn_add or include_scn_fund_short or include_scn_remove
+		):
+			hod = frappe.db.get_value(
+				"Demand Decision",
+				{
+					"demand": returned.name,
+					"stage": "Business Review",
+					"decision": "Return",
+				},
+				["reason", "actor_role"],
+				as_dict=True,
+			)
+			checks.append(
+				_check(
+					"demands.returned.hod_scope_return",
+					bool(
+						hod
+						and hod.actor_role == "Business Approver"
+						and "too broad" in (hod.reason or "")
+						and "80,000,000" in (hod.reason or "")
+					),
+					str(hod),
+				)
+			)
+			checks.append(
+				_check(
+					"demands.returned.no_funding_exception",
+					frappe.db.count("Funding Exception", {"demand": returned.name}) == 0,
+				)
+			)
+
+		county = frappe.db.get_value(
+			"Demand",
+			{"demand_code": C.DEMAND_CODE_COUNTY},
+			["name", "status", "current_stage", "procuring_entity", "requester_estimate"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"demands.county.draft_isolated",
+				bool(
+					county
+					and county.status == "Draft"
+					and county.current_stage == "Request Preparation"
+					and county.procuring_entity == C.PE_CGKIS
+					and abs(flt(county.requester_estimate) - 24_000_000) < 0.01
+				),
+				str(county),
+			)
+		)
+		if county:
+			checks.append(
+				_check(
+					"demands.county.no_strategy_or_budget",
+					frappe.db.count(
+						"Demand Strategy Reference", {"demand": county.name}
+					)
+					== 0
+					and frappe.db.count(
+						"Demand Funding Allocation", {"demand": county.name}
+					)
+					== 0,
+				)
+			)
+
+	if include_planning and frappe.db.exists("DocType", "Procurement Plan"):
+		plan = frappe.db.get_value(
+			"Procurement Plan",
+			{"plan_code": C.PROCUREMENT_PLAN_CODE},
+			[
+				"name",
+				"lifecycle_state",
+				"current_approved_version",
+				"procuring_entity",
+				"fixture_namespace",
+			],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.plan.open",
+				bool(
+					plan
+					and plan.lifecycle_state == "Open"
+					and plan.procuring_entity == C.PE_MOH
+					and plan.fixture_namespace == C.FIXTURE_NS
+				),
+				str(plan),
+			)
+		)
+		version = frappe.db.get_value(
+			"Procurement Plan Version",
+			{"version_code": C.PROCUREMENT_PLAN_VERSION_CODE},
+			["name", "status", "plan", "approved_by", "fixture_namespace"],
+			as_dict=True,
+		)
+		if not include_scn_add:
+			checks.append(
+				_check(
+					"planning.version.approved_v1",
+					bool(
+						version
+						and version.status == "Approved"
+						and plan
+						and version.name == plan.current_approved_version
+					),
+					str(version),
+				)
+			)
+		checks.append(
+			_check(
+				"planning.version.canonical_approval_actor",
+				bool(
+					version
+					and version.approved_by == C.USER_HOP
+					and version.fixture_namespace == C.FIXTURE_NS
+				),
+				str(version),
+			)
+		)
+		item = frappe.db.get_value(
+			"Procurement Plan Item",
+			{"plan_item_code": C.PLAN_ITEM_CODE},
+			["name", "baseline_state", "plan"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.item.active_021",
+				bool(item and item.baseline_state == "Active" and plan and item.plan == plan.name),
+				str(item),
+			)
+		)
+		alloc_total = 0.0
+		if item:
+			alloc_total = sum(
+				flt(r.allocated_amount)
+				for r in frappe.get_all(
+					"Plan Demand Allocation",
+					filters={"plan_item": item.name, "status": "Effective"},
+					fields=["allocated_amount"],
+				)
+			)
+		checks.append(
+			_check(
+				"planning.allocations_455m",
+				abs(alloc_total - C.PLAN_AMOUNT_V1) < 0.01,
+				str(alloc_total),
+			)
+		)
+		checks.append(
+			_check(
+				"planning.no_duplicate_plan",
+				frappe.db.count(
+					"Procurement Plan", {"plan_code": C.PROCUREMENT_PLAN_CODE}
+				)
+				== 1,
+			)
+		)
+		checks.append(
+			_check(
+				"planning.county_demand_not_planned",
+				not frappe.db.exists(
+					"Plan Demand Allocation",
+					{
+						"demand": frappe.db.get_value(
+							"Demand", {"demand_code": C.DEMAND_CODE_COUNTY}, "name"
+						)
+						or "__missing__"
+					},
+				),
+			)
+		)
+		rsv_count = frappe.db.count(
+			"Funding Reservation", {"generated_reference": C.RSV_CODE}
+		)
+		checks.append(
+			_check(
+				"planning.rsv_0001_after_plan_item",
+				rsv_count == 1,
+				str(rsv_count),
+			)
+		)
+		iv = frappe.db.get_value(
+			"Procurement Plan Item Version",
+			{"item_version_code": f"{C.PLAN_ITEM_CODE}-1"},
+			["finance_reservation", "finance_confirmed_by", "reservation_reference"],
+			as_dict=True,
+		)
+		checks.append(
+			_check(
+				"planning.rsv_0001_finance_provenance",
+				bool(
+					iv
+					and (iv.finance_reservation or iv.reservation_reference)
+					and iv.finance_confirmed_by == C.USER_BUD_OFFICER
+				),
+				str(iv),
+			)
+		)
+		if include_scn_add:
+			_append_scn_add_checks(checks)
+		if include_scn_fund_short:
+			_append_scn_fund_short_checks(checks)
+		if include_scn_remove:
+			_append_scn_remove_checks(checks)
+		if not (include_scn_add or include_scn_fund_short or include_scn_remove):
+			checks.append(
+				_check(
+					"planning.no_scn_item_at_base",
+					not frappe.db.exists(
+						"Procurement Plan Item", {"plan_item_code": C.PLAN_ITEM_CODE_SCN}
+					),
+				)
+			)
+			checks.append(
+				_check(
+					"planning.no_scn_rsv_at_base",
+					not frappe.db.exists(
+						"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
+					),
+				)
+			)
+
+	failed = [c for c in checks if not c["ok"]]
+	ok = not failed
+	report = {
+		"ok": ok,
+		"fixture_namespace": C.FIXTURE_NS,
+		"passed": len(checks) - len(failed),
+		"failed": len(failed),
+		"checks": checks,
+		"failures": failed,
+	}
+	lines_out = [
+		f"{'PASS' if c['ok'] else 'FAIL'}: {c['name']}"
+		+ (f" ({c['detail']})" if c["detail"] and not c["ok"] else "")
+		for c in checks
+	]
+	report["summary"] = "\n".join(lines_out)
+	return report

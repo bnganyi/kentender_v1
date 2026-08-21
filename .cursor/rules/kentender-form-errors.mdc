@@ -1,0 +1,44 @@
+---
+description: Structured Desk field validation — inline errors, no generic Message dialogs
+alwaysApply: true
+---
+
+# KenTender Desk form errors (hard rule)
+
+User-correctable validation must **never** surface as Frappe’s generic **Message** dialog (`frappe.msgprint` / MandatoryError chrome).
+
+## Contract
+
+1. **API** — Form/write endpoints return structured validation failures:
+
+```json
+{ "ok": false, "errors": { "field_name": "Human message" } }
+```
+
+Do not throw DocType `MandatoryError` for fields the user can fix in the current surface. Permission and system failures may still throw / toast.
+
+2. **UI** — Use shared helper [`kt_form_errors.js`](apps/kentender_v1/kentender_core/kentender_core/public/js/kt_form_errors.js) (`window.ktFormErrors` / `kentender.formErrors`):
+
+- `clear($root)` / `show($root, errors)` — inline under field, mark invalid, focus first error
+- Error slots: `data-kt-field-error="<field>"` (Strategy may use `data-kt-str-error`)
+- Controls: `data-kt-field` / `data-kt-str-field` / drawer `name` / `data-kt-str-drawer-field`
+
+3. **Forbidden for field validation**
+
+- Sole reliance on `frappe.msgprint` / untitled “Message” dialogs
+- Bare `frappe.show_alert` with no field mapping when the error names a form field
+
+4. **Allowed**
+
+- `show_alert` for success, permission, or non-field system failures
+- Intentional titled dialogs for hard stops that are not field-level
+
+## Evidence before Done
+
+- Layout/fixture markers for error slots on new forms/drawers
+- Playwright: missing required field → inline error visible; **no** dialog with title “Message” or text “Value missing for …”
+
+## Reference
+
+- UI System Pattern § form errors in `apps/kentender_v1/docs/prompts/architecture/Kentender UI System Pattern v1.0.md`
+- First consumers: Strategy Create Plan + Structure drawer (`strategy_live_bind.js`)

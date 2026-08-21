@@ -1,0 +1,347 @@
+/* BUD-UI-07 Funding Activity — Stitch pins (Desk has no Tailwind). */
+
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-activity"] {
+	--kt-bud-primary: #003d9b;
+	--kt-bud-secondary: #01629d;
+	width: 100% !important;
+	display: block !important;
+}
+
+/* Balance strip */
+.kt-cl-shell .kt-bud-root .kt-bud-activity-strip,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-strip"] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 12px !important;
+	width: 100% !important;
+	margin: 0 0 1.5rem 0 !important;
+	padding: 20px !important;
+	box-sizing: border-box !important;
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-strip-cell {
+	flex: 1 1 200px !important;
+	min-width: 160px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-strip-divider {
+	display: none !important;
+	width: 1px !important;
+	height: 3rem !important;
+	background-color: #c3c6d1 !important;
+	flex: 0 0 auto !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-strip {
+		flex-wrap: nowrap !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-strip-divider {
+		display: block !important;
+	}
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-strip .font-label-caps {
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+	margin: 0 0 0.25rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-strip .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	line-height: 1.4 !important;
+	margin: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .text-status-committed {
+	color: #6366f1 !important;
+}
+.kt-cl-shell .kt-bud-root .text-status-available {
+	color: #10b981 !important;
+}
+.kt-cl-shell .kt-bud-root .text-status-reserved {
+	color: #f59e0b !important;
+}
+
+/* Toolbar — locked geometry (Lines lesson: no crushed w-full / dual chevrons) */
+.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-toolbar"] {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 1rem !important;
+	margin: 0 0 1rem 0 !important;
+	padding: 1rem !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-filters {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: flex-end !important;
+	justify-content: flex-end !important;
+	gap: 1rem !important;
+	flex: 0 0 auto !important;
+	width: auto !important;
+	margin-left: auto !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-filter-field {
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 0 0 auto !important;
+	width: 11.5rem !important;
+	min-width: 11.5rem !important;
+	max-width: 11.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-filter-field[data-kt-bud-activity-filter-field="date"] {
+	width: 11rem !important;
+	min-width: 11rem !important;
+	max-width: 11rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-select-wrap {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-select-wrap select {
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	height: 2.5rem !important;
+	padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #f9f9fe !important;
+	background-image: none !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font-size: 0.875rem !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-select-wrap select:has(+ .material-symbols-outlined) {
+	background-image: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-select-wrap > .material-symbols-outlined {
+	position: absolute !important;
+	right: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: #434750 !important;
+	width: 20px !important;
+	height: 20px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-date {
+	display: block !important;
+	width: 100% !important;
+	height: 2.5rem !important;
+	padding: 0.5rem 0.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #f9f9fe !important;
+	font-size: 0.875rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-search {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	width: 100% !important;
+	max-width: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-search-field {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-search"] {
+	display: block !important;
+	width: 100% !important;
+	height: 2.5rem !important;
+	padding: 0.5rem 1rem 0.5rem 2.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #f9f9fe !important;
+	font-size: 0.875rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-search-icon] {
+	position: absolute !important;
+	left: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: #434750 !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar {
+		flex-direction: row !important;
+		align-items: flex-end !important;
+		justify-content: space-between !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-search {
+		flex: 1 1 0% !important;
+		min-width: 16rem !important;
+		max-width: none !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-filters {
+		flex-wrap: nowrap !important;
+		margin-left: auto !important;
+	}
+}
+
+/* Notice */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-notice"],
+.kt-cl-shell .kt-bud-root .kt-bud-activity-notice {
+	display: none !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	width: 100% !important;
+	margin: 0 0 1rem 0 !important;
+	padding: 1rem 1.1rem !important;
+	box-sizing: border-box !important;
+	background-color: #f4f3f9 !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-notice"]:not(.hidden):not([hidden]),
+.kt-cl-shell .kt-bud-root .kt-bud-activity-notice:not(.hidden):not([hidden]) {
+	display: flex !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-notice-icon {
+	color: #003d9b !important;
+	font-size: 22px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-notice-title {
+	margin: 0 0 0.15rem 0 !important;
+	font-weight: 600 !important;
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-activity-notice-msg {
+	margin: 0 !important;
+	font-size: 0.875rem !important;
+	color: #434750 !important;
+	white-space: pre-wrap !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-activity-notice-dismiss,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-notice-dismiss"] {
+	flex: 0 0 auto !important;
+	width: 2rem !important;
+	height: 2rem !important;
+	padding: 0 !important;
+	border: none !important;
+	border-radius: 9999px !important;
+	background: transparent !important;
+	color: #434750 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+
+/* Table card */
+.kt-cl-shell .kt-bud-root .kt-bud-activity-table-card,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-table-card"] {
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-table"] th {
+	padding: 0.75rem 1rem !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-table"] td {
+	padding: 1rem !important;
+	vertical-align: top !important;
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-table"] .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+/* Status pills */
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-status] {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.25rem 0.5rem !important;
+	border-radius: 9999px !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	background-color: #e8e7ed !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-status="active"] {
+	background-color: #cfe5ff !important;
+	color: #004a78 !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-status="available"],
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-status="matched"] {
+	background-color: #10b981 !important;
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-activity-status="stale"] {
+	background-color: color-mix(in srgb, #f59e0b 20%, #ffffff) !important;
+	color: #b45309 !important;
+}
+
+/* Action — underline label only */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.25rem !important;
+	color: #01629d !important;
+	font-weight: 500 !important;
+	font-size: 0.875rem !important;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	min-height: 0 !important;
+	white-space: nowrap !important;
+	text-decoration: none !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"] .kt-bud-activity-action-label {
+	text-decoration: none !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:focus-visible {
+	text-decoration: none !important;
+	color: #003d9b !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:hover .kt-bud-activity-action-label,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"]:focus-visible .kt-bud-activity-action-label {
+	text-decoration: underline !important;
+	text-underline-offset: 2px !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-activity-action"] .material-symbols-outlined {
+	text-decoration: none !important;
+	font-size: 16px !important;
+}
+
+/* Desk bleed pins — Win98 Forms chevron must not stack with Material expand_more. */

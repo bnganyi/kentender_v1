@@ -29,21 +29,34 @@ def ensure_currency_kes():
 	).insert(ignore_permissions=True)
 
 
-def ensure_procuring_entity(entity_code: str, entity_name: str) -> str:
+def ensure_procuring_entity(
+	entity_code: str,
+	entity_name: str,
+	*,
+	entity_type: str | None = None,
+	short_name: str | None = None,
+) -> str:
 	"""Return Procuring Entity name (document name = entity_code with autoname field:entity_code)."""
+	values = {
+		"entity_code": entity_code,
+		"entity_name": entity_name,
+		"legal_name": entity_name,
+		"status": "Active",
+		"reporting_currency": "KES",
+	}
+	if entity_type:
+		values["entity_type"] = entity_type
+	if short_name:
+		values["short_name"] = short_name
 	if frappe.db.exists("Procuring Entity", entity_code):
 		doc = frappe.get_doc("Procuring Entity", entity_code)
-		if doc.entity_name != entity_name:
-			doc.entity_name = entity_name
-			doc.save(ignore_permissions=True)
+		# Seed/test setup may have just backfilled currency in the same process.
+		# Reload before the idempotent update to avoid a stale modified timestamp.
+		doc.reload()
+		doc.update({k: v for k, v in values.items() if k != "entity_code"})
+		doc.save(ignore_permissions=True)
 		return doc.name
-	doc = frappe.get_doc(
-		{
-			"doctype": "Procuring Entity",
-			"entity_code": entity_code,
-			"entity_name": entity_name,
-		}
-	)
+	doc = frappe.get_doc({"doctype": "Procuring Entity", **values})
 	doc.insert(ignore_permissions=True)
 	return doc.name
 

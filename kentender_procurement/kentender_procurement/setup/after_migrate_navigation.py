@@ -75,9 +75,7 @@ def reconcile_procurement_navigation_from_exports() -> None:
 	if frappe.db.exists("Workspace", "Procurement Planning"):
 		frappe.db.set_value("Workspace", "Procurement Planning", "is_hidden", 0)
 
-	# Include ``demand_intake`` so the Demand Intake module rail picks up
-	# ``Procurement Home`` / IA labels even when fixtures are skipped.
-	for basename in ("planning_module_navigation", "procurement", "demand_intake"):
+	for basename in ("planning_module_navigation", "procurement"):
 		data = _load_sidebar_export(basename)
 		if not data:
 			continue
@@ -113,6 +111,14 @@ def sync_procurement_home_page() -> None:
 		"kt_procurement_home",
 		"kt_procurement_home.json",
 	)
+	if not os.path.isfile(path):
+		# get_app_path already ends at package root in some installs.
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"page",
+			"kt_procurement_home",
+			"kt_procurement_home.json",
+		)
 	if os.path.isfile(path):
 		import_file_by_path(path, force=True)
 	# Retire colliding Page slug if an older import created it.
@@ -123,11 +129,31 @@ def sync_procurement_home_page() -> None:
 		frappe.db.set_value("Workspace", "Procurement Home", "is_hidden", 1)
 
 
+def sync_demands_pages() -> None:
+	"""DEM-UI pages must exist before sidebar Link To: demands-workspace."""
+	app_path = frappe.get_app_path("kentender_procurement")
+	for folder in (
+		"demands_workspace",
+		"demand_form",
+		"demand_review",
+		"demand_detail",
+		"demand_performance",
+	):
+		for candidate in (
+			os.path.join(app_path, "demands", "page", folder, f"{folder}.json"),
+			os.path.join(app_path, "page", folder, f"{folder}.json"),
+		):
+			if os.path.isfile(candidate):
+				import_file_by_path(candidate, force=True)
+				break
+
+
 def run() -> None:
 	# Page targets must exist before Workspace Sidebar Link To validation.
 	if frappe.db.exists("DocType", "Page"):
 		sync_coming_soon_page()
 		sync_procurement_home_page()
+		sync_demands_pages()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

@@ -3,8 +3,5 @@
 # Read docs to understand patches: https://frappeframework.com/docs/v14/user/en/database-migrations
 
 [post_model_sync]
-# Patches added in this section will be executed after doctypes are migrated
-kentender_budget.patches.v1_0.migrate_budget_status_remove_archived
-kentender_budget.patches.v1_0.migrate_program_allocations_to_budget_lines
-kentender_budget.patches.v1_0.backfill_budget_display_titles
-kentender_budget.patches.v1_0.budget_domain_v2_backfill
+# MVP-1 preparatory teardown — drop legacy Budget & Funding DocTypes / pages.
+kentender_budget.patches.mvp1_teardown_drop_legacy_budget_doctypes

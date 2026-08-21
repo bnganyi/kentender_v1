@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Workspace Review</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-secondary-container": "#004c7c",
+                        "background": "#f9f9fe",
+                        "on-primary-container": "#7b9ee0",
+                        "surface-variant": "#e2e2e8",
+                        "status-committed": "#6366F1",
+                        "on-background": "#1a1b20",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-surface": "#1a1b20",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#8f9fb8",
+                        "tertiary-fixed": "#d3e4ff",
+                        "status-exhausted": "#EF4444",
+                        "primary-container": "#00346f",
+                        "primary-fixed": "#d7e2ff",
+                        "on-surface-variant": "#434750",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "status-available": "#10B981",
+                        "on-primary-fixed": "#001b3f",
+                        "inverse-surface": "#2f3035",
+                        "inverse-on-surface": "#f1f0f6",
+                        "secondary-fixed": "#cfe5ff",
+                        "secondary": "#01629d",
+                        "tertiary-container": "#26364b",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f4f3f9",
+                        "status-reserved": "#F59E0B",
+                        "surface-container-high": "#e8e7ed",
+                        "secondary-container": "#7bbeff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f9f9fe",
+                        "tertiary": "#26364b",
+                        "surface": "#f9f9fe",
+                        "surface-dim": "#dad9df",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eeedf3",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "outline-variant": "#c3c6d1",
+                        "primary": "#001f48",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#99cbff",
+                        "surface-tint": "#395e9b",
+                        "outline": "#737781",
+                        "surface-container-highest": "#e2e2e8",
+                        "inverse-primary": "#abc7ff",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "on-secondary-fixed": "#001d34"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "card-padding": "20px",
+                        "container-padding": "16px",
+                        "base-unit": "4px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f9f9fe;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-surface border-b border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">KenTender</span>
+<!-- Search Bar (on_left as per JSON) -->
+<div class="hidden md:flex items-center bg-surface-container-highest rounded-full px-4 py-1.5 ml-4 focus-within:ring-2 focus-within:ring-primary focus-within:bg-surface-container-lowest transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md w-64 text-on-surface placeholder:text-on-surface-variant/70 p-0" placeholder="Search budget lines..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden cursor-pointer flex items-center justify-center border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate user, facing forward, bright ambient lighting, neutral background, high resolution, soft focus on edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXk6OxtcyHhXazcwPOvkbl9B1m_LK47ilKr8AEMZySvNGJDzKDeu1bnLnOxvBkne4AjPZXXjxXi7pPfdkzTLfwg3OhccWa8sXEw85U2se4TppIAhZigqhpxPTYTVfGMGIWdlSMgCQooZaLOhNMZholv8DT2Kxu2xRWDkDm0bYosRTtCf4sSQnseLZ62YfFmbudzZ6lTsR3Mg2SYnztelUXOBPvb_4iXzeKBZOo7OZ5nn8eHf4fWu6HDg"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Shared Component) -->
+<nav class="hidden md:flex fixed left-0 top-0 h-full w-64 flex-col p-4 z-40 border-r border-outline-variant bg-surface-container-lowest pt-20 flat no shadows transition-transform duration-200 ease-in-out">
+<div class="mb-8 px-3">
+<div class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-2 tracking-wider">Module</div>
+<div class="font-headline-sm text-headline-sm font-extrabold text-primary">Procurement Portal</div>
+</div>
+<div class="flex-1 space-y-1">
+<!-- Active Tab: Planning (Maps logically to Budget Planning/Review) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary-container text-on-secondary-container font-bold cursor-pointer transition-all" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="event_note">event_note</span>
+<span class="font-body-md text-body-md">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-md text-body-md">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-body-md text-body-md">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-body-md text-body-md">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-body-md text-body-md">Closeout</span>
+</a>
+</div>
+<div class="mt-auto pt-4 border-t border-surface-variant space-y-1">
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary rounded-lg py-2.5 font-body-md text-body-md font-medium hover:opacity-90 transition-opacity mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Requisition
+            </button>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="md:ml-64 pt-16 min-h-screen bg-surface">
+<!-- Workspace Header & Tabs -->
+<div class="bg-surface-container-lowest border-b border-outline-variant pt-8 px-6 md:px-10">
+<div class="max-w-6xl mx-auto">
+<div class="flex items-center gap-3 mb-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps text-on-secondary-container bg-secondary-container font-bold tracking-wider">WORKSPACE</span>
+<span class="text-body-md font-body-md text-on-surface-variant">FY 2027/28</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-6">Ministry of Health Procurement Budget</h1>
+<div class="flex overflow-x-auto hide-scrollbar gap-6 border-b-0">
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Overview</button>
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Budget Lines</button>
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Funding Activity</button>
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Revisions</button>
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Downstream Usage</button>
+<!-- Active Tab -->
+<button class="pb-3 text-primary font-body-md text-body-md font-medium border-b-2 border-primary whitespace-nowrap">Review</button>
+<button class="pb-3 text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors whitespace-nowrap">Audit</button>
+</div>
+</div>
+</div>
+<!-- Canvas Content -->
+<div class="max-w-6xl mx-auto p-6 md:p-10">
+<div class="mb-section-gap flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Readiness Checklist</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Pre-submission verification for procurement activation.</p>
+</div>
+<div class="hidden md:flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-lg border border-surface-variant">
+<span class="w-2 h-2 rounded-full bg-status-reserved"></span>
+<span class="font-body-md text-body-md text-on-surface text-sm">Draft State</span>
+</div>
+</div>
+<!-- Bento Grid Checklist -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter mb-section-gap">
+<!-- Card 1: Source (Issue) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding relative overflow-hidden group hover:border-error transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-exhausted"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Source</h3>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant">4/5</span>
+<div class="text-[10px] font-label-caps text-on-surface-variant tracking-wider">COMPLETE</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 border border-error-container mb-4">
+<div class="flex items-start gap-2 text-status-exhausted">
+<span class="material-symbols-outlined text-sm mt-0.5" data-icon="error">error</span>
+<span class="font-body-md text-body-md">External approval evidence missing</span>
+</div>
+</div>
+<button class="text-primary font-body-md text-body-md font-medium hover:underline flex items-center gap-1">
+                        Add evidence <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Card 2: Budget Lines (Issue) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding relative overflow-hidden group hover:border-error transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-exhausted"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Budget Lines</h3>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant">12/13</span>
+<div class="text-[10px] font-label-caps text-on-surface-variant tracking-wider">COMPLETE</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 border border-error-container mb-4">
+<div class="flex items-start gap-2 text-status-exhausted">
+<span class="material-symbols-outlined text-sm mt-0.5" data-icon="error">error</span>
+<span class="font-body-md text-body-md">Primary strategic target missing on 1 line</span>
+</div>
+</div>
+<button class="text-primary font-body-md text-body-md font-medium hover:underline flex items-center gap-1">
+                        Review budget line <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Card 3: Strategy and Value Commitments (Issue) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding relative overflow-hidden group hover:border-error transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-exhausted"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Strategy and Value Commitments</h3>
+</div>
+<div class="text-right shrink-0">
+<span class="font-data-mono text-data-mono text-on-surface-variant">8/9</span>
+<div class="text-[10px] font-label-caps text-on-surface-variant tracking-wider">COMPLETE</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 border border-error-container mb-4">
+<div class="flex items-start gap-2 text-status-exhausted">
+<span class="material-symbols-outlined text-sm mt-0.5" data-icon="error">error</span>
+<span class="font-body-md text-body-md">Required value treatment incomplete on 1 line</span>
+</div>
+</div>
+<button class="text-primary font-body-md text-body-md font-medium hover:underline flex items-center gap-1">
+                        Review treatments <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Card 4: Governance (Complete) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-available"></div>
+<div class="flex justify-between items-start h-full">
+<div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-status-available/10 flex items-center justify-center text-status-available">
+<span class="material-symbols-outlined icon-fill" data-icon="check_circle">check_circle</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Governance</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">All governance requirements met.</p>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-on-surface-variant">3/3</span>
+<div class="text-[10px] font-label-caps text-on-surface-variant tracking-wider">COMPLETE</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Actions Footer (Draft State) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+<div class="flex items-start gap-3 max-w-2xl">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5" data-icon="info">info</span>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Activation confirms that the approved financial baseline has been verified for procurement use in KenTender. It does not constitute statutory budget approval.
+                    </p>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto shrink-0">
+<button class="flex-1 md:flex-none px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-body-md text-body-md font-medium hover:bg-surface-container transition-colors">
+                        Run readiness check
+                    </button>
+<!-- Disabled visually due to errors -->
+<button class="flex-1 md:flex-none px-4 py-2 rounded-lg bg-surface-variant text-on-surface-variant font-body-md text-body-md font-medium cursor-not-allowed opacity-70" disabled="">
+                        Submit for review
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

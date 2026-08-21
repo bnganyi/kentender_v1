@@ -17,7 +17,14 @@
   {"role": "Procurement Planner"},
   {"role": "Planning Authority"},
   {"role": "Requisitioner"},
-  {"role": "Finance Reviewer"}
+  {"role": "Finance Reviewer"},
+  {"role": "Budget Officer"},
+  {"role": "Auditor"},
+  {"role": "Requester"},
+  {"role": "Business Approver"},
+  {"role": "Procurement Approval Authority"},
+  {"role": "Planning Officer"},
+  {"role": "Demand Viewer"}
  ],
  "script": null,
  "standard": "Yes",

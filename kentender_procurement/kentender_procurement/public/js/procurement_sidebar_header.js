@@ -4,7 +4,7 @@
 //
 // Also harmonizes Workspace Sidebar active matching:
 // 1) coming-soon?feature=… links must not all share one active state (Frappe strips query)
-// 2) Workspace hub redirects (demand-hub, budget-hub, planning-hub) map to rail items
+// 2) Workspace hubs and their child pages map to rail items
 // 3) Workspace `url` overrides slug path (Plans → /desk/planning-hub)
 (function () {
 	"use strict";
@@ -115,9 +115,9 @@
 		add(path);
 		var groups = [
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
-			["/desk/demand-hub", "/desk/demand-intake-and-approval"],
+			["/desk/demands-workspace"],
 			["/desk/budget-hub", "/desk/budget-management"],
-			["/desk/planning-hub", "/desk/procurement-planning"],
+			["/desk/planning-workspace", "/desk/procurement-planning", "/desk/planning-hub"],
 			["/desk/strategy-management"],
 		];
 		for (var g = 0; g < groups.length; g++) {
@@ -134,9 +134,12 @@
 			add("/desk/budget-hub");
 			add("/desk/budget-management");
 		}
-		if (/^\/desk\/create-demand(\/|$)/.test(path)) {
-			add("/desk/demand-hub");
-			add("/desk/demand-intake-and-approval");
+		if (
+			/^\/desk\/(demand-form|demand-review|demand-detail|demand-performance)(\/|$)/.test(
+				path
+			)
+		) {
+			add("/desk/demands-workspace");
 		}
 		if (/^\/desk\/it-tender-configuration(?!-dashboard)([/-]|$)/.test(path)) {
 			add("/desk/it-tender-configuration-dashboard");
@@ -209,11 +212,39 @@
 		frappe.ui.Sidebar.prototype.__ktProcRoutePatchVersion = KT_ROUTE_PATCH_VERSION;
 	}
 
+	/**
+	 * Desk home leaves `.body-sidebar-container` display:none. Frappe's
+	 * `sidebar.setup()` rebuilds the rail but does not `.show()` it, so the first
+	 * navigation into a Procurement Page (e.g. Home) looks rail-less until refresh.
+	 */
+	function patchSetupShowsRail() {
+		if (!frappe.ui || !frappe.ui.Sidebar || frappe.ui.Sidebar.prototype.__ktProcSetupShowPatched) {
+			return;
+		}
+		var original = frappe.ui.Sidebar.prototype.setup;
+		frappe.ui.Sidebar.prototype.setup = function (workspace_title) {
+			original.apply(this, arguments);
+			try {
+				var page = frappe.container && frappe.container.page && frappe.container.page.page;
+				if (page && page.hide_sidebar) {
+					return;
+				}
+				if (this.wrapper && typeof this.wrapper.show === "function") {
+					this.wrapper.show();
+				}
+			} catch (e) {
+				/* ignore */
+			}
+		};
+		frappe.ui.Sidebar.prototype.__ktProcSetupShowPatched = true;
+	}
+
 	function boot() {
 		patchSidebar();
 		patchHeaderMake();
 		patchWorkspaceGetPath();
 		patchActiveRouteMatching();
+		patchSetupShowsRail();
 	}
 
 	boot();

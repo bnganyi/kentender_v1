@@ -1,0 +1,60 @@
+---
+description: Strategy Alignment UI locks — typography, shared plan chrome, focus; Makefile gates before Done
+globs: apps/kentender_v1/kentender_strategy/**/*.{js,css,html},apps/kentender_strategy/**/*.{js,css,html},apps/kentender_v1/docs/mvp-1/01_strategy/**/*,apps/kentender_v1/tests/ui/smoke/strategy-alignment/**
+alwaysApply: false
+---
+
+# Strategy Alignment UI — regression locks (permanent)
+
+Strategy Desk canvases under `kentender_strategy` regress easily when Desk Espresso, fixture-local headers, or soft asset cache win over Stitch tokens. Soft spot-checks are not enough.
+
+## Shared plan chrome (structural)
+
+1. **One shared artifact** — `strategy_alignment_shell.js` `planChromeHtml` / `annotatePlanTabs` owns plan header + tabs for every plan tab.
+2. Fixtures must **not** embed `[data-testid="kt-str-plan-chrome"]` or `[data-testid="kt-str-plan-tabs"]` (layout guard enforces).
+3. Canonical layout: `[code][status pill]` → title → period | version → actions → tabs. Status sits beside code, not in the byline.
+4. Structure issues banner stays **above** shared chrome when present.
+5. **Live bind must use `bindPlanChrome` only** — never ad-hoc UPPERCASE status, `vN` version labels, or empty period. Downstream/Audit/Overview/Structure/VC/Measurements/Review all paint through that helper.
+6. **Soft tab navigation** must keep the same identity chrome (`Effective … | Version N` + status tone). Page-specific CTAs (Create successor, Edit Plan Details) may differ; identity meta must not.
+
+## Typography (Desk Espresso isolation)
+
+Frappe Espresso uses `--weight-regular: 420` and base letter-spacing. Strategy canvases must not inherit that.
+
+1. `.kt-cl-shell .kt-str-root` forces `--weight-regular: 400` and `letter-spacing: normal` (`strategy_alignment_tokens.css`).
+2. Headlines: Manrope — `headline-lg` = 30px / 700 / −0.02em (DS; pinned in `strategy_alignment_remaining.css` for `h1`/`h2`).
+3. Body / chrome meta: Inter 14px / 400 / normal tracking / 20px line-height.
+4. Self-hosted faces via `kentender_core` `kt_cl_fonts.css` (Manrope + Inter). No reliance on Google Fonts CDN for Done.
+5. Prefer pins in `tokens` + `remaining`; do not add conflicting per-screen `text-headline-lg` overrides.
+
+Also follow **`.cursor/rules/kentender-strategy-alignment-focus.mdc`** for focus chrome (light blue, never near-black primary).
+
+## Definition of Done (UI)
+
+```
+Typography / chrome CSS or plan-header work Done
+  ⇔ make ui-strategy-typography-gate green
+  ∧ fresh browser session spot-check (not a soft-routed stale tab)
+
+Broader Strategy Alignment nav / fixture work Done
+  ⇔ make ui-strategy-alignment-ui-gate green
+  ∧ (includes typography gate)
+
+Domain green ≠ UI Done
+```
+
+From `apps/kentender_v1/`:
+
+```bash
+make ui-strategy-typography-gate
+make ui-strategy-alignment-ui-gate
+```
+
+After CSS/JS edits: `bench --site kentender.midas.com clear-cache`. Do not claim typography verified from a long-lived Desk tab (asset + page-script cache).
+
+## Disallowed
+
+- Fixture-local plan headers/tabs after shared chrome landed.
+- Claiming Done without the Makefile gate for the scope above.
+- Weakening Espresso isolation (`--weight-regular: 400`) or Manrope `h1` pins to “match Desk”.
+- Relying only on title string checks without font-size / weight / tracking asserts.

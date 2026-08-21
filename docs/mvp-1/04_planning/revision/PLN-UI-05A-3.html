@@ -1,0 +1,472 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Remove Plan Item - GovProcure Alpha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#e1e2e4",
+                      "status-exhausted": "#E11D48",
+                      "status-available": "#10B981",
+                      "surface-container-highest": "#e1e2e4",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-secondary-container": "#005f71",
+                      "on-tertiary-container": "#ccd2e7",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#151b2b",
+                      "on-background": "#191c1e",
+                      "on-secondary": "#ffffff",
+                      "outline": "#737685",
+                      "on-secondary-fixed": "#001f27",
+                      "on-surface": "#191c1e",
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#f8f9fb",
+                      "on-surface-variant": "#434654",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#001848",
+                      "secondary-fixed": "#afecff",
+                      "surface-dim": "#d9dadc",
+                      "tertiary-container": "#545a6c",
+                      "surface-container-high": "#e7e8ea",
+                      "inverse-primary": "#b2c5ff",
+                      "surface-container-low": "#f3f4f6",
+                      "primary-container": "#0052cc",
+                      "surface-tint": "#0c56d0",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "data-committed": "#6366F1",
+                      "surface-container": "#edeef0",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "error": "#ba1a1a",
+                      "border-subtle": "#DFE1E6",
+                      "primary-fixed": "#dae2ff",
+                      "secondary": "#00687b",
+                      "outline-variant": "#c3c6d6",
+                      "background": "#f8f9fb",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "primary": "#003d9b",
+                      "secondary-container": "#50dcff",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-container": "#c4d2ff",
+                      "tertiary": "#3d4354",
+                      "surface": "#f8f9fb",
+                      "status-reserved": "#F59E0B",
+                      "tertiary-fixed": "#dce2f8",
+                      "secondary-fixed-dim": "#48d7f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-xs": "0.25rem",
+                      "section-gap": "1.5rem",
+                      "gutter-md": "1rem",
+                      "container-padding": "1rem",
+                      "stack-sm": "0.5rem"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden w-full h-screen flex flex-col font-body-md">
+<!-- TopNavBar (GovProcure Alpha) -->
+<nav class="sticky top-0 z-50 flex justify-between items-center px-container-padding w-full h-16 bg-surface dark:bg-surface-container border-b border-subtle dark:border-outline-variant transition-colors duration-200">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">GovProcure Alpha</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-subtle rounded text-body-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary w-64" placeholder="Search..." type="text">
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-subtle">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small, professional headshot of an African civil servant wearing a modern business suit. The background is a plain light grey. The lighting is soft and flattering, suitable for a corporate profile picture. The mood is approachable and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk9QUBGZIp5MFD_SRwcVPBG2RG79ojMQd424bywjTEKXitQOeYPZEB29ZLqBAKpATLc-WM25G5nL7-tOJsdQ4UZybQDcn2QpWnyWGiuDIbwo8ZMPtoJXc-SaSIskX_1YeOJ2Uk0IQS193rbWPgDn0eF5s2d2qd8nbdYYBX0Ddq1VaRBsiJpAtxKK2HL0mxOhg0V92028T_rpsvmHAQLzpU6Gt6kn1LgIG7DeGTqWZO9MwHw2quQXur">
+</div>
+</div>
+</nav>
+<div class="flex flex-1 overflow-hidden relative">
+<!-- SideNavBar (KenTender) -->
+<aside class="hidden lg:flex flex-col h-full py-section-gap bg-surface-container-low border-r border-subtle transition-all duration-200 ease-in-out w-64 shrink-0 z-40 relative">
+<div class="px-container-padding mb-section-gap flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary text-on-primary flex items-center justify-center font-bold">
+                    KT
+                 </div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-extrabold text-primary">KenTender</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">e-Procurement System</p>
+</div>
+</div>
+<div class="px-container-padding mb-6">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-body-sm font-medium hover:bg-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Requisition
+                </button>
+</div>
+<nav class="flex-1 overflow-y-auto">
+<ul class="space-y-1 px-2">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                            Dashboard
+                        </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                            Requisitions
+                        </a>
+</li>
+<li class="">
+<!-- Active State: Procurement Plan -->
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-primary-container text-on-primary-container border-l-4 border-primary transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="assignment" data-weight="fill" style="font-variation-settings: &quot;FILL&quot; 1;">assignment</span>
+                            Procurement Plan
+                        </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                            Vendor Registry
+                        </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+                            Audit Logs
+                        </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                            Settings
+                        </a>
+</li>
+</ul>
+</nav>
+<div class="mt-auto px-2 pt-4 border-t border-subtle">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Logout
+                </a>
+</div>
+</aside>
+<!-- Main Content Area (Dimmed Background Context) -->
+<main class="flex-1 overflow-y-auto bg-surface relative z-30 p-container-padding lg:p-8">
+<!-- Header (Dimmed) -->
+<div class="mb-section-gap flex justify-between items-start opacity-40 select-none">
+<div>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm mb-2">
+<span class="">Ministry of Health</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="">Annual Procurement Plan</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Annual Procurement Plan 2028/29</h2>
+<div class="flex items-center gap-3 mt-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container border border-subtle font-label-caps text-label-caps text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+                            Approved Version 1
+                        </span>
+<span class="font-body-sm text-on-surface-variant">Last updated 12 Aug 2028</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-subtle rounded text-primary font-label-caps text-label-caps bg-surface pointer-events-none">Export PDF</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded font-label-caps text-label-caps pointer-events-none">Update Plan</button>
+</div>
+</div>
+<!-- Content Blocks (Dimmed) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-40 select-none pointer-events-none">
+<div class="col-span-2 space-y-6">
+<!-- Fake Data Block 1 -->
+<div class="bg-surface-container-lowest border border-subtle rounded p-6">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 border-b border-subtle pb-2">Plan Summary</h3>
+<div class="grid grid-cols-3 gap-4">
+<div>
+<p class="font-body-sm text-on-surface-variant mb-1">Total Planned Value</p>
+<p class="font-data-lg text-data-lg text-on-surface">KES 4.2B</p>
+</div>
+<div>
+<p class="font-body-sm text-on-surface-variant mb-1">Items</p>
+<p class="font-data-lg text-data-lg text-on-surface">142</p>
+</div>
+<div>
+<p class="font-body-sm text-on-surface-variant mb-1">Committed Value</p>
+<p class="font-data-lg text-data-lg text-data-committed">KES 1.1B</p>
+</div>
+</div>
+</div>
+<!-- Fake List -->
+<div class="bg-surface-container-lowest border border-subtle rounded overflow-hidden">
+<div class="p-4 border-b border-subtle bg-surface flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Plan Items</h3>
+<div class="flex gap-2">
+<div class="w-32 h-8 bg-surface-variant rounded"></div>
+<div class="w-8 h-8 bg-surface-variant rounded"></div>
+</div>
+</div>
+<div class="p-4 border-b border-subtle flex justify-between items-center">
+<div>
+<p class="font-body-md font-medium text-on-surface">PPI-MOH-2028-001</p>
+<p class="font-body-sm text-on-surface-variant">Medical supplies for rural dispensaries Q1</p>
+</div>
+<p class="font-data-md text-data-md">KES 120,500,000</p>
+</div>
+<div class="p-4 border-b border-subtle flex items-center bg-surface-container-low border-l-4 border-l-status-exhausted justify-end gap-3">
+<div>
+<p class="font-body-md font-medium text-on-surface">PPI-MOH-2028-002</p>
+<p class="font-body-sm text-on-surface-variant">Clinical deployment laptops for digital health rollout</p>
+</div>
+<p class="font-data-md text-data-md text-status-exhausted line-through">KES 72,000,000</p>
+</div>
+<div class="p-4 flex justify-between items-center">
+<div>
+<p class="font-body-md font-medium text-on-surface">PPI-MOH-2028-003</p>
+<p class="font-body-sm text-on-surface-variant">Ambulance fleet maintenance contract (Annual)</p>
+</div>
+<p class="font-data-md text-data-md">KES 45,000,000</p>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<!-- Fake Sidebar block -->
+<div class="bg-surface-container-lowest border border-subtle rounded p-6">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 border-b border-subtle pb-2">Recent Activity</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant"></div>
+<div>
+<p class="font-body-sm text-on-surface">Update drafted</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">2 hours ago</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant"></div>
+<div>
+<p class="font-body-sm text-on-surface">Plan Approved</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">12 Aug 2028</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Overlay & Modal Dialog (The Core Task) -->
+<div class="absolute inset-0 z-50 flex items-center justify-center bg-surface-container-highest/60 backdrop-blur-sm p-4">
+<div class="bg-surface-container-lowest rounded-lg shadow-xl border border-subtle w-full max-w-2xl overflow-hidden flex flex-col max-h-full">
+<!-- Modal Header -->
+<div class="p-6 border-b border-subtle flex items-start justify-between bg-surface">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container/30 flex items-center justify-center text-status-exhausted border border-error-container">
+<span class="material-symbols-outlined">delete_sweep</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Remove Plan Item from approved plan?</h2>
+</div>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container rounded p-1 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 overflow-y-auto space-y-6">
+<p class="font-body-md text-on-surface-variant">The item remains active until the plan update is approved.</p>
+<!-- Item Summary (Read-only card) -->
+<div class="bg-surface border border-subtle rounded p-5 relative overflow-hidden">
+<!-- Decorative left border indicating context -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+<div class="col-span-1 md:col-span-2 mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Title</p>
+<p class="font-body-md font-medium text-on-surface">Clinical deployment laptops for digital health rollout</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Reference</p>
+<p class="font-data-md text-data-md text-on-surface">PPI-MOH-2028-002</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Planned Value</p>
+<p class="font-data-md text-data-md text-on-surface font-semibold bg-surface-container px-2 py-0.5 rounded inline-block">KES 72,000,000</p>
+</div>
+<div class="col-span-1 md:col-span-2 border-t border-subtle pt-4 mt-2">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Organisation Unit</p>
+<p class="font-body-sm text-on-surface">Directorate of Digital Health and Policy</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Source Demand</p>
+<p class="font-data-md text-data-md text-on-surface text-sm">DMD-MOH-2028-002</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Items</p>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">list_alt</span>
+<span class="font-body-sm text-on-surface">2 Need Items</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Approval Effect -->
+<div class="bg-surface-bright border border-subtle rounded p-4 flex gap-3 items-start">
+<span class="material-symbols-outlined text-secondary mt-0.5">info</span>
+<div>
+<p class="font-label-caps text-label-caps text-secondary mb-1">Approval Effect</p>
+<p class="font-body-sm text-on-surface-variant leading-relaxed">
+                                If the update is approved, the item will be removed, <span class="font-data-md text-[14px] text-on-surface">KES 72,000,000</span> will be released and the source Demand will be available for planning again.
+                            </p>
+</div>
+</div>
+<!-- Form Field -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface mb-2" for="reason">
+                            Reason for removal <span class="text-status-exhausted">*</span>
+</label>
+<textarea class="w-full bg-surface-container-lowest border border-subtle rounded p-3 font-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" id="reason" placeholder="Briefly explain why this item should be removed from the approved plan." required="" rows="3"></textarea>
+</div>
+</div>
+<!-- Modal Footer Actions -->
+<div class="p-4 border-t border-subtle bg-surface flex items-center justify-end gap-3">
+
+<!-- Restrained Destructive Button -->
+<button class="px-5 py-2.5 border border-subtle text-primary bg-surface hover:bg-surface-container-low rounded font-label-caps text-label-caps transition-colors">Keep item</button><button class="px-5 py-2.5 bg-error-container text-on-error-container hover:bg-status-exhausted hover:text-on-error border border-error-container hover:border-status-exhausted rounded font-label-caps text-label-caps transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">playlist_remove</span>
+                        Add removal to plan update
+                    </button>
+</div>
+</div>
+</div>
+</div>
+
+
+</body></html>

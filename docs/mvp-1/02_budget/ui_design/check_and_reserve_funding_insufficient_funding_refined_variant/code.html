@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Check and reserve funding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#8f9fb8",
+                        "secondary-container": "#7bbeff",
+                        "outline": "#737781",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "inverse-primary": "#abc7ff",
+                        "primary-fixed": "#d7e2ff",
+                        "on-background": "#1a1b20",
+                        "tertiary": "#26364b",
+                        "surface-container": "#eceef0",
+                        "surface-bright": "#f9f9fe",
+                        "surface-variant": "#e2e2e8",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-primary-fixed": "#001b3f",
+                        "on-secondary-container": "#004c7c",
+                        "primary-container": "#00346f",
+                        "status-available": "#10B981",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "status-exhausted": "#EF4444",
+                        "tertiary-fixed": "#d3e4ff",
+                        "status-committed": "#6366F1",
+                        "surface-container-low": "#f4f3f9",
+                        "secondary": "#01629d",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "inverse-on-surface": "#f1f0f6",
+                        "status-reserved": "#F59E0B",
+                        "primary": "#001f48",
+                        "on-surface": "#1a1b20",
+                        "on-primary-container": "#7b9ee0",
+                        "surface-dim": "#dad9df",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#395e9b",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c3c6d1",
+                        "on-surface-variant": "#434750",
+                        "tertiary-container": "#26364b",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "surface-container-high": "#e8e7ed",
+                        "background": "#f9f9fe",
+                        "inverse-surface": "#2f3035",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-secondary-fixed": "#001d34",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#cfe5ff",
+                        "on-error": "#ffffff",
+                        "surface": "#f9f9fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "container-padding": "16px",
+                        "base-unit": "4px",
+                        "gutter": "12px",
+                        "card-padding": "20px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-sm": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-40 transition-opacity"></div>
+<!-- Modal Container -->
+<div class="relative z-50 w-full max-w-3xl bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant overflow-hidden flex flex-col max-h-[90vh]">
+<!-- Header -->
+<div class="px-section-gap py-card-padding border-b border-outline-variant bg-surface-container-low flex justify-between items-start">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-1">Check and reserve funding</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">Confirm that approved procurement funding is available before this requirement proceeds.</p>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Content Area - Scrollable -->
+<div class="flex-1 overflow-y-auto p-section-gap space-y-section-gap">
+<!-- Procurement Context -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase tracking-wider">Procurement Context</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Demand</p>
+<p class="font-body-lg text-body-lg text-on-surface font-medium">National digital health infrastructure upgrade</p>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Requesting department</p>
+<p class="font-body-lg text-body-lg text-on-surface">Digital Health Directorate</p>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Requested amount</p>
+<p class="font-data-mono text-data-mono text-primary font-semibold">KES 455,000,000</p>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Primary strategic target</p>
+<p class="font-body-lg text-body-lg text-on-surface">At least 99.9% annual service availability</p>
+</div>
+</div>
+</div>
+<!-- Budget Line Selector -->
+<div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase tracking-wider">Budget Allocation</h2>
+<div class="border-2 border-outline-variant focus-within:border-primary rounded-lg p-4 bg-surface-container-lowest flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface font-medium group-hover:text-primary transition-colors">Digital clinical systems infrastructure</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Available before: <span class="font-data-mono text-data-mono">KES 480,000,000</span></p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">expand_more</span>
+</div>
+</div>
+<!-- Funding Decision (Available State) -->
+<div class="border border-status-available rounded-lg overflow-hidden transition-all duration-300 hidden" id="state-available">
+<div class="bg-status-available/10 px-card-padding py-3 flex items-center gap-3">
+<span class="material-symbols-outlined icon-fill text-status-available text-2xl">check_circle</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Funding available</h3>
+</div>
+<div class="p-card-padding bg-surface-container-lowest">
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-end pb-2 border-b border-outline-variant/50">
+<span class="font-body-md text-body-md text-on-surface-variant">Available before</span>
+<span class="font-data-mono text-data-mono text-on-surface">KES 480,000,000</span>
+</div>
+<div class="flex justify-between items-end pb-2 border-b border-outline-variant/50">
+<span class="font-body-md text-body-md text-on-surface-variant">Requested</span>
+<span class="font-data-mono text-data-mono text-status-exhausted">- KES 455,000,000</span>
+</div>
+<div class="flex justify-between items-end pt-2">
+<span class="font-body-lg text-body-lg text-on-surface font-medium">Available after</span>
+<span class="font-data-mono text-data-mono text-status-available font-bold text-lg">KES 25,000,000</span>
+</div>
+</div>
+<!-- Visual Progress Bar -->
+<div class="w-full h-2 bg-surface-container-highest rounded-full mb-6 overflow-hidden flex">
+<div class="h-full bg-status-committed" style="width: 95%;"></div>
+<div class="h-full bg-status-available" style="width: 5%;"></div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg flex gap-3 items-start mb-6">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5">info</span>
+<p class="font-body-md text-body-md text-on-surface-variant">This reservation follows the same requirement through Planning and Tendering. Those stages will not create additional funding holds.</p>
+</div>
+<div class="flex gap-4 justify-end">
+<button class="px-6 py-2.5 rounded-lg border border-outline-variant text-on-surface font-body-md font-medium hover:bg-surface-container-low transition-colors">Cancel</button>
+<button class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-body-md font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+                            Reserve funding
+                        </button>
+</div>
+</div>
+</div>
+<!-- Funding Decision (Insufficient State - Hidden by default for demo) -->
+<div class="border border-error rounded-lg overflow-hidden transition-all duration-300" id="state-insufficient">
+<div class="bg-error/10 px-card-padding py-3 flex items-center gap-3">
+<span class="material-symbols-outlined icon-fill text-error text-2xl">error</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Insufficient funding</h3>
+</div>
+<div class="p-card-padding bg-surface-container-lowest"><div class="space-y-4 mb-6"><div class="flex justify-between items-end pb-2 border-b border-outline-variant/50"><span class="font-body-md text-body-md text-on-surface-variant">Available before</span><span class="font-data-mono text-data-mono text-on-surface">KES 420,000,000</span></div><div class="flex justify-between items-end pb-2 border-b border-outline-variant/50"><span class="font-body-md text-body-md text-on-surface-variant">Requested</span><span class="font-data-mono text-data-mono text-status-exhausted">- KES 455,000,000</span></div><div class="flex justify-between items-end pt-2"><span class="font-body-lg text-body-lg text-error font-medium">Shortfall</span><span class="font-data-mono text-data-mono text-error font-bold text-lg">KES 35,000,000</span></div></div><div class="w-full h-2 bg-surface-container-highest rounded-full mb-6 overflow-hidden flex relative"><div class="h-full bg-status-committed" style="width: 92%;"></div><div class="h-full bg-error absolute top-0 right-0 left-[92%] bottom-0 opacity-50 border-r border-error border-dashed"></div></div><div class="bg-error/10 p-4 rounded-lg flex gap-3 items-start mb-6"><span class="material-symbols-outlined text-error mt-0.5">warning</span><p class="font-body-md text-body-md text-on-surface-variant">The selected budget line does not have sufficient unreserved funds to cover this request. Please reallocate funds or select a different budget line.</p></div><div class="flex gap-4 justify-end"><button class="px-6 py-2.5 rounded-lg border border-outline-variant text-on-surface font-body-md font-medium hover:bg-surface-container-low transition-colors">Return to demand</button><button class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-body-md font-medium hover:bg-primary/90 transition-colors">Select another budget line</button><button class="px-6 py-2.5 rounded-lg bg-surface-variant text-on-surface-variant/50 font-body-md font-medium cursor-not-allowed flex items-center gap-2" disabled=""><span class="material-symbols-outlined text-[20px]">lock</span>Reserve funding</button></div></div>
+</div>
+</div>
+</div>
+<!-- Toggle script for demonstration purposes -->
+</body></html>

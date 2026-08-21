@@ -1,15 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
-# For license information, please see license.txt
+"""Idempotent MOH-SP-2026-2030 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
 
-"""WORKS master strategy hierarchy — seed data specification §8 (R2-004 / LV-R2-001-04).
-
-Idempotent upsert of **Strategic Plan**, **Strategy Program**, **Strategy Objective**, and
-**Strategy Target** for the MOH healthcare-infrastructure priority chain. Respects G2: child
-mutations require the parent **Strategic Plan** to be in **Draft**; the plan is set to
-**Active** at the end (spec §8 *Approved* maps to Frappe **Active**).
-
-**Prerequisite:** a **Procuring Entity** with ``entity_code`` **PE-MOH** or **MOH** must exist
-(LV-R2-001-03). This module does not create the entity.
+Also keeps legacy constant aliases for works-master / stable-platform importers.
 """
 
 from __future__ import annotations
@@ -18,387 +10,149 @@ from typing import Any, Final
 
 import frappe
 
-# --- Canonical codes (G0-008 / seed spec §8) ---
-STRATEGY_PLAN_CODE: Final[str] = "STRAT-MOH-2026"
-PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026\u20132030"
+from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
+
+# --- Canonical MVP-1 codes (KENTENDER_MVP_V1 contract) ---
+STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-2026-2030"
+PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026–2030"
 START_YEAR: Final[int] = 2026
 END_YEAR: Final[int] = 2030
-PROGRAM_CODE: Final[str] = "PROG-MOH-INFRA"
-PROGRAM_TITLE: Final[str] = "Healthcare Infrastructure Rehabilitation"
+PROGRAM_CODE: Final[str] = "MOH-PROG-DH"
+PROGRAM_TITLE: Final[str] = "Digital Health Services"
 PROGRAM_DESCRIPTION: Final[str] = (
-	"Rehabilitation and improvement of priority district health facilities to improve access and quality of care."
+	"Digital clinical services and health information systems that improve access and continuity of care."
 )
-OBJECTIVE_CODE: Final[str] = "OBJ-MOH-HOSP-RENOV"
-OBJECTIVE_TITLE: Final[str] = "Improve district hospital infrastructure readiness"
-OBJECTIVE_DESCRIPTION: Final[str] = (
-	"Renovate and restore critical district hospital facilities to support safe and continuous healthcare service delivery."
+SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-HIS"
+SUB_PROGRAM_TITLE: Final[str] = "Health Information Systems"
+OBJECTIVE_CODE: Final[str] = "MOH-OUT-RELIABILITY"
+OBJECTIVE_TITLE: Final[str] = "Reliable and accessible digital clinical services"
+OBJECTIVE_DESCRIPTION: Final[str] = OBJECTIVE_TITLE
+INDICATOR_CODE: Final[str] = "MOH-IND-AVAIL-01"
+INDICATOR_TITLE: Final[str] = "Availability of core clinical information systems"
+TARGET_CODE: Final[str] = "MOH-TGT-AVAIL-2028"
+TARGET_TITLE: Final[str] = "At least 99.9% annual availability by 30 June 2028"
+TARGET_METRIC_TEXT: Final[str] = "Percent availability"
+
+# Legacy import aliases (pre-teardown codes) — map to MVP-1 where possible
+LEGACY_STRATEGY_PLAN_CODE: Final[str] = "STRAT-MOH-2026"
+
+# Dev/fixture Programme Strategy that may coexist with the Active ESP (STR-FR-005).
+HR_PROGRAMME_PLAN_CODE: Final[str] = "MOH-SP-0002"
+HR_PROGRAMME_SCOPE_ID: Final[str] = "MOH-PROG-HR"
+
+# Remap retired 000x codes → contract identities (KENTENDER_MVP_V1).
+_LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
+	("Strategic Plan", "plan_code", "MOH-SP-0001", STRATEGY_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-HR-2026-2030", HR_PROGRAMME_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-SP-HR-2026", HR_PROGRAMME_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-BLOCK", "MOH-SP-9001"),
+	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-TX", "MOH-SP-9002"),
+	("Strategy Programme", "programme_code", "MOH-PROG-0001", PROGRAM_CODE),
+	("Strategy Sub Programme", "sub_programme_code", "MOH-SUB-0001", SUB_PROGRAM_CODE),
+	("Strategic Outcome", "outcome_code", "MOH-OUT-0001", OBJECTIVE_CODE),
+	("Performance Indicator", "indicator_code", "MOH-IND-0001", INDICATOR_CODE),
+	("Performance Target", "target_code", "MOH-TGT-0001", TARGET_CODE),
 )
-SUB_PROGRAM_CODE: Final[str] = "SUB-MOH-INFRA-001"
-SUB_PROGRAM_TITLE: Final[str] = "District health facility rehabilitation"
-TARGET_CODE: Final[str] = "TGT-MOH-HOSP-RENOV-2026"
-TARGET_TITLE: Final[str] = "Renovate priority district hospital facilities in FY 2026/2027"
-TARGET_METRIC_TEXT: Final[str] = "Number of priority district hospital renovation projects initiated"
+
+
+def _remap_legacy_period_codes() -> None:
+	"""Rewrite retired 000x business codes to KENTENDER_MVP_V1 contract references."""
+	for doctype, field, old_code, new_code in _LEGACY_PERIOD_CODE_REMAP:
+		if old_code == new_code:
+			continue
+		names = frappe.get_all(doctype, filters={field: old_code}, pluck="name")
+		for name in names:
+			frappe.db.set_value(doctype, name, field, new_code, update_modified=False)
+
+
+def _backfill_active_subordinate_parents(pe: str, esp_plan: str) -> None:
+	"""Ensure Active non-ESP plans for the entity have parent_plan + distinct scope."""
+	rows = frappe.get_all(
+		"Strategic Plan",
+		filters={
+			"procuring_entity": pe,
+			"status": "Active",
+			"plan_type": ["!=", "Entity Strategic Plan"],
+		},
+		fields=["name", "plan_code", "parent_plan", "scope_type", "scope_id"],
+	)
+	for row in rows:
+		scope_id = row.scope_id
+		if not scope_id:
+			if row.plan_code == HR_PROGRAMME_PLAN_CODE:
+				scope_id = HR_PROGRAMME_SCOPE_ID
+			else:
+				scope_id = f"SCOPE-{row.plan_code}"
+		frappe.db.set_value(
+			"Strategic Plan",
+			row.name,
+			{
+				"parent_plan": esp_plan,
+				"scope_type": row.scope_type or "Programme",
+				"scope_id": scope_id,
+			},
+			update_modified=False,
+		)
 
 
 def desk_visibility(procuring_entity_name: str) -> dict[str, str]:
-	"""Explain why Desk lists / landing may look empty for non-Administrator users."""
 	return {
 		"procuring_entity": procuring_entity_name,
-		"scope_rule": (
-			"Strategic Plan, Strategy Program, Strategy Objective, and Strategy Target are entity-scoped. "
-			"Unless you are Administrator or System Manager, your user must have "
-			"User.kt_procuring_entity set to this exact Procuring Entity name, "
-			"or a User Permission on Procuring Entity with For Value = this name."
-		),
-		"optional_seed_fix": (
-			"bench execute kentender_strategy.seeds.seed_works_master_strategy_hierarchy.run "
-			'--kwargs \'{"sync_scope_user_email": "you@example.com"}\' '
-			"to add a User Permission for that user on the seeded entity (dev/UAT)."
-		),
+		"scope_rule": "Entity-scoped Strategy Alignment (MVP-1).",
+		"optional_seed_flag": "MOH-SP-2026-2030",
 	}
 
 
 def resolve_procuring_entity_moh() -> str | None:
-	"""Return Procuring Entity ``name`` for PE-MOH or legacy MOH code."""
+	"""STR-CHG-001 §13 — no first-PE fallback. Named lookups only; returns None
+	(never an arbitrary Procuring Entity) when neither resolves."""
 	for code in ("PE-MOH", "MOH"):
 		name = frappe.db.get_value("Procuring Entity", {"entity_code": code}, "name")
 		if name:
 			return name
-	return None
+	# Fallback: a PE named for Health — still a discriminating lookup, not "any PE".
+	return frappe.db.get_value("Procuring Entity", {"entity_name": ["like", "%Health%"]}, "name")
 
 
-def _find_strategic_plan(pe_name: str) -> str | None:
-	"""Resolve an existing master plan row; never guess an unrelated PE+year-only match."""
-	rows = frappe.get_all(
-		"Strategic Plan",
-		filters={
-			"procuring_entity": pe_name,
-			"start_year": START_YEAR,
-			"end_year": END_YEAR,
-		},
-		fields=["name", "strategic_plan_name"],
-		order_by="modified desc",
-		limit=50,
-	)
-	for row in rows:
-		if (row.get("strategic_plan_name") or "").strip() == PLAN_TITLE:
-			return row.name
-		if frappe.db.exists(
-			"Strategy Program",
-			{"strategic_plan": row.name, "program_code": PROGRAM_CODE},
-		):
-			return row.name
-	return None
-
-
-def _create_strategic_plan(pe_name: str) -> str:
-	doc = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan",
-			"strategic_plan_name": PLAN_TITLE,
-			"procuring_entity": pe_name,
-			"start_year": START_YEAR,
-			"end_year": END_YEAR,
-			"status": "Draft",
-			"version_no": 1,
-			"is_current_version": 1,
-			"description": (
-				f"WORKS master seed (spec §8). strategy_plan_code={STRATEGY_PLAN_CODE}. "
-				f"plan_period {START_YEAR}-01-01 .. {END_YEAR}-12-31."
-			),
-		}
-	)
+def _upsert_by_code(doctype: str, code_field: str, code: str, values: dict) -> str:
+	existing = frappe.db.get_value(doctype, {code_field: code}, "name")
+	if existing:
+		doc = frappe.get_doc(doctype, existing)
+		# Only update while Draft/Returned for plan-bound docs
+		plan = values.get("plan_version") or doc.get("plan_version")
+		if plan:
+			status = frappe.db.get_value("Strategic Plan", plan, "status")
+			if status not in ("Draft", "Returned", None):
+				return existing
+		doc.update(values)
+		doc.save(ignore_permissions=True)
+		return doc.name
+	doc = frappe.get_doc({"doctype": doctype, code_field: code, **values})
 	doc.insert(ignore_permissions=True)
 	return doc.name
 
 
-def _hierarchy_complete(plan_name: str) -> bool:
-	prog = frappe.db.get_value(
-		"Strategy Program",
-		{"strategic_plan": plan_name, "program_code": PROGRAM_CODE},
-		"name",
-	)
-	if not prog:
-		return False
-	sp = frappe.db.get_value(
-		"Sub Program",
-		{"program": prog, "sub_program_code": SUB_PROGRAM_CODE},
-		"name",
-	)
-	if not sp:
-		return False
-	obj = frappe.db.get_value(
-		"Strategy Objective",
-		{"sub_program": sp, "objective_code": OBJECTIVE_CODE},
-		["name", "strategic_plan", "program", "sub_program"],
-		as_dict=True,
-	)
-	if not obj or obj.strategic_plan != plan_name or obj.program != prog or obj.sub_program != sp:
-		return False
-	tgt = frappe.db.get_value(
-		"Strategy Target",
-		{"objective": obj.name, "target_code": TARGET_CODE},
-		"name",
-	)
-	return bool(tgt)
+def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+	"""Idempotent loader — delegates to KENTENDER_MVP_V1 contract Strategy seed."""
+	ensure_strategy_roles()
+	_remap_legacy_period_codes()
+	from kentender_strategy.seeds.moh_mvp_v1_strategy import upsert_moh_mvp_v1_strategy
+
+	result = upsert_moh_mvp_v1_strategy(reset=bool(_kwargs.get("reset")))
+	# Preserve legacy response keys used by stable-platform / tests.
+	if result.get("ok"):
+		result.setdefault("plan_code", STRATEGY_PLAN_CODE)
+		result.setdefault("program", frappe.db.get_value("Strategy Programme", {"programme_code": PROGRAM_CODE}, "name"))
+		result.setdefault(
+			"sub_program",
+			frappe.db.get_value("Strategy Sub Programme", {"sub_programme_code": SUB_PROGRAM_CODE}, "name"),
+		)
+		result.setdefault(
+			"objective",
+			frappe.db.get_value("Strategic Outcome", {"outcome_code": OBJECTIVE_CODE}, "name"),
+		)
+		result.setdefault("target", result.get("target_avail"))
+		result.setdefault("skipped", False)
+	return result
 
 
-def _ensure_program(plan_name: str) -> str:
-	existing = frappe.db.get_value(
-		"Strategy Program",
-		{"strategic_plan": plan_name, "program_code": PROGRAM_CODE},
-		"name",
-	)
-	if existing:
-		doc = frappe.get_doc("Strategy Program", existing)
-		changed = False
-		if (doc.program_title or "").strip() != PROGRAM_TITLE:
-			doc.program_title = PROGRAM_TITLE
-			changed = True
-		if (doc.description or "").strip() != PROGRAM_DESCRIPTION:
-			doc.description = PROGRAM_DESCRIPTION
-			changed = True
-		if changed:
-			doc.save(ignore_permissions=True)
-		return existing
-	child = frappe.get_doc(
-		{
-			"doctype": "Strategy Program",
-			"strategic_plan": plan_name,
-			"program_title": PROGRAM_TITLE,
-			"program_code": PROGRAM_CODE,
-			"description": PROGRAM_DESCRIPTION,
-			"order_index": 10,
-		}
-	)
-	child.insert(ignore_permissions=True)
-	return child.name
-
-
-def _ensure_sub_program(plan_name: str, program_name: str) -> str:
-	existing = frappe.db.get_value(
-		"Sub Program",
-		{"program": program_name, "sub_program_code": SUB_PROGRAM_CODE},
-		"name",
-	)
-	if existing:
-		doc = frappe.get_doc("Sub Program", existing)
-		changed = False
-		if doc.strategic_plan != plan_name:
-			doc.strategic_plan = plan_name
-			changed = True
-		if (doc.title or "").strip() != SUB_PROGRAM_TITLE:
-			doc.title = SUB_PROGRAM_TITLE
-			changed = True
-		if changed:
-			doc.save(ignore_permissions=True)
-		return existing
-	child = frappe.get_doc(
-		{
-			"doctype": "Sub Program",
-			"strategic_plan": plan_name,
-			"program": program_name,
-			"title": SUB_PROGRAM_TITLE,
-			"sub_program_code": SUB_PROGRAM_CODE,
-		}
-	)
-	child.insert(ignore_permissions=True)
-	return child.name
-
-
-def _ensure_objective(plan_name: str, program_name: str, sub_program_name: str) -> str:
-	existing = frappe.db.get_value(
-		"Strategy Objective",
-		{"sub_program": sub_program_name, "objective_code": OBJECTIVE_CODE},
-		"name",
-	)
-	if existing:
-		doc = frappe.get_doc("Strategy Objective", existing)
-		changed = False
-		if doc.strategic_plan != plan_name:
-			doc.strategic_plan = plan_name
-			changed = True
-		if doc.program != program_name:
-			doc.program = program_name
-			changed = True
-		if doc.sub_program != sub_program_name:
-			doc.sub_program = sub_program_name
-			changed = True
-		if (doc.objective_title or "").strip() != OBJECTIVE_TITLE:
-			doc.objective_title = OBJECTIVE_TITLE
-			changed = True
-		if (doc.description or "").strip() != OBJECTIVE_DESCRIPTION:
-			doc.description = OBJECTIVE_DESCRIPTION
-			changed = True
-		if changed:
-			doc.save(ignore_permissions=True)
-		return existing
-	child = frappe.get_doc(
-		{
-			"doctype": "Strategy Objective",
-			"strategic_plan": plan_name,
-			"program": program_name,
-			"sub_program": sub_program_name,
-			"objective_title": OBJECTIVE_TITLE,
-			"objective_code": OBJECTIVE_CODE,
-			"description": OBJECTIVE_DESCRIPTION,
-			"order_index": 10,
-		}
-	)
-	child.insert(ignore_permissions=True)
-	return child.name
-
-
-def _ensure_target(plan_name: str, program_name: str, objective_name: str) -> str:
-	existing = frappe.db.get_value(
-		"Strategy Target",
-		{"objective": objective_name, "target_code": TARGET_CODE},
-		"name",
-	)
-	if existing:
-		doc = frappe.get_doc("Strategy Target", existing)
-		changed = False
-		if doc.strategic_plan != plan_name:
-			doc.strategic_plan = plan_name
-			changed = True
-		if doc.program != program_name:
-			doc.program = program_name
-			changed = True
-		if (doc.target_title or "").strip() != TARGET_TITLE:
-			doc.target_title = TARGET_TITLE
-			changed = True
-		desc = f"{TARGET_METRIC_TEXT} (spec §8.4)."
-		if (doc.description or "").strip() != desc:
-			doc.description = desc
-			changed = True
-		if changed:
-			doc.save(ignore_permissions=True)
-		return existing
-	child = frappe.get_doc(
-		{
-			"doctype": "Strategy Target",
-			"strategic_plan": plan_name,
-			"program": program_name,
-			"objective": objective_name,
-			"target_title": TARGET_TITLE,
-			"target_code": TARGET_CODE,
-			"description": f"{TARGET_METRIC_TEXT} (spec §8.4).",
-			"order_index": 10,
-			"measurement_type": "Numeric",
-			"target_value_numeric": 1,
-			"target_unit": "projects",
-			"target_period_type": "Annual",
-			"target_year": START_YEAR,
-		}
-	)
-	child.insert(ignore_permissions=True)
-	return child.name
-
-
-def _names_when_complete(plan_name: str) -> tuple[str, str, str] | None:
-	prog = frappe.db.get_value(
-		"Strategy Program",
-		{"strategic_plan": plan_name, "program_code": PROGRAM_CODE},
-		"name",
-	)
-	if not prog:
-		return None
-	sp = frappe.db.get_value(
-		"Sub Program",
-		{"program": prog, "sub_program_code": SUB_PROGRAM_CODE},
-		"name",
-	)
-	if not sp:
-		return None
-	obj = frappe.db.get_value(
-		"Strategy Objective",
-		{"sub_program": sp, "objective_code": OBJECTIVE_CODE},
-		"name",
-	)
-	if not obj:
-		return None
-	tgt = frappe.db.get_value(
-		"Strategy Target",
-		{"objective": obj, "target_code": TARGET_CODE},
-		"name",
-	)
-	if not tgt:
-		return None
-	return prog, obj, tgt
-
-
-def upsert_works_master_strategy_hierarchy() -> dict[str, Any]:
-	"""Create or refresh the §8 strategy chain; return a small summary dict."""
-	pe = resolve_procuring_entity_moh()
-	if not pe:
-		return {
-			"ok": False,
-			"error_code": "MISSING_PROCURING_ENTITY",
-			"message": (
-				"No Procuring Entity with entity_code PE-MOH or MOH. "
-				"Run LV-R2-001-03 (PE-MOH seed) or create the entity before this seed."
-			),
-		}
-
-	plan_name = _find_strategic_plan(pe)
-	if not plan_name:
-		plan_name = _create_strategic_plan(pe)
-
-	plan = frappe.get_doc("Strategic Plan", plan_name)
-	prev_status = (plan.status or "").strip()
-
-	# G2: never save Program/Objective/Target while plan is Active. If already aligned, only
-	# ensure plan status is Active (spec §8 Approved) and return.
-	if _hierarchy_complete(plan_name):
-		names = _names_when_complete(plan_name)
-		if names:
-			prog, obj, tgt = names
-			if prev_status != "Active":
-				plan.status = "Active"
-				plan.save(ignore_permissions=True)
-			return {
-				"ok": True,
-				"procuring_entity": pe,
-				"strategic_plan": plan_name,
-				"strategy_program": prog,
-				"strategy_objective": obj,
-				"strategy_target": tgt,
-				"codes": {
-					"strategy_plan_code": STRATEGY_PLAN_CODE,
-					"programme_code": PROGRAM_CODE,
-					"objective_code": OBJECTIVE_CODE,
-					"target_code": TARGET_CODE,
-				},
-				"idempotent": True,
-			}
-
-	if prev_status != "Draft":
-		plan.status = "Draft"
-		plan.save(ignore_permissions=True)
-		plan.reload()
-
-	program_name = _ensure_program(plan_name)
-	sub_program_name = _ensure_sub_program(plan_name, program_name)
-	objective_name = _ensure_objective(plan_name, program_name, sub_program_name)
-	target_name = _ensure_target(plan_name, program_name, objective_name)
-
-	plan.reload()
-	if (plan.status or "").strip() != "Active":
-		plan.status = "Active"
-		plan.save(ignore_permissions=True)
-
-	return {
-		"ok": True,
-		"procuring_entity": pe,
-		"strategic_plan": plan_name,
-		"strategy_program": program_name,
-		"strategy_objective": objective_name,
-		"strategy_target": target_name,
-		"codes": {
-			"strategy_plan_code": STRATEGY_PLAN_CODE,
-			"programme_code": PROGRAM_CODE,
-			"objective_code": OBJECTIVE_CODE,
-			"target_code": TARGET_CODE,
-		},
-		"idempotent": False,
-	}

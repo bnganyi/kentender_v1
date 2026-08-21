@@ -32,7 +32,7 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_BUDGET_LINE_CODE,
 	IT_DEPT_NAME,
 )
-from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
 	ensure_active_canonical_ppra_it_std,
@@ -69,90 +69,13 @@ def _ensure_budget_line() -> str:
 
 
 def _seed_demands() -> dict[str, Any]:
-	"""Walkable Draft + gate-ready Pending HoD under PE-MOH (Home actions)."""
-	from kentender_procurement.demand_intake.seeds.dia_seed_common import ensure_core_prerequisites
-
-	ensure_core_prerequisites()
-	dept = ensure_department(IT_DEPT_NAME, PE_MOH)
-	bl = _ensure_budget_line()
-	out: dict[str, Any] = {}
-	u_req = "requisitioner@moh.test"
-
-	specs = (
-		(
-			DEMAND_DRAFT,
-			"District Hospital Clinical Workstations",
-			"Draft",
-			"walkable",
-			"Edit and submit for HoD approval",
-		),
-		(
-			DEMAND_PENDING_HOD,
-			"Secure Wi‑Fi Expansion Phase 1",
-			"Pending HoD Approval",
-			"gate_ready",
-			"Approve (HoD) from Demand workbench / Home",
-		),
-	)
-	for demand_id, title, status, role, next_action in specs:
-		existing = frappe.db.get_value("Demand", {"demand_id": demand_id}, "name")
-		if existing:
-			frappe.delete_doc("Demand", existing, force=True, ignore_permissions=True)
-		doc = frappe.get_doc(
-			{
-				"doctype": "Demand",
-				"title": title,
-				"demand_id": demand_id,
-				"procuring_entity": PE_MOH,
-				"requesting_department": dept,
-				"requested_by": u_req,
-				"request_date": "2026-06-01",
-				"required_by_date": "2026-12-31",
-				"priority_level": "High",
-				"demand_type": "Planned",
-				"requisition_type": "Goods",
-				"budget_line": bl,
-				"beneficiary_summary": (
-					"Priority Ministry of Health facilities requiring ICT capacity uplift."
-				),
-				"specification_summary": title,
-				"delivery_location": "Ministry of Health — priority district hospital sites",
-				"items": [
-					{
-						"item_description": title,
-						"category": "ICT Equipment",
-						"uom": "Lot",
-						"quantity": 1.0,
-						"estimated_unit_cost": 5_000_000.0,
-					}
-				],
-				"status": "Draft",
-				"reservation_status": "None",
-				"planning_status": "Not Planned",
-			}
-		)
-		doc.flags.ignore_mandatory = True
-		doc.insert(ignore_permissions=True)
-		if frappe.db.get_value("Demand", doc.name, "demand_id") != demand_id:
-			frappe.db.set_value("Demand", doc.name, "demand_id", demand_id, update_modified=False)
-		if status != "Draft":
-			frappe.db.set_value(
-				"Demand",
-				doc.name,
-				{
-					"status": status,
-					"submitted_by": u_req,
-					"submitted_at": "2026-06-05 09:00:00",
-				},
-			)
-		out[role] = {
-			"demand_id": demand_id,
-			"name": doc.name,
-			"status": status,
-			"title": title,
-			"next_action": next_action,
-		}
-	return out
+	"""Demand demo rows — skipped after DIA preparatory teardown."""
+	return {
+		"ok": True,
+		"skipped": True,
+		"reason": "DEMAND_MODULE_RETIRED",
+		"message": "Demand Intake retired — demo Demand rows not seeded (Demands MVP-1 pending).",
+	}
 
 
 def _insert_package(code: str, title: str) -> str:

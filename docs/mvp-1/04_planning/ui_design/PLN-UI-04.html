@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Approved Demand - GovProcure Alpha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#c4d2ff",
+                      "primary-fixed": "#dae2ff",
+                      "primary": "#003d9b",
+                      "surface-variant": "#e1e2e4",
+                      "on-tertiary-fixed": "#151b2b",
+                      "status-available": "#10B981",
+                      "on-secondary-container": "#005f71",
+                      "primary-container": "#0052cc",
+                      "data-committed": "#6366F1",
+                      "secondary-fixed": "#afecff",
+                      "surface-dim": "#d9dadc",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary-fixed": "#001848",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#50dcff",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "error": "#ba1a1a",
+                      "inverse-primary": "#b2c5ff",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#f0f1f3",
+                      "tertiary-container": "#545a6c",
+                      "inverse-surface": "#2e3132",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "secondary": "#00687b",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed": "#dce2f8",
+                      "surface-container-lowest": "#ffffff",
+                      "status-exhausted": "#E11D48",
+                      "tertiary": "#3d4354",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "surface-bright": "#f8f9fb",
+                      "on-surface-variant": "#434654",
+                      "surface-tint": "#0c56d0",
+                      "on-secondary-fixed": "#001f27",
+                      "surface-container": "#edeef0",
+                      "on-tertiary-container": "#ccd2e7",
+                      "outline-variant": "#c3c6d6",
+                      "on-error": "#ffffff",
+                      "border-subtle": "#DFE1E6",
+                      "outline": "#737685",
+                      "background": "#f8f9fb",
+                      "on-background": "#191c1e",
+                      "surface-container-low": "#f3f4f6",
+                      "on-surface": "#191c1e",
+                      "surface-container-highest": "#e1e2e4",
+                      "status-reserved": "#F59E0B",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "surface": "#f8f9fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "0.5rem",
+                      "gutter-md": "1rem",
+                      "stack-xs": "0.25rem",
+                      "container-padding": "1rem",
+                      "section-gap": "1.5rem"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md h-screen w-full overflow-hidden flex font-body-md">
+<!-- Background Context: Procurement Plan Empty State -->
+<!-- (Simulated behind the overlay) -->
+<div class="fixed inset-0 z-0 flex bg-surface">
+<!-- SideNav (Suppressed for Context, but structure kept if needed) -->
+<!-- Main Content Canvas (Empty State) -->
+<main class="flex-1 flex flex-col items-center justify-center relative">
+<div class="text-center p-section-gap opacity-30 pointer-events-none">
+<span class="material-symbols-outlined text-6xl text-outline mb-stack-sm" style="font-variation-settings: 'FILL' 0;">assignment</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-xs">Procurement Plan Empty</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">No items have been added to this plan yet.</p>
+</div>
+</main>
+</div>
+<!-- Dialog Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-container-padding bg-on-background/40 backdrop-blur-sm">
+<!-- Dialog Container (Level 2 Elevation: Soft Shadow + Tint) -->
+<div class="bg-surface-container-lowest w-full max-w-6xl max-h-[921px] flex flex-col rounded-xl shadow-[0_8px_30px_rgb(0,61,155,0.1)] border border-subtle overflow-hidden">
+<!-- Header -->
+<div class="px-section-gap py-gutter-md border-b border-subtle bg-surface-container-lowest flex justify-between items-start shrink-0">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Add approved Demands</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-stack-xs">Select from pre-approved strategic demands to allocate to this procurement plan.</p>
+</div>
+<button aria-label="Close dialog" class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">close</span>
+</button>
+</div>
+<!-- Filter Row -->
+<div class="px-section-gap py-gutter-md bg-surface-bright border-b border-subtle shrink-0">
+<div class="flex flex-wrap gap-gutter-md items-end">
+<div class="flex-1 min-w-[250px]">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-stack-xs uppercase">Search approved Demands</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full pl-10 pr-3 py-2 bg-surface-container-lowest border border-subtle rounded text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none" placeholder="Search by name or reference..." type="text"/>
+</div>
+</div>
+<div class="w-full md:w-auto min-w-[200px]">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-stack-xs uppercase">Organisation Unit</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-subtle rounded py-2 pl-3 pr-10 text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none">
+<option>All permitted units</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style="font-variation-settings: 'FILL' 0;">arrow_drop_down</span>
+</div>
+</div>
+<div class="w-full md:w-auto min-w-[180px]">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-stack-xs uppercase">Category</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-subtle rounded py-2 pl-3 pr-10 text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none">
+<option>All categories</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style="font-variation-settings: 'FILL' 0;">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex items-center gap-2 pb-2 pl-2">
+<input checked="" class="w-4 h-4 text-primary bg-surface-container-lowest border-outline rounded focus:ring-primary focus:ring-offset-0" id="available-only" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface cursor-pointer" for="available-only">Available to plan only</label>
+</div>
+</div>
+</div>
+<!-- Table Area (Scrollable) -->
+<div class="flex-1 overflow-auto bg-surface-container-lowest">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="sticky top-0 bg-surface-bright border-b border-subtle z-10">
+<tr>
+<th class="w-12 px-container-padding py-3"></th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase">Demand</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase">Organisation Unit</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase text-right">Approved Value</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase">Required By</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase">Proposed Funding</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant px-container-padding py-3 uppercase">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-subtle"><tr class="hover:bg-surface-container-low transition-colors cursor-pointer relative bg-surface-container-low/50 is-selected"><td class="px-container-padding py-4"><input checked="" class="w-4 h-4 text-primary border-outline focus:ring-primary focus:ring-offset-0 cursor-pointer rounded" type="checkbox"/></td><td class="px-container-padding py-4"><p class="font-body-md text-body-md text-on-surface font-medium">National digital health infrastructure upgrade</p><p class="font-body-sm text-body-sm text-on-surface-variant mt-1 font-data-lg text-[12px] leading-tight">DMD-MOH-2027-014</p></td><td class="px-container-padding py-4 font-body-sm text-body-sm text-on-surface-variant">Directorate of Digital Health and Policy</td><td class="px-container-padding py-4 text-right"><span class="font-data-md text-data-md text-on-surface font-semibold">KES 455,000,000</span></td><td class="px-container-padding py-4"><span class="font-data-md text-[14px] leading-tight text-on-surface-variant">31 March 2028</span></td><td class="px-container-padding py-4 font-body-sm text-body-sm text-on-surface-variant whitespace-normal">Digital clinical systems infrastructure</td><td class="px-container-padding py-4"><span class="inline-flex items-center px-2 py-1 rounded bg-status-available/10 text-status-available font-label-caps text-label-caps">Planning Ready</span></td></tr><tr class="hover:bg-surface-container-low transition-colors cursor-pointer relative bg-surface-container-low/50 is-selected"><td class="px-container-padding py-4"><input checked="" class="w-4 h-4 text-primary border-outline focus:ring-primary focus:ring-offset-0 cursor-pointer rounded" type="checkbox"/></td><td class="px-container-padding py-4"><p class="font-body-md text-body-md text-on-surface font-medium">Digital health technical staff certification programme</p><p class="font-body-sm text-body-sm text-on-surface-variant mt-1 font-data-lg text-[12px] leading-tight">DMD-HR-2027-088</p></td><td class="px-container-padding py-4 font-body-sm text-body-sm text-on-surface-variant">Human Resources Management and Development</td><td class="px-container-padding py-4 text-right"><span class="font-data-md text-data-md text-on-surface font-semibold">KES 80,000,000</span></td><td class="px-container-padding py-4"><span class="font-data-md text-[14px] leading-tight text-on-surface-variant">31 March 2028</span></td><td class="px-container-padding py-4 font-body-sm text-body-sm text-on-surface-variant whitespace-normal">Digital health workforce development</td><td class="px-container-padding py-4"><span class="inline-flex items-center px-2 py-1 rounded bg-status-available/10 text-status-available font-label-caps text-label-caps">Planning Ready</span></td></tr></tbody>
+</table>
+</div>
+<!-- Source Summary Block (Contextual Data Block) -->
+<div class="bg-surface-bright border-t border-subtle p-section-gap shrink-0 shadow-[0_-4px_10px_rgb(0,0,0,0.02)]"><div class="flex flex-col gap-section-gap"><div class="flex flex-col md:flex-row gap-gutter-md justify-between items-start md:items-center"><div class="flex items-center gap-stack-sm"><span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span><h3 class="font-headline-sm text-headline-sm text-on-surface">2 Approved Demands selected</h3><span class="text-outline">·</span><p class="font-body-md text-on-surface-variant">2 Organisation Units</p><span class="text-outline">·</span><p class="font-data-md text-primary font-semibold">KES 535,000,000</p></div><a class="font-body-sm text-primary hover:underline flex items-center gap-1" href="#">View source breakdown<span class="material-symbols-outlined text-[16px]">open_in_new</span></a></div><div class="grid grid-cols-1 md:grid-cols-2 gap-section-gap pt-section-gap border-t border-subtle"><div class="space-y-stack-sm"><p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Plan Item formation</p><div class="flex flex-col gap-2"><label class="flex items-center gap-2 cursor-pointer"><input checked="" class="w-4 h-4 text-primary border-outline focus:ring-primary" name="formation" type="radio"/> <span class="font-body-md text-on-surface">Create separate Plan Items</span></label><label class="flex items-center gap-2 opacity-50 cursor-not-allowed"><input class="w-4 h-4 text-primary border-outline" disabled="" name="formation" type="radio"/> <span class="font-body-md text-on-surface">Combine into one Plan Item</span></label></div></div><div class="bg-surface-container-low p-4 rounded-lg flex flex-col justify-center"><p class="font-body-sm text-on-surface-variant italic mb-2">“These Demands have different owning Organisation Units and cannot be combined in MVP 1.”</p><div class="flex items-center gap-2 text-primary font-semibold"><span class="material-symbols-outlined">inventory_2</span><span class="font-body-md">2 Plan Items will be created.</span></div></div></div></div></div>
+<!-- Footer Actions -->
+<div class="px-section-gap py-gutter-md bg-surface-container-lowest border-t border-subtle flex justify-end gap-gutter-md shrink-0">
+<button class="px-4 py-2 font-body-sm text-body-sm font-medium text-error hover:bg-error-container/20 rounded transition-colors">
+                    Cancel
+                </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-body-sm text-body-sm font-medium rounded hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">Create 2 Plan Items</button>
+</div>
+</div>
+</div>
+</body></html>

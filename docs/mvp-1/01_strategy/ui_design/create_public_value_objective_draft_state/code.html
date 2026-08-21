@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Public Value Objective - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "status-available": "#10B981",
+                      "surface-container": "#eeedf3",
+                      "primary": "#001f48",
+                      "status-reserved": "#F59E0B",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "background": "#f9f9fe",
+                      "surface-container-highest": "#e2e2e8",
+                      "inverse-surface": "#2f3035",
+                      "on-background": "#1a1b20",
+                      "on-surface-variant": "#434750",
+                      "surface": "#f9f9fe",
+                      "tertiary": "#26364b",
+                      "surface-container-high": "#e8e7ed",
+                      "on-error-container": "#93000a",
+                      "on-primary-container": "#7b9ee0",
+                      "on-primary-fixed": "#001b3f",
+                      "secondary-fixed-dim": "#99cbff",
+                      "secondary": "#01629d",
+                      "status-exhausted": "#EF4444",
+                      "on-primary": "#ffffff",
+                      "on-secondary-container": "#004c7c",
+                      "on-secondary": "#ffffff",
+                      "surface-dim": "#dad9df",
+                      "tertiary-container": "#26364b",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "inverse-on-surface": "#f1f0f6",
+                      "secondary-fixed": "#cfe5ff",
+                      "outline": "#737781",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "inverse-primary": "#abc7ff",
+                      "tertiary-fixed": "#d3e4ff",
+                      "on-tertiary-container": "#8f9fb8",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "status-committed": "#6366F1",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "on-surface": "#1a1b20",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed": "#001d34",
+                      "surface-container-low": "#f4f3f9",
+                      "surface-variant": "#e2e2e8",
+                      "outline-variant": "#c3c6d1",
+                      "primary-fixed": "#d7e2ff",
+                      "on-error": "#ffffff",
+                      "primary-container": "#00346f",
+                      "surface-tint": "#395e9b",
+                      "surface-bright": "#f9f9fe",
+                      "primary-fixed-dim": "#abc7ff",
+                      "secondary-container": "#7bbeff",
+                      "border-subtle": "#E2E8F0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "24px",
+                      "gutter": "12px",
+                      "container-padding": "16px",
+                      "unit": "4px",
+                      "card-padding": "20px",
+                      "base-unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "headline-lg-mobile": [
+                              "Manrope"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased h-screen overflow-hidden flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface-container-lowest font-headline-sm text-headline-sm flex justify-between items-center px-container-padding h-16 w-full sticky top-0 z-50 border-b border-outline-variant flex-shrink-0">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search on left of trailing actions not specified as explicit element in JSON but requested in layout -->
+<div class="relative hidden md:block mr-4">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 rounded-full text-body-md w-64 text-on-surface" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User profile" class="object-cover w-full h-full" data-alt="A professional headshot of a user in a well-lit office environment, corporate modern aesthetic, crisp focus, neutral tones with soft ambient light, high quality portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnalvMV2jmvFmkH2ql_5Subd4B_9QVMeI26QZHPCvw-_AbVxeyRS60Za1CMXOJuYQc_CCcxKt8rdqjCr6lqtQgBxVDvo2x4acXVOIkIR_fZftuGDG7SzlQGPFM-XGfuMlDVZECVBeEoJP913MUM71ZWlkliGvSJRWr7nOrasSX1TDDvOkrzNMtzYkkkVJ766VHbGVLGccvPdB47R7qo7wbcb04UDPgAeR11UPloAITnUfhvIPIl3sV3w"/>
+</div>
+</div>
+</nav>
+<div class="flex flex-1 overflow-hidden relative">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-low hidden md:flex flex-col h-full p-4 gap-2 border-r border-outline-variant flex-shrink-0 w-64 z-40 relative">
+<div class="flex items-center gap-3 mb-6 px-2 pt-2">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center border border-border-subtle shrink-0">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Procurement</h2>
+<p class="font-body-md text-label-caps text-on-surface-variant opacity-80 leading-tight">Management Suite</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary rounded-lg py-2.5 px-4 mb-4 font-headline-sm text-body-md font-medium shadow-sm hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                 Create New Tender
+             </button>
+<nav class="flex flex-col gap-1 flex-1 font-label-caps text-label-caps">
+<a class="bg-secondary-container text-on-secondary-container rounded-lg font-bold flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="assignment">assignment</span>
+                    Planning
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="description">description</span>
+                    Requisition
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span>
+                    Tendering
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
+                    Evaluation
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified">verified</span>
+                    Award
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="history_edu">history_edu</span>
+                    Contract Management
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2">inventory_2</span>
+                    Closeout
+                </a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 border-t border-outline-variant pt-2 font-label-caps text-label-caps">
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+                    Settings
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="contact_support">contact_support</span>
+                    Support
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-surface flex flex-col">
+<div class="flex-1 px-container-padding md:px-8 py-8 max-w-[1200px] w-full mx-auto pb-32">
+<!-- Page Header -->
+<div class="mb-section-gap flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h1 class="font-headline-lg md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Create public value objective</h1>
+<span class="bg-status-reserved text-white font-label-caps text-label-caps px-3 py-1 rounded-full uppercase tracking-wider flex items-center self-center mt-1">Draft</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Define a reusable objective and the conditions under which it may be considered.</p>
+</div>
+</div>
+<div class="flex flex-col gap-section-gap">
+<!-- Section 1: Objective -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-border-subtle">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Objective Details</h3>
+</div>
+<div class="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Objective code</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="PVO-SUS-02"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Version</label>
+<input class="w-full bg-surface-container opacity-70 border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface-variant cursor-not-allowed" disabled="" type="text" value="1"/>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Title</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Ensure compliant handling of replaced ICT equipment"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Pillar</label>
+<select class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+<option>Sustainability and asset stewardship</option>
+<option>Economic development</option>
+<option>Social value</option>
+</select>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Scope</label>
+<select class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+<option>Procuring entity</option>
+<option>National</option>
+<option>County</option>
+</select>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Procuring entity</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">account_balance</span>
+<input class="w-full bg-surface border-outline-variant rounded-lg pl-10 pr-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Ministry of Health"/>
+</div>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Description</label>
+<textarea class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" placeholder="Enter detailed description..." rows="3"></textarea>
+</div>
+</div>
+</section>
+<!-- Section 2: Authority and ownership -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Authority and ownership</h3>
+</div>
+<div class="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Source type</label>
+<select class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+<option>Act</option>
+<option>Policy</option>
+<option>Directive</option>
+</select>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Responsible function</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Supply Chain Management Services"/>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Source reference</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Public Procurement and Asset Disposal Act — applicable asset-disposal provisions"/>
+<p class="text-xs text-on-surface-variant mt-1.5 flex items-center gap-1 opacity-80"><span class="material-symbols-outlined text-[14px]">info</span>The reference supports auditability and does not replace the authoritative legal source.</p>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Effective from</label>
+<div class="relative">
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="1 July 2026"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">calendar_today</span>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Effective to</label>
+<div class="relative">
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="30 June 2030"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">calendar_today</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Applicability -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Applicability</h3>
+</div>
+<div class="p-card-padding flex flex-col gap-5">
+<div class="w-full md:w-1/2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Applicability mode</label>
+<select class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+<option>Asset-triggered</option>
+<option>Value-based</option>
+<option>Category-based</option>
+</select>
+</div>
+<div class="border border-border-subtle rounded-lg overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-border-subtle">
+<th class="py-2.5 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase w-1/3">Trigger type</th>
+<th class="py-2.5 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Trigger value</th>
+<th class="py-2.5 px-4 w-12"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-border-subtle hover:bg-surface-container transition-colors group">
+<td class="py-3 px-4 font-medium">Asset condition</td>
+<td class="py-3 px-4">Replacement or end of useful life</td>
+<td class="py-3 px-4 text-right">
+<button class="text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-all p-1">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="bg-surface-bright py-3 px-4">
+<button class="text-primary hover:text-primary-container font-headline-sm text-body-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                                        Add trigger
+                                    </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Guidance -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-border-subtle">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Guidance</h3>
+</div>
+<div class="p-card-padding grid grid-cols-1 gap-y-5">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Measure guidance</label>
+<textarea class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" rows="2">Track the proportion of replaced ICT equipment transferred, reused or disposed through an authorised route</textarea>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Evidence guidance</label>
+<textarea class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" rows="2">Asset register update, inspection record, transfer or disposal approval and completion record</textarea>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Default enforcement guidance</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Asset or disposal control"/>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Sticky Footer Actions -->
+<div class="fixed bottom-0 right-0 left-0 md:left-64 bg-surface-container-lowest border-t border-border-subtle p-4 px-container-padding md:px-8 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="max-w-[1200px] mx-auto flex justify-end gap-3">
+<button class="border border-outline px-6 py-2 rounded-lg font-headline-sm text-body-md text-on-surface hover:bg-surface-container-lowest transition-colors">
+                        Cancel
+                    </button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-headline-sm text-body-md hover:bg-primary-container transition-colors shadow-sm">
+                        Save objective
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

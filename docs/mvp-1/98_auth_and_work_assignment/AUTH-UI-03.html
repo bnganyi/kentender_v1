@@ -1,0 +1,369 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - User Operational Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#f0f1f3",
+                    "surface-variant": "#e1e2e4",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f8f9fb",
+                    "inverse-surface": "#2e3132",
+                    "surface-container-low": "#f3f4f6",
+                    "on-tertiary-fixed-variant": "#404658",
+                    "on-error-container": "#93000a",
+                    "background": "#f8f9fb",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "data-committed": "#6366F1",
+                    "on-primary-fixed": "#001848",
+                    "primary": "#003d9b",
+                    "on-secondary-fixed": "#001f27",
+                    "on-surface-variant": "#434654",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#ccd2e7",
+                    "tertiary-fixed": "#dce2f8",
+                    "secondary-container": "#50dcff",
+                    "on-background": "#191c1e",
+                    "secondary-fixed": "#afecff",
+                    "on-tertiary-fixed": "#151b2b",
+                    "tertiary-container": "#545a6c",
+                    "on-secondary-fixed-variant": "#004e5d",
+                    "surface-tint": "#0c56d0",
+                    "secondary-fixed-dim": "#48d7f9",
+                    "status-available": "#10B981",
+                    "status-exhausted": "#E11D48",
+                    "inverse-primary": "#b2c5ff",
+                    "secondary": "#00687b",
+                    "on-primary-container": "#c4d2ff",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "tertiary": "#3d4354",
+                    "on-secondary-container": "#005f71",
+                    "on-surface": "#191c1e",
+                    "outline-variant": "#c3c6d6",
+                    "error": "#ba1a1a",
+                    "surface-dim": "#d9dadc",
+                    "surface-container-highest": "#e1e2e4",
+                    "primary-fixed": "#dae2ff",
+                    "surface-container-high": "#e7e8ea",
+                    "primary-container": "#0052cc",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#edeef0",
+                    "outline": "#737685",
+                    "border-subtle": "#DFE1E6",
+                    "surface-bright": "#f8f9fb",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "status-reserved": "#F59E0B"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "1rem",
+                    "stack-xs": "0.25rem",
+                    "stack-sm": "0.5rem",
+                    "section-gap": "1.5rem",
+                    "gutter-md": "1rem"
+            },
+            "fontFamily": {
+                    "headline-sm": [
+                            "Manrope"
+                    ],
+                    "headline-lg": [
+                            "Manrope"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "data-lg": [
+                            "JetBrains Mono"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "data-md": [
+                            "JetBrains Mono"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Manrope"
+                    ]
+            },
+            "fontSize": {
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "30px",
+                            {
+                                    "lineHeight": "38px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "data-lg": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "data-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex">
+<!-- Side Navigation -->
+<nav class="hidden md:flex flex-col h-screen fixed left-0 top-0 pt-16 z-40 bg-surface-container-low dark:bg-inverse-surface text-primary dark:text-primary-fixed h-screen w-64 docked left-0 border-r border-subtle dark:border-outline-variant flat no shadows font-label-caps text-label-caps font-body-md text-body-md">
+<div class="px-container-padding pb-stack-sm mt-8 border-b border-subtle mb-4">
+<div class="font-headline-sm text-headline-sm font-black text-primary dark:text-primary-fixed mb-1">KenTender</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Public Procurement</div>
+</div>
+<div class="px-container-padding mb-6">
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps py-2 rounded flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add</span>
+                New Requisition
+            </button>
+</div>
+<ul class="flex flex-col gap-1 px-2">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">description</span>
+                    Requisitions
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                    Procurement Plan
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Vendor Registry
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Audit Logs
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary border-l-4 border-primary font-bold opacity-80 transition-opacity scale-95 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0 md:ml-64">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50 bg-surface dark:bg-inverse-surface text-primary dark:text-primary-fixed border-b border-subtle dark:border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed md:hidden">KenTender</div>
+<div class="hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-subtle focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
+<span class="material-symbols-outlined text-outline mr-2">search</span>
+<input class="bg-transparent border-none outline-none text-body-sm w-64 text-on-surface placeholder:text-outline" placeholder="Search..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined">support</span>
+<span class="font-label-caps text-label-caps hidden md:inline">Support</span>
+</button>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-label-caps">
+                    U
+                </div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-container-padding md:p-section-gap overflow-y-auto">
+<!-- Breadcrumbs & Header -->
+<div class="mb-section-gap flex flex-col gap-stack-sm md:flex-row md:justify-between md:items-end">
+<div>
+<nav class="flex items-center gap-2 text-body-sm text-outline mb-2">
+<a class="hover:text-primary transition-colors" href="#">Access management</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Users</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Peter Otieno</span>
+</nav>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Peter Otieno</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 max-w-3xl">Operational roles and the Procuring Entity, Organisation Unit or governed resource scopes in which they apply.</p>
+</div>
+<div class="mt-4 md:mt-0 flex gap-2">
+<button class="bg-primary text-on-primary font-label-caps text-label-caps px-4 py-2 rounded flex items-center gap-2 hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Add operational assignment
+                    </button>
+</div>
+</div>
+<!-- Summary Strip -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-section-gap">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Account status</span>
+<div class="flex items-center gap-2 mt-1">
+<div class="w-2 h-2 rounded-full bg-status-available"></div>
+<span class="font-body-lg text-body-lg text-on-surface">Active</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Active assignments</span>
+<span class="font-data-lg text-data-lg text-on-surface mt-1">1</span>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Current open tasks</span>
+<span class="font-data-lg text-data-lg text-on-surface mt-1">1</span>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Separation-of-duties issues</span>
+<span class="font-data-lg text-data-lg text-on-surface mt-1">0</span>
+</div>
+</div>
+<!-- Operational Assignments Section -->
+<section class="mb-section-gap">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-4">Operational assignments</h2>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-subtle bg-surface-container-low">
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Role</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Procuring Entity</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Organisation Scope</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Resource Scope</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Effective Period</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider">Status</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-outline uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-subtle hover:bg-surface-bright transition-colors group">
+<td class="px-4 py-4 font-body-md text-body-md text-on-surface font-medium border-l-4 border-transparent group-hover:border-primary">Budget Officer</td>
+<td class="px-4 py-4 font-body-sm text-body-sm text-on-surface-variant">Ministry of Health</td>
+<td class="px-4 py-4 font-body-sm text-body-sm text-on-surface-variant">All assigned Ministry units</td>
+<td class="px-4 py-4 font-body-sm text-body-sm text-on-surface-variant">Budget Lines in assigned units</td>
+<td class="px-4 py-4 font-data-md text-data-md text-on-surface-variant">1 July 2026 — No end date</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-status-available/10 text-status-available font-label-caps text-[10px]">
+                                            Active
+                                        </span>
+</td>
+<td class="px-4 py-4 text-right">
+<a class="inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-on-primary-fixed-variant transition-colors" href="#">
+                                            View assignment
+                                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Footer / Metadata -->
+<div class="mt-section-gap pt-6 border-t border-subtle flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] mt-0.5">info</span>
+<p class="font-body-sm text-body-sm">Assignments grant scope and capabilities. Workflow tasks are assigned separately through routing rules.</p>
+</div>
+
+</div>
+</main>
+</div>
+
+
+</body></html>

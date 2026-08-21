@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Procurement Planning - Ministry of Health</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#191c1e",
+                    "surface-variant": "#e1e2e4",
+                    "on-primary-fixed": "#001848",
+                    "secondary": "#00687b",
+                    "primary-fixed": "#dae2ff",
+                    "inverse-surface": "#2e3132",
+                    "surface-dim": "#d9dadc",
+                    "status-reserved": "#F59E0B",
+                    "on-secondary-fixed-variant": "#004e5d",
+                    "outline": "#737685",
+                    "surface-container-highest": "#e1e2e4",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#f0f1f3",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "data-committed": "#6366F1",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "on-surface": "#191c1e",
+                    "on-tertiary-container": "#ccd2e7",
+                    "background": "#f8f9fb",
+                    "on-secondary-container": "#005f71",
+                    "surface-container": "#edeef0",
+                    "on-primary": "#ffffff",
+                    "border-subtle": "#DFE1E6",
+                    "secondary-fixed-dim": "#48d7f9",
+                    "tertiary-container": "#545a6c",
+                    "tertiary-fixed": "#dce2f8",
+                    "on-surface-variant": "#434654",
+                    "on-tertiary-fixed-variant": "#404658",
+                    "secondary-container": "#50dcff",
+                    "primary-container": "#0052cc",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#f8f9fb",
+                    "on-primary-container": "#c4d2ff",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "on-tertiary-fixed": "#151b2b",
+                    "primary": "#003d9b",
+                    "tertiary": "#3d4354",
+                    "inverse-primary": "#b2c5ff",
+                    "outline-variant": "#c3c6d6",
+                    "surface": "#f8f9fb",
+                    "surface-tint": "#0c56d0",
+                    "status-exhausted": "#E11D48",
+                    "on-tertiary": "#ffffff",
+                    "status-available": "#10B981",
+                    "on-secondary-fixed": "#001f27",
+                    "surface-container-high": "#e7e8ea",
+                    "secondary-fixed": "#afecff",
+                    "surface-container-low": "#f3f4f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-xs": "0.25rem",
+                    "gutter-md": "1rem",
+                    "container-padding": "1rem",
+                    "stack-sm": "0.5rem",
+                    "section-gap": "1.5rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope", "sans-serif"],
+                    "body-md": ["Inter", "sans-serif"],
+                    "data-md": ["JetBrains Mono", "monospace"],
+                    "headline-sm": ["Manrope", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "label-caps": ["Inter", "sans-serif"],
+                    "headline-lg": ["Manrope", "sans-serif"],
+                    "body-sm": ["Inter", "sans-serif"],
+                    "data-lg": ["JetBrains Mono", "monospace"]
+            }
+          }
+        }
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .font-headline-md { font-family: 'Manrope', sans-serif; font-size: 24px; line-height: 32px; font-weight: 600; }
+            .text-headline-md { font-size: 24px; line-height: 32px; font-weight: 600; }
+            .font-body-md { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; }
+            .text-body-md { font-size: 16px; line-height: 24px; font-weight: 400; }
+            .font-data-md { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 24px; font-weight: 500; }
+            .text-data-md { font-size: 16px; line-height: 24px; font-weight: 500; }
+            .font-headline-sm { font-family: 'Manrope', sans-serif; font-size: 20px; line-height: 28px; font-weight: 600; }
+            .text-headline-sm { font-size: 20px; line-height: 28px; font-weight: 600; }
+            .font-body-lg { font-family: 'Inter', sans-serif; font-size: 18px; line-height: 28px; font-weight: 400; }
+            .text-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; }
+            .font-label-caps { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; }
+            .text-label-caps { font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; }
+            .font-headline-lg { font-family: 'Manrope', sans-serif; font-size: 30px; line-height: 38px; letter-spacing: -0.02em; font-weight: 700; }
+            .text-headline-lg { font-size: 30px; line-height: 38px; letter-spacing: -0.02em; font-weight: 700; }
+            .font-body-sm { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 20px; font-weight: 400; }
+            .text-body-sm { font-size: 14px; line-height: 20px; font-weight: 400; }
+            .font-data-lg { font-family: 'JetBrains Mono', monospace; font-size: 24px; line-height: 32px; font-weight: 600; }
+            .text-data-lg { font-size: 24px; line-height: 32px; font-weight: 600; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex antialiased">
+<!-- SideNav (Shared Component) -->
+<nav class="fixed left-0 top-0 h-full flex flex-col z-40 hidden lg:flex docked left h-full w-64 border-r border-subtle dark:border-outline-variant flat no shadows bg-surface-container-low dark:bg-inverse-surface">
+<div class="px-container-padding py-6 border-b border-subtle">
+<div class="flex items-center gap-3 mb-2">
+<img alt="Institution Logo" class="w-8 h-8 rounded" data-alt="A minimalist, highly professional corporate logo symbol representing a public procurement portal, rendered in a crisp, clean light-mode aesthetic with deep blues and crisp whites. Modern geometric design. 4k resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDImeKiRKd0TmVOBNB_mLacY7q8GVsbssj31pqRuG1U1V9TlRcADvl4mjFtGSZmugOZJ9QbGzhn5Y6u34MbP50M7Px4Um84mCzNQRv0i-ltWIofg7Ey49BH6bXMa-E4kVaiXwGN9mnuHNmELo92_ZXygr7C_b8tMFznBhJSmh7jnCPhNT9TW77eHUeqc9FGJodD-EzB9dzsfYY0ytugzfHw-beibWfWoEWa6R-5vvpBH7lJ_1xeTzv8"/>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-extrabold text-primary dark:text-inverse-primary">KenTender</h1>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Public Procurement Portal</p>
+<button class="mt-6 w-full bg-primary text-white font-body-sm text-body-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined" style='font-variation-settings: "FILL" 0;'>add</span>
+                New Requisition
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Dashboard
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">description</span>
+                        Requisitions
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-primary bg-surface-container-highest border-l-4 border-primary translate-x-1 duration-150 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>assignment</span>
+                        Procurement Plan
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">group</span>
+                        Vendor Registry
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">history</span>
+                        Audit Logs
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</div>
+<div class="mt-auto border-t border-subtle p-4">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all font-body-sm text-body-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+                        Support
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all font-body-sm text-body-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+                        Logout
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col lg:ml-64 w-full min-h-screen">
+<!-- TopNavBar (Shared Component - Contextually adjusted for Web/Desktop layout) -->
+<header class="flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50 bg-surface-bright dark:bg-inverse-surface border-b border-subtle dark:border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<!-- Mobile menu toggle (visible only on small screens) -->
+<button class="lg:hidden text-on-surface-variant p-2 -ml-2 hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-subtle rounded-full text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary transition-all w-64 outline-none" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-status-exhausted rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-subtle ml-2">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A highly detailed portrait photograph of a professional Kenyan woman, Mercy Kilonzo, working as a procurement planner, warm corporate lighting, neutral background, modern corporate attire, light-mode friendly. 4k resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-aa9nyk8IgP0h3et0lC_W-L3nVDjXI0Hv2Z8QLONHQdHSd_5mHlCCH8kjSuj8JXRwFJeo_Ol_IG3sFDjUvK_4CZx9hDF55RUWlL88UUdpSNHQ3QGQwgZ-TK0k5_l-4eLkKIfQy5VjRpeiM7geCX5QIMY95KwgbpF3bntbNwsOP_YITGrntUQpg5nHd__I2TAXN-QqiL0WFi33OkSYF-W1pd4Eszw9FNGhyjpZQFCe2A5GqNK4_phY"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-container-padding md:p-section-gap flex-1 w-full max-w-7xl mx-auto flex flex-col gap-section-gap">
+<!-- Context Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 w-full">
+<div class="flex flex-col gap-2">
+<nav class="flex items-center gap-2 text-body-sm text-on-surface-variant font-body-sm">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Ministry of Health</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface font-medium">2027/28</span>
+</nav>
+</div>
+<div class="flex flex-wrap items-center gap-3 ml-auto">
+<div class="relative">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Current Plan Panel (Bento-style Header Card) -->
+<div class="bg-surface-container-lowest border border-subtle rounded-xl p-6 flex flex-col gap-6 relative overflow-hidden">
+<!-- Subtle decorative background accent -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary-fixed-dim/20 to-transparent rounded-bl-full pointer-events-none"></div>
+<div class="flex flex-col md:flex-row justify-between items-start gap-4 relative z-10">
+<div class="flex flex-col gap-stack-xs">
+<span class="font-label-caps text-label-caps text-outline font-bold">PLN-MOH-2027-001</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">Ministry of Health Annual Procurement Plan 2027/28</h2>
+<div class="flex items-center gap-2 mt-1"><span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm font-medium border border-subtle"><span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>Open Plan</span><span class="text-outline">•</span><span class="text-on-surface-variant font-body-sm text-body-sm">Approved Version 2</span><span class="text-outline">•</span><span class="text-on-surface-variant font-body-sm text-body-sm">As at: 20 August 2027, 11:05 EAT</span></div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2 max-w-2xl">No plan update is currently in progress.</p>
+</div>
+<button class="bg-primary text-white font-body-md text-body-md font-medium py-2 px-5 rounded-lg hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 shadow-[0_2px_10px_rgba(0,61,155,0.1)]">View approved plan</button></div>
+<!-- Summary Strip -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-subtle pt-6 relative z-10 -mx-4"><div class="flex flex-col gap-1 px-4 border-r border-subtle"><span class="font-label-caps text-label-caps text-outline">Plan Items</span><span class="font-data-md text-data-md text-on-surface">2 active</span></div><div class="flex flex-col gap-1 px-4 border-r border-subtle"><span class="font-label-caps text-label-caps text-outline">Approved value</span><span class="font-data-md text-data-md text-on-surface">KES 535,000,000</span></div><div class="flex flex-col gap-1 px-4 border-r border-subtle lg:border-r"><span class="font-label-caps text-label-caps text-outline">Finance confirmed</span><span class="font-data-md text-data-md text-on-surface">2 / 2</span></div><div class="flex flex-col gap-1 px-4"><span class="font-label-caps text-label-caps text-outline">Validation</span><div class="mt-0.5"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-status-available text-white font-body-sm text-body-sm font-medium whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">check_circle</span>Ready</span></div></div></div>
+</div>
+<div class="grid grid-cols-1 gap-section-gap">
+<!-- Work Requiring Action (Takes 2 columns on desktop) -->
+<div class="flex flex-col gap-4"><h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-status-available">task_alt</span>Work requiring action</h3><div class="bg-white border border-subtle border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center"><p class="font-body-md text-on-surface-variant">No planning work currently needs your action. You're all caught up for now.</p></div></div>
+<!-- Waiting on Others (Sidebar) -->
+<div class="flex flex-col gap-4"><h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-outline">hourglass_empty</span>Waiting on others</h3><div class="bg-white border border-subtle rounded-lg overflow-hidden"><div class="p-8 flex flex-col items-center justify-center text-center border border-dashed border-subtle rounded-lg"><p class="font-body-md text-on-surface-variant">Nothing is currently waiting on another reviewer. There are no pending approvals or external actions.</p></div></div></div>
+</div>
+</div>
+</main>
+</body></html>

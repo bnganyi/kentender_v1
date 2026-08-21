@@ -98,9 +98,8 @@
   },
   {
    "fieldname": "procurement_package",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Procurement Package",
-   "options": "Procurement Package",
    "reqd": 1,
    "search_index": 1
   },

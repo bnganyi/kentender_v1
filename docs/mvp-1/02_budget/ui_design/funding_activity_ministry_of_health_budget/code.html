@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Funding Activity - Ministry of Health Budget</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed": "#cfe5ff",
+                      "surface-container-high": "#e8e7ed",
+                      "inverse-on-surface": "#f1f0f6",
+                      "surface": "#f9f9fe",
+                      "on-surface": "#1a1b20",
+                      "secondary": "#01629d",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "inverse-surface": "#2f3035",
+                      "tertiary-fixed": "#d3e4ff",
+                      "secondary-fixed-dim": "#99cbff",
+                      "tertiary": "#26364b",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-tint": "#395e9b",
+                      "outline-variant": "#c3c6d1",
+                      "on-secondary": "#ffffff",
+                      "primary": "#001f48",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#eeedf3",
+                      "primary-fixed": "#d7e2ff",
+                      "surface-container-highest": "#e2e2e8",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-container": "#8f9fb8",
+                      "on-background": "#1a1b20",
+                      "status-reserved": "#F59E0B",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "on-secondary-fixed": "#001d34",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "tertiary-container": "#26364b",
+                      "status-exhausted": "#EF4444",
+                      "status-committed": "#6366F1",
+                      "background": "#f9f9fe",
+                      "on-surface-variant": "#434750",
+                      "status-available": "#10B981",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#dad9df",
+                      "on-secondary-container": "#004c7c",
+                      "surface-variant": "#e2e2e8",
+                      "on-primary-fixed": "#001b3f",
+                      "surface-container-low": "#f4f3f9",
+                      "secondary-container": "#7bbeff",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "primary-fixed-dim": "#abc7ff",
+                      "on-primary-container": "#7b9ee0",
+                      "inverse-primary": "#abc7ff",
+                      "error": "#ba1a1a",
+                      "primary-container": "#00346f",
+                      "outline": "#737781",
+                      "surface-bright": "#f9f9fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "card-padding": "20px",
+                      "container-padding": "16px",
+                      "unit": "4px",
+                      "section-gap": "24px",
+                      "gutter": "12px",
+                      "base-unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Manrope"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .data-block-bg {
+                @apply bg-surface-container-lowest border border-outline-variant;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased h-screen overflow-hidden flex flex-col md:flex-row">
+<!-- Side Nav Bar (Web) -->
+<nav class="hidden md:flex bg-surface text-secondary font-label-caps text-label-caps w-64 h-screen fixed left-0 top-0 bg-surface-container-low flat no shadows flex-col py-6 px-4 gap-2 z-40 border-r border-outline-variant">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center font-bold font-headline-sm text-headline-sm">K</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-black text-primary">KenTender</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">Procurement Management</p>
+</div>
+</div>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+            Planning
+        </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+            Requisition
+        </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">gavel</span>
+            Tendering
+        </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">analytics</span>
+            Evaluation
+        </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">verified</span>
+            Award
+        </a>
+<a class="bg-secondary-container text-on-secondary-container rounded-lg font-bold scale-95 active:scale-100 transition-transform p-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">handshake</span>
+            Contract Management
+        </a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-all scale-95 active:scale-100 transition-transform p-3 rounded-lg flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+            Closeout
+        </a>
+</nav>
+<!-- Top App Bar (Mobile) & Header Area (Web) -->
+<div class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden bg-background">
+<!-- Mobile Nav Placeholder -->
+<header class="md:hidden flex justify-between items-center px-container-padding w-full sticky top-0 z-50 h-16 bg-surface-container-lowest border-b border-outline-variant flat no shadows">
+<div class="font-headline-md text-headline-md font-bold text-primary">KenTender</div>
+<div class="flex gap-4 text-primary">
+<span class="material-symbols-outlined cursor-pointer duration-200">notifications</span>
+<span class="material-symbols-outlined cursor-pointer duration-200">help_outline</span>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-container-padding md:p-section-gap space-y-section-gap">
+<!-- Page Header -->
+<div class="space-y-4">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Ministry of Health Procurement Budget FY 2027/28</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2 max-w-3xl">Manage and track all financial movements, reservations, and actual spending against the approved procurement budget.</p>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant overflow-x-auto hide-scrollbar">
+<a class="px-4 py-3 font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors whitespace-nowrap" href="#">Overview</a>
+<a class="px-4 py-3 font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors whitespace-nowrap" href="#">Budget Lines</a>
+<a class="px-4 py-3 font-body-md text-body-md text-primary border-b-2 border-primary font-bold whitespace-nowrap" href="#">Funding Activity</a>
+<a class="px-4 py-3 font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors whitespace-nowrap" href="#">Downstream Usage</a>
+</div>
+</div>
+<!-- Balance Strip -->
+<div class="data-block-bg rounded-lg p-card-padding flex flex-wrap md:flex-nowrap gap-gutter justify-between items-center">
+<div class="flex-1 min-w-[200px]">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Reserved</p>
+<p class="font-data-mono text-data-mono text-on-surface font-bold text-lg">KES 145,000,000</p>
+</div>
+<div class="w-px h-12 bg-outline-variant hidden md:block"></div>
+<div class="flex-1 min-w-[200px]">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Committed</p>
+<p class="font-data-mono text-data-mono text-status-committed font-bold text-lg">KES 310,000,000</p>
+</div>
+<div class="w-px h-12 bg-outline-variant hidden md:block"></div>
+<div class="flex-1 min-w-[200px]">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Actual</p>
+<p class="font-data-mono text-data-mono text-status-available font-bold text-lg">KES 180,000,000</p>
+</div>
+<div class="w-px h-12 bg-outline-variant hidden md:block"></div>
+<div class="flex-1 min-w-[200px]">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Outstanding commitment</p>
+<p class="font-data-mono text-data-mono text-status-reserved font-bold text-lg">KES 130,000,000</p>
+</div>
+</div>
+<!-- Filters & Search -->
+<div class="flex flex-col md:flex-row gap-gutter justify-between items-center bg-surface-container-lowest p-4 rounded-lg border border-outline-variant">
+<div class="flex flex-wrap gap-unit w-full md:w-auto">
+<select class="form-select font-body-md text-body-md border-outline-variant rounded-DEFAULT focus:border-primary focus:ring-1 focus:ring-primary text-on-surface">
+<option>Activity type: All</option>
+<option>Reservation</option>
+<option>Commitment</option>
+<option>Actual</option>
+</select>
+<select class="form-select font-body-md text-body-md border-outline-variant rounded-DEFAULT focus:border-primary focus:ring-1 focus:ring-primary text-on-surface">
+<option>Status: All</option>
+<option>Active</option>
+<option>Matched</option>
+</select>
+<input class="form-input font-body-md text-body-md border-outline-variant rounded-DEFAULT focus:border-primary focus:ring-1 focus:ring-primary text-on-surface" placeholder="Date range" type="date"/>
+</div>
+<div class="relative w-full md:w-64 mt-unit md:mt-0">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="form-input w-full pl-9 font-body-md text-body-md border-outline-variant rounded-DEFAULT focus:border-primary focus:ring-1 focus:ring-primary text-on-surface" placeholder="Search activity..." type="text"/>
+</div>
+</div>
+<!-- Data Table -->
+<div class="data-block-bg rounded-lg overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase">Activity</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase">Source record</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase text-right">Amount</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase">Current status</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase">Event date</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase">Related record</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-4 font-bold uppercase text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-4 font-semibold">Funding reservation</td>
+<td class="p-4 text-on-surface-variant max-w-xs truncate" title="National digital health infrastructure upgrade">National digital health infrastructure upgrade</td>
+<td class="p-4 font-data-mono text-data-mono text-right">KES 455M</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-surface-container-high text-on-surface-variant">Partially converted</span>
+</td>
+<td class="p-4 text-on-surface-variant">12 Sep 2027</td>
+<td class="p-4 text-sm"><span class="text-status-reserved">Reserved balance:</span> KES 145M</td>
+<td class="p-4 text-right">
+<a class="text-secondary hover:text-primary font-medium flex items-center justify-end gap-1" href="#">
+                                    View <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-4 font-semibold">Contract commitment</td>
+<td class="p-4 text-on-surface-variant max-w-xs truncate" title="Digital health infrastructure implementation contract">Digital health infrastructure implementation contract</td>
+<td class="p-4 font-data-mono text-data-mono text-right text-status-committed">KES 310M</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-secondary-fixed text-on-secondary-fixed-variant">Active</span>
+</td>
+<td class="p-4 text-on-surface-variant">28 Oct 2027</td>
+<td class="p-4 text-on-surface-variant text-center">-</td>
+<td class="p-4 text-right">
+<a class="text-secondary hover:text-primary font-medium flex items-center justify-end gap-1" href="#">
+                                    View <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-4 font-semibold">Actual expenditure snapshot</td>
+<td class="p-4 text-on-surface-variant">Finance system</td>
+<td class="p-4 font-data-mono text-data-mono text-right text-status-available">KES 180M</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-status-available text-white">Matched</span>
+</td>
+<td class="p-4 text-on-surface-variant">15 Nov 2027</td>
+<td class="p-4 text-on-surface-variant text-center">-</td>
+<td class="p-4 text-right">
+<a class="text-secondary hover:text-primary font-medium flex items-center justify-end gap-1" href="#">
+                                    View <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-body-md text-body-md text-on-surface-variant">Showing 1 to 3 of 3 entries</span>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-outline-variant rounded-DEFAULT text-on-surface-variant disabled:opacity-50" disabled="">Previous</button>
+<button class="px-3 py-1 border border-outline-variant rounded-DEFAULT text-on-surface-variant disabled:opacity-50" disabled="">Next</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

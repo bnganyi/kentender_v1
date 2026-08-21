@@ -65,7 +65,7 @@ def _rewrite_link_fields(old: str, new: str) -> dict[str, int]:
 		("Procuring Department", "procuring_entity"),
 		("Budget", "procuring_entity"),
 		("Budget Line", "procuring_entity"),
-		("Strategic Plan", "procuring_entity"),
+		# ("Strategic Plan", "procuring_entity"),  # removed MVP-1 strategy teardown
 		("Procurement Plan", "procuring_entity"),
 	):
 		n = _rewrite_field(dt, field, old, new)

@@ -1,0 +1,189 @@
+/* BUD-UI-10 Downstream Usage — Stitch traceability table under workspace shell */
+
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-downstream"] {
+	display: block !important;
+	width: 100% !important;
+	background: #ffffff !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-toolbar {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	justify-content: space-between !important;
+	align-items: flex-end !important;
+	gap: 1rem !important;
+	margin: 0 0 1.5rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-toolbar-search {
+	flex: 0 1 18rem !important;
+	min-width: 12rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-toolbar-filters {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.75rem !important;
+	align-items: flex-end !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-search-field {
+	position: relative !important;
+	display: block !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-search-field .material-symbols-outlined {
+	position: absolute !important;
+	left: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	font-size: 1rem !important;
+	color: #434750 !important;
+	pointer-events: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-search-field input {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	padding: 0.375rem 0.75rem 0.375rem 2.25rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background: #ffffff !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-filter-field {
+	min-width: 11.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-select-wrap {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-select-wrap select {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background-image: none !important;
+	padding: 0.375rem 2rem 0.375rem 0.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #ffffff !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+}
+/* Win98 Desk select bleed — Material chevron only */
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-select-wrap .material-symbols-outlined {
+	position: absolute !important;
+	right: 0.5rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	font-size: 1.125rem !important;
+	color: #434750 !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	padding: 0.875rem 1rem !important;
+	margin: 0 0 1rem 0 !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice.hidden,
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice[hidden] {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice-title {
+	font-weight: 700 !important;
+	margin: 0 0 0.25rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice-msg {
+	margin: 0 !important;
+	white-space: pre-wrap !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-notice-dismiss {
+	border: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	color: #434750 !important;
+	margin-left: auto !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-downstream-table"] th.kt-bud-down-phase {
+	border-left: 1px solid #c3c6d1 !important;
+	background: rgba(238, 237, 243, 0.5) !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-downstream-table"] td.kt-bud-down-phase {
+	border-left: 1px solid #c3c6d1 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-code {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 0.8125rem !important;
+	color: #01629d !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-muted {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 0.75rem !important;
+	color: #737781 !important;
+	font-style: italic !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-downstream-status="ok"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.125rem 0.5rem !important;
+	border-radius: 9999px !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	background: #d1fae5 !important;
+	color: #065f46 !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-downstream-status="warn"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.125rem 0.5rem !important;
+	border-radius: 9999px !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	background: #fef3c7 !important;
+	color: #92400e !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-downstream-status="muted"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.125rem 0.5rem !important;
+	border-radius: 9999px !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	background: #e2e2e8 !important;
+	color: #434750 !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-action {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.25rem !important;
+	border: none !important;
+	background: transparent !important;
+	color: #01629d !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-action:hover .kt-bud-downstream-action-label {
+	text-decoration: underline !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-downstream-action .material-symbols-outlined {
+	font-size: 1rem !important;
+	text-decoration: none !important;
+}

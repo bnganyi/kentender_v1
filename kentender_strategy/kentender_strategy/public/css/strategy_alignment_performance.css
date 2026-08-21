@@ -1,0 +1,682 @@
+/* STR-UI-15 — CSS for Stitch classes in strategy_performance/code.html <main> */
+/* Markup is the Stitch HTML (fixture). No BEM rewrite. No Tailwind CDN. */
+
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] {
+	--kt-str-primary: #003d9b;
+	color: #1a1b20;
+	font-family: Inter, "Public Sans", system-ui, sans-serif;
+	font-size: 0.875rem;
+	box-sizing: border-box;
+	width: 100%;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] *,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] *::before,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] *::after {
+	box-sizing: border-box;
+}
+
+body.kt-str-surface.kt-str-perf-active #kt-cl-page-header-host {
+	display: none !important;
+}
+body.kt-str-surface.kt-str-perf-active [data-testid="kt-cl-page-body"] {
+	max-width: none;
+}
+
+/* Desk/Bootstrap must not paint black boxes on Stitch buttons */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] button,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	border-width: 0 !important;
+	box-shadow: none !important;
+	outline: none !important;
+	border-radius: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+	line-height: inherit;
+	min-height: 0;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] button.bg-primary {
+	background-color: #003d9b !important;
+	color: #ffffff !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] button.border {
+	border: 1px solid #c3c6d1 !important;
+	background: #ffffff !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 1rem !important;
+}
+/*
+ * Filter selects: Material expand_more sibling owns the glyph (portfolio pattern).
+ * Strip the tokens.css SVG stand-in so we do not double-draw carets.
+ */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] select {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font: inherit;
+	color: inherit;
+	margin: 0;
+	outline: none;
+	border-width: 1px !important;
+	border-style: solid !important;
+	border-color: #c3c6d1 !important;
+	background-color: #ffffff !important;
+	background-image: none !important;
+	padding: 0.5rem 2rem 0.5rem 0.75rem !important;
+	border-radius: 0.25rem !important;
+	width: 100%;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] select:disabled,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] select[disabled] {
+	cursor: default !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .relative > .material-symbols-outlined {
+	pointer-events: none !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .right-2 {
+	right: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .-translate-y-1\/2 {
+	transform: translateY(-50%) !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .pointer-events-none {
+	pointer-events: none !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .top-1\/2 {
+	top: 50% !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .pr-8 {
+	padding-right: 2rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .pl-3 {
+	padding-left: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .appearance-none {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] h1,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] h2,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] h3,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] p {
+	margin: 0;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+/* Stitch data-block / data-table (exact class names from canvas) */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-block {
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table th {
+	background-color: #f4f3f9 !important;
+	color: #434750 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.05em !important;
+	padding: 12px 16px !important;
+	text-align: left !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table td {
+	padding: 12px 16px !important;
+	border-bottom: 1px solid #e2e2e8 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 14px !important;
+	line-height: 20px !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table tr:last-child td {
+	border-bottom: none !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table tr:hover {
+	background-color: #eceef0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table th.text-right,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table td.text-right {
+	text-align: right !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table th.text-left,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .data-table td.text-left {
+	text-align: left !important;
+}
+
+/* Status pills */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-pill {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 2px 8px !important;
+	border-radius: 9999px !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-on-track {
+	background-color: #d1fae5 !important;
+	color: #065f46 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-at-risk {
+	background-color: #fef3c7 !important;
+	color: #92400e !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-off-track {
+	background-color: #fee2e2 !important;
+	color: #991b1b !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-no-data {
+	background-color: #e2e2e8 !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .status-not-due {
+	background-color: #dae2ff !important;
+	color: #1d4681 !important;
+}
+
+/* Layout utilities used by Performance Stitch */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .absolute {
+	position: absolute !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .relative {
+	position: relative !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .top-0 {
+	top: 0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .left-0 {
+	left: 0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .flex {
+	display: flex !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .flex-col {
+	flex-direction: column !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .flex-1 {
+	flex: 1 1 0% !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .flex-wrap {
+	flex-wrap: wrap !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .grid {
+	display: grid !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .grid-cols-1 {
+	grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .col-span-1 {
+	grid-column: span 1 / span 1 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .col-span-2 {
+	grid-column: span 2 / span 2 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .block {
+	display: block !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .items-center {
+	align-items: center !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .items-start {
+	align-items: flex-start !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .items-end {
+	align-items: flex-end !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .justify-between {
+	justify-content: space-between !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .justify-center {
+	justify-content: center !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-1 {
+	gap: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-1\.5 {
+	gap: 0.375rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-2 {
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-3 {
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-4 {
+	gap: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-gutter {
+	gap: 12px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .gap-section-gap {
+	gap: 24px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .space-y-section-gap > :not([hidden]) ~ :not([hidden]) {
+	margin-top: 24px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .max-w-7xl {
+	max-width: 80rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .max-w-\[200px\] {
+	max-width: 200px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .min-w-\[140px\] {
+	min-width: 140px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .min-w-\[200px\] {
+	min-width: 200px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mx-auto {
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .w-full {
+	width: 100% !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .w-1 {
+	width: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .w-2\.5 {
+	width: 0.625rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .h-full {
+	height: 100% !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .h-2\.5 {
+	height: 0.625rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .h-3 {
+	height: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .overflow-hidden {
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .overflow-x-auto {
+	overflow-x: auto !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .truncate {
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
+	white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .whitespace-nowrap {
+	white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .cursor-not-allowed {
+	cursor: not-allowed !important;
+}
+
+/* Spacing */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .p-2 {
+	padding: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .p-3 {
+	padding: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .p-4 {
+	padding: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .p-card-padding {
+	padding: 20px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .px-3 {
+	padding-left: 0.75rem !important;
+	padding-right: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .px-4 {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .px-card-padding {
+	padding-left: 20px !important;
+	padding-right: 20px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .py-2 {
+	padding-top: 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .py-3 {
+	padding-top: 0.75rem !important;
+	padding-bottom: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .py-4 {
+	padding-top: 1rem !important;
+	padding-bottom: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .py-8 {
+	padding-top: 2rem !important;
+	padding-bottom: 2rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .pt-4 {
+	padding-top: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .pl-6 {
+	padding-left: 1.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mb-0\.5 {
+	margin-bottom: 0.125rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mb-1 {
+	margin-bottom: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mb-2 {
+	margin-bottom: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mb-4 {
+	margin-bottom: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mb-6 {
+	margin-bottom: 1.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mt-1 {
+	margin-top: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mt-2 {
+	margin-top: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mt-4 {
+	margin-top: 1rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .ml-2 {
+	margin-left: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .mr-1 {
+	margin-right: 0.25rem !important;
+}
+
+/* Borders / radius */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border {
+	border-width: 1px !important;
+	border-style: solid !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-b {
+	border-bottom-width: 1px !important;
+	border-bottom-style: solid !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-t {
+	border-top-width: 1px !important;
+	border-top-style: solid !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-l {
+	border-left-width: 1px !important;
+	border-left-style: solid !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-outline-variant {
+	border-color: #c3c6d1 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-surface-variant {
+	border-color: #e2e2e8 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-\[\#bbf7d0\] {
+	border-color: #bbf7d0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-\[\#fde68a\] {
+	border-color: #fde68a !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .border-\[\#fecaca\] {
+	border-color: #fecaca !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .rounded {
+	border-radius: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .rounded-lg {
+	border-radius: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .rounded-full {
+	border-radius: 9999px !important;
+}
+
+/* Surfaces / status colours (including Stitch arbitrary hex utilities) */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-primary {
+	background-color: #003d9b !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-surface-container {
+	background-color: #eceef0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-surface-container-low {
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-surface-container-lowest {
+	background-color: #ffffff !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-surface-container-highest {
+	background-color: #e2e2e8 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-surface-container-low\/30 {
+	background-color: color-mix(in srgb, #f4f3f9 30%, transparent) !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-status-committed {
+	background-color: #6366f1 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-status-reserved {
+	background-color: #f59e0b !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-\[\#f0fdf4\] {
+	background-color: #f0fdf4 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-\[\#fffbeb\] {
+	background-color: #fffbeb !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-\[\#fef2f2\] {
+	background-color: #fef2f2 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .bg-\[\#ef4444\] {
+	background-color: #ef4444 !important;
+}
+
+/* Typography */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-headline-lg,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-headline-md,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-headline-sm {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-body-md,
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-label-caps {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-bold {
+	font-weight: 700 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-semibold {
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .font-normal {
+	font-weight: 400 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-headline-lg {
+	font-size: 30px !important; line-height: 38px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-headline-md {
+	font-size: 22px !important;
+	line-height: 30px !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-headline-sm {
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-body-lg {
+	font-size: 16px !important;
+	line-height: 24px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-body-md {
+	font-size: 14px !important;
+	line-height: 20px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-data-mono {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 500 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-label-caps {
+	font-size: 12px !important;
+	line-height: 16px !important;
+	letter-spacing: 0.05em !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-xs {
+	font-size: 0.75rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-sm {
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-lg {
+	font-size: 1.125rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[10px\] {
+	font-size: 10px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[14px\] {
+	font-size: 14px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[16px\] {
+	font-size: 16px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[18px\] {
+	font-size: 18px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[20px\] {
+	font-size: 20px !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-primary {
+	color: #003d9b !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-on-primary {
+	color: #ffffff !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-on-surface {
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-on-surface-variant {
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-error {
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-status-available {
+	color: #10b981 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[\#166534\] {
+	color: #166534 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[\#92400e\] {
+	color: #92400e !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-\[\#991b1b\] {
+	color: #991b1b !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-center {
+	text-align: center !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-left {
+	text-align: left !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .text-right {
+	text-align: right !important;
+}
+
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .material-symbols-outlined {
+	font-family: "Material Symbols Outlined", sans-serif !important;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+	display: inline-block !important;
+	vertical-align: middle !important;
+	line-height: 1 !important;
+}
+
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .hover\:bg-surface-container:hover {
+	background-color: #eceef0 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .hover\:opacity-90:hover {
+	opacity: 0.9 !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .hover\:underline:hover {
+	text-decoration: underline !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .transition-colors {
+	transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .transition-opacity {
+	transition: opacity 150ms ease !important;
+}
+
+/* Responsive — Stitch md/lg/xl breakpoints */
+@media (min-width: 640px) {
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .sm\:px-6 {
+		padding-left: 1.5rem !important;
+		padding-right: 1.5rem !important;
+	}
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .md\:flex-row {
+		flex-direction: row !important;
+	}
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .md\:items-start {
+		align-items: flex-start !important;
+	}
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .md\:grid-cols-4 {
+		grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	}
+}
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .lg\:grid-cols-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .lg\:col-span-2 {
+		grid-column: span 2 / span 2 !important;
+	}
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .lg\:px-8 {
+		padding-left: 2rem !important;
+		padding-right: 2rem !important;
+	}
+}
+@media (min-width: 1280px) {
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] .xl\:table-cell {
+		display: table-cell !important;
+	}
+}
+
+/* Explicit layout locks so soft utility misses cannot collapse Stitch regions */
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] [data-testid="kt-str-perf-filters"] > .grid {
+	display: grid !important;
+	grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+	gap: 12px !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] [data-testid="kt-str-perf-filters"] > .grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	}
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] [data-testid="kt-str-perf-strip"] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-str-root[data-testid="kt-str-performance"] [data-testid="kt-str-perf-strip"] > div {
+	flex: 1 1 140px !important;
+}

@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 17:37:05.649565",
+ "creation": "2026-08-19 20:39:15.326902",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "kanban",
@@ -13,14 +13,14 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Procurement Plans",
-   "link_to": "Procurement Planning",
-   "link_type": "Workspace",
+   "link_to": "planning-workspace",
+   "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/planning-hub"
+   "url": "/desk/planning-workspace"
   }
  ],
- "modified": "2026-07-31 17:37:05.649565",
+ "modified": "2026-08-21 13:04:49.631939",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Planning module navigation",

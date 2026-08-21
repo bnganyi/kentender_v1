@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Work - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f4f6",
+                        "data-committed": "#6366F1",
+                        "on-secondary-container": "#005f71",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e1e2e4",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-container": "#edeef0",
+                        "tertiary-fixed": "#dce2f8",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "surface-container-highest": "#e1e2e4",
+                        "inverse-primary": "#b2c5ff",
+                        "on-surface-variant": "#434654",
+                        "error": "#ba1a1a",
+                        "secondary": "#00687b",
+                        "surface-tint": "#0c56d0",
+                        "on-primary-fixed": "#001848",
+                        "on-tertiary-fixed": "#151b2b",
+                        "status-reserved": "#F59E0B",
+                        "surface-container-high": "#e7e8ea",
+                        "on-secondary-fixed": "#001f27",
+                        "surface-bright": "#f8f9fb",
+                        "status-available": "#10B981",
+                        "tertiary": "#3d4354",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "tertiary-container": "#545a6c",
+                        "on-primary-container": "#c4d2ff",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "secondary-fixed": "#afecff",
+                        "surface-dim": "#d9dadc",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c3c6d6",
+                        "primary-container": "#0052cc",
+                        "inverse-surface": "#2e3132",
+                        "primary": "#003d9b",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "secondary-container": "#50dcff",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "border-subtle": "#DFE1E6",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "background": "#f8f9fb",
+                        "on-background": "#191c1e",
+                        "outline": "#737685",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "status-exhausted": "#E11D48",
+                        "on-tertiary-container": "#ccd2e7",
+                        "on-error-container": "#93000a",
+                        "surface": "#f8f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-xs": "0.25rem",
+                        "container-padding": "1rem",
+                        "gutter-md": "1rem",
+                        "stack-sm": "0.5rem",
+                        "section-gap": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex font-body-md">
+<!-- Desktop SideNav (Visible md and up) -->
+<nav class="hidden md:flex flex-col h-screen fixed left-0 top-0 pt-16 z-40 bg-surface-container-low dark:bg-inverse-surface border-r border-subtle dark:border-outline-variant h-screen w-64 docked left-0 flat no shadows text-primary dark:text-primary-fixed">
+<div class="px-container-padding pb-section-gap pt-gutter-md">
+<!-- Brand & User Profile area in SideNav (Usually below TopNav in layout, but TopNav covers top) -->
+</div>
+<ul class="flex flex-col flex-grow">
+<li class="px-container-padding py-stack-xs">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+</li>
+<li class="px-container-padding py-stack-xs">
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary border-l-4 border-primary font-bold opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-caps text-label-caps">My Work</span>
+</a>
+</li>
+<li class="px-container-padding py-stack-xs">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps">Procurement Plan</span>
+</a>
+</li>
+<li class="px-container-padding py-stack-xs">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-caps text-label-caps">Vendor Registry</span>
+</a>
+</li>
+<li class="px-container-padding py-stack-xs mt-auto border-t border-subtle pt-stack-sm">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</a>
+</li>
+<li class="px-container-padding py-stack-xs pb-stack-sm">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</li>
+</ul>
+<div class="p-container-padding border-t border-subtle">
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps py-2 px-4 rounded hover:opacity-90 transition-opacity">
+                New Requisition
+            </button>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-64 w-full h-full relative">
+<!-- TopNavBar (Universal) -->
+<header class="flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50 bg-surface dark:bg-inverse-surface border-b border-subtle dark:border-outline-variant docked full-width top-0 flat no shadows text-primary dark:text-primary-fixed">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Button (Hidden on md) -->
+<button class="md:hidden text-on-surface-variant p-2 hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KenTender</span>
+</div>
+<!-- Search Bar (Left aligned per JSON) -->
+<div class="hidden sm:flex flex-1 max-w-md mx-4 relative items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border border-subtle rounded-full py-1.5 pl-10 pr-4 text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors rounded-full" title="Support">
+<span class="font-label-caps text-label-caps hidden sm:inline mr-1">Support</span>
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors rounded-full relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="ml-2 w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-subtle cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A professional close-up portrait of an African government official in a sharp grey suit, looking directly at the camera. The background is a muted, soft-focus modern office setting. The lighting is bright and clean, typical of a corporate light-mode application aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5Rn5IuwBZqcILF77sOxAsPJ5X-nwcP853g42AytJ_cRKa-QUHeNBhhe530pjV_BgOZHRey5vmHyuZzUoWFun5O057ciCsfd0lfC71Gg2aGpnPFHcccrskwnne_tZ8-0ug_NLnynMgOTOeAq4TpsxMubczSf_otfvRZzHx-No9Xup9fi5mN8oJWj9X2M7DECAd6J9wWF2qzG1rJ0Hh7G-UvHPcUBWQEU_7BZa0AnBS7Yy0M027cDOF"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding md:p-section-gap flex flex-col items-center">
+<!-- Header Section -->
+<div class="w-full max-w-4xl mb-section-gap self-start">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs">My work</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Tasks currently assigned to you or available for you to claim.</p>
+</div>
+<!-- Empty State Blocking Panel -->
+<div class="w-full max-w-xl bg-surface-container-lowest border border-subtle rounded-xl p-section-gap flex flex-col items-center text-center mt-12 md:mt-24 shadow-sm">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-stack-sm text-outline">
+<span class="material-symbols-outlined" data-icon="assignment_late" style="font-size: 32px;">assignment_late</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-stack-sm">No active operational assignment</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-sm max-w-md">
+                    No active operational assignment is configured for this account. Your roles do not by themselves grant access to a Procuring Entity or workflow task.
+                </p>
+<div class="bg-surface-container-low p-container-padding rounded border border-subtle w-full mb-section-gap text-left flex gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            Contact your system access administrator and provide the account name shown above <strong>(MOH Budget Officer+Authority)</strong>.
+                        </p>
+</div>
+</div>
+<a class="inline-flex items-center justify-center border border-subtle text-primary font-label-caps text-label-caps px-4 py-2 rounded hover:bg-surface-container transition-colors" href="#">
+                    View my access
+                </a>
+</div>
+</main>
+</div>
+<!-- Mobile Bottom Nav (Visible only < md) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface dark:bg-inverse-surface border-t border-subtle dark:border-outline-variant z-50 flex justify-around items-center h-16 px-2 text-on-surface-variant">
+<a class="flex flex-col items-center justify-center w-full h-full p-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold mt-1 tracking-wide">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full p-1 text-primary opacity-80 border-t-2 border-primary" href="#">
+<span class="material-symbols-outlined" data-icon="description" data-weight="fill" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="text-[10px] font-bold mt-1 tracking-wide">My Work</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full p-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="text-[10px] font-bold mt-1 tracking-wide">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full p-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="text-[10px] font-bold mt-1 tracking-wide">More</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,251 @@
+/* STR-UI-07 Value Commitments — classes from plan_value_commitments_…_v2/code.html */
+
+.kt-cl-shell .kt-str-root .-translate-y-1\/2{transform: translateY(-50%) !important}
+.kt-cl-shell .kt-str-root .absolute{position: absolute !important}
+.kt-cl-shell .kt-str-root .align-top{vertical-align: top !important}
+.kt-cl-shell .kt-str-root .bg-primary{background-color: #003d9b !important}
+.kt-cl-shell .kt-str-root .bg-primary\/5{background-color: color-mix(in srgb, #003d9b 5%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-secondary-fixed{background-color: #cfe5ff !important}
+.kt-cl-shell .kt-str-root .bg-status-available{background-color: #10B981 !important}
+.kt-cl-shell .kt-str-root .bg-status-available\/10{background-color: color-mix(in srgb, #10B981 10%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-status-exhausted\/10{background-color: color-mix(in srgb, #EF4444 10%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-status-reserved\/10{background-color: color-mix(in srgb, #F59E0B 10%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-surface-bright{background-color: #f9f9fe !important}
+.kt-cl-shell .kt-str-root .bg-surface-container{background-color: #eceef0 !important}
+.kt-cl-shell .kt-str-root .bg-surface-container-high{background-color: #e8e7ed !important}
+.kt-cl-shell .kt-str-root .bg-surface-container-highest{background-color: #e2e2e8 !important}
+.kt-cl-shell .kt-str-root .bg-surface-container-low{background-color: #f4f3f9 !important}
+.kt-cl-shell .kt-str-root .bg-surface-container-low\/50{background-color: color-mix(in srgb, #f4f3f9 50%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-surface-container-lowest{background-color: #ffffff !important}
+.kt-cl-shell .kt-str-root .block{display: block !important}
+.kt-cl-shell .kt-str-root .border{border-width: 1px !important; border-style: solid !important}
+.kt-cl-shell .kt-str-root .border-b{border-bottom-width: 1px !important; border-bottom-style: solid !important}
+.kt-cl-shell .kt-str-root .border-collapse{border-collapse: collapse !important}
+.kt-cl-shell .kt-str-root .border-dashed{border-style: dashed !important}
+.kt-cl-shell .kt-str-root .border-l{border-left-width: 1px !important; border-left-style: solid !important}
+.kt-cl-shell .kt-str-root .border-outline-variant{border-color: #c3c6d1 !important}
+.kt-cl-shell .kt-str-root .border-outline-variant\/30{border-color: color-mix(in srgb, #c3c6d1 30%, transparent) !important}
+.kt-cl-shell .kt-str-root .border-outline-variant\/50{border-color: color-mix(in srgb, #c3c6d1 50%, transparent) !important}
+.kt-cl-shell .kt-str-root .border-primary\/20{border-color: color-mix(in srgb, #003d9b 20%, transparent) !important}
+.kt-cl-shell .kt-str-root .border-secondary-fixed-dim\/50{border-color: color-mix(in srgb, #99cbff 50%, transparent) !important}
+.kt-cl-shell .kt-str-root .border-surface-container-high{border-color: #e8e7ed !important}
+.kt-cl-shell .kt-str-root .border-t{border-top-width: 1px !important; border-top-style: solid !important}
+.kt-cl-shell .kt-str-root .bottom-0{bottom: 0 !important}
+.kt-cl-shell .kt-str-root .cursor-pointer{cursor: pointer !important}
+.kt-cl-shell .kt-str-root .duration-300{transition-duration: 300ms !important}
+.kt-cl-shell .kt-str-root .ease-in-out{transition-timing-function: ease-in-out !important}
+.kt-cl-shell .kt-str-root .flex{display: flex !important}
+.kt-cl-shell .kt-str-root .flex-1{flex: 1 1 0% !important}
+.kt-cl-shell .kt-str-root .flex-col{flex-direction: column !important}
+.kt-cl-shell .kt-str-root .font-body-lg{font-family: Inter, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-body-md{font-family: Inter, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-bold{font-weight: 700 !important}
+.kt-cl-shell .kt-str-root .font-data-mono{font-family: "JetBrains Mono", ui-monospace, monospace !important}
+.kt-cl-shell .kt-str-root .font-headline-lg{font-family: Manrope, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-headline-md{font-family: Manrope, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-headline-sm{font-family: Manrope, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-label-caps{font-family: Inter, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-medium{font-weight: 500 !important}
+.kt-cl-shell .kt-str-root .font-normal{font-weight: 400 !important}
+.kt-cl-shell .kt-str-root .font-semibold{font-weight: 600 !important}
+.kt-cl-shell .kt-str-root .gap-1{gap: 0.25rem !important}
+.kt-cl-shell .kt-str-root .gap-1\.5{gap: 0.375rem !important}
+.kt-cl-shell .kt-str-root .gap-2{gap: 0.5rem !important}
+.kt-cl-shell .kt-str-root .gap-3{gap: 0.75rem !important}
+.kt-cl-shell .kt-str-root .gap-4{gap: 1rem !important}
+.kt-cl-shell .kt-str-root .gap-5{gap: 1.25rem !important}
+.kt-cl-shell .kt-str-root .grid{display: grid !important}
+.kt-cl-shell .kt-str-root .grid-cols-2{grid-template-columns: repeat(2, minmax(0, 1fr)) !important}
+.kt-cl-shell .kt-str-root .h-1\.5{height: 0.375rem !important}
+.kt-cl-shell .kt-str-root .h-2{height: 0.5rem !important}
+.kt-cl-shell .kt-str-root .h-full{height: 100% !important}
+.kt-cl-shell .kt-str-root .hidden{display: none !important}
+/* Add CTA also has .flex — keep hidden winning for read-only Active plans. */
+.kt-cl-shell .kt-str-root [data-kt-str-vc-add].hidden,
+.kt-cl-shell .kt-str-root [data-kt-str-vc-add][hidden],
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-save].hidden,
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-save][hidden]{display: none !important}
+.kt-cl-shell .kt-str-root .inline-block{display: inline-block !important}
+.kt-cl-shell .kt-str-root .inline-flex{display: inline-flex !important}
+.kt-cl-shell .kt-str-root .items-center{align-items: center !important}
+.kt-cl-shell .kt-str-root .items-start{align-items: flex-start !important}
+.kt-cl-shell .kt-str-root .justify-between{justify-content: space-between !important}
+.kt-cl-shell .kt-str-root .justify-center{justify-content: center !important}
+.kt-cl-shell .kt-str-root .justify-end{justify-content: flex-end !important}
+.kt-cl-shell .kt-str-root .leading-relaxed{line-height: 1.625 !important}
+.kt-cl-shell .kt-str-root .leading-tight{line-height: 1.25 !important}
+.kt-cl-shell .kt-str-root .left-3{left: 0.75rem !important}
+.kt-cl-shell .kt-str-root .material-symbols-outlined{font-family: "Material Symbols Outlined", sans-serif !important; display: inline-block !important; vertical-align: middle !important; line-height: 1 !important}
+.kt-cl-shell .kt-str-root .max-w-3xl{max-width: 48rem !important}
+.kt-cl-shell .kt-str-root .max-w-\[1400px\]{max-width: 1400px !important}
+.kt-cl-shell .kt-str-root .mb-1{margin-bottom: 0.25rem !important}
+.kt-cl-shell .kt-str-root .mb-1\.5{margin-bottom: 0.375rem !important}
+.kt-cl-shell .kt-str-root .mb-2{margin-bottom: 0.5rem !important}
+.kt-cl-shell .kt-str-root .mb-3{margin-bottom: 0.75rem !important}
+.kt-cl-shell .kt-str-root .mb-4{margin-bottom: 1rem !important}
+.kt-cl-shell .kt-str-root .mb-6{margin-bottom: 1.5rem !important}
+.kt-cl-shell .kt-str-root .mb-section-gap{margin-bottom: 24px !important}
+.kt-cl-shell .kt-str-root .min-h-\[80px\]{min-height: 80px !important}
+.kt-cl-shell .kt-str-root .min-w-\[200px\]{min-width: 200px !important}
+.kt-cl-shell .kt-str-root .ml-1{margin-left: 0.25rem !important}
+.kt-cl-shell .kt-str-root .mt-0\.5{margin-top: 0.125rem !important}
+.kt-cl-shell .kt-str-root .mt-4{margin-top: 1rem !important}
+.kt-cl-shell .kt-str-root .overflow-hidden{overflow: hidden !important}
+.kt-cl-shell .kt-str-root .overflow-x-auto{overflow-x: auto !important}
+.kt-cl-shell .kt-str-root .overflow-y-auto{overflow-y: auto !important}
+.kt-cl-shell .kt-str-root .p-2{padding: 0.5rem !important}
+.kt-cl-shell .kt-str-root .p-2\.5{padding: 0.625rem !important}
+.kt-cl-shell .kt-str-root .p-3{padding: 0.75rem !important}
+.kt-cl-shell .kt-str-root .p-4{padding: 1rem !important}
+.kt-cl-shell .kt-str-root .p-5{padding: 1.25rem !important}
+.kt-cl-shell .kt-str-root .p-6{padding: 1.5rem !important}
+.kt-cl-shell .kt-str-root .p-8{padding: 2rem !important}
+.kt-cl-shell .kt-str-root .px-8{padding-left: 2rem !important; padding-right: 2rem !important}
+.kt-cl-shell .kt-str-root .pt-4{padding-top: 1rem !important}
+.kt-cl-shell .kt-str-root .pt-6{padding-top: 1.5rem !important}
+.kt-cl-shell .kt-str-root .pb-8{padding-bottom: 2rem !important}
+.kt-cl-shell .kt-str-root .pl-9{padding-left: 2.25rem !important}
+.kt-cl-shell .kt-str-root .pr-4{padding-right: 1rem !important}
+.kt-cl-shell .kt-str-root .px-2{padding-left: 0.5rem !important; padding-right: 0.5rem !important}
+.kt-cl-shell .kt-str-root .px-2\.5{padding-left: 0.625rem !important; padding-right: 0.625rem !important}
+.kt-cl-shell .kt-str-root .px-3{padding-left: 0.75rem !important; padding-right: 0.75rem !important}
+.kt-cl-shell .kt-str-root .px-4{padding-left: 1rem !important; padding-right: 1rem !important}
+.kt-cl-shell .kt-str-root .px-5{padding-left: 1.25rem !important; padding-right: 1.25rem !important}
+.kt-cl-shell .kt-str-root .py-0\.5{padding-top: 0.125rem !important; padding-bottom: 0.125rem !important}
+.kt-cl-shell .kt-str-root .py-1{padding-top: 0.25rem !important; padding-bottom: 0.25rem !important}
+.kt-cl-shell .kt-str-root .py-1\.5{padding-top: 0.375rem !important; padding-bottom: 0.375rem !important}
+.kt-cl-shell .kt-str-root .py-2{padding-top: 0.5rem !important; padding-bottom: 0.5rem !important}
+.kt-cl-shell .kt-str-root .py-2\.5{padding-top: 0.625rem !important; padding-bottom: 0.625rem !important}
+.kt-cl-shell .kt-str-root .py-3{padding-top: 0.75rem !important; padding-bottom: 0.75rem !important}
+.kt-cl-shell .kt-str-root .py-4{padding-top: 1rem !important; padding-bottom: 1rem !important}
+.kt-cl-shell .kt-str-root .relative{position: relative !important}
+.kt-cl-shell .kt-str-root .right-0{right: 0 !important}
+.kt-cl-shell .kt-str-root .rounded{border-radius: 0.25rem !important}
+.kt-cl-shell .kt-str-root .rounded-full{border-radius: 9999px !important}
+.kt-cl-shell .kt-str-root .rounded-lg{border-radius: 0.5rem !important}
+.kt-cl-shell .kt-str-root .rounded-md{border-radius: 0.375rem !important}
+.kt-cl-shell .kt-str-root .rounded-xl{border-radius: 0.75rem !important}
+.kt-cl-shell .kt-str-root .shadow-2xl{box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important}
+.kt-cl-shell .kt-str-root .shadow-sm{box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important}
+.kt-cl-shell .kt-str-root .text-\[11px\]{font-size: 11px !important}
+.kt-cl-shell .kt-str-root .text-\[12px\]{font-size: 12px !important}
+.kt-cl-shell .kt-str-root .text-\[16px\]{font-size: 16px !important}
+.kt-cl-shell .kt-str-root .text-\[18px\]{font-size: 18px !important}
+.kt-cl-shell .kt-str-root .text-\[20px\]{font-size: 20px !important}
+.kt-cl-shell .kt-str-root .text-body-lg{font-size: 1rem !important; line-height: 1.5 !important}
+.kt-cl-shell .kt-str-root .text-body-md{font-size: 0.875rem !important; line-height: 1.45 !important}
+.kt-cl-shell .kt-str-root .text-data-mono{font-size: 0.8125rem !important; font-family: "JetBrains Mono", ui-monospace, monospace !important}
+.kt-cl-shell .kt-str-root .text-error{color: #ba1a1a !important}
+.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 30px !important; line-height: 38px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
+/* Stitch token: headline-md = 22px / 30px / 600 */
+.kt-cl-shell .kt-str-root .text-headline-md{font-size: 22px !important; line-height: 30px !important; font-weight: 600 !important}
+.kt-cl-shell .kt-str-root .text-headline-sm{font-size: 1.125rem !important; line-height: 1.3 !important; font-weight: 600 !important}
+.kt-cl-shell .kt-str-root .text-label-caps{font-size: 0.6875rem !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; font-weight: 600 !important}
+.kt-cl-shell .kt-str-root .text-left{text-align: left !important}
+.kt-cl-shell .kt-str-root .text-on-primary{color: #ffffff !important}
+.kt-cl-shell .kt-str-root .text-on-primary-fixed-variant{color: #1d4681 !important}
+.kt-cl-shell .kt-str-root .text-on-secondary-fixed{color: #001d34 !important}
+.kt-cl-shell .kt-str-root .text-on-surface{color: #1a1b20 !important}
+.kt-cl-shell .kt-str-root .text-on-surface-variant{color: #434750 !important}
+.kt-cl-shell .kt-str-root .text-outline{color: #737781 !important}
+.kt-cl-shell .kt-str-root .text-primary{color: #003d9b !important}
+.kt-cl-shell .kt-str-root .text-right{text-align: right !important}
+.kt-cl-shell .kt-str-root .text-secondary{color: #01629d !important}
+.kt-cl-shell .kt-str-root .text-sm{font-size: 0.875rem !important}
+.kt-cl-shell .kt-str-root .text-status-available{color: #10B981 !important}
+.kt-cl-shell .kt-str-root .text-status-exhausted{color: #EF4444 !important}
+.kt-cl-shell .kt-str-root .text-status-reserved{color: #F59E0B !important}
+.kt-cl-shell .kt-str-root .text-xs{font-size: 0.75rem !important}
+.kt-cl-shell .kt-str-root .top-0{top: 0 !important}
+.kt-cl-shell .kt-str-root .top-1\/2{top: 50% !important}
+.kt-cl-shell .kt-str-root .tracking-wider{letter-spacing: 0.05em !important}
+.kt-cl-shell .kt-str-root .transition-all{transition: all 150ms ease !important}
+.kt-cl-shell .kt-str-root .transition-colors{transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease !important}
+.kt-cl-shell .kt-str-root .transition-transform{transition: transform 300ms ease-in-out !important}
+.kt-cl-shell .kt-str-root .translate-x-full{transform: translateX(100%) !important}
+.kt-cl-shell .kt-str-root .uppercase{text-transform: uppercase !important}
+.kt-cl-shell .kt-str-root .w-48{width: 12rem !important}
+.kt-cl-shell .kt-str-root .w-\[250px\]{width: 250px !important}
+.kt-cl-shell .kt-str-root .w-\[450px\]{width: 450px !important}
+.kt-cl-shell .kt-str-root .w-\[87\.5\%\]{width: 87.5% !important}
+.kt-cl-shell .kt-str-root .w-full{width: 100% !important}
+.kt-cl-shell .kt-str-root .w-max{width: max-content !important}
+.kt-cl-shell .kt-str-root .z-30{z-index: 30 !important}
+.kt-cl-shell .kt-str-root .space-y-3 > :not([hidden]) ~ :not([hidden]){margin-top:0.75rem !important}
+.kt-cl-shell .kt-str-root .space-y-5 > :not([hidden]) ~ :not([hidden]){margin-top:1.25rem !important}
+.kt-cl-shell .kt-str-root .divide-y > :not([hidden]) ~ :not([hidden]){border-top-width:1px !important;border-top-style:solid !important}
+.kt-cl-shell .kt-str-root .divide-surface-container-high > :not([hidden]) ~ :not([hidden]){border-top-color:#e8e7ed !important}
+.kt-cl-shell .kt-str-root .hover\:bg-surface-container-lowest:hover{background-color:#ffffff !important}
+.kt-cl-shell .kt-str-root .hover\:bg-surface-container-high:hover{background-color:#e8e7ed !important}
+.kt-cl-shell .kt-str-root .hover\:bg-surface-container-low:hover{background-color:#f4f3f9 !important}
+.kt-cl-shell .kt-str-root .hover\:bg-on-primary-fixed-variant:hover{background-color:#1d4681 !important}
+.kt-cl-shell .kt-str-root .hover\:text-on-primary-fixed-variant:hover{color:#1d4681 !important}
+.kt-cl-shell .kt-str-root .hover\:text-primary:hover{color:#003d9b !important}
+.kt-cl-shell .kt-str-root .group:hover .group-hover\:text-primary{color:#003d9b !important}
+.kt-cl-shell .kt-str-root .placeholder\:text-outline::placeholder{color:#737781 !important}
+
+.kt-cl-shell .kt-str-root.kt-str-vc-root {
+  position: relative !important;
+  min-height: calc(100vh - 140px) !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer"] {
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  z-index: 30 !important;
+  width: 450px !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+  border-left: 1px solid #e8e7ed !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+  transition: transform 300ms ease-in-out !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer"].translate-x-full {
+  transform: translateX(100%) !important;
+  pointer-events: none !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer"].is-open {
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+/* Keep Pillar/Source equal and clear of the drawer scrollbar track. */
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer-scroll"] {
+  scrollbar-gutter: stable !important;
+  padding-right: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer-filters"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-pillar],
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-source] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-str-root .min-w-0 {
+  min-width: 0 !important;
+}
+/* Overlay only — do not shrink the canvas (Stitch used padding-right; that squashes the table). */
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-canvas"].drawer-open {
+  padding-right: 2rem !important; /* keep normal canvas px-8, no drawer gutter */
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-table"] { width: 100% !important; }
+
+.kt-cl-shell .kt-str-root .bg-error-container\/5{background-color:color-mix(in srgb, #ffdad6 5%, transparent) !important}
+.kt-cl-shell .kt-str-root .bg-status-reserved{background-color:#F59E0B !important}
+.kt-cl-shell .kt-str-root .border-l-2{border-left-width:2px !important;border-left-style:solid !important}
+.kt-cl-shell .kt-str-root .border-l-status-reserved{border-left-color:#F59E0B !important}
+.kt-cl-shell .kt-str-root .border-status-reserved\/20{border-color:color-mix(in srgb, #F59E0B 20%, transparent) !important}
+.kt-cl-shell .kt-str-root .hover\:bg-error-container\/10:hover{background-color:color-mix(in srgb, #ffdad6 10%, transparent) !important}
+.kt-cl-shell .kt-str-root .hover\:text-status-reserved\/80:hover{color:color-mix(in srgb, #F59E0B 80%, transparent) !important}
+.kt-cl-shell .kt-str-root .mt-1{margin-top:0.25rem !important}
+.kt-cl-shell .kt-str-root .px-6{padding-left:1.5rem !important;padding-right:1.5rem !important}
+.kt-cl-shell .kt-str-root .py-5{padding-top:1.25rem !important;padding-bottom:1.25rem !important}
+.kt-cl-shell .kt-str-root .w-1\.5{width:0.375rem !important}

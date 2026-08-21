@@ -1,0 +1,270 @@
+/* NDS-UI-02A/02B/02C — literal hand-port of docs/mvp-1-r1/01_departmental_needs/NDS-UI-02[A|B|C].html
+ * (02B's own HTML mockup is missing its footer entirely; built against the MD
+ * spec's table instead, per this module's tracker rule 6). Extends the shared
+ * `.kt-nds-root` variable palette from departmental_needs.css — do not
+ * redeclare vars already defined there. */
+
+.kt-cl-shell .kt-nds-root {
+	--kt-nds-secondary: #00687b;
+	--kt-nds-error-container: #ffdad6;
+	--kt-nds-status-exhausted: #e11d48;
+}
+
+/* Shared page shell for all three form/review screens */
+.kt-nds-form-page { max-width: 56rem; margin: 0 auto; padding-bottom: 8rem; }
+.kt-nds-form-page--wide { max-width: 64rem; }
+
+/* Context strip (02A "Create" only — 02B/02C use .kt-nds-meta-line instead).
+ * Previously had zero CSS at all — rendered as unstyled inline text, not the
+ * mockup's bordered card with stacked label/value pairs. Found by grepping
+ * for the class and getting zero matches, not from a screenshot.
+ * Named distinctly from departmental_needs.css's `.kt-nds-context*` (the
+ * workspace page's inline pill+"Change"-link strip) — both files are global
+ * app_include_css, so a shared class name here silently overrode that
+ * page's pill layout since this file loads after it in hooks.py. */
+.kt-nds-create-context { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; background: var(--kt-nds-surface-low); border: 1px solid var(--kt-nds-border-subtle); border-radius: 8px; padding: 16px; margin: 0 0 16px; }
+.kt-nds-create-context-item { display: flex; flex-direction: column; gap: 2px; }
+.kt-nds-create-context-label { font-size: 10px; line-height: 14px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; color: var(--kt-nds-outline); }
+.kt-nds-create-context-value { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--kt-nds-on-surface); }
+
+.kt-nds-page-header { margin-bottom: 24px; }
+.kt-nds-page-header .kt-nds-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.kt-nds-page-header .kt-nds-title { margin: 0; }
+.kt-nds-page-header .kt-nds-subtitle { margin: 0 0 16px; }
+
+.kt-nds-status-pill { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; border: 1px solid transparent; }
+.kt-nds-status-pill--reserved { background: rgba(245, 158, 11, 0.1); color: var(--kt-nds-status-reserved); border-color: rgba(245, 158, 11, 0.2); }
+.kt-nds-status-pill--primary { background: rgba(0, 61, 155, 0.1); color: var(--kt-nds-primary); border-color: rgba(0, 61, 155, 0.2); }
+
+.kt-nds-meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: var(--kt-nds-on-surface-variant); margin: 0 0 16px; }
+.kt-nds-meta-sep { width: 4px; height: 4px; border-radius: 999px; background: var(--kt-nds-outline); }
+
+/* Numbered/icon section card — shared by every form/review block */
+.kt-nds-block { background: var(--kt-nds-surface-lowest); border: 1px solid var(--kt-nds-border-subtle); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+.kt-nds-block-head { display: flex; align-items: center; gap: 8px; padding: 16px 24px; border-bottom: 1px solid var(--kt-nds-border-subtle); background: var(--kt-nds-surface); }
+.kt-nds-block-head .material-symbols-outlined { color: var(--kt-nds-primary); font-size: 20px !important; }
+/* Mockup applies both `text-label-caps` (0.05em) and `tracking-wide` to this
+ * title; Tailwind's utility order resolves letter-spacing to tracking-wide's
+ * 0.025em, not the font-size preset's own 0.05em — confirmed via computed-style
+ * diff against the rendered mockup, not by reading the class list. */
+.kt-nds-block-title { font-size: 12px; line-height: 16px; letter-spacing: 0.025em; font-weight: 700; text-transform: uppercase; color: var(--kt-nds-on-surface); margin: 0; }
+.kt-nds-block-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+.kt-nds-block-body--tight { gap: 8px; }
+.kt-nds-block-helper { padding: 0 24px 16px; margin: 0; font-size: 14px; color: var(--kt-nds-on-surface-variant); font-style: italic; display: flex; align-items: flex-start; gap: 8px; opacity: 0.85; }
+.kt-nds-block-helper .material-symbols-outlined { font-size: 16px !important; margin-top: 2px; }
+
+.kt-nds-grid-2 { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 768px) { .kt-nds-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kt-nds-grid-2-stack { display: flex; flex-direction: column; gap: 24px; }
+
+/* Fields */
+.kt-nds-field { display: flex; flex-direction: column; }
+.kt-cl-shell .kt-nds-root .kt-nds-field-label { display: block; font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; color: var(--kt-nds-on-surface-variant); margin-bottom: 8px; }
+.kt-cl-shell .kt-nds-root input.kt-nds-input,
+.kt-cl-shell .kt-nds-root textarea.kt-nds-input,
+.kt-cl-shell .kt-nds-root select.kt-nds-input {
+	/* border here is inert by design: kt_stitch_desk_chrome.css's shared
+	 * `.kt-stitch-canvas input/select/textarea` rule forces border-width/
+	 * style/color with !important (the cross-module baseline, #c3c6d6) —
+	 * confirmed via computed-style diff against the mockup. Declared anyway
+	 * so this rule is correct if that baseline selector list ever narrows. */
+	width: 100%; background: var(--kt-nds-surface-lowest); border: 1px solid var(--kt-nds-border-subtle);
+	border-radius: 8px; padding: 12px 16px; font-size: 16px; color: var(--kt-nds-on-surface); font-family: inherit;
+}
+.kt-cl-shell .kt-nds-root input.kt-nds-input:focus,
+.kt-cl-shell .kt-nds-root textarea.kt-nds-input:focus,
+.kt-cl-shell .kt-nds-root select.kt-nds-input:focus {
+	outline: none; border-color: var(--kt-nds-secondary) !important; box-shadow: 0 0 0 1px var(--kt-nds-secondary);
+}
+.kt-cl-shell .kt-nds-root textarea.kt-nds-input { resize: vertical; min-height: 4.5rem; }
+.kt-nds-field-error { font-size: 12px; color: var(--kt-nds-status-exhausted); margin-top: 6px; }
+.kt-nds-field--invalid input.kt-nds-input, .kt-nds-field--invalid textarea.kt-nds-input, .kt-nds-field--invalid select.kt-nds-input { border-color: var(--kt-nds-status-exhausted) !important; }
+
+
+/* Items table (editable, 02A/02B) */
+.kt-nds-items-table-wrap { overflow-x: auto; }
+.kt-nds-items-table { width: 100%; border-collapse: collapse; text-align: left; }
+.kt-nds-items-table thead { background: var(--kt-nds-surface-lowest); border-bottom: 1px solid var(--kt-nds-border-subtle); }
+.kt-nds-items-table th { padding: 12px 24px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--kt-nds-outline); white-space: nowrap; }
+.kt-nds-items-table th.kt-nds-th-line { width: 64px; }
+.kt-nds-items-table th.kt-nds-th-qty { width: 128px; text-align: right; }
+.kt-nds-items-table th.kt-nds-th-unit { width: 160px; }
+.kt-nds-items-table th.kt-nds-th-action { width: 96px; text-align: center; }
+.kt-nds-items-table tbody tr { border-top: 1px solid var(--kt-nds-border-subtle); transition: background-color 0.15s ease; }
+.kt-nds-items-table tbody tr:first-child { border-top: none; }
+/* Mockup: hover:bg-surface-container-low/50 (#f3f4f6 @ 50%) — not the var's
+ * full-opacity value, which reads visibly darker at this row height. */
+.kt-nds-items-table tbody tr:hover { background: rgba(243, 244, 246, 0.5); }
+.kt-nds-items-table td { padding: 16px 24px; vertical-align: middle; }
+.kt-nds-items-table td.kt-nds-td-line { font-family: "JetBrains Mono", monospace; color: var(--kt-nds-on-surface-variant); }
+.kt-nds-items-table td.kt-nds-td-action { text-align: center; }
+
+/* kt_stitch_desk_chrome.css forces a bordered white box (`border-width:1px
+ * !important; background-color:#fff !important`) on every bare text/number
+ * input and select in the canvas — needed for real form fields, but these
+ * are the mockup's borderless inline table-cell edits (`border-0` in
+ * NDS-UI-02A). Must counter with !important, same pattern already used by
+ * every other module's table-cell inputs (e.g. budget_funding_lines.css,
+ * strategy_alignment_portfolio.css, planning_workspace.css) — without it,
+ * the chrome's border/background win and the mockup's seamless row look
+ * becomes a cramped boxed input with zero horizontal padding. */
+.kt-cl-shell .kt-nds-root input.kt-nds-cell-input,
+.kt-cl-shell .kt-nds-root select.kt-nds-cell-input {
+	width: 100%; background: transparent !important; border: none !important; border-bottom: 1px solid transparent !important;
+	border-radius: 0 !important; padding: 4px 0; font-size: 16px; color: var(--kt-nds-on-surface); font-family: inherit;
+}
+.kt-cl-shell .kt-nds-root input.kt-nds-cell-input.kt-nds-cell-input--qty { text-align: right; font-family: "JetBrains Mono", monospace; }
+.kt-cl-shell .kt-nds-root input.kt-nds-cell-input:hover, .kt-cl-shell .kt-nds-root select.kt-nds-cell-input:hover { background: transparent !important; }
+.kt-cl-shell .kt-nds-root input.kt-nds-cell-input:focus, .kt-cl-shell .kt-nds-root select.kt-nds-cell-input:focus { outline: none; background: transparent !important; border-bottom-color: var(--kt-nds-secondary) !important; box-shadow: none !important; }
+.kt-nds-item-other-unit { margin-top: 6px; }
+.kt-nds-item-other-unit input.kt-nds-cell-input { border-bottom: 1px solid var(--kt-nds-border-subtle) !important; }
+
+.kt-cl-shell .kt-nds-root button.kt-nds-row-remove { display: inline-flex; align-items: center; justify-content: center; padding: 4px !important; border-radius: 6px; color: var(--kt-nds-on-surface-variant); }
+.kt-cl-shell .kt-nds-root button.kt-nds-row-remove:hover { color: var(--kt-nds-status-exhausted) !important; background: var(--kt-nds-error-container) !important; }
+.kt-nds-row-remove .material-symbols-outlined { font-size: 20px !important; }
+
+.kt-nds-items-footer { padding: 24px; background: var(--kt-nds-surface); border-top: 1px solid var(--kt-nds-border-subtle); }
+.kt-cl-shell .kt-nds-root button.kt-nds-add-item {
+	display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px !important;
+	border: 1px dashed var(--kt-nds-border-subtle) !important; border-radius: 8px; font-size: 16px; font-weight: 500; color: var(--kt-nds-primary);
+}
+.kt-cl-shell .kt-nds-root button.kt-nds-add-item:hover { border-color: var(--kt-nds-primary) !important; background: rgba(0, 61, 155, 0.05) !important; }
+
+/* Indicative cost block (accented left border) */
+.kt-nds-cost-block { position: relative; }
+.kt-nds-cost-block::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--kt-nds-primary); }
+.kt-nds-cost-block .kt-nds-block-body { padding-left: 32px; }
+.kt-nds-cost-label { display: flex; align-items: center; gap: 8px; }
+.kt-nds-cost-optional { font-size: 10px; text-transform: lowercase; color: var(--kt-nds-outline); font-weight: 400; }
+.kt-nds-cost-input-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+.kt-nds-cost-currency { color: var(--kt-nds-on-surface-variant); }
+/* Same chrome-bleed issue as .kt-nds-cell-input above — needs !important. */
+.kt-cl-shell .kt-nds-root input.kt-nds-cost-input { background: transparent !important; border: none !important; border-bottom: 1px solid transparent !important; border-radius: 0 !important; padding: 0; font-family: "JetBrains Mono", monospace; font-size: 24px; line-height: 32px; font-weight: 600; color: var(--kt-nds-on-surface); width: 100%; }
+.kt-cl-shell .kt-nds-root input.kt-nds-cost-input:hover { background: transparent !important; }
+.kt-cl-shell .kt-nds-root input.kt-nds-cost-input:focus { outline: none; background: transparent !important; border-bottom-color: var(--kt-nds-secondary) !important; box-shadow: none !important; }
+.kt-nds-cost-derived { font-size: 12px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; color: var(--kt-nds-outline); margin-top: 12px; text-align: right; }
+
+/* Supporting documents */
+.kt-nds-attachment-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--kt-nds-border-subtle); border-radius: 8px; background: var(--kt-nds-surface-low); margin-bottom: 12px; }
+.kt-nds-attachment-info { display: flex; align-items: center; gap: 12px; overflow: hidden; min-width: 0; }
+.kt-nds-attachment-icon { width: 40px; height: 40px; border-radius: 4px; background: rgba(0, 104, 123, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kt-nds-attachment-icon .material-symbols-outlined { color: var(--kt-nds-secondary); }
+.kt-nds-attachment-name { font-size: 14px; font-weight: 500; color: var(--kt-nds-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kt-nds-attachment-meta { font-size: 12px; color: var(--kt-nds-outline); display: flex; gap: 6px; align-items: center; }
+.kt-nds-attachment-scan--pending { color: var(--kt-nds-status-reserved); }
+.kt-nds-attachment-scan--quarantined, .kt-nds-attachment-scan--failed { color: var(--kt-nds-status-exhausted); }
+.kt-cl-shell .kt-nds-root button.kt-nds-attachment-remove { color: var(--kt-nds-on-surface-variant); padding: 8px !important; flex-shrink: 0; }
+.kt-cl-shell .kt-nds-root button.kt-nds-attachment-remove:hover { color: var(--kt-nds-status-exhausted) !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-attachment-upload {
+	width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+	padding: 12px !important; border: 1px dashed var(--kt-nds-border-subtle) !important; border-radius: 8px;
+	color: var(--kt-nds-on-surface-variant); font-size: 14px; background: var(--kt-nds-surface-lowest) !important;
+}
+.kt-cl-shell .kt-nds-root button.kt-nds-attachment-upload:hover { border-color: var(--kt-nds-primary) !important; color: var(--kt-nds-primary) !important; }
+.kt-nds-attachment-upload-input { display: none; }
+
+/* Sticky-to-viewport footer actions (Cancel/Withdraw | Save draft/Save changes |
+ * Submit/Resubmit) — stays visible while a long form scrolls, matching the
+ * mockup's own intent (there, <main overflow-y-auto> scrolls internally while
+ * the sibling <footer> stays put; Frappe's page has no such inner scroll
+ * container, so `fixed` is the only way to reproduce that here). `left:0`
+ * alone paints underneath the persistent Desk sidebar — offset by the
+ * sidebar's own width variable instead (falls back to 256px, the expanded
+ * width, if the variable is ever unset). */
+.kt-nds-form-footer {
+	position: fixed; left: var(--sidebar-width, 256px); right: 0; bottom: 0; z-index: 40;
+	background: var(--kt-nds-surface-lowest); border-top: 1px solid var(--kt-nds-border-subtle);
+	/* Mockup: px-container-padding (1rem) py-4, md:px-8 — was 1.5rem on mobile. */
+	padding: 16px 1rem; display: flex; flex-direction: column; gap: 12px;
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.kt-nds-form-footer-right { display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 768px) {
+	.kt-nds-form-footer { flex-direction: row; align-items: center; justify-content: space-between; padding: 16px 32px; }
+	.kt-nds-form-footer-right { flex-direction: row; }
+}
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-danger-outline { padding: 10px 24px !important; border: 1px solid var(--kt-nds-border-subtle) !important; color: var(--kt-nds-status-exhausted) !important; border-radius: 8px; font-weight: 500; background: transparent !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-danger-outline:hover { background: var(--kt-nds-error-container) !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-outline { padding: 10px 24px !important; border: 1px solid var(--kt-nds-border-subtle) !important; color: var(--kt-nds-primary) !important; border-radius: 8px; font-weight: 500; background: transparent !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-outline:hover { background: rgba(0, 61, 155, 0.05) !important; }
+/* background/color were missing entirely — the button rendered transparent
+ * with dark text (no visible fill) instead of the mockup's solid navy CTA.
+ * Found via computed-style inspection, not visible from reading the class
+ * list. Hover target (#0052cc, DS primary-container) matches the shared
+ * `button.bg-primary:hover` contract in kt_stitch_desk_chrome.css exactly,
+ * since this button uses its own class rather than that literal selector. */
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-primary { padding: 10px 24px !important; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 1px 2px 0 rgba(0, 61, 155, 0.2); background: var(--kt-nds-primary) !important; color: #ffffff !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-primary:hover { background: #0052cc !important; color: #ffffff !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-primary:disabled,
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-outline:disabled,
+.kt-cl-shell .kt-nds-root button.kt-nds-btn-danger-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+.kt-nds-btn-primary .material-symbols-outlined, .kt-nds-btn-outline .material-symbols-outlined, .kt-nds-btn-danger-outline .material-symbols-outlined { font-size: 18px !important; }
+
+/* Return notice (02B) */
+.kt-nds-return-notice { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; background: rgba(245, 158, 11, 0.05); margin-bottom: 24px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+.kt-nds-return-notice .material-symbols-outlined { color: var(--kt-nds-status-reserved); margin-top: 4px; }
+.kt-nds-return-notice-title { font-family: Manrope, sans-serif; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--kt-nds-on-surface); margin: 0 0 8px; }
+.kt-nds-return-notice-reason { font-size: 16px; color: var(--kt-nds-on-surface-variant); margin: 0 0 16px; padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.5); border: 1px solid rgba(245, 158, 11, 0.1); }
+.kt-nds-return-notice-audit { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--kt-nds-outline); }
+.kt-nds-return-notice-audit .material-symbols-outlined { font-size: 12px !important; color: var(--kt-nds-outline); margin-top: 0; }
+
+/* Review screen (02C) */
+.kt-nds-review-banner { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 12px; background: rgba(0, 61, 155, 0.1); border: 1px solid rgba(0, 61, 155, 0.2); margin-bottom: 24px; }
+.kt-nds-review-banner .material-symbols-outlined { color: var(--kt-nds-primary); flex-shrink: 0; }
+.kt-nds-review-banner p { margin: 0; color: var(--kt-nds-on-surface-variant); }
+
+.kt-nds-ro-block { background: var(--kt-nds-surface-low); border: 1px solid var(--kt-nds-border-subtle); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+.kt-nds-ro-block .kt-nds-block-head { background: rgba(255,255,255,0.5); }
+.kt-nds-ro-block .kt-nds-block-head .material-symbols-outlined { color: var(--kt-nds-outline); }
+.kt-nds-ro-block .kt-nds-block-title { font-family: inherit; text-transform: none; letter-spacing: normal; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--kt-nds-on-surface); }
+
+.kt-nds-ro-field-label { font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 700; text-transform: uppercase; color: var(--kt-nds-outline); margin: 0 0 8px; }
+.kt-nds-ro-value { font-size: 18px; line-height: 28px; font-weight: 500; color: var(--kt-nds-on-surface); margin: 0; }
+.kt-nds-ro-justification { background: var(--kt-nds-surface); padding: 16px; border-radius: 8px; border: 1px solid var(--kt-nds-border-subtle); border-left: 4px solid var(--kt-nds-primary); font-size: 16px; color: var(--kt-nds-on-surface); margin: 0; }
+
+.kt-nds-ro-timing-row { display: flex; align-items: flex-start; gap: 16px; }
+.kt-nds-ro-timing-icon { width: 40px; height: 40px; border-radius: 999px; background: var(--kt-nds-surface-variant); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--kt-nds-on-surface-variant); }
+.kt-nds-ro-timing-divider { width: 1px; height: 24px; background: var(--kt-nds-border-subtle); margin-left: 20px; }
+
+.kt-nds-ro-cost { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; background: linear-gradient(to bottom right, var(--kt-nds-surface-low), var(--kt-nds-surface)); }
+.kt-nds-ro-cost-value { display: flex; align-items: baseline; gap: 8px; }
+.kt-nds-ro-cost-value .kt-nds-ro-cost-amount { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 700; color: var(--kt-nds-on-surface); letter-spacing: -0.02em; }
+
+.kt-nds-ro-attachment { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; border: 1px solid var(--kt-nds-border-subtle); cursor: pointer; }
+.kt-cl-shell .kt-nds-root .kt-nds-ro-attachment:hover { background: var(--kt-nds-surface); }
+.kt-cl-shell .kt-nds-root button.kt-nds-ro-attachment-download { padding: 8px !important; color: var(--kt-nds-outline); border-radius: 999px; }
+.kt-cl-shell .kt-nds-root button.kt-nds-ro-attachment-download:hover { color: var(--kt-nds-primary) !important; background: rgba(0, 61, 155, 0.1) !important; }
+
+.kt-nds-decision-footer { position: fixed; left: var(--sidebar-width, 256px); right: 0; bottom: 0; z-index: 40; background: var(--kt-nds-surface-low); border-top: 1px solid var(--kt-nds-border-subtle); box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05); padding: 16px 1.5rem; }
+.kt-nds-decision-footer-inner { max-width: 64rem; margin: 0 auto; display: flex; flex-direction: column; sm-flex-direction: row; align-items: stretch; justify-content: flex-end; gap: 12px; }
+@media (min-width: 640px) { .kt-nds-decision-footer-inner { flex-direction: row; align-items: center; } }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn { flex: 1 1 auto; padding: 8px 16px !important; border-radius: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+@media (min-width: 640px) { .kt-cl-shell .kt-nds-root button.kt-nds-decision-btn { flex: none; } }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--return { border: 1px solid var(--kt-nds-border-subtle) !important; color: var(--kt-nds-on-surface-variant) !important; background: transparent !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--return:hover { background: var(--kt-nds-surface-low) !important; color: var(--kt-nds-on-surface) !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--decline { border: 1px solid var(--kt-nds-border-subtle) !important; color: var(--kt-nds-status-exhausted) !important; background: transparent !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--decline:hover { background: var(--kt-nds-error-container) !important; border-color: var(--kt-nds-error-container) !important; }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--accept { background: var(--kt-nds-primary) !important; color: #fff !important; font-weight: 700; box-shadow: 0 1px 2px 0 rgba(0, 61, 155, 0.2); }
+.kt-cl-shell .kt-nds-root button.kt-nds-decision-btn--accept:hover { background: var(--kt-nds-on-primary-fixed-variant) !important; }
+
+/* Reason dialog (Return for correction / Do not take forward) — same custom
+ * Stitch-scoped-dialog convention as the workspace's context dialog. */
+.kt-nds-reason-dialog { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.kt-nds-reason-dialog-backdrop { position: absolute; inset: 0; background: rgba(25, 28, 30, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.kt-nds-reason-dialog-card { position: relative; width: 100%; max-width: 32rem; background: var(--kt-nds-surface-lowest); border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0, 61, 155, 0.1), 0 8px 10px -6px rgba(0, 61, 155, 0.1); display: flex; flex-direction: column; overflow: hidden; }
+.kt-nds-reason-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--kt-nds-border-subtle); background: var(--kt-nds-surface-low); }
+.kt-nds-reason-dialog-title { font-family: Manrope, sans-serif; font-size: 18px; font-weight: 600; color: var(--kt-nds-on-surface); margin: 0; }
+.kt-cl-shell .kt-nds-root button.kt-nds-reason-dialog-close { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; color: var(--kt-nds-on-surface-variant); }
+.kt-cl-shell .kt-nds-root button.kt-nds-reason-dialog-close:hover { background: var(--kt-nds-surface-low) !important; }
+.kt-nds-reason-dialog-body { padding: 24px; display: flex; flex-direction: column; gap: 8px; }
+.kt-nds-reason-dialog-hint { font-size: 12px; color: var(--kt-nds-outline); margin: 6px 0 0; }
+.kt-nds-reason-dialog-footer { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--kt-nds-border-subtle); background: var(--kt-nds-surface-low); }
+
+/* Detail page (read-only, non-fixtured route) reuses .kt-nds-ro-* above */
+.kt-nds-detail-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+@media (max-width: 599px) {
+	.kt-nds-block-body { padding: 16px; }
+	.kt-nds-cost-block .kt-nds-block-body { padding-left: 24px; }
+	.kt-nds-items-table th, .kt-nds-items-table td { padding: 12px; }
+}

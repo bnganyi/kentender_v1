@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "autoname": "field:item_reference",
+ "creation": "2026-08-18 23:19:25.538606",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_reference",
+  "departmental_need",
+  "line_number",
+  "description",
+  "indicative_quantity",
+  "unit_code",
+  "other_unit",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "line_number",
+   "fieldtype": "Int",
+   "label": "Line Number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "indicative_quantity",
+   "fieldtype": "Float",
+   "label": "Indicative Quantity"
+  },
+  {
+   "fieldname": "unit_code",
+   "fieldtype": "Select",
+   "label": "Unit",
+   "options": "\nEach\nSet\nLot\nPerson\nStaff\nMonth\nDay\nService\nProgramme\nOther"
+  },
+  {
+   "depends_on": "eval:doc.unit_code==\"Other\"",
+   "fieldname": "other_unit",
+   "fieldtype": "Data",
+   "label": "Other Unit"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-18 23:19:25.538606",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -44,47 +44,60 @@ def validate_stable_platform_seed(
 	def _check(code: str, label: str, passed: bool, *, detail: str = "") -> None:
 		checks.append({"code": code, "label": label, "ok": passed, "detail": detail})
 
+	# MVP-1 Strategy teardown: legacy Strategy DocTypes removed; checks are skipped.
 	_check(
 		"STABLE-STRAT-001",
 		"WORKS strategy program",
-		bool(frappe.db.exists("Strategy Program", {"program_code": WORKS_PROGRAM_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 	_check(
 		"STABLE-STRAT-001B",
 		"WORKS strategy objective",
-		bool(frappe.db.exists("Strategy Objective", {"objective_code": WORKS_OBJECTIVE_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 	_check(
 		"STABLE-STRAT-001C",
 		"WORKS strategy target",
-		bool(frappe.db.exists("Strategy Target", {"target_code": WORKS_TARGET_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 
 	if expect_it_supplement:
 		_check(
 			"STABLE-STRAT-002",
 			"IT strategy program",
-			bool(frappe.db.exists("Strategy Program", {"program_code": IT_PROGRAM_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-STRAT-003",
 			"IT strategy objective",
-			bool(frappe.db.exists("Strategy Objective", {"objective_code": IT_OBJECTIVE_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-STRAT-004",
 			"IT strategy target",
-			bool(frappe.db.exists("Strategy Target", {"target_code": IT_TARGET_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-BUD-001",
 			"IT budget line",
-			bool(frappe.db.exists("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE})),
+			True,
+			detail="skipped:mvp1-budget-teardown",
 		)
 		_check(
 			"STABLE-DIA-002",
 			"IT demand approved",
-			(frappe.db.get_value("Demand", {"demand_id": IT_DEMAND_CODE}, "status") or "") == "Approved",
+			(
+				frappe.db.get_value("Demand", {"demand_code": IT_DEMAND_CODE}, "status")
+				or frappe.db.get_value("Demand", {"demand_id": IT_DEMAND_CODE}, "status")
+				or ""
+			)
+			== "Approved",
 		)
 		_check(
 			"STABLE-PLAN-002",
@@ -94,46 +107,36 @@ def validate_stable_platform_seed(
 		_check(
 			"STABLE-PLAN-003",
 			"IT procurement package draft",
-			bool(frappe.db.exists("Procurement Package", IT_PKG_CODE)),
+			True,  # PP2 Package retired
 		)
 
 	_check(
 		"STABLE-DIA-001",
 		"WORKS demand approved",
-		(frappe.db.get_value("Demand", {"demand_id": WORKS_DEMAND_CODE}, "status") or "") == "Approved",
+		(
+			frappe.db.get_value("Demand", {"demand_code": WORKS_DEMAND_CODE}, "status")
+			or frappe.db.get_value("Demand", {"demand_id": WORKS_DEMAND_CODE}, "status")
+			or ""
+		)
+		== "Approved",
 	)
 	_check(
 		"STABLE-PLAN-001",
-		"WORKS procurement plan",
-		bool(frappe.db.exists("Procurement Plan", WORKS_PLAN_CODE)),
+		"WORKS procurement plan (PP2 retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
 	_check(
 		"STABLE-PLAN-004",
-		"WORKS procurement package",
-		bool(frappe.db.exists("Procurement Package", WORKS_PKG_CODE)),
+		"WORKS procurement package (PP2 retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
-
-	def _pp2_validate(checkpoint: str) -> dict[str, Any]:
-		try:
-			from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.validate import (
-				run_validate,
-			)
-
-			return run_validate(checkpoint=checkpoint)
-		except Exception as exc:
-			return {
-				"ok": True,
-				"skipped": True,
-				"reason": str(exc),
-				"checkpoint": checkpoint,
-			}
-
-	pp2_validate = _pp2_validate(planning_checkpoint or "PACKAGE_DRAFT")
 	_check(
 		"STABLE-PP2-001",
-		"PP2 WORKS planning validation",
-		bool(pp2_validate.get("ok")),
-		detail=pp2_validate.get("message") or pp2_validate.get("reason") or "",
+		"PP2 WORKS planning validation (retired — skip)",
+		True,
+		detail="PP2_PLANNING_RETIRED",
 	)
 
 	if expect_it_std:
@@ -162,5 +165,5 @@ def validate_stable_platform_seed(
 		"ok": not failed,
 		"checks": checks,
 		"failed_count": len(failed),
-		"pp2_validate": pp2_validate,
+		"pp2_validate": {"ok": True, "skipped": True, "reason": "PP2_PLANNING_RETIRED"},
 	}

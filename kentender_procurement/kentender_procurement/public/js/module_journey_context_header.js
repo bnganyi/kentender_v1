@@ -225,22 +225,8 @@
 			$body.append($titleRow, $stateLine, $technicalDetails);
 		}
 
-		frappe.call({
-			method: "kentender_procurement.procurement_planning.api.planning_journey.get_pp_planning_journey_handoffs",
-			args: { package_code: packageCode },
-			freeze: false,
-			callback: function (r) {
-				var payload = (r && r.message) || {};
-				if (r.exc || !payload || payload.ok === false) {
-					renderPayload({});
-					return;
-				}
-				renderPayload(payload);
-			},
-			error: function () {
-				renderPayload({});
-			},
-		});
+		// PP2 planning journey API retired — empty handoff payload.
+		renderPayload({});
 	}
 
 	function render($host, opts) {

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Procurement Planning - IFMIS Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800;900&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "primary-fixed": "#dae2ff",
+                        "secondary": "#00687b",
+                        "background": "#f8f9fb",
+                        "on-primary-container": "#c4d2ff",
+                        "on-background": "#191c1e",
+                        "tertiary": "#3d4354",
+                        "inverse-primary": "#b2c5ff",
+                        "secondary-fixed": "#afecff",
+                        "status-reserved": "#F59E0B",
+                        "outline-variant": "#c3c6d6",
+                        "outline": "#737685",
+                        "primary": "#003d9b",
+                        "tertiary-container": "#545a6c",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-secondary-container": "#005f71",
+                        "surface-tint": "#0c56d0",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "surface-container-low": "#f3f4f6",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-surface-variant": "#434654",
+                        "surface-bright": "#f8f9fb",
+                        "on-primary-fixed": "#001848",
+                        "on-tertiary-fixed-variant": "#404658",
+                        "data-committed": "#6366F1",
+                        "status-available": "#10B981",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "inverse-surface": "#2e3132",
+                        "secondary-container": "#50dcff",
+                        "surface-container": "#edeef0",
+                        "on-secondary-fixed": "#001f27",
+                        "on-error": "#ffffff",
+                        "primary-container": "#0052cc",
+                        "surface-variant": "#e1e2e4",
+                        "tertiary-fixed": "#dce2f8",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#e7e8ea",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadc",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#ccd2e7",
+                        "status-exhausted": "#E11D48",
+                        "on-tertiary-fixed": "#151b2b",
+                        "surface": "#f8f9fb",
+                        "inverse-on-surface": "#f0f1f3",
+                        "border-subtle": "#DFE1E6",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "0.5rem",
+                        "gutter-md": "1rem",
+                        "section-gap": "1.5rem",
+                        "container-padding": "1rem",
+                        "stack-xs": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "data-md": ["JetBrains Mono"],
+                        "headline-sm": ["Manrope"],
+                        "data-lg": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex bg-surface dark:bg-on-background text-primary dark:text-primary-fixed font-label-caps text-label-caps border-r border-outline-variant fixed left-0 top-0 h-full flex-col pt-16 z-40 w-64">
+<div class="px-gutter-md pb-section-gap flex flex-col gap-stack-xs border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, high-quality rendering of the official Kenyan government coat of arms used as a minimal institution logo, set against a pristine light mode background. The colors are accurate but optimized for digital display in a professional dashboard context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-zC2b4uo_eYk4-PkdwYrZyFG0ZfZhEWk6yOTevJ8TfCjSmniXVK1vGQ663QFCDPen-QNKIS_XYvGHq0yOQS46t3sZcuTK1QypNb02gNAwn-0UA3uHS-tMtj5SdVaEtBAvt5dDJUFEqDIhOrmOSzoqRMT72aYGix0rQkPv8QCCuiUVZrqAJVJZZGut61Q51A3v7-zPmcxL3x5bbndor84BHK5Ol13khHWZP_-cHhiz16YKhlNp9p1U"/>
+<div>
+<div class="font-headline-sm text-headline-sm font-black text-on-surface">Treasury Department</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Fiscal Year 2024/25</div>
+</div>
+</div>
+<button class="mt-4 bg-primary text-on-primary font-label-caps text-label-caps rounded px-4 py-2 hover:bg-primary-container-low transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">add</span> New Requisition
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto py-stack-sm flex flex-col gap-1 px-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span> Requisitions
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT bg-primary-container text-on-primary-container border-l-4 border-primary font-bold opacity-80 translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span> Procurement Plan
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span> Vendor Registry
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span> Audit Logs
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span> Settings
+            </a>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span> Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col md:ml-64 min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface text-primary dark:text-inverse-primary font-body-md text-body-md border-b border-outline-variant flex justify-between items-center w-full px-gutter-md h-16 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Button -->
+<button class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">IFMIS Portal</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex relative text-on-surface-variant focus-within:text-primary">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px]">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-high border-transparent rounded-full font-body-sm text-body-sm focus:bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 w-64 transition-all outline-none" placeholder="Search..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="hidden md:flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:bg-surface-container-low transition-colors">
+                    Help Desk
+                </button>
+<img alt="User profile photo" class="w-8 h-8 rounded-full border border-border-subtle object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all" data-alt="A professional headshot of a female African public servant in business attire, looking approachable and confident. Shot against a neutral, well-lit studio background suitable for a corporate portal profile avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiJWSbYCR567wVbRlf-G9coY6551qrpHBifDmTEvaQYjMHVZUu18fh04qTGi7YmgG-4UUhMcgfrGV3O6keOUWh_os7sOvEMALZq0YctI98LHi0yez2awZeZa7gN-QYaiskkLJfoUyAzkIB3KoMr0xF_B41Dp-KAStUcuxKbfRSu-vsuQF1fFgkTFx2mKGJ1DcWoJnG1TC6VnOnqlMV-45UI9FsKfbfsfGzEcTMcXQM0ZP_wVpc2_0o"/>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-container-padding md:p-section-gap flex flex-col gap-section-gap max-w-[1400px] mx-auto w-full">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-gutter-md">
+<div class="flex-1 max-w-2xl">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-xs">Procurement Planning</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Turn approved needs into funded, approved Plan Items ready for tendering.</p>
+</div>
+<div class="flex-shrink-0 flex items-start gap-4 flex-col sm:flex-row w-full md:w-auto">
+<button class="w-full sm:w-auto bg-primary text-on-primary font-body-md px-6 py-2.5 rounded-lg hover:bg-primary-container-low shadow-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap">
+                        Open current plan <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Workspace Scope Controls -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-container-padding flex flex-col gap-stack-sm">
+<div class="flex flex-col md:flex-row gap-gutter-md items-end">
+<div class="flex-1 w-full flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Procuring Entity</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-border-subtle rounded-DEFAULT px-3 py-2 pr-10 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+<option selected="">Ministry of Health</option>
+<option>Ministry of Education</option>
+<option>National Treasury</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="w-full md:w-64 flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Financial Year</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-border-subtle rounded-DEFAULT px-3 py-2 pr-10 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+<option selected="">2027/28</option>
+<option>2026/27</option>
+<option>2025/26</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[16px]">info</span> These controls define the workspace scope; they do not assign ownership to records.
+                </p>
+</div>
+<!-- Current Plan Panel -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-container-padding flex flex-col md:flex-row items-start md:items-center justify-between gap-gutter-md border-l-4 border-l-primary">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">Ministry of Health Annual Procurement Plan 2027/28</h2>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2 font-body-sm text-body-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-available"></span> Open</span>
+<span class="text-outline-variant">•</span>
+<span>Draft Version 1</span>
+<span class="text-outline-variant">•</span>
+<span class="font-data-md text-data-md text-on-surface">0</span> Plan Items
+                        <span class="text-outline-variant">•</span>
+<span>KES <span class="font-data-md text-data-md text-on-surface">0</span> planned</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">warning</span> Validation: Not run</span>
+</div>
+</div>
+<button class="shrink-0 border border-border-subtle text-primary bg-surface hover:bg-surface-container-low font-body-md px-4 py-2 rounded-DEFAULT transition-colors whitespace-nowrap">
+                    Continue planning
+                </button>
+</div>
+<!-- Work Requiring Action Section -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg flex flex-col overflow-hidden">
+<div class="p-container-padding border-b border-border-subtle bg-surface-bright flex flex-col sm:flex-row items-center justify-between gap-gutter-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface m-0">Work Requiring Action</h3>
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<div class="relative w-full sm:w-64">
+<select class="w-full appearance-none bg-surface border border-border-subtle rounded-DEFAULT px-3 py-1.5 pr-8 font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 transition-all">
+<option>All work</option>
+<option>Approved Demands</option>
+<option>Plan Items returned by Finance</option>
+<option>Plan Items needing attention</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">arrow_drop_down</span>
+</div>
+<div class="relative w-full sm:w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-surface border border-border-subtle rounded-DEFAULT font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 transition-all" placeholder="Search work..." type="text"/>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle bg-surface-container-low font-label-caps text-label-caps text-on-surface-variant">
+<th class="p-3 whitespace-nowrap font-medium">Work Item</th>
+<th class="p-3 whitespace-nowrap font-medium">Organisation Unit</th>
+<th class="p-3 whitespace-nowrap font-medium text-right">Amount</th>
+<th class="p-3 whitespace-nowrap font-medium">Reason</th>
+<th class="p-3 whitespace-nowrap font-medium">Status</th>
+<th class="p-3 whitespace-nowrap font-medium text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-on-surface divide-y divide-border-subtle">
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-3 font-medium">National digital health infrastructure upgrade</td>
+<td class="p-3 text-on-surface-variant">Directorate of Digital Health and Policy</td>
+<td class="p-3 text-right font-data-md">KES 455,000,000</td>
+<td class="p-3 text-on-surface-variant">Approved Demand ready for planning</td>
+<td class="p-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-status-available/10 text-status-available text-xs font-semibold">
+                                        Ready
+                                    </span>
+</td>
+<td class="p-3 text-right">
+<button class="text-primary hover:text-primary-container font-medium text-sm flex items-center justify-end gap-1 ml-auto">
+<span class="material-symbols-outlined text-[18px]">add_circle</span> Add to plan
+                                    </button>
+</td>
+</tr>
+<!-- Empty State for Demonstration if needed, though prompt implies one row -->
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</body></html>

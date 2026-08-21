@@ -1,0 +1,559 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Plan Item Editor - GovProcure Alpha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-reserved": "#F59E0B",
+                        "tertiary": "#3d4354",
+                        "on-surface-variant": "#434654",
+                        "secondary-fixed": "#afecff",
+                        "on-background": "#191c1e",
+                        "secondary-container": "#50dcff",
+                        "tertiary-fixed": "#dce2f8",
+                        "surface": "#f8f9fb",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#0052cc",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e1e2e4",
+                        "secondary-fixed-dim": "#48d7f9",
+                        "on-secondary-fixed": "#001f27",
+                        "secondary": "#00687b",
+                        "surface-tint": "#0c56d0",
+                        "surface-container": "#edeef0",
+                        "border-subtle": "#DFE1E6",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "outline-variant": "#c3c6d6",
+                        "primary-fixed": "#dae2ff",
+                        "on-tertiary-fixed": "#151b2b",
+                        "on-secondary-container": "#005f71",
+                        "tertiary-container": "#545a6c",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "on-tertiary": "#ffffff",
+                        "status-available": "#10B981",
+                        "surface-bright": "#f8f9fb",
+                        "surface-dim": "#d9dadc",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b2c5ff",
+                        "data-committed": "#6366F1",
+                        "surface-variant": "#e1e2e4",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f3f4f6",
+                        "on-tertiary-container": "#ccd2e7",
+                        "primary": "#003d9b",
+                        "inverse-on-surface": "#f0f1f3",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#c4d2ff",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#001848",
+                        "surface-container-high": "#e7e8ea",
+                        "background": "#f8f9fb",
+                        "on-secondary-fixed-variant": "#004e5d",
+                        "status-exhausted": "#E11D48",
+                        "outline": "#737685",
+                        "on-tertiary-fixed-variant": "#404658"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "1.5rem",
+                        "stack-sm": "0.5rem",
+                        "container-padding": "1rem",
+                        "stack-xs": "0.25rem",
+                        "gutter-md": "1rem"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "data-md": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden lg:flex flex-col h-full py-section-gap bg-surface-container-low dark:bg-surface-container-lowest h-screen w-64 docked left-0 border-r border-subtle dark:border-outline-variant transition-all duration-200 ease-in-out shrink-0 z-40 relative shadow-none">
+<div class="px-container-padding mb-8">
+<h1 class="font-headline-sm text-headline-sm font-extrabold text-primary dark:text-primary-fixed">KenTender</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant dark:text-on-tertiary-fixed-variant mt-1 uppercase tracking-wider opacity-80">e-Procurement System</p>
+</div>
+<div class="px-container-padding mb-6">
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps py-3 rounded hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 uppercase tracking-wide">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Requisition
+            </button>
+</div>
+<ul class="flex flex-col gap-1 flex-1 overflow-y-auto px-4">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">description</span>
+                    Requisitions
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-primary-container text-on-primary-container border-l-4 border-primary dark:bg-secondary-container dark:text-on-secondary-container transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+                    Procurement Plan
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">group</span>
+                    Vendor Registry
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">history_edu</span>
+                    Audit Logs
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+<div class="mt-auto px-4 pt-4 border-t border-subtle dark:border-outline-variant mx-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:bg-surface-container-high dark:hover:bg-surface-dim transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase tracking-wider group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-error">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden bg-surface relative">
+<!-- Subtle decorative background -->
+<div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: radial-gradient(circle at 100% 0%, var(--tw-colors-primary-container) 0%, transparent 40%);"></div>
+<!-- TopNavBar -->
+<header class="sticky top-0 z-30 flex justify-between items-center px-container-padding w-full h-16 bg-surface dark:bg-surface-container border-b border-subtle dark:border-outline-variant transition-colors duration-200 flat no shadows backdrop-blur-sm bg-opacity-90">
+<div class="flex items-center gap-4 lg:hidden">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">GovProcure Alpha</span>
+</div>
+<div class="hidden lg:flex items-center gap-2">
+<!-- Left space reserved if needed, nav is on side -->
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-subtle rounded text-body-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all w-64 shadow-sm" placeholder="Search..." type="text">
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center relative">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm border border-subtle overflow-hidden shadow-sm ring-2 ring-transparent hover:ring-primary/20 cursor-pointer transition-all">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small, professional headshot photo of a business user in a modern office setting, well-lit, shallow depth of field, neutral background, realistic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlhasoXslrOkvrg6y1btDK-aJOXMWfdBFKBse2lYQzxYnsE-1X0G1HkS0a4JXUxsNxATscxm4qj-VfN7UjjVKY5i0czq59fnW9thGjP7UnyyhoQHIn4rjcT_X3knANYfEwcUTFwJzZUfTcnMwJAyQFKUtxh-6uRHZenZzJJyDql1efimxWaoQ4YKmzkD3G9wMIpwBnMIuRG17oPlEA-JDbr0TiyBHzg_dXq-yMU4qlYzfC_nH_YOpb">
+</div>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding lg:p-6 lg:px-8 relative z-10 pb-32">
+<!-- Focused Column Wrapper -->
+<div class="max-w-4xl mx-auto flex flex-col gap-section-gap">
+<!-- Header Section -->
+<div class="flex flex-col gap-stack-sm mb-4">
+<nav aria-label="Breadcrumb" class="flex text-body-sm text-on-surface-variant mb-2">
+<ol class="inline-flex items-center space-x-1 md:space-x-2">
+<li class="inline-flex items-center">
+<a class="hover:text-primary transition-colors" href="#">Procurement Planning</a>
+</li>
+<li class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<a class="hover:text-primary transition-colors truncate max-w-[200px] md:max-w-xs" href="#">Ministry of Health Annual Procurement Plan 2027/28</a>
+</div>
+</li>
+<li aria-current="page" class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-outline font-medium">PPI-MOH-2027-022</span>
+</div>
+</li>
+</ol>
+</nav>
+<div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+<div class="flex-1">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2 leading-tight">Digital health technical staff certification programme <span class="text-on-surface-variant font-headline-sm text-headline-sm font-normal block md:inline mt-1 md:mt-0">(PPI-MOH-2027-022)</span></h1>
+<div class="flex flex-wrap items-center gap-3 text-body-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">edit_document</span> Draft Version 2</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-primary font-medium">Added Plan Item</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="">Current Approved Version 1 remains active</span>
+</div>
+</div>
+<div class="flex flex-col items-start md:items-end gap-3 shrink-0">
+<div class="font-data-lg text-data-lg text-on-surface tracking-tight bg-surface-container-lowest border border-subtle px-3 py-1 rounded shadow-sm">
+                                KES 80,000,000
+                            </div>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                    Proposed
+                                </span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-status-available/10 text-status-available border border-status-available/20">
+<span class="material-symbols-outlined text-[14px] mr-1">check_circle</span>
+                                    Planning complete
+                                </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Approved Requirement Card (Read-only Bento style) -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg p-6 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-6 border-b border-subtle pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">assignment_turned_in</span>
+                                Approved requirement
+                            </h2>
+<a class="text-body-sm font-medium text-primary hover:text-primary-container transition-colors flex items-center gap-1 group" href="#">
+                                View Approved Demand
+                                <span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 mb-6">
+<div><p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Demand</p><p class="font-body-md text-body-md text-on-surface font-medium">Digital health technical staff certification programme</p><p class="font-data-md text-xs text-on-surface-variant mt-1 tracking-tight">DMD-MOH-2027-019</p></div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Owner Organisation Unit</p>
+<p class="font-body-md text-body-md text-on-surface">Human Resources Management and Development</p>
+</div>
+<div class="lg:col-span-1 md:col-span-2">
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Need Item</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Accredited digital-health technical staff certification programme</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Quantity</p>
+<p class="font-data-md text-data-md text-on-surface">1 Programme</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Required by</p>
+<p class="font-data-md text-data-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+                                    31 December 2027
+                                </p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Approved Value</p>
+<p class="font-data-md text-data-md text-on-surface font-semibold">KES 80,000,000</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Proposed budget line</p>
+<p class="font-data-md text-data-md text-on-surface flex gap-1 items-start">
+<span class="flex flex-col">
+    <span class="font-body-md text-body-md text-on-surface font-medium">Digital Health Workforce Capacity Development</span>
+    <span class="font-data-md text-xs text-on-surface-variant mt-1 tracking-tight">MOH-BL-HWD-2027</span>
+</span></p>
+</div>
+<div><p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Strategy alignment</p><p class="font-body-md text-body-md text-on-surface font-medium">Train and certify 150 digital-health technical staff by 30 June 2029</p><p class="font-data-md text-xs text-on-surface-variant mt-1 tracking-tight">MOH-TGT-SKILLS-2029</p></div>
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase tracking-wider mb-1">Finance confirmation</p>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>
+                                    Not requested
+                                </p>
+</div>
+</div>
+<div class="bg-surface p-4 rounded border border-subtle flex gap-3 items-start">
+<span class="material-symbols-outlined text-outline mt-0.5">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                                The Approved Demand controls the business scope, quantity, required-by date, owner and planned value. Amend and reapprove the Demand if any of these must change.
+                            </p>
+</div>
+</div>
+</section>
+<!-- Procurement Approach Section (Interactive form) -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg p-6 shadow-sm transition-all hover:border-outline-variant duration-300">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6 border-b border-subtle pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: &quot;FILL&quot; 1;">strategy</span>
+                        Procurement approach
+                    </h2>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="plan-desc">Plan Item Description</label>
+<textarea class="w-full bg-surface-container-lowest border border-subtle rounded p-3 text-body-md focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all resize-y shadow-sm" id="plan-desc" placeholder="Enter description..." rows="3">Procure one accredited digital-health certification programme, including training and examinations, for the FY 2027/28 workforce-development requirement.</textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="proc-category">Procurement Category</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-subtle rounded p-3 pr-10 text-body-md focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all appearance-none shadow-sm" id="proc-category">
+<option>Goods</option>
+<option>Works</option>
+<option>Non-Consulting Services</option>
+<option selected="">Training and professional development services</option>
+<option>Consulting Services</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Planned Value (From Demand)</label>
+<div class="w-full bg-surface-container-low border border-subtle rounded p-3 font-data-md text-data-md text-on-surface-variant cursor-not-allowed">
+                                    KES 80,000,000
+                                </div>
+</div>
+</div>
+<!-- Recommendation Strip -->
+<div class="bg-secondary/5 border border-secondary/20 rounded-lg p-4 flex gap-4 items-start shadow-sm">
+<div class="bg-secondary/10 p-2 rounded-full text-secondary shrink-0 mt-1">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">tips_and_updates</span>
+</div>
+<div>
+<h4 class="font-body-md text-body-md font-bold text-on-surface">Recommended procurement method: Open tender</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Configured competitive method for this service category and planned value.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="proc-method">Planned Procurement Method</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-subtle rounded p-3 pr-10 text-body-md focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all appearance-none shadow-sm font-medium text-on-surface" id="proc-method">
+<option selected="">Open tender</option>
+<option>Restricted tender</option>
+<option>Request for quotations</option>
+<option>Direct procurement</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="contract-period">Contract Period</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-subtle rounded p-3 pr-10 text-body-md focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all appearance-none shadow-sm" id="contract-period">
+<option selected="">Single year</option>
+<option>Multi-year (2 years)</option>
+<option>Multi-year (3 years)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Indicative Lotting Section -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg p-6 shadow-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: &quot;FILL&quot; 1;">category</span>
+                        Indicative lotting
+                    </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6 border-b border-subtle pb-4">Detailed lots are defined during Tender preparation.</p>
+<div class="flex flex-col sm:flex-row gap-4">
+<label class="relative flex cursor-pointer rounded-lg border border-primary bg-primary/5 p-4 shadow-sm focus:outline-none w-full sm:w-1/2 hover:bg-primary/10 transition-colors group">
+<input checked="" class="sr-only" name="lotting" type="radio" value="no-lots">
+<span class="flex flex-1">
+<span class="flex flex-col">
+<span class="block font-body-md text-body-md font-medium text-on-surface group-hover:text-primary transition-colors">No lots expected</span>
+</span>
+</span>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">radio_button_checked</span>
+<span aria-hidden="true" class="absolute -inset-px rounded-lg border-2 border-primary pointer-events-none"></span>
+</label>
+<label class="relative flex cursor-pointer rounded-lg border border-subtle bg-surface-container-lowest p-4 shadow-sm focus:outline-none w-full sm:w-1/2 hover:border-outline-variant transition-colors group">
+<input class="sr-only" name="lotting" type="radio" value="lots">
+<span class="flex flex-1">
+<span class="flex flex-col">
+<span class="block font-body-md text-body-md font-medium text-on-surface-variant group-hover:text-on-surface transition-colors">Lots expected</span>
+</span>
+</span>
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+</label>
+</div>
+</section>
+<!-- Planned Schedule Section -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg p-0 shadow-sm overflow-hidden mb-8">
+<div class="p-6 border-b border-subtle bg-surface-bright">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-status-reserved" style="font-variation-settings: &quot;FILL&quot; 1;">event_note</span>
+                            Planned schedule
+                        </h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-subtle">
+<th class="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider w-2/3">Milestone</th>
+<th class="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider w-1/3">Planned date</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md divide-y divide-subtle">
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">campaign</span>
+</div>
+                                        Invitation or advertisement
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="8 November 2027">
+<span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-outline text-[18px]">calendar_today</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">unarchive</span>
+</div>
+                                        Bid opening
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="29 November 2027">
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">fact_check</span>
+</div>
+                                        Evaluation completion
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="8 December 2027">
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">emoji_events</span>
+</div>
+                                        Tender award
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="13 December 2027">
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">forward_to_inbox</span>
+</div>
+                                        Notification of award
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="15 December 2027">
+</div>
+</td>
+</tr>
+<tr class="bg-primary/5 hover:bg-primary/10 transition-colors group">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3 font-medium">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[16px]">draw</span>
+</div>
+                                        Contract signing
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b-2 border-primary border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-primary font-bold focus:ring-0 focus:border-primary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="20 December 2027">
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors group border-t-2 border-subtle">
+<td class="py-3 px-6 text-on-surface flex items-center gap-3 text-on-surface-variant">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+</div>
+                                        Contract completion
+                                    </td>
+<td class="py-3 px-6 text-on-surface">
+<div class="relative max-w-[200px]">
+<input class="w-full bg-transparent border-b border-subtle border-t-0 border-l-0 border-r-0 rounded-none py-1 px-0 text-on-surface-variant focus:ring-0 focus:border-secondary focus:outline-none font-data-md text-data-md" readonly="" type="text" value="31 December 2027">
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-subtle flex justify-end">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="">Planned time to contract signature — <strong>42 days</strong>.</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Sticky Footer -->
+<div class="absolute bottom-0 left-0 right-0 glass-panel border-t border-subtle/50 px-container-padding py-4 z-20 flex flex-col sm:flex-row justify-between items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary font-label-caps text-label-caps uppercase tracking-wider transition-colors flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to plan update
+            </button>
+<div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+<button class="px-6 py-2 border border-subtle text-primary bg-surface-container-lowest font-label-caps text-label-caps uppercase tracking-wider rounded hover:bg-surface-container-low transition-colors w-full sm:w-auto">
+                    Save draft
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-wider rounded hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto">
+                    Request Finance confirmation
+                </button>
+</div>
+</div>
+</div>
+
+
+</body></html>

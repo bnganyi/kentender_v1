@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-05 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "budget_line",
+  "line_code",
+  "line_title",
+  "before_amount",
+  "change_amount",
+  "after_amount",
+  "reserved_snapshot",
+  "committed_snapshot",
+  "impact_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "line_code",
+   "fieldtype": "Data",
+   "label": "Line Code",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "line_title",
+   "fieldtype": "Data",
+   "label": "Line Title",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "before_amount",
+   "fieldtype": "Currency",
+   "label": "Before Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "change_amount",
+   "fieldtype": "Currency",
+   "label": "Change",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "after_amount",
+   "fieldtype": "Currency",
+   "label": "After Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "reserved_snapshot",
+   "fieldtype": "Currency",
+   "label": "Reserved Snapshot"
+  },
+  {
+   "default": "0",
+   "fieldname": "committed_snapshot",
+   "fieldtype": "Currency",
+   "label": "Committed Snapshot"
+  },
+  {
+   "default": "Balanced",
+   "fieldname": "impact_status",
+   "fieldtype": "Select",
+   "label": "Impact",
+   "options": "Balanced\nBelow floor\nIncrease\nDecrease",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-08-05 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Budget Revision Line",
+ "naming_rule": "",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0
+}
