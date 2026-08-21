@@ -12,9 +12,8 @@ from kentender_procurement.departmental_needs.constants import (
 	CAP_CREATE,
 	CAP_EDIT_OWN,
 	CAP_OVERSIGHT_READ,
-	CAP_PLANNING_READ,
+	CAP_READ_ACCEPTED_FOR_PLANNING,
 	CAP_REVIEW,
-	CAP_SUBMIT_OWN,
 	CAP_VIEW_DEPARTMENT,
 	CAP_VIEW_OWN,
 	STATE_ACCEPTED,
@@ -28,7 +27,7 @@ from kentender_procurement.departmental_needs.services.permissions import actor,
 from kentender_procurement.departmental_needs.services.usage import planning_usage
 
 
-READ_CAPABILITIES = {CAP_CREATE, CAP_VIEW_OWN, CAP_VIEW_DEPARTMENT, CAP_REVIEW, CAP_PLANNING_READ, CAP_OVERSIGHT_READ}
+READ_CAPABILITIES = {CAP_CREATE, CAP_VIEW_OWN, CAP_VIEW_DEPARTMENT, CAP_REVIEW, CAP_READ_ACCEPTED_FOR_PLANNING, CAP_OVERSIGHT_READ}
 
 
 def _contexts(principal: str) -> list[dict[str, str]]:
@@ -65,18 +64,28 @@ def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] 
 
 
 def _indicative_requirement(need: str) -> str:
-	rows = frappe.get_all("Departmental Need Item", filters={"departmental_need": need}, fields=["indicative_quantity", "unit"], order_by="line_number asc")
+	rows = frappe.get_all("Departmental Need Item", filters={"departmental_need": need}, fields=["indicative_quantity", "unit_code", "other_unit"], order_by="line_number asc")
 	if len(rows) == 1:
 		quantity = flt(rows[0].indicative_quantity)
 		value = int(quantity) if quantity.is_integer() else quantity
-		return f"{value} {rows[0].unit}"
+		unit_label = rows[0].other_unit if rows[0].unit_code == "Other" else rows[0].unit_code
+		return f"{value} {unit_label}"
 	return f"{len(rows)} need lines"
+
+
+def _open_review_task(need: str) -> dict[str, str] | None:
+	row = frappe.db.get_value(
+		"Workflow Task", {"subject_type": "Departmental Need", "subject_id": need, "task_type": "departmental_needs.department_review", "state": "Open"},
+		["name", "concurrency_token"], order_by="created_at desc", as_dict=True,
+	)
+	return {"name": row.name, "concurrency_token": row.concurrency_token} if row else None
 
 
 def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 	ctx = resource(doc)
 	if doc.status == STATE_SUBMITTED and evaluate_capability(principal, CAP_REVIEW, ctx).allowed:
-		return [{"code": "review", "label": "Review"}]
+		task = _open_review_task(doc.name)
+		return [{"code": "review", "label": "Review", "task": (task or {}).get("name", ""), "task_token": (task or {}).get("concurrency_token", "")}]
 	if doc.submitted_by == principal and doc.status in {"Draft", STATE_RETURNED} and evaluate_capability(principal, CAP_EDIT_OWN, ctx).allowed:
 		return [{"code": "view", "label": "View"}, {"code": "edit", "label": "Edit"}]
 	return [{"code": "view", "label": "View"}] if profile != "none" else []
@@ -104,7 +113,7 @@ def get_workspace(*, procuring_entity: str = "", organisation_unit: str = "", fi
 	for row in rows:
 		doc = frappe._dict(row)
 		allowed, profile = can_view(doc, principal)
-		if not allowed or (profile == "planning" and doc.status != STATE_ACCEPTED):
+		if not allowed:
 			continue
 		usage = planning_usage(doc.name)
 		needs.append({
@@ -141,11 +150,31 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		fail("NDS_NOT_FOUND", "Departmental Need not found.")
 	doc = frappe.get_doc("Departmental Need", need)
 	allowed, profile = can_view(doc, principal)
-	if not allowed or (profile == "planning" and doc.status != STATE_ACCEPTED):
+	if not allowed:
 		fail("NDS_NOT_FOUND", "Departmental Need not found.")
+	latest_return = None
+	if doc.status == "Returned":
+		row = frappe.db.get_value(
+			"Departmental Need Review", {"departmental_need": doc.name, "action": "Return for correction"},
+			["reason", "actor", "occurred_at"], order_by="occurred_at desc", as_dict=True,
+		)
+		if row:
+			latest_return = {
+				"reason": row.reason, "actor": row.actor,
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_at": str(row.occurred_at), "occurred_label": formatdate(row.occurred_at, "d MMMM y") + " at " + frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
 	return {
 		"ok": True, "need": doc.as_dict(no_nulls=True),
-		"items": frappe.get_all("Departmental Need Item", filters={"departmental_need": doc.name}, fields=["name", "item_reference", "line_number", "description", "indicative_quantity", "unit"], order_by="line_number asc"),
+		"items": frappe.get_all("Departmental Need Item", filters={"departmental_need": doc.name}, fields=["name", "item_reference", "line_number", "description", "indicative_quantity", "unit_code", "other_unit"], order_by="line_number asc"),
+		"attachments": frappe.get_all(
+			"Departmental Need Attachment", filters={"departmental_need": doc.name, "is_active": 1},
+			fields=["name", "attachment_reference", "original_filename", "file_size", "mime_type", "scan_status"],
+			order_by="uploaded_at asc",
+		),
+		"latest_return": latest_return,
+		"submitted_by_label": frappe.db.get_value("User", doc.submitted_by, "full_name") or doc.submitted_by,
+		"submitted_label": (formatdate(doc.submitted_at, "d MMMM y") + " at " + frappe.utils.format_time(doc.submitted_at, "HH:mm")) if doc.submitted_at else frappe._("Not yet submitted"),
 		"planning_usage": planning_usage(doc.name), "actions": _actions(doc, principal, profile), "access_profile": profile,
 	}
 

@@ -2,6 +2,12 @@
 
 import frappe
 
+from kentender_procurement.departmental_needs.services.attachments import (
+	download_attachment as _download_attachment,
+	list_attachments as _list_attachments,
+	remove_attachment as _remove_attachment,
+	upload_attachment as _upload_attachment,
+)
 from kentender_procurement.departmental_needs.services.context import resolve_creation_context
 from kentender_procurement.departmental_needs.services.lifecycle import (
 	approve_withdrawal as _approve_withdrawal,
@@ -26,3 +32,7 @@ review_need = frappe.whitelist()(_review_need)
 withdraw_need = frappe.whitelist()(_withdraw_need)
 request_withdrawal = frappe.whitelist()(_request_withdrawal)
 approve_withdrawal = frappe.whitelist()(_approve_withdrawal)
+upload_attachment = frappe.whitelist()(_upload_attachment)
+remove_attachment = frappe.whitelist()(_remove_attachment)
+list_attachments = frappe.whitelist()(_list_attachments)
+download_attachment = frappe.whitelist()(_download_attachment)

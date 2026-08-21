@@ -5,13 +5,12 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, now_datetime
 
 from kentender_core.seeds._common import ensure_procuring_entity
 from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
-	BUDGET_VIEWER, OU, PE, REQUESTER, REVIEWER, upsert_departmental_needs,
+	BUDGET_VIEWER, DELEGATE, OU, PE, REQUESTER, REVIEWER, upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services.lifecycle import create_need, review_need, submit_need
 from kentender_procurement.departmental_needs.services.permissions import require_create
@@ -38,39 +37,24 @@ class TestDepartmentalNeedsCompletenessGaps(IntegrationTestCase):
 		fy = self._current_fy()
 		created = create_need(
 			procuring_entity=PE, organisation_unit=OU, target_financial_year=fy["id"],
-			title=f"Gap-closure need {uuid4().hex[:8]}", business_justification="Completeness-gap regression coverage.",
+			title=f"Gap-closure need {uuid4().hex[:8]}", business_justification="Completeness-gap regression coverage exercising the full submit-review lifecycle.",
 			required_by_date=fy["end_date"], delivery_or_use_location="Digital Health Directorate",
-			items=[{"description": "Field kits", "indicative_quantity": 5, "unit": "sets"}],
+			items=[{"description": "Field kits", "indicative_quantity": 5, "unit_code": "Set"}],
 			idempotency_key=self._key("CREATE"), user=user,
 		)
 		submitted = submit_need(need=created["need"], expected_token=created["concurrency_token"], idempotency_key=self._key("SUBMIT"), user=user)
 		return created, submitted
 
 	def _ensure_delegate(self) -> str:
-		"""A Departmental Review Delegate acts via an Authorization Delegation FROM the
-		Head of User Department, not an independent scope assignment — the review task
-		is routed to a named assignee (the reviewer), and only an active delegation lets
-		another user act on that reviewer's open tasks (see _task_allows / _active_delegations
-		in kentender_core.services.authorization_policy)."""
-		email = "nds.delegate@moh.example.test"
-		if not frappe.db.exists("User", email):
-			frappe.get_doc({
-				"doctype": "User", "email": email, "first_name": "Delegate", "last_name": "Reviewer",
-				"enabled": 1, "user_type": "System User", "send_welcome_email": 0,
-			}).insert(ignore_permissions=True)
-		frappe.get_doc("User", email).add_roles("Desk User", "Departmental Review Delegate")
-		reviewer_profile = frappe.db.get_value("Operational Scope Assignment", "OSA-NDS-PETER-MOH-DHP", "capability_profile_id")
-		delegation_id = "AUD-NDS-DELEGATE-TEST"
-		if not frappe.db.exists("Authorization Delegation", delegation_id):
-			frappe.get_doc({
-				"doctype": "Authorization Delegation", "delegation_id": delegation_id,
-				"delegator_user_id": REVIEWER, "delegate_user_id": email, "capability_profile_id": reviewer_profile,
-				"procuring_entity_id": PE, "organisation_unit_id": OU,
-				"effective_from": add_days(now_datetime(), -1), "effective_to": add_days(now_datetime(), 7),
-				"reason": "Test coverage for NDS-AC-005 delegate-scoped review.", "status": "Active",
-				"approved_by": "Administrator", "approved_at": now_datetime(), "concurrency_token": uuid4().hex,
-			}).insert(ignore_permissions=True)
-		return email
+		"""§10.1's Departmental Review Delegate (julia.njeri@moh.example.test) acts via
+		an Authorization Delegation FROM the Head of User Department, not an independent
+		scope assignment — the review task is routed to a named assignee (the reviewer),
+		and only an active delegation lets another user act on that reviewer's open tasks
+		(see _task_allows / _active_delegations in kentender_core.services.authorization_policy).
+		The persona and its delegation are seeded durably by upsert_departmental_needs()
+		(called in setUpClass) rather than built ad hoc here — promoted out of test-local
+		setup per NDS-CHG-002 Phase 7 (NDC-702)."""
+		return DELEGATE
 
 	def _foreign_ou(self, pe: str, label: str) -> str:
 		code = f"NDS-GAP-{label}-{uuid4().hex[:6]}".upper()

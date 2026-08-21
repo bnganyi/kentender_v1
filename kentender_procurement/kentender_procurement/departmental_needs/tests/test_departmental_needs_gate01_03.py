@@ -33,9 +33,9 @@ class TestDepartmentalNeedsGate0103(IntegrationTestCase):
 		fy = self._current_fy()
 		return create_need(
 			procuring_entity=PE, organisation_unit=OU, target_financial_year=fy["id"],
-			title=f"Lifecycle need {uuid4().hex[:8]}", business_justification="A governed lifecycle test requirement.",
+			title=f"Lifecycle need {uuid4().hex[:8]}", business_justification="A governed lifecycle test requirement covering the full submit-review-decision cycle.",
 			required_by_date=fy["end_date"], delivery_or_use_location="Digital Health Directorate",
-			items=[{"description": "Training cohort", "indicative_quantity": 10, "unit": "staff"}],
+			items=[{"description": "Training cohort", "indicative_quantity": 10, "unit_code": "Staff"}],
 			idempotency_key=self._key("CREATE"), user=REQUESTER,
 		)
 
@@ -50,7 +50,9 @@ class TestDepartmentalNeedsGate0103(IntegrationTestCase):
 	def test_exact_workspace_fixture_and_separate_usage(self):
 		result = get_workspace(procuring_entity=PE, organisation_unit=OU, financial_year="2027/28", user=REVIEWER)
 		self.assertTrue(result["ok"])
-		self.assertEqual(result["summary"], {"total_needs": 3, "awaiting_departmental_review": 1, "accepted_for_planning": 1, "included_in_approved_plan": 1})
+		# 5 visible (Withdrawn NDS-MOH-2027-006 is excluded from the workspace by design) —
+		# was 3 before Phase 7 added the Draft (-0004) and Not-taken-forward (-0005) fixtures.
+		self.assertEqual(result["summary"], {"total_needs": 5, "awaiting_departmental_review": 1, "accepted_for_planning": 1, "included_in_approved_plan": 1})
 		self.assertEqual([row["reference"] for row in result["work_requiring_action"]], ["NDS-MOH-2027-002"])
 		self.assertEqual(planning_usage("NDS-MOH-2027-001"), "Fully included")
 		self.assertEqual(frappe.db.get_value("Departmental Need", "NDS-MOH-2027-001", "status"), "Accepted for planning")
@@ -77,7 +79,7 @@ class TestDepartmentalNeedsGate0103(IntegrationTestCase):
 		key = self._key("IDEMPOTENT")
 		kwargs = dict(procuring_entity=PE, organisation_unit=OU, target_financial_year=fy["id"], title="Idempotent Need",
 			business_justification="Test", required_by_date=fy["end_date"], delivery_or_use_location="MOH",
-			items=[{"description": "One unit", "indicative_quantity": 1, "unit": "sets"}], idempotency_key=key, user=REQUESTER)
+			items=[{"description": "One unit", "indicative_quantity": 1, "unit_code": "Set"}], idempotency_key=key, user=REQUESTER)
 		first, second = create_need(**kwargs), create_need(**kwargs)
 		self.assertEqual(first["need"], second["need"])
 		self.assertTrue(second["idempotent"])

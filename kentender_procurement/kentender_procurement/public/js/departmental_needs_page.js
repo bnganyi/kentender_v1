@@ -354,18 +354,29 @@
 			.setRows(state.data.needs || [], true);
 	}
 
+	// NDS-CHG-002 §8.1 route table, mapped onto this app's own /desk/<page-name>
+	// Desk-routing convention (the spec's `/departmental-needs/...` paths are
+	// logical routes, not literal URLs — every other module in this app maps
+	// its own logical routes the same way, e.g. Budget's /desk/budget-register).
+	function navigateForAction(code, needName) {
+		if (code === "create") { frappe.set_route("departmental-needs-new"); return; }
+		if (code === "edit") { frappe.set_route("departmental-needs-edit", { need: needName }); return; }
+		if (code === "review") { frappe.set_route("departmental-needs-review", { need: needName }); return; }
+		frappe.set_route("departmental-needs-detail", { need: needName });
+	}
+
 	function bind(state) {
 		// Delegated: row actions and context controls repaint inside state.body on every reload.
 		const $body = window.jQuery && jQuery(state.body);
 		if ($body && $body.length) {
 			$body.off(".ktNdsActions");
 			$body.on("click.ktNdsActions", "[data-nds-change-context]", () => openContextDialog(state));
-			$body.on("click.ktNdsActions", "[data-nds-action]", () => {
-				frappe.show_alert({ message: __("This Departmental Needs interaction is awaiting its approved detailed screen contract."), indicator: "orange" }, 7);
+			$body.on("click.ktNdsActions", "[data-nds-action]", function () {
+				navigateForAction(this.getAttribute("data-nds-action"), this.getAttribute("data-need"));
 			});
 		} else {
 			state.body.querySelectorAll("[data-nds-action]").forEach((el) => el.addEventListener("click", () => {
-				frappe.show_alert({ message: __("This Departmental Needs interaction is awaiting its approved detailed screen contract."), indicator: "orange" }, 7);
+				navigateForAction(el.getAttribute("data-nds-action"), el.getAttribute("data-need"));
 			}));
 		}
 		bindPagination(state);

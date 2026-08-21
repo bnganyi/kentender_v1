@@ -39,7 +39,9 @@ test.describe('NDS-UI-01 Departmental Needs workspace', () => {
 		await expect(page.getByText('Ministry of Health').first()).toBeVisible();
 		await expect(page.getByText('Directorate of Digital Health and Policy').first()).toBeVisible();
 		await expect(page.getByText('2027/28').first()).toBeVisible();
-		await expect(page.getByTestId('nds-summary-total')).toContainText('3');
+		// 5 visible (Withdrawn NDS-MOH-2027-006 is excluded by design) — was 3 before
+		// Phase 7 added the Draft (-0004) and Not-taken-forward (-0005) seed fixtures.
+		await expect(page.getByTestId('nds-summary-total')).toContainText('5');
 		await expect(page.getByTestId('nds-summary-waiting')).toContainText('1');
 		await expect(page.getByTestId('nds-summary-accepted')).toContainText('1');
 		await expect(page.getByTestId('nds-summary-included')).toContainText('1');

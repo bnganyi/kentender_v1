@@ -69,6 +69,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
 	f"/assets/kentender_procurement/css/departmental_needs.css?v={_desk_asset_v('public/css/departmental_needs.css')}",
+	f"/assets/kentender_procurement/css/departmental_needs_forms.css?v={_desk_asset_v('public/css/departmental_needs_forms.css')}",
 	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",
 ]
 app_include_js = [
@@ -214,6 +215,10 @@ doctype_js = {
 page_js = {
 	"support-plan-view": "public/js/support_plan_view.js",
 	"departmental-needs": "public/js/departmental_needs_page.js",
+	"departmental-needs-new": "public/js/departmental_needs_create_page.js",
+	"departmental-needs-edit": "public/js/departmental_needs_create_page.js",
+	"departmental-needs-review": "public/js/departmental_needs_review_page.js",
+	"departmental-needs-detail": "public/js/departmental_needs_detail_page.js",
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",

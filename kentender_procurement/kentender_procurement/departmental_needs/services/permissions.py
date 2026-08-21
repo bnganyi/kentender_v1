@@ -15,11 +15,12 @@ from kentender_procurement.departmental_needs.constants import (
 	CAP_CREATE,
 	CAP_EDIT_OWN,
 	CAP_OVERSIGHT_READ,
-	CAP_PLANNING_READ,
+	CAP_READ_ACCEPTED_FOR_PLANNING,
 	CAP_REVIEW,
-	CAP_SUBMIT_OWN,
+	CAP_SUBMIT,
 	CAP_VIEW_DEPARTMENT,
 	CAP_VIEW_OWN,
+	STATE_ACCEPTED,
 )
 from kentender_procurement.departmental_needs.errors import fail
 
@@ -71,15 +72,21 @@ def require_create(user: str, pe: str, ou: str, financial_year: str) -> None:
 
 
 def can_view(need: Any, user: str) -> tuple[bool, str]:
+	"""§6 — a Planner sees only Accepted Needs in their assigned PE; every
+	other profile's scope is fully expressed by its capability grant alone.
+	This rule lives here, not in each caller, so every view/list/download
+	path is scoped identically by construction."""
 	ctx = resource(need)
 	if cstr(need.submitted_by) == user and evaluate_capability(user, CAP_VIEW_OWN, ctx).allowed:
 		return True, "owner"
 	for capability, profile in (
 		(CAP_VIEW_DEPARTMENT, "department"),
 		(CAP_REVIEW, "department"),
-		(CAP_PLANNING_READ, "planning"),
+		(CAP_READ_ACCEPTED_FOR_PLANNING, "planning"),
 		(CAP_OVERSIGHT_READ, "oversight"),
 	):
+		if profile == "planning" and cstr(need.status) != STATE_ACCEPTED:
+			continue
 		if evaluate_capability(user, capability, ctx).allowed:
 			return True, profile
 	return False, "none"
@@ -92,4 +99,4 @@ def require_owner_command(need: Any, user: str, capability: str) -> None:
 
 
 def owner_capability(action: str) -> str:
-	return CAP_EDIT_OWN if action == "edit" else CAP_SUBMIT_OWN
+	return CAP_EDIT_OWN if action == "edit" else CAP_SUBMIT

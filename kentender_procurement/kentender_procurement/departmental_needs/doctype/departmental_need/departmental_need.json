@@ -18,6 +18,7 @@
   "indicative_cost",
   "currency",
   "status",
+  "revision_no",
   "submitted_at",
   "last_decision_at",
   "concurrency_token",
@@ -78,20 +79,17 @@
   {
    "fieldname": "business_justification",
    "fieldtype": "Long Text",
-   "label": "Business Justification",
-   "reqd": 1
+   "label": "Business Justification"
   },
   {
    "fieldname": "required_by_date",
    "fieldtype": "Date",
-   "label": "Required By",
-   "reqd": 1
+   "label": "Required By"
   },
   {
    "fieldname": "delivery_or_use_location",
    "fieldtype": "Data",
-   "label": "Delivery or Use Location",
-   "reqd": 1
+   "label": "Delivery or Use Location"
   },
   {
    "fieldname": "indicative_cost",
@@ -100,10 +98,13 @@
    "options": "currency"
   },
   {
+   "default": "KES",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency"
+   "options": "Currency",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "default": "Draft",
@@ -115,6 +116,12 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "revision_no",
+   "fieldtype": "Int",
+   "label": "Revision No",
+   "read_only": 1
   },
   {
    "fieldname": "submitted_at",

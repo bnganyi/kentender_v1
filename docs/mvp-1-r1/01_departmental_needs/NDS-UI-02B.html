@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Returned Need correction - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#e7e8ea",
+                    "on-primary-container": "#c4d2ff",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "on-surface-variant": "#434654",
+                    "surface-variant": "#e1e2e4",
+                    "on-tertiary-fixed-variant": "#404658",
+                    "surface-container": "#edeef0",
+                    "secondary-fixed": "#afecff",
+                    "outline-variant": "#c3c6d6",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#005f71",
+                    "inverse-primary": "#b2c5ff",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "primary": "#003d9b",
+                    "surface-dim": "#d9dadc",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#ccd2e7",
+                    "outline": "#737685",
+                    "inverse-surface": "#2e3132",
+                    "status-available": "#10B981",
+                    "surface-tint": "#0c56d0",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f8f9fb",
+                    "on-tertiary-fixed": "#151b2b",
+                    "background": "#f8f9fb",
+                    "surface-bright": "#f8f9fb",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#00687b",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "tertiary": "#3d4354",
+                    "on-secondary-fixed-variant": "#004e5d",
+                    "on-secondary-fixed": "#001f27",
+                    "secondary-fixed-dim": "#48d7f9",
+                    "data-committed": "#6366F1",
+                    "on-background": "#191c1e",
+                    "primary-fixed": "#dae2ff",
+                    "surface-container-highest": "#e1e2e4",
+                    "primary-container": "#0052cc",
+                    "tertiary-container": "#545a6c",
+                    "surface-container-low": "#f3f4f6",
+                    "on-surface": "#191c1e",
+                    "tertiary-fixed": "#dce2f8",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#001848",
+                    "secondary-container": "#50dcff",
+                    "border-subtle": "#DFE1E6",
+                    "status-exhausted": "#E11D48",
+                    "inverse-on-surface": "#f0f1f3",
+                    "on-error": "#ffffff",
+                    "status-reserved": "#F59E0B"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "1.5rem",
+                    "container-padding": "1rem",
+                    "stack-xs": "0.25rem",
+                    "gutter-md": "1rem",
+                    "stack-sm": "0.5rem"
+            },
+            "fontFamily": {
+                    "data-lg": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "headline-sm": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "data-md": ["JetBrains Mono"],
+                    "label-caps": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "data-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #f8f9fb; }
+    </style>
+</head>
+<body class="text-on-surface flex flex-col md:flex-row h-screen overflow-hidden font-body-md">
+<!-- Side Navigation -->
+<nav class="hidden md:flex flex-col h-full py-section-gap w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-highest border-r border-border-subtle dark:border-outline-variant z-10">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">account_balance</span>
+</div>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-extrabold text-primary dark:text-primary-fixed">KenTender</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Procurement Planning</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary hover:bg-on-primary-fixed-variant text-on-primary rounded-lg py-2 px-4 flex items-center justify-center gap-2 transition-colors font-body-sm font-medium">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                New Plan
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 rounded-lg hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-primary dark:text-inverse-primary font-bold border-l-4 border-primary bg-surface-container dark:bg-surface-variant px-4 py-3 rounded-r-lg cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+<span class="font-body-md">Departmental Needs</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 rounded-lg hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-md">Procurement Plan</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 rounded-lg hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md">Vendor Registry</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 rounded-lg hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-body-md">Audit Logs</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 rounded-lg hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</div>
+<div class="px-2 mt-auto pt-4 border-t border-border-subtle mx-4">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-2 rounded-lg hover:text-primary transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-body-sm">Help Center</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-2 rounded-lg hover:text-status-exhausted transition-all cursor-pointer mt-1" href="#">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="font-body-sm">Log Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
+<!-- Top App Bar (Mobile) -->
+<header class="md:hidden flex justify-between items-center px-gutter-md w-full sticky top-0 z-50 bg-surface dark:bg-on-background h-16 border-b border-border-subtle dark:border-outline-variant">
+<div class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary">KenTender</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant cursor-pointer"><span class="material-symbols-outlined">help</span></button>
+<button class="text-on-surface-variant cursor-pointer"><span class="material-symbols-outlined">notifications</span></button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold font-body-sm">GW</div>
+</div>
+</header>
+<!-- Top User Info Bar (Desktop) -->
+<div class="hidden md:flex justify-end items-center px-8 py-4 bg-surface border-b border-border-subtle shrink-0">
+<div class="flex items-center gap-6 text-body-sm text-on-surface-variant">
+<button class="hover:text-primary transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-sm">help</span> Support</button>
+<button class="hover:text-primary transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-sm">notifications</span> Alerts</button>
+<div class="flex items-center gap-3 border-l border-border-subtle pl-6">
+<div class="text-right">
+<div class="font-medium text-on-surface">Grace Wanjiku</div>
+<div class="font-label-caps text-label-caps opacity-80">Departmental Need Requester</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">GW</div>
+</div>
+</div>
+</div>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto p-4 md:p-8 bg-background">
+<div class="max-w-5xl mx-auto space-y-6"><!-- Breadcrumb & Header -->
+<div>
+<nav aria-label="Breadcrumb" class="flex text-body-sm text-on-surface-variant mb-4">
+<ol class="inline-flex items-center space-x-1 md:space-x-2">
+<li class="inline-flex items-center">
+<a class="hover:text-primary transition-colors" href="#">Home</a>
+</li>
+<li class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-sm mx-1">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Departmental Needs</a>
+</div>
+</li>
+<li aria-current="page" class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-sm mx-1">chevron_right</span>
+<span class="text-on-surface font-medium">NDS-MOH-2027-0003</span>
+</div>
+</li>
+</ol>
+</nav>
+<div class="flex items-center gap-3 mb-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Regional health-facility connectivity equipment</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-label-caps bg-status-reserved/10 text-status-reserved border border-status-reserved/20">Returned</span>
+</div>
+<p class="font-body-md text-on-surface-variant mb-6 max-w-2xl">
+<span class="material-symbols-outlined text-sm align-middle">corporate_fare</span> Ministry of Health | Directorate of Digital Health and Policy | Planning year 2027/28
+  </p>
+</div>
+<!-- Return Notice Block -->
+<div class="bg-status-reserved/5 border border-status-reserved/30 rounded-lg p-6 shadow-sm">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-status-reserved mt-1" style="font-variation-settings: 'FILL' 1;">error</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-2">Returned for correction</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-4 bg-white/50 p-3 rounded border border-status-reserved/10">
+        "Clarify whether the 120 sets cover all regional referral facilities and attach the facilities distribution list."
+      </p>
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-outline">
+<span class="material-symbols-outlined text-xs">history</span>
+<span>Returned by Dr Peter Kimani on 14 May 2027 at 10:35</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 1. Need Summary -->
+<section class="bg-white rounded-xl border border-border-subtle overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface tracking-wide">1. Need Summary</h3>
+</div>
+<div class="p-6 space-y-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Need Title</label>
+<input class="w-full bg-surface-container-lowest border border-border-subtle rounded-lg px-4 py-3 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" type="text" value="Regional health-facility connectivity equipment"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Business Justification <span class="text-status-exhausted">*</span></label>
+<textarea class="w-full bg-surface-container-lowest border border-border-subtle rounded-lg px-4 py-3 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow resize-none" rows="3">Provide reliable connectivity equipment for regional referral facilities supporting national digital-health services.</textarea>
+</div>
+</div>
+</section>
+<!-- 2. Items Needed -->
+<section class="bg-white rounded-xl border border-border-subtle overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle bg-surface-bright flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface tracking-wide">2. Items Needed</h3>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-lowest border-b border-border-subtle">
+<tr>
+<th class="px-6 py-3 font-label-caps text-label-caps text-outline">Description</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-outline text-right w-32">Quantity</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-outline w-32">Unit</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-outline text-center w-24">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-4">
+<input class="w-full bg-transparent border-0 border-b border-transparent focus:border-secondary focus:ring-0 px-0 py-1 font-body-md text-on-surface" type="text" value="Managed connectivity equipment set for a regional referral facility"/>
+</td>
+<td class="px-6 py-4">
+<input class="w-full bg-transparent border-0 border-b border-transparent focus:border-secondary focus:ring-0 px-0 py-1 font-data-md text-on-surface text-right" type="number" value="120"/>
+</td>
+<td class="px-6 py-4">
+<select class="w-full bg-transparent border-0 border-b border-transparent focus:border-secondary focus:ring-0 px-0 py-1 font-body-md text-on-surface">
+<option>Set</option>
+<option>Piece</option>
+<option>Unit</option>
+</select>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-on-surface-variant hover:text-status-exhausted transition-colors p-1 rounded-md hover:bg-error-container/20">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface-container-lowest border-t border-border-subtle">
+<button class="flex items-center gap-2 text-primary font-body-md font-medium px-4 py-2 rounded-lg hover:bg-primary/5 transition-colors border border-border-subtle border-dashed hover:border-primary">
+<span class="material-symbols-outlined">add</span> Add item
+    </button>
+</div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-section-gap">
+<!-- 3. Timing & Location -->
+<section class="bg-white rounded-xl border border-border-subtle overflow-hidden h-full">
+<div class="px-6 py-4 border-b border-border-subtle bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">event_available</span>
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface tracking-wide">3. Timing &amp; Location</h3>
+</div>
+<div class="p-6 space-y-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Required by</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-border-subtle rounded-lg pl-10 pr-4 py-3 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" type="date" value="2028-01-15"/>
+<span class="material-symbols-outlined absolute left-3 top-3 text-on-surface-variant">calendar_today</span>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Delivery or use location</label>
+<textarea class="w-full bg-surface-container-lowest border border-border-subtle rounded-lg px-4 py-3 font-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow resize-none" rows="2">Regional referral facilities</textarea>
+</div>
+</div>
+</section>
+<div class="space-y-section-gap flex flex-col">
+<!-- Estimated Cost -->
+<section class="bg-white rounded-xl border border-border-subtle overflow-hidden relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl"></div>
+<div class="p-6 pl-8">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 flex items-center gap-2">
+          Estimated total cost <span class="text-outline text-[10px] lowercase font-normal">(optional)</span>
+</label>
+<div class="flex items-baseline gap-2 mt-2">
+<span class="font-body-md text-on-surface-variant">KES</span>
+<input class="bg-transparent border-0 border-b border-transparent focus:border-secondary focus:ring-0 px-0 py-0 font-data-lg text-data-lg text-on-surface font-semibold w-full" type="text" value="24,000,000.00"/>
+</div>
+<p class="text-label-caps font-label-caps text-outline mt-3 text-right">System calculated from items</p>
+</div>
+</section>
+<!-- 5. Supporting Documents -->
+<section class="bg-white rounded-xl border border-border-subtle overflow-hidden flex-1">
+<div class="px-6 py-4 border-b border-border-subtle bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">folder</span>
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface tracking-wide">5. Supporting Documents</h3>
+</div>
+<div class="p-6">
+<div class="flex items-center justify-between p-3 border border-border-subtle rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors mb-4">
+<div class="flex items-center gap-3 overflow-hidden">
+<div class="w-10 h-10 rounded bg-secondary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary">description</span>
+</div>
+<div class="overflow-hidden">
+<p class="font-body-sm text-on-surface font-medium truncate">Regional-facilities-distribution-list.xlsx</p>
+<p class="font-body-sm text-xs text-outline">42 KB</p>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-status-exhausted transition-colors p-2 shrink-0">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<button class="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-border-subtle rounded-lg text-on-surface-variant font-body-sm hover:border-primary hover:text-primary transition-colors bg-surface-container-lowest">
+<span class="material-symbols-outlined">upload</span> Upload another document
+        </button>
+</div>
+</section>
+</div>
+</div></div>
+</div>
+</main>
+</body></html>

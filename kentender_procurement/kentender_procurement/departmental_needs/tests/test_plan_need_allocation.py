@@ -27,7 +27,7 @@ class TestPlanNeedAllocation(IntegrationTestCase):
 			"business_justification": "Allocation projection test", "required_by_date": enabled_fiscal_years()[0]["end_date"],
 			"delivery_or_use_location": "MOH", "status": "Draft", "concurrency_token": uuid4().hex}).insert(ignore_permissions=True)
 		line = frappe.get_doc({"doctype": "Departmental Need Item", "item_reference": f"{need.name}-001", "departmental_need": need.name,
-			"line_number": 1, "description": "Ten sets", "indicative_quantity": 10, "unit": "sets"}).insert(ignore_permissions=True)
+			"line_number": 1, "description": "Ten sets", "indicative_quantity": 10, "unit_code": "Set"}).insert(ignore_permissions=True)
 		frappe.db.set_value("Departmental Need", need.name, "status", "Accepted for planning", update_modified=False)
 		plan = frappe.get_doc({"doctype": "Procurement Plan", "plan_code": f"PLN-NDS-{suffix}", "title": "NDS allocation test Plan", "procuring_entity": PE,
 			"financial_year": fy, "currency": "KES", "plan_type": "Annual", "lifecycle_state": "Open"}).insert(ignore_permissions=True)

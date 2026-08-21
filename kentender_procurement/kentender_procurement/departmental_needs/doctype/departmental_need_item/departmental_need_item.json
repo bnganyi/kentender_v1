@@ -11,7 +11,8 @@
   "line_number",
   "description",
   "indicative_quantity",
-  "unit",
+  "unit_code",
+  "other_unit",
   "fixture_namespace"
  ],
  "fields": [
@@ -43,21 +44,24 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description",
-   "reqd": 1
+   "label": "Description"
   },
   {
    "fieldname": "indicative_quantity",
    "fieldtype": "Float",
-   "label": "Indicative Quantity",
-   "reqd": 1
+   "label": "Indicative Quantity"
   },
   {
-   "fieldname": "unit",
-   "fieldtype": "Link",
+   "fieldname": "unit_code",
+   "fieldtype": "Select",
    "label": "Unit",
-   "options": "UOM",
-   "reqd": 1
+   "options": "\nEach\nSet\nLot\nPerson\nStaff\nMonth\nDay\nService\nProgramme\nOther"
+  },
+  {
+   "depends_on": "eval:doc.unit_code==\"Other\"",
+   "fieldname": "other_unit",
+   "fieldtype": "Data",
+   "label": "Other Unit"
   },
   {
    "fieldname": "fixture_namespace",

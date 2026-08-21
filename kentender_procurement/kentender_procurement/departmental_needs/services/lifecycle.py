@@ -5,7 +5,7 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cstr, flt, now_datetime
+from frappe.utils import cstr, flt, getdate, now_datetime
 
 from kentender_core.services.workflow_routing import RoutingContext
 from kentender_core.services.workflow_tasks import TaskSpec, execute_routed_transition, transition_task
@@ -19,6 +19,7 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_WITHDRAWN,
 	TASK_DEPARTMENT_REVIEW,
 	TASK_WITHDRAWAL_REVIEW,
+	UNIT_CODES,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.context import selectable_financial_year
@@ -37,18 +38,83 @@ def _token() -> str:
 
 
 def _items(value: str | list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""Parse and lightly normalize item rows for a Draft save (NDS-FR-023).
+
+	A row may be entirely incomplete — missing description, zero quantity, no
+	unit — that is a valid Draft state, not an error. This function only
+	rejects structurally malformed input (not a list, or an invalid
+	`unit_code` value that isn't even in the closed enum, or a nonsensical
+	Other/other_unit combination); it never enforces completeness. Submission
+	completeness is enforced separately by `_validate_submission`.
+	"""
 	rows = json.loads(value) if isinstance(value, str) else value
-	if not isinstance(rows, list) or not rows:
-		fail("NDS_ITEMS_REQUIRED", "Add at least one Departmental Need item.")
+	if not isinstance(rows, list):
+		fail("NDS_ITEMS_INVALID", "Items must be a list of rows.")
 	clean = []
 	for row in rows:
 		description = cstr(row.get("description")).strip()
 		quantity = flt(row.get("indicative_quantity"))
-		unit = cstr(row.get("unit")).strip()
-		if not description or quantity <= 0 or not unit:
-			fail("NDS_ITEM_INVALID", "Each item requires a description, positive indicative quantity and unit.")
-		clean.append({"description": description, "indicative_quantity": quantity, "unit": unit})
+		unit_code = cstr(row.get("unit_code")).strip()
+		other_unit = cstr(row.get("other_unit")).strip()
+		if quantity < 0:
+			fail("NDS_ITEM_INVALID", "Indicative quantity cannot be negative.")
+		if unit_code and unit_code not in UNIT_CODES:
+			fail("NDS_ITEM_INVALID", "Unit must be one of the controlled Departmental Need units.")
+		if other_unit and unit_code != "Other":
+			fail("NDS_ITEM_OTHER_UNIT_INVALID", "Other Unit may only be set when Unit is Other.")
+		clean.append({
+			"description": description, "indicative_quantity": quantity, "unit_code": unit_code,
+			"other_unit": other_unit if unit_code == "Other" else "",
+		})
 	return clean
+
+
+def _item_complete(row) -> bool:
+	description = cstr(row.description).strip()
+	quantity = flt(row.indicative_quantity)
+	unit_code = cstr(row.unit_code).strip()
+	if not description or quantity <= 0 or unit_code not in UNIT_CODES:
+		return False
+	if unit_code == "Other" and not (2 <= len(cstr(row.other_unit).strip()) <= 50):
+		return False
+	return True
+
+
+def _validate_submission(doc) -> None:
+	"""Full §5 submit/resubmit validation contract. Must run before any state
+	change, revision_no increment, work dispatch or notification — a failure
+	here is a pure no-op with a stable error code (NDS-FR-026)."""
+	justification = cstr(doc.business_justification).strip()
+	if not (50 <= len(justification) <= 2000):
+		fail("NDS_JUSTIFICATION_INVALID", "Business justification must be 50-2,000 characters.")
+	if not doc.required_by_date:
+		fail("NDS_REQUIRED_BY_DATE_MISSING", "Required-by date is required.")
+	fy_row = selectable_financial_year(doc.target_financial_year)
+	required_by = getdate(doc.required_by_date)
+	if not (getdate(fy_row["start_date"]) <= required_by <= getdate(fy_row["end_date"])):
+		fail("NDS_REQUIRED_BY_DATE_OUT_OF_YEAR", "Required-by date must fall within the target financial year.")
+	if not cstr(doc.delivery_or_use_location).strip():
+		fail("NDS_LOCATION_MISSING", "Delivery or use location is required.")
+	if doc.indicative_cost:
+		cost = flt(doc.indicative_cost)
+		cents = cost * 100
+		if cost <= 0 or abs(cents - round(cents)) > 1e-6:
+			fail("NDS_INDICATIVE_COST_INVALID", "Estimated total cost must be positive with at most two decimal places.")
+	rows = frappe.get_all(
+		"Departmental Need Item", filters={"departmental_need": doc.name},
+		fields=["description", "indicative_quantity", "unit_code", "other_unit"], order_by="line_number asc",
+	)
+	if not rows:
+		fail("NDS_ITEMS_REQUIRED", "Add at least one Departmental Need item.")
+	if any(not _item_complete(row) for row in rows):
+		fail("NDS_ITEM_INCOMPLETE", "Every item line must have a description, a positive quantity and a unit before submission.")
+	unclean = frappe.get_all(
+		"Departmental Need Attachment",
+		filters={"departmental_need": doc.name, "is_active": 1, "scan_status": ["!=", "Clean"]},
+		limit=1,
+	)
+	if unclean:
+		fail("NDS_ATTACHMENT_NOT_CLEAN", "All supporting documents must finish malware scanning before submission.")
 
 
 def _existing(idempotency_key: str) -> dict[str, Any] | None:
@@ -92,6 +158,7 @@ def _result(need, *, idempotent: bool = False, action: str = "", task: str = "")
 		"need": need.name,
 		"need_reference": need.need_reference,
 		"status": need.status,
+		"revision_no": need.revision_no,
 		"concurrency_token": need.concurrency_token,
 		"task": task or "",
 	}
@@ -131,30 +198,34 @@ def _next_reference(pe: str, financial_year: str) -> tuple[str, str]:
 		fail("NDS_CREATE_BUSY", "Departmental Need creation is busy. Try again.")
 	refs = frappe.get_all("Departmental Need", filters={"need_reference": ["like", f"{prefix}%"]}, pluck="need_reference")
 	seq = max([int(ref.rsplit("-", 1)[-1]) for ref in refs if ref.rsplit("-", 1)[-1].isdigit()] or [0]) + 1
-	return f"{prefix}{seq:03d}", lock_name
+	return f"{prefix}{seq:04d}", lock_name
 
 
 def create_need(*, procuring_entity: str, organisation_unit: str, target_financial_year: str, title: str,
-	business_justification: str, required_by_date: str, delivery_or_use_location: str, items,
-	idempotency_key: str, indicative_cost: float | None = None, currency: str | None = None,
+	business_justification: str = "", required_by_date: str | None = None, delivery_or_use_location: str = "",
+	items=None, idempotency_key: str, indicative_cost: float | None = None,
 	user: str | None = None) -> dict[str, Any]:
+	"""Save a Draft (NDS-FR-023): only context (PE/OU/target FY) and title need
+	be valid. Every submission-only field — justification, required-by date,
+	location, items, indicative cost — may be absent or incomplete; the full
+	§5 contract is enforced later, once only, at `submit_need`."""
 	if replay := _existing(idempotency_key):
 		return replay
 	principal = actor(user)
 	fy = selectable_financial_year(target_financial_year)
 	pe, ou = cstr(procuring_entity).strip(), cstr(organisation_unit).strip()
 	require_create(principal, pe, ou, fy["id"])
-	clean_items = _items(items)
-	if not cstr(title).strip() or not cstr(business_justification).strip() or not cstr(required_by_date).strip() or not cstr(delivery_or_use_location).strip():
-		fail("NDS_REQUIRED_FIELDS_MISSING", "Title, business justification, required-by date and location are required.")
+	clean_items = _items(items or [])
+	if not cstr(title).strip():
+		fail("NDS_REQUIRED_FIELDS_MISSING", "Title is required.")
 	reference, lock_name = _next_reference(pe, fy["id"])
 	try:
 		need = frappe.get_doc({
 			"doctype": "Departmental Need", "need_reference": reference, "title": cstr(title).strip(),
 			"procuring_entity": pe, "organisation_unit": ou, "target_financial_year": fy["id"],
 			"submitted_by": principal, "business_justification": cstr(business_justification).strip(),
-			"required_by_date": required_by_date, "delivery_or_use_location": cstr(delivery_or_use_location).strip(),
-			"indicative_cost": indicative_cost, "currency": currency, "status": STATE_DRAFT,
+			"required_by_date": required_by_date or None, "delivery_or_use_location": cstr(delivery_or_use_location).strip(),
+			"indicative_cost": indicative_cost, "currency": "KES", "status": STATE_DRAFT,
 			"concurrency_token": _token(),
 		}).insert(ignore_permissions=True)
 		for number, row in enumerate(clean_items, 1):
@@ -166,9 +237,12 @@ def create_need(*, procuring_entity: str, organisation_unit: str, target_financi
 		frappe.db.sql("select release_lock(%s)", lock_name)
 
 
-def update_need(*, need: str, title: str, business_justification: str, required_by_date: str,
-	delivery_or_use_location: str, items, expected_token: str, idempotency_key: str,
-	indicative_cost: float | None = None, currency: str | None = None, user: str | None = None) -> dict[str, Any]:
+def update_need(*, need: str, title: str, business_justification: str = "", required_by_date: str | None = None,
+	delivery_or_use_location: str = "", items=None, expected_token: str, idempotency_key: str,
+	indicative_cost: float | None = None, user: str | None = None) -> dict[str, Any]:
+	"""Save a partial Draft/Returned edit (NDS-FR-023) — only the title is
+	required; every submission-only field may be left blank/incomplete here,
+	same as `create_need`."""
 	if replay := _existing(idempotency_key):
 		return replay
 	principal = actor(user)
@@ -177,12 +251,14 @@ def update_need(*, need: str, title: str, business_justification: str, required_
 	require_owner_command(doc, principal, owner_capability("edit"))
 	if doc.status not in {STATE_DRAFT, STATE_RETURNED}:
 		fail("NDS_CONTENT_LOCKED", "Only Draft or Returned Departmental Needs may be edited.")
-	clean_items = _items(items)
-	for field, value in (("title", title), ("business_justification", business_justification), ("required_by_date", required_by_date), ("delivery_or_use_location", delivery_or_use_location)):
-		if not cstr(value).strip():
-			fail("NDS_REQUIRED_FIELDS_MISSING", "Title, business justification, required-by date and location are required.")
-		doc.set(field, cstr(value).strip())
-	doc.indicative_cost, doc.currency, doc.concurrency_token = indicative_cost, currency, _token()
+	clean_items = _items(items or [])
+	if not cstr(title).strip():
+		fail("NDS_REQUIRED_FIELDS_MISSING", "Title is required.")
+	doc.title = cstr(title).strip()
+	doc.business_justification = cstr(business_justification).strip()
+	doc.required_by_date = required_by_date or None
+	doc.delivery_or_use_location = cstr(delivery_or_use_location).strip()
+	doc.indicative_cost, doc.currency, doc.concurrency_token = indicative_cost, "KES", _token()
 	doc.save(ignore_permissions=True)
 	frappe.db.delete("Departmental Need Item", {"departmental_need": doc.name})
 	for number, row in enumerate(clean_items, 1):
@@ -204,10 +280,13 @@ def submit_need(*, need: str, expected_token: str, idempotency_key: str, user: s
 	require_owner_command(doc, principal, owner_capability("submit"))
 	if doc.status not in {STATE_DRAFT, STATE_RETURNED}:
 		fail("NDS_TRANSITION_NOT_ALLOWED", "Only Draft or Returned Departmental Needs may be submitted.")
+	_validate_submission(doc)
 	prior = doc.status
 	action = "Submit" if prior == STATE_DRAFT else "Resubmit"
 	iteration = frappe.db.count("Departmental Need Review", {"departmental_need": doc.name, "action": ["in", ["Submit", "Resubmit"]]}) + 1
 	def transition():
+		doc.revision_no = iteration
+		doc.submitted_at = now_datetime()
 		_set_state(doc, STATE_SUBMITTED)
 		return _record_event(doc, action=action, prior=prior, result=STATE_SUBMITTED, principal=principal, idempotency_key=idempotency_key)
 	_, task = execute_routed_transition(TaskSpec(

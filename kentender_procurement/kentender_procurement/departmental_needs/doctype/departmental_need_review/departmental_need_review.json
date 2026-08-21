@@ -42,7 +42,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Action",
-   "options": "Create\nUpdate\nSubmit\nResubmit\nReturn for correction\nAccept for planning\nDo not take forward\nWithdraw\nRequest withdrawal\nApprove withdrawal",
+   "options": "Create\nUpdate\nSubmit\nResubmit\nReturn for correction\nAccept for planning\nDo not take forward\nWithdraw\nRequest withdrawal\nApprove withdrawal\nAttach document\nRemove document",
    "read_only": 1,
    "reqd": 1
   },

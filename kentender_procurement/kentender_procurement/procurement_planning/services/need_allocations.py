@@ -10,7 +10,7 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_core.services.authorization_policy import ResourceContext, require_capability
-from kentender_procurement.departmental_needs.constants import CAP_ALLOCATE, CAP_PLANNING_READ, STATE_ACCEPTED
+from kentender_procurement.departmental_needs.constants import CAP_ALLOCATE, CAP_READ_ACCEPTED_FOR_PLANNING, STATE_ACCEPTED
 from kentender_procurement.procurement_planning.services._invariants import assert_version_concurrency, new_concurrency_token
 
 
@@ -25,7 +25,7 @@ def _plan_context(plan) -> ResourceContext:
 def list_eligible_needs(*, plan: str, user: str | None = None) -> dict[str, Any]:
 	principal = _actor(user)
 	plan_doc = frappe.get_doc("Procurement Plan", plan)
-	require_capability(principal, CAP_PLANNING_READ, _plan_context(plan_doc))
+	require_capability(principal, CAP_READ_ACCEPTED_FOR_PLANNING, _plan_context(plan_doc))
 	rows = frappe.get_all("Departmental Need", filters={
 		"procuring_entity": plan_doc.procuring_entity,
 		"target_financial_year": plan_doc.financial_year,
@@ -33,7 +33,7 @@ def list_eligible_needs(*, plan: str, user: str | None = None) -> dict[str, Any]
 	}, fields=["name", "need_reference", "title", "organisation_unit", "required_by_date"], order_by="need_reference asc")
 	out = []
 	for need in rows:
-		require_capability(principal, CAP_PLANNING_READ, ResourceContext("Departmental Need", need.name, plan_doc.procuring_entity, plan_doc.financial_year, need.organisation_unit))
+		require_capability(principal, CAP_READ_ACCEPTED_FOR_PLANNING, ResourceContext("Departmental Need", need.name, plan_doc.procuring_entity, plan_doc.financial_year, need.organisation_unit))
 		items = []
 		for item in frappe.get_all("Departmental Need Item", filters={"departmental_need": need.name}, fields=["name", "item_reference", "description", "indicative_quantity", "unit"], order_by="line_number asc"):
 			held = flt(frappe.db.sql("select coalesce(sum(allocated_quantity),0) from `tabPlan Need Allocation` where departmental_need_item=%s and status in ('Draft','Effective')", item.name)[0][0])
