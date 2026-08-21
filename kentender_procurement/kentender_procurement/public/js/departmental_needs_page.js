@@ -322,7 +322,11 @@
 		enterShell();
 		render(state, '<div class="kt-nds-root kt-stitch-canvas"><div class="kt-nds-loading">Loading Departmental Needs…</div></div>');
 		try {
-			const response = await frappe.call({ method: "kentender_procurement.departmental_needs.api.get_workspace", args: query() });
+			// silent: true — see departmental_needs_create_page.js's call() wrapper
+			// comment; without it a thrown exc_type with no error_handlers match
+			// also pops Frappe's own default frappe.msgprint(), on top of the
+			// "could not be loaded" empty state rendered below.
+			const response = await frappe.call({ method: "kentender_procurement.departmental_needs.api.get_workspace", args: query(), silent: true });
 			state.data = response.message || {};
 			render(state, state.data.ok ? readyMarkup(state.data) : blockedMarkup(state.data));
 			bind(state);
@@ -359,10 +363,14 @@
 	// logical routes, not literal URLs — every other module in this app maps
 	// its own logical routes the same way, e.g. Budget's /desk/budget-register).
 	function navigateForAction(code, needName) {
+		// Identifier is passed as a plain string so Frappe puts it in the URL
+		// path (route[1]) — an object arg only stashes on the in-memory-only
+		// frappe.route_options and is lost on refresh (see each destination
+		// page's own routeNeed()).
 		if (code === "create") { frappe.set_route("departmental-needs-new"); return; }
-		if (code === "edit") { frappe.set_route("departmental-needs-edit", { need: needName }); return; }
-		if (code === "review") { frappe.set_route("departmental-needs-review", { need: needName }); return; }
-		frappe.set_route("departmental-needs-detail", { need: needName });
+		if (code === "edit") { frappe.set_route("departmental-needs-edit", needName); return; }
+		if (code === "review") { frappe.set_route("departmental-needs-review", needName); return; }
+		frappe.set_route("departmental-needs-detail", needName);
 	}
 
 	function bind(state) {

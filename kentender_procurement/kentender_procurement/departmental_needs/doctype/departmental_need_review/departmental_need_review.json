@@ -13,8 +13,15 @@
   "result_state",
   "reason",
   "actor",
+  "effective_assignment",
+  "scope",
   "workflow_task",
   "occurred_at",
+  "request_id",
+  "source_ip",
+  "session_id",
+  "before_state_hash",
+  "after_state_hash",
   "idempotency_key",
   "fixture_namespace"
  ],
@@ -75,6 +82,18 @@
    "reqd": 1
   },
   {
+   "fieldname": "effective_assignment",
+   "fieldtype": "Data",
+   "label": "Effective Assignment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Scope",
+   "read_only": 1
+  },
+  {
    "fieldname": "workflow_task",
    "fieldtype": "Link",
    "label": "Workflow Task",
@@ -87,6 +106,36 @@
    "label": "Occurred At",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "request_id",
+   "fieldtype": "Data",
+   "label": "Request ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "Source IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "label": "Session ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "before_state_hash",
+   "fieldtype": "Data",
+   "label": "Before State Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "after_state_hash",
+   "fieldtype": "Data",
+   "label": "After State Hash",
+   "read_only": 1
   },
   {
    "fieldname": "idempotency_key",

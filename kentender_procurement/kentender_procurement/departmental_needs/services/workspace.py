@@ -87,7 +87,12 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 		task = _open_review_task(doc.name)
 		return [{"code": "review", "label": "Review", "task": (task or {}).get("name", ""), "task_token": (task or {}).get("concurrency_token", "")}]
 	if doc.submitted_by == principal and doc.status in {"Draft", STATE_RETURNED} and evaluate_capability(principal, CAP_EDIT_OWN, ctx).allowed:
-		return [{"code": "view", "label": "View"}, {"code": "edit", "label": "Edit"}]
+		# "edit" first: the workspace row button always wires to actions[0]
+		# (see departmental_needs_page.js's rowAction()) — a Draft/Returned
+		# need is by definition incomplete, so its own owner opening it from
+		# the workspace should land straight in the editable form, not a
+		# read-only preview requiring a second "Edit" click to get anywhere.
+		return [{"code": "edit", "label": "Edit"}, {"code": "view", "label": "View"}]
 	return [{"code": "view", "label": "View"}] if profile != "none" else []
 
 

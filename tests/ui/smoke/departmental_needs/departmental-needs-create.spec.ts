@@ -47,10 +47,11 @@ test.describe('NDS-UI-02A Create Departmental Need', () => {
 		const title = `UI smoke draft ${Date.now()}`;
 		await page.locator('#kt-nds-f-title').fill(title);
 		await page.getByRole('button', { name: 'Save draft' }).click();
-		// frappe.set_route(name, {need}) hands the value through frappe.route_options,
-		// not the URL query string — Frappe core's push_state() never appends it — so
-		// the target record is confirmed by its rendered content, not the URL.
-		await expect(page).toHaveURL(/\/departmental-needs-edit$/, { timeout: 15_000 });
+		// The need name lands in the URL path (route[1]), set via
+		// frappe.set_route("departmental-needs-edit", name) — a string arg,
+		// not {need: name} (which only stashes on the in-memory-only
+		// frappe.route_options and is lost on refresh).
+		await expect(page).toHaveURL(/\/departmental-needs-edit\/[^/?#]+$/, { timeout: 15_000 });
 		await expect(page.getByTestId('departmental-needs-edit')).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByRole('heading', { name: title })).toBeVisible();
 
@@ -67,7 +68,7 @@ test.describe('NDS-UI-02A Create Departmental Need', () => {
 		await editRoot.locator('[data-field="required_by_date"]').fill('2027-01-15');
 		await editRoot.locator('[data-field="delivery_or_use_location"]').fill('MOH headquarters');
 		await editRoot.getByRole('button', { name: /Resubmit for departmental review|Submit for departmental review/ }).click();
-		await expect(page).toHaveURL(/\/departmental-needs-detail$/, { timeout: 15_000 });
+		await expect(page).toHaveURL(/\/departmental-needs-detail\/[^/?#]+$/, { timeout: 15_000 });
 		await expect(page.getByTestId('departmental-needs-detail')).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByRole('heading', { name: title })).toBeVisible();
 		await expect(page.getByText('Submitted', { exact: true }).first()).toBeVisible();

@@ -3,6 +3,7 @@ import {
 	loginAsAdministrator,
 	loginAsBusinessApprover,
 	loginAsDemandRequester,
+	loginAsDepartmentalNeedsRequester,
 } from "../../helpers/auth";
 import {
 	loginAsMohPlanningOfficer,
@@ -175,6 +176,14 @@ const SURFACES = [
 		primaryCtaTestId: "kt-dem-ui04-support",
 	},
 	{
+		id: "departmental-needs-new",
+		route: "/desk/departmental-needs-new",
+		rootTestId: "departmental-needs-new",
+		liveAttr: "data-kt-nds-live",
+		primaryCtaTestId: "kt-nds-create-submit",
+		assertEditableInputs: true,
+	},
+	{
 		id: "planning-workspace",
 		route: "/desk/planning-workspace",
 		rootTestId: "kt-pln-ui01-root",
@@ -240,6 +249,11 @@ test.describe("Stitch Desk chrome baseline", () => {
 			if (surface.id === "demand-form" || surface.id === "demands-workspace") {
 				await page.context().clearCookies();
 				await loginAsDemandRequester(page);
+			}
+			// Administrator has no Departmental Needs operational assignment at all.
+			if (surface.id === "departmental-needs-new") {
+				await page.context().clearCookies();
+				await loginAsDepartmentalNeedsRequester(page);
 			}
 			let route = surface.route;
 			if (surface.id === "demand-review") {

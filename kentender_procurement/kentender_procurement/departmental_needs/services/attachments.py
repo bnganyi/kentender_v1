@@ -15,8 +15,10 @@ from kentender_procurement.departmental_needs.constants import STATE_DRAFT, STAT
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.lifecycle import (
 	_check_token,
+	_effective_assignment,
 	_locked_need,
 	_record_event,
+	_state_hash,
 	_token,
 )
 from kentender_procurement.departmental_needs.services.permissions import (
@@ -133,9 +135,11 @@ def upload_attachment(*, need: str, expected_token: str, idempotency_key: str, u
 	}).insert(ignore_permissions=True)
 	saved = save_file(f"{attachment.name}-{filename}", content, "Departmental Need Attachment", attachment.name, is_private=1)
 	attachment.db_set("file", saved.file_url, update_modified=False)
+	state_hash = _state_hash(doc)
 	_record_event(
 		doc, action="Attach document", prior=doc.status, result=doc.status, principal=principal,
 		idempotency_key=f"{key}:review", reason=filename,
+		before_hash=state_hash, effective_assignment=_effective_assignment(principal, owner_capability("edit"), doc),
 	)
 	return _attachment_result(attachment, reused=False)
 
@@ -161,6 +165,7 @@ def remove_attachment(*, need: str, attachment: str, expected_token: str, idempo
 		fail("NDS_NOT_FOUND", "Attachment not found on this Departmental Need.")
 	if not att.is_active:
 		fail("NDS_ATTACHMENT_ALREADY_REMOVED", "This attachment has already been removed.")
+	state_hash = _state_hash(doc)
 	att.is_active = 0
 	att.removed_by = principal
 	att.removed_at = now_datetime()
@@ -168,6 +173,7 @@ def remove_attachment(*, need: str, attachment: str, expected_token: str, idempo
 	_record_event(
 		doc, action="Remove document", prior=doc.status, result=doc.status, principal=principal,
 		idempotency_key=idempotency_key, reason=reason or att.original_filename,
+		before_hash=state_hash, effective_assignment=_effective_assignment(principal, owner_capability("edit"), doc),
 	)
 	return {"ok": True, "attachment": att.name, "is_active": False}
 

@@ -12,7 +12,10 @@ async function loginAsRequester(page: Page) {
 	);
 }
 
-const RETURNED_ROUTE = '/desk/departmental-needs-edit?need=NDS-MOH-2027-003';
+// Path segment (route[1]), not a query string — matches frappe.set_route's
+// actual URL shape (a string arg lands in the path; see routeNeed() in
+// departmental_needs_create_page.js).
+const RETURNED_ROUTE = '/desk/departmental-needs-edit/NDS-MOH-2027-003';
 const BENCH_ROOT = path.resolve(__dirname, '../../../../../..');
 const SITE = process.env.UI_SITE || 'kentender.midas.com';
 

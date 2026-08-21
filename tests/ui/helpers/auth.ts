@@ -74,6 +74,15 @@ export async function loginAsStrategyOfficer(page: Page) {
 	);
 }
 
+/** NDS-CHG-002 §10.1 — Departmental Need Requester (Grace Wanjiku). */
+export async function loginAsDepartmentalNeedsRequester(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_REQUESTER_USER || 'grace.wanjiku@moh.example.test',
+		process.env.UI_NDS_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 /** Contract v2.2 §7.5 — single-scope Demand Requester (Dr Miriam Njeri). */
 export async function loginAsDemandRequester(page: Page) {
 	await login(

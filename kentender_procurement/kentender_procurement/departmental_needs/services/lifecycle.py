@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 from uuid import uuid4
@@ -7,9 +8,11 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, flt, getdate, now_datetime
 
+from kentender_core.services.authorization_policy import evaluate_capability
 from kentender_core.services.workflow_routing import RoutingContext
 from kentender_core.services.workflow_tasks import TaskSpec, execute_routed_transition, transition_task
 from kentender_procurement.departmental_needs.constants import (
+	CAP_CREATE,
 	CAP_REVIEW,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
@@ -23,6 +26,7 @@ from kentender_procurement.departmental_needs.constants import (
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.context import selectable_financial_year
+from kentender_procurement.departmental_needs.services.notifications import notify_need_transition
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	owner_capability,
@@ -134,7 +138,50 @@ def _review_reference() -> str:
 	return f"NDR-{uuid4().hex.upper()}"
 
 
-def _record_event(need, *, action: str, prior: str, result: str, principal: str, idempotency_key: str, reason: str = "", task: str = ""):
+def _state_hash(need) -> str:
+	"""§8.4's before/after state hash — a stable digest of the fields that
+	actually define the Need's meaningful state, not a full row dump."""
+	payload = {
+		"status": cstr(need.status), "revision_no": need.revision_no, "title": cstr(need.title),
+		"business_justification": cstr(need.business_justification), "required_by_date": cstr(need.required_by_date),
+		"delivery_or_use_location": cstr(need.delivery_or_use_location), "indicative_cost": cstr(need.indicative_cost),
+		"concurrency_token": cstr(need.concurrency_token),
+	}
+	return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
+def _request_context() -> dict[str, str]:
+	"""§8.4's request identifier / source IP / session — read from the active
+	HTTP request when one exists (a real command call); falls back to a
+	generated identifier and blank IP/session for console/background/test
+	contexts, where there genuinely is no HTTP request to attribute."""
+	request_id = ""
+	try:
+		request_id = cstr(frappe.get_request_header("X-Frappe-Request-Id") or "")
+	except Exception:
+		request_id = ""
+	if not request_id:
+		request_id = uuid4().hex
+	return {
+		"request_id": request_id,
+		"source_ip": cstr(getattr(frappe.local, "request_ip", "") or ""),
+		"session_id": cstr(getattr(frappe.session, "sid", "") or ""),
+	}
+
+
+def _effective_assignment(principal: str, capability: str, need) -> str:
+	"""§8.4's "effective assignment" — the governed assignment(s) that actually
+	authorized this command. Command enforcement already ran (require_capability/
+	transition_task) before this is called; re-evaluating here is read-only and
+	side-effect-free, purely to capture the assignment identifiers for the audit
+	record without changing the enforcement call sites' return contracts."""
+	decision = evaluate_capability(principal, capability, resource(need))
+	return ",".join(decision.assignment_ids)
+
+
+def _record_event(need, *, action: str, prior: str, result: str, principal: str, idempotency_key: str, reason: str = "", task: str = "",
+	before_hash: str = "", effective_assignment: str = ""):
+	ctx = _request_context()
 	return frappe.get_doc({
 		"doctype": "Departmental Need Review",
 		"review_reference": _review_reference(),
@@ -144,8 +191,15 @@ def _record_event(need, *, action: str, prior: str, result: str, principal: str,
 		"result_state": result,
 		"reason": cstr(reason).strip(),
 		"actor": principal,
+		"effective_assignment": effective_assignment,
+		"scope": f"{need.procuring_entity}/{need.organisation_unit}/{need.target_financial_year}",
 		"workflow_task": task or None,
 		"occurred_at": now_datetime(),
+		"request_id": ctx["request_id"],
+		"source_ip": ctx["source_ip"],
+		"session_id": ctx["session_id"],
+		"before_state_hash": before_hash,
+		"after_state_hash": _state_hash(need),
 		"idempotency_key": cstr(idempotency_key).strip(),
 	}).insert(ignore_permissions=True)
 
@@ -231,7 +285,8 @@ def create_need(*, procuring_entity: str, organisation_unit: str, target_financi
 		for number, row in enumerate(clean_items, 1):
 			frappe.get_doc({"doctype": "Departmental Need Item", "item_reference": f"{reference}-{number:03d}",
 				"departmental_need": need.name, "line_number": number, **row}).insert(ignore_permissions=True)
-		_record_event(need, action="Create", prior=STATE_DRAFT, result=STATE_DRAFT, principal=principal, idempotency_key=idempotency_key)
+		_record_event(need, action="Create", prior=STATE_DRAFT, result=STATE_DRAFT, principal=principal, idempotency_key=idempotency_key,
+			effective_assignment=_effective_assignment(principal, CAP_CREATE, need))
 		return _result(need, action="Create")
 	finally:
 		frappe.db.sql("select release_lock(%s)", lock_name)
@@ -247,6 +302,7 @@ def update_need(*, need: str, title: str, business_justification: str = "", requ
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	require_owner_command(doc, principal, owner_capability("edit"))
 	if doc.status not in {STATE_DRAFT, STATE_RETURNED}:
@@ -263,7 +319,8 @@ def update_need(*, need: str, title: str, business_justification: str = "", requ
 	frappe.db.delete("Departmental Need Item", {"departmental_need": doc.name})
 	for number, row in enumerate(clean_items, 1):
 		frappe.get_doc({"doctype": "Departmental Need Item", "item_reference": f"{doc.need_reference}-{number:03d}", "departmental_need": doc.name, "line_number": number, **row}).insert(ignore_permissions=True)
-	_record_event(doc, action="Update", prior=doc.status, result=doc.status, principal=principal, idempotency_key=idempotency_key)
+	_record_event(doc, action="Update", prior=doc.status, result=doc.status, principal=principal, idempotency_key=idempotency_key,
+		before_hash=before_hash, effective_assignment=_effective_assignment(principal, owner_capability("edit"), doc))
 	return _result(doc, action="Update")
 
 
@@ -276,6 +333,7 @@ def submit_need(*, need: str, expected_token: str, idempotency_key: str, user: s
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	require_owner_command(doc, principal, owner_capability("submit"))
 	if doc.status not in {STATE_DRAFT, STATE_RETURNED}:
@@ -288,7 +346,8 @@ def submit_need(*, need: str, expected_token: str, idempotency_key: str, user: s
 		doc.revision_no = iteration
 		doc.submitted_at = now_datetime()
 		_set_state(doc, STATE_SUBMITTED)
-		return _record_event(doc, action=action, prior=prior, result=STATE_SUBMITTED, principal=principal, idempotency_key=idempotency_key)
+		return _record_event(doc, action=action, prior=prior, result=STATE_SUBMITTED, principal=principal, idempotency_key=idempotency_key,
+			before_hash=before_hash, effective_assignment=_effective_assignment(principal, owner_capability("submit"), doc))
 	_, task = execute_routed_transition(TaskSpec(
 		routing=_route(doc, TASK_DEPARTMENT_REVIEW), subject_type="Departmental Need", subject_id=doc.name,
 		idempotency_key=f"nds:{doc.name}:department-review:{iteration}", task_iteration=iteration,
@@ -296,6 +355,7 @@ def submit_need(*, need: str, expected_token: str, idempotency_key: str, user: s
 	event = frappe.db.get_value("Departmental Need Review", {"idempotency_key": idempotency_key}, "name")
 	if event:
 		frappe.db.set_value("Departmental Need Review", event, "workflow_task", task.name, update_modified=False)
+	notify_need_transition(doc, action=action)
 	return _result(doc, action=action, task=task.name)
 
 
@@ -305,9 +365,17 @@ def review_need(*, need: str, decision: str, task: str, expected_token: str, tas
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	if doc.status != STATE_SUBMITTED:
 		fail("NDS_TRANSITION_NOT_ALLOWED", "Only a Submitted Departmental Need may be reviewed.")
+	# NDS-FR-031/AC-028 — maker-checker: the submitter may never decide their own
+	# Need. This is an unconditional business rule, not delegated to the generic
+	# (admin-configured) Separation of Duties Rule mechanism, which has no rows
+	# for departmental_needs.submit/review and so would silently allow this if
+	# relied on alone.
+	if cstr(doc.submitted_by) == principal:
+		fail("NDS_SELF_REVIEW_NOT_ALLOWED", "You cannot make the departmental decision on your own submitted Need.")
 	choices = {
 		"return": ("Return for correction", STATE_RETURNED, "Returned"),
 		"accept": ("Accept for planning", STATE_ACCEPTED, "Completed"),
@@ -316,12 +384,20 @@ def review_need(*, need: str, decision: str, task: str, expected_token: str, tas
 	if decision not in choices:
 		fail("NDS_REVIEW_DECISION_INVALID", "Select return, accept or decline.")
 	action, target, task_state = choices[decision]
-	if decision in {"return", "decline"} and not cstr(reason).strip():
-		fail("NDS_REASON_REQUIRED", "A reason is required for this decision.")
+	if decision in {"return", "decline"}:
+		# NDS-FR-032/035 — a mandatory 20-1,000 character reason. The reason
+		# dialog enforces this client-side (minlength/maxlength), but that is
+		# not itself authorization: a direct API call must be rejected the
+		# same way, not merely rely on the UI never sending a short one.
+		reason_length = len(cstr(reason).strip())
+		if not (20 <= reason_length <= 1000):
+			fail("NDS_REASON_INVALID", "A reason of 20-1,000 characters is required for this decision.")
 	_require_task_subject(task, doc.name, TASK_DEPARTMENT_REVIEW)
 	transition_task(task, actor=principal, capability=CAP_REVIEW, target_state=task_state, expected_token=task_token)
 	_set_state(doc, target)
-	_record_event(doc, action=action, prior=STATE_SUBMITTED, result=target, principal=principal, reason=reason, task=task, idempotency_key=idempotency_key)
+	_record_event(doc, action=action, prior=STATE_SUBMITTED, result=target, principal=principal, reason=reason, task=task, idempotency_key=idempotency_key,
+		before_hash=before_hash, effective_assignment=_effective_assignment(principal, CAP_REVIEW, doc))
+	notify_need_transition(doc, action=action)
 	return _result(doc, action=action, task=task)
 
 
@@ -330,13 +406,15 @@ def withdraw_need(*, need: str, expected_token: str, idempotency_key: str, reaso
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	require_owner_command(doc, principal, owner_capability("submit"))
 	if doc.status not in {STATE_DRAFT, STATE_RETURNED}:
 		fail("NDS_WITHDRAWAL_REQUEST_REQUIRED", "An accepted Departmental Need requires a governed withdrawal request.")
 	prior = doc.status
 	_set_state(doc, STATE_WITHDRAWN)
-	_record_event(doc, action="Withdraw", prior=prior, result=STATE_WITHDRAWN, principal=principal, reason=reason, idempotency_key=idempotency_key)
+	_record_event(doc, action="Withdraw", prior=prior, result=STATE_WITHDRAWN, principal=principal, reason=reason, idempotency_key=idempotency_key,
+		before_hash=before_hash, effective_assignment=_effective_assignment(principal, owner_capability("submit"), doc))
 	return _result(doc, action="Withdraw")
 
 
@@ -345,6 +423,7 @@ def request_withdrawal(*, need: str, expected_token: str, idempotency_key: str, 
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	require_owner_command(doc, principal, owner_capability("submit"))
 	if doc.status != STATE_ACCEPTED:
@@ -355,7 +434,8 @@ def request_withdrawal(*, need: str, expected_token: str, idempotency_key: str, 
 	def transition():
 		doc.concurrency_token = _token()
 		doc.save(ignore_permissions=True)
-		return _record_event(doc, action="Request withdrawal", prior=STATE_ACCEPTED, result=STATE_ACCEPTED, principal=principal, reason=reason, idempotency_key=idempotency_key)
+		return _record_event(doc, action="Request withdrawal", prior=STATE_ACCEPTED, result=STATE_ACCEPTED, principal=principal, reason=reason, idempotency_key=idempotency_key,
+			before_hash=before_hash, effective_assignment=_effective_assignment(principal, owner_capability("submit"), doc))
 	_, task = execute_routed_transition(TaskSpec(
 		routing=_route(doc, TASK_WITHDRAWAL_REVIEW), subject_type="Departmental Need", subject_id=doc.name,
 		idempotency_key=f"nds:{doc.name}:withdrawal-review:{iteration}", task_iteration=iteration,
@@ -371,6 +451,7 @@ def approve_withdrawal(*, need: str, task: str, expected_token: str, task_token:
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
+	before_hash = _state_hash(doc)
 	_check_token(doc, expected_token)
 	if doc.status != STATE_ACCEPTED:
 		fail("NDS_TRANSITION_NOT_ALLOWED", "Only an Accepted for planning Need may complete governed withdrawal.")
@@ -381,5 +462,6 @@ def approve_withdrawal(*, need: str, task: str, expected_token: str, task_token:
 	_require_task_subject(task, doc.name, TASK_WITHDRAWAL_REVIEW)
 	transition_task(task, actor=principal, capability=CAP_REVIEW, target_state="Completed", expected_token=task_token)
 	_set_state(doc, STATE_WITHDRAWN)
-	_record_event(doc, action="Approve withdrawal", prior=STATE_ACCEPTED, result=STATE_WITHDRAWN, principal=principal, task=task, idempotency_key=idempotency_key)
+	_record_event(doc, action="Approve withdrawal", prior=STATE_ACCEPTED, result=STATE_WITHDRAWN, principal=principal, task=task, idempotency_key=idempotency_key,
+		before_hash=before_hash, effective_assignment=_effective_assignment(principal, CAP_REVIEW, doc))
 	return _result(doc, action="Approve withdrawal", task=task)

@@ -15,6 +15,13 @@ frappe.provide("kentender_procurement.departmental_needs");
 				args: args || {},
 				freeze: false,
 				error_handlers: {},
+				// frappe.request.cleanup() auto-shows _server_messages via its own
+				// frappe.msgprint() popup whenever no handler is registered for the
+				// thrown exc_type — error_handlers:{} never matches this module's
+				// own DepartmentalNeedError, so that popup fired *in addition to*
+				// the toast below. `silent` is the dedicated option for suppressing
+				// it; it does not affect this callback/extractMessage() at all.
+				silent: true,
 				callback: function (r) {
 					if (r && r.exc) {
 						reject(extractMessage(r));
@@ -172,6 +179,12 @@ frappe.provide("kentender_procurement.departmental_needs");
 		);
 	}
 
+	// Also used for the reason-less "accept" confirmation — frappe.confirm()
+	// (a frappe.ui.Dialog wrapper) renders outside .kt-stitch-canvas and
+	// never picks up the module's CSS, so every prior "Accept" click showed
+	// the unstyled default Frappe modal. Reusing this dialog for accept too
+	// (message shown, reason field group hidden) keeps one dialog instance
+	// instead of a second copy-pasted template.
 	function reasonDialogTemplate() {
 		return (
 			'<div class="kt-nds-reason-dialog" data-reason-dialog hidden>' +
@@ -179,9 +192,12 @@ frappe.provide("kentender_procurement.departmental_needs");
 			'<div class="kt-nds-reason-dialog-card">' +
 			'<div class="kt-nds-reason-dialog-header"><h3 class="kt-nds-reason-dialog-title" data-reason-dialog-title></h3>' +
 			'<button type="button" class="kt-nds-reason-dialog-close" data-reason-dialog-cancel aria-label="' + esc(__("Close")) + '"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>' +
-			'<div class="kt-nds-reason-dialog-body"><label class="kt-nds-field-label" for="kt-nds-reason-text" data-reason-dialog-label></label>' +
+			'<div class="kt-nds-reason-dialog-body">' +
+			'<p class="kt-nds-reason-dialog-hint" data-reason-dialog-message hidden></p>' +
+			'<div data-reason-field-group><label class="kt-nds-field-label" for="kt-nds-reason-text" data-reason-dialog-label></label>' +
 			'<textarea id="kt-nds-reason-text" class="kt-nds-input" rows="4" data-reason-text minlength="20" maxlength="1000"></textarea>' +
 			'<p class="kt-nds-reason-dialog-hint">' + esc(__("20-1,000 characters.")) + "</p></div>" +
+			"</div>" +
 			'<div class="kt-nds-reason-dialog-footer"><button type="button" class="kt-nds-btn-outline" data-reason-dialog-cancel>' + esc(__("Cancel")) + "</button>" +
 			'<button type="button" class="kt-nds-btn-primary" data-reason-dialog-confirm>' + esc(__("Confirm")) + "</button></div>" +
 			"</div></div>"
@@ -190,13 +206,20 @@ frappe.provide("kentender_procurement.departmental_needs");
 
 	function openReasonDialog($body, decision) {
 		var $dialog = $body.find("[data-reason-dialog]");
-		var titles = { return: __("Return for correction"), decline: __("Do not take forward") };
+		var titles = { return: __("Return for correction"), decline: __("Do not take forward"), accept: __("Accept for planning") };
 		var labels = { return: __("Reason for return"), decline: __("Reason for declining") };
+		var needsReason = decision !== "accept";
 		$dialog.find("[data-reason-dialog-title]").text(titles[decision]);
-		$dialog.find("[data-reason-dialog-label]").text(labels[decision]);
-		$dialog.find("[data-reason-text]").val("");
+		$dialog.find("[data-reason-field-group]").toggle(needsReason);
+		if (needsReason) {
+			$dialog.find("[data-reason-dialog-label]").text(labels[decision]);
+			$dialog.find("[data-reason-text]").val("");
+			$dialog.find("[data-reason-dialog-message]").attr("hidden", "hidden");
+		} else {
+			$dialog.find("[data-reason-dialog-message]").text(__("Accept this Departmental Need for planning?")).removeAttr("hidden");
+		}
 		$dialog.attr("data-decision-pending", decision).removeAttr("hidden");
-		$dialog.find("[data-reason-text]").trigger("focus");
+		(needsReason ? $dialog.find("[data-reason-text]") : $dialog.find("[data-reason-dialog-confirm]")).trigger("focus");
 	}
 
 	function closeReasonDialog($body) {
@@ -220,14 +243,7 @@ frappe.provide("kentender_procurement.departmental_needs");
 	function bind(state, $body) {
 		$body.off(".ktNdsReview");
 		$body.on("click.ktNdsReview", "[data-decision]", function () {
-			var decision = this.getAttribute("data-decision");
-			if (decision === "accept") {
-				frappe.confirm(__("Accept this Departmental Need for planning?"), function () {
-					submitDecision(state, $body, "accept");
-				});
-				return;
-			}
-			openReasonDialog($body, decision);
+			openReasonDialog($body, this.getAttribute("data-decision"));
 		});
 		$body.on("click.ktNdsReview", "[data-reason-dialog-cancel], [data-reason-dialog-backdrop]", function () {
 			closeReasonDialog($body);
@@ -235,6 +251,11 @@ frappe.provide("kentender_procurement.departmental_needs");
 		$body.on("click.ktNdsReview", "[data-reason-dialog-confirm]", function () {
 			var $dialog = $body.find("[data-reason-dialog]");
 			var decision = $dialog.attr("data-decision-pending");
+			if (decision === "accept") {
+				closeReasonDialog($body);
+				submitDecision(state, $body, "accept");
+				return;
+			}
 			var reason = ($dialog.find("[data-reason-text]").val() || "").trim();
 			if (reason.length < 20) {
 				frappe.show_alert({ message: __("Reason must be at least 20 characters."), indicator: "orange" });
@@ -293,16 +314,13 @@ frappe.provide("kentender_procurement.departmental_needs");
 	}
 
 	function routeNeed() {
-		// frappe.set_route(name, {need}) stashes the value on frappe.route_options
-		// rather than the URL query string (Frappe core's push_state() never
-		// appends it) — direct navigation (bookmark, page.goto) still relies on
-		// the URL, so fall back to that.
-		if (frappe.route_options && frappe.route_options.need) {
-			var value = frappe.route_options.need;
-			delete frappe.route_options.need;
-			return value;
-		}
-		return new URLSearchParams(window.location.search).get("need") || "";
+		// The need name lives in the URL path itself (route[1]), set via
+		// frappe.set_route("departmental-needs-review", name) — a plain
+		// string arg, not {need: name}. An object arg only stashes onto the
+		// in-memory-only frappe.route_options and never lands in the path,
+		// so a refresh had nothing to recover the identifier from.
+		var route = frappe.get_route() || [];
+		return (route.length > 1 && route[1]) ? String(route[1]).trim() : "";
 	}
 
 	function load(wrapper) {

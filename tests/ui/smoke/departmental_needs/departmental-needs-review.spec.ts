@@ -20,7 +20,10 @@ async function loginAsRequester(page: Page) {
 	);
 }
 
-const SUBMITTED_ROUTE = '/desk/departmental-needs-review?need=NDS-MOH-2027-002';
+// Path segment (route[1]), not a query string — matches frappe.set_route's
+// actual URL shape (a string arg lands in the path; see routeNeed() in
+// departmental_needs_review_page.js).
+const SUBMITTED_ROUTE = '/desk/departmental-needs-review/NDS-MOH-2027-002';
 // Unscoped (no financial_year filter) so a freshly created throwaway Need —
 // which lands in whatever fiscal year is actually open today, not the
 // 2027/28 fixture year — is still listed.
@@ -86,7 +89,7 @@ test.describe('NDS-UI-02C Departmental review', () => {
 		await page.locator('[data-field="required_by_date"]').fill('2027-01-15');
 		await page.locator('[data-field="delivery_or_use_location"]').fill('MOH headquarters');
 		await page.getByRole('button', { name: /Submit for departmental review/ }).click();
-		await expect(page).toHaveURL(/\/departmental-needs-detail$/, { timeout: 15_000 });
+		await expect(page).toHaveURL(/\/departmental-needs-detail\/[^/?#]+$/, { timeout: 15_000 });
 
 		await loginAsReviewer(page);
 		await page.goto(WORKSPACE_ALL_YEARS_ROUTE, { waitUntil: 'domcontentloaded' });

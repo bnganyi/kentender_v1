@@ -20,6 +20,13 @@ frappe.provide("kentender_procurement.departmental_needs");
 				args: args || {},
 				freeze: false,
 				error_handlers: {},
+				// frappe.request.cleanup() auto-shows _server_messages via its own
+				// frappe.msgprint() popup whenever no handler is registered for the
+				// thrown exc_type — error_handlers:{} never matches this module's
+				// own DepartmentalNeedError, so that popup fired *in addition to*
+				// the toast below. `silent` is the dedicated option for suppressing
+				// it; it does not affect this callback/extractMessage() at all.
+				silent: true,
 				callback: function (r) {
 					if (r && r.exc) {
 						reject(extractMessage(r));
@@ -113,7 +120,11 @@ frappe.provide("kentender_procurement.departmental_needs");
 			'<input type="number" min="0" step="any" class="kt-nds-cell-input kt-nds-cell-input--qty" data-item-field="indicative_quantity" value="' + esc(row.indicative_quantity) + '">' +
 			"</td>" +
 			"<td>" +
-			'<select class="kt-nds-cell-input" data-item-field="unit_code"><option value="">' + esc(__("Unit")) + "</option>" + unitOptions(row.unit_code) + "</select>" +
+			// Placeholder option text must not read like a real selection —
+			// it previously said "Unit" (same word as the column header), so
+			// an unselected row visually looked filled in and only failed
+			// at submission ("must have ... a unit") with no visible cause.
+			'<select class="kt-nds-cell-input" data-item-field="unit_code"><option value="" disabled' + (row.unit_code ? "" : " selected") + ">" + esc(__("Select unit")) + "</option>" + unitOptions(row.unit_code) + "</select>" +
 			(showOther
 				? '<div class="kt-nds-item-other-unit"><input type="text" class="kt-nds-cell-input" data-item-field="other_unit" value="' + esc(row.other_unit) + '" placeholder="' + esc(__("Specify unit")) + '"></div>'
 				: "") +
@@ -163,7 +174,7 @@ frappe.provide("kentender_procurement.departmental_needs");
 		var isEdit = state.mode === "edit";
 		var c = state.context;
 		return (
-			'<div class="kt-nds-root kt-stitch-canvas" data-testid="' + (isEdit ? "departmental-needs-edit" : "departmental-needs-new") + '">' +
+			'<div class="kt-nds-root kt-stitch-canvas" data-kt-nds-live="1" data-testid="' + (isEdit ? "departmental-needs-edit" : "departmental-needs-new") + '">' +
 			'<div class="kt-nds-form-page">' +
 			'<div class="kt-nds-page-header">' +
 			(isEdit
@@ -173,12 +184,15 @@ frappe.provide("kentender_procurement.departmental_needs");
 					esc(c.procuring_entity_label) + " | " + esc(c.organisation_unit_label) + " | " + esc(__("Planning year")) + " " + esc(c.financial_year) + "</p>"
 				: '<h1 class="kt-nds-title">' + esc(__("Create departmental need")) + "</h1>" +
 					'<p class="kt-nds-subtitle">' + esc(__("Describe what your department expects to require for the selected planning year.")) + "</p>" +
-					'<div class="kt-nds-context">' +
-					"<span><span class=\"kt-nds-context-label\">" + esc(__("Procuring Entity:")) + "</span> " + esc(c.procuring_entity_label) + "</span>" +
-					'<span class="kt-nds-context-sep" aria-hidden="true">|</span>' +
-					"<span><span class=\"kt-nds-context-label\">" + esc(__("Department:")) + "</span> " + esc(c.organisation_unit_label) + "</span>" +
-					'<span class="kt-nds-context-sep" aria-hidden="true">|</span>' +
-					"<span><span class=\"kt-nds-context-label\">" + esc(__("Planning year:")) + "</span> " + esc(c.financial_year) + "</span>" +
+					// NDS-UI-02A's context strip also carries a "Change" link — omitted
+					// here since the Create page has no context-selection UI to link to
+					// yet (a real, separate gap: resolve_creation_context()'s own
+					// requires_selection signal is never read by this page — see
+					// NDS-CHG-002 Phase 9 coverage map, FR-021).
+					'<div class="kt-nds-create-context">' +
+					'<div class="kt-nds-create-context-item"><span class="kt-nds-create-context-label">' + esc(__("Procuring Entity")) + '</span><span class="kt-nds-create-context-value">' + esc(c.procuring_entity_label) + "</span></div>" +
+					'<div class="kt-nds-create-context-item"><span class="kt-nds-create-context-label">' + esc(__("Department")) + '</span><span class="kt-nds-create-context-value">' + esc(c.organisation_unit_label) + "</span></div>" +
+					'<div class="kt-nds-create-context-item"><span class="kt-nds-create-context-label">' + esc(__("Planning Year")) + '</span><span class="kt-nds-create-context-value">' + esc(c.financial_year) + "</span></div>" +
 					"</div>") +
 			"</div>" +
 			(isEdit ? returnNoticeHtml(state.returnNotice) : "") +
@@ -204,8 +218,8 @@ frappe.provide("kentender_procurement.departmental_needs");
 			'<div class="kt-nds-grid-2">' +
 			'<section class="kt-nds-block"><div class="kt-nds-block-head"><span class="material-symbols-outlined" aria-hidden="true">event_available</span><h3 class="kt-nds-block-title">3. ' + esc(__("Timing & Location")) + "</h3></div>" +
 			'<div class="kt-nds-block-body">' +
-			'<div class="kt-nds-field"><label class="kt-nds-field-label">' + esc(__("Required by")) + '</label><div class="kt-nds-date-field">' +
-			'<input type="date" class="kt-nds-input" data-field="required_by_date" value="' + esc(f.required_by_date) + '"><span class="material-symbols-outlined" aria-hidden="true">calendar_today</span></div>' + fieldError(state, "required_by_date") + "</div>" +
+			'<div class="kt-nds-field"><label class="kt-nds-field-label">' + esc(__("Required by")) + '</label>' +
+			'<input type="date" class="kt-nds-input" data-field="required_by_date" value="' + esc(f.required_by_date) + '">' + fieldError(state, "required_by_date") + "</div>" +
 			'<div class="kt-nds-field"><label class="kt-nds-field-label">' + esc(__("Delivery or use location")) + '</label>' +
 			'<textarea class="kt-nds-input" rows="2" data-field="delivery_or_use_location">' + esc(f.delivery_or_use_location) + "</textarea>" + fieldError(state, "delivery_or_use_location") + "</div>" +
 			"</div></section>" +
@@ -224,7 +238,27 @@ frappe.provide("kentender_procurement.departmental_needs");
 			"</div></div>" +
 			"</div>" +
 			footerMarkup(state) +
+			confirmDialogTemplate() +
 			"</div>"
+		);
+	}
+
+	// frappe.confirm() (a frappe.ui.Dialog wrapper) renders outside
+	// .kt-stitch-canvas and never picks up this module's CSS — the withdraw
+	// confirmation showed up as the unstyled default Frappe modal. Same
+	// structure as departmental_needs_review_page.js's reason dialog, minus
+	// the reason field, so it inherits the design system's dialog chrome.
+	function confirmDialogTemplate() {
+		return (
+			'<div class="kt-nds-reason-dialog" data-confirm-dialog hidden>' +
+			'<div class="kt-nds-reason-dialog-backdrop" data-confirm-dialog-backdrop></div>' +
+			'<div class="kt-nds-reason-dialog-card">' +
+			'<div class="kt-nds-reason-dialog-header"><h3 class="kt-nds-reason-dialog-title">' + esc(__("Withdraw need")) + "</h3>" +
+			'<button type="button" class="kt-nds-reason-dialog-close" data-confirm-dialog-cancel aria-label="' + esc(__("Close")) + '"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>' +
+			'<div class="kt-nds-reason-dialog-body"><p class="kt-nds-reason-dialog-hint">' + esc(__("Withdraw this Departmental Need? This cannot be undone.")) + "</p></div>" +
+			'<div class="kt-nds-reason-dialog-footer"><button type="button" class="kt-nds-btn-outline" data-confirm-dialog-cancel>' + esc(__("Cancel")) + "</button>" +
+			'<button type="button" class="kt-nds-btn-danger-outline" data-confirm-dialog-confirm>' + esc(__("Withdraw need")) + "</button></div>" +
+			"</div></div>"
 		);
 	}
 
@@ -237,7 +271,7 @@ frappe.provide("kentender_procurement.departmental_needs");
 				: '<button type="button" class="kt-nds-btn-danger-outline" data-action="cancel">' + esc(__("Cancel")) + "</button>") +
 			'<div class="kt-nds-form-footer-right">' +
 			'<button type="button" class="kt-nds-btn-outline" data-action="save">' + esc(isEdit ? __("Save changes") : __("Save draft")) + "</button>" +
-			'<button type="button" class="kt-nds-btn-primary" data-action="submit">' +
+			'<button type="button" class="kt-nds-btn-primary" data-action="submit" data-testid="kt-nds-create-submit">' +
 			esc(isEdit ? __("Resubmit for departmental review") : __("Submit for departmental review")) +
 			'<span class="material-symbols-outlined" aria-hidden="true">send</span></button>' +
 			"</div></footer>"
@@ -389,13 +423,10 @@ frappe.provide("kentender_procurement.departmental_needs");
 				if (thenSubmit) return doSubmit(state, $body, { skipSync: true });
 				frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
 				if (wasCreate) {
-					// First save of a new draft — move to the edit page's route.
-					// Once there, state.mode becomes "edit" and further saves stay
-					// put: re-navigating here on every save would silently drop the
-					// need from the URL (frappe.set_route() only carries it through
-					// frappe.route_options, not the URL — see routeNeed() above), so
-					// a page reload afterward would have nothing to reload against.
-					return frappe.set_route("departmental-needs-edit", { need: result.need });
+					// First save of a new draft — move to the edit page's route,
+					// with the need name as a string arg so it lands in the URL
+					// path (route[1]) and survives a refresh — see routeNeed().
+					return frappe.set_route("departmental-needs-edit", result.need);
 				}
 				state.mode = "edit";
 			})
@@ -418,7 +449,7 @@ frappe.provide("kentender_procurement.departmental_needs");
 		return call("submit_need", { need: state.need, expected_token: state.token, idempotency_key: idempotencyKey("nds-submit") })
 			.then(function (result) {
 				frappe.show_alert({ message: __("Submitted for departmental review"), indicator: "green" });
-				return frappe.set_route("departmental-needs-detail", { need: result.need });
+				return frappe.set_route("departmental-needs-detail", result.need);
 			})
 			.catch(function (err) {
 				frappe.show_alert({ message: err.message || __("Could not submit"), indicator: "red" });
@@ -538,9 +569,18 @@ frappe.provide("kentender_procurement.departmental_needs");
 			frappe.set_route("departmental-needs");
 		});
 		$body.on("click.ktNdsForm", '[data-action="withdraw"]', function () {
-			frappe.confirm(__("Withdraw this Departmental Need? This cannot be undone."), function () {
-				doWithdraw(state);
-			});
+			$body.find("[data-confirm-dialog]").removeAttr("hidden");
+			$body.find("[data-confirm-dialog-confirm]").trigger("focus");
+		});
+		$body.on("click.ktNdsForm", "[data-confirm-dialog-cancel], [data-confirm-dialog-backdrop]", function () {
+			$body.find("[data-confirm-dialog]").attr("hidden", "hidden");
+		});
+		$body.on("click.ktNdsForm", "[data-confirm-dialog-confirm]", function () {
+			$body.find("[data-confirm-dialog]").attr("hidden", "hidden");
+			doWithdraw(state);
+		});
+		$body.on("keydown.ktNdsForm", "[data-confirm-dialog]", function (event) {
+			if (event.key === "Escape") $body.find("[data-confirm-dialog]").attr("hidden", "hidden");
 		});
 	}
 
@@ -576,16 +616,18 @@ frappe.provide("kentender_procurement.departmental_needs");
 	}
 
 	function routeNeed() {
-		// frappe.set_route(name, {need}) stashes the value on frappe.route_options
-		// rather than the URL query string (Frappe core's push_state() never
-		// appends it) — direct navigation (bookmark, page.goto) still relies on
-		// the URL, so fall back to that.
-		if (frappe.route_options && frappe.route_options.need) {
-			var value = frappe.route_options.need;
-			delete frappe.route_options.need;
-			return value;
-		}
-		return new URLSearchParams(window.location.search).get("need") || "";
+		// The need name lives in the URL path itself (route[1]), set via
+		// frappe.set_route("departmental-needs-edit", name) — a plain string
+		// arg, NOT {need: name}. Passing an object stashes it on the
+		// in-memory-only frappe.route_options instead of the URL (confirmed:
+		// Frappe's push_state() never serializes an object arg into the
+		// path), so a page refresh had nothing to recover it from and the
+		// page rendered "Departmental Need not found." String args, by
+		// contrast, are appended as real path segments and survive a
+		// refresh — see kentender_budget's budget_workspace_shell.js
+		// (budgetCodeFromRoute) for the same, already-working convention.
+		var route = frappe.get_route() || [];
+		return (route.length > 1 && route[1]) ? String(route[1]).trim() : "";
 	}
 
 	function query() {

@@ -17,6 +17,13 @@ frappe.provide("kentender_procurement.departmental_needs");
 				args: args || {},
 				freeze: false,
 				error_handlers: {},
+				// frappe.request.cleanup() auto-shows _server_messages via its own
+				// frappe.msgprint() popup whenever no handler is registered for the
+				// thrown exc_type — error_handlers:{} never matches this module's
+				// own DepartmentalNeedError, so that popup fired *in addition to*
+				// the toast below. `silent` is the dedicated option for suppressing
+				// it; it does not affect this callback/extractMessage() at all.
+				silent: true,
 				callback: function (r) {
 					if (r && r.exc) {
 						reject(extractMessage(r));
@@ -179,16 +186,13 @@ frappe.provide("kentender_procurement.departmental_needs");
 	}
 
 	function routeNeed() {
-		// frappe.set_route(name, {need}) stashes the value on frappe.route_options
-		// rather than the URL query string (Frappe core's push_state() never
-		// appends it) — direct navigation (bookmark, page.goto) still relies on
-		// the URL, so fall back to that.
-		if (frappe.route_options && frappe.route_options.need) {
-			var value = frappe.route_options.need;
-			delete frappe.route_options.need;
-			return value;
-		}
-		return new URLSearchParams(window.location.search).get("need") || "";
+		// The need name lives in the URL path itself (route[1]), set via
+		// frappe.set_route("departmental-needs-detail", name) — a plain
+		// string arg, not {need: name}. An object arg only stashes onto the
+		// in-memory-only frappe.route_options and never lands in the path,
+		// so a refresh had nothing to recover the identifier from.
+		var route = frappe.get_route() || [];
+		return (route.length > 1 && route[1]) ? String(route[1]).trim() : "";
 	}
 
 	function load(wrapper) {
@@ -200,7 +204,7 @@ frappe.provide("kentender_procurement.departmental_needs");
 				enterShell(data.need.title);
 				var body = jQuery(render(wrapper.ktNdsDetail.page, detailMarkup(data)));
 				body.on("click.ktNdsDetail", "[data-edit]", function () {
-					frappe.set_route("departmental-needs-edit", { need: data.need.name });
+					frappe.set_route("departmental-needs-edit", data.need.name);
 				});
 				body.on("click.ktNdsDetail", "[data-download-attachment]", function () {
 					window.open(

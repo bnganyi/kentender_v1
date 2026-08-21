@@ -861,6 +861,97 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
+		/* Departmental Needs (NDS-CHG-002) — previously unregistered here, so
+		 * onRouteChange's resolveFromRoute() found no match on every route
+		 * settle and called leaveNative() unconditionally, including right
+		 * after a page's own enterShell() had just correctly entered native
+		 * mode (observed on browser back-navigation, where onRouteChange's
+		 * frappe.router "change" listener fires after the target page's own
+		 * on_page_show). Registering strips document.body of kt-cl-shell/
+		 * kt-cl-shell-native on every such route settle, which is why the
+		 * workspace's "Create need" button (and the rest of its chrome)
+		 * rendered as an unstyled black default button after navigating
+		 * away and back. Each page still calls its own enterShell() with a
+		 * dynamic per-record breadcrumb leaf (matching every other module's
+		 * dual-registration pattern, e.g. Budget/Strategy) — the static
+		 * trail below is only the fallback shown on the rare race where
+		 * onRouteChange's repaint wins. */
+		"NDS-UI-01": {
+			id: "NDS-UI-01",
+			label: "Departmental Needs",
+			routePrefixes: ["departmental-needs"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental Needs"),
+				__("Capture and review departmental requirements for procurement planning."),
+				[crumb(__("Home"), ["Workspaces", "Procurement Home"]), crumb(__("Departmental Needs"))],
+				[]
+			),
+		},
+		"NDS-UI-02A": {
+			id: "NDS-UI-02A",
+			label: "Create Departmental Need",
+			routePrefixes: ["departmental-needs-new"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Create departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Create need")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-02B": {
+			id: "NDS-UI-02B",
+			label: "Edit Departmental Need",
+			routePrefixes: ["departmental-needs-edit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Edit departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Edit need")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-02C": {
+			id: "NDS-UI-02C",
+			label: "Departmental Need Review",
+			routePrefixes: ["departmental-needs-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental need review"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Review")),
+				],
+				[]
+			),
+		},
+		"NDS-UI-03": {
+			id: "NDS-UI-03",
+			label: "Departmental Need Detail",
+			routePrefixes: ["departmental-needs-detail"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Departmental need"),
+				"",
+				[
+					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
+					crumb(__("Departmental Needs"), ["departmental-needs"]),
+					crumb(__("Need")),
+				],
+				[]
+			),
+		},
 	};
 
 	function routeKey(route) {

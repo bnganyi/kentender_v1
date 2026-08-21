@@ -172,6 +172,15 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"headline_selector": "[data-testid='departmental-needs-workspace'] h1",
 	},
 	{
+		"id": "departmental-needs-new",
+		"app": "kentender_procurement",
+		"fixture_rel": "public/js/departmental_needs_create_page.js",
+		"desk_route": "departmental-needs-new",
+		"primary_cta_testid": "kt-nds-create-submit",
+		"select_filter_attr": "",
+		"headline_selector": "[data-testid='departmental-needs-new'] h1",
+	},
+	{
 		"id": "planning-workspace",
 		"app": "kentender_procurement",
 		"fixture_rel": "public/js/planning_ui_fixtures/workspace.js",
