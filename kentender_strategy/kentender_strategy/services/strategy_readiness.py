@@ -1,373 +1,81 @@
 # Copyright (c) 2026, KenTender and contributors
-"""REQ §13 plan readiness engine."""
+"""STR-CHG-001 §6.2/§13.3/STR-BR-012 plan version submission readiness."""
 
 from __future__ import annotations
 
 import frappe
 from frappe import _
 
-from kentender_strategy.services.strategy_permissions import (
-	can_approve_plan,
-	can_review_plan,
-	can_submit_plan,
-)
 
-
-def _chrome_effective_period(start, end) -> str | None:
-	"""Compact period for shared plan chrome (keep local — avoid contracts circular import)."""
-	if not start or not end:
-		return None
-	sd = frappe.utils.getdate(start)
-	ed = frappe.utils.getdate(end)
-	return f"{sd.strftime('%d-%b-%Y')} - {ed.strftime('%d-%b-%Y')}"
-
-
-def get_plan_readiness(plan_name: str) -> dict:
-	plan = frappe.get_doc("Strategic Plan", plan_name)
-	issues: list[dict] = []
-
-	programmes = frappe.get_all(
-		"Strategy Programme",
-		filters={"plan_version": plan_name},
-		fields=["name", "programme_code", "title", "responsible_function"],
-		order_by="order_index asc",
-	)
-	if not programmes:
-		issues.append(
-			_issue(
-				"Structure",
-				"blocker",
-				plan_name,
-				plan.plan_code,
-				"No Programme",
-				"Add at least one Programme",
-				"strategy-plan-structure",
-			)
-		)
-
-	objectives = frappe.get_all(
-		"Strategic Objective",
-		filters={"plan_version": plan_name},
-		fields=["name", "objective_code", "title", "programme", "responsible_function"],
-	)
-	outcomes = frappe.get_all(
-		"Strategic Outcome",
-		filters={"plan_version": plan_name},
-		fields=["name", "outcome_code", "title", "programme", "responsible_function"],
-	)
-	indicators = frappe.get_all(
-		"Performance Indicator",
-		filters={"plan_version": plan_name},
-		fields=[
-			"name",
-			"indicator_code",
-			"title",
-			"strategic_objective",
-			"strategic_outcome",
-			"definition",
-			"measurement_type",
-			"unit",
-			"data_source",
-			"responsible_function",
-		],
-	)
-	targets = frappe.get_all(
-		"Performance Target",
-		filters={"plan_version": plan_name},
-		fields=[
-			"name",
-			"target_code",
-			"title",
-			"performance_indicator",
-			"baseline_status",
-			"baseline_numeric",
-			"baseline_text",
-			"baseline_as_of",
-			"baseline_source",
-			"period_start",
-			"period_end",
-			"benefit_owner",
-			"measurement_verifier",
-			"target_numeric",
-			"target_text",
-			"target_date",
-		],
-	)
-
-	outcomes_by_prog: dict[str, list] = {}
-	for o in outcomes:
-		outcomes_by_prog.setdefault(o.programme, []).append(o)
-	objectives_by_prog: dict[str, list] = {}
-	for obj in objectives:
-		objectives_by_prog.setdefault(obj.programme, []).append(obj)
-
-	for p in programmes:
-		if not outcomes_by_prog.get(p.name) and not objectives_by_prog.get(p.name):
-			issues.append(
-				_issue(
-					"Structure",
-					"blocker",
-					p.name,
-					p.programme_code,
-					"Programme without an Outcome or Objective",
-					f"{p.title} has no Strategic Outcome or Strategic Objective",
-					"strategy-plan-structure",
-				)
-			)
-		if not p.responsible_function:
-			issues.append(
-				_issue(
-					"Governance",
-					"blocker",
-					p.name,
-					p.programme_code,
-					"Missing responsible function",
-					f"{p.title} needs a responsible function",
-					"strategy-plan-structure",
-				)
-			)
-
-	inds_by_out = {}
-	inds_by_obj = {}
-	for i in indicators:
-		if i.strategic_objective:
-			inds_by_obj.setdefault(i.strategic_objective, []).append(i)
-		else:
-			inds_by_out.setdefault(i.strategic_outcome, []).append(i)
-	tgts_by_ind = {}
-	for t in targets:
-		tgts_by_ind.setdefault(t.performance_indicator, []).append(t)
-
-	for o in outcomes:
-		if not inds_by_out.get(o.name):
-			issues.append(
-				_issue(
-					"Structure",
-					"blocker",
-					o.name,
-					o.outcome_code,
-					"Outcome without an Indicator",
-					f"{o.title} has no Performance Indicator",
-					"strategy-plan-structure",
-				)
-			)
-
-	for obj in objectives:
-		if not inds_by_obj.get(obj.name):
-			issues.append(
-				_issue(
-					"Structure",
-					"blocker",
-					obj.name,
-					obj.objective_code,
-					"Objective without an Indicator",
-					f"{obj.title} has no Performance Indicator",
-					"strategy-plan-structure",
-				)
-			)
-
-	for i in indicators:
-		if not tgts_by_ind.get(i.name):
-			issues.append(
-				_issue(
-					"Targets",
-					"blocker",
-					i.name,
-					i.indicator_code,
-					"Indicator without a Target",
-					f"{i.title} has no Performance Target",
-					"strategy-plan-structure",
-				)
-			)
-		if not i.definition or not i.data_source or not i.responsible_function:
-			issues.append(
-				_issue(
-					"Targets",
-					"blocker",
-					i.name,
-					i.indicator_code,
-					"Incomplete indicator definition",
-					f"{i.title} is missing required indicator fields",
-					"strategy-plan-structure",
-				)
-			)
-		if i.measurement_type not in ("Milestone", "Boolean") and not i.unit:
-			issues.append(
-				_issue(
-					"Targets",
-					"blocker",
-					i.name,
-					i.indicator_code,
-					"Incomplete indicator definition",
-					f"{i.title} requires a unit",
-					"strategy-plan-structure",
-				)
-			)
-
-	for t in targets:
-		incomplete = False
-		if t.baseline_status == "Known" and (
-			t.baseline_as_of is None
-			or not t.baseline_source
-			or (t.baseline_numeric is None and not t.baseline_text)
-		):
-			incomplete = True
-		if not t.period_start or not t.period_end or not t.benefit_owner or not t.measurement_verifier:
-			incomplete = True
-		if (
-			t.target_numeric is None
-			and not t.target_text
-			and t.target_date is None
-		):
-			incomplete = True
-		if incomplete:
-			issues.append(
-				_issue(
-					"Targets",
-					"blocker",
-					t.name,
-					t.target_code,
-					"Incomplete target, baseline or period",
-					f"{t.title} is incomplete",
-					"strategy-plan-structure",
-				)
-			)
-
-	# code uniqueness within plan
-	_check_unique_codes(issues, "Strategy Programme", plan_name, "programme_code")
-	_check_unique_codes(issues, "Strategic Objective", plan_name, "objective_code")
-	_check_unique_codes(issues, "Strategic Outcome", plan_name, "outcome_code")
-
-	commitments = frappe.get_all(
-		"Strategy Value Commitment",
-		filters={"plan_version": plan_name},
-		fields=["name", "rationale", "responsible_owner"],
-	)
-	for c in commitments:
-		links = frappe.get_all("Strategy Value Commitment Link", filters={"parent": c.name})
-		if not c.rationale or not c.responsible_owner:
-			issues.append(
-				_issue(
-					"Value Commitments",
-					"blocker",
-					c.name,
-					c.name,
-					"Strategy Value Commitment without rationale, owner or linked outcome/target",
-					"Complete commitment rationale and owner",
-					"strategy-value-commitments",
-				)
-			)
-		elif not links:
-			issues.append(
-				_issue(
-					"Value Commitments",
-					"blocker",
-					c.name,
-					c.name,
-					"Strategy Value Commitment without rationale, owner or linked outcome/target",
-					"Link the commitment to an outcome or target",
-					"strategy-value-commitments",
-				)
-			)
-	if plan.start_date and plan.end_date and plan.start_date > plan.end_date:
-		issues.append(
-			_issue(
-				"Governance",
-				"blocker",
-				plan.name,
-				plan.plan_code,
-				"Invalid effective period",
-				"Correct the plan effective period",
-				"strategy-plan-overview",
-			)
-		)
-
-	grouped = {"Structure": [], "Targets": [], "Value Commitments": [], "Governance": []}
-	for issue in issues:
-		grouped.setdefault(issue["group"], []).append(issue)
-
-	blockers = [i for i in issues if i["severity"] == "blocker"]
-	ready = len(blockers) == 0
-	return {
-		"plan": {
-			**_ref(plan.name, plan.plan_code, plan.title),
-			"status": plan.status,
-			"version_number": plan.version_number,
-			"start_date": str(plan.start_date) if plan.start_date else None,
-			"end_date": str(plan.end_date) if plan.end_date else None,
-			"effective_period_label": _chrome_effective_period(plan.start_date, plan.end_date),
-		},
-		"status": plan.status,
-		"ready": ready,
-		"blocker_count": len(blockers),
-		"warning_count": len([i for i in issues if i["severity"] == "warning"]),
-		"issues": issues,
-		"grouped": grouped,
-		"return_reason": plan.get("return_reason") or "",
-		"allowed_actions": _allowed_actions(plan.status, ready),
-	}
-
-
-def _allowed_actions(status: str, ready: bool) -> list[str]:
-	"""§11.1 actions visible for current user (server still enforces on transition)."""
-	actions: list[str] = []
-	if status == "Draft" and ready and can_submit_plan():
-		actions.append("Submit")
-	elif status == "Returned" and ready and can_submit_plan():
-		actions.append("Resubmit")
-	elif status == "Submitted":
-		if can_review_plan():
-			actions.append("Return for correction")
-		if can_approve_plan():
-			actions.append("Approve")
-	elif status == "Approved" and can_approve_plan():
-		actions.append("Activate")
-	return actions
-
-
-def assert_plan_ready_for_submit(plan_name: str) -> None:
-	result = get_plan_readiness(plan_name)
-	if not result["ready"]:
-		frappe.throw(
-			_("Plan is not ready for submission ({0} blockers)").format(result["blocker_count"])
-		)
-
-
-def _check_unique_codes(issues, doctype, plan_name, code_field):
+def _node_type_counts(plan_version_id: str) -> dict[str, int]:
 	rows = frappe.get_all(
-		doctype, filters={"plan_version": plan_name}, fields=["name", code_field]
+		"Strategy Node",
+		filters={"plan_version_id": plan_version_id},
+		fields=["node_type"],
 	)
-	seen: dict[str, str] = {}
+	counts: dict[str, int] = {}
 	for r in rows:
-		code = r.get(code_field)
-		if not code:
-			continue
-		if code in seen:
-			issues.append(
-				_issue(
-					"Structure",
-					"blocker",
-					r.name,
-					code,
-					"Invalid or duplicate code",
-					f"Duplicate code {code}",
-					"strategy-plan-structure",
-				)
-			)
-		seen[code] = r.name
+		counts[r.node_type] = counts.get(r.node_type, 0) + 1
+	return counts
 
 
-def _issue(group, severity, record_id, code, title, message, edit_location):
-	return {
-		"group": group,
-		"severity": severity,
-		"record_id": record_id,
-		"code": code,
-		"title": title,
-		"message": message,
-		"edit_location": edit_location,
-	}
+def _indicator_and_target_counts(plan_version_id: str) -> tuple[int, int]:
+	indicator_count = frappe.db.count("Performance Indicator", {"plan_version_id": plan_version_id})
+	target_count = frappe.db.sql(
+		"""
+		select count(*) from `tabPerformance Target` t
+		inner join `tabPerformance Indicator` i on i.name = t.indicator_id
+		where i.plan_version_id = %s
+		""",
+		(plan_version_id,),
+	)[0][0]
+	return indicator_count, int(target_count or 0)
 
 
-def _ref(id_, code, name):
-	return {"id": id_, "code": code, "name": name}
+def get_version_readiness(plan_version_id: str) -> dict:
+	"""STR-DES-06's Readiness card: 4 named checks, ready when all are Ready."""
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	plan = frappe.get_doc("Strategic Plan", version.plan_id)
+
+	identity_ready = bool(
+		plan.title and plan.procuring_entity_id and plan.period_start and plan.period_end
+	)
+
+	counts = _node_type_counts(plan_version_id)
+	hierarchy_ready = counts.get("Pillar", 0) > 0 and (
+		counts.get("Strategic Objective", 0) > 0 or counts.get("Strategic Outcome", 0) > 0
+	)
+
+	indicator_count, target_count = _indicator_and_target_counts(plan_version_id)
+	content_ready = (
+		counts.get("Strategic Objective", 0) > 0
+		and counts.get("Strategic Outcome", 0) > 0
+		and indicator_count > 0
+		and target_count > 0
+	)
+
+	checks = [
+		{"check": "Plan identity complete", "ready": identity_ready},
+		{"check": "Hierarchy valid", "ready": hierarchy_ready},
+		{"check": "Indicators and targets complete", "ready": content_ready},
+		# The authoritative overlap guard runs transactionally at Activate
+		# (STR-BR-004); this is a non-blocking preview only.
+		{"check": "Active-plan overlap", "ready": True},
+	]
+	return {"ready": all(c["ready"] for c in checks), "checks": checks}
+
+
+# Back-compat name for the one remaining legacy caller (api.strategy_api.get_plan_readiness_api,
+# itself Phase 4/7 rebuild scope) — same function, new schema-appropriate body.
+get_plan_readiness = get_version_readiness
+
+
+def assert_version_ready_for_submit(plan_version_id: str) -> None:
+	result = get_version_readiness(plan_version_id)
+	if not result["ready"]:
+		failing = ", ".join(c["check"] for c in result["checks"] if not c["ready"])
+		frappe.throw(
+			_("Not ready for submission: {0}").format(failing),
+			frappe.ValidationError,
+			title="STRATEGY_NOT_READY",
+		)

@@ -1,5 +1,13 @@
 # Copyright (c) 2026, KenTender and contributors
-"""REQ §11 state transitions (server authoritative)."""
+"""STR-CHG-001 §6.1 plan-version lifecycle — table-driven, modeled on
+kentender_core.services.reference_data_transitions.py's pattern (CFG-CHG-002).
+
+Governs Strategic Plan Version only. Strategy Node/Performance Indicator/
+Performance Target inherit their plan version's status (§6.1: "There is no
+separate lifecycle for hierarchy, indicator or target records") and are
+gated directly by strategy_domain_guards._assert_version_editable, not by
+anything in this module.
+"""
 
 from __future__ import annotations
 
@@ -7,203 +15,204 @@ import frappe
 from frappe import _
 
 from kentender_strategy.services.strategy_audit import record_event
-from kentender_strategy.services.strategy_permissions import (
-	can_approve_plan,
-	can_review_plan,
-	can_submit_measurement,
-	can_submit_plan,
-	can_verify_measurement,
+from kentender_strategy.services.strategy_authorization import (
+	CAP_APPROVE,
+	CAP_AUTHOR,
+	CAP_REVIEW,
+	has_plan_version_capability,
+	require_plan_version_capability,
 )
-from kentender_strategy.services.strategy_readiness import assert_plan_ready_for_submit
+from kentender_strategy.services.strategy_readiness import assert_version_ready_for_submit
 
-
-PLAN_TRANSITIONS = {
-	("Draft", "Submit"): "Submitted",
-	("Returned", "Resubmit"): "Submitted",
-	("Submitted", "Return for correction"): "Returned",
-	("Submitted", "Approve"): "Approved",
-	("Approved", "Activate"): "Active",
-	("Active", "Supersede"): "Superseded",
-	("Active", "Archive"): "Archived",
-	("Approved", "Withdraw approval"): "Draft",
+# (status, action) -> (next_status, capability). Matches the 9-row §6.1 table
+# exactly except "Activate successor" (system-driven, inside _activate below,
+# not a user-invoked action key).
+TRANSITIONS: dict[tuple[str, str], tuple[str, str]] = {
+	("Draft", "Submit for review"): ("In Review", CAP_AUTHOR),
+	("Returned", "Revise"): ("Draft", CAP_AUTHOR),
+	("In Review", "Return"): ("Returned", CAP_REVIEW),
+	("In Review", "Recommend for approval"): ("Awaiting Approval", CAP_REVIEW),
+	("Awaiting Approval", "Return"): ("Returned", CAP_APPROVE),
+	("Awaiting Approval", "Approve"): ("Approved", CAP_APPROVE),
+	("Approved", "Activate"): ("Active", CAP_APPROVE),
+	("Superseded", "Archive"): ("Archived", CAP_APPROVE),
 }
 
-MEASUREMENT_TRANSITIONS = {
-	("Draft", "Submit"): "Submitted",
-	("Returned", "Resubmit"): "Submitted",
-	("Submitted", "Return"): "Returned",
-	("Submitted", "Verify"): "Verified",
-	("Submitted", "Reject"): "Rejected",
-}
+# status -> [(action, capability), ...] — the same table, read the other way,
+# for server-computed available_actions (AGENTS.md §5: "server-computed
+# action order is part of the contract").
+_ACTIONS_BY_STATUS: dict[str, list[tuple[str, str]]] = {}
+for (_status, _action), (_next, _cap) in TRANSITIONS.items():
+	_ACTIONS_BY_STATUS.setdefault(_status, []).append((_action, _cap))
+
+RETURN_REASON_MIN = 10
+RETURN_REASON_MAX = 500
 
 
-def transition_plan(plan_name: str, action: str, reason: str | None = None) -> dict:
-	doc = frappe.get_doc("Strategic Plan", plan_name)
-	key = (doc.status, action)
-	if key not in PLAN_TRANSITIONS:
-		frappe.throw(_("Invalid plan transition: {0} / {1}").format(doc.status, action))
-	next_status = PLAN_TRANSITIONS[key]
-
-	if action in ("Submit", "Resubmit"):
-		if not can_submit_plan():
-			frappe.throw(_("Only Strategy Manager may submit plans"), frappe.PermissionError)
-		assert_plan_ready_for_submit(plan_name)
-		doc.submitted_by = frappe.session.user
-		doc.submitted_at = frappe.utils.now_datetime()
-		doc.return_reason = ""
-	elif action == "Return for correction":
-		if not can_review_plan():
-			frappe.throw(_("Not permitted to return plans"), frappe.PermissionError)
-		if not reason:
-			frappe.throw(_("Return reason is required"))
-		doc.return_reason = reason
-	elif action == "Approve":
-		if not can_approve_plan():
-			frappe.throw(_("Only Planning Authority may approve"), frappe.PermissionError)
-		if doc.submitted_by == frappe.session.user and frappe.session.user != "Administrator":
-			frappe.throw(_("Approver must not be the submitter"))
-		doc.approved_by = frappe.session.user
-		doc.approved_at = frappe.utils.now_datetime()
-	elif action == "Activate":
-		if not can_approve_plan():
-			frappe.throw(_("Only Planning Authority may activate"), frappe.PermissionError)
-		_activate_plan(doc)
-		next_status = "Active"
-	elif action in ("Archive", "Withdraw approval", "Supersede"):
-		if not can_approve_plan():
-			frappe.throw(_("Only Planning Authority may perform this action"), frappe.PermissionError)
-		if action != "Supersede" and not reason:
-			frappe.throw(_("Reason is required"))
-
-	prior = doc.status
-	if action != "Activate":
-		doc.status = next_status
-		doc.save(ignore_permissions=True)
-	record_event(
-		entity_type="Strategic Plan",
-		entity_name=doc.name,
-		event_type=action,
-		prior_state=prior,
-		new_state=doc.status,
-		reason=reason,
-		plan_version=doc.name,
-	)
-	from kentender_strategy.services.strategy_notification_service import notify_plan_transition
-
-	notify_plan_transition(doc, action)
-	return {"name": doc.name, "status": doc.status, "plan_code": doc.plan_code}
+def _check_expected_version(doc, expected_version: str | None) -> None:
+	"""BR-016 optimistic concurrency, using `modified` as the version token —
+	same mechanism as reference_data_transitions.py."""
+	if expected_version is None:
+		return
+	if str(doc.modified) != str(expected_version):
+		frappe.throw(
+			_("This plan version has changed since it was loaded."),
+			frappe.ValidationError,
+			title="STRATEGY_STALE_WRITE",
+		)
 
 
-def _activate_plan(doc) -> None:
-	from kentender_strategy.services.strategy_domain_guards import (
-		normalize_plan_scope,
-		validate_plan_activation,
+def available_actions(version, user: str | None = None) -> list[str]:
+	if isinstance(version, str):
+		version = frappe.get_doc("Strategic Plan Version", version)
+	user = user or frappe.session.user
+	return [
+		action
+		for action, capability in _ACTIONS_BY_STATUS.get(version.status, [])
+		if has_plan_version_capability(user, capability, version)
+	]
+
+
+def _version_payload(doc) -> dict:
+	return {
+		"name": doc.name,
+		"plan_version_id": doc.plan_version_id,
+		"plan_id": doc.plan_id,
+		"status": doc.status,
+		"expected_version": str(doc.modified),
+		"allowed_actions": available_actions(doc),
+	}
+
+
+def _overlaps(start_a, end_a, start_b, end_b) -> bool:
+	if not start_a or not end_a or not start_b or not end_b:
+		return False
+	return (
+		frappe.utils.getdate(start_a) <= frappe.utils.getdate(end_b)
+		and frappe.utils.getdate(start_b) <= frappe.utils.getdate(end_a)
 	)
 
-	normalize_plan_scope(doc)
-	validate_plan_activation(doc)
 
-	# Atomically supersede other Active version of same plan_code+entity
-	others = frappe.get_all(
+def _assert_no_primary_overlap(doc) -> None:
+	"""STR-BR-004: two Primary plans for the same PE/OU shall not both be
+	Active for overlapping dates."""
+	plan = frappe.get_doc("Strategic Plan", doc.plan_id)
+	if plan.plan_role != "Primary":
+		return
+	other_plans = frappe.get_all(
 		"Strategic Plan",
 		filters={
-			"plan_code": doc.plan_code,
-			"procuring_entity": doc.procuring_entity,
-			"status": "Active",
-			"name": ["!=", doc.name],
+			"procuring_entity_id": plan.procuring_entity_id,
+			"plan_role": "Primary",
+			"name": ["!=", plan.name],
 		},
+		fields=["name", "owner_org_unit_id"],
+	)
+	for other_plan in other_plans:
+		# PE-wide (no OU) and a specific-OU plan are treated as non-overlapping
+		# scopes unless both are PE-wide or both name the same OU.
+		if (plan.owner_org_unit_id or other_plan.owner_org_unit_id) and (
+			plan.owner_org_unit_id != other_plan.owner_org_unit_id
+		):
+			continue
+		active_versions = frappe.get_all(
+			"Strategic Plan Version",
+			filters={"plan_id": other_plan.name, "status": "Active"},
+			fields=["name", "effective_from", "effective_to"],
+		)
+		for v in active_versions:
+			if _overlaps(doc.effective_from, doc.effective_to, v.effective_from, v.effective_to):
+				frappe.throw(
+					_("Activation would create overlapping Active Primary authority"),
+					frappe.ValidationError,
+					title="STRATEGY_OVERLAP",
+				)
+
+
+def _activate(doc) -> None:
+	"""Revalidates and atomically activates: supersedes the plan's own
+	previous Active version (successor case) and rejects cross-plan Primary
+	overlap (STR-BR-004), inside the request's own DB transaction."""
+	_assert_no_primary_overlap(doc)
+
+	current_active = frappe.get_all(
+		"Strategic Plan Version",
+		filters={"plan_id": doc.plan_id, "status": "Active", "name": ["!=", doc.name]},
 		pluck="name",
 	)
-	from kentender_strategy.services.strategy_notification_service import notify_plan_transition
-
-	for name in others:
-		other = frappe.get_doc("Strategic Plan", name)
+	for name in current_active:
+		other = frappe.get_doc("Strategic Plan Version", name)
 		other.status = "Superseded"
 		other.save(ignore_permissions=True)
 		record_event(
-			entity_type="Strategic Plan",
+			entity_type="Strategic Plan Version",
 			entity_name=other.name,
-			event_type="Supersede",
+			event_type="Activate successor",
 			prior_state="Active",
 			new_state="Superseded",
 			plan_version=other.name,
 			summary=f"Superseded by {doc.name}",
 		)
-		notify_plan_transition(other, "Supersede")
+
 	doc.status = "Active"
-	doc.activated_by = frappe.session.user
-	doc.activated_at = frappe.utils.now_datetime()
 	doc.save(ignore_permissions=True)
 
 
-def transition_measurement(
-	name: str,
+def transition_plan_version(
+	plan_version_id: str,
 	action: str,
+	*,
 	reason: str | None = None,
-	authorised_exception: bool | int | str | None = None,
-	exception_reason: str | None = None,
+	expected_version: str | None = None,
+	correlation_id: str | None = None,
 ) -> dict:
-	from kentender_strategy.services.strategy_measurement import derive_measurement_result
+	doc = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	_check_expected_version(doc, expected_version)
 
-	doc = frappe.get_doc("Performance Measurement", name)
-	key = (doc.workflow_status, action)
-	if key not in MEASUREMENT_TRANSITIONS:
-		frappe.throw(_("Invalid measurement transition: {0} / {1}").format(doc.workflow_status, action))
-	if action in ("Submit", "Resubmit"):
-		if not can_submit_measurement():
-			frappe.throw(_("Only Strategy Officer may submit measurements"), frappe.PermissionError)
-		derive_measurement_result(doc)
-		doc.submitted_by = frappe.session.user
-		doc.submitted_at = frappe.utils.now_datetime()
-	elif action in ("Return", "Verify", "Reject"):
-		if not can_verify_measurement():
-			frappe.throw(_("Only Strategy Manager may verify measurements"), frappe.PermissionError)
-		if doc.submitted_by == frappe.session.user and frappe.session.user != "Administrator":
-			frappe.throw(_("Verifier must not be the submitter"), frappe.PermissionError)
-		if action in ("Return", "Reject") and not reason:
-			frappe.throw(_("Reason is required"))
-		doc.verification_comment = reason or doc.verification_comment
-		if action == "Verify":
-			doc.verified_by = frappe.session.user
-			doc.verified_at = frappe.utils.now_datetime()
-			derive_measurement_result(doc)
-			exc_flag = _as_bool(authorised_exception)
-			exc_reason = (exception_reason or "").strip()
-			if doc.result_status == "Off track":
-				if exc_flag:
-					if not exc_reason:
-						frappe.throw(_("Exception reason is required for an authorised exception"))
-					doc.authorised_exception = 1
-					doc.exception_reason = exc_reason
-				else:
-					doc.authorised_exception = 0
-					doc.exception_reason = None
-			else:
-				doc.authorised_exception = 0
-				doc.exception_reason = None
-	prior = doc.workflow_status
-	doc.workflow_status = MEASUREMENT_TRANSITIONS[key]
-	doc.save(ignore_permissions=True)
+	key = (doc.status, action)
+	if key not in TRANSITIONS:
+		frappe.throw(
+			_("Invalid transition: {0} / {1}").format(doc.status, action),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+	next_status, capability = TRANSITIONS[key]
+
+	require_plan_version_capability(
+		frappe.session.user, capability, doc, correlation_id=correlation_id or ""
+	)
+
+	if action == "Submit for review":
+		assert_version_ready_for_submit(doc.name)
+
+	if action == "Return":
+		reason = (reason or "").strip()
+		if not (RETURN_REASON_MIN <= len(reason) <= RETURN_REASON_MAX):
+			frappe.throw(
+				_("Return reason must be {0}-{1} characters").format(RETURN_REASON_MIN, RETURN_REASON_MAX),
+				frappe.ValidationError,
+				title="STRATEGY_NOT_READY",
+			)
+		doc.return_reason = reason
+
+	prior_status = doc.status
+	if action == "Activate":
+		_activate(doc)
+	else:
+		doc.status = next_status
+		if action == "Revise":
+			doc.return_reason = ""
+		doc.save(ignore_permissions=True)
+
 	record_event(
-		entity_type="Performance Measurement",
+		entity_type="Strategic Plan Version",
 		entity_name=doc.name,
 		event_type=action,
-		prior_state=prior,
-		new_state=doc.workflow_status,
+		prior_state=prior_status,
+		new_state=doc.status,
 		reason=reason,
-		plan_version=doc.plan_version,
+		plan_version=doc.name,
+		correlation_id=correlation_id,
+		capability=capability,
 	)
-	from kentender_strategy.services.strategy_notification_service import (
-		notify_measurement_transition,
-	)
-
-	notify_measurement_transition(doc, action)
-	return {"name": doc.name, "workflow_status": doc.workflow_status, "result_status": doc.result_status}
-
-
-def _as_bool(value) -> bool:
-	if value in (True, 1, "1", "true", "True", "yes", "Yes"):
-		return True
-	return False
-
-
+	return _version_payload(doc)

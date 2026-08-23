@@ -2,19 +2,22 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "hash",
- "creation": "2026-08-02 00:00:00.000000",
+ "creation": "2026-08-23 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_identity",
-  "indicator_id",
   "plan_version_id",
+  "plan_id",
   "col_id",
-  "measures_node_id",
-  "section_content",
-  "indicator_name",
-  "definition",
-  "unit",
+  "version_number",
+  "based_on_plan_version_id",
+  "status",
+  "section_period",
+  "effective_from",
+  "effective_to",
+  "section_return",
+  "return_reason",
   "section_fixture_ownership",
   "fixture_namespace"
  ],
@@ -25,20 +28,19 @@
    "label": "Identity"
   },
   {
-   "fieldname": "indicator_id",
+   "fieldname": "plan_version_id",
    "fieldtype": "Data",
-   "label": "Indicator Id",
-   "description": "Immutable generated reference used by targets, lineage and snapshots.",
+   "label": "Plan Version Id",
+   "description": "Immutable generated reference used by hierarchy children, services and snapshots.",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
   },
   {
-   "fieldname": "plan_version_id",
+   "fieldname": "plan_id",
    "fieldtype": "Link",
-   "label": "Plan Version",
-   "options": "Strategic Plan Version",
-   "description": "Binds the indicator to one immutable version.",
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
    "reqd": 1,
    "search_index": 1
   },
@@ -48,40 +50,57 @@
    "label": "Col Id"
   },
   {
-   "fieldname": "measures_node_id",
-   "fieldtype": "Link",
-   "label": "Measures Node",
-   "options": "Strategy Node",
-   "description": "Identifies the Objective or Outcome being measured.",
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
    "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "section_content",
-   "fieldtype": "Section Break",
-   "label": "Content"
-  },
-  {
-   "fieldname": "indicator_name",
-   "fieldtype": "Data",
-   "label": "Name",
-   "description": "Human-readable measure used in plan review and downstream snapshots. Maps to STR-CHG-001 §5.4's `name` field — stored under a distinct fieldname because Frappe reserves `name` for the document's own primary key.",
-   "reqd": 1,
+   "default": "1",
    "in_list_view": 1
   },
   {
-   "fieldname": "definition",
-   "fieldtype": "Small Text",
-   "label": "Definition",
-   "description": "Removes ambiguity about what the measure counts or calculates. Shown during review.",
-   "reqd": 1
+   "fieldname": "based_on_plan_version_id",
+   "fieldtype": "Link",
+   "label": "Based On Plan Version",
+   "options": "Strategic Plan Version",
+   "description": "Approved or Active version copied to create a successor; the fixed comparison baseline for review. Empty only for the first version."
   },
   {
-   "fieldname": "unit",
-   "fieldtype": "Data",
-   "label": "Unit",
-   "description": "Defines the target value's unit and prevents incompatible target entry.",
-   "reqd": 1
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nIn Review\nReturned\nAwaiting Approval\nApproved\nActive\nSuperseded\nArchived",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_period",
+   "fieldtype": "Section Break",
+   "label": "Effective period"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "description": "Determines when this version may become the resolved Active version. Required before approval."
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To",
+   "description": "Ends version applicability. May be empty only while this is the current Active version within the plan period."
+  },
+  {
+   "fieldname": "section_return",
+   "fieldtype": "Section Break",
+   "label": "Return",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Small Text",
+   "label": "Return Reason",
+   "description": "Required only for the Return action; otherwise absent from ordinary forms."
   },
   {
    "fieldname": "section_fixture_ownership",
@@ -104,7 +123,7 @@
  "modified": "2026-08-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
- "name": "Performance Indicator",
+ "name": "Strategic Plan Version",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
@@ -162,6 +181,6 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 0,
- "title_field": "indicator_name",
- "search_fields": "indicator_id,indicator_name"
+ "title_field": "plan_version_id",
+ "search_fields": "plan_version_id,status"
 }

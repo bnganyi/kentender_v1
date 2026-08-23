@@ -6,153 +6,80 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "performance_indicator",
-  "plan_version",
-  "target_code",
-  "external_reference",
-  "title",
-  "comparison_direction",
-  "target_numeric",
-  "target_text",
-  "target_date",
-  "baseline_status",
-  "baseline_numeric",
-  "baseline_text",
-  "baseline_as_of",
-  "baseline_source",
-  "tolerance_value",
-  "period_start",
-  "period_end",
-  "benefit_owner",
-  "measurement_verifier",
-  "status",
+  "section_identity",
+  "target_id",
+  "indicator_id",
+  "col_id",
+  "financial_year_id",
+  "target_by_date",
+  "section_value",
+  "comparison",
+  "target_value",
   "section_fixture_ownership",
-  "fixture_namespace",
-  "owner_org_unit"
+  "fixture_namespace"
  ],
  "fields": [
   {
-   "fieldname": "performance_indicator",
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "target_id",
+   "fieldtype": "Data",
+   "label": "Target Id",
+   "description": "Immutable generated reference used by lineage and snapshots.",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "indicator_id",
    "fieldtype": "Link",
    "label": "Performance Indicator",
    "options": "Performance Indicator",
+   "description": "Identifies the measure to which the target applies.",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "plan_version",
-   "fieldtype": "Link",
-   "label": "Plan Version",
-   "options": "Strategic Plan",
-   "reqd": 1,
-   "search_index": 1
+   "fieldname": "col_id",
+   "fieldtype": "Column Break",
+   "label": "Col Id"
   },
   {
-   "fieldname": "target_code",
-   "fieldtype": "Data",
-   "label": "Target Code",
+   "fieldname": "financial_year_id",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial Year",
+   "description": "Anchors an annual target to a configured Financial Year. Exactly one of Financial Year / Target By Date must be set."
+  },
+  {
+   "fieldname": "target_by_date",
+   "fieldtype": "Date",
+   "label": "Target By Date",
+   "description": "Anchors a plan-period target when no annual Financial Year is used."
+  },
+  {
+   "fieldname": "section_value",
+   "fieldtype": "Section Break",
+   "label": "Expected value"
+  },
+  {
+   "fieldname": "comparison",
+   "fieldtype": "Select",
+   "label": "Comparison",
+   "options": "At least\nAt most\nEqual to",
    "reqd": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "external_reference",
-   "fieldtype": "Data",
-   "label": "External Reference"
-  },
-  {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "label": "Title",
+   "fieldname": "target_value",
+   "fieldtype": "Float",
+   "label": "Target Value",
+   "description": "Expected value in the indicator's inherited unit. Percentage values must be between 0 and 100 inclusive.",
    "reqd": 1,
    "in_list_view": 1
-  },
-  {
-   "fieldname": "comparison_direction",
-   "fieldtype": "Select",
-   "label": "Comparison Direction",
-   "options": "At least\nAt most\nEqual to\nIncrease to\nReduce to\nAchieve by date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "target_numeric",
-   "fieldtype": "Float",
-   "label": "Target Numeric"
-  },
-  {
-   "fieldname": "target_text",
-   "fieldtype": "Data",
-   "label": "Target Text"
-  },
-  {
-   "fieldname": "target_date",
-   "fieldtype": "Date",
-   "label": "Target Date"
-  },
-  {
-   "fieldname": "baseline_status",
-   "fieldtype": "Select",
-   "label": "Baseline Status",
-   "options": "Known\nTo be established\nNot applicable",
-   "reqd": 1,
-   "default": "To be established"
-  },
-  {
-   "fieldname": "baseline_numeric",
-   "fieldtype": "Float",
-   "label": "Baseline Numeric"
-  },
-  {
-   "fieldname": "baseline_text",
-   "fieldtype": "Data",
-   "label": "Baseline Text"
-  },
-  {
-   "fieldname": "baseline_as_of",
-   "fieldtype": "Date",
-   "label": "Baseline As Of"
-  },
-  {
-   "fieldname": "baseline_source",
-   "fieldtype": "Data",
-   "label": "Baseline Source"
-  },
-  {
-   "fieldname": "tolerance_value",
-   "fieldtype": "Float",
-   "label": "Tolerance Value"
-  },
-  {
-   "fieldname": "period_start",
-   "fieldtype": "Date",
-   "label": "Period Start",
-   "reqd": 1
-  },
-  {
-   "fieldname": "period_end",
-   "fieldtype": "Date",
-   "label": "Period End",
-   "reqd": 1
-  },
-  {
-   "fieldname": "benefit_owner",
-   "fieldtype": "Data",
-   "label": "Benefit Owner",
-   "reqd": 1
-  },
-  {
-   "fieldname": "measurement_verifier",
-   "fieldtype": "Link",
-   "label": "Measurement Verifier",
-   "options": "User",
-   "reqd": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Active\nHistorical",
-   "reqd": 1,
-   "default": "Active"
   },
   {
    "fieldname": "section_fixture_ownership",
@@ -164,13 +91,7 @@
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture Namespace",
-   "search_index": 1
-  },
-  {
-   "fieldname": "owner_org_unit",
-   "fieldtype": "Link",
-   "label": "Owner Organisation Unit",
-   "options": "Organisation Unit",
+   "description": "Seed/test scoping key for idempotent fixture cleanup. Not a business field.",
    "search_index": 1
   }
  ],
@@ -178,7 +99,7 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-02 00:00:00.000000",
+ "modified": "2026-08-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Performance Target",
@@ -210,6 +131,18 @@
    "write": 1
   },
   {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Officer",
+   "share": 0,
+   "write": 1
+  },
+  {
    "create": 0,
    "delete": 0,
    "email": 0,
@@ -227,6 +160,6 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 0,
- "title_field": "title",
- "search_fields": "target_code,title"
+ "title_field": "target_id",
+ "search_fields": "target_id"
 }

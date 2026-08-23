@@ -7,37 +7,19 @@
  "engine": "InnoDB",
  "field_order": [
   "section_identity",
-  "plan_code",
-  "external_reference",
-  "version_number",
+  "plan_id",
   "title",
   "col_id",
-  "procuring_entity",
-  "plan_type",
-  "status",
-  "section_scope",
-  "scope_type",
-  "scope_id",
-  "col_scope",
-  "parent_plan",
+  "procuring_entity_id",
+  "owner_org_unit_id",
+  "section_role",
+  "plan_role",
+  "parent_primary_plan_id",
   "section_period",
-  "start_date",
-  "end_date",
-  "col_period",
-  "description",
-  "supersedes_plan_version",
-  "section_governance",
-  "submitted_by",
-  "submitted_at",
-  "col_gov",
-  "approved_by",
-  "approved_at",
-  "activated_by",
-  "activated_at",
-  "return_reason",
+  "period_start",
+  "period_end",
   "section_fixture_ownership",
-  "fixture_namespace",
-  "owner_org_unit"
+  "fixture_namespace"
  ],
  "fields": [
   {
@@ -46,26 +28,13 @@
    "label": "Identity"
   },
   {
-   "fieldname": "plan_code",
+   "fieldname": "plan_id",
    "fieldtype": "Data",
-   "label": "Plan Code",
+   "label": "Plan Id",
+   "description": "Immutable generated reference used by routes, contracts, audit and downstream snapshots. Not editable.",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "external_reference",
-   "fieldtype": "Data",
-   "label": "External Reference",
-   "description": "Optional code from an imported or approved source document"
-  },
-  {
-   "fieldname": "version_number",
-   "fieldtype": "Int",
-   "label": "Version Number",
-   "reqd": 1,
-   "default": "1",
-   "in_list_view": 1
   },
   {
    "fieldname": "title",
@@ -80,144 +49,59 @@
    "label": "Col Id"
   },
   {
-   "fieldname": "procuring_entity",
+   "fieldname": "procuring_entity_id",
    "fieldtype": "Link",
    "label": "Procuring Entity",
    "options": "Procuring Entity",
+   "description": "Defines the owning PE and is used in permission and context resolution.",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "plan_type",
-   "fieldtype": "Select",
-   "label": "Plan Type",
-   "options": "Entity Strategic Plan\nProgramme Strategy\nThematic Plan\nAnnual Implementation Plan",
-   "reqd": 1,
-   "default": "Entity Strategic Plan"
+   "fieldname": "owner_org_unit_id",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
+   "description": "Narrows applicability to one configured organisation unit when the plan is not PE-wide. Empty means PE-wide.",
+   "search_index": 1
   },
   {
-   "fieldname": "status",
+   "fieldname": "section_role",
+   "fieldtype": "Section Break",
+   "label": "Role and parent"
+  },
+  {
+   "fieldname": "plan_role",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "Draft\nSubmitted\nReturned\nApproved\nActive\nSuperseded\nArchived",
+   "label": "Plan Role",
+   "options": "Primary\nSupporting Framework",
    "reqd": 1,
-   "default": "Draft",
+   "default": "Primary",
    "in_list_view": 1
   },
   {
-   "fieldname": "section_scope",
-   "fieldtype": "Section Break",
-   "label": "Scope and parent"
-  },
-  {
-   "fieldname": "scope_type",
-   "fieldtype": "Select",
-   "label": "Scope Type",
-   "options": "Procuring Entity\nProgramme\nEntity Unit"
-  },
-  {
-   "fieldname": "scope_id",
-   "fieldtype": "Data",
-   "label": "Scope Id",
-   "search_index": 1
-  },
-  {
-   "fieldname": "col_scope",
-   "fieldtype": "Column Break",
-   "label": "Col Scope"
-  },
-  {
-   "fieldname": "parent_plan",
+   "fieldname": "parent_primary_plan_id",
    "fieldtype": "Link",
-   "label": "Parent Plan",
-   "options": "Strategic Plan"
+   "label": "Parent Primary Plan",
+   "options": "Strategic Plan",
+   "description": "Required only when Plan Role is Supporting Framework and forbidden when it is Primary."
   },
   {
    "fieldname": "section_period",
    "fieldtype": "Section Break",
-   "label": "Effective period"
+   "label": "Plan period"
   },
   {
-   "fieldname": "start_date",
+   "fieldname": "period_start",
    "fieldtype": "Date",
-   "label": "Start Date",
+   "label": "Period Start",
    "reqd": 1
   },
   {
-   "fieldname": "end_date",
+   "fieldname": "period_end",
    "fieldtype": "Date",
-   "label": "End Date",
+   "label": "Period End",
    "reqd": 1
-  },
-  {
-   "fieldname": "col_period",
-   "fieldtype": "Column Break",
-   "label": "Col Period"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description"
-  },
-  {
-   "fieldname": "supersedes_plan_version",
-   "fieldtype": "Link",
-   "label": "Supersedes Plan Version",
-   "options": "Strategic Plan"
-  },
-  {
-   "fieldname": "section_governance",
-   "fieldtype": "Section Break",
-   "label": "Governance"
-  },
-  {
-   "fieldname": "submitted_by",
-   "fieldtype": "Link",
-   "label": "Submitted By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "submitted_at",
-   "fieldtype": "Datetime",
-   "label": "Submitted At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "col_gov",
-   "fieldtype": "Column Break",
-   "label": "Col Gov"
-  },
-  {
-   "fieldname": "approved_by",
-   "fieldtype": "Link",
-   "label": "Approved By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "approved_at",
-   "fieldtype": "Datetime",
-   "label": "Approved At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "activated_by",
-   "fieldtype": "Link",
-   "label": "Activated By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "activated_at",
-   "fieldtype": "Datetime",
-   "label": "Activated At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "return_reason",
-   "fieldtype": "Small Text",
-   "label": "Return Reason"
   },
   {
    "fieldname": "section_fixture_ownership",
@@ -229,13 +113,7 @@
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture Namespace",
-   "search_index": 1
-  },
-  {
-   "fieldname": "owner_org_unit",
-   "fieldtype": "Link",
-   "label": "Owner Organisation Unit",
-   "options": "Organisation Unit",
+   "description": "Seed/test scoping key for idempotent fixture cleanup. Not a business field.",
    "search_index": 1
   }
  ],
@@ -243,7 +121,7 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-02 00:00:00.000000",
+ "modified": "2026-08-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Strategic Plan",
@@ -305,5 +183,5 @@
  "track_changes": 1,
  "is_submittable": 0,
  "title_field": "title",
- "search_fields": "plan_code,title,status"
+ "search_fields": "plan_id,title"
 }

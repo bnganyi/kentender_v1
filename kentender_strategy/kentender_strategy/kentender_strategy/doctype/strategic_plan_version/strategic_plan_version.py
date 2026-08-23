@@ -5,13 +5,13 @@ import frappe
 from frappe.model.document import Document
 
 
-class StrategyValueCommitment(Document):
+class StrategicPlanVersion(Document):
 	def before_insert(self):
 		from kentender_strategy.services.strategy_reference import before_insert_assign_reference
 		before_insert_assign_reference(self)
 
 	def validate(self):
 		from kentender_strategy.services.strategy_reference import validate_reference_field
-		from kentender_strategy.services.strategy_domain_guards import validate_strategy_value_commitment
+		from kentender_strategy.services.strategy_domain_guards import validate_strategic_plan_version
 		validate_reference_field(self)
-		validate_strategy_value_commitment(self)
+		validate_strategic_plan_version(self)

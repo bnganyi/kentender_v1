@@ -22,10 +22,7 @@ from kentender_strategy.services.strategy_contracts import (
 	list_strategy_value_commitments,
 	validate_strategy_reference,
 )
-from kentender_strategy.services.strategy_domain_guards import (
-	PLAN_TYPE_ENTITY,
-	SUBORDINATE_PLAN_TYPES,
-)
+from kentender_strategy.services.strategy_domain_guards import PLAN_ROLE_PRIMARY, PLAN_ROLE_SUPPORTING
 
 
 def _covers_date(start, end, as_of) -> bool:
@@ -52,16 +49,40 @@ def resolve_strategy_context(
 		frappe.throw(_("Procuring entity is required"), frappe.ValidationError)
 	as_of = getdate(effective_date) if effective_date else getdate()
 
-	primaries = frappe.get_all(
-		"Strategic Plan",
-		filters={
-			"procuring_entity": procuring_entity,
-			"plan_type": PLAN_TYPE_ENTITY,
-			"status": "Active",
-		},
-		fields=["name", "plan_code", "title", "start_date", "end_date"],
-	)
-	covering = [p for p in primaries if _covers_date(p.start_date, p.end_date, as_of)]
+	def _active_versions(plan_role: str) -> list[dict]:
+		filters = {"procuring_entity_id": procuring_entity, "plan_role": plan_role}
+		if organisation_unit and plan_role == PLAN_ROLE_SUPPORTING:
+			filters["owner_org_unit_id"] = organisation_unit
+		plans = frappe.get_all("Strategic Plan", filters=filters, fields=["name", "plan_id", "title"])
+		if not plans:
+			return []
+		plan_names = [p.name for p in plans]
+		versions = frappe.get_all(
+			"Strategic Plan Version",
+			filters={"plan_id": ["in", plan_names], "status": "Active"},
+			fields=["name", "plan_id", "effective_from", "effective_to"],
+		)
+		plans_by_name = {p.name: p for p in plans}
+		out = []
+		for v in versions:
+			if not _covers_date(v.effective_from, v.effective_to, as_of):
+				continue
+			plan = plans_by_name.get(v.plan_id)
+			if not plan:
+				continue
+			out.append(
+				{
+					"id": plan.name,
+					"code": plan.plan_id,
+					"name": plan.title,
+					"version_id": v.name,
+					"effective_from": v.effective_from,
+					"effective_to": v.effective_to,
+				}
+			)
+		return out
+
+	covering = _active_versions(PLAN_ROLE_PRIMARY)
 	if not covering:
 		frappe.throw(
 			_("No primary Active strategic plan covers {0} for this procuring entity").format(as_of),
@@ -76,34 +97,21 @@ def resolve_strategy_context(
 			frappe.ValidationError,
 		)
 	primary = covering[0]
-
-	supporting_filters = {
-		"procuring_entity": procuring_entity,
-		"plan_type": ["in", list(SUBORDINATE_PLAN_TYPES)],
-		"status": "Active",
-	}
-	if organisation_unit:
-		supporting_filters["owner_org_unit"] = organisation_unit
-	supporting_rows = frappe.get_all(
-		"Strategic Plan",
-		filters=supporting_filters,
-		fields=["name", "plan_code", "title", "plan_type", "start_date", "end_date"],
-	)
-	supporting = [s for s in supporting_rows if _covers_date(s.start_date, s.end_date, as_of)]
+	supporting = _active_versions(PLAN_ROLE_SUPPORTING)
 
 	return {
 		"procuring_entity": procuring_entity,
 		"organisation_unit": organisation_unit,
 		"effective_date": str(as_of),
 		"primary_plan": {
-			"id": primary.name,
-			"code": primary.plan_code,
-			"name": primary.title,
-			"start_date": str(primary.start_date),
-			"end_date": str(primary.end_date),
+			"id": primary["id"],
+			"code": primary["code"],
+			"name": primary["name"],
+			"start_date": str(primary["effective_from"]),
+			"end_date": str(primary["effective_to"]),
 		},
 		"supporting_plans": [
-			{"id": s.name, "code": s.plan_code, "name": s.title, "plan_type": s.plan_type}
+			{"id": s["id"], "code": s["code"], "name": s["name"], "plan_type": PLAN_ROLE_SUPPORTING}
 			for s in supporting
 		],
 	}

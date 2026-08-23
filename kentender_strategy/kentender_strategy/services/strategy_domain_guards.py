@@ -1,333 +1,233 @@
 # Copyright (c) 2026, KenTender and contributors
-"""REQ §10 domain constraints for Strategy MVP-1 DocTypes."""
+"""STR-CHG-001 §8 domain constraints for the rebuilt Strategy Alignment schema."""
 
 from __future__ import annotations
-
-import re
 
 import frappe
 from frappe import _
 
-CODE_RE = re.compile(r"^[A-Z0-9-]+$")
-IMMUTABLE_PLAN = frozenset({"Approved", "Active", "Superseded", "Archived"})
+PLAN_ROLE_PRIMARY = "Primary"
+PLAN_ROLE_SUPPORTING = "Supporting Framework"
+PLAN_ROLES = (PLAN_ROLE_PRIMARY, PLAN_ROLE_SUPPORTING)
 
-PLAN_TYPE_ENTITY = "Entity Strategic Plan"
-PLAN_TYPE_PROGRAMME = "Programme Strategy"
-PLAN_TYPE_THEMATIC = "Thematic Plan"
-PLAN_TYPE_ANNUAL = "Annual Implementation Plan"
-PLAN_TYPES = (
-	PLAN_TYPE_ENTITY,
-	PLAN_TYPE_PROGRAMME,
-	PLAN_TYPE_THEMATIC,
-	PLAN_TYPE_ANNUAL,
+VERSION_IMMUTABLE = frozenset({"Approved", "Active", "Superseded", "Archived"})
+VERSION_EDITABLE = frozenset({"Draft", "Returned"})
+
+NODE_TYPE_PILLAR = "Pillar"
+NODE_TYPE_PROGRAMME = "Programme"
+NODE_TYPE_SUB_PROGRAMME = "Sub-programme"
+NODE_TYPE_OBJECTIVE = "Strategic Objective"
+NODE_TYPE_OUTCOME = "Strategic Outcome"
+NODE_TYPES = (
+	NODE_TYPE_PILLAR,
+	NODE_TYPE_PROGRAMME,
+	NODE_TYPE_SUB_PROGRAMME,
+	NODE_TYPE_OBJECTIVE,
+	NODE_TYPE_OUTCOME,
 )
-SUBORDINATE_PLAN_TYPES = frozenset(
-	{PLAN_TYPE_PROGRAMME, PLAN_TYPE_THEMATIC, PLAN_TYPE_ANNUAL}
-)
-SCOPE_TYPE_PE = "Procuring Entity"
-SCOPE_TYPE_PROGRAMME = "Programme"
-SCOPE_TYPE_ENTITY_UNIT = "Entity Unit"
-SCOPE_TYPES = (SCOPE_TYPE_PE, SCOPE_TYPE_PROGRAMME, SCOPE_TYPE_ENTITY_UNIT)
+# STR-BR-007: Pillar -> Programme -> optional Sub-programme -> Strategic Objective ->
+# Strategic Outcome. A Programme may parent an Objective when Sub-programme is omitted.
+NODE_ALLOWED_PARENT_TYPES: dict[str, tuple[str, ...]] = {
+	NODE_TYPE_PILLAR: (),
+	NODE_TYPE_PROGRAMME: (NODE_TYPE_PILLAR,),
+	NODE_TYPE_SUB_PROGRAMME: (NODE_TYPE_PROGRAMME,),
+	NODE_TYPE_OBJECTIVE: (NODE_TYPE_PROGRAMME, NODE_TYPE_SUB_PROGRAMME),
+	NODE_TYPE_OUTCOME: (NODE_TYPE_OBJECTIVE,),
+}
+MEASURABLE_NODE_TYPES = (NODE_TYPE_OBJECTIVE, NODE_TYPE_OUTCOME)
+TARGET_COMPARISONS = ("At least", "At most", "Equal to")
 
 
-def _require_code(code: str, label: str) -> None:
-	if not code or not CODE_RE.match(code):
-		frappe.throw(_("{0} must use uppercase letters, numbers and hyphens").format(label))
-
-
-def _periods_overlap(start_a, end_a, start_b, end_b) -> bool:
-	if not start_a or not end_a or not start_b or not end_b:
-		return False
-	sa = frappe.utils.getdate(start_a)
-	ea = frappe.utils.getdate(end_a)
-	sb = frappe.utils.getdate(start_b)
-	eb = frappe.utils.getdate(end_b)
-	return sa <= eb and sb <= ea
-
-
-def normalize_plan_scope(doc) -> None:
-	"""Auto-fill ESP scope from procuring entity; clear parent for ESP."""
-	if (doc.plan_type or "") == PLAN_TYPE_ENTITY:
-		doc.scope_type = SCOPE_TYPE_PE
-		doc.scope_id = doc.procuring_entity
-		doc.parent_plan = None
-
-
-def validate_plan_activation(doc) -> None:
-	"""STR-FR-005: Active concurrency guards before status flip to Active."""
-	normalize_plan_scope(doc)
-	plan_type = (doc.plan_type or "").strip()
-	if plan_type not in PLAN_TYPES:
-		frappe.throw(_("Select a valid plan type"))
-
-	if plan_type in SUBORDINATE_PLAN_TYPES:
-		if not doc.parent_plan:
-			frappe.throw(
-				_(
-					"Programme Strategy, Thematic Plan and Annual Implementation Plan "
-					"require a parent Entity Strategic Plan before activation"
-				)
-			)
-		parent = frappe.db.get_value(
-			"Strategic Plan",
-			doc.parent_plan,
-			["name", "plan_type", "procuring_entity", "status"],
-			as_dict=True,
-		)
-		if not parent:
-			frappe.throw(_("Parent plan is not valid"))
-		if parent.plan_type != PLAN_TYPE_ENTITY:
-			frappe.throw(_("Parent plan must be an Entity Strategic Plan"))
-		if parent.procuring_entity != doc.procuring_entity:
-			frappe.throw(_("Parent plan must belong to the same procuring entity"))
-		if not doc.scope_type or not doc.scope_id:
-			frappe.throw(_("Organisational scope is required for subordinate plans"))
-		if doc.scope_type == SCOPE_TYPE_PE and doc.scope_id == doc.procuring_entity:
-			frappe.throw(
-				_(
-					"Subordinate plans must use a distinct organisational scope "
-					"(not the whole procuring entity)"
-				)
-			)
-	else:
-		# Entity Strategic Plan
-		if not doc.scope_type or not doc.scope_id:
-			frappe.throw(_("Entity Strategic Plan scope could not be resolved"))
-
-	# Overlap: at most one Active plan per entity+type(+scope) for an overlapping
-	# period (excluding same plan_code, which supersedes atomically below).
-	#
-	# ESP's scope is always the whole procuring_entity — normalize_plan_scope()
-	# derives scope_id from procuring_entity unconditionally, so ESP uniqueness
-	# is really entity+type alone. Filtering by scope_type/scope_id here would
-	# silently miss a same-entity Active ESP row whose scope fields are blank:
-	# those columns are optional at the schema level (see Strategic Plan
-	# scope_type/scope_id, both non-reqd), so a row written by any path that
-	# skips the doctype's own validate()-time normalization would never be
-	# re-normalized once Active (Active plans are immutable). Omitting the
-	# scope filter for ESP closes that gap by construction rather than by an
-	# extra safety-net query.
-	if plan_type == PLAN_TYPE_ENTITY:
-		others = frappe.get_all(
-			"Strategic Plan",
-			filters={
-				"procuring_entity": doc.procuring_entity,
-				"plan_type": PLAN_TYPE_ENTITY,
-				"status": "Active",
-				"name": ["!=", doc.name],
-			},
-			fields=["name", "plan_code", "title", "start_date", "end_date"],
-		)
-		for row in others:
-			if row.plan_code == doc.plan_code:
-				continue
-			if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
-				frappe.throw(
-					_(
-						"Only one Active Entity Strategic Plan may cover a given date "
-						"for this entity. Active plan {0} already overlaps."
-					).format(row.plan_code)
-				)
-	else:
-		# Subordinate plans: uniqueness additionally depends on organisational
-		# scope, which is required and validated above before we ever reach here.
-		others = frappe.get_all(
-			"Strategic Plan",
-			filters={
-				"procuring_entity": doc.procuring_entity,
-				"plan_type": plan_type,
-				"scope_type": doc.scope_type,
-				"scope_id": doc.scope_id,
-				"status": "Active",
-				"name": ["!=", doc.name],
-			},
-			fields=["name", "plan_code", "title", "start_date", "end_date"],
-		)
-		for row in others:
-			if row.plan_code == doc.plan_code:
-				# Same logical plan — will be superseded atomically
-				continue
-			if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
-				frappe.throw(
-					_(
-						"Cannot activate: Active plan {0} ({1}) already covers an overlapping "
-						"period for the same entity, plan type and scope"
-					).format(row.plan_code, row.title or row.name)
-				)
+def _plan_period(plan_id: str) -> tuple:
+	row = frappe.db.get_value("Strategic Plan", plan_id, ["period_start", "period_end"])
+	if not row:
+		return None, None
+	start, end = row
+	return (frappe.utils.getdate(start) if start else None, frappe.utils.getdate(end) if end else None)
 
 
 def validate_strategic_plan(doc) -> None:
-	_require_code(doc.plan_code, "Plan Code")
+	"""STR-BR-002/003/005: role/parent rules and a valid period."""
+	if doc.period_start and doc.period_end:
+		if frappe.utils.getdate(doc.period_start) >= frappe.utils.getdate(doc.period_end):
+			frappe.throw(_("Plan period start must be earlier than plan period end"))
+
+	role = (doc.plan_role or "").strip()
+	if role not in PLAN_ROLES:
+		frappe.throw(_("Select a valid plan role"))
+
+	if role == PLAN_ROLE_PRIMARY:
+		if doc.parent_primary_plan_id:
+			frappe.throw(_("A Primary plan must not have a parent plan"))
+	else:
+		if not doc.parent_primary_plan_id:
+			frappe.throw(_("A Supporting Framework must name one governing Primary plan"))
+		parent = frappe.db.get_value(
+			"Strategic Plan",
+			doc.parent_primary_plan_id,
+			["plan_role", "procuring_entity_id"],
+			as_dict=True,
+		)
+		if not parent:
+			frappe.throw(_("Parent primary plan is not valid"))
+		if parent.plan_role != PLAN_ROLE_PRIMARY:
+			frappe.throw(_("A Supporting Framework's parent must be a Primary plan"))
+		if parent.procuring_entity_id != doc.procuring_entity_id:
+			frappe.throw(_("A Supporting Framework must belong to the same procuring entity as its parent"))
+
+	if not doc.is_new():
+		prev_role = frappe.db.get_value("Strategic Plan", doc.name, "plan_role")
+		if prev_role != doc.plan_role and _has_versions(doc.name):
+			frappe.throw(_("Plan role cannot change once the plan has any version"))
+
+
+def _has_versions(plan_id: str) -> bool:
+	return bool(frappe.db.exists("Strategic Plan Version", {"plan_id": plan_id}))
+
+
+def validate_strategic_plan_version(doc) -> None:
+	"""STR-BR-005/006: version numbering, baseline requirement, period containment,
+	and immutability of Approved/Active/Superseded/Archived content."""
 	if not doc.version_number or int(doc.version_number) < 1:
 		frappe.throw(_("Version Number must be a positive integer"))
-	if doc.start_date and doc.end_date and doc.start_date > doc.end_date:
-		frappe.throw(_("Start Date must be on or before End Date"))
-	if doc.version_number and int(doc.version_number) > 1 and not doc.supersedes_plan_version:
-		frappe.throw(_("Successor plan versions require Supersedes Plan Version"))
-	if doc.plan_type == PLAN_TYPE_ENTITY:
-		normalize_plan_scope(doc)
+	if int(doc.version_number) == 1:
+		if doc.based_on_plan_version_id:
+			frappe.throw(_("The first plan version must not name a baseline version"))
+	else:
+		if not doc.based_on_plan_version_id:
+			frappe.throw(_("Successor plan versions require Based On Plan Version"))
+		# Re-validated only when the relationship is actually being formed —
+		# not on every later save. Activating this successor legitimately
+		# supersedes its own baseline in the same transaction (§6.1), which
+		# would otherwise make this check fail on its own activation save.
+		if doc.is_new() or doc.has_value_changed("based_on_plan_version_id"):
+			baseline = frappe.db.get_value(
+				"Strategic Plan Version", doc.based_on_plan_version_id, ["plan_id", "status"], as_dict=True
+			)
+			if not baseline:
+				frappe.throw(_("Based On Plan Version is not valid"))
+			if baseline.plan_id != doc.plan_id:
+				frappe.throw(_("Based On Plan Version must belong to the same Strategic Plan"))
+			if baseline.status not in ("Approved", "Active"):
+				frappe.throw(_("A successor version must be based on an Approved or Active version"))
+
+	period_start, period_end = _plan_period(doc.plan_id)
+	effective_from = frappe.utils.getdate(doc.effective_from) if doc.effective_from else None
+	effective_to = frappe.utils.getdate(doc.effective_to) if doc.effective_to else None
+	if effective_from and period_start and effective_from < period_start:
+		frappe.throw(_("Version effective start cannot be earlier than the plan period"))
+	if effective_from and period_end and effective_from > period_end:
+		frappe.throw(_("Version effective start cannot be later than the plan period"))
+	if effective_from and effective_to and effective_from > effective_to:
+		frappe.throw(_("Version effective start must be on or before effective end"))
+
 	if not doc.is_new():
-		prev = doc.get_db_value("status") if hasattr(doc, "get_db_value") else None
-		try:
-			prev = frappe.db.get_value("Strategic Plan", doc.name, "status")
-		except Exception:
-			prev = None
-		if prev in IMMUTABLE_PLAN and doc.has_value_changed("title"):
-			# Allow status transitions only via transition service; block content edits
-			pass
-		if prev in IMMUTABLE_PLAN:
-			for f in (
-				"plan_code",
-				"title",
-				"plan_type",
-				"start_date",
-				"end_date",
-				"description",
-				"procuring_entity",
-				"scope_type",
-				"scope_id",
-				"parent_plan",
-			):
+		prev_status = frappe.db.get_value("Strategic Plan Version", doc.name, "status")
+		if prev_status in VERSION_IMMUTABLE:
+			for f in ("plan_id", "version_number", "based_on_plan_version_id"):
 				if doc.has_value_changed(f):
 					frappe.throw(_("Approved/Active plan versions are immutable"))
 
 
-def validate_strategy_programme(doc) -> None:
-	_require_code(doc.programme_code, "Programme Code")
-	_assert_plan_editable(doc.plan_version)
+def _assert_version_editable(plan_version_id: str | None) -> None:
+	if not plan_version_id:
+		frappe.throw(_("Plan version is required"))
+	status = frappe.db.get_value("Strategic Plan Version", plan_version_id, "status")
+	if status not in VERSION_EDITABLE:
+		frappe.throw(_("Plan structure can only be edited while the version is Draft or Returned"))
 
 
-def validate_strategy_sub_programme(doc) -> None:
-	_require_code(doc.sub_programme_code, "Sub Programme Code")
-	_assert_plan_editable(doc.plan_version)
-	prog_plan = frappe.db.get_value("Strategy Programme", doc.programme, "plan_version")
-	if prog_plan != doc.plan_version:
-		frappe.throw(_("Sub-programme parent must belong to the same plan version"))
+def validate_strategy_node(doc) -> None:
+	"""STR-BR-007: allowed hierarchy and deterministic sibling ordering."""
+	if doc.node_type not in NODE_TYPES:
+		frappe.throw(_("Select a valid node type"))
+	_assert_version_editable(doc.plan_version_id)
 
-
-def validate_strategic_objective(doc) -> None:
-	_require_code(doc.objective_code, "Objective Code")
-	_assert_plan_editable(doc.plan_version)
-	prog_plan = frappe.db.get_value("Strategy Programme", doc.programme, "plan_version")
-	if prog_plan != doc.plan_version:
-		frappe.throw(_("Objective programme must belong to the same plan version"))
-	if doc.sub_programme:
-		row = frappe.db.get_value(
-			"Strategy Sub Programme",
-			doc.sub_programme,
-			["plan_version", "programme"],
-			as_dict=True,
+	allowed_parents = NODE_ALLOWED_PARENT_TYPES[doc.node_type]
+	if not allowed_parents:
+		if doc.parent_node_id:
+			frappe.throw(_("A {0} must not have a parent node").format(doc.node_type))
+	else:
+		if not doc.parent_node_id:
+			frappe.throw(_("A {0} requires a parent node").format(doc.node_type))
+		parent = frappe.db.get_value(
+			"Strategy Node", doc.parent_node_id, ["node_type", "plan_version_id"], as_dict=True
 		)
-		if not row or row.plan_version != doc.plan_version or row.programme != doc.programme:
-			frappe.throw(_("Sub-programme must belong to the objective's programme and plan version"))
+		if not parent:
+			frappe.throw(_("Parent node is not valid"))
+		if parent.plan_version_id != doc.plan_version_id:
+			frappe.throw(_("Parent node must belong to the same plan version"))
+		if parent.node_type not in allowed_parents:
+			frappe.throw(
+				_("A {0}'s parent must be one of: {1}").format(doc.node_type, ", ".join(allowed_parents))
+			)
 
-
-def validate_strategic_outcome(doc) -> None:
-	_require_code(doc.outcome_code, "Outcome Code")
-	_assert_plan_editable(doc.plan_version)
-	prog_plan = frappe.db.get_value("Strategy Programme", doc.programme, "plan_version")
-	if prog_plan != doc.plan_version:
-		frappe.throw(_("Outcome programme must belong to the same plan version"))
-	if doc.sub_programme:
-		row = frappe.db.get_value(
-			"Strategy Sub Programme",
-			doc.sub_programme,
-			["plan_version", "programme"],
-			as_dict=True,
-		)
-		if not row or row.plan_version != doc.plan_version or row.programme != doc.programme:
-			frappe.throw(_("Sub-programme must belong to the outcome's programme and plan version"))
+	siblings = frappe.get_all(
+		"Strategy Node",
+		filters={
+			"plan_version_id": doc.plan_version_id,
+			"parent_node_id": doc.parent_node_id or "",
+			"name": ["!=", doc.name or ""],
+		},
+		fields=["name", "display_order"],
+	)
+	if any((s.display_order == doc.display_order) for s in siblings):
+		frappe.throw(_("Display Order must be unique among sibling nodes"))
 
 
 def validate_performance_indicator(doc) -> None:
-	_require_code(doc.indicator_code, "Indicator Code")
-	if doc.strategic_objective and doc.strategic_outcome:
-		frappe.throw(_("Indicator must measure a Strategic Objective or a Strategic Outcome, not both"))
-	if doc.strategic_objective:
-		parent = frappe.db.get_value(
-			"Strategic Objective", doc.strategic_objective, ["plan_version"], as_dict=True
-		)
-		if not parent:
-			frappe.throw(_("Strategic Objective is required"))
-		if doc.plan_version != parent.plan_version:
-			frappe.throw(_("Indicator must belong to the same plan version as its objective"))
-	elif doc.strategic_outcome:
-		parent = frappe.db.get_value(
-			"Strategic Outcome", doc.strategic_outcome, ["plan_version"], as_dict=True
-		)
-		if not parent:
-			frappe.throw(_("Strategic Outcome is required"))
-		if doc.plan_version != parent.plan_version:
-			frappe.throw(_("Indicator must belong to the same plan version as its outcome"))
-	else:
-		frappe.throw(_("Indicator must measure a Strategic Objective or a Strategic Outcome"))
-	_assert_plan_editable(doc.plan_version)
-	if doc.measurement_type not in ("Milestone", "Boolean") and not doc.unit:
-		frappe.throw(_("Unit is required for this measurement type"))
+	"""STR-BR-008/009: measures an Objective/Outcome from the same version; unique
+	name under its measured node within one version."""
+	_assert_version_editable(doc.plan_version_id)
+	node = frappe.db.get_value(
+		"Strategy Node", doc.measures_node_id, ["node_type", "plan_version_id"], as_dict=True
+	)
+	if not node:
+		frappe.throw(_("Measures Node is required"))
+	if node.node_type not in MEASURABLE_NODE_TYPES:
+		frappe.throw(_("An indicator may only measure a Strategic Objective or Strategic Outcome"))
+	if node.plan_version_id != doc.plan_version_id:
+		frappe.throw(_("Indicator must belong to the same plan version as the node it measures"))
+
+	dup = frappe.get_all(
+		"Performance Indicator",
+		filters={
+			"measures_node_id": doc.measures_node_id,
+			"indicator_name": doc.indicator_name,
+			"name": ["!=", doc.name or ""],
+		},
+		limit=1,
+	)
+	if dup:
+		frappe.throw(_("Indicator name must be unique under its measured node"))
 
 
 def validate_performance_target(doc) -> None:
-	_require_code(doc.target_code, "Target Code")
-	ind = frappe.db.get_value(
-		"Performance Indicator",
-		doc.performance_indicator,
-		["plan_version", "measurement_type"],
-		as_dict=True,
+	"""STR-BR-010/011: exactly one period anchor, valid comparison, unit-compatible
+	value within the plan period."""
+	indicator = frappe.db.get_value(
+		"Performance Indicator", doc.indicator_id, ["plan_version_id", "unit"], as_dict=True
 	)
-	if not ind:
+	if not indicator:
 		frappe.throw(_("Performance Indicator is required"))
-	if doc.plan_version != ind.plan_version:
-		frappe.throw(_("Target must belong to the same plan version as its indicator"))
-	_assert_plan_editable(doc.plan_version)
-	if doc.baseline_status == "Known":
-		if doc.baseline_as_of is None or not doc.baseline_source:
-			frappe.throw(_("Known baseline requires as-of date and source"))
-		if doc.baseline_numeric is None and not doc.baseline_text:
-			frappe.throw(_("Known baseline requires a baseline value"))
-	if doc.period_start and doc.period_end and doc.period_start > doc.period_end:
-		frappe.throw(_("Target period start must be on or before period end"))
+	_assert_version_editable(indicator.plan_version_id)
 
+	has_fy = bool(doc.financial_year_id)
+	has_date = bool(doc.target_by_date)
+	if has_fy == has_date:
+		frappe.throw(_("A target must use exactly one of Financial Year or Target By Date"))
 
-def validate_strategy_value_commitment(doc) -> None:
-	_assert_plan_editable(doc.plan_version)
-	for link in doc.get("links") or []:
-		if link.link_type == "Strategic Outcome" and not link.linked_outcome:
-			frappe.throw(_("Commitment link requires a Strategic Outcome"))
-		if link.link_type == "Performance Target" and not link.linked_target:
-			frappe.throw(_("Commitment link requires a Performance Target"))
+	if doc.comparison not in TARGET_COMPARISONS:
+		frappe.throw(_("Select a valid comparison"))
 
+	if doc.target_value is None:
+		frappe.throw(_("Target Value is required"))
+	if (indicator.unit or "").strip().lower() == "percentage" and not (0 <= doc.target_value <= 100):
+		frappe.throw(_("Percentage target values must be between 0 and 100 inclusive"))
 
-def validate_strategy_value_commitment_link(doc) -> None:
-	pass
-
-
-def validate_performance_measurement(doc) -> None:
-	tgt_plan = frappe.db.get_value("Performance Target", doc.performance_target, "plan_version")
-	if doc.plan_version != tgt_plan:
-		frappe.throw(_("Measurement must belong to the same plan version as its target"))
-	if doc.workflow_status == "Verified" and not doc.is_new():
-		prev = frappe.db.get_value("Performance Measurement", doc.name, "workflow_status")
-		if prev == "Verified":
-			for f in (
-				"actual_numeric",
-				"actual_text",
-				"actual_date",
-				"evidence_reference",
-				"measurement_period_start",
-				"measurement_period_end",
-			):
-				if doc.has_value_changed(f):
-					frappe.throw(_("Verified measurements are immutable"))
-
-
-def validate_strategy_audit_event(doc) -> None:
-	if not doc.event_at:
-		doc.event_at = frappe.utils.now_datetime()
-
-
-def _assert_plan_editable(plan_name: str) -> None:
-	if not plan_name:
-		frappe.throw(_("Plan version is required"))
-	status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-	if status not in ("Draft", "Returned"):
-		frappe.throw(_("Plan structure can only be edited while Draft or Returned"))
+	plan_id = frappe.db.get_value("Strategic Plan Version", indicator.plan_version_id, "plan_id")
+	period_start, period_end = _plan_period(plan_id)
+	if has_date and period_start and period_end:
+		target_by_date = frappe.utils.getdate(doc.target_by_date)
+		if not (period_start <= target_by_date <= period_end):
+			frappe.throw(_("Target By Date must fall within the plan period"))

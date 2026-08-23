@@ -8,7 +8,6 @@ import json
 import frappe
 
 from kentender_strategy.services import strategy_contracts as contracts
-from kentender_strategy.services import strategy_performance as performance
 from kentender_strategy.services import strategy_transitions as transitions
 from kentender_strategy.services import strategy_writes as writes
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
@@ -66,19 +65,6 @@ def create_successor_version(plan_version: str):
 
 
 @frappe.whitelist()
-def list_measurements(
-	plan_version: str | None = None,
-	plan_code: str | None = None,
-	workflow_status: str | None = None,
-):
-	return contracts.list_measurements(
-		plan_version=plan_version or None,
-		plan_code=plan_code or None,
-		workflow_status=workflow_status or None,
-	)
-
-
-@frappe.whitelist()
 def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = None):
 	return contracts.get_strategy_usage(plan_version=plan_version or None, plan_code=plan_code or None)
 
@@ -105,16 +91,6 @@ def get_plan_readiness_api(plan_version: str | None = None, plan_code: str | Non
 
 
 @frappe.whitelist()
-def get_create_plan_context():
-	return contracts.get_create_plan_context()
-
-
-@frappe.whitelist()
-def create_plan(payload=None):
-	return contracts.create_plan(_obj(payload) or {})
-
-
-@frappe.whitelist()
 def correct_strategy_reference(doctype: str, name: str, new_code: str, reason: str, plan_version: str | None = None):
 	from kentender_strategy.services.strategy_reference import correct_reference
 
@@ -127,8 +103,20 @@ def update_plan_identity(plan_version: str, payload=None):
 
 
 @frappe.whitelist()
-def transition_plan(plan_version: str, action: str, reason: str | None = None):
-	return transitions.transition_plan(plan_version, action, reason=reason or None)
+def transition_plan(
+	plan_version: str,
+	action: str,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	correlation_id: str | None = None,
+):
+	return transitions.transition_plan_version(
+		plan_version,
+		action,
+		reason=reason or None,
+		expected_version=expected_version or None,
+		correlation_id=correlation_id or None,
+	)
 
 
 @frappe.whitelist()
@@ -147,100 +135,8 @@ def delete_structure_node(node_type: str, name: str):
 
 
 @frappe.whitelist()
-def list_strategy_value_commitments(plan_version: str | None = None, plan_code: str | None = None):
-	return contracts.list_strategy_value_commitments(
-		plan_version=plan_version or None, plan_code=plan_code or None
-	)
-
-
-@frappe.whitelist()
-def upsert_strategy_value_commitment(payload=None):
-	return writes.upsert_strategy_value_commitment(_obj(payload) or {})
-
-
-@frappe.whitelist()
-def set_commitment_links(commitment_name: str, links=None):
-	return writes.set_commitment_links(commitment_name, _obj(links) or [])
-
-
-@frappe.whitelist()
-def save_measurement_draft(payload=None):
-	return writes.save_measurement_draft(_obj(payload) or {})
-
-
-@frappe.whitelist()
-def transition_measurement(
-	name: str,
-	action: str,
-	reason: str | None = None,
-	authorised_exception=None,
-	exception_reason: str | None = None,
-):
-	return transitions.transition_measurement(
-		name,
-		action,
-		reason=reason or None,
-		authorised_exception=authorised_exception,
-		exception_reason=exception_reason or None,
-	)
-
-
-@frappe.whitelist()
-def get_measurement(
-	name: str | None = None,
-	target_code: str | None = None,
-	plan_code: str | None = None,
-	purpose: str | None = None,
-):
-	return writes.get_measurement(
-		name=name or None,
-		target_code=target_code or None,
-		plan_code=plan_code or None,
-		purpose=purpose or None,
-	)
-
-
-@frappe.whitelist()
 def list_audit_events(plan_version: str | None = None, plan_code: str | None = None):
 	return contracts.list_audit_events(plan_version=plan_version or None, plan_code=plan_code or None)
-
-
-@frappe.whitelist()
-def get_strategy_performance(
-	procuring_entity: str | None = None,
-	plan_code: str | None = None,
-	plan_version: str | None = None,
-	period: str | None = None,
-	programme: str | None = None,
-	sub_programme: str | None = None,
-):
-	return performance.get_strategy_performance(
-		procuring_entity=procuring_entity or None,
-		plan_code=plan_code or None,
-		plan_version=plan_version or None,
-		period=period or None,
-		programme=programme or None,
-		sub_programme=sub_programme or None,
-	)
-
-
-@frappe.whitelist()
-def export_strategy_performance_report(
-	procuring_entity: str | None = None,
-	plan_code: str | None = None,
-	plan_version: str | None = None,
-	period: str | None = None,
-	programme: str | None = None,
-	sub_programme: str | None = None,
-):
-	return performance.export_strategy_performance_report(
-		procuring_entity=procuring_entity or None,
-		plan_code=plan_code or None,
-		plan_version=plan_version or None,
-		period=period or None,
-		programme=programme or None,
-		sub_programme=sub_programme or None,
-	)
 
 
 @frappe.whitelist()

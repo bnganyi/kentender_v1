@@ -2,19 +2,19 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "hash",
- "creation": "2026-08-02 00:00:00.000000",
+ "creation": "2026-08-23 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_identity",
-  "indicator_id",
+  "strategy_node_id",
   "plan_version_id",
   "col_id",
-  "measures_node_id",
+  "node_type",
+  "parent_node_id",
   "section_content",
-  "indicator_name",
-  "definition",
-  "unit",
+  "title",
+  "display_order",
   "section_fixture_ownership",
   "fixture_namespace"
  ],
@@ -25,10 +25,10 @@
    "label": "Identity"
   },
   {
-   "fieldname": "indicator_id",
+   "fieldname": "strategy_node_id",
    "fieldtype": "Data",
-   "label": "Indicator Id",
-   "description": "Immutable generated reference used by targets, lineage and snapshots.",
+   "label": "Strategy Node Id",
+   "description": "Immutable generated reference used by parent links, lineage and downstream snapshots.",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
@@ -38,7 +38,7 @@
    "fieldtype": "Link",
    "label": "Plan Version",
    "options": "Strategic Plan Version",
-   "description": "Binds the indicator to one immutable version.",
+   "description": "Prevents content from leaking between plan versions.",
    "reqd": 1,
    "search_index": 1
   },
@@ -48,13 +48,19 @@
    "label": "Col Id"
   },
   {
-   "fieldname": "measures_node_id",
-   "fieldtype": "Link",
-   "label": "Measures Node",
-   "options": "Strategy Node",
-   "description": "Identifies the Objective or Outcome being measured.",
+   "fieldname": "node_type",
+   "fieldtype": "Select",
+   "label": "Node Type",
+   "options": "Pillar\nProgramme\nSub-programme\nStrategic Objective\nStrategic Outcome",
    "reqd": 1,
-   "search_index": 1
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "parent_node_id",
+   "fieldtype": "Link",
+   "label": "Parent Node",
+   "options": "Strategy Node",
+   "description": "Establishes the node's position. Empty only for a root Pillar."
   },
   {
    "fieldname": "section_content",
@@ -62,26 +68,20 @@
    "label": "Content"
   },
   {
-   "fieldname": "indicator_name",
+   "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Name",
-   "description": "Human-readable measure used in plan review and downstream snapshots. Maps to STR-CHG-001 §5.4's `name` field — stored under a distinct fieldname because Frappe reserves `name` for the document's own primary key.",
+   "label": "Title",
+   "description": "Carries the approved strategic statement displayed in the hierarchy and snapshot.",
    "reqd": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "definition",
-   "fieldtype": "Small Text",
-   "label": "Definition",
-   "description": "Removes ambiguity about what the measure counts or calculates. Shown during review.",
-   "reqd": 1
-  },
-  {
-   "fieldname": "unit",
-   "fieldtype": "Data",
-   "label": "Unit",
-   "description": "Defines the target value's unit and prevents incompatible target entry.",
-   "reqd": 1
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "description": "Produces deterministic sibling ordering. Required and unique among siblings.",
+   "reqd": 1,
+   "default": "0"
   },
   {
    "fieldname": "section_fixture_ownership",
@@ -104,7 +104,7 @@
  "modified": "2026-08-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
- "name": "Performance Indicator",
+ "name": "Strategy Node",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
@@ -162,6 +162,6 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 0,
- "title_field": "indicator_name",
- "search_fields": "indicator_id,indicator_name"
+ "title_field": "title",
+ "search_fields": "strategy_node_id,title"
 }

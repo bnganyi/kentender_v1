@@ -12,22 +12,18 @@ from kentender_strategy.services.strategy_permissions import ROLE_PLANNING, user
 
 # Type token → (DocType, fieldname)
 REF_TYPE_META: dict[str, tuple[str, str]] = {
-	"SP": ("Strategic Plan", "plan_code"),
-	"PROG": ("Strategy Programme", "programme_code"),
-	"SUB": ("Strategy Sub Programme", "sub_programme_code"),
-	"OBJ": ("Strategic Objective", "objective_code"),
-	"OUT": ("Strategic Outcome", "outcome_code"),
-	"IND": ("Performance Indicator", "indicator_code"),
-	"TGT": ("Performance Target", "target_code"),
-	"MSR": ("Performance Measurement", "measurement_code"),
-	"PVC": ("Strategy Value Commitment", "commitment_code"),
+	"SP": ("Strategic Plan", "plan_id"),
+	"SPV": ("Strategic Plan Version", "plan_version_id"),
+	"NODE": ("Strategy Node", "strategy_node_id"),
+	"IND": ("Performance Indicator", "indicator_id"),
+	"TGT": ("Performance Target", "target_id"),
 }
 
 DOCTYPE_REF: dict[str, tuple[str, str]] = {
 	dt: (token, field) for token, (dt, field) in REF_TYPE_META.items()
 }
 
-REF_RE = re.compile(r"^[A-Z0-9]+-(SP|PROG|SUB|OBJ|OUT|IND|TGT|MSR|PVC)-\d{4}$")
+REF_RE = re.compile(r"^[A-Z0-9]+-(SP|SPV|NODE|IND|TGT)-\d{4}$")
 
 
 def pe_slug(procuring_entity: str | None) -> str:
@@ -140,23 +136,43 @@ def ensure_doc_reference(doc, type_token: str, procuring_entity: str | None, fie
 	return ref
 
 
+def _plan_id_for_doc(doc) -> str | None:
+	"""Resolve the owning Strategic Plan id for any Strategy-owned document."""
+	if doc.doctype == "Strategic Plan":
+		return doc.name if not doc.is_new() else None
+	if doc.doctype == "Strategic Plan Version":
+		return doc.get("plan_id")
+	plan_version_id = _plan_version_id_for_doc(doc)
+	if not plan_version_id:
+		return None
+	return frappe.db.get_value("Strategic Plan Version", plan_version_id, "plan_id")
+
+
+def _plan_version_id_for_doc(doc) -> str | None:
+	if doc.doctype in ("Strategic Plan Version", "Strategy Node", "Performance Indicator"):
+		return doc.get("plan_version_id")
+	if doc.doctype == "Performance Target":
+		indicator_id = doc.get("indicator_id")
+		if not indicator_id:
+			return None
+		return frappe.db.get_value("Performance Indicator", indicator_id, "plan_version_id")
+	return None
+
+
 def resolve_pe_for_doc(doc) -> str:
 	"""Procuring entity for reference allocation.
 
 	Fail-closed (STR-CHG-001 §6 — every owned record carries one procuring_entity):
 	raises rather than silently returning an unusable value.
 	"""
-	pe = doc.get("procuring_entity")
+	pe = doc.get("procuring_entity_id")
 	if not pe:
-		plan_version = doc.get("plan_version")
-		if not plan_version and doc.doctype == "Performance Measurement" and doc.get("performance_target"):
-			plan_version = frappe.db.get_value(
-				"Performance Target", doc.performance_target, "plan_version"
-			)
-			if plan_version:
-				doc.plan_version = plan_version
-		if plan_version:
-			pe = frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
+		if doc.doctype == "Strategic Plan":
+			pe = doc.get("procuring_entity_id")
+		else:
+			plan_id = _plan_id_for_doc(doc)
+			if plan_id:
+				pe = frappe.db.get_value("Strategic Plan", plan_id, "procuring_entity_id")
 	if not pe:
 		frappe.throw(
 			_("Could not resolve a procuring entity for {0}").format(frappe.unscrub(doc.doctype)),
@@ -209,16 +225,18 @@ def correct_reference(
 		frappe.throw(_("Reason is required to correct a reference"))
 
 	doc = frappe.get_doc(doctype, name)
-	# Pre-activation only for plan-scoped docs
-	pv = plan_version or doc.get("plan_version")
+	# Pre-activation only for plan-version-scoped docs.
+	pv = plan_version or _plan_version_id_for_doc(doc)
 	if doctype == "Strategic Plan":
-		pv = doc.name
+		if _has_active_or_beyond_version(doc.name):
+			frappe.throw(_("References can only be corrected before the plan has an Approved version"))
+	elif doctype == "Strategic Plan Version":
 		if doc.status not in ("Draft", "Returned"):
 			frappe.throw(_("References can only be corrected before activation"))
 	elif pv:
-		status = frappe.db.get_value("Strategic Plan", pv, "status")
+		status = frappe.db.get_value("Strategic Plan Version", pv, "status")
 		if status not in ("Draft", "Returned"):
-			frappe.throw(_("References can only be corrected before the plan is activated"))
+			frappe.throw(_("References can only be corrected before the plan version is activated"))
 
 	prior = doc.get(field)
 	if prior == new_code:
@@ -241,8 +259,17 @@ def correct_reference(
 		event_type="Reference Corrected",
 		prior_state=prior or "",
 		new_state=new_code,
-		plan_version=pv if pv and frappe.db.exists("Strategic Plan", pv) else None,
+		plan_version=pv if pv and frappe.db.exists("Strategic Plan Version", pv) else None,
 		reason=reason,
 		summary=f"Reference corrected {prior} → {new_code}",
 	)
 	return {"id": doc.name, "code": new_code, "prior": prior, "audit_event": audit_id}
+
+
+def _has_active_or_beyond_version(plan_id: str) -> bool:
+	return bool(
+		frappe.db.exists(
+			"Strategic Plan Version",
+			{"plan_id": plan_id, "status": ["in", ["Approved", "Active", "Superseded", "Archived"]]},
+		)
+	)
