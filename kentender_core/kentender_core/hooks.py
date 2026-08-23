@@ -49,6 +49,9 @@ app_include_css = [
 	f"/assets/kentender_core/css/kt_stitch_desk_chrome.css?v={_asset_version('public/css/kt_stitch_desk_chrome.css')}",
 	# Shared Stitch list-table footer (Showing X of Y + Rows per page + pager).
 	f"/assets/kentender_core/css/kt_stitch_table_footer.css?v={_asset_version('public/css/kt_stitch_table_footer.css')}",
+	# Shared "Industry" design-system tokens (CFG-CHG-002 and future Vue-in-Desk-page
+	# modules) — scoped under .kt-industry, never :root; safe to load globally.
+	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_asset_version('public/css/kt_industry_tokens.css')}",
 ]
 boot_session = ["kentender_core.services.my_work.patch_bootinfo_home"]
 
@@ -88,6 +91,7 @@ page_js = {
 	"user-operational-acc": "public/js/authorization_admin_pages.js",
 	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
 	"access-diagnostic": "public/js/authorization_admin_pages.js",
+	"reference-data": "public/js/reference_data_page.js",
 }
 
 # include js in doctype views
@@ -220,23 +224,15 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"kentender_core.tasks.all"
-# 	],
-# 	"daily": [
-# 		"kentender_core.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"kentender_core.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"kentender_core.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"kentender_core.tasks.monthly"
-# 	],
-# }
+# CFG-CHG-002 §6.3 — automated PE/FY Context activation (active_from reached)
+# and closure (active_to reached), each with its own scheduler audit event.
+scheduler_events = {
+	"cron": {
+		"*/5 * * * *": [
+			"kentender_core.services.reference_data_transitions.run_scheduled_context_transitions"
+		],
+	},
+}
 
 # Testing
 # -------

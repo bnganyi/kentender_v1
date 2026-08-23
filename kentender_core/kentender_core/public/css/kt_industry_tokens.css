@@ -1,0 +1,338 @@
+/*
+ * Shared "Industry" design-system tokens and component classes, ported from
+ * docs/mvp-1-r1/05_pe_and_fy_maintenance/design/_ds/industry-.../styles.css
+ * (the Claude Design export used for CFG-CHG-002 and, going forward, other
+ * Vue-in-Desk-page modules). Namespaced under .kt-industry, never :root, so
+ * this stylesheet can never leak into Desk chrome or any other screen.
+ *
+ * Fonts: Barlow / Barlow Condensed, self-hosted (kt_cl_fonts.css, Phase 6 of
+ * CFG-CHG-002) — no CDN @import, unlike the raw Claude Design artboard export.
+ */
+
+.kt-industry {
+	--kt-color-bg: #f2f2f3;
+	--kt-color-surface: #e9e9ea;
+	--kt-color-text: #1d1f20;
+	--kt-color-accent: #416180;
+	--kt-color-accent-2: #597ea3;
+	--kt-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+	--kt-color-accent-100: #eef6ff;
+	--kt-color-accent-200: #d6ebff;
+	--kt-color-accent-800: #2c455d;
+	--kt-color-accent-900: #1d2d3d;
+
+	--kt-font-heading: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--kt-font-heading-weight: 600;
+	--kt-font-body: "Barlow", system-ui, sans-serif;
+
+	--kt-space-1: 3.4px;
+	--kt-space-2: 6.8px;
+	--kt-space-3: 10.2px;
+	--kt-space-4: 13.6px;
+	--kt-space-6: 20.4px;
+	--kt-space-8: 27.2px;
+
+	--kt-radius-sm: 2px;
+	--kt-radius-md: 4px;
+	--kt-radius-lg: 7px;
+
+	--kt-shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+	--kt-shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+
+	background: var(--kt-color-bg);
+	color: var(--kt-color-text);
+	font-family: var(--kt-font-body);
+	font-size: 15px;
+	line-height: 1.55;
+	min-height: 100%;
+}
+
+.kt-industry,
+.kt-industry *,
+.kt-industry *::before,
+.kt-industry *::after {
+	box-sizing: border-box;
+}
+
+.kt-industry h1,
+.kt-industry h2,
+.kt-industry h3,
+.kt-industry h4 {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	line-height: 1.12;
+	letter-spacing: -0.015em;
+	margin: 0;
+}
+
+.kt-industry :focus {
+	outline: none;
+}
+.kt-industry :focus-visible {
+	outline: 2px solid var(--kt-color-accent);
+	outline-offset: 2px;
+}
+
+/* — blueprint frame: square, transparent, hairline-bordered, registration-mark
+     corners. Matches the artboards' wireframe aesthetic. — */
+.kt-industry .kt-blueprint {
+	position: relative;
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-corner {
+	position: absolute;
+	width: 11px;
+	height: 11px;
+	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
+}
+.kt-industry .kt-corner::before,
+.kt-industry .kt-corner::after {
+	content: "";
+	position: absolute;
+	background: currentColor;
+}
+.kt-industry .kt-corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+.kt-industry .kt-corner::after { top: 5px; left: 0; width: 100%; height: 1px; }
+.kt-industry .kt-corner.tl { top: -6px; left: -6px; }
+.kt-industry .kt-corner.tr { top: -6px; right: -6px; }
+.kt-industry .kt-corner.bl { bottom: -6px; left: -6px; }
+.kt-industry .kt-corner.br { bottom: -6px; right: -6px; }
+
+/* — buttons — */
+.kt-industry .kt-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	cursor: pointer;
+	text-decoration: none;
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 14px;
+	line-height: 1.2;
+	color: var(--kt-color-text);
+	background: transparent;
+	border: 1px solid var(--kt-color-divider);
+	height: 40px;
+	padding: 0 20px;
+	white-space: nowrap;
+}
+.kt-industry .kt-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.kt-industry .kt-btn-primary { background: var(--kt-color-accent); color: #fff; border-color: var(--kt-color-accent); }
+.kt-industry .kt-btn-primary:hover:not(:disabled) { background: var(--kt-color-accent-800); }
+.kt-industry .kt-btn-primary.kt-danger { background: oklch(0.45 0.13 28); border-color: oklch(0.45 0.13 28); }
+.kt-industry .kt-btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-text) 7%, transparent); }
+.kt-industry .kt-btn-secondary.kt-danger { color: oklch(0.45 0.13 28); border-color: oklch(0.45 0.13 28); }
+.kt-industry .kt-btn-secondary.kt-danger:hover:not(:disabled) { background: oklch(0.45 0.13 28 / 0.08); }
+.kt-industry .kt-btn-ghost { color: var(--kt-color-accent); border-color: transparent; padding-inline: var(--kt-space-1); }
+.kt-industry .kt-btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent); }
+
+/* — forms — */
+.kt-industry .kt-field > label {
+	display: block;
+	font-size: 12px;
+	margin-bottom: 5px;
+	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+}
+.kt-industry .kt-input {
+	width: 100%;
+	height: 40px;
+	padding: 6px 10px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--kt-color-text);
+	caret-color: var(--kt-color-accent);
+	background: var(--kt-color-surface);
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-input:hover { border-color: color-mix(in srgb, var(--kt-color-text) 45%, transparent); }
+.kt-industry .kt-input:focus-visible { border-color: var(--kt-color-accent); outline-offset: 0; }
+.kt-industry select.kt-input {
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+	background-position: right 14px center, right 9px center;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+	padding-right: 30px;
+}
+.kt-industry .kt-ro {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+	border-bottom: 1px solid var(--kt-color-divider);
+	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
+}
+
+/* — cards — */
+.kt-industry .kt-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-2);
+	padding: 24px 26px;
+	background: transparent;
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-card-title {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 15px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--kt-color-text);
+	padding-bottom: 10px;
+	border-bottom: 2px solid var(--kt-color-accent);
+	align-self: flex-start;
+	margin: 0 0 12px;
+}
+
+/* — key/value rows — */
+.kt-industry .kt-row {
+	display: grid;
+	grid-template-columns: 190px minmax(0, 1fr);
+	gap: 20px;
+	padding: 12px 0;
+	border-top: 1px solid var(--kt-color-divider);
+	font-size: 14px;
+	align-items: center;
+}
+.kt-industry .kt-row dt { color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); margin: 0; }
+.kt-industry .kt-row dd { margin: 0; }
+
+/* — tables — */
+.kt-industry .kt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.kt-industry .kt-table th {
+	text-align: left;
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--kt-color-text) 60%, transparent);
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-table td {
+	padding: 16px;
+	border-bottom: 1px solid color-mix(in srgb, var(--kt-color-text) 8%, transparent);
+}
+.kt-industry .kt-table tbody tr:hover { background: color-mix(in srgb, var(--kt-color-text) 4%, transparent); }
+.kt-industry .kt-muted { color: color-mix(in srgb, var(--kt-color-text) 78%, transparent); }
+.kt-industry .kt-tabular { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
+/* — tabs — */
+.kt-industry .kt-tab {
+	position: relative;
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 17px;
+	letter-spacing: 0.01em;
+	padding: 0 0 12px;
+	color: color-mix(in srgb, var(--kt-color-text) 62%, transparent);
+	display: inline-flex;
+	align-items: baseline;
+	gap: 8px;
+	cursor: pointer;
+	background: none;
+	border: 0;
+}
+.kt-industry .kt-tab[aria-selected="true"] { color: var(--kt-color-text); }
+.kt-industry .kt-tab[aria-selected="true"]::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	background: var(--kt-color-accent);
+}
+.kt-industry .kt-tab .kt-count {
+	font-family: var(--kt-font-body);
+	font-size: 12px;
+	padding: 2px 7px;
+	background: color-mix(in srgb, var(--kt-color-text) 8%, transparent);
+	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+}
+.kt-industry .kt-tab[aria-selected="true"] .kt-count {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+}
+
+/* — figures (summary card numbers) — */
+.kt-industry .kt-figure { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 44px; line-height: 1; }
+.kt-industry .kt-figure.is-live { color: #047857; }
+.kt-industry .kt-figure.is-attention { color: #92610a; }
+
+/* — dialog — */
+.kt-industry .kt-dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: var(--kt-space-4);
+	background: color-mix(in srgb, #1d1f20 55%, transparent);
+	z-index: 100;
+}
+.kt-industry .kt-dialog {
+	width: min(620px, 100%);
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 30px 32px;
+	background: var(--kt-color-bg);
+	box-shadow: var(--kt-shadow-lg);
+}
+.kt-industry .kt-dialog-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 26px; margin: 0; }
+.kt-industry .kt-dialog-actions { display: flex; justify-content: flex-end; gap: 14px; padding-top: 6px; }
+
+/* — status pills (semantic vocabulary; see kt-status.css in the design pack) — */
+.kt-industry .kt-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-family: var(--kt-font-body);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.5;
+	letter-spacing: 0.01em;
+	padding: 4px 12px;
+	border: 0;
+	border-radius: 6px;
+	white-space: nowrap;
+}
+.kt-industry .kt-status::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+.kt-industry .kt-status.is-live { background: #10b9811a; color: #047857; }
+.kt-industry .kt-status.is-draft { background: #0052cc1a; color: #003d9b; }
+.kt-industry .kt-status.is-pending { background: #7376851a; color: #434654; }
+.kt-industry .kt-status.is-pending::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+.kt-industry .kt-status.is-attention { background: #f59e0b26; color: #92610a; }
+.kt-industry .kt-status.is-critical { background: #e11d481a; color: #b0143a; }
+
+/* — empty / loading / error register states — */
+.kt-industry .kt-skel {
+	height: 14px;
+	background: color-mix(in srgb, var(--kt-color-text) 10%, transparent);
+	animation: kt-skel-pulse 1.4s ease-in-out infinite;
+}
+@keyframes kt-skel-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+.kt-industry .kt-empty {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	text-align: center;
+	padding: 60px 48px 80px;
+}
+.kt-industry .kt-empty h2 { font-size: 28px; }
+.kt-industry .kt-empty p { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--kt-color-text) 70%, transparent); }

@@ -15,6 +15,7 @@
   "reporting_currency",
   "column_break_pe",
   "status",
+  "current_version_id",
   "external_reference",
   "effective_from",
   "effective_to"
@@ -74,11 +75,18 @@
   },
   {
    "default": "Active",
+   "description": "CFG-CHG-002 lifecycle. 'Inactive' retained only as a historical value for rows written before this change; new rows never use it.",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Active\nInactive",
+   "options": "Draft\nActive\nSuspended\nRetired\nInactive",
    "reqd": 1
+  },
+  {
+   "fieldname": "current_version_id",
+   "fieldtype": "Link",
+   "label": "Current Version",
+   "options": "Procuring Entity Version"
   },
   {
    "fieldname": "external_reference",

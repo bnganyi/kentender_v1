@@ -1,0 +1,81 @@
+import { reactive, toRefs } from "vue";
+import { referenceDataApi as api } from "../data/referenceDataApi.js";
+
+// Classifies a frappe.call rejection into the two error states the register
+// screens distinguish (§12.9): "forbidden" (PermissionError) vs "server" (anything
+// else). frappe surfaces the raised exception's class name in the XHR response
+// body/headers depending on version; string-matching the message is the stable
+// signal across both.
+function classifyError(err) {
+	const message = (err && (err.message || err._server_messages || err.exc)) || "";
+	const text = typeof message === "string" ? message : JSON.stringify(message);
+	if (/PermissionError/i.test(text)) return { type: "forbidden", message: __("You do not have access to maintain reference data.") };
+	return { type: "server", message: __("Reference data could not be loaded.") };
+}
+
+export function useReferenceData() {
+	const state = reactive({
+		peTypes: [],
+		pe: { rows: [], count: 0, loading: false, error: null },
+		fy: { rows: [], count: 0, loading: false, error: null },
+		context: { rows: [], count: 0, loading: false, error: null },
+	});
+
+	async function loadPeTypes() {
+		try {
+			const res = await api.listPeTypes();
+			state.peTypes = res.rows || [];
+		} catch (e) {
+			// Non-fatal — only affects the New PE type dropdown, not the register itself.
+			state.peTypes = [];
+		}
+	}
+
+	async function refreshPe(filters = {}) {
+		state.pe.loading = true;
+		state.pe.error = null;
+		try {
+			const res = await api.listProcuringEntities(filters);
+			state.pe.rows = res.rows || [];
+			state.pe.count = res.count || 0;
+		} catch (e) {
+			state.pe.error = classifyError(e);
+		} finally {
+			state.pe.loading = false;
+		}
+	}
+
+	async function refreshFy(filters = {}) {
+		state.fy.loading = true;
+		state.fy.error = null;
+		try {
+			const res = await api.listFinancialYears(filters);
+			state.fy.rows = res.rows || [];
+			state.fy.count = res.count || 0;
+		} catch (e) {
+			state.fy.error = classifyError(e);
+		} finally {
+			state.fy.loading = false;
+		}
+	}
+
+	async function refreshContext(filters = {}) {
+		state.context.loading = true;
+		state.context.error = null;
+		try {
+			const res = await api.listPeFyContexts(filters);
+			state.context.rows = res.rows || [];
+			state.context.count = res.count || 0;
+		} catch (e) {
+			state.context.error = classifyError(e);
+		} finally {
+			state.context.loading = false;
+		}
+	}
+
+	async function refreshAll() {
+		await Promise.all([loadPeTypes(), refreshPe(), refreshFy(), refreshContext()]);
+	}
+
+	return { ...toRefs(state), refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, classifyError };
+}

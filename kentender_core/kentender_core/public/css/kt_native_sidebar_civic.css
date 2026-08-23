@@ -309,6 +309,9 @@
 .body-sidebar .section-item[data-id="STD Administration"] > .standard-sidebar-item .item-anchor.section-break::before {
 	content: "menu_book";
 }
+.body-sidebar .section-item[data-id="Configuration and Governance"] > .standard-sidebar-item .item-anchor.section-break::before {
+	content: "admin_panel_settings";
+}
 /* Group chevron: quiet outline caret, no button chrome / focus plate */
 .body-sidebar .section-item .sidebar-item-control {
 	display: flex;

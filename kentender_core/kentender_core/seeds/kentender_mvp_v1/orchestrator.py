@@ -15,6 +15,13 @@ from kentender_core.seeds.kentender_mvp_v1.clear import clear_kentender_mvp_v1
 from kentender_core.seeds.kentender_mvp_v1.demands import upsert_demands
 from kentender_core.seeds.kentender_mvp_v1.org import upsert_org
 from kentender_core.seeds.kentender_mvp_v1.planning import upsert_planning
+from kentender_core.seeds.kentender_mvp_v1.reference_data import (
+	migrate_legacy_pes,
+	upsert_context_governance_actors,
+	upsert_pe_governance_actors,
+	upsert_pe_types,
+	upsert_reference_data_mvp1,
+)
 from kentender_core.seeds.kentender_mvp_v1.strategy import upsert_strategy
 from kentender_core.seeds.kentender_mvp_v1.users import upsert_canonical_users
 from kentender_core.seeds.kentender_mvp_v1.validate import (
@@ -94,6 +101,11 @@ def run_kentender_mvp_v1(
 			)
 
 		result["org"] = upsert_org()
+		result["pe_types"] = upsert_pe_types()
+		result["pe_governance_actors"] = upsert_pe_governance_actors([C.PE_MOH, C.PE_CGKIS])
+		result["context_governance_actors"] = upsert_context_governance_actors([C.PE_MOH, C.PE_CGKIS])
+		result["pe_legacy_migration"] = migrate_legacy_pes([C.PE_MOH, C.PE_CGKIS])
+		result["reference_data_mvp1"] = upsert_reference_data_mvp1()
 		result["fiscal_years_created"] = _ensure_financial_years()
 		result["users"] = upsert_canonical_users(commit=False)
 		result["strategy"] = upsert_strategy(reset=False)

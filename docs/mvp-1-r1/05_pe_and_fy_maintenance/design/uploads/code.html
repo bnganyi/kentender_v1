@@ -1,0 +1,421 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Procurement Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ba1a1a",
+                      "tertiary": "#3d4354",
+                      "on-surface": "#191c1e",
+                      "outline": "#737685",
+                      "on-secondary-container": "#005f71",
+                      "border-subtle": "#DFE1E6",
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary-container": "#c4d2ff",
+                      "secondary-fixed-dim": "#48d7f9",
+                      "tertiary-fixed-dim": "#c0c6db",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "inverse-surface": "#2e3132",
+                      "surface-container-highest": "#e1e2e4",
+                      "background": "#f8f9fb",
+                      "primary-container": "#0052cc",
+                      "surface-dim": "#d9dadc",
+                      "data-committed": "#6366F1",
+                      "tertiary-container": "#545a6c",
+                      "primary": "#003d9b",
+                      "on-surface-variant": "#434654",
+                      "status-reserved": "#F59E0B",
+                      "on-secondary-fixed": "#001f27",
+                      "surface": "#f8f9fb",
+                      "on-primary-fixed": "#001848",
+                      "surface-variant": "#e1e2e4",
+                      "on-secondary-fixed-variant": "#004e5d",
+                      "primary-fixed": "#dae2ff",
+                      "error-container": "#ffdad6",
+                      "secondary-container": "#50dcff",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f8f9fb",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "surface-container": "#edeef0",
+                      "on-tertiary-fixed": "#151b2b",
+                      "secondary": "#00687b",
+                      "on-primary": "#ffffff",
+                      "status-available": "#10B981",
+                      "on-tertiary-fixed-variant": "#404658",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#dce2f8",
+                      "status-exhausted": "#E11D48",
+                      "surface-tint": "#0c56d0",
+                      "secondary-fixed": "#afecff",
+                      "outline-variant": "#c3c6d6",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#ccd2e7",
+                      "inverse-primary": "#b2c5ff",
+                      "surface-container-low": "#f3f4f6",
+                      "on-background": "#191c1e",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-xs": "0.25rem",
+                      "section-gap": "1.5rem",
+                      "stack-sm": "0.5rem",
+                      "gutter-md": "1rem",
+                      "container-padding": "1rem"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-container-highest text-primary dark:text-inverse-primary font-label-caps text-label-caps h-screen w-64 fixed left-0 top-0 border-r border-border-subtle dark:border-outline-variant hidden md:flex flex-col py-section-gap z-40">
+<div class="px-gutter-md mb-8">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">
+                    KT
+                </div>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-extrabold text-primary dark:text-primary-fixed">KenTender</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant opacity-80 uppercase tracking-wider text-[10px]">Procurement Planning</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity duration-200">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Plan
+            </button>
+</div>
+<ul class="flex-1 flex flex-col gap-1 overflow-y-auto px-2">
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">account_tree</span>
+                    Departmental Needs
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-primary dark:text-inverse-primary font-bold border-l-4 border-primary bg-surface-container dark:bg-surface-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">inventory_2</span>
+                    Procurement Plan
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">badge</span>
+                    Vendor Registry
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">history_edu</span>
+                    Audit Logs
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+<ul class="mt-auto px-2 border-t border-border-subtle pt-4">
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined">help</span>
+                    Help Center
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container-high transition-all cursor-pointer duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined">logout</span>
+                    Log Out
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar (Mobile Only) -->
+<header class="bg-surface dark:bg-on-background w-full h-16 border-b border-border-subtle dark:border-outline-variant flex justify-between items-center px-gutter-md sticky top-0 z-50 md:hidden">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">menu</span>
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary">KenTender</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors rounded-full p-2">help</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors rounded-full p-2">notifications</span>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm cursor-pointer">
+                     JD
+                 </div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 p-container-padding md:p-section-gap overflow-x-hidden">
+<!-- Header Section -->
+<div class="mb-section-gap">
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant mb-2">
+<a class="hover:text-primary transition-colors" href="#">Home</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-on-surface">Procurement Planning</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mb-2">Procurement Planning</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">Turn accepted departmental plans into funded, approved Plan Items ready for requisitioning.</p>
+</div>
+<div class="flex items-center gap-3 self-start">
+<button class="px-4 py-2 border border-border-subtle text-primary bg-transparent rounded hover:bg-surface-container-low transition-colors text-body-sm font-body-sm font-medium">View approved plan</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded hover:opacity-90 transition-opacity text-body-sm font-body-sm font-medium">View plan update</button>
+</div>
+</div>
+</div>
+<!-- Context Row -->
+<div class="bg-surface-container-low border border-border-subtle rounded-lg p-4 mb-section-gap">
+<div class="flex flex-col md:flex-row gap-6 md:items-center">
+<div class="flex-1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Entity</label>
+<div class="text-body-md font-body-md font-medium px-3 py-2 bg-surface border border-border-subtle rounded text-on-surface flex items-center justify-between">
+                            Ministry of Health
+                            <span class="material-symbols-outlined text-outline text-sm">lock</span>
+</div>
+</div>
+<div class="w-full md:w-64">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Financial Year</label>
+<select class="w-full text-body-md font-body-md px-3 py-2 bg-surface border border-border-subtle rounded text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all appearance-none cursor-pointer">
+<option>2027/28</option>
+<option>2026/27</option>
+</select>
+</div>
+</div>
+
+</div>
+<!-- Current Plan Panel -->
+<div class="bg-surface border border-border-subtle rounded-lg overflow-hidden mb-section-gap">
+<div class="p-6 border-b border-border-subtle">
+<div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Ministry of Health Annual Procurement Plan 2027/28</h2>
+</div>
+<div class="flex items-center gap-3 text-body-sm font-body-sm">
+<span class="font-data-md text-data-md text-tertiary">PLN-MOH-2027-001</span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                    Active Version 1
+                                </span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-status-reserved/10 text-status-reserved">
+<span class="w-1.5 h-1.5 rounded-full bg-status-reserved"></span>
+                                    Draft Version 2
+                                </span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-2">Active Version 1 remains operational while Draft Version 2 is prepared.</p>
+</div>
+</div>
+<!-- Summary Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<div class="p-4 bg-surface-container-low rounded-md border border-border-subtle/50">
+<span class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Active Value</span>
+<span class="block text-data-md font-data-md text-on-surface">KES 80,000,000</span>
+</div>
+<div class="p-4 bg-surface-container-low rounded-md border border-border-subtle/50">
+<span class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Draft Value</span>
+<span class="block text-data-md font-data-md text-on-surface">KES 120,000,000</span>
+</div>
+<div class="p-4 bg-surface-container-low rounded-md border border-border-subtle/50 border-l-4 border-l-data-committed">
+<span class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Net Change</span>
+<span class="block text-data-md font-data-md text-data-committed flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+                                KES 40,000,000
+                            </span>
+</div>
+<div class="p-4 bg-surface-container-low rounded-md border border-border-subtle/50">
+<span class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Planning Complete</span>
+<span class="block text-data-md font-data-md text-on-surface">1 of 2</span>
+</div>
+<div class="p-4 bg-surface-container-low rounded-md border border-border-subtle/50">
+<span class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Finance Confirmed</span>
+<span class="block text-data-md font-data-md text-on-surface">1 of 2</span>
+</div>
+<div class="p-4 bg-error-container/30 rounded-md border border-error/20 border-l-4 border-l-error">
+<span class="block text-label-caps font-label-caps text-error mb-1">Validation</span>
+<span class="block text-body-md font-body-md font-medium text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">warning</span>
+                                Needs attention
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Work Requiring Action Section -->
+<div class="mb-section-gap">
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-4">Work requiring action</h3>
+<div class="bg-surface border border-border-subtle rounded-lg overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle bg-surface-container-low">
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Work Item</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Type</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Department</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold text-right">Amount (KES)</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Why it needs action</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Status</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-semibold">Action</th>
+</tr>
+</thead>
+<tbody class="text-body-sm font-body-sm">
+<tr class="border-b border-border-subtle hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<div class="font-medium text-on-surface mb-1">Digital health workforce certification programme</div>
+<div class="font-data-md text-xs text-tertiary">PPI-MOH-2027-022</div>
+</td>
+<td class="p-4 text-on-surface-variant">Plan Item</td>
+<td class="p-4 text-on-surface-variant">Human Resources Management and Development</td>
+<td class="p-4 font-data-md text-on-surface text-right">40,000,000</td>
+<td class="p-4 text-on-surface-variant max-w-xs text-error">Complete procurement treatment and schedule before Finance confirmation.</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-error-container text-on-error-container">
+                                        Planning incomplete
+                                    </span>
+</td>
+<td class="p-4">
+<button class="text-primary hover:text-primary-container font-medium text-sm transition-colors whitespace-nowrap">
+                                        Complete item
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Waiting on Others Section -->
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-4">Waiting on others</h3>
+<div class="bg-surface-container-low border border-border-subtle rounded-lg p-8 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-outline text-4xl mb-3">check_circle</span>
+<p class="text-body-md font-body-md text-on-surface-variant">Nothing is currently waiting on another reviewer.</p>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

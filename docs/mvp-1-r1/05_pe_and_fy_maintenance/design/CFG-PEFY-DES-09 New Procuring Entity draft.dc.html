@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #6b6f73; }
+  .kt-ro { height: 40px; display: flex; align-items: center; font-size: 14px; border-bottom: 1px solid var(--color-divider); }
+  select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: right 14px center, right 9px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 0">
+<div style="width:1440px;min-width:1440px;flex:none;height:1024px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);overflow:hidden;display:flex;flex-direction:column">
+
+  <div style="padding:36px 48px 0;display:flex;flex-direction:column;gap:12px">
+    <h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">New procuring entity</h1>
+    <div><span class="kt-status is-draft">Draft</span></div>
+  </div>
+
+  <div style="margin:36px 48px 0;flex:1;display:flex;flex-direction:column;gap:24px">
+    <div class="card blueprint" style="padding:26px 28px;gap:20px;max-width:920px">
+      <h2 class="kt-card-title">Identity</h2>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px">
+        <div class="field">
+          <label for="pe-code">PE code</label>
+          <input class="input" id="pe-code" type="text" value="PE-KEMSA" style="height:40px">
+        </div>
+        <div class="field">
+          <label for="pe-type">PE type</label>
+          <select class="input" id="pe-type" style="height:40px"><option>State Corporation</option></select>
+        </div>
+        <div class="field">
+          <label for="pe-legal">Legal name</label>
+          <input class="input" id="pe-legal" type="text" value="Kenya Medical Supplies Authority" style="height:40px">
+        </div>
+        <div class="field">
+          <label for="pe-display">Display name</label>
+          <input class="input" id="pe-display" type="text" value="Kenya Medical Supplies Authority" style="height:40px">
+        </div>
+        <div class="field">
+          <label for="pe-effective">Effective from</label>
+          <input class="input" id="pe-effective" type="text" value="1 Jul 2027" style="height:40px">
+        </div>
+      </div>
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    </div>
+
+    <div class="card blueprint" style="padding:26px 28px;gap:20px;max-width:920px">
+      <h2 class="kt-card-title">Operational setting</h2>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px">
+        <div class="field">
+          <label>Timezone</label>
+          <div class="kt-ro">Africa/Nairobi</div>
+        </div>
+      </div>
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--color-divider);padding:20px 48px;display:flex;justify-content:flex-end;gap:14px">
+    <button type="button" class="btn btn-ghost" style="height:40px;padding:0 20px;font-size:14px">Cancel</button>
+    <button type="button" class="btn btn-secondary" style="height:40px;padding:0 20px;font-size:14px">Save draft</button>
+    <button type="button" class="btn btn-primary blueprint" style="height:40px;padding:0 20px;font-size:14px;white-space:nowrap">Submit for approval<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i></button>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1080}}"></script>
+</body>
+</html>

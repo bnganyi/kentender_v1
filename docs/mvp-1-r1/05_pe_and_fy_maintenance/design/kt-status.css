@@ -1,0 +1,59 @@
+/* KenTender status semantics.
+   Chip form borrowed from the KenTender Decision System: full pill, tinted fill at ~10%
+   of the status hue, text at full strength, no hard border. Palette is the
+   "dynamic guardrail" trio (emerald / amber / rose) plus indigo and institutional blue. */
+.kt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .01em;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.kt-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* Live — in force now: Active, Available, Ready (Emerald) */
+.kt-status.is-live { background: #10b9811a; color: #047857; }
+
+/* Draft — authored, not submitted (institutional blue) */
+.kt-status.is-draft { background: #0052cc1a; color: #003d9b; }
+
+/* Pending — awaiting evaluation: Not assessed (neutral) */
+.kt-status.is-pending { background: #7376851a; color: #434654; }
+.kt-status.is-pending::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+/* Attention — action needed: Configuration required (Amber) */
+.kt-status.is-attention { background: #f59e0b26; color: #92610a; }
+
+/* Critical — stopped or removed: Suspended, Closed (Rose) */
+.kt-status.is-critical { background: #e11d481a; color: #b0143a; }
+
+/* Table + section header emphasis */
+.table thead th {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* Summary-card figures — same semantic tones as the chips */
+.kt-figure { display: inline-flex; align-items: center; gap: 12px; }
+.kt-figure::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: .9; }
+.kt-figure.is-live { color: #047857; }
+.kt-figure.is-attention { color: #92610a; }
