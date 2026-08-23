@@ -26,6 +26,9 @@ PE_CGKIS_NAME: Final[str] = "County Government of Kisumu"
 # Kept for transitional denial tests / shims.
 PE_MOE: Final[str] = "PE-MOE"
 PE_MOE_NAME: Final[str] = "Ministry of Education"
+# CFG-CHG-002 §16 — net-new seeded PE.
+PE_NSSF: Final[str] = "PE-NSSF"
+PE_NSSF_NAME: Final[str] = "National Social Security Fund"
 
 OUT_STATE_DEPT: Final[str] = "OUT-STATE-DEPT"
 OUT_DIRECTORATE: Final[str] = "OUT-DIRECTORATE"

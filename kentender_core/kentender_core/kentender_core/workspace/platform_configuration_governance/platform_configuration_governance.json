@@ -1,0 +1,73 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"pcg_h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Platform Configuration & Governance</b></span>\",\"col\":12}},{\"id\":\"pcg_p\",\"type\":\"paragraph\",\"data\":{\"text\":\"Maintain the Procuring Entities, Financial Years and PE/FY Contexts that every KenTender module reads at runtime. Restricted to configuration and oversight roles.\",\"col\":12}},{\"id\":\"pcg_sc_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reference Data\",\"col\":4}}]",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "settings",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Platform Configuration & Governance",
+ "links": [
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reference Data",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Procuring Entities, Financial Years, PE/FY Contexts",
+   "link_count": 0,
+   "link_to": "reference-data",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "module": "Kentender Core",
+ "name": "Platform Configuration & Governance",
+ "number_cards": [],
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Central Reference Data Steward"
+  },
+  {
+   "role": "Central Configuration Approver"
+  }
+ ],
+ "sequence_id": 100.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "format": "",
+   "icon": "settings",
+   "kanban_board": "",
+   "label": "Reference Data",
+   "link_to": "reference-data",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "Page",
+   "url": ""
+  }
+ ],
+ "title": "Platform Configuration & Governance",
+ "type": "Workspace"
+}

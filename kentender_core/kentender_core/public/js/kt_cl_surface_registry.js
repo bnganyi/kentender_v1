@@ -278,6 +278,17 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(__("Plan Overview"), "", trailStrategyPlan(__("Plan Overview")), []),
 		},
+		/* Vue-3-in-Desk-page pilot spike (docs/mvp-1-r1/00_common/KenTender_UI_Construction_Framework.md).
+		   Registered only so kt_cl_shell_router.js's leaveNative() fallback doesn't strip shell
+		   classes on back/forward through this route — enterNative() is called for the chrome
+		   sliver only; mountContent() is never called near the Vue root. Not a production surface. */
+		"STR-UI-PILOT": {
+			id: "STR-UI-PILOT",
+			label: "Strategy Portfolio (Pilot)",
+			routePrefixes: ["strategy-portfolio-pilot"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Strategy Portfolio (Pilot)"), "", trailStrategy(), []),
+		},
 		"STR-UI-03": {
 			id: "STR-UI-03",
 			label: "Plan Structure",
@@ -952,6 +963,17 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
+
+		// CFG-CHG-002 — Reference Data intentionally has no "CFG-PEFY-UI" entry here.
+		// It's an Industry-design-system page (Barlow tokens, kt_industry_tokens.css),
+		// not a Civic Ledger one (Tailwind/Material Symbols) — registering it would let
+		// kt_cl_shell_router.js's global route listener auto-render this registry's
+		// Civic Ledger toolbar into #kt-cl-chrome-host on every route settle (the same
+		// dual-registration race documented above for NDS-UI-01), which visually clashes
+		// with reference_data/components/PageRail.vue, the page's own DES-12 rail.
+		// reference_data_page.js still calls cl_shell.enterNative() directly (for the
+		// shared "procurement" sidebar only, no toolbar), so the sidebar keeps working
+		// without this page ever being resolvable by resolveFromRoute().
 	};
 
 	function routeKey(route) {

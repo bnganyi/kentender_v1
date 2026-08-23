@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  a:hover { color: var(--color-accent-700); }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-bg);padding:34px 40px 60px;font-family:var(--font-body)">
+  <div style="max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:27px">
+
+    <header style="display:flex;align-items:flex-start;gap:34px">
+      <div style="max-width:640px">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">KenTender · Strategic Alignment</div>
+        <h1 style="font-size:40px;margin:0 0 6px">Strategy Alignment</h1>
+        <p style="margin:0;font-size:15px;color:color-mix(in srgb, var(--color-text) 65%, transparent);text-wrap:pretty">Govern strategic outcomes, public-value commitments and performance targets used across procurement.</p>
+      </div>
+      <div style="margin-left:auto;padding-top:26px">
+        <button type="button" class="btn btn-primary blueprint" style="padding:9px 16px;font-size:14px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          Create strategic plan
+        </button>
+      </div>
+    </header>
+
+    <div class="blueprint" style="display:grid;grid-template-columns:repeat(4,1fr)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+      <button type="button" onClick="{{ filterActive }}" style="text-align:left;background:transparent;border:0;border-right:1px solid var(--color-divider);padding:13px 17px 15px;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+        <span style="font-family:var(--font-heading);font-size:30px;line-height:1">2</span>
+        <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Active plans</span>
+        <sc-if value="{{ isActive }}" hint-placeholder-val="{{ false }}">
+          <span style="display:block;height:2px;margin-top:9px;background:var(--color-accent);width:34px"></span>
+        </sc-if>
+      </button>
+
+      <button type="button" onClick="{{ filterReview }}" style="text-align:left;background:transparent;border:0;border-right:1px solid var(--color-divider);padding:13px 17px 15px;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+        <span style="font-family:var(--font-heading);font-size:30px;line-height:1">1</span>
+        <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Awaiting review</span>
+        <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+          <span style="display:block;height:2px;margin-top:9px;background:var(--color-accent);width:34px"></span>
+        </sc-if>
+      </button>
+
+      <button type="button" onClick="{{ filterDue }}" style="text-align:left;background:transparent;border:0;border-right:1px solid var(--color-divider);padding:13px 17px 15px;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+        <span style="font-family:var(--font-heading);font-size:30px;line-height:1">3</span>
+        <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Measurements due</span>
+        <sc-if value="{{ isDue }}" hint-placeholder-val="{{ false }}">
+          <span style="display:block;height:2px;margin-top:9px;background:var(--color-accent);width:34px"></span>
+        </sc-if>
+      </button>
+
+      <button type="button" onClick="{{ filterAttention }}" style="text-align:left;background:transparent;border:0;padding:13px 17px 15px;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px" style-hover="background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+        <span style="font-family:var(--font-heading);font-size:30px;line-height:1">1</span>
+        <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Needs attention</span>
+        <sc-if value="{{ isAttention }}" hint-placeholder-val="{{ false }}">
+          <span style="display:block;height:2px;margin-top:9px;background:var(--color-accent);width:34px"></span>
+        </sc-if>
+      </button>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px">
+      <div class="field" style="flex:1 1 260px;min-width:220px">
+        <label for="sp-q">Search</label>
+        <input id="sp-q" class="input" type="search" placeholder="Plan code or title" value="{{ q }}" onChange="{{ onQuery }}">
+      </div>
+      <div class="field" style="flex:0 1 190px">
+        <label for="sp-type">Plan type</label>
+        <select id="sp-type" class="input" value="{{ type }}" onChange="{{ onType }}">
+          <option value="">All plan types</option>
+          <option value="Entity Strategic Plan">Entity Strategic Plan</option>
+          <option value="Programme Strategy">Programme Strategy</option>
+        </select>
+      </div>
+      <div class="field" style="flex:0 1 170px">
+        <label for="sp-period">Period</label>
+        <select id="sp-period" class="input" value="{{ period }}" onChange="{{ onPeriod }}">
+          <option value="">All periods</option>
+          <option value="2026–2029">2026–2029</option>
+          <option value="2026–2030">2026–2030</option>
+          <option value="2030–2034">2030–2034</option>
+        </select>
+      </div>
+      <div class="field" style="flex:0 1 160px">
+        <label for="sp-status">Status</label>
+        <select id="sp-status" class="input" value="{{ status }}" onChange="{{ onStatus }}">
+          <option value="">All statuses</option>
+          <option value="Draft">Draft</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Returned">Returned</option>
+          <option value="Approved">Approved</option>
+          <option value="Active">Active</option>
+          <option value="Superseded">Superseded</option>
+          <option value="Archived">Archived</option>
+        </select>
+      </div>
+      <sc-if value="{{ crossEntity }}" hint-placeholder-val="{{ true }}">
+        <div class="field" style="flex:0 1 210px">
+          <label for="sp-entity">Entity</label>
+          <select id="sp-entity" class="input" value="{{ entity }}" onChange="{{ onEntity }}">
+            <option value="">All entities</option>
+            <option value="Ministry of Health">Ministry of Health</option>
+            <option value="Ministry of Education">Ministry of Education</option>
+            <option value="Ministry of Transport">Ministry of Transport</option>
+          </select>
+        </div>
+      </sc-if>
+      <button type="button" class="btn btn-ghost" onClick="{{ clearFilters }}" style="height:36px;padding-inline:8px">Clear filters</button>
+    </div>
+
+    <section class="blueprint" style="padding:0">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;align-items:baseline;gap:10px;padding:12px 17px;border-bottom:1px solid var(--color-divider)">
+        <h2 style="font-size:19px;margin:0">Strategy portfolio</h2>
+        <span style="font-size:12px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ countLabel }}</span>
+      </div>
+
+      <sc-if value="{{ hasRows }}" hint-placeholder-val="{{ true }}">
+        <table class="table" style="font-size:14px">
+          <thead>
+            <tr>
+              <th style="width:32%;padding-inline:17px">Plan</th>
+              <th style="width:13%">Type</th>
+              <th style="width:16%">Effective period</th>
+              <th style="width:6%">Version</th>
+              <th style="width:10%">Status</th>
+              <th style="width:16%">Current attention</th>
+              <th style="width:7%;text-align:right;padding-inline:17px">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="p" hint-placeholder-count="3">
+              <tr>
+                <td style="padding:11px 17px">
+                  <div style="font-family:var(--font-heading);font-size:12px;letter-spacing:0.08em;color:var(--color-accent-700)">{{ p.code }}</div>
+                  <div style="font-size:14.5px;line-height:1.3">{{ p.title }}</div>
+                </td>
+                <td style="padding:11px 7px;color:color-mix(in srgb, var(--color-text) 75%, transparent)">{{ p.type }}</td>
+                <td style="padding:11px 7px;font-variant-numeric:tabular-nums;white-space:nowrap">{{ p.period }}</td>
+                <td style="padding:11px 7px;font-variant-numeric:tabular-nums">{{ p.version }}</td>
+                <td style="padding:11px 7px"><span class="tag {{ p.statusTag }}">{{ p.status }}</span></td>
+                <td style="padding:11px 7px"><span class="{{ p.attentionClass }}" style="font-size:13px">{{ p.attention }}</span></td>
+                <td style="padding:11px 17px;text-align:right"><a href="#" style="font-family:var(--font-heading);font-size:14px;text-decoration:none">{{ p.action }}</a></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </sc-if>
+
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:54px 17px 58px;text-align:center">
+          <p style="margin:0 0 14px;font-family:var(--font-heading);font-size:19px">No strategic plans match these filters.</p>
+          <button type="button" class="btn btn-secondary" onClick="{{ clearFilters }}">Clear filters</button>
+        </div>
+      </sc-if>
+    </section>
+
+    <sc-if value="{{ showMyWork }}" hint-placeholder-val="{{ true }}">
+      <section style="max-width:620px">
+        <h3 style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent);margin:0 0 6px">My work</h3>
+        <div style="border-top:1px solid var(--color-divider)">
+          <sc-for list="{{ work }}" as="w" hint-placeholder-count="3">
+            <a href="#" style="display:flex;align-items:baseline;gap:12px;padding:10px 2px;border-bottom:1px solid color-mix(in srgb, var(--color-text) 8%, transparent);text-decoration:none;color:var(--color-text)" style-hover="background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+              <span style="font-size:14px">{{ w.label }}</span>
+              <span style="margin-left:auto;font-family:var(--font-heading);font-size:12px;letter-spacing:0.08em;color:var(--color-accent-700)">{{ w.ref }}</span>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;Cross-entity authority&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Permissions&quot;},&quot;Show My work section&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sections&quot;}}">
+const PLANS = [
+  { code: 'MOH-SP-0001', title: 'Ministry of Health Strategic Plan 2026–2030', type: 'Entity Strategic Plan',
+    period: '1 Jul 2026 – 30 Jun 2030', periodKey: '2026–2030', version: 'v1', status: 'Active', statusTag: 'tag-accent',
+    attention: '1 target needs attention', attentionClass: '', flag: 'attention', entity: 'Ministry of Health', action: 'View' },
+  { code: 'MOH-DHT-2026-2029', title: 'Digital Health Transformation Strategy', type: 'Programme Strategy',
+    period: '1 Jul 2026 – 30 Jun 2029', periodKey: '2026–2029', version: 'v1', status: 'Active', statusTag: 'tag-accent',
+    attention: '2 measurements due', attentionClass: '', flag: 'due', entity: 'Ministry of Health', action: 'View' },
+  { code: 'MOH-SP-2030-2034', title: 'Ministry of Health Strategic Plan 2030–2034', type: 'Entity Strategic Plan',
+    period: '1 Jul 2030 – 30 Jun 2034', periodKey: '2030–2034', version: 'v1', status: 'Submitted', statusTag: 'tag-outline',
+    attention: 'Awaiting review', attentionClass: 'text-muted', flag: 'review', entity: 'Ministry of Health', action: 'Review' }
+];
+
+const WORK = [
+  { label: 'Review submitted plan', ref: 'MOH-SP-2030-2034' },
+  { label: 'Submit overdue measurement', ref: 'MOH-DHT-2026-2029' },
+  { label: 'Resolve off-track target', ref: 'MOH-SP-0001' }
+];
+
+class Component extends DCLogic {
+  state = { q: '', type: '', period: '', status: '', entity: '', quick: '' };
+
+  set = (k) => (e) => this.setState({ [k]: e.target.value });
+  quick = (v) => () => this.setState(s => ({ quick: s.quick === v ? '' : v }));
+
+  filtered() {
+    const { q, type, period, status, entity, quick } = this.state;
+    const needle = q.trim().toLowerCase();
+    return PLANS.filter(p => {
+      if (needle && !(p.code.toLowerCase().includes(needle) || p.title.toLowerCase().includes(needle))) return false;
+      if (type && p.type !== type) return false;
+      if (period && p.periodKey !== period) return false;
+      if (status && p.status !== status) return false;
+      if (entity && p.entity !== entity) return false;
+      if (quick === 'active' && p.status !== 'Active') return false;
+      if (quick === 'review' && p.status !== 'Submitted') return false;
+      if (quick === 'due' && p.flag !== 'due') return false;
+      if (quick === 'attention' && p.flag !== 'attention') return false;
+      return true;
+    });
+  }
+
+  renderVals() {
+    const rows = this.filtered();
+    const n = rows.length;
+    const { q, type, period, status, entity, quick } = this.state;
+    return {
+      rows, work: WORK,
+      hasRows: n > 0, isEmpty: n === 0,
+      countLabel: n === PLANS.length ? n + ' plans' : n + ' of ' + PLANS.length + ' plans',
+      q, type, period, status, entity,
+      crossEntity: this.props['Cross-entity authority'] ?? this.props.crossEntity ?? true,
+      showMyWork: this.props['Show My work section'] ?? this.props.showMyWork ?? true,
+      onQuery: this.set('q'), onType: this.set('type'), onPeriod: this.set('period'),
+      onStatus: this.set('status'), onEntity: this.set('entity'),
+      filterActive: this.quick('active'), filterReview: this.quick('review'),
+      filterDue: this.quick('due'), filterAttention: this.quick('attention'),
+      isActive: quick === 'active', isReview: quick === 'review',
+      isDue: quick === 'due', isAttention: quick === 'attention',
+      clearFilters: () => this.setState({ q: '', type: '', period: '', status: '', entity: '', quick: '' })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

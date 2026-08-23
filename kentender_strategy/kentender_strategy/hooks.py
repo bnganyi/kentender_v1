@@ -77,4 +77,6 @@ page_js = {
 	"strategy-plan-audit": "public/js/strategy_plan_audit_page.js",
 	"strategy-measurement-submit": "public/js/strategy_measurement_submit_page.js",
 	"strategy-measurement-verify": "public/js/strategy_measurement_verify_page.js",
+	# Claude Design -> Vue 3 pilot (spike, not the shared shell/registry pattern).
+	"strategy-portfolio-pilot": "public/js/strategy_portfolio_pilot_page.js",
 }

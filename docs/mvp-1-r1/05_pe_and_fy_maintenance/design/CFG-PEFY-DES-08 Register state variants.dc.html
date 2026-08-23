@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #6b6f73; }
+  .kt-board { width: 1440px; min-width: 1440px; flex: none; height: 1024px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); overflow: hidden; display: flex; flex-direction: column; }
+  .kt-caption { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: #f2f2f3; margin: 0 0 10px; }
+  .kt-tab { position: relative; font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; letter-spacing: .01em; padding: 0 0 12px; color: color-mix(in srgb, var(--color-text) 62%, transparent); display: inline-flex; align-items: baseline; gap: 8px; cursor: pointer; background: none; border: 0; }
+  .kt-tab[aria-selected="true"] { color: var(--color-text); }
+  .kt-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--color-accent); }
+  .kt-tab .kt-count { font-family: var(--font-body); font-size: 12px; padding: 2px 7px; background: color-mix(in srgb, var(--color-text) 8%, transparent); color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+  .kt-tab[aria-selected="true"] .kt-count { background: var(--color-accent-100); color: var(--color-accent-800); }
+  select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: right 14px center, right 9px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+  .kt-filters { margin: 28px 48px 0; display: grid; grid-template-columns: minmax(0,1fr) 220px 200px 200px; gap: 16px; }
+  .kt-skel { height: 14px; background: color-mix(in srgb, var(--color-text) 10%, transparent); }
+  .kt-empty-h { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 28px; margin: 0; }
+  .kt-empty-b { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+</style>
+</helmet>
+<div style="display:flex;flex-direction:column;align-items:center;gap:40px;padding:28px 0 60px">
+
+  <div>
+    <p class="kt-caption">Loading</p>
+    <div class="kt-board">
+      <div style="padding:36px 48px 0">
+        <h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">Reference data</h1>
+        <p style="margin:10px 0 0;font-size:15px;max-width:760px;color:color-mix(in srgb, var(--color-text) 72%, transparent);text-wrap:pretty">Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.</p>
+      </div>
+      <div style="margin:32px 48px 0;display:flex;gap:36px;border-bottom:1px solid var(--color-divider)">
+        <button type="button" class="kt-tab" aria-selected="false">Procuring Entities <span class="kt-count">3</span></button>
+        <button type="button" class="kt-tab" aria-selected="false">Financial Years <span class="kt-count">1</span></button>
+        <button type="button" class="kt-tab" aria-selected="true">PE/FY Contexts <span class="kt-count">3</span></button>
+      </div>
+      <div class="kt-filters">
+        <input class="input" type="text" value="" placeholder="Search context or procuring entity" style="height:40px" disabled="disabled">
+        <select class="input" style="height:40px" disabled="disabled"><option>All procuring entities</option></select>
+        <select class="input" style="height:40px" disabled="disabled"><option>All financial years</option></select>
+        <select class="input" style="height:40px" disabled="disabled"><option>All statuses</option></select>
+      </div>
+      <div style="margin:36px 48px 0;display:flex;flex-direction:column">
+        <div style="height:64px;display:flex;align-items:center;border-top:1px solid var(--color-divider)"><div class="kt-skel" style="width:100%"></div></div>
+        <div style="height:64px;display:flex;align-items:center;border-top:1px solid var(--color-divider)"><div class="kt-skel" style="width:100%"></div></div>
+        <div style="height:64px;display:flex;align-items:center;border-top:1px solid var(--color-divider)"><div class="kt-skel" style="width:100%"></div></div>
+        <div style="height:64px;display:flex;align-items:center;border-top:1px solid var(--color-divider)"><div class="kt-skel" style="width:100%"></div></div>
+        <div style="height:64px;display:flex;align-items:center;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div class="kt-skel" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="kt-caption">No matches</p>
+    <div class="kt-board">
+      <div style="padding:36px 48px 0">
+        <h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">Reference data</h1>
+        <p style="margin:10px 0 0;font-size:15px;max-width:760px;color:color-mix(in srgb, var(--color-text) 72%, transparent);text-wrap:pretty">Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.</p>
+      </div>
+      <div style="margin:32px 48px 0;display:flex;gap:36px;border-bottom:1px solid var(--color-divider)">
+        <button type="button" class="kt-tab" aria-selected="false">Procuring Entities <span class="kt-count">3</span></button>
+        <button type="button" class="kt-tab" aria-selected="false">Financial Years <span class="kt-count">1</span></button>
+        <button type="button" class="kt-tab" aria-selected="true">PE/FY Contexts <span class="kt-count">3</span></button>
+      </div>
+      <div class="kt-filters">
+        <input class="input" type="text" value="Ministry of Education" placeholder="Search context or procuring entity" style="height:40px">
+        <select class="input" style="height:40px"><option>All procuring entities</option></select>
+        <select class="input" style="height:40px"><option>All financial years</option></select>
+        <select class="input" style="height:40px"><option>All statuses</option></select>
+      </div>
+      <div style="margin:0 48px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding-bottom:80px">
+        <h2 class="kt-empty-h">No records match these filters.</h2>
+        <p class="kt-empty-b">Change or clear the filters to see other PE/FY contexts.</p>
+        <button type="button" class="btn btn-secondary" style="height:40px;padding:0 20px;font-size:14px;margin-top:6px">Clear filters</button>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="kt-caption">Forbidden</p>
+    <div class="kt-board">
+      <div style="padding:36px 48px 0">
+        <h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">Reference data</h1>
+        <p style="margin:10px 0 0;font-size:15px;max-width:760px;color:color-mix(in srgb, var(--color-text) 72%, transparent);text-wrap:pretty">Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.</p>
+      </div>
+      <div style="margin:32px 48px 0;display:flex;gap:36px;border-bottom:1px solid var(--color-divider)">
+        <button type="button" class="kt-tab" aria-selected="false">Procuring Entities <span class="kt-count">3</span></button>
+        <button type="button" class="kt-tab" aria-selected="false">Financial Years <span class="kt-count">1</span></button>
+        <button type="button" class="kt-tab" aria-selected="true">PE/FY Contexts <span class="kt-count">3</span></button>
+      </div>
+      <div style="margin:0 48px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding-bottom:80px">
+        <h2 class="kt-empty-h">You do not have access to maintain reference data.</h2>
+        <p class="kt-empty-b">Ask your KenTender administrator to review your configuration assignment.</p>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="kt-caption">Server error</p>
+    <div class="kt-board">
+      <div style="padding:36px 48px 0">
+        <h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">Reference data</h1>
+        <p style="margin:10px 0 0;font-size:15px;max-width:760px;color:color-mix(in srgb, var(--color-text) 72%, transparent);text-wrap:pretty">Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.</p>
+      </div>
+      <div style="margin:32px 48px 0;display:flex;gap:36px;border-bottom:1px solid var(--color-divider)">
+        <button type="button" class="kt-tab" aria-selected="false">Procuring Entities <span class="kt-count">3</span></button>
+        <button type="button" class="kt-tab" aria-selected="false">Financial Years <span class="kt-count">1</span></button>
+        <button type="button" class="kt-tab" aria-selected="true">PE/FY Contexts <span class="kt-count">3</span></button>
+      </div>
+      <div class="kt-filters">
+        <input class="input" type="text" value="" placeholder="Search context or procuring entity" style="height:40px">
+        <select class="input" style="height:40px"><option>All procuring entities</option></select>
+        <select class="input" style="height:40px"><option>All financial years</option></select>
+        <select class="input" style="height:40px"><option>All statuses</option></select>
+      </div>
+      <div style="margin:0 48px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding-bottom:80px">
+        <h2 class="kt-empty-h">Reference data could not be loaded.</h2>
+        <p class="kt-empty-b">Try again. If the problem continues, contact KenTender support.</p>
+        <button type="button" class="btn btn-secondary" style="height:40px;padding:0 20px;font-size:14px;margin-top:6px">Try again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1120}}"></script>
+</body>
+</html>

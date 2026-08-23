@@ -10,5 +10,7 @@ Latin + latin-ext subsets only.
 | Inter | 400, 500, 600, 700 | SIL OFL 1.1 | Google Fonts |
 | JetBrains Mono | 400, 500 | SIL OFL 1.1 | Google Fonts |
 | Material Symbols Outlined | variable | Apache-2.0 | Google Fonts |
+| Barlow | 400, 500, 700 | SIL OFL 1.1 | Google Fonts |
+| Barlow Condensed | 400, 600 | SIL OFL 1.1 | Google Fonts |
 
 All licenses permit redistribution and self-hosting.

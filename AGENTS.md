@@ -1,33 +1,24 @@
-# KenTender Repository Instructions
+# KenTender Engineering Rules
 
-KenTender is a modular public-procurement platform built on Frappe/ERPNext v16. Treat this repository as production-oriented, governance-sensitive software: preserve legal/process meaning, app boundaries, permissions, auditability, and test evidence.
+KenTender is a modular public-procurement platform on Frappe/ERPNext v16. Its purpose is to manage the traceable lifecycle from public strategy and budget through procurement, contracting, delivery, assets, disclosure, and audit. Treat workflow meaning, permissions, evidence, and audit history as product behaviour—not administrative detail.
 
-## Instruction precedence and conflicts
+## 1. Authority and scope
 
-Apply guidance in this order:
+Apply instructions in this order:
 
-1. The user's current explicit request and acceptance criteria.
-2. The task-specific implementation pack or specification explicitly named by the user.
-3. The closest applicable nested `AGENTS.md` or `AGENTS.override.md`.
-4. This repository-level file.
-5. Current, non-archived architecture and module documentation.
+1. the user's current request and acceptance criteria;
+2. the task-specific specification or implementation pack named by the user;
+3. the closest applicable `AGENTS.md` or `AGENTS.override.md`;
+4. this repository-level file;
+5. current, non-archived architecture and module documentation.
 
-Do not infer that the words “never” or “do not” in an older document automatically override a newer explicit instruction. If two applicable sources materially conflict, stop before editing, identify the exact conflict and affected files, and ask for direction.
+If two applicable sources materially disagree, identify the exact conflict and stop before implementing the disputed part. Archived documents and code are historical reference only unless the task explicitly targets them.
 
-Archived documents and retired code are historical reference only unless the task explicitly targets them.
+The root `CLAUDE.md` is the command card and execution loop. It does not override this file.
 
-## Repository boundary
+## 2. Project structure and ownership
 
-- The repository root is `frappe-bench/apps/kentender_v1/`; it is a container repository, not a Frappe app named `kentender_v1`.
-- Frappe apps are the top-level `kentender_*` directories in this repository. Bench exposes them through symlinks under the repository's `apps/` directory; see `docs/architecture/mono-repo-v2.md` and the root `Makefile`.
-- Work only inside this repository unless the task explicitly requires inspection elsewhere.
-- Treat sibling bench apps (`frappe`, `erpnext`, `hrms`, and third-party apps) as read-only references. Do not modify them unless the user explicitly authorizes a framework or upstream-app change.
-- Do not inspect or expose secrets, site configuration, private files, environment directories, database dumps, or logs unless the task specifically requires them. Never print credentials or tokens.
-- Generated or transient directories such as `node_modules/`, `playwright-report/`, `test-results/`, caches, and built assets are not source files. Do not hand-edit or commit generated output unless the repository intentionally tracks it.
-
-## App set and dependency direction
-
-The allowed v3 apps are:
+The repository root is `frappe-bench/apps/kentender_v1/`. It is a container repository, not a Frappe app. The product apps are the top-level `kentender_*` directories:
 
 - `kentender_core`
 - `kentender_strategy`
@@ -41,243 +32,254 @@ The allowed v3 apps are:
 - `kentender_integrations`
 - `kentender_transparency`
 
-Do not create another app or parallel replacement module unless explicitly approved.
+Do not create another app or parallel replacement module without explicit approval.
 
-The primary dependency direction is:
+Primary dependency direction:
 
 `core -> strategy -> budget -> procurement -> stores -> assets`
 
-Side apps (`suppliers`, `governance`, `compliance`, `integrations`, and `transparency`) consume published interfaces. Respect ownership and the detailed map in `docs/architecture/dependency-map-v3.md`.
+`suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
 
-- Do not add reverse dependencies or deep imports into another app's internals.
-- Put shared primitives and cross-app contracts in the owning public interface, normally `kentender_core` when genuinely cross-cutting.
-- Do not move behavior between apps merely to make an implementation easier.
-- Before a cross-app change, identify the owning app, consumers, public contract, and dependency impact.
+Rules:
 
-## Read only the context the task needs
+- The app that owns a record owns its invariants and write operations.
+- No upstream or reverse dependency, deep import into another app's internals, or cross-app direct database write.
+- Cross-app interaction uses an explicit public service or API owned by the relevant app.
+- Put genuinely shared primitives and contracts in `kentender_core`; do not move domain behaviour there merely for convenience.
+- Before changing a cross-app contract, identify the owner, consumers, compatibility impact, and contract tests.
+- Treat sibling bench apps such as Frappe and ERPNext as read-only unless an explicit task authorizes an upstream change or tracked core patch.
 
-Start with repository inspection and the files or implementation pack named in the task. Do not load every architecture document by default.
+The canonical traceability chain is:
 
-Read `docs/architecture/README.md` for routing when the relevant source is unclear. Read these documents when the change is architecture-sensitive, cross-app, or introduces a domain/workflow boundary:
+`Strategy -> Budget -> Demand/Requisition -> Plan -> Tender -> Bid -> Evaluation -> Award -> Contract -> Inspection -> Stores/Assets -> Reporting/Audit`
 
-- `docs/architecture/kentender_architecture_rules_v3.md`
-- `docs/architecture/global-architecture-v3.md`
-- `docs/architecture/dependency-map-v3.md`
+Preserve identifiers, record lineage, approvals, actor/time/reason evidence, and organizational scope across that chain.
 
-Read `docs/prompts/architecture/architecture-restructure-cursor-prompt-pack.md` only for an explicitly requested architecture restructure or phased ticket from that pack. Despite its filename, treat it as a task specification, not as automatically loaded Cursor behaviour.
+## 3. Change discipline
 
-For module work, prefer the current PRD, domain/state model, role-permission matrix, UI specification, seed specification, and tests for that module. Ignore superseded drafts in `archive/` directories unless asked to compare or recover them.
+Before editing:
 
-If documentation, tests, and current code disagree materially, do not silently select one. Report the mismatch and use the user's stated task as the controlling scope.
+1. Inspect `git status` and preserve existing user changes.
+2. Read the named implementation pack, target code, callers, public contracts, and focused tests. Do not read every project document by default.
+3. Confirm the owning app and the smallest coherent change.
+4. State a short plan for multi-app, migration, permission, workflow, or substantial UI work.
 
-## Working method
+While editing:
 
-### Before editing
+- Implement only the requested scope. Avoid speculative refactors, broad formatting, unrelated cleanup, duplicate modules, shadow workflows, and temporary bypasses.
+- Reuse existing services, components, helpers, registries, fixtures, and patterns before introducing another abstraction.
+- Preserve existing public contracts unless the controlling task explicitly approves a clean break or migration.
+- Do not invent roles, states, approvals, identifiers, legal outcomes, or business rules. Surface the missing decision.
+- Do not modify secrets, private site configuration, generated assets, test reports, framework code, or unrelated files.
+- Do not add or upgrade production dependencies without approval.
+- Do not commit, push, merge, rebase, or use destructive Git commands unless explicitly requested.
 
-1. Inspect the relevant repository area and `git status`; preserve all existing user changes.
-2. Confirm the task mode:
-   - For review, explanation, planning, or diagnosis, do not implement unless explicitly asked.
-   - For a requested change or build, implement it and validate it.
-3. Trace the existing implementation before proposing a new one. Reuse established services, APIs, components, test helpers, and patterns.
-4. Define the smallest coherent change. Do not mix unrelated cleanup, speculative refactoring, or future phases into the task.
-5. For a substantive change, state briefly before the first edit:
-   - goal and acceptance criteria;
-   - affected apps and likely files;
-   - explicit scope exclusions;
-   - validation plan.
+## 4. Frappe application rules
 
-Use Plan mode for ambiguous, multi-app, migration, workflow, permission, or architecture-sensitive work. A small localized correction does not require a ceremonial plan.
+### 4.1 Use Frappe, do not imitate it
 
-### While editing
+- Create apps, sites, and DocType scaffolds through supported Frappe commands and export flows. Do not hand-create fake framework scaffolding.
+- Use DocTypes, permissions, hooks, patches, background jobs, caching, and Desk lifecycle conventions before inventing parallel mechanisms.
+- Persistent schema and data changes require explicit DocType changes and patches/migrations. Do not hide migrations in runtime side effects.
+- Use the repository's build wrapper and current `make` targets; do not guess commands or bypass the required Node version.
 
-- Make the smallest maintainable change that fully satisfies the requirement.
-- Preserve public behaviour and compatibility outside the stated scope.
-- Do not create duplicate modules, compatibility scaffolding, shadow workflows, or temporary bypasses unless explicitly required.
-- Do not invent missing business rules, roles, approvals, workflow states, identifiers, or legal outcomes. Surface the decision needed.
-- Do not add or upgrade production dependencies without explaining the need and receiving approval.
-- Do not modify unrelated files, reformat broad areas, or overwrite user changes.
-- Do not run destructive Git operations. Do not commit, push, merge, rebase, or amend unless explicitly requested.
-- Comments should explain non-obvious business or technical reasons, not restate the code.
+### 4.2 Keep layers clear
 
-### Before completion
+- **DocType controllers:** persistence lifecycle and thin, local invariants.
+- **Services:** business orchestration, cross-record consistency, transitions, and reusable domain operations.
+- **API:** small explicit endpoints that validate input, authorize the actor, and call services.
+- **Client code:** interaction and presentation only; never the sole enforcement point for business rules.
+- **Utilities:** lightweight helpers, not hidden service layers.
 
-1. Review the complete diff for scope creep, permission gaps, architectural violations, and accidental generated-file changes.
-2. Run the narrowest relevant checks first, then the appropriate broader tests for affected contracts.
-3. Never claim a test or manual flow passed unless it was actually run. Report blocked or skipped validation with the reason.
-4. Confirm that the result matches the named requirement or acceptance criteria—not merely that the code compiles.
+Services must be callable independently of a particular page. Avoid duplicating a business operation in a controller, API method, fixture, and browser handler.
 
-### Efficiency and iteration discipline
+### 4.3 Server authority and security
 
-- Verify unfamiliar framework mechanisms empirically before building on them. Before writing a feature against a framework interaction you haven't personally exercised in this codebase (routing, page lifecycle, event wiring, async/transaction boundaries), write a minimal throwaway probe that exercises the real interaction path and confirms your assumption. Do not assume framework behavior from documentation or prior experience with a different version.
-- Test the real interaction path, not the shortcut path, before calling a phase done. A page that renders correctly via direct URL navigation is not verified — click-through navigation from the actual entry point (button, menu, workflow transition) must be exercised at least once before a UI phase is marked complete. Framework routing/state can differ across three distinct paths in this codebase — direct load, `frappe.set_route()` programmatic navigation, and browser back/forward (`popstate`) — confirm all three that apply, not just the first one that happens to work. Browser back-navigation in particular resolves Frappe's hide/show/route-change event order differently than a forward `set_route()` call and has silently broken chrome that looked fine on every other path (see the `kt_cl_surface_registry` gotcha above).
-- Batch diagnosis before batch fixing. When a broad test run surfaces a failure, review the surrounding code for related issues before fixing the single visible one and re-running everything. Do not run the full suite after every single-line fix; use narrow/targeted test runs during active iteration and reserve full-suite runs for phase boundaries and pre-completion verification.
-- Seed/test fixtures must call the real service layer, not duplicate its side effects. Constructing fixtures via direct DB writes that hand-reconstruct what a service function would have done (audit rows, timestamps, task creation, derived fields) creates a second implementation that silently drifts from the first every time the real one changes. Prefer calling the actual service functions to build fixtures. Where a direct write is unavoidable (e.g., backdating), comment why, and treat it as a standing liability to re-check whenever the corresponding service function changes.
-- Checkpoint with the user before continuing past a natural demo point in any multi-phase module. For any module split into phases where a UI phase completes, stop and show a live screenshot or short demo before continuing to the next phase — do not run an entire multi-phase module autonomously to completion without a midpoint check-in. This is the cheapest point to catch a design or functional mismatch.
+Every material server action must define and enforce:
 
-### Hard completion-status rule
+- eligible source state;
+- required role and organizational scope;
+- input and business validation;
+- resulting state and related-record effects;
+- audit actor, time, and reason where applicable;
+- predictable failure behaviour.
 
-- Never mark a gate, tracker row, requirement, acceptance criterion, module wave, plan step, or task as `Done`, `Complete`, or equivalent unless its entire stated scope and every applicable acceptance criterion have actually been implemented and the required validation evidence has passed.
-- A prerequisite, partial slice, narrow happy path, scaffold, passing subset of tests, or implementation that still requires material integration or verification must remain `Partial`, `In progress`, or `Planned` as appropriate.
-- Do not infer completion from progress. Before changing any persistent status to complete, compare the implementation and executed evidence against the full controlling contract item by item.
-- If a completion status was recorded prematurely, correct it immediately and explicitly identify the remaining work. Never preserve an inaccurate completion status for presentation, momentum, or convenience.
-- A phase cannot be marked Done without one unscripted, live, end-to-end run of its primary user journey. Automated Python/Playwright coverage is necessary but not sufficient — before setting a tracker row or gate to Done, perform a manual-equivalent click-through as a real user would do it (fresh data, no pre-conditioned shortcuts), watching actual network responses for errors, not just green assertions. A green test suite that never exercised the real journey is not evidence of a working journey.
-- Test every optional-feature-plus-completion combination, not just each in isolation. If a workflow has an optional step (attachment, cost estimate, delegate assignment, multi-context selection), the test matrix must include "use the optional step, then complete the primary flow" — not only "complete the primary flow" and "use the optional step" as separate, disconnected tests.
-- A deferred/stubbed integration that blocks the primary flow is a bug, not a scope boundary. Before deferring an integration point ("no real external service exists yet, wire it up later"), check whether skipping it leaves the primary user journey completable. If completing the primary journey now depends on that integration, deferring it without a safe stopgap (e.g., an explicit override, a default-pass behavior with a visible flag) is a blocking defect and must be flagged as such in the tracker — not filed as acceptable future work.
-- For any screen that persists state and is reachable by its own URL (create/edit/detail routes), the live end-to-end run must include a hard page refresh after the state-changing action, not just the action itself. Loading a page via direct URL and loading it via client-side navigation after a save can diverge — the save can appear to fully succeed (success toast, correct-looking transition) while the identifier it navigated to was never actually placed anywhere a refresh can recover it. "I clicked save and it looked right" is not equivalent to "I clicked save, refreshed, and the data was still there."
+Never rely on hidden fields, disabled buttons, or client checks for authorization. Use Frappe permission APIs and re-check permissions inside whitelisted methods and services. Return only data the caller is allowed to see. Use translatable user messages and do not expose internal exceptions, SQL, secrets, or stack traces.
 
-## Frappe engineering rules
+### 4.4 Documents, database, and transactions
 
-- This is a Frappe application; act as an expert Frappe Framework developer, not a generic web developer bolting features onto an unfamiliar system. When a framework mechanism seems awkward, limiting, or produces an unexpected result, the default hypothesis is that there is an idiomatic Frappe way to do it that hasn't been found yet — not that the framework needs to be worked around. Before building a parallel mechanism (custom state-passing, hand-rolled permission checks, bespoke dialog systems, manual DOM diffing), search for and use the framework's own facility for it, even if the workaround would ship faster. A working-but-wrong-idiom fix has cost more later in this codebase than the time saved building it — see the `frappe.set_route` gotcha below, which shipped as an object-based `route_options` workaround (documented as a "known limitation" at the time) instead of the framework's own path-segment routing, and later broke "refresh loses data" in production across an entire module.
-- Keep business logic in explicit Python service modules, not in DocType controllers, page JavaScript, or client-only handlers.
-- Keep DocType controllers thin: lifecycle delegation, invariant enforcement, and calls into the owning service layer.
-- Expose cross-layer operations through explicit, minimal APIs with stable inputs and outputs.
-- Enforce critical validation, authorization, scope, state transitions, and financial/business rules on the server. Client validation may improve UX but is never the sole control.
-- Use Frappe's permission and ORM facilities unless a reviewed exception is required. Do not bypass permissions or write directly to the database for convenience.
-- Make retriable actions idempotent where duplicate execution could create approvals, reservations, submissions, awards, ledger effects, or audit events.
-- Idempotency keys built from a business record's own auto-generated name (e.g. `f"{prefix}:{doc.name}:{step}"`, as `kentender_core.services.workflow_tasks.execute_routed_transition` does) are only safe if that name can never be reused. Several of this codebase's naming schemes are purely sequential ("next number for this scope"), not globally unique (UUID/hash) — so deleting a record and later creating a new one in the same scope can silently reissue its old name. If a stale `Workflow Task` (or any other row keyed by that same idempotency string) still exists from the deleted record, the new record's genuinely-first transition gets silently treated as an idempotent replay of the old one: the calling function returns `ok: true` with the *pre-transition* state, and the real mutation never runs — no error, no log, just a submission that silently doesn't submit. This is exactly why ad hoc data deletion on a sequentially-named doctype must also sweep every other table keyed by that name (not just doctypes with a formal Link field to it) — `grep` for the doctype name as a plain string field (`subject_type`/`document_type`/`reference_doctype`-style generic references), not only `"options": "<Doctype>"` Link fields, before considering a cleanup complete.
-- Preserve audit trails and actor/time/reason data for material workflow decisions.
-- Do not invent hidden workflow states. User-visible status, server state, permitted actions, and audit history must agree.
-- Use explicit patches/migrations for persistent schema or data changes. Do not disguise migrations as runtime side effects.
-- Keep APIs and services independent of a particular page where the capability is a domain operation.
+- Prefer document APIs for writes so validation, permissions, hooks, and audit behaviour run.
+- Lightweight `frappe.db` reads are acceptable when document behaviour is not required. Avoid raw SQL; when unavoidable, justify it, parameterize it, and cover it with tests.
+- Do not use direct database writes to bypass validation or manufacture workflow state.
+- Let the Frappe request lifecycle manage commits and rollbacks. Do not call `frappe.db.commit()` from ordinary request services.
+- Long work belongs in a background job. Jobs must be idempotent, scoped, observable, safe to retry, and explicit about transaction boundaries.
+- Cache only derived/read data. Invalidate it on authoritative writes and never use cache as the system of record.
 
-For Frappe-managed scaffolding:
+### 4.5 Idempotency, audit, and identity
 
-- Create apps with `bench new-app`.
-- Create sites with `bench new-site`.
-- Generate DocType scaffolds through Frappe's standard creation/export flow.
-- Do not simulate unavailable generator output by handwriting framework scaffolds.
-- If a required generator cannot be run safely, provide the exact command and report the blocker instead of fabricating the result.
+- Retriable commands, seeds, patches, and integrations must be idempotent.
+- Build idempotency on an immutable business key or explicit request key—not an auto-incremented document name, timestamp, or display label.
+- Do not infer chronology or uniqueness from sequential names. Deletion and name reuse can leave stale generic references that are not formal Link fields.
+- Material changes to approved value, funding, timing, method, evaluation, award, or contract baselines must use the applicable amendment/reapproval flow. Never silently rewrite approved history.
+- User-visible status, server state, permitted actions, tasks, and audit history must agree.
 
-## Product and workflow rules
+### 4.6 Fixtures and seed data
 
-- Preserve the canonical business traceability chain: Strategy -> Budget -> Demand/Requisition -> Plan -> Tender -> Bid -> Evaluation -> Award -> Contract -> Inspection -> Stores/Assets.
-- Preserve app ownership, record lineage, approval evidence, and role/organizational scope across that chain.
-- Do not simplify away governance, reservations, role queues, exception handling, reapproval, or audit behaviour merely to complete a happy path.
-- Material changes to an approved requirement, value, funding, timing, procurement route, evaluation, or award must follow the applicable amendment/reapproval rules; do not mutate an approved baseline silently.
-- Every server action must define eligible source state, required role/scope, validation, resulting state, audit effect, and failure behaviour.
-- No module is considered implementation-ready solely because screens exist. Follow the applicable PRD, domain/state model, role-permission matrix, UI specification, seed specification, and smoke contracts.
+- Fixtures and seeds must be deterministic, idempotent, tenant/site scoped, and safe to validate repeatedly.
+- Build records through the real service layer. Do not reproduce service side effects with direct writes.
+- A direct write is acceptable only for a test property the service cannot produce, such as controlled backdating; isolate it and explain why.
+- Test data cleanup must target only owned fixtures. Confirm references before deletion, including generic reference fields.
 
-## UI and navigation
+## 5. Workflow and product rules
 
-- Prefer the approved workspace-first pattern: landing/workspace -> queue -> detail/workspace -> guided builder or form. Do not fall back to raw DocType-first UX where a product workspace is specified.
-- Stitch output is approved design input, not production architecture. Hand-port it into maintainable Frappe pages, components, CSS, and APIs. Do not ship static mock shells, iframes, duplicated fake data, or client-side business behaviour copied from a mockup.
-- Preserve the repository's design tokens, accessibility behaviour, responsive layout, test IDs, and established shared components.
-- Avoid developer-oriented instructions in end-user UI. Copy must describe the user's decision, evidence, consequence, and next action.
+- A screen is not a workflow. Implement and test states, transitions, guards, responsibilities, exceptions, notifications/tasks, amendment paths, and audit effects.
+- Do not remove governance, reservations, role queues, exception handling, reapproval, or evidence merely to make the happy path work.
+- A deferred integration is acceptable only if the primary journey still has an explicit, safe, truthful outcome. A stub that blocks completion is a defect.
+- For optional features, test the combination “use the option, then complete the primary flow”; separate isolated tests are insufficient.
+- The primary action shown for a record must reflect what that actor can and should do next in the current state. Server-computed action order is part of the contract.
 
-### Stitch Desk chrome fidelity
+## 6. Frappe UI construction standard
 
-- Register every new Stitch-ported Desk page in `kentender_core.stitch_desk_chrome_registry.STITCH_DESK_SURFACES` in the same change that adds it, and run `test_stitch_desk_chrome_gate` before considering the page done. This is an existing, enforced cross-module gate that catches Desk-bleed color/typography/chrome regressions — a page left unregistered is silently exempt from the one automated check built for exactly this problem.
-- Module CSS must chain color/spacing/typography from `kt_stitch_desk_chrome.css`'s `--kt-stitch-*` custom properties (e.g. `var(--kt-stitch-primary, #003d9b)`), never hardcode independently. New component CSS must chain through the same tokens, not introduce a second source of truth.
-- Do not reintroduce these already-fixed Desk-bleed defects (each has a specific, documented fix in `kt_stitch_desk_chrome.css`): Win98 outset buttons, missing Tailwind Forms select chevrons, wrong Espresso font-weight/letter-spacing on body/labels, wrong primary-button hover color (must stay white, never on-primary-container ink), editable inputs rendering as disabled/surface-tinted instead of white, wrong table/section header chrome (must use the muted DS recipe, not primary-fixed/square), wrong card border color (must be outline-variant/border-subtle).
-- Follow the established `<module>_ui_fixtures/<screen>.js` file-per-screen convention (see Strategy/Budget/Planning), not flat `<module>_<screen>_page.js` files — this keeps new pages discoverable the same way existing ones are and lines up with the registry's own naming.
-- Pixel-fidelity verification must compare actual values, not impressions. Before marking a UI phase done, extract the mockup's real color hex codes, font-family stack, and spacing/radius tokens from its Tailwind config (or computed styles) and diff them line-by-line against the implementation's CSS — do not rely on a screenshot "looks right" pass. Matching fixture text content is not the same as matching visual design; both are required and must be verified separately.
-- When hand-porting a Tailwind-based mockup to plain CSS (required — Desk pages cannot load Tailwind CDN), build the token table first. Translate the mockup's custom color/spacing/font tokens into a small set of CSS custom properties in one place (chained from `--kt-stitch-*` per above), then write component rules only in terms of those tokens. Never transcribe a Tailwind utility class's approximate pixel value by eye into a hand-written rule.
-- Known Frappe/Desk routing and rendering gotchas — apply these by default, do not rediscover them per module:
-  - Any `position: fixed` element must offset from the left by the sidebar width (`var(--sidebar-width, 256px)` or the module's equivalent token) or it renders hidden under Desk's persistent sidebar.
-  - `frappe.set_route(name, {key: value})` — an **object** arg — does not put `key` in the URL; Frappe's own `push_state()` never serializes it, and the value only exists in the in-memory `frappe.route_options`, lost on any refresh or direct link. **Do not "fix" this by reading `frappe.route_options` with a URL-query-string fallback** — that pattern shipped in this exact module, was documented as a known limitation, and still broke "refresh loses data" in production across four page controllers. Use Frappe's actual idiom instead: pass the identifier as a plain **string/positional** arg — `frappe.set_route(name, id)` — which Frappe appends as a real URL path segment (`route[1]`, refresh-safe); read it back with `frappe.get_route()[1]`. This is how every other KenTender module's detail/edit routes already work (e.g. `kentender_budget`'s `budget_workspace_shell.js` `budgetCodeFromRoute()`) — match that convention rather than reinventing state-passing.
-  - Two page controllers must never share one `page_js` file with a blind `frappe.pages[name] = frappe.pages[name] || {}` for multiple route names — this silently stubs out whichever name isn't currently loading and permanently blanks that page on its real first visit. Only attach handlers when `frappe.pages[name]` already resolves to a real wrapper.
-  - Never repaint a component with `$body.html(jQuery(markupString).html())` when the markup's own root element carries the test id / style-scoping class — this silently strips that root element on every re-render. Use `$body.html(markupString)` directly.
-  - Custom-styled dialogs must be appended inside the page's own styled root container, never via `frappe.ui.Dialog` (renders outside that scope and won't match the design). `frappe.confirm()` is a thin wrapper around `frappe.ui.Dialog` and has the exact same problem despite not looking like a Dialog call at the use site — grep for `frappe.confirm(` alongside `frappe.ui.Dialog(` when auditing a module for this. The established replacement is a plain-HTML dialog template (backdrop `div` + card with header/title/close, body, footer with Cancel + primary/danger action) appended inside the page's own markup and toggled via a `hidden` attribute — see `departmental_needs_review_page.js`'s `reasonDialogTemplate()`/`openReasonDialog()` (generalized to also cover a reason-less confirm) and `departmental_needs_create_page.js`'s `confirmDialogTemplate()`. Reuse an existing module's dialog CSS classes (e.g. `.kt-nds-reason-dialog*`) across multiple confirm/prompt dialogs in that module rather than inventing a new class family per dialog.
-  - `kt_stitch_desk_chrome.css` forces `border-width/border-color/background-color: ... !important` onto every bare `input`/`select`/`textarea` inside `.kt-stitch-canvas` (needed for real form fields). Any screen with a deliberately borderless/transparent control — an inline table-cell edit, an inline currency amount, anything the mockup renders with `border-0`/transparent background — must counter this with its own `!important` on `background`/`border`/`border-radius`, matching the pattern already used by Budget's, Strategy's, and Planning's table-cell inputs. Skipping the `!important` doesn't make the control invisible-and-broken in an obvious way — it silently produces a bordered white box with whatever padding you wrote, which reads as "slightly cramped" rather than "clearly wrong" and is easy to miss on a casual look.
-  - `app_include_css` entries are loaded globally on every Desk page, not scoped per-route — a class name is not implicitly scoped to the screen you're styling it for. Before introducing a new component class in a module CSS file, grep the module's *other* CSS files (not just the one you're editing) for the same class name; a second, differently-shaped rule for the same class will silently override or be overridden by the first wherever both screens share the cascade, breaking whichever screen loses.
-  - `frappe.request.cleanup()` auto-shows any `_server_messages` on a response via its own `frappe.msgprint()` popup whenever no handler is registered for the response's `exc_type` — **independent of, and in addition to, whatever the caller's own `callback`/`error` function does with that same response.** Passing `error_handlers: {}` does *not* suppress this (it only registers handlers keyed by exact `exc_type`, which a module's own custom exception class will never match, so the fallback still fires). The result of getting this wrong: after fixing a "generic Request failed" bug by switching `raise` to `frappe.throw()` so the real message reaches the client (see the `errors.py::fail()` fix elsewhere in this file), every validation error started showing as a raw, undesigned "Message" popup dialog *on top of* the module's own on-brand toast — the exact vanilla-Frappe-chrome problem this file already warns about, just reached through a different door. The correct, dedicated suppression is `frappe.call({ ..., silent: true })` — it has no effect on the caller's own `callback`/`error` handling, it only stops Frappe's own auto-popup. Any module wrapping `frappe.call()` in a custom `call()` helper that reads `_server_messages` itself (as this codebase's convention does) must set `silent: true`.
-  - `document.body`'s `kt-cl-shell`/`kt-cl-shell-native` classes (the ones every Stitch native-chrome CSS selector is scoped under) are managed by **two independent mechanisms that must both be told about a route, or they fight each other**: each page's own `enterShell()`/`on_page_hide → leaveNative()` calls, *and* `kentender_core`'s global `kt_cl_shell_router.js`, which listens to `frappe.router.on("change", ...)` and calls `leaveNative()` on **any** route not found in `kentender_core.cl_surface_registry` — regardless of what the page itself just did. A module whose routes aren't registered there will intermittently lose all native-shell styling (buttons render as unstyled black default `<button>`s, sidebar/breadcrumb chrome disappears) specifically on browser back/forward navigation, because `popstate`-triggered routing resolves the hide/show/route-change order differently than a `frappe.set_route()` forward navigation, and the registry-driven `leaveNative()` can fire *after* the page's own `enterNative()` on that path. Register every native-chrome route's prefix in `kentender_core.cl_surface_registry` in the same change that adds the page — do not rely solely on each page's own manual `enterShell()` call, even though that call alone is sufficient on first load. This is a **different** registry from `kentender_core.stitch_desk_chrome_registry` (Python, CSS/pixel-fidelity gate) — a page needs both, and being registered in one does not imply the other.
-- Verify interactive/re-rendered states, not just first paint. Bugs live disproportionately in state after a client-side re-render (add/remove a row, change a dropdown) — a screen that looks correct on load must also be re-checked after triggering at least one such interaction.
-- Diff computed styles on *every distinct control variant* on the page, not one representative sample. A top-level text field, an inline table-cell edit, and an inline currency amount can each carry different CSS and different chrome-bleed exposure even on the same screen — verifying one and assuming the others match by similarity is how a boxed-input regression like the one above survives a "pixel fidelity verified" pass.
-- A `<select>`'s empty/placeholder option must be visually and textually impossible to mistake for a real selection: mark it `disabled` (most browsers grey it out and it can't be silently re-selected) and never give it the same label as the field's own column header or field label. A placeholder reading "Unit" in a column header "Unit" looked filled-in at a glance, so users left it unselected without noticing, and only found out at submission — with a generic "must have a unit" message that pointed at the whole form, not the one empty select. This is the same failure shape as an unlabeled disabled button: the control *looks* complete but silently isn't, and the cost lands entirely on the user, downstream, with no visible cause.
-- The primary action surfaced for a record (e.g., a workspace row's single action button, driven by `actions[0]` from a server-computed list) must be the action the record's owner is actually going to take next, not a generic default. A Draft/Returned need's own owner opening it from the workspace is going to edit it, not read a preview of it first — routing them through a read-only "View" screen that then requires a second click to "Edit" is friction with no purpose, even though "View" a technically-valid, harmless action. When a server endpoint computes an ordered actions list consumed by `actions[0]`, order it by what's actually next for that state/owner combination, not by an incidental/historical order.
+The standard for complex screens is **Vue 3, mounted inside a real Frappe Desk Page**. This replaced hand-porting Tailwind/Stitch HTML into jQuery pages after a validated pilot (`kentender_strategy`'s `strategy_portfolio_pilot`) showed materially fewer defeat-CSS iterations and equivalent-or-better fit with Frappe's own patterns. Vue 3 is already vendored by Frappe framework's own esbuild pipeline (`esbuild-plugin-vue3`; the framework uses it internally for Form Builder, Workflow Builder, Print Format Builder) — mounting Vue in a Desk page requires no new dependency and no new build tooling.
 
-For workbench-to-builder/form navigation, use the shared `kentender_core` shell and the canonical specification:
+Use tiered construction by screen type:
 
-`docs/prompts/strategy/1. ken_tender_frappe_context_preserving_form_navigation_pattern.md`
+- Routine CRUD and administration: standard Frappe Form/List/Report/Workflow/Dialog APIs.
+- Module landing/navigation: standard Frappe Workspace.
+- Complex queues, workbenches, guided builders, multi-state workflows: Vue 3 (`<script setup>`, Composition API) mounted in a Desk Page, per this section.
+- Public supplier/bidder experiences: a dedicated frontend, per existing convention.
 
-When applicable:
+Do not add `frappe-ui` as a dependency by default. Hand-authored Vue components styled from a small ported design-token stylesheet are sufficient; add `frappe-ui` only with explicit approval and a specific, named need.
 
-1. Register the module consistently in `kentender_core/kentender_core/module_registry.py` and `kentender_core/public/js/kt_module_registry.js`.
-2. Mount `kentender_core.kt_shell.mountHeader()` on builders and guided forms.
-3. Use `kentender_core.kt_state` to save and restore workbench context.
-4. Expose `data-testid="back-to-workbench"` through the shared shell.
-5. Cover the return path with `tests/ui/helpers/moduleShell.ts` and `expectBackToWorkbench`.
-6. Do not use `frappe.set_route("/desk")` or raw `location.assign` as the primary exit path.
+### 6.1 Page and bundle structure
 
-Strategy-specific current rule: the primary UX is the Strategy Management workspace (`strategy_workspace.js`) with Plan Info, Structure, Review, and Audit tabs. The legacy `/app/strategy-builder/<plan>` route redirects to the workspace Structure tab and is not the primary editing surface.
+- The Page doctype folder holds only the `.json` record. The controller lives in `public/js/<slug>_page.js`, registered in the owning app's `hooks.py` `page_js` dict — the same convention every Desk page in this repo already follows.
+- The Vue app lives under `public/js/<slug>/`: a `<slug>.bundle.js` entry point (auto-discovered by esbuild's `**/*.bundle.js` glob — no manual registration needed), a root `.vue` component, `components/`, `composables/`, `data/` (API adapters), `styles/` (token CSS).
+- Page controller pattern (mirrors Frappe's own `frappe/printing/page/print_format_builder_beta`):
+  ```js
+  frappe.pages["<slug>"].on_page_load = (wrapper) => frappe.ui.make_app_page({ parent: wrapper, ... });
+  frappe.pages["<slug>"].on_page_show = (wrapper) => mount(wrapper); // guard against double-mount
+  frappe.pages["<slug>"].on_page_hide = (wrapper) => unmount(wrapper); // calls app.unmount()
+  ```
+  Load the bundle lazily via `frappe.require("<slug>.bundle.js")`. Guard the async load against `on_page_hide` firing before it resolves (a "still wanted" flag checked inside the `.then()`), or a fast navigate-away-and-back can mount an app nothing ever unmounts.
 
-For Workbench typography changes, follow:
+### 6.2 Data, permissions, actions
 
-`docs/prompts/architecture/KenTender Workbench Typography v1.0.md`
+- Call existing whitelisted Python endpoints via `frappe.call()`, wrapped in small composables (`useX()` returning reactive state plus a `refresh()`), not a generic data-fetching library.
+- Server output is authoritative for both data and permitted actions. Render a record's action buttons only from a server-returned `allowed_actions`-style array — never a client-side status-to-action map. The server re-checks permissions on every mutating call regardless of what the client displayed; the client list is advisory only.
+- After any mutating action, refetch from the server and re-render from the fresh response. Never optimistically mutate local state to reflect an action's expected result.
 
-Use the established `--kt-wb-*` tokens rather than introducing ad hoc typography values.
+### 6.3 Confirmation dialogs
 
-## Procurement layout
+Do not use `frappe.confirm()`/`frappe.ui.Dialog` on a Vue-owned surface — they render outside the Vue root and inherit neither its state nor its styles. Build a small in-Vue dialog component instead: `v-if` toggle, `nextTick()` + `.focus()` on open, `@keydown.esc` to cancel, a conditional field for actions that need a reason.
 
-Procurement subdomains live below `kentender_procurement/kentender_procurement/` (for example, `demand_intake/`). Follow `kentender_procurement/PROCUREMENT_INTERNAL_STRUCTURE.md`; do not flatten subdomains or place procurement-owned logic in another app.
+### 6.4 Routing and lifecycle
 
-## Testing and validation
+- Put durable record identity in the URL path segment: `frappe.set_route(slug, id)`, read back via `frappe.get_route()[1]`. Never pass identity as an object argument or rely on `frappe.route_options` — in-memory route state is lost on refresh and direct links.
+- Subscribe to `frappe.router.on("change", handler)` to react to in-page navigation (for example, opening/closing a route-addressable detail panel). **`frappe.router.off()` does not actually unbind anything** — Frappe's `EventEmitterMixin.off()` (`frappe/public/js/frappe/event_emitter.js`) rebuilds a fresh wrapper closure on every call and unbinds *that* from jQuery, not the wrapper `on()` originally bound, so the removal never matches. This is a confirmed framework bug, not app-specific. Mitigate with an active-flag guard — set `false` in `onUnmounted`, checked as the first line of the handler — rather than relying on `off()` to remove the listener; it stays bound but becomes inert.
+- Verify every applicable path before calling routing work done: direct load, `page.reload()`, and browser back/forward (`page.goBack()`/`goForward()`). This repo's UI test suite has essentially no back/forward coverage anywhere — there is no existing precedent to lean on; write it explicitly for new work.
 
-Every substantive story or correction must consider:
+### 6.5 Shared shell participation
 
-- service/domain behaviour;
-- validation and invariants;
-- permissions and organizational scope;
-- allowed and forbidden workflow transitions;
-- failure and exception paths;
-- audit effects;
-- critical UI flow where UI behaviour changed;
-- cross-app contract tests where a public interface changed.
+- `kentender_core.cl_shell` is the shell system real Desk pages use. Call `kentender_core.cl_shell.enterNative({ sidebarWorkspaceKey, ... })` in `on_page_show` for the toolbar/breadcrumb chrome — it only touches a DOM sibling (`#kt-cl-chrome-host`), never the page's content region, so it is safe alongside a Vue-owned mount point.
+- **Never call `kentender_core.cl_shell.mountContent()` on or near a Vue mount root.** It does a full innerHTML replace and will destroy Vue's DOM without Vue knowing. Vue's own `createApp().mount(el)` on a dedicated leaf node is the content-region equivalent; the two must never target overlapping DOM.
+- Register the route in `kentender_core.cl_surface_registry.js`'s `surfaces` table (`routePrefixes`, `sidebarWorkspaceKey`, `chrome(...)`) the moment `enterNative()` is used at all. `kt_cl_shell_router.js` calls `leaveNative()` on any unregistered route once native chrome has ever been entered, stripping shell classes on back/forward through the page.
+- `kentender_core.kt_shell`/`kt_state`/`module_registry.py`/the `back-to-workbench` testid contract are dead code with zero production callers — confirmed by grep, not assumed. Do not build against them.
 
-Add or update focused tests with the implementation. High-risk funding, submission, evaluation, award, contract, permission, amendment, and audit flows require both positive and negative coverage.
+### 6.6 Styling
 
-Run `bench` from `/home/midasuser/frappe-bench`. Determine exact test commands from the repository's current scripts and documentation rather than inventing commands.
+- Port design tokens (colors, spacing, radius, shadow, font stacks) as CSS custom properties scoped under one wrapper class on the component root, not `:root` — the stylesheet is loaded globally once via `frappe.require`, so scoping under a class is what keeps it from leaking into Desk chrome or another screen.
+- Vue's `<style scoped>` (an auto-appended `data-v-*` attribute selector) is sufficient on its own to avoid Desk/Bootstrap style-bleed — confirmed empirically: a first-pass Vue screen rendered with zero button/select/table chrome bleed, no defeat-CSS iteration needed. Still avoid literal global class names Desk's own Bootstrap CSS already claims (`.btn`, `.table`, `.card`, and similar) inside scoped styles, as a matter of hygiene.
+- Self-host any custom fonts using the existing `kt_cl_fonts.css` pattern (`kentender_core/public/css/kt_cl_fonts.css`): per-weight `@font-face` blocks split into `latin`/`latin-ext` subsets, one woff2 file each, registered via the owning app's own `hooks.py` `app_include_css`. Never load fonts from a CDN.
 
-For asset builds, use the repository wrapper only:
+### 6.7 Testing
 
-```bash
-./scripts/bench-with-node.sh build --app <app>
-```
+- Use `page.goto(..., { waitUntil: "domcontentloaded" })` plus an explicit element wait for Desk pages, not `waitUntil: "networkidle"` — Frappe's persistent long-poll/socket.io connections mean network never truly goes idle, and `networkidle` can hang or silently consume most of a test's timeout.
+- Cover, per screen: live data render; loading/empty/error states (force the error case, for example via `page.route()` intercepting the endpoint with a 500 — do not assert only the happy path); a workflow action end-to-end including the confirm dialog and the authoritative refresh after it; direct load, reload, and back/forward on any route-addressable state; and, if the component holds any interval or subscription, an explicit open-close-reopen cycle asserting the call count does not multiply.
 
-Do not run plain `bench build` or app-level Yarn builds; the wrapper supplies the required Node version. Run the wrapper from the repository root unless its own help/documentation states otherwise.
+### 6.8 Vue-specific notes (this bench's pinned Vue 3.3.9)
 
-For Frappe core patches, source patches live under `patches/frappe/`. Apply them only when the task explicitly requires a tracked core patch:
+- `<script setup>`'s automatic ref-unwrapping in templates applies only to top-level bindings. A ref nested inside a plain returned object (for example `const filters = { q: someRef }`) renders as the raw ref object in the template — a literal `[object Object]` if bound to an `<input>`. Expose each ref as its own top-level `const` instead.
+- `defineModel()` is not available (stabilized in Vue 3.4; this bench pins 3.3.9). Use the plain `modelValue` prop plus `update:modelValue` emit pattern it desugars to.
 
-```bash
-./scripts/apply-frappe-patches.sh
-./scripts/bench-with-node.sh build --app frappe
-```
+## 7. Test-driven development
 
-Do not edit the bench-local `apps/frappe` copy as an untracked shortcut.
+TDD is the default for behaviour changes and bug fixes.
 
-## Current temporary and retired areas
+1. **Red:** express one observable requirement or reproduce the defect in the smallest appropriate test. Run it and confirm it fails for the expected reason.
+2. **Green:** implement the smallest production change that passes the test.
+3. **Refactor:** remove duplication and improve names or boundaries while the focused test remains green.
+4. Add the next required case and repeat.
 
-- The IT Tender Configuration Wizard v1/v2 was retired in July 2026. Historical code is under `archive/it-std-wizard-retired-2026-07/`. Do not reactivate or extend it. The STD Engine remains active.
-- The August 2026 MVP-1 Budget teardown removed legacy Budget DocTypes and `kentender_budget.seed.*` implementations. The rebuild is complete against `docs/mvp-1-r1/03_budget/KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1.0.md` (approved 2026-08-20) — `kentender_budget.seeds.kentender_mvp_v1_portfolio.upsert_kentender_mvp_v1_portfolio` is the active, real seed entry point (called via `kentender_core/seeds/kentender_mvp_v1/budget.py::upsert_budget()`). It no longer returns a skipped `mvp1-budget-teardown` result. `docs/mvp-1/02_budget/` is superseded — do not treat it as the live authority for new Budget work.
-- `kentender_budget.seeds.works_master_budget_seed.upsert_works_master_budget` remains only as a compatibility skip stub. Do not treat it as an active seeding implementation.
+Test the lowest stable layer that owns the behaviour:
 
-## Completion report
+- service/domain tests for rules, invariants, transitions, and audit effects;
+- API tests for input, permission, scope, serialization, and failure contracts;
+- contract tests for public cross-app interfaces;
+- browser tests for navigation, rendering, interaction, and integration—not for re-proving every service permutation.
 
-End implementation tasks with a concise, evidence-based report containing:
+For high-risk funding, submission, evaluation, award, contract, permission, amendment, and audit flows, include positive and negative cases. A bug fix requires a regression test unless the controlling task explicitly documents why automation is impractical.
 
-- files changed;
-- behaviour implemented;
-- tests/checks run and their results;
-- tests not run and why;
-- manual verification still required;
-- intentional exclusions or future-phase work not implemented;
-- assumptions, unresolved questions, or risks.
+Do not weaken assertions, bypass permissions, add arbitrary waits, or make production behaviour test-only to get green. Mock external system boundaries, not the service under test. Use deterministic data and the real service layer for setup.
 
-Do not describe a task as complete while required validation is failing or a material requirement remains unresolved.
+## 8. Efficient test and diagnosis ladder
 
-## Code review rules
+Use the least expensive level that can disprove the current change. Move upward only after the lower level passes.
 
-When reviewing changes, prioritize behavioural and governance defects over style. Flag:
+| Level | Run when | Typical scope |
+|---|---|---|
+| 1. Focused reproducer | After each relevant edit in red/green | One test method, one Python module, one Vitest case, or one Playwright test |
+| 2. Component/module | The focused case passes | Tests for the changed service, controller, page, or module |
+| 3. Affected contract/app | A public interface, permission, workflow, or shared helper changed | Direct consumers and relevant app tests |
+| 4. Feature/UI gate | A coherent feature slice is ready for review | The named current `make` gate, smoke suite, or build |
+| 5. Full suite | Before merge/release when required, or after broad shared infrastructure, migration, permission framework, global shell, or cross-app changes | Full backend/frontend/UI suite appropriate to the risk |
 
-- cross-app ownership or dependency violations;
-- business logic in controllers or client-only code;
-- missing server-side permission, scope, validation, or transition checks;
-- silent mutation of approved baselines;
-- hidden states or UI/server action mismatches;
-- missing negative-path, permission, workflow, or audit tests;
-- raw Desk navigation that breaks workspace context;
-- edits to retired, archived, generated, framework, or unrelated files;
-- claims of validation unsupported by executed checks.
+Operational rules:
 
-Report findings by severity with file references and concrete consequences. If no material finding exists, say so and identify any residual testing risk.
+- During active repair, rerun the last failing focused test—not the full suite.
+- Do not rerun an unchanged passing suite after an edit that cannot affect it.
+- Discover exact targets with `make help` and repository scripts. Never guess a gate name.
+- When a broad run reports several failures, save the results, group them by likely root cause, and reduce them to focused reproducers before editing.
+- Batch related fixes, run their focused subsets, then run the broad level once to confirm the batch.
+- If a failure is environmental, prove that with a minimal diagnostic; do not repeatedly rerun the same suite hoping it clears.
+- Use a build, migration, seed, or browser run only when the changed layer requires it.
+- Perform the unscripted primary user journey once at the feature/phase completion checkpoint, not after every small code fix. Check actual network failures and use fresh, valid data.
+- A direct URL rendering successfully is not sufficient UI evidence; the real entry path and return path must also work.
+
+Escalate test scope immediately only when the change itself is broad or dangerous—for example a migration, global permission rule, shared shell/router, app contract, framework patch, or release candidate. State why the broader run is justified.
+
+## 9. Completion standard
+
+Before claiming completion:
+
+1. Review the full diff for scope creep, generated files, permission gaps, dependency violations, and accidental changes.
+2. Compare implementation and evidence with every applicable acceptance criterion.
+3. Run the appropriate level of the test ladder and the primary manual journey when the feature/phase is complete.
+4. Confirm no required integration, state, permission, audit effect, or error path remains stubbed or misleading.
+
+Do not mark a requirement, gate, phase, or tracker item complete from a scaffold, happy path, partial test subset, or unverified integration. Use `Partial`, `In progress`, or `Blocked` truthfully.
+
+The completion report must state:
+
+- files and behaviour changed;
+- tests/checks run and results;
+- manual flow run and result;
+- tests or flows not run and why;
+- intentional exclusions, assumptions, unresolved questions, and risks.
+
+Never report a test, screen, or journey as passing unless it was actually observed.
+
+## 10. Review priorities
+
+Review behavioural and governance risk before style. Flag, in severity order:
+
+- missing server permission, scope, validation, or transition enforcement;
+- silent mutation of approved baselines or missing audit evidence;
+- cross-app ownership, dependency, or direct-write violations;
+- business logic implemented only in the client or duplicated across layers;
+- UI actions that disagree with server state or lose context on navigation/refresh;
+- missing negative-path, contract, workflow, audit, or regression tests;
+- edits to archived, retired, generated, framework, secret, or unrelated files;
+- completion claims unsupported by executed evidence.
+
+If no material defect is found, say so and identify any remaining validation risk.
