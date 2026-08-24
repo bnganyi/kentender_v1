@@ -1107,21 +1107,47 @@ def build_strategy_reference(plan_version_id: str, target_id: str) -> dict:
 
 
 def list_active_targets(procuring_entity: str | None = None, plan_code: str | None = None) -> list[dict]:
+	"""XMOD-STR-001 read used by kentender_budget's Budget Line "primary
+	target" picker (`budget_live_bind.js::loadTargetOptions`). Rebuilt for
+	the Phase 1 schema (STR-908, Phase 9): the pre-rebuild version filtered
+	`Strategic Plan.status`/`procuring_entity`/`plan_code` and
+	`Performance Target.plan_version`/`target_code`/`title`/`status`, none
+	of which exist any more (status moved to `Strategic Plan Version`;
+	`Performance Target` has no direct plan-version link, only
+	`indicator_id`). Confirmed via Phase 4's already-correct sibling
+	functions `validate_strategy_reference`/`build_strategy_reference` in
+	this same file, which this now matches."""
 	pe = procuring_entity or entity_for_user()
-	plan_filters = {"status": "Active"}
+	plan_filters: dict[str, Any] = {}
 	if pe:
-		plan_filters["procuring_entity"] = pe
+		plan_filters["procuring_entity_id"] = pe
 	if plan_code:
-		plan_filters["plan_code"] = plan_code
+		plan_filters["plan_id"] = plan_code
 	plans = frappe.get_all("Strategic Plan", filters=plan_filters, pluck="name")
 	if not plans:
 		return []
+	versions = frappe.get_all(
+		"Strategic Plan Version",
+		filters={"plan_id": ["in", plans], "status": "Active"},
+		pluck="name",
+	)
+	if not versions:
+		return []
+	indicators = frappe.get_all(
+		"Performance Indicator", filters={"plan_version_id": ["in", versions]}, pluck="name"
+	)
+	if not indicators:
+		return []
 	targets = frappe.get_all(
 		"Performance Target",
-		filters={"plan_version": ["in", plans], "status": "Active"},
-		fields=["name", "target_code", "title", "plan_version"],
+		filters={"indicator_id": ["in", indicators]},
+		fields=["name", "indicator_id"],
 	)
-	return [build_strategy_reference(t.plan_version, t.name) for t in targets]
+	out = []
+	for t in targets:
+		pv_id = frappe.db.get_value("Performance Indicator", t.indicator_id, "plan_version_id")
+		out.append(build_strategy_reference(pv_id, t.name))
+	return out
 
 
 def _usage_target_ref(target_id: str | None, snapshot_label: str | None = None) -> dict | None:

@@ -22,6 +22,7 @@ from kentender_strategy.services.strategy_consumer import (
 	get_strategy_lineage,
 	target_snapshot_fields,
 )
+from kentender_strategy.services.strategy_contracts import list_active_targets
 
 
 class TestWorksMasterFixtureRebuilt(FrappeTestCase):
@@ -78,3 +79,27 @@ class TestWorksMasterFixtureRebuilt(FrappeTestCase):
 		types = [p["type"] for p in lineage["path"]]
 		self.assertEqual(types, ["Pillar", "Programme", "Strategic Objective"])
 		self.assertEqual(lineage["path"][-1]["id"], out["objective"])
+
+	def test_list_active_targets_matches_current_schema_str_908(self):
+		"""Real gap found during Phase 9's static scan (STR-908): this
+		function — the one `kentender_budget`'s own live
+		`budget_live_bind.js::loadTargetOptions` calls via
+		`kentender_strategy.api.strategy_api.list_active_targets` to
+		populate the Budget Line "primary target" dropdown — still filtered
+		on `Strategic Plan.status`/`procuring_entity`/`plan_code` and
+		`Performance Target.plan_version`/`target_code`/`title`/`status`,
+		none of which exist post-Phase-1 (status moved to `Strategic Plan
+		Version`; `Performance Target` links only via `indicator_id`).
+		Every real call from Budget's UI has been silently returning an
+		empty dropdown since Phase 1 (the JS `error:` callback swallows the
+		failure and resolves `[]`). Fixed in this same phase to match the
+		already-correct sibling functions in this module
+		(`validate_strategy_reference`/`build_strategy_reference`)."""
+		out = upsert_works_master_strategy_hierarchy()
+
+		refs = list_active_targets(procuring_entity=PE_MOH)
+
+		self.assertTrue(any(r["node_id"] == out["target"] for r in refs))
+		matched = next(r for r in refs if r["node_id"] == out["target"])
+		self.assertEqual(matched["plan_version_id"], out["plan"])
+		self.assertTrue(matched["node_name"])

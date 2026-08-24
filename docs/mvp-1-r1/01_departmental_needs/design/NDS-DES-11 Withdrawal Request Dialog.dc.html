@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    .kt-status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 6px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; }
+    .kt-status .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .kt-status.is-live { background: oklch(93% 0.06 155); color: oklch(30% 0.09 155); }
+    .kt-status.is-live .dot { background: oklch(45% 0.13 155); }
+    .kt-readonly-row + .kt-readonly-row { margin-top: 16px; }
+    textarea.input { resize: vertical; min-height: 90px; font-family: var(--font-body); }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); width: 1440px; min-height: 1024px; font-family: var(--font-body); color: var(--color-text); position: relative;">
+
+  <div style="display: flex; justify-content: center; filter: blur(1.5px); opacity: 0.5;">
+    <div style="width: 1200px; padding: 32px 0;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;">
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--color-accent-700);">NDS-MOH-2027-0001 · ACCEPTED VERSION 1</div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+            <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 30px; margin: 0; letter-spacing: 0.01em;">National digital health infrastructure upgrade</h1>
+            <span class="kt-status is-live"><i class="dot"></i>Accepted for planning</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; flex: none; margin-top: 6px;">
+          <button class="btn btn-secondary">Create update</button>
+          <button class="btn btn-secondary">Request withdrawal</button>
+        </div>
+      </div>
+
+      <div class="card blueprint" style="margin-bottom: 16px; padding: 20px 24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Accepted by</div><div style="font-size: 14.5px; font-weight: 500;">Dr Peter Kimani</div></div>
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Accepted</div><div style="font-size: 14.5px; font-weight: 500;">24 Nov 2026, 14:00 EAT</div></div>
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Department</div><div style="font-size: 14.5px; font-weight: 500;">Digital Health</div></div>
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Financial Year</div><div style="font-size: 14.5px; font-weight: 500;">FY 2027/28</div></div>
+        </div>
+      </div>
+
+      <div class="card blueprint" style="padding: 20px 24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title" style="margin-bottom: 16px;">Requirement</div>
+        <div class="kt-readonly-row"><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Description</div><div style="font-size: 14.5px;">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; inset: 0; background: color-mix(in oklch, var(--color-text) 35%, transparent); display: flex; align-items: center; justify-content: center;">
+    <div class="dialog blueprint" style="width: 480px; background: var(--color-bg); padding: 24px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="dialog-title" style="font-family: var(--font-heading); font-size: 20px; font-weight: 600; margin-bottom: 8px;">Request withdrawal</div>
+      <div class="dialog-body">
+        <p style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700);">Explain why this accepted need should no longer be used for procurement planning.</p>
+        <div class="field" style="margin: 0;">
+          <label>Reason</label>
+          <textarea class="input">The programme will not proceed in FY 2027/28 because implementation responsibility has moved outside the department.</textarea>
+        </div>
+      </div>
+      <div class="dialog-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">Submit request</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

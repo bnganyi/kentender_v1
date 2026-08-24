@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-neutral-100); }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+    .btn-danger-outline { border: 1px solid #b0143a; color: #b0143a; background: transparent; }
+    .btn-danger-outline:hover { background: #e11d481a; }
+    .kv-row { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--color-divider); font-size: 14px; }
+    .kv-row:last-child { border-bottom: none; }
+    .kv-label { opacity: 0.6; }
+    .kv-value { font-weight: 600; text-align: right; }
+    .tab { padding: 0 0 10px; font-family: var(--font-heading); font-size: 15px; font-weight: 600; opacity: 0.55; }
+    .tab.active { color: var(--color-accent-700); border-bottom: 2px solid var(--color-accent); opacity: 1; }
+  </style>
+</helmet>
+<div style="width:1440px;min-height:1024px;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text);display:flex;flex-direction:column;">
+  <div style="max-width:1200px;margin:0 auto;padding:32px 0 0;flex:1 1 auto;width:100%;">
+
+    <div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px;">STR-MOH-2023-001 · VERSION 2</div>
+    <div style="display:flex;align-items:baseline;gap:14px;">
+      <h1 style="font-family:var(--font-heading);font-weight:600;font-size:34px;line-height:1.1;margin:0;">Approve strategic plan version</h1>
+      <span class="kt-status is-pending">Awaiting Approval</span>
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:28px;border-bottom:1px solid var(--color-divider);">
+      <div class="tab">Overview</div>
+      <div class="tab">Structure</div>
+      <div class="tab active">Changes</div>
+      <div class="tab">History</div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="card blueprint" style="padding:24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title" style="margin-bottom:16px;">Changes from Active Version 1</div>
+        <table class="table" style="margin:0;">
+          <thead><tr><th>Changed item</th><th>Active Version 1</th><th>Submitted Version 2</th></tr></thead>
+          <tbody>
+            <tr><td>FY 2027/28 performance target</td><td>At least 80%</td><td>At least 85%</td></tr>
+          </tbody>
+        </table>
+        <p class="text-muted" style="font-size:13px;margin:16px 0 0;">No other plan identity or structure items changed.</p>
+      </div>
+    </div</div>
+
+  </div>
+
+  <div style="border-top:1px solid var(--color-divider);background:var(--color-bg);">
+    <div style="max-width:1200px;margin:0 auto;padding:16px 0;display:flex;justify-content:flex-end;gap:12px;">
+      <button type="button" class="btn btn-danger-outline">Return</button>
+      <button type="button" class="btn btn-primary">Approve</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

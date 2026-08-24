@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    .kt-status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 6px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; }
+    .kt-status .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .kt-status.is-live { background: oklch(93% 0.06 155); color: oklch(30% 0.09 155); }
+    .kt-status.is-live .dot { background: oklch(45% 0.13 155); }
+    .kt-status.is-draft { background: oklch(93% 0.03 250); color: oklch(35% 0.08 250); }
+    .kt-status.is-draft .dot { background: oklch(50% 0.13 250); }
+    .kt-status.is-pending { background: var(--color-neutral-100); color: var(--color-neutral-700); }
+    .kt-status.is-pending .dot { background: transparent; border: 1.5px solid var(--color-neutral-700); }
+    .kt-action-link:hover { text-decoration: underline; }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); width: 1440px; min-height: 1024px; font-family: var(--font-body); color: var(--color-text); display: flex; justify-content: center;">
+  <div style="width: 1200px; padding: 32px 0;">
+
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px;">
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--color-accent-700);">DEPARTMENTAL NEEDS</div>
+        <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; margin: 4px 0 8px; letter-spacing: 0.01em;">My needs</h1>
+        <p style="font-size: 15px; color: var(--color-neutral-700); max-width: 640px; margin: 0;">Capture and track the requirements your department expects to include in procurement planning.</p>
+      </div>
+      <button class="btn btn-primary">Create need</button>
+    </div>
+
+    <div class="card blueprint" style="margin-bottom: 16px; padding: 20px 24px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Procuring Entity</div>
+          <div style="font-size: 14.5px; font-weight: 500;">PE-MOH — Ministry of Health</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Department</div>
+          <div style="font-size: 14.5px; font-weight: 500;">OU-MOH-DHI — Digital Health</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Financial Year</div>
+          <div style="font-size: 14.5px; font-weight: 500;">FY 2027/28</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Intake window</div>
+          <div style="font-size: 14.5px; font-weight: 500;">Open until 25 Nov 2026, 23:59 EAT</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <div class="field" style="flex: 1; max-width: 360px; margin: 0;">
+        <input class="input" type="text" placeholder="Search title or reference">
+      </div>
+      <div class="field" style="width: 200px; margin: 0;">
+        <select class="input">
+          <option>All statuses</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary">Clear filters</button>
+    </div>
+
+    <div class="card blueprint" style="padding: 0; overflow: hidden;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Need</th>
+            <th style="text-align: right;">Quantity</th>
+            <th>Required by</th>
+            <th>Status</th>
+            <th>Planning usage</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="font-weight: 500;">National digital health infrastructure upgrade</span><br><span style="color: var(--color-neutral-600); font-size: 13px;">NDS-MOH-2027-0001</span></td>
+            <td style="text-align: right;">1 programme</td>
+            <td>31 Aug 2027</td>
+            <td><span class="kt-status is-live"><i class="dot"></i>Accepted for planning</span></td>
+            <td><span class="kt-status is-pending"><i class="dot"></i>Not included</span></td>
+            <td style="text-align: right;"><a href="#" class="kt-action-link" style="color: var(--color-accent-700); font-weight: 600; text-decoration: none;">View</a></td>
+          </tr>
+          <tr>
+            <td><span style="font-weight: 500;">Clinical deployment laptops for digital health rollout</span><br><span style="color: var(--color-neutral-600); font-size: 13px;">NDS-MOH-2027-0004</span></td>
+            <td style="text-align: right;">300 each</td>
+            <td>31 Dec 2027</td>
+            <td><span class="kt-status is-draft"><i class="dot"></i>Draft</span></td>
+            <td><span class="kt-status is-pending"><i class="dot"></i>Not included</span></td>
+            <td style="text-align: right;"><a href="#" class="kt-action-link" style="color: var(--color-accent-700); font-weight: 600; text-decoration: none;">Continue</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 12px; font-size: 13px; color: var(--color-neutral-600);">2 needs</div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -212,27 +212,21 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
-	function crumbStrategyAlignment() {
-		return crumb(__("Strategy Alignment"), ["strategy-alignment"]);
-	}
-	function trailStrategy() {
-		return [crumbDashboard(), crumbStrategyAlignment()];
-	}
-	function trailStrategyPlan(leafLabel) {
-		return [crumbDashboard(), crumbStrategyAlignment(), crumb(leafLabel)];
-	}
-
-	/* STR-CHG-001 v1.3 Phase 7 — the rebuilt production Strategy screens use
-	   a different route ("strategy-portfolio") than the pre-Phase-1 legacy
-	   "strategy-alignment" page these crumbs above still point at (that page
-	   is deleted in Phase 8, not this phase — see IMPLEMENTATION_TRACKER.md). */
+	/* STR-CHG-001 v1.3 Phase 8 — the pre-Phase-1 legacy "strategy-alignment"
+	   page and its crumbStrategyAlignment()/trailStrategy()/trailStrategyPlan()
+	   helpers were deleted along with the 13 legacy Pages (see
+	   IMPLEMENTATION_TRACKER.md Phase 8). crumbStrategyPortfolio()/
+	   trailStrategy()/trailStrategyLeaf() below (renamed from
+	   .../trailStrategyRebuilt()/trailStrategyRebuiltLeaf() in Phase 7) are
+	   now the only Strategy breadcrumb helpers — there is no older variant
+	   left to distinguish them from. */
 	function crumbStrategyPortfolio() {
 		return crumb(__("Strategy Alignment"), ["strategy-portfolio"]);
 	}
-	function trailStrategyRebuilt() {
+	function trailStrategy() {
 		return [crumbDashboard(), crumbStrategyPortfolio()];
 	}
-	function trailStrategyRebuiltLeaf(leafLabel) {
+	function trailStrategyLeaf(leafLabel) {
 		return [crumbDashboard(), crumbStrategyPortfolio(), crumb(leafLabel)];
 	}
 
@@ -271,142 +265,37 @@ frappe.provide("kentender_core.cl_surface_registry");
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
 	 */
 	var surfaces = {
+		/* STR-CHG-001 v1.3 Phase 8 — the 13 pre-Phase-1 legacy Strategy Pages
+		   (STR-UI-01/02/03/07/08/09/10/12/13/14 and the STR-UI-PILOT spike)
+		   are deleted; these ids now point at the real Phase 7 production
+		   Vue-in-Desk routes (renamed from the temporary STR-REBUILD-* ids
+		   used while the legacy pages still held the canonical ids — see
+		   IMPLEMENTATION_TRACKER.md Phase 8 decision log). */
 		"STR-UI-01": {
 			id: "STR-UI-01",
-			label: "Strategy Portfolio",
-			routePrefixes: ["strategy-alignment"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Strategy Alignment"),
-				__(
-					"Govern strategic outcomes, public-value commitments and performance targets used across procurement."
-				),
-				trailStrategy(),
-				[]
-			),
-		},
-		"STR-UI-02": {
-			id: "STR-UI-02",
-			label: "Plan Overview",
-			routePrefixes: ["strategy-plan-overview"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Plan Overview"), "", trailStrategyPlan(__("Plan Overview")), []),
-		},
-		/* Vue-3-in-Desk-page pilot spike (docs/mvp-1-r1/00_common/KenTender_UI_Construction_Framework.md).
-		   Registered only so kt_cl_shell_router.js's leaveNative() fallback doesn't strip shell
-		   classes on back/forward through this route — enterNative() is called for the chrome
-		   sliver only; mountContent() is never called near the Vue root. Not a production surface. */
-		"STR-UI-PILOT": {
-			id: "STR-UI-PILOT",
-			label: "Strategy Portfolio (Pilot)",
-			routePrefixes: ["strategy-portfolio-pilot"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Strategy Portfolio (Pilot)"), "", trailStrategy(), []),
-		},
-		/* STR-CHG-001 v1.3 Phase 7 — production rebuild of STR-UI-01..04.
-		   Registered under new ids (not "STR-UI-01/02/03", already taken by
-		   the pre-rebuild legacy pages above, slated for Phase 8 deletion). */
-		"STR-REBUILD-PORTFOLIO": {
-			id: "STR-REBUILD-PORTFOLIO",
 			label: "Strategy Portfolio",
 			routePrefixes: ["strategy-portfolio"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Strategy Portfolio"),
 				__("Maintain the approved strategy structure used by Budget and Procurement Planning."),
-				trailStrategyRebuilt(),
+				trailStrategy(),
 				[]
 			),
 		},
-		"STR-REBUILD-PLAN": {
-			id: "STR-REBUILD-PLAN",
+		"STR-UI-02": {
+			id: "STR-UI-02",
 			label: "Plan Workspace",
 			routePrefixes: ["strategy-plan-workspace"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Plan Workspace"), "", trailStrategyRebuiltLeaf(__("Plan Workspace")), []),
+			chrome: chrome(__("Plan Workspace"), "", trailStrategyLeaf(__("Plan Workspace")), []),
 		},
-		"STR-REBUILD-REVIEW": {
-			id: "STR-REBUILD-REVIEW",
+		"STR-UI-04": {
+			id: "STR-UI-04",
 			label: "Review Task",
 			routePrefixes: ["strategy-review-task"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Review Task"), "", trailStrategyRebuiltLeaf(__("Review Task")), []),
-		},
-		"STR-UI-03": {
-			id: "STR-UI-03",
-			label: "Plan Structure",
-			routePrefixes: ["strategy-plan-structure"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Plan Structure"), "", trailStrategyPlan(__("Plan Structure")), []),
-		},
-		"STR-UI-07": {
-			id: "STR-UI-07",
-			label: "Strategy Value Commitments",
-			routePrefixes: ["strategy-value-commitments"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Value Commitments"),
-				"",
-				trailStrategyPlan(__("Value Commitments")),
-				[]
-			),
-		},
-		"STR-UI-08": {
-			id: "STR-UI-08",
-			label: "Measurement Register",
-			routePrefixes: ["strategy-plan-measurements"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Measurements"), "", trailStrategyPlan(__("Measurements")), []),
-		},
-		"STR-UI-09": {
-			id: "STR-UI-09",
-			label: "Submit Measurement",
-			routePrefixes: ["strategy-measurement-submit"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Submit Measurement"),
-				"",
-				trailStrategyPlan(__("Submit Measurement")),
-				[]
-			),
-		},
-		"STR-UI-10": {
-			id: "STR-UI-10",
-			label: "Verify Measurement",
-			routePrefixes: ["strategy-measurement-verify"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Verify Measurement"),
-				"",
-				trailStrategyPlan(__("Verify Measurement")),
-				[]
-			),
-		},
-		"STR-UI-12": {
-			id: "STR-UI-12",
-			label: "Downstream Usage",
-			routePrefixes: ["strategy-plan-downstream-usage"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Downstream Usage"),
-				"",
-				trailStrategyPlan(__("Downstream Usage")),
-				[]
-			),
-		},
-		"STR-UI-13": {
-			id: "STR-UI-13",
-			label: "Readiness and Review",
-			routePrefixes: ["strategy-plan-review"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Review"), "", trailStrategyPlan(__("Review")), []),
-		},
-		"STR-UI-14": {
-			id: "STR-UI-14",
-			label: "Audit History",
-			routePrefixes: ["strategy-plan-audit"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Audit"), "", trailStrategyPlan(__("Audit")), []),
+			chrome: chrome(__("Review Task"), "", trailStrategyLeaf(__("Review Task")), []),
 		},
 		"UI-00": {
 			id: "UI-00",

@@ -25,25 +25,17 @@ class StitchDeskSurface(TypedDict):
 
 
 # Append-only for new Stitch Desk screens. Do not remove without replacing coverage.
+#
+# STR-CHG-001 v1.3 Phase 8: the 2 Strategy rows that used to live here
+# ("strategy-portfolio" / "strategy-plan-create", fixture_rel pointing at
+# strategy_ui_fixtures/portfolio.js / create_plan.js) were removed. Both
+# backed pre-rebuild legacy Pages deleted in Phase 8, and both fixture files
+# are deleted with them. This registry is specifically for the
+# Tailwind/Stitch-HTML-ported canvas pattern (see module docstring); the
+# Phase 7 Strategy replacements (strategy-portfolio, strategy-plan-workspace,
+# strategy-review-task) are hand-authored Vue 3 components, not Stitch HTML
+# ports, so they do not get a row here — no coverage is being dropped.
 STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
-	{
-		"id": "strategy-portfolio",
-		"app": "kentender_strategy",
-		"fixture_rel": "public/js/strategy_ui_fixtures/portfolio.js",
-		"desk_route": "strategy-alignment",
-		"primary_cta_testid": "kt-str-create-plan",
-		"select_filter_attr": "data-kt-str-filter",
-		"headline_selector": '.kt-str-root h1, [data-testid="kt-str-portfolio"] h1',
-	},
-	{
-		"id": "strategy-plan-create",
-		"app": "kentender_strategy",
-		"fixture_rel": "public/js/strategy_ui_fixtures/create_plan.js",
-		"desk_route": "strategy-plan-create",
-		"primary_cta_testid": "kt-str-create-plan-submit",
-		"select_filter_attr": "data-kt-str-field",
-		"headline_selector": '.kt-str-root h1, [data-testid="kt-str-create-plan"] h1',
-	},
 	{
 		"id": "budget-portfolio",
 		"app": "kentender_budget",

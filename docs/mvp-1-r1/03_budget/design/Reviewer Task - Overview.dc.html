@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+    .kt-tab { font-family: var(--font-heading); font-weight: 600; font-size: 15px; padding: 10px 2px; color: color-mix(in srgb, var(--color-text) 55%, transparent); border-bottom: 2px solid transparent; cursor: pointer; }
+    .kt-tab.active { color: var(--color-text); border-bottom-color: var(--color-accent); }
+    .kt-card-title { font-family: var(--font-heading); font-weight: 600; text-transform: uppercase; font-size: 15px; letter-spacing: 0.02em; border-bottom: 2px solid var(--color-accent); display: inline-block; padding-bottom: 6px; margin-bottom: 16px; }
+    .kt-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin-bottom: 4px; }
+    .btn-danger-outline { border: 1px solid color-mix(in srgb, #b91c1c 55%, transparent); color: #b91c1c; background: transparent; }
+    .btn-danger-outline:hover { background: color-mix(in srgb, #b91c1c 8%, transparent); }
+  </style>
+</helmet>
+<div style="width:1440px;min-height:1024px;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text);box-sizing:border-box;position:relative">
+  <div style="max-width:1200px;margin:0 auto;padding:32px 0 96px;display:flex;flex-direction:column">
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">MOH-BUD-2027-001 &middot; VERSION 2</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <h1 style="margin:0">Review budget version</h1>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:#7376851a;color:#434654"><span style="width:6px;height:6px;border-radius:50%;background:transparent;box-shadow:inset 0 0 0 1.5px currentColor;display:inline-block"></span>In Review</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:28px;border-bottom:1px solid var(--color-divider);margin-bottom:24px">
+      <div class="kt-tab active">Overview</div>
+      <div class="kt-tab">Budget Lines</div>
+      <div class="kt-tab">Changes</div>
+      <div class="kt-tab">History</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card blueprint" style="padding:20px 24px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Version identity</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div style="grid-column:1 / -1"><div class="kt-label">Procurement budget</div><div style="font-size:14px;font-weight:500">Ministry of Health procurement budget 2027/28</div></div>
+          <div><div class="kt-label">Procuring Entity</div><div style="font-size:14px;font-weight:500">PE-MOH — Ministry of Health</div></div>
+          <div><div class="kt-label">Financial Year</div><div style="font-size:14px;font-weight:500">FY 2027/28</div></div>
+          <div><div class="kt-label">Currency</div><div style="font-size:14px;font-weight:500">KES</div></div>
+          <div><div class="kt-label">Submitted version</div><div style="font-size:14px;font-weight:500">Version 2</div></div>
+          <div><div class="kt-label">Based on</div><div style="font-size:14px;font-weight:500">Active Version 1</div></div>
+          <div><div class="kt-label">Revision type</div><div style="font-size:14px;font-weight:500">Transfer</div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card blueprint" style="padding:20px 24px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="kt-card-title">External approval</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div><div class="kt-label">Approval reference</div><div style="font-size:14px;font-weight:500">MOH-FIN-BUD-2027-02 (Demo)</div></div>
+            <div><div class="kt-label">Approval date</div><div style="font-size:14px;font-weight:500">14 Mar 2027</div></div>
+            <div><div class="kt-label">Authorised total</div><div style="font-size:14px;font-weight:500">KES 160,000,000</div></div>
+            <div><div class="kt-label">Approval document</div><a href="#" style="font-size:14px;font-weight:500;text-decoration:underline">MOH Approved Procurement Budget Transfer 2027-28 (Demo).pdf</a></div>
+          </div>
+        </div>
+
+        <div class="card blueprint" style="padding:20px 24px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="kt-card-title">Submission authority</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div><div class="kt-label">Submitted by</div><div style="font-size:14px;font-weight:500">MOH Budget Officer</div></div>
+            <div><div class="kt-label">Submitted</div><div style="font-size:14px;font-weight:500">15 Mar 2027, 16:20 EAT</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card blueprint" style="padding:20px 24px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Readiness</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--color-divider)">
+          <div style="font-size:13px;font-weight:500">Approval details complete</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:#10b9811a;color:#047857;flex:none"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>Ready</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--color-divider)">
+          <div style="font-size:13px;font-weight:500">Budget Line total matches authorised total</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:#10b9811a;color:#047857;flex:none"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>Ready</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--color-divider)">
+          <div style="font-size:13px;font-weight:500">Reservation and commitment floors</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:#10b9811a;color:#047857;flex:none"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>Ready</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--color-divider)">
+          <div style="font-size:13px;font-weight:500">Transfer balance</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:#10b9811a;color:#047857;flex:none"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>Ready</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--color-divider);background:var(--color-bg);padding:16px 0">
+    <div style="max-width:1200px;margin:0 auto;display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-danger-outline">Return</button>
+      <button type="button" class="btn btn-primary">Recommend for activation</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>

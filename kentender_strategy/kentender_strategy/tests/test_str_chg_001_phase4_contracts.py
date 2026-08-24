@@ -201,6 +201,45 @@ class TestReadContracts(Phase4TestBase):
 			api.get_strategy_lineage("does-not-exist")
 
 
+class TestResolveStrategyContext(Phase4TestBase):
+	"""STR-AC-015/016 — found with zero automated coverage during Phase 9's
+	AC-mapping pass (STR-901). `resolve_strategy_context`'s zero-match and
+	multiple-match branches were already correctly implemented (typed
+	errors, no first-record fallback) but had never been asserted by a
+	test. Added here as the cheap, targeted close for two genuine
+	zero-coverage ACs."""
+
+	def test_zero_covering_plans_raises_typed_not_found(self):
+		_, version = self._plan_and_version()
+		self._fill_hierarchy(version)
+		frappe.db.set_value("Strategic Plan Version", version, "status", "Active")
+
+		# An effective_date decades before this fixture's period (2040-2045)
+		# and before the real seeded MOH plan's period (2023-2028) covers no
+		# primary Active plan for PE-MOH at all.
+		with self.assertRaises(frappe.DoesNotExistError):
+			consumer.resolve_strategy_context(PE, effective_date="1999-01-01")
+
+	def test_multiple_covering_plans_raises_typed_ambiguous_not_first_match(self):
+		"""Simulates the anomalous state STR-BR-004's overlap guard exists
+		to prevent (two primary Active versions covering the same PE/date)
+		by writing directly at the DB layer — the only way to construct
+		this state for a test, since the real write path correctly refuses
+		to create it. Confirms resolve_strategy_context still fails closed
+		with a typed ambiguity error rather than silently returning
+		whichever row query ordering happens to return first."""
+		_, v1 = self._plan_and_version()
+		self._fill_hierarchy(v1)
+		frappe.db.set_value("Strategic Plan Version", v1, "status", "Active")
+
+		_, v2 = self._plan_and_version()
+		self._fill_hierarchy(v2)
+		frappe.db.set_value("Strategic Plan Version", v2, "status", "Active")
+
+		with self.assertRaises(frappe.ValidationError):
+			consumer.resolve_strategy_context(PE, effective_date="2042-01-01")
+
+
 class TestCreateStrategySnapshot(Phase4TestBase):
 	def test_snapshot_rejects_non_active_version(self):
 		_, version = self._plan_and_version()
@@ -426,3 +465,28 @@ class TestLifecycleCommandDispatch(Phase4TestBase):
 		frappe.set_user(approver)
 		out = api.activate_strategy_version(version)
 		self.assertEqual(out["status"], "Active")
+
+
+class TestActiveContentImmutability(Phase4TestBase):
+	"""STR-AC-012 / spec §19 ("No mutation of Approved or Active content").
+	Found with zero automated coverage during Phase 9's AC-mapping pass
+	(STR-901) — the enforcing guard already existed
+	(`strategy_domain_guards.py`'s "Plan structure can only be edited while
+	the version is Draft or Returned") and was proven live against the
+	real seeded MOH Active plan via `bench console` impersonating a real
+	Author before this test was written, but no unit test named it. Added
+	here as the cheap, targeted close for a genuine zero-coverage AC."""
+
+	def test_structure_edit_rejected_on_active_version(self):
+		author = self._user("immutability_author")
+		self._assign(author, "CAP-STRATEGY-AUTHOR")
+		_, version = self._plan_and_version()
+		self._fill_hierarchy(version)
+		frappe.db.set_value("Strategic Plan Version", version, "status", "Active")
+
+		frappe.set_user(author)
+		with self.assertRaises(frappe.ValidationError):
+			save_strategy_structure_draft(
+				version,
+				nodes=[{"node_type": "Pillar", "title": "Illegal edit", "display_order": 999}],
+			)

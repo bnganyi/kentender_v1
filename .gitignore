@@ -7,6 +7,7 @@ playwright-report/
 test-results/
 blob-report/
 playwright/.cache/
+artifacts/playwright-mcp/
 .env.ui
 
 

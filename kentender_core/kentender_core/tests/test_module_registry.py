@@ -104,7 +104,10 @@ class TestModuleRegistry(IntegrationTestCase):
 		keys = get_route_sidebar_keys()
 		# Legacy strategy-builder removed; MVP-1 Alignment portfolio restored.
 		self.assertNotIn("strategy-builder", keys)
-		self.assertEqual(keys.get("strategy-alignment"), "Procurement")
+		# STR-CHG-001 v1.3 Phase 8: legacy "strategy-alignment" page deleted;
+		# "strategy-portfolio" (Phase 7) is the real desk_page now.
+		self.assertNotIn("strategy-alignment", keys)
+		self.assertEqual(keys.get("strategy-portfolio"), "Procurement")
 		self.assertIn("budget-funding", keys)
 		self.assertIn("form/demand", keys)
 
@@ -154,8 +157,10 @@ class TestModuleRegistry(IntegrationTestCase):
 		mod = get_module("strategy")
 		prefixes = {str(p) for p in (mod["route_prefixes"] or ())}
 		sidebar_keys = get_route_sidebar_keys()
-		self.assertEqual(mod["desk_page"], "strategy-alignment")
-		self.assertEqual(mod["builder_page"], "strategy-plan-structure")
+		# STR-CHG-001 v1.3 Phase 8: legacy "strategy-alignment"/"strategy-plan-structure"
+		# pages deleted; Phase 7's "strategy-portfolio"/"strategy-plan-workspace" are real now.
+		self.assertEqual(mod["desk_page"], "strategy-portfolio")
+		self.assertEqual(mod["builder_page"], "strategy-plan-workspace")
 		self.assertEqual(mod.get("form_doctype") or "", "")
 		for slug in _strategy_page_js_slugs():
 			self.assertIn(

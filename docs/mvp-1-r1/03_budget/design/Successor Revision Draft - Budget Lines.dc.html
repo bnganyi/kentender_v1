@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+    .kt-tab { font-family: var(--font-heading); font-weight: 600; font-size: 15px; padding: 10px 2px; color: color-mix(in srgb, var(--color-text) 55%, transparent); border-bottom: 2px solid transparent; cursor: pointer; }
+    .kt-tab.active { color: var(--color-text); border-bottom-color: var(--color-accent); }
+    .kt-input-prefix { min-height: 36px; padding: 6px 10px; font-size: 14px; display: flex; align-items: center; gap: 6px; background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+    .kt-input-prefix span.prefix { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+    .kt-input-prefix input { border: none; background: transparent; padding: 0; min-height: auto; width: 100%; }
+  </style>
+</helmet>
+<div style="width:1440px;min-height:1024px;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text);box-sizing:border-box">
+  <div style="max-width:1200px;margin:0 auto;padding:32px 0;display:flex;flex-direction:column">
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">MOH-BUD-2027-001 &middot; VERSION 2</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <h1 style="margin:0">Budget revision</h1>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:var(--color-accent-100);color:var(--color-accent-800)"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-600);display:inline-block"></span>Draft</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex:none;margin-top:4px">
+        <button type="button" class="btn btn-secondary" style="border-color:color-mix(in srgb, var(--color-text) 30%, transparent)">Save draft</button>
+        <button type="button" class="btn btn-primary">Submit for review</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:28px;border-bottom:1px solid var(--color-divider);margin-bottom:24px">
+      <div class="kt-tab">Overview</div>
+      <div class="kt-tab active">Budget Lines</div>
+    </div>
+
+    <div class="card blueprint" style="margin-bottom:16px;padding:16px 24px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+        <div>
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Authorised total</div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 160,000,000</div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Budget Line total</div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 160,000,000</div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Difference</div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card blueprint" style="padding:20px 24px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="margin-bottom:16px">
+        <thead>
+          <tr>
+            <th>Budget Line</th>
+            <th>Line title</th>
+            <th>Owner scope</th>
+            <th>Funding source</th>
+            <th style="text-align:right">Active amount</th>
+            <th style="text-align:right">Proposed amount</th>
+            <th style="text-align:right">Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent);white-space:nowrap">MOH-BL-DHI-2027</td>
+            <td>Digital health infrastructure programme</td>
+            <td>Digital Health</td>
+            <td>Government of Kenya</td>
+            <td style="text-align:right">KES 100,000,000</td>
+            <td style="text-align:right"><div class="kt-input-prefix"><span class="prefix">KES</span><input value="90,000,000" style="text-align:right"></div></td>
+            <td style="text-align:right;color:#b91c1c;font-weight:500">&minus; KES 10,000,000</td>
+          </tr>
+          <tr>
+            <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent);white-space:nowrap">MOH-BL-HWD-2027</td>
+            <td>Digital health workforce development</td>
+            <td>HR Management and Development</td>
+            <td>Government of Kenya</td>
+            <td style="text-align:right">KES 60,000,000</td>
+            <td style="text-align:right"><div class="kt-input-prefix"><span class="prefix">KES</span><input value="70,000,000" style="text-align:right"></div></td>
+            <td style="text-align:right;color:#047857;font-weight:500">+ KES 10,000,000</td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-secondary" style="border-color:color-mix(in srgb, var(--color-text) 30%, transparent);align-self:flex-start">Add Budget Line</button>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>
