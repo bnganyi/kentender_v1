@@ -79,4 +79,10 @@ page_js = {
 	"strategy-measurement-verify": "public/js/strategy_measurement_verify_page.js",
 	# Claude Design -> Vue 3 pilot (spike, not the shared shell/registry pattern).
 	"strategy-portfolio-pilot": "public/js/strategy_portfolio_pilot_page.js",
+	# STR-CHG-001 v1.3 Phase 7 — the 3 production Vue-in-Desk pages
+	# (STR-UI-01..04). Additive: the legacy strategy-* pages above stay
+	# until Phase 8 deletes them.
+	"strategy-portfolio": "public/js/strategy_portfolio_page.js",
+	"strategy-plan-workspace": "public/js/strategy_plan_workspace_page.js",
+	"strategy-review-task": "public/js/strategy_review_task_page.js",
 }

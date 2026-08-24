@@ -34,7 +34,16 @@ logs/
 *.pid
 
 # Compiled assets
-*.bundle.js
+# NOTE: content-hashed build output (e.g. strategy_portfolio.bundle.UDDOPOFU.js)
+# already ends in a hash + .js, not literally "bundle.js" — it's excluded by the
+# public/build/ and public/dist/ path rules below, not by a *.bundle.js glob.
+# A *.bundle.js glob here would instead only match the hand-written, un-hashed
+# *.bundle.js entry-point source files Frappe's esbuild convention requires
+# (e.g. public/js/<page>/<page>.bundle.js, which import the Vue root and call
+# createApp()) — those must be committed, so this rule was removed rather than
+# narrowed (found blocking commit of STR-CHG-001 v1.3 Phase 7's new bundle.js
+# entry files; the pre-existing strategy_portfolio_pilot spike's own bundle.js
+# was silently affected the same way and was never committed either).
 *.min.js
 *.map
 public/build/

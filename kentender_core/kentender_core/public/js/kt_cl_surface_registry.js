@@ -222,6 +222,20 @@ frappe.provide("kentender_core.cl_surface_registry");
 		return [crumbDashboard(), crumbStrategyAlignment(), crumb(leafLabel)];
 	}
 
+	/* STR-CHG-001 v1.3 Phase 7 — the rebuilt production Strategy screens use
+	   a different route ("strategy-portfolio") than the pre-Phase-1 legacy
+	   "strategy-alignment" page these crumbs above still point at (that page
+	   is deleted in Phase 8, not this phase — see IMPLEMENTATION_TRACKER.md). */
+	function crumbStrategyPortfolio() {
+		return crumb(__("Strategy Alignment"), ["strategy-portfolio"]);
+	}
+	function trailStrategyRebuilt() {
+		return [crumbDashboard(), crumbStrategyPortfolio()];
+	}
+	function trailStrategyRebuiltLeaf(leafLabel) {
+		return [crumbDashboard(), crumbStrategyPortfolio(), crumb(leafLabel)];
+	}
+
 	function crumbBudgetFunding() {
 		return crumb(__("Budget & Funding"), ["budget-funding"]);
 	}
@@ -288,6 +302,35 @@ frappe.provide("kentender_core.cl_surface_registry");
 			routePrefixes: ["strategy-portfolio-pilot"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(__("Strategy Portfolio (Pilot)"), "", trailStrategy(), []),
+		},
+		/* STR-CHG-001 v1.3 Phase 7 — production rebuild of STR-UI-01..04.
+		   Registered under new ids (not "STR-UI-01/02/03", already taken by
+		   the pre-rebuild legacy pages above, slated for Phase 8 deletion). */
+		"STR-REBUILD-PORTFOLIO": {
+			id: "STR-REBUILD-PORTFOLIO",
+			label: "Strategy Portfolio",
+			routePrefixes: ["strategy-portfolio"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Strategy Portfolio"),
+				__("Maintain the approved strategy structure used by Budget and Procurement Planning."),
+				trailStrategyRebuilt(),
+				[]
+			),
+		},
+		"STR-REBUILD-PLAN": {
+			id: "STR-REBUILD-PLAN",
+			label: "Plan Workspace",
+			routePrefixes: ["strategy-plan-workspace"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Plan Workspace"), "", trailStrategyRebuiltLeaf(__("Plan Workspace")), []),
+		},
+		"STR-REBUILD-REVIEW": {
+			id: "STR-REBUILD-REVIEW",
+			label: "Review Task",
+			routePrefixes: ["strategy-review-task"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Review Task"), "", trailStrategyRebuiltLeaf(__("Review Task")), []),
 		},
 		"STR-UI-03": {
 			id: "STR-UI-03",

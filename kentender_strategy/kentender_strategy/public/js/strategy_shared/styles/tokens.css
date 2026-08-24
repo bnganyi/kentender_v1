@@ -1,0 +1,291 @@
+/*
+ * Shared scoped tokens for the Phase 7 production Strategy screens
+ * (Portfolio / Plan workspace+editor / Review task). Namespaced under
+ * .kt-strategy-ui, never :root, so this stylesheet can never leak into
+ * Desk or any other screen once loaded — same isolation approach as
+ * strategy_portfolio_pilot/styles/tokens.css, but kept as ONE shared file
+ * imported by all 3 production bundles rather than 3 near-identical
+ * copies (STR-CHG-001 v1.3 Phase 7 decision log).
+ */
+.kt-strategy-ui {
+	--ktstr-color-bg: #f2f2f3;
+	--ktstr-color-surface: #ffffff;
+	--ktstr-color-text: #1d1f20;
+	--ktstr-color-text-muted: color-mix(in srgb, #1d1f20 60%, transparent);
+	--ktstr-color-accent: #003d9b;
+	--ktstr-color-accent-700: #002d73;
+	--ktstr-color-divider: color-mix(in srgb, #1d1f20 14%, transparent);
+
+	--ktstr-color-live-bg: #e6f4ea;
+	--ktstr-color-live-fg: #047857;
+	--ktstr-color-pending-bg: #fef3e0;
+	--ktstr-color-pending-fg: #92610a;
+	--ktstr-color-draft-bg: #eef1f5;
+	--ktstr-color-draft-fg: #424244;
+	--ktstr-color-danger: #b0143a;
+
+	--ktstr-font-heading: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--ktstr-font-heading-weight: 600;
+	--ktstr-font-body: "Barlow", system-ui, sans-serif;
+
+	--ktstr-radius-md: 4px;
+	--ktstr-shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+
+	background: var(--ktstr-color-bg);
+	color: var(--ktstr-color-text);
+	font-family: var(--ktstr-font-body);
+	font-size: 15px;
+	line-height: 1.5;
+	min-height: 100vh;
+	padding: 32px 40px 60px;
+}
+
+.kt-strategy-ui,
+.kt-strategy-ui *,
+.kt-strategy-ui *::before,
+.kt-strategy-ui *::after {
+	box-sizing: border-box;
+}
+
+.kt-strategy-ui h1,
+.kt-strategy-ui h2,
+.kt-strategy-ui h3 {
+	font-family: var(--ktstr-font-heading);
+	font-weight: var(--ktstr-font-heading-weight);
+	line-height: 1.15;
+	margin: 0;
+}
+
+.kt-strategy-ui :focus-visible {
+	outline: 2px solid var(--ktstr-color-accent);
+	outline-offset: 2px;
+}
+
+.kt-strategy-ui .kt-shell {
+	max-width: 1200px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.kt-strategy-ui .kt-card {
+	background: var(--ktstr-color-surface);
+	border: 1px solid var(--ktstr-color-divider);
+	border-radius: var(--ktstr-radius-md);
+	box-shadow: var(--ktstr-shadow-sm);
+	padding: 20px;
+}
+
+.kt-strategy-ui .kt-card-title {
+	font-size: 16px;
+	margin-bottom: 12px;
+}
+
+.kt-strategy-ui .kt-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-family: var(--ktstr-font-heading);
+	font-weight: var(--ktstr-font-heading-weight);
+	font-size: 14px;
+	padding: 8px 16px;
+	border-radius: var(--ktstr-radius-md);
+	border: 1px solid transparent;
+}
+.kt-strategy-ui .kt-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.kt-strategy-ui .kt-btn-primary {
+	background: var(--ktstr-color-accent);
+	color: #fff;
+	border-color: var(--ktstr-color-accent);
+}
+.kt-strategy-ui .kt-btn-primary:hover:not(:disabled) {
+	background: var(--ktstr-color-accent-700);
+}
+.kt-strategy-ui .kt-btn-secondary {
+	background: transparent;
+	color: var(--ktstr-color-accent);
+	border-color: var(--ktstr-color-accent);
+}
+.kt-strategy-ui .kt-btn-ghost {
+	background: transparent;
+	color: var(--ktstr-color-text);
+	border-color: transparent;
+}
+.kt-strategy-ui .kt-btn-danger-outline {
+	background: transparent;
+	color: var(--ktstr-color-danger);
+	border-color: var(--ktstr-color-danger);
+}
+.kt-strategy-ui .kt-add-child {
+	font-size: 12px;
+	padding: 3px 10px;
+	border-radius: 999px;
+	border: 1px solid var(--ktstr-color-divider);
+	background: transparent;
+	cursor: pointer;
+}
+
+.kt-strategy-ui .kt-status {
+	display: inline-flex;
+	align-items: center;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 2px 10px;
+	border-radius: 999px;
+}
+.kt-strategy-ui .kt-status.is-live {
+	background: var(--ktstr-color-live-bg);
+	color: var(--ktstr-color-live-fg);
+}
+.kt-strategy-ui .kt-status.is-pending {
+	background: var(--ktstr-color-pending-bg);
+	color: var(--ktstr-color-pending-fg);
+}
+.kt-strategy-ui .kt-status.is-draft {
+	background: var(--ktstr-color-draft-bg);
+	color: var(--ktstr-color-draft-fg);
+}
+
+.kt-strategy-ui .kt-tabs {
+	display: flex;
+	gap: 24px;
+	border-bottom: 1px solid var(--ktstr-color-divider);
+}
+.kt-strategy-ui .kt-tab {
+	padding: 8px 2px 12px;
+	cursor: pointer;
+	color: var(--ktstr-color-text-muted);
+	border-bottom: 2px solid transparent;
+	font-family: var(--ktstr-font-heading);
+	font-weight: var(--ktstr-font-heading-weight);
+}
+.kt-strategy-ui .kt-tab.active {
+	color: var(--ktstr-color-text);
+	border-bottom-color: var(--ktstr-color-accent);
+}
+
+.kt-strategy-ui .kv-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--ktstr-color-divider);
+	font-size: 14px;
+}
+.kt-strategy-ui .kv-row:last-child {
+	border-bottom: none;
+}
+.kt-strategy-ui .kv-label {
+	color: var(--ktstr-color-text-muted);
+}
+.kt-strategy-ui .kv-value {
+	text-align: right;
+	font-weight: 500;
+}
+
+.kt-strategy-ui table.kt-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+.kt-strategy-ui table.kt-table th {
+	text-align: left;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ktstr-color-text-muted);
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--ktstr-color-divider);
+}
+.kt-strategy-ui table.kt-table td {
+	padding: 10px;
+	border-bottom: 1px solid var(--ktstr-color-divider);
+	vertical-align: top;
+}
+
+.kt-strategy-ui .kt-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 14px;
+}
+.kt-strategy-ui .kt-field label {
+	font-size: 12px;
+	color: var(--ktstr-color-text-muted);
+}
+.kt-strategy-ui .kt-input,
+.kt-strategy-ui select.kt-input,
+.kt-strategy-ui textarea.kt-input {
+	font-family: var(--ktstr-font-body);
+	font-size: 14px;
+	padding: 8px 10px;
+	border: 1px solid var(--ktstr-color-divider);
+	border-radius: var(--ktstr-radius-md);
+	background: #fff;
+	color: var(--ktstr-color-text);
+}
+.kt-strategy-ui .kt-input:disabled {
+	background: var(--ktstr-color-draft-bg);
+	color: var(--ktstr-color-text-muted);
+}
+
+.kt-strategy-ui .kt-tree-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--ktstr-radius-md);
+	cursor: pointer;
+}
+.kt-strategy-ui .kt-tree-row.selected {
+	background: color-mix(in srgb, var(--ktstr-color-accent) 10%, transparent);
+	outline: 1px solid var(--ktstr-color-accent);
+}
+.kt-strategy-ui .kt-tree-row:hover {
+	background: var(--ktstr-color-draft-bg);
+}
+.kt-strategy-ui .kt-tree-type {
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--ktstr-color-text-muted);
+}
+.kt-strategy-ui .kt-tree-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex: none;
+}
+
+.kt-strategy-ui .kt-empty {
+	text-align: center;
+	padding: 40px 20px;
+}
+.kt-strategy-ui .kt-empty h3 {
+	margin-bottom: 6px;
+}
+.kt-strategy-ui .kt-empty p {
+	color: var(--ktstr-color-text-muted);
+	margin: 0 0 16px;
+}
+
+.kt-strategy-ui .kt-sticky-footer {
+	position: sticky;
+	bottom: 0;
+	background: var(--ktstr-color-surface);
+	border-top: 1px solid var(--ktstr-color-divider);
+	padding: 14px 20px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+	margin: 20px -40px -60px;
+}
+
+.kt-strategy-ui .kt-text-muted {
+	color: var(--ktstr-color-text-muted);
+	font-size: 13px;
+}
