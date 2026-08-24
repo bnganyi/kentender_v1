@@ -17,8 +17,8 @@ export const diffStrategyVersions = (compareVersionId, baseVersionId) =>
 		base_version_id: baseVersionId || null,
 	});
 
-export const getPlanHistory = (planId) =>
-	call("kentender_strategy.api.strategy_ui_api.get_plan_history", { plan_id: planId });
+export const getVersionHistory = (planVersionId) =>
+	call("kentender_strategy.api.strategy_ui_api.get_version_history", { plan_version_id: planVersionId });
 
 export const reviewVersion = (planVersionId, action, reason) =>
 	call("kentender_strategy.api.strategy_consumer_api.review_strategy_version", {

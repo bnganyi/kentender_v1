@@ -37,7 +37,8 @@
 	font-size: 15px;
 	line-height: 1.5;
 	min-height: 100vh;
-	padding: 32px 40px 60px;
+	display: flex;
+	flex-direction: column;
 }
 
 .kt-strategy-ui,
@@ -63,10 +64,12 @@
 
 .kt-strategy-ui .kt-shell {
 	max-width: 1200px;
+	width: 100%;
 	margin: 0 auto;
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
+	padding: 32px 40px 60px;
 }
 
 .kt-strategy-ui .kt-card {
@@ -78,8 +81,15 @@
 }
 
 .kt-strategy-ui .kt-card-title {
-	font-size: 16px;
-	margin-bottom: 12px;
+	font-family: var(--ktstr-font-heading);
+	font-weight: var(--ktstr-font-heading-weight);
+	font-size: 15px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--ktstr-color-text);
+	padding-bottom: 10px;
+	border-bottom: 2px solid var(--ktstr-color-accent);
+	margin: 0 0 16px;
 }
 
 .kt-strategy-ui .kt-btn {
@@ -235,12 +245,28 @@
 }
 
 .kt-strategy-ui .kt-tree-row {
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	padding: 6px 8px;
 	border-radius: var(--ktstr-radius-md);
 	cursor: pointer;
+}
+.kt-strategy-ui .kt-tree-line-v,
+.kt-strategy-ui .kt-tree-line-h {
+	position: absolute;
+	background: var(--ktstr-color-divider);
+}
+.kt-strategy-ui .kt-tree-line-v {
+	top: -7px;
+	bottom: 14px;
+	width: 1px;
+}
+.kt-strategy-ui .kt-tree-line-h {
+	top: 14px;
+	width: 8px;
+	height: 1px;
 }
 .kt-strategy-ui .kt-tree-row.selected {
 	background: color-mix(in srgb, var(--ktstr-color-accent) 10%, transparent);
@@ -254,11 +280,33 @@
 	font-size: 11px;
 	color: var(--ktstr-color-text-muted);
 }
-.kt-strategy-ui .kt-tree-dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
+.kt-strategy-ui .kt-tree-toggle {
 	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--ktstr-color-text-muted);
+	cursor: pointer;
+	transition: transform 0.12s ease;
+}
+.kt-strategy-ui .kt-tree-toggle.collapsed {
+	transform: rotate(0deg);
+}
+.kt-strategy-ui .kt-tree-toggle:not(.collapsed) {
+	transform: rotate(90deg);
+}
+.kt-strategy-ui .kt-tree-toggle-spacer {
+	flex: none;
+	width: 16px;
+}
+.kt-strategy-ui .kt-tree-hidden-count {
+	font-size: 11px;
+	color: var(--ktstr-color-text-muted);
 }
 
 .kt-strategy-ui .kt-empty {
@@ -278,14 +326,88 @@
 	bottom: 0;
 	background: var(--ktstr-color-surface);
 	border-top: 1px solid var(--ktstr-color-divider);
-	padding: 14px 20px;
+	padding: 14px 40px;
 	display: flex;
 	justify-content: flex-end;
 	gap: 12px;
-	margin: 20px -40px -60px;
 }
 
 .kt-strategy-ui .kt-text-muted {
 	color: var(--ktstr-color-text-muted);
 	font-size: 13px;
+}
+
+/* Decorative "blueprint" card frame + registration-mark corners, ported
+ * verbatim (structure/values) from the mockups' own shared "Industry"
+ * design-system stylesheet under docs/mvp-1-r1/02_strategy/strategy_design/_ds/
+ * — same visual result, renamed kt-blueprint/kt-corner and scoped under
+ * .kt-strategy-ui's own tokens instead of kentender_core's .kt-industry
+ * (AGENTS.md §6.6: never re-derive a mockup's decorative CSS from prose). */
+.kt-strategy-ui .kt-blueprint {
+	position: relative;
+}
+.kt-strategy-ui .kt-corner {
+	position: absolute;
+	width: 11px;
+	height: 11px;
+	color: color-mix(in srgb, var(--ktstr-color-text) 55%, transparent);
+}
+.kt-strategy-ui .kt-corner::before,
+.kt-strategy-ui .kt-corner::after {
+	content: "";
+	position: absolute;
+	background: currentColor;
+}
+.kt-strategy-ui .kt-corner::before {
+	left: 5px;
+	top: 0;
+	width: 1px;
+	height: 100%;
+}
+.kt-strategy-ui .kt-corner::after {
+	top: 5px;
+	left: 0;
+	width: 100%;
+	height: 1px;
+}
+.kt-strategy-ui .kt-corner.tl {
+	top: -6px;
+	left: -6px;
+}
+.kt-strategy-ui .kt-corner.tr {
+	top: -6px;
+	right: -6px;
+}
+.kt-strategy-ui .kt-corner.bl {
+	bottom: -6px;
+	left: -6px;
+}
+.kt-strategy-ui .kt-corner.br {
+	bottom: -6px;
+	right: -6px;
+}
+
+/* Structure summary figures: colored number + trailing dot, ported from
+ * the same shared stylesheet's .kt-figure/.is-live/.is-attention rules. */
+.kt-strategy-ui .kt-figure {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ktstr-color-accent);
+}
+.kt-strategy-ui .kt-figure::after {
+	content: "";
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.9;
+}
+.kt-strategy-ui .kt-figure.is-live {
+	color: var(--ktstr-color-live-fg);
+}
+.kt-strategy-ui .kt-figure.is-attention {
+	color: var(--ktstr-color-pending-fg);
 }

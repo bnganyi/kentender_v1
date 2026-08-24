@@ -1,10 +1,22 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRouteState } from "../strategy_shared/composables/useRouteState.js";
+import PageRail from "../strategy_shared/components/PageRail.vue";
 import { fetchPortfolio, saveNewPlanDraft } from "./data/strategyPortfolioApi.js";
 
 const { route, go } = useRouteState("strategy-portfolio");
 const mode = computed(() => (route.value[1] === "new" ? "create" : "list"));
+
+const railTrail = computed(() => {
+	const items = [{ label: __("Home"), route: ["Workspaces", "Procurement Home"] }];
+	if (mode.value === "create") {
+		items.push({ label: __("Strategy Alignment"), route: ["strategy-portfolio"] });
+		items.push({ label: __("New strategic plan") });
+	} else {
+		items.push({ label: __("Strategy Alignment") });
+	}
+	return items;
+});
 
 const loading = ref(true);
 const error = ref(null);
@@ -12,6 +24,7 @@ const forbidden = ref(false);
 const plans = ref([]);
 const myWork = ref([]);
 const procuringEntity = ref(null);
+const activeTab = ref("plans");
 
 const filters = reactive({ q: "", role: "", status: "" });
 
@@ -71,7 +84,11 @@ function statusClass(status) {
 }
 
 function openPlan(plan) {
-	frappe.set_route("strategy-plan-workspace", plan.id);
+	frappe.set_route(plan.action_route || "strategy-plan-workspace", plan.action_target_id || plan.id);
+}
+
+function openMyWorkItem(item) {
+	frappe.set_route("strategy-review-task", item.version_id);
 }
 
 // --- New strategic plan draft form (STR-DES-02) ---
@@ -120,6 +137,7 @@ async function submitDraft() {
 
 <template>
 	<div class="kt-strategy-ui">
+		<PageRail :trail="railTrail" />
 		<div class="kt-shell">
 			<template v-if="mode === 'list'">
 				<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
@@ -151,8 +169,8 @@ async function submitDraft() {
 				</div>
 
 				<div class="kt-tabs">
-					<div class="kt-tab active">{{ __("Plans") }} {{ plans.length }}</div>
-					<div class="kt-tab">{{ __("My work") }} {{ myWork.length }}</div>
+					<div class="kt-tab" :class="{ active: activeTab === 'plans' }" @click="activeTab = 'plans'">{{ __("Plans") }} {{ plans.length }}</div>
+					<div class="kt-tab" :class="{ active: activeTab === 'my-work' }" @click="activeTab = 'my-work'">{{ __("My work") }} {{ myWork.length }}</div>
 				</div>
 
 				<div v-if="forbidden" class="kt-card kt-empty">
@@ -166,7 +184,14 @@ async function submitDraft() {
 					<button type="button" class="kt-btn kt-btn-secondary" @click="refresh">{{ __("Try again") }}</button>
 				</div>
 
-				<template v-else>
+				<div v-else-if="!loading && activeTab === 'plans' && plans.length === 0" class="kt-card kt-empty">
+					<h3>{{ __("No strategic plans exist for this scope.") }}</h3>
+					<button type="button" class="kt-btn kt-btn-secondary" @click="openCreateForm" v-if="!forbidden">
+						{{ __("New strategic plan") }}
+					</button>
+				</div>
+
+				<template v-else-if="activeTab === 'plans'">
 					<div style="display: flex; gap: 12px">
 						<input
 							v-model="filters.q"
@@ -185,7 +210,8 @@ async function submitDraft() {
 						</select>
 					</div>
 
-					<div class="kt-card">
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 						<div v-if="loading">
 							<div
 								v-for="i in 5"
@@ -221,7 +247,7 @@ async function submitDraft() {
 									<td>{{ p.period_label || "—" }}</td>
 									<td>{{ p.current_version ? `Version ${p.current_version.version_number}` : "—" }}</td>
 									<td><span class="kt-status" :class="statusClass(p.status)">{{ p.status }}</span></td>
-									<td><a href="#" @click.prevent="openPlan(p)">{{ __("View") }}</a></td>
+									<td><a href="#" @click.prevent="openPlan(p)">{{ p.available_action || __("View") }}</a></td>
 								</tr>
 							</tbody>
 						</table>
@@ -230,13 +256,52 @@ async function submitDraft() {
 						{{ __("Showing {0} of {1} plan(s)", [filteredPlans.length, plans.length]) }}
 					</div>
 				</template>
+
+				<template v-else>
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<div v-if="loading">
+							<div
+								v-for="i in 5"
+								:key="i"
+								style="height: 16px; background: var(--ktstr-color-draft-bg); border-radius: 4px; margin-bottom: 10px"
+							></div>
+						</div>
+						<div v-else-if="myWork.length === 0" class="kt-empty">
+							<h3>{{ __("Nothing needs your action right now.") }}</h3>
+						</div>
+						<table v-else class="kt-table">
+							<thead>
+								<tr>
+									<th>{{ __("Strategic plan") }}</th>
+									<th>{{ __("Version") }}</th>
+									<th>{{ __("Status") }}</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="w in myWork" :key="w.version_id">
+									<td>
+										<div>{{ w.plan_title }}</div>
+										<div class="kt-text-muted">{{ w.plan_reference }}</div>
+									</td>
+									<td>{{ __("Version") }} {{ w.version_number }}</td>
+									<td><span class="kt-status" :class="statusClass(w.status)">{{ w.status }}</span></td>
+									<td><a href="#" @click.prevent="openMyWorkItem(w)">{{ __("Review") }}</a></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="kt-text-muted">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
+				</template>
 			</template>
 
 			<template v-else>
 				<header>
 					<h1 style="font-size: 28px">{{ __("New strategic plan") }} <span class="kt-status is-draft">{{ __("Draft") }}</span></h1>
 				</header>
-				<div class="kt-card" style="max-width: 720px">
+				<div class="kt-card kt-blueprint" style="max-width: 720px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div class="kt-card-title">{{ __("Plan identity") }}</div>
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
 						<div class="kt-field">

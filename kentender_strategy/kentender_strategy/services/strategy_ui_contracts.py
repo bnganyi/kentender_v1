@@ -123,6 +123,33 @@ def _version_dto(version) -> dict:
 # --------------------------------------------------------------------------
 
 
+# STR-CHG-001 v1.3 §13.1: the Portfolio row link must follow the server-
+# returned action, not a client-side status map (AGENTS.md §6.2). Maps each
+# transitionable status (strategy_transitions.TRANSITIONS) to the label the
+# spec assigns it; a status with no matching entry (Active/Superseded/
+# Archived, or "No version") falls back to plain "View".
+_STATUS_ACTION_LABELS: dict[str, str] = {
+	"Draft": "Continue draft",
+	"Returned": "Continue draft",
+	"In Review": "Review",
+	"Awaiting Approval": "Approve",
+	"Approved": "Activate",
+}
+_REVIEW_TASK_STATUSES = ("In Review", "Awaiting Approval")
+
+
+def _row_action(plan_name: str, version_row: dict | None) -> dict:
+	"""(label, route, target_id) for a Portfolio row's action link."""
+	if not version_row:
+		return {"label": _("View"), "route": "strategy-plan-workspace", "target_id": plan_name}
+	status = version_row["status"]
+	route = "strategy-review-task" if status in _REVIEW_TASK_STATUSES else "strategy-plan-workspace"
+	target_id = version_row["name"] if route == "strategy-review-task" else plan_name
+	if not available_actions(version_row["name"]):
+		return {"label": _("View"), "route": route, "target_id": target_id}
+	return {"label": _(_STATUS_ACTION_LABELS.get(status, "View")), "route": route, "target_id": target_id}
+
+
 def _latest_version_row(plan_name: str) -> dict | None:
 	rows = frappe.get_all(
 		"Strategic Plan Version",
@@ -171,6 +198,7 @@ def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
 	rows = []
 	for p in plans:
 		latest = _latest_version_row(p.name)
+		action = _row_action(p.name, latest)
 		rows.append(
 			{
 				**_plan_dto(p),
@@ -185,6 +213,9 @@ def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
 					else None
 				),
 				"status": latest["status"] if latest else "No version",
+				"available_action": action["label"],
+				"action_route": action["route"],
+				"action_target_id": action["target_id"],
 			}
 		)
 
@@ -378,7 +409,18 @@ def get_plan_workspace(plan_id: str) -> dict:
 	by_status = {v.status: v for v in versions}
 	active = by_status.get("Active")
 	pending = by_status.get("Approved")
-	current = pending or active or versions[0]
+	# An open (Draft/In Review/Returned/Awaiting Approval) successor always
+	# takes priority over the steady-state Active version — before Create
+	# successor version existed in this UI, a plan could only ever have one
+	# non-Active version at a time, so `pending or active or versions[0]`
+	# never had to consider Draft/In Review/Returned; now that a Draft can
+	# coexist with an Active version, that fallback chain would silently
+	# keep showing the old Active version's Overview/Structure/History
+	# forever instead of the newly created Draft (found live 2026-08-24
+	# while verifying the successor-version fix in a browser).
+	open_statuses = ("Draft", "In Review", "Returned", "Awaiting Approval", "Approved")
+	open_version = next((v for v in versions if v.status in open_statuses), None)
+	current = open_version or active or versions[0]
 
 	tree = get_strategy_tree(current.name)
 	events = _authority_from_events(current.name, ("Approve", "Activate", "Submit for review", "Recommend for approval"))
@@ -400,6 +442,15 @@ def get_plan_workspace(plan_id: str) -> dict:
 	can_activate = bool(pending) and has_plan_version_capability(frappe.session.user, CAP_APPROVE, pending.name)
 	is_editable_draft = current.status in ("Draft", "Returned")
 
+	open_successor_exists = any(
+		v.status in ("Draft", "In Review", "Returned", "Awaiting Approval") for v in versions
+	)
+	can_create_successor = (
+		bool(active or pending)
+		and not open_successor_exists
+		and has_plan_version_capability(frappe.session.user, CAP_AUTHOR, current.name)
+	)
+
 	return {
 		"forbidden": False,
 		"not_found": False,
@@ -413,7 +464,7 @@ def get_plan_workspace(plan_id: str) -> dict:
 		"version_authority": version_authority,
 		"readiness": readiness,
 		"is_editable_draft": is_editable_draft,
-		"capabilities": {"activate": can_activate},
+		"capabilities": {"activate": can_activate, "create_successor": can_create_successor},
 	}
 
 
@@ -437,6 +488,31 @@ def get_plan_history(plan_id: str) -> list[dict]:
 					"version_id": v,
 				}
 			)
+	out.sort(key=lambda r: r["at"], reverse=True)
+	return out
+
+
+def get_version_history(plan_version_id: str) -> list[dict]:
+	"""STR-CHG-001 v1.3 spec: "History returns only lifecycle and draft-save
+	events for the submitted version" — unlike get_plan_history (plan-wide,
+	used by the Portfolio's implicit "all activity" reads), the Review task
+	and the Plan workspace's own-version History tab must show only this
+	one version's events, not every version of the plan merged together."""
+	if not frappe.db.exists("Strategic Plan Version", plan_version_id):
+		return []
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	plan = frappe.get_doc("Strategic Plan", version.plan_id)
+	if not _user_can_view_plan(plan.procuring_entity_id):
+		return []
+	out = [
+		{
+			"at": str(row.get("timestamp")),
+			"event": row.get("action"),
+			"actor": row.get("performed_by"),
+			"version_id": plan_version_id,
+		}
+		for row in list_events("Strategic Plan Version", plan_version_id)
+	]
 	out.sort(key=lambda r: r["at"], reverse=True)
 	return out
 

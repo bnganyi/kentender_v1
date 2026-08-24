@@ -3,14 +3,27 @@ import { ref, computed, watch } from "vue";
 import { useRouteState } from "../strategy_shared/composables/useRouteState.js";
 import StructureTree from "../strategy_shared/components/StructureTree.vue";
 import ConfirmDialog from "../strategy_shared/components/ConfirmDialog.vue";
+import PageRail from "../strategy_shared/components/PageRail.vue";
 import {
 	getVersionReviewOverview,
 	getStrategyTree,
 	diffStrategyVersions,
-	getPlanHistory,
+	getVersionHistory,
 	reviewVersion,
 	approveVersion,
 } from "./data/strategyReviewApi.js";
+
+function eventStatusClass(eventName) {
+	if (["Approve", "Activate", "Activate successor"].includes(eventName)) return "is-live";
+	if (["Submit for review", "Recommend for approval"].includes(eventName)) return "is-pending";
+	return "is-draft";
+}
+
+const railTrail = computed(() => [
+	{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+	{ label: __("Strategy Alignment"), route: ["strategy-portfolio"] },
+	{ label: __("Review Task") },
+]);
 
 const { route, go } = useRouteState("strategy-review-task");
 const versionId = computed(() => route.value[1] || null);
@@ -26,8 +39,7 @@ const history = ref([]);
 const historyLoaded = ref(false);
 const actingError = ref(null);
 const acting = ref(false);
-const returnReason = ref("");
-const showReturnBox = ref(false);
+const showReturnDialog = ref(false);
 
 async function load() {
 	if (!versionId.value) return;
@@ -43,6 +55,13 @@ async function load() {
 		} else {
 			overview.value = data;
 			tree.value = await getStrategyTree(versionId.value);
+			// A direct load (or reload) landing straight on the Changes/History
+			// tab must still fetch that tab's data — watch(tab, ...) below only
+			// fires on a later CLIENT-SIDE tab change, never for the tab value
+			// the route already had on mount (AGENTS.md §6.4: verify direct
+			// load, not just in-page navigation).
+			if (tab.value === "changes") loadDiff();
+			if (tab.value === "history") loadHistory();
 		}
 	} catch (e) {
 		actingError.value = e.message || String(e);
@@ -58,7 +77,7 @@ async function loadDiff() {
 
 async function loadHistory() {
 	if (!overview.value || historyLoaded.value) return;
-	history.value = await getPlanHistory(overview.value.plan.id);
+	history.value = await getVersionHistory(versionId.value);
 	historyLoaded.value = true;
 }
 
@@ -80,15 +99,14 @@ const canRecommend = computed(() => (overview.value?.allowed_actions || []).incl
 const canApprove = computed(() => (overview.value?.allowed_actions || []).includes("Approve"));
 const canReturn = computed(() => (overview.value?.allowed_actions || []).includes("Return"));
 
-async function submitReturn() {
+async function submitReturn(reason) {
 	acting.value = true;
 	actingError.value = null;
 	try {
 		const fn = isApprover.value ? approveVersion : reviewVersion;
-		await fn(versionId.value, "Return", returnReason.value);
+		await fn(versionId.value, "Return", reason);
 		frappe.show_alert({ message: __("Returned"), indicator: "orange" });
-		showReturnBox.value = false;
-		returnReason.value = "";
+		showReturnDialog.value = false;
 		await load();
 	} catch (e) {
 		actingError.value = e.message || String(e);
@@ -122,6 +140,7 @@ async function submitAdvance() {
 
 <template>
 	<div class="kt-strategy-ui">
+		<PageRail :trail="railTrail" />
 		<div class="kt-shell" style="padding-bottom: 90px">
 			<div v-if="loading">{{ __("Loading...") }}</div>
 			<div v-else-if="notFound" class="kt-card kt-empty"><h3>{{ __("This version could not be found.") }}</h3></div>
@@ -148,22 +167,30 @@ async function submitAdvance() {
 
 				<template v-if="tab === 'overview'">
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-						<div class="kt-card">
+						<div class="kt-card kt-blueprint">
+							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 							<div class="kt-card-title">{{ __("Plan identity") }}</div>
 							<div class="kv-row"><span class="kv-label">{{ __("Strategic plan") }}</span><span class="kv-value">{{ overview.plan.title }}</span></div>
 							<div class="kv-row"><span class="kv-label">{{ __("Procuring Entity") }}</span><span class="kv-value">{{ overview.plan.procuring_entity?.name }}</span></div>
+							<div class="kv-row"><span class="kv-label">{{ __("Organisation scope") }}</span><span class="kv-value">{{ __("PE-wide") }}</span></div>
 							<div class="kv-row"><span class="kv-label">{{ __("Plan role") }}</span><span class="kv-value">{{ overview.plan.plan_role }}</span></div>
 							<div class="kv-row"><span class="kv-label">{{ __("Plan period") }}</span><span class="kv-value">{{ overview.plan.period_label }}</span></div>
 							<div class="kv-row"><span class="kv-label">{{ __("Submitted version") }}</span><span class="kv-value">Version {{ overview.version.version_number }}</span></div>
 							<div class="kv-row"><span class="kv-label">{{ __("Version effective period") }}</span><span class="kv-value">{{ overview.version.effective_period_label || "—" }}</span></div>
 						</div>
 						<div style="display: flex; flex-direction: column; gap: 16px">
-							<div class="kt-card">
+							<div class="kt-card kt-blueprint">
+								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 								<div class="kt-card-title">{{ __("Submission authority") }}</div>
 								<div class="kv-row"><span class="kv-label">{{ __("Submitted by") }}</span><span class="kv-value">{{ overview.submission_authority.submitted_by?.actor || "—" }}</span></div>
-								<div v-if="isApprover" class="kv-row"><span class="kv-label">{{ __("Reviewed by") }}</span><span class="kv-value">{{ overview.submission_authority.reviewed_by?.actor || "—" }}</span></div>
+								<div class="kv-row"><span class="kv-label">{{ __("Submitted") }}</span><span class="kv-value">{{ overview.submission_authority.submitted_by?.at || "—" }}</span></div>
+								<template v-if="isApprover">
+									<div class="kv-row"><span class="kv-label">{{ __("Reviewed by") }}</span><span class="kv-value">{{ overview.submission_authority.reviewed_by?.actor || "—" }}</span></div>
+									<div class="kv-row"><span class="kv-label">{{ __("Recommended") }}</span><span class="kv-value">{{ overview.submission_authority.reviewed_by?.at || "—" }}</span></div>
+								</template>
 							</div>
-							<div class="kt-card">
+							<div class="kt-card kt-blueprint">
+								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 								<div class="kt-card-title">{{ __("Readiness") }}</div>
 								<div v-for="c in overview.readiness.checks" :key="c.check" class="kv-row">
 									<span class="kv-label">{{ c.check }}</span>
@@ -171,23 +198,46 @@ async function submitAdvance() {
 								</div>
 							</div>
 						</div>
-						<div class="kt-card" style="grid-column: 1 / -1">
+						<div class="kt-card kt-blueprint" style="grid-column: 1 / -1">
+							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 							<div class="kt-card-title">{{ __("Structure summary") }}</div>
-							<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px">
-								<div><div class="kv-label">{{ __("Pillars") }}</div><div style="font-size: 22px">{{ overview.structure_summary.pillars }}</div></div>
-								<div><div class="kv-label">{{ __("Programmes") }}</div><div style="font-size: 22px">{{ overview.structure_summary.programmes }}</div></div>
-								<div><div class="kv-label">{{ __("Sub-programmes") }}</div><div style="font-size: 22px">{{ overview.structure_summary.sub_programmes }}</div></div>
-								<div><div class="kv-label">{{ __("Strategic objectives") }}</div><div style="font-size: 22px">{{ overview.structure_summary.strategic_objectives }}</div></div>
-								<div><div class="kv-label">{{ __("Strategic outcomes") }}</div><div style="font-size: 22px">{{ overview.structure_summary.strategic_outcomes }}</div></div>
-								<div><div class="kv-label">{{ __("Performance indicators") }}</div><div style="font-size: 22px">{{ overview.structure_summary.performance_indicators }}</div></div>
-								<div><div class="kv-label">{{ __("Performance targets") }}</div><div style="font-size: 22px">{{ overview.structure_summary.performance_targets }}</div></div>
+							<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 24px">
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="16"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Pillars") }}</div><div class="kt-figure">{{ overview.structure_summary.pillars }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18 8.58 3.9a1 1 0 0 1 0 1.83l-8.58 3.9a2 2 0 0 1-1.66 0L2.6 7.91a1 1 0 0 1 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Programmes") }}</div><div class="kt-figure">{{ overview.structure_summary.programmes }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Sub-programmes") }}</div><div class="kt-figure">{{ overview.structure_summary.sub_programmes }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Strategic objectives") }}</div><div class="kt-figure is-live">{{ overview.structure_summary.strategic_objectives }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Strategic outcomes") }}</div><div class="kt-figure is-live">{{ overview.structure_summary.strategic_outcomes }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Performance indicators") }}</div><div class="kt-figure is-attention">{{ overview.structure_summary.performance_indicators }}</div></div>
+								</div>
+								<div style="display: flex; align-items: center; gap: 12px">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+									<div><div class="kv-label" style="font-size: 12px">{{ __("Performance targets") }}</div><div class="kt-figure is-attention">{{ overview.structure_summary.performance_targets }}</div></div>
+								</div>
 							</div>
 						</div>
 					</div>
 				</template>
 
 				<template v-else-if="tab === 'structure'">
-					<div class="kt-card">
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 						<div class="kt-card-title">{{ __("Submitted Version") }} {{ overview.version.version_number }} {{ __("structure") }}</div>
 						<p class="kt-text-muted">{{ __("Read-only plan hierarchy") }}</p>
 						<StructureTree :nodes="tree.tree" :read-only="true" />
@@ -222,7 +272,7 @@ async function submitAdvance() {
 							<tbody>
 								<tr v-for="(h, i) in history" :key="i">
 									<td>{{ h.at }}</td>
-									<td><span class="kt-status is-pending">{{ h.event }}</span></td>
+									<td><span class="kt-status" :class="eventStatusClass(h.event)">{{ h.event }}</span></td>
 									<td>{{ h.actor }}</td>
 								</tr>
 							</tbody>
@@ -233,32 +283,18 @@ async function submitAdvance() {
 		</div>
 
 		<div v-if="overview && (canReturn || canRecommend || canApprove)" class="kt-sticky-footer">
-			<template v-if="showReturnBox">
-				<input
-					v-model="returnReason"
-					class="kt-input"
-					style="width: 360px"
-					:placeholder="__('Reason (10-500 characters)')"
-				/>
-				<button type="button" class="kt-btn kt-btn-ghost" @click="showReturnBox = false">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-danger-outline" :disabled="acting" @click="submitReturn">
-					{{ __("Confirm return") }}
-				</button>
-			</template>
-			<template v-else>
-				<button v-if="canReturn" type="button" class="kt-btn kt-btn-danger-outline" @click="showReturnBox = true">
-					{{ __("Return") }}
-				</button>
-				<button
-					v-if="canRecommend || canApprove"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					:disabled="acting"
-					@click="showAdvanceConfirm = true"
-				>
-					{{ canApprove ? __("Approve") : __("Recommend for approval") }}
-				</button>
-			</template>
+			<button v-if="canReturn" type="button" class="kt-btn kt-btn-danger-outline" @click="showReturnDialog = true">
+				{{ __("Return") }}
+			</button>
+			<button
+				v-if="canRecommend || canApprove"
+				type="button"
+				class="kt-btn kt-btn-primary"
+				:disabled="acting"
+				@click="showAdvanceConfirm = true"
+			>
+				{{ canApprove ? __("Approve") : __("Recommend for approval") }}
+			</button>
 		</div>
 
 		<ConfirmDialog
@@ -268,6 +304,17 @@ async function submitAdvance() {
 			:confirm-label="canApprove ? __('Approve') : __('Recommend for approval')"
 			@confirm="submitAdvance"
 			@cancel="showAdvanceConfirm = false"
+		/>
+		<ConfirmDialog
+			:open="showReturnDialog"
+			:title="__('Return this version?')"
+			require-reason
+			:reason-placeholder="__('Reason (10-500 characters)')"
+			:reason-min-length="10"
+			:reason-max-length="500"
+			:confirm-label="__('Return')"
+			@confirm="submitReturn"
+			@cancel="showReturnDialog = false"
 		/>
 	</div>
 </template>

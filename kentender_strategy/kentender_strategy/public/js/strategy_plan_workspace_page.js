@@ -13,6 +13,14 @@ frappe.pages["strategy-plan-workspace"].on_page_load = function (wrapper) {
 frappe.pages["strategy-plan-workspace"].on_page_show = function (wrapper) {
 	if (window.kentender_core && kentender_core.cl_shell) {
 		kentender_core.cl_shell.enterNative({ sidebarWorkspaceKey: "procurement" });
+		// See strategy_portfolio_page.js for why this host must be force-emptied and
+		// the native navbar/page-head force-hidden: this page's own PageRail.vue is
+		// the only rail, matching kentender_core's reference_data pattern.
+		const chromeHost = document.getElementById("kt-cl-chrome-host");
+		if (chromeHost) chromeHost.innerHTML = "";
+		document.querySelectorAll(".navbar, .page-head").forEach((el) => {
+			el.style.setProperty("display", "none", "important");
+		});
 	}
 	mount_strategy_plan_workspace(wrapper);
 };

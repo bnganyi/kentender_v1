@@ -11,6 +11,9 @@ export const getPlanWorkspace = (planId) =>
 export const getPlanHistory = (planId) =>
 	call("kentender_strategy.api.strategy_ui_api.get_plan_history", { plan_id: planId });
 
+export const getVersionHistory = (planVersionId) =>
+	call("kentender_strategy.api.strategy_ui_api.get_version_history", { plan_version_id: planVersionId });
+
 export const getStrategyTree = (planVersionId) =>
 	call("kentender_strategy.api.strategy_ui_api.get_strategy_tree", { plan_version_id: planVersionId });
 
@@ -32,4 +35,9 @@ export const submitVersion = (planVersionId) =>
 export const activateVersion = (planVersionId) =>
 	call("kentender_strategy.api.strategy_consumer_api.activate_strategy_version", {
 		plan_version_id: planVersionId,
+	});
+
+export const createSuccessorVersion = (planId) =>
+	call("kentender_strategy.api.strategy_consumer_api.create_strategy_successor_version", {
+		plan_id: planId,
 	});

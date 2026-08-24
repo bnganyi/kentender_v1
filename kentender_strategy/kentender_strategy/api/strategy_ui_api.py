@@ -30,6 +30,11 @@ def get_plan_history(plan_id: str):
 
 
 @frappe.whitelist()
+def get_version_history(plan_version_id: str):
+	return ui.get_version_history(plan_version_id)
+
+
+@frappe.whitelist()
 def get_strategy_tree(plan_version_id: str):
 	return ui.get_strategy_tree(plan_version_id)
 
