@@ -1,13 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
 """Downstream Strategy Reference helpers for Budget / Demand / Planning.
 
-This module is the STR-CHG-001 §12 integration-contract boundary: downstream
+This module is the STR-CHG-001 §10 integration-contract boundary: downstream
 apps call the functions here, never a Strategy DocType controller or table
-directly. The 5 canonically-named contracts (resolve_strategy_context,
-list_strategy_commitments, get_strategy_lineage, create_strategy_snapshot,
-record_verified_result) sit alongside the older, budget-shaped helpers below
-that already route through them — both are legitimate parts of this same
-boundary, not competing layers.
+directly. The 5 canonically-named contracts are resolve_strategy_context,
+list_strategy_objectives, get_strategy_lineage, create_strategy_snapshot and
+record_verified_result (deferred stub). They sit alongside the older,
+Target-based helpers below (apply_budget_primary_strategy_reference and
+friends — kentender_budget's XMOD-STR-001 integration) — both are legitimate,
+separate parts of this same boundary, not competing layers: Procurement Plan
+Items select a Strategic Objective (§9), Budget Lines reference a
+Performance Target for funding-target linkage, a distinct relationship v1.3
+does not change.
 """
 
 from __future__ import annotations
@@ -17,9 +21,9 @@ from frappe import _
 from frappe.utils import getdate
 
 from kentender_strategy.services.strategy_contracts import (
+	_node_ancestor_path,
 	build_strategy_reference,
 	list_active_targets,
-	list_strategy_value_commitments,
 	validate_strategy_reference,
 )
 from kentender_strategy.services.strategy_domain_guards import PLAN_ROLE_PRIMARY, PLAN_ROLE_SUPPORTING
@@ -117,102 +121,166 @@ def resolve_strategy_context(
 	}
 
 
-def list_strategy_commitments(
-	procuring_entity: str | None = None,
-	plan_version: str | None = None,
-	node_id: str | None = None,
-	target_id: str | None = None,
-) -> list[dict]:
-	"""STR-CHG-001 §12 — list_strategy_commitments.
-
-	Input: resolved context (PE, or an explicit plan_version) plus optional
-	node/target filters. Output: Approved (Locked), effective (Active plan)
-	commitments only — server-side scope enforced, no Draft/incomplete rows.
-	"""
-	if not plan_version:
-		if not procuring_entity:
-			frappe.throw(
-				_("Either procuring_entity or plan_version is required"), frappe.ValidationError
-			)
-		plan_version = resolve_strategy_context(procuring_entity)["primary_plan"]["id"]
-	if frappe.db.get_value("Strategic Plan", plan_version, "status") != "Active":
-		return []
-	rows = [
-		r
-		for r in (list_strategy_value_commitments(plan_version=plan_version).get("rows") or [])
-		if r.get("status") == "Locked"
-	]
-	wanted = {v for v in (node_id, target_id) if v}
-	if wanted:
-		rows = [
-			r
-			for r in rows
-			if any(
-				(ln.get("outcome") or {}).get("id") in wanted
-				or (ln.get("target") or {}).get("id") in wanted
-				for ln in r.get("links") or []
-			)
-		]
-	return rows
+_LINEAGE_NODE_TYPES = ("Strategic Objective", "Strategic Outcome")
 
 
-def get_strategy_lineage(
+def list_strategy_objectives(
+	plan_version_id: str,
 	*,
-	plan_version: str,
-	node_id: str,
-	node_type: str = "PerformanceTarget",
+	parent_node_id: str | None = None,
+	search: str | None = None,
+	limit_start: int = 0,
+	limit_page_length: int = 20,
 ) -> dict:
-	"""STR-CHG-001 §12 / §12.1 — get_strategy_lineage.
+	"""STR-CHG-001 §9/§10 — list_strategy_objectives.
 
-	Canonical titles, hierarchy path, version and effective period for a
-	Strategy reference — no editable code. Scoped to Performance Target
-	references (the only lineage entry point consumed by any downstream
-	module today); extend when a genuine Objective/Outcome/Indicator-only
-	consumer exists rather than speculatively.
+	Active Strategic Objectives from one resolved Active plan version, each
+	with its ordered Pillar -> Programme -> optional Sub-programme ancestor
+	path so a planner can distinguish similarly-named objectives (§13.6).
+	Never returns Draft-version content — the caller supplies an already
+	Active plan_version_id (from resolve_strategy_context), and this
+	function itself re-confirms that before returning anything (STR-BR-018).
 	"""
-	if node_type != "PerformanceTarget":
-		frappe.throw(_("Unsupported node_type for lineage resolution: {0}").format(node_type))
-	return build_strategy_reference(plan_version, node_id)
+	if frappe.db.get_value("Strategic Plan Version", plan_version_id, "status") != "Active":
+		return {"rows": [], "count": 0}
+
+	filters = {"plan_version_id": plan_version_id, "node_type": "Strategic Objective"}
+	if parent_node_id:
+		filters["parent_node_id"] = parent_node_id
+	if search:
+		filters["title"] = ["like", f"%{search}%"]
+
+	total = frappe.db.count("Strategy Node", filters)
+	rows = frappe.get_all(
+		"Strategy Node",
+		filters=filters,
+		fields=["name", "title", "parent_node_id"],
+		order_by="display_order asc",
+		limit_start=limit_start,
+		limit_page_length=limit_page_length,
+	)
+	out = []
+	for row in rows:
+		path = _node_ancestor_path(row.name)
+		out.append(
+			{
+				"id": row.name,
+				"title": row.title,
+				"path": [{"type": n["node_type"], "id": n["name"], "title": n["title"]} for n in path],
+			}
+		)
+	return {"rows": out, "count": total}
 
 
-def create_strategy_snapshot(
-	*,
-	plan_version: str,
-	node_id: str,
-	correlation_key: str,
-	node_type: str = "PerformanceTarget",
-) -> dict:
-	"""STR-CHG-001 §12 / STR-FR-022 — create_strategy_snapshot.
+def get_strategy_lineage(node_id: str) -> dict:
+	"""STR-CHG-001 §10 — get_strategy_lineage.
 
-	Input: an approved downstream record boundary (correlation_key) plus
-	selected references. Output: immutable lineage payload and source version.
-	Idempotent by construction — Strategy source data is immutable once
-	Approved/Active, so recomputing for the same correlation_key always
-	yields the same payload. No separate persisted snapshot ledger doctype.
-	Audited: this is the one contract among the five that represents a real
-	downstream-resolution *action* (an approval boundary freezing a
-	reference), not a routine read — logged accordingly, unlike
-	resolve_strategy_context/list_strategy_commitments/get_strategy_lineage.
+	Ordered path with stable IDs, types and titles from plan to the
+	requested Strategic Objective, Strategic Outcome, Performance Indicator
+	or Performance Target — auto-detecting which of the four the id
+	belongs to rather than requiring the caller to state it.
+	"""
+	if frappe.db.exists("Strategy Node", node_id):
+		path = _node_ancestor_path(node_id)
+	elif frappe.db.exists("Performance Indicator", node_id):
+		indicator = frappe.get_doc("Performance Indicator", node_id)
+		path = _node_ancestor_path(indicator.measures_node_id)
+		path.append(
+			{
+				"name": indicator.name,
+				"node_type": "Performance Indicator",
+				"title": indicator.indicator_name,
+				"parent_node_id": indicator.measures_node_id,
+			}
+		)
+	elif frappe.db.exists("Performance Target", node_id):
+		target = frappe.get_doc("Performance Target", node_id)
+		indicator = frappe.get_doc("Performance Indicator", target.indicator_id)
+		path = _node_ancestor_path(indicator.measures_node_id)
+		path.append(
+			{
+				"name": indicator.name,
+				"node_type": "Performance Indicator",
+				"title": indicator.indicator_name,
+				"parent_node_id": indicator.measures_node_id,
+			}
+		)
+		path.append(
+			{
+				"name": target.name,
+				"node_type": "Performance Target",
+				"title": f"{target.comparison} {target.target_value}",
+				"parent_node_id": indicator.name,
+			}
+		)
+	else:
+		frappe.throw(_("Unknown Strategy reference"), frappe.DoesNotExistError)
+
+	return {
+		"node_id": node_id,
+		"path": [{"id": n["name"], "type": n["node_type"], "title": n["title"]} for n in path],
+	}
+
+
+def create_strategy_snapshot(*, plan_version_id: str, objective_id: str, correlation_key: str) -> dict:
+	"""STR-CHG-001 §9/§10/§13.6 — create_strategy_snapshot.
+
+	Freezes one selected Strategic Objective's plan/version identity,
+	period and ordered Pillar->Programme->[Sub-programme]->Objective path
+	for a downstream approval boundary (a Procurement Plan Version
+	approval). Idempotent per correlation_key — see
+	strategy_idempotency.run_idempotent, wired at the API layer, not here;
+	this function is pure/re-computable given the same inputs since source
+	data is immutable once Approved/Active.
 	"""
 	if not correlation_key:
-		frappe.throw(_("correlation_key is required"), frappe.ValidationError)
-	result = validate_strategy_reference(
-		{"plan_version_id": plan_version, "node_id": node_id, "node_type": node_type}
+		frappe.throw(_("correlation_key is required"), frappe.ValidationError, title="STRATEGY_SCOPE_REQUIRED")
+
+	version = frappe.db.get_value(
+		"Strategic Plan Version", plan_version_id, ["plan_id", "status", "effective_from", "effective_to"], as_dict=True
 	)
-	if not result.get("valid"):
-		frappe.throw(_(result.get("reason") or "Invalid strategy reference"), frappe.ValidationError)
-	snapshot = dict(result["reference"])
-	snapshot["correlation_key"] = correlation_key
-	snapshot["selectable_for_new"] = result.get("selectable_for_new")
+	if not version:
+		frappe.throw(_("Unknown plan version"), frappe.DoesNotExistError, title="STRATEGY_OBJECTIVE_NOT_ELIGIBLE")
+	objective = frappe.db.get_value(
+		"Strategy Node", objective_id, ["node_type", "plan_version_id", "title"], as_dict=True
+	)
+	if (
+		not objective
+		or objective.node_type != "Strategic Objective"
+		or objective.plan_version_id != plan_version_id
+		or version.status != "Active"
+	):
+		frappe.throw(
+			_("The selected Objective is not eligible for a new snapshot"),
+			frappe.ValidationError,
+			title="STRATEGY_OBJECTIVE_NOT_ELIGIBLE",
+		)
+
+	plan = frappe.db.get_value("Strategic Plan", version.plan_id, ["plan_id", "title"], as_dict=True)
+	path = _node_ancestor_path(objective_id)
+
+	snapshot = {
+		"plan_id": version.plan_id,
+		"plan_code": plan.plan_id,
+		"plan_title": plan.title,
+		"plan_version_id": plan_version_id,
+		"effective_from": str(version.effective_from) if version.effective_from else None,
+		"effective_to": str(version.effective_to) if version.effective_to else None,
+		"path": [{"id": n["name"], "type": n["node_type"], "title": n["title"]} for n in path],
+		"objective_id": objective_id,
+		"objective_title": objective.title,
+		"correlation_key": correlation_key,
+	}
 
 	from kentender_strategy.services.strategy_audit import record_event
 
 	record_event(
-		entity_type=node_type,
-		entity_name=node_id,
+		entity_type="Strategy Node",
+		entity_name=objective_id,
 		event_type="Strategy Snapshot Created",
-		plan_version=plan_version,
+		plan_version=plan_version_id,
 		reason=correlation_key,
+		correlation_id=correlation_key,
 		summary=f"Snapshot created for downstream boundary {correlation_key}",
 	)
 	return snapshot
@@ -233,30 +301,17 @@ def record_verified_result(*_args, **_kwargs):
 def resolve_performance_target_id(
 	*, target_id: str | None = None, target_code: str | None = None
 ) -> str | None:
-	"""Resolve a Performance Target name from id or business code.
+	"""Resolve a Performance Target name from its generated id.
 
-	When resolving by code and duplicates exist, prefer Active targets on Active plans
-	(STR-AC-009 / selectable_for_new).
+	Performance Target has no business code distinct from its generated id
+	(Phase 1 schema) — target_code is accepted only for backward
+	compatibility with callers that historically passed either
+	interchangeably, and is treated as a literal target id.
 	"""
-	tid = (target_id or "").strip()
+	tid = (target_id or "").strip() or (target_code or "").strip()
 	if tid and frappe.db.exists("Performance Target", tid):
 		return tid
-	code = (target_code or "").strip()
-	if not code:
-		return tid or None
-	rows = frappe.get_all(
-		"Performance Target",
-		filters={"target_code": code, "status": "Active"},
-		fields=["name", "plan_version"],
-		order_by="modified desc",
-	)
-	for row in rows:
-		plan_status = frappe.db.get_value("Strategic Plan", row.plan_version, "status")
-		if plan_status == "Active":
-			return row.name
-	if rows:
-		return rows[0].name
-	return frappe.db.get_value("Performance Target", {"target_code": code}, "name")
+	return None
 
 
 def target_snapshot_fields(target_id: str) -> dict | None:
@@ -268,21 +323,18 @@ def target_snapshot_fields(target_id: str) -> dict | None:
 	tid = (target_id or "").strip()
 	if not tid:
 		return None
-	return frappe.db.get_value(
-		"Performance Target",
-		tid,
-		["name", "title", "plan_version", "target_code"],
-		as_dict=True,
+	target = frappe.db.get_value(
+		"Performance Target", tid, ["name", "indicator_id", "comparison", "target_value"], as_dict=True
 	)
-
-
-def resolve_commitment_id(commitment_code: str) -> str | None:
-	"""Resolve a Strategy Value Commitment name from its business code — the
-	downstream-safe alternative to querying the DocType directly."""
-	code = (commitment_code or "").strip()
-	if not code:
+	if not target:
 		return None
-	return frappe.db.get_value("Strategy Value Commitment", {"commitment_code": code}, "name")
+	plan_version_id = frappe.db.get_value("Performance Indicator", target.indicator_id, "plan_version_id")
+	return {
+		"name": target.name,
+		"title": f"{target.comparison} {target.target_value}",
+		"plan_version": plan_version_id,
+		"target_code": target.name,
+	}
 
 
 def _validated_strategy_reference(target_id: str, *, require_active: bool = True) -> dict:

@@ -17,11 +17,13 @@ from __future__ import annotations
 import json
 
 import frappe
+from frappe import _
 
 from kentender_core.services.authorization_policy import (
 	ResourceContext,
 	evaluate_capability,
 	require_capability,
+	resolve_effective_access,
 )
 from kentender_strategy.services.strategy_audit import list_events
 
@@ -164,3 +166,19 @@ def require_plan_version_capability(
 
 def has_plan_version_capability(user: str, capability: str, version) -> bool:
 	return evaluate_capability(user, capability, resource_context_for_version(version)).allowed
+
+
+def require_plan_create_capability(user: str, procuring_entity_id: str) -> None:
+	"""Bootstrap check for creating a brand-new Strategic Plan: there is no
+	existing resource to scope a normal evaluate_capability() call to, so —
+	same pattern as reference_data_permissions.require_pe_create_capability
+	(CFG-CHG-002) — this checks for any active assignment granting CAP_AUTHOR
+	for the target PE, not one scoped to a specific not-yet-existing plan."""
+	for grant in resolve_effective_access(user, CAP_AUTHOR):
+		if grant.get("procuring_entity_id") == procuring_entity_id:
+			return
+	frappe.throw(
+		_("Not permitted to create a strategic plan for this procuring entity"),
+		frappe.PermissionError,
+		title="STRATEGY_PERMISSION_DENIED",
+	)

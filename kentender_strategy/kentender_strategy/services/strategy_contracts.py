@@ -1006,91 +1006,101 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 	}
 
 
+# STR-CHG-001 Phase 1's Strategy Node node_type values -> the compact,
+# space-free path-entry "type" tokens this module's callers already expect
+# (strategy_consumer.strategy_fields_from_doc's path_by_type lookups predate
+# the rebuild and were not changed, so this mapping is what keeps them
+# working unmodified).
+_NODE_PATH_TYPE = {
+	"Pillar": "Pillar",
+	"Programme": "Programme",
+	"Sub-programme": "SubProgramme",
+	"Strategic Objective": "StrategicObjective",
+	"Strategic Outcome": "StrategicOutcome",
+}
+
+
+def _node_ancestor_path(node_id: str) -> list[dict]:
+	"""Root-first Strategy Node ancestor chain, self included."""
+	chain = []
+	current = frappe.db.get_value(
+		"Strategy Node", node_id, ["name", "node_type", "title", "parent_node_id"], as_dict=True
+	)
+	while current:
+		chain.append(current)
+		current = (
+			frappe.db.get_value(
+				"Strategy Node",
+				current.parent_node_id,
+				["name", "node_type", "title", "parent_node_id"],
+				as_dict=True,
+			)
+			if current.parent_node_id
+			else None
+		)
+	chain.reverse()
+	return chain
+
+
 def validate_strategy_reference(reference: dict | None = None) -> dict:
+	"""XMOD-STR-001 — validates a Performance Target reference for a
+	downstream consumer (kentender_budget's Budget Line). Rebuilt for the
+	Phase 1 schema: Performance Target no longer carries its own status or
+	business code — eligibility is the owning Strategic Plan Version's
+	status, and the reference's own generated id is its code."""
 	reference = reference or {}
 	plan_version_id = reference.get("plan_version_id")
 	node_id = reference.get("node_id")
 	node_type = reference.get("node_type") or "PerformanceTarget"
-	if not plan_version_id or not frappe.db.exists("Strategic Plan", plan_version_id):
-		return {"valid": False, "reason": "Unknown plan version"}
-	status = frappe.db.get_value("Strategic Plan", plan_version_id, "status")
-	if status != "Active":
-		# historical may still resolve
-		historical_ok = True
-	else:
-		historical_ok = True
-	if node_type == "PerformanceTarget":
-		tgt = frappe.db.get_value(
-			"Performance Target",
-			node_id,
-			["name", "target_code", "title", "plan_version", "status"],
-			as_dict=True,
-		)
-		if not tgt:
-			return {"valid": False, "reason": "Unknown target"}
-		if tgt.plan_version != plan_version_id:
-			return {"valid": False, "reason": "Target/plan version mismatch"}
-		selectable = status == "Active" and tgt.status == "Active"
-		dto = build_strategy_reference(plan_version_id, node_id)
-		return {"valid": True, "selectable_for_new": selectable, "historical_ok": historical_ok, "reference": dto}
-	return {"valid": False, "reason": f"Unsupported node_type {node_type}"}
+	if node_type != "PerformanceTarget":
+		return {"valid": False, "reason": f"Unsupported node_type {node_type}"}
+
+	target = frappe.db.get_value("Performance Target", node_id, "indicator_id")
+	if not target:
+		return {"valid": False, "reason": "Unknown target"}
+	indicator_plan_version_id = frappe.db.get_value("Performance Indicator", target, "plan_version_id")
+	if not indicator_plan_version_id:
+		return {"valid": False, "reason": "Unknown target"}
+	if plan_version_id and indicator_plan_version_id != plan_version_id:
+		return {"valid": False, "reason": "Target/plan version mismatch"}
+
+	version_status = frappe.db.get_value("Strategic Plan Version", indicator_plan_version_id, "status")
+	selectable = version_status == "Active"
+	dto = build_strategy_reference(indicator_plan_version_id, node_id)
+	return {"valid": True, "selectable_for_new": selectable, "historical_ok": True, "reference": dto}
 
 
 def build_strategy_reference(plan_version_id: str, target_id: str) -> dict:
-	plan = frappe.get_doc("Strategic Plan", plan_version_id)
-	tgt = frappe.get_doc("Performance Target", target_id)
-	ind = frappe.get_doc("Performance Indicator", tgt.performance_indicator)
-	if ind.strategic_objective:
-		parent = frappe.get_doc("Strategic Objective", ind.strategic_objective)
-		parent_node = {
-			"type": "StrategicObjective",
-			"id": parent.name,
-			"code": parent.objective_code,
-			"name": parent.title,
-		}
-	else:
-		parent = frappe.get_doc("Strategic Outcome", ind.strategic_outcome)
-		parent_node = {
-			"type": "StrategicOutcome",
-			"id": parent.name,
-			"code": parent.outcome_code,
-			"name": parent.title,
-		}
-	prog = frappe.get_doc("Strategy Programme", parent.programme)
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	target = frappe.get_doc("Performance Target", target_id)
+	indicator = frappe.get_doc("Performance Indicator", target.indicator_id)
+
 	path = [
-		{"type": "Programme", "id": prog.name, "code": prog.programme_code, "name": prog.title},
+		{"type": _NODE_PATH_TYPE[n.node_type], "id": n.name, "code": n.name, "name": n.title}
+		for n in _node_ancestor_path(indicator.measures_node_id)
 	]
-	if parent.sub_programme:
-		sub = frappe.get_doc("Strategy Sub Programme", parent.sub_programme)
-		path.append(
-			{"type": "SubProgramme", "id": sub.name, "code": sub.sub_programme_code, "name": sub.title}
-		)
-	path.extend(
-		[
-			parent_node,
-			{
-				"type": "PerformanceIndicator",
-				"id": ind.name,
-				"code": ind.indicator_code,
-				"name": ind.title,
-			},
-			{
-				"type": "PerformanceTarget",
-				"id": tgt.name,
-				"code": tgt.target_code,
-				"name": tgt.title,
-			},
-		]
+	path.append(
+		{
+			"type": "PerformanceIndicator",
+			"id": indicator.name,
+			"code": indicator.name,
+			"name": indicator.indicator_name,
+		}
 	)
-	snapshot = " / ".join(p["name"] for p in path if p["type"] in ("Programme", "SubProgramme", "PerformanceTarget"))
+	target_label = f"{target.comparison} {target.target_value}"
+	path.append({"type": "PerformanceTarget", "id": target.name, "code": target.name, "name": target_label})
+
+	snapshot = " / ".join(
+		p["name"] for p in path if p["type"] in ("Programme", "SubProgramme", "PerformanceTarget")
+	)
 	return {
-		"plan_version_id": plan.name,
-		"plan_code": plan.plan_code,
-		"plan_version": plan.version_number,
+		"plan_version_id": version.name,
+		"plan_code": frappe.db.get_value("Strategic Plan", version.plan_id, "plan_id"),
+		"plan_version": version.version_number,
 		"node_type": "PerformanceTarget",
-		"node_id": tgt.name,
-		"node_code": tgt.target_code,
-		"node_name": tgt.title,
+		"node_id": target.name,
+		"node_code": target.name,
+		"node_name": target_label,
 		"path": path,
 		"snapshot_label": snapshot,
 	}

@@ -1,517 +1,353 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Write companions for Strategy hierarchy, commitments, measurements."""
+"""STR-CHG-001 §10.1 write commands: save_strategy_plan_draft,
+create_strategy_successor_version, save_strategy_structure_draft.
+
+Rebuilt for the Phase 1 domain model (Strategic Plan/Strategic Plan
+Version split, unified Strategy Node) — the previous version of this file
+targeted the pre-rebuild Programme/Sub-programme/Objective/Outcome
+doctypes and combined Plan/Version schema."""
 
 from __future__ import annotations
-
-from typing import Any
 
 import frappe
 from frappe import _
 
 from kentender_strategy.services.strategy_audit import record_event
-from kentender_strategy.services.strategy_domain_guards import _assert_version_editable as _assert_plan_editable
-from kentender_strategy.services.strategy_permissions import (
-	assert_entity_in_scope,
-	assert_org_unit_in_scope,
-	can_create_successor_plan,
-	can_edit_draft_plan,
+from kentender_strategy.services.strategy_authorization import (
+	CAP_AUTHOR,
+	require_plan_create_capability,
+	require_plan_version_capability,
 )
-_META_SKIP = frozenset(
-	{
-		"name",
-		"owner",
-		"creation",
-		"modified",
-		"modified_by",
-		"docstatus",
-		"idx",
-		"doctype",
-		"amended_from",
-	}
+from kentender_strategy.services.strategy_transitions import _check_expected_version, _version_payload
+
+PLAN_IDENTITY_FIELDS = (
+	"title",
+	"procuring_entity_id",
+	"owner_org_unit_id",
+	"plan_role",
+	"parent_primary_plan_id",
+	"period_start",
+	"period_end",
 )
-
-NODE_DOCTYPE = {
-	"Programme": ("Strategy Programme", "programme_code"),
-	"SubProgramme": ("Strategy Sub Programme", "sub_programme_code"),
-	"StrategicObjective": ("Strategic Objective", "objective_code"),
-	"StrategicOutcome": ("Strategic Outcome", "outcome_code"),
-	"PerformanceIndicator": ("Performance Indicator", "indicator_code"),
-	"PerformanceTarget": ("Performance Target", "target_code"),
-}
+VERSION_FIELDS = ("effective_from", "effective_to")
 
 
-def _next_order_index(doctype: str, plan_version: str, parent_filters: dict | None = None) -> int:
-	filters = {"plan_version": plan_version}
-	if parent_filters:
-		filters.update(parent_filters)
-	meta = frappe.get_meta(doctype)
-	if not meta.has_field("order_index"):
-		return 0
-	rows = frappe.get_all(doctype, filters=filters, fields=["order_index"], order_by="order_index desc", limit=1)
-	if not rows or rows[0].order_index is None:
-		return 0
-	return int(rows[0].order_index) + 1
-
-
-def _parent_filter_for_order(node_type: str, data: dict) -> dict | None:
-	if node_type == "SubProgramme" and data.get("programme"):
-		return {"programme": data["programme"]}
-	if node_type in ("StrategicObjective", "StrategicOutcome"):
-		if data.get("sub_programme"):
-			return {"sub_programme": data["sub_programme"]}
-		if data.get("programme"):
-			return {"programme": data["programme"]}
-	if node_type == "PerformanceIndicator":
-		if data.get("strategic_objective"):
-			return {"strategic_objective": data["strategic_objective"]}
-		if data.get("strategic_outcome"):
-			return {"strategic_outcome": data["strategic_outcome"]}
-	if node_type == "PerformanceTarget" and data.get("performance_indicator"):
-		return {"performance_indicator": data["performance_indicator"]}
-	return None
-
-
-def _blank(value: Any) -> bool:
-	if value is None:
-		return True
-	if isinstance(value, str) and not value.strip():
-		return True
-	return False
-
-
-def _validate_structure_node_fields(node_type: str, data: dict) -> dict[str, str]:
-	"""Field-level validation for structure drawers — return map for inline UI."""
-	errors: dict[str, str] = {}
-	if _blank(data.get("title")):
-		errors["title"] = _("Title is required")
-
-	if node_type in ("Programme", "SubProgramme", "StrategicObjective", "StrategicOutcome"):
-		if _blank(data.get("responsible_function")):
-			errors["responsible_function"] = _("Responsible function is required")
-
-	if node_type == "PerformanceIndicator":
-		has_objective = not _blank(data.get("strategic_objective"))
-		has_outcome = not _blank(data.get("strategic_outcome"))
-		if has_objective and has_outcome:
-			errors["strategic_outcome"] = _(
-				"Choose either a Strategic Objective or a Strategic Outcome, not both"
-			)
-		elif not has_objective and not has_outcome:
-			errors["strategic_outcome"] = _(
-				"A Strategic Objective or a Strategic Outcome is required"
-			)
-		if _blank(data.get("definition")):
-			errors["definition"] = _("Definition is required")
-		if _blank(data.get("measurement_type")):
-			errors["measurement_type"] = _("Measurement type is required")
-		if _blank(data.get("measurement_frequency")):
-			errors["measurement_frequency"] = _("Measurement frequency is required")
-		if _blank(data.get("data_source")):
-			errors["data_source"] = _("Data source is required")
-		if _blank(data.get("responsible_function")):
-			errors["responsible_function"] = _("Responsible function is required")
-
-	if node_type == "PerformanceTarget":
-		if _blank(data.get("comparison_direction")):
-			errors["comparison_direction"] = _("Comparison direction is required")
-		if data.get("target_numeric") is None and _blank(data.get("target_text")):
-			errors["target_numeric"] = _("Target value is required")
-		if _blank(data.get("period_start")):
-			errors["period_start"] = _("Period start is required")
-		if _blank(data.get("period_end")):
-			errors["period_end"] = _("Period end is required")
-		if _blank(data.get("benefit_owner")):
-			errors["benefit_owner"] = _("Benefit owner is required")
-		if _blank(data.get("measurement_verifier")):
-			errors["measurement_verifier"] = _("Measurement verifier is required")
-
-	return errors
-
-
-def upsert_structure_node(payload: dict) -> dict:
-	if not can_edit_draft_plan():
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	node_type = payload.get("type") or payload.get("node_type")
-	if node_type not in NODE_DOCTYPE:
-		frappe.throw(_("Unknown structure node type: {0}").format(node_type))
-	doctype, code_field = NODE_DOCTYPE[node_type]
-	name = payload.get("id") or payload.get("name")
-	data = dict(payload.get("fields") or {})
-	# Flatten common keys
-	for key in (
-		"plan_version",
-		"title",
-		"description",
-		"responsible_function",
-		"order_index",
-		"programme",
-		"sub_programme",
-		"strategic_objective",
-		"strategic_outcome",
-		"performance_indicator",
-		"executive_owner",
-		"definition",
-		"measurement_type",
-		"unit",
-		"measurement_frequency",
-		"data_source",
-		"comparison_direction",
-		"target_numeric",
-		"target_text",
-		"target_date",
-		"baseline_status",
-		"baseline_numeric",
-		"baseline_text",
-		"baseline_as_of",
-		"baseline_source",
-		"tolerance_value",
-		"period_start",
-		"period_end",
-		"benefit_owner",
-		"measurement_verifier",
-		"status",
-	):
-		if key in payload and key not in data:
-			data[key] = payload[key]
-	# Client-supplied codes are ignored on create (system-assigned). On edit, codes are immutable.
-	data.pop(code_field, None)
-	data.pop("code", None)
-
-	plan_version = data.get("plan_version")
-	if not plan_version and name and frappe.db.exists(doctype, name):
-		plan_version = frappe.db.get_value(doctype, name, "plan_version")
-		data["plan_version"] = plan_version
-	if not plan_version:
-		frappe.throw(_("Plan version is required"))
-	_assert_plan_editable(plan_version)
-	pe = frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
-	if pe:
-		assert_entity_in_scope(pe)
-	owner_ou = data.get("owner_org_unit")
-	if owner_ou is None and name and frappe.db.exists(doctype, name):
-		owner_ou = frappe.db.get_value(doctype, name, "owner_org_unit")
-	if pe:
-		assert_org_unit_in_scope(pe, owner_ou, require_write=True)
-
-	# Inherit parent links / plan from parent when omitted
-	if node_type == "SubProgramme" and data.get("programme"):
-		data["plan_version"] = plan_version
-	elif node_type in ("StrategicObjective", "StrategicOutcome"):
-		if data.get("sub_programme") and not data.get("programme"):
-			data["programme"] = frappe.db.get_value(
-				"Strategy Sub Programme", data["sub_programme"], "programme"
-			)
-	elif node_type == "PerformanceIndicator" and (
-		data.get("strategic_objective") or data.get("strategic_outcome")
-	):
-		data["plan_version"] = plan_version
-	elif node_type == "PerformanceTarget" and data.get("performance_indicator"):
-		data["plan_version"] = plan_version
-
-	field_errors = _validate_structure_node_fields(node_type, data)
-	if field_errors:
-		return {"ok": False, "errors": field_errors}
-
-	if data.get("order_index") is None and frappe.get_meta(doctype).has_field("order_index"):
-		data["order_index"] = _next_order_index(
-			doctype, plan_version, _parent_filter_for_order(node_type, data)
-		)
-
-	if name and frappe.db.exists(doctype, name):
-		doc = frappe.get_doc(doctype, name)
-		# Never overwrite an existing system reference from the payload.
-		data.pop(code_field, None)
-		doc.update(data)
-		doc.save(ignore_permissions=True)
-	else:
-		data["doctype"] = doctype
-		data[code_field] = None
-		doc = frappe.get_doc(data)
-		doc.insert(ignore_permissions=True)
+def _plan_payload(plan) -> dict:
 	return {
-		"ok": True,
-		"id": doc.name,
-		"type": node_type,
-		"code": doc.get(code_field),
-		"name": doc.title,
+		"plan_id": plan.name,
+		"title": plan.title,
+		"procuring_entity_id": plan.procuring_entity_id,
+		"owner_org_unit_id": plan.owner_org_unit_id,
+		"plan_role": plan.plan_role,
+		"parent_primary_plan_id": plan.parent_primary_plan_id,
+		"period_start": str(plan.period_start) if plan.period_start else None,
+		"period_end": str(plan.period_end) if plan.period_end else None,
 	}
 
 
-def reorder_structure_nodes(plan_version: str, ordered: list[dict]) -> dict:
-	"""ordered: [{id, type, order_index}, ...]"""
-	if not can_edit_draft_plan():
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	for item in ordered or []:
-		node_type = item.get("type")
-		doctype = NODE_DOCTYPE.get(node_type, (None, None))[0]
-		if not doctype or not item.get("id"):
-			continue
-		if "order_index" in item and frappe.db.has_column(f"tab{doctype}", "order_index"):
-			frappe.db.set_value(doctype, item["id"], "order_index", int(item["order_index"]))
-	return {"ok": True, "count": len(ordered or [])}
+def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = None) -> dict:
+	"""Create a new Strategic Plan + its Draft v1, or update an existing
+	Draft/Returned plan's identity and version period fields."""
+	plan_id = payload.get("plan_id")
+	if plan_id:
+		plan = frappe.get_doc("Strategic Plan", plan_id)
+		version_id = payload.get("plan_version_id") or frappe.db.get_value(
+			"Strategic Plan Version",
+			{"plan_id": plan_id, "status": ["in", ("Draft", "Returned")]},
+			"name",
+		)
+		if not version_id:
+			frappe.throw(
+				_("No editable Draft or Returned version found for this plan"),
+				frappe.ValidationError,
+				title="STRATEGY_INVALID_STATE",
+			)
+		version = frappe.get_doc("Strategic Plan Version", version_id)
+		_check_expected_version(version, expected_version)
+		require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
 
+		for field in PLAN_IDENTITY_FIELDS:
+			if field in payload:
+				plan.set(field, payload[field])
+		plan.save(ignore_permissions=True)
+		for field in VERSION_FIELDS:
+			if field in payload:
+				version.set(field, payload[field])
+		version.save(ignore_permissions=True)
 
-def delete_structure_node(node_type: str, name: str) -> dict:
-	if not can_edit_draft_plan():
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	doctype = NODE_DOCTYPE.get(node_type, (None, None))[0]
-	if not doctype:
-		frappe.throw(_("Unknown type"))
-	if not frappe.db.exists(doctype, name):
-		frappe.throw(_("Structure node not found"))
-	plan_version = frappe.db.get_value(doctype, name, "plan_version")
-	_assert_plan_editable(plan_version)
-	pe = frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
-	if pe:
-		assert_entity_in_scope(pe)
-	# Reference guards
-	if node_type == "PerformanceTarget":
-		if frappe.db.exists("Performance Measurement", {"performance_target": name}):
-			frappe.throw(_("Cannot delete target with measurements"))
-	if node_type == "PerformanceIndicator":
-		if frappe.db.exists("Performance Target", {"performance_indicator": name}):
-			frappe.throw(_("Delete child targets first"))
-	if node_type == "StrategicObjective":
-		if frappe.db.exists("Performance Indicator", {"strategic_objective": name}):
-			frappe.throw(_("Delete child indicators first"))
-	if node_type == "StrategicOutcome":
-		if frappe.db.exists("Performance Indicator", {"strategic_outcome": name}):
-			frappe.throw(_("Delete child indicators first"))
-	if node_type == "SubProgramme":
-		if (
-			frappe.db.exists("Strategic Outcome", {"sub_programme": name})
-			or frappe.db.exists("Strategic Objective", {"sub_programme": name})
-		):
-			frappe.throw(_("Delete child outcomes first"))
-	if node_type == "Programme":
-		if (
-			frappe.db.exists("Strategy Sub Programme", {"programme": name})
-			or frappe.db.exists("Strategic Outcome", {"programme": name})
-			or frappe.db.exists("Strategic Objective", {"programme": name})
-		):
-			frappe.throw(_("Delete child structure first"))
-	frappe.delete_doc(doctype, name, ignore_permissions=True)
-	return {"ok": True}
+		record_event(
+			entity_type="Strategic Plan Version",
+			entity_name=version.name,
+			event_type="Draft saved",
+			plan_version=version.name,
+		)
+		return {"plan": _plan_payload(plan), "version": _version_payload(version)}
 
+	procuring_entity_id = payload.get("procuring_entity_id")
+	if not procuring_entity_id:
+		frappe.throw(_("Procuring entity is required"), frappe.ValidationError, title="STRATEGY_SCOPE_REQUIRED")
+	require_plan_create_capability(frappe.session.user, procuring_entity_id)
 
-def update_plan_identity(plan_name: str, payload: dict) -> dict:
-	if not can_edit_draft_plan():
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	doc = frappe.get_doc("Strategic Plan", plan_name)
-	if doc.status not in ("Draft", "Returned"):
-		frappe.throw(_("Plan identity can only be edited in Draft or Returned"))
-	for key in ("title", "plan_type", "start_date", "end_date", "description"):
-		if key in payload:
-			doc.set(key, payload[key])
-	doc.save()
-	return {"id": doc.name, "code": doc.plan_code, "name": doc.title, "status": doc.status}
-
-def _clone_fields(doc) -> dict:
-	data = {}
-	for df in doc.meta.fields:
-		if df.fieldtype in ("Section Break", "Column Break", "Tab Break", "HTML", "Button", "Fold"):
-			continue
-		if df.fieldname in _META_SKIP:
-			continue
-		if df.fieldtype == "Table":
-			continue
-		data[df.fieldname] = doc.get(df.fieldname)
-	return data
-
-
-def create_successor_version(plan_version: str) -> dict:
-	"""Clone Active/Approved plan into Draft vN+1 with hierarchy + commitments (no measurements)."""
-	if not can_create_successor_plan():
-		frappe.throw(_("Not permitted to create a successor version"), frappe.PermissionError)
-	if not plan_version or not frappe.db.exists("Strategic Plan", plan_version):
-		frappe.throw(_("Strategic Plan not found"))
-
-	src = frappe.get_doc("Strategic Plan", plan_version)
-	assert_entity_in_scope(src.procuring_entity)
-	if src.status not in ("Active", "Approved"):
-		frappe.throw(_("Only Active or Approved plan versions can create a successor"))
-
-	if frappe.db.exists(
-		"Strategic Plan",
+	plan = frappe.get_doc(
+		{"doctype": "Strategic Plan", **{f: payload.get(f) for f in PLAN_IDENTITY_FIELDS}}
+	)
+	plan.insert(ignore_permissions=True)
+	version = frappe.get_doc(
 		{
-			"plan_code": src.plan_code,
-			"procuring_entity": src.procuring_entity,
-			"status": ["in", ["Draft", "Returned", "Submitted"]],
-			"version_number": [">", 1],
-		},
-	):
-		frappe.throw(_("An open successor version already exists for this plan"))
-
-	next_ver = int(src.version_number or 1) + 1
-	new_plan = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan",
-			"plan_code": src.plan_code,
-			"version_number": next_ver,
-			"title": src.title,
-			"procuring_entity": src.procuring_entity,
-			"plan_type": src.plan_type,
-			"scope_type": src.scope_type,
-			"scope_id": src.scope_id,
-			"parent_plan": src.parent_plan,
-			"start_date": src.start_date,
-			"end_date": src.end_date,
-			"description": src.description,
-			"status": "Draft",
-			"supersedes_plan_version": src.name,
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			**{f: payload.get(f) for f in VERSION_FIELDS},
 		}
 	)
-	new_plan.insert(ignore_permissions=True)
+	version.insert(ignore_permissions=True)
+
+	record_event(
+		entity_type="Strategic Plan Version",
+		entity_name=version.name,
+		event_type="Draft saved",
+		plan_version=version.name,
+		summary="Plan draft created",
+	)
+	return {"plan": _plan_payload(plan), "version": _version_payload(version)}
+
+
+def create_strategy_successor_version(plan_id: str) -> dict:
+	"""STR-CHG-001 §10.1 create_strategy_successor_version — copy the plan's
+	Approved or Active version's hierarchy/indicators/targets into a new
+	Draft, with based_on_plan_version_id as the fixed comparison baseline."""
+	baseline_name = frappe.db.get_value(
+		"Strategic Plan Version",
+		{"plan_id": plan_id, "status": ["in", ("Approved", "Active")]},
+		"name",
+		order_by="version_number desc",
+	)
+	if not baseline_name:
+		frappe.throw(
+			_("No Approved or Active version to create a successor from"),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+	baseline = frappe.get_doc("Strategic Plan Version", baseline_name)
+	require_plan_version_capability(frappe.session.user, CAP_AUTHOR, baseline)
+
+	if frappe.db.exists(
+		"Strategic Plan Version",
+		{"plan_id": plan_id, "status": ["in", ("Draft", "In Review", "Returned", "Awaiting Approval")]},
+	):
+		frappe.throw(
+			_("An open successor version already exists for this plan"),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+
+	new_version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan_id,
+			"version_number": int(baseline.version_number) + 1,
+			"based_on_plan_version_id": baseline.name,
+			"effective_from": baseline.effective_from,
+			"effective_to": baseline.effective_to,
+		}
+	)
+	new_version.insert(ignore_permissions=True)
 
 	id_map: dict[str, str] = {}
+	remaining = frappe.get_all(
+		"Strategy Node",
+		filters={"plan_version_id": baseline.name},
+		fields=["name", "node_type", "parent_node_id", "title", "display_order"],
+	)
+	# Clone parents before children regardless of original creation order.
+	while remaining:
+		still = []
+		progressed = False
+		for node in remaining:
+			if node.parent_node_id and node.parent_node_id not in id_map:
+				still.append(node)
+				continue
+			clone = frappe.get_doc(
+				{
+					"doctype": "Strategy Node",
+					"plan_version_id": new_version.name,
+					"node_type": node.node_type,
+					"parent_node_id": id_map.get(node.parent_node_id) if node.parent_node_id else None,
+					"title": node.title,
+					"display_order": node.display_order,
+				}
+			)
+			clone.insert(ignore_permissions=True)
+			id_map[node.name] = clone.name
+			progressed = True
+		if not progressed and still:
+			frappe.throw(_("Could not resolve hierarchy parent chain while cloning"))
+		remaining = still
 
-	for prog in frappe.get_all(
-		"Strategy Programme",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="order_index asc",
-	):
-		old = frappe.get_doc("Strategy Programme", prog.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Strategy Programme"
-		data["plan_version"] = new_plan.name
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
-	for sub in frappe.get_all(
-		"Strategy Sub Programme",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="order_index asc",
-	):
-		old = frappe.get_doc("Strategy Sub Programme", sub.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Strategy Sub Programme"
-		data["plan_version"] = new_plan.name
-		data["programme"] = id_map.get(old.programme) or old.programme
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
-	for obj in frappe.get_all(
-		"Strategic Objective",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="order_index asc",
-	):
-		old = frappe.get_doc("Strategic Objective", obj.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Strategic Objective"
-		data["plan_version"] = new_plan.name
-		data["programme"] = id_map.get(old.programme) or old.programme
-		if old.sub_programme:
-			data["sub_programme"] = id_map.get(old.sub_programme) or old.sub_programme
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
-	for out in frappe.get_all(
-		"Strategic Outcome",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="order_index asc",
-	):
-		old = frappe.get_doc("Strategic Outcome", out.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Strategic Outcome"
-		data["plan_version"] = new_plan.name
-		data["programme"] = id_map.get(old.programme) or old.programme
-		if old.sub_programme:
-			data["sub_programme"] = id_map.get(old.sub_programme) or old.sub_programme
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
+	indicator_ids = []
 	for ind in frappe.get_all(
 		"Performance Indicator",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="order_index asc",
+		filters={"plan_version_id": baseline.name},
+		fields=["name", "measures_node_id", "indicator_name", "definition", "unit"],
 	):
-		old = frappe.get_doc("Performance Indicator", ind.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Performance Indicator"
-		data["plan_version"] = new_plan.name
-		if old.strategic_objective:
-			data["strategic_objective"] = id_map.get(old.strategic_objective) or old.strategic_objective
-		if old.strategic_outcome:
-			data["strategic_outcome"] = id_map.get(old.strategic_outcome) or old.strategic_outcome
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
-	for tgt in frappe.get_all(
-		"Performance Target",
-		filters={"plan_version": src.name},
-		fields=["name"],
-		order_by="creation asc",
-	):
-		old = frappe.get_doc("Performance Target", tgt.name)
-		data = _clone_fields(old)
-		data["doctype"] = "Performance Target"
-		data["plan_version"] = new_plan.name
-		data["performance_indicator"] = (
-			id_map.get(old.performance_indicator) or old.performance_indicator
-		)
-		clone = frappe.get_doc(data)
-		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
-
-	for cname in frappe.get_all(
-		"Strategy Value Commitment",
-		filters={"plan_version": src.name},
-		pluck="name",
-	):
-		old = frappe.get_doc("Strategy Value Commitment", cname)
-		links = []
-		for link in old.get("links") or []:
-			row = {
-				"link_type": link.link_type,
-				"linked_outcome": id_map.get(link.linked_outcome) if link.linked_outcome else None,
-				"linked_target": id_map.get(link.linked_target) if link.linked_target else None,
-			}
-			links.append(row)
 		clone = frappe.get_doc(
 			{
-				"doctype": "Strategy Value Commitment",
-				"plan_version": new_plan.name,
-				"rationale": old.rationale,
-				"consideration_level": old.consideration_level,
-				"responsible_owner": old.responsible_owner,
-				"plan_measure_note": old.plan_measure_note,
-				"status": "Draft",
-				"links": links,
+				"doctype": "Performance Indicator",
+				"plan_version_id": new_version.name,
+				"measures_node_id": id_map.get(ind.measures_node_id, ind.measures_node_id),
+				"indicator_name": ind.indicator_name,
+				"definition": ind.definition,
+				"unit": ind.unit,
 			}
 		)
 		clone.insert(ignore_permissions=True)
-		id_map[old.name] = clone.name
+		id_map[ind.name] = clone.name
+		indicator_ids.append(ind.name)
 
-	audit_id = record_event(
-		entity_type="Strategic Plan",
-		entity_name=new_plan.name,
-		event_type="SuccessorCreated",
-		prior_state=src.status,
-		new_state="Draft",
-		plan_version=new_plan.name,
-		summary=f"Created successor draft v{next_ver} from {src.plan_code} v{src.version_number}",
+	for tgt in (
+		frappe.get_all(
+			"Performance Target",
+			filters={"indicator_id": ["in", indicator_ids]},
+			fields=["indicator_id", "financial_year_id", "target_by_date", "comparison", "target_value"],
+		)
+		if indicator_ids
+		else []
+	):
+		frappe.get_doc(
+			{
+				"doctype": "Performance Target",
+				"indicator_id": id_map.get(tgt.indicator_id, tgt.indicator_id),
+				"financial_year_id": tgt.financial_year_id,
+				"target_by_date": tgt.target_by_date,
+				"comparison": tgt.comparison,
+				"target_value": tgt.target_value,
+			}
+		).insert(ignore_permissions=True)
+
+	record_event(
+		entity_type="Strategic Plan Version",
+		entity_name=new_version.name,
+		event_type="Successor Version Created",
+		plan_version=new_version.name,
+		summary=f"Created successor v{new_version.version_number} based on {baseline.name}",
 	)
-	return {
-		"ok": True,
-		"plan": {
-			"id": new_plan.name,
-			"code": new_plan.plan_code,
-			"name": new_plan.title,
-			"status": new_plan.status,
-			"version_number": new_plan.version_number,
-			"supersedes_plan_version": new_plan.supersedes_plan_version,
-			"procuring_entity": new_plan.procuring_entity,
-		},
-		"source_plan_id": src.name,
-		"audit_event": audit_id,
-	}
+	return _version_payload(new_version)
+
+
+def _resolve_client_id(id_map: dict[str, str], value):
+	if isinstance(value, str) and value.startswith("$"):
+		return id_map.get(value)
+	return value
+
+
+def _assert_deletable(doctype: str, name: str) -> None:
+	if doctype == "Strategy Node":
+		if frappe.db.exists("Strategy Node", {"parent_node_id": name}):
+			frappe.throw(_("Delete child nodes first"), frappe.ValidationError, title="STRATEGY_INVALID_HIERARCHY")
+		if frappe.db.exists("Performance Indicator", {"measures_node_id": name}):
+			frappe.throw(
+				_("Delete indicators measuring this node first"),
+				frappe.ValidationError,
+				title="STRATEGY_INVALID_HIERARCHY",
+			)
+	elif doctype == "Performance Indicator":
+		if frappe.db.exists("Performance Target", {"indicator_id": name}):
+			frappe.throw(
+				_("Delete targets for this indicator first"), frappe.ValidationError, title="STRATEGY_INVALID_TARGET"
+			)
+
+
+def save_strategy_structure_draft(
+	plan_version_id: str,
+	*,
+	nodes: list[dict] | None = None,
+	indicators: list[dict] | None = None,
+	targets: list[dict] | None = None,
+	deletes: list[dict] | None = None,
+	expected_version: str | None = None,
+) -> dict:
+	"""STR-CHG-001 §10.1 save_strategy_structure_draft — create, update,
+	reorder or remove Draft nodes/indicators/targets as one validated
+	change set. `client_id` on a node/indicator item lets a later item in
+	the same batch reference it (as e.g. parent_node_id="$1") before it has
+	a real generated id."""
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	_check_expected_version(version, expected_version)
+	require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
+
+	id_map: dict[str, str] = {}
+	result: dict[str, list[str]] = {"nodes": [], "indicators": [], "targets": [], "deleted": []}
+
+	for item in deletes or []:
+		doctype, name = item.get("doctype"), item.get("name")
+		if not doctype or not name or not frappe.db.exists(doctype, name):
+			continue
+		_assert_deletable(doctype, name)
+		frappe.delete_doc(doctype, name, ignore_permissions=True)
+		result["deleted"].append(name)
+
+	for item in nodes or []:
+		data = dict(item)
+		client_id = data.pop("client_id", None)
+		name = data.pop("name", None)
+		data["plan_version_id"] = plan_version_id
+		if "parent_node_id" in data:
+			data["parent_node_id"] = _resolve_client_id(id_map, data["parent_node_id"])
+		if name and frappe.db.exists("Strategy Node", name):
+			doc = frappe.get_doc("Strategy Node", name)
+			doc.update(data)
+			doc.save(ignore_permissions=True)
+		else:
+			data["doctype"] = "Strategy Node"
+			doc = frappe.get_doc(data)
+			doc.insert(ignore_permissions=True)
+		if client_id:
+			id_map[client_id] = doc.name
+		result["nodes"].append(doc.name)
+
+	for item in indicators or []:
+		data = dict(item)
+		client_id = data.pop("client_id", None)
+		name = data.pop("name", None)
+		data["plan_version_id"] = plan_version_id
+		if "measures_node_id" in data:
+			data["measures_node_id"] = _resolve_client_id(id_map, data["measures_node_id"])
+		if name and frappe.db.exists("Performance Indicator", name):
+			doc = frappe.get_doc("Performance Indicator", name)
+			doc.update(data)
+			doc.save(ignore_permissions=True)
+		else:
+			data["doctype"] = "Performance Indicator"
+			doc = frappe.get_doc(data)
+			doc.insert(ignore_permissions=True)
+		if client_id:
+			id_map[client_id] = doc.name
+		result["indicators"].append(doc.name)
+
+	for item in targets or []:
+		data = dict(item)
+		name = data.pop("name", None)
+		if "indicator_id" in data:
+			data["indicator_id"] = _resolve_client_id(id_map, data["indicator_id"])
+		if name and frappe.db.exists("Performance Target", name):
+			doc = frappe.get_doc("Performance Target", name)
+			doc.update(data)
+			doc.save(ignore_permissions=True)
+		else:
+			data["doctype"] = "Performance Target"
+			doc = frappe.get_doc(data)
+			doc.insert(ignore_permissions=True)
+		result["targets"].append(doc.name)
+
+	record_event(
+		entity_type="Strategic Plan Version",
+		entity_name=version.name,
+		event_type="Draft structure saved",
+		plan_version=version.name,
+		summary=(
+			f"{len(result['nodes'])} node(s), {len(result['indicators'])} indicator(s), "
+			f"{len(result['targets'])} target(s), {len(result['deleted'])} deletion(s)"
+		),
+	)
+	result["expected_version"] = str(frappe.db.get_value("Strategic Plan Version", version.name, "modified"))
+	return result

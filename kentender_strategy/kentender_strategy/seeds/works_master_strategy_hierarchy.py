@@ -1,7 +1,28 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Idempotent MOH-SP-2026-2030 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
+""""Works Master" demo Strategy fixture — a real PE-MOH Primary plan,
+hierarchy and target, consumed by kentender_budget's and
+kentender_procurement's own cross-app seed/test suites.
 
-Also keeps legacy constant aliases for works-master / stable-platform importers.
+This is a separate, pre-existing demo dataset from STR-CHG-001 v1.3's own
+§16 MOH/Kisumu seed (kentender_mvp_v1_strategy.py) — same PE, different
+fixture, different owner concern (budget/procurement handoff testing, not
+the Strategy module's own acceptance contract).
+
+Rebuilt for the Phase 1 domain model (Strategic Plan/Version split,
+unified Strategy Node). The old schema gave every hierarchy level its own
+business "code" (e.g. `OBJ-MOH-HOSP-RENOV`); STR-BR-016 and this rebuild's
+Strategy Node design deliberately do not — identifiers are system-generated
+only. `kentender_procurement`'s own "Works Master" R3/R4/R5 test suite
+(~9 files: strategy_alignment_handoff.py and its direct callers/tests)
+hardcodes those literal legacy codes and reads Strategy's tables directly,
+bypassing the published contract layer (a pre-existing boundary violation,
+not introduced here). Rebuilding that whole suite to stop hardcoding
+codes Strategy's schema no longer has is real work belonging to
+kentender_procurement's own tracker, not this change unit — out of scope
+here; this module only guarantees a real, working PE-MOH plan/hierarchy/
+target exists for callers that only need *a* valid fixture (this file's
+own `upsert_works_master_strategy_hierarchy()` return dict), which is what
+kentender_budget's and kentender_core's actual callers use.
 """
 
 from __future__ import annotations
@@ -10,149 +31,173 @@ from typing import Any, Final
 
 import frappe
 
-from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
+from kentender_strategy.services.strategy_transitions import transition_plan_version
 
-# --- Canonical MVP-1 codes (KENTENDER_MVP_V1 contract) ---
-STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-2026-2030"
-PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026–2030"
-START_YEAR: Final[int] = 2026
-END_YEAR: Final[int] = 2030
-PROGRAM_CODE: Final[str] = "MOH-PROG-DH"
-PROGRAM_TITLE: Final[str] = "Digital Health Services"
-PROGRAM_DESCRIPTION: Final[str] = (
-	"Digital clinical services and health information systems that improve access and continuity of care."
-)
-SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-HIS"
-SUB_PROGRAM_TITLE: Final[str] = "Health Information Systems"
-OBJECTIVE_CODE: Final[str] = "MOH-OUT-RELIABILITY"
-OBJECTIVE_TITLE: Final[str] = "Reliable and accessible digital clinical services"
-OBJECTIVE_DESCRIPTION: Final[str] = OBJECTIVE_TITLE
-INDICATOR_CODE: Final[str] = "MOH-IND-AVAIL-01"
-INDICATOR_TITLE: Final[str] = "Availability of core clinical information systems"
-TARGET_CODE: Final[str] = "MOH-TGT-AVAIL-2028"
-TARGET_TITLE: Final[str] = "At least 99.9% annual availability by 30 June 2028"
-TARGET_METRIC_TEXT: Final[str] = "Percent availability"
+PE_MOH = "PE-MOH"
+FIXTURE_TITLE = "Works Master Strategy Fixture (Demo)"
+FIXTURE_NS = "works-master-strategy"
 
-# Legacy import aliases (pre-teardown codes) — map to MVP-1 where possible
-LEGACY_STRATEGY_PLAN_CODE: Final[str] = "STRAT-MOH-2026"
-
-# Dev/fixture Programme Strategy that may coexist with the Active ESP (STR-FR-005).
-HR_PROGRAMME_PLAN_CODE: Final[str] = "MOH-SP-0002"
-HR_PROGRAMME_SCOPE_ID: Final[str] = "MOH-PROG-HR"
-
-# Remap retired 000x codes → contract identities (KENTENDER_MVP_V1).
-_LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
-	("Strategic Plan", "plan_code", "MOH-SP-0001", STRATEGY_PLAN_CODE),
-	("Strategic Plan", "plan_code", "MOH-HR-2026-2030", HR_PROGRAMME_PLAN_CODE),
-	("Strategic Plan", "plan_code", "MOH-SP-HR-2026", HR_PROGRAMME_PLAN_CODE),
-	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-BLOCK", "MOH-SP-9001"),
-	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-TX", "MOH-SP-9002"),
-	("Strategy Programme", "programme_code", "MOH-PROG-0001", PROGRAM_CODE),
-	("Strategy Sub Programme", "sub_programme_code", "MOH-SUB-0001", SUB_PROGRAM_CODE),
-	("Strategic Outcome", "outcome_code", "MOH-OUT-0001", OBJECTIVE_CODE),
-	("Performance Indicator", "indicator_code", "MOH-IND-0001", INDICATOR_CODE),
-	("Performance Target", "target_code", "MOH-TGT-0001", TARGET_CODE),
-)
+# Legacy names kept only so existing cross-app imports of these module
+# attributes keep resolving (kentender_core.stable_platform_seed.validate
+# imports them but never inspects their value) — not literal business
+# codes on any record; the new schema has none.
+STRATEGY_PLAN_CODE: Final[str] = "WORKS-MASTER-MOH-STRATEGY"
+PROGRAM_CODE: Final[str] = "WORKS-MASTER-PROGRAMME"
+OBJECTIVE_CODE: Final[str] = "WORKS-MASTER-OBJECTIVE"
+TARGET_CODE: Final[str] = "WORKS-MASTER-TARGET"
 
 
-def _remap_legacy_period_codes() -> None:
-	"""Rewrite retired 000x business codes to KENTENDER_MVP_V1 contract references."""
-	for doctype, field, old_code, new_code in _LEGACY_PERIOD_CODE_REMAP:
-		if old_code == new_code:
-			continue
-		names = frappe.get_all(doctype, filters={field: old_code}, pluck="name")
-		for name in names:
-			frappe.db.set_value(doctype, name, field, new_code, update_modified=False)
-
-
-def _backfill_active_subordinate_parents(pe: str, esp_plan: str) -> None:
-	"""Ensure Active non-ESP plans for the entity have parent_plan + distinct scope."""
-	rows = frappe.get_all(
-		"Strategic Plan",
-		filters={
-			"procuring_entity": pe,
-			"status": "Active",
-			"plan_type": ["!=", "Entity Strategic Plan"],
-		},
-		fields=["name", "plan_code", "parent_plan", "scope_type", "scope_id"],
+def _seed_actors() -> dict[str, str]:
+	"""Reuses the real §16 MOH actors (author/reviewer/approver) rather than
+	minting a second parallel actor set — the same 3 pairwise Separation of
+	Duties rules Phase 3 seeded apply everywhere, so one fixture actor could
+	not legally perform all 4 lifecycle stages on its own version anyway."""
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
+		ACTORS,
+		ensure_strategy_governance_actors,
 	)
-	for row in rows:
-		scope_id = row.scope_id
-		if not scope_id:
-			if row.plan_code == HR_PROGRAMME_PLAN_CODE:
-				scope_id = HR_PROGRAMME_SCOPE_ID
-			else:
-				scope_id = f"SCOPE-{row.plan_code}"
-		frappe.db.set_value(
-			"Strategic Plan",
-			row.name,
-			{
-				"parent_plan": esp_plan,
-				"scope_type": row.scope_type or "Programme",
-				"scope_id": scope_id,
-			},
-			update_modified=False,
-		)
 
-
-def desk_visibility(procuring_entity_name: str) -> dict[str, str]:
+	ensure_strategy_governance_actors()
 	return {
-		"procuring_entity": procuring_entity_name,
-		"scope_rule": "Entity-scoped Strategy Alignment (MVP-1).",
-		"optional_seed_flag": "MOH-SP-2026-2030",
+		"author": ACTORS["author_moh"],
+		"reviewer": ACTORS["reviewer_moh"],
+		"approver": ACTORS["approver_moh"],
 	}
 
 
 def resolve_procuring_entity_moh() -> str | None:
-	"""STR-CHG-001 §13 — no first-PE fallback. Named lookups only; returns None
-	(never an arbitrary Procuring Entity) when neither resolves."""
-	for code in ("PE-MOH", "MOH"):
-		name = frappe.db.get_value("Procuring Entity", {"entity_code": code}, "name")
-		if name:
-			return name
-	# Fallback: a PE named for Health — still a discriminating lookup, not "any PE".
-	return frappe.db.get_value("Procuring Entity", {"entity_name": ["like", "%Health%"]}, "name")
-
-
-def _upsert_by_code(doctype: str, code_field: str, code: str, values: dict) -> str:
-	existing = frappe.db.get_value(doctype, {code_field: code}, "name")
-	if existing:
-		doc = frappe.get_doc(doctype, existing)
-		# Only update while Draft/Returned for plan-bound docs
-		plan = values.get("plan_version") or doc.get("plan_version")
-		if plan:
-			status = frappe.db.get_value("Strategic Plan", plan, "status")
-			if status not in ("Draft", "Returned", None):
-				return existing
-		doc.update(values)
-		doc.save(ignore_permissions=True)
-		return doc.name
-	doc = frappe.get_doc({"doctype": doctype, code_field: code, **values})
-	doc.insert(ignore_permissions=True)
-	return doc.name
+	"""STR-CHG-001 §13 — no first-PE fallback; a named lookup only."""
+	return PE_MOH if frappe.db.exists("Procuring Entity", PE_MOH) else None
 
 
 def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-	"""Idempotent loader — delegates to KENTENDER_MVP_V1 contract Strategy seed."""
-	ensure_strategy_roles()
-	_remap_legacy_period_codes()
-	from kentender_strategy.seeds.moh_mvp_v1_strategy import upsert_moh_mvp_v1_strategy
+	"""Idempotent. Returns {"ok", "plan" (Strategic Plan Version name),
+	"target" (Performance Target name), "objective" (Strategy Node name)} —
+	the exact keys kentender_budget's own test reads."""
+	pe = resolve_procuring_entity_moh()
+	if not pe:
+		return {"ok": False, "reason": "STRATEGY_CONFIG_MISSING", "detail": f"{PE_MOH} is not configured"}
 
-	result = upsert_moh_mvp_v1_strategy(reset=bool(_kwargs.get("reset")))
-	# Preserve legacy response keys used by stable-platform / tests.
-	if result.get("ok"):
-		result.setdefault("plan_code", STRATEGY_PLAN_CODE)
-		result.setdefault("program", frappe.db.get_value("Strategy Programme", {"programme_code": PROGRAM_CODE}, "name"))
-		result.setdefault(
-			"sub_program",
-			frappe.db.get_value("Strategy Sub Programme", {"sub_programme_code": SUB_PROGRAM_CODE}, "name"),
+	existing_plan = frappe.db.get_value(
+		"Strategic Plan", {"title": FIXTURE_TITLE, "procuring_entity_id": pe}, "name"
+	)
+	if existing_plan:
+		version = frappe.db.get_value(
+			"Strategic Plan Version", {"plan_id": existing_plan, "version_number": 1}, "name"
 		)
-		result.setdefault(
-			"objective",
-			frappe.db.get_value("Strategic Outcome", {"outcome_code": OBJECTIVE_CODE}, "name"),
+		objective = frappe.db.get_value(
+			"Strategy Node", {"plan_version_id": version, "node_type": "Strategic Objective"}, "name"
 		)
-		result.setdefault("target", result.get("target_avail"))
-		result.setdefault("skipped", False)
-	return result
+		indicator = frappe.db.get_value("Performance Indicator", {"plan_version_id": version}, "name")
+		target = frappe.db.get_value("Performance Target", {"indicator_id": indicator}, "name")
+		return {"ok": True, "plan": version, "objective": objective, "target": target, "already_seeded": True}
 
+	actors = _seed_actors()
 
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": FIXTURE_TITLE,
+			"procuring_entity_id": pe,
+			"plan_role": "Primary",
+			"period_start": "2031-07-01",
+			"period_end": "2035-06-30",
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	plan.insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2031-07-01",
+			"effective_to": "2035-06-30",
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	version.insert(ignore_permissions=True)
+
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node",
+			"plan_version_id": version.name,
+			"node_type": "Pillar",
+			"title": "Digital health infrastructure",
+			"display_order": 1,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	pillar.insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node",
+			"plan_version_id": version.name,
+			"node_type": "Programme",
+			"title": "Digital Health Services",
+			"display_order": 2,
+			"parent_node_id": pillar.name,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	programme.insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node",
+			"plan_version_id": version.name,
+			"node_type": "Strategic Objective",
+			"title": "Reliable and accessible digital clinical services",
+			"display_order": 3,
+			"parent_node_id": programme.name,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	objective.insert(ignore_permissions=True)
+	outcome = frappe.get_doc(
+		{
+			"doctype": "Strategy Node",
+			"plan_version_id": version.name,
+			"node_type": "Strategic Outcome",
+			"title": "Core clinical information systems remain continuously available",
+			"display_order": 4,
+			"parent_node_id": objective.name,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	outcome.insert(ignore_permissions=True)
+	indicator = frappe.get_doc(
+		{
+			"doctype": "Performance Indicator",
+			"plan_version_id": version.name,
+			"measures_node_id": outcome.name,
+			"indicator_name": "Availability of core clinical information systems",
+			"definition": "Percentage of scheduled uptime achieved by core clinical information systems.",
+			"unit": "Percentage",
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	indicator.insert(ignore_permissions=True)
+	target = frappe.get_doc(
+		{
+			"doctype": "Performance Target",
+			"indicator_id": indicator.name,
+			"target_by_date": "2033-06-30",
+			"comparison": "At least",
+			"target_value": 99.9,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	target.insert(ignore_permissions=True)
+
+	try:
+		frappe.set_user(actors["author"])
+		transition_plan_version(version.name, "Submit for review")
+		frappe.set_user(actors["reviewer"])
+		transition_plan_version(version.name, "Recommend for approval")
+		frappe.set_user(actors["approver"])
+		transition_plan_version(version.name, "Approve")
+		transition_plan_version(version.name, "Activate")
+	finally:
+		frappe.set_user("Administrator")
+
+	return {"ok": True, "plan": version.name, "objective": objective.name, "target": target.name}

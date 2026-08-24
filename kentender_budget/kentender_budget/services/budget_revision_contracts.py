@@ -898,7 +898,7 @@ def _build_review_groups(rev, budget, currency: str):
 				"severity": "warning",
 				"title": _("Review Strategy coverage after apply"),
 				"message": _(
-					"Funding reductions may affect Strategy Value Commitment coverage."
+					"Funding reductions may affect Strategy target coverage."
 				),
 			}
 		)

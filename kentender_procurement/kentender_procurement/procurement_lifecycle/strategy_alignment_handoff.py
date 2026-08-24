@@ -7,9 +7,18 @@
 
 ``create_strategy_alignment_reference(strategy_ref, journey_code)`` produces (or updates)
 the ``Procurement Handoff Card`` that records the Strategy → Budget module boundary event.
-It reads live Strategy module data (``Strategy Objective``, ``Strategy Program``,
-``Strategy Target``), builds a typed payload, and delegates to the generic
+It resolves the Strategy Objective through kentender_strategy's own published
+``get_strategy_lineage`` contract (STR-CHG-001 v1.3 §10) — never a direct read
+of a Strategy table — builds a typed payload, and delegates to the generic
 ``create_or_update_handoff_card`` (R3-001).
+
+STR-CHG-001 v1.3 note (2026-08-24): this rebuild's Strategy Node has no
+business "code" field distinct from its generated id (STR-BR-016 — every
+identifier is system-generated only). ``strategy_ref`` is therefore the
+Strategy Node's real generated id (its docname), not a legacy
+``objective_code``-style string. Callers that still pass a pre-rebuild
+literal code (e.g. ``OBJ-MOH-HOSP-RENOV``) will get ``OBJECTIVE_NOT_FOUND`` —
+a real, correct rejection, not a bug in this function.
 
 ## Handoff card produced
 
@@ -65,19 +74,34 @@ def _handoff_code(journey_code: str) -> str:
     return f"STRATREF-{suffix}"
 
 
-def _find_objective_by_code(objective_code: str) -> dict[str, Any] | None:
-    """Return the first Strategy Objective row matching ``objective_code``.
+def _resolve_objective_lineage(strategy_ref: str) -> dict[str, Any] | None:
+    """Resolve a Strategy Node id (a Strategic Objective) via
+    kentender_strategy's published get_strategy_lineage contract.
 
-    Returns a dict with ``name``, ``objective_title``, ``strategic_plan``, ``program``.
+    Returns {"name", "title", "programme_title", "programme_id"} or None —
+    never touches a Strategy table directly.
     """
-    rows = frappe.db.get_all(
-        "Strategy Objective",
-        filters={"objective_code": objective_code},
-        fields=["name", "objective_title", "strategic_plan", "program"],
-        limit=1,
-        order_by="creation asc",
-    )
-    return rows[0] if rows else None
+    from kentender_strategy.services.strategy_consumer import get_strategy_lineage
+
+    try:
+        lineage = get_strategy_lineage(strategy_ref)
+    except frappe.DoesNotExistError:
+        return None
+
+    path = lineage.get("path") or []
+    objective_entry = next((p for p in path if p.get("type") == "Strategic Objective"), None)
+    if not objective_entry or objective_entry.get("id") != strategy_ref:
+        # strategy_ref resolved to a real Strategy reference, but not to an
+        # Objective itself (e.g. an Indicator/Target/Outcome id) — R3-002's
+        # own contract is objective-scoped.
+        return None
+    programme_entry = next((p for p in path if p.get("type") == "Programme"), None)
+    return {
+        "name": objective_entry["id"],
+        "title": objective_entry["title"],
+        "programme_title": (programme_entry or {}).get("title") or "",
+        "programme_id": (programme_entry or {}).get("id") or "",
+    }
 
 
 def create_strategy_alignment_reference(
@@ -85,9 +109,9 @@ def create_strategy_alignment_reference(
 ) -> dict[str, Any]:
     """Upsert the Strategy Alignment Reference handoff card for a journey.
 
-    :param strategy_ref: ``Strategy Objective`` code (``objective_code`` field,
-        e.g. ``OBJ-MOH-HOSP-RENOV``).  Also accepted as a direct Frappe DocType
-        ``name`` (auto-detected if no match on ``objective_code``).
+    :param strategy_ref: the Strategy Node's real generated id (a Strategic
+        Objective), resolved via kentender_strategy's get_strategy_lineage
+        contract.
     :param journey_code: Procurement Journey code (e.g. ``JRN-MOH-2026-001``).
     :returns: Result dict from ``create_or_update_handoff_card``.
     :raises ValueError: If inputs are blank or the objective is not found.
@@ -104,54 +128,22 @@ def create_strategy_alignment_reference(
     obj_code = strategy_ref.strip()
     jrn_code = journey_code.strip()
 
-    # Locate the Strategy Objective — prefer objective_code lookup, fall back to name
-    obj_row = _find_objective_by_code(obj_code)
-    if obj_row is None:
-        # Try direct name lookup (Frappe docname)
-        if frappe.db.exists("Strategy Objective", obj_code):
-            obj_row = frappe.db.get_value(
-                "Strategy Objective",
-                obj_code,
-                ["name", "objective_title", "strategic_plan", "program"],
-                as_dict=True,
-            )
-    if not obj_row:
+    lineage = _resolve_objective_lineage(obj_code)
+    if not lineage:
         raise ValueError(
-            f"OBJECTIVE_NOT_FOUND: no Strategy Objective with objective_code or name = {obj_code!r}"
+            f"OBJECTIVE_NOT_FOUND: no Strategy Objective with id = {obj_code!r}"
         )
 
-    obj_name: str = str(obj_row["name"])
-    obj_title: str = str(obj_row.get("objective_title") or obj_code)
-    plan_name: str = str(obj_row.get("strategic_plan") or "")
-    program_frappe_name: str = str(obj_row.get("program") or "")
+    obj_name: str = lineage["name"]
+    obj_title: str = lineage["title"] or obj_code
+    program_title: str = lineage["programme_title"]
+    program_code: str = lineage["programme_id"]  # generated id — no separate business code (STR-BR-016)
 
-    # Resolve programme code + title from Strategy Program
-    program_code: str = ""
-    program_title: str = ""
-    if program_frappe_name:
-        prog = frappe.db.get_value(
-            "Strategy Program",
-            program_frappe_name,
-            ["program_code", "program_title"],
-            as_dict=True,
-        )
-        if prog:
-            program_code = str(prog.get("program_code") or "")
-            program_title = str(prog.get("program_title") or "")
-
-    # Resolve target (first one for this objective)
-    target_code: str = ""
+    # This rebuild's Strategy Node does not expose "the target for an
+    # Objective" as a 1:1 relationship (a Target measures an Indicator,
+    # which measures an Objective or Outcome — not the Objective directly),
+    # so target enrichment is intentionally omitted rather than guessed.
     target_title: str = ""
-    target_rows = frappe.db.get_all(
-        "Strategy Target",
-        filters={"objective": obj_name},
-        fields=["target_code", "target_title"],
-        limit=1,
-        order_by="creation asc",
-    )
-    if target_rows:
-        target_code = str(target_rows[0].get("target_code") or "")
-        target_title = str(target_rows[0].get("target_title") or "")
 
     # Evidence link route for the Strategy Objective desk page
     obj_route = f"{_OBJ_DESK_ROUTE_PREFIX}/{obj_name}"
@@ -170,7 +162,6 @@ def create_strategy_alignment_reference(
             "Fund this strategic infrastructure priority through an approved budget line."
         ),
         "locked_summary": {
-            "strategy_plan": plan_name,
             "programme": program_code,
             "objective": obj_code,
         },
@@ -190,9 +181,7 @@ def create_strategy_alignment_reference(
             }
         ],
         "technical_refs": {
-            **({"strategy_plan_code": plan_name} if plan_name else {}),
             **({"programme_code": program_code} if program_code else {}),
-            **({"target_code": target_code} if target_code else {}),
         },
     }
 

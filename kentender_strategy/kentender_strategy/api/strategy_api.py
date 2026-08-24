@@ -8,8 +8,6 @@ import json
 import frappe
 
 from kentender_strategy.services import strategy_contracts as contracts
-from kentender_strategy.services import strategy_transitions as transitions
-from kentender_strategy.services import strategy_writes as writes
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 
@@ -60,11 +58,6 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 
 
 @frappe.whitelist()
-def create_successor_version(plan_version: str):
-	return writes.create_successor_version(plan_version)
-
-
-@frappe.whitelist()
 def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = None):
 	return contracts.get_strategy_usage(plan_version=plan_version or None, plan_code=plan_code or None)
 
@@ -95,43 +88,6 @@ def correct_strategy_reference(doctype: str, name: str, new_code: str, reason: s
 	from kentender_strategy.services.strategy_reference import correct_reference
 
 	return correct_reference(doctype, name, new_code, reason, plan_version=plan_version)
-
-
-@frappe.whitelist()
-def update_plan_identity(plan_version: str, payload=None):
-	return writes.update_plan_identity(plan_version, _obj(payload) or {})
-
-
-@frappe.whitelist()
-def transition_plan(
-	plan_version: str,
-	action: str,
-	reason: str | None = None,
-	expected_version: str | None = None,
-	correlation_id: str | None = None,
-):
-	return transitions.transition_plan_version(
-		plan_version,
-		action,
-		reason=reason or None,
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
-	)
-
-
-@frappe.whitelist()
-def upsert_structure_node(payload=None):
-	return writes.upsert_structure_node(_obj(payload) or {})
-
-
-@frappe.whitelist()
-def reorder_structure_nodes(plan_version: str, ordered=None):
-	return writes.reorder_structure_nodes(plan_version, _obj(ordered) or [])
-
-
-@frappe.whitelist()
-def delete_structure_node(node_type: str, name: str):
-	return writes.delete_structure_node(node_type, name)
 
 
 @frappe.whitelist()

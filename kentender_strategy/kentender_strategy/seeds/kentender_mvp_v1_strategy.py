@@ -1,1005 +1,559 @@
 # Copyright (c) 2026, KenTender and contributors
-# For license information, please see license.txt
+"""STR-CHG-001 v1.3 §16 seed contract.
 
-"""KENTENDER_MVP_V1 Strategy seed — Contract v2.0 §5 identities."""
+Rebuilt for the Phase 1-4 domain model. Entry points
+(`upsert_kentender_mvp_v1_strategy`, `clear_kentender_mvp_v1_strategy`) keep
+their existing names/signatures — kentender_core's seed orchestrator and
+clear pipeline import them by these exact names.
+
+Identifier note (tracker decision log, 2026-08-24): §16.3/§16.4 illustrate
+plan/node/indicator/target identifiers in a `STR-`/`PIL-`/`PRG-`/`OBJ-`
+style distinct from this rebuild's actual `{PE}-{TYPE}-####` generator
+(strategy_reference.py). Forcing the seed to carry those literal strings
+would require weakening `strategy_reference.REF_RE`'s correction-format
+guard for every caller, not just the seed — out of proportion for a
+cosmetic identifier match. Titles, dates, actors, hierarchy shape and
+target values are seeded exactly as specified; identifiers are whatever
+the real, already-tested reference generator deterministically produces,
+following the same "spec literal is descriptive shorthand" precedent
+CFG-CHG-002 set for `PE-CGK`/`PE-CGKIS`.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
 import frappe
+from frappe import _
+from frappe.utils import get_datetime
 
-from kentender_core.seeds.kentender_mvp_v1 import constants as C
-from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
-from kentender_strategy.services.strategy_transitions import transition_plan
-
-# (commitment_code, commitment statement, requirement_level) — STR-CHG-001 §5: no PVO catalogue.
-PVC_FIXTURE = (
-	("MOH-PVC-EFT-01", "Improve availability of critical health services", "Required consideration"),
-	("MOH-PVC-ECO-01", "Reduce whole-life infrastructure cost", "Required consideration"),
-	("MOH-PVC-EFY-01", "Reduce implementation and service-restoration time", "Recommended consideration"),
-	("MOH-PVC-RES-01", "Improve continuity of critical services", "Recommended consideration"),
-	("MOH-PVC-LOC-01", "Develop internal and local technical capability", "Required consideration"),
-	("MOH-PVC-SUS-01", "Reduce infrastructure energy consumption", "Recommended consideration"),
-	("MOH-PVC-SUS-02", "Ensure compliant handling of replaced ICT equipment", "Required consideration"),
-	("MOH-PVC-INT-01", "Minimise uncontrolled contract changes", "Required consideration"),
+from kentender_strategy.services.strategy_authorization import (
+	CAP_APPROVE,
+	CAP_AUTHOR,
+	CAP_REVIEW,
+	ensure_strategy_governance_roles,
 )
+from kentender_strategy.services.strategy_transitions import transition_plan_version
 
-OWN_DHP = {"owner_org_unit": C.OU_DIR_DHP, "fixture_namespace": C.FIXTURE_NS}
-OWN_HRMD = {"owner_org_unit": C.OU_DIR_HRMD, "fixture_namespace": C.FIXTURE_NS}
-OWN_CGK = {"owner_org_unit": C.OU_CGK_HEALTH, "fixture_namespace": C.FIXTURE_NS}
-OWN_ENTITY = {"owner_org_unit": "", "fixture_namespace": C.FIXTURE_NS}
+PE_MOH = "PE-MOH"
+# STR-CHG-001 §16.1 names PE-CGK; the live seeded docname is PE-CGKIS
+# (CFG-CHG-002 decision log, 2026-08-22 — kept verbatim here, same PE).
+PE_CGK = "PE-CGKIS"
+FY_2027_2028 = "FY-2027-2028"
 
-# Real Strategy personas (STR-CHG-001 §5: "Administrator has neutral read access
-# only unless explicitly assigned") — replace the placeholder "Administrator"
-# actor previously stamped on seeded submitted_by/verified_by/measurement_verifier.
-USER_STR_OFFICER = "moh.strategy.officer@example.test"
-USER_STR_OFFICER_NAME = "MOH Strategy Officer"
-USER_STR_MANAGER = "moh.strategy.manager@example.test"
-USER_STR_MANAGER_NAME = "MOH Strategy Manager"
+FIXTURE_NS = "str-chg-001-mvp1"
+
+ACTORS: dict[str, str] = {
+	"author_moh": "str.author.moh@example.test",
+	"reviewer_moh": "str.reviewer.moh@example.test",
+	"approver_moh": "str.approver.moh@example.test",
+	"viewer_moh": "str.viewer.moh@example.test",
+	"author_kisumu": "str.author.kisumu@example.test",
+	"reviewer_kisumu": "str.reviewer.kisumu@example.test",
+	"approver_kisumu": "str.approver.kisumu@example.test",
+	"viewer_kisumu": "str.viewer.kisumu@example.test",
+	"auditor": "str.auditor@example.test",
+}
+
+_ACTOR_DISPLAY: dict[str, str] = {
+	"author_moh": "MOH Strategy Author",
+	"reviewer_moh": "MOH Strategy Reviewer",
+	"approver_moh": "MOH Strategy Approval Authority",
+	"viewer_moh": "MOH Strategy Viewer",
+	"author_kisumu": "Kisumu Strategy Author",
+	"reviewer_kisumu": "Kisumu Strategy Reviewer",
+	"approver_kisumu": "Kisumu Strategy Approval Authority",
+	"viewer_kisumu": "Kisumu Strategy Viewer",
+	"auditor": "Strategy Auditor",
+}
+
+_ACTOR_ROLE: dict[str, str] = {
+	"author_moh": "Strategy Author",
+	"reviewer_moh": "Strategy Reviewer",
+	"approver_moh": "Strategy Approval Authority",
+	"viewer_moh": "Strategy Viewer",
+	"author_kisumu": "Strategy Author",
+	"reviewer_kisumu": "Strategy Reviewer",
+	"approver_kisumu": "Strategy Approval Authority",
+	"viewer_kisumu": "Strategy Viewer",
+	"auditor": "Auditor",
+}
+
+# key -> (capability_profile_id, procuring_entity_id); Viewer/Auditor have no
+# lifecycle capability to grant (Phase 3 decision log — DocType-level read
+# access from their Frappe Role is sufficient for a neutral viewer/auditor).
+_ACTOR_ASSIGNMENT: dict[str, tuple[str, str]] = {
+	"author_moh": ("CAP-STRATEGY-AUTHOR", PE_MOH),
+	"reviewer_moh": ("CAP-STRATEGY-REVIEWER", PE_MOH),
+	"approver_moh": ("CAP-STRATEGY-APPROVAL-AUTHORITY", PE_MOH),
+	"author_kisumu": ("CAP-STRATEGY-AUTHOR", PE_CGK),
+	"reviewer_kisumu": ("CAP-STRATEGY-REVIEWER", PE_CGK),
+	"approver_kisumu": ("CAP-STRATEGY-APPROVAL-AUTHORITY", PE_CGK),
+}
 
 
-def _ensure_strategy_personas() -> None:
-	from kentender_core.seeds._common import upsert_seed_user
-
-	upsert_seed_user(
-		USER_STR_OFFICER,
-		USER_STR_OFFICER_NAME,
-		"Strategy Officer",
-		entity_name=C.PE_MOH,
-		department_docname=None,
-	)
-	upsert_seed_user(
-		USER_STR_MANAGER,
-		USER_STR_MANAGER_NAME,
-		"Strategy Manager",
-		entity_name=C.PE_MOH,
-		department_docname=None,
-	)
-
-
-def _pe_moh() -> str:
-	from kentender_core.seeds._common import ensure_procuring_entity
-
-	return ensure_procuring_entity(C.PE_MOH, C.PE_MOH_NAME, entity_type="Ministry", short_name="MoH")
+def _ensure_config_prerequisites() -> None:
+	"""STR-CHG-001 §16.1 — fail closed, never create/infer, never pick a
+	fallback record."""
+	missing = [
+		ref
+		for ref, exists in (
+			(PE_MOH, frappe.db.exists("Procuring Entity", PE_MOH)),
+			(PE_CGK, frappe.db.exists("Procuring Entity", PE_CGK)),
+			(FY_2027_2028, frappe.db.exists("Financial Year", FY_2027_2028)),
+		)
+		if not exists
+	]
+	if missing:
+		frappe.throw(
+			_("Missing Configuration and Governance prerequisites: {0}").format(", ".join(missing)),
+			frappe.ValidationError,
+			title="STRATEGY_CONFIG_MISSING",
+		)
 
 
-def _pe_cgk() -> str:
-	from kentender_core.seeds._common import ensure_procuring_entity
+def _ensure_user(email: str, first_name: str, role: str) -> str:
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": first_name,
+				"enabled": 1,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", email)
+	if role not in {r.role for r in user.roles}:
+		user.append("roles", {"role": role})
+		user.save(ignore_permissions=True)
+	return email
 
-	return ensure_procuring_entity(
-		C.PE_CGKIS, C.PE_CGKIS_NAME, entity_type="County Government", short_name="Kisumu"
-	)
 
-
-def _upsert_strategy_scope(
-	*,
-	strategy_doctype: str,
-	strategy_item: str,
-	strategy_item_code: str,
-	pe: str,
-	org_unit: str,
-	plan_version: str,
-	include_descendants: int = 1,
-	applicability: str = "Required",
-) -> None:
-	existing = frappe.db.get_value(
-		"Strategy Scope Assignment",
-		{
-			"strategy_doctype": strategy_doctype,
-			"strategy_item": strategy_item,
-			"organisation_unit": org_unit,
-			"fixture_namespace": C.FIXTURE_NS,
-		},
-		"name",
-	)
-	if existing:
+def _ensure_assignment(assignment_id: str, user: str, profile_id: str, pe: str) -> None:
+	if frappe.db.exists("Operational Scope Assignment", assignment_id):
 		return
 	frappe.get_doc(
 		{
-			"doctype": "Strategy Scope Assignment",
-			"strategy_doctype": strategy_doctype,
-			"strategy_item": strategy_item,
-			"strategy_item_code": strategy_item_code,
-			"procuring_entity": pe,
-			"organisation_unit": org_unit,
-			"include_descendants": include_descendants,
-			"applicability": applicability,
-			"plan_version": plan_version,
-			"fixture_namespace": C.FIXTURE_NS,
+			"doctype": "Operational Scope Assignment",
+			"assignment_id": assignment_id,
+			"user_id": user,
+			"capability_profile_id": profile_id,
+			"procuring_entity_id": pe,
+			"effective_from": "2020-01-01",
+			"status": "Active",
+			"assigned_by": "Administrator",
+			"assigned_at": frappe.utils.now_datetime(),
+			"concurrency_token": frappe.generate_hash(length=16),
 		}
 	).insert(ignore_permissions=True)
 
 
-def _upsert(doctype: str, code_field: str, code: str, values: dict) -> str:
-	existing = frappe.db.get_value(doctype, {code_field: code}, "name")
-	payload = {code_field: code, **values}
-	if existing:
-		# Always refresh ownership / fixture tags even on Active plans.
-		own_keys = ("fixture_namespace", "owner_org_unit")
-		frappe.db.set_value(
-			doctype,
-			existing,
-			{k: payload[k] for k in own_keys if k in payload},
-			update_modified=False,
+def ensure_strategy_governance_actors() -> dict[str, Any]:
+	"""STR-CHG-001 §16.2 — the 9 named test actors and their assignments.
+	No actor receives Strategy authority from Administrator/System Manager
+	alone (§16.2's own closing line) — every grant here is an explicit,
+	scoped Operational Scope Assignment."""
+	_ensure_config_prerequisites()
+	ensure_strategy_governance_roles()
+
+	for key, email in ACTORS.items():
+		_ensure_user(email, _ACTOR_DISPLAY[key], _ACTOR_ROLE[key])
+
+	for key, (profile_id, pe) in _ACTOR_ASSIGNMENT.items():
+		_ensure_assignment(f"OSA-{FIXTURE_NS}-{key}".upper(), ACTORS[key], profile_id, pe)
+
+	return {"ok": True, "actors": list(ACTORS.values())}
+
+
+def _run_as(user: str, fn, *args, **kwargs):
+	frappe.set_user(user)
+	try:
+		return fn(*args, **kwargs)
+	finally:
+		frappe.set_user("Administrator")
+
+
+def _backdate_event(version_name: str, action: str, when: str) -> None:
+	"""AGENTS.md §4.6 — narrow, documented timestamp-only direct write; the
+	event itself is produced by the real transition service, only its
+	recorded time is corrected to the seed's fixed fixture clock."""
+	name = frappe.db.get_value(
+		"Audit Event",
+		{"document_type": "Strategic Plan Version", "document_name": version_name, "action": action},
+		"name",
+		order_by="creation desc",
+	)
+	if name:
+		frappe.db.set_value("Audit Event", name, "timestamp", get_datetime(when), update_modified=False)
+
+
+def _seed_plan(
+	*,
+	title: str,
+	pe: str,
+	period_start: str,
+	period_end: str,
+	nodes: list[dict],
+	indicators: list[dict],
+	targets: list[dict],
+	actors: dict[str, str],
+	events: dict[str, str],
+) -> dict[str, Any]:
+	"""Upsert one Primary plan through the real domain/lifecycle services —
+	draft, hierarchy, submit, recommend, approve, activate — matching
+	§16.6 ("validate each plan through the same domain rules used by
+	commands... seed lifecycle events use the named role actors, never
+	Administrator"). Idempotent on the plan title within the fixture
+	namespace; a second run returns the existing version untouched."""
+	existing_plan = frappe.db.get_value(
+		"Strategic Plan", {"title": title, "procuring_entity_id": pe}, "name"
+	)
+	if existing_plan:
+		existing_version = frappe.db.get_value(
+			"Strategic Plan Version", {"plan_id": existing_plan, "version_number": 1}, "name"
 		)
-		plan = payload.get("plan_version")
-		if plan:
-			status = frappe.db.get_value("Strategic Plan", plan, "status")
-			if status not in ("Draft", "Returned", None):
-				return existing
-		doc = frappe.get_doc(doctype, existing)
-		doc.update(payload)
-		doc.save(ignore_permissions=True)
-		return existing
-	doc = frappe.get_doc({"doctype": doctype, **payload})
-	doc.insert(ignore_permissions=True)
-	return doc.name
+		return {"ok": True, "plan": existing_plan, "plan_version": existing_version, "already_seeded": True}
+
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": title,
+			"procuring_entity_id": pe,
+			"plan_role": "Primary",
+			"period_start": period_start,
+			"period_end": period_end,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	plan.insert(ignore_permissions=True)
+
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": period_start,
+			"effective_to": period_end,
+			"fixture_namespace": FIXTURE_NS,
+		}
+	)
+	version.insert(ignore_permissions=True)
+
+	id_map: dict[str, str] = {}
+	for node in nodes:
+		doc = frappe.get_doc(
+			{
+				"doctype": "Strategy Node",
+				"plan_version_id": version.name,
+				"node_type": node["node_type"],
+				"title": node["title"],
+				"display_order": node["display_order"],
+				"parent_node_id": id_map.get(node.get("parent")),
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		id_map[node["key"]] = doc.name
+
+	for ind in indicators:
+		doc = frappe.get_doc(
+			{
+				"doctype": "Performance Indicator",
+				"plan_version_id": version.name,
+				"measures_node_id": id_map[ind["measures"]],
+				"indicator_name": ind["name"],
+				"definition": ind["definition"],
+				"unit": ind["unit"],
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		id_map[ind["key"]] = doc.name
+
+	for tgt in targets:
+		data = {
+			"doctype": "Performance Target",
+			"indicator_id": id_map[tgt["indicator"]],
+			"comparison": tgt["comparison"],
+			"target_value": tgt["target_value"],
+			"fixture_namespace": FIXTURE_NS,
+		}
+		if tgt.get("financial_year_id"):
+			data["financial_year_id"] = tgt["financial_year_id"]
+		if tgt.get("target_by_date"):
+			data["target_by_date"] = tgt["target_by_date"]
+		frappe.get_doc(data).insert(ignore_permissions=True)
+
+	_run_as(actors["author"], transition_plan_version, version.name, "Submit for review")
+	_backdate_event(version.name, "Submit for review", events["submitted_at"])
+
+	_run_as(actors["reviewer"], transition_plan_version, version.name, "Recommend for approval")
+	_backdate_event(version.name, "Recommend for approval", events["recommended_at"])
+
+	_run_as(actors["approver"], transition_plan_version, version.name, "Approve")
+	_backdate_event(version.name, "Approve", events["approved_at"])
+
+	_run_as(actors["approver"], transition_plan_version, version.name, "Activate")
+	_backdate_event(version.name, "Activate", events["activated_at"])
+
+	return {"ok": True, "plan": plan.name, "plan_version": version.name}
+
+
+def _seed_moh_plan() -> dict[str, Any]:
+	"""STR-CHG-001 §16.3."""
+	return _seed_plan(
+		title="Ministry of Health Strategic Plan (Demo)",
+		pe=PE_MOH,
+		period_start="2023-07-01",
+		period_end="2028-06-30",
+		nodes=[
+			{"key": "pillar", "node_type": "Pillar", "title": "Digital health systems", "display_order": 1},
+			{
+				"key": "programme",
+				"node_type": "Programme",
+				"title": "Health policy, standards and regulation",
+				"display_order": 2,
+				"parent": "pillar",
+			},
+			{
+				"key": "sub_programme",
+				"node_type": "Sub-programme",
+				"title": "Digital health governance",
+				"display_order": 3,
+				"parent": "programme",
+			},
+			{
+				"key": "objective",
+				"node_type": "Strategic Objective",
+				"title": "Strengthen interoperable national digital health services",
+				"display_order": 4,
+				"parent": "sub_programme",
+			},
+			{
+				"key": "outcome",
+				"node_type": "Strategic Outcome",
+				"title": "Improved availability and reliability of interoperable digital health services",
+				"display_order": 5,
+				"parent": "objective",
+			},
+		],
+		indicators=[
+			{
+				"key": "indicator",
+				"measures": "outcome",
+				"name": "Percentage of priority facilities using interoperable digital health services",
+				"definition": (
+					"Priority facilities operating an approved interoperable digital health service "
+					"divided by all priority facilities, expressed as a percentage."
+				),
+				"unit": "Percentage",
+			}
+		],
+		targets=[
+			{
+				"indicator": "indicator",
+				"financial_year_id": FY_2027_2028,
+				"comparison": "At least",
+				"target_value": 80,
+			}
+		],
+		actors={
+			"author": ACTORS["author_moh"],
+			"reviewer": ACTORS["reviewer_moh"],
+			"approver": ACTORS["approver_moh"],
+		},
+		events={
+			"submitted_at": "2023-06-28 09:10:00",
+			"recommended_at": "2023-06-29 10:25:00",
+			"approved_at": "2023-06-30 15:40:00",
+			"activated_at": "2023-07-01 00:00:00",
+		},
+	)
+
+
+def _seed_kisumu_plan() -> dict[str, Any]:
+	"""STR-CHG-001 §16.4 — cross-PE isolation fixture."""
+	return _seed_plan(
+		title="Kisumu County Development Strategy (Demo)",
+		pe=PE_CGK,
+		period_start="2023-01-01",
+		period_end="2027-12-31",
+		nodes=[
+			{"key": "pillar", "node_type": "Pillar", "title": "Digital county services", "display_order": 1},
+			{
+				"key": "programme",
+				"node_type": "Programme",
+				"title": "County administration and digital services",
+				"display_order": 2,
+				"parent": "pillar",
+			},
+			{
+				"key": "objective",
+				"node_type": "Strategic Objective",
+				"title": "Improve reliable access to priority county digital services",
+				"display_order": 3,
+				"parent": "programme",
+			},
+			{
+				"key": "outcome",
+				"node_type": "Strategic Outcome",
+				"title": "More priority county services available through reliable digital channels",
+				"display_order": 4,
+				"parent": "objective",
+			},
+		],
+		indicators=[
+			{
+				"key": "indicator",
+				"measures": "outcome",
+				"name": "Percentage of priority county services available through approved digital channels",
+				"definition": (
+					"Priority county services available through an approved digital channel divided by "
+					"all priority county services, expressed as a percentage."
+				),
+				"unit": "Percentage",
+			}
+		],
+		targets=[
+			{
+				"indicator": "indicator",
+				"target_by_date": "2027-12-31",
+				"comparison": "At least",
+				"target_value": 70,
+			}
+		],
+		actors={
+			"author": ACTORS["author_kisumu"],
+			"reviewer": ACTORS["reviewer_kisumu"],
+			"approver": ACTORS["approver_kisumu"],
+		},
+		events={
+			"submitted_at": "2022-12-28 09:00:00",
+			"recommended_at": "2022-12-29 11:10:00",
+			"approved_at": "2022-12-30 14:15:00",
+			"activated_at": "2023-01-01 00:00:00",
+		},
+	)
+
+
+def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
+	if reset:
+		clear_kentender_mvp_v1_strategy()
+	_ensure_config_prerequisites()
+	actors = ensure_strategy_governance_actors()
+	moh = _seed_moh_plan()
+	kisumu = _seed_kisumu_plan()
+	return {"ok": True, "actors": actors, "moh": moh, "kisumu": kisumu}
 
 
 def clear_kentender_mvp_v1_strategy(
 	*, include_canonical: bool = True, include_playwright: bool = True
 ) -> dict[str, Any]:
-	"""Delete fixture-tagged Strategy records (MOH + CGK codes) — no broad PE wipe."""
+	"""Delete fixture-tagged Strategy records only — no broad PE wipe, and
+	no deletion of the 9 seeded actor users (stable identities, same as
+	CFG-CHG-002's own governance-actor seed convention)."""
 	deleted: dict[str, int] = {}
-	namespaces = [C.FIXTURE_NS, C.LEGACY_FIXTURE_NS] if include_canonical else []
-	if include_playwright:
-		namespaces.append(C.PLAYWRIGHT_FIXTURE_NS)
-	plans: list[str] = []
-	if namespaces and frappe.db.has_column("Strategic Plan", "fixture_namespace"):
-		plans.extend(
-			frappe.get_all(
-				"Strategic Plan",
-				filters={"fixture_namespace": ["in", list(namespaces)]},
-				pluck="name",
-			)
-		)
-	if include_canonical:
-		for code in (C.PLAN_CODE, C.CGK_PLAN_CODE, "MOH-SP-0001"):
-			plans.extend(
-				frappe.get_all("Strategic Plan", filters={"plan_code": code}, pluck="name")
-			)
-	if include_playwright:
-		# Legacy STR Playwright creation predates fixture_namespace. Its title is
-		# deliberately test-specific, so it can be removed without a PE-wide wipe.
-		plans.extend(
-			frappe.get_all(
-				"Strategic Plan",
-				filters={"title": ["like", "Playwright Create %"]},
-				pluck="name",
-			)
-		)
-	seen_plans: set[str] = set()
-	uniq_plans: list[str] = []
-	for p in plans:
-		if p and p not in seen_plans:
-			seen_plans.add(p)
-			uniq_plans.append(p)
-	plans = uniq_plans
+	if not (include_canonical or include_playwright):
+		return {"ok": True, "deleted": deleted}
 
-	child_doctypes = (
-		"Strategy Audit Event",
-		"Performance Measurement",
-		"Strategy Value Commitment",
-		"Performance Target",
-		"Performance Indicator",
-		"Strategic Objective",
-		"Strategic Outcome",
-		"Strategy Sub Programme",
-		"Strategy Programme",
+	plans = frappe.get_all("Strategic Plan", filters={"fixture_namespace": FIXTURE_NS}, pluck="name")
+	versions: list[str] = []
+	for p in plans:
+		versions.extend(
+			frappe.get_all("Strategic Plan Version", filters={"plan_id": p}, pluck="name")
+		)
+	versions.extend(
+		frappe.get_all("Strategic Plan Version", filters={"fixture_namespace": FIXTURE_NS}, pluck="name")
 	)
-	for doctype in child_doctypes:
-		names: list[str] = []
-		if namespaces and frappe.db.has_column(doctype, "fixture_namespace"):
-			names.extend(
-				frappe.get_all(
-					doctype,
-					filters={"fixture_namespace": ["in", list(namespaces)]},
-					pluck="name",
-				)
-			)
-		for p in plans:
-			if frappe.db.has_column(doctype, "plan_version"):
-				names.extend(
-					frappe.get_all(doctype, filters={"plan_version": p}, pluck="name")
-				)
-		seen: set[str] = set()
-		count = 0
+	versions = list(dict.fromkeys(versions))
+
+	indicator_ids: list[str] = []
+	for doctype, filters in (
+		("Strategy Node", {"plan_version_id": ["in", versions or [""]]}),
+		("Performance Indicator", {"plan_version_id": ["in", versions or [""]]}),
+	):
+		names = frappe.get_all(doctype, filters=filters, pluck="name")
+		if doctype == "Performance Indicator":
+			indicator_ids = names
 		for name in names:
-			if name in seen or not frappe.db.exists(doctype, name):
-				continue
-			seen.add(name)
 			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
-			count += 1
-		deleted[doctype] = count
+		deleted[doctype] = len(names)
+
+	target_names = (
+		frappe.get_all("Performance Target", filters={"indicator_id": ["in", indicator_ids]}, pluck="name")
+		if indicator_ids
+		else []
+	)
+	for name in target_names:
+		frappe.delete_doc("Performance Target", name, force=1, ignore_permissions=True)
+	deleted["Performance Target"] = len(target_names)
+
+	for name in versions:
+		if frappe.db.exists("Strategic Plan Version", name):
+			frappe.delete_doc("Strategic Plan Version", name, force=1, ignore_permissions=True)
+	deleted["Strategic Plan Version"] = len(versions)
 
 	for p in plans:
 		if frappe.db.exists("Strategic Plan", p):
 			frappe.delete_doc("Strategic Plan", p, force=1, ignore_permissions=True)
-			deleted["Strategic Plan"] = deleted.get("Strategic Plan", 0) + 1
+	deleted["Strategic Plan"] = len(plans)
 
-	if namespaces and frappe.db.exists("DocType", "Strategy Scope Assignment"):
-		ssa = 0
-		for name in frappe.get_all(
-			"Strategy Scope Assignment",
-			filters={"fixture_namespace": ["in", list(namespaces)]},
-			pluck="name",
-		):
-			frappe.delete_doc("Strategy Scope Assignment", name, force=1, ignore_permissions=True)
-			ssa += 1
-		deleted["Strategy Scope Assignment"] = ssa
 	return {"ok": True, "deleted": deleted}
 
 
-def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
-	ensure_strategy_roles()
-	pe = _pe_moh()
-	_ensure_strategy_personas()
-	if reset:
-		clear_kentender_mvp_v1_strategy()
-
-	# Migrate legacy code in place if old plan still exists
-	legacy = frappe.db.get_value("Strategic Plan", {"plan_code": "MOH-SP-0001"}, "name")
-	if legacy and not frappe.db.exists("Strategic Plan", {"plan_code": C.PLAN_CODE}):
-		frappe.db.set_value(
-			"Strategic Plan", legacy, "plan_code", C.PLAN_CODE, update_modified=False
-		)
-
-	plan_name = frappe.db.get_value(
-		"Strategic Plan", {"plan_code": C.PLAN_CODE, "version_number": 1}, "name"
-	)
-	created = False
-	if not plan_name:
-		plan = frappe.get_doc(
-			{
-				"doctype": "Strategic Plan",
-				"plan_code": C.PLAN_CODE,
-				"version_number": 1,
-				"title": C.PLAN_TITLE,
-				"procuring_entity": pe,
-				"plan_type": "Entity Strategic Plan",
-				"scope_type": "Procuring Entity",
-				"scope_id": pe,
-				"status": "Draft",
-				"start_date": "2026-07-01",
-				"end_date": "2030-06-30",
-				"description": "Canonical KENTENDER_MVP_V1 Ministry strategic plan.",
-				"fixture_namespace": C.FIXTURE_NS,
-				"owner_org_unit": "",
-			}
-		)
-		plan.insert(ignore_permissions=True)
-		plan_name = plan.name
-		created = True
-	else:
-		frappe.db.set_value(
-			"Strategic Plan",
-			plan_name,
-			{
-				"title": C.PLAN_TITLE,
-				"fixture_namespace": C.FIXTURE_NS,
-				"scope_type": "Procuring Entity",
-				"scope_id": pe,
-				"owner_org_unit": "",
-			},
-			update_modified=False,
-		)
-
-	status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-	rebuild = status in ("Draft", "Returned") or created
-	if status in ("Approved", "Active", "Superseded", "Archived") and not created:
-		# Force Draft only when reset path already cleared; otherwise patch ownership via _upsert
-		rebuild = False
-
-	if rebuild and status not in ("Draft", "Returned"):
-		frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
-
-	# --- Medical Services hierarchy ---
-	prog = _upsert(
-		"Strategy Programme",
-		"programme_code",
-		C.PROG_DH,
-		{
-			"plan_version": plan_name,
-			"title": "Digital Health Services",
-			"description": "Digital clinical services and health information systems.",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 1,
-			**OWN_DHP,
-		},
-	)
-	sub_his = _upsert(
-		"Strategy Sub Programme",
-		"sub_programme_code",
-		C.SUB_HIS,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"title": "Health Information Systems",
-			"description": "Health Information Systems",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 1,
-			**OWN_DHP,
-		},
-	)
-	out_rel = _upsert(
-		"Strategic Outcome",
-		"outcome_code",
-		C.OUT_RELIABILITY,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"sub_programme": sub_his,
-			"title": "Reliable and accessible digital clinical services",
-			"description": "Reliable and accessible digital clinical services",
-			"responsible_function": C.DIR_DHP_NAME,
-			"executive_owner": "Director, Digital Health and Policy",
-			"order_index": 1,
-			**OWN_DHP,
-		},
-	)
-	ind_avail = _upsert(
-		"Performance Indicator",
-		"indicator_code",
-		C.IND_AVAIL,
-		{
-			"plan_version": plan_name,
-			"strategic_outcome": out_rel,
-			"title": "Availability of core clinical information systems",
-			"definition": "Percentage of time core clinical information systems are available.",
-			"measurement_type": "Percentage",
-			"unit": "%",
-			"measurement_frequency": "Monthly",
-			"data_source": "Approved infrastructure-monitoring report",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 1,
-			**OWN_DHP,
-		},
-	)
-	ind_restore = _upsert(
-		"Performance Indicator",
-		"indicator_code",
-		C.IND_RESTORE,
-		{
-			"plan_version": plan_name,
-			"strategic_outcome": out_rel,
-			"title": "Average restoration time for critical services",
-			"definition": "Average hours to restore critical clinical services.",
-			"measurement_type": "Numeric",
-			"unit": "hours",
-			"measurement_frequency": "Monthly",
-			"data_source": "Approved infrastructure-monitoring report",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 2,
-			**OWN_DHP,
-		},
-	)
-	tgt_avail = _upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_AVAIL_2028,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_avail,
-			"title": "At least 99.9% annual availability by 30 June 2028",
-			"comparison_direction": "At least",
-			"target_numeric": 99.9,
-			"baseline_status": "Known",
-			"baseline_numeric": 97.8,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 0.1,
-			"period_start": "2026-07-01",
-			"period_end": "2028-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_DHP,
-		},
-	)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_RESTORE_2028,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_restore,
-			"title": "Restore critical services within four hours by 30 June 2028",
-			"comparison_direction": "At most",
-			"target_numeric": 4.0,
-			"baseline_status": "Known",
-			"baseline_numeric": 11.5,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 0.5,
-			"period_start": "2026-07-01",
-			"period_end": "2028-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_DHP,
-		},
-	)
-	# Successor targets (§5.4)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_AVAIL_2029,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_avail,
-			"title": "Maintain at least 99.95% annual availability by 30 June 2029",
-			"comparison_direction": "At least",
-			"target_numeric": 99.95,
-			"baseline_status": "Known",
-			"baseline_numeric": 97.8,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 0.05,
-			"period_start": "2028-07-01",
-			"period_end": "2029-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_DHP,
-		},
-	)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_RESTORE_2029,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_restore,
-			"title": "Restore critical services within two hours by 30 June 2029",
-			"comparison_direction": "At most",
-			"target_numeric": 2.0,
-			"baseline_status": "Known",
-			"baseline_numeric": 11.5,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 0.25,
-			"period_start": "2028-07-01",
-			"period_end": "2029-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_DHP,
-		},
-	)
-
-	# Strategic Objective sits alongside the Outcome above (STR-CHG-001 §6.2): an
-	# Indicator may measure a Strategic Objective directly instead of an Outcome.
-	obj_interop = _upsert(
-		"Strategic Objective",
-		"objective_code",
-		C.OBJ_INTEROP,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"sub_programme": sub_his,
-			"title": "Strengthen interoperable national digital health services",
-			"description": "Strengthen interoperable national digital health services",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 2,
-			**OWN_DHP,
-		},
-	)
-	ind_interop = _upsert(
-		"Performance Indicator",
-		"indicator_code",
-		C.IND_INTEROP,
-		{
-			"plan_version": plan_name,
-			"strategic_objective": obj_interop,
-			"title": "Percentage of priority facilities using interoperable digital health services",
-			"definition": "Percentage of priority facilities exchanging data via interoperable digital health services.",
-			"measurement_type": "Percentage",
-			"unit": "%",
-			"measurement_frequency": "Quarterly",
-			"data_source": "Approved interoperability-adoption report",
-			"responsible_function": C.DIR_DHP_NAME,
-			"order_index": 1,
-			**OWN_DHP,
-		},
-	)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_INTEROP_2028,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_interop,
-			"title": "At least 80% of priority facilities interoperable by 30 June 2028",
-			"comparison_direction": "At least",
-			"target_numeric": 80.0,
-			"baseline_status": "Known",
-			"baseline_numeric": 42.0,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 interoperability-adoption report",
-			"tolerance_value": 1.0,
-			"period_start": "2026-07-01",
-			"period_end": "2028-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_DHP,
-		},
-	)
-
-	# --- Public Health hierarchy (minimal) ---
-	sub_dhc = _upsert(
-		"Strategy Sub Programme",
-		"sub_programme_code",
-		C.SUB_DHC,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"title": "Digital Health Workforce Capability",
-			"description": "Digital Health Workforce Capability",
-			"responsible_function": C.DIR_HRMD_NAME,
-			"order_index": 2,
-			**OWN_HRMD,
-		},
-	)
-	out_cap = _upsert(
-		"Strategic Outcome",
-		"outcome_code",
-		C.OUT_CAPABILITY,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"sub_programme": sub_dhc,
-			"title": "Sustainable digital-health workforce capability",
-			"description": "Sustainable digital-health workforce capability",
-			"responsible_function": C.DIR_HRMD_NAME,
-			"executive_owner": "Director, HRMD",
-			"order_index": 2,
-			**OWN_HRMD,
-		},
-	)
-	ind_skills = _upsert(
-		"Performance Indicator",
-		"indicator_code",
-		C.IND_SKILLS,
-		{
-			"plan_version": plan_name,
-			"strategic_outcome": out_cap,
-			"title": "Number of trained and certified digital-health technical staff",
-			"definition": "Count of trained and certified digital-health technical staff.",
-			"measurement_type": "Numeric",
-			"unit": "staff",
-			"measurement_frequency": "Annual",
-			"data_source": "HR training registry",
-			"responsible_function": C.DIR_HRMD_NAME,
-			"order_index": 1,
-			**OWN_HRMD,
-		},
-	)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_SKILLS_2029,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_skills,
-			"title": "Train and certify 150 digital-health technical staff by 30 June 2029",
-			"comparison_direction": "At least",
-			"target_numeric": 150,
-			"baseline_status": "Known",
-			"baseline_numeric": 35,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 5,
-			"period_start": "2026-07-01",
-			"period_end": "2029-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_HRMD,
-		},
-	)
-	_upsert(
-		"Performance Target",
-		"target_code",
-		C.TGT_SKILLS_2030,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind_skills,
-			"title": "Train and certify 220 digital-health technical staff by 30 June 2030",
-			"comparison_direction": "At least",
-			"target_numeric": 220,
-			"baseline_status": "Known",
-			"baseline_numeric": 35,
-			"baseline_as_of": "2026-06-30",
-			"baseline_source": "FY2025/26 infrastructure report",
-			"tolerance_value": 5,
-			"period_start": "2029-07-01",
-			"period_end": "2030-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_HRMD,
-		},
-	)
-
-	# PVCs
-	pvcs: dict[str, str] = {}
-	for pvc_code, statement, level in PVC_FIXTURE:
-		existing = frappe.db.get_value(
-			"Strategy Value Commitment", {"commitment_code": pvc_code}, "name"
-		)
-		if existing:
-			frappe.db.set_value(
-				"Strategy Value Commitment",
-				existing,
-				{"fixture_namespace": C.FIXTURE_NS, "status": "Locked"},
-				update_modified=False,
-			)
-			pvcs[pvc_code] = existing
-			continue
-		doc = frappe.get_doc(
-			{
-				"doctype": "Strategy Value Commitment",
-				"commitment_code": pvc_code,
-				"plan_version": plan_name,
-				"rationale": statement,
-				"consideration_level": level,
-				"responsible_owner": C.DIR_DHP_NAME,
-				"status": "Locked",
-				"fixture_namespace": C.FIXTURE_NS,
-				"links": [
-					{"link_type": "Strategic Outcome", "linked_outcome": out_rel},
-					{"link_type": "Performance Target", "linked_target": tgt_avail},
-				],
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		pvcs[pvc_code] = doc.name
-
-	# Activate plan
-	status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-	frappe.set_user("Administrator")
-	if status == "Draft":
-		transition_plan(plan_name, "Submit")
-		transition_plan(plan_name, "Approve")
-		transition_plan(plan_name, "Activate")
-	elif status == "Submitted":
-		transition_plan(plan_name, "Approve")
-		transition_plan(plan_name, "Activate")
-	elif status == "Approved":
-		transition_plan(plan_name, "Activate")
-
-	meas = _ensure_measurements(plan_name, tgt_avail)
-
-	# §5.1 Strategy Scope Assignments (MOH)
-	_upsert_strategy_scope(
-		strategy_doctype="Strategy Programme",
-		strategy_item=prog,
-		strategy_item_code=C.PROG_DH,
-		pe=pe,
-		org_unit=C.OU_SDMS,
-		plan_version=plan_name,
-	)
-	_upsert_strategy_scope(
-		strategy_doctype="Strategy Sub Programme",
-		strategy_item=sub_dhc,
-		strategy_item_code=C.SUB_DHC,
-		pe=pe,
-		org_unit=C.OU_SDPHPS,
-		plan_version=plan_name,
-	)
-
-	cgk = _seed_kisumu_strategy()
-
-	return {
-		"ok": True,
-		"created": created,
-		"plan": plan_name,
-		"plan_code": C.PLAN_CODE,
-		"target_avail": tgt_avail,
-		"measurements": meas,
-		"pvcs": pvcs,
-		"procuring_entity": pe,
-		"kisumu": cgk,
-	}
+# --- STR-CHG-001 §16.5 isolated design/workflow fixture -------------------------
 
 
-def _seed_kisumu_strategy() -> dict[str, Any]:
-	"""Contract §5.8–5.9 minimal county Strategy fixture."""
-	pe = _pe_cgk()
-	plan_name = frappe.db.get_value(
-		"Strategic Plan", {"plan_code": C.CGK_PLAN_CODE, "version_number": 1}, "name"
-	)
-	created = False
-	if not plan_name:
-		plan = frappe.get_doc(
-			{
-				"doctype": "Strategic Plan",
-				"plan_code": C.CGK_PLAN_CODE,
-				"version_number": 1,
-				"title": C.CGK_PLAN_TITLE,
-				"procuring_entity": pe,
-				"plan_type": "Entity Strategic Plan",
-				"scope_type": "Procuring Entity",
-				"scope_id": pe,
-				"status": "Draft",
-				"start_date": "2027-07-01",
-				"end_date": "2028-06-30",
-				"description": "Canonical KENTENDER_MVP_V1 Kisumu county health plan.",
-				"fixture_namespace": C.FIXTURE_NS,
-				"owner_org_unit": C.OU_CGK_HEALTH,
-			}
-		)
-		plan.insert(ignore_permissions=True)
-		plan_name = plan.name
-		created = True
-	else:
-		frappe.db.set_value(
-			"Strategic Plan",
-			plan_name,
-			{
-				"title": C.CGK_PLAN_TITLE,
-				"fixture_namespace": C.FIXTURE_NS,
-				"owner_org_unit": C.OU_CGK_HEALTH,
-				"procuring_entity": pe,
-			},
-			update_modified=False,
-		)
+def seed_str_des_v2_fixture() -> dict[str, Any]:
+	"""STR-CHG-001 §16.5 — an isolated Version 2 test fixture for the
+	STR-DES-04..11 artboards, NOT part of the default upsert above. Reaches
+	Awaiting Approval (the last event §16.5 names); the caller may transition
+	it further and MUST tear it down with teardown_str_des_v2_fixture().
 
-	status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-	rebuild = status in ("Draft", "Returned") or created
-	if rebuild and status not in ("Draft", "Returned"):
-		frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
+	Reuses create_strategy_successor_version (the same real command §10.1
+	exposes) to clone the full hierarchy rather than hand-cloning only the
+	indicator/target — a hand-clone left the indicator pointing at the V1
+	outcome node, which validate_performance_indicator correctly rejects
+	as a cross-version reference (found live while first building this
+	fixture, fixed by reuse instead of a second, narrower clone path)."""
+	from kentender_strategy.services.strategy_writes import create_strategy_successor_version
 
-	# Minimal programme scaffolding (Outcome DocType requires programme).
-	prog = _upsert(
-		"Strategy Programme",
-		"programme_code",
-		"CGK-PROG-HEALTH",
-		{
-			"plan_version": plan_name,
-			"title": "County Health Services",
-			"description": "Kisumu county health services operational programme.",
-			"responsible_function": C.OU_CGK_HEALTH_NAME,
-			"order_index": 1,
-			**OWN_CGK,
-		},
+	moh_plan = frappe.db.get_value(
+		"Strategic Plan", {"title": "Ministry of Health Strategic Plan (Demo)", "procuring_entity_id": PE_MOH}, "name"
 	)
-	sub = _upsert(
-		"Strategy Sub Programme",
-		"sub_programme_code",
-		"CGK-SUB-COLDCHAIN",
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"title": "Vaccine Cold Chain",
-			"description": "Vaccine cold-chain reliability",
-			"responsible_function": C.OU_CGK_HEALTH_NAME,
-			"order_index": 1,
-			**OWN_CGK,
-		},
-	)
-	out = _upsert(
-		"Strategic Outcome",
-		"outcome_code",
-		C.CGK_OUT_COLDCHAIN,
-		{
-			"plan_version": plan_name,
-			"programme": prog,
-			"sub_programme": sub,
-			"title": "Reliable vaccine cold-chain services at county health facilities",
-			"description": "Reliable vaccine cold-chain services at county health facilities",
-			"responsible_function": C.OU_CGK_HEALTH_NAME,
-			"executive_owner": "County Director of Health",
-			"order_index": 1,
-			**OWN_CGK,
-		},
-	)
-	ind = _upsert(
-		"Performance Indicator",
-		"indicator_code",
-		C.CGK_IND_COLDCHAIN,
-		{
-			"plan_version": plan_name,
-			"strategic_outcome": out,
-			"title": "Percentage of supported facilities meeting the cold-chain uptime standard",
-			"definition": "Share of supported facilities meeting the cold-chain uptime standard.",
-			"measurement_type": "Percentage",
-			"unit": "%",
-			"measurement_frequency": "Annual",
-			"data_source": "County cold-chain monitoring report",
-			"responsible_function": C.OU_CGK_HEALTH_NAME,
-			"order_index": 1,
-			**OWN_CGK,
-		},
-	)
-	tgt = _upsert(
-		"Performance Target",
-		"target_code",
-		C.CGK_TGT_COLDCHAIN,
-		{
-			"plan_version": plan_name,
-			"performance_indicator": ind,
-			"title": "At least 95% of supported facilities meet the uptime standard by 30 June 2028",
-			"comparison_direction": "At least",
-			"target_numeric": 95.0,
-			"baseline_status": "Known",
-			"baseline_numeric": 82.0,
-			"baseline_as_of": "2027-06-30",
-			"baseline_source": "FY2026/27 county health report",
-			"tolerance_value": 2.0,
-			"period_start": "2027-07-01",
-			"period_end": "2028-06-30",
-			"benefit_owner": USER_STR_OFFICER_NAME,
-			"measurement_verifier": USER_STR_MANAGER,
-			"status": "Active",
-			**OWN_CGK,
-		},
-	)
+	if not moh_plan:
+		frappe.throw(_("Seed the default MOH plan before creating the V2 fixture"))
 
-	cgk_pvcs = (
-		("CGK-PVC-EFT-01", "Improve availability of critical health services", "Required consideration"),
-		("CGK-PVC-ECO-01", "Reduce whole-life infrastructure cost", "Required consideration"),
-		("CGK-PVC-SUS-01", "Reduce infrastructure energy consumption", "Recommended consideration"),
+	out = _run_as(ACTORS["author_moh"], create_strategy_successor_version, moh_plan)
+	v2 = out["name"]
+	frappe.db.set_value(
+		"Strategic Plan Version", v2, {"effective_from": "2027-07-01", "effective_to": "2028-06-30"}
 	)
-	pvcs: dict[str, str] = {}
-	for pvc_code, statement, level in cgk_pvcs:
-		existing = frappe.db.get_value(
-			"Strategy Value Commitment", {"commitment_code": pvc_code}, "name"
-		)
-		if existing:
-			frappe.db.set_value(
-				"Strategy Value Commitment",
-				existing,
-				{"fixture_namespace": C.FIXTURE_NS, "status": "Locked", **OWN_CGK},
-				update_modified=False,
-			)
-			pvcs[pvc_code] = existing
-			continue
-		doc = frappe.get_doc(
-			{
-				"doctype": "Strategy Value Commitment",
-				"commitment_code": pvc_code,
-				"plan_version": plan_name,
-				"rationale": statement,
-				"consideration_level": level,
-				"responsible_owner": C.OU_CGK_HEALTH_NAME,
-				"status": "Locked",
-				"links": [
-					{"link_type": "Strategic Outcome", "linked_outcome": out},
-					{"link_type": "Performance Target", "linked_target": tgt},
-				],
-				**OWN_CGK,
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		pvcs[pvc_code] = doc.name
+	_backdate_event(v2, "Successor Version Created", "2027-03-15 13:10:00")
 
-	_upsert_strategy_scope(
-		strategy_doctype="Strategic Outcome",
-		strategy_item=out,
-		strategy_item_code=C.CGK_OUT_COLDCHAIN,
-		pe=pe,
-		org_unit=C.OU_CGK_HEALTH,
-		plan_version=plan_name,
-	)
-	_upsert_strategy_scope(
-		strategy_doctype="Performance Indicator",
-		strategy_item=ind,
-		strategy_item_code=C.CGK_IND_COLDCHAIN,
-		pe=pe,
-		org_unit=C.OU_CGK_HEALTH,
-		plan_version=plan_name,
-	)
-	_upsert_strategy_scope(
-		strategy_doctype="Performance Target",
-		strategy_item=tgt,
-		strategy_item_code=C.CGK_TGT_COLDCHAIN,
-		pe=pe,
-		org_unit=C.OU_CGK_HEALTH,
-		plan_version=plan_name,
-	)
+	new_indicator = frappe.db.get_value("Performance Indicator", {"plan_version_id": v2}, "name")
+	new_target = frappe.db.get_value("Performance Target", {"indicator_id": new_indicator}, "name")
+	frappe.db.set_value("Performance Target", new_target, "target_value", 85)  # §16.5's only content change
 
-	frappe.set_user("Administrator")
-	status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-	if status == "Draft":
-		transition_plan(plan_name, "Submit")
-		transition_plan(plan_name, "Approve")
-		transition_plan(plan_name, "Activate")
-	elif status == "Submitted":
-		transition_plan(plan_name, "Approve")
-		transition_plan(plan_name, "Activate")
-	elif status == "Approved":
-		transition_plan(plan_name, "Activate")
+	_run_as(ACTORS["author_moh"], transition_plan_version, v2, "Submit for review")
+	_backdate_event(v2, "Submit for review", "2027-03-15 16:20:00")
 
-	return {
-		"created": created,
-		"plan": plan_name,
-		"plan_code": C.CGK_PLAN_CODE,
-		"target": tgt,
-		"pvcs": pvcs,
-		"procuring_entity": pe,
-	}
+	_run_as(ACTORS["reviewer_moh"], transition_plan_version, v2, "Recommend for approval")
+	_backdate_event(v2, "Recommend for approval", "2027-03-16 10:22:00")
+
+	return {"ok": True, "plan_version": v2, "indicator": new_indicator, "target": new_target}
 
 
-def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
-	ids: dict[str, str] = {}
-	sep = frappe.db.get_value(
-		"Performance Measurement",
-		{
-			"performance_target": target_name,
-			"measurement_period_start": "2027-09-01",
-			"measurement_period_end": "2027-09-30",
-		},
-		"name",
-	)
-	if not sep:
-		sep_doc = frappe.get_doc(
-			{
-				"doctype": "Performance Measurement",
-				"measurement_code": "MOH-MEAS-AVAIL-2027-09",
-				"performance_target": target_name,
-				"plan_version": plan_name,
-				"measurement_period_start": "2027-09-01",
-				"measurement_period_end": "2027-09-30",
-				"actual_numeric": 99.82,
-				"measurement_date": "2027-10-05",
-				"evidence_reference": "INFRA-MON-2027-09",
-				"evidence_source": "Approved infrastructure-monitoring report",
-				"commentary": "Storage-controller instability",
-				"variance": 99.82 - 99.9,
-				"result_status": "At risk",
-				"workflow_status": "Verified",
-				"submitted_by": USER_STR_OFFICER,
-				"verified_by": USER_STR_MANAGER,
-				**OWN_DHP,
-			}
-		)
-		sep_doc.insert(ignore_permissions=True)
-		sep = sep_doc.name
-	else:
-		frappe.db.set_value(
-			"Performance Measurement", sep, OWN_DHP, update_modified=False
-		)
-	ids["sep"] = sep
-
-	oct = frappe.db.get_value(
-		"Performance Measurement",
-		{
-			"performance_target": target_name,
-			"measurement_period_start": "2027-10-01",
-			"measurement_period_end": "2027-10-31",
-		},
-		"name",
-	)
-	if not oct:
-		oct_doc = frappe.get_doc(
-			{
-				"doctype": "Performance Measurement",
-				"measurement_code": "MOH-MEAS-AVAIL-2027-10",
-				"performance_target": target_name,
-				"plan_version": plan_name,
-				"measurement_period_start": "2027-10-01",
-				"measurement_period_end": "2027-10-31",
-				"actual_numeric": 99.96,
-				"measurement_date": "2027-11-05",
-				"evidence_reference": "INFRA-MON-2027-10",
-				"evidence_source": "Approved infrastructure-monitoring report",
-				"commentary": "Stabilised after remediation",
-				"variance": 99.96 - 99.9,
-				"result_status": "On track",
-				"workflow_status": "Verified",
-				"submitted_by": USER_STR_OFFICER,
-				"verified_by": USER_STR_MANAGER,
-				**OWN_DHP,
-			}
-		)
-		oct_doc.insert(ignore_permissions=True)
-		oct = oct_doc.name
-	else:
-		frappe.db.set_value(
-			"Performance Measurement", oct, OWN_DHP, update_modified=False
-		)
-	ids["oct"] = oct
-	return ids
+def teardown_str_des_v2_fixture(plan_version_id: str) -> None:
+	"""Removes an isolated V2 fixture created by seed_str_des_v2_fixture —
+	§16.5's own requirement: "must remove or roll it back after the test"."""
+	for indicator in frappe.get_all(
+		"Performance Indicator", filters={"plan_version_id": plan_version_id}, pluck="name"
+	):
+		for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
+			frappe.delete_doc("Performance Target", target, force=1, ignore_permissions=True)
+		frappe.delete_doc("Performance Indicator", indicator, force=1, ignore_permissions=True)
+	if frappe.db.exists("Strategic Plan Version", plan_version_id):
+		frappe.delete_doc("Strategic Plan Version", plan_version_id, force=1, ignore_permissions=True)

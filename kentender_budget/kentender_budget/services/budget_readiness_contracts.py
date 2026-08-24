@@ -354,7 +354,7 @@ def _evaluate_readiness(doc) -> tuple[list[dict[str, Any]], list[dict[str, Any]]
 		),
 		_group(
 			"strategy",
-			_("Strategy and Value Commitments"),
+			_("Strategy Alignment"),
 			complete=strategy_complete,
 			total=strategy_total,
 			issues=strategy_issues,

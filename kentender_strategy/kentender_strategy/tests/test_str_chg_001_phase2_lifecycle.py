@@ -113,8 +113,8 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 					"title": f"Lifecycle Test Plan {self.suffix}",
 					"procuring_entity_id": PE,
 					"plan_role": version_kwargs.pop("plan_role", "Primary"),
-					"period_start": "2027-07-01",
-					"period_end": "2032-06-30",
+					"period_start": "2040-07-01",
+					"period_end": "2045-06-30",
 				}
 			).insert(ignore_permissions=True)
 		)
@@ -122,8 +122,8 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 			"doctype": "Strategic Plan Version",
 			"plan_id": plan.name,
 			"version_number": 1,
-			"effective_from": "2027-07-01",
-			"effective_to": "2032-06-30",
+			"effective_from": "2040-07-01",
+			"effective_to": "2045-06-30",
 		}
 		data.update(version_kwargs)
 		version = self._track(frappe.get_doc(data).insert(ignore_permissions=True))
@@ -308,8 +308,8 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 					"plan_id": plan,
 					"version_number": 2,
 					"based_on_plan_version_id": v1,
-					"effective_from": "2027-07-01",
-					"effective_to": "2032-06-30",
+					"effective_from": "2040-07-01",
+					"effective_to": "2045-06-30",
 					"status": "Approved",
 				}
 			).insert(ignore_permissions=True)
