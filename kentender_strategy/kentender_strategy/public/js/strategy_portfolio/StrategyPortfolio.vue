@@ -139,7 +139,7 @@ async function submitDraft() {
 
 <template>
 	<div class="kt-industry">
-		<div ref="railEl"></div>
+		<div ref="railEl" class="kt-rail-mount"></div>
 		<template v-if="mode === 'list'">
 			<div class="kt-shell">
 				<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">

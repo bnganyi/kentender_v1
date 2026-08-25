@@ -198,6 +198,23 @@ function selectNode(node) {
 	});
 }
 
+// Performance Target has no standalone editor panel of its own — it is only
+// ever edited inline in its parent indicator's Targets table (STR-DES-05).
+// Selecting a target row in the tree opens that parent indicator's panel
+// with the target's row already in edit mode, instead of a blank panel.
+function handleTreeSelect(node) {
+	if (node.node_type === "Performance Target") {
+		const path = findPath(tree.value.tree, node.id, []);
+		const parent = path && path.length >= 2 ? path[path.length - 2] : null;
+		if (parent) {
+			selectNode(parent);
+			startEditTarget(node);
+			return;
+		}
+	}
+	selectNode(node);
+}
+
 function startAddChild({ parent, childType }) {
 	if (childType === "Performance Target") {
 		// STR-DES-05b: adding a target opens a dialog over the indicator's own
@@ -452,7 +469,7 @@ async function saveNewPillar() {
 
 <template>
 	<div class="kt-industry">
-		<div ref="railEl"></div>
+		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell">
 			<div v-if="loading">{{ __("Loading...") }}</div>
 			<div v-else-if="notFound" class="kt-card kt-empty">
@@ -475,6 +492,14 @@ async function saveNewPillar() {
 						</h1>
 					</div>
 					<div style="display: flex; gap: 12px">
+						<template v-if="tab === 'structure' && workspace.is_editable_draft">
+							<button type="button" class="kt-btn kt-btn-secondary" @click="saveDraft">
+								{{ __("Save draft") }}
+							</button>
+							<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" @click="confirmDialog = 'submit'">
+								{{ __("Submit for review") }}
+							</button>
+						</template>
 						<button
 							v-if="workspace.capabilities.create_successor"
 							type="button"
@@ -545,31 +570,31 @@ async function saveNewPillar() {
 							</div>
 							<div class="kt-card kt-blueprint" style="grid-column: 1 / -1">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-								<div class="kt-card-title">{{ __("Structure summary") }}</div>
-								<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 24px">
+								<div class="kt-card-title" style="margin-bottom: 16px">{{ __("Structure summary") }}</div>
+								<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 24px">
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="16"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Pillars") }}</div><div class="kt-figure">{{ workspace.structure_summary.pillars }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Pillars") }}</div><div class="kt-figure" style="font-size: 16px; font-weight: 600; color: #003d9b">{{ workspace.structure_summary.pillars }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18 8.58 3.9a1 1 0 0 1 0 1.83l-8.58 3.9a2 2 0 0 1-1.66 0L2.6 7.91a1 1 0 0 1 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.programmes }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Programmes") }}</div><div class="kt-figure" style="font-size: 16px; font-weight: 600; color: #003d9b">{{ workspace.structure_summary.programmes }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Sub-programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.sub_programmes }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Sub-programmes") }}</div><div class="kt-figure" style="font-size: 16px; font-weight: 600; color: #003d9b">{{ workspace.structure_summary.sub_programmes }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Strategic objectives") }}</div><div class="kt-figure is-live">{{ workspace.structure_summary.strategic_objectives }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Strategic objectives") }}</div><div class="kt-figure is-live" style="font-size: 16px; font-weight: 600">{{ workspace.structure_summary.strategic_objectives }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance indicators") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_indicators }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance indicators") }}</div><div class="kt-figure is-attention" style="font-size: 16px; font-weight: 600">{{ workspace.structure_summary.performance_indicators }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance targets") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_targets }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance targets") }}</div><div class="kt-figure is-attention" style="font-size: 16px; font-weight: 600">{{ workspace.structure_summary.performance_targets }}</div></div>
 									</div>
 								</div>
 							</div>
@@ -578,14 +603,6 @@ async function saveNewPillar() {
 				</template>
 
 				<template v-else-if="tab === 'structure'">
-					<div style="display: flex; justify-content: flex-end; gap: 12px" v-if="workspace.is_editable_draft">
-						<button type="button" class="kt-btn kt-btn-secondary" @click="saveDraft">
-							{{ __("Save draft") }}
-						</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" @click="confirmDialog = 'submit'">
-							{{ __("Submit for review") }}
-						</button>
-					</div>
 					<div style="display: flex; gap: 16px; align-items: flex-start">
 						<div class="kt-card kt-blueprint" style="width: 42%">
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -599,7 +616,7 @@ async function saveNewPillar() {
 								:nodes="tree.tree"
 								:selected-id="selectedNode?.id"
 								:read-only="!workspace.is_editable_draft"
-								@select="selectNode"
+								@select="handleTreeSelect"
 								@add-child="startAddChild"
 							/>
 							<p v-if="!tree.tree.length" class="kt-muted">{{ __("No structure yet.") }}</p>

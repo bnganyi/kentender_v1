@@ -242,7 +242,19 @@
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
-	padding: 32px 40px 60px;
+	padding: 16px 40px 60px;
+}
+
+/* — top page rail mount point (kentender_core.industry.mountPageRail's target
+     element). The mounted <header class="kt-rail"> is itself position:sticky,
+     but a sticky element can only travel within its containing block (its
+     immediate parent) — this mount div otherwise collapses to the rail's own
+     64px height, giving it nowhere to stick. Sticky is set here instead, one
+     level up, whose parent (.kt-industry) spans the full page height. — */
+.kt-industry > .kt-rail-mount {
+	position: sticky;
+	top: 0;
+	z-index: 20;
 }
 
 /* — small add-child pill (tree row actions) — */
