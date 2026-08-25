@@ -58,36 +58,9 @@ def after_migrate():
 	if os.path.exists(path):
 		import_file_by_path(path, force=True)
 
-	title = "Budget Management"
-	if not frappe.db.exists("Workspace", title):
-		doc = frappe.get_doc(
-			{
-				"doctype": "Workspace",
-				"label": "Budget & Funding",
-				"title": title,
-				"module": "Kentender Budget",
-				"app": "kentender_budget",
-				"type": "Workspace",
-				"content": "[]",
-				"icon": "money-bill-wave",
-				"public": 0,
-				"is_hidden": 0,
-			}
-		)
-		doc.insert(ignore_permissions=True)
+	from kentender_budget.services.budget_workspace import ensure_budget_workspace
 
-	frappe.db.set_value(
-		"Workspace",
-		title,
-		{
-			"public": 1,
-			"is_hidden": 0,
-			"module": "Kentender Budget",
-			"label": "Budget & Funding",
-			"title": title,
-		},
-		update_modified=False,
-	)
+	ensure_budget_workspace()
 
 
 def before_tests():

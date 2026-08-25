@@ -68,42 +68,9 @@ def _delete_all_rows(doctype: str) -> None:
 
 def _ensure_placeholder_workspace() -> None:
 	"""Minimal public Workspace so Procurement rail Budget & Funding links validate."""
-	title = "Budget Management"
-	if frappe.db.exists("Workspace", title):
-		frappe.db.set_value(
-			"Workspace",
-			title,
-			{
-				"public": 1,
-				"is_hidden": 0,
-				"module": "Kentender Budget",
-				"label": "Budget & Funding",
-				"title": title,
-			},
-			update_modified=False,
-		)
-		return
-	doc = frappe.get_doc(
-		{
-			"doctype": "Workspace",
-			"label": "Budget & Funding",
-			"title": title,
-			"module": "Kentender Budget",
-			"app": "kentender_budget",
-			"type": "Workspace",
-			"content": "[]",
-			"icon": "money-bill-wave",
-			"public": 0,
-			"is_hidden": 0,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-	frappe.db.set_value(
-		"Workspace",
-		title,
-		{"public": 1, "is_hidden": 0, "label": "Budget & Funding"},
-		update_modified=False,
-	)
+	from kentender_budget.services.budget_workspace import ensure_budget_workspace
+
+	ensure_budget_workspace()
 
 
 def execute() -> None:

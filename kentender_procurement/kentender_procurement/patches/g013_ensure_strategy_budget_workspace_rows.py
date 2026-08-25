@@ -20,12 +20,18 @@ import frappe
 
 _WORKSPACES: tuple[tuple[str, str, str, str], ...] = (
 	("Strategy Management", "Kentender Strategy", "kentender_strategy", "project"),
-	("Budget Management", "Kentender Budget", "kentender_budget", "chart"),
 )
 
 
 def execute() -> None:
 	frappe.set_user("Administrator")
+
+	# Budget Management has one canonical creation/repair implementation, owned by
+	# kentender_budget, to prevent this row drifting to a different label/icon.
+	from kentender_budget.services.budget_workspace import ensure_budget_workspace
+
+	ensure_budget_workspace()
+
 	for label, module, app, icon in _WORKSPACES:
 		if frappe.db.exists("Workspace", label):
 			frappe.db.set_value(
