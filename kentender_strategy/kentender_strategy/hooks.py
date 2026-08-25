@@ -15,13 +15,15 @@ required_apps = ["kentender_core"]
 from pathlib import Path
 
 
-def _asset_version(rel_path: str) -> int:
-	# mtime-based cache bust; touch this file after CSS edits so workers re-import hooks.
+def _asset_version(abs_path: Path) -> int:
+	# mtime-based cache bust; touch the source file after edits so workers re-import hooks.
 	try:
-		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
+		return int(abs_path.stat().st_mtime)
 	except OSError:
 		return 1
 
+
+_CORE_PUBLIC = Path(__file__).resolve().parent.parent.parent / "kentender_core" / "kentender_core" / "public"
 
 # Phase 8 (STR-CHG-001 v1.3) deleted the last app_include_css/app_include_js
 # entries this app owned (12 legacy strategy_alignment_*.css files, the
@@ -29,21 +31,18 @@ def _asset_version(rel_path: str) -> int:
 # strategy_alignment_shell.js, strategy_alignment_workspace_redirect.js) —
 # all backed only the 13 legacy Pages deleted in the same phase.
 #
-# The 3 Phase 7 production bundles were originally built with a plain
-# `import "../strategy_shared/styles/tokens.css"` inside each bundle.js,
-# on the assumption frappe.require() would load a paired CSS file the way
-# it loads the JS entry point. It doesn't: esbuild only writes an
-# assets.json key for genuine metafile entry points, and a CSS file pulled
-# in via a plain top-level import from a JS bundle is a build *output*,
-# not an entry point — so it compiled to a real file on disk that nothing
-# ever linked, and all 3 screens rendered with zero styling applied
-# (discovered 2026-08-24, alongside the missing globalProperties.__ fix —
-# see AGENTS.md §6.1/§6.6). Loading the shared token stylesheet globally
-# here, the same way kentender_core loads kt_industry_tokens.css, is the
-# fix: it is scoped under .kt-strategy-ui (never :root), so it is safe to
-# load on every Desk page and simply does nothing outside that class.
+# kt_industry_tokens.css (owned by kentender_core, scoped under .kt-industry,
+# never :root) is the one canonical design system for the whole application —
+# see AGENTS.md §6.6. Strategy previously forked its own copy
+# (strategy_shared_tokens.css / .kt-strategy-ui) rather than loading this
+# file directly, on the mistaken belief that no precedent existed for one
+# app consuming another's published CSS asset; that fork drifted from the
+# canonical tokens and was deleted. Frappe serves every installed app's
+# static assets from one shared /assets/<app_name>/ namespace, so loading
+# kentender_core's file by URL here works the same way any of this app's
+# own app_include_css entries do.
 app_include_css = [
-	f"/assets/kentender_strategy/css/strategy_shared_tokens.css?v={_asset_version('public/css/strategy_shared_tokens.css')}",
+	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_asset_version(_CORE_PUBLIC / 'css/kt_industry_tokens.css')}",
 ]
 
 app_include_js = []

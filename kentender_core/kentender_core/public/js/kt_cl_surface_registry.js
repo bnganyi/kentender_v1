@@ -212,24 +212,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
-	/* STR-CHG-001 v1.3 Phase 8 — the pre-Phase-1 legacy "strategy-alignment"
-	   page and its crumbStrategyAlignment()/trailStrategy()/trailStrategyPlan()
-	   helpers were deleted along with the 13 legacy Pages (see
-	   IMPLEMENTATION_TRACKER.md Phase 8). crumbStrategyPortfolio()/
-	   trailStrategy()/trailStrategyLeaf() below (renamed from
-	   .../trailStrategyRebuilt()/trailStrategyRebuiltLeaf() in Phase 7) are
-	   now the only Strategy breadcrumb helpers — there is no older variant
-	   left to distinguish them from. */
-	function crumbStrategyPortfolio() {
-		return crumb(__("Strategy Alignment"), ["strategy-portfolio"]);
-	}
-	function trailStrategy() {
-		return [crumbDashboard(), crumbStrategyPortfolio()];
-	}
-	function trailStrategyLeaf(leafLabel) {
-		return [crumbDashboard(), crumbStrategyPortfolio(), crumb(leafLabel)];
-	}
-
 	function crumbBudgetFunding() {
 		return crumb(__("Budget & Funding"), ["budget-funding"]);
 	}
@@ -267,36 +249,22 @@ frappe.provide("kentender_core.cl_surface_registry");
 	var surfaces = {
 		/* STR-CHG-001 v1.3 Phase 8 — the 13 pre-Phase-1 legacy Strategy Pages
 		   (STR-UI-01/02/03/07/08/09/10/12/13/14 and the STR-UI-PILOT spike)
-		   are deleted; these ids now point at the real Phase 7 production
-		   Vue-in-Desk routes (renamed from the temporary STR-REBUILD-* ids
-		   used while the legacy pages still held the canonical ids — see
-		   IMPLEMENTATION_TRACKER.md Phase 8 decision log). */
-		"STR-UI-01": {
-			id: "STR-UI-01",
-			label: "Strategy Portfolio",
-			routePrefixes: ["strategy-portfolio"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Strategy Portfolio"),
-				__("Maintain the approved strategy structure used by Budget and Procurement Planning."),
-				trailStrategy(),
-				[]
-			),
-		},
-		"STR-UI-02": {
-			id: "STR-UI-02",
-			label: "Plan Workspace",
-			routePrefixes: ["strategy-plan-workspace"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Plan Workspace"), "", trailStrategyLeaf(__("Plan Workspace")), []),
-		},
-		"STR-UI-04": {
-			id: "STR-UI-04",
-			label: "Review Task",
-			routePrefixes: ["strategy-review-task"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Review Task"), "", trailStrategyLeaf(__("Review Task")), []),
-		},
+		   are deleted. Phase 8 repointed STR-UI-01/02/04 at the real Phase 7
+		   production Vue-in-Desk routes instead of removing them — but those
+		   routes are self-managed exactly like CFG-PEFY-UI (Reference Data,
+		   see the comment below): strategy_portfolio_page.js,
+		   strategy_plan_workspace_page.js and strategy_review_task_page.js
+		   each call cl_shell.enterNative() and force-empty #kt-cl-chrome-host
+		   themselves, with their own PageRail.vue as the only rail. Keeping
+		   them registered here let onRouteChange's global frappe.router
+		   "change" listener (kt_cl_shell_router.js) re-render this registry's
+		   toolbar into #kt-cl-chrome-host on every subsequent route settle
+		   (tab switches inside the page, e.g. Structure, push a route via
+		   frappe.set_route and re-fire "change" — but the page's own clear
+		   only runs once, in on_page_show) — a second, dark Civic Ledger
+		   toolbar stacked above the page's real light breadcrumb. Removed;
+		   see IMPLEMENTATION_TRACKER.md Phase 8 decision log for the
+		   original repoint. */
 		"UI-00": {
 			id: "UI-00",
 			label: "Tender Configurations Dashboard",
@@ -902,7 +870,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 		// kt_cl_shell_router.js's global route listener auto-render this registry's
 		// Civic Ledger toolbar into #kt-cl-chrome-host on every route settle (the same
 		// dual-registration race documented above for NDS-UI-01), which visually clashes
-		// with reference_data/components/PageRail.vue, the page's own DES-12 rail.
+		// with kt_industry/components/PageRail.vue, the page's own DES-12 rail.
 		// reference_data_page.js still calls cl_shell.enterNative() directly (for the
 		// shared "procurement" sidebar only, no toolbar), so the sidebar keeps working
 		// without this page ever being resolvable by resolveFromRoute().

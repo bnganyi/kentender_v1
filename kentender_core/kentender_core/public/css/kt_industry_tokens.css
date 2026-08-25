@@ -148,6 +148,10 @@
 }
 .kt-industry .kt-input:hover { border-color: color-mix(in srgb, var(--kt-color-text) 45%, transparent); }
 .kt-industry .kt-input:focus-visible { border-color: var(--kt-color-accent); outline-offset: 0; }
+.kt-industry .kt-input:disabled {
+	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
+	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
+}
 .kt-industry select.kt-input {
 	appearance: none;
 	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
@@ -219,7 +223,101 @@
 .kt-industry .kt-muted { color: color-mix(in srgb, var(--kt-color-text) 78%, transparent); }
 .kt-industry .kt-tabular { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 
+/* — eyebrow (small uppercase label above a value/heading) — */
+.kt-industry .kt-eyebrow {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: color-mix(in srgb, var(--kt-color-text) 60%, transparent);
+	margin-bottom: 8px;
+}
+
+/* — page shell (centered max-width column) — */
+.kt-industry .kt-shell {
+	max-width: 1200px;
+	width: 100%;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 32px 40px 60px;
+}
+
+/* — small add-child pill (tree row actions) — */
+.kt-industry .kt-add-child {
+	font-family: var(--kt-font-body);
+	font-size: 12px;
+	padding: 3px 10px;
+	border-radius: var(--kt-radius-md);
+	border: 1px solid var(--kt-color-divider);
+	background: transparent;
+	color: var(--kt-color-text);
+	cursor: pointer;
+}
+.kt-industry .kt-add-child:hover { background: color-mix(in srgb, var(--kt-color-text) 7%, transparent); }
+
+/* — sticky footer (dialog / create-mode action bar) — */
+.kt-industry .kt-sticky-footer {
+	position: sticky;
+	bottom: 0;
+	background: var(--kt-color-bg);
+	border-top: 1px solid var(--kt-color-divider);
+	padding: 14px 40px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+/* — hierarchy tree row (indentation guides + toggle + trailing action) — */
+.kt-industry .kt-tree-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--kt-radius-sm);
+	cursor: pointer;
+}
+.kt-industry .kt-tree-line-v,
+.kt-industry .kt-tree-line-h {
+	position: absolute;
+	background: var(--kt-color-divider);
+}
+.kt-industry .kt-tree-line-v { top: -7px; bottom: 14px; width: 1px; }
+.kt-industry .kt-tree-line-h { top: 14px; width: 8px; height: 1px; }
+.kt-industry .kt-tree-row.selected {
+	background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent);
+	outline: 1px solid var(--kt-color-accent);
+}
+.kt-industry .kt-tree-row:hover { background: color-mix(in srgb, var(--kt-color-text) 5%, transparent); }
+.kt-industry .kt-tree-type { margin-left: auto; font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); }
+.kt-industry .kt-tree-toggle {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: color-mix(in srgb, var(--kt-color-text) 62%, transparent);
+	cursor: pointer;
+	transition: transform 0.12s ease;
+}
+.kt-industry .kt-tree-toggle.collapsed { transform: rotate(0deg); }
+.kt-industry .kt-tree-toggle:not(.collapsed) { transform: rotate(90deg); }
+.kt-industry .kt-tree-toggle-spacer { flex: none; width: 16px; }
+.kt-industry .kt-tree-hidden-count { font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); }
+
 /* — tabs — */
+.kt-industry .kt-tabs {
+	display: flex;
+	gap: 24px;
+	border-bottom: 1px solid var(--kt-color-divider);
+}
 .kt-industry .kt-tab {
 	position: relative;
 	font-family: var(--kt-font-heading);

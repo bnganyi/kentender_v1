@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from "vue";
-import PageRail from "./components/PageRail.vue";
+import PageRail from "../kt_industry/components/PageRail.vue";
 import SummaryCards from "./components/SummaryCards.vue";
 import TabStrip from "./components/TabStrip.vue";
 import PeList from "./components/pe/PeList.vue";

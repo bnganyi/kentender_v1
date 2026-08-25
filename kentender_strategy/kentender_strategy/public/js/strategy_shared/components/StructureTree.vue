@@ -18,7 +18,6 @@ const DOT_COLOR = {
 	Programme: "#003d9b",
 	"Sub-programme": "#003d9b",
 	"Strategic Objective": "#047857",
-	"Strategic Outcome": "#047857",
 	"Performance Indicator": "#92610a",
 	"Performance Target": "#92610a",
 };
@@ -33,8 +32,6 @@ const NODE_ICON = {
 	"Sub-programme":
 		'<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
 	"Strategic Objective": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-	"Strategic Outcome":
-		'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
 	"Performance Indicator": '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
 	"Performance Target":
 		'<circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>',
@@ -44,9 +41,20 @@ const CHILD_TYPE = {
 	Pillar: "Programme",
 	Programme: "Sub-programme",
 	"Sub-programme": "Strategic Objective",
-	"Strategic Objective": "Strategic Outcome",
+	"Strategic Objective": "Performance Indicator",
+	"Performance Indicator": "Performance Target",
 };
-const CAN_ADD_INDICATOR = new Set(["Strategic Objective", "Strategic Outcome"]);
+
+// Single source of truth for the "Add …" row label, keyed by the type of
+// child that will actually be created — so the label can never drift from
+// what onAddChild() emits. Matches v1.4 §12.5's exact action table.
+const ADD_CHILD_LABEL = {
+	Programme: "Add programme",
+	"Sub-programme": "Add sub-programme",
+	"Strategic Objective": "Add objective",
+	"Performance Indicator": "Add indicator",
+	"Performance Target": "Add target",
+};
 
 function dot(nodeType) {
 	return DOT_COLOR[nodeType] || "#666";
@@ -76,22 +84,17 @@ function countDescendants(node) {
 	if (!node.children) return 0;
 	return node.children.reduce((sum, c) => sum + 1 + countDescendants(c), 0);
 }
+function childType(node) {
+	return CHILD_TYPE[node.node_type];
+}
 function canAddChild(node) {
-	return !props.readOnly && (Boolean(CHILD_TYPE[node.node_type]) || CAN_ADD_INDICATOR.has(node.node_type));
+	return !props.readOnly && Boolean(childType(node));
 }
 function addChildLabel(node) {
-	if (node.node_type === "Performance Indicator") return "Add target";
-	if (CAN_ADD_INDICATOR.has(node.node_type)) return "Add indicator";
-	return "Add child";
+	return ADD_CHILD_LABEL[childType(node)] || "Add child";
 }
 function onAddChild(node) {
-	if (node.node_type === "Performance Indicator") {
-		emit("add-child", { parent: node, childType: "Performance Target" });
-	} else if (CAN_ADD_INDICATOR.has(node.node_type) && !CHILD_TYPE[node.node_type]) {
-		emit("add-child", { parent: node, childType: "Performance Indicator" });
-	} else {
-		emit("add-child", { parent: node, childType: CHILD_TYPE[node.node_type] });
-	}
+	emit("add-child", { parent: node, childType: childType(node) });
 }
 </script>
 

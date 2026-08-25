@@ -1,21 +1,10 @@
 // Live data adapter for kentender_strategy.api.strategy_ui_api (STR-UI-01)
 // and strategy_consumer_api.save_strategy_plan_draft (the "New strategic
 // plan" draft-create action).
+import { frappeCall } from "../../strategy_shared/data/frappeCall.js";
 
-export async function fetchPortfolio() {
-	const response = await frappe.call({
-		method: "kentender_strategy.api.strategy_ui_api.get_strategy_portfolio",
-		args: {},
-		freeze: false,
-	});
-	return response.message;
-}
+export const fetchPortfolio = () =>
+	frappeCall("kentender_strategy.api.strategy_ui_api.get_strategy_portfolio", {});
 
-export async function saveNewPlanDraft(payload) {
-	const response = await frappe.call({
-		method: "kentender_strategy.api.strategy_consumer_api.save_strategy_plan_draft",
-		args: { payload },
-		freeze: false,
-	});
-	return response.message;
-}
+export const saveNewPlanDraft = (payload) =>
+	frappeCall("kentender_strategy.api.strategy_consumer_api.save_strategy_plan_draft", { payload });

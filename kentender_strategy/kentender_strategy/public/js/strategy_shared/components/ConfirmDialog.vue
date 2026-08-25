@@ -50,24 +50,24 @@ function onConfirm() {
 <template>
 	<div
 		v-if="open"
-		class="kt-confirm-backdrop"
+		class="kt-dialog-backdrop"
 		@keydown="onKeydown"
 		tabindex="-1"
 	>
-		<div class="kt-confirm-box kt-card">
-			<div class="kt-card-title">{{ title }}</div>
-			<p v-if="message" class="kt-text-muted">{{ message }}</p>
+		<div class="kt-dialog" style="width: 420px">
+			<h2 class="kt-dialog-title">{{ title }}</h2>
+			<p v-if="message" class="kt-muted">{{ message }}</p>
 			<textarea
 				v-if="requireReason"
 				ref="reasonInput"
 				v-model="reason"
 				class="kt-input"
-				style="width: 100%; margin-top: 4px"
+				style="width: 100%"
 				rows="3"
 				:placeholder="reasonPlaceholder"
 				:maxlength="reasonMaxLength"
 			></textarea>
-			<div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px">
+			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('cancel')">{{ __("Cancel") }}</button>
 				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" @click="onConfirm">
 					{{ confirmLabel }}
@@ -76,19 +76,3 @@ function onConfirm() {
 		</div>
 	</div>
 </template>
-
-<style scoped>
-.kt-confirm-backdrop {
-	position: fixed;
-	inset: 0;
-	background: color-mix(in srgb, #000 40%, transparent);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
-}
-.kt-confirm-box {
-	width: 420px;
-	max-width: calc(100vw - 40px);
-}
-</style>

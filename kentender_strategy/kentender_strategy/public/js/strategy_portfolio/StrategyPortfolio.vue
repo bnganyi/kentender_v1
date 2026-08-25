@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRouteState } from "../strategy_shared/composables/useRouteState.js";
-import PageRail from "../strategy_shared/components/PageRail.vue";
+import { usePageRail } from "../strategy_shared/composables/usePageRail.js";
 import { fetchPortfolio, saveNewPlanDraft } from "./data/strategyPortfolioApi.js";
 
 const { route, go } = useRouteState("strategy-portfolio");
@@ -17,6 +17,8 @@ const railTrail = computed(() => {
 	}
 	return items;
 });
+const railEl = ref(null);
+usePageRail(railEl, railTrail);
 
 const loading = ref(true);
 const error = ref(null);
@@ -136,10 +138,10 @@ async function submitDraft() {
 </script>
 
 <template>
-	<div class="kt-strategy-ui">
-		<PageRail :trail="railTrail" />
-		<div class="kt-shell">
-			<template v-if="mode === 'list'">
+	<div class="kt-industry">
+		<div ref="railEl"></div>
+		<template v-if="mode === 'list'">
+			<div class="kt-shell">
 				<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
 					<div>
 						<div
@@ -147,14 +149,14 @@ async function submitDraft() {
 								text-transform: uppercase;
 								font-size: 11px;
 								letter-spacing: 0.08em;
-								color: var(--ktstr-color-accent);
+								color: var(--kt-color-accent);
 								margin-bottom: 6px;
 							"
 						>
 							{{ __("Strategy Alignment") }}
 						</div>
 						<h1 style="font-size: 32px">{{ __("Strategy Portfolio") }}</h1>
-						<p class="kt-text-muted" style="margin-top: 6px">
+						<p class="kt-muted" style="margin-top: 6px">
 							{{ __("Maintain the approved strategy structure used by Budget and Procurement Planning.") }}
 						</p>
 					</div>
@@ -164,28 +166,28 @@ async function submitDraft() {
 				</header>
 
 				<div v-if="procuringEntity" class="kt-card" style="padding: 10px 16px">
-					<span class="kv-label">{{ __("Procuring Entity") }}: </span>
+					<span class="kt-muted">{{ __("Procuring Entity") }}: </span>
 					<strong>{{ procuringEntity.name }}</strong>
 				</div>
 
 				<div class="kt-tabs">
-					<div class="kt-tab" :class="{ active: activeTab === 'plans' }" @click="activeTab = 'plans'">{{ __("Plans") }} {{ plans.length }}</div>
-					<div class="kt-tab" :class="{ active: activeTab === 'my-work' }" @click="activeTab = 'my-work'">{{ __("My work") }} {{ myWork.length }}</div>
+					<div class="kt-tab" :aria-selected="activeTab === 'plans'" @click="activeTab = 'plans'">{{ __("Plans") }} <span class="kt-count">{{ plans.length }}</span></div>
+					<div class="kt-tab" :aria-selected="activeTab === 'my-work'" @click="activeTab = 'my-work'">{{ __("My work") }} <span class="kt-count">{{ myWork.length }}</span></div>
 				</div>
 
 				<div v-if="forbidden" class="kt-card kt-empty">
-					<h3>{{ __("You do not have access to Strategy Alignment.") }}</h3>
+					<h2>{{ __("You do not have access to Strategy Alignment.") }}</h2>
 					<p>{{ __("Ask your KenTender administrator to review your Strategy assignment.") }}</p>
 				</div>
 
 				<div v-else-if="error" class="kt-card kt-empty">
-					<h3>{{ __("Strategy plans could not be loaded.") }}</h3>
+					<h2>{{ __("Strategy plans could not be loaded.") }}</h2>
 					<p>{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
 					<button type="button" class="kt-btn kt-btn-secondary" @click="refresh">{{ __("Try again") }}</button>
 				</div>
 
 				<div v-else-if="!loading && activeTab === 'plans' && plans.length === 0" class="kt-card kt-empty">
-					<h3>{{ __("No strategic plans exist for this scope.") }}</h3>
+					<h2>{{ __("No strategic plans exist for this scope.") }}</h2>
 					<button type="button" class="kt-btn kt-btn-secondary" @click="openCreateForm" v-if="!forbidden">
 						{{ __("New strategic plan") }}
 					</button>
@@ -216,11 +218,11 @@ async function submitDraft() {
 							<div
 								v-for="i in 5"
 								:key="i"
-								style="height: 16px; background: var(--ktstr-color-draft-bg); border-radius: 4px; margin-bottom: 10px"
+								class="kt-skel" style="height: 16px; margin-bottom: 10px"
 							></div>
 						</div>
 						<div v-else-if="filteredPlans.length === 0 && plans.length > 0" class="kt-empty">
-							<h3>{{ __("No plans match these filters.") }}</h3>
+							<h2>{{ __("No plans match these filters.") }}</h2>
 							<p>{{ __("Change or clear the filters to see other strategic plans.") }}</p>
 							<button type="button" class="kt-btn kt-btn-secondary" @click="clearFilters">
 								{{ __("Clear filters") }}
@@ -241,7 +243,7 @@ async function submitDraft() {
 								<tr v-for="p in filteredPlans" :key="p.id">
 									<td>
 										<div>{{ p.title }}</div>
-										<div class="kt-text-muted">{{ p.reference }}</div>
+										<div class="kt-muted">{{ p.reference }}</div>
 									</td>
 									<td>{{ p.plan_role }}</td>
 									<td>{{ p.period_label || "—" }}</td>
@@ -252,7 +254,7 @@ async function submitDraft() {
 							</tbody>
 						</table>
 					</div>
-					<div class="kt-text-muted">
+					<div class="kt-muted">
 						{{ __("Showing {0} of {1} plan(s)", [filteredPlans.length, plans.length]) }}
 					</div>
 				</template>
@@ -264,11 +266,11 @@ async function submitDraft() {
 							<div
 								v-for="i in 5"
 								:key="i"
-								style="height: 16px; background: var(--ktstr-color-draft-bg); border-radius: 4px; margin-bottom: 10px"
+								class="kt-skel" style="height: 16px; margin-bottom: 10px"
 							></div>
 						</div>
 						<div v-else-if="myWork.length === 0" class="kt-empty">
-							<h3>{{ __("Nothing needs your action right now.") }}</h3>
+							<h2>{{ __("Nothing needs your action right now.") }}</h2>
 						</div>
 						<table v-else class="kt-table">
 							<thead>
@@ -283,7 +285,7 @@ async function submitDraft() {
 								<tr v-for="w in myWork" :key="w.version_id">
 									<td>
 										<div>{{ w.plan_title }}</div>
-										<div class="kt-text-muted">{{ w.plan_reference }}</div>
+										<div class="kt-muted">{{ w.plan_reference }}</div>
 									</td>
 									<td>{{ __("Version") }} {{ w.version_number }}</td>
 									<td><span class="kt-status" :class="statusClass(w.status)">{{ w.status }}</span></td>
@@ -292,11 +294,13 @@ async function submitDraft() {
 							</tbody>
 						</table>
 					</div>
-					<div class="kt-text-muted">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
+					<div class="kt-muted">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
 				</template>
-			</template>
+			</div>
+		</template>
 
-			<template v-else>
+		<template v-else>
+			<div class="kt-shell" style="padding-bottom: 90px">
 				<header>
 					<h1 style="font-size: 28px">{{ __("New strategic plan") }} <span class="kt-status is-draft">{{ __("Draft") }}</span></h1>
 				</header>
@@ -306,11 +310,11 @@ async function submitDraft() {
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
 						<div class="kt-field">
 							<label>{{ __("Plan reference") }}</label>
-							<div class="kt-input" style="background: var(--ktstr-color-draft-bg)">{{ __("Not assigned") }}</div>
+							<div class="kt-input" style="background: color-mix(in srgb, var(--kt-color-text) 6%, transparent)">{{ __("Not assigned") }}</div>
 						</div>
 						<div class="kt-field">
 							<label>{{ __("Procuring Entity") }}</label>
-							<div class="kt-input" style="background: var(--ktstr-color-draft-bg)">
+							<div class="kt-input" style="background: color-mix(in srgb, var(--kt-color-text) 6%, transparent)">
 								{{ procuringEntity ? procuringEntity.name : __("Unavailable") }}
 							</div>
 						</div>
@@ -338,15 +342,15 @@ async function submitDraft() {
 							<input v-model="draft.period_end" class="kt-input" type="date" />
 						</div>
 					</div>
-					<p v-if="saveError" style="color: var(--ktstr-color-danger)">{{ saveError }}</p>
+					<p v-if="saveError" style="color: oklch(0.45 0.13 28)">{{ saveError }}</p>
 				</div>
-				<div class="kt-sticky-footer">
-					<button type="button" class="kt-btn kt-btn-ghost" @click="go()">{{ __("Cancel") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="saving" @click="submitDraft">
-						{{ __("Save draft") }}
-					</button>
-				</div>
-			</template>
-		</div>
+			</div>
+			<div class="kt-sticky-footer">
+				<button type="button" class="kt-btn kt-btn-ghost" @click="go()">{{ __("Cancel") }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" :disabled="saving" @click="submitDraft">
+					{{ __("Save draft") }}
+				</button>
+			</div>
+		</template>
 	</div>
 </template>

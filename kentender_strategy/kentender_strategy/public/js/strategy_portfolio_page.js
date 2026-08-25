@@ -48,7 +48,7 @@ function mount_strategy_portfolio(wrapper) {
 	$mountPoint.get(0).appendChild(el);
 
 	wrapper.__kt_strategy_portfolio_pending = true;
-	frappe.require("strategy_portfolio.bundle.js").then(() => {
+	frappe.require(["kt_industry_page_rail.bundle.js", "strategy_portfolio.bundle.js"]).then(() => {
 		if (!wrapper.__kt_strategy_portfolio_pending) return;
 		wrapper.__kt_strategy_portfolio_pending = false;
 		wrapper.__kt_strategy_portfolio_app = frappe.kt_mount_strategy_portfolio(el);

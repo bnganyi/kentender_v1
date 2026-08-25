@@ -37,7 +37,7 @@ function mount_strategy_review_task(wrapper) {
 	$mountPoint.get(0).appendChild(el);
 
 	wrapper.__kt_strategy_review_task_pending = true;
-	frappe.require("strategy_review_task.bundle.js").then(() => {
+	frappe.require(["kt_industry_page_rail.bundle.js", "strategy_review_task.bundle.js"]).then(() => {
 		if (!wrapper.__kt_strategy_review_task_pending) return;
 		wrapper.__kt_strategy_review_task_pending = false;
 		wrapper.__kt_strategy_review_task_app = frappe.kt_mount_strategy_review_task(el);

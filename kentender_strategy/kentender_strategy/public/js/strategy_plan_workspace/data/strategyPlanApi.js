@@ -1,9 +1,13 @@
 // Live data adapter for STR-UI-02 (Plan workspace) / STR-UI-03 (Structure editor).
+import { frappeCall as call } from "../../strategy_shared/data/frappeCall.js";
 
-async function call(method, args) {
-	const response = await frappe.call({ method, args, freeze: false });
-	return response.message;
-}
+export const getFinancialYears = () =>
+	call("frappe.client.get_list", {
+		doctype: "Financial Year",
+		fields: ["name"],
+		limit_page_length: 0,
+		order_by: "name desc",
+	}).then((rows) => (rows || []).map((row) => row.name));
 
 export const getPlanWorkspace = (planId) =>
 	call("kentender_strategy.api.strategy_ui_api.get_plan_workspace", { plan_id: planId });

@@ -3,7 +3,8 @@ import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRouteState } from "../strategy_shared/composables/useRouteState.js";
 import StructureTree from "../strategy_shared/components/StructureTree.vue";
 import ConfirmDialog from "../strategy_shared/components/ConfirmDialog.vue";
-import PageRail from "../strategy_shared/components/PageRail.vue";
+import AddTargetDialog from "./components/AddTargetDialog.vue";
+import { usePageRail } from "../strategy_shared/composables/usePageRail.js";
 import {
 	getPlanWorkspace,
 	getVersionHistory,
@@ -12,6 +13,7 @@ import {
 	submitVersion,
 	activateVersion,
 	createSuccessorVersion,
+	getFinancialYears,
 } from "./data/strategyPlanApi.js";
 
 const { route, go } = useRouteState("strategy-plan-workspace");
@@ -23,6 +25,8 @@ const railTrail = computed(() => [
 	{ label: __("Strategy Alignment"), route: ["strategy-portfolio"] },
 	{ label: __("Plan Workspace") },
 ]);
+const railEl = ref(null);
+usePageRail(railEl, railTrail);
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -33,6 +37,23 @@ const history = ref([]);
 const historyLoaded = ref(false);
 const actionError = ref(null);
 const acting = ref(false);
+const financialYears = ref([]);
+
+onMounted(async () => {
+	try {
+		financialYears.value = await getFinancialYears();
+	} catch (e) {
+		// Non-fatal: the Financial year select just stays empty; targets can
+		// still be created against Target By Date instead.
+	}
+});
+
+// STR-DES-05b: "At least 85%" — append the % sign only for a Percentage-unit
+// indicator, matching the artboard's exact "Expected result" cell format.
+function expectedResult(target, unit) {
+	const suffix = (unit || "").trim().toLowerCase() === "percentage" ? "%" : "";
+	return `${target.comparison} ${target.target_value}${suffix}`;
+}
 
 function statusClass(status) {
 	if (["Active", "Approved"].includes(status)) return "is-live";
@@ -97,6 +118,16 @@ function switchTab(t) {
 	go(planId.value, t);
 }
 
+// Every structure mutation (saveNodeEdit/saveNewChild/saveTargetEdit/…)
+// already calls saveStructureDraft and persists immediately — there is no
+// separate pending/unsaved buffer to flush. "Save draft" is a confirmation
+// affordance for "I'm intentionally leaving this as Draft for now", matching
+// STR-DES-05b's header without inventing persistence semantics that don't
+// exist elsewhere in this editor.
+function saveDraft() {
+	frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
+}
+
 const confirmDialog = ref(null); // 'activate' | 'submit' | null
 
 async function doActivate() {
@@ -151,8 +182,9 @@ async function doCreateSuccessor() {
 // --- Structure editor state (STR-UI-03) ---
 const selectedNode = ref(null);
 const editForm = reactive({});
-const creatingChildOf = ref(null); // { parent, childType } while composing a new node/indicator/target
+const creatingChildOf = ref(null); // { parent, childType } while composing a new node/indicator
 const savingNode = ref(false);
+const addingTargetTo = ref(null); // the Performance Indicator node, while the Add Performance Target dialog is open
 
 function selectNode(node) {
 	creatingChildOf.value = null;
@@ -167,6 +199,13 @@ function selectNode(node) {
 }
 
 function startAddChild({ parent, childType }) {
+	if (childType === "Performance Target") {
+		// STR-DES-05b: adding a target opens a dialog over the indicator's own
+		// detail view — it never replaces it, unlike every other child type.
+		selectNode(parent);
+		addingTargetTo.value = parent;
+		return;
+	}
 	selectedNode.value = null;
 	creatingChildOf.value = { parent, childType };
 	Object.assign(editForm, {
@@ -175,9 +214,6 @@ function startAddChild({ parent, childType }) {
 		indicator_name: "",
 		definition: "",
 		unit: "",
-		comparison: "At least",
-		target_value: "",
-		financial_year_id: "",
 	});
 }
 
@@ -342,17 +378,6 @@ async function saveNewChild() {
 					},
 				],
 			});
-		} else if (childType === "Performance Target") {
-			await saveStructureDraft(currentVersionId.value, {
-				targets: [
-					{
-						indicator_id: parent.id,
-						comparison: editForm.comparison,
-						target_value: editForm.target_value,
-						financial_year_id: editForm.financial_year_id || null,
-					},
-				],
-			});
 		} else {
 			await saveStructureDraft(currentVersionId.value, {
 				nodes: [
@@ -379,6 +404,35 @@ async function addPillar() {
 	startAddChild({ parent: { id: null, children: tree.value.tree }, childType: "Pillar" });
 }
 
+function closeTargetDialog() {
+	addingTargetTo.value = null;
+}
+
+async function confirmAddTarget({ financial_year_id, comparison, target_value }) {
+	if (!addingTargetTo.value || !currentVersionId.value) return;
+	savingNode.value = true;
+	actionError.value = null;
+	try {
+		await saveStructureDraft(currentVersionId.value, {
+			targets: [
+				{
+					indicator_id: addingTargetTo.value.id,
+					comparison,
+					target_value,
+					financial_year_id: financial_year_id || null,
+				},
+			],
+		});
+		frappe.show_alert({ message: __("Added"), indicator: "green" });
+		addingTargetTo.value = null;
+		await refreshTree();
+	} catch (e) {
+		actionError.value = e.message || String(e);
+	} finally {
+		savingNode.value = false;
+	}
+}
+
 async function saveNewPillar() {
 	savingNode.value = true;
 	actionError.value = null;
@@ -397,20 +451,20 @@ async function saveNewPillar() {
 </script>
 
 <template>
-	<div class="kt-strategy-ui">
-		<PageRail :trail="railTrail" />
+	<div class="kt-industry">
+		<div ref="railEl"></div>
 		<div class="kt-shell">
 			<div v-if="loading">{{ __("Loading...") }}</div>
 			<div v-else-if="notFound" class="kt-card kt-empty">
-				<h3>{{ __("This plan could not be found.") }}</h3>
+				<h2>{{ __("This plan could not be found.") }}</h2>
 			</div>
 			<div v-else-if="forbidden" class="kt-card kt-empty">
-				<h3>{{ __("You do not have access to this plan.") }}</h3>
+				<h2>{{ __("You do not have access to this plan.") }}</h2>
 			</div>
 			<template v-else-if="workspace">
 				<header style="display: flex; justify-content: space-between; align-items: flex-start">
 					<div>
-						<div class="kt-text-muted" style="text-transform: uppercase; font-size: 11px">
+						<div class="kt-muted" style="text-transform: uppercase; font-size: 11px">
 							{{ workspace.plan.reference }}
 						</div>
 						<h1 style="font-size: 28px; display: inline-flex; align-items: center; gap: 10px">
@@ -442,17 +496,17 @@ async function saveNewPillar() {
 					</div>
 				</header>
 
-				<p v-if="actionError" style="color: var(--ktstr-color-danger)">{{ actionError }}</p>
+				<p v-if="actionError" style="color: oklch(0.45 0.13 28)">{{ actionError }}</p>
 
 				<div class="kt-tabs">
-					<div class="kt-tab" :class="{ active: tab === 'overview' }" @click="switchTab('overview')">{{ __("Overview") }}</div>
-					<div class="kt-tab" :class="{ active: tab === 'structure' }" @click="switchTab('structure')">{{ __("Structure") }}</div>
-					<div class="kt-tab" :class="{ active: tab === 'history' }" @click="switchTab('history')">{{ __("History") }}</div>
+					<div class="kt-tab" :aria-selected="tab === 'overview'" @click="switchTab('overview')">{{ __("Overview") }}</div>
+					<div class="kt-tab" :aria-selected="tab === 'structure'" @click="switchTab('structure')">{{ __("Structure") }}</div>
+					<div class="kt-tab" :aria-selected="tab === 'history'" @click="switchTab('history')">{{ __("History") }}</div>
 				</div>
 
 				<template v-if="tab === 'overview'">
 					<div v-if="workspace.no_version" class="kt-card kt-empty">
-						<h3>{{ __("This plan has no version yet.") }}</h3>
+						<h2>{{ __("This plan has no version yet.") }}</h2>
 					</div>
 					<template v-else>
 						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
@@ -460,34 +514,34 @@ async function saveNewPillar() {
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 								<div class="kt-card-title">{{ workspace.pending_version ? __("Version authority") : __("Plan identity") }}</div>
 								<template v-if="workspace.pending_version">
-									<div class="kv-row"><span class="kv-label">{{ __("Plan period") }}</span><span class="kv-value">{{ workspace.plan.period_label }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Version effective period") }}</span><span class="kv-value">{{ workspace.pending_version.effective_period_label || "—" }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Approved by") }}</span><span class="kv-value">{{ workspace.version_authority.approved_by?.actor || "—" }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Current Active version") }}</span><span class="kv-value">{{ workspace.version_authority.current_active_version ? `Version ${workspace.version_authority.current_active_version.version_number}` : "—" }}</span></div>
+									<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Version effective period") }}</dt><dd>{{ workspace.pending_version.effective_period_label || "—" }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Approved by") }}</dt><dd>{{ workspace.version_authority.approved_by?.actor || "—" }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Current Active version") }}</dt><dd>{{ workspace.version_authority.current_active_version ? `Version ${workspace.version_authority.current_active_version.version_number}` : "—" }}</dd></div>
 								</template>
 								<template v-else>
-									<div class="kv-row"><span class="kv-label">{{ __("Procuring Entity") }}</span><span class="kv-value">{{ workspace.plan.procuring_entity?.name }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Organisation scope") }}</span><span class="kv-value">{{ __("PE-wide") }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Plan role") }}</span><span class="kv-value">{{ workspace.plan.plan_role }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Plan period") }}</span><span class="kv-value">{{ workspace.plan.period_label }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Active version") }}</span><span class="kv-value">{{ workspace.active_version ? `Version ${workspace.active_version.version_number}` : "—" }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Version effective period") }}</span><span class="kv-value">{{ workspace.current_version.effective_period_label || "—" }}</span></div>
+									<div class="kt-row"><dt>{{ __("Procuring Entity") }}</dt><dd>{{ workspace.plan.procuring_entity?.name }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Organisation scope") }}</dt><dd>{{ __("PE-wide") }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Plan role") }}</dt><dd>{{ workspace.plan.plan_role }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Active version") }}</dt><dd>{{ workspace.active_version ? `Version ${workspace.active_version.version_number}` : "—" }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Version effective period") }}</dt><dd>{{ workspace.current_version.effective_period_label || "—" }}</dd></div>
 								</template>
 							</div>
 							<div class="kt-card kt-blueprint">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 								<div class="kt-card-title">{{ workspace.pending_version ? __("Activation readiness") : __("Current authority") }}</div>
 								<template v-if="workspace.pending_version && workspace.readiness">
-									<div v-for="c in workspace.readiness.checks" :key="c.check" class="kv-row">
-										<span class="kv-label">{{ c.check }}</span>
-										<span class="kt-status is-live">{{ c.ready ? __("Ready") : __("Not ready") }}</span>
+									<div v-for="c in workspace.readiness.checks" :key="c.check" class="kt-row">
+										<dt>{{ c.check }}</dt>
+										<dd><span class="kt-status is-live">{{ c.ready ? __("Ready") : __("Not ready") }}</span></dd>
 									</div>
 								</template>
 								<template v-else-if="workspace.current_authority">
-									<div class="kv-row"><span class="kv-label">{{ __("Approved by") }}</span><span class="kv-value">{{ workspace.current_authority.approved_by?.actor || "—" }}</span></div>
-									<div class="kv-row"><span class="kv-label">{{ __("Activated") }}</span><span class="kv-value">{{ workspace.current_authority.activated?.actor || "—" }}</span></div>
+									<div class="kt-row"><dt>{{ __("Approved by") }}</dt><dd>{{ workspace.current_authority.approved_by?.actor || "—" }}</dd></div>
+									<div class="kt-row"><dt>{{ __("Activated") }}</dt><dd>{{ workspace.current_authority.activated?.actor || "—" }}</dd></div>
 								</template>
-								<p v-else class="kt-text-muted">{{ __("No authority events recorded yet.") }}</p>
+								<p v-else class="kt-muted">{{ __("No authority events recorded yet.") }}</p>
 							</div>
 							<div class="kt-card kt-blueprint" style="grid-column: 1 / -1">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -495,31 +549,27 @@ async function saveNewPillar() {
 								<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 24px">
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="16"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Pillars") }}</div><div class="kt-figure">{{ workspace.structure_summary.pillars }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Pillars") }}</div><div class="kt-figure">{{ workspace.structure_summary.pillars }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18 8.58 3.9a1 1 0 0 1 0 1.83l-8.58 3.9a2 2 0 0 1-1.66 0L2.6 7.91a1 1 0 0 1 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.programmes }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.programmes }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003d9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Sub-programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.sub_programmes }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Sub-programmes") }}</div><div class="kt-figure">{{ workspace.structure_summary.sub_programmes }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Strategic objectives") }}</div><div class="kt-figure is-live">{{ workspace.structure_summary.strategic_objectives }}</div></div>
-									</div>
-									<div style="display: flex; align-items: center; gap: 12px">
-										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Strategic outcomes") }}</div><div class="kt-figure is-live">{{ workspace.structure_summary.strategic_outcomes }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Strategic objectives") }}</div><div class="kt-figure is-live">{{ workspace.structure_summary.strategic_objectives }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Performance indicators") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_indicators }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance indicators") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_indicators }}</div></div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 12px">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92610a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-										<div><div class="kv-label" style="font-size: 12px">{{ __("Performance targets") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_targets }}</div></div>
+										<div><div class="kt-muted" style="font-size: 12px">{{ __("Performance targets") }}</div><div class="kt-figure is-attention">{{ workspace.structure_summary.performance_targets }}</div></div>
 									</div>
 								</div>
 							</div>
@@ -529,6 +579,9 @@ async function saveNewPillar() {
 
 				<template v-else-if="tab === 'structure'">
 					<div style="display: flex; justify-content: flex-end; gap: 12px" v-if="workspace.is_editable_draft">
+						<button type="button" class="kt-btn kt-btn-secondary" @click="saveDraft">
+							{{ __("Save draft") }}
+						</button>
 						<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" @click="confirmDialog = 'submit'">
 							{{ __("Submit for review") }}
 						</button>
@@ -549,7 +602,7 @@ async function saveNewPillar() {
 								@select="selectNode"
 								@add-child="startAddChild"
 							/>
-							<p v-if="!tree.tree.length" class="kt-text-muted">{{ __("No structure yet.") }}</p>
+							<p v-if="!tree.tree.length" class="kt-muted">{{ __("No structure yet.") }}</p>
 						</div>
 						<div class="kt-card kt-blueprint" style="width: 58%">
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -559,15 +612,6 @@ async function saveNewPillar() {
 									<div class="kt-field"><label>{{ __("Indicator name") }}</label><input v-model="editForm.indicator_name" class="kt-input" /></div>
 									<div class="kt-field"><label>{{ __("Definition") }}</label><textarea v-model="editForm.definition" class="kt-input" rows="2"></textarea></div>
 									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" /></div>
-								</template>
-								<template v-else-if="creatingChildOf.childType === 'Performance Target'">
-									<div class="kt-field"><label>{{ __("Financial year") }}</label><input v-model="editForm.financial_year_id" class="kt-input" placeholder="FY id" /></div>
-									<div class="kt-field"><label>{{ __("Comparison") }}</label>
-										<select v-model="editForm.comparison" class="kt-input">
-											<option>At least</option><option>At most</option><option>Equal to</option>
-										</select>
-									</div>
-									<div class="kt-field"><label>{{ __("Target value") }}</label><input v-model="editForm.target_value" class="kt-input" type="number" /></div>
 								</template>
 								<template v-else>
 									<div class="kt-field"><label>{{ __("Title") }}</label><input v-model="editForm.title" class="kt-input" /></div>
@@ -587,7 +631,7 @@ async function saveNewPillar() {
 							</template>
 							<template v-else-if="selectedNode">
 								<div class="kt-card-title">{{ selectedNode.node_type }}</div>
-								<p v-if="selectedNodeContext" class="kt-text-muted" style="margin-top: -8px; margin-bottom: 12px">
+								<p v-if="selectedNodeContext" class="kt-muted" style="margin-top: -8px; margin-bottom: 12px">
 									{{ selectedNodeContext }}
 								</p>
 								<template v-if="selectedNode.node_type === 'Performance Indicator'">
@@ -596,22 +640,25 @@ async function saveNewPillar() {
 									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" :disabled="!workspace.is_editable_draft" /></div>
 									<div class="kt-card-title" style="margin-top: 16px">{{ __("Targets") }}</div>
 									<table class="kt-table">
-										<thead><tr><th>{{ __("Period") }}</th><th>{{ __("Expected result") }}</th><th v-if="workspace.is_editable_draft"></th></tr></thead>
+										<thead><tr><th>{{ __("Period") }}</th><th>{{ __("Expected result") }}</th><th v-if="workspace.is_editable_draft">{{ __("Action") }}</th></tr></thead>
 										<tbody>
 											<template v-for="t in selectedNode.children" :key="t.id">
 												<tr v-if="editingTargetId !== t.id">
 													<td>{{ t.period_label || "—" }}</td>
-													<td>{{ t.comparison }} {{ t.target_value }}</td>
+													<td>{{ expectedResult(t, selectedNode.unit) }}</td>
 													<td v-if="workspace.is_editable_draft">
 														<a href="#" @click.prevent="startEditTarget(t)">{{ __("Edit") }}</a>
 														&nbsp;
-														<a href="#" style="color: var(--ktstr-color-danger)" @click.prevent="deleteTarget(t)">{{ __("Delete") }}</a>
+														<a href="#" style="color: oklch(0.45 0.13 28)" @click.prevent="deleteTarget(t)">{{ __("Delete") }}</a>
 													</td>
 												</tr>
 												<tr v-else>
 													<td colspan="3">
 														<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
-															<input v-model="targetEditForm.financial_year_id" class="kt-input" style="width: 110px" :placeholder="__('FY id')" />
+															<select v-model="targetEditForm.financial_year_id" class="kt-input" style="width: 150px">
+																<option value="">{{ __("Select FY") }}</option>
+																<option v-for="fy in financialYears" :key="fy" :value="fy">{{ fy }}</option>
+															</select>
 															<select v-model="targetEditForm.comparison" class="kt-input" style="width: 130px">
 																<option>At least</option><option>At most</option><option>Equal to</option>
 															</select>
@@ -628,7 +675,7 @@ async function saveNewPillar() {
 										v-if="workspace.is_editable_draft"
 										type="button"
 										class="kt-btn kt-btn-secondary"
-										style="margin-top: 8px"
+										style="margin-top: 8px; margin-bottom: 24px"
 										@click="startAddChild({ parent: selectedNode, childType: 'Performance Target' })"
 									>
 										{{ __("Add target") }}
@@ -638,8 +685,11 @@ async function saveNewPillar() {
 									<div class="kt-field"><label>{{ __("Title") }}</label><input v-model="editForm.title" class="kt-input" :disabled="!workspace.is_editable_draft" /></div>
 									<div class="kt-field"><label>{{ __("Display order") }}</label><input v-model="editForm.display_order" class="kt-input" type="number" :disabled="!workspace.is_editable_draft" /></div>
 								</template>
-								<div v-if="workspace.is_editable_draft && selectedNode.node_type !== 'Performance Target'" style="display: flex; justify-content: space-between">
-									<button type="button" class="kt-btn kt-btn-danger-outline" :disabled="savingNode" @click="deleteSelectedNode">
+								<div
+									v-if="workspace.is_editable_draft && selectedNode.node_type !== 'Performance Target'"
+									style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--kt-color-divider)"
+								>
+									<button type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="savingNode" @click="deleteSelectedNode">
 										{{ selectedNode.node_type === "Performance Indicator" ? __("Delete indicator") : __("Delete node") }}
 									</button>
 									<button type="button" class="kt-btn kt-btn-primary" :disabled="savingNode" @click="saveNodeEdit">
@@ -647,7 +697,7 @@ async function saveNewPillar() {
 									</button>
 								</div>
 							</template>
-							<p v-else class="kt-text-muted">{{ __("Select a hierarchy item to view or edit it.") }}</p>
+							<p v-else class="kt-muted">{{ __("Select a hierarchy item to view or edit it.") }}</p>
 						</div>
 					</div>
 				</template>
@@ -665,7 +715,7 @@ async function saveNewPillar() {
 								</tr>
 							</tbody>
 						</table>
-						<p v-if="!history.length" class="kt-text-muted">{{ __("No events recorded yet.") }}</p>
+						<p v-if="!history.length" class="kt-muted">{{ __("No events recorded yet.") }}</p>
 					</div>
 				</template>
 			</template>
@@ -694,6 +744,14 @@ async function saveNewPillar() {
 			:confirm-label="__('Create successor version')"
 			@confirm="doCreateSuccessor"
 			@cancel="confirmDialog = null"
+		/>
+		<AddTargetDialog
+			:open="Boolean(addingTargetTo)"
+			:financial-years="financialYears"
+			:unit="addingTargetTo?.unit"
+			:saving="savingNode"
+			@confirm="confirmAddTarget"
+			@cancel="closeTargetDialog"
 		/>
 	</div>
 </template>

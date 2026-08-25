@@ -1,31 +1,81 @@
-.kt-auth-surface { --auth-blue:#0645a5; --auth-ink:#18191d; --auth-muted:#687083; --auth-line:#d9dee8; --auth-bg:#f7f8fa; max-width:1280px; margin:0 auto; padding:32px; color:var(--auth-ink); font-family:"Source Sans 3","Segoe UI",sans-serif; }
-.kt-auth-surface * { box-sizing:border-box; min-width:0; }
-.kt-auth-breadcrumb { color:var(--auth-muted); font-size:14px; margin-bottom:12px; }
-.kt-auth-header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:28px; }
-.kt-auth-header h1 { margin:0 0 8px; font-size:36px; line-height:1.12; font-weight:700; letter-spacing:-.02em; }
-.kt-auth-header p { margin:0; color:var(--auth-muted); font-size:16px; }
-.kt-auth-btn { border:1px solid var(--auth-line); background:#fff; color:var(--auth-blue); border-radius:6px; padding:10px 16px; font-weight:700; }
-.kt-auth-btn.primary { background:var(--auth-blue); color:#fff; border-color:var(--auth-blue); }
-.kt-auth-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
-.kt-auth-card,.kt-auth-panel { background:#fff; border:1px solid var(--auth-line); border-radius:10px; }
-.kt-auth-card { padding:18px; }
-.kt-auth-label { display:block; color:var(--auth-muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
-.kt-auth-value { font:600 22px "IBM Plex Mono","Courier New",monospace; }
-.kt-auth-panel { overflow:hidden; margin-bottom:28px; }
-.kt-auth-panel h2 { margin:0; padding:22px 24px; font-size:24px; border-bottom:1px solid var(--auth-line); }
-.kt-auth-table-wrap { overflow-x:auto; }
-.kt-auth-table { width:100%; border-collapse:collapse; table-layout:auto; }
-.kt-auth-table th { background:var(--auth-bg); color:#4d5260; font-size:12px; text-transform:uppercase; letter-spacing:.04em; text-align:left; padding:14px 16px; white-space:nowrap; }
-.kt-auth-table td { padding:16px; border-top:1px solid var(--auth-line); vertical-align:top; overflow-wrap:anywhere; }
-.kt-auth-table tr.failed td { background:#fff5f5; }
-.kt-auth-status { display:inline-flex; align-items:center; border-radius:999px; padding:5px 10px; font-size:12px; font-weight:800; background:#e3f7ef; color:#087755; }
-.kt-auth-status.denied { background:#fde8e8; color:#b4232c; }
-.kt-auth-note,.kt-auth-banner { border:1px solid var(--auth-line); background:var(--auth-bg); border-radius:8px; padding:16px 18px; color:#434a5b; }
-.kt-auth-banner { margin-bottom:24px; }
-.kt-auth-banner strong { display:block; color:var(--auth-ink); text-transform:uppercase; font-size:12px; letter-spacing:.06em; margin-bottom:4px; }
-.kt-auth-dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; padding:24px; }
-.kt-auth-dl dd { margin:0; font-size:16px; overflow-wrap:anywhere; }
-.kt-auth-links { display:flex; flex-wrap:wrap; gap:20px; padding-top:20px; border-top:1px solid var(--auth-line); }
-.kt-auth-links a { color:var(--auth-blue); font-weight:600; }
-@media(max-width:900px){.kt-auth-surface{padding:20px 14px}.kt-auth-header{flex-direction:column}.kt-auth-grid,.kt-auth-dl{grid-template-columns:1fr 1fr}.kt-auth-header h1{font-size:30px}}
-@media(max-width:560px){.kt-auth-grid,.kt-auth-dl{grid-template-columns:1fr}.kt-auth-table{min-width:760px}}
+/*
+ * Access management admin pages (user-operational-acc, workflow-routing-rul,
+ * access-diagnostic) — vanilla-JS Desk pages, not Vue. Scoped under
+ * .kt-industry (kt_industry_tokens.css, the one canonical design system —
+ * AGENTS.md §6.6): buttons/cards/tables/status pills/eyebrow labels reuse
+ * Industry's own classes directly (authorization_admin_pages.js emits
+ * kt-btn/kt-card/kt-table/kt-eyebrow etc.). Only the handful of layout
+ * patterns Industry has no equivalent for (breadcrumb line, stat grid,
+ * definition-list grid, note/banner box, link row) stay here, built from
+ * Industry's own CSS custom properties rather than a separate palette.
+ */
+.kt-industry .kt-auth-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--kt-space-4);
+	margin-bottom: var(--kt-space-8);
+}
+.kt-industry .kt-auth-value {
+	font: 600 22px "IBM Plex Mono", "Courier New", monospace;
+	color: var(--kt-color-text);
+}
+.kt-industry .kt-auth-dl {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--kt-space-6);
+	padding: var(--kt-space-6);
+}
+.kt-industry .kt-auth-dl dd {
+	margin: 0;
+	font-size: 16px;
+	overflow-wrap: anywhere;
+}
+.kt-industry .kt-auth-note,
+.kt-industry .kt-auth-banner {
+	border: 1px solid var(--kt-color-divider);
+	background: color-mix(in srgb, var(--kt-color-text) 4%, transparent);
+	border-radius: var(--kt-radius-md);
+	padding: 16px 18px;
+	color: color-mix(in srgb, var(--kt-color-text) 82%, transparent);
+}
+.kt-industry .kt-auth-banner {
+	margin-bottom: var(--kt-space-6);
+}
+.kt-industry .kt-auth-banner strong {
+	display: block;
+	color: var(--kt-color-text);
+	text-transform: uppercase;
+	font-size: 12px;
+	letter-spacing: 0.06em;
+	margin-bottom: 4px;
+}
+.kt-industry .kt-auth-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-auth-links a {
+	color: var(--kt-color-accent);
+	font-weight: 600;
+}
+.kt-industry table.kt-table tr.failed td {
+	background: color-mix(in srgb, oklch(0.45 0.13 28) 6%, transparent);
+}
+
+@media (max-width: 900px) {
+	.kt-industry .kt-auth-grid,
+	.kt-industry .kt-auth-dl {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+@media (max-width: 560px) {
+	.kt-industry .kt-auth-grid,
+	.kt-industry .kt-auth-dl {
+		grid-template-columns: 1fr;
+	}
+	.kt-industry .kt-auth-table {
+		min-width: 760px;
+	}
+}

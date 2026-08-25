@@ -39,7 +39,7 @@ function mount_strategy_plan_workspace(wrapper) {
 	$mountPoint.get(0).appendChild(el);
 
 	wrapper.__kt_strategy_plan_workspace_pending = true;
-	frappe.require("strategy_plan_workspace.bundle.js").then(() => {
+	frappe.require(["kt_industry_page_rail.bundle.js", "strategy_plan_workspace.bundle.js"]).then(() => {
 		if (!wrapper.__kt_strategy_plan_workspace_pending) return;
 		wrapper.__kt_strategy_plan_workspace_pending = false;
 		wrapper.__kt_strategy_plan_workspace_app = frappe.kt_mount_strategy_plan_workspace(el);
