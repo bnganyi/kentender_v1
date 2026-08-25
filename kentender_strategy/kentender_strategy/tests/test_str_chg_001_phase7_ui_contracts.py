@@ -126,24 +126,12 @@ class Phase7TestBase(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		)
-		outcome = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Strategy Node",
-					"plan_version_id": plan_version,
-					"node_type": "Strategic Outcome",
-					"title": "Outcome A",
-					"display_order": 4,
-					"parent_node_id": objective.name,
-				}
-			).insert(ignore_permissions=True)
-		)
 		indicator = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Performance Indicator",
 					"plan_version_id": plan_version,
-					"measures_node_id": outcome.name,
+					"measures_node_id": objective.name,
 					"indicator_name": "Indicator A",
 					"definition": "Definition",
 					"unit": "Percentage",
@@ -165,7 +153,6 @@ class Phase7TestBase(FrappeTestCase):
 			"pillar": pillar.name,
 			"programme": programme.name,
 			"objective": objective.name,
-			"outcome": outcome.name,
 			"indicator": indicator.name,
 			"target": target.name,
 		}
@@ -212,15 +199,13 @@ class TestPlanWorkspaceAndTree(Phase7TestBase):
 		self.assertEqual(tree["counts"]["pillars"], 1)
 		self.assertEqual(tree["counts"]["programmes"], 1)
 		self.assertEqual(tree["counts"]["strategic_objectives"], 1)
-		self.assertEqual(tree["counts"]["strategic_outcomes"], 1)
 		self.assertEqual(tree["counts"]["performance_indicators"], 1)
 		self.assertEqual(tree["counts"]["performance_targets"], 1)
 		root = tree["tree"][0]
 		self.assertEqual(root["node_type"], "Pillar")
 		programme = root["children"][0]
 		objective = programme["children"][0]
-		outcome = objective["children"][0]
-		indicator = outcome["children"][0]
+		indicator = objective["children"][0]
 		self.assertEqual(indicator["node_type"], "Performance Indicator")
 		target = indicator["children"][0]
 		self.assertEqual(target["node_type"], "Performance Target")

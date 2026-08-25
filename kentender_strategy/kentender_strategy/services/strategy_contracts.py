@@ -1006,17 +1006,14 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 	}
 
 
-# STR-CHG-001 Phase 1's Strategy Node node_type values -> the compact,
-# space-free path-entry "type" tokens this module's callers already expect
-# (strategy_consumer.strategy_fields_from_doc's path_by_type lookups predate
-# the rebuild and were not changed, so this mapping is what keeps them
-# working unmodified).
+# Strategy Node node_type values -> the compact, space-free path-entry "type"
+# tokens this module's build_strategy_reference()/list_active_targets()
+# callers expect.
 _NODE_PATH_TYPE = {
 	"Pillar": "Pillar",
 	"Programme": "Programme",
 	"Sub-programme": "SubProgramme",
 	"Strategic Objective": "StrategicObjective",
-	"Strategic Outcome": "StrategicOutcome",
 }
 
 

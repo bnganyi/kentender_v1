@@ -124,24 +124,12 @@ class Phase4TestBase(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		)
-		outcome = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Strategy Node",
-					"plan_version_id": plan_version,
-					"node_type": "Strategic Outcome",
-					"title": "Outcome",
-					"display_order": 4,
-					"parent_node_id": objective.name,
-				}
-			).insert(ignore_permissions=True)
-		)
 		indicator = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Performance Indicator",
 					"plan_version_id": plan_version,
-					"measures_node_id": outcome.name,
+					"measures_node_id": objective.name,
 					"indicator_name": "Indicator",
 					"definition": "Definition",
 					"unit": "Percentage",
@@ -163,7 +151,6 @@ class Phase4TestBase(FrappeTestCase):
 			"pillar": pillar.name,
 			"programme": programme.name,
 			"objective": objective.name,
-			"outcome": outcome.name,
 			"indicator": indicator.name,
 			"target": target.name,
 		}
@@ -277,7 +264,7 @@ class TestCreateStrategySnapshot(Phase4TestBase):
 		nodes = self._fill_hierarchy(version)
 		frappe.db.set_value("Strategic Plan Version", version, "status", "Active")
 		with self.assertRaises(frappe.ValidationError):
-			api.create_strategy_snapshot(version, nodes["outcome"], f"corr-outcome-{self.suffix}")
+			api.create_strategy_snapshot(version, nodes["pillar"], f"corr-pillar-{self.suffix}")
 
 
 class TestBudgetTargetReferenceRebuilt(Phase4TestBase):
@@ -298,7 +285,7 @@ class TestBudgetTargetReferenceRebuilt(Phase4TestBase):
 		self.assertEqual(result["reference"]["node_id"], nodes["target"])
 		self.assertEqual(
 			[p["type"] for p in result["reference"]["path"]],
-			["Pillar", "Programme", "StrategicObjective", "StrategicOutcome", "PerformanceIndicator", "PerformanceTarget"],
+			["Pillar", "Programme", "StrategicObjective", "PerformanceIndicator", "PerformanceTarget"],
 		)
 
 	def test_apply_budget_primary_strategy_reference_sets_fields(self):
@@ -376,7 +363,7 @@ class TestPlanDraftAndSuccessorCommands(Phase4TestBase):
 			"Strategy Node", filters={"plan_version_id": out["name"]}, fields=["name", "node_type", "parent_node_id"]
 		)
 		self._cleanup.extend(("Strategy Node", n.name) for n in cloned_nodes)
-		self.assertEqual(len(cloned_nodes), 4)
+		self.assertEqual(len(cloned_nodes), 3)
 		objective_clone = next(n for n in cloned_nodes if n.node_type == "Strategic Objective")
 		self.assertNotEqual(objective_clone.name, nodes["objective"])
 
@@ -385,8 +372,7 @@ class TestPlanDraftAndSuccessorCommands(Phase4TestBase):
 		)
 		self._cleanup.extend(("Performance Indicator", i.name) for i in cloned_indicators)
 		self.assertEqual(len(cloned_indicators), 1)
-		outcome_clone = next(n for n in cloned_nodes if n.node_type == "Strategic Outcome")
-		self.assertEqual(cloned_indicators[0].measures_node_id, outcome_clone.name)
+		self.assertEqual(cloned_indicators[0].measures_node_id, objective_clone.name)
 
 		cloned_targets = frappe.get_all(
 			"Performance Target", filters={"indicator_id": cloned_indicators[0].name}, fields=["name"]

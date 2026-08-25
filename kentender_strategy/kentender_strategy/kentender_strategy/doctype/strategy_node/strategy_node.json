@@ -51,7 +51,7 @@
    "fieldname": "node_type",
    "fieldtype": "Select",
    "label": "Node Type",
-   "options": "Pillar\nProgramme\nSub-programme\nStrategic Objective\nStrategic Outcome",
+   "options": "Pillar\nProgramme\nSub-programme\nStrategic Objective",
    "reqd": 1,
    "in_list_view": 1
   },

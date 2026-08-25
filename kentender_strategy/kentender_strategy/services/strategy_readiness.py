@@ -42,14 +42,11 @@ def get_version_readiness(plan_version_id: str) -> dict:
 	)
 
 	counts = _node_type_counts(plan_version_id)
-	hierarchy_ready = counts.get("Pillar", 0) > 0 and (
-		counts.get("Strategic Objective", 0) > 0 or counts.get("Strategic Outcome", 0) > 0
-	)
+	hierarchy_ready = counts.get("Pillar", 0) > 0 and counts.get("Strategic Objective", 0) > 0
 
 	indicator_count, target_count = _indicator_and_target_counts(plan_version_id)
 	content_ready = (
 		counts.get("Strategic Objective", 0) > 0
-		and counts.get("Strategic Outcome", 0) > 0
 		and indicator_count > 0
 		and target_count > 0
 	)

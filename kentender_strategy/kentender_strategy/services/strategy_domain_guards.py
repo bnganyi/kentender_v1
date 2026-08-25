@@ -17,24 +17,21 @@ NODE_TYPE_PILLAR = "Pillar"
 NODE_TYPE_PROGRAMME = "Programme"
 NODE_TYPE_SUB_PROGRAMME = "Sub-programme"
 NODE_TYPE_OBJECTIVE = "Strategic Objective"
-NODE_TYPE_OUTCOME = "Strategic Outcome"
 NODE_TYPES = (
 	NODE_TYPE_PILLAR,
 	NODE_TYPE_PROGRAMME,
 	NODE_TYPE_SUB_PROGRAMME,
 	NODE_TYPE_OBJECTIVE,
-	NODE_TYPE_OUTCOME,
 )
-# STR-BR-007: Pillar -> Programme -> optional Sub-programme -> Strategic Objective ->
-# Strategic Outcome. A Programme may parent an Objective when Sub-programme is omitted.
+# STR-BR-007 (v1.4): Pillar -> Programme -> optional Sub-programme -> Strategic
+# Objective. A Programme may parent an Objective when Sub-programme is omitted.
 NODE_ALLOWED_PARENT_TYPES: dict[str, tuple[str, ...]] = {
 	NODE_TYPE_PILLAR: (),
 	NODE_TYPE_PROGRAMME: (NODE_TYPE_PILLAR,),
 	NODE_TYPE_SUB_PROGRAMME: (NODE_TYPE_PROGRAMME,),
 	NODE_TYPE_OBJECTIVE: (NODE_TYPE_PROGRAMME, NODE_TYPE_SUB_PROGRAMME),
-	NODE_TYPE_OUTCOME: (NODE_TYPE_OBJECTIVE,),
 }
-MEASURABLE_NODE_TYPES = (NODE_TYPE_OBJECTIVE, NODE_TYPE_OUTCOME)
+MEASURABLE_NODE_TYPES = (NODE_TYPE_OBJECTIVE,)
 TARGET_COMPARISONS = ("At least", "At most", "Equal to")
 
 
@@ -176,7 +173,7 @@ def validate_strategy_node(doc) -> None:
 
 
 def validate_performance_indicator(doc) -> None:
-	"""STR-BR-008/009: measures an Objective/Outcome from the same version; unique
+	"""STR-BR-008/009: measures a Strategic Objective from the same version; unique
 	name under its measured node within one version."""
 	_assert_version_editable(doc.plan_version_id)
 	node = frappe.db.get_value(
@@ -185,7 +182,7 @@ def validate_performance_indicator(doc) -> None:
 	if not node:
 		frappe.throw(_("Measures Node is required"))
 	if node.node_type not in MEASURABLE_NODE_TYPES:
-		frappe.throw(_("An indicator may only measure a Strategic Objective or Strategic Outcome"))
+		frappe.throw(_("An indicator may only measure a Strategic Objective"))
 	if node.plan_version_id != doc.plan_version_id:
 		frappe.throw(_("Indicator must belong to the same plan version as the node it measures"))
 

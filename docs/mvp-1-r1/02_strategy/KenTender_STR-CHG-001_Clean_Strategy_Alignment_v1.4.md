@@ -3,8 +3,8 @@
 | Control | Value |
 |---|---|
 | Document ID | STR-CHG-001 |
-| Version | 1.3 |
-| Date | 23 August 2026 |
+| Version | 1.4 |
+| Date | 25 August 2026 |
 | Status | Proposed for product-owner approval |
 | Module | Strategy Alignment |
 | Implementation posture | Correction in place; no compatibility layer |
@@ -21,7 +21,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.3 |
+| Earlier item | Disposition in v1.4 |
 |---|---|
 | Plan Value Commitment / Strategy Value Commitment | Remove completely. It duplicates the Strategic Objective and creates no separate decision. A Procurement Plan Item links one approved Strategic Objective directly. |
 | Public Value Objective and PVO catalogue | Remove completely. No replacement object or screen. |
@@ -29,7 +29,8 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Strategy Corrective Action | Remove completely. |
 | Strategy-owned result capture, verification and remediation | Exclude. Contract Management owns delivery and verified results. |
 | Strategy performance dashboard | Replace with the neutral, permission-gated Strategy Portfolio read surface. |
-| Objective represented as a measure or PVO | Correct to an explicit **Strategic Objective** distinct from Strategic Outcome and Performance Indicator. |
+| Strategic Outcome between Objective and Indicator | Remove. It duplicates outcome-oriented Objective wording and is not used by Procurement Planning. A Performance Indicator measures one Strategic Objective directly. |
+| Objective represented as a measure or PVO | Correct to an explicit **Strategic Objective** distinct from a Performance Indicator. |
 | Administrator or first-record fallback authority | Remove. Use explicit, scoped Strategy assignments and fail closed. |
 | Downstream direct Strategy table reads | Remove. Downstream modules use the contracts in section 10. |
 | Delete-and-recreate cleanup | Reject. Correct the retained application in place. |
@@ -40,7 +41,7 @@ Strategy Alignment shall provide:
 
 - one governed portfolio of strategic plans for each authorised Procuring Entity scope;
 - immutable approved plan versions;
-- a typed lineage from plan through objective, outcome, indicator and target;
+- a typed lineage from plan through objective, indicator and target;
 - direct selection of approved Strategic Objectives by downstream Procurement Planning;
 - explicit author, reviewer and approval authority responsibilities;
 - deterministic resolution of the applicable active primary plan;
@@ -52,6 +53,7 @@ Strategy Alignment shall provide:
 The module shall not contain:
 
 - Public Value Objectives;
+- Strategic Outcomes or an equivalent intermediate layer between Strategic Objective and Performance Indicator;
 - treatment, remediation or corrective-action records;
 - performance-result entry, verification or performance scoring;
 - an advanced performance dashboard;
@@ -159,19 +161,18 @@ Allowed `node_type` values are:
 - **Programme**
 - **Sub-programme**
 - **Strategic Objective**
-- **Strategic Outcome**
 
 An inapplicable optional layer is omitted. Blank placeholder nodes are forbidden.
 
 ### 5.4 PerformanceIndicator
 
-A measure attached to one Strategic Objective or Strategic Outcome.
+A measure attached directly to one Strategic Objective.
 
 | Field | Operational purpose and system effect |
 |---|---|
 | `indicator_id` | Immutable generated reference used by targets, lineage and snapshots. |
 | `plan_version_id` | Binds the indicator to one immutable version. |
-| `measures_node_id` | Identifies the Objective or Outcome being measured. Required. |
+| `measures_node_id` | Identifies the Strategic Objective being measured. Required. |
 | `name` | Provides the human-readable measure used in plan review and downstream snapshots. Required. |
 | `definition` | Removes ambiguity about what the measure counts or calculates. Required and shown during review. |
 | `unit` | Defines the target value's unit and prevents incompatible target entry. Required. |
@@ -252,12 +253,12 @@ Assignments are scoped by PE, optional organisation unit, plan role and effectiv
 | STR-BR-004 | Two Primary plans for the same PE/OU shall not be Active for overlapping dates. The database transaction shall serialize the activation check. |
 | STR-BR-005 | A plan period shall have `period_start < period_end`; every version effective date shall fall within that period. |
 | STR-BR-006 | Approved or Active content is immutable. A correction requires a successor version whose `based_on_plan_version_id` identifies an Approved or Active version of the same plan. |
-| STR-BR-007 | Allowed hierarchy is Pillar → Programme → optional Sub-programme → Strategic Objective → Strategic Outcome. A Programme may parent an Objective when Sub-programme is omitted. |
-| STR-BR-008 | A Performance Indicator shall measure a Strategic Objective or Strategic Outcome from the same version. |
+| STR-BR-007 | Allowed structural hierarchy is Pillar → Programme → optional Sub-programme → Strategic Objective. A Programme may parent an Objective when Sub-programme is omitted. |
+| STR-BR-008 | A Performance Indicator shall measure one Strategic Objective from the same version and shall appear as its direct child in the authoring and review tree. |
 | STR-BR-009 | An indicator name shall be unique under its measured node within one version. |
 | STR-BR-010 | A target shall use exactly one configured Financial Year or one target-by date, and shall fall within the plan period. |
 | STR-BR-011 | `target_value` shall be compatible with the indicator unit; Percentage values shall be between 0 and 100 inclusive. |
-| STR-BR-012 | Submission requires complete plan identity, a valid hierarchy, at least one Strategic Objective, one Strategic Outcome, one Indicator and one Target. |
+| STR-BR-012 | Submission requires complete plan identity, a valid hierarchy, at least one Strategic Objective, one Indicator and one Target. |
 | STR-BR-013 | Only Strategic Objectives in an Active plan version are available for new Procurement Plan Item selection. |
 | STR-BR-014 | The selected Strategic Objective shall belong to the resolved Active plan version and the same authorised PE/OU scope as the Procurement Plan Item. |
 | STR-BR-015 | Approval and activation repeat all readiness checks; a stale client result cannot bypass server validation. |
@@ -295,7 +296,7 @@ For a Procurement Plan Item, Strategy Alignment supplies one direct selection pa
 4. the Draft Plan Item stores the selected Objective ID; and
 5. approval of the Procurement Plan Version creates an immutable snapshot of the plan, version, ancestor path and selected Objective.
 
-Outcomes, Indicators and Targets remain visible lineage below the Objective but are not alternative Procurement Plan Item selection objects.
+Indicators and Targets remain visible below the Objective but are not alternative Procurement Plan Item selection objects.
 
 ## 10. Service contracts
 
@@ -305,10 +306,10 @@ All services are server-authorised, typed and versioned. They do not mutate Stra
 |---|---|---|
 | `resolve_strategy_context` | PE, optional OU, date or FY, include-supporting flag | One applicable Active Primary version and optional Supporting Framework summaries; typed zero/ambiguous errors. |
 | `list_strategy_objectives` | Resolved plan version ID, optional Programme/Sub-programme filter, search text and paging | Active Strategic Objectives with generated ID, title and full ancestor path; no Draft records. |
-| `get_strategy_lineage` | One authorised Strategic Objective, Outcome, Indicator or Target ID | Ordered path with stable IDs, types and titles from plan to the requested record. |
+| `get_strategy_lineage` | One authorised Strategic Objective, Indicator or Target ID | Ordered path with stable IDs, types and titles from plan to the requested record. |
 | `create_strategy_snapshot` | Consumer module, record ID/version, Strategic Objective ID, expected consumer status and approval correlation ID | Validates eligibility and returns a deterministic snapshot containing plan/version identity and period plus the ordered Pillar, Programme, optional Sub-programme and Strategic Objective IDs and titles. It records the snapshot audit event but does not write the consumer's record. Repeating the same approval correlation returns the same payload. |
 
-`record_verified_result` is reserved for a later Contract Management change unit. Strategy Alignment v1.3 provides no result-entry fields, screen or production write endpoint.
+`record_verified_result` is reserved for a later Contract Management change unit. Strategy Alignment v1.4 provides no result-entry fields, screen or production write endpoint.
 
 ### 10.1 Command contracts
 
@@ -472,7 +473,6 @@ Do not show structure fields, approval history, readiness checks or a submit act
 | Programmes | 1 |
 | Sub-programmes | 1 |
 | Strategic objectives | 1 |
-| Strategic outcomes | 1 |
 | Performance indicators | 1 |
 | Performance targets | 1 |
 
@@ -513,11 +513,21 @@ Below the tabs, create a two-column working surface: 42% width for the hierarchy
    1. **Health policy, standards and regulation** · Programme
       1. **Digital health governance** · Sub-programme
          1. **Strengthen interoperable national digital health services** · Strategic Objective — selected
-            1. **Improved availability and reliability of interoperable digital health services** · Strategic Outcome
-               1. **Percentage of priority facilities using interoperable digital health services** · Performance Indicator
-                  1. **At least 85% · FY 2027/28** · Performance Target
+            1. **Percentage of priority facilities using interoperable digital health services** · Performance Indicator
+               1. **At least 85% · FY 2027/28** · Performance Target
 
-Each structural node row has one compact trailing button labelled **Add child**. Indicator and Target rows have no Add child button. The selected row has the approved selected background and border.
+Use these exact compact trailing actions:
+
+| Selected or displayed row type | Trailing action |
+|---|---|
+| Pillar | Add programme |
+| Programme | Add sub-programme |
+| Sub-programme | Add objective |
+| Strategic Objective | Add indicator |
+| Performance Indicator | Add target |
+| Performance Target | None |
+
+Do not show **Add outcome** or the generic label **Add child**. The selected row has the approved selected background and border.
 
 **Selected record card**
 
@@ -542,7 +552,7 @@ Duplicate the completed STR-DES-04 artboard. Keep the hierarchy tree unchanged e
 **Selected record card**
 
 - Heading: **Performance Indicator**
-- Subtext: **Measures: Improved availability and reliability of interoperable digital health services**
+- Subtext: **Measures: Strengthen interoperable national digital health services**
 
 | Field label | Displayed value |
 |---|---|
@@ -561,6 +571,21 @@ Below the table, right-aligned secondary button: **Add target**
 Card footer buttons, left to right: **Delete indicator**, **Save changes**. **Delete indicator** uses the danger-outline style; **Save changes** is primary.
 
 Do not show source, frequency, responsible owner, baseline, actual result, evidence, variance, score or status.
+
+**Add target dialog artboard**
+
+Create one additional static artboard over the dimmed Indicator editor.
+
+- Title: **Add performance target**
+- Intro text: **Set the expected value and period for this indicator.**
+- Field label: **Period**
+- Displayed choice: **FY 2027/28**
+- Field label: **Expected result**
+- Two controls on one row: comparison choice **At least** and numeric value **85**
+- Read-only suffix beside the numeric value: **Percentage**
+- Footer buttons: **Cancel** and **Add target**
+
+Do not show target name, description, owner, baseline, tolerance, actual result, evidence, status or another unit control.
 
 ### 12.7 STR-DES-06 — Reviewer task · Overview
 
@@ -611,7 +636,6 @@ Do not show source, frequency, responsible owner, baseline, actual result, evide
 | Programmes | 1 |
 | Sub-programmes | 1 |
 | Strategic objectives | 1 |
-| Strategic outcomes | 1 |
 | Performance indicators | 1 |
 | Performance targets | 1 |
 
@@ -638,9 +662,8 @@ Display this fully expanded hierarchy in the exact order and indentation shown:
    1. **Health policy, standards and regulation** · Programme
       1. **Digital health governance** · Sub-programme
          1. **Strengthen interoperable national digital health services** · Strategic Objective
-            1. **Improved availability and reliability of interoperable digital health services** · Strategic Outcome
-               1. **Percentage of priority facilities using interoperable digital health services** · Performance Indicator
-                  1. **At least 85% · FY 2027/28** · Performance Target
+            1. **Percentage of priority facilities using interoperable digital health services** · Performance Indicator
+               1. **At least 85% · FY 2027/28** · Performance Target
 
 No hierarchy row is selected. Do not show Add, Edit, Delete, drag, overflow-menu, checkbox or inline-action controls.
 
@@ -797,8 +820,13 @@ This section defines behaviour for requirements, implementation and testing. It 
 - Add-child choices are limited by STR-BR-007 and returned by the server.
 - Reorder updates only sibling `display_order` values and is saved as one atomic command.
 - A node with descendants cannot be removed until its descendants are removed or explicitly moved in the same validated command.
-- An indicator can be attached only to a Strategic Objective or Strategic Outcome.
+- An indicator can be attached only to a Strategic Objective and is displayed directly beneath that Objective.
+- **Add indicator** is available only on a Strategic Objective. **Add target** is available only on a Performance Indicator. No Outcome command or record is permitted.
 - A target copies no unit field; its displayed unit is resolved from the indicator.
+- **Add target** opens the exact dialog in STR-DES-05. **Edit** opens the same dialog with the current Period, comparison and value.
+- Period offers only configured Financial Years overlapping the plan period and one plan-period date option when applicable.
+- The unit is inherited from the Indicator, displayed read-only and never submitted as an independent Target value.
+- One Indicator cannot contain two Targets for the same Financial Year or the same target-by date.
 - Financial Year choices come from Configuration and Governance and are limited to years overlapping the plan period.
 - Saving a stale tree returns `STRATEGY_STALE_WRITE` and preserves the user's unsaved values for deliberate reload or reconciliation.
 - **Submit for review** calls readiness validation. If validation fails, the page shows an error summary and focuses the first failing record without changing status.
@@ -834,7 +862,7 @@ This section defines behaviour for requirements, implementation and testing. It 
 - Procurement Planning owns the Plan Item selector and its interaction design.
 - Strategy Alignment returns eligible Objective rows only through `list_strategy_objectives`.
 - Each row contains Objective ID, Objective title and the ordered Pillar → Programme → optional Sub-programme path so the planner can distinguish similar objectives.
-- A Plan Item selects exactly one Strategic Objective. Outcome, Indicator and Target are read-only lineage, not alternative selector values.
+- A Plan Item selects exactly one Strategic Objective. Indicator and Target are read-only associated measures, not alternative selector values.
 - The Draft Plan Item stores the Objective ID. Procurement Plan Version approval calls `create_strategy_snapshot` and stores the returned immutable lineage.
 - No Value Commitment field, model, service, label or compatibility mapping is permitted in Strategy Alignment or Procurement Planning.
 
@@ -940,11 +968,10 @@ Exact hierarchy:
 | 2 | `PRG-MOH-2023-001` | Programme | Health policy, standards and regulation |
 | 3 | `SPR-MOH-2023-001` | Sub-programme | Digital health governance |
 | 4 | `OBJ-MOH-2023-001` | Strategic Objective | Strengthen interoperable national digital health services |
-| 5 | `OUT-MOH-2023-001` | Strategic Outcome | Improved availability and reliability of interoperable digital health services |
-| 6 | `IND-MOH-2023-001` | Performance Indicator | Percentage of priority facilities using interoperable digital health services |
-| 7 | — | Indicator definition | Priority facilities operating an approved interoperable digital health service divided by all priority facilities, expressed as a percentage. |
-| 8 | — | Indicator unit | Percentage |
-| 9 | `TGT-MOH-2027-001` | Performance Target | FY 2027/28 · At least 80% |
+| 5 | `IND-MOH-2023-001` | Performance Indicator | Percentage of priority facilities using interoperable digital health services |
+| 6 | — | Indicator definition | Priority facilities operating an approved interoperable digital health service divided by all priority facilities, expressed as a percentage. |
+| 7 | — | Indicator unit | Percentage |
+| 8 | `TGT-MOH-2027-001` | Performance Target | FY 2027/28 · At least 80% |
 
 ### 16.4 County Government of Kisumu isolation plan
 
@@ -977,11 +1004,10 @@ Exact minimal hierarchy:
 | 1 | `PIL-KSM-2023-001` | Pillar | Digital county services |
 | 2 | `PRG-KSM-2023-001` | Programme | County administration and digital services |
 | 3 | `OBJ-KSM-2023-001` | Strategic Objective | Improve reliable access to priority county digital services |
-| 4 | `OUT-KSM-2023-001` | Strategic Outcome | More priority county services available through reliable digital channels |
-| 5 | `IND-KSM-2023-001` | Performance Indicator | Percentage of priority county services available through approved digital channels |
-| 6 | — | Indicator definition | Priority county services available through an approved digital channel divided by all priority county services, expressed as a percentage. |
-| 7 | — | Indicator unit | Percentage |
-| 8 | `TGT-KSM-2027-001` | Performance Target | By 31 Dec 2027 · At least 70% |
+| 4 | `IND-KSM-2023-001` | Performance Indicator | Percentage of priority county services available through approved digital channels |
+| 5 | — | Indicator definition | Priority county services available through an approved digital channel divided by all priority county services, expressed as a percentage. |
+| 6 | — | Indicator unit | Percentage |
+| 7 | `TGT-KSM-2027-001` | Performance Target | By 31 Dec 2027 · At least 70% |
 
 ### 16.5 Isolated design and workflow fixture
 
@@ -1014,14 +1040,14 @@ Test setup may place the version in Draft, In Review, Awaiting Approval or Appro
 | ID | Acceptance result |
 |---|---|
 | STR-AC-001 | The module installs and imports without the legacy Demands package or Procurement Home. |
-| STR-AC-002 | No executable metadata, route, service, field, label, seed or active test refers to Plan Value Commitment, Strategy Value Commitment, PVO, treatment or Strategy Corrective Action. |
+| STR-AC-002 | No executable metadata, route, service, field, label, seed or active test refers to Plan Value Commitment, Strategy Value Commitment, PVO, Strategic Outcome, treatment or Strategy Corrective Action. |
 | STR-AC-003 | A scoped Author can create a Draft plan and receives generated plan/version references. |
 | STR-AC-004 | An unassigned user and a System Administrator without Strategy assignment cannot create, review, approve or activate. |
-| STR-AC-005 | A Draft can represent Pillar → Programme → optional Sub-programme → Objective → Outcome → Indicator → Target with validated parents. |
-| STR-AC-006 | Objective, Outcome and Indicator are distinct types and cannot be substituted for one another. |
+| STR-AC-005 | A Draft can represent Pillar → Programme → optional Sub-programme → Objective, with Indicator directly beneath Objective and Target directly beneath Indicator. |
+| STR-AC-006 | Strategic Objective and Performance Indicator are distinct types and cannot be substituted for one another; no Strategic Outcome type exists. |
 | STR-AC-007 | Target validation enforces period choice, comparison, unit-compatible value and percentage range. |
-| STR-AC-008 | Readiness blocks submission when plan identity or hierarchy is invalid, or when the version has no Strategic Objective, Strategic Outcome, Indicator or Target. |
-| STR-AC-009 | A Procurement Plan Item can select exactly one Strategic Objective from its resolved Active plan version and cannot select an Outcome, Indicator or Target instead. |
+| STR-AC-008 | Readiness blocks submission when plan identity or hierarchy is invalid, or when the version has no Strategic Objective, Indicator or Target. |
+| STR-AC-009 | A Procurement Plan Item can select exactly one Strategic Objective from its resolved Active plan version and cannot select an Indicator or Target instead. |
 | STR-AC-010 | Reviewer recommendation and Approval Authority approval use distinct scoped capabilities; the Author cannot perform either on the same version. |
 | STR-AC-011 | Return requires a reason and preserves the complete workflow history. |
 | STR-AC-012 | Approved and Active content cannot be edited; a successor version is required. |
@@ -1060,6 +1086,7 @@ Test setup may place the version in Draft, In Review, Awaiting Approval or Appro
 ### 18.1 Frappe and UI implementation
 
 - Delete the existing Plan/Strategy Value Commitment DocTypes, child-link table, services, routes, page fixtures, seeds and tests. Do not preserve an alias or compatibility response field.
+- Remove `Strategic Outcome` from Strategy node metadata, services, commands, fixtures, screens and tests. During cleanup, an Indicator currently attached to an Outcome is reattached to that Outcome's direct parent Strategic Objective, then the Outcome is removed. The cleanup fails loudly if the parent is not exactly one Strategic Objective or if the link crosses a plan version; it never guesses another Objective.
 - Replace downstream Strategy-contract imports and Budget/Planning test fixtures with `list_strategy_objectives`, `get_strategy_lineage` and the Objective-based `create_strategy_snapshot` shape defined in section 10.
 - Reuse the proven Vue 3 single-file-component pattern mounted into one `frappe.ui.make_app_page()` Desk page.
 - Reuse the approved Strategy design tokens and scoped component styles. Do not import Claude Design runtime files into production.
@@ -1128,4 +1155,4 @@ This document reconciles and supersedes conflicting Strategy requirements contai
 - `02_Strategy_Cleanup_Plan.md`; and
 - `KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1.0.md`.
 
-It consumes PE/FY configuration through the approved `KenTender_CFG-CHG-002_PE_and_Financial_Year_Maintenance_v0.3.md` contract. Where an earlier item is not retained in this v1.3 document, it is outside the approved Strategy Alignment scope.
+It consumes PE/FY configuration through the approved `KenTender_CFG-CHG-002_PE_and_Financial_Year_Maintenance_v0.3.md` contract. Where an earlier item is not retained in this v1.4 document, it is outside the proposed Strategy Alignment scope.

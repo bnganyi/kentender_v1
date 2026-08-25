@@ -175,24 +175,12 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		)
-		outcome = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Strategy Node",
-					"plan_version_id": plan_version,
-					"node_type": "Strategic Outcome",
-					"title": "Outcome",
-					"display_order": 4,
-					"parent_node_id": objective.name,
-				}
-			).insert(ignore_permissions=True)
-		)
 		indicator = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Performance Indicator",
 					"plan_version_id": plan_version,
-					"measures_node_id": outcome.name,
+					"measures_node_id": objective.name,
 					"indicator_name": "Indicator",
 					"definition": "Definition",
 					"unit": "Percentage",

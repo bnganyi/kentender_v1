@@ -331,18 +331,11 @@ def _seed_moh_plan() -> dict[str, Any]:
 				"display_order": 4,
 				"parent": "sub_programme",
 			},
-			{
-				"key": "outcome",
-				"node_type": "Strategic Outcome",
-				"title": "Improved availability and reliability of interoperable digital health services",
-				"display_order": 5,
-				"parent": "objective",
-			},
 		],
 		indicators=[
 			{
 				"key": "indicator",
-				"measures": "outcome",
+				"measures": "objective",
 				"name": "Percentage of priority facilities using interoperable digital health services",
 				"definition": (
 					"Priority facilities operating an approved interoperable digital health service "
@@ -396,18 +389,11 @@ def _seed_kisumu_plan() -> dict[str, Any]:
 				"display_order": 3,
 				"parent": "programme",
 			},
-			{
-				"key": "outcome",
-				"node_type": "Strategic Outcome",
-				"title": "More priority county services available through reliable digital channels",
-				"display_order": 4,
-				"parent": "objective",
-			},
 		],
 		indicators=[
 			{
 				"key": "indicator",
-				"measures": "outcome",
+				"measures": "objective",
 				"name": "Percentage of priority county services available through approved digital channels",
 				"definition": (
 					"Priority county services available through an approved digital channel divided by "

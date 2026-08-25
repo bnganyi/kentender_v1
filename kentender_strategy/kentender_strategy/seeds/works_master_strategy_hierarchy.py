@@ -153,23 +153,11 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 		}
 	)
 	objective.insert(ignore_permissions=True)
-	outcome = frappe.get_doc(
-		{
-			"doctype": "Strategy Node",
-			"plan_version_id": version.name,
-			"node_type": "Strategic Outcome",
-			"title": "Core clinical information systems remain continuously available",
-			"display_order": 4,
-			"parent_node_id": objective.name,
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	outcome.insert(ignore_permissions=True)
 	indicator = frappe.get_doc(
 		{
 			"doctype": "Performance Indicator",
 			"plan_version_id": version.name,
-			"measures_node_id": outcome.name,
+			"measures_node_id": objective.name,
 			"indicator_name": "Availability of core clinical information systems",
 			"definition": "Percentage of scheduled uptime achieved by core clinical information systems.",
 			"unit": "Percentage",

@@ -73,7 +73,6 @@ def get_budget_line_context(budget_line_id: str | None = None):
 			"strategic_plan": None,
 			"program": None,
 			"sub_program": None,
-			"output_indicator": None,
 			"performance_target": line.primary_target_code or None,
 			"is_active": 1 if line.is_active else 0,
 			"amount_allocated": flt(line.approved_amount),

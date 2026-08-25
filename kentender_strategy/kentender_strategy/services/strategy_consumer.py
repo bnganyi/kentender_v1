@@ -121,9 +121,6 @@ def resolve_strategy_context(
 	}
 
 
-_LINEAGE_NODE_TYPES = ("Strategic Objective", "Strategic Outcome")
-
-
 def list_strategy_objectives(
 	plan_version_id: str,
 	*,
@@ -176,9 +173,9 @@ def get_strategy_lineage(node_id: str) -> dict:
 	"""STR-CHG-001 §10 — get_strategy_lineage.
 
 	Ordered path with stable IDs, types and titles from plan to the
-	requested Strategic Objective, Strategic Outcome, Performance Indicator
-	or Performance Target — auto-detecting which of the four the id
-	belongs to rather than requiring the caller to state it.
+	requested Strategic Objective, Performance Indicator or Performance
+	Target — auto-detecting which of the three the id belongs to rather
+	than requiring the caller to state it.
 	"""
 	if frappe.db.exists("Strategy Node", node_id):
 		path = _node_ancestor_path(node_id)
@@ -430,55 +427,6 @@ def validated_supporting_target_row(
 		"plan_version_id": ref["plan_version_id"],
 		"snapshot_label": ref.get("snapshot_label") or "",
 		"reason": (reason or "").strip(),
-	}
-
-
-def strategy_fields_from_doc(doc) -> dict:
-	"""DTO slice for builder/artefact payloads."""
-	empty = {
-		"strategy_plan_version": None,
-		"strategy_target": None,
-		"performance_target": None,
-		"performance_target_label": "",
-		"performance_target_code": "",
-		"strategy_reference": None,
-		"strategic_plan": None,
-		"program": None,
-		"program_label": "",
-		"program_code": "",
-		"sub_program": None,
-		"sub_program_label": "",
-		"sub_program_code": "",
-		"output_indicator": None,
-		"output_indicator_label": "",
-		"output_indicator_code": "",
-	}
-	target_id = getattr(doc, "strategy_target", None) or getattr(doc, "performance_target", None)
-	plan_id = getattr(doc, "strategy_plan_version", None)
-	if not target_id or not plan_id:
-		return empty
-	try:
-		ref = build_strategy_reference(plan_id, target_id)
-	except Exception:
-		return empty
-	path_by_type = {p["type"]: p for p in ref.get("path") or []}
-	return {
-		"strategy_plan_version": plan_id,
-		"strategy_target": target_id,
-		"performance_target": target_id,
-		"performance_target_label": ref.get("node_name") or "",
-		"performance_target_code": ref.get("node_code") or "",
-		"strategy_reference": ref,
-		"strategic_plan": plan_id,
-		"program": (path_by_type.get("Programme") or {}).get("id"),
-		"program_label": (path_by_type.get("Programme") or {}).get("name") or "",
-		"program_code": (path_by_type.get("Programme") or {}).get("code") or "",
-		"sub_program": (path_by_type.get("SubProgramme") or {}).get("id"),
-		"sub_program_label": (path_by_type.get("SubProgramme") or {}).get("name") or "",
-		"sub_program_code": (path_by_type.get("SubProgramme") or {}).get("code") or "",
-		"output_indicator": (path_by_type.get("StrategicOutcome") or {}).get("id"),
-		"output_indicator_label": (path_by_type.get("StrategicOutcome") or {}).get("name") or "",
-		"output_indicator_code": (path_by_type.get("StrategicOutcome") or {}).get("code") or "",
 	}
 
 

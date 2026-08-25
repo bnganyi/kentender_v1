@@ -179,18 +179,6 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 			).insert(ignore_permissions=True)
 		)
 		self.assertEqual(objective.parent_node_id, programme.name)
-		outcome = self._track(
-			frappe.get_doc(
-				self._node(
-					pv,
-					node_type="Strategic Outcome",
-					title="Out",
-					display_order=4,
-					parent_node_id=objective.name,
-				)
-			).insert(ignore_permissions=True)
-		)
-		self.assertEqual(outcome.parent_node_id, objective.name)
 
 	def test_sibling_display_order_must_be_unique(self):
 		pv = self._setup_plan_version()
@@ -230,7 +218,7 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		data.update(kwargs)
 		return data
 
-	def test_indicator_must_measure_objective_or_outcome(self):
+	def test_indicator_must_measure_objective(self):
 		pv = self._setup_plan_version()
 		pillar = self._track(
 			frappe.get_doc(self._node(pv, title="Standalone Pillar", display_order=99)).insert(

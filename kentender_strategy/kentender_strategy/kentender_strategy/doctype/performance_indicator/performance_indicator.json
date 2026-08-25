@@ -52,7 +52,7 @@
    "fieldtype": "Link",
    "label": "Measures Node",
    "options": "Strategy Node",
-   "description": "Identifies the Objective or Outcome being measured.",
+   "description": "Identifies the Strategic Objective being measured.",
    "reqd": 1,
    "search_index": 1
   },

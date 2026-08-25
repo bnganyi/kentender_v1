@@ -360,7 +360,6 @@ def get_strategy_tree(plan_version_id: str) -> dict:
 		"programmes": sum(1 for n in nodes if n.node_type == "Programme"),
 		"sub_programmes": sum(1 for n in nodes if n.node_type == "Sub-programme"),
 		"strategic_objectives": sum(1 for n in nodes if n.node_type == "Strategic Objective"),
-		"strategic_outcomes": sum(1 for n in nodes if n.node_type == "Strategic Outcome"),
 		"performance_indicators": len(indicators),
 		"performance_targets": len(targets),
 	}
