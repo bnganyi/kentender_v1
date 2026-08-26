@@ -90,7 +90,18 @@
 		});
 		wrapper.page = page;
 		page._ktPlnApprovedMounted = false;
-		mount(page);
+		frappe.require(
+			[
+				"/assets/kentender_procurement/js/planning_client_utils.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/plan_approved.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/remove_plan_item_dialog.js",
+				"/assets/kentender_procurement/js/planning_removal_dialog.js",
+				"/assets/kentender_procurement/js/planning_approved_bind.js",
+			],
+			function () {
+				mount(page);
+			}
+		);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {

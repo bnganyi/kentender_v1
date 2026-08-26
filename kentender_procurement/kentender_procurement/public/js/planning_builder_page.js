@@ -89,7 +89,22 @@
 		});
 		wrapper.page = page;
 		page._ktPlnBuilderMounted = false;
-		mount(page);
+		frappe.require(
+			[
+				"/assets/kentender_procurement/js/planning_client_utils.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js",
+				"/assets/kentender_procurement/js/planning_builder_bind.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/remove_plan_item_dialog.js",
+				"/assets/kentender_procurement/js/planning_removal_dialog.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/empty_update_cancel.js",
+				"/assets/kentender_procurement/js/planning_empty_update_dialog.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/finance_confirm_drawer.js",
+				"/assets/kentender_procurement/js/planning_finance_bind.js",
+			],
+			function () {
+				mount(page);
+			}
+		);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {

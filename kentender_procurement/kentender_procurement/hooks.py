@@ -54,11 +54,10 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
-	f"/assets/kentender_core/css/authorization_surfaces.css",
-	# STD-CHG-001 v1.3 Phase 11 — kt_industry_tokens.css is the one canonical
-	# design system (AGENTS.md §6.6). Loaded once here for every STD
-	# Configuration Vue-in-Desk page; no forked token file.
-	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_desk_asset_v('../../kentender_core/kentender_core/public/css/kt_industry_tokens.css')}",
+	# authorization_surfaces.css and kt_industry_tokens.css are already loaded
+	# globally by kentender_core/hooks.py — this app depends on kentender_core
+	# (required_apps above), so re-declaring them here was a pure duplicate
+	# download, not a second real inclusion.
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
@@ -78,25 +77,12 @@ app_include_css = [
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/workspace.js?v={_desk_asset_v('public/js/planning_ui_fixtures/workspace.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/register.js?v={_desk_asset_v('public/js/planning_ui_fixtures/register.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/builder.js?v={_desk_asset_v('public/js/planning_ui_fixtures/builder.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/remove_plan_item_dialog.js?v={_desk_asset_v('public/js/planning_ui_fixtures/remove_plan_item_dialog.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/empty_update_cancel.js?v={_desk_asset_v('public/js/planning_ui_fixtures/empty_update_cancel.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/finance_confirm_drawer.js?v={_desk_asset_v('public/js/planning_ui_fixtures/finance_confirm_drawer.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_item_editor.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_item_editor.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_review.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_review.js')}",
-	f"/assets/kentender_procurement/js/planning_ui_fixtures/plan_approved.js?v={_desk_asset_v('public/js/planning_ui_fixtures/plan_approved.js')}",
-	f"/assets/kentender_procurement/js/planning_live_bind.js?v={_desk_asset_v('public/js/planning_live_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_client_utils.js?v={_desk_asset_v('public/js/planning_client_utils.js')}",
-	f"/assets/kentender_procurement/js/planning_removal_dialog.js?v={_desk_asset_v('public/js/planning_removal_dialog.js')}",
-	f"/assets/kentender_procurement/js/planning_empty_update_dialog.js?v={_desk_asset_v('public/js/planning_empty_update_dialog.js')}",
-	f"/assets/kentender_procurement/js/planning_item_editor_bind.js?v={_desk_asset_v('public/js/planning_item_editor_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_register_bind.js?v={_desk_asset_v('public/js/planning_register_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_builder_bind.js?v={_desk_asset_v('public/js/planning_builder_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_finance_bind.js?v={_desk_asset_v('public/js/planning_finance_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_review_bind.js?v={_desk_asset_v('public/js/planning_review_bind.js')}",
-	f"/assets/kentender_procurement/js/planning_approved_bind.js?v={_desk_asset_v('public/js/planning_approved_bind.js')}",
+	# The whole "planning" route family's fixtures/binds/dialogs used to load
+	# here globally (every Desk page, not just planning ones) — each is now
+	# lazy-loaded by its own page_js controller via frappe.require() instead
+	# (planning_workspace_page.js, planning_register_page.js,
+	# planning_builder_page.js, planning_item_editor_page.js,
+	# planning_review_page.js, planning_approved_page.js).
 	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	f"/assets/kentender_procurement/js/std_prod_engine.js?v={_desk_asset_v('public/js/std_prod_engine.js')}",
@@ -107,7 +93,9 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
-	f"/assets/kentender_procurement/js/support_plan_view.js?v={_desk_asset_v('public/js/support_plan_view.js')}",
+	# support_plan_view.js is already the page_js controller for route
+	# "support-plan-view" (Frappe lazy-loads it on navigation) — this was a
+	# pure duplicate global load with zero benefit.
 ]
 
 # include js, css files in header of web template

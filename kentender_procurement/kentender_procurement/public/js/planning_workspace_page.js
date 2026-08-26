@@ -66,7 +66,21 @@
 		});
 		wrapper.page = page;
 		page._ktPlnWorkspaceMounted = false;
-		mount(page);
+		// This page's own fixture/live-bind dependencies used to be dumped into
+		// every app's global app_include_js (loaded on every Desk page, not just
+		// this one) — lazy-loaded here instead, exactly like this file itself
+		// already is via the page_js hook.
+		frappe.require(
+			[
+				"/assets/kentender_core/js/kt_form_errors.js",
+				"/assets/kentender_procurement/js/planning_client_utils.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/workspace.js",
+				"/assets/kentender_procurement/js/planning_live_bind.js",
+			],
+			function () {
+				mount(page);
+			}
+		);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {

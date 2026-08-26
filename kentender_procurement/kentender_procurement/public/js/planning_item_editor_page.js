@@ -99,7 +99,16 @@
 		});
 		wrapper.page = page;
 		page._ktPlnEditorMounted = false;
-		mount(page);
+		frappe.require(
+			[
+				"/assets/kentender_procurement/js/planning_client_utils.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/plan_item_editor.js",
+				"/assets/kentender_procurement/js/planning_item_editor_bind.js",
+			],
+			function () {
+				mount(page);
+			}
+		);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
