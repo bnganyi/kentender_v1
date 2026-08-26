@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_key",
+  "step_id",
+  "label",
+  "help_text",
+  "value_type",
+  "source_mode",
+  "source_binding",
+  "required_mode",
+  "condition",
+  "allowed_values",
+  "default_rule",
+  "validation",
+  "render_binding",
+  "downstream_mapping",
+  "completion_effect"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_key",
+   "fieldtype": "Data",
+   "label": "Item Key",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Stable package-owned key used by values, conditions, tests and render bindings (§7.18)."
+  },
+  {
+   "fieldname": "step_id",
+   "fieldtype": "Select",
+   "label": "Step",
+   "options": "CFG-01\nCFG-02\nCFG-03\nCFG-04\nCFG-05\nCFG-06\nCFG-07\nCFG-08\nCFG-09",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "help_text",
+   "fieldtype": "Small Text",
+   "label": "Help Text"
+  },
+  {
+   "fieldname": "value_type",
+   "fieldtype": "Select",
+   "label": "Value Type",
+   "options": "Text\nLong Text\nInteger\nDecimal\nMoney\nPercentage\nDate\nDate and Time\nDuration\nBoolean\nChoice\nMulti-choice\nLink\nStructured Table\nGenerated Display",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_mode",
+   "fieldtype": "Select",
+   "label": "Source Mode",
+   "options": "Generated\nInherited locked\nInherited reviewable\nOfficer entry\nOfficer choice",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_binding",
+   "fieldtype": "Data",
+   "label": "Source Binding",
+   "description": "Exact upstream or system key when the source is generated or inherited."
+  },
+  {
+   "fieldname": "required_mode",
+   "fieldtype": "Select",
+   "label": "Required Mode",
+   "options": "Always\nConditional\nOptional",
+   "reqd": 1
+  },
+  {
+   "fieldname": "condition",
+   "fieldtype": "Data",
+   "label": "Condition",
+   "description": "Governed expression over manifest keys. Empty unless required mode, choices or visibility depend on another value."
+  },
+  {
+   "fieldname": "allowed_values",
+   "fieldtype": "Small Text",
+   "label": "Allowed Values",
+   "description": "Exact package choices or governed link query. Empty for unrestricted typed values."
+  },
+  {
+   "fieldname": "default_rule",
+   "fieldtype": "Data",
+   "label": "Default Rule",
+   "description": "Package constant or named system/upstream binding. No hidden UI default."
+  },
+  {
+   "fieldname": "validation",
+   "fieldtype": "Small Text",
+   "label": "Validation",
+   "description": "Bounds, format, chronology, cross-field rule or table-row rule."
+  },
+  {
+   "fieldname": "render_binding",
+   "fieldtype": "Data",
+   "label": "Render Binding",
+   "reqd": 1,
+   "description": "Exact official document slot, table or clause cross-reference."
+  },
+  {
+   "fieldname": "downstream_mapping",
+   "fieldtype": "Data",
+   "label": "Downstream Mapping",
+   "description": "Named bidder, evaluation, contract or publication destination where applicable."
+  },
+  {
+   "fieldname": "completion_effect",
+   "fieldtype": "Select",
+   "label": "Completion Effect",
+   "options": "Blocks step\nWarning only",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Tender Manifest Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0
+}

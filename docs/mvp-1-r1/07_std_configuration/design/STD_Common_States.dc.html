@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); }
+    .kthdr { padding: 10px 32px; border-bottom: 1px solid var(--color-neutral-300); font-size: 13px; color: var(--color-neutral-700); display: flex; justify-content: space-between; }
+  </style>
+</helmet>
+<div style="min-height:100vh; font-family:var(--font-body);">
+  <div class="kthdr"><span>Home &gt; Standard Tender Documents &gt; Common states</span><span>Amina Hassan</span></div>
+  <div style="max-width:900px; margin:0 auto; padding:40px 32px 60px;">
+    <h1 style="font-family:var(--font-heading); font-weight:600; font-size:28px; margin:0 0 24px;">Common page states</h1>
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <sc-for list="{{ states }}" as="st" hint-placeholder-count="7">
+        <div class="card" style="padding:24px; text-align:center;">
+          <div style="font-weight:600; font-size:17px; margin-bottom:8px;">{{ st.heading }}</div>
+          <div style="color:var(--color-neutral-700); font-size:14px; margin-bottom:14px;">{{ st.text }}</div>
+          <sc-if value="{{ st.hasControl }}"><button class="btn btn-secondary" style="align-self:center;">{{ st.control }}</button></sc-if>
+          <sc-if value="{{ st.hasRef }}"><div style="margin-top:10px; font-size:12px; color:var(--color-neutral-500); font-family:monospace;">Support reference: STD-ERR-88213</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const defs = [
+      ['Standard Tender Documents is not available', 'You do not have an active STD configuration assignment.', null],
+      ['Preparing Draft proposals', 'Your current Draft is unchanged while proposals are prepared.', 'Cancel assistance'],
+      ['Draft assistance could not be prepared', 'Your Draft was not changed. Try again or continue configuring manually.', 'Try again'],
+      ['This Draft changed', 'Reload the configuration area before saving your changes.', 'Reload'],
+      ['Package coverage is incomplete', 'Complete every required STD area before submission.', 'Open Coverage Report'],
+      ['Runtime outputs could not be generated', 'Correct the reported package configuration and run the complete check again.', 'Open Readiness Report'],
+      ['Standard Tender Documents could not be loaded', 'Try again. If the problem continues, quote the support reference shown below.', 'Try again'],
+    ];
+    const states = defs.map(([heading, text, control], i) => ({
+      heading, text, control, hasControl: !!control, hasRef: i === 6,
+    }));
+    return { states };
+  }
+}
+
+</script>
+</body>
+</html>

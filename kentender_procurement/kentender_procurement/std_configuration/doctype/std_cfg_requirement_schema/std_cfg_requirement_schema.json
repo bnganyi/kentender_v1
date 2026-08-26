@@ -1,0 +1,201 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_owner",
+  "reference_doctype",
+  "reference_name",
+  "section_identity",
+  "category",
+  "display_order",
+  "section_response",
+  "allowed_response_types",
+  "evidence_mode",
+  "col_response",
+  "acceptance_mode",
+  "vendor_neutrality_trigger",
+  "vendor_neutrality_note",
+  "section_bindings",
+  "render_binding",
+  "bidder_response_binding",
+  "col_bindings",
+  "evaluation_binding",
+  "contract_carry_forward_binding"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_owner",
+   "fieldtype": "Section Break",
+   "label": "Owning Draft or Version"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Category"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Functional\nArchitecture\nPerformance\nSecurity\nIntegration\nData and migration\nReporting and analytics\nHosting and infrastructure\nTraining and knowledge transfer\nSupport and warranty\nTesting and acceptance\nAccessibility and usability\nBusiness continuity and disaster recovery\nRegulatory compliance",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§7.8 — one of the fourteen governed IT categories. One schema row per category."
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_response",
+   "fieldtype": "Section Break",
+   "label": "Row schema"
+  },
+  {
+   "fieldname": "allowed_response_types",
+   "fieldtype": "Small Text",
+   "label": "Allowed Response Types",
+   "reqd": 1,
+   "description": "One or more of: Compliance choice, Text, Numeric, Choice, Structured table (§9.7), one per line."
+  },
+  {
+   "fieldname": "evidence_mode",
+   "fieldtype": "Data",
+   "label": "Evidence Mode",
+   "description": "Defines the exact proof or demonstration where needed."
+  },
+  {
+   "fieldname": "col_response",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acceptance_mode",
+   "fieldtype": "Data",
+   "label": "Acceptance Mode",
+   "reqd": 1,
+   "description": "Defines how delivery can be accepted."
+  },
+  {
+   "fieldname": "vendor_neutrality_trigger",
+   "fieldtype": "Check",
+   "label": "Vendor-Neutrality Review Trigger"
+  },
+  {
+   "fieldname": "vendor_neutrality_note",
+   "fieldtype": "Small Text",
+   "label": "Vendor-Neutrality Note",
+   "depends_on": "eval:doc.vendor_neutrality_trigger"
+  },
+  {
+   "fieldname": "section_bindings",
+   "fieldtype": "Section Break",
+   "label": "Downstream bindings",
+   "description": "§7.8/§11.2 — a requirement schema without bidder/evaluation/contract treatment is a Blocking finding; all four bindings are required here."
+  },
+  {
+   "fieldname": "render_binding",
+   "fieldtype": "Data",
+   "label": "Render Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_response_binding",
+   "fieldtype": "Data",
+   "label": "Bidder Response Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_bindings",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "evaluation_binding",
+   "fieldtype": "Data",
+   "label": "Evaluation Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_carry_forward_binding",
+   "fieldtype": "Data",
+   "label": "Contract Carry-Forward Binding",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Requirement Schema",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "display_order",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "category",
+ "search_fields": "category"
+}

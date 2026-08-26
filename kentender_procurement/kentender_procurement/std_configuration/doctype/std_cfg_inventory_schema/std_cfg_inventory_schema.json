@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_owner",
+  "reference_doctype",
+  "reference_name",
+  "section_identity",
+  "category",
+  "price_schedule_link_policy",
+  "section_links",
+  "requirement_link",
+  "schedule_link",
+  "col_links",
+  "render_binding"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_owner",
+   "fieldtype": "Section Break",
+   "label": "Owning Draft or Version"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Category"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Hardware\nSoftware\nLicence\nService\nTraining\nSupport\nHosting\nIntegration",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§7.10 — bidder-relevant technical disclosure only. Quantity, unit, tax and commercial totals belong to Price Schedules, not this doctype (no such fields exist here by design)."
+  },
+  {
+   "fieldname": "price_schedule_link_policy",
+   "fieldtype": "Select",
+   "label": "Price Schedule Link Policy",
+   "options": "Required\nOptional",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_links",
+   "fieldtype": "Section Break",
+   "label": "Links"
+  },
+  {
+   "fieldname": "requirement_link",
+   "fieldtype": "Link",
+   "label": "Requirement Link",
+   "options": "STD Cfg Requirement Schema"
+  },
+  {
+   "fieldname": "schedule_link",
+   "fieldtype": "Link",
+   "label": "Schedule Link",
+   "options": "STD Cfg Schedule Schema"
+  },
+  {
+   "fieldname": "col_links",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "render_binding",
+   "fieldtype": "Data",
+   "label": "Render Binding",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Inventory Schema",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "category",
+ "search_fields": "category"
+}

@@ -1,0 +1,164 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "manifest_type",
+  "std_version_id",
+  "col_identity",
+  "schema_version",
+  "status",
+  "section_generation",
+  "generated_at",
+  "content_digest",
+  "col_generation",
+  "error_message",
+  "section_payload",
+  "payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "manifest_type",
+   "fieldtype": "Select",
+   "label": "Manifest Type",
+   "options": "Requirement Composer\nBidder Response\nEvaluation\nContract Formation\nContract Management\nRender",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§10 — the six runtime manifests without their own dedicated DocType. Tender Configuration keeps its own `STD Cfg Tender Manifest` (already implemented and tested, Phase 2/7) as a deliberate exception, not migrated here."
+  },
+  {
+   "fieldname": "std_version_id",
+   "fieldtype": "Link",
+   "label": "STD Version",
+   "options": "STD Cfg Version",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "schema_version",
+   "fieldtype": "Data",
+   "label": "Schema Version",
+   "reqd": 1,
+   "default": "1",
+   "description": "Version of this manifest type's own payload validator, not the STD package Version."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Generated\nFailed",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Always \"Generated\" for a row that exists after a real activation — §11.3 activation is atomic, so a failed build never leaves a Version or any manifest row at all. \"Failed\" is reserved for a future dry-run/regenerate command outside the activation transaction, not written here."
+  },
+  {
+   "fieldname": "section_generation",
+   "fieldtype": "Section Break",
+   "label": "Generation"
+  },
+  {
+   "fieldname": "generated_at",
+   "fieldtype": "Datetime",
+   "label": "Generated At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content Digest",
+   "reqd": 1,
+   "description": "SHA-256 of the canonical JSON payload — proves determinism and lets a consumer detect drift without diffing."
+  },
+  {
+   "fieldname": "col_generation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "depends_on": "eval:doc.status=='Failed'"
+  },
+  {
+   "fieldname": "section_payload",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Long Text",
+   "label": "Payload",
+   "reqd": 1,
+   "description": "Schema-validated JSON, never user-authored — written only by this manifest type's own builder function."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Runtime Manifest",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0,
+ "title_field": "manifest_type",
+ "search_fields": "manifest_type,std_version_id"
+}

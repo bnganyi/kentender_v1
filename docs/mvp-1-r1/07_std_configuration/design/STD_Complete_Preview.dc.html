@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); }
+    .kthdr { padding: 10px 32px; border-bottom: 1px solid var(--color-neutral-300); font-size: 13px; color: var(--color-neutral-700); display: flex; justify-content: space-between; }
+    .nav-item { padding:9px 14px; font-size:14px; cursor:pointer; border-bottom:1px solid var(--color-neutral-300); }
+  </style>
+</helmet>
+<div style="min-height:100vh; font-family:var(--font-body); padding-bottom:88px;">
+  <div class="kthdr"><span>Home &gt; Standard Tender Documents &gt; KE-PPRA-IT &gt; Complete preview</span><span>Amina Hassan</span></div>
+  <div style="max-width:1080px; margin:0 auto; padding:40px 32px 0;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px;">
+      <h1 style="font-family:var(--font-heading); font-weight:600; font-size:28px; margin:0;">Complete Package Preview</h1>
+      <div><span style="color:var(--color-neutral-600); font-size:13px; margin-right:10px;">Draft Version 1</span><span class="kt-status is-live">Generated</span></div>
+    </div>
+    <div style="display:flex; gap:24px;">
+      <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400); width:280px; flex:none; height:fit-content;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="13">
+          <div class="nav-item" style="{{ sec.style }}" onClick="{{ sec.select }}">{{ sec.name }}</div>
+        </sc-for>
+      </div>
+      <div style="flex:1;">
+        <div class="card" style="padding:18px 22px; margin-bottom:16px;">
+          <div class="kt-card-title" style="margin-bottom:12px;">{{ selName }}</div>
+          <sc-if value="{{ isTds }}">
+            <table class="table" style="width:100%;">
+              <thead><tr><th>Tender Data Sheet item</th><th>Preview value</th></tr></thead>
+              <tbody>
+                <tr><td>Procuring Entity</td><td style="color:var(--color-neutral-600);">[Generated from Tender context]</td></tr>
+                <tr><td>Tender reference</td><td style="color:var(--color-neutral-600);">[Generated from Tender context]</td></tr>
+                <tr><td>Clarification deadline</td><td style="color:var(--color-neutral-600);">[Tender Preparation value]</td></tr>
+                <tr><td>Tender validity</td><td style="color:var(--color-neutral-600);">[Tender Preparation value in days]</td></tr>
+              </tbody>
+            </table>
+          </sc-if>
+          <sc-if value="{{ !isTds }}">
+            <p style="font-size:14px; color:var(--color-neutral-600);">Rendered content for this section is generated from locked text, generated values and Tender Preparation input at Tender time.</p>
+          </sc-if>
+        </div>
+        <div class="card" style="background:var(--color-accent-100); border-color:var(--color-accent-300); padding:12px 16px; font-size:13px; margin-bottom:16px;">Placeholders show the exact runtime owner because this is an STD package preview, not a configured Tender.</div>
+        <div style="display:flex; justify-content:space-between;">
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-secondary" onClick="{{ prev }}">Previous section</button>
+            <button class="btn btn-secondary" onClick="{{ next }}">Next section</button>
+          </div>
+          <a href="#" class="btn btn-ghost">Open source document</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--color-neutral-300); padding:16px 32px;">
+    <a href="STD_Package_Home.dc.html" class="btn btn-ghost">Back to package</a>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx: 2 };
+  renderVals() {
+    const names = ['Invitation to Tender', 'Section I — Instructions to Tenderers', 'Section II — Tender Data Sheet', 'Section III — Evaluation and Qualification Criteria', 'Section IV — Non-price Tendering Forms', 'Section V — Requirements of the Information System', 'Section VI — Technical Requirements', 'Section VII — Implementation Schedule', 'Section VIII — System Inventory Tables', 'Section IX — Background and Informational Materials', 'General Conditions of Contract', 'Special Conditions of Contract', 'Contract Forms'];
+    const sections = names.map((name, i) => ({
+      name, select: () => this.setState({ idx: i }),
+      style: this.state.idx === i ? 'background:var(--color-accent-100); font-weight:600; border-left:3px solid var(--color-accent-600);' : '',
+    }));
+    return {
+      sections, selName: names[this.state.idx], isTds: this.state.idx === 2,
+      prev: () => this.setState({ idx: Math.max(0, this.state.idx - 1) }),
+      next: () => this.setState({ idx: Math.min(names.length - 1, this.state.idx + 1) }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

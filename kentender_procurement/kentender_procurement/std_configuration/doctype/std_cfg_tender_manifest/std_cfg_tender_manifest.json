@@ -1,0 +1,189 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "manifest_type",
+  "manifest_version",
+  "col_identity",
+  "package_code",
+  "std_version_id",
+  "section_official",
+  "official_title",
+  "official_issue",
+  "col_official",
+  "requirement_profile",
+  "section_rule",
+  "complete_rule",
+  "col_rule",
+  "content_digest",
+  "section_items",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "manifest_type",
+   "fieldtype": "Data",
+   "label": "Manifest Type",
+   "reqd": 1,
+   "default": "Tender Configuration",
+   "read_only": 1,
+   "description": "§9.2 — exact value \"Tender Configuration\"."
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Data",
+   "label": "Manifest Version",
+   "reqd": 1,
+   "description": "Package-generated contract version, populated by the Phase 7 activation engine."
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "package_code",
+   "fieldtype": "Data",
+   "label": "Package Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "std_version_id",
+   "fieldtype": "Link",
+   "label": "STD Version",
+   "options": "STD Cfg Version",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Immutable Active Version this manifest was generated from. One manifest per Version."
+  },
+  {
+   "fieldname": "section_official",
+   "fieldtype": "Section Break",
+   "label": "Official identity"
+  },
+  {
+   "fieldname": "official_title",
+   "fieldtype": "Data",
+   "label": "Official Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "official_issue",
+   "fieldtype": "Data",
+   "label": "Official Issue",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_official",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requirement_profile",
+   "fieldtype": "Data",
+   "label": "Requirement Profile",
+   "reqd": 1,
+   "default": "Information Technology"
+  },
+  {
+   "fieldname": "section_rule",
+   "fieldtype": "Section Break",
+   "label": "Completion rule"
+  },
+  {
+   "fieldname": "complete_rule",
+   "fieldtype": "Data",
+   "label": "Complete Rule",
+   "reqd": 1,
+   "default": "All nine steps Complete and zero Blocking findings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_rule",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content Digest",
+   "description": "SHA-256 of the canonical JSON item list — same digest rule `STD Cfg Runtime Manifest` uses for the other six manifest types (interface parity; this manifest deliberately keeps its own richer typed storage, not the shared JSON-payload doctype)."
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Items (CFG-01..09)"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Manifest Items",
+   "options": "STD Cfg Tender Manifest Item",
+   "description": "§9.4-9.13 — populated by the Phase 7 activation engine from the Draft/Version's PCFG-03..09 content, not authored directly here."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Tender Manifest",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "package_code",
+ "search_fields": "package_code,std_version_id"
+}

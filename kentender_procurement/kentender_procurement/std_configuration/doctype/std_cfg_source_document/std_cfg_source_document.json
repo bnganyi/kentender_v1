@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "STDCFG-SRC-.####",
+ "creation": "2026-08-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "source_document_id",
+  "reference_doctype",
+  "reference_name",
+  "col_identity",
+  "official_title",
+  "official_issue_label",
+  "section_file",
+  "file_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "source_document_id",
+   "fieldtype": "Data",
+   "label": "Source Document Id",
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1,
+   "description": "Fixes the exact Draft/Version reviewed (§7.4)."
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "official_title",
+   "fieldtype": "Data",
+   "label": "Official Title",
+   "reqd": 1,
+   "description": "Displayed beside the source viewer."
+  },
+  {
+   "fieldname": "official_issue_label",
+   "fieldtype": "Data",
+   "label": "Official Issue Label",
+   "reqd": 1,
+   "description": "Confirms the edition being configured."
+  },
+  {
+   "fieldname": "section_file",
+   "fieldtype": "Section Break",
+   "label": "Source file"
+  },
+  {
+   "fieldname": "file_id",
+   "fieldtype": "Attach",
+   "label": "Source File",
+   "reqd": 1,
+   "description": "Opens the reviewer-only source file. Not parsed by the runtime. File integrity is protected by Frappe's normal file service; no user-entered hash field (§7.4)."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Source Document",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "official_title",
+ "search_fields": "source_document_id,official_title"
+}

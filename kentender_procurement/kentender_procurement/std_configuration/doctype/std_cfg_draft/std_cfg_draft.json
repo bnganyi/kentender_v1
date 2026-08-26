@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "STDCFG-DRAFT-.####",
+ "creation": "2026-08-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "draft_id",
+  "package_id",
+  "col_identity",
+  "based_on_version_id",
+  "proposed_version_number",
+  "section_source",
+  "official_issue_label",
+  "official_source_file_id",
+  "section_state",
+  "state",
+  "col_state",
+  "record_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "draft_id",
+   "fieldtype": "Data",
+   "label": "Draft Id",
+   "description": "Stable authoring and review route reference (§7.2). System-generated, immutable.",
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Cfg Package",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "based_on_version_id",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "STD Cfg Version",
+   "description": "Active Version copied for revision. Empty for Version 1 (§7.2)."
+  },
+  {
+   "fieldname": "proposed_version_number",
+   "fieldtype": "Int",
+   "label": "Proposed Version Number",
+   "reqd": 1,
+   "description": "Next generated integer."
+  },
+  {
+   "fieldname": "section_source",
+   "fieldtype": "Section Break",
+   "label": "Official source"
+  },
+  {
+   "fieldname": "official_issue_label",
+   "fieldtype": "Data",
+   "label": "Official Issue Label",
+   "reqd": 1,
+   "description": "Exact edition/revision wording used during review, e.g. \"April 2021 edition\"."
+  },
+  {
+   "fieldname": "official_source_file_id",
+   "fieldtype": "Link",
+   "label": "Official Source File",
+   "options": "STD Cfg Source Document",
+   "description": "Reviewer-only official source. Required before submission (enforced by the Phase 6 coverage/validation engine, not at save time here)."
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "State"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "Draft\nIn review\nReturned",
+   "default": "Draft",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_state",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "description": "Optimistic-concurrency token (§7.2). Checked by the Phase 3 lifecycle engine."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Draft",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "draft_id",
+ "search_fields": "draft_id,package_id"
+}

@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_owner",
+  "reference_doctype",
+  "reference_name",
+  "section_identity",
+  "parameter_key",
+  "label",
+  "col_identity",
+  "value_type",
+  "runtime_owner",
+  "section_requirement",
+  "required",
+  "required_when",
+  "allowed_values",
+  "col_requirement",
+  "minimum_value",
+  "maximum_value",
+  "section_output",
+  "render_binding",
+  "downstream_binding",
+  "col_output",
+  "help_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_owner",
+   "fieldtype": "Section Break",
+   "label": "Owning Draft or Version"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "parameter_key",
+   "fieldtype": "Data",
+   "label": "Parameter Key",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Stable runtime and render binding, e.g. tender.validity_days (§7.7)."
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Exact user-facing label."
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "value_type",
+   "fieldtype": "Select",
+   "label": "Value Type",
+   "options": "Text\nLong text\nInteger\nDecimal\nDate\nDatetime\nDuration\nMoney\nChoice\nBoolean\nAddress\nContact",
+   "reqd": 1
+  },
+  {
+   "fieldname": "runtime_owner",
+   "fieldtype": "Select",
+   "label": "Runtime Owner",
+   "options": "System derived\nTender Preparation\nTender Management\nContract Formation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_requirement",
+   "fieldtype": "Section Break",
+   "label": "Requirement and bounds"
+  },
+  {
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required"
+  },
+  {
+   "fieldname": "required_when",
+   "fieldtype": "Data",
+   "label": "Required When",
+   "description": "Governed condition expression. Empty when unconditionally required/optional."
+  },
+  {
+   "fieldname": "allowed_values",
+   "fieldtype": "Small Text",
+   "label": "Allowed Values",
+   "description": "Required for Choice, empty otherwise (one value per line)."
+  },
+  {
+   "fieldname": "col_requirement",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "minimum_value",
+   "fieldtype": "Data",
+   "label": "Minimum Value",
+   "description": "Present only where the package constrains numeric, duration or money values."
+  },
+  {
+   "fieldname": "maximum_value",
+   "fieldtype": "Data",
+   "label": "Maximum Value"
+  },
+  {
+   "fieldname": "section_output",
+   "fieldtype": "Section Break",
+   "label": "Render and downstream use"
+  },
+  {
+   "fieldname": "render_binding",
+   "fieldtype": "Data",
+   "label": "Render Binding",
+   "description": "Exact section placeholder. A definition without a render or downstream consumer is invalid (§7.7)."
+  },
+  {
+   "fieldname": "downstream_binding",
+   "fieldtype": "Data",
+   "label": "Downstream Binding",
+   "description": "Exact manifest consumer when the value is reused."
+  },
+  {
+   "fieldname": "col_output",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "help_text",
+   "fieldtype": "Small Text",
+   "label": "Help Text",
+   "description": "Present only when the label and choices do not let the user answer correctly."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Parameter Definition",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "label",
+ "search_fields": "parameter_key,label"
+}

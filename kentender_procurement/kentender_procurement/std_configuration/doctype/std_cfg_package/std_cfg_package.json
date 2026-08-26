@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:package_code",
+ "creation": "2026-08-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "package_code",
+  "package_id",
+  "col_identity",
+  "official_title",
+  "requirement_profile",
+  "section_current",
+  "current_active_version_id",
+  "current_draft_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "package_code",
+   "fieldtype": "Data",
+   "label": "Package Code",
+   "description": "Governed route and binding code, e.g. KE-PPRA-IT (STD-CHG-001 v1.3 §7.1). Governed seed/configuration record; MVP-1 has no general create-family screen.",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Data",
+   "label": "Package Id",
+   "description": "Immutable family identity. Mirrors package_code (the document name) for direct spec-field traceability in downstream contract code.",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "official_title",
+   "fieldtype": "Data",
+   "label": "Official Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requirement_profile",
+   "fieldtype": "Select",
+   "label": "Requirement Profile",
+   "options": "Information Technology",
+   "reqd": 1,
+   "default": "Information Technology",
+   "description": "Determines the Requisition composer family (§7.1). Only Information Technology is supported in this build."
+  },
+  {
+   "fieldname": "section_current",
+   "fieldtype": "Section Break",
+   "label": "Current pointers",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "current_active_version_id",
+   "fieldtype": "Link",
+   "label": "Current Active Version",
+   "options": "STD Cfg Version",
+   "read_only": 1,
+   "description": "One Active Version for new instances. Maintained by the Phase 7 activation engine, not editable here."
+  },
+  {
+   "fieldname": "current_draft_id",
+   "fieldtype": "Link",
+   "label": "Current Draft",
+   "options": "STD Cfg Draft",
+   "read_only": 1,
+   "description": "One open Draft maximum. Maintained by the Phase 3 lifecycle engine, not editable here."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Package",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "official_title",
+ "search_fields": "package_code,official_title"
+}

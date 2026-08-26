@@ -1,0 +1,160 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "STDCFG-BLK-.####",
+ "creation": "2026-08-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_owner",
+  "reference_doctype",
+  "reference_name",
+  "section_identity",
+  "content_block_id",
+  "section_id",
+  "col_identity",
+  "block_type",
+  "display_order",
+  "section_content",
+  "locked_text",
+  "binding_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_owner",
+   "fieldtype": "Section Break",
+   "label": "Owning Draft or Version"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1,
+   "description": "§6.2 — locked wording and bindings change between STD revisions, so content is Draft/Version-scoped like every Phase 2 schema doctype, not shared package-wide. Only the Section container itself (the stable structural skeleton) is package-scoped."
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "content_block_id",
+   "fieldtype": "Data",
+   "label": "Content Block Id",
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_id",
+   "fieldtype": "Link",
+   "label": "Section",
+   "options": "STD Cfg Section",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "block_type",
+   "fieldtype": "Select",
+   "label": "Block Type",
+   "options": "Locked text\nGenerated value\nParameter\nRequirement table\nSchedule table\nInventory table\nPrice table\nEvaluation table\nBidder form\nContract value",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§7.6. Exhaustive enum — no undefined \"Other\" treatment is representable."
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Unique positive order within the Section."
+  },
+  {
+   "fieldname": "section_content",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "locked_text",
+   "fieldtype": "Long Text",
+   "label": "Locked Text",
+   "description": "Exact fixed wording. Locked text blocks only."
+  },
+  {
+   "fieldname": "binding_key",
+   "fieldtype": "Data",
+   "label": "Binding Key",
+   "description": "Exact definition or manifest destination. Required for every non-Locked-text block."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Content Block",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "display_order",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "content_block_id",
+ "search_fields": "content_block_id,binding_key"
+}

@@ -1,0 +1,179 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_owner",
+  "reference_doctype",
+  "reference_name",
+  "section_identity",
+  "family",
+  "col_identity",
+  "line_description",
+  "section_columns",
+  "quantity_unit_source",
+  "currency_rule",
+  "col_columns",
+  "tax_treatment",
+  "bidder_price_fields",
+  "section_calc",
+  "calculation",
+  "evaluated_total_binding"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_owner",
+   "fieldtype": "Section Break",
+   "label": "Owning Draft or Version"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "STD Cfg Draft\nSTD Cfg Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Draft/Version",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "family",
+   "fieldtype": "Select",
+   "label": "Price Schedule Family",
+   "options": "Software and infrastructure\nImplementation services\nTraining\nRecurrent support",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§7.11 — the four IT price-table families."
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "line_description",
+   "fieldtype": "Data",
+   "label": "Line Description Column",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_columns",
+   "fieldtype": "Section Break",
+   "label": "Column definitions"
+  },
+  {
+   "fieldname": "quantity_unit_source",
+   "fieldtype": "Data",
+   "label": "Quantity/Unit Source",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency_rule",
+   "fieldtype": "Data",
+   "label": "Currency Rule",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_columns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tax_treatment",
+   "fieldtype": "Data",
+   "label": "Tax Treatment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_price_fields",
+   "fieldtype": "Small Text",
+   "label": "Bidder Price Fields",
+   "reqd": 1,
+   "description": "No actual bid price is stored here — this defines the fields a bidder must later supply."
+  },
+  {
+   "fieldname": "section_calc",
+   "fieldtype": "Section Break",
+   "label": "Calculation"
+  },
+  {
+   "fieldname": "calculation",
+   "fieldtype": "Data",
+   "label": "Calculation",
+   "reqd": 1,
+   "description": "§11.2 — a price table without a calculation or evaluated-total treatment is Blocking."
+  },
+  {
+   "fieldname": "evaluated_total_binding",
+   "fieldtype": "Data",
+   "label": "Evaluated Total Binding",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Price Schema",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "family",
+ "search_fields": "family"
+}

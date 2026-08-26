@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "STDCFG-VER-.####",
+ "creation": "2026-08-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "version_id",
+  "package_id",
+  "col_identity",
+  "version_number",
+  "status",
+  "section_source",
+  "official_issue_label",
+  "official_source_file_id",
+  "col_source",
+  "manifest_revision"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "version_id",
+   "fieldtype": "Data",
+   "label": "Version Id",
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Cfg Package",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nSuperseded\nRetired",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§7.3. Transitions owned by the Phase 7 activation/supersession engine, not free client edits."
+  },
+  {
+   "fieldname": "section_source",
+   "fieldtype": "Section Break",
+   "label": "Official source"
+  },
+  {
+   "fieldname": "official_issue_label",
+   "fieldtype": "Data",
+   "label": "Official Issue Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "official_source_file_id",
+   "fieldtype": "Link",
+   "label": "Official Source File",
+   "options": "STD Cfg Source Document",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_source",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "manifest_revision",
+   "fieldtype": "Data",
+   "label": "Manifest Revision",
+   "read_only": 1,
+   "description": "Generated manifest revision token (§7.3), populated by the Phase 7 activation engine."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Version",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "version_id",
+ "search_fields": "version_id,package_id,version_number"
+}

@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "draft_id",
+  "assistance_type",
+  "col_identity",
+  "input_reference",
+  "actor",
+  "draft_record_version_snapshot",
+  "section_proposals",
+  "proposals"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "draft_id",
+   "fieldtype": "Link",
+   "label": "Draft",
+   "options": "STD Cfg Draft",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "assistance_type",
+   "fieldtype": "Select",
+   "label": "Assistance Type",
+   "options": "Prior configuration\nAI-assisted draft",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "input_reference",
+   "fieldtype": "Data",
+   "label": "Input File/Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "draft_record_version_snapshot",
+   "fieldtype": "Int",
+   "label": "Draft Record Version Snapshot",
+   "read_only": 1,
+   "description": "§16.2 — a proposal set is bound to one Draft record_version. Any subsequent Draft change makes it stale (checked by the Phase 8 assistance engine using this snapshot)."
+  },
+  {
+   "fieldname": "section_proposals",
+   "fieldtype": "Section Break",
+   "label": "Proposals"
+  },
+  {
+   "fieldname": "proposals",
+   "fieldtype": "Table",
+   "label": "Proposed Items",
+   "options": "STD Cfg Assistance Proposal Item"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Assistance Batch",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Configurator",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "STD Reviewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "draft_id",
+ "search_fields": "draft_id,assistance_type"
+}

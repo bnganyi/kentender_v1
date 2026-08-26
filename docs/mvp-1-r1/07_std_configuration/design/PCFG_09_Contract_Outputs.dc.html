@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); }
+    .kthdr { padding: 10px 32px; border-bottom: 1px solid var(--color-neutral-300); font-size: 13px; color: var(--color-neutral-700); display: flex; justify-content: space-between; }
+    .seg-opt { border: none; background: transparent; font-family: var(--font-body); }
+    .seg-opt:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  </style>
+</helmet>
+<div style="min-height:100vh; font-family:var(--font-body); padding-bottom:88px;">
+  <div class="kthdr"><span>Home &gt; Standard Tender Documents &gt; KE-PPRA-IT &gt; Contract and Outputs</span><span>Amina Hassan</span></div>
+  <div style="max-width:1080px; margin:0 auto; padding:40px 32px 0;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px;">
+      <h1 style="font-family:var(--font-heading); font-weight:600; font-size:28px; margin:0;">Contract and Outputs</h1>
+      <div><span style="color:var(--color-neutral-600); font-size:13px; margin-right:10px;">Draft Version 1</span><span class="kt-status is-live">Complete</span></div>
+    </div>
+
+    <div class="seg" style="margin-bottom:20px; width:fit-content;">
+      <button class="seg-opt" style="{{ tStyle.val }}" onClick="{{ sel.val }}">Contract values <span style="opacity:.55; font-size:11px;">(12)</span></button>
+      <button class="seg-opt" style="{{ tStyle.forms }}" onClick="{{ sel.forms }}">Contract forms <span style="opacity:.55; font-size:11px;">(4)</span></button>
+      <button class="seg-opt" style="{{ tStyle.maps }}" onClick="{{ sel.maps }}">Output mappings <span style="opacity:.55; font-size:11px;">(7)</span></button>
+      <button class="seg-opt" style="{{ tStyle.post }}" onClick="{{ sel.post }}">Post-award <span style="opacity:.55; font-size:11px;">(3)</span></button>
+    </div>
+
+    <sc-if value="{{ isVal }}">
+      <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400); margin-bottom:24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <table class="table" style="width:100%;">
+          <thead><tr><th>Value</th><th>Supplied by</th><th>Required treatment</th><th>Output</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ values }}" as="v" hint-placeholder-count="12">
+              <tr><td>{{ v.name }}</td><td>{{ v.by }}</td><td>{{ v.req }}</td><td>{{ v.output }}</td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isForms }}">
+      <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400); margin-bottom:24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <table class="table" style="width:100%;">
+          <thead><tr><th>Form</th><th>Treatment</th></tr></thead>
+          <tbody>
+            <tr><td>Contract Agreement</td><td>Locked + generated fields</td></tr>
+            <tr><td>Performance Security</td><td>Locked + generated fields</td></tr>
+            <tr><td>Advance Payment Security</td><td>Locked + generated fields</td></tr>
+            <tr><td>Acceptance Certificate</td><td>Locked + generated fields</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMaps }}">
+      <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400); margin-bottom:24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <table class="table" style="width:100%;">
+          <thead><tr><th>Output</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <sc-for list="{{ mappings }}" as="m" hint-placeholder-count="7">
+              <tr><td>{{ m }}</td><td><span class="kt-status is-live">Resolved</span></td><td><a href="#" class="btn btn-ghost">View mappings</a></td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPost }}">
+      <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400); margin-bottom:24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <table class="table" style="width:100%;">
+          <thead><tr><th>Form</th><th>Destination</th><th>Tender configuration</th></tr></thead>
+          <tbody>
+            <tr><td>Change Order Form</td><td>Contract Management</td><td>Not shown</td></tr>
+            <tr><td>Acceptance Certificate</td><td>Contract Management</td><td>Not shown</td></tr>
+            <tr><td>Contract Amendment Form</td><td>Contract Management</td><td>Not shown</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+  </div>
+  <div style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--color-neutral-300); padding:16px 32px; display:flex; justify-content:space-between;">
+    <a href="STD_Package_Home.dc.html" class="btn btn-ghost">Back to package</a>
+    <button class="btn btn-primary" onClick="{{ onSave }}">{{ saveLabel }}</button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { s: null, saved: false, tab: 'val' };
+  async componentDidMount() {
+    const store = await import('./std-store.js');
+    this.store = store;
+    this.setState({ s: store.load() });
+  }
+  renderVals() {
+    const s = this.state.s;
+    if (!s) return {};
+    const values = [
+      ['Performance security', 'Tender Preparation', 'Required', 'SCC and Contract Formation'],
+      ['Advance-payment security', 'Tender Preparation', 'Conditional', 'SCC and Contract Formation'],
+      ['Payment milestones', 'Tender Preparation', 'Required', 'SCC and contract schedule'],
+      ['Operational acceptance', 'Requirement and schedule data', 'Required', 'SCC and acceptance certificate'],
+      ['Warranty period', 'Tender Preparation', 'Required', 'SCC and contract'],
+      ['Support period', 'Tender Preparation', 'Required', 'SCC and contract'],
+      ['Intellectual-property treatment', 'Tender Preparation', 'Required', 'SCC and contract'],
+      ['Software licence categories', 'IT Requirements', 'Conditional', 'Contract appendix'],
+      ['Confidentiality', 'Package default plus Tender value', 'Required', 'SCC and contract'],
+      ['Insurance', 'Tender Preparation', 'Conditional', 'SCC and contract'],
+      ['Liability limit', 'Tender Preparation', 'Required', 'SCC and contract'],
+      ['Dispute resolution', 'Tender Preparation', 'Required', 'SCC and contract'],
+    ].map(([name, by, req, output]) => ({ name, by, req, output }));
+    const mappings = ['Render', 'Requisition', 'Tender Preparation', 'Bidder Response', 'Evaluation', 'Contract Formation', 'Contract Management'];
+    const t = this.state.tab;
+    const style = (k) => t === k ? 'background:var(--color-accent); color:var(--color-bg);' : '';
+    return {
+      values, mappings,
+      isVal: t === 'val', isForms: t === 'forms', isMaps: t === 'maps', isPost: t === 'post',
+      tStyle: { val: style('val'), forms: style('forms'), maps: style('maps'), post: style('post') },
+      sel: {
+        val: () => this.setState({ tab: 'val' }), forms: () => this.setState({ tab: 'forms' }),
+        maps: () => this.setState({ tab: 'maps' }), post: () => this.setState({ tab: 'post' }),
+      },
+      saveLabel: this.state.saved ? 'Saved' : 'Save Contract and Outputs',
+      onSave: () => { this.store.saveArea('contract-outputs', {}); this.setState({ saved: true }); setTimeout(() => this.setState({ saved: false }), 1800); },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

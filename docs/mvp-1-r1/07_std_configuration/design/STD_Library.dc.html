@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); }
+  </style>
+</helmet>
+<div style="min-height:100vh; font-family:var(--font-body);">
+  <div style="padding:10px 32px; border-bottom:1px solid var(--color-neutral-300); font-size:13px; color:var(--color-neutral-700); display:flex; justify-content:space-between;">
+    <span>Home &gt; Configuration and Governance &gt; Standard Tender Documents</span>
+    <span>Amina Hassan</span>
+  </div>
+  <div style="max-width:1080px; margin:0 auto; padding:40px 32px;">
+    <div style="font-family:var(--font-heading); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--color-accent-700); margin-bottom:8px;">CONFIGURATION AND GOVERNANCE</div>
+    <h1 style="font-family:var(--font-heading); font-weight:600; font-size:36px; margin:0 0 12px;">Standard Tender Documents</h1>
+    <p style="color:var(--color-neutral-700); font-size:16px; max-width:640px; margin:0 0 32px;">Configure and activate the standard document packages used by KenTender.</p>
+
+    <div class="blueprint" style="position:relative; border:1px solid var(--color-neutral-400);">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="width:100%;">
+        <thead><tr>
+          <th>Standard Tender Document</th><th>Profile</th><th>Active version</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td>{{ pkgLine }}</td>
+            <td>Information Technology</td>
+            <td>{{ activeLabel }}</td>
+            <td><span class="kt-status {{ statusClass }}">{{ statusLabel }}</span></td>
+            <td><a href="STD_Package_Home.dc.html" class="btn btn-secondary">Open package</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--color-neutral-600); font-size:13px; margin-top:16px;">1 Standard Tender Document</p>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { s: null };
+  async componentDidMount() {
+    const store = await import('./std-store.js');
+    this.setState({ s: store.load() });
+  }
+  renderVals() {
+    const s = this.state.s;
+    if (!s) return {};
+    const map = {
+      'Draft': ['is-draft', 'Draft in progress'],
+      'In review': ['is-pending', 'In review'],
+      'Returned': ['is-attention', 'Returned for correction'],
+      'Active': ['is-live', 'Active'],
+    };
+    const [statusClass, statusLabel] = map[s.lifecycle] || map['Draft'];
+    return {
+      pkgLine: `${s.packageCode} · ${s.officialTitle}`,
+      activeLabel: s.activeVersionNumber ? `Version ${s.activeVersionNumber}` : 'Not active',
+      statusClass, statusLabel,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
