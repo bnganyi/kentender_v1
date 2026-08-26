@@ -213,6 +213,34 @@ Do not use `frappe.confirm()`/`frappe.ui.Dialog` on a Vue-owned surface — they
 - `<script setup>`'s automatic ref-unwrapping in templates applies only to top-level bindings. A ref nested inside a plain returned object (for example `const filters = { q: someRef }`) renders as the raw ref object in the template — a literal `[object Object]` if bound to an `<input>`. Expose each ref as its own top-level `const` instead.
 - `defineModel()` is not available (stabilized in Vue 3.4; this bench pins 3.3.9). Use the plain `modelValue` prop plus `update:modelValue` emit pattern it desugars to.
 
+### 6.9 Lazy-load page-specific assets — never dump them in `app_include_js`/`app_include_css`
+
+**A route's own JS/CSS (fixture templates, live-data binders, dialogs, page-specific stylesheets) must be loaded only by that route's own `page_js`-mapped controller, via `frappe.require([...])` — never added to the app's global `app_include_js`/`app_include_css` in `hooks.py`.** Anything in those global lists loads on *every* Desk page, in every app, on every navigation, regardless of which route the user is actually on. Confirmed live 2026-08-26: kentender_procurement's "planning" route family alone (17 fixture/bind/dialog files) was loading globally, meaning the STD Configuration screens — which use none of it — were pulling in ~145 static requests per navigation, most of it dead weight for that page. This is a real, measured performance cost, not a style nitpick.
+
+- `page_js` (route → controller file) is Frappe's own lazy mechanism — it only loads the mapped controller when the user navigates to that exact route. That part already worked correctly everywhere in this repo.
+- The bug pattern was every *other* file that controller depends on (fixture template files, `*_bind.js` live-data binders, dialog components, the page's own CSS) getting dumped into the global include lists instead — a shortcut that avoided figuring out multi-file lazy loading, at the cost of loading it for every page forever.
+- The fix: inside the controller's `on_page_load`, before calling whatever function actually renders the page, wrap it in `frappe.require([...])`:
+  ```js
+  frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
+  	var page = frappe.ui.make_app_page({ parent: wrapper, ... });
+  	wrapper.page = page;
+  	frappe.require(
+  		[
+  			"/assets/<app>/js/<fixture_or_bind_file>.js",
+  			// ...every other file this page's own render/bind logic needs...
+  		],
+  		function () {
+  			mount(page); // now safe — every listed file has finished loading
+  		}
+  	);
+  };
+  ```
+  `frappe.require()`'s callback fires only once every listed asset has finished loading (`Promise.all` under the hood) — safe to list several interdependent files in one call, since none of them should execute cross-file calls at their own top level (only later, when the controller's own render function runs inside the callback). It does **not** guarantee execution order *among* the listed files themselves (dynamically-injected `<script>` tags race by network arrival, not array order) — fine for files that only define functions/attach to a namespace at load time, wrong if any of them calls another listed file's function immediately at top level.
+  `on_page_show` (re-entry into an already-mounted page) does not need its own `frappe.require()` call — Frappe guarantees `on_page_load` always fires once before any `on_page_show`, so the assets are already loaded by the time `on_page_show` could possibly need them.
+- If a file is genuinely shared by more than one route, add the same `frappe.require()` entry to each of those routes' controllers — `frappe.require()` is safe to call redundantly (already-loaded assets are a no-op).
+- **Not everything belongs in a page-specific `frappe.require()`.** Genuine cross-cutting Desk-wide chrome stays in `app_include_js`/`app_include_css` — the shared shell (`kt_cl_shell.js`/`kt_cl_sidebar.js`/`kt_cl_components.js`/`kt_cl_surface_registry.js`/`kt_cl_shell_router.js`), `kt_industry_tokens.css` (§6.6), the Stitch table-footer/pager components reused across many unrelated pages, and small self-triggering route-detection shims that must run globally to catch a legacy route *before* any specific page controller exists for it (for example `procurement_home_workspace.js`'s `Workspaces/Procurement Home` → `kt-procurement-home` redirect). The test is usage breadth, not file size: if grepping the file's exported namespace/function name turns up callers in one route's controller (or a small named family of routes), it is page-specific and belongs behind that route's own `frappe.require()`; if it turns up callers spread across many unrelated route families, it is genuinely global chrome.
+- Before assuming a file is dead and deleting it outright, grep for its exported namespace/function name across every app's `public/js` — a hit count of zero across the whole repo is a real finding (flag it, don't silently keep loading it forever "just in case"), but do not guess a consumer that isn't there.
+
 ## 7. Test-driven development
 
 TDD is the default for behaviour changes and bug fixes.
