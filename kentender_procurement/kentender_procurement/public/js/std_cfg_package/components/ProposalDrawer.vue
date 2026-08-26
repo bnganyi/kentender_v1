@@ -64,6 +64,22 @@ async function acceptItem(item) {
 	}
 }
 
+async function rejectItem(item) {
+	busy.value = true;
+	try {
+		await frappe.xcall("kentender_procurement.std_configuration.api.std_configuration_api.reject_assistance_items", {
+			batch_id: item.batch_id,
+			item_names: [item.name],
+		});
+		frappe.show_alert({ message: __("Rejected"), indicator: "blue" });
+		await refresh();
+	} catch (e) {
+		frappe.show_alert({ message: (e && e.message) || __("Could not reject this item."), indicator: "red" });
+	} finally {
+		busy.value = false;
+	}
+}
+
 async function rejectRemaining() {
 	busy.value = true;
 	try {
@@ -111,7 +127,10 @@ async function rejectRemaining() {
 							<td>{{ item.current_draft_state }}</td>
 							<td>
 								<span v-if="item.status !== 'Proposed'" class="kt-status" :class="item.status === 'Accepted' ? 'is-live' : 'is-pending'">{{ item.status }}</span>
-								<a v-else href="#" :aria-disabled="busy" @click.prevent="!busy && acceptItem(item)">{{ __("Review") }}</a>
+								<template v-else>
+									<button type="button" class="kt-btn kt-btn-ghost" :disabled="busy" @click="acceptItem(item)">{{ __("Accept") }}</button>
+									<button type="button" class="kt-btn kt-btn-ghost" :disabled="busy" @click="rejectItem(item)">{{ __("Reject") }}</button>
+								</template>
 							</td>
 						</tr>
 						<tr v-if="!visibleItems.length"><td colspan="4" class="kt-muted">{{ __("No items in this group.") }}</td></tr>

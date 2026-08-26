@@ -35,6 +35,7 @@ const readiness = ref(null);
 const areaStatus = reactive({});
 const activeTab = ref("Overview");
 const confirmed = ref(false);
+const notInReview = computed(() => !workspace.value || workspace.value.task.status !== "Open");
 
 async function refresh() {
 	loading.value = true;
@@ -80,6 +81,10 @@ const railTrail = computed(() => [
 ]);
 usePageRail(railEl, railTrail);
 
+function viewArea(area) {
+	frappe.set_route("std-cfg-area", "draft", workspace.value.task.draft_id, area.code);
+}
+
 const returnDialogOpen = ref(false);
 const returnSaving = ref(false);
 const returnError = ref("");
@@ -120,7 +125,7 @@ async function activatePackage() {
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<div class="kt-shell" style="padding-bottom: 88px">
 			<div v-if="loading" class="kt-card kt-blueprint">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div v-for="i in 4" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
@@ -140,7 +145,8 @@ async function activatePackage() {
 				</div>
 
 				<template v-if="activeTab === 'Overview'">
-					<div class="kt-card" style="padding: 16px">
+					<div class="kt-card kt-blueprint" style="padding: 16px">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 						<table class="kt-table" style="border: none">
 							<tbody>
 								<tr><td class="kt-muted">{{ __("Official issue") }}</td><td>{{ workspace.draft.official_issue_label || "—" }}</td></tr>
@@ -161,53 +167,65 @@ async function activatePackage() {
 						<input type="checkbox" v-model="confirmed" />
 						{{ __("I have reviewed the complete package against the official source, including all configuration areas, mappings and the rendered preview.") }}
 					</label>
-
-					<div style="display: flex; justify-content: space-between; margin-top: 8px">
-						<button type="button" class="kt-btn kt-btn-secondary" @click="returnDialogOpen = true">{{ __("Return for correction") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="!confirmed || activating" @click="activatePackage">
-							{{ __("Activate package") }}
-						</button>
-					</div>
 				</template>
 
-				<table v-else-if="activeTab === 'Coverage'" class="kt-table">
-					<thead><tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th></tr></thead>
-					<tbody>
-						<tr v-for="row in readiness.coverage" :key="row.number">
-							<td>{{ row.number }}</td>
-							<td>{{ row.official_area }}</td>
-							<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result }}</span></td>
-						</tr>
-					</tbody>
-				</table>
+				<div v-else-if="activeTab === 'Coverage'" class="kt-card kt-blueprint">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<table class="kt-table" style="border: none">
+						<thead><tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th></tr></thead>
+						<tbody>
+							<tr v-for="row in readiness.coverage" :key="row.number">
+								<td>{{ row.number }}</td>
+								<td>{{ row.official_area }}</td>
+								<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result }}</span></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
-				<table v-else-if="activeTab === 'Configuration'" class="kt-table">
-					<thead><tr><th>{{ __("Area") }}</th><th>{{ __("Exact purpose") }}</th><th>{{ __("Status") }}</th></tr></thead>
-					<tbody>
-						<tr v-for="a in PCFG_AREAS" :key="a.code">
-							<td>{{ a.title }}</td>
-							<td class="kt-muted">{{ a.purpose }}</td>
-							<td><span class="kt-status" :class="areaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">{{ areaStatus[a.code] }}</span></td>
-						</tr>
-					</tbody>
-				</table>
+				<div v-else-if="activeTab === 'Configuration'" class="kt-card kt-blueprint">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<table class="kt-table" style="border: none">
+						<thead><tr><th>{{ __("Area") }}</th><th>{{ __("Exact purpose") }}</th><th>{{ __("Status") }}</th><th></th></tr></thead>
+						<tbody>
+							<tr v-for="a in PCFG_AREAS" :key="a.code">
+								<td>{{ a.title }}</td>
+								<td class="kt-muted">{{ a.purpose }}</td>
+								<td><span class="kt-status" :class="areaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">{{ areaStatus[a.code] }}</span></td>
+								<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="viewArea(a)">{{ __("View") }}</a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
 				<div v-else-if="activeTab === 'Complete preview'" class="kt-card kt-empty">
 					<h2>{{ __("Complete preview is not available in this build yet.") }}</h2>
 				</div>
 
-				<table v-else class="kt-table">
-					<thead><tr><th>{{ __("Date") }}</th><th>{{ __("Event") }}</th><th>{{ __("By") }}</th></tr></thead>
-					<tbody>
-						<tr><td>{{ workspace.task.submitted_at }}</td><td>{{ __("Submitted for review") }}</td><td>{{ workspace.task.submitted_by }}</td></tr>
-						<tr v-for="d in workspace.decisions" :key="d.decided_at + d.decided_by">
-							<td>{{ d.decided_at }}</td>
-							<td>{{ d.decision }}</td>
-							<td>{{ d.decided_by }}</td>
-						</tr>
-					</tbody>
-				</table>
+				<div v-else class="kt-card kt-blueprint">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<table class="kt-table" style="border: none">
+						<thead><tr><th>{{ __("Date") }}</th><th>{{ __("Event") }}</th><th>{{ __("By") }}</th></tr></thead>
+						<tbody>
+							<tr><td>{{ workspace.task.submitted_at }}</td><td>{{ __("Submitted for review") }}</td><td>{{ workspace.task.submitted_by }}</td></tr>
+							<tr v-for="d in workspace.decisions" :key="d.decided_at + d.decided_by">
+								<td>{{ d.decided_at }}</td>
+								<td>{{ d.decision }}</td>
+								<td>{{ d.decided_by }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</template>
+		</div>
+
+		<div v-if="!loading" class="kt-sticky-footer">
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="notInReview" @click="returnDialogOpen = true">
+				{{ __("Return for correction") }}
+			</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="notInReview || !confirmed || activating" @click="activatePackage">
+				{{ __("Activate package") }}
+			</button>
 		</div>
 
 		<ReturnDialog

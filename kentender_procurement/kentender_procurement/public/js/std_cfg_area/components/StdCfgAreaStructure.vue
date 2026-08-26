@@ -118,31 +118,37 @@ async function confirmBlock(values) {
 			<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
 
-		<table v-else-if="activeTab === TAB.COVERAGE" class="kt-table">
-			<thead>
-				<tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th></tr>
-			</thead>
-			<tbody>
-				<tr v-for="row in coverage" :key="row.number">
-					<td>{{ row.number }}</td>
-					<td>{{ row.official_area }}</td>
-					<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result === 'Pass' ? __('Complete') : __('Incomplete') }}</span></td>
-				</tr>
-			</tbody>
-		</table>
+		<div v-else-if="activeTab === TAB.COVERAGE" class="kt-card kt-blueprint" style="padding: 0">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<table class="kt-table" style="border: none">
+				<thead>
+					<tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th></tr>
+				</thead>
+				<tbody>
+					<tr v-for="row in coverage" :key="row.number">
+						<td>{{ row.number }}</td>
+						<td>{{ row.official_area }}</td>
+						<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result === 'Pass' ? __('Complete') : __('Incomplete') }}</span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 
-		<table v-else-if="activeTab === TAB.SECTIONS" class="kt-table">
-			<thead>
-				<tr><th>{{ __("Section") }}</th><th>{{ __("Blocks") }}</th><th></th></tr>
-			</thead>
-			<tbody>
-				<tr v-for="s in sections" :key="s.name">
-					<td>{{ s.title }}</td>
-					<td>{{ (blocksBySection[s.name] || []).length }}</td>
-					<td><a href="#" @click.prevent="selectedSectionId = s.name; activeTab = TAB.SELECTED">{{ __("Open") }}</a></td>
-				</tr>
-			</tbody>
-		</table>
+		<div v-else-if="activeTab === TAB.SECTIONS" class="kt-card kt-blueprint" style="padding: 0">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<table class="kt-table" style="border: none">
+				<thead>
+					<tr><th>{{ __("Section") }}</th><th>{{ __("Blocks") }}</th><th></th></tr>
+				</thead>
+				<tbody>
+					<tr v-for="s in sections" :key="s.name">
+						<td>{{ s.title }}</td>
+						<td>{{ (blocksBySection[s.name] || []).length }}</td>
+						<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="selectedSectionId = s.name; activeTab = TAB.SELECTED">{{ __("Open") }}</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 
 		<template v-else>
 			<div class="kt-field" style="max-width: 360px">
@@ -151,21 +157,25 @@ async function confirmBlock(values) {
 					<option v-for="s in sections" :key="s.name" :value="s.name">{{ s.title }}</option>
 				</select>
 			</div>
-			<table class="kt-table">
-				<thead>
-					<tr><th>{{ __("Order") }}</th><th>{{ __("Content") }}</th><th>{{ __("Treatment") }}</th><th>{{ __("Binding") }}</th><th></th></tr>
-				</thead>
-				<tbody>
-					<tr v-for="b in selectedBlocks" :key="b.name">
-						<td>{{ b.display_order }}</td>
-						<td>{{ b.content_block_id }}</td>
-						<td>{{ b.block_type }}</td>
-						<td>{{ b.binding_key || "—" }}</td>
-						<td><a v-if="!readOnly" href="#" @click.prevent="openEditBlock(b)">{{ __("Edit") }}</a></td>
-					</tr>
-					<tr v-if="!selectedBlocks.length"><td colspan="5" class="kt-muted">{{ __("No content blocks yet.") }}</td></tr>
-				</tbody>
-			</table>
+			<div class="kt-card-title">{{ selectedSection ? selectedSection.title : "" }}</div>
+			<div class="kt-card kt-blueprint" style="padding: 0; margin-bottom: 16px">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<table class="kt-table" style="border: none">
+					<thead>
+						<tr><th>{{ __("Order") }}</th><th>{{ __("Content") }}</th><th>{{ __("Treatment") }}</th><th>{{ __("Binding") }}</th><th></th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="b in selectedBlocks" :key="b.name">
+							<td>{{ b.display_order }}</td>
+							<td>{{ b.content_block_id }}</td>
+							<td>{{ b.block_type }}</td>
+							<td>{{ b.binding_key || "—" }}</td>
+							<td><a v-if="!readOnly" href="#" class="kt-btn kt-btn-ghost" @click.prevent="openEditBlock(b)">{{ __("Edit") }}</a></td>
+						</tr>
+						<tr v-if="!selectedBlocks.length"><td colspan="5" class="kt-muted">{{ __("No content blocks yet.") }}</td></tr>
+					</tbody>
+				</table>
+			</div>
 			<button v-if="!readOnly" type="button" class="kt-btn kt-btn-secondary" @click="openAddBlock">{{ __("Add content block") }}</button>
 		</template>
 

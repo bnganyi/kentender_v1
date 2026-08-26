@@ -69,7 +69,7 @@ async function submitForReview() {
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<div class="kt-shell" style="padding-bottom: 88px">
 			<div v-if="loading" class="kt-card kt-blueprint">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
@@ -87,47 +87,63 @@ async function submitForReview() {
 					</div>
 				</header>
 
-				<div v-if="isReady" class="kt-card" style="padding: 12px 16px; border-left: 3px solid #10b981">
+				<div v-if="isReady" class="kt-card" style="padding: 14px 18px; margin-bottom: 20px; background: color-mix(in srgb, #10b981 10%, transparent); border-color: color-mix(in srgb, #10b981 33%, transparent)">
 					{{ __("All sixteen STD areas are covered and the package has no blocking findings.") }}
 				</div>
 
-				<div class="kt-card" style="padding: 16px; display: flex; gap: 32px; flex-wrap: wrap">
-					<div><div class="kt-muted">{{ __("Coverage") }}</div><strong>{{ readiness.coverage_pass_count }} {{ __("of") }} {{ readiness.coverage.length }}</strong></div>
-					<div><div class="kt-muted">{{ __("Blocking") }}</div><strong>{{ readiness.blocking_count }}</strong></div>
-					<div><div class="kt-muted">{{ __("Warnings") }}</div><strong>{{ readiness.warning_count }}</strong></div>
+				<div class="kt-card kt-blueprint" style="display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div style="text-align: center; padding: 14px">
+						<div style="font-size: 26px; font-weight: 600">{{ readiness.coverage_pass_count }} {{ __("of") }} {{ readiness.coverage.length }}</div>
+						<div class="kt-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">{{ __("Coverage") }}</div>
+					</div>
+					<div style="text-align: center; padding: 14px">
+						<div style="font-size: 26px; font-weight: 600">{{ readiness.blocking_count }}</div>
+						<div class="kt-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">{{ __("Blocking") }}</div>
+					</div>
+					<div style="text-align: center; padding: 14px">
+						<div style="font-size: 26px; font-weight: 600">{{ readiness.warning_count }}</div>
+						<div class="kt-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">{{ __("Warnings") }}</div>
+					</div>
 				</div>
 
-				<table class="kt-table">
-					<thead>
-						<tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th><th></th></tr>
-					</thead>
-					<tbody>
-						<tr v-for="row in readiness.coverage" :key="row.number">
-							<td>{{ row.number }}</td>
-							<td>{{ row.official_area }}</td>
-							<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result }}</span></td>
-							<td><a href="#" @click.prevent="openArea(row)">{{ __("View area") }}</a></td>
-						</tr>
-					</tbody>
-				</table>
-
-				<div v-if="readiness.warnings.length" class="kt-card" style="padding: 16px">
-					<h2 style="font-size: 16px; margin: 0 0 10px">{{ __("Warnings") }}</h2>
+				<div class="kt-card kt-blueprint" style="margin-bottom: 20px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<table class="kt-table" style="border: none">
 						<thead>
-							<tr><th>{{ __("Area") }}</th><th>{{ __("Warning") }}</th><th></th></tr>
+							<tr><th>{{ __("No.") }}</th><th>{{ __("STD area") }}</th><th>{{ __("Result") }}</th><th></th></tr>
 						</thead>
 						<tbody>
-							<tr v-for="w in readiness.warnings" :key="w.code + w.message">
-								<td>{{ w.owning_area }}</td>
-								<td>{{ w.message }}</td>
-								<td><a href="#" @click.prevent="frappe.set_route('std-cfg-area', 'draft', draftId, w.owning_area)">{{ __("Open") }} {{ w.owning_area }}</a></td>
+							<tr v-for="row in readiness.coverage" :key="row.number">
+								<td>{{ row.number }}</td>
+								<td>{{ row.official_area }}</td>
+								<td><span class="kt-status" :class="row.result === 'Pass' ? 'is-live' : 'is-pending'">{{ row.result }}</span></td>
+								<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openArea(row)">{{ __("View area") }}</a></td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
 
-				<div style="display: flex; justify-content: space-between; margin-top: 8px">
+				<template v-if="readiness.warnings.length">
+					<div class="kt-card-title">{{ __("Warnings") }}</div>
+					<div class="kt-card kt-blueprint" style="margin-bottom: 16px">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<table class="kt-table" style="border: none">
+							<thead>
+								<tr><th>{{ __("Area") }}</th><th>{{ __("Warning") }}</th><th></th></tr>
+							</thead>
+							<tbody>
+								<tr v-for="w in readiness.warnings" :key="w.code + w.message">
+									<td>{{ w.owning_area }}</td>
+									<td>{{ w.message }}</td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="frappe.set_route('std-cfg-area', 'draft', draftId, w.owning_area)">{{ __("Open") }} {{ w.owning_area }}</a></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</template>
+
+				<div class="kt-sticky-footer" style="justify-content: space-between">
 					<button type="button" class="kt-btn kt-btn-ghost" @click="backToPackage">{{ __("Back to package") }}</button>
 					<button type="button" class="kt-btn kt-btn-primary" :disabled="submitting" @click="submitForReview">{{ __("Submit for review") }}</button>
 				</div>

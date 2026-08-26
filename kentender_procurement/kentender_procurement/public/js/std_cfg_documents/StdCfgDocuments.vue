@@ -80,7 +80,7 @@ function openPackage(pkg) {
 							<td>{{ pkg.requirement_profile }}</td>
 							<td>{{ activeVersionLabel(pkg) }}</td>
 							<td><span class="kt-status" :class="statusClass(pkg.state)">{{ pkg.state }}</span></td>
-							<td><a href="#" @click.prevent="openPackage(pkg)">{{ __("Open package") }}</a></td>
+							<td><a href="#" class="kt-btn kt-btn-secondary" @click.prevent="openPackage(pkg)">{{ __("Open package") }}</a></td>
 						</tr>
 					</tbody>
 				</table>

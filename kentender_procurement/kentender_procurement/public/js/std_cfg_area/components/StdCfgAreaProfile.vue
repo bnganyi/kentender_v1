@@ -90,7 +90,8 @@ async function save() {
 		<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 		<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 	</div>
-	<div v-else class="kt-card" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+	<div v-else class="kt-card kt-blueprint" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+		<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 		<div class="kt-field" style="margin: 0">
 			<label>{{ __("Package code") }}</label>
 			<input class="kt-input" :value="pkg.package_code" disabled />

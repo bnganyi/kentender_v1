@@ -59,6 +59,14 @@ usePageRail(railEl, railTrail);
 function label(doctype) {
 	return DOCTYPE_LABELS[doctype] || doctype;
 }
+
+function viewChange() {
+	frappe.show_alert({ message: __("Field-level change detail is not available yet."), indicator: "orange" });
+}
+
+function backToReview() {
+	window.history.back();
+}
 </script>
 
 <template>
@@ -70,42 +78,58 @@ function label(doctype) {
 				<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 			</div>
 			<template v-else>
-				<header>
-					<h1 style="font-size: 28px">{{ __("Changes from Active Version") }} {{ docA.version_number }}</h1>
-					<p class="kt-muted" style="margin: 4px 0 0">
-						{{ __("Version") }} {{ docB.version_number }} · {{ docB.official_issue_label }}
-						<span class="kt-status is-pending" style="margin-left: 8px">{{ docB.status }}</span>
-					</p>
+				<header style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px">
+					<div>
+						<h1 style="font-size: 28px">{{ __("Changes from Active Version") }} {{ docA.version_number }}</h1>
+						<p class="kt-muted" style="margin: 6px 0 0">
+							{{ __("Version") }} {{ docB.version_number }} · {{ docB.official_issue_label }}
+						</p>
+					</div>
+					<span class="kt-status is-pending">{{ docB.status }}</span>
 				</header>
 
-				<div class="kt-card" style="padding: 16px; display: flex; gap: 32px; flex-wrap: wrap">
-					<div><div class="kt-muted">{{ __("Changed areas") }}</div><strong>{{ comparison.changed.length }}</strong></div>
-					<div><div class="kt-muted">{{ __("Unchanged areas") }}</div><strong>{{ comparison.unchanged.length }}</strong></div>
+				<div class="kt-card kt-blueprint" style="display: grid; grid-template-columns: repeat(2, 1fr); margin-bottom: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div style="text-align: center; padding: 14px">
+						<div style="font-size: 24px; font-weight: 600">{{ comparison.changed.length }}</div>
+						<div class="kt-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">{{ __("Changed areas") }}</div>
+					</div>
+					<div style="text-align: center; padding: 14px">
+						<div style="font-size: 24px; font-weight: 600">{{ comparison.unchanged.length }}</div>
+						<div class="kt-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">{{ __("Unchanged areas") }}</div>
+					</div>
 				</div>
 
-				<table class="kt-table">
-					<thead>
-						<tr>
-							<th>{{ __("Area") }}</th>
-							<th>{{ __("Active Version") }} {{ docA.version_number }}</th>
-							<th>{{ __("Submitted Version") }} {{ docB.version_number }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="row in comparison.changed" :key="row.doctype">
-							<td>{{ label(row.doctype) }}</td>
-							<td>{{ row.count_a }} {{ __("row(s)") }}</td>
-							<td>{{ row.count_b }} {{ __("row(s)") }}</td>
-						</tr>
-						<tr v-if="!comparison.changed.length">
-							<td colspan="3" class="kt-muted">{{ __("No changed areas.") }}</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="kt-card kt-blueprint" style="margin-bottom: 16px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<table class="kt-table" style="border: none">
+						<thead>
+							<tr>
+								<th>{{ __("Area") }}</th>
+								<th>{{ __("Active Version") }} {{ docA.version_number }}</th>
+								<th>{{ __("Submitted Version") }} {{ docB.version_number }}</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in comparison.changed" :key="row.doctype">
+								<td>{{ label(row.doctype) }}</td>
+								<td>{{ row.count_a }} {{ __("row(s)") }}</td>
+								<td>{{ row.count_b }} {{ __("row(s)") }}</td>
+								<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="viewChange">{{ __("View change") }}</a></td>
+							</tr>
+							<tr v-if="!comparison.changed.length">
+								<td colspan="4" class="kt-muted">{{ __("No changed areas.") }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
 				<p class="kt-muted">
 					{{ __("{0} area(s) have no configured change.", [comparison.unchanged.length]) }}
 				</p>
+
+				<a href="#" class="kt-btn kt-btn-ghost" @click.prevent="backToReview">{{ __("Back to review") }}</a>
 			</template>
 		</div>
 	</div>

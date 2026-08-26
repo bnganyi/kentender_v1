@@ -62,14 +62,16 @@ function backToPackage() {
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<div class="kt-shell" style="padding-bottom: 88px">
 			<template v-if="!loading && reference">
-				<header>
-					<h1 style="font-size: 28px">{{ areaTitle }}</h1>
-					<p class="kt-muted" style="margin: 4px 0 0">
-						{{ readOnly ? __("Version") + " " + reference.version_number : __("Draft Version") + " " + reference.proposed_version_number }}
-						<span v-if="readOnly" class="kt-status is-live" style="margin-left: 8px">{{ __("Read only") }}</span>
-					</p>
+				<header style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px">
+					<h1 style="font-size: 28px; margin: 0">{{ areaTitle }}</h1>
+					<div>
+						<span class="kt-muted" style="font-size: 13px; margin-right: 10px">
+							{{ readOnly ? __("Version") + " " + reference.version_number : __("Draft Version") + " " + reference.proposed_version_number }}
+						</span>
+						<span class="kt-status" :class="readOnly ? 'is-live' : 'is-draft'">{{ readOnly ? __("Read only") : reference.state }}</span>
+					</div>
 				</header>
 
 				<StdCfgAreaProfile v-if="areaCode === 'PCFG-01'" :reference-doctype="referenceDoctype" :reference-name="referenceName" :package-id="reference.package_id" :read-only="readOnly" />
@@ -79,7 +81,7 @@ function backToPackage() {
 					<h2>{{ __("Unknown configuration area.") }}</h2>
 				</div>
 
-				<div style="display: flex; justify-content: flex-start; margin-top: 8px">
+				<div class="kt-sticky-footer" style="justify-content: flex-start">
 					<button type="button" class="kt-btn kt-btn-ghost" @click="backToPackage">{{ __("Back to package") }}</button>
 				</div>
 			</template>

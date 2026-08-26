@@ -95,23 +95,26 @@ function displayValue(item, col) {
 			<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
 		<template v-else>
-			<table class="kt-table">
-				<thead>
-					<tr>
-						<th v-for="c in activeGroup.columns" :key="c.key">{{ c.label }}</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="item in itemsByDoctype[activeGroup.doctype]" :key="item.name">
-						<td v-for="c in activeGroup.columns" :key="c.key">{{ displayValue(item, c) }}</td>
-						<td><a v-if="!readOnly" href="#" @click.prevent="openEdit(item)">{{ __("Edit") }}</a></td>
-					</tr>
-					<tr v-if="!itemsByDoctype[activeGroup.doctype] || !itemsByDoctype[activeGroup.doctype].length">
-						<td :colspan="activeGroup.columns.length + 1" class="kt-muted">{{ __("Nothing configured yet.") }}</td>
-					</tr>
-				</tbody>
-			</table>
+			<div class="kt-card kt-blueprint" style="padding: 0; margin-bottom: 16px">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<table class="kt-table" style="border: none">
+					<thead>
+						<tr>
+							<th v-for="c in activeGroup.columns" :key="c.key">{{ c.label }}</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="item in itemsByDoctype[activeGroup.doctype]" :key="item.name">
+							<td v-for="c in activeGroup.columns" :key="c.key">{{ displayValue(item, c) }}</td>
+							<td><a v-if="!readOnly" href="#" class="kt-btn kt-btn-ghost" @click.prevent="openEdit(item)">{{ __("Edit") }}</a></td>
+						</tr>
+						<tr v-if="!itemsByDoctype[activeGroup.doctype] || !itemsByDoctype[activeGroup.doctype].length">
+							<td :colspan="activeGroup.columns.length + 1" class="kt-muted">{{ __("Nothing configured yet.") }}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 			<button v-if="!readOnly" type="button" class="kt-btn kt-btn-secondary" @click="openAdd">{{ __("Add") }} {{ activeGroup.label.toLowerCase() }}</button>
 		</template>
 

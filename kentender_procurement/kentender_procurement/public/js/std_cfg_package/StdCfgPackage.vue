@@ -249,7 +249,7 @@ async function closeDrawer() {
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<div class="kt-shell" style="padding-bottom: 88px">
 			<div v-if="error" class="kt-card kt-empty">
 				<h2>{{ __("Could not load this package.") }}</h2>
 				<p>{{ error.message }}</p>
@@ -263,21 +263,23 @@ async function closeDrawer() {
 			</template>
 
 			<template v-else-if="draft">
-				<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
+				<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
 					<div>
 						<div class="kt-eyebrow">{{ __("Standard Tender Document") }}</div>
 						<h1 style="font-size: 32px">{{ pkg.official_title }}</h1>
-						<p class="kt-muted" style="margin: 4px 0 0">
+						<p class="kt-muted" style="margin: 4px 0 10px">
 							{{ pkg.package_code }} · {{ __("Proposed Version") }} {{ draft.proposed_version_number }}
-							<span class="kt-status is-draft" style="margin-left: 8px">{{ draft.state }}</span>
 						</p>
+						<span class="kt-status is-draft">{{ draft.state }}</span>
 					</div>
 					<button type="button" class="kt-btn kt-btn-secondary" @click="openDraftAssistance">
 						{{ __("Draft assistance") }}
 					</button>
 				</header>
 
-				<div class="kt-card" style="padding: 16px">
+				<div class="kt-card-title">{{ __("Source") }}</div>
+				<div class="kt-card kt-blueprint">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<table class="kt-table" style="border: none">
 						<tbody>
 							<tr>
@@ -296,83 +298,10 @@ async function closeDrawer() {
 					</table>
 				</div>
 
-				<table class="kt-table">
-					<thead>
-						<tr>
-							<th>{{ __("Area") }}</th>
-							<th>{{ __("Exact purpose") }}</th>
-							<th>{{ __("Status") }}</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="a in PCFG_AREAS" :key="a.code">
-							<td>{{ a.title }}</td>
-							<td class="kt-muted">{{ a.purpose }}</td>
-							<td>
-								<span class="kt-status" :class="areaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">
-									{{ areaStatus[a.code] || __("Not started") }}
-								</span>
-							</td>
-							<td><a href="#" @click.prevent="openArea(a)">{{ __("Review") }}</a></td>
-						</tr>
-					</tbody>
-				</table>
-
-				<div v-if="readiness" class="kt-card" style="padding: 16px">
+				<div class="kt-card-title">{{ __("Configuration areas") }}</div>
+				<div class="kt-card kt-blueprint">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<table class="kt-table" style="border: none">
-						<tbody>
-							<tr>
-								<td class="kt-muted">{{ __("Coverage") }}</td>
-								<td>{{ readiness.coverage_pass_count }} {{ __("of") }} {{ readiness.coverage.length }} {{ __("areas complete") }}</td>
-								<td><a href="#" @click.prevent="openReadiness">{{ __("View report") }}</a></td>
-							</tr>
-							<tr>
-								<td class="kt-muted">{{ __("Blocking findings") }}</td>
-								<td>{{ readiness.blocking_count }}</td>
-								<td><a href="#" @click.prevent="openReadiness">{{ __("View readiness") }}</a></td>
-							</tr>
-							<tr>
-								<td class="kt-muted">{{ __("Warnings") }}</td>
-								<td>{{ readiness.warning_count }}</td>
-								<td><a href="#" @click.prevent="openReadiness">{{ __("View readiness") }}</a></td>
-							</tr>
-							<tr>
-								<td class="kt-muted">{{ __("Complete preview") }}</td>
-								<td><span class="kt-status is-pending">{{ __("Not available yet") }}</span></td>
-								<td><a href="#" @click.prevent="openPreview">{{ __("Open preview") }}</a></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-
-				<div style="display: flex; justify-content: flex-end; gap: 10px">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="checking" @click="runCompleteCheck">
-						{{ __("Run complete check") }}
-					</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="submitting" @click="submitForReview">
-						{{ __("Submit for review") }}
-					</button>
-				</div>
-			</template>
-
-			<template v-else>
-				<header>
-					<div class="kt-eyebrow">{{ __("Standard Tender Document") }}</div>
-					<h1 style="font-size: 32px">{{ pkg.official_title }}</h1>
-					<p class="kt-muted" style="margin: 4px 0 0" v-if="activeVersion">
-						{{ pkg.package_code }} · {{ __("Version") }} {{ activeVersion.version_number }}
-						<span class="kt-status is-live" style="margin-left: 8px">{{ __("Active") }}</span>
-					</p>
-					<p class="kt-muted" style="margin: 4px 0 0" v-else>{{ pkg.package_code }}</p>
-				</header>
-
-				<template v-if="activeVersion">
-					<div class="kt-card" style="padding: 12px 16px; border-left: 3px solid #10b981">
-						{{ __("Version {0} is available to Procurement Requisitions and Tender Preparation.", [activeVersion.version_number]) }}
-					</div>
-
-					<table class="kt-table">
 						<thead>
 							<tr>
 								<th>{{ __("Area") }}</th>
@@ -386,17 +315,105 @@ async function closeDrawer() {
 								<td>{{ a.title }}</td>
 								<td class="kt-muted">{{ a.purpose }}</td>
 								<td>
-									<span class="kt-status" :class="activeAreaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">
-										{{ activeAreaStatus[a.code] || __("Not started") }}
+									<span class="kt-status" :class="areaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">
+										{{ areaStatus[a.code] || __("Not started") }}
 									</span>
 								</td>
-								<td><a href="#" @click.prevent="viewActiveArea(a)">{{ __("View") }}</a></td>
+								<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openArea(a)">{{ __("Review") }}</a></td>
 							</tr>
 						</tbody>
 					</table>
+				</div>
 
-					<div class="kt-card" style="padding: 16px">
-						<h2 style="font-size: 16px; margin: 0 0 10px">{{ __("Runtime Outputs") }}</h2>
+				<template v-if="readiness">
+					<div class="kt-card-title">{{ __("Completion") }}</div>
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<table class="kt-table" style="border: none">
+							<tbody>
+								<tr>
+									<td class="kt-muted">{{ __("Coverage") }}</td>
+									<td>{{ readiness.coverage_pass_count }} {{ __("of") }} {{ readiness.coverage.length }} {{ __("areas complete") }}</td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openReadiness">{{ __("View report") }}</a></td>
+								</tr>
+								<tr>
+									<td class="kt-muted">{{ __("Blocking findings") }}</td>
+									<td>{{ readiness.blocking_count }}</td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openReadiness">{{ __("View readiness") }}</a></td>
+								</tr>
+								<tr>
+									<td class="kt-muted">{{ __("Warnings") }}</td>
+									<td>{{ readiness.warning_count }}</td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openReadiness">{{ __("View readiness") }}</a></td>
+								</tr>
+								<tr>
+									<td class="kt-muted">{{ __("Complete preview") }}</td>
+									<td><span class="kt-status is-pending">{{ __("Not available yet") }}</span></td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openPreview">{{ __("Open preview") }}</a></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</template>
+
+				<div class="kt-sticky-footer">
+					<button type="button" class="kt-btn kt-btn-secondary" :disabled="checking" @click="runCompleteCheck">
+						{{ __("Run complete check") }}
+					</button>
+					<button type="button" class="kt-btn kt-btn-primary" :disabled="submitting" @click="submitForReview">
+						{{ __("Submit for review") }}
+					</button>
+				</div>
+			</template>
+
+			<template v-else>
+				<header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px">
+					<div>
+						<div class="kt-eyebrow">{{ __("Standard Tender Document") }}</div>
+						<h1 style="font-size: 32px">{{ pkg.official_title }}</h1>
+						<p class="kt-muted" style="margin: 4px 0 0" v-if="activeVersion">
+							{{ pkg.package_code }} · {{ __("Version") }} {{ activeVersion.version_number }}
+						</p>
+						<p class="kt-muted" style="margin: 4px 0 0" v-else>{{ pkg.package_code }}</p>
+					</div>
+					<span v-if="activeVersion" class="kt-status is-live">{{ __("Active") }}</span>
+				</header>
+
+				<template v-if="activeVersion">
+					<div class="kt-card" style="padding: 14px 18px; background: color-mix(in srgb, #10b981 10%, transparent); border-color: color-mix(in srgb, #10b981 33%, transparent)">
+						{{ __("Version {0} is available to Procurement Requisitions and Tender Preparation.", [activeVersion.version_number]) }}
+					</div>
+
+					<div class="kt-card-title">{{ __("Configuration areas") }}</div>
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<table class="kt-table" style="border: none">
+							<thead>
+								<tr>
+									<th>{{ __("Area") }}</th>
+									<th>{{ __("Exact purpose") }}</th>
+									<th>{{ __("Status") }}</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="a in PCFG_AREAS" :key="a.code">
+									<td>{{ a.title }}</td>
+									<td class="kt-muted">{{ a.purpose }}</td>
+									<td>
+										<span class="kt-status" :class="activeAreaStatus[a.code] === 'Complete' ? 'is-live' : 'is-pending'">
+											{{ activeAreaStatus[a.code] || __("Not started") }}
+										</span>
+									</td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="viewActiveArea(a)">{{ __("View") }}</a></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="kt-card-title">{{ __("Runtime outputs") }}</div>
+					<div class="kt-card kt-blueprint">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 						<table class="kt-table" style="border: none">
 							<thead>
 								<tr><th>{{ __("Output") }}</th><th>{{ __("Status") }}</th><th></th></tr>
@@ -405,17 +422,17 @@ async function closeDrawer() {
 								<tr v-for="m in runtimeManifests" :key="m.name">
 									<td>{{ m.manifest_type }}</td>
 									<td><span class="kt-status is-live">{{ __("Available") }}</span></td>
-									<td><a href="#" @click.prevent="openPreview">{{ __("Preview") }}</a></td>
+									<td><a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openPreview">{{ __("Preview") }}</a></td>
 								</tr>
 								<tr v-if="!runtimeManifests.length"><td colspan="3" class="kt-muted">{{ __("No runtime outputs generated yet.") }}</td></tr>
 							</tbody>
 						</table>
 					</div>
 
-					<div style="display: flex; justify-content: flex-end; gap: 10px">
-						<button type="button" class="kt-btn kt-btn-secondary" @click="openPreview">
+					<div class="kt-sticky-footer" style="justify-content: space-between">
+						<a href="#" class="kt-btn kt-btn-ghost" @click.prevent="openPreview">
 							{{ __("Open complete preview") }}
-						</button>
+						</a>
 						<button type="button" class="kt-btn kt-btn-primary" @click="openCreateVersionModal">
 							{{ __("Create new version") }}
 						</button>
