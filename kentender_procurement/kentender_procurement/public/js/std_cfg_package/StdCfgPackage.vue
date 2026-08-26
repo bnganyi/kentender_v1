@@ -201,7 +201,7 @@ function openReadiness() {
 	frappe.set_route("std-cfg-readiness", draft.value.name);
 }
 function openPreview() {
-	frappe.set_route("std-cfg-preview", draft.value.name);
+	frappe.show_alert({ message: __("Complete preview is not available yet."), indicator: "orange" });
 }
 // --- STD-UI-M02 ---
 const assistanceModalOpen = ref(false);
@@ -336,7 +336,7 @@ async function closeDrawer() {
 							</tr>
 							<tr>
 								<td class="kt-muted">{{ __("Complete preview") }}</td>
-								<td>{{ __("Available") }}</td>
+								<td><span class="kt-status is-pending">{{ __("Not available yet") }}</span></td>
 								<td><a href="#" @click.prevent="openPreview">{{ __("Open preview") }}</a></td>
 							</tr>
 						</tbody>
@@ -402,7 +402,7 @@ async function closeDrawer() {
 								<tr v-for="m in runtimeManifests" :key="m.name">
 									<td>{{ m.manifest_type }}</td>
 									<td><span class="kt-status is-live">{{ __("Available") }}</span></td>
-									<td><a href="#" @click.prevent="frappe.set_route('std-cfg-preview', activeVersion.name)">{{ __("Preview") }}</a></td>
+									<td><a href="#" @click.prevent="openPreview">{{ __("Preview") }}</a></td>
 								</tr>
 								<tr v-if="!runtimeManifests.length"><td colspan="3" class="kt-muted">{{ __("No runtime outputs generated yet.") }}</td></tr>
 							</tbody>
@@ -410,7 +410,7 @@ async function closeDrawer() {
 					</div>
 
 					<div style="display: flex; justify-content: flex-end; gap: 10px">
-						<button type="button" class="kt-btn kt-btn-secondary" @click="frappe.set_route('std-cfg-preview', activeVersion.name)">
+						<button type="button" class="kt-btn kt-btn-secondary" @click="openPreview">
 							{{ __("Open complete preview") }}
 						</button>
 						<button type="button" class="kt-btn kt-btn-primary" @click="openCreateVersionModal">
