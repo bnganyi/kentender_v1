@@ -42,19 +42,28 @@ app_include_css = [
 ]
 
 app_include_js = [
-	f"/assets/kentender_budget/js/budget_ui_fixtures/portfolio.js?v={_v('public/js/budget_ui_fixtures/portfolio.js')}",
-	f"/assets/kentender_budget/js/budget_ui_fixtures/register.js?v={_v('public/js/budget_ui_fixtures/register.js')}",
+	# 6 of the 13 budget routes are standalone controllers (own dedicated
+	# fixture, no shared dispatcher) — each now lazy-loads its own fixture +
+	# budget_live_bind.js + kt_form_errors.js via frappe.require() instead
+	# (portfolio/register/performance/check_reserve/revision_create/
+	# revision_review _page.js). The other 7 (overview/lines/activity/
+	# downstream/review/audit/revisions) call
+	# kentender_budget.workspace.registerPage(...) synchronously at their own
+	# controller's top level, which requires budget_workspace_shell.js (and
+	# transitively budget_live_bind.js/kt_form_errors.js) to already be loaded
+	# — registerPage itself assigns on_page_load, so deferring that load with
+	# frappe.require() races Frappe's own page-load sequencer calling
+	# on_page_load right after the controller script finishes. Fixing that
+	# needs mountBudgetPage itself (inside budget_workspace_shell.js) to defer
+	# its own fixture lookup, not a per-route change — left global for now,
+	# a real follow-up, not forgotten.
 	f"/assets/kentender_budget/js/budget_ui_fixtures/overview.js?v={_v('public/js/budget_ui_fixtures/overview.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/lines.js?v={_v('public/js/budget_ui_fixtures/lines.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/activity.js?v={_v('public/js/budget_ui_fixtures/activity.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/downstream.js?v={_v('public/js/budget_ui_fixtures/downstream.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/review.js?v={_v('public/js/budget_ui_fixtures/review.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/audit.js?v={_v('public/js/budget_ui_fixtures/audit.js')}",
-	f"/assets/kentender_budget/js/budget_ui_fixtures/performance.js?v={_v('public/js/budget_ui_fixtures/performance.js')}",
-	f"/assets/kentender_budget/js/budget_ui_fixtures/check_reserve.js?v={_v('public/js/budget_ui_fixtures/check_reserve.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/revisions.js?v={_v('public/js/budget_ui_fixtures/revisions.js')}",
-	f"/assets/kentender_budget/js/budget_ui_fixtures/revision_create.js?v={_v('public/js/budget_ui_fixtures/revision_create.js')}",
-	f"/assets/kentender_budget/js/budget_ui_fixtures/revision_review.js?v={_v('public/js/budget_ui_fixtures/revision_review.js')}",
 	f"/assets/kentender_budget/js/budget_live_bind.js?v={_v('public/js/budget_live_bind.js')}",
 	f"/assets/kentender_budget/js/budget_workspace_shell.js?v={_v('public/js/budget_workspace_shell.js')}",
 	f"/assets/kentender_budget/js/budget_funding_workspace_redirect.js?v={_v('public/js/budget_funding_workspace_redirect.js')}",

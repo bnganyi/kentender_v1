@@ -92,7 +92,27 @@
 			}
 			return;
 		}
-		mount(wrapper.page);
+		// on_page_load's own call into this same function is async, but Frappe
+		// can call on_page_show synchronously right after on_page_load
+		// returns, before that async load resolves — without a guard,
+		// on_page_show's own "not yet mounted" branch here would ALSO kick
+		// off a second require+mount (and its API call). The loading flag
+		// makes a concurrent call a no-op while one is already in flight.
+		if (wrapper.page._ktBudRevReviewLoading) {
+			return;
+		}
+		wrapper.page._ktBudRevReviewLoading = true;
+		frappe.require(
+			[
+				"/assets/kentender_core/js/kt_form_errors.js",
+				"/assets/kentender_budget/js/budget_live_bind.js",
+				"/assets/kentender_budget/js/budget_ui_fixtures/revision_review.js",
+			],
+			function () {
+				wrapper.page._ktBudRevReviewLoading = false;
+				mount(wrapper.page);
+			}
+		);
 	}
 
 	frappe.pages[PAGE_SLUG] = frappe.pages[PAGE_SLUG] || {};
@@ -106,7 +126,7 @@
 		wrapper.page = page;
 		frappe.pages[PAGE_SLUG].page = page;
 		page._ktBudRevReviewMounted = false;
-		mount(page);
+		ensureMounted(wrapper);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {

@@ -65,6 +65,30 @@
 		}
 	}
 
+	function mountWithDeps(page) {
+		// on_page_load's frappe.require() is async, but Frappe can call
+		// on_page_show synchronously right after on_page_load returns, before
+		// that async load resolves — without a guard, on_page_show's own
+		// "not yet mounted" branch would ALSO fire mountWithDeps, doubling the
+		// mount() (and its API call). The loading flag makes a concurrent call
+		// a no-op while one is already in flight.
+		if (page._ktBudCrLoading) {
+			return;
+		}
+		page._ktBudCrLoading = true;
+		frappe.require(
+			[
+				"/assets/kentender_core/js/kt_form_errors.js",
+				"/assets/kentender_budget/js/budget_live_bind.js",
+				"/assets/kentender_budget/js/budget_ui_fixtures/check_reserve.js",
+			],
+			function () {
+				page._ktBudCrLoading = false;
+				mount(page);
+			}
+		);
+	}
+
 	frappe.pages[PAGE_SLUG] = frappe.pages[PAGE_SLUG] || {};
 	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
 		var page = frappe.ui.make_app_page({
@@ -74,7 +98,7 @@
 		});
 		wrapper.page = page;
 		page._ktBudCrMounted = false;
-		mount(page);
+		mountWithDeps(page);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
@@ -82,7 +106,7 @@
 			return;
 		}
 		if (!wrapper.page._ktBudCrMounted) {
-			mount(wrapper.page);
+			mountWithDeps(wrapper.page);
 			return;
 		}
 		if (kentender_budget.live && typeof kentender_budget.live.openCheckReserve === "function") {

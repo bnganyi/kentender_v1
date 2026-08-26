@@ -57,6 +57,31 @@
 		}
 	}
 
+	function mountWithDeps(page) {
+		// on_page_load's frappe.require() is async, but Frappe can call
+		// on_page_show synchronously right after on_page_load returns, before
+		// that async load resolves — without a guard, on_page_show's own
+		// "not yet mounted" check would ALSO fire mountWithDeps, doubling the
+		// mount() (and its API call). The loading flag makes on_page_show a
+		// no-op while on_page_load's own require is already in flight.
+		if (page._ktPlnWorkspaceLoading) {
+			return;
+		}
+		page._ktPlnWorkspaceLoading = true;
+		frappe.require(
+			[
+				"/assets/kentender_core/js/kt_form_errors.js",
+				"/assets/kentender_procurement/js/planning_client_utils.js",
+				"/assets/kentender_procurement/js/planning_ui_fixtures/workspace.js",
+				"/assets/kentender_procurement/js/planning_live_bind.js",
+			],
+			function () {
+				page._ktPlnWorkspaceLoading = false;
+				mount(page);
+			}
+		);
+	}
+
 	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
 		activateSurface();
 		var page = frappe.ui.make_app_page({
@@ -66,21 +91,7 @@
 		});
 		wrapper.page = page;
 		page._ktPlnWorkspaceMounted = false;
-		// This page's own fixture/live-bind dependencies used to be dumped into
-		// every app's global app_include_js (loaded on every Desk page, not just
-		// this one) — lazy-loaded here instead, exactly like this file itself
-		// already is via the page_js hook.
-		frappe.require(
-			[
-				"/assets/kentender_core/js/kt_form_errors.js",
-				"/assets/kentender_procurement/js/planning_client_utils.js",
-				"/assets/kentender_procurement/js/planning_ui_fixtures/workspace.js",
-				"/assets/kentender_procurement/js/planning_live_bind.js",
-			],
-			function () {
-				mount(page);
-			}
-		);
+		mountWithDeps(page);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
@@ -90,7 +101,7 @@
 		activateSurface();
 		var $root = wrapper.page.main.find('[data-testid="kt-pln-ui01-root"]');
 		if (!wrapper.page._ktPlnWorkspaceMounted || !$root.length) {
-			mount(wrapper.page);
+			mountWithDeps(wrapper.page);
 			return;
 		}
 		enterShell();

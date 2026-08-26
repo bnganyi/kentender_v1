@@ -50,6 +50,30 @@
 		}
 	}
 
+	function mountWithDeps(page) {
+		// on_page_load's frappe.require() is async, but Frappe can call
+		// on_page_show synchronously right after on_page_load returns, before
+		// that async load resolves — without a guard, on_page_show's own
+		// "not yet mounted" check would ALSO fire mountWithDeps, doubling the
+		// mount() (and its API call). The loading flag makes on_page_show a
+		// no-op while on_page_load's own require is already in flight.
+		if (page._ktBudPerfLoading) {
+			return;
+		}
+		page._ktBudPerfLoading = true;
+		frappe.require(
+			[
+				"/assets/kentender_core/js/kt_form_errors.js",
+				"/assets/kentender_budget/js/budget_live_bind.js",
+				"/assets/kentender_budget/js/budget_ui_fixtures/performance.js",
+			],
+			function () {
+				page._ktBudPerfLoading = false;
+				mount(page);
+			}
+		);
+	}
+
 	frappe.pages[PAGE_SLUG] = frappe.pages[PAGE_SLUG] || {};
 	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
 		activateSurface();
@@ -60,7 +84,7 @@
 		});
 		wrapper.page = page;
 		page._ktBudPerfMounted = false;
-		mount(page);
+		mountWithDeps(page);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
@@ -70,7 +94,7 @@
 		activateSurface();
 		var $root = wrapper.page.main.find('[data-testid="kt-bud-performance"]');
 		if (!wrapper.page._ktBudPerfMounted || !$root.length) {
-			mount(wrapper.page);
+			mountWithDeps(wrapper.page);
 			return;
 		}
 		var sh = kentender_core.cl_shell;

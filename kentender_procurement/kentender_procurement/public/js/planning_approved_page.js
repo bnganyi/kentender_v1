@@ -81,15 +81,17 @@
 		}
 	}
 
-	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
-		activateSurface();
-		var page = frappe.ui.make_app_page({
-			parent: wrapper,
-			title: __("Approved plan"),
-			single_column: true,
-		});
-		wrapper.page = page;
-		page._ktPlnApprovedMounted = false;
+	function mountWithDeps(page) {
+		// on_page_load's frappe.require() is async, but Frappe can call
+		// on_page_show synchronously right after on_page_load returns, before
+		// that async load resolves — without a guard, on_page_show's own
+		// "not yet mounted" check would ALSO fire mountWithDeps, doubling the
+		// mount() (and its API call). The loading flag makes on_page_show a
+		// no-op while on_page_load's own require is already in flight.
+		if (page._ktPlnApprovedLoading) {
+			return;
+		}
+		page._ktPlnApprovedLoading = true;
 		frappe.require(
 			[
 				"/assets/kentender_procurement/js/planning_client_utils.js",
@@ -99,9 +101,22 @@
 				"/assets/kentender_procurement/js/planning_approved_bind.js",
 			],
 			function () {
+				page._ktPlnApprovedLoading = false;
 				mount(page);
 			}
 		);
+	}
+
+	frappe.pages[PAGE_SLUG].on_page_load = function (wrapper) {
+		activateSurface();
+		var page = frappe.ui.make_app_page({
+			parent: wrapper,
+			title: __("Approved plan"),
+			single_column: true,
+		});
+		wrapper.page = page;
+		page._ktPlnApprovedMounted = false;
+		mountWithDeps(page);
 	};
 
 	frappe.pages[PAGE_SLUG].on_page_show = function (wrapper) {
@@ -111,7 +126,7 @@
 		activateSurface();
 		var $root = wrapper.page.main.find('[data-testid="kt-pln-ui09-root"]');
 		if (!wrapper.page._ktPlnApprovedMounted || !$root.length) {
-			mount(wrapper.page);
+			mountWithDeps(wrapper.page);
 			return;
 		}
 		enterShell();
