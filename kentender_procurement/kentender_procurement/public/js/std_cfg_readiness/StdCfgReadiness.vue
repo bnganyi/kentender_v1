@@ -13,15 +13,22 @@ const railEl = ref(null);
 const draft = ref(null);
 const readiness = ref(null);
 const loading = ref(true);
+const error = ref(null);
 
 async function refresh() {
 	loading.value = true;
-	draft.value = await frappe.db.get_doc("STD Cfg Draft", draftId.value);
-	readiness.value = await frappe.xcall(
-		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_readiness_report",
-		{ reference_doctype: "STD Cfg Draft", reference_name: draftId.value }
-	);
-	loading.value = false;
+	error.value = null;
+	try {
+		draft.value = await frappe.db.get_doc("STD Cfg Draft", draftId.value);
+		readiness.value = await frappe.xcall(
+			"kentender_procurement.std_configuration.api.std_configuration_api.get_std_readiness_report",
+			{ reference_doctype: "STD Cfg Draft", reference_name: draftId.value }
+		);
+	} catch (e) {
+		error.value = e;
+	} finally {
+		loading.value = false;
+	}
 }
 onMounted(refresh);
 
@@ -70,7 +77,11 @@ async function submitForReview() {
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" style="padding-bottom: 88px">
-			<div v-if="loading" class="kt-card kt-blueprint">
+			<div v-if="error" class="kt-card kt-empty">
+				<h2>{{ __("Could not load coverage and readiness.") }}</h2>
+				<p>{{ error.message }}</p>
+			</div>
+			<div v-else-if="loading" class="kt-card kt-blueprint">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 			</div>

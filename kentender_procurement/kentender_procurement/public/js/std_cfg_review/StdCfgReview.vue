@@ -28,6 +28,7 @@ const reviewTaskId = computed(() => route.value[1]);
 
 const railEl = ref(null);
 const loading = ref(true);
+const error = ref(null);
 const workspace = ref(null);
 const draftDoc = ref(null);
 const pkg = ref(null);
@@ -39,37 +40,43 @@ const notInReview = computed(() => !workspace.value || workspace.value.task.stat
 
 async function refresh() {
 	loading.value = true;
-	workspace.value = await frappe.xcall(
-		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_review_workspace",
-		{ review_task_id: reviewTaskId.value }
-	);
-	// get_std_review_workspace's own `draft` read is deliberately narrow (§13.1
-	// — package_id/official_issue_label/official_source_file_id only); the
-	// version number for the header/breadcrumb needs the full Draft doc.
-	draftDoc.value = await frappe.db.get_doc("STD Cfg Draft", workspace.value.task.draft_id);
-	pkg.value = await frappe.xcall(
-		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_package_home",
-		{ package_id: workspace.value.draft.package_id }
-	);
-	readiness.value = await frappe.xcall(
-		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_readiness_report",
-		{ reference_doctype: "STD Cfg Draft", reference_name: workspace.value.task.draft_id }
-	);
-	await Promise.all(
-		PCFG_AREAS.map(async (a) => {
-			if (a.code === "PCFG-01") {
-				areaStatus[a.code] = workspace.value.draft.official_issue_label && workspace.value.draft.official_source_file_id ? "Complete" : "Incomplete";
-				return;
-			}
-			const res = await frappe.xcall(
-				"kentender_procurement.std_configuration.api.std_configuration_api.get_std_configuration_area",
-				{ reference_doctype: "STD Cfg Draft", reference_name: workspace.value.task.draft_id, area: a.code }
-			);
-			const hasItems = Object.values(res.items).some((rows) => rows.length > 0);
-			areaStatus[a.code] = hasItems ? "Complete" : "Not started";
-		})
-	);
-	loading.value = false;
+	error.value = null;
+	try {
+		workspace.value = await frappe.xcall(
+			"kentender_procurement.std_configuration.api.std_configuration_api.get_std_review_workspace",
+			{ review_task_id: reviewTaskId.value }
+		);
+		// get_std_review_workspace's own `draft` read is deliberately narrow (§13.1
+		// — package_id/official_issue_label/official_source_file_id only); the
+		// version number for the header/breadcrumb needs the full Draft doc.
+		draftDoc.value = await frappe.db.get_doc("STD Cfg Draft", workspace.value.task.draft_id);
+		pkg.value = await frappe.xcall(
+			"kentender_procurement.std_configuration.api.std_configuration_api.get_std_package_home",
+			{ package_id: workspace.value.draft.package_id }
+		);
+		readiness.value = await frappe.xcall(
+			"kentender_procurement.std_configuration.api.std_configuration_api.get_std_readiness_report",
+			{ reference_doctype: "STD Cfg Draft", reference_name: workspace.value.task.draft_id }
+		);
+		await Promise.all(
+			PCFG_AREAS.map(async (a) => {
+				if (a.code === "PCFG-01") {
+					areaStatus[a.code] = workspace.value.draft.official_issue_label && workspace.value.draft.official_source_file_id ? "Complete" : "Incomplete";
+					return;
+				}
+				const res = await frappe.xcall(
+					"kentender_procurement.std_configuration.api.std_configuration_api.get_std_configuration_area",
+					{ reference_doctype: "STD Cfg Draft", reference_name: workspace.value.task.draft_id, area: a.code }
+				);
+				const hasItems = Object.values(res.items).some((rows) => rows.length > 0);
+				areaStatus[a.code] = hasItems ? "Complete" : "Not started";
+			})
+		);
+	} catch (e) {
+		error.value = e;
+	} finally {
+		loading.value = false;
+	}
 }
 onMounted(refresh);
 
@@ -126,7 +133,11 @@ async function activatePackage() {
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" style="padding-bottom: 88px">
-			<div v-if="loading" class="kt-card kt-blueprint">
+			<div v-if="error" class="kt-card kt-empty">
+				<h2>{{ __("Could not load this review.") }}</h2>
+				<p>{{ error.message }}</p>
+			</div>
+			<div v-else-if="loading" class="kt-card kt-blueprint">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div v-for="i in 4" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 			</div>

@@ -29,21 +29,28 @@ const versionB = computed(() => route.value[2]);
 
 const railEl = ref(null);
 const loading = ref(true);
+const error = ref(null);
 const comparison = ref(null);
 const docA = ref(null);
 const docB = ref(null);
 
 async function refresh() {
 	loading.value = true;
-	[docA.value, docB.value, comparison.value] = await Promise.all([
-		frappe.db.get_doc("STD Cfg Version", versionA.value),
-		frappe.db.get_doc("STD Cfg Version", versionB.value),
-		frappe.xcall(
-			"kentender_procurement.std_configuration.api.std_configuration_api.get_std_version_comparison",
-			{ version_a: versionA.value, version_b: versionB.value }
-		),
-	]);
-	loading.value = false;
+	error.value = null;
+	try {
+		[docA.value, docB.value, comparison.value] = await Promise.all([
+			frappe.db.get_doc("STD Cfg Version", versionA.value),
+			frappe.db.get_doc("STD Cfg Version", versionB.value),
+			frappe.xcall(
+				"kentender_procurement.std_configuration.api.std_configuration_api.get_std_version_comparison",
+				{ version_a: versionA.value, version_b: versionB.value }
+			),
+		]);
+	} catch (e) {
+		error.value = e;
+	} finally {
+		loading.value = false;
+	}
 }
 onMounted(refresh);
 
@@ -73,7 +80,11 @@ function backToReview() {
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell">
-			<div v-if="loading" class="kt-card kt-blueprint">
+			<div v-if="error" class="kt-card kt-empty">
+				<h2>{{ __("Could not load this comparison.") }}</h2>
+				<p>{{ error.message }}</p>
+			</div>
+			<div v-else-if="loading" class="kt-card kt-blueprint">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div v-for="i in 3" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 			</div>

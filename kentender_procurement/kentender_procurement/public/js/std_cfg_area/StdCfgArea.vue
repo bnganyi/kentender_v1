@@ -37,11 +37,18 @@ const areaTitle = computed(() => AREA_TITLES[areaCode.value] || (AREA_REGISTRY[a
 const railEl = ref(null);
 const reference = ref(null);
 const loading = ref(true);
+const error = ref(null);
 
 async function refresh() {
 	loading.value = true;
-	reference.value = await frappe.db.get_doc(referenceDoctype.value, referenceName.value);
-	loading.value = false;
+	error.value = null;
+	try {
+		reference.value = await frappe.db.get_doc(referenceDoctype.value, referenceName.value);
+	} catch (e) {
+		error.value = e;
+	} finally {
+		loading.value = false;
+	}
 }
 watch([referenceDoctype, referenceName], refresh);
 onMounted(refresh);
@@ -63,7 +70,11 @@ function backToPackage() {
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" style="padding-bottom: 88px">
-			<template v-if="!loading && reference">
+			<div v-if="error" class="kt-card kt-empty">
+				<h2>{{ __("Could not load this configuration area.") }}</h2>
+				<p>{{ error.message }}</p>
+			</div>
+			<template v-else-if="!loading && reference">
 				<header style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px">
 					<h1 style="font-size: 28px; margin: 0">{{ areaTitle }}</h1>
 					<div>
