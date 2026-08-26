@@ -67,8 +67,9 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	# The legacy std-* "std_prod" route family's own CSS is now lazy-loaded by
 	# each of its page_js controllers alongside std_prod_engine.js (see below).
-	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
-	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
+	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
+	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
+	# had its own ensureCss() fallback link-injection for exactly this case.
 	f"/assets/kentender_procurement/css/departmental_needs.css?v={_desk_asset_v('public/css/departmental_needs.css')}",
 	f"/assets/kentender_procurement/css/departmental_needs_forms.css?v={_desk_asset_v('public/css/departmental_needs_forms.css')}",
 	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",

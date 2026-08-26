@@ -105,6 +105,7 @@
 	}
 
 	frappe.pages["coming-soon"].on_page_load = function (wrapper) {
+		frappe.require("/assets/kentender_procurement/css/coming_soon_page.css");
 		ensureProcurementRail();
 		var page = frappe.ui.make_app_page({
 			parent: wrapper,
