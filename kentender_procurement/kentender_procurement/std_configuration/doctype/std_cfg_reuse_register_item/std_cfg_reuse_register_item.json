@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "creation": "2026-08-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reuse_item_id",
+  "source_name",
+  "source_location",
+  "source_scope",
+  "col_class",
+  "content_class",
+  "target_area",
+  "target_entity",
+  "col_disposition",
+  "disposition",
+  "transformation",
+  "verification",
+  "section_result",
+  "proposed_row_count",
+  "rejected_row_count",
+  "col_result",
+  "unresolved_count",
+  "assistance_batch_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "reuse_item_id",
+   "fieldtype": "Data",
+   "label": "Reuse Item ID",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "§17.4 — stable one-time transformation reference for this register row."
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Data",
+   "label": "Source Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_location",
+   "fieldtype": "Data",
+   "label": "Source Location",
+   "reqd": 1,
+   "description": "Read-only repository path or controlled file reference."
+  },
+  {
+   "fieldname": "source_scope",
+   "fieldtype": "Small Text",
+   "label": "Source Scope",
+   "reqd": 1,
+   "description": "Exact sections, rows or records covered."
+  },
+  {
+   "fieldname": "col_class",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "content_class",
+   "fieldtype": "Select",
+   "label": "Content Class",
+   "options": "Locked text\nParameter\nRequirement\nSchedule\nInventory\nBackground\nPrice\nEvaluation\nForm\nContract\nMapping\nLabel/Help\nFixture",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_area",
+   "fieldtype": "Select",
+   "label": "Target Area",
+   "options": "PCFG-01\nPCFG-02\nPCFG-03\nPCFG-04\nPCFG-05\nPCFG-06\nPCFG-07\nPCFG-08\nPCFG-09",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_entity",
+   "fieldtype": "Data",
+   "label": "Target Entity",
+   "description": "Exact v1.3 entity from §7. Empty when disposition is Retire/Unavailable/Reference only."
+  },
+  {
+   "fieldname": "col_disposition",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "disposition",
+   "fieldtype": "Select",
+   "label": "Disposition",
+   "options": "Reuse as proposal\nRewrite from official source\nReference only\nRetire\nUnavailable",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "transformation",
+   "fieldtype": "Small Text",
+   "label": "Transformation",
+   "reqd": 1,
+   "description": "Exact normalization or field mapping required."
+  },
+  {
+   "fieldname": "verification",
+   "fieldtype": "Small Text",
+   "label": "Verification",
+   "reqd": 1,
+   "description": "Official section, control rule and structural check used to accept it."
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result (system-derived)"
+  },
+  {
+   "fieldname": "proposed_row_count",
+   "fieldtype": "Int",
+   "label": "Proposed Row Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_row_count",
+   "fieldtype": "Int",
+   "label": "Rejected Row Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unresolved_count",
+   "fieldtype": "Int",
+   "label": "Unresolved Count",
+   "read_only": 1,
+   "description": "Source rows in this group that could not be mapped at all (e.g. no section correspondence) — distinct from rejected (mapped, proposed, then rejected by the Configurator)."
+  },
+  {
+   "fieldname": "assistance_batch_id",
+   "fieldtype": "Link",
+   "label": "Assistance Batch",
+   "options": "STD Cfg Assistance Batch",
+   "read_only": 1,
+   "description": "§17.9 item 9 — traceability from an accepted reused item back to this register row, via the batch it was proposed in."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-08-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Configuration",
+ "name": "STD Cfg Reuse Register Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -55,6 +55,10 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 # include js, css files in header of desk.html
 app_include_css = [
 	f"/assets/kentender_core/css/authorization_surfaces.css",
+	# STD-CHG-001 v1.3 Phase 11 — kt_industry_tokens.css is the one canonical
+	# design system (AGENTS.md §6.6). Loaded once here for every STD
+	# Configuration Vue-in-Desk page; no forked token file.
+	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_desk_asset_v('../../kentender_core/kentender_core/public/css/kt_industry_tokens.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
@@ -253,6 +257,19 @@ page_js = {
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
 	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
+	# STD-CHG-001 v1.3 Phase 11 — new Vue-in-Desk STD Configuration surfaces
+	# (STD-UI-*/PCFG-*/STD-WF-*). Distinct route names from the "std-*" legacy
+	# std_engine pages below, which remain live pending Phase 12 retirement.
+	"std-cfg-documents": "public/js/std_cfg_documents_page.js",
+	# "std-cfg-package" (unsuffixed) collides with the auto-generated Desk
+	# route for the "STD Cfg Package" DocType — confirmed live: it opened the
+	# DocType's form view instead of this Vue page. "-home" avoids every
+	# current and future "STD Cfg *" DocType's own auto-slug.
+	"std-cfg-package-home": "public/js/std_cfg_package_page.js",
+	"std-cfg-area": "public/js/std_cfg_area_page.js",
+	"std-cfg-readiness": "public/js/std_cfg_readiness_page.js",
+	"std-cfg-review": "public/js/std_cfg_review_page.js",
+	"std-cfg-comparison": "public/js/std_cfg_comparison_page.js",
 	"std-library": "public/js/std_prod_std_library_page.js",
 	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
 	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",

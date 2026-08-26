@@ -19,7 +19,12 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
-from kentender_procurement.std_configuration.services import std_assistance, std_coverage, std_lifecycle
+from kentender_procurement.std_configuration.services import (
+	std_assistance,
+	std_coverage,
+	std_lifecycle,
+	std_reuse_transformation,
+)
 from kentender_procurement.std_configuration.services.std_authorization import (
 	CAP_CONFIGURE,
 	require_draft_capability,
@@ -185,6 +190,27 @@ def get_assistance_proposal(batch_id: str) -> dict:
 	return frappe.get_doc("STD Cfg Assistance Batch", batch_id).as_dict()
 
 
+@frappe.whitelist()
+def list_std_reviewers() -> list[dict]:
+	"""Phase 11 support read — §16.4's "Submit for review" needs a reviewer to
+	route to; not itself named in §13.1 since that registry lists the
+	package-authoring reads, but the STD Reviewer role is the same one
+	`std_authorization.py` already checks capability against."""
+	rows = frappe.get_all(
+		"Has Role",
+		filters={"role": "STD Reviewer", "parenttype": "User"},
+		fields=["parent as user"],
+	)
+	users = [r["user"] for r in rows]
+	if not users:
+		return []
+	return frappe.get_all(
+		"User",
+		filters={"name": ["in", users], "enabled": 1},
+		fields=["name", "full_name"],
+	)
+
+
 # --- §13.2 commands — area saves ----------------------------------------------
 
 
@@ -192,6 +218,17 @@ def _save_area_items(draft_name: str, doctype: str, items: list[dict], *, actor:
 	draft = frappe.get_doc("STD Cfg Draft", draft_name)
 	actor = actor or frappe.session.user
 	require_draft_capability(actor, CAP_CONFIGURE, draft)
+	# This module's `from __future__ import annotations` makes every function's
+	# annotations plain strings at runtime, which makes typing_validations.py's
+	# argument-type validation a silent no-op for every whitelisted command here
+	# (a `str` annotation short-circuits its check) — confirmed live: a real
+	# browser call sends a list arg as a JSON string (frappe.call's own
+	# convention for object/array args), and with validation bypassed nothing
+	# ever decodes it back, so `items` arrives as a raw string here and gets
+	# iterated character-by-character. `frappe.parse_json` is the fix: a no-op
+	# for an already-real list (every existing Python-level test call), a real
+	# decode for the JSON-string form every live HTTP call actually sends.
+	items = frappe.parse_json(items)
 	saved = []
 	for raw_item in items:
 		item = dict(raw_item)
@@ -242,6 +279,42 @@ def save_std_source_and_profile(
 		return {"draft_id": draft.name, "record_version": draft.record_version}
 
 	return run_idempotent(idempotency_key, "STD Cfg Draft", draft_name, "save_source_and_profile", _do)
+
+
+@frappe.whitelist()
+def save_std_source_document(draft_name: str, file_id: str, official_title: str | None = None, official_issue_label: str | None = None) -> dict:
+	"""Phase 11 support command — `official_source_file_id` (Draft/Version)
+	links to `STD Cfg Source Document`, not a raw Frappe File (confirmed by
+	the doctype's own field options); a Vue file picker only ever produces a
+	File name, so this wraps one as the real linked record. Upserts one row
+	per reference (a Draft has exactly one official source) rather than
+	accumulating duplicates on repeated "Replace"."""
+	draft = frappe.get_doc("STD Cfg Draft", draft_name)
+	require_draft_capability(frappe.session.user, CAP_CONFIGURE, draft)
+	existing = frappe.db.get_value(
+		"STD Cfg Source Document", {"reference_doctype": "STD Cfg Draft", "reference_name": draft_name}, "name"
+	)
+	if existing:
+		doc = frappe.get_doc("STD Cfg Source Document", existing)
+		doc.file_id = file_id
+		if official_title is not None:
+			doc.official_title = official_title
+		if official_issue_label is not None:
+			doc.official_issue_label = official_issue_label
+		doc.save(ignore_permissions=True)
+	else:
+		doc = frappe.get_doc(
+			{
+				"doctype": "STD Cfg Source Document",
+				"reference_doctype": "STD Cfg Draft",
+				"reference_name": draft_name,
+				"file_id": file_id,
+				"official_title": official_title,
+				"official_issue_label": official_issue_label,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+	return {"source_document_id": doc.name}
 
 
 @frappe.whitelist()
@@ -314,32 +387,63 @@ def save_std_contract_and_outputs(
 #
 # `proposed_items` is supplied by the caller in both commands — this module
 # owns the proposal *contract* (validate/store/accept/reject), not proposal
-# *production*. In production, a Phase 10 adapter (the reuse/transformation
-# utility) or an AI-calling adapter sources this list; neither adapter exists
-# yet (tracker STD-801/802), so these two commands are real and usable today
-# only for a caller that already has a candidate list in the proposal shape.
+# *production*. In production, the Phase 10 reuse/transformation utility (see
+# `run_std_reuse_transformation` below) or an AI-calling adapter sources this
+# list; the AI-calling adapter is still future work (tracker STD-802), so
+# `prepare_ai_assisted_draft_proposal` is real and usable today only for a
+# caller that already has a candidate list in the proposal shape.
 
 
 @frappe.whitelist()
 def prepare_prior_configuration_proposal(draft_name: str, input_reference: str, proposed_items: list[dict]) -> dict:
-	batch = std_assistance.prepare_proposal(draft_name, "Prior configuration", input_reference, proposed_items)
+	# See _save_area_items's comment: `from __future__ import annotations` makes
+	# argument-type validation a no-op, so a real HTTP call's JSON-stringified
+	# list arg must be decoded explicitly here.
+	batch = std_assistance.prepare_proposal(draft_name, "Prior configuration", input_reference, frappe.parse_json(proposed_items))
 	return {"batch_id": batch.name, "proposal_count": len(batch.proposals)}
 
 
 @frappe.whitelist()
 def prepare_ai_assisted_draft_proposal(draft_name: str, input_reference: str, proposed_items: list[dict]) -> dict:
-	batch = std_assistance.prepare_proposal(draft_name, "AI-assisted draft", input_reference, proposed_items)
+	batch = std_assistance.prepare_proposal(draft_name, "AI-assisted draft", input_reference, frappe.parse_json(proposed_items))
 	return {"batch_id": batch.name, "proposal_count": len(batch.proposals)}
 
 
 @frappe.whitelist()
 def accept_assistance_items(batch_id: str, item_names: list[str]) -> dict:
-	return std_assistance.accept_items(batch_id, item_names)
+	return std_assistance.accept_items(batch_id, frappe.parse_json(item_names))
 
 
 @frappe.whitelist()
 def reject_assistance_items(batch_id: str, item_names: list[str]) -> dict:
-	return std_assistance.reject_items(batch_id, item_names)
+	return std_assistance.reject_items(batch_id, frappe.parse_json(item_names))
+
+
+# --- §13.2 commands — reuse/transformation (§17) -------------------------------
+
+
+@frappe.whitelist()
+def run_std_reuse_transformation(draft_name: str, bundle_dir: str | None = None) -> dict:
+	run = std_reuse_transformation.run_reuse_transformation(draft_name, bundle_dir=bundle_dir)
+	return {
+		"run_id": run.name,
+		"register": [
+			{
+				"reuse_item_id": row.reuse_item_id,
+				"content_class": row.content_class,
+				"disposition": row.disposition,
+				"proposed_row_count": row.proposed_row_count,
+				"unresolved_count": row.unresolved_count,
+				"assistance_batch_id": row.assistance_batch_id,
+			}
+			for row in run.register
+		],
+	}
+
+
+@frappe.whitelist()
+def get_std_reuse_reconciliation_report(run_id: str) -> dict:
+	return std_reuse_transformation.reconciliation_report(run_id)
 
 
 # --- §13.2 commands — check / lifecycle ---------------------------------------
