@@ -50,7 +50,9 @@
 		}
 		var config = PAGE_CONFIGS[page_name];
 		frappe.pages[page_name].on_page_load = function (wrapper) {
-			kentender.std_prod.mount_page(wrapper, config);
+			frappe.require("/assets/kentender_procurement/js/std_prod_engine.js", function () {
+				kentender.std_prod.mount_page(wrapper, config);
+			});
 		};
 	});
 })();

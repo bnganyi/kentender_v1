@@ -65,10 +65,8 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
-	f"/assets/kentender_procurement/css/std_prod_std_library_page.css?v={_desk_asset_v('public/css/std_prod_std_library_page.css')}",
-	f"/assets/kentender_procurement/css/std_prod_std_family_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_family_detail_page.css')}",
-	f"/assets/kentender_procurement/css/std_prod_std_version_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_version_detail_page.css')}",
-	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
+	# The legacy std-* "std_prod" route family's own CSS is now lazy-loaded by
+	# each of its page_js controllers alongside std_prod_engine.js (see below).
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
 	f"/assets/kentender_procurement/css/departmental_needs.css?v={_desk_asset_v('public/css/departmental_needs.css')}",
@@ -85,7 +83,8 @@ app_include_js = [
 	# planning_review_page.js, planning_approved_page.js).
 	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
-	f"/assets/kentender_procurement/js/std_prod_engine.js?v={_desk_asset_v('public/js/std_prod_engine.js')}",
+	# std_prod_engine.js (the legacy std-* route family's shared engine, ~4900
+	# lines) is now lazy-loaded by each of its 7 page_js controllers instead.
 	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
 	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",

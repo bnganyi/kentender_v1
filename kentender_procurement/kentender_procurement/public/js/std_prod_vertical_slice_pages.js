@@ -60,7 +60,15 @@
 		}
 		var config = PAGE_CONFIGS[page_name];
 		frappe.pages[page_name].on_page_load = function (wrapper) {
-			kentender.std_prod.mount_page(wrapper, config);
+			frappe.require(
+				[
+					"/assets/kentender_procurement/js/std_prod_engine.js",
+					"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css",
+				],
+				function () {
+					kentender.std_prod.mount_page(wrapper, config);
+				}
+			);
 		};
 	});
 })();
