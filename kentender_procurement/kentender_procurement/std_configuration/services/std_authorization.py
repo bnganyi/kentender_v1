@@ -107,11 +107,18 @@ def _sod_blocked(user: str, capability: str, draft_name: str) -> bool:
 
 def require_draft_capability(user: str, capability: str, draft, *, correlation_id: str = "") -> None:
 	"""§12 — fail closed on a missing role (no System Manager/Administrator
-	fallback) and on the maker-checker SoD pair. §13.3 error codes:
-	`STD_CONTEXT_REQUIRED` (no effective assignment at all — the spec's own
-	error table has no separate "wrong role for this specific action" code, so
-	a Reviewer attempting a Configurator action also surfaces this one) and
-	`STD_MAKER_CHECKER` (the SoD pairing specifically)."""
+	fallback), on the maker-checker SoD pair, and — for CAP_CONFIGURE — on
+	Draft state. §12's state table only allows Configurator actions from
+	`Draft`/`Returned`; a submitted Draft is `In review` and content changes
+	must wait for the Reviewer's decision (`std_lifecycle.py`'s own
+	`_assert_snapshot_unchanged` docstring already assumed "no area-save
+	command accepts that state" — this is that guarantee actually being
+	enforced, not merely assumed). §13.3 error codes: `STD_CONTEXT_REQUIRED`
+	(no effective assignment at all — the spec's own error table has no
+	separate "wrong role for this specific action" code, so a Reviewer
+	attempting a Configurator action, or a Configurator attempting one on an
+	In-review Draft, also surfaces this one) and `STD_MAKER_CHECKER` (the SoD
+	pairing specifically)."""
 	from kentender_procurement.std_configuration.services.std_errors import (
 		STD_CONTEXT_REQUIRED,
 		STD_MAKER_CHECKER,
@@ -123,6 +130,10 @@ def require_draft_capability(user: str, capability: str, draft, *, correlation_i
 		std_throw(STD_CONTEXT_REQUIRED)
 	if _sod_blocked(user, capability, draft_name):
 		std_throw(STD_MAKER_CHECKER)
+	if capability == CAP_CONFIGURE:
+		state = draft.state if not isinstance(draft, str) else frappe.db.get_value("STD Cfg Draft", draft_name, "state")
+		if state not in ("Draft", "Returned"):
+			std_throw(STD_CONTEXT_REQUIRED)
 
 
 def has_draft_capability(user: str, capability: str, draft) -> bool:

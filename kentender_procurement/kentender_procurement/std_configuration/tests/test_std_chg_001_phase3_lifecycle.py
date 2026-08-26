@@ -152,6 +152,26 @@ class TestSTDChg001Phase3Lifecycle(FrappeTestCase):
 		task.reload()
 		self.assertEqual(task.status, "Decided")
 
+	def test_cannot_edit_draft_content_while_in_review(self):
+		# `_assert_snapshot_unchanged`'s own docstring claims "a Draft cannot
+		# normally change while `In review` (no area-save command accepts that
+		# state)" — that guarantee did not actually exist: `require_draft_capability`
+		# checked role/SoD but never Draft state, so a Configurator could keep
+		# editing content a Reviewer was actively deciding on. This is the guard
+		# that makes the docstring's claim true.
+		from kentender_procurement.std_configuration.api.std_configuration_api import (
+			save_std_source_and_profile,
+		)
+
+		draft = self._submittable_draft()
+		std_lifecycle.submit_for_review(draft.name, reviewer=self.reviewer, actor=self.configurator)
+		frappe.set_user(self.configurator)
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				save_std_source_and_profile(draft.name, official_issue_label="Changed while In review")
+		finally:
+			frappe.set_user("Administrator")
+
 	def test_return_then_resubmit_then_activate(self):
 		draft = self._submittable_draft()
 		task = std_lifecycle.submit_for_review(draft.name, reviewer=self.reviewer, actor=self.configurator)
