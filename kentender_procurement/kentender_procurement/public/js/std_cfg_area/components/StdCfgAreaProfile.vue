@@ -5,8 +5,10 @@
 import { ref, reactive, onMounted, watch } from "vue";
 
 const props = defineProps({
-	draftId: { type: String, required: true },
+	referenceDoctype: { type: String, required: true },
+	referenceName: { type: String, required: true },
 	packageId: { type: String, required: true },
+	readOnly: { type: Boolean, default: false },
 });
 const emit = defineEmits(["saved"]);
 
@@ -21,18 +23,18 @@ async function refresh() {
 		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_package_home",
 		{ package_id: props.packageId }
 	);
-	const draft = await frappe.db.get_doc("STD Cfg Draft", props.draftId);
-	form.official_issue_label = draft.official_issue_label || "";
-	form.official_source_file_id = draft.official_source_file_id || "";
+	const reference = await frappe.db.get_doc(props.referenceDoctype, props.referenceName);
+	form.official_issue_label = reference.official_issue_label || "";
+	form.official_source_file_id = reference.official_source_file_id || "";
 	form.official_source_file_name = "";
-	if (draft.official_source_file_id) {
-		const sourceDoc = await frappe.db.get_doc("STD Cfg Source Document", draft.official_source_file_id);
+	if (reference.official_source_file_id) {
+		const sourceDoc = await frappe.db.get_doc("STD Cfg Source Document", reference.official_source_file_id);
 		const file = await frappe.db.get_doc("File", sourceDoc.file_id);
 		form.official_source_file_name = file.file_name || sourceDoc.file_id;
 	}
 	loading.value = false;
 }
-watch(() => props.draftId, refresh);
+watch(() => props.referenceName, refresh);
 onMounted(refresh);
 
 const uploadingSource = ref(false);
@@ -49,7 +51,7 @@ function pickSourceFile() {
 				const result = await frappe.xcall(
 					"kentender_procurement.std_configuration.api.std_configuration_api.save_std_source_document",
 					{
-						draft_name: props.draftId,
+						draft_name: props.referenceName,
 						file_id: file.name,
 						official_title: pkg.value.official_title,
 						official_issue_label: form.official_issue_label,
@@ -70,7 +72,7 @@ async function save() {
 		await frappe.xcall(
 			"kentender_procurement.std_configuration.api.std_configuration_api.save_std_source_and_profile",
 			{
-				draft_name: props.draftId,
+				draft_name: props.referenceName,
 				official_issue_label: form.official_issue_label,
 				official_source_file_id: form.official_source_file_id || null,
 			}
@@ -99,7 +101,7 @@ async function save() {
 		</div>
 		<div class="kt-field" style="margin: 0">
 			<label for="kt-cfg-profile-issue">{{ __("Official issue") }}</label>
-			<input id="kt-cfg-profile-issue" v-model="form.official_issue_label" class="kt-input" type="text" />
+			<input id="kt-cfg-profile-issue" v-model="form.official_issue_label" class="kt-input" type="text" :disabled="readOnly" />
 		</div>
 		<div class="kt-field" style="margin: 0">
 			<label>{{ __("Requirement profile") }}</label>
@@ -109,10 +111,10 @@ async function save() {
 			<label>{{ __("Official source") }}</label>
 			<div style="display: flex; align-items: center; gap: 10px">
 				<span class="kt-muted">{{ form.official_source_file_name || __("No file selected") }}</span>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="uploadingSource" @click="pickSourceFile">{{ __("Replace") }}</button>
+				<button v-if="!readOnly" type="button" class="kt-btn kt-btn-secondary" :disabled="uploadingSource" @click="pickSourceFile">{{ __("Replace") }}</button>
 			</div>
 		</div>
-		<div style="display: flex; justify-content: flex-end">
+		<div v-if="!readOnly" style="display: flex; justify-content: flex-end">
 			<button type="button" class="kt-btn kt-btn-primary" :disabled="saving" @click="save">
 				{{ __("Save Source and Profile") }}
 			</button>

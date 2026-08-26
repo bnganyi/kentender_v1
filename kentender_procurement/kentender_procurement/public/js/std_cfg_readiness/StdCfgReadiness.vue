@@ -40,7 +40,7 @@ function backToPackage() {
 }
 function openArea(row) {
 	const code = `PCFG-${String(row.number <= 9 ? row.number : 9).padStart(2, "0")}`;
-	frappe.set_route("std-cfg-area", draftId.value, code);
+	frappe.set_route("std-cfg-area", "draft", draftId.value, code);
 }
 
 const submitting = ref(false);
@@ -121,7 +121,7 @@ async function submitForReview() {
 							<tr v-for="w in readiness.warnings" :key="w.code + w.message">
 								<td>{{ w.owning_area }}</td>
 								<td>{{ w.message }}</td>
-								<td><a href="#" @click.prevent="frappe.set_route('std-cfg-area', draftId, w.owning_area)">{{ __("Open") }} {{ w.owning_area }}</a></td>
+								<td><a href="#" @click.prevent="frappe.set_route('std-cfg-area', 'draft', draftId, w.owning_area)">{{ __("Open") }} {{ w.owning_area }}</a></td>
 							</tr>
 						</tbody>
 					</table>

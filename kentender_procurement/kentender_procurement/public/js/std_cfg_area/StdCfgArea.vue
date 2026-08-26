@@ -22,33 +22,40 @@ const AREA_TITLES = {
 	"PCFG-02": __("Coverage and Document Structure"),
 };
 
+// Route: std-cfg-area/<draft|version>/<referenceName>/<areaCode>. A Draft is
+// the real editing surface (save_std_* commands); a Version is read-only —
+// there is no "edit an Active Version" operation, only viewing what was
+// activated, since content changes go through a new Draft (§8).
 const { route } = useRouteState("std-cfg-area");
-const draftId = computed(() => route.value[1]);
-const areaCode = computed(() => route.value[2]);
+const referenceKind = computed(() => route.value[1]);
+const referenceName = computed(() => route.value[2]);
+const areaCode = computed(() => route.value[3]);
+const referenceDoctype = computed(() => (referenceKind.value === "version" ? "STD Cfg Version" : "STD Cfg Draft"));
+const readOnly = computed(() => referenceKind.value === "version");
 const areaTitle = computed(() => AREA_TITLES[areaCode.value] || (AREA_REGISTRY[areaCode.value] && AREA_REGISTRY[areaCode.value].title) || areaCode.value);
 
 const railEl = ref(null);
-const draft = ref(null);
+const reference = ref(null);
 const loading = ref(true);
 
 async function refresh() {
 	loading.value = true;
-	draft.value = await frappe.db.get_doc("STD Cfg Draft", draftId.value);
+	reference.value = await frappe.db.get_doc(referenceDoctype.value, referenceName.value);
 	loading.value = false;
 }
-watch(draftId, refresh);
+watch([referenceDoctype, referenceName], refresh);
 onMounted(refresh);
 
 const railTrail = computed(() => [
 	{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
 	{ label: __("Standard Tender Documents"), route: ["std-cfg-documents"] },
-	{ label: draft.value ? draft.value.package_id : "", route: draft.value ? ["std-cfg-package-home", draft.value.package_id] : [] },
+	{ label: reference.value ? reference.value.package_id : "", route: reference.value ? ["std-cfg-package-home", reference.value.package_id] : [] },
 	{ label: areaTitle.value },
 ]);
 usePageRail(railEl, railTrail);
 
 function backToPackage() {
-	frappe.set_route("std-cfg-package-home", draft.value.package_id);
+	frappe.set_route("std-cfg-package-home", reference.value.package_id);
 }
 </script>
 
@@ -56,17 +63,18 @@ function backToPackage() {
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell">
-			<template v-if="!loading && draft">
+			<template v-if="!loading && reference">
 				<header>
 					<h1 style="font-size: 28px">{{ areaTitle }}</h1>
 					<p class="kt-muted" style="margin: 4px 0 0">
-						{{ __("Draft Version") }} {{ draft.proposed_version_number }}
+						{{ readOnly ? __("Version") + " " + reference.version_number : __("Draft Version") + " " + reference.proposed_version_number }}
+						<span v-if="readOnly" class="kt-status is-live" style="margin-left: 8px">{{ __("Read only") }}</span>
 					</p>
 				</header>
 
-				<StdCfgAreaProfile v-if="areaCode === 'PCFG-01'" :draft-id="draftId" :package-id="draft.package_id" />
-				<StdCfgAreaStructure v-else-if="areaCode === 'PCFG-02'" :draft-id="draftId" :package-id="draft.package_id" />
-				<StdCfgAreaGeneric v-else-if="AREA_REGISTRY[areaCode]" :draft-id="draftId" :area-code="areaCode" />
+				<StdCfgAreaProfile v-if="areaCode === 'PCFG-01'" :reference-doctype="referenceDoctype" :reference-name="referenceName" :package-id="reference.package_id" :read-only="readOnly" />
+				<StdCfgAreaStructure v-else-if="areaCode === 'PCFG-02'" :reference-doctype="referenceDoctype" :reference-name="referenceName" :package-id="reference.package_id" :read-only="readOnly" />
+				<StdCfgAreaGeneric v-else-if="AREA_REGISTRY[areaCode]" :reference-doctype="referenceDoctype" :reference-name="referenceName" :area-code="areaCode" :read-only="readOnly" />
 				<div v-else class="kt-card kt-empty">
 					<h2>{{ __("Unknown configuration area.") }}</h2>
 				</div>

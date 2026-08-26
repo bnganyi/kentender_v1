@@ -7,8 +7,10 @@ import { AREA_REGISTRY } from "../../std_configuration_shared/areaRegistry.js";
 import AreaItemDialog from "./AreaItemDialog.vue";
 
 const props = defineProps({
-	draftId: { type: String, required: true },
+	referenceDoctype: { type: String, required: true },
+	referenceName: { type: String, required: true },
 	areaCode: { type: String, required: true },
+	readOnly: { type: Boolean, default: false },
 });
 const emit = defineEmits(["saved"]);
 
@@ -22,7 +24,7 @@ async function refresh() {
 	activeGroupIdx.value = 0;
 	const res = await frappe.xcall(
 		"kentender_procurement.std_configuration.api.std_configuration_api.get_std_configuration_area",
-		{ reference_doctype: "STD Cfg Draft", reference_name: props.draftId, area: props.areaCode }
+		{ reference_doctype: props.referenceDoctype, reference_name: props.referenceName, area: props.areaCode }
 	);
 	for (const g of area.value.groups) {
 		itemsByDoctype[g.doctype] = res.items[g.doctype] || [];
@@ -55,7 +57,7 @@ async function confirmDialog(values) {
 	list.push(payload);
 	saving.value = true;
 	try {
-		const params = { draft_name: props.draftId };
+		const params = { draft_name: props.referenceName };
 		params[g.savePayloadKey || area.value.savePayloadKey] = list;
 		await frappe.xcall(area.value.saveMethod, params);
 		dialogOpen.value = false;
@@ -103,17 +105,18 @@ function displayValue(item, col) {
 				<tbody>
 					<tr v-for="item in itemsByDoctype[activeGroup.doctype]" :key="item.name">
 						<td v-for="c in activeGroup.columns" :key="c.key">{{ displayValue(item, c) }}</td>
-						<td><a href="#" @click.prevent="openEdit(item)">{{ __("Edit") }}</a></td>
+						<td><a v-if="!readOnly" href="#" @click.prevent="openEdit(item)">{{ __("Edit") }}</a></td>
 					</tr>
 					<tr v-if="!itemsByDoctype[activeGroup.doctype] || !itemsByDoctype[activeGroup.doctype].length">
 						<td :colspan="activeGroup.columns.length + 1" class="kt-muted">{{ __("Nothing configured yet.") }}</td>
 					</tr>
 				</tbody>
 			</table>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="openAdd">{{ __("Add") }} {{ activeGroup.label.toLowerCase() }}</button>
+			<button v-if="!readOnly" type="button" class="kt-btn kt-btn-secondary" @click="openAdd">{{ __("Add") }} {{ activeGroup.label.toLowerCase() }}</button>
 		</template>
 
 		<AreaItemDialog
+			v-if="!readOnly"
 			:open="dialogOpen"
 			:title="dialogItem ? __('Edit') + ' ' + activeGroup.label : __('Add') + ' ' + activeGroup.label"
 			:fields="activeGroup ? activeGroup.fields : []"

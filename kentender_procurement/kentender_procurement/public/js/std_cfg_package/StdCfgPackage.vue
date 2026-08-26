@@ -108,7 +108,10 @@ async function refresh() {
 onMounted(refresh);
 
 function openArea(area) {
-	frappe.set_route("std-cfg-area", draft.value.name, area.code);
+	frappe.set_route("std-cfg-area", "draft", draft.value.name, area.code);
+}
+function viewActiveArea(area) {
+	frappe.set_route("std-cfg-area", "version", activeVersion.value.name, area.code);
 }
 
 // --- STD-UI-M01 ---
@@ -387,7 +390,7 @@ async function closeDrawer() {
 										{{ activeAreaStatus[a.code] || __("Not started") }}
 									</span>
 								</td>
-								<td>—</td>
+								<td><a href="#" @click.prevent="viewActiveArea(a)">{{ __("View") }}</a></td>
 							</tr>
 						</tbody>
 					</table>

@@ -8,8 +8,10 @@ import { ref, reactive, computed, onMounted, watch } from "vue";
 import AreaItemDialog from "./AreaItemDialog.vue";
 
 const props = defineProps({
-	draftId: { type: String, required: true },
+	referenceDoctype: { type: String, required: true },
+	referenceName: { type: String, required: true },
 	packageId: { type: String, required: true },
+	readOnly: { type: Boolean, default: false },
 });
 const emit = defineEmits(["saved"]);
 
@@ -26,8 +28,8 @@ async function refresh() {
 	loading.value = true;
 	const [readiness, sectionRows, areaRes] = await Promise.all([
 		frappe.xcall("kentender_procurement.std_configuration.api.std_configuration_api.get_std_readiness_report", {
-			reference_doctype: "STD Cfg Draft",
-			reference_name: props.draftId,
+			reference_doctype: props.referenceDoctype,
+			reference_name: props.referenceName,
 		}),
 		frappe.db.get_list("STD Cfg Section", {
 			filters: { package_id: props.packageId },
@@ -36,8 +38,8 @@ async function refresh() {
 			limit: 100,
 		}),
 		frappe.xcall("kentender_procurement.std_configuration.api.std_configuration_api.get_std_configuration_area", {
-			reference_doctype: "STD Cfg Draft",
-			reference_name: props.draftId,
+			reference_doctype: props.referenceDoctype,
+			reference_name: props.referenceName,
 			area: "PCFG-02",
 		}),
 	]);
@@ -52,7 +54,7 @@ async function refresh() {
 	if (!selectedSectionId.value && sectionRows.length) selectedSectionId.value = sectionRows[0].name;
 	loading.value = false;
 }
-watch(() => props.draftId, refresh);
+watch(() => props.referenceName, refresh);
 onMounted(refresh);
 
 const selectedSection = computed(() => sections.value.find((s) => s.name === selectedSectionId.value));
@@ -84,7 +86,7 @@ async function confirmBlock(values) {
 	saving.value = true;
 	try {
 		await frappe.xcall("kentender_procurement.std_configuration.api.std_configuration_api.save_std_document_structure", {
-			draft_name: props.draftId,
+			draft_name: props.referenceName,
 			content_blocks: allBlocks,
 		});
 		dialogOpen.value = false;
@@ -159,15 +161,16 @@ async function confirmBlock(values) {
 						<td>{{ b.content_block_id }}</td>
 						<td>{{ b.block_type }}</td>
 						<td>{{ b.binding_key || "—" }}</td>
-						<td><a href="#" @click.prevent="openEditBlock(b)">{{ __("Edit") }}</a></td>
+						<td><a v-if="!readOnly" href="#" @click.prevent="openEditBlock(b)">{{ __("Edit") }}</a></td>
 					</tr>
 					<tr v-if="!selectedBlocks.length"><td colspan="5" class="kt-muted">{{ __("No content blocks yet.") }}</td></tr>
 				</tbody>
 			</table>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="openAddBlock">{{ __("Add content block") }}</button>
+			<button v-if="!readOnly" type="button" class="kt-btn kt-btn-secondary" @click="openAddBlock">{{ __("Add content block") }}</button>
 		</template>
 
 		<AreaItemDialog
+			v-if="!readOnly"
 			:open="dialogOpen"
 			:title="dialogItem ? __('Edit content block') : __('Add content block')"
 			:fields="BLOCK_FIELDS"
