@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-08-11 00:10:48.781410",
+ "modified": "2026-08-26 21:18:05.389459",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "kt-procurement-home",
@@ -64,6 +64,12 @@
   },
   {
    "role": "Head of User Department"
+  },
+  {
+   "role": "STD Configurator"
+  },
+  {
+   "role": "STD Reviewer"
   }
  ],
  "script": null,
