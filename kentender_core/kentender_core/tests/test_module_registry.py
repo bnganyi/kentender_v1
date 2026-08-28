@@ -108,43 +108,35 @@ class TestModuleRegistry(IntegrationTestCase):
 		# "strategy-portfolio" (Phase 7) is the real desk_page now.
 		self.assertNotIn("strategy-alignment", keys)
 		self.assertEqual(keys.get("strategy-portfolio"), "Procurement")
-		# BUD-CHG-001 v1.2: the 13 pre-rebuild legacy Budget routes were
-		# deleted in the UI teardown; "budget-funding" is no longer a real
-		# page until the Phase 5 Vue-in-Desk rebuild lands.
-		self.assertNotIn("budget-funding", keys)
+		# BUD-CHG-001 v1.2 Phase 5: the one "budget-funding" Page now exists
+		# (BUD-UI-01..05) — not "budget", which collides with the existing
+		# Budget doctype's own List View route.
+		self.assertEqual(keys.get("budget-funding"), "Procurement")
 		self.assertIn("form/demand", keys)
 
 	def test_budget_module_portfolio_route(self):
-		"""BUD-CHG-001 v1.2: placeholder state — real routes land in Phase 5."""
+		"""BUD-CHG-001 v1.2 Phase 5 — the one "budget-funding" Page (BUD-UI-01..05)."""
 		mod = get_module("budget")
-		self.assertEqual(mod["desk_page"], "")
-		self.assertEqual(mod["form_doctype"], "Budget")
-		self.assertEqual(mod["route_prefixes"], ())
+		self.assertEqual(mod["desk_page"], "budget-funding")
+		self.assertEqual(mod["form_doctype"], "")
+		self.assertEqual(mod["route_prefixes"], ("budget-funding",))
 
 	def test_budget_route_prefixes_cover_all_page_js(self):
-		"""BUD-SUP-004 — every Budget Desk page must resolve to the budget module.
-
-		BUD-CHG-001 v1.2: hooks.page_js and route_prefixes are both
-		intentionally empty pending the Phase 5 Vue-in-Desk rebuild; this test
-		asserts they stay empty together, not that specific slugs are covered.
-		"""
+		"""BUD-SUP-004 — every Budget Desk page must resolve to the budget module."""
 		mod = get_module("budget")
 		prefixes = {str(p) for p in (mod["route_prefixes"] or ())}
-		self.assertEqual(_budget_page_js_slugs(), [])
-		self.assertEqual(prefixes, set())
+		for slug in _budget_page_js_slugs():
+			self.assertIn(slug, prefixes, msg=f"budget route_prefixes missing page_js slug {slug!r}")
 
 	def test_budget_js_registry_route_prefixes_match_page_js(self):
-		"""BUD-SUP-004 — kt_module_registry.js must stay in sync with hooks.page_js.
-
-		BUD-CHG-001 v1.2: both are intentionally empty pending Phase 5.
-		"""
+		"""BUD-SUP-004 — kt_module_registry.js must stay in sync with hooks.page_js."""
 		source = _js_module_registry_source()
 		self.assertIn("Register approved budget", source)
 		self.assertNotIn("Manage Allocations", source)
 		block = _budget_js_route_prefixes_block(source)
 		self.assertTrue(block, msg="budget routePrefixes array not found in kt_module_registry.js")
-		self.assertEqual(_budget_page_js_slugs(), [])
-		self.assertEqual(block.strip(), "[]")
+		for slug in _budget_page_js_slugs():
+			self.assertIn(f'"{slug}"', block, msg=f"kt_module_registry.js budget routePrefixes missing {slug!r}")
 
 	def test_strategy_route_prefixes_cover_all_page_js(self):
 		"""STR-SUP-003 — every Strategy Desk page must resolve to the strategy module."""

@@ -172,6 +172,8 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 
 def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 	"""BUD-UI-02 Budget Lines tab — BUD-DES-03 (baseline) / BUD-DES-15 (successor)."""
+	from kentender_budget.services.budget_contracts import _org_unit_label
+
 	version = _resolve_budget_version(budget_version)
 	require_budget_version_read_scope(version)
 	locked = _lines_previously_in_active(version)
@@ -182,6 +184,16 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		order_by="title asc",
 	)
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if rows
+		else {}
+	)
 	line_total = 0.0
 	out = []
 	for r in rows:
@@ -189,8 +201,10 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 		is_locked = r.budget_line in locked
 		row_dto: dict[str, Any] = {
 			"budget_line": r.budget_line,
+			"budget_line_code": codes.get(r.budget_line, ""),
 			"title": r.title,
 			"owner_org_unit": r.owner_org_unit,
+			"owner_org_unit_label": _org_unit_label(r.owner_org_unit),
 			"funding_source": r.funding_source,
 			"approved_amount": flt(r.approved_amount),
 			"identity_locked": is_locked,

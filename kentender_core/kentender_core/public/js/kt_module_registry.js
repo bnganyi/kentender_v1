@@ -41,17 +41,19 @@ frappe.provide("kentender_core.module_registry");
 			// live and their final Frappe Page-name/route-collision behaviour
 			// against the "Budget" DocType list view has been verified live.
 			id: "budget",
-			workspaceRoute: ["Workspaces", "Budget Management"],
-			workspaceSlug: "budget-management",
+			// Not "budget" — collides with the existing Budget doctype's own
+			// List View route in Frappe's client router.
+			workspaceRoute: ["budget-funding"],
+			workspaceSlug: "budget-funding",
 			workbenchLabel: __("Budget & Funding"),
 			backLabel: __("Back to Budget & Funding"),
-			sidebarWorkspaceKey: "budget management",
+			sidebarWorkspaceKey: "procurement",
 			builderPage: "",
-			deskPage: "",
-			formDoctype: "Budget",
+			deskPage: "budget-funding",
+			formDoctype: "",
 			stateKey: "kt_budget_workbench_state",
 			selectKey: "kt_budget_workspace_select",
-			routePrefixes: [],
+			routePrefixes: ["budget-funding"],
 			taskLabels: {
 				builder: __("Budget & Funding"),
 				form: __("Register approved budget"),

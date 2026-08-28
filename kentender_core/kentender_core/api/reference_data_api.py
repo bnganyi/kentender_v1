@@ -38,6 +38,16 @@ def list_pe_types():
 	return queries.list_pe_types()
 
 
+@frappe.whitelist()
+def list_organisation_units(procuring_entity: str | None = None):
+	return queries.list_organisation_units(procuring_entity or "")
+
+
+@frappe.whitelist()
+def list_funding_sources():
+	return queries.list_funding_sources()
+
+
 # --- Procuring Entity --------------------------------------------------------------
 
 

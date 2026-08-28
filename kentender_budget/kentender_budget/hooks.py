@@ -12,11 +12,35 @@ app_license = "mit"
 
 required_apps = ["kentender_core", "kentender_strategy"]
 
-# Empty pending the Phase 5 Vue-in-Desk rebuild (BUD-CHG-001 v1.2). Kept as an
-# explicit dict, not removed, so callers that read kentender_budget.hooks.page_js
-# directly (e.g. kentender_core's module-registry tests) see "zero routes",
-# not an AttributeError.
-page_js: dict[str, str] = {}
+from pathlib import Path
+
+
+def _asset_version(abs_path: Path) -> int:
+	# mtime-based cache bust; touch the source file after edits so workers re-import hooks.
+	try:
+		return int(abs_path.stat().st_mtime)
+	except OSError:
+		return 1
+
+
+_CORE_PUBLIC = Path(__file__).resolve().parent.parent.parent / "kentender_core" / "kentender_core" / "public"
+
+# kt_industry_tokens.css (owned by kentender_core, scoped under .kt-industry,
+# never :root) is the one canonical design system for the whole application —
+# AGENTS.md §6.6. Loaded here the same way any of this app's own
+# app_include_css entries would be; Frappe serves every installed app's
+# static assets from one shared /assets/<app_name>/ namespace.
+app_include_css = [
+	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_asset_version(_CORE_PUBLIC / 'css/kt_industry_tokens.css')}",
+]
+
+# Never append ?v= to page_js — Frappe resolves these as disk paths.
+page_js = {
+	# BUD-CHG-001 v1.2 Phase 5 — BUD-UI-01/02/03/04/05 share this one Page.
+	# Not "budget" — collides with the existing Budget doctype's own List
+	# View route in Frappe's client router (see budget_funding_page.js).
+	"budget-funding": "public/js/budget_funding_page.js",
+}
 
 after_migrate = "kentender_budget.install.after_migrate"
 before_tests = "kentender_budget.install.before_tests"

@@ -36,20 +36,24 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"sidebar_parent": "Procurement",
 	},
 	"budget": {
-		# BUD-CHG-001 v1.2 — the 13 pre-rebuild legacy routes were deleted in
-		# the UI teardown. This entry (and the matching one in
-		# kt_module_registry.js) is confirmed dead code, same as "strategy"
-		# above: kentender_strategy's own Phase 7 production pages were never
-		# wired into this registry either — each Vue-in-Desk page owns its own
-		# PageRail.vue chrome instead. Placeholder pending the Phase 5 rebuild.
+		# BUD-CHG-001 v1.2 Phase 5 — the one "budget-funding" Page
+		# (BUD-UI-01..05, all sharing the /app/budget-funding prefix — not
+		# "budget", which collides with the existing Budget doctype's own
+		# List View route; see kentender_budget's budget_funding_page.js).
+		# This entry (and the matching one in kt_module_registry.js) is
+		# confirmed dead code, same as "strategy" above: kentender_budget's
+		# own production page was never wired into this registry either — it
+		# owns its own PageRail.vue chrome instead. Updated to stay
+		# internally consistent (AGENTS.md §6.5), not because anything live
+		# reads it.
 		"workspace_label": "Budget Management",
-		"sidebar_workspace_key": "budget management",
+		"sidebar_workspace_key": "procurement",
 		"builder_page": "",
-		"desk_page": "",
-		"form_doctype": "Budget",
+		"desk_page": "budget-funding",
+		"form_doctype": "",
 		"state_key": "kt_budget_workbench_state",
 		"select_key": "kt_budget_workspace_select",
-		"route_prefixes": (),
+		"route_prefixes": ("budget-funding",),
 		"sidebar_parent": "Procurement",
 	},
 	"departmental_needs": {

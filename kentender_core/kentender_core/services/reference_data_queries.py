@@ -44,6 +44,39 @@ def list_pe_types() -> dict[str, Any]:
 	return {"rows": [{"type_code": r.type_code, "label": r.label} for r in rows]}
 
 
+# --- Organisation Unit / Funding Source picklists -------------------------------
+# Supplements, not named in CFG-CHG-002 §10 — small catalogue lookups other
+# modules' editors need (e.g. Budget's Budget Line editor, BUD-CHG-001 v1.2
+# §12.2 "Owner-scope choices come from Configuration & Governance for the
+# exact PE. Funding-source choices come from the configured catalogue.").
+# Unscoped read like list_pe_types above — a label-only picklist, not
+# sensitive data, and no owning-module-specific role should gate a shared
+# catalogue read.
+
+
+def list_organisation_units(procuring_entity: str) -> dict[str, Any]:
+	pe = (procuring_entity or "").strip()
+	if not pe:
+		return {"rows": []}
+	rows = frappe.get_all(
+		"Organisation Unit",
+		filters={"procuring_entity": pe, "status": "Active"},
+		fields=["name", "unit_name"],
+		order_by="unit_name asc",
+	)
+	return {"rows": [{"id": r.name, "label": r.unit_name} for r in rows]}
+
+
+def list_funding_sources() -> dict[str, Any]:
+	rows = frappe.get_all(
+		"Funding Source",
+		filters={"record_status": "Available"},
+		fields=["name", "label"],
+		order_by="label asc",
+	)
+	return {"rows": [{"id": r.name, "label": r.label} for r in rows]}
+
+
 # --- Procuring Entity ------------------------------------------------------------
 
 

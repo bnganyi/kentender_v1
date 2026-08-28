@@ -18,9 +18,10 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, nowdate
 
 from kentender_budget.services.budget_authorization import (
+	CAP_APPROVE,
 	CAP_EDIT,
 	has_budget_version_capability,
 	require_budget_create_capability,
@@ -78,6 +79,15 @@ def _fy_label(fy_name: str | None) -> str:
 	if not fy_name:
 		return ""
 	return frappe.db.get_value("Financial Year", fy_name, "label") or fy_name
+
+
+def _org_unit_label(org_unit: str | None) -> str:
+	"""Empty owner_org_unit means PE-wide (Budget Line Version's own field
+	description) — that reads as a real label everywhere it's displayed, not
+	a blank cell."""
+	if not org_unit:
+		return _("PE-wide")
+	return frappe.db.get_value("Organisation Unit", org_unit, "unit_name") or org_unit
 
 
 def _resolve_budget(key: str) -> Any:
@@ -210,13 +220,25 @@ def _version_totals(budget_version_name: str) -> dict[str, float]:
 	)
 	approved = reserved = committed = available = 0.0
 	lines: list[dict[str, Any]] = []
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [lv.budget_line for lv in line_versions]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if line_versions
+		else {}
+	)
 	for lv in line_versions:
 		pos = _line_position(lv.budget_line, lv)
 		approved += pos["approved"]
 		reserved += pos["reserved"]
 		committed += pos["committed"]
 		available += pos["available"]
-		lines.append({**lv, "positions": pos})
+		lines.append(
+			{**lv, "code": codes.get(lv.budget_line, ""), "owner_org_unit_label": _org_unit_label(lv.owner_org_unit), "positions": pos}
+		)
 	return {
 		"approved": approved,
 		"reserved": reserved,
@@ -276,11 +298,21 @@ def _version_summary(version) -> dict[str, Any]:
 	}
 
 
+def _current_financial_year() -> str:
+	"""Best-effort 'current' Financial Year — the one whose period contains
+	today. BUD-UI-01's context strip is read-only display, not a selector
+	(no cross-app PE/FY picker component exists yet); this is a narrow
+	workspace-only stopgap, not a general resolver, and does not handle a
+	user needing a non-current FY or multiple assigned PEs."""
+	today = getdate(nowdate())
+	return frappe.db.get_value("Financial Year", {"start_date": ["<=", today], "end_date": [">=", today]}, "name") or ""
+
+
 def get_budget_workspace(procuring_entity: str | None = None, financial_year: str | None = None) -> dict[str, Any]:
 	"""BUD-UI-01 — current scoped Budget and operational position, or the
 	no-baseline state. Loading never shows zero balances (§12.1)."""
 	pe = resolve_scoped_entity(procuring_entity)
-	fy = (financial_year or "").strip()
+	fy = (financial_year or "").strip() or _current_financial_year()
 	result: dict[str, Any] = {
 		"procuring_entity": {"id": pe, "name": _entity_label(pe)},
 		"financial_year": {"id": fy, "label": _fy_label(fy)},
@@ -304,6 +336,33 @@ def get_budget_workspace(procuring_entity: str | None = None, financial_year: st
 	result["has_budget"] = True
 	result["budget"] = _budget_summary(budget)
 	if not version:
+		# A Budget row exists (an Officer saved a Draft) but nothing has been
+		# Activated yet — no artboard covers this directly (BUD-DES-16 "No
+		# baseline" only covers "no Budget row at all"); reuse that empty-state
+		# shell with a status-appropriate action instead of inventing a new
+		# visual. `action` is server-decided per AGENTS.md §6.2 — the client
+		# never derives it from status itself.
+		pending = _draft_version(budget_name)
+		if pending:
+			action = None
+			if has_budget_version_capability(frappe.session.user, CAP_EDIT, pending):
+				action = "open_draft"
+			elif pending.status == "Submitted for approval" and has_budget_version_capability(
+				frappe.session.user, CAP_APPROVE, pending
+			):
+				action = "open_task"
+			# A Viewer (no edit/approve capability on it) gets no disclosure that
+			# a Draft/Submitted version exists at all — falls back to the plain
+			# "No baseline" treatment client-side, matching the no-disclosure
+			# principle already applied to Forbidden/failure states (§12.1).
+			if action:
+				result["pending_version"] = {
+					"id": pending.name,
+					"code": pending.generated_reference,
+					"version_number": pending.version_number,
+					"status": pending.status,
+					"action": action,
+				}
 		return result
 
 	totals = _version_totals(version.name)
@@ -323,8 +382,9 @@ def _line_preview_row(row: dict[str, Any]) -> dict[str, Any]:
 	pos = row["positions"]
 	return {
 		"id": row["budget_line"],
+		"code": row.get("code", ""),
 		"title": row["title"],
-		"owner_org_unit": row["owner_org_unit"],
+		"owner_org_unit": row.get("owner_org_unit_label", ""),
 		"approved": pos["approved"],
 		"reserved": pos["reserved"],
 		"committed": pos["committed"],
