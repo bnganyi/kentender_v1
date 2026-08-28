@@ -63,17 +63,11 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
-		C.USER_BUD_REVIEWER,
-		"MOH Budget Reviewer",
-		("Budget Reviewer",),
-		C.PE_MOH,
-		None,
-		0,
-	),
-	(
-		C.USER_BUD_AUTHORITY,
-		"MOH Budget Authority",
-		("Budget Authority",),
+		# BUD-CHG-001 v1.2 §15.2 — Budget Reviewer + Budget Activation Authority
+		# collapsed into one Budget Approver role/persona.
+		C.USER_BUD_APPROVER,
+		"MOH Budget Approver",
+		("Budget Approver",),
 		C.PE_MOH,
 		None,
 		0,
@@ -103,10 +97,54 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
+		# BUD-AC-008 self-approval-segregation persona — holds both roles so the
+		# "submitting Officer cannot approve their own version, even if they also
+		# hold Budget Approver" rule has a durable, permanently-dual-role fixture
+		# to exercise without a per-test dynamic role toggle.
 		C.USER_BUD_DUAL,
-		"MOH Budget Officer+Authority",
-		("Budget Officer", "Budget Authority"),
+		"MOH Budget Officer+Approver",
+		("Budget Officer", "Budget Approver"),
 		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_BUD_VIEWER_MOH,
+		"MOH Budget Viewer",
+		("Budget Viewer",),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_BUD_AUDITOR,
+		"Budget Auditor",
+		("Auditor",),
+		C.PE_MOH,
+		None,
+		0,
+	),
+	(
+		C.USER_CGK_BUD_OFFICER,
+		"Kisumu Budget Officer",
+		("Budget Officer",),
+		C.PE_CGKIS,
+		None,
+		0,
+	),
+	(
+		C.USER_CGK_BUD_APPROVER,
+		"Kisumu Budget Approver",
+		("Budget Approver",),
+		C.PE_CGKIS,
+		None,
+		0,
+	),
+	(
+		C.USER_BUD_VIEWER_KISUMU,
+		"Kisumu Budget Viewer",
+		("Budget Viewer",),
+		C.PE_CGKIS,
 		None,
 		0,
 	),
@@ -168,9 +206,11 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
+		# BUD-CHG-001 v1.2 §15.2 — "Budget Officer and separately assigned MOH
+		# Finance Confirmation capability for FY 2027/28."
 		C.USER_BUD_OFFICER,
 		"Peter Otieno",
-		("Budget Officer", ROLE_VIEWER),
+		("Budget Officer", "Finance Confirmation Officer", ROLE_VIEWER),
 		C.PE_MOH,
 		None,
 		0,

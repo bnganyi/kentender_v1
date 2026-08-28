@@ -84,15 +84,14 @@ CGK_OUT_COLDCHAIN: Final[str] = "CGK-OUT-COLDCHAIN"
 CGK_IND_COLDCHAIN: Final[str] = "CGK-IND-COLDCHAIN-01"
 CGK_TGT_COLDCHAIN: Final[str] = "CGK-TGT-COLDCHAIN-2028"
 
-BUD_ACTIVE: Final[str] = "MOH-BUD-2027-2028"
-BUD_DRAFT: Final[str] = "MOH-BUD-2028-2029"
-BUD_CLOSED: Final[str] = "MOH-BUD-2026-2027"
+BUD_ACTIVE: Final[str] = "MOH-BUD-2027-001"
+BUD_ACTIVE_V1: Final[str] = "MOH-BUD-2027-001-V1"
+BUD_ACTIVE_V2: Final[str] = "MOH-BUD-2027-001-V2"
 BL_DHI_2027: Final[str] = "MOH-BL-DHI-2027"
 BL_HWD_2027: Final[str] = "MOH-BL-HWD-2027"
-BL_DHI_2028: Final[str] = "MOH-BL-DHI-2028"
-BL_HWD_2028: Final[str] = "MOH-BL-HWD-2028"
-CGK_BUD_ACTIVE: Final[str] = "CGK-BUD-2027-2028"
-CGK_BL_COLDCHAIN: Final[str] = "CGK-BL-COLDCHAIN-2027"
+CGK_BUD_ACTIVE: Final[str] = "CGK-BUD-2027-001"
+CGK_BUD_ACTIVE_V1: Final[str] = "CGK-BUD-2027-001-V1"
+CGK_BL_DIGSVC: Final[str] = "CGK-BL-DIG-2027"
 
 RSV_CODE: Final[str] = "RSV-MOH-0001"
 COM_CODE: Final[str] = "COM-MOH-2027-005"
@@ -116,12 +115,20 @@ RSV_SHORT_CODE: Final[str] = "RSV-MOH-SHORT-001"
 USER_MEDICAL: Final[str] = "moh.medicalservices.officer@example.test"
 USER_PUBLIC: Final[str] = "moh.publichealth.officer@example.test"
 USER_STR_REVIEWER: Final[str] = "moh.strategy.reviewer@example.test"
-USER_BUD_REVIEWER: Final[str] = "moh.budget.reviewer@example.test"
-USER_BUD_AUTHORITY: Final[str] = "moh.budget.authority@example.test"
+# BUD-CHG-001 v1.2 §15.2 — Budget Reviewer + Budget Activation Authority
+# collapsed into one Budget Approver role/persona (STR-CHG-001-style merge).
+USER_BUD_APPROVER: Final[str] = "moh.budget.approver@example.test"
 USER_VIEWER: Final[str] = "moh.viewer@example.test"
 USER_KISUMU_OFFICER: Final[str] = "kisumu.health.officer@example.test"
 USER_KISUMU_VIEWER: Final[str] = "kisumu.viewer@example.test"
 USER_BUD_DUAL: Final[str] = "moh.budget.officer.authority@example.test"
+# BUD-CHG-001 v1.2 §15.2 — dedicated Budget-only test actors (distinct from
+# the multi-module Strategy+Budget personas above).
+USER_BUD_VIEWER_MOH: Final[str] = "bud.viewer.moh@example.test"
+USER_BUD_AUDITOR: Final[str] = "bud.auditor@example.test"
+USER_CGK_BUD_OFFICER: Final[str] = "cgk.budget.officer@example.test"
+USER_CGK_BUD_APPROVER: Final[str] = "cgk.budget.approver@example.test"
+USER_BUD_VIEWER_KISUMU: Final[str] = "bud.viewer.kisumu@example.test"
 # Contract v2.2 §4.6 / §7.5 — Demand creation-scope demonstration personas.
 USER_MULTISCOPE: Final[str] = "kentender.multiscope.admin@example.test"
 USER_SYSTEM_ADMIN: Final[str] = "kentender.system.admin@example.test"
@@ -144,12 +151,16 @@ CANONICAL_USERS: Final[tuple[str, ...]] = (
 	USER_MEDICAL,
 	USER_PUBLIC,
 	USER_STR_REVIEWER,
-	USER_BUD_REVIEWER,
-	USER_BUD_AUTHORITY,
+	USER_BUD_APPROVER,
 	USER_VIEWER,
 	USER_KISUMU_OFFICER,
 	USER_KISUMU_VIEWER,
 	USER_BUD_DUAL,
+	USER_BUD_VIEWER_MOH,
+	USER_BUD_AUDITOR,
+	USER_CGK_BUD_OFFICER,
+	USER_CGK_BUD_APPROVER,
+	USER_BUD_VIEWER_KISUMU,
 	USER_MULTISCOPE,
 	USER_SYSTEM_ADMIN,
 	USER_PLANNING_OFFICER,
@@ -173,6 +184,10 @@ RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (
 	"budget.authority@moh.test",
 	"budget.officer.authority@moh.test",
 	"budget.officer@moe.test",
+	# BUD-CHG-001 v1.2 §15.2 — Budget Reviewer + Budget Activation Authority
+	# collapsed into USER_BUD_APPROVER; these two personas are retired.
+	"moh.budget.reviewer@example.test",
+	"moh.budget.authority@example.test",
 	USER_PLAN_APPROVER,
 	USER_OTHER_ENTITY,
 )

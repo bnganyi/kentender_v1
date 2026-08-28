@@ -454,148 +454,130 @@ def validate_kentender_mvp_v1(
 		)
 	)
 
-	# --- Budget ---
+	# --- Budget (BUD-CHG-001 v1.2 §15.3 MOH Active baseline, §15.7 CGK isolation) ---
 	bud = frappe.db.get_value(
-		"Budget",
-		{"generated_reference": C.BUD_ACTIVE},
-		["name", "status", "external_approved_total"],
-		as_dict=True,
+		"Budget", {"generated_reference": C.BUD_ACTIVE}, ["name", "procuring_entity", "financial_year"], as_dict=True
 	)
-	checks.append(_check("budget.active_exists", bool(bud and bud.status == "Active")))
-
-	lines = (
-		frappe.get_all(
-			"Budget Line",
-			filters={"budget": bud.name} if bud else {"name": ["is", "not set"]},
-			fields=[
-				"generated_reference",
-				"approved_amount",
-				"amount_reserved",
-				"amount_committed",
-				"amount_actual",
-				"owner_org_unit",
-			],
+	checks.append(_check("budget.exists", bool(bud)))
+	ver = (
+		frappe.db.get_value(
+			"Budget Version",
+			{"generated_reference": C.BUD_ACTIVE_V1},
+			["name", "status", "approval_reference", "authorised_total", "submitted_by", "decided_by"],
+			as_dict=True,
 		)
 		if bud
+		else None
+	)
+	checks.append(_check("budget.active_version_active", bool(ver and ver.status == "Active")))
+	checks.append(
+		_check(
+			"budget.active_version_authority",
+			bool(ver and ver.submitted_by == C.USER_BUD_OFFICER and ver.decided_by == C.USER_BUD_APPROVER),
+		)
+	)
+
+	line_versions = (
+		frappe.get_all(
+			"Budget Line Version",
+			filters={"budget_version": ver.name},
+			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
+		)
+		if ver
 		else []
 	)
-	by_code = {r.generated_reference: r for r in lines}
+	line_codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [lv.budget_line for lv in line_versions]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if line_versions
+		else {}
+	)
+	by_code = {line_codes.get(lv.budget_line): lv for lv in line_versions}
 	dhi = by_code.get(C.BL_DHI_2027)
 	hwd = by_code.get(C.BL_HWD_2027)
-	approved = sum(flt(r.approved_amount) for r in lines)
-	reserved = sum(flt(r.amount_reserved) for r in lines)
-	committed = sum(flt(r.amount_committed) for r in lines)
-	available = approved - reserved - committed
-	checks.append(_check("budget.lines_total_560m", abs(approved - 560_000_000) < 0.01, str(approved)))
-	if include_planning:
-		expect_reserved = 535_000_000 if include_scn_add else 455_000_000
-		expect_available = 25_000_000 if include_scn_add else 105_000_000
-		if include_scn_add and not frappe.db.exists(
-			"Funding Reservation", {"generated_reference": C.RSV_CODE_SCN}
-		):
-			expect_reserved = 455_000_000
-			expect_available = 105_000_000
-		if include_scn_fund_short:
-			expect_reserved = 510_000_000
-			expect_available = 50_000_000
-	else:
-		expect_reserved = 0.0
-		expect_available = 560_000_000
-	checks.append(
-		_check(
-			"budget.reserved_after_finance" if include_planning else "budget.reserved_before_finance",
-			abs(reserved - expect_reserved) < 0.01,
-			str(reserved),
-		)
-	)
-	checks.append(
-		_check(
-			"budget.committed_before_tender",
-			abs(committed - 0) < 0.01,
-			str(committed),
-		)
-	)
-	checks.append(
-		_check(
-			"budget.available_after_finance" if include_planning else "budget.available_before_finance",
-			abs(available - expect_available) < 0.01,
-			str(available),
-		)
-	)
-	checks.append(
-		_check(
-			"budget.dhi_actual_none",
-			bool(dhi and abs(flt(dhi.amount_actual) - 0) < 0.01),
-			str(dhi.amount_actual if dhi else None),
-		)
-	)
+	checks.append(_check("budget.dhi_exists", bool(dhi)))
+	checks.append(_check("budget.hwd_exists", bool(hwd)))
+	approved = sum(flt(lv.approved_amount) for lv in line_versions)
+	checks.append(_check("budget.lines_total_160m", abs(approved - 160_000_000) < 0.01, str(approved)))
+	checks.append(_check("budget.dhi_amount_100m", bool(dhi and abs(flt(dhi.approved_amount) - 100_000_000) < 0.01)))
+	checks.append(_check("budget.hwd_amount_60m", bool(hwd and abs(flt(hwd.approved_amount) - 60_000_000) < 0.01)))
 	checks.append(_check("budget.dhi_owner_dhp", bool(dhi and dhi.owner_org_unit == C.OU_DIR_DHP)))
 	checks.append(_check("budget.hwd_owner_hrmd", bool(hwd and hwd.owner_org_unit == C.OU_DIR_HRMD)))
 
+	# §15.4's integrated reservation is created by Planning's own seed calling
+	# Budget's real reserve_funding contract, not by this seed directly — its
+	# presence is checked only when found (position invariant always holds;
+	# a missing Planning integration is Planning's own concern, not a Budget
+	# seed defect).
+	if dhi:
+		from kentender_budget.services.budget_contracts import _line_position
+
+		pos = _line_position(dhi.budget_line, frappe._dict(approved_amount=dhi.approved_amount))
+		checks.append(
+			_check(
+				"budget.dhi_position_balances",
+				abs(pos["approved"] - (pos["reserved"] + pos["committed"] + pos["available"])) < 0.01,
+				str(pos),
+			)
+		)
+		if include_planning:
+			rsv = frappe.db.get_value(
+				"Funding Reservation",
+				{"budget_line": dhi.budget_line, "status": "Active"},
+				["original_amount", "remaining_amount"],
+				as_dict=True,
+			)
+			if rsv:
+				checks.append(_check("budget.dhi_finance_integration_reserved", flt(rsv.remaining_amount) > 0, str(rsv)))
+
+	cgk_ver = frappe.db.get_value(
+		"Budget Version",
+		{"generated_reference": C.CGK_BUD_ACTIVE_V1},
+		["name", "status", "budget"],
+		as_dict=True,
+	)
+	checks.append(_check("budget.cgk_active", bool(cgk_ver and cgk_ver.status == "Active")))
+	cgk_lines = (
+		frappe.get_all(
+			"Budget Line Version",
+			filters={"budget_version": cgk_ver.name},
+			fields=["owner_org_unit", "approved_amount"],
+		)
+		if cgk_ver
+		else []
+	)
+	cgk_line = cgk_lines[0] if cgk_lines else None
 	checks.append(
 		_check(
-			"budget.draft_exists",
-			bool(frappe.db.exists("Budget", {"generated_reference": C.BUD_DRAFT, "status": "Draft"})),
+			"budget.cgk_20m_pe_wide",
+			bool(cgk_line and abs(flt(cgk_line.approved_amount) - 20_000_000) < 0.01 and not cgk_line.owner_org_unit),
 		)
 	)
 	checks.append(
 		_check(
-			"budget.closed_exists",
-			bool(frappe.db.exists("Budget", {"generated_reference": C.BUD_CLOSED, "status": "Closed"})),
+			"budget.moh_cgk_isolated",
+			bool(bud and cgk_ver and bud.name != cgk_ver.budget),
 		)
 	)
 
-	cgk_bud = frappe.db.get_value(
-		"Budget",
-		{"generated_reference": C.CGK_BUD_ACTIVE},
-		["name", "status", "external_approved_total"],
-		as_dict=True,
-	)
-	checks.append(
-		_check("budget.cgk_active", bool(cgk_bud and cgk_bud.status == "Active"))
-	)
-	cgk_line = frappe.db.get_value(
-		"Budget Line",
-		{"generated_reference": C.CGK_BL_COLDCHAIN},
-		["approved_amount", "amount_reserved", "amount_committed", "owner_org_unit", "primary_target_code"],
-		as_dict=True,
-	)
-	checks.append(
-		_check(
-			"budget.cgk_24m_available",
-			bool(
-				cgk_line
-				and abs(flt(cgk_line.approved_amount) - 24_000_000) < 0.01
-				and flt(cgk_line.amount_reserved) == 0
-				and flt(cgk_line.amount_committed) == 0
-			),
-		)
-	)
-	checks.append(
-		_check(
-			"budget.cgk_owner_and_target",
-			bool(
-				cgk_line
-				and cgk_line.owner_org_unit == C.OU_CGK_HEALTH
-				and cgk_line.primary_target_code == C.CGK_TGT_COLDCHAIN
-			),
-		)
-	)
-
-	rsv = frappe.db.get_value(
-		"Funding Reservation",
-		{"generated_reference": C.RSV_CODE},
-		["original_amount", "remaining_reserved", "status"],
-		as_dict=True,
-	)
 	if include_planning:
+		rsv = frappe.db.get_value(
+			"Funding Reservation",
+			{"generated_reference": C.RSV_CODE},
+			["original_amount", "remaining_amount", "status"],
+			as_dict=True,
+		)
 		checks.append(
 			_check(
 				"funding.reservation",
 				bool(
 					rsv
 					and abs(flt(rsv.original_amount) - 455_000_000) < 0.01
-					and abs(flt(rsv.remaining_reserved) - 455_000_000) < 0.01
+					and abs(flt(rsv.remaining_amount) - 455_000_000) < 0.01
 				),
 				str(rsv),
 			)
