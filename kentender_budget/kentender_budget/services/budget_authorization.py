@@ -147,14 +147,31 @@ def require_budget_create_capability(user: str, procuring_entity_id: str) -> Non
 # not a same-version segregation check. `CAP_VIEW` stays reserved for the
 # neutral Budget Viewer read surface (§9.1's Active-only reads); this is the
 # check every other read contract in this module uses instead.
-_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Budget Viewer", "Auditor")
+#
+# Finance Confirmation Officer is included because BUD-UI-05 ("Open Budget &
+# Funding" from a Planning Finance surface) opens Budget Line detail directly
+# for that role — a distinct capability from Finance's own check_funding/
+# reserve_funding authority (BUDGET_FINANCE_TASK_DENIED in
+# budget_check_reserve_contracts.py), which stays a separate check.
+_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Budget Viewer", "Auditor", "Finance Confirmation Officer")
+
+# §7: "Viewer may view Active, Superseded and Closed Budgets only" — a Draft
+# or Submitted-for-approval version is governance-workflow-in-progress
+# content, visible only to the roles actually party to that workflow (plus
+# Auditor). This must hold for a direct version URL too, not just for what a
+# listing chooses to surface (Phase 4: "the same scope predicate gates...
+# direct URLs").
+_DRAFT_STATUSES = ("Draft", "Submitted for approval")
+_DRAFT_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Auditor")
 
 
-def require_budget_read_scope(procuring_entity_id: str) -> None:
+def require_budget_read_scope(procuring_entity_id: str, *, status: str | None = None) -> None:
 	user = frappe.session.user
 	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
 		return
-	if not any(role in frappe.get_roles(user) for role in _READ_ROLES):
+	roles = frappe.get_roles(user)
+	allowed_roles = _DRAFT_READ_ROLES if status in _DRAFT_STATUSES else _READ_ROLES
+	if not any(role in roles for role in allowed_roles):
 		frappe.throw(_("Not permitted to view Budget & Funding"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
 	pe_scope = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
 	if pe_scope and procuring_entity_id not in pe_scope:
@@ -165,4 +182,4 @@ def require_budget_version_read_scope(version) -> None:
 	if isinstance(version, str):
 		version = frappe.get_doc("Budget Version", version)
 	procuring_entity = frappe.db.get_value("Budget", version.budget, "procuring_entity")
-	require_budget_read_scope(procuring_entity or "")
+	require_budget_read_scope(procuring_entity or "", status=version.status)

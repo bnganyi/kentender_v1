@@ -57,6 +57,12 @@ def _line_active_version_and_position(budget_line_doc):
 
 	version = _active_version(budget_line_doc.budget)
 	if not version:
+		# BUD-BR-023 — a Closed Budget admits no new reservations. A Closed
+		# Budget Version means the Budget itself is Closed (no other Active
+		# version exists for it); distinguish that from the generic "not
+		# eligible" case so callers get the specific documented error code.
+		if frappe.db.exists("Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}):
+			frappe.throw(_("The Budget is Closed and cannot accept a new reservation"), frappe.ValidationError, title="BUDGET_CLOSED")
 		frappe.throw(_("Budget Line has no Active Budget Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
 	line_version = _line_version_for(version.name, budget_line_doc.name)
 	if not line_version:
@@ -87,6 +93,17 @@ def check_funding(
 			budget = frappe.get_doc("Budget", line_doc.budget)
 		_require_finance_capability(budget.procuring_entity)
 		version, line_version, position = _line_active_version_and_position(line_doc)
+		# BUD-BR-008 — the allocation's funding source shall equal the Budget
+		# Line's, independently of any upstream filtering (list_eligible_budget_lines
+		# already filters by funding_source, but a caller bypassing that read
+		# must not be able to reserve against a mismatched line).
+		requested_funding_source = (alloc.get("funding_source") or "").strip()
+		if requested_funding_source and requested_funding_source != line_version.funding_source:
+			frappe.throw(
+				_("{0} funding source does not match the allocation").format(line_version.title),
+				frappe.ValidationError,
+				title="BUDGET_LINE_NOT_ELIGIBLE",
+			)
 		requested = flt(alloc.get("amount"))
 		if requested <= 0:
 			frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
@@ -114,7 +131,15 @@ def check_funding(
 			"finance_task": finance_task,
 			"source_set_hash": source_set_hash,
 			"correlation_id": correlation_id,
-			"allocations": [{"budget_line": r["budget_line"], "plan_source_allocation": r["plan_source_allocation"], "amount": r["requested_amount"]} for r in results],
+			"allocations": [
+				{
+					"budget_line": r["budget_line"],
+					"plan_source_allocation": r["plan_source_allocation"],
+					"amount": r["requested_amount"],
+					"funding_source": (a.get("funding_source") or "").strip(),
+				}
+				for r, a in zip(results, allocations)
+			],
 		},
 		expires_in_sec=_CHECK_TOKEN_TTL_SECONDS,
 	)
@@ -176,6 +201,28 @@ def reserve_funding(
 		line_doc = line_docs[alloc["budget_line"]]
 		budget = frappe.get_doc("Budget", line_doc.budget)
 		version, line_version, position = _line_active_version_and_position(line_doc)
+		requested_funding_source = (alloc.get("funding_source") or "").strip()
+		if requested_funding_source and requested_funding_source != line_version.funding_source:
+			frappe.throw(
+				_("{0} funding source does not match the allocation").format(line_version.title),
+				frappe.ValidationError,
+				title="BUDGET_LINE_NOT_ELIGIBLE",
+			)
+		# `plan_source_allocation` is unique on Funding Reservation (§4.5) — a
+		# prior reservation under a *different* correlation is a genuine
+		# conflict (BUD-BR-011/§13 BUDGET_RESERVATION_CONFLICT), not something
+		# to silently insert on top of or crash on with a raw DB constraint
+		# error. The whole-correlation reuse check above already handled the
+		# same-correlation retry case.
+		clashing = frappe.db.get_value(
+			"Funding Reservation", {"plan_source_allocation": alloc["plan_source_allocation"]}, ["name", "correlation_id"], as_dict=True
+		)
+		if clashing and clashing.correlation_id != correlation_id:
+			frappe.throw(
+				_("This allocation already has a different effective reservation"),
+				frappe.ValidationError,
+				title="BUDGET_RESERVATION_CONFLICT",
+			)
 		requested = flt(alloc["amount"])
 		if position["available"] < requested:
 			frappe.throw(

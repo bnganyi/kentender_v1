@@ -8,8 +8,6 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
-from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability
-
 ROLE_VIEWER = "Budget Viewer"
 ROLE_OFFICER = "Budget Officer"
 ROLE_APPROVER = "Budget Approver"
@@ -21,9 +19,6 @@ ALL_BUDGET_ROLES = (
 	ROLE_APPROVER,
 	ROLE_AUDITOR,
 )
-
-# Viewer may view Active, Superseded and Closed Budgets only (BUD-CHG-001 v1.2 §7).
-_VIEWER_STATUSES = ("Active", "Superseded", "Closed")
 
 
 def ensure_budget_roles() -> None:
@@ -47,60 +42,6 @@ def require_any_role(*roles: str) -> None:
 		return
 	if not have.intersection(roles):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-
-
-def visible_statuses_for_roles(roles: set[str]) -> list[str] | None:
-	"""Return status allow-list, or None when all statuses are visible."""
-	if "System Manager" in roles:
-		return None
-	elevated = {ROLE_OFFICER, ROLE_APPROVER, ROLE_AUDITOR}
-	if roles.intersection(elevated):
-		return None
-	if ROLE_VIEWER in roles:
-		return list(_VIEWER_STATUSES)
-	return None
-
-
-def visible_statuses_for_user(user: str | None = None) -> list[str] | None:
-	return visible_statuses_for_roles(user_roles(user))
-
-
-def can_register_budget_for_roles(roles: set[str]) -> bool:
-	"""BUD-FR create Draft — Budget Officer (and System Manager), not Authority alone."""
-	if "System Manager" in roles:
-		return True
-	return ROLE_OFFICER in roles
-
-
-def can_register_budget() -> bool:
-	return can_register_budget_for_roles(user_roles())
-
-
-def can_review_budget() -> bool:
-	return bool(user_roles().intersection({ROLE_APPROVER, "System Manager"}))
-
-
-def can_export_funding_performance(user: str | None = None, pe: str | None = None) -> bool:
-	"""Export is an assignment-scoped capability, never a presentation-role grant.
-
-	`pe` should be the procuring entity already resolved for the current
-	request (e.g. via `resolve_scoped_entity`) — an explicitly-requested PE
-	must be honoured here too, not silently re-derived from the actor's own
-	implicit scope (which is blank for an unrestricted Administrator).
-	"""
-	actor = user or frappe.session.user
-	pe = pe or entity_for_user(actor) or ""
-	if not pe:
-		return False
-	return evaluate_capability(
-		actor,
-		"budget.export",
-		ResourceContext(
-			resource_type="Budget Funding Performance",
-			resource_id=pe,
-			procuring_entity_id=pe,
-		),
-	).allowed
 
 
 def entity_for_user(user: str | None = None) -> str | None:
@@ -166,23 +107,3 @@ def ownership_path_for_unit(owner_org_unit: str | None) -> str:
 	from kentender_core.services.org_scope_access import ownership_path_label
 
 	return ownership_path_label(owner_org_unit)
-
-
-def can_access_budget_line(
-	line,
-	user: str | None = None,
-	*,
-	require_write: bool = False,
-) -> bool:
-	"""Line-level PE + owner_org_unit check."""
-	from kentender_core.services.org_scope_access import can_access_owned_record
-
-	pe = getattr(line, "procuring_entity", None)
-	if not pe and getattr(line, "budget", None):
-		pe = frappe.db.get_value("Budget", line.budget, "procuring_entity")
-	return can_access_owned_record(
-		procuring_entity=pe,
-		owner_org_unit=getattr(line, "owner_org_unit", None),
-		user=user,
-		require_write=require_write,
-	)

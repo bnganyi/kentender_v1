@@ -120,15 +120,7 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 	bl_row = frappe.db.get_value(
 		"Budget Line",
 		nm,
-		[
-			"budget_line_code",
-			"budget_line_name",
-			"budget",
-			"currency",
-			"amount_allocated",
-			"amount_reserved",
-			"amount_available",
-		],
+		["generated_reference", "budget"],
 		as_dict=True,
 	)
 	if not bl_row:
@@ -141,17 +133,56 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 			"packages": [],
 		}
 
-	# Parent Budget metadata (funding confirmation)
+	# BUD-CHG-001 v1.2 §4.2/§4.3/§4.4 — Budget Line no longer carries a title
+	# or amounts directly; those live on the Active Budget Version's Budget
+	# Line Version, with Reserved/Committed always computed live (§5), never
+	# stored. This stays a raw, permission-free read (the caller already
+	# enforces Journey visibility via `_require_journey_read_permission`) —
+	# not routed through kentender_budget's own capability-gated read API,
+	# which would add an unrelated Budget-role requirement to this panel.
 	budget_meta: dict[str, Any] = {}
+	line_title = ""
+	amount_allocated = 0.0
+	amount_reserved = 0.0
+	amount_available = 0.0
 	if bl_row.get("budget"):
-		raw = frappe.db.get_value(
-			"Budget",
-			bl_row["budget"],
-			["budget_name", "fiscal_year", "status", "currency"],
-			as_dict=True,
+		budget_row = frappe.db.get_value(
+			"Budget", bl_row["budget"], ["title", "financial_year", "currency"], as_dict=True
 		)
-		if raw:
-			budget_meta = dict(raw)
+		if budget_row:
+			budget_meta = dict(budget_row)
+		version_row = frappe.db.get_value(
+			"Budget Version", {"budget": bl_row["budget"], "status": "Active"}, ["name", "status"], as_dict=True
+		)
+		if version_row:
+			budget_meta["status"] = version_row.status
+			line_version_row = frappe.db.get_value(
+				"Budget Line Version",
+				{"budget_version": version_row.name, "budget_line": nm},
+				["title", "approved_amount"],
+				as_dict=True,
+			)
+			if line_version_row:
+				line_title = (line_version_row.get("title") or "").strip()
+				amount_allocated = frappe.utils.flt(line_version_row.get("approved_amount"))
+				amount_reserved = frappe.utils.flt(
+					frappe.db.sql(
+						"select coalesce(sum(remaining_amount), 0) from `tabFunding Reservation` "
+						"where budget_line = %s and status in ('Active', 'Partially Converted', 'Needs Attention')",
+						(nm,),
+					)[0][0]
+				)
+				reservation_names = frappe.get_all("Funding Reservation", filters={"budget_line": nm}, pluck="name")
+				amount_committed = 0.0
+				if reservation_names:
+					amount_committed = frappe.utils.flt(
+						frappe.db.sql(
+							"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
+							"where reservation in %s and status = 'Active'",
+							(reservation_names,),
+						)[0][0]
+					)
+				amount_available = amount_allocated - amount_reserved - amount_committed
 
 	# Journeys linked to this budget line
 	journey_rows = frappe.get_all(
@@ -194,23 +225,22 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 	demands_out = _fetch_demands(demand_ids)
 	packages_out = _fetch_packages(package_names)
 
-	bl_code = (bl_row.get("budget_line_code") or nm).strip()
-	bl_display = (bl_row.get("budget_line_name") or "").strip()
+	bl_code = (bl_row.get("generated_reference") or nm).strip()
 
 	return {
 		"ok": True,
 		"budget_line_name": nm,
 		"budget_line_code": bl_code,
-		"budget_line_display_name": bl_display,
+		"budget_line_display_name": line_title,
 		# Funding confirmation
 		"budget_doc_name": bl_row.get("budget") or "",
-		"budget_name": budget_meta.get("budget_name") or "",
-		"fiscal_year": budget_meta.get("fiscal_year"),
+		"budget_name": budget_meta.get("title") or "",
+		"fiscal_year": budget_meta.get("financial_year"),
 		"budget_status": budget_meta.get("status") or "",
-		"currency": bl_row.get("currency") or budget_meta.get("currency") or "",
-		"amount_allocated": bl_row.get("amount_allocated") or 0,
-		"amount_reserved": bl_row.get("amount_reserved") or 0,
-		"amount_available": bl_row.get("amount_available") or 0,
+		"currency": budget_meta.get("currency") or "",
+		"amount_allocated": amount_allocated,
+		"amount_reserved": amount_reserved,
+		"amount_available": amount_available,
 		# Linked procurement objects
 		"journeys": journeys_out,
 		"demands": demands_out,
