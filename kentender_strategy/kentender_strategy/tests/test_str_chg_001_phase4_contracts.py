@@ -12,12 +12,15 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, now_datetime
 
 from kentender_strategy.api import strategy_consumer_api as api
 from kentender_strategy.services import strategy_consumer as consumer
 from kentender_strategy.services import strategy_contracts as contracts
-from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
+from kentender_strategy.services.strategy_authorization import (
+	ROLE_STRATEGY_APPROVER,
+	ROLE_STRATEGY_AUTHOR,
+	ensure_strategy_governance_roles,
+)
 from kentender_strategy.services.strategy_writes import (
 	create_strategy_successor_version,
 	save_strategy_plan_draft,
@@ -26,6 +29,13 @@ from kentender_strategy.services.strategy_writes import (
 
 PE = "PE-MOH"
 FY = "FY-2027-2028"
+
+# AUTH-ADR-001 — these test fixtures kept the old profile_id strings as
+# argument values; map them onto the real Roles those profiles used to grant.
+_PROFILE_ROLE = {
+	"CAP-STRATEGY-AUTHOR": ROLE_STRATEGY_AUTHOR,
+	"CAP-STRATEGY-APPROVAL-AUTHORITY": ROLE_STRATEGY_APPROVER,
+}
 
 
 class Phase4TestBase(FrappeTestCase):
@@ -53,20 +63,10 @@ class Phase4TestBase(FrappeTestCase):
 		return email
 
 	def _assign(self, user: str, profile_id: str, pe: str = PE) -> None:
+		frappe.get_doc("User", user).add_roles(_PROFILE_ROLE[profile_id])
 		self._track(
 			frappe.get_doc(
-				{
-					"doctype": "Operational Scope Assignment",
-					"assignment_id": f"OSA-P4-{uuid4().hex[:10]}-{self.suffix}",
-					"user_id": user,
-					"capability_profile_id": profile_id,
-					"procuring_entity_id": pe,
-					"effective_from": add_days(now_datetime(), -1),
-					"status": "Active",
-					"assigned_by": "Administrator",
-					"assigned_at": now_datetime(),
-					"concurrency_token": uuid4().hex,
-				}
+				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
 			).insert(ignore_permissions=True)
 		)
 
@@ -435,7 +435,7 @@ class TestLifecycleCommandDispatch(Phase4TestBase):
 	"""Confirms the §10.1 API dispatchers wire correctly to the Phase 2
 	engine — lifecycle rules themselves are exhaustively covered there."""
 
-	def test_submit_and_activate_via_api_dispatchers(self):
+	def test_submit_and_approve_via_api_dispatchers(self):
 		author = self._user("dispatch_author")
 		approver = self._user("dispatch_approver")
 		self._assign(author, "CAP-STRATEGY-AUTHOR")
@@ -445,11 +445,10 @@ class TestLifecycleCommandDispatch(Phase4TestBase):
 
 		frappe.set_user(author)
 		out = api.submit_strategy_version(version)
-		self.assertEqual(out["status"], "In Review")
+		self.assertEqual(out["status"], "Submitted for approval")
 
-		frappe.db.set_value("Strategic Plan Version", version, "status", "Approved")
 		frappe.set_user(approver)
-		out = api.activate_strategy_version(version)
+		out = api.approve_strategy_version(version)
 		self.assertEqual(out["status"], "Active")
 
 

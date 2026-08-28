@@ -9,13 +9,13 @@ import {
 	getStrategyTree,
 	diffStrategyVersions,
 	getVersionHistory,
-	reviewVersion,
+	returnVersion,
 	approveVersion,
 } from "./data/strategyReviewApi.js";
 
 function eventStatusClass(eventName) {
-	if (["Approve", "Activate", "Activate successor"].includes(eventName)) return "is-live";
-	if (["Submit for review", "Recommend for approval"].includes(eventName)) return "is-pending";
+	if (["Approve", "Approve successor"].includes(eventName)) return "is-live";
+	if (eventName === "Submit for approval") return "is-pending";
 	return "is-draft";
 }
 
@@ -93,11 +93,7 @@ function switchTab(t) {
 	go(versionId.value, t);
 }
 
-const isApprover = computed(() => overview.value?.role === "approver");
-const headerTitle = computed(() =>
-	isApprover.value ? __("Approve strategic plan version") : __("Review strategic plan version")
-);
-const canRecommend = computed(() => (overview.value?.allowed_actions || []).includes("Recommend for approval"));
+const headerTitle = computed(() => __("Approve strategic plan version"));
 const canApprove = computed(() => (overview.value?.allowed_actions || []).includes("Approve"));
 const canReturn = computed(() => (overview.value?.allowed_actions || []).includes("Return"));
 
@@ -105,8 +101,7 @@ async function submitReturn(reason) {
 	acting.value = true;
 	actingError.value = null;
 	try {
-		const fn = isApprover.value ? approveVersion : reviewVersion;
-		await fn(versionId.value, "Return", reason);
+		await returnVersion(versionId.value, reason);
 		frappe.show_alert({ message: __("Returned"), indicator: "orange" });
 		showReturnDialog.value = false;
 		await load();
@@ -124,13 +119,8 @@ async function submitAdvance() {
 	actingError.value = null;
 	showAdvanceConfirm.value = false;
 	try {
-		if (canApprove.value) {
-			await approveVersion(versionId.value, "Approve");
-			frappe.show_alert({ message: __("Approved"), indicator: "green" });
-		} else {
-			await reviewVersion(versionId.value, "Recommend for approval");
-			frappe.show_alert({ message: __("Recommended for approval"), indicator: "green" });
-		}
+		await approveVersion(versionId.value);
+		frappe.show_alert({ message: __("Approved and activated"), indicator: "green" });
 		await load();
 	} catch (e) {
 		actingError.value = e.message || String(e);
@@ -186,10 +176,6 @@ async function submitAdvance() {
 								<div class="kt-card-title">{{ __("Submission authority") }}</div>
 								<div class="kt-row"><dt>{{ __("Submitted by") }}</dt><dd>{{ overview.submission_authority.submitted_by?.actor || "—" }}</dd></div>
 								<div class="kt-row"><dt>{{ __("Submitted") }}</dt><dd>{{ overview.submission_authority.submitted_by?.at || "—" }}</dd></div>
-								<template v-if="isApprover">
-									<div class="kt-row"><dt>{{ __("Reviewed by") }}</dt><dd>{{ overview.submission_authority.reviewed_by?.actor || "—" }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Recommended") }}</dt><dd>{{ overview.submission_authority.reviewed_by?.at || "—" }}</dd></div>
-								</template>
 							</div>
 							<div class="kt-card kt-blueprint">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -280,26 +266,26 @@ async function submitAdvance() {
 			</template>
 		</div>
 
-		<div v-if="overview && (canReturn || canRecommend || canApprove)" class="kt-sticky-footer">
+		<div v-if="overview && (canReturn || canApprove)" class="kt-sticky-footer">
 			<button v-if="canReturn" type="button" class="kt-btn kt-btn-secondary kt-danger" @click="showReturnDialog = true">
 				{{ __("Return") }}
 			</button>
 			<button
-				v-if="canRecommend || canApprove"
+				v-if="canApprove"
 				type="button"
 				class="kt-btn kt-btn-primary"
 				:disabled="acting"
 				@click="showAdvanceConfirm = true"
 			>
-				{{ canApprove ? __("Approve") : __("Recommend for approval") }}
+				{{ __("Approve") }}
 			</button>
 		</div>
 
 		<ConfirmDialog
 			:open="showAdvanceConfirm"
-			:title="canApprove ? __('Approve this version?') : __('Recommend this version for approval?')"
-			:message="canApprove ? __('The version will move to Approved and become eligible for activation.') : __('The version will move to Awaiting Approval.')"
-			:confirm-label="canApprove ? __('Approve') : __('Recommend for approval')"
+			:title="__('Approve this version?')"
+			:message="__('The version will move to Active. The previous Active version, if any, will be superseded.')"
+			:confirm-label="__('Approve')"
 			@confirm="submitAdvance"
 			@cancel="showAdvanceConfirm = false"
 		/>

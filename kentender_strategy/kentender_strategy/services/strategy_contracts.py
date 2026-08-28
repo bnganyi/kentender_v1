@@ -17,8 +17,6 @@ from kentender_strategy.services.strategy_permissions import (
 	has_cross_entity_authority,
 	ownership_path_for_unit,
 	require_any_role,
-	ROLE_MANAGER,
-	ROLE_OFFICER,
 )
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
 
@@ -930,12 +928,9 @@ def _overview_attention_rows(plan_name: str) -> list[dict]:
 def get_plan_overview(plan_version: str | None = None, plan_code: str | None = None) -> dict:
 	"""STR-UI-02 aggregate DTO: plan identity, structure counts, commitments, attention."""
 	require_any_role(
-		ROLE_OFFICER,
-		ROLE_MANAGER,
+		"Strategy Author",
+		"Strategy Approver",
 		"Strategy Viewer",
-		"Strategy Officer",
-		"Strategy Manager",
-		"Strategy Reviewer",
 		"Planning Authority",
 		"Auditor",
 		"System Manager",

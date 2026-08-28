@@ -26,19 +26,18 @@ from typing import Any
 import frappe
 from frappe import _
 
-from kentender_core.services.authorization_policy import resolve_effective_access
 from kentender_strategy.services.strategy_audit import list_events
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
-	CAP_REVIEW,
+	ROLE_STRATEGY_APPROVER,
+	ROLE_STRATEGY_AUTHOR,
 	has_plan_version_capability,
 )
 from kentender_strategy.services.strategy_readiness import get_version_readiness
 from kentender_strategy.services.strategy_transitions import available_actions
 
 UNRESTRICTED_READ_ROLES = ("System Manager", "Strategy Viewer", "Auditor")
-_LIFECYCLE_CAPS = (CAP_AUTHOR, CAP_REVIEW, CAP_APPROVE)
 
 
 def _ref(id_: str | None, name: str | None = None) -> dict | None:
@@ -58,22 +57,22 @@ def _pe_label(pe_id: str | None) -> str | None:
 	return f"{code} — {name}" if name != code else code
 
 
+_LIFECYCLE_ROLES = (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER)
+
+
 def _allowed_pes() -> tuple[set[str], bool]:
 	"""(pes, unrestricted). `unrestricted=True` means no PE filter applies —
 	System Manager / Strategy Viewer / Auditor, per STR-302/STR-303's own
 	documented deferral of PE-scoped read capabilities for those roles.
-	Author/Reviewer/Approval Authority are scoped to whichever PE(s) their
-	real Operational Scope Assignments grant."""
+	Author/Approver are scoped to whichever Procuring Entities their real
+	native User Permission grants (AUTH-ADR-001)."""
 	roles = frappe.get_roles()
 	if any(r in roles for r in UNRESTRICTED_READ_ROLES):
 		return set(), True
 	user = frappe.session.user
-	pes: set[str] = set()
-	for cap in _LIFECYCLE_CAPS:
-		for grant in resolve_effective_access(user, cap):
-			pe = grant.get("procuring_entity_id")
-			if pe:
-				pes.add(pe)
+	if not any(r in roles for r in _LIFECYCLE_ROLES):
+		return set(), False
+	pes = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
 	return pes, False
 
 
@@ -123,19 +122,16 @@ def _version_dto(version) -> dict:
 # --------------------------------------------------------------------------
 
 
-# STR-CHG-001 v1.3 §13.1: the Portfolio row link must follow the server-
+# STR-CHG-001 v1.5 §13.1: the Portfolio row link must follow the server-
 # returned action, not a client-side status map (AGENTS.md §6.2). Maps each
 # transitionable status (strategy_transitions.TRANSITIONS) to the label the
-# spec assigns it; a status with no matching entry (Active/Superseded/
-# Archived, or "No version") falls back to plain "View".
+# spec assigns it; a status with no matching entry (Active/Superseded, or
+# "No version") falls back to plain "View".
 _STATUS_ACTION_LABELS: dict[str, str] = {
 	"Draft": "Continue draft",
-	"Returned": "Continue draft",
-	"In Review": "Review",
-	"Awaiting Approval": "Approve",
-	"Approved": "Activate",
+	"Submitted for approval": "Approve",
 }
-_REVIEW_TASK_STATUSES = ("In Review", "Awaiting Approval")
+_REVIEW_TASK_STATUSES = ("Submitted for approval",)
 
 
 def _row_action(plan_name: str, version_row: dict | None) -> dict:
@@ -238,7 +234,7 @@ def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
 def _my_work_versions(pes: set[str], unrestricted: bool) -> list[dict]:
 	versions = frappe.get_all(
 		"Strategic Plan Version",
-		filters={"status": ["in", ("In Review", "Awaiting Approval", "Returned")]},
+		filters={"status": "Submitted for approval"},
 		fields=["name", "plan_version_id", "plan_id", "version_number", "status"],
 	)
 	out = []
@@ -407,45 +403,30 @@ def get_plan_workspace(plan_id: str) -> dict:
 
 	by_status = {v.status: v for v in versions}
 	active = by_status.get("Active")
-	pending = by_status.get("Approved")
-	# An open (Draft/In Review/Returned/Awaiting Approval) successor always
-	# takes priority over the steady-state Active version — before Create
-	# successor version existed in this UI, a plan could only ever have one
-	# non-Active version at a time, so `pending or active or versions[0]`
-	# never had to consider Draft/In Review/Returned; now that a Draft can
-	# coexist with an Active version, that fallback chain would silently
-	# keep showing the old Active version's Overview/Structure/History
-	# forever instead of the newly created Draft (found live 2026-08-24
-	# while verifying the successor-version fix in a browser).
-	open_statuses = ("Draft", "In Review", "Returned", "Awaiting Approval", "Approved")
+	# An open (Draft/Submitted for approval) successor always takes priority
+	# over the steady-state Active version — before Create successor version
+	# existed in this UI, a plan could only ever have one non-Active version
+	# at a time, so `active or versions[0]` never had to consider Draft; now
+	# that a Draft can coexist with an Active version, that fallback chain
+	# would silently keep showing the old Active version's Overview/
+	# Structure/History forever instead of the newly created Draft (found
+	# live 2026-08-24 while verifying the successor-version fix in a
+	# browser).
+	open_statuses = ("Draft", "Submitted for approval")
 	open_version = next((v for v in versions if v.status in open_statuses), None)
 	current = open_version or active or versions[0]
 
 	tree = get_strategy_tree(current.name)
-	events = _authority_from_events(current.name, ("Approve", "Activate", "Submit for review", "Recommend for approval"))
+	events = _authority_from_events(current.name, ("Approve", "Submit for approval"))
 
-	current_authority = None
-	version_authority = None
-	readiness = None
-	if pending:
-		version_authority = {
-			"approved_by": events["Approve"],
-			"current_active_version": _version_dto(frappe.get_doc("Strategic Plan Version", active.name))
-			if active
-			else None,
-		}
-		readiness = get_version_readiness(pending.name)
-	elif active:
-		current_authority = {"approved_by": events["Approve"], "activated": events["Activate"]}
+	current_authority = {"approved_by": events["Approve"]} if active else None
+	readiness = get_version_readiness(current.name) if current.status == "Submitted for approval" else None
 
-	can_activate = bool(pending) and has_plan_version_capability(frappe.session.user, CAP_APPROVE, pending.name)
-	is_editable_draft = current.status in ("Draft", "Returned")
+	is_editable_draft = current.status == "Draft"
 
-	open_successor_exists = any(
-		v.status in ("Draft", "In Review", "Returned", "Awaiting Approval") for v in versions
-	)
+	open_successor_exists = any(v.status in open_statuses for v in versions)
 	can_create_successor = (
-		bool(active or pending)
+		bool(active)
 		and not open_successor_exists
 		and has_plan_version_capability(frappe.session.user, CAP_AUTHOR, current.name)
 	)
@@ -457,13 +438,11 @@ def get_plan_workspace(plan_id: str) -> dict:
 		"plan": _plan_dto(plan),
 		"current_version": _version_dto(frappe.get_doc("Strategic Plan Version", current.name)),
 		"active_version": _version_dto(frappe.get_doc("Strategic Plan Version", active.name)) if active else None,
-		"pending_version": _version_dto(frappe.get_doc("Strategic Plan Version", pending.name)) if pending else None,
 		"structure_summary": tree["counts"],
 		"current_authority": current_authority,
-		"version_authority": version_authority,
 		"readiness": readiness,
 		"is_editable_draft": is_editable_draft,
-		"capabilities": {"activate": can_activate, "create_successor": can_create_successor},
+		"capabilities": {"create_successor": can_create_successor},
 	}
 
 
@@ -530,14 +509,11 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 		return {"forbidden": True}
 
 	user = frappe.session.user
-	is_reviewer = has_plan_version_capability(user, CAP_REVIEW, version)
 	is_approver = has_plan_version_capability(user, CAP_APPROVE, version)
-	role = "approver" if is_approver else ("reviewer" if is_reviewer else None)
+	role = "approver" if is_approver else None
 
 	tree = get_strategy_tree(version.name)
-	events = _authority_from_events(
-		version.name, ("Submit for review", "Recommend for approval", "Return")
-	)
+	events = _authority_from_events(version.name, ("Submit for approval", "Return"))
 	readiness = get_version_readiness(version.name)
 
 	active_version_row = frappe.get_all(
@@ -556,8 +532,7 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 		"active_version": active_version_row[0] if active_version_row else None,
 		"structure_summary": tree["counts"],
 		"submission_authority": {
-			"submitted_by": events["Submit for review"],
-			"reviewed_by": events["Recommend for approval"] if is_approver else None,
+			"submitted_by": events["Submit for approval"],
 		},
 		"readiness": readiness,
 		"allowed_actions": available_actions(version.name),

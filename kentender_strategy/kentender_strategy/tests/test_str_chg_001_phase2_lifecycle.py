@@ -1,23 +1,24 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.3 Phase 2 — plan version lifecycle engine.
+"""STR-CHG-001 v1.5 Phase 2 — plan version lifecycle engine.
 
-Covers STR-BR-004, 006, 015-017 and STR-AC-008, 010-015. Capability Profiles/
-Operational Scope Assignments/Separation of Duties Rules are self-contained
-test fixtures (Phase 3 seeds the production versions of these for real
-Strategy Author/Reviewer/Approval Authority actors) — same pattern as
-kentender_core's own CFG-CHG-002 lifecycle tests.
-"""
+Covers STR-BR-004, 006, 015-017 and STR-AC-008, 010-015 against the v1.5
+2-role/4-status model: Strategy Author submits; Strategy Approver returns
+or approves (approve activates in the same transaction, superseding the
+plan's previous Active version). Separation of duties is the direct
+same-version self-check ("the author cannot approve or return the same
+version, even if they also hold Strategy Approver") — not a capability-pair
+Separation of Duties Rule table any more (Phase 3 seeds no such rule for
+Strategy under v1.5)."""
 
 from __future__ import annotations
 
-import json
 from uuid import uuid4
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, now_datetime
 
-from kentender_strategy.services.strategy_authorization import CAP_APPROVE, CAP_AUTHOR, CAP_REVIEW
+from kentender_core.services.authorization_role_registry import CAPABILITY_ROLE_MAP
+from kentender_strategy.services.strategy_authorization import CAP_APPROVE, CAP_AUTHOR
 from kentender_strategy.services.strategy_transitions import available_actions, transition_plan_version
 
 PE = "PE-MOH"
@@ -47,62 +48,18 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 		)
 		return email
 
-	def _profile(self, label: str, capabilities: list[str]) -> str:
-		doc = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Capability Profile",
-					"profile_id": f"CAP-STR-{label}-{self.suffix}",
-					"profile_name": f"Test Strategy {label}",
-					"capabilities": json.dumps(capabilities),
-					"allows_entity_wide": 1,
-					"status": "Active",
-					"concurrency_token": uuid4().hex,
-				}
-			).insert(ignore_permissions=True)
-		)
-		return doc.name
-
-	def _assign(self, user: str, profile: str) -> str:
-		doc = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Operational Scope Assignment",
-					"assignment_id": f"OSA-STR-{uuid4().hex[:10]}-{self.suffix}",
-					"user_id": user,
-					"capability_profile_id": profile,
-					"procuring_entity_id": PE,
-					"effective_from": add_days(now_datetime(), -1),
-					"status": "Active",
-					"assigned_by": "Administrator",
-					"assigned_at": now_datetime(),
-					"concurrency_token": uuid4().hex,
-				}
-			).insert(ignore_permissions=True)
-		)
-		return doc.name
-
-	def _sod_rule(self, first: str, second: str) -> str:
-		doc = self._track(
-			frappe.get_doc(
-				{
-					"doctype": "Separation of Duties Rule",
-					"rule_id": f"SOD-STR-{uuid4().hex[:8]}-{self.suffix}",
-					"rule_name": f"Test {first} vs {second}",
-					"first_capability": first,
-					"second_capability": second,
-					"enforcement_level": "Workflow instance",
-					"status": "Active",
-					"effective_from": add_days(now_datetime(), -1),
-				}
-			).insert(ignore_permissions=True)
-		)
-		return doc.name
-
 	def _actor(self, label: str, capabilities: list[str]) -> str:
 		user = self._user(label)
-		profile = self._profile(label, capabilities)
-		self._assign(user, profile)
+		for capability in capabilities:
+			role = CAPABILITY_ROLE_MAP[capability]
+			if not frappe.db.exists("Role", role):
+				frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
+			frappe.get_doc("User", user).add_roles(role)
+		self._track(
+			frappe.get_doc(
+				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": PE}
+			).insert(ignore_permissions=True)
+		)
 		return user
 
 	def _plan_and_version(self, **version_kwargs) -> tuple[str, str]:
@@ -191,79 +148,70 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 
 	def test_full_lifecycle_happy_path_with_distinct_actors(self):
 		author = self._actor("author", [CAP_AUTHOR])
-		reviewer = self._actor("reviewer", [CAP_REVIEW])
 		approver = self._actor("approver", [CAP_APPROVE])
 		_, version = self._plan_and_version()
 		self._fill_hierarchy(version)
 
 		frappe.set_user(author)
-		self.assertEqual(available_actions(version, author), ["Submit for review"])
-		out = transition_plan_version(version, "Submit for review")
-		self.assertEqual(out["status"], "In Review")
-
-		frappe.set_user(reviewer)
-		self.assertCountEqual(available_actions(version, reviewer), ["Return", "Recommend for approval"])
-		out = transition_plan_version(version, "Recommend for approval")
-		self.assertEqual(out["status"], "Awaiting Approval")
+		self.assertEqual(available_actions(version, author), ["Submit for approval"])
+		out = transition_plan_version(version, "Submit for approval")
+		self.assertEqual(out["status"], "Submitted for approval")
 
 		frappe.set_user(approver)
 		self.assertCountEqual(available_actions(version, approver), ["Return", "Approve"])
 		out = transition_plan_version(version, "Approve")
-		self.assertEqual(out["status"], "Approved")
-
-		out = transition_plan_version(version, "Activate")
 		self.assertEqual(out["status"], "Active")
 		self.assertEqual(available_actions(version, approver), [])
 
 	def test_return_reason_length_enforced(self):
-		reviewer = self._actor("reviewer2", [CAP_REVIEW])
+		approver = self._actor("approver2", [CAP_APPROVE])
 		author = self._actor("author2", [CAP_AUTHOR])
 		_, version = self._plan_and_version()
 		self._fill_hierarchy(version)
 		frappe.set_user(author)
-		transition_plan_version(version, "Submit for review")
+		transition_plan_version(version, "Submit for approval")
 
-		frappe.set_user(reviewer)
+		frappe.set_user(approver)
 		with self.assertRaises(frappe.ValidationError):
 			transition_plan_version(version, "Return", reason="too short")
 		out = transition_plan_version(version, "Return", reason="A properly detailed return reason.")
-		self.assertEqual(out["status"], "Returned")
+		self.assertEqual(out["status"], "Draft")
 
 		frappe.set_user(author)
-		self.assertEqual(available_actions(version, author), ["Revise"])
-		out = transition_plan_version(version, "Revise")
-		self.assertEqual(out["status"], "Draft")
+		self.assertEqual(available_actions(version, author), ["Submit for approval"])
 
 	def test_submit_blocked_when_not_ready(self):
 		author = self._actor("author3", [CAP_AUTHOR])
 		_, version = self._plan_and_version()
 		frappe.set_user(author)
 		with self.assertRaises(frappe.ValidationError):
-			transition_plan_version(version, "Submit for review")
+			transition_plan_version(version, "Submit for approval")
 
-	def test_reviewer_cannot_recommend_own_submission(self):
-		dual = self._actor("dual", [CAP_AUTHOR, CAP_REVIEW])
-		self._sod_rule(CAP_AUTHOR, CAP_REVIEW)
+	def test_author_cannot_return_or_approve_own_version_even_with_approver_role(self):
+		"""§6.2/§13.4/§18.1: same-version self-check, not a capability-pair
+		rule — a dual-role actor is blocked only on the version they
+		themselves submitted."""
+		dual = self._actor("dual", [CAP_AUTHOR, CAP_APPROVE])
 		_, version = self._plan_and_version()
 		self._fill_hierarchy(version)
 		frappe.set_user(dual)
-		transition_plan_version(version, "Submit for review")
-		with self.assertRaises(frappe.PermissionError):
-			transition_plan_version(version, "Recommend for approval")
-
-	def test_author_cannot_approve_own_version(self):
-		dual = self._actor("dual2", [CAP_AUTHOR, CAP_APPROVE])
-		reviewer = self._actor("reviewer3", [CAP_REVIEW])
-		self._sod_rule(CAP_AUTHOR, CAP_APPROVE)
-		_, version = self._plan_and_version()
-		self._fill_hierarchy(version)
-		frappe.set_user(dual)
-		transition_plan_version(version, "Submit for review")
-		frappe.set_user(reviewer)
-		transition_plan_version(version, "Recommend for approval")
-		frappe.set_user(dual)
+		transition_plan_version(version, "Submit for approval")
+		self.assertCountEqual(available_actions(version, dual), [])
 		with self.assertRaises(frappe.PermissionError):
 			transition_plan_version(version, "Approve")
+		with self.assertRaises(frappe.PermissionError):
+			transition_plan_version(version, "Return", reason="A properly detailed return reason.")
+
+	def test_dual_role_actor_may_approve_a_version_someone_else_submitted(self):
+		dual = self._actor("dual2", [CAP_AUTHOR, CAP_APPROVE])
+		author = self._actor("author4b", [CAP_AUTHOR])
+		_, version = self._plan_and_version()
+		self._fill_hierarchy(version)
+		frappe.set_user(author)
+		transition_plan_version(version, "Submit for approval")
+		frappe.set_user(dual)
+		out = transition_plan_version(version, "Approve")
+		self.assertEqual(out["status"], "Active")
 
 	def test_stale_write_rejected(self):
 		author = self._actor("author4", [CAP_AUTHOR])
@@ -274,7 +222,7 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 		# Any subsequent save (even unrelated) moves `modified` forward.
 		frappe.db.set_value("Strategic Plan Version", version, "return_reason", "")
 		with self.assertRaises(frappe.ValidationError):
-			transition_plan_version(version, "Submit for review", expected_version=stale_token)
+			transition_plan_version(version, "Submit for approval", expected_version=stale_token)
 
 	def test_invalid_transition_rejected(self):
 		author = self._actor("author5", [CAP_AUTHOR])
@@ -298,12 +246,12 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 					"based_on_plan_version_id": v1,
 					"effective_from": "2040-07-01",
 					"effective_to": "2045-06-30",
-					"status": "Approved",
+					"status": "Submitted for approval",
 				}
 			).insert(ignore_permissions=True)
 		)
 		frappe.set_user(approver)
-		out = transition_plan_version(v2.name, "Activate")
+		out = transition_plan_version(v2.name, "Approve")
 		self.assertEqual(out["status"], "Active")
 		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Superseded")
 
@@ -311,7 +259,7 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 		approver = self._actor("approver3", [CAP_APPROVE])
 		_, v1 = self._plan_and_version(plan_role="Primary")
 		frappe.db.set_value("Strategic Plan Version", v1, "status", "Active")
-		_, v2 = self._plan_and_version(plan_role="Primary", status="Approved")
+		_, v2 = self._plan_and_version(plan_role="Primary", status="Submitted for approval")
 		frappe.set_user(approver)
 		with self.assertRaises(frappe.ValidationError):
-			transition_plan_version(v2, "Activate")
+			transition_plan_version(v2, "Approve")

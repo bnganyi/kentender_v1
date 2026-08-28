@@ -24,10 +24,7 @@
    "role": "Strategy Author"
   },
   {
-   "role": "Strategy Reviewer"
-  },
-  {
-   "role": "Strategy Approval Authority"
+   "role": "Strategy Approver"
   }
  ],
  "script": null,

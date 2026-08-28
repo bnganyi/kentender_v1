@@ -1293,7 +1293,7 @@ frappe.provide("kentender_budget.live");
 	function loadTargetOptions($root, pe) {
 		return new Promise(function (resolve) {
 			frappe.call({
-				method: "kentender_strategy.api.strategy_api.list_active_targets",
+				method: "kentender_strategy.api.strategy_consumer_api.list_active_targets",
 				args: { procuring_entity: pe || "" },
 				callback: function (r) {
 					resolve((r && r.message) || []);

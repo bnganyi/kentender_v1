@@ -36,11 +36,6 @@ export const submitVersion = (planVersionId) =>
 		plan_version_id: planVersionId,
 	});
 
-export const activateVersion = (planVersionId) =>
-	call("kentender_strategy.api.strategy_consumer_api.activate_strategy_version", {
-		plan_version_id: planVersionId,
-	});
-
 export const createSuccessorVersion = (planId) =>
 	call("kentender_strategy.api.strategy_consumer_api.create_strategy_successor_version", {
 		plan_id: planId,

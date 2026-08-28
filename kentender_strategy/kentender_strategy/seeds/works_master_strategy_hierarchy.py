@@ -48,10 +48,11 @@ TARGET_CODE: Final[str] = "WORKS-MASTER-TARGET"
 
 
 def _seed_actors() -> dict[str, str]:
-	"""Reuses the real §16 MOH actors (author/reviewer/approver) rather than
-	minting a second parallel actor set — the same 3 pairwise Separation of
-	Duties rules Phase 3 seeded apply everywhere, so one fixture actor could
-	not legally perform all 4 lifecycle stages on its own version anyway."""
+	"""Reuses the real §16 MOH actors (author/approver) rather than minting a
+	second parallel actor set — the same-version self-check (§6.2/§18.1)
+	still requires two distinct actors: the author who submits and the
+	approver who returns/approves, so one fixture actor could not legally
+	perform both lifecycle stages on its own version anyway."""
 	from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
 		ACTORS,
 		ensure_strategy_governance_actors,
@@ -60,7 +61,6 @@ def _seed_actors() -> dict[str, str]:
 	ensure_strategy_governance_actors()
 	return {
 		"author": ACTORS["author_moh"],
-		"reviewer": ACTORS["reviewer_moh"],
 		"approver": ACTORS["approver_moh"],
 	}
 
@@ -179,12 +179,9 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 
 	try:
 		frappe.set_user(actors["author"])
-		transition_plan_version(version.name, "Submit for review")
-		frappe.set_user(actors["reviewer"])
-		transition_plan_version(version.name, "Recommend for approval")
+		transition_plan_version(version.name, "Submit for approval")
 		frappe.set_user(actors["approver"])
 		transition_plan_version(version.name, "Approve")
-		transition_plan_version(version.name, "Activate")
 	finally:
 		frappe.set_user("Administrator")
 

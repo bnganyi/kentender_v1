@@ -55,7 +55,7 @@ def get_version_readiness(plan_version_id: str) -> dict:
 		{"check": "Plan identity complete", "ready": identity_ready},
 		{"check": "Hierarchy valid", "ready": hierarchy_ready},
 		{"check": "Indicators and targets complete", "ready": content_ready},
-		# The authoritative overlap guard runs transactionally at Activate
+		# The authoritative overlap guard runs transactionally inside Approve
 		# (STR-BR-004); this is a non-blocking preview only.
 		{"check": "Active-plan overlap", "ready": True},
 	]

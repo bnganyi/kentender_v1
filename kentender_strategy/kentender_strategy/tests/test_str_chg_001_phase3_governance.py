@@ -1,8 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.3 Phase 3 — roles and permissions on authorization_policy.
+"""STR-CHG-001 v1.5 Phase 3 — roles and permissions on authorization_policy.
 
 Covers STR-BR-001-004 and STR-AC-003, 004, 010, 021, 022 at the service
 layer (contract/UI-level verification of AC-021/022 is Phase 4/7/9 scope).
+Rebuilt for v1.5's 2-role model: no Separation of Duties Rule is seeded any
+more for Strategy — the only remaining rule is the direct same-version
+self-check in strategy_authorization._blocked_by_self_approval (see Phase 2).
 """
 
 from __future__ import annotations
@@ -11,16 +14,13 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, now_datetime
 
+from kentender_core.services.authorization_role_registry import CAPABILITY_ROLE_MAP
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
-	CAP_REVIEW,
-	ROLE_STRATEGY_APPROVAL_AUTHORITY,
+	ROLE_STRATEGY_APPROVER,
 	ROLE_STRATEGY_AUTHOR,
-	ROLE_STRATEGY_REVIEWER,
-	ROLE_STRATEGY_VIEWER,
 	ensure_strategy_governance_roles,
 )
 from kentender_strategy.services.strategy_transitions import available_actions, transition_plan_version
@@ -33,37 +33,16 @@ class TestGovernanceSeed(FrappeTestCase):
 	def test_seed_is_idempotent_and_creates_expected_rows(self):
 		ensure_strategy_governance_roles()
 		second_run = ensure_strategy_governance_roles()
-		self.assertEqual(second_run, {"roles": [], "profiles": [], "sod_rules": []})
+		self.assertEqual(second_run, {"roles": [], "sod_rules": []})
 
-		for role in (
-			ROLE_STRATEGY_VIEWER,
-			ROLE_STRATEGY_AUTHOR,
-			ROLE_STRATEGY_REVIEWER,
-			ROLE_STRATEGY_APPROVAL_AUTHORITY,
-		):
+		for role in (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER):
 			self.assertTrue(frappe.db.exists("Role", role))
 
-		for profile_id, expected_cap in (
-			("CAP-STRATEGY-AUTHOR", CAP_AUTHOR),
-			("CAP-STRATEGY-REVIEWER", CAP_REVIEW),
-			("CAP-STRATEGY-APPROVAL-AUTHORITY", CAP_APPROVE),
-		):
-			doc = frappe.get_doc("Capability Profile", profile_id)
-			self.assertEqual(frappe.parse_json(doc.capabilities), [expected_cap])
-			self.assertEqual(doc.status, "Active")
-
-		pairs = {
-			(r.first_capability, r.second_capability)
-			for r in frappe.get_all(
-				"Separation of Duties Rule",
-				filters={"name": ["like", "SOD-STRATEGY-%"]},
-				fields=["first_capability", "second_capability"],
-			)
-		}
-		self.assertEqual(
-			pairs,
-			{(CAP_AUTHOR, CAP_REVIEW), (CAP_AUTHOR, CAP_APPROVE), (CAP_REVIEW, CAP_APPROVE)},
-		)
+		# AUTH-ADR-001 — authority is the Role + a native User Permission, not
+		# a Capability Profile; confirm the registry maps each capability to
+		# its expected Role instead of asserting on a retired profile record.
+		self.assertEqual(CAPABILITY_ROLE_MAP[CAP_AUTHOR], ROLE_STRATEGY_AUTHOR)
+		self.assertEqual(CAPABILITY_ROLE_MAP[CAP_APPROVE], ROLE_STRATEGY_APPROVER)
 
 
 class TestSeededProfileEnforcement(FrappeTestCase):
@@ -94,24 +73,14 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 		)
 		return email
 
-	def _assign(self, user: str, profile_id: str, pe: str) -> str:
-		doc = self._track(
+	def _grant(self, user: str, capability: str, pe: str) -> None:
+		role = CAPABILITY_ROLE_MAP[capability]
+		frappe.get_doc("User", user).add_roles(role)
+		self._track(
 			frappe.get_doc(
-				{
-					"doctype": "Operational Scope Assignment",
-					"assignment_id": f"OSA-GOV-{uuid4().hex[:10]}-{self.suffix}",
-					"user_id": user,
-					"capability_profile_id": profile_id,
-					"procuring_entity_id": pe,
-					"effective_from": add_days(now_datetime(), -1),
-					"status": "Active",
-					"assigned_by": "Administrator",
-					"assigned_at": now_datetime(),
-					"concurrency_token": uuid4().hex,
-				}
+				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
 			).insert(ignore_permissions=True)
 		)
-		return doc.name
 
 	def _plan_and_version(self, pe: str) -> str:
 		plan = self._track(
@@ -201,16 +170,16 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 
 	def test_author_profile_grants_only_author_capability(self):
 		author = self._user("author")
-		self._assign(author, "CAP-STRATEGY-AUTHOR", PE_MOH)
+		self._grant(author, CAP_AUTHOR, PE_MOH)
 		version = self._plan_and_version(PE_MOH)
 		self._fill_hierarchy(version)
 
 		frappe.set_user(author)
-		self.assertEqual(available_actions(version, author), ["Submit for review"])
-		out = transition_plan_version(version, "Submit for review")
-		self.assertEqual(out["status"], "In Review")
+		self.assertEqual(available_actions(version, author), ["Submit for approval"])
+		out = transition_plan_version(version, "Submit for approval")
+		self.assertEqual(out["status"], "Submitted for approval")
 		with self.assertRaises(frappe.PermissionError):
-			transition_plan_version(version, "Recommend for approval")
+			transition_plan_version(version, "Approve")
 
 	def test_unassigned_user_denied_stc_ac_004(self):
 		outsider = self._user("outsider")
@@ -219,7 +188,7 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 		frappe.set_user(outsider)
 		self.assertEqual(available_actions(version, outsider), [])
 		with self.assertRaises(frappe.PermissionError):
-			transition_plan_version(version, "Submit for review")
+			transition_plan_version(version, "Submit for approval")
 
 	def test_administrator_without_assignment_has_no_workflow_capability(self):
 		"""STR-CHG-001 §1.1/§19 — no Administrator fallback authority."""
@@ -228,14 +197,14 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.assertEqual(available_actions(version, "Administrator"), [])
 		with self.assertRaises(frappe.PermissionError):
-			transition_plan_version(version, "Submit for review")
+			transition_plan_version(version, "Submit for approval")
 
 	def test_assignment_scoped_to_other_pe_denied_stc_br_001(self):
 		author = self._user("author2")
-		self._assign(author, "CAP-STRATEGY-AUTHOR", PE_CGKIS)
+		self._grant(author, CAP_AUTHOR, PE_CGKIS)
 		version = self._plan_and_version(PE_MOH)
 		self._fill_hierarchy(version)
 		frappe.set_user(author)
 		self.assertEqual(available_actions(version, author), [])
 		with self.assertRaises(frappe.PermissionError):
-			transition_plan_version(version, "Submit for review")
+			transition_plan_version(version, "Submit for approval")

@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.3 §16 seed contract.
+"""STR-CHG-001 v1.5 §16 seed contract.
 
 Rebuilt for the Phase 1-4 domain model. Entry points
 (`upsert_kentender_mvp_v1_strategy`, `clear_kentender_mvp_v1_strategy`) keep
@@ -27,12 +27,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_datetime
 
-from kentender_strategy.services.strategy_authorization import (
-	CAP_APPROVE,
-	CAP_AUTHOR,
-	CAP_REVIEW,
-	ensure_strategy_governance_roles,
-)
+from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 
 PE_MOH = "PE-MOH"
@@ -45,11 +40,9 @@ FIXTURE_NS = "str-chg-001-mvp1"
 
 ACTORS: dict[str, str] = {
 	"author_moh": "str.author.moh@example.test",
-	"reviewer_moh": "str.reviewer.moh@example.test",
 	"approver_moh": "str.approver.moh@example.test",
 	"viewer_moh": "str.viewer.moh@example.test",
 	"author_kisumu": "str.author.kisumu@example.test",
-	"reviewer_kisumu": "str.reviewer.kisumu@example.test",
 	"approver_kisumu": "str.approver.kisumu@example.test",
 	"viewer_kisumu": "str.viewer.kisumu@example.test",
 	"auditor": "str.auditor@example.test",
@@ -57,38 +50,35 @@ ACTORS: dict[str, str] = {
 
 _ACTOR_DISPLAY: dict[str, str] = {
 	"author_moh": "MOH Strategy Author",
-	"reviewer_moh": "MOH Strategy Reviewer",
-	"approver_moh": "MOH Strategy Approval Authority",
+	"approver_moh": "MOH Strategy Approver",
 	"viewer_moh": "MOH Strategy Viewer",
 	"author_kisumu": "Kisumu Strategy Author",
-	"reviewer_kisumu": "Kisumu Strategy Reviewer",
-	"approver_kisumu": "Kisumu Strategy Approval Authority",
+	"approver_kisumu": "Kisumu Strategy Approver",
 	"viewer_kisumu": "Kisumu Strategy Viewer",
 	"auditor": "Strategy Auditor",
 }
 
 _ACTOR_ROLE: dict[str, str] = {
 	"author_moh": "Strategy Author",
-	"reviewer_moh": "Strategy Reviewer",
-	"approver_moh": "Strategy Approval Authority",
+	"approver_moh": "Strategy Approver",
 	"viewer_moh": "Strategy Viewer",
 	"author_kisumu": "Strategy Author",
-	"reviewer_kisumu": "Strategy Reviewer",
-	"approver_kisumu": "Strategy Approval Authority",
+	"approver_kisumu": "Strategy Approver",
 	"viewer_kisumu": "Strategy Viewer",
 	"auditor": "Auditor",
 }
 
-# key -> (capability_profile_id, procuring_entity_id); Viewer/Auditor have no
+# key -> procuring_entity_id — AUTH-ADR-001: the Role itself (already granted
+# via _ACTOR_ROLE above) plus a native User Permission on this exact
+# Procuring Entity is the whole authorization decision now; there is no
+# Capability Profile to key a grant off any more. Viewer/Auditor have no
 # lifecycle capability to grant (Phase 3 decision log — DocType-level read
 # access from their Frappe Role is sufficient for a neutral viewer/auditor).
-_ACTOR_ASSIGNMENT: dict[str, tuple[str, str]] = {
-	"author_moh": ("CAP-STRATEGY-AUTHOR", PE_MOH),
-	"reviewer_moh": ("CAP-STRATEGY-REVIEWER", PE_MOH),
-	"approver_moh": ("CAP-STRATEGY-APPROVAL-AUTHORITY", PE_MOH),
-	"author_kisumu": ("CAP-STRATEGY-AUTHOR", PE_CGK),
-	"reviewer_kisumu": ("CAP-STRATEGY-REVIEWER", PE_CGK),
-	"approver_kisumu": ("CAP-STRATEGY-APPROVAL-AUTHORITY", PE_CGK),
+_ACTOR_SCOPE: dict[str, str] = {
+	"author_moh": PE_MOH,
+	"approver_moh": PE_MOH,
+	"author_kisumu": PE_CGK,
+	"approver_kisumu": PE_CGK,
 }
 
 
@@ -131,38 +121,28 @@ def _ensure_user(email: str, first_name: str, role: str) -> str:
 	return email
 
 
-def _ensure_assignment(assignment_id: str, user: str, profile_id: str, pe: str) -> None:
-	if frappe.db.exists("Operational Scope Assignment", assignment_id):
+def _ensure_pe_scope(user: str, pe: str) -> None:
+	if frappe.db.exists("User Permission", {"user": user, "allow": "Procuring Entity", "for_value": pe}):
 		return
 	frappe.get_doc(
-		{
-			"doctype": "Operational Scope Assignment",
-			"assignment_id": assignment_id,
-			"user_id": user,
-			"capability_profile_id": profile_id,
-			"procuring_entity_id": pe,
-			"effective_from": "2020-01-01",
-			"status": "Active",
-			"assigned_by": "Administrator",
-			"assigned_at": frappe.utils.now_datetime(),
-			"concurrency_token": frappe.generate_hash(length=16),
-		}
+		{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
 	).insert(ignore_permissions=True)
 
 
 def ensure_strategy_governance_actors() -> dict[str, Any]:
-	"""STR-CHG-001 §16.2 — the 9 named test actors and their assignments.
+	"""STR-CHG-001 v1.5 §16.2 — the 7 named test actors, their Frappe Role and
+	(AUTH-ADR-001) their native Procuring Entity User Permission scope.
 	No actor receives Strategy authority from Administrator/System Manager
-	alone (§16.2's own closing line) — every grant here is an explicit,
-	scoped Operational Scope Assignment."""
+	alone (§16.2's own closing line) — every grant here is an explicit Role
+	plus an explicit scope, not implicit technical access."""
 	_ensure_config_prerequisites()
 	ensure_strategy_governance_roles()
 
 	for key, email in ACTORS.items():
 		_ensure_user(email, _ACTOR_DISPLAY[key], _ACTOR_ROLE[key])
 
-	for key, (profile_id, pe) in _ACTOR_ASSIGNMENT.items():
-		_ensure_assignment(f"OSA-{FIXTURE_NS}-{key}".upper(), ACTORS[key], profile_id, pe)
+	for key, pe in _ACTOR_SCOPE.items():
+		_ensure_pe_scope(ACTORS[key], pe)
 
 	return {"ok": True, "actors": list(ACTORS.values())}
 
@@ -202,11 +182,12 @@ def _seed_plan(
 	events: dict[str, str],
 ) -> dict[str, Any]:
 	"""Upsert one Primary plan through the real domain/lifecycle services —
-	draft, hierarchy, submit, recommend, approve, activate — matching
-	§16.6 ("validate each plan through the same domain rules used by
-	commands... seed lifecycle events use the named role actors, never
-	Administrator"). Idempotent on the plan title within the fixture
-	namespace; a second run returns the existing version untouched."""
+	draft, hierarchy, submit, approve (approve activates in the same
+	transaction under v1.5) — matching §16.6 ("validate each plan through
+	the same domain rules used by commands... seed lifecycle events use the
+	named role actors, never Administrator"). Idempotent on the plan title
+	within the fixture namespace; a second run returns the existing version
+	untouched."""
 	existing_plan = frappe.db.get_value(
 		"Strategic Plan", {"title": title, "procuring_entity_id": pe}, "name"
 	)
@@ -286,17 +267,11 @@ def _seed_plan(
 			data["target_by_date"] = tgt["target_by_date"]
 		frappe.get_doc(data).insert(ignore_permissions=True)
 
-	_run_as(actors["author"], transition_plan_version, version.name, "Submit for review")
-	_backdate_event(version.name, "Submit for review", events["submitted_at"])
-
-	_run_as(actors["reviewer"], transition_plan_version, version.name, "Recommend for approval")
-	_backdate_event(version.name, "Recommend for approval", events["recommended_at"])
+	_run_as(actors["author"], transition_plan_version, version.name, "Submit for approval")
+	_backdate_event(version.name, "Submit for approval", events["submitted_at"])
 
 	_run_as(actors["approver"], transition_plan_version, version.name, "Approve")
-	_backdate_event(version.name, "Approve", events["approved_at"])
-
-	_run_as(actors["approver"], transition_plan_version, version.name, "Activate")
-	_backdate_event(version.name, "Activate", events["activated_at"])
+	_backdate_event(version.name, "Approve", events["activated_at"])
 
 	return {"ok": True, "plan": plan.name, "plan_version": version.name}
 
@@ -354,13 +329,10 @@ def _seed_moh_plan() -> dict[str, Any]:
 		],
 		actors={
 			"author": ACTORS["author_moh"],
-			"reviewer": ACTORS["reviewer_moh"],
 			"approver": ACTORS["approver_moh"],
 		},
 		events={
 			"submitted_at": "2023-06-28 09:10:00",
-			"recommended_at": "2023-06-29 10:25:00",
-			"approved_at": "2023-06-30 15:40:00",
 			"activated_at": "2023-07-01 00:00:00",
 		},
 	)
@@ -412,13 +384,10 @@ def _seed_kisumu_plan() -> dict[str, Any]:
 		],
 		actors={
 			"author": ACTORS["author_kisumu"],
-			"reviewer": ACTORS["reviewer_kisumu"],
 			"approver": ACTORS["approver_kisumu"],
 		},
 		events={
 			"submitted_at": "2022-12-28 09:00:00",
-			"recommended_at": "2022-12-29 11:10:00",
-			"approved_at": "2022-12-30 14:15:00",
 			"activated_at": "2023-01-01 00:00:00",
 		},
 	)
@@ -493,10 +462,11 @@ def clear_kentender_mvp_v1_strategy(
 
 
 def seed_str_des_v2_fixture() -> dict[str, Any]:
-	"""STR-CHG-001 §16.5 — an isolated Version 2 test fixture for the
+	"""STR-CHG-001 v1.5 §16.5 — an isolated Version 2 test fixture for the
 	STR-DES-04..11 artboards, NOT part of the default upsert above. Reaches
-	Awaiting Approval (the last event §16.5 names); the caller may transition
-	it further and MUST tear it down with teardown_str_des_v2_fixture().
+	Submitted for approval (the last event §16.5 names under the v1.5
+	4-status model); the caller may transition it further and MUST tear it
+	down with teardown_str_des_v2_fixture().
 
 	Reuses create_strategy_successor_version (the same real command §10.1
 	exposes) to clone the full hierarchy rather than hand-cloning only the
@@ -523,11 +493,8 @@ def seed_str_des_v2_fixture() -> dict[str, Any]:
 	new_target = frappe.db.get_value("Performance Target", {"indicator_id": new_indicator}, "name")
 	frappe.db.set_value("Performance Target", new_target, "target_value", 85)  # §16.5's only content change
 
-	_run_as(ACTORS["author_moh"], transition_plan_version, v2, "Submit for review")
-	_backdate_event(v2, "Submit for review", "2027-03-15 16:20:00")
-
-	_run_as(ACTORS["reviewer_moh"], transition_plan_version, v2, "Recommend for approval")
-	_backdate_event(v2, "Recommend for approval", "2027-03-16 10:22:00")
+	_run_as(ACTORS["author_moh"], transition_plan_version, v2, "Submit for approval")
+	_backdate_event(v2, "Submit for approval", "2027-03-15 16:20:00")
 
 	return {"ok": True, "plan_version": v2, "indicator": new_indicator, "target": new_target}
 

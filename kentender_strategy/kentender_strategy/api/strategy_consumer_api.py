@@ -1,6 +1,6 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 §10/§10.1 — the 4 downstream read/action contracts and the
-8 plan-version command contracts, as thin whitelisted wrappers.
+"""STR-CHG-001 v1.5 §10/§10.1 — the 4 downstream read/action contracts and
+the 6 plan-version command contracts, as thin whitelisted wrappers.
 
 Every state-changing command here returns the same refreshed-state shape
 as kentender_strategy.services.strategy_transitions._version_payload:
@@ -70,6 +70,16 @@ def get_strategy_lineage(node_id: str):
 
 
 @frappe.whitelist()
+def list_active_targets(procuring_entity: str | None = None, plan_code: str | None = None):
+	"""Relocated from the retired `strategy_api.py` (STR-CHG-001 v1.6 cleanup)
+	— the Budget Line "primary target" picker's live dropdown source
+	(`kentender_budget`'s `budget_live_bind.js::loadTargetOptions`)."""
+	return consumer.active_target_options(
+		procuring_entity=procuring_entity or None, plan_code=plan_code or None
+	)
+
+
+@frappe.whitelist()
 def create_strategy_snapshot(plan_version_id: str, objective_id: str, correlation_key: str):
 	return run_idempotent(
 		correlation_key,
@@ -120,25 +130,25 @@ def submit_strategy_version(
 ):
 	return transitions.transition_plan_version(
 		plan_version_id,
-		"Submit for review",
+		"Submit for approval",
 		expected_version=expected_version or None,
 		correlation_id=correlation_id or None,
 	)
 
 
 @frappe.whitelist()
-def review_strategy_version(
+def return_strategy_version(
 	plan_version_id: str,
-	action: str,
-	reason: str | None = None,
+	reason: str,
 	expected_version: str | None = None,
 	correlation_id: str | None = None,
 ):
-	"""action: 'Return' or 'Recommend for approval' (Strategy Reviewer, In Review only)."""
+	"""§10.1 return_strategy_version — Strategy Approver only, Submitted for
+	approval only. Requires a 10-500 character correction reason."""
 	return transitions.transition_plan_version(
 		plan_version_id,
-		action,
-		reason=reason or None,
+		"Return",
+		reason=reason,
 		expected_version=expected_version or None,
 		correlation_id=correlation_id or None,
 	)
@@ -146,41 +156,15 @@ def review_strategy_version(
 
 @frappe.whitelist()
 def approve_strategy_version(
-	plan_version_id: str,
-	action: str,
-	reason: str | None = None,
-	expected_version: str | None = None,
-	correlation_id: str | None = None,
-):
-	"""action: 'Return' or 'Approve' (Strategy Approval Authority, Awaiting Approval only)."""
-	return transitions.transition_plan_version(
-		plan_version_id,
-		action,
-		reason=reason or None,
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
-	)
-
-
-@frappe.whitelist()
-def activate_strategy_version(
 	plan_version_id: str, expected_version: str | None = None, correlation_id: str | None = None
 ):
+	"""§10.1 approve_strategy_version — Strategy Approver only, Submitted for
+	approval only. Revalidates readiness/overlap and activates the version,
+	atomically superseding the plan's previous Active version in the same
+	transaction — there is no separate Activate action any more."""
 	return transitions.transition_plan_version(
 		plan_version_id,
-		"Activate",
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
-	)
-
-
-@frappe.whitelist()
-def archive_strategy_version(
-	plan_version_id: str, expected_version: str | None = None, correlation_id: str | None = None
-):
-	return transitions.transition_plan_version(
-		plan_version_id,
-		"Archive",
+		"Approve",
 		expected_version=expected_version or None,
 		correlation_id=correlation_id or None,
 	)

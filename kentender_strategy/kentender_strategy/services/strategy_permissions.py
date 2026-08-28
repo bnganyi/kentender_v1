@@ -7,37 +7,20 @@ import frappe
 from frappe import _
 
 ROLE_VIEWER = "Strategy Viewer"
-ROLE_OFFICER = "Strategy Officer"
-ROLE_MANAGER = "Strategy Manager"
-ROLE_REVIEWER = "Strategy Reviewer"
 ROLE_PLANNING = "Planning Authority"
 ROLE_AUDITOR = "Auditor"
 
-ALL_STRATEGY_ROLES = (
-	ROLE_VIEWER,
-	ROLE_OFFICER,
-	ROLE_MANAGER,
-	ROLE_REVIEWER,
-	ROLE_PLANNING,
-	ROLE_AUDITOR,
-)
-
-
-def ensure_strategy_roles() -> None:
-	for role in ALL_STRATEGY_ROLES:
-		if not frappe.db.exists("Role", role):
-			frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(
-				ignore_permissions=True
-			)
+# STR-CHG-001 v1.5/v1.6 — the pre-rebuild role set (Strategy Officer, Strategy
+# Manager, Strategy Reviewer) is retired. Only Strategy Viewer (plain native
+# permission role, current model) plus the cross-domain Planning Authority /
+# Auditor roles this module references for scope checks remain here.
 
 
 def user_roles(user: str | None = None) -> set[str]:
 	"""STR-CHG-001 §5 — Administrator has neutral read access only unless
-	explicitly assigned; System Manager (an explicit, assignable capability,
-	not a hardcoded identity) still carries every Strategy role."""
+	explicitly assigned. Every consumer below explicitly checks for
+	"System Manager" itself, so no special-casing is needed here."""
 	user = user or frappe.session.user
-	if "System Manager" in frappe.get_roles(user):
-		return set(ALL_STRATEGY_ROLES) | {"System Manager"}
 	return set(frappe.get_roles(user))
 
 
@@ -50,25 +33,13 @@ def require_any_role(*roles: str) -> None:
 
 
 def can_edit_draft_plan() -> bool:
-	"""REQ §12 — Create/edit Draft plans: Strategy Officer and Strategy Manager."""
-	return bool(user_roles().intersection({ROLE_OFFICER, ROLE_MANAGER, "System Manager"}))
+	"""REQ §12 — Create/edit Draft plans: STR-CHG-001 v1.5's Strategy Author."""
+	return bool(user_roles().intersection({"Strategy Author", "System Manager"}))
 
 
 def can_create_successor_plan() -> bool:
-	"""STR-UI-02 — Create successor Draft from Active/Approved: Officer / Manager."""
+	"""STR-UI-02 — Create successor Draft from Active/Approved: Strategy Author."""
 	return can_edit_draft_plan()
-
-
-def can_submit_plan() -> bool:
-	return ROLE_MANAGER in user_roles() or "System Manager" in user_roles()
-
-
-def can_review_plan() -> bool:
-	return bool(user_roles().intersection({ROLE_REVIEWER, ROLE_PLANNING, "System Manager"}))
-
-
-def can_approve_plan() -> bool:
-	return ROLE_PLANNING in user_roles() or "System Manager" in user_roles()
 
 
 def has_cross_entity_authority(user: str | None = None) -> bool:

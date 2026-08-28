@@ -16,16 +16,13 @@ export const diffStrategyVersions = (compareVersionId, baseVersionId) =>
 export const getVersionHistory = (planVersionId) =>
 	call("kentender_strategy.api.strategy_ui_api.get_version_history", { plan_version_id: planVersionId });
 
-export const reviewVersion = (planVersionId, action, reason) =>
-	call("kentender_strategy.api.strategy_consumer_api.review_strategy_version", {
+export const returnVersion = (planVersionId, reason) =>
+	call("kentender_strategy.api.strategy_consumer_api.return_strategy_version", {
 		plan_version_id: planVersionId,
-		action,
-		reason: reason || null,
+		reason,
 	});
 
-export const approveVersion = (planVersionId, action, reason) =>
+export const approveVersion = (planVersionId) =>
 	call("kentender_strategy.api.strategy_consumer_api.approve_strategy_version", {
 		plan_version_id: planVersionId,
-		action,
-		reason: reason || null,
 	});

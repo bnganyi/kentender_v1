@@ -3,11 +3,11 @@
 | Control | Value |
 |---|---|
 | Document ID | STR-CHG-001 |
-| Version | 1.4 |
-| Date | 25 August 2026 |
+| Version | 1.5 |
+| Date | 28 August 2026 |
 | Status | Proposed for product-owner approval |
 | Module | Strategy Alignment |
-| Implementation posture | Correction in place; no compatibility layer |
+| Implementation posture | Two-role correction required; no compatibility layer |
 
 **Controlling decision:** Retain Strategy Alignment as a small upstream governance module. It maintains approved strategy structures and exposes them through read-only contracts. It does not become a performance-management, treatment, corrective-action or procurement-workflow module.
 
@@ -21,7 +21,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.4 |
+| Earlier item | Disposition in v1.5 |
 |---|---|
 | Plan Value Commitment / Strategy Value Commitment | Remove completely. It duplicates the Strategic Objective and creates no separate decision. A Procurement Plan Item links one approved Strategic Objective directly. |
 | Public Value Objective and PVO catalogue | Remove completely. No replacement object or screen. |
@@ -31,7 +31,10 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Strategy performance dashboard | Replace with the neutral, permission-gated Strategy Portfolio read surface. |
 | Strategic Outcome between Objective and Indicator | Remove. It duplicates outcome-oriented Objective wording and is not used by Procurement Planning. A Performance Indicator measures one Strategic Objective directly. |
 | Objective represented as a measure or PVO | Correct to an explicit **Strategic Objective** distinct from a Performance Indicator. |
-| Administrator or first-record fallback authority | Remove. Use explicit, scoped Strategy assignments and fail closed. |
+| Strategy Reviewer and Strategy Approval Authority split | Remove. Retain only **Strategy Author** and **Strategy Approver**. Approval includes the review decision and activation. |
+| Strategy Viewer workflow role | Remove. Read access uses ordinary Frappe permissions and existing consumer/audit roles. |
+| In Review, Returned, Awaiting Approval, Approved and Archived statuses | Remove. Retain only Draft, Submitted for approval, Active and Superseded. Return moves directly to Draft; approval moves directly to Active. |
+| Administrator or first-record fallback authority | Remove. Use native Strategy Roles plus PE/OU User Permissions and fail closed. |
 | Downstream direct Strategy table reads | Remove. Downstream modules use the contracts in section 10. |
 | Delete-and-recreate cleanup | Reject. Correct the retained application in place. |
 
@@ -40,10 +43,10 @@ Completion requires one coherent result across schema, services, permissions, sc
 Strategy Alignment shall provide:
 
 - one governed portfolio of strategic plans for each authorised Procuring Entity scope;
-- immutable approved plan versions;
+- immutable Active plan versions;
 - a typed lineage from plan through objective, indicator and target;
-- direct selection of approved Strategic Objectives by downstream Procurement Planning;
-- explicit author, reviewer and approval authority responsibilities;
+- direct selection of Strategic Objectives from the Active version by downstream Procurement Planning;
+- explicit Strategy Author and Strategy Approver responsibilities;
 - deterministic resolution of the applicable active primary plan;
 - immutable strategy snapshots at downstream approval boundaries; and
 - neutral read access without granting workflow authority.
@@ -83,7 +86,7 @@ No new stored field is permitted unless all three conditions are documented befo
 - Procuring Entity, organisation-unit and Financial Year records come from Configuration and Governance. Strategy shall not create or infer them.
 - Strategy lineage supports procurement traceability but does not approve a budget, procurement plan, tender or contract.
 - New Procurement Plan Items may select only Strategic Objectives from the applicable Active plan version.
-- Existing downstream snapshots remain historically valid after a plan is superseded or archived.
+- Existing downstream snapshots remain historically valid after a plan is superseded.
 - Strategy owns definitions and targets. Contract Management owns delivery evidence and verified results.
 
 ## 4. Ownership and domain boundary
@@ -134,13 +137,13 @@ The approval boundary for the contents of one Strategic Plan.
 | `plan_version_id` | Immutable generated reference used by hierarchy children, services and snapshots. |
 | `plan_id` | Links the version to its stable Strategic Plan. |
 | `version_number` | Establishes ordered version history and is generated per plan. |
-| `based_on_plan_version_id` | Identifies the approved or Active version copied to create a successor and supplies the fixed comparison baseline for review. Empty only for the first version. |
+| `based_on_plan_version_id` | Identifies the Active version copied to create a successor and supplies the fixed comparison baseline for approval. Empty only for the first version. |
 | `status` | Controls editability, workflow actions and downstream eligibility. |
 | `effective_from` | Determines when this version may become the resolved Active version. Required before approval. |
 | `effective_to` | Ends version applicability and supports successor resolution. May be empty only while it is the current Active version within the plan period. |
-| `return_reason` | Records why an In Review or Awaiting Approval version was returned. Required only for the Return action; otherwise absent from ordinary forms. |
+| `return_reason` | Records why a Submitted for approval version was returned to Draft. Required only for the Return action; otherwise absent from ordinary forms. |
 
-Submitted, reviewed, approved, activated, superseded and archived actors and timestamps are audit events. They are not editable business fields.
+Submitted, returned, approved/activated and superseded actors and timestamps are audit events. They are not editable business fields.
 
 ### 5.3 StrategyNode
 
@@ -204,44 +207,38 @@ An append-only system event containing event ID, record type and ID, action, act
 
 | Current status | Command | Next status | Authorised actor |
 |---|---|---|---|
-| Draft | Submit for review | In Review | Strategy Author |
-| In Review | Return | Returned | Strategy Reviewer |
-| In Review | Recommend for approval | Awaiting Approval | Strategy Reviewer |
-| Returned | Revise | Draft | Original or reassigned Strategy Author |
-| Awaiting Approval | Return | Returned | Strategy Approval Authority |
-| Awaiting Approval | Approve | Approved | Strategy Approval Authority |
-| Approved | Activate | Active | Strategy Approval Authority |
-| Active | Activate successor | Superseded | System, as part of the successor activation transaction |
-| Superseded | Archive | Archived | Strategy Approval Authority |
+| Draft | Submit for approval | Submitted for approval | Strategy Author |
+| Submitted for approval | Return | Draft | Strategy Approver |
+| Submitted for approval | Approve | Active | Strategy Approver |
+| Active | Approve successor | Superseded | System, as part of the successor approval transaction |
 
 There is no separate lifecycle for hierarchy, indicator or target records. They inherit the plan version status.
 
+The only allowed plan-version statuses are **Draft**, **Submitted for approval**, **Active** and **Superseded**. Old role labels and old statuses must be removed from metadata, services, screens, seeds and tests; they are not aliases.
+
 ### 6.2 Governance rules
 
-- Draft and Returned versions are editable only by an assigned Strategy Author.
-- In Review, Awaiting Approval, Approved, Active, Superseded and Archived versions are read-only.
-- The submitter cannot perform the reviewer recommendation on the same version.
-- The author cannot approve or activate the same version.
-- Return requires a reason of 10–500 characters.
-- Approve and Activate are separate audited decisions.
-- Activation revalidates scope, period, completeness and overlap inside one transaction.
-- Activating a successor version supersedes the previous Active version of the same plan atomically.
-- Records are never deleted after submission.
+- Draft versions are editable only by a scoped Strategy Author.
+- Submitted for approval, Active and Superseded versions are read-only.
+- Return requires a reason of 10–500 characters and sends the submitted version directly back to Draft.
+- The author cannot approve the same version.
+- Approval revalidates scope, period, completeness and overlap and activates the version inside one transaction.
+- Approving a successor version activates it and supersedes the previous Active version of the same plan atomically.
+- Approval is permitted only when the version can become effective immediately; MVP 1 has no separate scheduled-activation state.
+- Records are never deleted after first submission.
 
 ## 7. Roles and permissions
 
-| Role | Permitted capability |
-|---|---|
-| Strategy Viewer | View approved, Active, Superseded and Archived Strategy records within assigned scope. |
-| Strategy Author | Create plans and draft versions; edit Draft or Returned content; submit for review within assigned scope. |
-| Strategy Reviewer | View live review tasks; return or recommend them within assigned scope. |
-| Strategy Approval Authority | Return, approve, activate and archive live tasks within assigned scope. |
-| Budget/Finance Officer | Read the applicable Active context and lineage through contracts; no Strategy workflow access. |
-| Procurement Planner | List applicable Active Strategic Objectives and create approved downstream snapshots through contracts; no Strategy workflow access. |
-| Auditor | Read scoped records, version history and audit evidence; no workflow action. |
-| System Administrator | Inspect all records and technical metadata read-only unless separately assigned a Strategy role. |
+Only two Strategy workflow roles exist:
 
-Assignments are scoped by PE, optional organisation unit, plan role and effective dates. The same server-side scope filter applies to registers, counts, direct URLs, service calls, exports and task queues.
+| Role | Permitted actions |
+|---|---|
+| Strategy Author | Create plans and successor versions; edit Draft content; submit for approval within permitted PE/OU scope. |
+| Strategy Approver | Inspect a submitted version; return it with a reason or approve and activate it within permitted PE/OU scope. |
+
+Read access is not a third Strategy workflow role. It uses ordinary Frappe DocType permissions and User Permissions. Budget/Finance users and Procurement Planners consume only the approved read contracts required by their modules. Auditors use the existing audit read role. System Manager receives no Strategy business action by virtue of technical administration.
+
+Both Strategy roles use native Frappe Roles. PE and optional organisation-unit scope use native User Permissions. No capability profile, operational scope assignment, plan-role grant, effective-date grant or parallel permission store is introduced. The same server-side permission query applies to registers, counts, direct URLs, service calls, exports and approval queues.
 
 ## 8. Business rules
 
@@ -250,9 +247,9 @@ Assignments are scoped by PE, optional organisation unit, plan role and effectiv
 | STR-BR-001 | Every Strategy record shall resolve to one explicit configured PE. Missing or unauthorised scope is rejected server-side. |
 | STR-BR-002 | A Primary plan shall be PE-wide or scoped to one organisation unit and shall not have a parent plan. |
 | STR-BR-003 | A Supporting Framework shall name one Active or governed Primary plan in the same PE and compatible OU scope. |
-| STR-BR-004 | Two Primary plans for the same PE/OU shall not be Active for overlapping dates. The database transaction shall serialize the activation check. |
+| STR-BR-004 | Two Primary plans for the same PE/OU shall not be Active for overlapping dates. The database transaction shall serialize the approval check. |
 | STR-BR-005 | A plan period shall have `period_start < period_end`; every version effective date shall fall within that period. |
-| STR-BR-006 | Approved or Active content is immutable. A correction requires a successor version whose `based_on_plan_version_id` identifies an Approved or Active version of the same plan. |
+| STR-BR-006 | Active content is immutable. A correction requires a successor version whose `based_on_plan_version_id` identifies the Active version of the same plan. |
 | STR-BR-007 | Allowed structural hierarchy is Pillar → Programme → optional Sub-programme → Strategic Objective. A Programme may parent an Objective when Sub-programme is omitted. |
 | STR-BR-008 | A Performance Indicator shall measure one Strategic Objective from the same version and shall appear as its direct child in the authoring and review tree. |
 | STR-BR-009 | An indicator name shall be unique under its measured node within one version. |
@@ -261,7 +258,7 @@ Assignments are scoped by PE, optional organisation unit, plan role and effectiv
 | STR-BR-012 | Submission requires complete plan identity, a valid hierarchy, at least one Strategic Objective, one Indicator and one Target. |
 | STR-BR-013 | Only Strategic Objectives in an Active plan version are available for new Procurement Plan Item selection. |
 | STR-BR-014 | The selected Strategic Objective shall belong to the resolved Active plan version and the same authorised PE/OU scope as the Procurement Plan Item. |
-| STR-BR-015 | Approval and activation repeat all readiness checks; a stale client result cannot bypass server validation. |
+| STR-BR-015 | Approval repeats all readiness and overlap checks and activates atomically; a stale client result cannot bypass server validation. |
 | STR-BR-016 | Ordinary users never enter or modify generated identifiers. |
 | STR-BR-017 | Zero matching Active primary plans returns `STRATEGY_CONTEXT_NOT_FOUND`; more than one returns `STRATEGY_CONTEXT_AMBIGUOUS`. Neither case chooses the first record. |
 | STR-BR-018 | Downstream services return only authorised, Active data and never expose Draft or live workflow content. |
@@ -309,20 +306,18 @@ All services are server-authorised, typed and versioned. They do not mutate Stra
 | `get_strategy_lineage` | One authorised Strategic Objective, Indicator or Target ID | Ordered path with stable IDs, types and titles from plan to the requested record. |
 | `create_strategy_snapshot` | Consumer module, record ID/version, Strategic Objective ID, expected consumer status and approval correlation ID | Validates eligibility and returns a deterministic snapshot containing plan/version identity and period plus the ordered Pillar, Programme, optional Sub-programme and Strategic Objective IDs and titles. It records the snapshot audit event but does not write the consumer's record. Repeating the same approval correlation returns the same payload. |
 
-`record_verified_result` is reserved for a later Contract Management change unit. Strategy Alignment v1.4 provides no result-entry fields, screen or production write endpoint.
+`record_verified_result` is reserved for a later Contract Management change unit. Strategy Alignment v1.5 provides no result-entry fields, screen or production write endpoint.
 
 ### 10.1 Command contracts
 
 | Command | Purpose |
 |---|---|
 | `save_strategy_plan_draft` | Create or update plan identity and Draft version metadata with optimistic concurrency. |
-| `create_strategy_successor_version` | Copy one Approved or Active version into a new Draft of the same plan and set the immutable comparison baseline. |
+| `create_strategy_successor_version` | Copy one Active version into a new Draft of the same plan and set the immutable comparison baseline. |
 | `save_strategy_structure_draft` | Create, update, reorder or remove Draft nodes, indicators and targets as one validated draft change set. |
-| `submit_strategy_version` | Validate readiness and move Draft to In Review. |
-| `review_strategy_version` | Return or recommend an In Review version. |
-| `approve_strategy_version` | Return or approve an Awaiting Approval version. |
-| `activate_strategy_version` | Revalidate and atomically activate an Approved version. |
-| `archive_strategy_version` | Archive a Superseded version. |
+| `submit_strategy_version` | Validate readiness and move Draft to Submitted for approval. |
+| `return_strategy_version` | Require a correction reason and return Submitted for approval to Draft. |
+| `approve_strategy_version` | Revalidate authority, readiness, effective date and overlap; activate the submitted version and atomically supersede the previous Active version where applicable. |
 
 Every write command requires the expected record version. A conflict returns `STRATEGY_STALE_WRITE`; the command shall not silently overwrite newer work.
 
@@ -331,7 +326,7 @@ Every write command requires the expected record version. A conflict returns `ST
 Strategy Alignment remains a top-level KenTender module named **Strategy Alignment**. The module menu contains only:
 
 - **Strategy Portfolio**; and
-- **Review tasks**, visible only to an assigned Strategy Reviewer or Strategy Approval Authority.
+- **Approval tasks**, visible only to a scoped Strategy Approver.
 
 Do not retain navigation for PVOs, treatments, corrective actions or Strategy performance management.
 
@@ -340,7 +335,7 @@ Do not retain navigation for PVOs, treatments, corrective actions or Strategy pe
 | STR-UI-01 Strategy Portfolio | `/app/strategy` | Scoped plan register and entry point for authoring or neutral viewing. |
 | STR-UI-02 Plan workspace | `/app/strategy/plan/{plan_id}` | Plan identity, version summary and version navigation. |
 | STR-UI-03 Structure editor | `/app/strategy/plan/{plan_id}/version/{version_number}/structure` | Draft hierarchy, indicators and targets. |
-| STR-UI-04 Review task | `/app/strategy/review/{plan_version_id}` | Live reviewer, approver or activation decision surface. |
+| STR-UI-04 Approval task | `/app/strategy/approval/{plan_version_id}` | Read-only submitted-version review and return/approve decision surface. |
 
 The plan workspace uses these persistent tabs:
 
@@ -443,7 +438,7 @@ Do not show structure fields, approval history, readiness checks or a submit act
 
 ### 12.4 STR-DES-03 — Active plan overview
 
-**Fixture context — outside the artboard:** MOH Strategy Viewer · `str.viewer.moh@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > STR-MOH-2023-001**
+**Fixture context — outside the artboard:** MOH Internal Auditor · `str.auditor@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > STR-MOH-2023-001**
 
 **Page content header**
 
@@ -480,9 +475,8 @@ Do not show structure fields, approval history, readiness checks or a submit act
 
 | Label | Value |
 |---|---|
-| Approved by | MOH Strategy Approval Authority |
-| Approved | 30 Jun 2023, 15:40 EAT |
-| Activated | 1 Jul 2023, 00:00 EAT |
+| Approved and activated by | MOH Strategy Approver |
+| Approved and activated | 1 Jul 2023, 09:15 EAT |
 
 Do not show edit controls, performance results, evidence, corrective action or downstream transaction counts.
 
@@ -496,7 +490,7 @@ Do not show edit controls, performance results, evidence, corrective action or d
 - Title: **Strategy structure**
 - Status: **Draft**
 - Right-aligned secondary button: **Save draft**
-- Right-aligned primary button: **Submit for review**
+- Right-aligned primary button: **Submit for approval**
 
 **Tabs:** **Overview**, **Structure** selected, **History**
 
@@ -587,15 +581,15 @@ Create one additional static artboard over the dimmed Indicator editor.
 
 Do not show target name, description, owner, baseline, tolerance, actual result, evidence, status or another unit control.
 
-### 12.7 STR-DES-06 — Reviewer task · Overview
+### 12.7 STR-DES-06 — Approval task · Overview
 
-**Fixture context — outside the artboard:** MOH Strategy Reviewer · `str.reviewer.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Review tasks > STR-MOH-2023-001-V2**
+**Fixture context — outside the artboard:** MOH Strategy Approver · `str.approver.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2**
 
 **Page content header**
 
 - Eyebrow: **STR-MOH-2023-001 · VERSION 2**
-- Title: **Review strategic plan version**
-- Status: **In Review**
+- Title: **Approve strategic plan version**
+- Status: **Submitted for approval**
 - No header action button
 
 **Tabs:** **Overview** selected, **Structure**, **Changes**, **History**
@@ -639,13 +633,13 @@ Do not show target name, description, owner, baseline, tolerance, actual result,
 | Performance indicators | 1 |
 | Performance targets | 1 |
 
-**Fixed footer, left to right:** **Return**, **Recommend for approval**. **Return** uses the danger-outline style; **Recommend for approval** is primary.
+**Fixed footer, left to right:** **Return**, **Approve**. **Return** uses the danger-outline style; **Approve** is primary.
 
 Do not show editable fields, comments, attachments, evidence, performance results or Active Version 1 data on this artboard.
 
-### 12.8 STR-DES-07 — Reviewer task · Structure
+### 12.8 STR-DES-07 — Approval task · Structure
 
-**Fixture context — outside the artboard:** MOH Strategy Reviewer · `str.reviewer.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Review tasks > STR-MOH-2023-001-V2**
+**Fixture context — outside the artboard:** MOH Strategy Approver · `str.approver.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2**
 
 Reuse the STR-DES-06 page content header and fixed footer without changing their content or placement.
 
@@ -667,9 +661,9 @@ Display this fully expanded hierarchy in the exact order and indentation shown:
 
 No hierarchy row is selected. Do not show Add, Edit, Delete, drag, overflow-menu, checkbox or inline-action controls.
 
-### 12.9 STR-DES-08 — Reviewer task · Changes
+### 12.9 STR-DES-08 — Approval task · Changes
 
-**Fixture context — outside the artboard:** MOH Strategy Reviewer · `str.reviewer.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Review tasks > STR-MOH-2023-001-V2**
+**Fixture context — outside the artboard:** MOH Strategy Approver · `str.approver.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2**
 
 Reuse the STR-DES-06 page content header and fixed footer without changing their content or placement.
 
@@ -687,9 +681,9 @@ Text below the table: **No other plan identity or structure items changed.**
 
 Do not show unchanged rows, inline editing, accept/reject controls, comments or a side-by-side document viewer.
 
-### 12.10 STR-DES-09 — Reviewer task · History
+### 12.10 STR-DES-09 — Approval task · History
 
-**Fixture context — outside the artboard:** MOH Strategy Reviewer · `str.reviewer.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Review tasks > STR-MOH-2023-001-V2**
+**Fixture context — outside the artboard:** MOH Strategy Approver · `str.approver.moh@example.test` · Ministry of Health · 16 Mar 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2**
 
 Reuse the STR-DES-06 page content header and fixed footer without changing their content or placement.
 
@@ -699,93 +693,26 @@ Reuse the STR-DES-06 page content header and fixed footer without changing their
 
 | Date and time | Event | Actor |
 |---|---|---|
-| 15 Mar 2027, 16:20 EAT | Submitted for review | MOH Strategy Author |
+| 15 Mar 2027, 16:20 EAT | Submitted for approval | MOH Strategy Author |
 | 15 Mar 2027, 15:55 EAT | Draft saved | MOH Strategy Author |
 | 15 Mar 2027, 13:10 EAT | Successor Version 2 created | MOH Strategy Author |
 
 Do not show comments, attachments, evidence, technical request logs or events from another plan version.
 
-### 12.11 STR-DES-10 — Approval task · four tab variants
-
-Create four Approval Authority artboards by duplicating STR-DES-06, STR-DES-07, STR-DES-08 and STR-DES-09 respectively.
-
-**Fixture context for all four approval artboards — outside the artboard:** MOH Strategy Approval Authority · `str.approver.moh@example.test` · Ministry of Health · 17 Mar 2027, 09:40 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > Review tasks > STR-MOH-2023-001-V2**
-
-Make exactly these changes on all four duplicates:
-
-- title: **Approve strategic plan version**;
-- status: **Awaiting Approval**;
-- fixed-footer buttons: **Return**, **Approve**; **Return** uses the danger-outline style and **Approve** is primary; and
-- retain the selected tab and all submitted Version 2 content from the corresponding Reviewer artboard.
-
-On the **Overview** duplicate, replace the Submission authority card with this exact resulting card:
-
-| Label | Value |
-|---|---|
-| Submitted by | MOH Strategy Author |
-| Submitted | 15 Mar 2027, 16:20 EAT |
-| Reviewed by | MOH Strategy Reviewer |
-| Recommended | 16 Mar 2027, 10:22 EAT |
-
-On the **History** duplicate, replace the Version history table with this exact resulting table:
-
-| Date and time | Event | Actor |
-|---|---|---|
-| 16 Mar 2027, 10:22 EAT | Recommended for approval | MOH Strategy Reviewer |
-| 15 Mar 2027, 16:20 EAT | Submitted for review | MOH Strategy Author |
-| 15 Mar 2027, 15:55 EAT | Draft saved | MOH Strategy Author |
-| 15 Mar 2027, 13:10 EAT | Successor Version 2 created | MOH Strategy Author |
-
-Do not change the Structure or Changes content. Do not add an activation action, editable control, comment box, attachment or evidence panel to any Approval artboard.
-
-### 12.12 STR-DES-11 — Approved version awaiting activation
-
-**Fixture context — outside the artboard:** MOH Strategy Approval Authority · `str.approver.moh@example.test` · Ministry of Health · 17 Mar 2027, 10:05 EAT · Frappe header breadcrumb: **Home > Strategy Alignment > STR-MOH-2023-001 > Version 2**
-
-**Page content header**
-
-- Eyebrow: **STR-MOH-2023-001 · VERSION 2**
-- Title: **Ministry of Health Strategic Plan (Demo)**
-- Status: **Approved**
-- Right-aligned primary button: **Activate version**
-
-**Tabs:** **Overview** selected, **Structure**, **History**
-
-**Version authority card**
-
-| Label | Value |
-|---|---|
-| Plan period | 1 Jul 2023–30 Jun 2028 |
-| Version effective period | 1 Jul 2027–30 Jun 2028 |
-| Approved by | MOH Strategy Approval Authority |
-| Approved | 17 Mar 2027, 09:47 EAT |
-| Current Active version | Version 1 |
-
-**Activation readiness card**
-
-| Check | Result |
-|---|---|
-| Plan identity complete | Ready |
-| Hierarchy valid | Ready |
-| Indicators and targets complete | Ready |
-| Active-plan overlap | Ready |
-
-Do not show editable fields, an approval stepper, scheduling fields, a reason field or a second action button.
-
-### 12.13 STR-DES-12 — Portfolio state variants
+### 12.11 STR-DES-10 — Portfolio state variants
 
 Create four static variants. Every variant contains the STR-DES-01 page content header, context strip, tabs and standard filter row. Do not show summary cards or plan rows.
 
-Fixture context for Loading, No matches and Server error — outside the artboard: **MOH Strategy Author · `str.author.moh@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT**. Fixture context for Forbidden — outside the artboard: **Kisumu Strategy Viewer · `str.viewer.kisumu@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT**. Frappe header breadcrumb for all variants: **Home > Strategy Alignment**.
+Fixture context for Loading, No matches and Server error — outside the artboard: **MOH Strategy Author · `str.author.moh@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT**. Fixture context for Forbidden — outside the artboard: **Unassigned Kisumu user · `str.unassigned.kisumu@example.test` · Ministry of Health · 15 Mar 2027, 11:30 EAT**. Frappe header breadcrumb for all variants: **Home > Strategy Alignment**.
 
 | Variant | Filter row | Main content | Buttons |
 |---|---|---|---|
 | Loading | Search, plan-role and status controls disabled | Five full-width skeleton table rows | None |
 | No matches | Search value **County strategy**; selects show **All plan roles** and **All statuses** | Heading **No plans match these filters.** Body **Change or clear the filters to see other strategic plans.** | **Clear filters** |
-| Forbidden | No filter row | Heading **You do not have access to Strategy Alignment.** Body **Ask your KenTender administrator to review your Strategy assignment.** | None |
+| Forbidden | No filter row | Heading **You do not have access to Strategy Alignment.** Body **Ask your KenTender administrator to review your role and Procuring Entity access.** | None |
 | Server error | Standard empty filter row | Heading **Strategy plans could not be loaded.** Body **Try again. If the problem continues, contact KenTender support.** | **Try again** |
 
-### 12.14 STR-DES-13 — Existing Frappe and KenTender controls
+### 12.12 STR-DES-11 — Existing Frappe and KenTender controls
 
 No design artboard is authorised for the Frappe header, breadcrumb, module menu, global page chrome, notifications, user menu or the existing KenTender PE/FY selector. Reuse those components without visual modification. The Procurement Planning Strategic Objective selector belongs to the Procurement Planning UI contract and is not designed in this Strategy change unit.
 
@@ -795,23 +722,23 @@ This section defines behaviour for requirements, implementation and testing. It 
 
 ### 13.1 STR-UI-01 — Strategy Portfolio
 
-- The server returns only plans within the actor's Strategy assignment.
+- The server returns only plans allowed by the actor's native Role and User Permission scope.
 - The selected PE context comes from the existing KenTender context control and is never inferred from the first available record.
 - **Plans** shows all scoped records the actor may view. **My work** shows only live records on which the actor may perform the next command.
 - Search matches plan reference and title. Plan role and status filters are server-side.
 - Counts use the same permission query as rows.
 - **New strategic plan** appears only for a scoped Strategy Author.
-- Selecting **View**, **Continue draft**, **Review**, **Approve** or **Activate** follows the server-returned `available_action`; the browser does not derive authority from status alone.
+- Selecting **View**, **Continue draft** or **Approve** follows the server-returned `available_action`; the browser does not derive authority from status alone.
 - Browser back/forward restores filters, tab and selected record.
 
 ### 13.2 STR-UI-02 — Plan workspace
 
 - A saved new-plan draft receives its generated plan and version references from the server.
 - The first version effective period is set equal to the plan period; the user does not enter the same dates twice.
-- Plan identity can be edited only while its first version is Draft or Returned and before downstream use exists.
+- Plan identity can be edited only while its first version is Draft and before downstream use exists.
 - A Primary plan hides `parent_primary_plan_id`; a Supporting Framework requires selection of an eligible Primary plan.
-- Active, Superseded and Archived versions always open read-only.
-- **Create successor version** is offered only to an authorised Strategy Author on an approved or Active plan and creates a server-side copy of the current version.
+- Submitted for approval, Active and Superseded versions always open read-only.
+- **Create successor version** is offered only to an authorised Strategy Author on an Active plan and creates a server-side copy of the current version.
 - History is chronological and append-only; it shows lifecycle events, actor, timestamp and required return reason.
 
 ### 13.3 STR-UI-03 — Structure editor
@@ -829,24 +756,23 @@ This section defines behaviour for requirements, implementation and testing. It 
 - One Indicator cannot contain two Targets for the same Financial Year or the same target-by date.
 - Financial Year choices come from Configuration and Governance and are limited to years overlapping the plan period.
 - Saving a stale tree returns `STRATEGY_STALE_WRITE` and preserves the user's unsaved values for deliberate reload or reconciliation.
-- **Submit for review** calls readiness validation. If validation fails, the page shows an error summary and focuses the first failing record without changing status.
+- **Submit for approval** calls readiness validation. If validation fails, the page shows an error summary and focuses the first failing record without changing status.
 
-### 13.4 STR-UI-04 — Review task
+### 13.4 STR-UI-04 — Approval task
 
-- Direct task routes require the exact live capability. A neutral viewer is denied rather than shown a disabled workflow form.
+- Direct task routes require the Strategy Approver role and matching native User Permission scope. A read-only user is denied rather than shown a disabled workflow form.
 - The route is bound to one `plan_version_id`. Overview, Structure, Changes and History always read that submitted version; they never fall back to the current Active version.
-- The selected review tab is represented by the URL. Browser back/forward restores the prior tab without changing the submitted version or mounting a second page application.
+- The selected approval tab is represented by the URL. Browser back/forward restores the prior tab without changing the submitted version or mounting a second page application.
 - Overview returns plan identity, submission authority, readiness and structure counts from the submitted version.
 - Structure returns the complete read-only submitted hierarchy, including Indicators and Targets.
 - Changes is calculated server-side between `based_on_plan_version_id` and the submitted version. The client does not construct or infer the comparison.
 - History returns only lifecycle and draft-save events for the submitted version in reverse chronological order.
 - The role-appropriate decision footer remains available on every tab and every command carries the submitted version ID, expected status and expected record version.
-- A Reviewer may Return or Recommend only while status is In Review.
-- An Approval Authority may Return or Approve only while status is Awaiting Approval.
+- A Strategy Approver may Return or Approve only while status is Submitted for approval.
 - Return opens a dialog containing only **Return reason**, **Cancel** and **Return**. The reason is validated server-side.
-- Approve does not activate. The Approved plan workspace exposes **Activate version** only to the scoped Approval Authority.
-- Activate reruns readiness and overlap guards under a transaction lock. A failed guard leaves the version Approved.
-- Successful successor activation changes the new version to Active and the previous Active version of the same plan to Superseded in one transaction.
+- Approve reruns readiness, effective-date and overlap guards under a transaction lock. A failed guard leaves the version Submitted for approval.
+- Successful approval changes the submitted version to Active and the previous Active version of the same plan to Superseded in one transaction.
+- The author of the submitted version cannot approve it, even if that user also holds the Strategy Approver role.
 
 ### 13.5 Common page states
 
@@ -873,13 +799,13 @@ Errors return a stable code, plain-language message, correlation ID and field or
 | Code | Message intent and effect |
 |---|---|
 | `STRATEGY_SCOPE_REQUIRED` | A valid PE and, where required, organisation-unit scope was not supplied. No record is created or changed. |
-| `STRATEGY_PERMISSION_DENIED` | The actor lacks the required scoped capability. No protected data is returned. |
+| `STRATEGY_PERMISSION_DENIED` | The actor lacks the required native Role or User Permission scope. No protected data is returned. |
 | `STRATEGY_CONFIG_MISSING` | A referenced PE, OU or Financial Year is missing or unavailable. The operation fails closed. |
 | `STRATEGY_INVALID_STATE` | The command is not valid for the current server status. Current status is returned. |
-| `STRATEGY_NOT_READY` | Submission, approval or activation readiness failed. Structured failing rule IDs are returned. |
+| `STRATEGY_NOT_READY` | Submission or approval readiness failed. Structured failing rule IDs are returned. |
 | `STRATEGY_INVALID_HIERARCHY` | A node type, parent relationship, duplicate sibling or cross-version link is invalid. |
 | `STRATEGY_INVALID_TARGET` | Target period, comparison or value is invalid for the indicator and plan. |
-| `STRATEGY_OVERLAP` | Activation would create overlapping Active Primary authority. No status changes occur. |
+| `STRATEGY_OVERLAP` | Approval would create overlapping Active Primary authority. No status changes occur. |
 | `STRATEGY_CONTEXT_NOT_FOUND` | No applicable Active Primary plan exists for the requested scope and date/FY. |
 | `STRATEGY_CONTEXT_AMBIGUOUS` | More than one equally applicable Active Primary plan exists. No record is selected. |
 | `STRATEGY_OBJECTIVE_NOT_ELIGIBLE` | The selected Objective is missing, outside the resolved version or scope, or not in an Active plan version. No link or snapshot is produced. |
@@ -894,15 +820,15 @@ The following events are append-only:
 
 - plan and successor-version creation;
 - Draft structural change sets;
-- submit, return, recommend, approve, activate, supersede and archive;
+- submit, return, approve/activate and supersede;
 - permission or segregation denial;
 - successful and failed context resolution;
 - Strategic Objective listing and lineage reads by a downstream module; and
 - snapshot creation or idempotent snapshot reuse.
 
-Each event records actor, scoped capability, PE/OU, record and version IDs, action, timestamp, before/after status, required reason and correlation ID. A downstream contract event also records the calling module.
+Each event records actor, Role, PE/OU scope, record and version IDs, action, timestamp, before/after status, required reason and correlation ID. A downstream contract event also records the calling module.
 
-Approved, Active, Superseded and Archived versions are immutable. A Strategy snapshot is copied into the downstream approval record and does not change when the source plan later changes status. Deleting lifecycle events, renumbering versions and reusing generated references are prohibited.
+Submitted for approval, Active and Superseded versions are immutable. A Strategy snapshot is copied into the downstream approval record and does not change when the source plan later changes status. Deleting lifecycle events, renumbering versions and reusing generated references are prohibited.
 
 ## 16. Seed contract
 
@@ -925,14 +851,11 @@ The Strategy seed shall not create a PE, OU, Financial Year or PE/FY Context and
 | User ID | Display name | Assignment and test purpose |
 |---|---|---|
 | `str.author.moh@example.test` | MOH Strategy Author | Strategy Author for PE-MOH; authoring and submit tests. |
-| `str.reviewer.moh@example.test` | MOH Strategy Reviewer | Strategy Reviewer for PE-MOH; review and segregation tests. |
-| `str.approver.moh@example.test` | MOH Strategy Approval Authority | Strategy Approval Authority for PE-MOH; approval and activation tests. |
-| `str.viewer.moh@example.test` | MOH Strategy Viewer | Strategy Viewer for PE-MOH; neutral-read tests. |
+| `str.approver.moh@example.test` | MOH Strategy Approver | Strategy Approver for PE-MOH; return, approval and segregation tests. |
 | `str.author.kisumu@example.test` | Kisumu Strategy Author | Strategy Author for PE-CGK; cross-PE authoring tests and deterministic seed authority. |
-| `str.reviewer.kisumu@example.test` | Kisumu Strategy Reviewer | Strategy Reviewer for PE-CGK; cross-PE review tests and deterministic seed authority. |
-| `str.approver.kisumu@example.test` | Kisumu Strategy Approval Authority | Strategy Approval Authority for PE-CGK; cross-PE approval tests and deterministic seed authority. |
-| `str.viewer.kisumu@example.test` | Kisumu Strategy Viewer | Strategy Viewer for PE-CGK; cross-PE isolation tests. |
-| `str.auditor@example.test` | Strategy Auditor | Auditor for PE-MOH and PE-CGK; audit-read tests. |
+| `str.approver.kisumu@example.test` | Kisumu Strategy Approver | Strategy Approver for PE-CGK; cross-PE approval tests and deterministic seed authority. |
+| `str.auditor@example.test` | Internal Auditor | Existing audit read role for PE-MOH and PE-CGK; no Strategy workflow role. |
+| `str.unassigned.kisumu@example.test` | Unassigned Kisumu User | No Strategy role or PE-MOH User Permission; forbidden and isolation tests. |
 
 No actor receives Strategy authority from Administrator or System Manager alone.
 
@@ -955,10 +878,8 @@ Exact lifecycle authority:
 
 | Event | Actor | Date and time |
 |---|---|---|
-| Submitted for review | MOH Strategy Author | 28 Jun 2023, 09:10 EAT |
-| Recommended for approval | MOH Strategy Reviewer | 29 Jun 2023, 10:25 EAT |
-| Approved | MOH Strategy Approval Authority | 30 Jun 2023, 15:40 EAT |
-| Activated | MOH Strategy Approval Authority | 1 Jul 2023, 00:00 EAT |
+| Submitted for approval | MOH Strategy Author | 1 Jul 2023, 08:30 EAT |
+| Approved and activated | MOH Strategy Approver | 1 Jul 2023, 09:15 EAT |
 
 Exact hierarchy:
 
@@ -992,10 +913,8 @@ Exact lifecycle authority:
 
 | Event | Actor | Date and time |
 |---|---|---|
-| Submitted for review | Kisumu Strategy Author | 28 Dec 2022, 09:00 EAT |
-| Recommended for approval | Kisumu Strategy Reviewer | 29 Dec 2022, 11:10 EAT |
-| Approved | Kisumu Strategy Approval Authority | 30 Dec 2022, 14:15 EAT |
-| Activated | Kisumu Strategy Approval Authority | 1 Jan 2023, 00:00 EAT |
+| Submitted for approval | Kisumu Strategy Author | 1 Jan 2023, 08:30 EAT |
+| Approved and activated | Kisumu Strategy Approver | 1 Jan 2023, 09:10 EAT |
 
 Exact minimal hierarchy:
 
@@ -1021,10 +940,9 @@ The Version 2 data shown in STR-DES-04 through STR-DES-11 is an isolated test fi
 | Only content change | FY 2027/28 target: At least 80% → At least 85% |
 | Successor created | 15 Mar 2027, 13:10 EAT · MOH Strategy Author |
 | Draft saved | 15 Mar 2027, 15:55 EAT · MOH Strategy Author |
-| Submitted for review | 15 Mar 2027, 16:20 EAT · MOH Strategy Author |
-| Recommended for approval | 16 Mar 2027, 10:22 EAT · MOH Strategy Reviewer |
+| Submitted for approval | 15 Mar 2027, 16:20 EAT · MOH Strategy Author |
 
-Test setup may place the version in Draft, In Review, Awaiting Approval or Approved status for the named artboard or test and must remove or roll it back after the test.
+Test setup may place the version in Draft or Submitted for approval status for the named artboard or test and must remove or roll it back after the test. Approval changes it directly to Active.
 
 ### 16.6 Seed execution rules
 
@@ -1042,24 +960,24 @@ Test setup may place the version in Draft, In Review, Awaiting Approval or Appro
 | STR-AC-001 | The module installs and imports without the legacy Demands package or Procurement Home. |
 | STR-AC-002 | No executable metadata, route, service, field, label, seed or active test refers to Plan Value Commitment, Strategy Value Commitment, PVO, Strategic Outcome, treatment or Strategy Corrective Action. |
 | STR-AC-003 | A scoped Author can create a Draft plan and receives generated plan/version references. |
-| STR-AC-004 | An unassigned user and a System Administrator without Strategy assignment cannot create, review, approve or activate. |
+| STR-AC-004 | An unassigned user and a System Administrator without a Strategy role and matching User Permission cannot create, submit, return or approve. |
 | STR-AC-005 | A Draft can represent Pillar → Programme → optional Sub-programme → Objective, with Indicator directly beneath Objective and Target directly beneath Indicator. |
 | STR-AC-006 | Strategic Objective and Performance Indicator are distinct types and cannot be substituted for one another; no Strategic Outcome type exists. |
 | STR-AC-007 | Target validation enforces period choice, comparison, unit-compatible value and percentage range. |
 | STR-AC-008 | Readiness blocks submission when plan identity or hierarchy is invalid, or when the version has no Strategic Objective, Indicator or Target. |
 | STR-AC-009 | A Procurement Plan Item can select exactly one Strategic Objective from its resolved Active plan version and cannot select an Indicator or Target instead. |
-| STR-AC-010 | Reviewer recommendation and Approval Authority approval use distinct scoped capabilities; the Author cannot perform either on the same version. |
+| STR-AC-010 | Only Strategy Author and Strategy Approver are Strategy workflow roles; the Author of a version cannot approve that version. |
 | STR-AC-011 | Return requires a reason and preserves the complete workflow history. |
-| STR-AC-012 | Approved and Active content cannot be edited; a successor version is required. |
-| STR-AC-013 | Concurrent activation cannot create overlapping Active Primary authority. |
-| STR-AC-014 | Activating a successor version atomically supersedes the previous Active version of the same plan. |
+| STR-AC-012 | Submitted for approval, Active and Superseded content cannot be edited; an Active correction requires a successor version. |
+| STR-AC-013 | Concurrent approval cannot create overlapping Active Primary authority. |
+| STR-AC-014 | Approving a successor atomically activates it and supersedes the previous Active version of the same plan. |
 | STR-AC-015 | Zero and multiple context matches return typed errors and never use first-record fallback. |
 | STR-AC-016 | `resolve_strategy_context` returns the correct MoH or Kisumu Active plan and never leaks the other PE's data. |
 | STR-AC-017 | `list_strategy_objectives` returns only Active, scoped Strategic Objectives with exact generated IDs and ordered ancestor paths. |
 | STR-AC-018 | `get_strategy_lineage` returns exact stable IDs, types and titles in plan-to-record order. |
 | STR-AC-019 | `create_strategy_snapshot` captures the selected Strategic Objective and its exact plan-to-objective lineage and is immutable and idempotent for one downstream approval correlation ID. |
 | STR-AC-020 | Downstream direct-table mutation and Draft reads are rejected. |
-| STR-AC-021 | A neutral viewer can open an authorised Active plan but cannot open a live workflow task. |
+| STR-AC-021 | A user with native read permission can open an authorised Active plan but cannot open an approval task without the Strategy Approver role. |
 | STR-AC-022 | Portfolio counts, rows, routes, exports and APIs apply the same server-side scope. |
 | STR-AC-023 | The default seed is deterministic and an immediate second run produces no change. |
 | STR-AC-024 | Missing CFG prerequisites fail seed execution without creating fallback records. |
@@ -1067,16 +985,18 @@ Test setup may place the version in Draft, In Review, Awaiting Approval or Appro
 | STR-AC-026 | Loading, no-match, forbidden and server-error states disclose no false or unauthorised data. |
 | STR-AC-027 | Frappe header, breadcrumb and existing PE/FY selector are reused and are not duplicated inside the Vue page. |
 | STR-AC-028 | No Strategy page or API accepts Value Commitment, source-reference, evidence, attachment, contact, baseline, treatment, actual-result or corrective-action data. |
-| STR-AC-029 | Reviewer and Approval Authority can inspect Overview, Structure, Changes and History for the exact submitted version, and no tab substitutes current Active-version content. |
-| STR-AC-030 | Reviewer and Approval Authority decision actions remain available on every review tab and reject a stale version or status. |
+| STR-AC-029 | Strategy Approver can inspect Overview, Structure, Changes and History for the exact submitted version, and no tab substitutes current Active-version content. |
+| STR-AC-030 | Return and Approve remain available on every approval tab and reject a stale version or status. |
+| STR-AC-031 | No executable Strategy metadata, permission, route, service, seed or active test refers to Strategy Reviewer, Strategy Approval Authority, Strategy Viewer as a workflow role, or the removed lifecycle statuses. |
+| STR-AC-032 | Every Strategy write is authorised through native Frappe Role and PE/OU User Permission; no capability profile, operational scope assignment or parallel permission lookup participates. |
 
 ### 17.1 Minimum rule coverage
 
 | Rule group | Required automated coverage |
 |---|---|
-| Scope and permission | STR-BR-001–004, STR-AC-003–004, STR-AC-010, STR-AC-021–022 |
+| Scope and permission | STR-BR-001–004, STR-AC-003–004, STR-AC-010, STR-AC-021–022, STR-AC-031–032 |
 | Domain structure | STR-BR-005–012, STR-AC-005–009, STR-AC-012 |
-| Lifecycle and activation | STR-BR-004, STR-BR-006, STR-BR-015–017, STR-AC-010–016 |
+| Lifecycle and approval | STR-BR-004, STR-BR-006, STR-BR-015–017, STR-AC-010–016 |
 | Downstream Objective and contracts | STR-BR-013–014, STR-BR-018–020, STR-AC-009, STR-AC-016–020 |
 | Seeds and isolation | STR-AC-023–024 |
 | UI | STR-AC-025–030 |
@@ -1085,6 +1005,10 @@ Test setup may place the version in Draft, In Review, Awaiting Approval or Appro
 
 ### 18.1 Frappe and UI implementation
 
+- Replace the Strategy Reviewer and Strategy Approval Authority workflow roles with one **Strategy Approver** role. Retain **Strategy Author**. Remove Strategy Viewer as a workflow role; preserve legitimate read access through ordinary DocType permissions.
+- Remove Strategy capability strings and any custom assignment lookup from Strategy writes. Authorisation uses Frappe Role plus PE/OU User Permission and the version's audit history for the no-self-approval check.
+- Normalize legacy statuses once: Draft and Returned → Draft; In Review, Awaiting Approval and Approved → Submitted for approval; Active → Active; Superseded and Archived → Superseded. Do not activate an old Approved version automatically.
+- Existing Strategy Approval Authority holders may be granted Strategy Approver during the controlled migration. Existing Strategy Reviewer holders are not promoted automatically. Remove old roles after all permissions, fixtures and tests use the two-role model.
 - Delete the existing Plan/Strategy Value Commitment DocTypes, child-link table, services, routes, page fixtures, seeds and tests. Do not preserve an alias or compatibility response field.
 - Remove `Strategic Outcome` from Strategy node metadata, services, commands, fixtures, screens and tests. During cleanup, an Indicator currently attached to an Outcome is reattached to that Outcome's direct parent Strategic Objective, then the Outcome is removed. The cleanup fails loudly if the parent is not exactly one Strategic Objective or if the link crosses a plan version; it never guesses another Objective.
 - Replace downstream Strategy-contract imports and Budget/Planning test fixtures with `list_strategy_objectives`, `get_strategy_lineage` and the Objective-based `create_strategy_snapshot` shape defined in section 10.
@@ -1111,10 +1035,9 @@ Run cross-module contract tests only when a public Strategy contract or snapshot
 
 Browser verification is one focused path per role:
 
-- Author: open Portfolio → create/save Draft → edit structure → submit;
-- Reviewer: open task → inspect Overview, Structure, Changes and History → recommend;
-- Approval Authority: inspect Overview, Structure, Changes and History → approve → activate;
-- Viewer: open Active plan and confirm no workflow actions; and
+- Strategy Author: open Portfolio → create/save Draft → edit structure → submit for approval;
+- Strategy Approver: inspect Overview, Structure, Changes and History → return once → approve the corrected submission; and
+- read-only user: open Active plan and confirm no workflow actions; and
 - forbidden actor: confirm no data disclosure.
 
 Do not wait for `networkidle` on Frappe Desk. Wait for DOM content and an explicit page-ready element because persistent socket connections may remain open.
@@ -1138,7 +1061,7 @@ Do not wait for `networkidle` on Frappe Desk. Wait for DOM content and an explic
 - No downstream raw SQL or ORM read of Strategy tables.
 - No client-only permission, readiness, overlap or transition enforcement.
 - No editable generated reference.
-- No mutation of Approved or Active content.
+- No mutation of Submitted for approval, Active or Superseded content.
 - No Value Commitment, alignment statement or equivalent duplicate of the Strategic Objective under another label.
 - No arbitrary JSON field used to avoid the canonical hierarchy or direct Strategic Objective reference.
 - No optional source, evidence, attachment, contact, description, note, baseline or owner field “for future use”.
@@ -1155,4 +1078,4 @@ This document reconciles and supersedes conflicting Strategy requirements contai
 - `02_Strategy_Cleanup_Plan.md`; and
 - `KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1.0.md`.
 
-It consumes PE/FY configuration through the approved `KenTender_CFG-CHG-002_PE_and_Financial_Year_Maintenance_v0.3.md` contract. Where an earlier item is not retained in this v1.4 document, it is outside the proposed Strategy Alignment scope.
+It consumes PE/FY configuration through the approved `KenTender_CFG-CHG-002_PE_and_Financial_Year_Maintenance_v0.3.md` contract. Where an earlier item is not retained in this v1.5 document, it is outside the proposed Strategy Alignment scope.

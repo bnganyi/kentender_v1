@@ -74,10 +74,10 @@ class TestSeedIdempotency(FrappeTestCase):
 			fields=["action", "performed_by", "timestamp"],
 		)
 		by_action = {e.action: e for e in events}
-		self.assertEqual(by_action["Submit for review"].performed_by, ACTORS["author_moh"])
-		self.assertEqual(str(by_action["Submit for review"].timestamp), "2023-06-28 09:10:00")
-		self.assertEqual(by_action["Activate"].performed_by, ACTORS["approver_moh"])
-		self.assertEqual(str(by_action["Activate"].timestamp), "2023-07-01 00:00:00")
+		self.assertEqual(by_action["Submit for approval"].performed_by, ACTORS["author_moh"])
+		self.assertEqual(str(by_action["Submit for approval"].timestamp), "2023-06-28 09:10:00")
+		self.assertEqual(by_action["Approve"].performed_by, ACTORS["approver_moh"])
+		self.assertEqual(str(by_action["Approve"].timestamp), "2023-07-01 00:00:00")
 
 	def test_no_actor_holds_strategy_authority_via_administrator_alone(self):
 		upsert_kentender_mvp_v1_strategy()
@@ -109,7 +109,7 @@ class TestVersion2DesignFixture(FrappeTestCase):
 		out = seed_str_des_v2_fixture()
 		try:
 			version = frappe.get_doc("Strategic Plan Version", out["plan_version"])
-			self.assertEqual(version.status, "Awaiting Approval")
+			self.assertEqual(version.status, "Submitted for approval")
 			self.assertEqual(version.version_number, 2)
 			target = frappe.get_doc("Performance Target", out["target"])
 			self.assertEqual(target.target_value, 85)

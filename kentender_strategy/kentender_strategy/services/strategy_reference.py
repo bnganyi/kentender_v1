@@ -8,8 +8,6 @@ import re
 import frappe
 from frappe import _
 
-from kentender_strategy.services.strategy_permissions import ROLE_PLANNING, user_roles
-
 # Type token → (DocType, fieldname)
 REF_TYPE_META: dict[str, tuple[str, str]] = {
 	"SP": ("Strategic Plan", "plan_id"),
@@ -103,20 +101,16 @@ def allocate_reference(procuring_entity: str, type_token: str) -> str:
 	frappe.throw(_("Could not allocate a unique {0} reference").format(type_token))
 
 
-def can_correct_reference(user: str | None = None) -> bool:
-	"""STR-CHG-001 §5/§8 — explicit Strategy Approval Authority capability, not a
-	hardcoded Administrator/System Manager identity stand-in."""
-	have = user_roles(user)
-	return "System Manager" in have or ROLE_PLANNING in have
-
-
 def assert_reference_immutable(doc, field: str) -> None:
-	"""Block reference edits after first save unless admin correction flag is set."""
+	"""Block reference edits after first save.
+
+	STR-CHG-001 v1.6 cleanup: the admin-correction escape hatch this used to
+	honour (`correct_reference`/`can_correct_reference`) was dead code with
+	zero live callers and referenced a stale pre-v1.5 "Returned" status —
+	removed outright rather than fixed forward, since nothing exercises it."""
 	if doc.is_new():
 		return
 	if not doc.has_value_changed(field):
-		return
-	if getattr(frappe.flags, "strategy_reference_correction", False) and can_correct_reference():
 		return
 	frappe.throw(
 		_("{0} is system-generated and cannot be edited").format(frappe.unscrub(field)),
@@ -201,75 +195,3 @@ def validate_reference_field(doc) -> None:
 		frappe.throw(_("{0} is required").format(frappe.unscrub(field)))
 
 
-def correct_reference(
-	doctype: str,
-	name: str,
-	new_code: str,
-	reason: str,
-	plan_version: str | None = None,
-) -> dict:
-	"""Pre-activation correction with audit trail."""
-	if not can_correct_reference():
-		frappe.throw(
-			_("Only a Strategy Approval Authority may correct references"), frappe.PermissionError
-		)
-	meta = DOCTYPE_REF.get(doctype)
-	if not meta:
-		frappe.throw(_("Unsupported DocType for reference correction"))
-	_token, field = meta
-	new_code = (new_code or "").strip().upper()
-	if not REF_RE.match(new_code):
-		frappe.throw(_("Reference format is invalid"))
-	reason = (reason or "").strip()
-	if not reason:
-		frappe.throw(_("Reason is required to correct a reference"))
-
-	doc = frappe.get_doc(doctype, name)
-	# Pre-activation only for plan-version-scoped docs.
-	pv = plan_version or _plan_version_id_for_doc(doc)
-	if doctype == "Strategic Plan":
-		if _has_active_or_beyond_version(doc.name):
-			frappe.throw(_("References can only be corrected before the plan has an Approved version"))
-	elif doctype == "Strategic Plan Version":
-		if doc.status not in ("Draft", "Returned"):
-			frappe.throw(_("References can only be corrected before activation"))
-	elif pv:
-		status = frappe.db.get_value("Strategic Plan Version", pv, "status")
-		if status not in ("Draft", "Returned"):
-			frappe.throw(_("References can only be corrected before the plan version is activated"))
-
-	prior = doc.get(field)
-	if prior == new_code:
-		return {"id": doc.name, "code": prior, "unchanged": True}
-	if frappe.db.exists(doctype, {field: new_code, "name": ["!=", name]}):
-		frappe.throw(_("Reference {0} is already in use").format(new_code))
-
-	frappe.flags.strategy_reference_correction = True
-	try:
-		doc.set(field, new_code)
-		doc.save(ignore_permissions=True)
-	finally:
-		frappe.flags.strategy_reference_correction = False
-
-	from kentender_strategy.services.strategy_audit import record_event
-
-	audit_id = record_event(
-		entity_type=doctype,
-		entity_name=doc.name,
-		event_type="Reference Corrected",
-		prior_state=prior or "",
-		new_state=new_code,
-		plan_version=pv if pv and frappe.db.exists("Strategic Plan Version", pv) else None,
-		reason=reason,
-		summary=f"Reference corrected {prior} → {new_code}",
-	)
-	return {"id": doc.name, "code": new_code, "prior": prior, "audit_event": audit_id}
-
-
-def _has_active_or_beyond_version(plan_id: str) -> bool:
-	return bool(
-		frappe.db.exists(
-			"Strategic Plan Version",
-			{"plan_id": plan_id, "status": ["in", ["Approved", "Active", "Superseded", "Archived"]]},
-		)
-	)

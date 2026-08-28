@@ -1,82 +1,56 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 §7 capability wiring, on kentender_core's authorization_policy
-engine — same engine CFG-CHG-002 adopted (docs/mvp-1-r1/02_strategy/
-IMPLEMENTATION_TRACKER.md decision log, 2026-08-23), not Strategy's older
-org_scope_access.py mechanism.
+"""STR-CHG-001 v1.5 §7/§18.1 capability wiring, on AUTH-ADR-001's native
+Frappe Role + User Permission engine (kentender_core.services.authorization_native)
+— not kentender_core's older Operational Scope Assignment/Capability Profile
+engine, and not Strategy's older org_scope_access.py mechanism either.
 
-Phase 2 defines the capability constants and the resource-context/SoD wiring
-the lifecycle engine enforces against. Phase 3 seeds the production Capability
-Profiles, Operational Scope Assignments and Separation of Duties Rules that
-grant these capabilities to real Strategy Author/Reviewer/Approval Authority
-actors — until then, every check here fails closed (no profile exists to
-grant it), which is the correct, safe default, not a gap.
+v1.5 collapses the 3-role/3-capability model (Author/Reviewer/Approval
+Authority) onto 2 roles/capabilities (Author/Approver). Separation of duties
+is no longer a pairwise Separation of Duties Rule table (there is only one
+remaining pair, Author vs Approver, and the rule is version-specific, not a
+general two-hat block): "the author of a submitted version cannot approve or
+return it, even if that user also holds Strategy Approver" (§13.4/§18.1).
+That is enforced directly here via the version's own audit trail, not via
+kentender_core's general capability-pair SoD machinery.
 """
 
 from __future__ import annotations
 
-import json
-
 import frappe
-from frappe import _
 
-from kentender_core.services.authorization_policy import (
-	ResourceContext,
-	evaluate_capability,
-	require_capability,
-	resolve_effective_access,
-)
+from kentender_core.services.authorization_native import evaluate_role_capability, require_role_capability
+from kentender_core.services.authorization_policy import ResourceContext
 from kentender_strategy.services.strategy_audit import list_events
 
 CAP_AUTHOR = "strategy.plan_version.author"
-CAP_REVIEW = "strategy.plan_version.review"
 CAP_APPROVE = "strategy.plan_version.approve"
 
-# STR-CHG-001 §7: Viewer and Reviewer keep their exact existing Frappe Role
-# names (already correct); Author and Approval Authority are new — the
-# legacy "Strategy Officer"/"Strategy Manager"/"Planning Authority" roles
-# stay in place only because strategy_writes.py/strategy_contracts.py
-# (Phase 4/6/7 rebuild targets) still reference them, not because they are
-# part of this rebuilt role set.
-ROLE_STRATEGY_VIEWER = "Strategy Viewer"
+# STR-CHG-001 v1.5 §7/§18.1: only 2 Strategy workflow roles remain. Strategy
+# Reviewer is removed outright (not renamed, not aliased). Strategy Approval
+# Authority is renamed to Strategy Approver — same responsibility, new name.
+# Strategy Viewer is intentionally NOT part of this governance-role tuple any
+# more: "Read access is not a third Strategy workflow role" (§7) — it stays a
+# plain Frappe Role driving ordinary DocType permissions, outside the
+# capability engine entirely.
 ROLE_STRATEGY_AUTHOR = "Strategy Author"
-ROLE_STRATEGY_REVIEWER = "Strategy Reviewer"
-ROLE_STRATEGY_APPROVAL_AUTHORITY = "Strategy Approval Authority"
+ROLE_STRATEGY_APPROVER = "Strategy Approver"
 
 STRATEGY_GOVERNANCE_ROLES = (
-	ROLE_STRATEGY_VIEWER,
 	ROLE_STRATEGY_AUTHOR,
-	ROLE_STRATEGY_REVIEWER,
-	ROLE_STRATEGY_APPROVAL_AUTHORITY,
-)
-
-# profile_id -> (Role, [capabilities])
-_GOVERNANCE_PROFILES: dict[str, tuple[str, list[str]]] = {
-	"CAP-STRATEGY-AUTHOR": (ROLE_STRATEGY_AUTHOR, [CAP_AUTHOR]),
-	"CAP-STRATEGY-REVIEWER": (ROLE_STRATEGY_REVIEWER, [CAP_REVIEW]),
-	"CAP-STRATEGY-APPROVAL-AUTHORITY": (ROLE_STRATEGY_APPROVAL_AUTHORITY, [CAP_APPROVE]),
-}
-
-# (rule_id, first_capability, second_capability) — all 3 pairwise combinations
-# of the 3 lifecycle capabilities. STR-CHG-001 §6.2 requires the submitter,
-# reviewer and approver on one version to be 3 distinct actors; 3 pairwise
-# rules already guarantee this (any 2-of-3 overlap is one of these 3 pairs) —
-# no separate 3-way hand-check is needed, unlike CFG-CHG-002's context-reopen
-# flow, which had no per-stage doctype state to key a pairwise check off of.
-_SOD_PAIRS = (
-	("SOD-STRATEGY-AUTHOR-REVIEWER", CAP_AUTHOR, CAP_REVIEW),
-	("SOD-STRATEGY-AUTHOR-APPROVE", CAP_AUTHOR, CAP_APPROVE),
-	("SOD-STRATEGY-REVIEW-APPROVE", CAP_REVIEW, CAP_APPROVE),
+	ROLE_STRATEGY_APPROVER,
 )
 
 
 def ensure_strategy_governance_roles() -> dict:
-	"""Idempotent: create the 4 STR-CHG-001 §7 Frappe Roles, the 3 lifecycle
-	Capability Profiles, and the 3 pairwise Separation of Duties Rules.
+	"""Idempotent: create the 2 STR-CHG-001 v1.5 §7 Frappe Roles. No
+	Separation of Duties Rule is seeded any more — with only 2 capabilities
+	the only remaining rule is the direct same-version self-check in
+	`_blocked_by_self_approval` below, not a capability-pair rule.
 
-	Does not grant any of this to a specific user — Operational Scope
-	Assignments for real named actors are Phase 5's seed contract (§16),
-	once the exact 9 actor identities exist."""
-	created = {"roles": [], "profiles": [], "sod_rules": []}
+	Does not grant any Role to a specific user — provisioning real named
+	actors is a separate seed-contract concern, once the exact actor
+	identities exist."""
+	created = {"roles": [], "sod_rules": []}
 
 	for role in STRATEGY_GOVERNANCE_ROLES:
 		if not frappe.db.exists("Role", role):
@@ -84,44 +58,6 @@ def ensure_strategy_governance_roles() -> dict:
 				ignore_permissions=True
 			)
 			created["roles"].append(role)
-
-	for profile_id, (_role, capabilities) in _GOVERNANCE_PROFILES.items():
-		if frappe.db.exists("Capability Profile", profile_id):
-			existing = frappe.get_doc("Capability Profile", profile_id)
-			if frappe.parse_json(existing.capabilities) != capabilities:
-				existing.capabilities = json.dumps(capabilities)
-				existing.save(ignore_permissions=True)
-			continue
-		frappe.get_doc(
-			{
-				"doctype": "Capability Profile",
-				"profile_id": profile_id,
-				"profile_name": profile_id.replace("-", " ").title(),
-				"capabilities": json.dumps(capabilities),
-				"allows_entity_wide": 1,
-				"status": "Active",
-				"concurrency_token": frappe.generate_hash(length=16),
-			}
-		).insert(ignore_permissions=True)
-		created["profiles"].append(profile_id)
-
-	for rule_id, first, second in _SOD_PAIRS:
-		if frappe.db.exists("Separation of Duties Rule", rule_id):
-			continue
-		frappe.get_doc(
-			{
-				"doctype": "Separation of Duties Rule",
-				"rule_id": rule_id,
-				"rule_name": rule_id.replace("-", " ").title(),
-				"first_capability": first,
-				"second_capability": second,
-				"enforcement_level": "Workflow instance",
-				"module_name": "Strategy",
-				"status": "Active",
-				"effective_from": frappe.utils.add_days(frappe.utils.now_datetime(), -1),
-			}
-		).insert(ignore_permissions=True)
-		created["sod_rules"].append(rule_id)
 
 	return created
 
@@ -140,45 +76,61 @@ def resource_context_for_version(version) -> ResourceContext:
 		procuring_entity_id=(plan.procuring_entity_id if plan else "") or "",
 		organisation_unit_id=(plan.owner_org_unit_id if plan else "") or "",
 		state=version.status or "",
-		prior_actions=prior_actions_for_version(version.name),
 	)
 
 
-def prior_actions_for_version(version_name: str) -> list[dict]:
-	"""SoD history for one version, reconstructed from its own audit trail —
-	the same pattern reference_data_permissions.prior_actions_for_pe/context
-	uses. Only events that recorded which capability was exercised count."""
-	out = []
+def _submitted_by(version_name: str) -> str | None:
+	"""The user who performed this version's own "Submit for approval" —
+	read from its audit trail (§18.1: "the version's audit history for the
+	no-self-approval check"), not a stored field."""
 	for event in list_events("Strategic Plan Version", version_name):
-		capability = (event.get("metadata") or {}).get("capability")
-		if capability:
-			out.append({"user": event.get("performed_by"), "capability": capability})
-	return out
+		if event.get("action") == "Submit for approval":
+			return event.get("performed_by")
+	return None
+
+
+def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> bool:
+	"""§6.2/§13.4/§18.1: "The author cannot approve the same version" / "even
+	if that user also holds the Strategy Approver role" — a same-version
+	self-check, not a general capability-pair rule."""
+	if capability != CAP_APPROVE:
+		return False
+	return _submitted_by(version_name) == user
 
 
 def require_plan_version_capability(
 	user: str, capability: str, version, *, correlation_id: str = ""
 ):
-	return require_capability(
-		user, capability, resource_context_for_version(version), correlation_id=correlation_id
+	if isinstance(version, str):
+		version_name = version
+	else:
+		version_name = version.name
+	resource = resource_context_for_version(version)
+	require_role_capability(
+		user,
+		capability,
+		resource,
+		sod_blocked=_blocked_by_self_approval(user, capability, version_name),
 	)
 
 
 def has_plan_version_capability(user: str, capability: str, version) -> bool:
-	return evaluate_capability(user, capability, resource_context_for_version(version)).allowed
+	if isinstance(version, str):
+		version_name = version
+	else:
+		version_name = version.name
+	if _blocked_by_self_approval(user, capability, version_name):
+		return False
+	return evaluate_role_capability(user, capability, resource_context_for_version(version))[0]
 
 
 def require_plan_create_capability(user: str, procuring_entity_id: str) -> None:
-	"""Bootstrap check for creating a brand-new Strategic Plan: there is no
-	existing resource to scope a normal evaluate_capability() call to, so —
-	same pattern as reference_data_permissions.require_pe_create_capability
-	(CFG-CHG-002) — this checks for any active assignment granting CAP_AUTHOR
-	for the target PE, not one scoped to a specific not-yet-existing plan."""
-	for grant in resolve_effective_access(user, CAP_AUTHOR):
-		if grant.get("procuring_entity_id") == procuring_entity_id:
-			return
-	frappe.throw(
-		_("Not permitted to create a strategic plan for this procuring entity"),
-		frappe.PermissionError,
-		title="STRATEGY_PERMISSION_DENIED",
+	"""Creating a brand-new Strategic Plan needs no bootstrap workaround (unlike
+	reference_data's PE/FY Context case) — Strategy's scope granularity is
+	Procuring Entity itself, and the PE already exists at plan-creation time,
+	so a normal Role+PE-scope check applies directly."""
+	require_role_capability(
+		user,
+		CAP_AUTHOR,
+		ResourceContext(resource_type="Strategic Plan", resource_id="", procuring_entity_id=procuring_entity_id),
 	)

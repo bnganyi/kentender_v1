@@ -10,8 +10,12 @@ PLAN_ROLE_PRIMARY = "Primary"
 PLAN_ROLE_SUPPORTING = "Supporting Framework"
 PLAN_ROLES = (PLAN_ROLE_PRIMARY, PLAN_ROLE_SUPPORTING)
 
-VERSION_IMMUTABLE = frozenset({"Approved", "Active", "Superseded", "Archived"})
-VERSION_EDITABLE = frozenset({"Draft", "Returned"})
+# STR-CHG-001 v1.5 §6.1: only 4 statuses remain — Draft, Submitted for
+# approval, Active, Superseded. Return moves a submitted version directly
+# back to Draft (no separate Returned status); Approve moves it directly to
+# Active in the same transaction (no separate Approved status).
+VERSION_IMMUTABLE = frozenset({"Submitted for approval", "Active", "Superseded"})
+VERSION_EDITABLE = frozenset({"Draft"})
 
 NODE_TYPE_PILLAR = "Pillar"
 NODE_TYPE_PROGRAMME = "Programme"
@@ -105,8 +109,8 @@ def validate_strategic_plan_version(doc) -> None:
 				frappe.throw(_("Based On Plan Version is not valid"))
 			if baseline.plan_id != doc.plan_id:
 				frappe.throw(_("Based On Plan Version must belong to the same Strategic Plan"))
-			if baseline.status not in ("Approved", "Active"):
-				frappe.throw(_("A successor version must be based on an Approved or Active version"))
+			if baseline.status != "Active":
+				frappe.throw(_("A successor version must be based on the Active version"))
 
 	period_start, period_end = _plan_period(doc.plan_id)
 	effective_from = frappe.utils.getdate(doc.effective_from) if doc.effective_from else None

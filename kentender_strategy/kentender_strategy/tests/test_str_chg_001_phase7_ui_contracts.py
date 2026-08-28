@@ -14,14 +14,23 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, now_datetime
 
 from kentender_strategy.services import strategy_ui_contracts as ui
-from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
+from kentender_strategy.services.strategy_authorization import (
+	ROLE_STRATEGY_APPROVER,
+	ROLE_STRATEGY_AUTHOR,
+	ensure_strategy_governance_roles,
+)
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 
 PE = "PE-MOH"
 FY = "FY-2027-2028"
+
+# AUTH-ADR-001 — map the old profile_id fixture strings onto the real Roles.
+_PROFILE_ROLE = {
+	"CAP-STRATEGY-AUTHOR": ROLE_STRATEGY_AUTHOR,
+	"CAP-STRATEGY-APPROVAL-AUTHORITY": ROLE_STRATEGY_APPROVER,
+}
 
 
 class Phase7TestBase(FrappeTestCase):
@@ -49,20 +58,12 @@ class Phase7TestBase(FrappeTestCase):
 		return email
 
 	def _assign(self, user: str, profile_id: str, pe: str = PE) -> None:
+		frappe.get_doc("User", user).add_roles(_PROFILE_ROLE[profile_id])
+		if frappe.db.exists("User Permission", {"user": user, "allow": "Procuring Entity", "for_value": pe}):
+			return
 		self._track(
 			frappe.get_doc(
-				{
-					"doctype": "Operational Scope Assignment",
-					"assignment_id": f"OSA-P7-{uuid4().hex[:10]}-{self.suffix}",
-					"user_id": user,
-					"capability_profile_id": profile_id,
-					"procuring_entity_id": pe,
-					"effective_from": add_days(now_datetime(), -1),
-					"status": "Active",
-					"assigned_by": "Administrator",
-					"assigned_at": now_datetime(),
-					"concurrency_token": uuid4().hex,
-				}
+				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
 			).insert(ignore_permissions=True)
 		)
 
@@ -215,28 +216,21 @@ class TestPlanWorkspaceAndTree(Phase7TestBase):
 		plan_id, version_id = self._plan_and_version()
 		self._fill_hierarchy(version_id)
 		author = self._user("author2")
-		reviewer = self._user("reviewer2")
 		approver = self._user("approver2")
 		self._assign(author, "CAP-STRATEGY-AUTHOR")
-		self._assign(reviewer, "CAP-STRATEGY-REVIEWER")
 		self._assign(approver, "CAP-STRATEGY-APPROVAL-AUTHORITY")
 
 		frappe.set_user(author)
-		transition_plan_version(version_id, "Submit for review")
-		frappe.set_user(reviewer)
-		transition_plan_version(version_id, "Recommend for approval")
+		transition_plan_version(version_id, "Submit for approval")
 		frappe.set_user(approver)
 		transition_plan_version(version_id, "Approve")
-		transition_plan_version(version_id, "Activate")
 		frappe.set_user("Administrator")
 
 		result = ui.get_plan_workspace(plan_id)
 		self.assertFalse(result["forbidden"])
 		self.assertIsNotNone(result["active_version"])
-		self.assertIsNone(result["pending_version"])
 		self.assertIsNotNone(result["current_authority"])
 		self.assertIsNotNone(result["current_authority"]["approved_by"])
-		self.assertIsNotNone(result["current_authority"]["activated"])
 		self.assertEqual(result["structure_summary"]["performance_targets"], 1)
 
 	def test_workspace_forbidden_for_unrelated_user(self):
@@ -253,13 +247,13 @@ class TestPlanWorkspaceAndTree(Phase7TestBase):
 		author = self._user("author3")
 		self._assign(author, "CAP-STRATEGY-AUTHOR")
 		frappe.set_user(author)
-		transition_plan_version(version_id, "Submit for review")
+		transition_plan_version(version_id, "Submit for approval")
 		frappe.set_user("Administrator")
 
 		history = ui.get_plan_history(plan_id)
 		self.assertGreaterEqual(len(history), 1)
 		events = [h["event"] for h in history]
-		self.assertIn("Submit for review", events)
+		self.assertIn("Submit for approval", events)
 		timestamps = [h["at"] for h in history]
 		self.assertEqual(timestamps, sorted(timestamps, reverse=True))
 
@@ -267,49 +261,43 @@ class TestPlanWorkspaceAndTree(Phase7TestBase):
 class TestVersionReviewOverview(Phase7TestBase):
 	def _submit(self, version_id: str, author: str) -> None:
 		frappe.set_user(author)
-		transition_plan_version(version_id, "Submit for review")
+		transition_plan_version(version_id, "Submit for approval")
 		frappe.set_user("Administrator")
 
-	def test_reviewer_role_and_readiness(self):
+	def test_approver_role_and_readiness(self):
 		_, version_id = self._plan_and_version()
 		self._fill_hierarchy(version_id)
 		author = self._user("author4")
-		reviewer = self._user("reviewer4")
+		approver = self._user("approver4")
 		self._assign(author, "CAP-STRATEGY-AUTHOR")
-		self._assign(reviewer, "CAP-STRATEGY-REVIEWER")
-		self._submit(version_id, author)
-
-		frappe.set_user(reviewer)
-		result = ui.get_version_review_overview(version_id)
-		frappe.set_user("Administrator")
-
-		self.assertEqual(result["role"], "reviewer")
-		self.assertIn("Return", result["allowed_actions"])
-		self.assertIn("Recommend for approval", result["allowed_actions"])
-		self.assertTrue(result["readiness"]["ready"])
-		self.assertIsNotNone(result["submission_authority"]["submitted_by"])
-
-	def test_approver_role_after_recommend(self):
-		_, version_id = self._plan_and_version()
-		self._fill_hierarchy(version_id)
-		author = self._user("author5")
-		reviewer = self._user("reviewer5")
-		approver = self._user("approver5")
-		self._assign(author, "CAP-STRATEGY-AUTHOR")
-		self._assign(reviewer, "CAP-STRATEGY-REVIEWER")
 		self._assign(approver, "CAP-STRATEGY-APPROVAL-AUTHORITY")
 		self._submit(version_id, author)
-		frappe.set_user(reviewer)
-		transition_plan_version(version_id, "Recommend for approval")
-		frappe.set_user("Administrator")
 
 		frappe.set_user(approver)
 		result = ui.get_version_review_overview(version_id)
 		frappe.set_user("Administrator")
 
 		self.assertEqual(result["role"], "approver")
+		self.assertIn("Return", result["allowed_actions"])
 		self.assertIn("Approve", result["allowed_actions"])
-		self.assertIsNotNone(result["submission_authority"]["reviewed_by"])
+		self.assertTrue(result["readiness"]["ready"])
+		self.assertIsNotNone(result["submission_authority"]["submitted_by"])
+
+	def test_author_of_submission_gets_no_approver_actions_even_with_approver_role(self):
+		"""§6.2/§13.4/§18.1 same-version self-check."""
+		_, version_id = self._plan_and_version()
+		self._fill_hierarchy(version_id)
+		dual = self._user("dual5")
+		self._assign(dual, "CAP-STRATEGY-AUTHOR")
+		self._assign(dual, "CAP-STRATEGY-APPROVAL-AUTHORITY")
+		self._submit(version_id, dual)
+
+		frappe.set_user(dual)
+		result = ui.get_version_review_overview(version_id)
+		frappe.set_user("Administrator")
+
+		self.assertIsNone(result["role"])
+		self.assertEqual(result["allowed_actions"], [])
 
 
 class TestDiffStrategyVersions(Phase7TestBase):
@@ -317,19 +305,14 @@ class TestDiffStrategyVersions(Phase7TestBase):
 		plan_id, base_version = self._plan_and_version()
 		self._fill_hierarchy(base_version, target_value=80)
 		author = self._user("author6")
-		reviewer = self._user("reviewer6")
 		approver = self._user("approver6")
 		self._assign(author, "CAP-STRATEGY-AUTHOR")
-		self._assign(reviewer, "CAP-STRATEGY-REVIEWER")
 		self._assign(approver, "CAP-STRATEGY-APPROVAL-AUTHORITY")
 
 		frappe.set_user(author)
-		transition_plan_version(base_version, "Submit for review")
-		frappe.set_user(reviewer)
-		transition_plan_version(base_version, "Recommend for approval")
+		transition_plan_version(base_version, "Submit for approval")
 		frappe.set_user(approver)
 		transition_plan_version(base_version, "Approve")
-		transition_plan_version(base_version, "Activate")
 		frappe.set_user("Administrator")
 
 		from kentender_strategy.services.strategy_writes import create_strategy_successor_version

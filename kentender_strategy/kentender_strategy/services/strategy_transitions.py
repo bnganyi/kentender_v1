@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 §6.1 plan-version lifecycle — table-driven, modeled on
+"""STR-CHG-001 v1.5 §6.1 plan-version lifecycle — table-driven, modeled on
 kentender_core.services.reference_data_transitions.py's pattern (CFG-CHG-002).
 
 Governs Strategic Plan Version only. Strategy Node/Performance Indicator/
@@ -7,6 +7,12 @@ Performance Target inherit their plan version's status (§6.1: "There is no
 separate lifecycle for hierarchy, indicator or target records") and are
 gated directly by strategy_domain_guards._assert_version_editable, not by
 anything in this module.
+
+v1.5 collapses the previous 8-status/9-transition table onto 4 statuses and
+3 user-invoked actions: Submit for approval, Return and Approve. Approve
+both activates the submitted version and (inside the same transaction,
+still driven off "Approve" rather than a separate user action) supersedes
+the plan's previous Active version — see `_activate` below.
 """
 
 from __future__ import annotations
@@ -18,24 +24,20 @@ from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
-	CAP_REVIEW,
 	has_plan_version_capability,
 	require_plan_version_capability,
 )
 from kentender_strategy.services.strategy_readiness import assert_version_ready_for_submit
 
-# (status, action) -> (next_status, capability). Matches the 9-row §6.1 table
-# exactly except "Activate successor" (system-driven, inside _activate below,
-# not a user-invoked action key).
+# (status, action) -> (next_status, capability). Matches the 4-row §6.1
+# table exactly: Activate/supersede-previous-Active happens inside the
+# "Approve" branch of transition_plan_version below (§6.1's own 4th row is
+# system-driven "as part of the successor approval transaction", not a
+# separate user-invoked action key).
 TRANSITIONS: dict[tuple[str, str], tuple[str, str]] = {
-	("Draft", "Submit for review"): ("In Review", CAP_AUTHOR),
-	("Returned", "Revise"): ("Draft", CAP_AUTHOR),
-	("In Review", "Return"): ("Returned", CAP_REVIEW),
-	("In Review", "Recommend for approval"): ("Awaiting Approval", CAP_REVIEW),
-	("Awaiting Approval", "Return"): ("Returned", CAP_APPROVE),
-	("Awaiting Approval", "Approve"): ("Approved", CAP_APPROVE),
-	("Approved", "Activate"): ("Active", CAP_APPROVE),
-	("Superseded", "Archive"): ("Archived", CAP_APPROVE),
+	("Draft", "Submit for approval"): ("Submitted for approval", CAP_AUTHOR),
+	("Submitted for approval", "Return"): ("Draft", CAP_APPROVE),
+	("Submitted for approval", "Approve"): ("Active", CAP_APPROVE),
 }
 
 # status -> [(action, capability), ...] — the same table, read the other way,
@@ -130,9 +132,12 @@ def _assert_no_primary_overlap(doc) -> None:
 
 
 def _activate(doc) -> None:
-	"""Revalidates and atomically activates: supersedes the plan's own
-	previous Active version (successor case) and rejects cross-plan Primary
-	overlap (STR-BR-004), inside the request's own DB transaction."""
+	"""STR-BR-015: revalidates and atomically activates: supersedes the
+	plan's own previous Active version (successor case) and rejects
+	cross-plan Primary overlap (STR-BR-004), inside the request's own DB
+	transaction. Fires directly off "Approve" (§6.2: "Approval ... activates
+	the version inside one transaction") — there is no separate Activate
+	action any more."""
 	_assert_no_primary_overlap(doc)
 
 	current_active = frappe.get_all(
@@ -147,7 +152,7 @@ def _activate(doc) -> None:
 		record_event(
 			entity_type="Strategic Plan Version",
 			entity_name=other.name,
-			event_type="Activate successor",
+			event_type="Approve successor",
 			prior_state="Active",
 			new_state="Superseded",
 			plan_version=other.name,
@@ -182,7 +187,7 @@ def transition_plan_version(
 		frappe.session.user, capability, doc, correlation_id=correlation_id or ""
 	)
 
-	if action == "Submit for review":
+	if action == "Submit for approval":
 		assert_version_ready_for_submit(doc.name)
 
 	if action == "Return":
@@ -196,11 +201,14 @@ def transition_plan_version(
 		doc.return_reason = reason
 
 	prior_status = doc.status
-	if action == "Activate":
+	if action == "Approve":
+		# STR-BR-015: readiness/overlap revalidated and the version activated
+		# atomically inside _activate — no separate Awaiting Approval/Approved
+		# stopover.
 		_activate(doc)
 	else:
 		doc.status = next_status
-		if action == "Revise":
+		if action == "Submit for approval":
 			doc.return_reason = ""
 		doc.save(ignore_permissions=True)
 

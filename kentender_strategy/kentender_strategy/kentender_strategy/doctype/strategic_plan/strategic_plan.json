@@ -11,6 +11,7 @@
   "title",
   "col_id",
   "procuring_entity_id",
+  "pe_fy_context",
   "owner_org_unit_id",
   "section_role",
   "plan_role",
@@ -56,6 +57,13 @@
    "description": "Defines the owning PE and is used in permission and context resolution.",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "label": "PE Fiscal Year Context",
+   "options": "PE Fiscal Year Context",
+   "insert_after": "procuring_entity_id"
   },
   {
    "fieldname": "owner_org_unit_id",
@@ -160,19 +168,7 @@
    "print": 0,
    "read": 1,
    "report": 1,
-   "role": "Strategy Reviewer",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 0,
-   "read": 1,
-   "report": 1,
-   "role": "Strategy Approval Authority",
+   "role": "Strategy Approver",
    "share": 0,
    "write": 0
   },

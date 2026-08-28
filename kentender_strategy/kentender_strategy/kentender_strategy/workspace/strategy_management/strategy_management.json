@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"str_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Strategy Management</b></span>\",\"col\":12}},{\"id\":\"str_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Strategy Portfolio (all Strategy roles) and Review tasks (Reviewer / Approval Authority) — STR-CHG-001 v1.3 Phase 8.\",\"col\":12}}]",
+ "content": "[{\"id\":\"str_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Strategy Management</b></span>\",\"col\":12}},{\"id\":\"str_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Strategy Portfolio (all Strategy roles) and Approval tasks (Strategy Approver) — STR-CHG-001 v1.5.\",\"col\":12}}]",
  "creation": "2026-08-02 21:16:56.771192",
  "custom_blocks": [],
  "docstatus": 0,
@@ -30,10 +30,7 @@
    "role": "Strategy Author"
   },
   {
-   "role": "Strategy Reviewer"
-  },
-  {
-   "role": "Strategy Approval Authority"
+   "role": "Strategy Approver"
   },
   {
    "role": "Strategy Viewer"

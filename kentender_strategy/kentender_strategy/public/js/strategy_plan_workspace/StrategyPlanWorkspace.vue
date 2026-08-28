@@ -11,7 +11,6 @@ import {
 	getStrategyTree,
 	saveStructureDraft,
 	submitVersion,
-	activateVersion,
 	createSuccessorVersion,
 	getFinancialYears,
 } from "./data/strategyPlanApi.js";
@@ -56,8 +55,8 @@ function expectedResult(target, unit) {
 }
 
 function statusClass(status) {
-	if (["Active", "Approved"].includes(status)) return "is-live";
-	if (["In Review", "Awaiting Approval"].includes(status)) return "is-pending";
+	if (status === "Active") return "is-live";
+	if (status === "Submitted for approval") return "is-pending";
 	return "is-draft";
 }
 
@@ -66,8 +65,8 @@ function statusClass(status) {
 // to the same live/pending/draft coloring statusClass() already uses for
 // version badges, instead of hardcoding one class for every row.
 function eventStatusClass(eventName) {
-	if (["Approve", "Activate", "Activate successor"].includes(eventName)) return "is-live";
-	if (["Submit for review", "Recommend for approval"].includes(eventName)) return "is-pending";
+	if (["Approve", "Approve successor"].includes(eventName)) return "is-live";
+	if (eventName === "Submit for approval") return "is-pending";
 	return "is-draft";
 }
 
@@ -128,23 +127,7 @@ function saveDraft() {
 	frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
 }
 
-const confirmDialog = ref(null); // 'activate' | 'submit' | null
-
-async function doActivate() {
-	if (!workspace.value?.pending_version) return;
-	acting.value = true;
-	actionError.value = null;
-	confirmDialog.value = null;
-	try {
-		await activateVersion(workspace.value.pending_version.id);
-		frappe.show_alert({ message: __("Version activated"), indicator: "green" });
-		await loadWorkspace();
-	} catch (e) {
-		actionError.value = e.message || String(e);
-	} finally {
-		acting.value = false;
-	}
-}
+const confirmDialog = ref(null); // 'submit' | null
 
 async function doSubmit() {
 	if (!workspace.value?.current_version) return;
@@ -153,7 +136,7 @@ async function doSubmit() {
 	confirmDialog.value = null;
 	try {
 		await submitVersion(workspace.value.current_version.id);
-		frappe.show_alert({ message: __("Submitted for review"), indicator: "green" });
+		frappe.show_alert({ message: __("Submitted for approval"), indicator: "green" });
 		await loadWorkspace();
 	} catch (e) {
 		actionError.value = e.message || String(e);
@@ -497,7 +480,7 @@ async function saveNewPillar() {
 								{{ __("Save draft") }}
 							</button>
 							<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" @click="confirmDialog = 'submit'">
-								{{ __("Submit for review") }}
+								{{ __("Submit for approval") }}
 							</button>
 						</template>
 						<button
@@ -508,15 +491,6 @@ async function saveNewPillar() {
 							@click="confirmDialog = 'create-successor'"
 						>
 							{{ __("Create successor version") }}
-						</button>
-						<button
-							v-if="workspace.capabilities.activate"
-							type="button"
-							class="kt-btn kt-btn-primary"
-							:disabled="acting"
-							@click="confirmDialog = 'activate'"
-						>
-							{{ __("Activate version") }}
 						</button>
 					</div>
 				</header>
@@ -537,26 +511,18 @@ async function saveNewPillar() {
 						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
 							<div class="kt-card kt-blueprint">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-								<div class="kt-card-title">{{ workspace.pending_version ? __("Version authority") : __("Plan identity") }}</div>
-								<template v-if="workspace.pending_version">
-									<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Version effective period") }}</dt><dd>{{ workspace.pending_version.effective_period_label || "—" }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Approved by") }}</dt><dd>{{ workspace.version_authority.approved_by?.actor || "—" }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Current Active version") }}</dt><dd>{{ workspace.version_authority.current_active_version ? `Version ${workspace.version_authority.current_active_version.version_number}` : "—" }}</dd></div>
-								</template>
-								<template v-else>
-									<div class="kt-row"><dt>{{ __("Procuring Entity") }}</dt><dd>{{ workspace.plan.procuring_entity?.name }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Organisation scope") }}</dt><dd>{{ __("PE-wide") }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Plan role") }}</dt><dd>{{ workspace.plan.plan_role }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Active version") }}</dt><dd>{{ workspace.active_version ? `Version ${workspace.active_version.version_number}` : "—" }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Version effective period") }}</dt><dd>{{ workspace.current_version.effective_period_label || "—" }}</dd></div>
-								</template>
+								<div class="kt-card-title">{{ __("Plan identity") }}</div>
+								<div class="kt-row"><dt>{{ __("Procuring Entity") }}</dt><dd>{{ workspace.plan.procuring_entity?.name }}</dd></div>
+								<div class="kt-row"><dt>{{ __("Organisation scope") }}</dt><dd>{{ __("PE-wide") }}</dd></div>
+								<div class="kt-row"><dt>{{ __("Plan role") }}</dt><dd>{{ workspace.plan.plan_role }}</dd></div>
+								<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>
+								<div class="kt-row"><dt>{{ __("Active version") }}</dt><dd>{{ workspace.active_version ? `Version ${workspace.active_version.version_number}` : "—" }}</dd></div>
+								<div class="kt-row"><dt>{{ __("Version effective period") }}</dt><dd>{{ workspace.current_version.effective_period_label || "—" }}</dd></div>
 							</div>
 							<div class="kt-card kt-blueprint">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-								<div class="kt-card-title">{{ workspace.pending_version ? __("Activation readiness") : __("Current authority") }}</div>
-								<template v-if="workspace.pending_version && workspace.readiness">
+								<div class="kt-card-title">{{ __("Current authority") }}</div>
+								<template v-if="workspace.readiness">
 									<div v-for="c in workspace.readiness.checks" :key="c.check" class="kt-row">
 										<dt>{{ c.check }}</dt>
 										<dd><span class="kt-status is-live">{{ c.ready ? __("Ready") : __("Not ready") }}</span></dd>
@@ -564,7 +530,6 @@ async function saveNewPillar() {
 								</template>
 								<template v-else-if="workspace.current_authority">
 									<div class="kt-row"><dt>{{ __("Approved by") }}</dt><dd>{{ workspace.current_authority.approved_by?.actor || "—" }}</dd></div>
-									<div class="kt-row"><dt>{{ __("Activated") }}</dt><dd>{{ workspace.current_authority.activated?.actor || "—" }}</dd></div>
 								</template>
 								<p v-else class="kt-muted">{{ __("No authority events recorded yet.") }}</p>
 							</div>
@@ -739,18 +704,10 @@ async function saveNewPillar() {
 		</div>
 
 		<ConfirmDialog
-			:open="confirmDialog === 'activate'"
-			:title="__('Activate this version?')"
-			:message="__('The currently Active version will be superseded. This cannot be undone.')"
-			:confirm-label="__('Activate version')"
-			@confirm="doActivate"
-			@cancel="confirmDialog = null"
-		/>
-		<ConfirmDialog
 			:open="confirmDialog === 'submit'"
-			:title="__('Submit this version for review?')"
-			:message="__('The draft will move to In Review and can no longer be edited until returned.')"
-			:confirm-label="__('Submit for review')"
+			:title="__('Submit this version for approval?')"
+			:message="__('The draft will move to Submitted for approval and can no longer be edited until returned.')"
+			:confirm-label="__('Submit for approval')"
 			@confirm="doSubmit"
 			@cancel="confirmDialog = null"
 		/>

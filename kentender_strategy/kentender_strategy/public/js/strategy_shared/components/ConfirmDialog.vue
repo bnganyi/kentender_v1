@@ -1,8 +1,8 @@
 <script setup>
 // AGENTS.md §6.3: never frappe.confirm()/frappe.ui.Dialog on a Vue-owned
 // surface (renders outside the Vue root, inherits neither state nor styles)
-// — a small in-Vue dialog instead. Shared by the Plan workspace (Activate /
-// Submit for review) and Review task (Approve / Recommend for approval)
+// — a small in-Vue dialog instead. Shared by the Plan workspace (Submit for
+// approval / Create successor) and Approval task (Approve / Return)
 // lifecycle actions.
 import { ref, nextTick, watch, computed } from "vue";
 

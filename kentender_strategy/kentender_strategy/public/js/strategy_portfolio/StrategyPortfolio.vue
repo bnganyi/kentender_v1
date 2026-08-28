@@ -81,7 +81,7 @@ function clearFilters() {
 
 function statusClass(status) {
 	if (status === "Active") return "is-live";
-	if (["In Review", "Awaiting Approval", "Approved"].includes(status)) return "is-pending";
+	if (status === "Submitted for approval") return "is-pending";
 	return "is-draft";
 }
 

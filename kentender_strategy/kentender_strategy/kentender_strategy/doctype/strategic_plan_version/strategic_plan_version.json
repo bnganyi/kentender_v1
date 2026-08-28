@@ -68,7 +68,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nIn Review\nReturned\nAwaiting Approval\nApproved\nActive\nSuperseded\nArchived",
+   "options": "Draft\nSubmitted for approval\nActive\nSuperseded",
    "reqd": 1,
    "default": "Draft",
    "in_list_view": 1
@@ -159,19 +159,7 @@
    "print": 0,
    "read": 1,
    "report": 1,
-   "role": "Strategy Reviewer",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 0,
-   "read": 1,
-   "report": 1,
-   "role": "Strategy Approval Authority",
+   "role": "Strategy Approver",
    "share": 0,
    "write": 0
   },

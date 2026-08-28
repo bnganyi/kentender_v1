@@ -47,18 +47,18 @@ def _plan_payload(plan) -> dict:
 
 def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = None) -> dict:
 	"""Create a new Strategic Plan + its Draft v1, or update an existing
-	Draft/Returned plan's identity and version period fields."""
+	Draft plan's identity and version period fields."""
 	plan_id = payload.get("plan_id")
 	if plan_id:
 		plan = frappe.get_doc("Strategic Plan", plan_id)
 		version_id = payload.get("plan_version_id") or frappe.db.get_value(
 			"Strategic Plan Version",
-			{"plan_id": plan_id, "status": ["in", ("Draft", "Returned")]},
+			{"plan_id": plan_id, "status": "Draft"},
 			"name",
 		)
 		if not version_id:
 			frappe.throw(
-				_("No editable Draft or Returned version found for this plan"),
+				_("No editable Draft version found for this plan"),
 				frappe.ValidationError,
 				title="STRATEGY_INVALID_STATE",
 			)
@@ -114,17 +114,17 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 
 def create_strategy_successor_version(plan_id: str) -> dict:
 	"""STR-CHG-001 §10.1 create_strategy_successor_version — copy the plan's
-	Approved or Active version's hierarchy/indicators/targets into a new
-	Draft, with based_on_plan_version_id as the fixed comparison baseline."""
+	Active version's hierarchy/indicators/targets into a new Draft, with
+	based_on_plan_version_id as the fixed comparison baseline."""
 	baseline_name = frappe.db.get_value(
 		"Strategic Plan Version",
-		{"plan_id": plan_id, "status": ["in", ("Approved", "Active")]},
+		{"plan_id": plan_id, "status": "Active"},
 		"name",
 		order_by="version_number desc",
 	)
 	if not baseline_name:
 		frappe.throw(
-			_("No Approved or Active version to create a successor from"),
+			_("No Active version to create a successor from"),
 			frappe.ValidationError,
 			title="STRATEGY_INVALID_STATE",
 		)
@@ -133,7 +133,7 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 
 	if frappe.db.exists(
 		"Strategic Plan Version",
-		{"plan_id": plan_id, "status": ["in", ("Draft", "In Review", "Returned", "Awaiting Approval")]},
+		{"plan_id": plan_id, "status": ["in", ("Draft", "Submitted for approval")]},
 	):
 		frappe.throw(
 			_("An open successor version already exists for this plan"),
