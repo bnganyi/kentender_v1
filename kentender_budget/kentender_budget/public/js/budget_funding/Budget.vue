@@ -3,6 +3,9 @@ import { computed } from "vue";
 import { useRouteState } from "../budget_shared/composables/useRouteState.js";
 import BudgetWorkspaceScreen from "./components/BudgetWorkspaceScreen.vue";
 import BudgetVersionEditorScreen from "./components/BudgetVersionEditorScreen.vue";
+import BudgetDetailScreen from "./components/BudgetDetailScreen.vue";
+import BudgetApprovalTaskScreen from "./components/BudgetApprovalTaskScreen.vue";
+import BudgetLineDetailScreen from "./components/BudgetLineDetailScreen.vue";
 
 // BUD-CHG-001 v1.2 §10 — all five Budget screens share one Frappe Page
 // ("budget-funding", not the spec's literal "budget" — that collides with
@@ -26,6 +29,9 @@ const screen = computed(() => {
 <template>
 	<BudgetWorkspaceScreen v-if="screen === 'workspace'" />
 	<BudgetVersionEditorScreen v-else-if="screen === 'editor'" />
+	<BudgetDetailScreen v-else-if="screen === 'detail'" />
+	<BudgetApprovalTaskScreen v-else-if="screen === 'review'" />
+	<BudgetLineDetailScreen v-else-if="screen === 'line'" />
 	<div v-else class="kt-industry">
 		<div class="kt-shell">
 			<div class="kt-card kt-blueprint kt-empty">

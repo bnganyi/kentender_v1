@@ -25,8 +25,11 @@ from kentender_budget.services.budget_authorization import (
 from kentender_budget.services.budget_contracts import (
 	_active_version,
 	_budget_summary,
+	_funding_source_label,
+	_org_unit_label,
 	_resolve_budget,
 	_resolve_budget_version,
+	_user_label,
 	_version_summary,
 	_version_totals,
 	resolve_scoped_entity,
@@ -188,10 +191,11 @@ def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
 		if version.based_on_budget_version
 		else None,
 		"revision_type": version.revision_type or "",
+		"approval_document": version.approval_document or "",
 		"readiness": _readiness_checklist(version, issues),
 		"blockers": issues,
 		"submission": {
-			"submitted_by": version.submitted_by or "",
+			"submitted_by": _user_label(version.submitted_by),
 			"submitted_at": str(version.submitted_at) if version.submitted_at else "",
 			"submitted_at_display": format_datetime(version.submitted_at) if version.submitted_at else "",
 		},
@@ -216,6 +220,16 @@ def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
 		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		order_by="title asc",
 	)
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if rows
+		else {}
+	)
 	out = []
 	total_amount = total_floor = 0.0
 	for r in rows:
@@ -226,9 +240,10 @@ def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
 		out.append(
 			{
 				"budget_line": r.budget_line,
+				"budget_line_code": codes.get(r.budget_line, ""),
 				"title": r.title,
-				"owner_org_unit": r.owner_org_unit,
-				"funding_source": r.funding_source,
+				"owner_org_unit": _org_unit_label(r.owner_org_unit),
+				"funding_source": _funding_source_label(r.funding_source),
 				"amount": flt(r.approved_amount),
 				"floor": floor,
 				"headroom": headroom,
@@ -256,11 +271,29 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 		fields=["budget_line", "title", "approved_amount"],
 		order_by="title asc",
 	)
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if rows
+		else {}
+	)
 	if not version.based_on_budget_version:
 		total = sum(flt(r.approved_amount) for r in rows)
 		return {
 			"is_initial_baseline": True,
-			"rows": [{"budget_line": r.budget_line, "title": r.title, "submitted_amount": flt(r.approved_amount)} for r in rows],
+			"rows": [
+				{
+					"budget_line": r.budget_line,
+					"budget_line_code": codes.get(r.budget_line, ""),
+					"title": r.title,
+					"submitted_amount": flt(r.approved_amount),
+				}
+				for r in rows
+			],
 			"total_submitted": total,
 		}
 
@@ -286,6 +319,7 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 		changes.append(
 			{
 				"budget_line": r.budget_line,
+				"budget_line_code": codes.get(r.budget_line, ""),
 				"title": r.title,
 				"active_amount": active_amount,
 				"submitted_amount": flt(r.approved_amount),
@@ -349,6 +383,12 @@ def return_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
 
 	if version.status != "Submitted for approval":
 		frappe.throw(_("Only a Submitted version can be returned"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	# §12.5 "Every command carries Budget Version ID, expected status and
+	# expected record version" — mirrors approve_budget_version's own check.
+	expected_modified = payload.get("expected_modified")
+	if expected_modified and str(version.modified) != str(expected_modified):
+		frappe.throw(_("This Budget Version was changed by someone else"), frappe.ValidationError, title="BUDGET_STALE_WRITE")
 
 	reason = (payload.get("return_reason") or payload.get("reason") or "").strip()
 	if not (_MIN_RETURN_REASON <= len(reason) <= _MAX_RETURN_REASON):

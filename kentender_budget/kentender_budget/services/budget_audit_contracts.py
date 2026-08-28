@@ -15,15 +15,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, format_datetime, get_datetime, now_datetime
 
-from kentender_budget.services.budget_permissions import (
-	ROLE_AUDITOR,
-	ROLE_APPROVER,
-	ROLE_OFFICER,
-	ROLE_VIEWER,
-	require_any_role,
-)
-
-_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
+from kentender_budget.services.budget_authorization import require_budget_read_scope, require_budget_version_read_scope
+from kentender_budget.services.budget_contracts import _user_label
 
 # Must match Budget Audit Event.event_type exactly (kentender_budget/doctype/
 # budget_audit_event/budget_audit_event.json).
@@ -74,12 +67,28 @@ FUNDING_EVENT_TYPES = frozenset(
 # BUD-DES-11/13 History artboards show one "Draft saved" line regardless of
 # which draft-save event actually fired; DRAFT_APPROVAL_SAVED / DRAFT_LINES_SAVED
 # stay distinct in the ledger (precise audit) but collapse to one label here.
+# EVENT_SUBMITTED / EVENT_RESERVED are remapped to the exact wording BUD-DES-07
+# and BUD-DES-07A show ("Submitted for review" / "Reservation confirmed") —
+# the stored event_type stays the precise audit value, only display changes.
 _DISPLAY_LABEL = {
 	EVENT_DRAFT_APPROVAL_SAVED: _("Draft saved"),
 	EVENT_DRAFT_LINES_SAVED: _("Draft saved"),
+	EVENT_SUBMITTED: _("Submitted for review"),
+	EVENT_RESERVED: _("Reservation confirmed"),
 }
 
 _POSITION_KEYS = ("approved", "reserved", "committed", "available")
+
+# Deterministic order for the Funding Activity "All funding events" filter —
+# FUNDING_EVENT_TYPES is a frozenset and has no stable iteration order.
+_FUNDING_EVENT_ORDER = (
+	EVENT_RESERVED,
+	EVENT_REVALIDATED,
+	EVENT_PARTIAL,
+	EVENT_RELEASED,
+	EVENT_COMMITMENT,
+	EVENT_COMMITMENT_ADJUSTED,
+)
 
 
 def record_event(
@@ -170,7 +179,7 @@ def _row_dto(r) -> dict[str, Any]:
 		"downstream_reference": r.get("downstream_reference") or "",
 		"amount": flt(r.get("amount")) if r.get("amount") is not None else None,
 		"currency": r.get("currency") or "",
-		"actor": r.get("actor") or "",
+		"actor": _user_label(r.get("actor")),
 		"actor_kind": r.get("actor_kind") or "user",
 		"calling_module": r.get("calling_module") or "",
 		"correlation_id": r.get("correlation_id") or "",
@@ -212,8 +221,11 @@ def get_funding_activity(
 	event_type: str | None = None,
 ) -> dict[str, Any]:
 	"""BUD-UI-03 Funding Activity tab — §9.3: reverse chronological, server-filtered."""
-	require_any_role(*_READ_ROLES)
-	filters: dict[str, Any] = {"budget": budget, "event_type": ["in", list(FUNDING_EVENT_TYPES)]}
+	from kentender_budget.services.budget_contracts import _active_version, _resolve_budget, _version_totals
+
+	doc = _resolve_budget(budget)
+	require_budget_read_scope(doc.procuring_entity or "")
+	filters: dict[str, Any] = {"budget": doc.name, "event_type": ["in", list(FUNDING_EVENT_TYPES)]}
 	if (budget_line or "").strip():
 		filters["budget_line"] = budget_line.strip()
 	if (event_type or "").strip() and event_type in FUNDING_EVENT_TYPES:
@@ -225,7 +237,36 @@ def get_funding_activity(
 		fields=_ACTIVITY_FIELDS,
 		order_by="event_at desc",
 	)
-	out_rows = [_row_dto(r) for r in rows]
+	# Ledger rows only store the Budget Line's own (hash) docname — the
+	# artboard shows its human code (e.g. "MOH-BL-DHI-2027"), not the id.
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line",
+				filters={"name": ["in", list({row.budget_line for row in rows if row.budget_line})]},
+				fields=["name", "generated_reference"],
+			)
+		}
+		if rows
+		else {}
+	)
+	out_rows = []
+	for row in rows:
+		dto = _row_dto(row)
+		dto["budget_line_code"] = codes.get(dto["budget_line"], "")
+		out_rows.append(dto)
+
+	active_version = _active_version(doc.name)
+	budget_lines = (
+		[
+			{"id": ln["budget_line"], "code": ln.get("code", ""), "title": ln["title"]}
+			for ln in _version_totals(active_version.name)["lines"]
+		]
+		if active_version
+		else []
+	)
+
 	return {
 		"rows": out_rows,
 		"row_count": len(out_rows),
@@ -234,13 +275,16 @@ def get_funding_activity(
 			if len(out_rows) == 1
 			else _("Showing {0} funding events").format(len(out_rows))
 		),
+		"budget_lines": budget_lines,
+		"event_type_options": [{"value": et, "label": _DISPLAY_LABEL.get(et, et)} for et in _FUNDING_EVENT_ORDER],
 	}
 
 
 def get_budget_version_history(budget_version: str) -> dict[str, Any]:
 	"""§9.3/§12.5 History tab — Budget Version lifecycle events only, for the
 	exact submitted/active version, reverse chronological."""
-	require_any_role(*_READ_ROLES)
+	version = frappe.get_doc("Budget Version", budget_version)
+	require_budget_version_read_scope(version)
 	rows = frappe.get_all(
 		"Budget Audit Event",
 		filters={"budget_version": budget_version, "event_type": ["in", list(LIFECYCLE_EVENT_TYPES)]},

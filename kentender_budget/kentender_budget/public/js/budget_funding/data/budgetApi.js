@@ -38,3 +38,47 @@ export function listOrganisationUnits(procuringEntity) {
 export function listFundingSources() {
 	return frappeCall(`${REF_DATA}.list_funding_sources`, {});
 }
+
+export function getBudgetDetail(budget) {
+	return frappeCall(`${APP}.get_budget_detail`, { budget });
+}
+
+export function getBudgetLinesActive(budget) {
+	return frappeCall(`${APP}.get_budget_lines_active`, { budget });
+}
+
+export function getFundingActivity(budget, budgetLine, eventType) {
+	return frappeCall(`${APP}.get_funding_activity`, { budget, budget_line: budgetLine, event_type: eventType });
+}
+
+export function getBudgetVersionHistory(budgetVersion) {
+	return frappeCall(`${APP}.get_budget_version_history`, { budget_version: budgetVersion });
+}
+
+export function getBudgetApprovalTask(budgetVersion) {
+	return frappeCall(`${APP}.get_budget_approval_task`, { budget_version: budgetVersion });
+}
+
+export function getBudgetApprovalTaskLines(budgetVersion) {
+	return frappeCall(`${APP}.get_budget_approval_task_lines`, { budget_version: budgetVersion });
+}
+
+export function getBudgetApprovalTaskChanges(budgetVersion) {
+	return frappeCall(`${APP}.get_budget_approval_task_changes`, { budget_version: budgetVersion });
+}
+
+export function returnBudgetVersion(budgetVersion, returnReason, expectedModified) {
+	return frappeCall(`${APP}.return_budget_version`, {
+		payload: { budget_version: budgetVersion, return_reason: returnReason, expected_modified: expectedModified },
+	});
+}
+
+export function approveBudgetVersion(budgetVersion, expectedModified) {
+	return frappeCall(`${APP}.approve_budget_version`, {
+		payload: { budget_version: budgetVersion, expected_modified: expectedModified },
+	});
+}
+
+export function getBudgetLinePosition(budgetLine) {
+	return frappeCall(`${APP}.get_budget_line_position`, { budget_line: budgetLine });
+}

@@ -90,6 +90,34 @@ def _org_unit_label(org_unit: str | None) -> str:
 	return frappe.db.get_value("Organisation Unit", org_unit, "unit_name") or org_unit
 
 
+def _user_label(user: str | None) -> str:
+	if not user:
+		return ""
+	return frappe.db.get_value("User", user, "full_name") or user
+
+
+def _display_datetime(value) -> str:
+	from frappe.utils import format_datetime, get_datetime
+
+	if not value:
+		return ""
+	return format_datetime(get_datetime(value))
+
+
+def _display_date(value) -> str:
+	from frappe.utils import formatdate
+
+	if not value:
+		return ""
+	return formatdate(value, "d MMM yyyy")
+
+
+def _funding_source_label(funding_source: str | None) -> str:
+	if not funding_source:
+		return ""
+	return frappe.db.get_value("Funding Source", funding_source, "label") or funding_source
+
+
 def _resolve_budget(key: str) -> Any:
 	"""Resolve Budget by generated_reference or document name."""
 	key = (key or "").strip()
@@ -114,6 +142,22 @@ def _resolve_budget_version(key: str) -> Any:
 	if not name:
 		frappe.throw(_("Budget Version {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
 	return frappe.get_doc("Budget Version", name)
+
+
+def _resolve_budget_line(key: str) -> Any:
+	"""Resolve Budget Line by generated_reference or document name — same
+	dual-lookup pattern as _resolve_budget/_resolve_budget_version. Every URL
+	that carries a Budget Line uses its code (line.code, e.g. via `go("line",
+	line.code)`), never the raw hash docname."""
+	key = (key or "").strip()
+	if not key:
+		frappe.throw(_("Budget Line is required"), frappe.ValidationError)
+	name = frappe.db.get_value("Budget Line", {"generated_reference": key}, "name")
+	if not name and frappe.db.exists("Budget Line", key):
+		name = key
+	if not name:
+		frappe.throw(_("Budget Line {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+	return frappe.get_doc("Budget Line", name)
 
 
 def _active_version(budget_name: str) -> Any | None:
@@ -179,22 +223,84 @@ def _line_version_for(budget_version_name: str, budget_line_name: str):
 	return frappe.get_doc("Budget Line Version", name) if name else None
 
 
+def _plan_item_label(plan_item: str | None) -> str:
+	"""Budget Line detail's Active reservations table shows the Plan Item's
+	human reference ("PPI-MOH-2027-021 · National digital health
+	infrastructure upgrade"), not its raw docname. `Funding Reservation.plan_item`
+	only stores kentender_procurement's own docname (a plain Data field, not a
+	Link — no schema coupling), so this reads Procurement Plan Item's own
+	fields directly via frappe.db, the same cross-app read pattern already used
+	for Organisation Unit/Financial Year/Funding Source (reading another app's
+	doctype fields via the ORM is not "deep-importing internals" — that means
+	importing its Python modules)."""
+	if not plan_item:
+		return ""
+	code = frappe.db.get_value("Procurement Plan Item", plan_item, "plan_item_code")
+	if not code:
+		return plan_item
+	version_name = frappe.db.get_value("Procurement Plan Item", plan_item, "current_approved_item_version")
+	title = frappe.db.get_value("Procurement Plan Item Version", version_name, "requirement_title") if version_name else None
+	return f"{code} · {title}" if title else code
+
+
+def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Funding Reservation",
+		filters={"budget_line": budget_line, "status": ["in", _ACTIVE_RESERVATION_STATUSES]},
+		fields=["name", "generated_reference", "plan_item", "original_amount", "remaining_amount", "status"],
+		order_by="creation asc",
+	)
+	out = []
+	for r in rows:
+		out.append(
+			{
+				"id": r.name,
+				"code": r.generated_reference,
+				"plan_item_label": _plan_item_label(r.plan_item),
+				# §12.4 "View Plan Item uses a server-returned authorised Planning
+				# URL. The Budget client does not build a route from a guessed
+				# naming rule." — this is Planning's own published route shape for
+				# its Plan Item editor (kentender_procurement/.../get_plan_review.py
+				# builds the identical string for the same doctype/page).
+				"plan_item_url": f"/app/procurement-plan-item-editor/{r.plan_item}" if r.plan_item else "",
+				"original_amount": flt(r.original_amount),
+				"remaining_amount": flt(r.remaining_amount),
+				"status": r.status,
+			}
+		)
+	return out
+
+
 def get_budget_line_position(budget_line: str, *, as_at_version: str | None = None) -> dict[str, Any]:
 	"""§9.1 `get_budget_line_position` — authorised line identity, active-version
-	amount and current positions. No mutation."""
-	require_budget_version_read_scope(_line_owning_version(budget_line, as_at_version))
-	line = frappe.get_doc("Budget Line", budget_line)
-	version_name = as_at_version or _active_version_name_for_line(budget_line)
-	line_version = _line_version_for(version_name, budget_line) if version_name else None
-	position = _line_position(budget_line, line_version)
+	amount and current positions. No mutation. BUD-UI-05 Budget Line detail."""
+	line = _resolve_budget_line(budget_line)
+	owning_version = _line_owning_version(line.name, as_at_version)
+	require_budget_version_read_scope(owning_version)
+	budget = frappe.get_doc("Budget", line.budget)
+	version_name = as_at_version or owning_version.name
+	line_version = _line_version_for(version_name, line.name) if version_name else None
+	position = _line_position(line.name, line_version)
 	return {
 		"id": line.name,
 		"code": line.generated_reference,
 		"title": line_version.title if line_version else "",
-		"owner_org_unit": line_version.owner_org_unit if line_version else "",
-		"funding_source": line_version.funding_source if line_version else "",
+		"owner_org_unit": _org_unit_label(line_version.owner_org_unit) if line_version else "",
+		"funding_source": _funding_source_label(line_version.funding_source) if line_version else "",
 		"currency": line_version.currency if line_version else "KES",
 		"positions": position,
+		"budget": {
+			"id": budget.name,
+			"code": budget.generated_reference,
+			"procuring_entity": {"id": budget.procuring_entity, "name": _entity_label(budget.procuring_entity)},
+			"financial_year": {"id": budget.financial_year, "label": _fy_label(budget.financial_year)},
+		},
+		"version": {
+			"id": owning_version.name,
+			"version_number": owning_version.version_number,
+			"status": owning_version.status,
+		},
+		"reservations": _line_active_reservations(line.name),
 	}
 
 
@@ -237,7 +343,13 @@ def _version_totals(budget_version_name: str) -> dict[str, float]:
 		committed += pos["committed"]
 		available += pos["available"]
 		lines.append(
-			{**lv, "code": codes.get(lv.budget_line, ""), "owner_org_unit_label": _org_unit_label(lv.owner_org_unit), "positions": pos}
+			{
+				**lv,
+				"code": codes.get(lv.budget_line, ""),
+				"owner_org_unit_label": _org_unit_label(lv.owner_org_unit),
+				"funding_source_label": _funding_source_label(lv.funding_source),
+				"positions": pos,
+			}
 		)
 	return {
 		"approved": approved,
@@ -293,7 +405,12 @@ def _version_summary(version) -> dict[str, Any]:
 		"version_number": version.version_number,
 		"status": version.status,
 		"approval_reference": version.approval_reference,
+		# ISO (yyyy-mm-dd) — the version editor binds this straight into an
+		# <input type=date>. approval_date_display is the read-only sibling
+		# ("30 Sep 2026") for Workspace/Detail cards; keep both in sync here
+		# rather than at each call site.
 		"approval_date": str(version.approval_date) if version.approval_date else "",
+		"approval_date_display": _display_date(version.approval_date),
 		"authorised_total": flt(version.authorised_total),
 	}
 
@@ -430,10 +547,10 @@ def get_budget_detail(budget: str) -> dict[str, Any]:
 		},
 		"approval_document": version.approval_document,
 		"activation": {
-			"submitted_by": version.submitted_by or "",
-			"submitted_at": str(version.submitted_at) if version.submitted_at else "",
-			"decided_by": version.decided_by or "",
-			"decided_at": str(version.decided_at) if version.decided_at else "",
+			"submitted_by": _user_label(version.submitted_by),
+			"submitted_at": _display_datetime(version.submitted_at),
+			"decided_by": _user_label(version.decided_by),
+			"decided_at": _display_datetime(version.decided_at),
 		},
 		"can_create_revision": has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
 	}
@@ -635,5 +752,18 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 	if existing_draft:
 		return {"ok": True, "version": _version_summary(existing_draft), "existing": True}
 
-	version = _create_draft_version(doc, payload, based_on=active)
+	# approval_reference/date/authorised_total/approval_document are DB-mandatory
+	# on Budget Version from the first insert (see BudgetVersionEditorScreen.vue's
+	# own note on this for the baseline case). A successor has no pre-creation
+	# form (BUD-DES-14/15 only exist post-creation) — seed these from the prior
+	# Active version, matching how _copy_line_versions seeds the line data; the
+	# Officer edits them in the tabbed editor before Save/Submit.
+	seeded = {
+		"approval_reference": payload.get("approval_reference") or active.approval_reference,
+		"approval_date": payload.get("approval_date") or str(active.approval_date),
+		"authorised_total": payload.get("authorised_total") or active.authorised_total,
+		"approval_document": payload.get("approval_document") or active.approval_document,
+		"revision_type": payload.get("revision_type"),
+	}
+	version = _create_draft_version(doc, seeded, based_on=active)
 	return {"ok": True, "version": _version_summary(version)}

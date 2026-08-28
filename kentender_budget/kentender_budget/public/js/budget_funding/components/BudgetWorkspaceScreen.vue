@@ -203,7 +203,7 @@ function registerBudget() {
 						</div>
 						<div>
 							<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Approval date") }}</div>
-							<div style="font-size: 14px; font-weight: 500">{{ workspace.version.approval_date }}</div>
+							<div style="font-size: 14px; font-weight: 500">{{ workspace.version.approval_date_display }}</div>
 						</div>
 					</div>
 				</div>

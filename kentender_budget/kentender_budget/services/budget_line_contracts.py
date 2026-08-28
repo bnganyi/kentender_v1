@@ -254,9 +254,10 @@ def get_budget_lines_active(budget: str) -> dict[str, Any]:
 		rows.append(
 			{
 				"budget_line": line["budget_line"],
+				"code": line.get("code", ""),
 				"title": line["title"],
-				"owner_org_unit": line["owner_org_unit"],
-				"funding_source": line["funding_source"],
+				"owner_org_unit": line.get("owner_org_unit_label", ""),
+				"funding_source": line.get("funding_source_label", ""),
 				"approved": pos["approved"],
 				"reserved": pos["reserved"],
 				"committed": pos["committed"],
