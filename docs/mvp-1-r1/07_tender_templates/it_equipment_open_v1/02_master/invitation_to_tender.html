@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invitation to Tender - {{ tender.reference }}</title>
+<link rel="stylesheet" href="print.css">
+</head>
+<body class="invitation">
+
+<header class="invitation-header">
+  <p class="pe-name">{{ procuring_entity.name }}</p>
+  <p class="pe-address">{{ procuring_entity.address }}</p>
+</header>
+
+<h1>INVITATION TO TENDER</h1>
+
+<p class="tender-identity">
+  <strong>Tender Reference:</strong> {{ tender.reference }}<br>
+  <strong>Tender Title:</strong> {{ tender.title }}
+</p>
+
+<p>
+  {{ procuring_entity.name }} invites Tenders for electronic submission for the supply of goods described above.
+</p>
+
+<p>
+  Tendering will be conducted as a <strong>National Open Tender</strong>, using a standardised tender document.
+  Tendering is open to all qualified and interested Tenderers.
+</p>
+
+<p>
+  Tender Documents are available electronically through <strong>{{ platform.name }}</strong> at
+  <strong>{{ platform.public_url }}</strong>, where they may be viewed, downloaded and completed free of charge.
+  All Tenders must be submitted electronically through {{ platform.name }} at the same address.
+</p>
+
+<p>
+  <strong>Clarification deadline:</strong> {{ tender.clarification_deadline }}.
+  Requests for clarification must be submitted to {{ procuring_entity.contact_office }}.
+</p>
+
+<p>
+  <strong>Submission deadline:</strong> {{ tender.submission_deadline }}.
+  Electronic opening: immediately thereafter.
+</p>
+
+<p>
+  All Tenders must be accompanied by a Tender Security of {{ tender.tender_security.amount }}
+  {{ tender.tender_security.currency }}.
+</p>
+
+<p>
+  Tenders received after the submission deadline will be rejected.
+</p>
+
+<div class="signature-block">
+  <p>Authorised on behalf of {{ procuring_entity.name }} by:</p>
+  <p>
+    <strong>Name:</strong> {{ tender.approval.official_name }}<br>
+    <strong>Designation:</strong> {{ tender.approval.official_title }}<br>
+    <strong>Date:</strong> {{ tender.approval.approved_date }}<br>
+    <strong>Authentication reference:</strong> {{ tender.approval.reference }}
+  </p>
+</div>
+
+</body>
+</html>
