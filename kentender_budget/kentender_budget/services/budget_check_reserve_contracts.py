@@ -1,7 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Funding check and reservation — BUD-UI-06 / BUD-FR-009–016."""
+"""BUD-CHG-001 v1.2 §8.2/§9.1 — the Finance confirmation boundary. `check_funding`
+is non-mutating and returns a short-lived check token; `reserve_funding`
+re-validates every allocation under a stable-order row lock and creates one
+reservation per source allocation, atomically (all-or-none). Repeating the
+same correlation_id returns the original effective result (BUD-BR-011).
+
+Caller (Procurement Planning) authority — the assigned Finance Confirmation
+capability, task, PE/FY, source-set and amount scope — is authorised here
+directly; Budget never trusts Planning's own route visibility as authority
+(§12.6).
+"""
 
 from __future__ import annotations
 
@@ -9,378 +19,225 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, nowdate, today
+from frappe.utils import flt
 
-from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_RESERVE,
-	require_budget_capability,
-)
-from kentender_budget.services.budget_contracts import resolve_scoped_entity
 from kentender_budget.services.budget_line_contracts import format_kes_full
-from kentender_budget.services.budget_permissions import (
-	ROLE_AUDITOR,
-	ROLE_APPROVER,
-	ROLE_OFFICER,
-	ROLE_APPROVER,
-	ROLE_VIEWER,
-	entity_for_user,
-	require_any_role,
-)
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
-LINEAGE_NOTE = (
-	"This reservation follows the same requirement through Planning and Tendering. "
-	"Those stages will not create additional funding holds."
-)
+_CHECK_TOKEN_TTL_SECONDS = 300
+_FINANCE_CAPABILITY_ROLE = "Finance Confirmation Officer"
 
-DECISION_AVAILABLE = "Funding available"
-DECISION_INSUFFICIENT = "Insufficient funding"
+
+def _require_finance_capability(procuring_entity: str) -> None:
+	from kentender_core.services.authorization_native import require_role_capability
+	from kentender_core.services.authorization_policy import ResourceContext
+
+	user = frappe.session.user
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return
+	if _FINANCE_CAPABILITY_ROLE not in frappe.get_roles(user):
+		frappe.throw(_("Not permitted to confirm funding"), frappe.PermissionError, title="BUDGET_FINANCE_TASK_DENIED")
+	pe_scope = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
+	if pe_scope and procuring_entity not in pe_scope:
+		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_FINANCE_TASK_DENIED")
 
 
 def _resolve_line(budget_line: str) -> Any:
 	key = (budget_line or "").strip()
 	if not key:
 		frappe.throw(_("Budget Line is required"))
-	name = key
-	if not frappe.db.exists("Budget Line", name):
-		name = frappe.db.get_value("Budget Line", {"generated_reference": key}, "name")
+	name = key if frappe.db.exists("Budget Line", key) else frappe.db.get_value("Budget Line", {"generated_reference": key}, "name")
 	if not name:
-		frappe.throw(_("Budget Line not found"), frappe.DoesNotExistError)
+		frappe.throw(_("Budget Line {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_LINE_NOT_ELIGIBLE")
 	return frappe.get_doc("Budget Line", name)
 
 
-def _active_budget(budget_name: str) -> Any:
-	bud = frappe.get_doc("Budget", budget_name)
-	if bud.status != "Active":
-		frappe.throw(_("Budget must be Active for funding check"))
-	return bud
+def _line_active_version_and_position(budget_line_doc):
+	from kentender_budget.services.budget_contracts import _active_version, _line_position, _line_version_for
 
-
-def _available(line) -> float:
-	return flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
-
-
-def demand_doctype_available() -> bool:
-	"""DEM-INT-009 — Budget Demand reads follow DocType availability, not CONSUMERS_LIVE."""
-	return bool(frappe.db.exists("DocType", "Demand"))
-
-
-def _demand_context_fallback(key: str = "") -> dict[str, str]:
-	code = (key or "").strip()
-	return {
-		"id": "",
-		"code": code,
-		"name": code,
-		"owner_org_unit": "",
-		"status": "",
-		"current_stage": "",
-		# Compat aliases used by reserve payload builders.
-		"demand_code": code,
-		"demand_title": code,
-	}
-
-
-def _demand_context(demand: str | None) -> dict[str, str]:
-	"""DEM-INT-009 — resolve MVP Demand by document name or demand_code."""
-	key = (demand or "").strip()
-	if not key:
-		return _demand_context_fallback("")
-	if not demand_doctype_available():
-		return _demand_context_fallback(key)
-
-	name = key if frappe.db.exists("Demand", key) else ""
-	if not name:
-		name = frappe.db.get_value("Demand", {"demand_code": key}, "name") or ""
-	if not name:
-		return _demand_context_fallback(key)
-
-	doc = frappe.get_doc("Demand", name)
-	code = (getattr(doc, "demand_code", None) or "").strip() or name
-	title = (doc.title or "").strip() or code
-	return {
-		"id": name,
-		"code": code,
-		"name": title,
-		"owner_org_unit": (getattr(doc, "owner_org_unit", None) or "").strip(),
-		"status": (doc.status or "").strip(),
-		"current_stage": (getattr(doc, "current_stage", None) or "").strip(),
-		"demand_code": code,
-		"demand_title": title,
-	}
+	version = _active_version(budget_line_doc.budget)
+	if not version:
+		frappe.throw(_("Budget Line has no Active Budget Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
+	line_version = _line_version_for(version.name, budget_line_doc.name)
+	if not line_version:
+		frappe.throw(_("Budget Line is not eligible under the Active Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
+	return version, line_version, _line_position(budget_line_doc.name, line_version)
 
 
 def check_funding(
-	budget_line: str | None = None,
-	requested_amount: float | None = None,
-	demand: str | None = None,
-	procuring_entity: str | None = None,
-	_locked_line: Any = None,
+	plan_item: str,
+	plan_version: str,
+	finance_task: str,
+	source_set_hash: str,
+	allocations: list[dict[str, Any]],
+	correlation_id: str,
 ) -> dict[str, Any]:
-	"""Read-only funding check (BUD-AC-010). Does not mutate balances.
+	"""§9.1 `check_funding` — non-mutating per-allocation eligibility, positions,
+	required amounts, after-confirmation balances and a short-lived check token."""
+	allocations = allocations or []
+	if not allocations:
+		frappe.throw(_("At least one allocation is required"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
 
-	`_locked_line` is internal-only: `reserve_funding` passes its own
-	already-`FOR UPDATE`-locked, freshly-read Budget Line doc here so this
-	check reuses those balances instead of re-reading the line with a plain
-	(non-locking) SELECT — which could return stale balances under
-	REPEATABLE READ if this same DB transaction already did an earlier plain
-	read of the row (see the comment in `reserve_funding`). External/direct
-	callers never pass this and get the normal fresh read.
-	"""
-	require_any_role(
-		ROLE_VIEWER,
-		ROLE_OFFICER,
-		ROLE_APPROVER,
-		ROLE_APPROVER,
-		ROLE_AUDITOR,
-		"System Manager",
-		"Procurement Approval Authority",
+	results = []
+	all_sufficient = True
+	budget = None
+	for alloc in allocations:
+		line_doc = _resolve_line(alloc.get("budget_line") or "")
+		if budget is None:
+			budget = frappe.get_doc("Budget", line_doc.budget)
+		_require_finance_capability(budget.procuring_entity)
+		version, line_version, position = _line_active_version_and_position(line_doc)
+		requested = flt(alloc.get("amount"))
+		if requested <= 0:
+			frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
+		sufficient = position["available"] >= requested
+		all_sufficient = all_sufficient and sufficient
+		results.append(
+			{
+				"budget_line": line_doc.name,
+				"plan_source_allocation": alloc.get("plan_source_allocation") or "",
+				"requested_amount": requested,
+				"available_before": position["available"],
+				"available_after": max(0.0, position["available"] - requested) if sufficient else position["available"],
+				"sufficient": sufficient,
+				"shortfall": 0.0 if sufficient else (requested - position["available"]),
+				"budget_version_at_check": version.name,
+			}
+		)
+
+	token = frappe.generate_hash(length=24)
+	frappe.cache().set_value(
+		f"budget_check_token:{token}",
+		{
+			"plan_item": plan_item,
+			"plan_version": plan_version,
+			"finance_task": finance_task,
+			"source_set_hash": source_set_hash,
+			"correlation_id": correlation_id,
+			"allocations": [{"budget_line": r["budget_line"], "plan_source_allocation": r["plan_source_allocation"], "amount": r["requested_amount"]} for r in results],
+		},
+		expires_in_sec=_CHECK_TOKEN_TTL_SECONDS,
 	)
-	line = _locked_line if _locked_line is not None else _resolve_line(budget_line or "")
-	bud = _active_budget(line.budget)
-	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
-	if pe and bud.procuring_entity and pe != bud.procuring_entity:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError)
-	if not line.is_active:
-		frappe.throw(_("Budget Line must be active"))
 
-	requested = flt(requested_amount)
-	if requested <= 0:
-		frappe.throw(_("Requested amount must be greater than zero"))
+	from kentender_budget.services.budget_audit_contracts import EVENT_CHECK_PERFORMED, safe_record_event
 
-	currency = bud.currency or line.currency or "KES"
-	available_before = _available(line)
-	available_after = available_before - requested
-	sufficient = available_before >= requested
-	shortfall = 0.0 if sufficient else (requested - available_before)
+	safe_record_event(
+		budget=budget.name,
+		event_type=EVENT_CHECK_PERFORMED,
+		actor=frappe.session.user,
+		correlation_id=correlation_id,
+		calling_module="Procurement Planning",
+		downstream_reference=plan_item,
+	)
 
-	demand_ctx = _demand_context(demand)
-	decision = DECISION_AVAILABLE if sufficient else DECISION_INSUFFICIENT
+	return {"token": token, "all_sufficient": all_sufficient, "allocations": results}
 
-	return {
-		"decision": decision,
-		"decision_kind": "available" if sufficient else "insufficient",
-		"sufficient": sufficient,
-		"budget": {
-			"id": bud.name,
-			"code": bud.generated_reference or "",
-			"name": bud.title or bud.generated_reference or "",
-			"status": bud.status,
-			"fiscal_period": bud.fiscal_period or "",
-			"currency": currency,
-			"procuring_entity": bud.procuring_entity or "",
-		},
-		"budget_line": {
-			"id": line.name,
-			"code": line.generated_reference or "",
-			"name": line.title or line.generated_reference or "",
-			"primary_target_code": line.primary_target_code or "",
-			"primary_target_name": line.primary_target_name or "",
-		},
-		"demand": demand_ctx,
-		"requested_amount": requested,
-		"available_before": available_before,
-		"available_after": max(0.0, available_after) if sufficient else available_before,
-		"shortfall": shortfall,
-		"requested_display": format_kes_full(requested, currency=currency),
-		"available_before_display": format_kes_full(available_before, currency=currency),
-		"available_after_display": format_kes_full(
-			max(0.0, available_after) if sufficient else available_before, currency=currency
-		),
-		"shortfall_display": format_kes_full(shortfall, currency=currency) if shortfall else "",
-		"lineage_note": LINEAGE_NOTE,
-		"capabilities": {
-			"can_reserve": sufficient,
-			"can_select_line": True,
-			"read_only_check": True,
-		},
-	}
+
+def _existing_reservations_for_correlation(correlation_id: str) -> list[Any] | None:
+	names = frappe.get_all("Funding Reservation", filters={"correlation_id": correlation_id}, pluck="name")
+	if not names:
+		return None
+	return [frappe.get_doc("Funding Reservation", n) for n in names]
 
 
 def reserve_funding(
-	budget_line: str | None = None,
-	plan_item_code: str | None = None,
-	demand_name: str | None = None,
-	requested_amount: float | None = None,
-	idempotency_key: str | None = None,
+	token: str,
+	finance_task: str,
+	source_set_hash: str,
+	idempotency_key: str,
 	actor: str | None = None,
-	procuring_entity: str | None = None,
-	generated_reference: str | None = None,
 ) -> dict[str, Any]:
-	"""Create a Funding Reservation once a Procurement Plan Item's funding request
-	has been confirmed complete (BUD-FR-009/010) — one task before Requisition,
-	never at Departmental Need submission, approval or acceptance. Budget does
-	not itself validate Plan Item completeness (that gate belongs to Procurement
-	Planning); this contract trusts the caller and records `plan_item_code` as
-	the reservation's primary identity and idempotency/duplicate-prevention key
-	(BUD-FR-011/012). `demand_name` is optional secondary lineage only, never
-	required and never the correlation key.
-	"""
-	require_any_role(
-		ROLE_OFFICER,
-		ROLE_APPROVER,
-		ROLE_APPROVER,
-		"System Manager",
+	"""§9.1/§8.2 `reserve_funding` — locks all affected lines in stable ID
+	order, reloads every position, creates one reservation per source
+	allocation or none (BUD-BR-010/011/013)."""
+	correlation_id = idempotency_key
+	existing = _existing_reservations_for_correlation(correlation_id)
+	if existing:
+		return {"ok": True, "reused": True, "reservations": [_reservation_result(r) for r in existing]}
+
+	cached = frappe.cache().get_value(f"budget_check_token:{token}")
+	if not cached or cached.get("finance_task") != finance_task or cached.get("source_set_hash") != source_set_hash:
+		frappe.throw(_("The funding check has expired or no longer matches this task"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
+
+	allocations = cached["allocations"]
+	line_docs = {a["budget_line"]: _resolve_line(a["budget_line"]) for a in allocations}
+	budget_lines_sorted = sorted(line_docs.keys())
+
+	# Lock all affected lines in stable ID order (§8.2 step 5) before reloading
+	# any position, to prevent concurrent oversubscription (BUD-BR-013).
+	frappe.db.sql(
+		"select name from `tabBudget Line` where name in %s order by name for update",
+		(budget_lines_sorted,),
 	)
-	key = (idempotency_key or "").strip()
-	if key:
-		existing = frappe.db.get_value(
-			"Funding Reservation", {"idempotency_key": key}, "name"
+
+	actor_name = (actor or frappe.session.user or "System").strip()
+	prepared: list[dict[str, Any]] = []
+	for alloc in allocations:
+		line_doc = line_docs[alloc["budget_line"]]
+		budget = frappe.get_doc("Budget", line_doc.budget)
+		version, line_version, position = _line_active_version_and_position(line_doc)
+		requested = flt(alloc["amount"])
+		if position["available"] < requested:
+			frappe.throw(
+				_("Insufficient funding for {0}: available {1}, requested {2}").format(
+					line_version.title, format_kes_full(position["available"]), format_kes_full(requested)
+				),
+				frappe.ValidationError,
+				title="BUDGET_INSUFFICIENT_FUNDS",
+			)
+		prepared.append({"line_doc": line_doc, "budget": budget, "version": version, "requested": requested, "plan_source_allocation": alloc["plan_source_allocation"]})
+
+	created = []
+	for p in prepared:
+		ref = allocate_reservation_reference(p["budget"].procuring_entity)
+		doc = frappe.get_doc(
+			{
+				"doctype": "Funding Reservation",
+				"generated_reference": ref,
+				"budget": p["budget"].name,
+				"budget_version_at_creation": p["version"].name,
+				"budget_line": p["line_doc"].name,
+				"status": "Active",
+				"plan_item": cached["plan_item"],
+				"plan_source_allocation": p["plan_source_allocation"],
+				"original_amount": p["requested"],
+				"remaining_amount": p["requested"],
+				"currency": p["budget"].currency,
+				"correlation_id": correlation_id,
+			}
 		)
-		if existing:
-			doc = frappe.get_doc("Funding Reservation", existing)
-			return _reservation_result(doc, reused=True)
+		doc.insert(ignore_permissions=True)
+		created.append(doc)
 
-	line = _resolve_line(budget_line or "")
-	bud = frappe.get_doc("Budget", line.budget)
-	# BUD-CHG-001 §8 — Finance Confirmation Officer capability, scoped to this Budget's PE.
-	require_budget_capability(CAP_BUDGET_RESERVE, bud)
-	# Row lock against parallel oversubscription (BUD-FR-011/012, BUD-AC-011).
-	# A locking read of the balance columns themselves is required here — not
-	# `line.reload()` (a plain SELECT). Under MariaDB's default REPEATABLE READ
-	# isolation, the plain reads already done above (role/capability checks)
-	# establish this transaction's snapshot; a plain reload after FOR UPDATE can
-	# still return pre-lock stale balances even though the lock itself is held
-	# correctly. Only a locking SELECT is guaranteed to return latest-committed
-	# data regardless of when the snapshot was established.
-	locked = frappe.db.sql(
-		"SELECT amount_reserved, amount_committed FROM `tabBudget Line` WHERE name=%s FOR UPDATE",
-		(line.name,),
-		as_dict=True,
-	)[0]
-	line.amount_reserved = locked.amount_reserved
-	line.amount_committed = locked.amount_committed
+		from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, safe_record_event
 
-	plan_item = (plan_item_code or "").strip()
-	if not plan_item:
-		frappe.throw(_("Plan Item is required for reservation"))
-
-	check = check_funding(
-		budget_line=line.name,
-		requested_amount=requested_amount,
-		demand=demand_name,
-		procuring_entity=procuring_entity,
-		_locked_line=line,
-	)
-	if not check["sufficient"]:
-		from kentender_budget.services.budget_notification_service import (
-			notify_funding_insufficient,
+		safe_record_event(
+			budget=p["budget"].name,
+			budget_line=p["line_doc"].name,
+			reservation=doc.name,
+			event_type=EVENT_RESERVED,
+			actor=actor_name,
+			correlation_id=correlation_id,
+			calling_module="Procurement Planning",
+			downstream_reference=f"{cached['plan_item']} · {doc.name}",
+			amount=p["requested"],
+			currency=p["budget"].currency,
 		)
 
-		bud_for_notify = frappe.get_doc("Budget", line.budget)
-		notify_funding_insufficient(
-			budget_doc=bud_for_notify,
-			budget_line_code=line.generated_reference or line.name,
-			demand_code=plan_item
-			or (demand_name or "").strip()
-			or (check.get("demand") or {}).get("demand_code")
-			or "",
-			requested_amount=flt(requested_amount),
-			shortfall_display=check.get("shortfall_display") or "",
-		)
-		frappe.throw(
-			_("Insufficient funding. Shortfall: {0}").format(check["shortfall_display"]),
-			title=_("Insufficient funding"),
-		)
-
-	demand_ctx = check["demand"]
-	demand_code = demand_ctx["demand_code"] or (demand_name or "").strip()
-	demand_title = demand_ctx["demand_title"] or demand_code
-
-	# One active reservation per Plan Item + line (no duplicate holds).
-	dup = frappe.db.get_value(
-		"Funding Reservation",
-		{
-			"budget_line": line.name,
-			"plan_item_code": plan_item,
-			"status": ["in", ["Reserved", "Partially converted"]],
-		},
-		"name",
-	)
-	if dup and not key:
-		doc = frappe.get_doc("Funding Reservation", dup)
-		return _reservation_result(doc, reused=True)
-
-	requested = flt(requested_amount)
-	preferred = (generated_reference or "").strip()
-	if preferred and not frappe.db.exists(
-		"Funding Reservation", {"generated_reference": preferred}
-	):
-		ref = preferred
-	else:
-		ref = allocate_reservation_reference(bud.procuring_entity)
-	idem = key or f"{plan_item}:{line.generated_reference}:{flt(requested):.2f}"
-
-	# Re-check idempotency after lock (race).
-	existing2 = frappe.db.get_value("Funding Reservation", {"idempotency_key": idem}, "name")
-	if existing2:
-		doc = frappe.get_doc("Funding Reservation", existing2)
-		return _reservation_result(doc, reused=True)
-
-	doc = frappe.get_doc(
-		{
-			"doctype": "Funding Reservation",
-			"budget": bud.name,
-			"budget_line": line.name,
-			"generated_reference": ref,
-			"status": "Reserved",
-			"event_date": getdate(today()),
-			"plan_item_code": plan_item,
-			"demand_code": demand_code,
-			"demand_title": demand_title,
-			"original_amount": requested,
-			"remaining_reserved": requested,
-			"currency": bud.currency or "KES",
-			"idempotency_key": idem,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-
-	# Bump line reserved balance.
-	new_reserved = flt(line.amount_reserved) + requested
-	frappe.db.set_value(
-		"Budget Line",
-		line.name,
-		"amount_reserved",
-		new_reserved,
-		update_modified=True,
-	)
-
-	# BUD-SUP-005 — live mutation evidence for Funding Lifecycle / Audit History.
-	from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, safe_record_event
-
-	safe_record_event(
-		budget=bud.name,
-		event_type=EVENT_RESERVED,
-		record_doctype="Funding Reservation",
-		record_code=ref,
-		budget_line=line.name,
-		after_summary=format_kes_full(requested, currency=bud.currency or "KES"),
-		source_reference=plan_item,
-		actor=(actor or frappe.session.user or "System").strip(),
-		actor_kind="user",
-	)
-
-	if actor:
-		doc.flags.reservation_actor = actor
-	doc.reload()
-	return _reservation_result(doc, reused=False)
+	frappe.cache().delete_value(f"budget_check_token:{token}")
+	return {"ok": True, "reused": False, "reservations": [_reservation_result(r) for r in created]}
 
 
-def _reservation_result(doc, *, reused: bool) -> dict[str, Any]:
-	currency = doc.currency or "KES"
+def _reservation_result(doc) -> dict[str, Any]:
 	return {
-		"ok": True,
-		"reused": reused,
 		"reservation_id": doc.name,
 		"reservation_code": doc.generated_reference,
 		"status": doc.status,
 		"budget_line": doc.budget_line,
-		"demand_code": doc.demand_code,
+		"plan_source_allocation": doc.plan_source_allocation,
 		"original_amount": flt(doc.original_amount),
-		"remaining_reserved": flt(doc.remaining_reserved),
-		"original_amount_display": format_kes_full(doc.original_amount, currency=currency),
-		"remaining_reserved_display": format_kes_full(doc.remaining_reserved, currency=currency),
-		"idempotency_key": doc.idempotency_key or "",
+		"remaining_amount": flt(doc.remaining_amount),
+		"currency": doc.currency,
 	}
 
 
@@ -388,209 +245,7 @@ def _resolve_reservation(reservation: str) -> Any:
 	key = (reservation or "").strip()
 	if not key:
 		frappe.throw(_("Reservation is required"))
-	name = key if frappe.db.exists("Funding Reservation", key) else ""
-	if not name:
-		name = frappe.db.get_value("Funding Reservation", {"generated_reference": key}, "name") or ""
+	name = key if frappe.db.exists("Funding Reservation", key) else frappe.db.get_value("Funding Reservation", {"generated_reference": key}, "name")
 	if not name:
 		frappe.throw(_("Reservation {0} not found").format(key), frappe.DoesNotExistError)
 	return frappe.get_doc("Funding Reservation", name)
-
-
-def release_reservation(
-	reservation: str | None = None,
-	*,
-	reason: str | None = None,
-	actor: str | None = None,
-) -> dict[str, Any]:
-	"""Release an active Funding Reservation, restoring the line's reserved balance."""
-	doc = _resolve_reservation(reservation or "")
-	bud = frappe.get_doc("Budget", doc.budget)
-	# BUD-CHG-001 §8 — same Finance Confirmation Officer capability that creates a
-	# reservation also releases it; scoped to this Budget's PE.
-	require_budget_capability(CAP_BUDGET_RESERVE, bud)
-
-	if doc.status in ("Released", "Cancelled"):
-		return _reservation_result(doc, reused=True)
-
-	remaining = flt(doc.remaining_reserved)
-	doc.status = "Released"
-	doc.remaining_reserved = 0
-	doc.save(ignore_permissions=True)
-	if remaining and doc.budget_line:
-		cur = flt(frappe.db.get_value("Budget Line", doc.budget_line, "amount_reserved"))
-		frappe.db.set_value(
-			"Budget Line",
-			doc.budget_line,
-			"amount_reserved",
-			max(0.0, cur - remaining),
-			update_modified=True,
-		)
-
-	from kentender_budget.services.budget_audit_contracts import EVENT_RELEASED, safe_record_event
-
-	safe_record_event(
-		budget=bud.name,
-		event_type=EVENT_RELEASED,
-		record_doctype="Funding Reservation",
-		record_code=doc.generated_reference,
-		budget_line=doc.budget_line,
-		before_summary=format_kes_full(remaining, currency=doc.currency or "KES"),
-		after_summary=format_kes_full(0, currency=doc.currency or "KES"),
-		source_reference=doc.demand_code or "",
-		reason=(reason or "").strip(),
-		actor=(actor or frappe.session.user or "System").strip(),
-		actor_kind="user",
-	)
-
-	doc.reload()
-	return _reservation_result(doc, reused=False)
-
-
-def list_eligible_budget_lines(
-	procuring_entity: str | None = None,
-	fiscal_period: str | None = None,
-	min_amount: float | None = None,
-	classification: str | None = None,
-) -> list[dict[str, Any]]:
-	"""BUD-CHG-001 §12 `list_eligible_budget_lines` — scoped Active lines with
-	operational balances, for the Check/Reserve line selector. `min_amount`
-	excludes lines whose available balance cannot cover it; `classification`
-	filters to one Budget Line classification.
-	"""
-	require_any_role(
-		ROLE_VIEWER,
-		ROLE_OFFICER,
-		ROLE_APPROVER,
-		ROLE_APPROVER,
-		ROLE_AUDITOR,
-		"System Manager",
-		"Procurement Approval Authority",
-	)
-	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
-	if not pe and "System Manager" not in frappe.get_roles():
-		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError)
-	filters: dict[str, Any] = {"status": "Active"}
-	if pe:
-		filters["procuring_entity"] = pe
-	if fiscal_period:
-		filters["fiscal_period"] = fiscal_period
-	budgets = frappe.get_all("Budget", filters=filters, pluck="name")
-	if not budgets:
-		return []
-	line_filters: dict[str, Any] = {"budget": ["in", budgets], "is_active": 1}
-	if classification:
-		line_filters["classification"] = classification
-	lines = frappe.get_all(
-		"Budget Line",
-		filters=line_filters,
-		fields=[
-			"name",
-			"generated_reference",
-			"title",
-			"approved_amount",
-			"amount_reserved",
-			"amount_committed",
-			"primary_target_code",
-			"primary_target_name",
-			"budget",
-		],
-		order_by="idx asc",
-	)
-	floor = flt(min_amount)
-	out = []
-	for ln in lines:
-		avail = flt(ln.approved_amount) - flt(ln.amount_reserved) - flt(ln.amount_committed)
-		if floor > 0 and avail < floor:
-			continue
-		out.append(
-			{
-				"id": ln.name,
-				"code": ln.generated_reference or "",
-				"name": ln.title or ln.generated_reference or "",
-				"available_before": avail,
-				"available_before_display": format_kes_full(avail),
-				"primary_target_code": ln.primary_target_code or "",
-				"primary_target_name": ln.primary_target_name or "",
-				"budget": ln.budget,
-			}
-		)
-	return out
-
-
-def revalidate_reservation(
-	reservation: str | None = None,
-	*,
-	material_event: str | None = None,
-	new_estimated_amount: float | None = None,
-	evidence: str | None = None,
-	actor: str | None = None,
-) -> dict[str, Any]:
-	"""BUD-CHG-001 §12 `revalidate_reservation` / §7.2 / §7.4 — re-check an active
-	reservation after a named material event (Plan Item/Requisition amendment,
-	Tender or Award value change, Contract event, Budget Revision, ...). Budget
-	does not independently confirm the event occurred in the source module — it
-	trusts the caller and records `material_event`/`evidence` as correlation.
-	Idempotent by result: repeat calls that don't change the outcome do not
-	emit a duplicate audit event (BUD-CHG-001 §11).
-	"""
-	doc = _resolve_reservation(reservation or "")
-	bud = frappe.get_doc("Budget", doc.budget)
-	require_budget_capability(CAP_BUDGET_RESERVE, bud)
-
-	event = (material_event or "").strip()
-	if not event:
-		frappe.throw(_("A material-event reference is required to revalidate"))
-	if doc.status not in ("Reserved", "Partially converted", "Needs attention"):
-		frappe.throw(_("Only an active reservation can be revalidated"))
-
-	line = frappe.get_doc("Budget Line", doc.budget_line)
-	available = flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
-	increase = (
-		max(0.0, flt(new_estimated_amount) - flt(doc.remaining_reserved))
-		if new_estimated_amount is not None
-		else 0.0
-	)
-	valid = bud.status == "Active" and increase <= available
-
-	prior_status = doc.status
-	if valid:
-		new_status = (
-			"Partially converted" if flt(doc.remaining_reserved) < flt(doc.original_amount) else "Reserved"
-		)
-	else:
-		new_status = "Needs attention"
-
-	if new_status != prior_status:
-		doc.status = new_status
-		doc.save(ignore_permissions=True)
-
-		from kentender_budget.services.budget_audit_contracts import (
-			EVENT_REVALIDATED,
-			safe_record_event,
-		)
-
-		safe_record_event(
-			budget=bud.name,
-			event_type=EVENT_REVALIDATED,
-			record_doctype="Funding Reservation",
-			record_code=doc.generated_reference,
-			budget_line=doc.budget_line,
-			before_summary=prior_status,
-			after_summary=new_status,
-			source_reference=event,
-			reason=(evidence or "").strip(),
-			actor=(actor or frappe.session.user or "System").strip(),
-			actor_kind="user",
-		)
-		doc.reload()
-
-	return {
-		"ok": True,
-		"reservation_id": doc.name,
-		"reservation_code": doc.generated_reference,
-		"status": doc.status,
-		"valid": valid,
-		"remaining_reserved": flt(doc.remaining_reserved),
-		"remaining_reserved_display": format_kes_full(doc.remaining_reserved, currency=doc.currency or "KES"),
-		"material_event": event,
-	}

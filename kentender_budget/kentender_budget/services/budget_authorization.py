@@ -17,6 +17,7 @@ object), not kentender_core's general capability-pair SoD machinery.
 from __future__ import annotations
 
 import frappe
+from frappe import _
 
 from kentender_core.services.authorization_native import evaluate_role_capability, require_role_capability
 from kentender_core.services.authorization_policy import ResourceContext
@@ -136,3 +137,32 @@ def require_budget_create_capability(user: str, procuring_entity_id: str) -> Non
 		CAP_CREATE,
 		ResourceContext(resource_type="Budget", resource_id="", procuring_entity_id=procuring_entity_id),
 	)
+
+
+# AUTH-ADR-001 maps each capability string to exactly one Role (§5.2) — there
+# is no single "view" capability shared across Officer/Approver/Viewer/Auditor.
+# Read access to a Budget/Version in progress is not itself a workflow action
+# (§7: "Read access is not a third Strategy workflow role", mirrored here) —
+# it only needs "does this user hold any Budget-related Role with PE scope",
+# not a same-version segregation check. `CAP_VIEW` stays reserved for the
+# neutral Budget Viewer read surface (§9.1's Active-only reads); this is the
+# check every other read contract in this module uses instead.
+_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Budget Viewer", "Auditor")
+
+
+def require_budget_read_scope(procuring_entity_id: str) -> None:
+	user = frappe.session.user
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return
+	if not any(role in frappe.get_roles(user) for role in _READ_ROLES):
+		frappe.throw(_("Not permitted to view Budget & Funding"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
+	pe_scope = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
+	if pe_scope and procuring_entity_id not in pe_scope:
+		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
+
+
+def require_budget_version_read_scope(version) -> None:
+	if isinstance(version, str):
+		version = frappe.get_doc("Budget Version", version)
+	procuring_entity = frappe.db.get_value("Budget", version.budget, "procuring_entity")
+	require_budget_read_scope(procuring_entity or "")

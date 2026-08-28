@@ -58,13 +58,15 @@ def _sync_series(prefix: str, current_max: int) -> None:
 		)
 
 
-def allocate_budget_reference(procuring_entity: str) -> str:
-	"""Allocate next never-reuse `{PE}-BUD-####` for the entity."""
+def allocate_budget_reference(procuring_entity: str, financial_year: str) -> str:
+	"""Allocate next never-reuse `{PE}-BUD-{start_year}-###` for the entity/FY
+	(matches the BUD-CHG-001 v1.2 §15.3 seed ID pattern, e.g. `MOH-BUD-2027-001`)."""
 	slug = pe_slug(procuring_entity)
-	prefix = f"{slug}-BUD-"
+	start_year = frappe.db.get_value("Financial Year", financial_year, "start_year") or 0
+	prefix = f"{slug}-BUD-{start_year}-"
 	_sync_series(prefix, _max_seq("Budget", "generated_reference", prefix))
 	for _ in range(200):
-		candidate = make_autoname(f"{prefix}.####")
+		candidate = make_autoname(f"{prefix}.###")
 		if not frappe.db.exists("Budget", {"generated_reference": candidate}):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Budget reference"))
@@ -82,16 +84,16 @@ def allocate_budget_line_reference(procuring_entity: str) -> str:
 	frappe.throw(_("Could not allocate a unique Budget Line reference"))
 
 
-def allocate_budget_revision_reference(procuring_entity: str) -> str:
-	"""Allocate next never-reuse `BR-{PE}-####` (BUD-UI-08)."""
-	slug = pe_slug(procuring_entity)
-	prefix = f"BR-{slug}-"
-	_sync_series(prefix, _max_seq("Budget Revision", "generated_reference", prefix))
-	for _ in range(200):
-		candidate = make_autoname(f"{prefix}.####")
-		if not frappe.db.exists("Budget Revision", {"generated_reference": candidate}):
-			return candidate
-	frappe.throw(_("Could not allocate a unique Budget Revision reference"))
+def allocate_budget_version_reference(budget_reference: str, version_number: int) -> str:
+	"""Deterministic `{budget_reference}-V{version_number}` (BUD-CHG-001 v1.2 §15.3
+	seed IDs follow this exact pattern, e.g. `MOH-BUD-2027-001-V1`). No series
+	needed — uniqueness follows directly from the already-sequential version_number."""
+	return f"{budget_reference}-V{int(version_number)}"
+
+
+def allocate_budget_line_version_reference(budget_line_reference: str, version_number: int) -> str:
+	"""Deterministic `{budget_line_reference}-V{version_number}`."""
+	return f"{budget_line_reference}-V{int(version_number)}"
 
 
 def allocate_reservation_reference(procuring_entity: str) -> str:
@@ -118,13 +120,3 @@ def allocate_commitment_reference(procuring_entity: str) -> str:
 	frappe.throw(_("Could not allocate a unique Procurement Commitment reference"))
 
 
-def allocate_expenditure_snapshot_reference(procuring_entity: str) -> str:
-	"""Allocate next never-reuse `EXP-{PE}-####` (BUD-CHG-001 §12 ingest_expenditure_snapshot)."""
-	slug = pe_slug(procuring_entity)
-	prefix = f"EXP-{slug}-"
-	_sync_series(prefix, _max_seq("Expenditure Snapshot", "generated_reference", prefix))
-	for _ in range(200):
-		candidate = make_autoname(f"{prefix}.####")
-		if not frappe.db.exists("Expenditure Snapshot", {"generated_reference": candidate}):
-			return candidate
-	frappe.throw(_("Could not allocate a unique Expenditure Snapshot reference"))

@@ -1,7 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Budget readiness / review / activation — BUD-UI-11 / BUD-FR-050–055 / AC-002 / AC-018."""
+"""BUD-CHG-001 v1.2 §6/§9.2/§12.5 — Budget Version readiness, submission and
+the single Budget Approver decision (Return or Approve, one atomic action —
+no separate recommend-then-activate two-step). BUD-UI-04 Approval task.
+"""
 
 from __future__ import annotations
 
@@ -9,45 +12,28 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, format_datetime, now_datetime
+from frappe.utils import flt, format_datetime, getdate, now_datetime
 
-from kentender_budget.services.budget_contracts import _resolve_budget, resolve_scoped_entity
 from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_APPROVE,
-	CAP_BUDGET_REVIEW,
-	CAP_BUDGET_RETURN,
-	CAP_BUDGET_SUBMIT,
-	CAP_BUDGET_VIEW,
-	authorized_budget_task,
-	can_budget,
-	complete_budget_task,
-	create_budget_task,
-	require_budget_capability,
-	require_budget_task,
+	CAP_APPROVE,
+	CAP_RETURN,
+	CAP_SUBMIT,
+	has_budget_version_capability,
+	require_budget_version_capability,
+	require_budget_version_read_scope,
 )
-from kentender_budget.services.budget_permissions import (
-	ROLE_AUDITOR,
-	ROLE_APPROVER,
-	ROLE_OFFICER,
-	ROLE_APPROVER,
-	ROLE_VIEWER,
-	can_register_budget,
-	visible_statuses_for_user,
-	can_review_budget,
-	require_any_role,
-	user_roles,
+from kentender_budget.services.budget_contracts import (
+	_active_version,
+	_budget_summary,
+	_resolve_budget,
+	_resolve_budget_version,
+	_version_summary,
+	_version_totals,
+	resolve_scoped_entity,
 )
 
-_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
-
-_STATUS_CHIP = {
-	"Draft": "Draft State",
-	"Returned": "Returned",
-	"Submitted": "Under review",
-	"Active": "Active",
-	"Closed": "Closed",
-	"Cancelled": "Cancelled",
-}
+_MIN_RETURN_REASON = 10
+_MAX_RETURN_REASON = 500
 
 
 def _as_dict(payload: dict | str | None) -> dict[str, Any]:
@@ -56,701 +42,427 @@ def _as_dict(payload: dict | str | None) -> dict[str, Any]:
 	return payload or {}
 
 
-def _issue(
-	code: str,
-	message: str,
-	*,
-	action_label: str,
-	action_route: str,
-	group: str,
-) -> dict[str, Any]:
-	return {
-		"code": code,
-		"message": message,
-		"action_label": action_label,
-		"action_route": action_route,
-		"group": group,
-	}
+def _issue(code: str, message: str) -> dict[str, str]:
+	return {"code": code, "message": message}
 
 
-def _evaluate_readiness(doc) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-	"""Return (groups, flat blockers) from live Budget + Lines."""
-	code = doc.generated_reference
-	overview_route = f"budget-overview/{code}"
-	lines_route = f"budget-lines/{code}"
+def _evaluate_readiness(version) -> list[dict[str, str]]:
+	"""§9.2/§12.2/BUD-BR-004/017/018/019/020 — full readiness/activation guard
+	set, reused by both `submit_budget_version` (pre-submission) and
+	`approve_budget_version` (BUD-BR-021 full recheck)."""
+	issues: list[dict[str, str]] = []
 
-	source_checks: list[tuple[bool, dict[str, Any] | None]] = []
-	# (ok, issue_or_None)
-	source_items = [
-		(
-			bool((doc.authoritative_reference or "").strip()),
-			_issue(
-				"source.authoritative_reference",
-				_("Authoritative approval reference missing"),
-				action_label=_("Add evidence"),
-				action_route=overview_route,
-				group="source",
-			),
-		),
-		(
-			bool(doc.approval_date),
-			_issue(
-				"source.approval_date",
-				_("Approval date missing"),
-				action_label=_("Add evidence"),
-				action_route=overview_route,
-				group="source",
-			),
-		),
-		(
-			bool((doc.approval_evidence or "").strip()),
-			_issue(
-				"source.approval_evidence",
-				_("External approval evidence missing"),
-				action_label=_("Add evidence"),
-				action_route=overview_route,
-				group="source",
-			),
-		),
-		(
-			bool((doc.fiscal_period or "").strip()),
-			_issue(
-				"source.fiscal_period",
-				_("Fiscal period is invalid or missing"),
-				action_label=_("Open overview"),
-				action_route=overview_route,
-				group="source",
-			),
-		),
-		(
-			bool((doc.currency or "").strip()),
-			_issue(
-				"source.currency",
-				_("Currency is invalid or missing"),
-				action_label=_("Open overview"),
-				action_route=overview_route,
-				group="source",
-			),
-		),
-	]
-	source_checks = source_items
+	if not (version.approval_reference or "").strip():
+		issues.append(_issue("evidence.approval_reference", _("Approval reference is required")))
+	if not version.approval_date:
+		issues.append(_issue("evidence.approval_date", _("Approval date is required")))
+	elif getdate(version.approval_date) > getdate():
+		issues.append(_issue("evidence.approval_date", _("Approval date cannot be in the future")))
+	if not (version.approval_document or "").strip():
+		issues.append(_issue("evidence.approval_document", _("Approval document is required")))
+	if not version.authorised_total or flt(version.authorised_total) <= 0:
+		issues.append(_issue("evidence.authorised_total", _("Authorised total must be greater than zero")))
 
 	lines = frappe.get_all(
-		"Budget Line",
-		filters={"budget": doc.name, "is_active": 1},
-		fields=[
-			"name",
-			"generated_reference",
-			"organisational_owner",
-			"classification",
-			"funding_source_type",
-			"funding_source_name",
-			"approved_amount",
-			"primary_target_code",
-		],
-		order_by="order_index asc, creation asc",
+		"Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 	)
+	if not lines:
+		issues.append(_issue("lines.empty", _("At least one Budget Line is required")))
 
-	line_issues: list[dict[str, Any]] = []
-	line_complete = 0
-	line_total = 0
+	line_total = sum(flt(l.approved_amount) for l in lines)
+	if version.authorised_total and abs(flt(version.authorised_total) - line_total) >= 0.01:
+		issues.append(_issue("lines.total_mismatch", _("Budget Line total does not equal the authorised total")))
 
-	# Presence of lines
-	line_total += 1
-	if lines:
-		line_complete += 1
-	else:
-		line_issues.append(
-			_issue(
-				"lines.empty",
-				_("No Budget Line"),
-				action_label=_("Review budget line"),
-				action_route=lines_route,
-				group="lines",
-			)
+	based_on = frappe.get_doc("Budget Version", version.based_on_budget_version) if version.based_on_budget_version else None
+	if based_on:
+		issues.extend(_evaluate_successor_guards(version, based_on, lines))
+
+	return issues
+
+
+def _evaluate_successor_guards(version, based_on, lines: list[dict]) -> list[dict[str, str]]:
+	issues: list[dict[str, str]] = []
+	prior_lines = {
+		l.budget_line: l
+		for l in frappe.get_all(
+			"Budget Line Version",
+			filters={"budget_version": based_on.name},
+			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		)
+	}
+	this_lines = {l.budget_line: l for l in lines}
 
-	line_sum = 0.0
-	missing_primary = 0
-	for ln in lines:
-		line_sum += flt(ln.approved_amount)
-		checks = [
-			bool((ln.organisational_owner or "").strip()),
-			bool((ln.classification or "").strip()),
-			bool((ln.funding_source_type or "").strip())
-			and bool((ln.funding_source_name or "").strip()),
-			flt(ln.approved_amount) > 0,
-			bool((ln.primary_target_code or "").strip()),
-		]
-		line_total += len(checks)
-		line_complete += sum(1 for c in checks if c)
-		if not checks[0]:
-			line_issues.append(
-				_issue(
-					f"lines.owner.{ln.generated_reference}",
-					_("Line owner missing on {0}").format(ln.generated_reference),
-					action_label=_("Review budget line"),
-					action_route=lines_route,
-					group="lines",
-				)
-			)
-		if not checks[1]:
-			line_issues.append(
-				_issue(
-					f"lines.classification.{ln.generated_reference}",
-					_("Classification missing on {0}").format(ln.generated_reference),
-					action_label=_("Review budget line"),
-					action_route=lines_route,
-					group="lines",
-				)
-			)
-		if not checks[2]:
-			line_issues.append(
-				_issue(
-					f"lines.funding.{ln.generated_reference}",
-					_("Funding source incomplete on {0}").format(ln.generated_reference),
-					action_label=_("Review budget line"),
-					action_route=lines_route,
-					group="lines",
-				)
-			)
-		if not checks[3]:
-			line_issues.append(
-				_issue(
-					f"lines.amount.{ln.generated_reference}",
-					_("Non-positive approved amount on {0}").format(ln.generated_reference),
-					action_label=_("Review budget line"),
-					action_route=lines_route,
-					group="lines",
-				)
-			)
-		if not checks[4]:
-			missing_primary += 1
-
-	if missing_primary:
-		line_issues.append(
-			_issue(
-				"lines.primary_target",
-				_("Primary strategic target missing on {0} line").format(missing_primary)
-				if missing_primary == 1
-				else _("Primary strategic target missing on {0} lines").format(missing_primary),
-				action_label=_("Review budget line"),
-				action_route=lines_route,
-				group="lines",
-			)
-		)
-
-	ext = flt(doc.external_approved_total)
-	line_total += 1
-	if ext > 0 and lines and abs(ext - line_sum) >= 0.01:
-		line_issues.append(
-			_issue(
-				"lines.external_total",
-				_("Line totals do not match the external approved total"),
-				action_label=_("Review budget line"),
-				action_route=lines_route,
-				group="lines",
-			)
-		)
-	else:
-		line_complete += 1
-
-	# Strategy
-	strategy_issues: list[dict[str, Any]] = []
-	strategy_complete = 0
-	strategy_total = 0
-	for ln_name in [r.name for r in lines]:
-		line_doc = frappe.get_doc("Budget Line", ln_name)
-		for st in line_doc.get("supporting_targets") or []:
-			strategy_total += 1
-			if (st.target_code or "").strip() and not (st.reason or "").strip():
-				strategy_issues.append(
+	total_increase = total_decrease = 0.0
+	for budget_line, prior in prior_lines.items():
+		current = this_lines.get(budget_line)
+		floor = _reserved_plus_committed(budget_line)
+		if current is None:
+			# BUD-BR-020 — a line may be omitted only when it has no remaining
+			# reservation or active commitment.
+			if floor > 0:
+				issues.append(
 					_issue(
-						f"strategy.supporting.{line_doc.generated_reference}",
-						_("Supporting Strategy target without a reason on {0}").format(
-							line_doc.generated_reference
-						),
-						action_label=_("Review budget line"),
-						action_route=lines_route,
-						group="strategy",
+						f"lines.omitted_with_floor.{budget_line}",
+						_("{0} has a remaining reservation or commitment and cannot be omitted").format(prior.title),
 					)
 				)
-			else:
-				strategy_complete += 1
+			continue
+		# BUD-BR-019 — identity fields immutable after activation.
+		if (
+			current.title != prior.title
+			or current.owner_org_unit != prior.owner_org_unit
+			or current.funding_source != prior.funding_source
+		):
+			issues.append(
+				_issue(
+					f"lines.identity_changed.{budget_line}",
+					_("{0} changed title, owner scope or funding source — a new Budget Line is required").format(
+						prior.title
+					),
+				)
+			)
+		# BUD-BR-017 — cannot reduce below current Reserved + Committed.
+		if flt(current.approved_amount) < floor:
+			issues.append(
+				_issue(
+					f"lines.floor_breach.{budget_line}",
+					_("{0} proposed amount is below its current reserved and committed floor").format(prior.title),
+				)
+			)
+		delta = flt(current.approved_amount) - flt(prior.approved_amount)
+		if delta > 0:
+			total_increase += delta
+		elif delta < 0:
+			total_decrease += -delta
 
-	if strategy_total == 0:
-		# No strategy rows to evaluate — treat as complete empty-ok.
-		strategy_total = 1
-		strategy_complete = 1
+	if version.revision_type == "Transfer":
+		if abs(total_increase - total_decrease) >= 0.01:
+			issues.append(_issue("transfer.unbalanced", _("Transfer increases and decreases do not balance")))
+		if abs(flt(version.authorised_total) - flt(based_on.authorised_total)) >= 0.01:
+			issues.append(_issue("transfer.total_changed", _("A Transfer must preserve the authorised total")))
 
-	# Governance
-	gov_items = [
-		(
-			bool((doc.budget_owner or "").strip()),
-			_issue(
-				"governance.owner",
-				_("Budget owner is required"),
-				action_label=_("Open overview"),
-				action_route=overview_route,
-				group="governance",
-			),
-		),
-		(
-			bool(doc.procuring_entity),
-			_issue(
-				"governance.entity",
-				_("Procuring entity is required"),
-				action_label=_("Open overview"),
-				action_route=overview_route,
-				group="governance",
-			),
-		),
-		(
-			doc.status not in ("Cancelled",),
-			_issue(
-				"governance.status",
-				_("Budget is cancelled and cannot proceed"),
-				action_label=_("Open overview"),
-				action_route=overview_route,
-				group="governance",
-			),
-		),
+	return issues
+
+
+def _reserved_plus_committed(budget_line: str) -> float:
+	from kentender_budget.services.budget_contracts import _line_position
+
+	pos = _line_position(budget_line, None)
+	return pos["reserved"] + pos["committed"]
+
+
+def _readiness_checklist(version, issues: list[dict[str, str]]) -> list[dict[str, str]]:
+	codes = {i["code"] for i in issues}
+
+	def status(prefix: str) -> str:
+		return "Needs attention" if any(c.startswith(prefix) for c in codes) else "Ready"
+
+	checklist = [
+		{"key": "evidence", "label": _("Approval details complete"), "result": status("evidence.")},
+		{"key": "totals", "label": _("Budget Line total matches authorised total"), "result": status("lines.total_mismatch")},
 	]
+	if version.based_on_budget_version:
+		checklist.append({"key": "floors", "label": _("Reservation and commitment floors"), "result": status("lines.floor_breach") or status("lines.omitted_with_floor")})
+		if version.revision_type == "Transfer":
+			checklist.append({"key": "transfer", "label": _("Transfer balance"), "result": status("transfer.")})
+	else:
+		checklist.append({"key": "lines_complete", "label": _("Budget Lines complete"), "result": status("lines.empty")})
+	return checklist
 
-	def _group(
-		key: str,
-		title: str,
-		items: list[tuple[bool, dict[str, Any] | None]] | None = None,
-		*,
-		complete: int | None = None,
-		total: int | None = None,
-		issues: list[dict[str, Any]] | None = None,
-	) -> dict[str, Any]:
-		if items is not None:
-			total = len(items)
-			complete = sum(1 for ok, _ in items if ok)
-			issues = [iss for ok, iss in items if not ok and iss]
-		issues = issues or []
+
+def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
+	"""BUD-UI-04 Overview tab — §12.5: always reads the submitted version, no
+	tab substitutes the current Active version."""
+	version = _resolve_budget_version(budget_version)
+	require_budget_version_read_scope(version)
+	budget = frappe.get_doc("Budget", version.budget)
+	resolve_scoped_entity(budget.procuring_entity)
+
+	issues = _evaluate_readiness(version)
+	return {
+		"budget": _budget_summary(budget),
+		"version": _version_summary(version),
+		"based_on": _version_summary(frappe.get_doc("Budget Version", version.based_on_budget_version))
+		if version.based_on_budget_version
+		else None,
+		"revision_type": version.revision_type or "",
+		"readiness": _readiness_checklist(version, issues),
+		"blockers": issues,
+		"submission": {
+			"submitted_by": version.submitted_by or "",
+			"submitted_at": str(version.submitted_at) if version.submitted_at else "",
+			"submitted_at_display": format_datetime(version.submitted_at) if version.submitted_at else "",
+		},
+		"capabilities": {
+			"can_return": version.status == "Submitted for approval"
+			and has_budget_version_capability(frappe.session.user, CAP_RETURN, version),
+			"can_approve": version.status == "Submitted for approval"
+			and not issues
+			and has_budget_version_capability(frappe.session.user, CAP_APPROVE, version),
+		},
+	}
+
+
+def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
+	"""BUD-UI-04 Budget Lines tab — submitted line set + current floors."""
+	version = _resolve_budget_version(budget_version)
+	require_budget_version_read_scope(version)
+
+	rows = frappe.get_all(
+		"Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
+		order_by="title asc",
+	)
+	out = []
+	total_amount = total_floor = 0.0
+	for r in rows:
+		floor = _reserved_plus_committed(r.budget_line) if version.based_on_budget_version else 0.0
+		headroom = flt(r.approved_amount) - floor
+		total_amount += flt(r.approved_amount)
+		total_floor += floor
+		out.append(
+			{
+				"budget_line": r.budget_line,
+				"title": r.title,
+				"owner_org_unit": r.owner_org_unit,
+				"funding_source": r.funding_source,
+				"amount": flt(r.approved_amount),
+				"floor": floor,
+				"headroom": headroom,
+			}
+		)
+	return {
+		"rows": out,
+		"total_amount": total_amount,
+		"total_floor": total_floor,
+		"total_headroom": total_amount - total_floor,
+		"is_successor": bool(version.based_on_budget_version),
+	}
+
+
+def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
+	"""BUD-UI-04 Changes tab — server-calculated diff vs `based_on_budget_version`.
+	Version 1 returns the explicit initial-baseline state, never an invented
+	predecessor (§12.5)."""
+	version = _resolve_budget_version(budget_version)
+	require_budget_version_read_scope(version)
+
+	rows = frappe.get_all(
+		"Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["budget_line", "title", "approved_amount"],
+		order_by="title asc",
+	)
+	if not version.based_on_budget_version:
+		total = sum(flt(r.approved_amount) for r in rows)
 		return {
-			"key": key,
-			"title": title,
-			"complete_count": int(complete or 0),
-			"total_count": int(total or 0),
-			"issues": issues,
-			"status": "issue" if issues else "ok",
-			"summary": issues[0]["message"]
-			if issues
-			else _("All {0} requirements met.").format(title.lower()),
+			"is_initial_baseline": True,
+			"rows": [{"budget_line": r.budget_line, "title": r.title, "submitted_amount": flt(r.approved_amount)} for r in rows],
+			"total_submitted": total,
 		}
 
-	groups = [
-		_group("source", _("Source"), source_checks),
-		_group(
-			"lines",
-			_("Budget Lines"),
-			complete=line_complete,
-			total=line_total,
-			issues=line_issues,
-		),
-		_group(
-			"strategy",
-			_("Strategy Alignment"),
-			complete=strategy_complete,
-			total=strategy_total,
-			issues=strategy_issues,
-		),
-		_group("governance", _("Governance"), gov_items),
-	]
-
-	blockers: list[dict[str, Any]] = []
-	for g in groups:
-		for iss in g["issues"]:
-			blockers.append(iss)
-	return groups, blockers
-
-
-def _capabilities(doc, blockers: list[dict[str, Any]], task_id: str = "") -> dict[str, Any]:
-	is_officer = can_budget(CAP_BUDGET_SUBMIT, doc)
-	task, commands = authorized_budget_task(
-		actor=frappe.session.user,
-		subject_type="Budget",
-		subject_id=doc.name,
-		capabilities=(CAP_BUDGET_REVIEW, CAP_BUDGET_RETURN, CAP_BUDGET_APPROVE),
-		task_id=task_id,
-	)
-	is_reviewer = CAP_BUDGET_REVIEW in commands or CAP_BUDGET_RETURN in commands
-	is_authority = CAP_BUDGET_APPROVE in commands
-	status = doc.status
-	has_blockers = bool(blockers)
-	reviewed = bool((doc.reviewed_by or "").strip())
-	submitter = (doc.submitted_by or "").strip()
-	actor = frappe.session.user
-
-	can_submit = (
-		status in ("Draft", "Returned")
-		and is_officer
-		and not has_blockers
-	)
-	can_return = status == "Submitted" and is_reviewer
-	can_mark = status == "Submitted" and is_reviewer and not reviewed
-	can_activate = (
-		status == "Submitted"
-		and is_authority
-		and reviewed
-		and not has_blockers
-		and (not submitter or submitter != actor)
-	)
-	activate_lock = ""
-	if status == "Submitted" and is_authority:
-		if has_blockers:
-			activate_lock = _("Resolve readiness blockers before activation")
-		elif not reviewed:
-			activate_lock = _("Mark as reviewed before activation")
-		elif submitter and submitter == actor:
-			activate_lock = _("Submitter cannot activate the same Budget (AC-018)")
-
+	prior = {
+		l.budget_line: flt(l.approved_amount)
+		for l in frappe.get_all(
+			"Budget Line Version", filters={"budget_version": version.based_on_budget_version}, fields=["budget_line", "approved_amount"]
+		)
+	}
+	changes = []
+	total_active = total_submitted = 0.0
+	affected_reservations = affected_commitments = floor_breaches = 0
+	for r in rows:
+		active_amount = prior.get(r.budget_line, 0.0)
+		change = flt(r.approved_amount) - active_amount
+		total_active += active_amount
+		total_submitted += flt(r.approved_amount)
+		floor = _reserved_plus_committed(r.budget_line)
+		if change < 0 and abs(change) > 0 and flt(r.approved_amount) < floor:
+			floor_breaches += 1
+		if floor > 0:
+			affected_reservations += 1
+		changes.append(
+			{
+				"budget_line": r.budget_line,
+				"title": r.title,
+				"active_amount": active_amount,
+				"submitted_amount": flt(r.approved_amount),
+				"change": change,
+			}
+		)
 	return {
-		"can_run_check": status in ("Draft", "Returned", "Submitted", "Active"),
-		"can_submit": can_submit,
-		"can_return": can_return,
-		"can_mark_reviewed": can_mark,
-		"can_activate": can_activate,
-		"activate_lock_reason": activate_lock,
-		"read_only": status in ("Active", "Closed", "Cancelled"),
-		"show_activation_record": status == "Active",
-		# Active: same chrome Request revision as Overview/Lines. Draft/Submitted use in-tab actions.
-		"primary_action": "request_revision" if status == "Active" else "",
-		"primary_label": "Request revision" if status == "Active" else "",
-		"task_id": task.name if task else "",
-		"concurrency_token": task.concurrency_token if task else "",
+		"is_initial_baseline": False,
+		"rows": changes,
+		"total_active": total_active,
+		"total_submitted": total_submitted,
+		"total_change": total_submitted - total_active,
+		"impact": {
+			"active_reservations_affected": affected_reservations,
+			"active_commitments_affected": affected_commitments,
+			"floor_breaches": floor_breaches,
+			"transfer_difference": abs(flt(version.authorised_total) - flt(total_submitted)),
+		},
 	}
 
 
-def get_budget_readiness(budget: str, task_id: str | None = None) -> dict[str, Any]:
-	"""Grouped readiness checklist + capabilities for the Review tab."""
-	require_any_role(*_READ_ROLES)
-	doc = _resolve_budget(budget)
-	require_budget_capability(CAP_BUDGET_VIEW, doc)
-	resolve_scoped_entity(doc.procuring_entity)
-	allowed = visible_statuses_for_user()
-	if allowed is not None and doc.status not in allowed:
-		frappe.throw(
-			_("Not permitted to view {0} budgets").format(doc.status),
-			frappe.PermissionError,
-		)
-
-	groups, blockers = _evaluate_readiness(doc)
-	caps = _capabilities(doc, blockers, (task_id or "").strip())
-
-	# Keep portfolio attention counter in sync with live issue count for Draft/Returned.
-	live_count = len(blockers)
-	if doc.status in ("Draft", "Returned") and int(doc.readiness_issue_count or 0) != live_count:
-		frappe.db.set_value(
-			"Budget",
-			doc.name,
-			"readiness_issue_count",
-			live_count,
-			update_modified=False,
-		)
-		doc.readiness_issue_count = live_count
-
-	return {
-		"budget": {
-			"id": doc.name,
-			"code": doc.generated_reference,
-			"name": doc.title,
-			"title": doc.title,
-			"status": doc.status,
-			"status_label": _STATUS_CHIP.get(doc.status, doc.status),
-			"fiscal_period": doc.fiscal_period,
-			"currency": doc.currency or "KES",
-			"procuring_entity": doc.procuring_entity,
-		},
-		"groups": groups,
-		"blockers": blockers,
-		"blocker_count": len(blockers),
-		"governance": {
-			"submitted_by": doc.submitted_by or "",
-			"submitted_at": str(doc.submitted_at) if doc.submitted_at else "",
-			"submitted_at_display": format_datetime(doc.submitted_at) if doc.submitted_at else "",
-			"reviewed_by": doc.reviewed_by or "",
-			"reviewed_at": str(doc.reviewed_at) if doc.reviewed_at else "",
-			"reviewed_at_display": format_datetime(doc.reviewed_at) if doc.reviewed_at else "",
-			"activated_by": doc.activated_by or "",
-			"activated_at": str(doc.activated_at) if doc.activated_at else "",
-			"activated_at_display": format_datetime(doc.activated_at) if doc.activated_at else "",
-			"return_reason": doc.return_reason or "",
-			"authoritative_reference": doc.authoritative_reference or "",
-		},
-		"disclaimer": _(
-			"Activation confirms that the approved financial baseline has been verified "
-			"for procurement use in KenTender. It does not constitute statutory budget approval."
-		),
-		"capabilities": caps,
-	}
-
-
-def submit_budget(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Draft/Returned → Submitted when readiness passes."""
+def submit_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `submit_budget_version` — Draft → Submitted for approval."""
 	payload = _as_dict(payload)
-	doc = _resolve_budget(payload.get("budget") or "")
-	require_budget_capability(CAP_BUDGET_SUBMIT, doc)
+	version = _resolve_budget_version(payload.get("budget_version") or "")
+	require_budget_version_capability(frappe.session.user, CAP_SUBMIT, version)
 
-	if doc.status not in ("Draft", "Returned"):
-		return {
-			"ok": False,
-			"errors": {"status": _("Only Draft or Returned budgets can be submitted")},
-		}
+	if version.status != "Draft":
+		frappe.throw(_("Only a Draft version can be submitted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
-	_groups, blockers = _evaluate_readiness(doc)
-	if blockers:
-		return {
-			"ok": False,
-			"errors": {"blockers": blockers[0]["message"]},
-			"blockers": blockers,
-			"readiness": get_budget_readiness(doc.generated_reference),
-		}
+	issues = _evaluate_readiness(version)
+	if issues:
+		return {"ok": False, "code": "BUDGET_NOT_READY", "blockers": issues}
 
-	task = create_budget_task(
-		doc,
-		capability=CAP_BUDGET_REVIEW,
-		task_type="budget.review",
-		iteration=0,
-	)
-	prior = doc.status
-	doc.status = "Submitted"
-	doc.submitted_by = frappe.session.user
-	doc.submitted_at = now_datetime()
-	doc.reviewed_by = None
-	doc.reviewed_at = None
-	doc.return_reason = ""
-	doc.readiness_issue_count = 0
-	doc.save(ignore_permissions=True)
-	from kentender_budget.services.budget_audit_contracts import (
-		EVENT_SUBMITTED,
-		safe_record_event,
-	)
+	version.status = "Submitted for approval"
+	version.submitted_by = frappe.session.user
+	version.submitted_at = now_datetime()
+	version.decided_by = None
+	version.decided_at = None
+	version.return_reason = ""
+	version.save(ignore_permissions=True)
+
+	from kentender_budget.services.budget_audit_contracts import EVENT_SUBMITTED, safe_record_event
 
 	safe_record_event(
-		budget=doc.name,
+		budget=version.budget,
+		budget_version=version.name,
 		event_type=EVENT_SUBMITTED,
-		record_code=doc.generated_reference,
-		record_doctype="Budget",
 		actor=frappe.session.user,
-		actor_kind="user",
-		before_summary=prior,
-		after_summary="Submitted",
-		change_summary=f"Status: {prior} → Submitted",
-		source_reference=doc.authoritative_reference or "",
+		correlation_id=frappe.generate_hash(length=12),
+		calling_module="Budget & Funding",
 	)
-	from kentender_budget.services.budget_notification_service import (
-		EVENT_BUDGET_SUBMITTED,
-		notify_budget_users,
-	)
-
-	notify_budget_users(EVENT_BUDGET_SUBMITTED, budget_doc=doc)
-	return {"ok": True, "task_id": task.name, "readiness": get_budget_readiness(doc.generated_reference)}
+	return {"ok": True, "version": _version_summary(version)}
 
 
-def return_budget(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Submitted → Returned; Reviewer/Authority; comment required."""
+def return_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `return_budget_version` — Submitted for approval → Draft, reason required."""
 	payload = _as_dict(payload)
-	doc = _resolve_budget(payload.get("budget") or "")
-	task, token = require_budget_task(
-		payload,
-		capability=CAP_BUDGET_RETURN,
-		subject_type="Budget",
-		subject_id=doc.name,
-	)
+	version = _resolve_budget_version(payload.get("budget_version") or "")
+	require_budget_version_capability(frappe.session.user, CAP_RETURN, version)
 
-	if doc.status != "Submitted":
+	if version.status != "Submitted for approval":
+		frappe.throw(_("Only a Submitted version can be returned"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	reason = (payload.get("return_reason") or payload.get("reason") or "").strip()
+	if not (_MIN_RETURN_REASON <= len(reason) <= _MAX_RETURN_REASON):
 		return {
 			"ok": False,
-			"errors": {"status": _("Only Submitted budgets can be returned")},
+			"errors": {"return_reason": _("Return reason must be between {0} and {1} characters").format(_MIN_RETURN_REASON, _MAX_RETURN_REASON)},
 		}
 
-	comment = (payload.get("comment") or payload.get("return_reason") or "").strip()
-	if not comment:
-		return {
-			"ok": False,
-			"errors": {"comment": _("Comment is required when returning a Budget")},
-		}
+	version.status = "Draft"
+	version.decided_by = frappe.session.user
+	version.decided_at = now_datetime()
+	version.return_reason = reason
+	version.save(ignore_permissions=True)
 
-	complete_budget_task(task, token, capability=CAP_BUDGET_RETURN, target_state="Returned")
-	doc.status = "Returned"
-	doc.return_reason = comment
-	doc.reviewed_by = None
-	doc.reviewed_at = None
-	doc.save(ignore_permissions=True)
-	from kentender_budget.services.budget_audit_contracts import (
-		EVENT_RETURNED,
-		safe_record_event,
-	)
+	from kentender_budget.services.budget_audit_contracts import EVENT_RETURNED, safe_record_event
 
 	safe_record_event(
-		budget=doc.name,
+		budget=version.budget,
+		budget_version=version.name,
 		event_type=EVENT_RETURNED,
-		record_code=doc.generated_reference,
-		record_doctype="Budget",
 		actor=frappe.session.user,
-		actor_kind="user",
-		before_summary="Submitted",
-		after_summary="Returned",
-		change_summary="Status: Submitted → Returned",
-		source_reference=doc.authoritative_reference or "",
-		reason=comment,
+		correlation_id=frappe.generate_hash(length=12),
+		calling_module="Budget & Funding",
+		reason=reason,
 	)
-	from kentender_budget.services.budget_notification_service import (
-		EVENT_BUDGET_RETURNED,
-		notify_budget_users,
+	return {"ok": True, "version": _version_summary(version)}
+
+
+def approve_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `approve_budget_version` — revalidate authority, evidence, line
+	total, floors, transfer balance, scope and concurrency; atomically
+	activate and supersede the previous Active version (BUD-BR-021/022).
+	One atomic action — there is no separate later activation step."""
+	payload = _as_dict(payload)
+	version = _resolve_budget_version(payload.get("budget_version") or "")
+	require_budget_version_capability(frappe.session.user, CAP_APPROVE, version)
+
+	if version.status != "Submitted for approval":
+		frappe.throw(_("Only a Submitted version can be approved"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	expected_modified = payload.get("expected_modified")
+	if expected_modified and str(version.modified) != str(expected_modified):
+		frappe.throw(_("This Budget Version was changed by someone else"), frappe.ValidationError, title="BUDGET_STALE_WRITE")
+
+	issues = _evaluate_readiness(version)
+	if issues:
+		return {"ok": False, "code": "BUDGET_NOT_READY", "blockers": issues}
+
+	prior_active = _active_version(version.budget)
+
+	version.status = "Active"
+	version.decided_by = frappe.session.user
+	version.decided_at = now_datetime()
+	version.save(ignore_permissions=True)
+
+	if prior_active and prior_active.name != version.name:
+		prior_active.status = "Superseded"
+		prior_active.superseded_at = now_datetime()
+		prior_active.save(ignore_permissions=True)
+
+	correlation_id = frappe.generate_hash(length=12)
+	from kentender_budget.services.budget_audit_contracts import EVENT_APPROVED, EVENT_SUPERSEDED, safe_record_event
+
+	safe_record_event(
+		budget=version.budget,
+		budget_version=version.name,
+		event_type=EVENT_APPROVED,
+		actor=frappe.session.user,
+		correlation_id=correlation_id,
+		calling_module="Budget & Funding",
 	)
+	if prior_active and prior_active.name != version.name:
+		safe_record_event(
+			budget=version.budget,
+			budget_version=prior_active.name,
+			event_type=EVENT_SUPERSEDED,
+			actor=frappe.session.user,
+			correlation_id=correlation_id,
+			calling_module="Budget & Funding",
+		)
+	return {"ok": True, "version": _version_summary(version)}
 
-	notify_budget_users(EVENT_BUDGET_RETURNED, budget_doc=doc)
-	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
 
-
-def mark_budget_reviewed(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Record reviewer completion; status remains Submitted."""
+def close_budget(payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `close_budget` — Active → Closed after the FY and remaining-
+	reservation guards pass (§6.2, BUD-BR-023)."""
 	payload = _as_dict(payload)
 	doc = _resolve_budget(payload.get("budget") or "")
-	task, token = require_budget_task(
-		payload,
-		capability=CAP_BUDGET_REVIEW,
-		subject_type="Budget",
-		subject_id=doc.name,
-	)
+	version = _active_version(doc.name)
+	if not version:
+		frappe.throw(_("No Active Budget Version to close"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	require_budget_version_capability(frappe.session.user, CAP_APPROVE, version)
 
-	if doc.status != "Submitted":
-		return {
-			"ok": False,
-			"errors": {"status": _("Only Submitted budgets can be marked reviewed")},
-		}
+	end_date = frappe.db.get_value("Financial Year", doc.financial_year, "end_date")
+	if end_date and getdate() <= getdate(end_date):
+		return {"ok": False, "errors": {"financial_year": _("The Financial Year has not yet ended")}}
 
-	_groups, blockers = _evaluate_readiness(doc)
-	if blockers:
-		return {
-			"ok": False,
-			"errors": {"blockers": blockers[0]["message"]},
-			"blockers": blockers,
-		}
+	totals = _version_totals(version.name)
+	if totals["reserved"] > 0:
+		return {"ok": False, "errors": {"reservations": _("Budget Lines still have a remaining reservation")}}
 
-	complete_budget_task(task, token, capability=CAP_BUDGET_REVIEW)
-	authority_task = create_budget_task(
-		doc,
-		capability=CAP_BUDGET_APPROVE,
-		task_type="budget.approve",
-		predecessor_task_id=task.name,
-		iteration=0,
-	)
-	doc.reviewed_by = frappe.session.user
-	doc.reviewed_at = now_datetime()
-	doc.save(ignore_permissions=True)
-	from kentender_budget.services.budget_audit_contracts import (
-		EVENT_REVIEWED,
-		safe_record_event,
-	)
+	version.status = "Closed"
+	version.closed_by = frappe.session.user
+	version.closed_at = now_datetime()
+	version.save(ignore_permissions=True)
+
+	from kentender_budget.services.budget_audit_contracts import EVENT_CLOSED, safe_record_event
 
 	safe_record_event(
 		budget=doc.name,
-		event_type=EVENT_REVIEWED,
-		record_code=doc.generated_reference,
-		record_doctype="Budget",
+		budget_version=version.name,
+		event_type=EVENT_CLOSED,
 		actor=frappe.session.user,
-		actor_kind="user",
-		before_summary="Submitted",
-		after_summary="Reviewed",
-		change_summary="Reviewer completion recorded (status remains Submitted)",
-		source_reference=doc.authoritative_reference or "",
+		correlation_id=frappe.generate_hash(length=12),
+		calling_module="Budget & Funding",
 	)
-	from kentender_budget.services.budget_notification_service import (
-		EVENT_BUDGET_REVIEWED,
-		notify_budget_users,
-	)
-
-	notify_budget_users(EVENT_BUDGET_REVIEWED, budget_doc=doc)
-	return {"ok": True, "task_id": authority_task.name, "readiness": get_budget_readiness(doc.generated_reference)}
-
-
-def activate_budget(payload: dict | str | None = None) -> dict[str, Any]:
-	"""Submitted → Active; Authority; reviewed; AC-018 submitter lock."""
-	payload = _as_dict(payload)
-	doc = _resolve_budget(payload.get("budget") or "")
-	task, token = require_budget_task(
-		payload,
-		capability=CAP_BUDGET_APPROVE,
-		subject_type="Budget",
-		subject_id=doc.name,
-	)
-
-	if doc.status != "Submitted":
-		return {
-			"ok": False,
-			"errors": {"status": _("Only Submitted budgets can be activated")},
-		}
-
-	if not (doc.reviewed_by or "").strip():
-		return {
-			"ok": False,
-			"errors": {"reviewed_by": _("Budget must be marked reviewed before activation")},
-		}
-
-	if doc.submitted_by and doc.submitted_by == frappe.session.user:
-		return {
-			"ok": False,
-			"errors": {"status": _("Submitter cannot activate the same Budget (AC-018)")},
-		}
-
-	_groups, blockers = _evaluate_readiness(doc)
-	if blockers:
-		return {
-			"ok": False,
-			"errors": {"blockers": blockers[0]["message"]},
-			"blockers": blockers,
-		}
-
-	if not (doc.authoritative_reference or "").strip() or not (doc.approval_evidence or "").strip():
-		return {
-			"ok": False,
-			"errors": {
-				"approval_evidence": _("Authoritative approval reference and evidence are required"),
-			},
-		}
-
-	complete_budget_task(
-		task,
-		token,
-		capability=CAP_BUDGET_APPROVE,
-		prior_actions=[
-			{"user": doc.submitted_by or "", "capability": CAP_BUDGET_SUBMIT},
-			{"user": doc.reviewed_by or "", "capability": CAP_BUDGET_REVIEW},
-		],
-	)
-	doc.status = "Active"
-	doc.activated_by = frappe.session.user
-	doc.activated_at = now_datetime()
-	doc.readiness_issue_count = 0
-	doc.save(ignore_permissions=True)
-	from kentender_budget.services.budget_audit_contracts import (
-		EVENT_ACTIVATED,
-		safe_record_event,
-	)
-
-	safe_record_event(
-		budget=doc.name,
-		event_type=EVENT_ACTIVATED,
-		record_code=doc.generated_reference,
-		record_doctype="Budget",
-		actor=frappe.session.user,
-		actor_kind="user",
-		before_summary="Submitted",
-		after_summary="Active",
-		change_summary="Status: Submitted → Active",
-		source_reference=doc.authoritative_reference or "",
-	)
-	from kentender_budget.services.budget_notification_service import (
-		EVENT_BUDGET_ACTIVATED,
-		notify_budget_users,
-	)
-
-	notify_budget_users(EVENT_BUDGET_ACTIVATED, budget_doc=doc)
-	return {"ok": True, "readiness": get_budget_readiness(doc.generated_reference)}
+	return {"ok": True, "version": _version_summary(version)}

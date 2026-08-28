@@ -1,9 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Commitment conversion, adjustment and expenditure ingestion —
-BUD-CHG-001 §12 logical integration contracts `convert_reservation`,
-`adjust_commitment`, `ingest_expenditure_snapshot`.
+"""BUD-CHG-001 v1.2 §8.3/§9.1 — later reservation/commitment lifecycle events:
+`revalidate_reservations`, `release_reservation`, `convert_reservation`,
+`adjust_commitment`. No expenditure contract exists in MVP-1 — the previous
+`ingest_expenditure_snapshot` function and Expenditure Snapshot integration
+are removed outright, not stubbed.
 """
 
 from __future__ import annotations
@@ -12,379 +14,293 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, now_datetime, today
+from frappe.utils import flt
 
-from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_RESERVE,
-	require_budget_capability,
-)
-from kentender_budget.services.budget_check_reserve_contracts import _resolve_line, _resolve_reservation
-from kentender_budget.services.budget_line_contracts import ACTUAL_STALE_DAYS, format_kes_full
-from kentender_budget.services.budget_permissions import (
-	ROLE_APPROVER,
-	ROLE_OFFICER,
-	ROLE_APPROVER,
-	require_any_role,
-)
-from kentender_budget.services.budget_reference import (
-	allocate_commitment_reference,
-	allocate_expenditure_snapshot_reference,
-)
+from kentender_budget.services.budget_check_reserve_contracts import _resolve_reservation
+from kentender_budget.services.budget_line_contracts import format_kes_full
+from kentender_budget.services.budget_reference import allocate_commitment_reference
+
+
+def _require_service_capability(procuring_entity: str) -> None:
+	"""§17.1: downstream service principals authenticate their event, not a
+	Budget Version workflow role. A System Manager / Administrator technical
+	session, or any authenticated user acting for a downstream module, may
+	call these — the real authority boundary is the caller's own module
+	(Contract Management, Procurement Planning), asserted by their own event."""
+	if not frappe.session.user or frappe.session.user == "Guest":
+		frappe.throw(_("Authentication is required"), frappe.PermissionError, title="BUDGET_DOWNSTREAM_FORBIDDEN")
 
 
 def _resolve_commitment(commitment: str) -> Any:
 	key = (commitment or "").strip()
 	if not key:
 		frappe.throw(_("Commitment is required"))
-	name = key if frappe.db.exists("Procurement Commitment", key) else ""
-	if not name:
-		name = frappe.db.get_value("Procurement Commitment", {"generated_reference": key}, "name") or ""
+	name = key if frappe.db.exists("Procurement Commitment", key) else frappe.db.get_value("Procurement Commitment", {"generated_reference": key}, "name")
 	if not name:
 		frappe.throw(_("Commitment {0} not found").format(key), frappe.DoesNotExistError)
 	return frappe.get_doc("Procurement Commitment", name)
 
 
-def _commitment_result(doc, *, reused: bool) -> dict[str, Any]:
-	currency = doc.currency or "KES"
+def _commitment_result(doc) -> dict[str, Any]:
 	return {
-		"ok": True,
-		"reused": reused,
 		"commitment_id": doc.name,
 		"commitment_code": doc.generated_reference,
 		"status": doc.status,
-		"budget_line": doc.budget_line,
 		"reservation": doc.reservation,
-		"contract_code": doc.contract_code,
-		"original_amount": flt(doc.original_amount),
+		"contract": doc.contract,
 		"current_amount": flt(doc.current_amount),
-		"outstanding_amount": flt(doc.outstanding_amount),
-		"current_amount_display": format_kes_full(doc.current_amount, currency=currency),
-		"outstanding_amount_display": format_kes_full(doc.outstanding_amount, currency=currency),
-		"idempotency_key": doc.idempotency_key or "",
+		"currency": doc.currency,
 	}
 
 
-def convert_reservation(
-	reservation: str | None = None,
-	contract_code: str | None = None,
-	contract_title: str | None = None,
-	commitment_amount: float | None = None,
-	idempotency_key: str | None = None,
-	actor: str | None = None,
-	generated_reference: str | None = None,
+def _reservation_result(doc) -> dict[str, Any]:
+	return {
+		"reservation_id": doc.name,
+		"reservation_code": doc.generated_reference,
+		"status": doc.status,
+		"budget_line": doc.budget_line,
+		"remaining_amount": flt(doc.remaining_amount),
+		"currency": doc.currency,
+	}
+
+
+def revalidate_reservations(
+	reservations: list[str],
+	downstream_event_id: str,
+	downstream_event_type: str,
+	idempotency_key: str,
 ) -> dict[str, Any]:
-	"""BUD-CHG-001 §12 `convert_reservation` — convert all or part of a
-	Reserved/Partially converted reservation's remaining balance into a
-	Procurement Commitment against an Award/Contract. Excess beyond the
-	remaining reservation is rejected; any unconverted remainder stays
-	Reserved (status becomes Partially converted) — it is not silently
-	released. One reservation may be converted more than once (partial
-	conversions), never beyond its original amount.
-	"""
-	key = (idempotency_key or "").strip()
-	if key:
-		existing = frappe.db.get_value("Procurement Commitment", {"idempotency_key": key}, "name")
-		if existing:
-			return _commitment_result(frappe.get_doc("Procurement Commitment", existing), reused=True)
+	"""§9.1 `revalidate_reservations` — Current or Needs Attention results and
+	ledger events; no new reservation is created."""
+	_require_service_capability("")
+	from kentender_budget.services.budget_contracts import _line_position
+	from kentender_budget.services.budget_audit_contracts import EVENT_REVALIDATED, safe_record_event
 
-	doc = _resolve_reservation(reservation or "")
-	bud = frappe.get_doc("Budget", doc.budget)
-	require_budget_capability(CAP_BUDGET_RESERVE, bud)
+	results = []
+	for name in reservations or []:
+		doc = _resolve_reservation(name)
+		if doc.status in ("Converted", "Released"):
+			results.append(_reservation_result(doc))
+			continue
 
-	if doc.status not in ("Reserved", "Partially converted"):
-		frappe.throw(_("Only a Reserved or Partially converted reservation can be converted"))
+		pos = _line_position(doc.budget_line, _current_line_version(doc.budget_line))
+		# The reservation's own remaining_amount is already inside pos["reserved"];
+		# a floor breach shows up as negative available once approved_amount fell.
+		prior_status = doc.status
+		new_status = "Needs Attention" if pos["available"] < 0 else ("Active" if flt(doc.remaining_amount) >= flt(doc.original_amount) else "Partially Converted")
 
-	amount = flt(commitment_amount)
+		if new_status != prior_status:
+			doc.status = new_status
+			doc.save(ignore_permissions=True)
+			safe_record_event(
+				budget=doc.budget,
+				budget_line=doc.budget_line,
+				reservation=doc.name,
+				event_type=EVENT_REVALIDATED,
+				actor=frappe.session.user,
+				correlation_id=idempotency_key,
+				calling_module=downstream_event_type,
+				downstream_reference=downstream_event_id,
+				revalidation_failure_code="BUDGET_LINE_FLOOR_BREACH" if new_status == "Needs Attention" else "",
+			)
+			doc.reload()
+		results.append(_reservation_result(doc))
+	return {"ok": True, "reservations": results}
+
+
+def _current_line_version(budget_line: str):
+	from kentender_budget.services.budget_contracts import _active_version, _line_version_for
+
+	budget = frappe.db.get_value("Budget Line", budget_line, "budget")
+	version = _active_version(budget) if budget else None
+	return _line_version_for(version.name, budget_line) if version else None
+
+
+def release_reservation(
+	reservation: str,
+	amount: float | None,
+	downstream_event_id: str,
+	downstream_event_type: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	"""§9.1 `release_reservation` — reduce the remaining amount or set
+	Released, and return the new line position."""
+	_require_service_capability("")
+	doc = _resolve_reservation(reservation)
+	if doc.status in ("Converted", "Released"):
+		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
+
+	frappe.db.sql("select name from `tabFunding Reservation` where name=%s for update", (doc.name,))
+	doc.reload()
+
+	release_amount = flt(amount) if amount is not None else flt(doc.remaining_amount)
+	release_amount = min(release_amount, flt(doc.remaining_amount))
+	if release_amount <= 0:
+		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
+
+	prior_remaining = flt(doc.remaining_amount)
+	doc.remaining_amount = prior_remaining - release_amount
+	doc.status = "Released" if doc.remaining_amount <= 0.0001 else doc.status
+	doc.save(ignore_permissions=True)
+
+	from kentender_budget.services.budget_audit_contracts import EVENT_RELEASED, safe_record_event
+
+	safe_record_event(
+		budget=doc.budget,
+		budget_line=doc.budget_line,
+		reservation=doc.name,
+		event_type=EVENT_RELEASED,
+		actor=frappe.session.user,
+		correlation_id=idempotency_key,
+		calling_module=downstream_event_type,
+		downstream_reference=downstream_event_id,
+		amount=release_amount,
+		currency=doc.currency,
+	)
+	doc.reload()
+	return {"ok": True, "reused": False, "reservation": _reservation_result(doc)}
+
+
+def convert_reservation(
+	reservation: str,
+	contract: str,
+	amount: float,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	"""§9.1 `convert_reservation` — convert all or part of a reservation's
+	remaining balance into one Procurement Commitment. Excess beyond the
+	remaining reservation is rejected; the unconverted remainder stays
+	reserved (BUD-BR-014)."""
+	_require_service_capability("")
+	doc = _resolve_reservation(reservation)
+	contract = (contract or "").strip()
+	if not contract:
+		frappe.throw(_("Contract reference is required"))
+
+	# §4.6 — contract is unique within the reservation lineage, so (reservation,
+	# contract) is the natural idempotency key: a repeat call for the same pair
+	# returns the existing commitment rather than creating a second one.
+	existing = frappe.db.get_value("Procurement Commitment", {"contract": contract, "reservation": doc.name}, "name")
+	if existing:
+		existing_doc = frappe.get_doc("Procurement Commitment", existing)
+		return {"ok": True, "reused": True, "commitment": _commitment_result(existing_doc), "reservation": _reservation_result(doc)}
+
+	if doc.status not in ("Active", "Partially Converted"):
+		frappe.throw(_("Only an Active or Partially Converted reservation can be converted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	amount = flt(amount)
 	if amount <= 0:
 		frappe.throw(_("Commitment amount must be positive"))
 
-	contract = (contract_code or "").strip()
-	if not contract:
-		frappe.throw(_("Contract reference is required to convert a reservation"))
-
-	# Row lock against parallel conversion of the same reservation.
-	frappe.db.sql(
-		"SELECT name FROM `tabFunding Reservation` WHERE name=%s FOR UPDATE",
-		(doc.name,),
-	)
+	frappe.db.sql("select name from `tabFunding Reservation` where name=%s for update", (doc.name,))
 	doc.reload()
 
-	remaining = flt(doc.remaining_reserved)
+	remaining = flt(doc.remaining_amount)
 	if amount > remaining + 0.0001:
 		frappe.throw(
 			_("Commitment amount ({0}) exceeds the remaining reservation ({1})").format(
-				format_kes_full(amount, currency=doc.currency or "KES"),
-				format_kes_full(remaining, currency=doc.currency or "KES"),
-			)
+				format_kes_full(amount, currency=doc.currency), format_kes_full(remaining, currency=doc.currency)
+			),
+			frappe.ValidationError,
+			title="BUDGET_CONVERSION_EXCEEDS_REMAINDER",
 		)
 
-	preferred = (generated_reference or "").strip()
-	if preferred and not frappe.db.exists("Procurement Commitment", {"generated_reference": preferred}):
-		ref = preferred
-	else:
-		ref = allocate_commitment_reference(bud.procuring_entity)
-	idem = key or f"{doc.name}:{contract}:{flt(amount):.2f}"
-
-	# Re-check idempotency after lock (race).
-	existing2 = frappe.db.get_value("Procurement Commitment", {"idempotency_key": idem}, "name")
-	if existing2:
-		return _commitment_result(frappe.get_doc("Procurement Commitment", existing2), reused=True)
-
+	budget = frappe.get_doc("Budget", doc.budget)
+	ref = allocate_commitment_reference(budget.procuring_entity)
 	com = frappe.get_doc(
 		{
 			"doctype": "Procurement Commitment",
-			"budget": bud.name,
-			"budget_line": doc.budget_line,
-			"reservation": doc.name,
 			"generated_reference": ref,
+			"reservation": doc.name,
+			"contract": contract,
 			"status": "Active",
-			"event_date": getdate(today()),
-			"contract_code": contract,
-			"contract_title": (contract_title or "").strip() or contract,
-			"original_amount": amount,
 			"current_amount": amount,
-			"actual_expenditure": 0,
-			"currency": bud.currency or "KES",
-			"idempotency_key": idem,
+			"currency": doc.currency,
 		}
 	)
 	com.insert(ignore_permissions=True)
 
-	# Reclassify held funds: reservation -> commitment. Total held (reserved +
-	# committed) on the line is unchanged (BUD-CHG-001 §6.1 canonical formula).
-	doc.remaining_reserved = remaining - amount
-	doc.status = "Converted" if doc.remaining_reserved <= 0.0001 else "Partially converted"
+	doc.remaining_amount = remaining - amount
+	doc.status = "Converted" if doc.remaining_amount <= 0.0001 else "Partially Converted"
 	doc.save(ignore_permissions=True)
-
-	line = frappe.get_doc("Budget Line", doc.budget_line)
-	frappe.db.set_value(
-		"Budget Line",
-		line.name,
-		{
-			"amount_reserved": max(0.0, flt(line.amount_reserved) - amount),
-			"amount_committed": flt(line.amount_committed) + amount,
-		},
-		update_modified=True,
-	)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_COMMITMENT, safe_record_event
 
 	safe_record_event(
-		budget=bud.name,
-		event_type=EVENT_COMMITMENT,
-		record_doctype="Procurement Commitment",
-		record_code=ref,
+		budget=doc.budget,
 		budget_line=doc.budget_line,
-		after_summary=format_kes_full(amount, currency=bud.currency or "KES"),
-		source_reference=doc.generated_reference,
-		actor=(actor or frappe.session.user or "System").strip(),
-		actor_kind="user",
+		reservation=doc.name,
+		commitment=com.name,
+		event_type=EVENT_COMMITMENT,
+		actor=frappe.session.user,
+		correlation_id=idempotency_key,
+		calling_module="Contract Management",
+		downstream_reference=contract,
+		amount=amount,
+		currency=doc.currency,
 	)
-
 	com.reload()
-	return _commitment_result(com, reused=False)
+	doc.reload()
+	return {"ok": True, "commitment": _commitment_result(com), "reservation": _reservation_result(doc)}
 
 
 def adjust_commitment(
-	commitment: str | None = None,
-	new_amount: float | None = None,
-	reason: str | None = None,
-	actor: str | None = None,
+	commitment: str,
+	new_total: float,
+	variation_event_id: str,
+	variation_event_type: str,
+	idempotency_key: str,
 ) -> dict[str, Any]:
-	"""BUD-CHG-001 §12 `adjust_commitment` — apply a variation/correction to an
-	Active Procurement Commitment's current amount, updating the Budget
-	Line's committed balance accordingly. An increase must be covered by the
-	line's current available balance (a revalidation-equivalent guard);
-	`outstanding_amount` is recomputed automatically (already-existing
-	`Procurement Commitment.validate()` behaviour).
-	"""
-	doc = _resolve_commitment(commitment or "")
-	bud = frappe.get_doc("Budget", doc.budget)
-	require_budget_capability(CAP_BUDGET_RESERVE, bud)
-
+	"""§9.1 `adjust_commitment` — apply a contract variation/cancellation to
+	an Active commitment's current amount after locked revalidation. An
+	increase must be covered by the line's current available balance."""
+	_require_service_capability("")
+	doc = _resolve_commitment(commitment)
 	if doc.status != "Active":
-		frappe.throw(_("Only an Active commitment can be adjusted"))
+		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
-	new_amt = flt(new_amount)
+	new_amt = flt(new_total)
 	if new_amt < 0:
 		frappe.throw(_("Adjusted commitment amount cannot be negative"))
 
-	reason_text = (reason or "").strip()
-	if not reason_text:
-		frappe.throw(_("A reason is required to adjust a commitment"))
-
-	# Row lock against parallel adjustment.
-	frappe.db.sql(
-		"SELECT name FROM `tabProcurement Commitment` WHERE name=%s FOR UPDATE",
-		(doc.name,),
-	)
+	frappe.db.sql("select name from `tabProcurement Commitment` where name=%s for update", (doc.name,))
 	doc.reload()
 
+	reservation = frappe.get_doc("Funding Reservation", doc.reservation)
 	prior_amount = flt(doc.current_amount)
 	delta = new_amt - prior_amount
-	line = frappe.get_doc("Budget Line", doc.budget_line)
 	if delta > 0:
-		available = flt(line.approved_amount) - flt(line.amount_reserved) - flt(line.amount_committed)
-		if delta > available + 0.0001:
+		from kentender_budget.services.budget_contracts import _line_position
+
+		pos = _line_position(reservation.budget_line, _current_line_version(reservation.budget_line))
+		if delta > pos["available"] + 0.0001:
 			frappe.throw(
 				_("Increase of {0} exceeds the Budget Line's available balance ({1})").format(
-					format_kes_full(delta, currency=doc.currency or "KES"),
-					format_kes_full(available, currency=doc.currency or "KES"),
-				)
+					format_kes_full(delta, currency=doc.currency), format_kes_full(pos["available"], currency=doc.currency)
+				),
+				frappe.ValidationError,
+				title="BUDGET_COMMITMENT_INCREASE_UNFUNDED",
 			)
 
 	doc.current_amount = new_amt
+	if new_amt <= 0:
+		doc.status = "Cancelled"
 	doc.save(ignore_permissions=True)
 
-	frappe.db.set_value(
-		"Budget Line",
-		line.name,
-		"amount_committed",
-		max(0.0, flt(line.amount_committed) + delta),
-		update_modified=True,
-	)
-
-	from kentender_budget.services.budget_audit_contracts import (
-		EVENT_COMMITMENT_ADJUSTED,
-		safe_record_event,
-	)
+	from kentender_budget.services.budget_audit_contracts import EVENT_COMMITMENT_ADJUSTED, safe_record_event
 
 	safe_record_event(
-		budget=bud.name,
+		budget=reservation.budget,
+		budget_line=reservation.budget_line,
+		reservation=reservation.name,
+		commitment=doc.name,
 		event_type=EVENT_COMMITMENT_ADJUSTED,
-		record_doctype="Procurement Commitment",
-		record_code=doc.generated_reference,
-		budget_line=doc.budget_line,
-		before_summary=format_kes_full(prior_amount, currency=doc.currency or "KES"),
-		after_summary=format_kes_full(new_amt, currency=doc.currency or "KES"),
-		reason=reason_text,
-		actor=(actor or frappe.session.user or "System").strip(),
-		actor_kind="user",
+		actor=frappe.session.user,
+		correlation_id=idempotency_key,
+		calling_module=variation_event_type,
+		downstream_reference=variation_event_id,
+		amount=new_amt,
+		currency=doc.currency,
 	)
-
 	doc.reload()
-	return _commitment_result(doc, reused=False)
-
-
-def _snapshot_result(doc, *, reused: bool) -> dict[str, Any]:
-	return {
-		"ok": True,
-		"reused": reused,
-		"snapshot_id": doc.name,
-		"snapshot_code": doc.generated_reference,
-		"reconciliation_status": doc.reconciliation_status,
-		"budget_line": doc.budget_line,
-		"commitment": doc.commitment or "",
-		"amount": flt(doc.amount),
-		"amount_display": format_kes_full(doc.amount, currency=doc.currency or "KES"),
-		"source_as_at": str(doc.source_as_at) if doc.source_as_at else "",
-		"idempotency_key": doc.idempotency_key or "",
-	}
-
-
-def ingest_expenditure_snapshot(
-	budget_line: str | None = None,
-	commitment: str | None = None,
-	amount: float | None = None,
-	source_system: str | None = None,
-	source_reference: str | None = None,
-	source_as_at: str | None = None,
-	idempotency_key: str | None = None,
-	generated_reference: str | None = None,
-) -> dict[str, Any]:
-	"""BUD-CHG-001 §12 `ingest_expenditure_snapshot` — record a read-only
-	Expenditure Snapshot from an authoritative finance-system payload. Never
-	invents or derives an amount — actual expenditure is integration-only,
-	never manual entry, and reconciliation status reflects payload freshness
-	rather than a fabricated zero when no integration is configured.
-	"""
-	require_any_role(ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, "System Manager")
-
-	key = (idempotency_key or "").strip()
-	if key:
-		existing = frappe.db.get_value("Expenditure Snapshot", {"idempotency_key": key}, "name")
-		if existing:
-			return _snapshot_result(frappe.get_doc("Expenditure Snapshot", existing), reused=True)
-
-	line = _resolve_line(budget_line or "")
-	bud = frappe.get_doc("Budget", line.budget)
-
-	amt = flt(amount)
-	if amt < 0:
-		frappe.throw(_("Expenditure amount cannot be negative"))
-	source = (source_system or "").strip()
-	if not source:
-		frappe.throw(_("Source system is required for an expenditure snapshot"))
-
-	com_doc = None
-	com_key = (commitment or "").strip()
-	if com_key:
-		com_doc = _resolve_commitment(com_key)
-		if com_doc.budget_line != line.name:
-			frappe.throw(_("Commitment does not belong to this Budget Line"))
-
-	as_at = getdate(source_as_at) if source_as_at else getdate(today())
-	preferred = (generated_reference or "").strip()
-	if preferred and not frappe.db.exists("Expenditure Snapshot", {"generated_reference": preferred}):
-		ref = preferred
-	else:
-		ref = allocate_expenditure_snapshot_reference(bud.procuring_entity)
-	idem = key or f"{line.name}:{source}:{as_at}:{flt(amt):.2f}"
-
-	existing2 = frappe.db.get_value("Expenditure Snapshot", {"idempotency_key": idem}, "name")
-	if existing2:
-		return _snapshot_result(frappe.get_doc("Expenditure Snapshot", existing2), reused=True)
-
-	staleness_days = (getdate(today()) - as_at).days
-	reconciliation = "Stale" if staleness_days > ACTUAL_STALE_DAYS else "Matched"
-
-	snap = frappe.get_doc(
-		{
-			"doctype": "Expenditure Snapshot",
-			"budget": bud.name,
-			"budget_line": line.name,
-			"commitment": com_doc.name if com_doc else None,
-			"generated_reference": ref,
-			"reconciliation_status": reconciliation,
-			"amount": amt,
-			"currency": bud.currency or "KES",
-			"source_system": source,
-			"source_reference": (source_reference or "").strip(),
-			"contract_code": com_doc.contract_code if com_doc else "",
-			"source_as_at": as_at,
-			"received_at": now_datetime(),
-			"idempotency_key": idem,
-		}
-	)
-	snap.insert(ignore_permissions=True)
-
-	# Read-only reconciliation reference onto the line / commitment display
-	# fields — never the source of the reservation/commitment balances above.
-	frappe.db.set_value(
-		"Budget Line", line.name, {"amount_actual": amt, "actual_as_at": as_at}, update_modified=True
-	)
-	if com_doc:
-		outstanding = max(0.0, flt(com_doc.current_amount) - amt)
-		frappe.db.set_value(
-			"Procurement Commitment",
-			com_doc.name,
-			{"actual_expenditure": amt, "outstanding_amount": outstanding},
-			update_modified=True,
-		)
-
-	from kentender_budget.services.budget_audit_contracts import EVENT_EXPENDITURE, safe_record_event
-
-	safe_record_event(
-		budget=bud.name,
-		event_type=EVENT_EXPENDITURE,
-		record_doctype="Expenditure Snapshot",
-		record_code=ref,
-		budget_line=line.name,
-		after_summary=format_kes_full(amt, currency=bud.currency or "KES"),
-		source_reference=source,
-		actor=frappe.session.user or "System",
-		actor_kind="integration",
-	)
-
-	snap.reload()
-	return _snapshot_result(snap, reused=False)
+	return {"ok": True, "commitment": _commitment_result(doc)}
