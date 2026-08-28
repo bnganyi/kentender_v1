@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+a{color:var(--color-accent-700);text-decoration:none;}
+a:hover{color:var(--color-accent-900);text-decoration:underline;}
+body{margin:0;}
+.kt-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.kt-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.kt-status.is-live{background:oklch(93% .06 155);color:oklch(38% .11 155)}
+.kt-status.is-attention{background:oklch(94% .07 75);color:oklch(45% .12 75)}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);">
+<div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 24px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-neutral-300);font-size:12px;">
+  <a href="01-Workspace.dc.html">01 Workspace</a>
+  <a href="02-Start-Dialog.dc.html">02 Start dialog</a>
+  <a href="03-Five-Task-Workspace.dc.html">03 Five-task workspace</a>
+  <a href="04-Review-Readiness.dc.html" style="font-weight:700;color:var(--color-accent-900);border-bottom:2px solid var(--color-accent);padding-bottom:2px;">04 Review &amp; readiness</a>
+  <a href="05-Tender-Approval.dc.html">05 Tender approval</a>
+  <a href="06-Approved-Tender.dc.html">06 Approved Tender</a>
+  <a href="M01-Return-For-Correction.dc.html">M01 Return for correction</a>
+  <a href="M02-Reopen-Before-Publication.dc.html">M02 Reopen before publication</a>
+  <a href="S01-Empty-Error-States.dc.html">S01 Empty &amp; error states</a>
+</div>
+
+<div style="max-width:960px;margin:0 auto;padding:32px;">
+  <a href="03-Five-Task-Workspace.dc.html" style="font-size:13px;">← Back to tasks</a>
+  <h1 style="font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin:12px 0 4px;">Review Tender</h1>
+  <p style="color:var(--color-neutral-700);margin:0 0 24px;">Resolve Blocking findings and review the complete Tender before submission.</p>
+
+  <div class="table">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr><th>Check</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Source Requisition</td><td>Complete</td></tr>
+        <tr><td>Tender details</td><td>Complete</td></tr>
+        <tr><td>Goods and delivery</td><td>Complete · 50 each</td></tr>
+        <tr><td>Price schedule</td><td>Complete · 3 generated rows</td></tr>
+        <tr><td>Submission and evaluation</td><td>Complete</td></tr>
+        <tr><td>Contract terms</td><td>Complete</td></tr>
+        <tr><td>Rendered Tender</td><td>Complete</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;gap:10px;margin:20px 0;">
+    <span class="kt-status is-live">0 Blocking</span>
+    <span class="kt-status is-attention">1 Warning</span>
+  </div>
+
+  <div style="background:oklch(94% .07 75);border:1px solid oklch(70% .12 75);padding:12px 14px;border-radius:var(--radius-md);font-size:13px;color:oklch(35% .12 75);margin-bottom:28px;">
+    Confirm that the manufacturer-authorisation requirement is proportionate for every listed item.
+  </div>
+
+  <div class="card blueprint" style="padding:20px;margin-bottom:28px;">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div style="font-family:var(--font-heading);text-transform:uppercase;letter-spacing:.04em;font-weight:600;border-bottom:2px solid var(--color-accent);padding-bottom:8px;margin-bottom:12px;">Complete rendered Tender</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">1. Invitation and Tender identity</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">2. Instructions to Tenderers</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">3. Tender Data Sheet</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">4. Evaluation and Qualification Criteria</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">5. Tendering Forms</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">6. Goods, delivery and price schedules</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">7. Authorised technical specification</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">8. General and Special Conditions of Contract</div>
+    <div style="padding:6px 0;font-size:14px;">9. Contract Forms</div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:flex-end;">
+    <button class="btn btn-secondary">Preview complete Tender</button>
+    <a href="05-Tender-Approval.dc.html" class="btn btn-primary">Submit for approval</a>
+  </div>
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>

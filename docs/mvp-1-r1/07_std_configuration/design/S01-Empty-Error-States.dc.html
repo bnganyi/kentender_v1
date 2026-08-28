@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+a{color:var(--color-accent-700);text-decoration:none;}
+a:hover{color:var(--color-accent-900);text-decoration:underline;}
+body{margin:0;}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);">
+<div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 24px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-neutral-300);font-size:12px;">
+  <a href="01-Workspace.dc.html">01 Workspace</a>
+  <a href="02-Start-Dialog.dc.html">02 Start dialog</a>
+  <a href="03-Five-Task-Workspace.dc.html">03 Five-task workspace</a>
+  <a href="04-Review-Readiness.dc.html">04 Review &amp; readiness</a>
+  <a href="05-Tender-Approval.dc.html">05 Tender approval</a>
+  <a href="06-Approved-Tender.dc.html">06 Approved Tender</a>
+  <a href="M01-Return-For-Correction.dc.html">M01 Return for correction</a>
+  <a href="M02-Reopen-Before-Publication.dc.html">M02 Reopen before publication</a>
+  <a href="S01-Empty-Error-States.dc.html" style="font-weight:700;color:var(--color-accent-900);border-bottom:2px solid var(--color-accent);padding-bottom:2px;">S01 Empty &amp; error states</a>
+</div>
+
+<div style="max-width:1120px;margin:0 auto;padding:32px;">
+  <h1 style="font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin:0 0 6px;">Empty, unsupported and error states</h1>
+  <p style="color:var(--color-neutral-700);margin:0 0 28px;">Shown in place of the workspace or Tender screen when the applicable condition is met.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">No ready Requisitions</div>
+      <div class="card-body" style="margin:6px 0;">No authorised Requisitions are ready for Tender Preparation.</div>
+      <div style="font-size:12px;color:var(--color-neutral-500);">No action</div>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Unsupported requirement</div>
+      <div class="card-body" style="margin:6px 0;">This Requisition is not supported by the IT-equipment Tender pattern.</div>
+      <a href="01-Workspace.dc.html" style="font-size:12px;font-weight:600;">Return to workspace</a>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Handoff already consumed</div>
+      <div class="card-body" style="margin:6px 0;">This Requisition is already linked to a Tender.</div>
+      <a href="03-Five-Task-Workspace.dc.html" style="font-size:12px;font-weight:600;">View Tender</a>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Requisition changed or revoked</div>
+      <div class="card-body" style="margin:6px 0;">The source Requisition is no longer available for Tender Preparation.</div>
+      <a href="01-Workspace.dc.html" style="font-size:12px;font-weight:600;">Return to workspace</a>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Template unavailable</div>
+      <div class="card-body" style="margin:6px 0;">This Tender template is not available for new Tenders.</div>
+      <a href="01-Workspace.dc.html" style="font-size:12px;font-weight:600;">Return to workspace</a>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Stale write</div>
+      <div class="card-body" style="margin:6px 0;">Another user changed this Tender. Reload before continuing.</div>
+      <div style="font-size:12px;font-weight:600;color:var(--color-accent-700);">Reload</div>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">Load failure</div>
+      <div class="card-body" style="margin:6px 0;">Tender Preparation could not be loaded.</div>
+      <div style="font-size:12px;font-weight:600;color:var(--color-accent-700);">Try again</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>

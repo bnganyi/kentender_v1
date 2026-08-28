@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+a{color:var(--color-accent-700);text-decoration:none;}
+a:hover{color:var(--color-accent-900);text-decoration:underline;}
+body{margin:0;}
+.kt-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.kt-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.kt-status.is-live{background:oklch(93% .06 155);color:oklch(38% .11 155)}
+.kt-status.is-pending{background:oklch(94% .01 250);color:oklch(45% .01 250)}
+.kt-status.is-pending::before{background:transparent;border:1.5px solid currentColor}
+.kt-status.is-attention{background:oklch(94% .07 75);color:oklch(45% .12 75)}
+.kt-card-title{font-family:var(--font-heading);text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--color-text);border-bottom:2px solid var(--color-accent);padding-bottom:8px}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);">
+<div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 24px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-neutral-300);font-size:12px;">
+  <a href="01-Workspace.dc.html">01 Workspace</a>
+  <a href="02-Start-Dialog.dc.html">02 Start dialog</a>
+  <a href="03-Five-Task-Workspace.dc.html">03 Five-task workspace</a>
+  <a href="04-Review-Readiness.dc.html">04 Review &amp; readiness</a>
+  <a href="05-Tender-Approval.dc.html" style="font-weight:700;color:var(--color-accent-900);border-bottom:2px solid var(--color-accent);padding-bottom:2px;">05 Tender approval</a>
+  <a href="06-Approved-Tender.dc.html">06 Approved Tender</a>
+  <a href="M01-Return-For-Correction.dc.html">M01 Return for correction</a>
+  <a href="M02-Reopen-Before-Publication.dc.html">M02 Reopen before publication</a>
+  <a href="S01-Empty-Error-States.dc.html">S01 Empty &amp; error states</a>
+</div>
+
+<div style="max-width:1040px;margin:0 auto;padding:32px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <h1 style="font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin:0;">Tender approval</h1>
+    <span class="kt-status is-pending">Submitted for approval</span>
+  </div>
+  <p style="font-size:13px;color:var(--color-neutral-600);margin-top:-14px;margin-bottom:24px;">The page contains no editable Tender fields.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title" style="margin-bottom:10px;">Requisition summary</div>
+      <div style="font-size:14px;line-height:1.7;">REQ-KEBS-2026-ICT-0001 · Authorised<br>50 each · KES 18,000,000<br>Expected delivery 30 Dec 2026<br>ICT Equipment Technical Specifications v1.0.pdf</div>
+    </div>
+    <div class="card blueprint" style="padding:18px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title" style="margin-bottom:10px;">Readiness result</div>
+      <div style="display:flex;gap:10px;margin-top:6px;"><span class="kt-status is-live">0 Blocking</span><span class="kt-status is-attention">1 Warning</span></div>
+      <div style="font-size:13px;color:var(--color-neutral-700);margin-top:10px;">Submitted 5 Oct 2026, 11:40 EAT</div>
+    </div>
+  </div>
+
+  <div class="card blueprint" style="padding:18px;margin-bottom:24px;">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div class="kt-card-title" style="margin-bottom:12px;">Five-task summary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:14px;">
+      <div><strong>1. Tender details</strong><br>Supply and delivery of business ICT equipment · Submission 29 Oct 2026, 11:00 EAT</div>
+      <div><strong>2. Goods and delivery</strong><br>3 items · 50 each total</div>
+      <div><strong>3. Price schedule</strong><br>Blank supplier schedule · KES · Fixed prices, taxes shown separately</div>
+      <div><strong>4. Submission and evaluation</strong><br>Manufacturer authorisation, datasheets, past supply and after-sales evidence required</div>
+      <div><strong>5. Contract terms</strong><br>Payment 30 days · Performance security 10% · Delay damages 0.5%/week, capped 10%</div>
+    </div>
+  </div>
+
+  <div class="card blueprint" style="padding:20px;margin-bottom:24px;">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div class="kt-card-title" style="margin-bottom:12px;">Complete rendered Tender</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">1. Invitation and Tender identity</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">2. Instructions to Tenderers</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">3. Tender Data Sheet</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">4. Evaluation and Qualification Criteria</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">5. Tendering Forms</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">6. Goods, delivery and price schedules</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">7. Authorised technical specification</div>
+    <div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200);font-size:14px;">8. General and Special Conditions of Contract</div>
+    <div style="padding:6px 0;font-size:14px;">9. Contract Forms</div>
+  </div>
+
+  <div style="background:var(--color-neutral-100);padding:14px 16px;border-radius:var(--radius-sm);font-size:13px;color:var(--color-neutral-700);margin-bottom:28px;">
+    Template IT-EQUIPMENT-OPEN-V1 · Version 1.0 — PPRA Standard Tender Document for Procurement of Goods
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:flex-end;">
+    <a href="M01-Return-For-Correction.dc.html" class="btn btn-secondary">Return for correction</a>
+    <a href="06-Approved-Tender.dc.html" class="btn btn-primary">Approve for publication</a>
+  </div>
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>
