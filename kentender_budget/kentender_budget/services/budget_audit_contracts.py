@@ -1,7 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Budget Audit History — BUD-UI-12 / Pack Phase 8 / get_budget_audit."""
+"""BUD-CHG-001 v1.2 §4.7/§14 — the append-only Funding Ledger (Budget Audit
+Event doctype), plus the Funding Activity and History tab read models built
+directly from it. There is exactly one ledger; Funding Activity and History
+are two filtered projections of the same event stream, not two data sources.
+"""
 
 from __future__ import annotations
 
@@ -9,95 +13,136 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import format_datetime, get_datetime, now_datetime
+from frappe.utils import flt, format_datetime, get_datetime, now_datetime
 
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
 	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_APPROVER,
 	ROLE_VIEWER,
 	require_any_role,
 )
-from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, CAP_BUDGET_EXPORT, can_budget
 
-_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
+_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
 
-EVENT_BASELINE = "Baseline registered"
-EVENT_SUBMITTED = "Budget submitted"
-EVENT_RETURNED = "Budget returned"
-EVENT_REVIEWED = "Budget reviewed"
-EVENT_ACTIVATED = "Budget activated"
+# Must match Budget Audit Event.event_type exactly (kentender_budget/doctype/
+# budget_audit_event/budget_audit_event.json).
+EVENT_VERSION_CREATED = "Budget version created"
+EVENT_DRAFT_APPROVAL_SAVED = "Draft approval details saved"
+EVENT_DRAFT_LINES_SAVED = "Draft lines saved"
+EVENT_SUBMITTED = "Budget version submitted"
+EVENT_RETURNED = "Budget version returned"
+EVENT_APPROVED = "Budget version approved and activated"
+EVENT_SUPERSEDED = "Budget version superseded"
+EVENT_CLOSED = "Budget closed"
+EVENT_CHECK_PERFORMED = "Check funding performed"
 EVENT_RESERVED = "Funding reserved"
-EVENT_RELEASED = "Reservation released"
 EVENT_REVALIDATED = "Reservation revalidated"
+EVENT_RELEASED = "Reservation released"
 EVENT_PARTIAL = "Reservation partially converted"
 EVENT_COMMITMENT = "Contract commitment recorded"
 EVENT_COMMITMENT_ADJUSTED = "Commitment adjusted"
-EVENT_EXPENDITURE = "Expenditure snapshot recorded"
-EVENT_REVISION = "Revision applied"
+EVENT_PERMISSION_DENIED = "Permission denied"
+EVENT_CONCURRENCY_CONFLICT = "Concurrency conflict"
+
+# §12.3 "History contains Budget Version lifecycle events only; it does not
+# duplicate the funding ledger." — the two tabs are disjoint partitions.
+LIFECYCLE_EVENT_TYPES = frozenset(
+	{
+		EVENT_VERSION_CREATED,
+		EVENT_DRAFT_APPROVAL_SAVED,
+		EVENT_DRAFT_LINES_SAVED,
+		EVENT_SUBMITTED,
+		EVENT_RETURNED,
+		EVENT_APPROVED,
+		EVENT_SUPERSEDED,
+		EVENT_CLOSED,
+	}
+)
+
+FUNDING_EVENT_TYPES = frozenset(
+	{
+		EVENT_RESERVED,
+		EVENT_REVALIDATED,
+		EVENT_RELEASED,
+		EVENT_PARTIAL,
+		EVENT_COMMITMENT,
+		EVENT_COMMITMENT_ADJUSTED,
+	}
+)
+
+# BUD-DES-11/13 History artboards show one "Draft saved" line regardless of
+# which draft-save event actually fired; DRAFT_APPROVAL_SAVED / DRAFT_LINES_SAVED
+# stay distinct in the ledger (precise audit) but collapse to one label here.
+_DISPLAY_LABEL = {
+	EVENT_DRAFT_APPROVAL_SAVED: _("Draft saved"),
+	EVENT_DRAFT_LINES_SAVED: _("Draft saved"),
+}
+
+_POSITION_KEYS = ("approved", "reserved", "committed", "available")
 
 
 def record_event(
 	*,
 	budget: str,
 	event_type: str,
-	record_code: str,
 	actor: str | None = None,
 	actor_kind: str = "user",
-	record_doctype: str = "",
-	before_summary: str = "",
-	after_summary: str = "",
-	change_summary: str = "",
-	source_reference: str = "",
-	reason: str = "",
-	event_at=None,
+	correlation_id: str,
+	budget_version: str | None = None,
 	budget_line: str | None = None,
+	reservation: str | None = None,
+	commitment: str | None = None,
+	downstream_reference: str = "",
+	amount: float | None = None,
+	currency: str | None = None,
+	calling_module: str = "",
+	revalidation_failure_code: str = "",
+	reason: str = "",
+	before: dict[str, float] | None = None,
+	after: dict[str, float] | None = None,
+	event_at=None,
 	fixture_namespace: str = "",
-) -> str | None:
-	"""Insert an immutable Budget Audit Event. Returns name or None if DocType missing."""
-	if not frappe.db.exists("DocType", "Budget Audit Event"):
-		return None
-	budget_name = budget
-	if not frappe.db.exists("Budget", budget_name):
-		# Allow business code.
-		resolved = frappe.db.get_value("Budget", {"generated_reference": budget}, "name")
-		if not resolved:
-			return None
-		budget_name = resolved
+) -> str:
+	"""Insert one immutable Budget Audit Event (the FundingLedgerEvent object).
 
-	summary = (change_summary or "").strip()
-	if not summary:
-		if before_summary and after_summary:
-			summary = f"{before_summary} → {after_summary}"
-		else:
-			summary = after_summary or before_summary or event_type
+	Unlike the pre-v1.2 shape, `correlation_id` is required — every event
+	must be traceable to the command that produced it (§4.7, §14).
+	"""
+	if not (correlation_id or "").strip():
+		frappe.throw(_("correlation_id is required to record a funding ledger event."))
 
-	doc = frappe.get_doc(
-		{
-			"doctype": "Budget Audit Event",
-			"budget": budget_name,
-			"budget_line": budget_line or None,
-			"event_type": event_type,
-			"event_at": event_at or now_datetime(),
-			"actor": (actor or frappe.session.user or "System").strip(),
-			"actor_kind": actor_kind if actor_kind in ("user", "system", "integration") else "user",
-			"record_code": (record_code or "").strip(),
-			"record_doctype": (record_doctype or "").strip(),
-			"before_summary": before_summary or "",
-			"after_summary": after_summary or "",
-			"change_summary": summary,
-			"source_reference": source_reference or "",
-			"reason": reason or "",
-			"fixture_namespace": fixture_namespace or "",
-		}
-	)
+	values: dict[str, Any] = {
+		"doctype": "Budget Audit Event",
+		"budget": budget,
+		"budget_version": budget_version or None,
+		"budget_line": budget_line or None,
+		"event_type": event_type,
+		"event_at": event_at or now_datetime(),
+		"downstream_reference": downstream_reference or "",
+		"reservation": reservation or None,
+		"commitment": commitment or None,
+		"amount": flt(amount) if amount is not None else None,
+		"currency": currency or "KES",
+		"actor": (actor or frappe.session.user or "System").strip(),
+		"actor_kind": actor_kind if actor_kind in ("user", "system", "integration") else "user",
+		"calling_module": calling_module or "",
+		"correlation_id": correlation_id.strip(),
+		"revalidation_failure_code": revalidation_failure_code or "",
+		"reason": reason or "",
+		"fixture_namespace": fixture_namespace or "",
+	}
+	for key in _POSITION_KEYS:
+		values[f"before_{key}"] = flt((before or {}).get(key)) if before else None
+		values[f"after_{key}"] = flt((after or {}).get(key)) if after else None
+
+	doc = frappe.get_doc(values)
 	doc.insert(ignore_permissions=True)
 	return doc.name
 
 
 def safe_record_event(**kwargs) -> str | None:
-	"""Best-effort record; never break the calling mutation."""
+	"""Best-effort record; never break the calling mutation on a logging failure."""
 	try:
 		return record_event(**kwargs)
 	except Exception:
@@ -105,165 +150,101 @@ def safe_record_event(**kwargs) -> str | None:
 		return None
 
 
-def get_budget_audit(
-	budget: str,
-	event_type: str | None = None,
-	actor: str | None = None,
-	date_from: str | None = None,
-	date_to: str | None = None,
-) -> dict[str, Any]:
-	"""Return filtered read-only audit ledger projected from Funding Lifecycle (BUD-SUP-005)."""
-	require_any_role(*_READ_ROLES)
-	from kentender_budget.services.budget_funding_lifecycle import list_funding_lifecycle
-
-	life_filters: dict[str, Any] = {}
-	if (event_type or "").strip():
-		life_filters["event_types"] = [event_type.strip()]
-	if date_from:
-		life_filters["date_from"] = date_from
-	if date_to:
-		life_filters["date_to"] = date_to
-
-	life = list_funding_lifecycle(budget, life_filters or None)
-	bud = life["budget"]
-	budget_doc = frappe.get_doc("Budget", bud["id"])
-	actor_q = (actor or "").strip().lower()
-
-	out_rows = []
-	for ev in life["events"]:
-		if ev.get("kind") != "audit":
-			continue
-		payload = ev.get("audit_payload")
-		if not payload:
-			continue
-		if actor_q and actor_q not in (payload.get("actor") or "").lower():
-			continue
-		out_rows.append(_row_dto(payload))
-
-	actors = sorted({(r.get("actor") or "").strip() for r in out_rows if (r.get("actor") or "").strip()})
-	event_types = sorted(
-		{(r.get("event_type") or "").strip() for r in out_rows if (r.get("event_type") or "").strip()}
-	)
-	all_types: list[str] = []
-	all_actors: list[str] = []
-	if frappe.db.exists("DocType", "Budget Audit Event"):
-		all_types = frappe.get_all(
-			"Budget Audit Event",
-			filters={"budget": bud["id"]},
-			pluck="event_type",
-			distinct=True,
-		)
-		all_actors = frappe.get_all(
-			"Budget Audit Event",
-			filters={"budget": bud["id"]},
-			pluck="actor",
-			distinct=True,
-		)
-
-	return {
-		"budget": {
-			"id": bud["id"],
-			"code": bud["code"],
-			"name": bud["name"],
-			"title": bud["title"],
-			"status": bud["status"],
-			"status_label": bud["status_label"],
-			"currency": bud.get("currency") or "KES",
-			"procuring_entity": bud["procuring_entity"],
-		},
-		"rows": out_rows,
-		"row_count": len(out_rows),
-		"pagination": {
-			"showing_from": 1 if out_rows else 0,
-			"showing_to": len(out_rows),
-			"total": len(out_rows),
-			"label": (
-				f"Showing 1 to {len(out_rows)} of {len(out_rows)} entries"
-				if out_rows
-				else "Showing 0 entries"
-			),
-		},
-		"filters": {
-			"event_types": sorted({(t or "").strip() for t in all_types if t}) or event_types,
-			"actors": sorted({(a or "").strip() for a in all_actors if a}) or actors,
-		},
-		"capabilities": {
-			"read_only": True,
-			"can_export": can_budget(CAP_BUDGET_EXPORT, budget_doc),
-			"view_funding_performance": True,
-			"primary_action": (
-				"request_revision"
-				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
-				else ""
-			),
-			"primary_label": (
-				"Request revision"
-				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
-				else ""
-			),
-		},
-	}
-
-
-def _empty_dto(doc) -> dict[str, Any]:
-	return {
-		"budget": {
-			"id": doc.name,
-			"code": doc.generated_reference,
-			"name": doc.title,
-			"title": doc.title,
-			"status": doc.status,
-			"status_label": doc.status,
-			"currency": doc.currency or "KES",
-			"procuring_entity": doc.procuring_entity,
-		},
-		"rows": [],
-		"row_count": 0,
-		"pagination": {
-			"showing_from": 0,
-			"showing_to": 0,
-			"total": 0,
-			"label": "Showing 0 entries",
-		},
-		"filters": {"event_types": [], "actors": []},
-		"capabilities": {
-			"read_only": True,
-			"can_export": can_budget(CAP_BUDGET_EXPORT, doc),
-		},
-	}
-
-
 def _row_dto(r) -> dict[str, Any]:
-	"""Map audit row (frappe._dict or plain dict from lifecycle) to UI DTO."""
-
-	def g(key, default=""):
-		if isinstance(r, dict):
-			val = r.get(key)
-		else:
-			val = r.get(key) if hasattr(r, "get") else getattr(r, key, None)
-		return default if val is None else val
-
-	event_at = g("event_at", None)
+	event_at = r.get("event_at")
 	ea = get_datetime(event_at) if event_at else None
-	change = str(g("change_summary") or "").strip()
-	before = g("before_summary") or ""
-	after = g("after_summary") or ""
-	if not change and (before or after):
-		change = f"{before or '—'} → {after or '—'}"
+	event_type = r.get("event_type") or ""
+	positions = None
+	if any(r.get(f"after_{k}") is not None for k in _POSITION_KEYS):
+		positions = {
+			"before": {k: flt(r.get(f"before_{k}")) for k in _POSITION_KEYS},
+			"after": {k: flt(r.get(f"after_{k}")) for k in _POSITION_KEYS},
+		}
 	return {
-		"id": g("name") or "",
-		"event_type": g("event_type") or "",
+		"id": r.get("name") or "",
+		"event_type": event_type,
+		"event_type_label": _DISPLAY_LABEL.get(event_type, event_type),
 		"event_at": str(event_at) if event_at else "",
 		"event_at_display": format_datetime(ea) if ea else "—",
-		"actor": g("actor") or "",
-		"actor_kind": g("actor_kind") or "user",
-		"record_code": g("record_code") or "",
-		"record_doctype": g("record_doctype") or "",
-		"before_summary": before,
-		"after_summary": after,
-		"change_summary": change,
-		"change_summary_display": change,
-		"source_reference": g("source_reference") or "",
-		"reason": g("reason") or "",
-		"action_label": "View",
+		"budget_line": r.get("budget_line") or "",
+		"downstream_reference": r.get("downstream_reference") or "",
+		"amount": flt(r.get("amount")) if r.get("amount") is not None else None,
+		"currency": r.get("currency") or "",
+		"actor": r.get("actor") or "",
+		"actor_kind": r.get("actor_kind") or "user",
+		"calling_module": r.get("calling_module") or "",
+		"correlation_id": r.get("correlation_id") or "",
+		"revalidation_failure_code": r.get("revalidation_failure_code") or "",
+		"reason": r.get("reason") or "",
+		"positions": positions,
 	}
+
+
+_ACTIVITY_FIELDS = [
+	"name",
+	"event_type",
+	"event_at",
+	"budget_line",
+	"downstream_reference",
+	"amount",
+	"currency",
+	"actor",
+	"actor_kind",
+	"calling_module",
+	"correlation_id",
+	"revalidation_failure_code",
+	"reason",
+	"before_approved",
+	"before_reserved",
+	"before_committed",
+	"before_available",
+	"after_approved",
+	"after_reserved",
+	"after_committed",
+	"after_available",
+]
+
+
+def get_funding_activity(
+	budget: str,
+	*,
+	budget_line: str | None = None,
+	event_type: str | None = None,
+) -> dict[str, Any]:
+	"""BUD-UI-03 Funding Activity tab — §9.3: reverse chronological, server-filtered."""
+	require_any_role(*_READ_ROLES)
+	filters: dict[str, Any] = {"budget": budget, "event_type": ["in", list(FUNDING_EVENT_TYPES)]}
+	if (budget_line or "").strip():
+		filters["budget_line"] = budget_line.strip()
+	if (event_type or "").strip() and event_type in FUNDING_EVENT_TYPES:
+		filters["event_type"] = event_type.strip()
+
+	rows = frappe.get_all(
+		"Budget Audit Event",
+		filters=filters,
+		fields=_ACTIVITY_FIELDS,
+		order_by="event_at desc",
+	)
+	out_rows = [_row_dto(r) for r in rows]
+	return {
+		"rows": out_rows,
+		"row_count": len(out_rows),
+		"summary_label": (
+			_("Showing {0} funding event").format(len(out_rows))
+			if len(out_rows) == 1
+			else _("Showing {0} funding events").format(len(out_rows))
+		),
+	}
+
+
+def get_budget_version_history(budget_version: str) -> dict[str, Any]:
+	"""§9.3/§12.5 History tab — Budget Version lifecycle events only, for the
+	exact submitted/active version, reverse chronological."""
+	require_any_role(*_READ_ROLES)
+	rows = frappe.get_all(
+		"Budget Audit Event",
+		filters={"budget_version": budget_version, "event_type": ["in", list(LIFECYCLE_EVENT_TYPES)]},
+		fields=_ACTIVITY_FIELDS,
+		order_by="event_at desc",
+	)
+	return {"rows": [_row_dto(r) for r in rows], "row_count": len(rows)}

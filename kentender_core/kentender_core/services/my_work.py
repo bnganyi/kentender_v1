@@ -16,8 +16,11 @@ _PRESENTATION = {
 	"plan.finance.confirm": ("Finance confirmation", "Confirm funding", "procurement-plan-item-editor"),
 	"plan.review": ("Planning review", "Review Plan", "procurement-plan-review"),
 	"plan.approve": ("Planning approval", "Approve Plan", "procurement-plan-review"),
-	"budget.review": ("Budget review", "Review Budget", "budget-review"),
-	"budget.approve": ("Budget approval", "Approve Budget", "budget-review"),
+	# BUD-CHG-001 v1.2: Budget Version governance (submit/return/approve) moved
+	# off the Workflow Task queue entirely onto AUTH-ADR-001's native Role
+	# engine, mirroring Strategy — no "budget.*" entries here any more. Finance
+	# confirmation (plan.finance.confirm, above) is untouched: it's Procurement
+	# Planning's own task, not Budget Version governance.
 }
 
 
