@@ -6,46 +6,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "budget",
   "generated_reference",
-  "title",
-  "col_a",
-  "organisational_owner",
-  "classification",
-  "is_active",
-  "section_funding",
-  "funding_source_type",
-  "funding_source_name",
-  "external_financial_line_reference",
-  "col_b",
-  "approved_amount",
-  "amount_reserved",
-  "amount_committed",
-  "amount_actual",
-  "actual_as_at",
-  "section_strategy",
-  "primary_target_id",
-  "primary_target_code",
-  "primary_target_name",
-  "primary_plan_version_id",
-  "primary_snapshot_label",
-  "primary_strategy_linked",
-  "supporting_targets",
-  "currency",
-  "order_index",
-  "fixture_namespace",
-  "owner_org_unit"
+  "budget",
+  "fixture_namespace"
  ],
  "fields": [
-  {
-   "fieldname": "budget",
-   "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
-   "reqd": 1,
-   "in_list_view": 1,
-   "search_index": 1
-  },
   {
    "fieldname": "generated_reference",
    "fieldtype": "Data",
@@ -57,173 +22,26 @@
    "read_only": 1
   },
   {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "label": "Title",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "col_a",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "organisational_owner",
-   "fieldtype": "Data",
-   "label": "Organisational Owner",
-   "reqd": 1
-  },
-  {
-   "fieldname": "classification",
-   "fieldtype": "Select",
-   "label": "Classification",
-   "options": "Goods\nWorks\nServices\nConsultancy\nCapital expenditure",
-   "reqd": 1,
-   "default": "Capital expenditure"
-  },
-  {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "label": "Active"
-  },
-  {
-   "fieldname": "section_funding",
-   "fieldtype": "Section Break",
-   "label": "Funding"
-  },
-  {
-   "fieldname": "funding_source_type",
-   "fieldtype": "Select",
-   "label": "Funding Source Type",
-   "options": "Exchequer\nOwn source\nDonor or grant\nOther",
-   "reqd": 1,
-   "default": "Exchequer"
-  },
-  {
-   "fieldname": "funding_source_name",
-   "fieldtype": "Data",
-   "label": "Funding Source Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "external_financial_line_reference",
-   "fieldtype": "Data",
-   "label": "External Financial Line Reference"
-  },
-  {
-   "fieldname": "col_b",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "approved_amount",
-   "fieldtype": "Currency",
-   "label": "Approved Amount",
-   "reqd": 1,
-   "non_negative": 1,
-   "in_list_view": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "amount_reserved",
-   "fieldtype": "Currency",
-   "label": "Amount Reserved",
-   "non_negative": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "amount_committed",
-   "fieldtype": "Currency",
-   "label": "Amount Committed",
-   "non_negative": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "amount_actual",
-   "fieldtype": "Currency",
-   "label": "Amount Actual",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "actual_as_at",
-   "fieldtype": "Date",
-   "label": "Actual As At"
-  },
-  {
-   "fieldname": "section_strategy",
-   "fieldtype": "Section Break",
-   "label": "Strategy Alignment"
-  },
-  {
-   "fieldname": "primary_target_id",
-   "fieldtype": "Data",
-   "label": "Primary Target Id"
-  },
-  {
-   "fieldname": "primary_target_code",
-   "fieldtype": "Data",
-   "label": "Primary Target Code"
-  },
-  {
-   "fieldname": "primary_target_name",
-   "fieldtype": "Data",
-   "label": "Primary Target Name"
-  },
-  {
-   "fieldname": "primary_plan_version_id",
-   "fieldtype": "Data",
-   "label": "Primary Plan Version Id"
-  },
-  {
-   "fieldname": "primary_snapshot_label",
-   "fieldtype": "Small Text",
-   "label": "Primary Snapshot Label"
-  },
-  {
-   "default": "0",
-   "fieldname": "primary_strategy_linked",
-   "fieldtype": "Check",
-   "label": "Primary Strategy Linked",
-   "read_only": 1
-  },
-  {
-   "fieldname": "supporting_targets",
-   "fieldtype": "Table",
-   "label": "Supporting Targets",
-   "options": "Budget Line Supporting Target"
-  },
-  {
-   "fieldname": "currency",
+   "fieldname": "budget",
    "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
+   "label": "Budget",
+   "options": "Budget",
    "reqd": 1,
-   "default": "KES"
-  },
-  {
-   "default": "0",
-   "fieldname": "order_index",
-   "fieldtype": "Int",
-   "label": "Order Index",
-   "non_negative": 1
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1,
+   "description": "Prevents the line identity from moving to another PE/FY Budget."
   },
   {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture Namespace",
    "read_only": 1
-  },
-  {
-   "fieldname": "owner_org_unit",
-   "fieldtype": "Link",
-   "label": "Owner Organisation Unit",
-   "options": "Organisation Unit",
-   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-05 00:00:00.000000",
+ "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Line",
@@ -262,21 +80,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Budget Reviewer",
+   "role": "Budget Approver",
    "share": 0,
-   "write": 1
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Authority",
-   "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,
@@ -289,12 +95,23 @@
    "role": "Budget Viewer",
    "share": 0,
    "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
   }
  ],
- "sort_field": "order_index",
- "sort_order": "ASC",
+ "sort_field": "modified",
+ "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "title_field": "title",
- "search_fields": "generated_reference,title"
+ "search_fields": "generated_reference"
 }

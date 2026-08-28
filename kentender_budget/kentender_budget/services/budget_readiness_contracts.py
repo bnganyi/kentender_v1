@@ -27,9 +27,9 @@ from kentender_budget.services.budget_authorization import (
 )
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	can_register_budget,
 	visible_statuses_for_user,
@@ -38,7 +38,7 @@ from kentender_budget.services.budget_permissions import (
 	user_roles,
 )
 
-_READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
 
 _STATUS_CHIP = {
 	"Draft": "Draft State",

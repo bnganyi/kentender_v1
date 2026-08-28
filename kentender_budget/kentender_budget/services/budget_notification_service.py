@@ -12,9 +12,9 @@ from frappe import _
 from frappe.utils import flt
 
 from kentender_budget.services.budget_permissions import (
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 )
 from kentender_core.services.notification_service import emit_notification_log
 
@@ -104,10 +104,10 @@ def _recipients_for_event(
 
 	if event_type in (EVENT_BUDGET_SUBMITTED, EVENT_REVISION_SUBMITTED):
 		users = _filter_by_entity(
-			_users_with_roles([ROLE_REVIEWER, ROLE_AUTHORITY]), pe
+			_users_with_roles([ROLE_APPROVER, ROLE_APPROVER]), pe
 		)
 	elif event_type == EVENT_BUDGET_REVIEWED:
-		users = _filter_by_entity(_users_with_roles([ROLE_AUTHORITY]), pe)
+		users = _filter_by_entity(_users_with_roles([ROLE_APPROVER]), pe)
 		if submitted_by:
 			users.add(submitted_by)
 	elif event_type == EVENT_BUDGET_ACTIVATED:
@@ -122,7 +122,7 @@ def _recipients_for_event(
 		users = {primary} if primary else set()
 	elif event_type == EVENT_FUNDING_INSUFFICIENT:
 		users = _filter_by_entity(
-			_users_with_roles([ROLE_OFFICER, ROLE_AUTHORITY]), pe
+			_users_with_roles([ROLE_OFFICER, ROLE_APPROVER]), pe
 		)
 	else:
 		users = set()

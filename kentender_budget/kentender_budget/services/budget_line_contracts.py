@@ -18,9 +18,9 @@ from kentender_budget.services.budget_contracts import (
 )
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	assert_org_unit_in_scope,
 	can_access_budget_line,
@@ -248,7 +248,7 @@ def _line_list_dto(doc, budget_status: str, currency: str) -> dict[str, Any]:
 def list_budget_lines(budget: str) -> dict[str, Any]:
 	"""BUD-UI-04 — entity-scoped Budget Lines table DTO."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	doc = _resolve_budget(budget)
 	require_budget_capability(CAP_BUDGET_VIEW, doc)
@@ -292,7 +292,7 @@ def list_budget_lines(budget: str) -> dict[str, Any]:
 def get_budget_line(line: str) -> dict[str, Any]:
 	"""BUD-UI-05 — full editor DTO + capabilities."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	doc = _resolve_line(line)
 	budget = frappe.get_doc("Budget", doc.budget)
@@ -422,7 +422,7 @@ def _apply_strategy_fields(doc, payload: dict[str, Any]) -> None:
 
 def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
 	"""BUD-UI-05 — Draft/Returned only; one transaction for funding + Strategy + PVC."""
-	require_any_role(ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager")
+	require_any_role(ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, "System Manager")
 	payload = payload or {}
 	budget_key = (payload.get("budget") or payload.get("budget_code") or "").strip()
 	budget = _resolve_budget(budget_key)

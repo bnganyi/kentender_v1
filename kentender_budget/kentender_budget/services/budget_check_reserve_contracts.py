@@ -19,9 +19,9 @@ from kentender_budget.services.budget_contracts import resolve_scoped_entity
 from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	entity_for_user,
 	require_any_role,
@@ -129,8 +129,8 @@ def check_funding(
 	require_any_role(
 		ROLE_VIEWER,
 		ROLE_OFFICER,
-		ROLE_REVIEWER,
-		ROLE_AUTHORITY,
+		ROLE_APPROVER,
+		ROLE_APPROVER,
 		ROLE_AUDITOR,
 		"System Manager",
 		"Procurement Approval Authority",
@@ -217,8 +217,8 @@ def reserve_funding(
 	"""
 	require_any_role(
 		ROLE_OFFICER,
-		ROLE_REVIEWER,
-		ROLE_AUTHORITY,
+		ROLE_APPROVER,
+		ROLE_APPROVER,
 		"System Manager",
 	)
 	key = (idempotency_key or "").strip()
@@ -460,8 +460,8 @@ def list_eligible_budget_lines(
 	require_any_role(
 		ROLE_VIEWER,
 		ROLE_OFFICER,
-		ROLE_REVIEWER,
-		ROLE_AUTHORITY,
+		ROLE_APPROVER,
+		ROLE_APPROVER,
 		ROLE_AUDITOR,
 		"System Manager",
 		"Procurement Approval Authority",

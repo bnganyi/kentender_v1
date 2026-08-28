@@ -30,7 +30,16 @@ frappe.provide("kentender_core.module_registry");
 			},
 		},
 		budget: {
-			// MVP-1 Budget & Funding — keep in sync with module_registry.py + hooks.page_js.
+			// BUD-CHG-001 v1.2 — the 13 pre-rebuild legacy routes (and their
+			// vanilla-JS Desk pages) were deleted in the UI teardown. This
+			// block is a placeholder pending the Phase 5 Vue-in-Desk rebuild,
+			// which will follow kentender_strategy's confirmed pattern: its
+			// own production pages are NOT wired into this legacy
+			// context-preserving navigation registry at all (each owns its
+			// own PageRail.vue chrome instead — see kt_cl_surface_registry.js).
+			// routePrefixes is intentionally empty until the new routes are
+			// live and their final Frappe Page-name/route-collision behaviour
+			// against the "Budget" DocType list view has been verified live.
 			id: "budget",
 			workspaceRoute: ["Workspaces", "Budget Management"],
 			workspaceSlug: "budget-management",
@@ -38,26 +47,11 @@ frappe.provide("kentender_core.module_registry");
 			backLabel: __("Back to Budget & Funding"),
 			sidebarWorkspaceKey: "budget management",
 			builderPage: "",
-			deskPage: "budget-funding",
+			deskPage: "",
 			formDoctype: "Budget",
 			stateKey: "kt_budget_workbench_state",
 			selectKey: "kt_budget_workspace_select",
-			routePrefixes: [
-				"budget-funding",
-				"budget-register",
-				"budget-funding-performance",
-				"budget-check-reserve",
-				"budget-overview",
-				"budget-lines",
-				"budget-funding-activity",
-				"budget-revisions",
-				"budget-revision-create",
-				"budget-revision-review",
-				"budget-downstream",
-				"budget-review",
-				"budget-audit",
-				"Form/Budget",
-			],
+			routePrefixes: [],
 			taskLabels: {
 				builder: __("Budget & Funding"),
 				form: __("Register approved budget"),

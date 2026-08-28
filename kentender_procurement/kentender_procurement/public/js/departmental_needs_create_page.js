@@ -624,8 +624,8 @@ frappe.provide("kentender_procurement.departmental_needs");
 		// path), so a page refresh had nothing to recover it from and the
 		// page rendered "Departmental Need not found." String args, by
 		// contrast, are appended as real path segments and survive a
-		// refresh — see kentender_budget's budget_workspace_shell.js
-		// (budgetCodeFromRoute) for the same, already-working convention.
+		// refresh — this is the same string-route-arg convention used
+		// elsewhere in KenTender's Vue-in-Desk pages (see AGENTS.md §6.4).
 		var route = frappe.get_route() || [];
 		return (route.length > 1 && route[1]) ? String(route[1]).trim() : "";
 	}

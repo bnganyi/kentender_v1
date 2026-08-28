@@ -36,124 +36,19 @@ class StitchDeskSurface(TypedDict):
 # strategy-review-task) are hand-authored Vue 3 components, not Stitch HTML
 # ports, so they do not get a row here — no coverage is being dropped.
 STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
-	{
-		"id": "budget-portfolio",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/portfolio.js",
-		"desk_route": "budget-funding",
-		"primary_cta_testid": "kt-bud-register-budget",
-		"select_filter_attr": "data-kt-bud-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-portfolio'] h1",
-	},
-	{
-		"id": "budget-register",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/register.js",
-		"desk_route": "budget-register",
-		"primary_cta_testid": "kt-bud-create-draft",
-		"select_filter_attr": "data-kt-bud-field",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-register'] h1",
-	},
-	{
-		"id": "budget-overview",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/overview.js",
-		"desk_route": "budget-overview",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		"select_filter_attr": "",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-overview'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-lines",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/lines.js",
-		"desk_route": "budget-lines",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		# Toolbar Budget Source / Strategic Target selects use data-kt-bud-lines-filter.
-		"select_filter_attr": "data-kt-bud-lines-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-lines'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-funding-activity",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/activity.js",
-		"desk_route": "budget-funding-activity",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		"select_filter_attr": "data-kt-bud-activity-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-activity'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-downstream",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/downstream.js",
-		"desk_route": "budget-downstream",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		"select_filter_attr": "data-kt-bud-downstream-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-downstream'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-review",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/review.js",
-		"desk_route": "budget-review",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		"select_filter_attr": "",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-review'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-audit",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/audit.js",
-		"desk_route": "budget-audit",
-		"primary_cta_testid": "kt-bud-audit-export",
-		"select_filter_attr": "data-kt-bud-audit-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-audit'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-funding-performance",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/performance.js",
-		"desk_route": "budget-funding-performance",
-		"primary_cta_testid": "kt-bud-performance-export",
-		"select_filter_attr": "data-kt-bud-perf-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-performance'] h1",
-	},
-	{
-		"id": "budget-check-reserve",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/check_reserve.js",
-		"desk_route": "budget-check-reserve",
-		"primary_cta_testid": "kt-bud-check-reserve-reserve",
-		"select_filter_attr": "data-kt-bud-cr-filter",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-check-reserve'] h1",
-	},
-	{
-		"id": "budget-revisions",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/revisions.js",
-		"desk_route": "budget-revisions",
-		"primary_cta_testid": "kt-bud-overview-primary",
-		"select_filter_attr": "",
-		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-revisions'] h1, [data-kt-bud-budget-title]",
-	},
-	{
-		"id": "budget-revision-create",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/revision_create.js",
-		"desk_route": "budget-revision-create",
-		"primary_cta_testid": "kt-bud-rev-submit",
-		"select_filter_attr": "",
-		"headline_selector": ".kt-bud-rev-create-title, [data-testid='kt-bud-revision-create'] h1",
-	},
-	{
-		"id": "budget-revision-review",
-		"app": "kentender_budget",
-		"fixture_rel": "public/js/budget_ui_fixtures/revision_review.js",
-		"desk_route": "budget-revision-review",
-		"primary_cta_testid": "kt-bud-rev-review-apply",
-		"select_filter_attr": "",
-		"headline_selector": ".kt-bud-rev-review-title, [data-testid='kt-bud-revision-review'] h1",
-	},
+	# BUD-CHG-001 v1.2: the 12 Budget rows that used to live here
+	# (budget-portfolio, budget-register, budget-overview, budget-lines,
+	# budget-funding-activity, budget-downstream, budget-review, budget-audit,
+	# budget-funding-performance, budget-check-reserve, budget-revisions,
+	# budget-revision-create, budget-revision-review, fixture_rel pointing at
+	# budget_ui_fixtures/*.js) were removed. All backed the pre-rebuild
+	# vanilla-JS Desk pages deleted in the BUD-CHG-001 v1.2 UI teardown, and
+	# all fixture files are deleted with them. This registry is specifically
+	# for the Tailwind/Stitch-HTML-ported canvas pattern (see module
+	# docstring); the replacement Budget pages are hand-authored Vue 3
+	# components in the Industry design system, not Stitch HTML ports (same
+	# precedent as kentender_strategy's Phase 7 rebuild above), so they do
+	# not get a row here — no coverage is being dropped.
 	{
 		"id": "departmental-needs",
 		"app": "kentender_procurement",

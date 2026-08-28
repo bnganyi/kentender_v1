@@ -19,15 +19,15 @@ from kentender_budget.services.budget_audit_contracts import (
 from kentender_budget.services.budget_contracts import _resolve_budget, resolve_scoped_entity
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	require_any_role,
 )
 from kentender_budget.services.budget_authorization import CAP_BUDGET_VIEW, require_budget_capability
 
-_READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
 
 # Audit event types that pair with domain DocTypes (dedup against domain rows).
 _DOMAIN_AUDIT_TYPES = frozenset(

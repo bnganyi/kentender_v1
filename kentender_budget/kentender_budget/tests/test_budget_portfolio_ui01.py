@@ -109,7 +109,7 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 		from kentender_budget.services import budget_permissions as perms
 
 		self.assertTrue(perms.can_register_budget_for_roles({perms.ROLE_OFFICER}))
-		self.assertFalse(perms.can_register_budget_for_roles({perms.ROLE_AUTHORITY}))
+		self.assertFalse(perms.can_register_budget_for_roles({perms.ROLE_APPROVER}))
 		self.assertFalse(perms.can_register_budget_for_roles({perms.ROLE_VIEWER}))
 		self.assertTrue(perms.can_register_budget_for_roles({perms.ROLE_OFFICER, "System Manager"}))
 

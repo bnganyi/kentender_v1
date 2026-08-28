@@ -2,16 +2,19 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "hash",
- "creation": "2026-08-05 00:00:00.000000",
+ "creation": "2026-08-28 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "generated_reference",
-  "reservation",
+  "budget_version",
+  "budget_line",
   "col_a",
-  "contract",
-  "status",
-  "current_amount",
+  "title",
+  "owner_org_unit",
+  "col_b",
+  "funding_source",
+  "approved_amount",
   "currency",
   "fixture_namespace"
  ],
@@ -19,54 +22,69 @@
   {
    "fieldname": "generated_reference",
    "fieldtype": "Data",
-   "label": "Commitment Reference",
+   "label": "Budget Line Version Reference",
    "reqd": 1,
    "unique": 1,
    "in_list_view": 1,
+   "search_index": 1,
    "read_only": 1
   },
   {
-   "fieldname": "reservation",
+   "fieldname": "budget_version",
    "fieldtype": "Link",
-   "label": "Funding Reservation",
-   "options": "Funding Reservation",
+   "label": "Budget Version",
+   "options": "Budget Version",
    "reqd": 1,
-   "read_only": 1,
-   "search_index": 1,
-   "description": "Prevents a commitment from bypassing the confirmed funding lineage."
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "col_a",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "contract",
+   "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Contract",
+   "label": "Title",
    "reqd": 1,
-   "read_only": 1,
    "in_list_view": 1,
+   "description": "States the funded purpose. No separate purpose or description field is stored."
+  },
+  {
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
    "search_index": 1,
-   "unique": 1,
-   "description": "Identifies the owning downstream contract; unique within the reservation lineage."
+   "description": "Empty means PE-wide."
   },
   {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Active\nCancelled\nClosed",
-   "reqd": 1,
-   "default": "Active",
-   "in_list_view": 1
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
   },
   {
-   "fieldname": "current_amount",
+   "fieldname": "funding_source",
+   "fieldtype": "Link",
+   "label": "Funding Source",
+   "options": "Funding Source",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_amount",
    "fieldtype": "Currency",
-   "label": "Current Amount",
+   "label": "Approved Amount",
    "options": "currency",
    "reqd": 1,
    "non_negative": 1,
-   "description": "Changed only through the adjustment service."
+   "in_list_view": 1
   },
   {
    "default": "KES",
@@ -88,10 +106,22 @@
  "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
- "name": "Procurement Commitment",
+ "name": "Budget Line Version",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
   {
    "create": 1,
    "delete": 0,
@@ -100,21 +130,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
-   "share": 0,
-   "write": 1
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
    "role": "Budget Officer",
    "share": 0,
-   "write": 0
+   "write": 1
   },
   {
    "create": 0,
@@ -157,5 +175,6 @@
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "search_fields": "generated_reference,contract"
+ "title_field": "title",
+ "search_fields": "generated_reference,title"
 }

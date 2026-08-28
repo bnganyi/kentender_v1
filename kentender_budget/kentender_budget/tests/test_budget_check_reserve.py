@@ -200,7 +200,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 
 	def test_reserve_insufficient_emits_notification_idempotent(self):
 		"""BUD-SUP-001B — notify before throw; retry does not duplicate."""
-		from kentender_budget.services.budget_permissions import ROLE_AUTHORITY, ROLE_OFFICER
+		from kentender_budget.services.budget_permissions import ROLE_APPROVER, ROLE_OFFICER
 
 		officer = "budget.notify.insuff.officer@example.com"
 		if not frappe.db.exists("User", officer):
@@ -215,9 +215,9 @@ class TestBudgetCheckReserve(FrappeTestCase):
 				}
 			)
 			user.insert(ignore_permissions=True)
-			user.add_roles(ROLE_OFFICER, ROLE_AUTHORITY)
+			user.add_roles(ROLE_OFFICER, ROLE_APPROVER)
 		else:
-			frappe.get_doc("User", officer).add_roles(ROLE_OFFICER, ROLE_AUTHORITY)
+			frappe.get_doc("User", officer).add_roles(ROLE_OFFICER, ROLE_APPROVER)
 		pe = frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name")
 		if pe and not frappe.db.exists(
 			"User Permission",

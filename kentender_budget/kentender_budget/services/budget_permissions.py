@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUDGET-MVP1-REQ roles for Budget & Funding."""
+"""BUD-CHG-001 v1.2 §7 roles for Budget & Funding — two-role Officer/Approver model."""
 
 from __future__ import annotations
 
@@ -12,20 +12,18 @@ from kentender_core.services.authorization_policy import ResourceContext, evalua
 
 ROLE_VIEWER = "Budget Viewer"
 ROLE_OFFICER = "Budget Officer"
-ROLE_REVIEWER = "Budget Reviewer"
-ROLE_AUTHORITY = "Budget Authority"
+ROLE_APPROVER = "Budget Approver"
 ROLE_AUDITOR = "Auditor"
 
 ALL_BUDGET_ROLES = (
 	ROLE_VIEWER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_AUDITOR,
 )
 
-# Viewer may not see in-progress registration states (BUD-FR roles matrix).
-_VIEWER_STATUSES = ("Active", "Submitted", "Closed", "Cancelled")
+# Viewer may view Active, Superseded and Closed Budgets only (BUD-CHG-001 v1.2 §7).
+_VIEWER_STATUSES = ("Active", "Superseded", "Closed")
 
 
 def ensure_budget_roles() -> None:
@@ -55,7 +53,7 @@ def visible_statuses_for_roles(roles: set[str]) -> list[str] | None:
 	"""Return status allow-list, or None when all statuses are visible."""
 	if "System Manager" in roles:
 		return None
-	elevated = {ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR}
+	elevated = {ROLE_OFFICER, ROLE_APPROVER, ROLE_AUDITOR}
 	if roles.intersection(elevated):
 		return None
 	if ROLE_VIEWER in roles:
@@ -79,7 +77,7 @@ def can_register_budget() -> bool:
 
 
 def can_review_budget() -> bool:
-	return bool(user_roles().intersection({ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager"}))
+	return bool(user_roles().intersection({ROLE_APPROVER, "System Manager"}))
 
 
 def can_export_funding_performance(user: str | None = None, pe: str | None = None) -> bool:

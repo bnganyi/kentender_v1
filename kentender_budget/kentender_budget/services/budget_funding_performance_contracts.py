@@ -15,9 +15,9 @@ from kentender_budget.services.budget_contracts import resolve_scoped_entity
 from kentender_budget.services.budget_line_contracts import ACTUAL_STALE_DAYS, format_kes_full
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	can_export_funding_performance,
 	entity_for_user,
@@ -132,7 +132,7 @@ def get_funding_performance(
 ) -> dict[str, Any]:
 	"""PE-scoped Funding Performance DTO (Active budgets)."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
 	if not pe:

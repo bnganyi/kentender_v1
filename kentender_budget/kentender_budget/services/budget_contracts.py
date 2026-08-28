@@ -20,9 +20,9 @@ from kentender_budget.services.budget_permissions import (
 	user_roles,
 	visible_statuses_for_user,
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 )
 from kentender_budget.services.budget_reference import allocate_budget_reference
@@ -115,7 +115,7 @@ def resolve_budget_context(
 	first-record or Administrator fallback).
 	"""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
 	if not pe:
@@ -312,7 +312,7 @@ def list_budgets(
 ) -> list[dict[str, Any]]:
 	"""BUD-FR-001 / list_budgets — entity-scoped Budget portfolio rows."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	pe = resolve_scoped_entity(procuring_entity)
 	filters: dict[str, Any] = {}
@@ -381,7 +381,7 @@ def list_budgets(
 def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
 	"""Portfolio strip counts + capabilities for BUD-UI-01."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	pe = resolve_scoped_entity(procuring_entity)
 	filters: dict[str, Any] = {}
@@ -742,7 +742,7 @@ def _utilization_bar(approved: float, reserved: float, committed: float, availab
 def get_budget_overview(budget: str) -> dict[str, Any]:
 	"""BUD-UI-03 — entity-scoped Overview DTO with derived funding totals."""
 	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_AUDITOR, "System Manager"
 	)
 	doc = _resolve_budget(budget)
 	require_budget_capability(CAP_BUDGET_VIEW, doc)

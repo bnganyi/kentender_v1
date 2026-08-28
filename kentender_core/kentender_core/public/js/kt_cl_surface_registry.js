@@ -212,16 +212,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
-	function crumbBudgetFunding() {
-		return crumb(__("Budget & Funding"), ["budget-funding"]);
-	}
-	function trailBudget() {
-		return [crumbDashboard(), crumbBudgetFunding()];
-	}
-	function trailBudgetLeaf(leafLabel) {
-		return [crumbDashboard(), crumbBudgetFunding(), crumb(leafLabel)];
-	}
-
 	function crumbDemands() {
 		return crumb(__("Demands"), ["demands-workspace"]);
 	}
@@ -532,97 +522,12 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
-		/* Budget MVP-1 — must be registered so cl_shell_router does not leaveNative
-		   after page scripts call enterNative (strips kt-cl-shell → Win98 CTA bleed). */
-		"BUD-UI-01": {
-			id: "BUD-UI-01",
-			label: "Budget & Funding Portfolio",
-			routePrefixes: ["budget-funding"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Budget & Funding"),
-				__(
-					"Manage approved procurement funding and monitor its use across the procurement lifecycle."
-				),
-				trailBudget(),
-				[]
-			),
-		},
-		"BUD-UI-02": {
-			id: "BUD-UI-02",
-			label: "Funding Performance",
-			routePrefixes: ["budget-funding-performance"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Funding Performance"),
-				__("Monitor procurement funding coverage, commitments and exceptions."),
-				trailBudgetLeaf(__("Funding Performance")),
-				[]
-			),
-		},
-		"BUD-UI-06": {
-			id: "BUD-UI-06",
-			label: "Check and Reserve Funding",
-			routePrefixes: ["budget-check-reserve"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Check and reserve funding"),
-				__("Confirm that approved procurement funding is available before this requirement proceeds."),
-				trailBudgetLeaf(__("Check and reserve funding")),
-				[]
-			),
-		},
-		"BUD-REGISTER": {
-			id: "BUD-REGISTER",
-			label: "Register Approved Budget",
-			routePrefixes: ["budget-register"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Register approved budget"),
-				__("Register an approved financial baseline for procurement use in KenTender."),
-				trailBudgetLeaf(__("Register approved budget")),
-				[]
-			),
-		},
-		"BUD-UI-08-CREATE": {
-			id: "BUD-UI-08-CREATE",
-			label: "Create Budget Revision",
-			routePrefixes: ["budget-revision-create"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Create budget revision"),
-				__("Record an externally approved change to the active procurement budget."),
-				trailBudgetLeaf(__("Create budget revision")),
-				[]
-			),
-		},
-		"BUD-UI-09": {
-			id: "BUD-UI-09",
-			label: "Review Budget Revision",
-			routePrefixes: ["budget-revision-review"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Review budget revision"),
-				__("Review financial, Strategy and downstream impact before applying an externally approved revision."),
-				trailBudgetLeaf(__("Review budget revision")),
-				[]
-			),
-		},
-		"BUD-UI-04": {
-			id: "BUD-UI-04",
-			label: "Budget Overview",
-			routePrefixes: [
-				"budget-overview",
-				"budget-lines",
-				"budget-funding-activity",
-				"budget-revisions",
-				"budget-downstream",
-				"budget-review",
-				"budget-audit",
-			],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(__("Budget overview"), "", trailBudgetLeaf(__("Budget overview")), []),
-		},
+		/* Budget & Funding (kentender_budget) is rebuilt per BUD-CHG-001 v1.2 as
+		   Industry-design Vue-in-Desk pages with their own PageRail.vue chrome —
+		   deliberately NOT registered here, matching kentender_strategy's three
+		   production pages and kentender_core's reference_data page. Registering
+		   would let this legacy Civic Ledger router repaint a second, clashing
+		   toolbar on every in-page route change. See AGENTS.md §6.5. */
 		/* Demands MVP-1 — DEM-UI-01 workspace + stub routes keep shell on refresh. */
 		"DEM-UI-01": {
 			id: "DEM-UI-01",

@@ -21,9 +21,9 @@ from kentender_budget.services.budget_authorization import (
 from kentender_budget.services.budget_check_reserve_contracts import _resolve_line, _resolve_reservation
 from kentender_budget.services.budget_line_contracts import ACTUAL_STALE_DAYS, format_kes_full
 from kentender_budget.services.budget_permissions import (
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	require_any_role,
 )
 from kentender_budget.services.budget_reference import (
@@ -298,7 +298,7 @@ def ingest_expenditure_snapshot(
 	never manual entry, and reconciliation status reflects payload freshness
 	rather than a fabricated zero when no integration is configured.
 	"""
-	require_any_role(ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, "System Manager")
+	require_any_role(ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, "System Manager")
 
 	key = (idempotency_key or "").strip()
 	if key:

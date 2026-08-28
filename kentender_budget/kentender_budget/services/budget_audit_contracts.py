@@ -13,15 +13,15 @@ from frappe.utils import format_datetime, get_datetime, now_datetime
 
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	require_any_role,
 )
 from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, CAP_BUDGET_EXPORT, can_budget
 
-_READ_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+_READ_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
 
 EVENT_BASELINE = "Baseline registered"
 EVENT_SUBMITTED = "Budget submitted"

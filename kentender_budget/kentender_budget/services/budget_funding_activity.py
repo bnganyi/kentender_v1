@@ -18,9 +18,9 @@ from kentender_budget.services.budget_funding_lifecycle import list_funding_life
 from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_permissions import (
 	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	require_any_role,
 )
@@ -31,7 +31,7 @@ from kentender_budget.services.budget_authorization import (
 	require_budget_capability,
 )
 
-_ACTIVITY_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+_ACTIVITY_ROLES = (ROLE_OFFICER, ROLE_APPROVER, ROLE_APPROVER, ROLE_VIEWER, ROLE_AUDITOR)
 _ACTIVITY_TYPES = frozenset({"reservation", "commitment", "actual"})
 
 

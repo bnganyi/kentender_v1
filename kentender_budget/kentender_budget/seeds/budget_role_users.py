@@ -11,9 +11,9 @@ import frappe
 from frappe.utils.password import update_password
 
 from kentender_budget.services.budget_permissions import (
-	ROLE_AUTHORITY,
+	ROLE_APPROVER,
 	ROLE_OFFICER,
-	ROLE_REVIEWER,
+	ROLE_APPROVER,
 	ROLE_VIEWER,
 	ensure_budget_roles,
 )
@@ -30,12 +30,12 @@ PE_MOE_CODE = "PE-MOE"
 BUDGET_ROLE_USERS: tuple[tuple[Any, ...], ...] = (
 	("moh.viewer@example.test", "Budget Viewer MOH", (ROLE_VIEWER,), PE_MOH_CODE),
 	("moh.medicalservices.officer@example.test", "Budget Officer MOH", (ROLE_OFFICER,), PE_MOH_CODE),
-	("moh.budget.reviewer@example.test", "Budget Reviewer MOH", (ROLE_REVIEWER,), PE_MOH_CODE),
-	("moh.budget.authority@example.test", "Budget Authority MOH", (ROLE_AUTHORITY,), PE_MOH_CODE),
+	("moh.budget.reviewer@example.test", "Budget Reviewer MOH", (ROLE_APPROVER,), PE_MOH_CODE),
+	("moh.budget.authority@example.test", "Budget Authority MOH", (ROLE_APPROVER,), PE_MOH_CODE),
 	(
 		"moh.budget.officer.authority@example.test",
 		"Budget Officer Authority MOH",
-		(ROLE_OFFICER, ROLE_AUTHORITY),
+		(ROLE_OFFICER, ROLE_APPROVER),
 		PE_MOH_CODE,
 	),
 	("other.entity.officer@example.test", "Budget Officer MOE", (ROLE_OFFICER,), PE_MOE_CODE),
@@ -47,13 +47,13 @@ BUDGET_ROLE_USERS: tuple[tuple[Any, ...], ...] = (
 	(
 		"moh.budget.revision.authority@example.test",
 		"Budget Revision Authority MOH",
-		(ROLE_REVIEWER,),
+		(ROLE_APPROVER,),
 		PE_MOH_CODE,
 	),
 	(
 		"moh.budget.finance.officer@example.test",
 		"Budget Finance Confirmation Officer MOH",
-		(ROLE_REVIEWER,),
+		(ROLE_APPROVER,),
 		PE_MOH_CODE,
 	),
 )
