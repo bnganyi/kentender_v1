@@ -18,7 +18,7 @@ import { useRouteState } from "./composables/useRouteState.js";
 const { pe, fy, context, peTypes, refreshPe, refreshFy, refreshContext, refreshAll } = useReferenceData();
 onMounted(refreshAll);
 
-const { state: route, goToTab, openRecord, openNew, closeToList } = useRouteState();
+const { state: route, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
 
 const NEW_LABEL = { pe: "New procuring entity", fy: "New financial year", context: "New PE/FY context" };
 
@@ -105,8 +105,12 @@ const availableFyOptionsForContext = computed(() =>
 			/>
 		</template>
 
+		<template v-else-if="route.view === 'edit'">
+			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" :edit-code="route.code" @created="(code) => openRecord('pe', code)" @cancel="openRecord('pe', route.code)" />
+		</template>
+
 		<template v-else-if="route.view === 'detail'">
-			<PeDetail v-if="route.tab === 'pe'" :code="route.code" @after-action="afterAction" />
+			<PeDetail v-if="route.tab === 'pe'" :code="route.code" @after-action="afterAction" @edit="(code) => openEdit('pe', code)" />
 			<FyDetail v-else-if="route.tab === 'fy'" :code="route.code" @after-action="afterAction" @open-context="(code) => openRecord('context', code)" />
 			<ContextDetail v-else :code="route.code" @after-action="afterAction" />
 		</template>

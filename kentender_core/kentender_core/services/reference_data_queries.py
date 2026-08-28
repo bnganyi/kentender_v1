@@ -1,11 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""CFG-CHG-002 §10 — read-side projections (List*/Get* contracts). Scope for
-list/detail reads mirrors the resolver: System Manager/Administrator see
-everything, everyone else sees only PEs they hold an active reference-data
-assignment for — the same authorization_policy engine, not a second read-only
-permission system.
+"""CFG-CHG-002 v0.4 §10 — read-side projections (List*/Get* contracts).
+Reference Data Manager (and System Manager/Administrator) see every PE, FY
+and Context; everyone else has no access to this workspace at all — one
+global Role is the whole visibility and action decision, per
+reference_data_permissions.has_reference_data_read_access.
 """
 
 from __future__ import annotations
@@ -16,22 +16,17 @@ import frappe
 from frappe.utils import now_datetime
 
 from kentender_core.services import reference_data_permissions as perm
-from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability, resolve_effective_access
-
-
-def _is_admin(user: str) -> bool:
-	return user == "Administrator" or "System Manager" in frappe.get_roles(user)
 
 
 def _authorized_pes(user: str) -> set[str] | None:
-	"""None = unrestricted."""
-	if _is_admin(user):
+	"""None = unrestricted; empty set = no access."""
+	if perm.has_reference_data_read_access(user):
 		return None
-	return {row["procuring_entity_id"] for row in resolve_effective_access(user)}
+	return set()
 
 
-def _allowed(user: str, capability: str, resource: ResourceContext) -> bool:
-	return evaluate_capability(user, capability, resource).allowed
+def _allowed(user: str) -> bool:
+	return perm.has_reference_data_manager_role(user)
 
 
 # --- PE Type -----------------------------------------------------------------------
@@ -53,24 +48,24 @@ def list_pe_types() -> dict[str, Any]:
 
 
 def _pe_allowed_actions(pe, user: str) -> list[str]:
-	ctx = perm.pe_resource_context(pe.name, prior_actions=perm.prior_actions_for_pe(pe.name))
+	if not _allowed(user):
+		return []
 	actions: list[str] = []
-	if pe.status == "Draft" and _allowed(user, perm.PE_CREATE_DRAFT, ctx):
-		actions.append("Submit")
-	elif pe.status == "Active" and pe.current_version_id:
+	version_state = None
+	if pe.current_version_id:
 		version_state = frappe.db.get_value("Procuring Entity Version", pe.current_version_id, "version_state")
-		if version_state == "Draft" and _allowed(user, perm.PE_PROPOSE_AMENDMENT, ctx):
-			actions.append("Submit amendment")
-		if version_state == "Under Review" and _allowed(user, perm.PE_APPROVE_ACTIVATE, ctx):
-			actions.append("Approve and activate")
+	if pe.status == "Draft" and version_state == "Draft":
+		actions.append("Edit draft")
+		actions.append("Activate procuring entity")
+	elif pe.status == "Active" and version_state == "Draft":
+		actions.append("Edit draft")
+		actions.append("Apply amendment")
 	if pe.status == "Active":
-		if _allowed(user, perm.PE_PROPOSE_AMENDMENT, ctx):
-			actions.append("Propose amendment")
-		if _allowed(user, perm.PE_SUSPEND, ctx):
-			actions.append("Suspend")
-	if pe.status == "Suspended" and _allowed(user, perm.PE_REINSTATE, ctx):
+		actions.append("Propose amendment")
+		actions.append("Suspend")
+	if pe.status == "Suspended":
 		actions.append("Reinstate")
-	if pe.status in ("Active", "Suspended") and _allowed(user, perm.PE_RETIRE, ctx):
+	if pe.status in ("Active", "Suspended"):
 		actions.append("Retire")
 	return actions
 
@@ -132,6 +127,7 @@ def get_procuring_entity(pe_id: str, user: str | None = None) -> dict[str, Any]:
 		"pe_id": pe.name,
 		"code": pe.entity_code,
 		"status": pe.status,
+		"effective_from": pe.effective_from,
 		"version": (
 			{
 				"legal_name": version.legal_name,
@@ -162,12 +158,12 @@ def _calendar_phase(start_date, end_date) -> str:
 
 
 def _fy_allowed_actions(fy, user: str) -> list[str]:
+	if not _allowed(user):
+		return []
 	actions: list[str] = []
-	if fy.record_status == "Draft" and perm._has_any_active_capability(user, perm.FY_CREATE_DRAFT):
-		actions.append("Submit")
-	if fy.record_status == "Awaiting Approval" and perm._has_any_active_capability(user, perm.FY_APPROVE_AVAILABLE):
-		actions.append("Approve")
-	if fy.record_status == "Available" and perm._has_any_active_capability(user, perm.FY_RETIRE):
+	if fy.record_status == "Draft":
+		actions.append("Make available")
+	if fy.record_status == "Available":
 		actions.append("Retire")
 	return actions
 
@@ -260,23 +256,17 @@ def _context_core_readiness_checks(ctx) -> list[dict]:
 
 
 def _context_allowed_actions(ctx, user: str) -> list[str]:
-	rctx = perm.context_resource_context(ctx.name, ctx.procuring_entity, ctx.financial_year, prior_actions=perm.prior_actions_for_context(ctx.name))
+	if not _allowed(user):
+		return []
 	actions: list[str] = []
-	if ctx.context_status == "Draft" and _allowed(user, perm.CTX_CREATE_DRAFT, rctx):
-		actions.append("Submit for review")
-	elif ctx.context_status == "Under Review" and _allowed(user, perm.CTX_RECOMMEND, rctx):
-		actions.append("Recommend")
-	elif ctx.context_status == "Awaiting Approval" and _allowed(user, perm.CTX_APPROVE, rctx):
-		actions.append("Approve")
 	if ctx.context_status == "Active":
-		if _allowed(user, perm.CTX_APPROVE, rctx):
-			actions.append("Suspend")
-			actions.append("Close")
-	if ctx.context_status == "Suspended" and _allowed(user, perm.CTX_APPROVE, rctx):
+		actions.append("Suspend")
+	if ctx.context_status == "Suspended":
 		actions.append("Reinstate")
+	if ctx.context_status in ("Active", "Suspended", "Scheduled"):
 		actions.append("Close")
-	if ctx.context_status == "Closed" and _allowed(user, perm.CTX_CREATE_DRAFT, rctx):
-		actions.append("Propose exceptional reopen")
+	if ctx.context_status == "Closed":
+		actions.append("Reopen")
 	return actions
 
 

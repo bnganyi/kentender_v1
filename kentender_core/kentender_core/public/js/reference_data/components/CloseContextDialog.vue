@@ -3,12 +3,14 @@
 // checkbox that the action removes the context from new-work selectors without
 // cancelling existing records. Matches CFG-PEFY-DES-07.
 import { reactive, computed } from "vue";
+import KtErrorBanner from "./KtErrorBanner.vue";
 
 const props = defineProps({
 	contextLine: { type: String, required: true },
 	busy: { type: Boolean, default: false },
+	errorMessage: { type: String, default: "" },
 });
-const emit = defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(["confirm", "cancel", "clear-error"]);
 
 const form = reactive({ reason: "", acknowledged: false });
 const canConfirm = computed(() => form.reason.trim().length > 0 && form.acknowledged);
@@ -27,6 +29,7 @@ function confirm() {
 			<p style="margin:0;font-size:14px;line-height:1.55">
 				{{ __("This context will no longer appear in new-work selectors. Existing records will remain available according to their module rules.") }}
 			</p>
+			<KtErrorBanner :message="errorMessage" @dismiss="emit('clear-error')" />
 			<div class="kt-field" style="padding-top:4px;border-top:1px solid var(--kt-color-divider)">
 				<label style="padding-top:14px">{{ __("Closure reason") }}</label>
 				<textarea class="kt-input" style="height:auto;min-height:70px;padding:10px" v-model="form.reason"></textarea>

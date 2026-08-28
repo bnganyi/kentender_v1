@@ -1,5 +1,6 @@
 <script setup>
 import { reactive, computed } from "vue";
+import KtErrorBanner from "./KtErrorBanner.vue";
 
 // Generic in-Vue confirm dialog for the simple lifecycle transitions (Submit,
 // Approve, Suspend, Reinstate, Retire, Recommend...). §12's dedicated Close Context
@@ -15,8 +16,9 @@ const props = defineProps({
 	reasonRequired: { type: Boolean, default: false },
 	needsEffectiveDate: { type: Boolean, default: false },
 	busy: { type: Boolean, default: false },
+	errorMessage: { type: String, default: "" },
 });
-const emit = defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(["confirm", "cancel", "clear-error"]);
 
 const form = reactive({ reason: "", effectiveDate: frappe.datetime.get_today() });
 
@@ -38,6 +40,7 @@ function confirm() {
 			<h2 class="kt-dialog-title">{{ title }}</h2>
 			<div v-if="contextLine" style="font-size:14px;color:color-mix(in srgb, var(--kt-color-text) 72%, transparent)">{{ contextLine }}</div>
 			<p v-if="bodyText" style="margin:0;font-size:14px;line-height:1.55">{{ bodyText }}</p>
+			<KtErrorBanner :message="errorMessage" @dismiss="emit('clear-error')" />
 
 			<div v-if="reasonLabel" class="kt-field">
 				<label>{{ reasonLabel }}</label>

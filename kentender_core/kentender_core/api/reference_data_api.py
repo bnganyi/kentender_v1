@@ -60,6 +60,13 @@ def create_or_revise_pe(payload=None, pe_id: str | None = None, change_reason: s
 
 
 @frappe.whitelist()
+def update_pe_draft(pe_id: str, payload=None):
+	"""Edit a still-Draft PE's fields before Activate — §6.1's 'Create draft' and
+	'Activate' are separate steps, so the draft must stay editable in between."""
+	return txn.update_pe_draft(pe_id, _obj(payload), user=frappe.session.user)
+
+
+@frappe.whitelist()
 def decide_pe_change(
 	pe_id: str,
 	action: str,
@@ -68,8 +75,7 @@ def decide_pe_change(
 	idempotency_key: str | None = None,
 ):
 	dispatch = {
-		"submit": lambda: txn.submit_pe(pe_id, user=frappe.session.user),
-		"approve_activate": lambda: txn.approve_activate_pe(pe_id, user=frappe.session.user),
+		"activate": lambda: txn.activate_pe(pe_id, user=frappe.session.user),
 		"suspend": lambda: txn.suspend_pe(pe_id, reason or "", user=frappe.session.user),
 		"reinstate": lambda: txn.reinstate_pe(pe_id, user=frappe.session.user),
 		"retire": lambda: txn.retire_pe(
@@ -101,20 +107,13 @@ def create_financial_year(start_year):
 
 
 @frappe.whitelist()
-def submit_financial_year(financial_year_id: str):
-	"""Supplement — §10 names Create/MakeAvailable only, but the FY state machine
-	(§6.2) has a distinct Steward-only Submit step between them."""
-	return txn.submit_fy(financial_year_id, user=frappe.session.user)
-
-
-@frappe.whitelist()
 def make_financial_year_available(financial_year_id: str, idempotency_key: str | None = None):
 	return run_idempotent(
 		idempotency_key,
 		"Financial Year",
 		financial_year_id,
-		"approve_available",
-		lambda: txn.approve_fy(financial_year_id, user=frappe.session.user),
+		"make_available",
+		lambda: txn.make_fy_available(financial_year_id, user=frappe.session.user),
 	)
 
 
@@ -151,19 +150,20 @@ def get_pe_fy_context(context_id: str):
 
 
 @frappe.whitelist()
-def create_or_revise_pe_fy_context(
-	procuring_entity: str | None = None,
-	financial_year: str | None = None,
+def enable_pe_fy_context(
+	procuring_entity: str,
+	financial_year: str,
 	active_from=None,
 	active_to=None,
-	context_id: str | None = None,
-	expected_version: str | None = None,
+	idempotency_key: str | None = None,
 ):
-	if context_id:
-		return txn.update_context_draft(
-			context_id, active_from, active_to, user=frappe.session.user, expected_version=expected_version
-		)
-	return txn.create_context_draft(procuring_entity, financial_year, active_from, active_to, user=frappe.session.user)
+	return run_idempotent(
+		idempotency_key,
+		"PE Fiscal Year Context",
+		f"{procuring_entity}:{financial_year}",
+		"enable",
+		lambda: txn.enable_context(procuring_entity, financial_year, active_from, active_to, user=frappe.session.user),
+	)
 
 
 @frappe.whitelist()
@@ -172,17 +172,12 @@ def decide_pe_fy_context(
 	action: str,
 	reason: str | None = None,
 	acknowledged=False,
+	active_from=None,
+	active_to=None,
 	idempotency_key: str | None = None,
 	expected_version: str | None = None,
 ):
 	dispatch = {
-		"submit": lambda: txn.submit_context(context_id, user=frappe.session.user, expected_version=expected_version),
-		"recommend": lambda: txn.recommend_context(
-			context_id, user=frappe.session.user, expected_version=expected_version
-		),
-		"approve": lambda: txn.approve_context(
-			context_id, user=frappe.session.user, expected_version=expected_version
-		),
 		"suspend": lambda: txn.suspend_context(
 			context_id, reason or "", user=frappe.session.user, expected_version=expected_version
 		),
@@ -196,14 +191,8 @@ def decide_pe_fy_context(
 			user=frappe.session.user,
 			expected_version=expected_version,
 		),
-		"propose_reopen": lambda: txn.propose_context_reopen(
-			context_id, reason or "", user=frappe.session.user, expected_version=expected_version
-		),
-		"recommend_reopen": lambda: txn.recommend_context_reopen(
-			context_id, user=frappe.session.user, expected_version=expected_version
-		),
-		"approve_reopen": lambda: txn.approve_context_reopen(
-			context_id, user=frappe.session.user, expected_version=expected_version
+		"reopen": lambda: txn.reopen_context(
+			context_id, reason or "", active_from, active_to, user=frappe.session.user, expected_version=expected_version
 		),
 	}
 	if action not in dispatch:
@@ -220,5 +209,5 @@ def resolve_authorized_contexts(remembered_context: str | None = None):
 
 
 @frappe.whitelist()
-def validate_context_for_command(capability: str, context_id: str):
-	return resolver.validate_context_for_command(frappe.session.user, capability, context_id)
+def validate_context_for_command(context_id: str):
+	return resolver.validate_context_for_command(frappe.session.user, context_id)

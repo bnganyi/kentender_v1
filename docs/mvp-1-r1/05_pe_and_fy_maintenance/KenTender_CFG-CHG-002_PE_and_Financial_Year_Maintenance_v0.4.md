@@ -6,11 +6,12 @@
 |---|---|
 | Change unit | CFG-CHG-002 |
 | Module | Configuration and Governance |
-| Version | 0.3 — Corrected requirements and design-contract separation |
-| Date | 22 August 2026 |
+| Version | 0.4 — Simplified Reference Data authority and lifecycle |
+| Date | 27 August 2026 |
+| Status | Proposed for approval |
 | Scope | Procuring Entity, Financial Year and declared PE/FY context maintenance |
 | Implementation posture | Greenfield reference-data control; Vue 3 inside Frappe Desk |
-| Primary implementation owner | `kentender_core`, consuming public governance/assignment interfaces |
+| Primary implementation owner | `kentender_core`, using native Frappe Roles and User Permissions |
 
 ## 1. Governing decision
 
@@ -22,7 +23,11 @@ KenTender shall maintain three distinct governed references:
 
 The PE/FY Context is a production reference record. It is not a saved selector value, a Planning Cycle, a dashboard filter or a seed-only combination.
 
-An active PE/FY Context permits downstream modules to evaluate whether work may occur in that combination. It does not itself open a Departmental Needs window, create a Budget, create a Procurement Plan or authorize a user. Module configuration, effective assignment, record state and server-side permission checks remain independently required.
+An active PE/FY Context permits downstream modules to evaluate whether work may occur in that combination. It does not itself open a Departmental Needs window, create a Budget, create a Procurement Plan or authorize a user. Module configuration, native Frappe Role and User Permission scope, record state and server-side permission checks remain independently required.
+
+Reference Data maintenance shall use one business role: **Reference Data Manager**. PE, FY and PE/FY Context maintenance shall not require a separate steward, central approver, PE configuration steward, professional configuration reviewer or Accounting Officer decision.
+
+The safety controls are authoritative records, validation, effective dating, immutability after use, reasoned lifecycle actions, audit and fail-closed downstream resolution. This change unit does not impose a maker-checker chain where no documented legal or policy control requires one.
 
 ## 1.1 Narrow conflict disposition
 
@@ -32,6 +37,8 @@ An active PE/FY Context permits downstream modules to evaluate whether work may 
 | CFG-CHG-001 states that Financial Years remain shared calendar records and must not be extended with module fields. | Retained. FY contains calendar facts only; module windows and workflow fields remain outside it. |
 | PLN-GF-002 requires an active declared PE/FY context and prohibits Cartesian generation. | Retained and made maintainable by this change unit. |
 | A context selector filters authority and never grants it. | Retained without qualification. |
+| CFG-CHG-002 v0.3 defined five dedicated Reference Data actors and two approval chains. | Superseded. One Reference Data Manager performs the finite maintenance actions; existing business roles retain their transaction responsibilities outside Reference Data. |
+| AUTH-ADR-001 v1.0 removed the custom capability store but retained the v0.3 role examples. | Corrected by AUTH-ADR-001 v1.1 and this change unit. No `reference_data.*` capability string or custom assignment is part of Reference Data authority. |
 
 ## 2. Purpose and outcomes
 
@@ -39,10 +46,10 @@ CFG-CHG-002 shall provide:
 
 - one controlled register of Procuring Entities;
 - one controlled register of Financial Years;
-- explicit creation and governance of valid PE/FY combinations;
+- explicit enablement and lifecycle control of valid PE/FY combinations;
 - a common service for resolving the contexts an actor may lawfully view or use;
 - durable historical identity for Strategy, Budget, Needs, Planning, Tendering and audit records;
-- exact administrative screens for creating, reviewing, activating, suspending and closing these references; and
+- exact administrative screens for creating, activating, suspending and closing these references; and
 - deterministic seed and acceptance contracts.
 
 ## 2.1 Scope exclusions
@@ -72,14 +79,14 @@ Source citations are retained only in the source register. They do not replace a
 
 ## 4. Ownership and domain boundary
 
-| Record or capability | Owner | Rule |
+| Record or concern | Owner | Rule |
 |---|---|---|
-| Procuring Entity and approved descriptive version | Configuration and Governance / `kentender_core` | Shared reference; other modules may read but not write it. |
+| Procuring Entity and active descriptive version | Configuration and Governance / `kentender_core` | Shared reference; other modules may read but not write it. |
 | PE type catalogue | Configuration and Governance | Controlled reference used to resolve applicable routes. |
 | Financial Year | Configuration and Governance / `kentender_core` | Shared immutable calendar reference after availability. |
 | PE/FY Context | Configuration and Governance / `kentender_core` | Explicit valid combination; unique per PE and FY. |
-| Reference-data decisions and audit | Governance public interfaces | Append-only maker-checker evidence. |
-| Assignments and delegations | Identity and Access Governance | Resolved at request and command time; not copied into PE/FY records. |
+| Reference-data actions and audit | Frappe audit plus immutable lifecycle entries | Record who acted, when, why and what changed; no second approval ledger. |
+| Roles and scope | Native Frappe Role and User Permission records | Resolved at request and command time; not copied into PE/FY records. |
 | Module windows and workflow | Owning business module through governed configuration | Reference the PE/FY Context; never extend the FY master. |
 | Planning Cycle, Budget, Strategy and other transactions | Respective business module | Reference the context; never maintain a shadow PE/FY master. |
 
@@ -95,7 +102,7 @@ Stable identity record.
 |---|---|
 | `pe_id` | Immutable generated identifier, for example `PE-MOH`. |
 | `pe_code` | Required immutable uppercase code; unique after normalized comparison. |
-| `current_version_id` | Approved descriptive version currently in effect. |
+| `current_version_id` | Active descriptive version currently in effect. |
 | `record_status` | `DRAFT`, `ACTIVE`, `SUSPENDED` or `RETIRED`. |
 | `effective_from` | Date from which the PE may be used. |
 | `effective_to` | Optional terminal date; must be later than `effective_from`. |
@@ -115,8 +122,8 @@ Governed descriptive and classification version.
 | `pe_type_code` | Required active PE type reference. |
 | `timezone` | Required IANA timezone; MVP fixture value is `Africa/Nairobi`. |
 | `change_reason` | Required for every version after the initial draft. |
-| `version_state` | `DRAFT`, `UNDER_REVIEW`, `APPROVED`, `ACTIVE`, `SUPERSEDED`, `REJECTED` or `WITHDRAWN`. |
-| `valid_from/to` | Non-overlapping effective interval for approved versions. |
+| `version_state` | `DRAFT`, `ACTIVE`, `SUPERSEDED` or `WITHDRAWN`. |
+| `valid_from/to` | Non-overlapping effective interval for active versions. |
 
 The PE code and stable PE identity are never changed through a version. A mistaken activated identity requires a governed retirement and a new PE record; business logic does not alias the two identities.
 
@@ -132,8 +139,8 @@ Shared calendar record.
 | `start_date` | Generated as 1 July of `start_year`. |
 | `end_date` | Generated as 30 June of `start_year + 1`. |
 | `timezone` | `Africa/Nairobi` for the MVP. |
-| `record_status` | `DRAFT`, `AWAITING_APPROVAL`, `AVAILABLE` or `RETIRED`. |
-| `created_by/at`, `approved_by/at` | Immutable audit metadata. |
+| `record_status` | `DRAFT`, `AVAILABLE` or `RETIRED`. |
+| `created_by/at`, `made_available_by/at` | Immutable audit metadata. |
 
 `UPCOMING`, `CURRENT` and `PAST` are derived calendar phases, not editable statuses. No `is_current` field is permitted.
 
@@ -150,7 +157,7 @@ Stable declaration of one permitted PE/FY combination.
 | `context_id` | Immutable generated identifier, for example `CTX-MOH-2027-2028`. |
 | `pe_id` | Required reference to an active PE. |
 | `financial_year_id` | Required reference to an available FY. |
-| `context_status` | `DRAFT`, `UNDER_REVIEW`, `AWAITING_APPROVAL`, `APPROVED`, `SCHEDULED`, `ACTIVE`, `SUSPENDED` or `CLOSED`. |
+| `context_status` | `SCHEDULED`, `ACTIVE`, `SUSPENDED` or `CLOSED`. |
 | `active_from` | Required instant when the combination becomes available; it may precede the FY start to allow advance planning. |
 | `active_to` | Required instant later than `active_from`; it may extend beyond FY end for governed close-out. |
 | `closed_by/at/reason` | Required when manually closed. |
@@ -159,7 +166,7 @@ Stable declaration of one permitted PE/FY combination.
 
 Database uniqueness shall enforce one stable context per `(pe_id, financial_year_id)`. The platform shall never generate a Cartesian product of PEs and FYs.
 
-More than one context may be active for the same PE. This supports current-year work, historical close-out and preparation of the next FY. Calendar phase, effective assignment and module windows determine what work is actually available.
+More than one context may be active for the same PE. This supports current-year work, historical close-out and preparation of the next FY. Calendar phase, native user scope and module windows determine what work is actually available.
 
 ## 6. Lifecycle and governance
 
@@ -167,12 +174,12 @@ More than one context may be active for the same PE. This supports current-year 
 
 | Source | Action | Result | Minimum authority and guard |
 |---|---|---|---|
-| — | Create draft | `DRAFT` | Assigned central Reference Data Steward. Code is unique. |
-| `DRAFT` | Submit | Version `UNDER_REVIEW` | Required identity, classification and timezone fields complete. |
-| `UNDER_REVIEW` | Approve and activate | PE `ACTIVE`; version `ACTIVE` | Assigned central Configuration Approver; maker-checker enforced. |
-| `ACTIVE` | Propose amendment | New version `DRAFT` | Authorized steward; active version remains authoritative. |
-| `ACTIVE` | Suspend | `SUSPENDED` | Central approver; mandatory reason and impact warning. |
-| `SUSPENDED` | Reinstate | `ACTIVE` | Central approver after recorded review. |
+| — | Create draft | `DRAFT` | Reference Data Manager. Code is unique. |
+| `DRAFT` | Activate | PE `ACTIVE`; version `ACTIVE` | Reference Data Manager; required fields complete. |
+| `ACTIVE` | Propose amendment | New version `DRAFT` | Reference Data Manager; active version remains authoritative. |
+| Amendment `DRAFT` | Apply amendment | Successor version `ACTIVE`; prior version `SUPERSEDED` | Reference Data Manager; reason required and stable identity unchanged. |
+| `ACTIVE` | Suspend | `SUSPENDED` | Reference Data Manager; mandatory reason and impact warning. |
+| `SUSPENDED` | Reinstate | `ACTIVE` | Reference Data Manager; reason and prerequisite revalidation. |
 | `ACTIVE` or `SUSPENDED` | Retire | `RETIRED` | Effective date and reason required; no active/scheduled context may remain. |
 
 Suspension or retirement blocks new PE/FY contexts and new business roots. It never deletes, hides or rewrites existing records.
@@ -181,9 +188,8 @@ Suspension or retirement blocks new PE/FY contexts and new business roots. It ne
 
 | Source | Action | Result | Minimum authority and guard |
 |---|---|---|---|
-| — | Create from start year | `DRAFT` | Central Reference Data Steward; derived identifier and dates are unique. |
-| `DRAFT` | Submit | `AWAITING_APPROVAL` | Generated identifier, label and dates are internally consistent. |
-| `AWAITING_APPROVAL` | Approve | `AVAILABLE` | Central Configuration Approver; maker-checker enforced. |
+| — | Create from start year | `DRAFT` | Reference Data Manager; derived identifier and dates are unique. |
+| `DRAFT` | Make available | `AVAILABLE` | Reference Data Manager; generated identifier, label and dates are internally consistent. |
 | `AVAILABLE` | Retire | `RETIRED` | Only when not used by an active/scheduled context; retirement does not remove history. |
 
 FY availability is not the opening of a business process. No transaction is created when an FY becomes available.
@@ -192,39 +198,34 @@ FY availability is not the opening of a business process. No transaction is crea
 
 | Source | Action | Result | Authority and consequence |
 |---|---|---|---|
-| — | Create draft | `DRAFT` | PE-scoped Configuration Steward; active PE and available FY required. |
-| `DRAFT` | Submit for review | `UNDER_REVIEW` | PE, FY and availability dates are complete and valid. |
-| `UNDER_REVIEW` | Recommend | `AWAITING_APPROVAL` | Assigned Head of Procurement Function or professional reviewer. |
-| `AWAITING_APPROVAL` | Approve | `APPROVED` or `SCHEDULED` | PE Accounting Officer; maker-checker and no self-approval. |
-| `APPROVED`/`SCHEDULED` | Reach `active_from` | `ACTIVE` | Automated activation after revalidation. |
-| `ACTIVE` | Suspend | `SUSPENDED` | Authorized Accounting Officer or emergency authority; reason required. |
-| `SUSPENDED` | Reinstate | `ACTIVE` | Same governed route after prerequisite revalidation. |
-| `ACTIVE`/`SUSPENDED` | Close | `CLOSED` | Accounting Officer; impact acknowledgement and reason required. |
+| — | Enable PE for Financial Year | `ACTIVE` or `SCHEDULED` | Reference Data Manager; active PE, available FY, unique pair and valid availability dates required. |
+| `SCHEDULED` | Reach `active_from` | `ACTIVE` | Automated activation after prerequisite revalidation. |
+| `ACTIVE` | Suspend | `SUSPENDED` | Reference Data Manager; reason required. |
+| `SUSPENDED` | Reinstate | `ACTIVE` or `SCHEDULED` | Reference Data Manager; reason and prerequisite revalidation. |
+| `ACTIVE`/`SUSPENDED`/`SCHEDULED` | Close | `CLOSED` | Reference Data Manager; impact acknowledgement and reason required. |
 | `ACTIVE` | Reach `active_to` | `CLOSED` | Automated closure with scheduler audit; existing records remain governed by their owning modules. |
-| `CLOSED` | Exceptional reopen | `ACTIVE` | New steward proposal, professional recommendation and AO approval; full audit required. |
+| `CLOSED` | Reopen | `ACTIVE` or `SCHEDULED` | Reference Data Manager; reason, new availability dates and prerequisite revalidation required. |
 
-Approval is not activation. A future context remains `SCHEDULED` until `active_from`.
+A future context remains `SCHEDULED` until `active_from`.
 
 Closing a context prevents new business roots and removes it from new-work selectors. It does not automatically cancel or invalidate existing Strategy, Budget, Needs, Plan, Tender or Contract records. Each owning module determines the lawful completion, correction or read-only treatment of existing work.
 
-The PE/FY activation route is a KenTender high-impact control. It is not described to users as a statutory approval of the financial year.
+Enabling a PE/FY Context is an administrative reference-data action. It is not described as a statutory approval of the financial year or a substitute for downstream business approvals.
 
 ## 7. Roles and permissions
 
-| Actor/assignment | PE | FY | PE/FY Context |
+| Actor | PE | FY | PE/FY Context |
 |---|---|---|---|
-| Central Reference Data Steward | Create draft and propose amendment | Create draft | Read all configured contexts |
-| Central Configuration Approver | Approve, suspend, reinstate or retire within assignment | Make available or retire | Read all; no PE business approval by virtue of central role |
-| PE Configuration Steward | Read own PE | Read available FYs | Draft and submit own PE contexts |
-| Professional Configuration Reviewer / Head of Procurement Function | Read own PE | Read | Recommend, return or reject own PE contexts |
-| Accounting Officer | Read own PE | Read | Approve, suspend, close or exceptionally reopen own PE contexts at the applicable state |
-| Module consumer | Read minimum display fields | Read | Resolve only contexts permitted by effective assignment and capability |
-| Internal Auditor | Read within oversight scope | Read | Read decisions and audit; no action |
-| System Administrator | Audited technical read-only | Audited read-only | Audited support view; no business action or approval |
+| Reference Data Manager | Create, activate, amend, suspend, reinstate and retire | Create, make available and retire | Enable, suspend, reinstate, close and reopen |
+| Module consumer | Read minimum display fields | Read | Resolve only contexts permitted by native Frappe Role, User Permission and module rules |
+| Internal Auditor | Read within oversight scope | Read | Read lifecycle history and audit; no maintenance action |
+| System Manager | Administer users, Roles and User Permissions; assign Reference Data Manager where authorised | Same | Audited technical support; does not obtain downstream business approval authority |
 
-Role labels alone are insufficient. The server shall resolve effective assignment, PE scope, optional FY scope, delegation, segregation and record state at command time.
+Reference Data Manager is a global central Frappe Role for this finite register. It requires no PE-specific grant and no `reference_data.*` capability string. Assigning or revoking it uses standard Frappe administration and audit.
 
-The creator may not approve their own PE, FY or PE/FY Context proposal. One actor may not satisfy two required decision stages for the same proposal.
+Head of Procurement Function and Accounting Officer retain their business roles in the modules that require their decisions. Those roles confer no Reference Data maintenance action.
+
+The server shall resolve the actor's native Frappe Role, DocType permission and current record state at command time. Downstream context use additionally requires the exact native User Permission scope and owning-module rules.
 
 ## 8. Business rules
 
@@ -234,11 +235,11 @@ The creator may not approve their own PE, FY or PE/FY Context proposal. One acto
 | CFG-PEFY-BR-002 | An `ACTIVE` PE has exactly one `ACTIVE` descriptive version, one active PE Type and one valid IANA timezone. | PE activation command. |
 | CFG-PEFY-BR-003 | FY identifier, label, start date and end date are generated from `start_year` and cannot diverge. | FY creation command and database validation. |
 | CFG-PEFY-BR-004 | An `AVAILABLE` FY may exist with zero PE/FY Contexts. | No automatic context creation. |
-| CFG-PEFY-BR-005 | A Context can be submitted only for an `ACTIVE` PE and an `AVAILABLE` FY. | Context submission command. |
-| CFG-PEFY-BR-006 | `active_to` is later than `active_from`; these dates do not define a module submission window. | Context save and submission commands. |
+| CFG-PEFY-BR-005 | A Context can be enabled only for an `ACTIVE` PE and an `AVAILABLE` FY. | Context enable command. |
+| CFG-PEFY-BR-006 | `active_to` is later than `active_from`; these dates do not define a module submission window. | Context enable and lifecycle commands. |
 | CFG-PEFY-BR-007 | More than one Context may be `ACTIVE` for the same PE; no mutable global current-context flag exists. | Data model and resolver. |
 | CFG-PEFY-BR-008 | Calendar phase is derived from the request date and never grants access or causes automatic selection. | FY projection and context resolver. |
-| CFG-PEFY-BR-009 | A remembered Context is revalidated against current state and effective assignment on every read and command. | Context resolver and downstream command guard. |
+| CFG-PEFY-BR-009 | A remembered Context is revalidated against current state, native User Permission scope and module eligibility on every read and command. | Context resolver and downstream command guard. |
 | CFG-PEFY-BR-010 | List, count and selector results use the same server-side scope predicate. | Query services. |
 | CFG-PEFY-BR-011 | Context activation creates no Strategy, Budget, Need, Planning Cycle, Plan or Tender. | Context activation transaction. |
 | CFG-PEFY-BR-012 | New downstream work requires an `ACTIVE` Context plus the owning module's prerequisites. | Downstream command guard. |
@@ -251,11 +252,11 @@ The creator may not approve their own PE, FY or PE/FY Context proposal. One acto
 
 ## 9. Downstream context resolution
 
-The common resolver shall accept the authenticated actor, requested capability, request time and optional remembered context. It shall:
+The common resolver shall accept the authenticated actor, requesting module/command, request time and optional remembered context. It shall:
 
-1. resolve effective assignments and delegations;
-2. join them only to declared, active PE/FY Contexts;
-3. apply PE, FY and optional organisation-unit scope;
+1. resolve the actor's applicable Frappe Roles, native User Permissions and valid delegation where the owning module permits delegation;
+2. join the native scope only to declared, active PE/FY Contexts;
+3. apply exact PE/FY Context and optional Organisation Unit scope;
 4. return zero, one or many authorized contexts;
 5. revalidate a remembered selection and discard it if no longer authorized;
 6. expose no record-existence signal outside authorized scope; and
@@ -263,24 +264,24 @@ The common resolver shall accept the authenticated actor, requested capability, 
 
 Zero contexts produces an actionable no-access state. One context may be selected automatically. Multiple contexts require explicit user selection.
 
-The resolver result shall include `context_id`, PE code/name/type snapshot, FY label/start/end, timezone, context status, actor visibility mode and available module capability. It shall never return an authority inferred from the selected context.
+The resolver result shall include `context_id`, PE code/name/type snapshot, FY label/start/end, timezone, context status, actor visibility mode and available module actions. It shall never return an authority inferred from the selected context.
 
 ## 10. Service contracts
 
 | Contract | Input | Output | Required control |
 |---|---|---|---|
 | `ListProcuringEntities` | Filters and page cursor | Authorized PE register projection | Server scope; stable pagination; no broad client filtering. |
-| `GetProcuringEntity` | `pe_id` | Current version, history, decisions and available actions | Revalidate read scope. |
-| `CreateOrRevisePE` | Identity, classification, timezone and expected version | Draft projection | Unique code; steward assignment. |
-| `DecidePEChange` | Proposal, action, reason, expected version, idempotency key | Authoritative post-action projection | Maker-checker, assigned stage, audit. |
+| `GetProcuringEntity` | `pe_id` | Current version, lifecycle history and available actions | Revalidate read scope. |
+| `CreateOrRevisePE` | Identity, classification, timezone and expected version | Draft projection | Reference Data Manager; unique code. |
+| `ApplyPEAction` | PE/version, action, reason, expected version, idempotency key | Authoritative post-action projection | Reference Data Manager; state, dependency and audit checks. |
 | `ListFinancialYears` | Filters | FY register with derived calendar phase | Central/reference read policy. |
 | `CreateFinancialYear` | `start_year` | Generated Draft FY | No manual date override; uniqueness. |
-| `MakeFinancialYearAvailable` | FY, expected version, idempotency key | Available FY | Central approval; immutable calendar. |
+| `MakeFinancialYearAvailable` | FY, expected version, idempotency key | Available FY | Reference Data Manager; immutable calendar. |
 | `ListPEFYContexts` | Authorized filters | Context register and readiness diagnostics | Same scope predicate for counts and rows. |
-| `CreateOrRevisePEFYContext` | PE, FY, availability dates and expected version | Draft projection | Unique pair; PE/FY prerequisites. |
-| `DecidePEFYContext` | Context, action, reason, expected version, idempotency key | Authoritative projection | Exact stage authority and audit. |
-| `ResolveAuthorizedContexts` | Capability, request time, remembered context | Zero/one/many permitted contexts | Effective assignments; deny by default. |
-| `ValidateContextForCommand` | Actor, capability, context, record, request time | Allow/deny plus safe reason code | Used by every downstream state-changing command. |
+| `EnablePEFYContext` | PE, FY, availability dates and idempotency key | Active or Scheduled projection | Reference Data Manager; unique pair and PE/FY prerequisites. |
+| `ApplyPEFYContextAction` | Context, action, reason, dates, expected version, idempotency key | Authoritative projection | Reference Data Manager; state, dependency and audit checks. |
+| `ResolveAuthorizedContexts` | Requesting module/command, request time, remembered context | Zero/one/many permitted contexts | Native Roles and User Permissions; deny by default. |
+| `ValidateContextForCommand` | Actor, required Role, context, record, request time | Allow/deny plus safe reason code | Used by every downstream state-changing command. |
 
 All state-changing services shall return the refreshed record state, server-computed available actions and new concurrency token.
 
@@ -295,7 +296,7 @@ The production UI is one Vue 3 SFC application mounted in a standard Frappe Desk
 | `/app/reference-data/financial-years` | FY register tab. |
 | `/app/reference-data/financial-years/{financial_year_id}` | FY detail and governed actions. |
 | `/app/reference-data/pe-fy-contexts` | Declared context register tab. |
-| `/app/reference-data/pe-fy-contexts/{context_id}` | Context detail, readiness, decisions and actions. |
+| `/app/reference-data/pe-fy-contexts/{context_id}` | Context detail, readiness, lifecycle history and actions. |
 
 The route segment is durable and refresh-safe. The selected tab and record are read from `frappe.get_route()`; no durable identity is kept only in `frappe.route_options`.
 
@@ -317,7 +318,7 @@ This section alone is supplied to Claude Design. It contains visual composition 
 
 ### 12.2 CFG-PEFY-DES-01 — Procuring Entities register
 
-**Fixture context — outside the artboard:** Lydia Mwangi · Central Reference Data Steward · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
 
 **Page content header**
 
@@ -358,7 +359,7 @@ Footer text: **Showing 1–3 of 3**
 
 ### 12.3 CFG-PEFY-DES-02 — Financial Years register
 
-**Fixture context — outside the artboard:** Lydia Mwangi · Central Reference Data Steward · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
 
 **Page content header**
 
@@ -397,13 +398,13 @@ Footer text: **Showing 1 of 1**
 
 ### 12.4 CFG-PEFY-DES-03 — PE/FY Contexts register
 
-**Fixture context — outside the artboard:** Daniel Kariuki · Central Configuration Approver · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data**
 
 **Page content header**
 
 - Title: **Reference data**
 - Description: **Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.**
-- No header action button
+- Right-aligned primary button: **Enable PE for financial year**
 
 **Summary cards, left to right**
 
@@ -439,7 +440,7 @@ Footer text: **Showing 1–3 of 3**
 
 ### 12.5 CFG-PEFY-DES-04 — Active Procuring Entity detail
 
-**Fixture context — outside the artboard:** Lydia Mwangi · Central Reference Data Steward · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Procuring Entities > PE-MOH**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Procuring Entities > PE-MOH**
 
 **Page content header**
 
@@ -467,12 +468,12 @@ Footer text: **Showing 1–3 of 3**
 
 | Date and time | Event | Actor |
 |---|---|---|
-| 30 Jun 2026, 16:25 EAT | Approved and activated | Daniel Kariuki |
-| 29 Jun 2026, 10:10 EAT | Submitted for approval | Lydia Mwangi |
+| 30 Jun 2026, 16:25 EAT | Activated | Lydia Mwangi |
+| 29 Jun 2026, 10:10 EAT | Draft created | Lydia Mwangi |
 
 ### 12.6 CFG-PEFY-DES-05 — New Financial Year draft
 
-**Fixture context — outside the artboard:** Lydia Mwangi · Central Reference Data Steward · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Financial Years > New financial year**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Financial Years > New financial year**
 
 **Page content header**
 
@@ -491,11 +492,11 @@ Footer text: **Showing 1–3 of 3**
 
 Start year uses the approved text-input component. Financial year, Start date, End date and Timezone use the approved read-only field component.
 
-**Fixed footer, left to right:** **Cancel**, **Save draft**, **Submit for approval**. **Submit for approval** is the primary button.
+**Fixed footer, left to right:** **Cancel**, **Save draft**, **Make available**. **Make available** is the primary button.
 
 ### 12.7 CFG-PEFY-DES-06 — Active PE/FY Context detail
 
-**Fixture context — outside the artboard:** Amina Hassan · Accounting Officer · Ministry of Health · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > CTX-MOH-2027-2028**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > CTX-MOH-2027-2028**
 
 **Page content header**
 
@@ -533,18 +534,16 @@ Start year uses the approved text-input component. Financial year, Start date, E
 | Departmental Needs | Configuration required |
 | Procurement Planning | Configuration required |
 
-**Governance history card**
+**Lifecycle history card**
 
 | Date and time | Event | Actor |
 |---|---|---|
 | 1 Jan 2027, 00:00 EAT | Context activated | System |
-| 15 Dec 2026, 14:40 EAT | Approved | Amina Hassan |
-| 14 Dec 2026, 11:15 EAT | Recommended | Samuel Otieno |
-| 13 Dec 2026, 09:05 EAT | Submitted for review | Mercy Kilonzo |
+| 15 Dec 2026, 14:40 EAT | Enabled for FY 2027/28 | Lydia Mwangi |
 
 ### 12.8 CFG-PEFY-DES-07 — Close Context dialog
 
-**Fixture context — outside the artboard:** Amina Hassan · Accounting Officer · Ministry of Health · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > CTX-MOH-2027-2028**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > CTX-MOH-2027-2028**
 
 Duplicate the completed CFG-PEFY-DES-06 artboard without changing its content or layout. Dim that duplicate and place the following dialog over it.
 
@@ -572,18 +571,18 @@ Create four static variants. Every variant contains exactly this page content he
 
 The standard filter row contains an empty search field with placeholder **Search context or procuring entity**, a select showing **All procuring entities**, a select showing **All financial years**, and a select showing **All statuses**. Do not show summary cards or data rows in these variants.
 
-Fixture context for Loading, No matches and Server error — outside the artboard: **Daniel Kariuki · Central Configuration Approver · 15 Mar 2027, 11:30 EAT**. Fixture context for Forbidden — outside the artboard: **Grace Wanjiku · Departmental Need Requester · 15 Mar 2027, 11:30 EAT**. Frappe header breadcrumb for all four variants: **Home > Configuration and Governance > Reference data**.
+Fixture context for Loading, No matches and Server error — outside the artboard: **Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT**. Fixture context for Forbidden — outside the artboard: **Grace Wanjiku · Departmental Need Requester · 15 Mar 2027, 11:30 EAT**. Frappe header breadcrumb for all four variants: **Home > Configuration and Governance > Reference data**.
 
 | Variant | Filter row | Main content | Buttons |
 |---|---|---|---|
 | Loading | Standard filter row with all four controls disabled | Five full-width skeleton table rows | None |
 | No matches | Search value **Ministry of Education**; selects show **All procuring entities**, **All financial years** and **All statuses** | Heading **No records match these filters.** Body **Change or clear the filters to see other PE/FY contexts.** | **Clear filters** |
-| Forbidden | No filter row | Heading **You do not have access to maintain reference data.** Body **Ask your KenTender administrator to review your configuration assignment.** | None |
+| Forbidden | No filter row | Heading **You do not have access to maintain reference data.** Body **Ask your KenTender administrator to assign the Reference Data Manager role.** | None |
 | Server error | Standard filter row | Heading **Reference data could not be loaded.** Body **Try again. If the problem continues, contact KenTender support.** | **Try again** |
 
 ### 12.10 CFG-PEFY-DES-09 — New Procuring Entity draft
 
-**Fixture context — outside the artboard:** Lydia Mwangi · Central Reference Data Steward · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Procuring Entities > New procuring entity**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Procuring Entities > New procuring entity**
 
 **Page content header**
 
@@ -606,13 +605,13 @@ Fixture context for Loading, No matches and Server error — outside the artboar
 |---|---|
 | Timezone | Africa/Nairobi |
 
-**Fixed footer, left to right:** **Cancel**, **Save draft**, **Submit for approval**. **Submit for approval** is the primary button.
+**Fixed footer, left to right:** **Cancel**, **Save draft**, **Activate procuring entity**. **Activate procuring entity** is the primary button.
 
 Do not show a generated internal record ID, contact fields, source-reference fields, attachments, decision history, change reason, PE/FY Contexts, module configuration, approval stepper or destructive action.
 
 ### 12.11 CFG-PEFY-DES-10 — Available Financial Year detail
 
-**Fixture context — outside the artboard:** Daniel Kariuki · Central Configuration Approver · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Financial Years > FY-2027-2028**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > Financial Years > FY-2027-2028**
 
 **Page content header**
 
@@ -643,15 +642,14 @@ Footer text inside the Contexts card: **3 declared contexts**
 
 Do not show editable calendar fields, an **Open financial year** action, a **Close financial year** action, a **Set current** action, module windows, transaction totals or an approval stepper.
 
-### 12.12 CFG-PEFY-DES-11 — New PE/FY Context draft
+### 12.12 CFG-PEFY-DES-11 — Enable PE for Financial Year
 
-**Fixture context — outside the artboard:** Mercy Kilonzo · PE Configuration Steward · Ministry of Health · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > New PE/FY context**
+**Fixture context — outside the artboard:** Lydia Mwangi · Reference Data Manager · 15 Mar 2027, 11:30 EAT · Frappe header breadcrumb: **Home > Configuration and Governance > Reference data > PE/FY Contexts > Enable PE for financial year**
 
 **Page content header**
 
-- Title: **New PE/FY context**
+- Title: **Enable PE for financial year**
 - Description: **Declare when a Procuring Entity and Financial Year combination is available to KenTender modules.**
-- Status: **Draft**
 
 **Context card**
 
@@ -673,7 +671,7 @@ Do not show editable calendar fields, an **Open financial year** action, a **Clo
 | PE type configured | Not assessed |
 | Timezone configured | Not assessed |
 
-**Fixed footer, left to right:** **Cancel**, **Save draft**, **Submit for professional review**. **Submit for professional review** is visibly disabled.
+**Fixed footer, left to right:** **Cancel**, **Enable context**. **Enable context** is visibly disabled until the required values pass validation.
 
 Do not show reason fields, source-reference fields, attachments, Module readiness, governance history, approval actions, module windows, Strategy records, Budget records, Needs records, Procurement Plan records or an approval stepper.
 
@@ -701,7 +699,7 @@ Persistent tabs:
 
 The active tab is represented by the URL. Browser back/forward restores the prior tab and record without remounting a second Vue application.
 
-The page does not show the normal downstream PE/FY workspace selector. Maintenance visibility is derived from the actor's configuration assignment.
+The page does not show the normal downstream PE/FY workspace selector. Maintenance access requires the Reference Data Manager Frappe Role.
 
 #### Procuring Entities tab
 
@@ -717,7 +715,7 @@ Table columns:
 | Code | Procuring entity | PE type | Status | Effective from | Action |
 |---|---|---|---|---|---|
 
-Row action is **Continue draft**, **Review** or **View** as returned by the server. There is no inline editing.
+Row action is **Continue draft** or **View** as returned by the server. There is no inline editing.
 
 #### Financial Years tab
 
@@ -738,10 +736,10 @@ Table columns:
 Toolbar:
 
 - Search placeholder: **Search context or procuring entity**
-- **Procuring entity** filter populated only with PEs the actor may maintain or review
+- **Procuring entity** filter
 - **Financial year** filter
 - **Status** filter
-- primary button: **New PE/FY context** when authorized
+- primary button: **Enable PE for financial year** when authorized
 
 Table columns:
 
@@ -772,9 +770,9 @@ Sections:
 2. **Classification** — PE type and effective dates.
 3. **Operational setting** — timezone.
 4. **Change reason** — displayed for amendments.
-5. **History and decisions** — read-only version and decision timeline.
+5. **Lifecycle history** — read-only version and action timeline.
 
-Draft footer: **Cancel | Save draft | Submit for review**.
+Draft footer: **Cancel | Save draft | Activate procuring entity**. Amendment drafts use **Apply amendment** instead of **Activate procuring entity**.
 
 An active record has no **Edit** action. The action is **Propose amendment**, which creates a new Draft version while the active version remains displayed as the current authority.
 
@@ -796,15 +794,15 @@ New FY form:
 | End date | Generated read-only 30 June date. |
 | Timezone | Read-only `Africa/Nairobi` for MVP. |
 
-Footer: **Cancel | Save draft | Submit for approval**.
+Footer: **Cancel | Save draft | Make available**.
 
-Changing the start year immediately regenerates the identifier preview, label and dates. If an FY for that start year already exists, the field shows **Financial year {label} already exists** and submission remains disabled.
+Changing the start year immediately regenerates the identifier preview, label and dates. If an FY for that start year already exists, the field shows **Financial year {label} already exists** and **Make available** remains disabled.
 
 Once available, calendar fields are read-only. The screen shows derived calendar phase and linked PE/FY Context count. No action named **Open financial year**, **Close financial year** or **Set current** is shown.
 
 ### 13.4 CFG-PEFY-UI-04 — PE/FY Context detail
 
-**Title:** `{PE code} | FY {label}` or **New PE/FY context**
+**Title:** `{PE code} | FY {label}` or **Enable PE for financial year**
 
 **Description:** Declare when this Procuring Entity and Financial Year combination is available to KenTender modules.
 
@@ -816,19 +814,17 @@ Sections:
 2. **Availability** — Active from, Active to and timezone display.
 3. **Core readiness** — PE active, FY available, PE type configured, timezone configured.
 4. **Module readiness** — read-only diagnostics such as Strategy, Budget, Needs and Planning prerequisites. Missing module configuration does not rewrite core context status.
-5. **Governance history** — submission, recommendation, approval, activation, suspension, closure and reopening decisions.
-
-Draft footer: **Cancel | Save draft | Submit for professional review**.
+5. **Lifecycle history** — enablement, scheduled activation, activation, suspension, closure and reopening actions.
 
 When PE and FY are selected, the client requests a server-generated context ID and duplicate check. Client validation never replaces the database uniqueness constraint.
 
-**Approve** opens a summary dialog showing PE, FY, availability dates and the statement: **Approval permits scheduled activation of this PE/FY combination. It does not create or approve any Strategy, Budget, Need or Procurement Plan.** Actions: **Cancel | Approve context**.
+**Enable context** opens a summary dialog showing PE, FY, availability dates and the statement: **Enabling this context permits scheduled availability of this PE/FY combination. It does not create or approve any Strategy, Budget, Need or Procurement Plan.** Actions: **Cancel | Enable context**.
 
-**Suspend** requires a reason and shows affected new-work capabilities.
+**Suspend** requires a reason and shows affected new-work modules.
 
 **Close context** requires a reason and the confirmation checkbox **I understand that this removes the context from new-work selectors but does not cancel existing records.**
 
-**Exceptional reopen** is not an immediate button. It starts a new governed proposal and displays the complete required route.
+**Reopen** requires a reason, new availability dates and prerequisite revalidation.
 
 After every successful command, the UI replaces its local projection with the server response, updates available actions and shows one success notification. It does not optimistically invent the resulting workflow state.
 
@@ -836,7 +832,7 @@ After every successful command, the UI replaces its local projection with the se
 
 The shared downstream selector shall:
 
-- show only server-resolved contexts authorized for the current module capability;
+- show only server-resolved contexts authorized for the current module through native Roles and User Permissions;
 - display **{PE short name} | FY {label}**;
 - show no selector when zero contexts are authorized;
 - auto-select the sole authorized context;
@@ -858,9 +854,8 @@ A closed or suspended context is excluded from new-work selectors. Authorized hi
 | `FY_NOT_AVAILABLE` | This Financial Year is not available for use. |
 | `PEFY_CONTEXT_DUPLICATE` | This PE/FY context already exists. |
 | `PEFY_DATES_INVALID` | The context availability end must be later than its start. |
-| `PEFY_PREREQUISITE_MISSING` | Complete the listed core configuration before submitting this context. |
+| `PEFY_PREREQUISITE_MISSING` | Complete the listed core configuration before enabling this context. |
 | `PEFY_CONTEXT_NOT_ACTIVE` | This PE/FY context is not available for new work. |
-| `SEGREGATION_VIOLATION` | You cannot make this decision because you participated in an earlier restricted stage. |
 | `AUTHORITY_REQUIRED` | You are not authorized to perform this action. |
 | `VERSION_CONFLICT` | This record changed after you opened it. Refresh and review the latest version. |
 | `REFERENCE_IN_USE` | This reference cannot be retired while the listed active dependencies remain. |
@@ -869,9 +864,9 @@ Unauthorized errors shall not disclose whether an out-of-scope PE, FY or context
 
 ## 15. Audit and historical integrity
 
-Every create, submit, recommend, approve, activate, amend, suspend, reinstate, close, reopen, retire and denied command shall record:
+Every create, activate, make-available, enable, amend, suspend, reinstate, close, reopen, retire and denied command shall record:
 
-- actor and effective assignment/delegation;
+- actor and applicable Frappe Role;
 - target record and version;
 - PE/FY scope;
 - command and outcome;
@@ -915,58 +910,52 @@ The design and test fixture shall expose these exact readiness results at **15 M
 | CTX-NSSF-2027-2028 | Ready | Ready | Ready | Ready | Ready |
 | CTX-CGK-2027-2028 | Ready | Configuration required | Configuration required | Configuration required | Configuration required |
 
-The fixture actors used in the displayed decision history are:
+The fixture actors are:
 
 | User | Display name | Assignment |
 |---|---|---|
-| lydia.mwangi@kentender.example.test | Lydia Mwangi | Central Reference Data Steward |
-| daniel.kariuki@kentender.example.test | Daniel Kariuki | Central Configuration Approver |
-| mercy.kilonzo@moh.example.test | Mercy Kilonzo | PE Configuration Steward — PE-MOH |
-| samuel.otieno@moh.example.test | Samuel Otieno | Professional Configuration Reviewer — PE-MOH |
-| amina.hassan@moh.example.test | Amina Hassan | Accounting Officer — PE-MOH |
+| lydia.mwangi@kentender.example.test | Lydia Mwangi | Reference Data Manager |
 | grace.wanjiku@moh.example.test | Grace Wanjiku | Departmental Need Requester — PE-MOH |
 
 The seeded history shall contain these exact committed events:
 
 | Record | Date and time | Event | Actor |
 |---|---|---|---|
-| PE-MOH | 29 Jun 2026, 10:10 EAT | Submitted for approval | Lydia Mwangi |
-| PE-MOH | 30 Jun 2026, 16:25 EAT | Approved and activated | Daniel Kariuki |
-| CTX-MOH-2027-2028 | 13 Dec 2026, 09:05 EAT | Submitted for review | Mercy Kilonzo |
-| CTX-MOH-2027-2028 | 14 Dec 2026, 11:15 EAT | Recommended | Samuel Otieno |
-| CTX-MOH-2027-2028 | 15 Dec 2026, 14:40 EAT | Approved | Amina Hassan |
+| PE-MOH | 29 Jun 2026, 10:10 EAT | Draft created | Lydia Mwangi |
+| PE-MOH | 30 Jun 2026, 16:25 EAT | Activated | Lydia Mwangi |
+| CTX-MOH-2027-2028 | 15 Dec 2026, 14:40 EAT | Enabled for FY 2027/28 | Lydia Mwangi |
 | CTX-MOH-2027-2028 | 1 Jan 2027, 00:00 EAT | Context activated | System |
 
 The **New procuring entity** artboard uses unsaved `PE-KEMSA` data, and the **New financial year** artboard uses an unsaved design fixture for start year **2028**. Neither is an additional production seed record.
 
-Seeds are deterministic and idempotent. Running them twice creates no duplicate master, version, decision, context or audit record. Seeds shall fail on conflicting authoritative data and shall not repair, alias or import legacy records.
+Seeds are deterministic and idempotent. Running them twice creates no duplicate master, version, lifecycle entry, context or audit record. Seeds shall fail on conflicting authoritative data and shall not repair, alias or import legacy records.
 
 ## 17. Acceptance contract
 
 | ID | Scenario | Expected result |
 |---|---|---|
-| CFG-PEFY-AC-001 | Steward creates a PE with a unique valid code and complete required fields. | Draft is saved; no active authority is created. |
+| CFG-PEFY-AC-001 | Reference Data Manager creates a PE with a unique valid code and complete required fields. | Draft is saved; no active PE is created. |
 | CFG-PEFY-AC-002 | Duplicate normalized PE code is submitted. | `PE_CODE_DUPLICATE`; no partial record. |
-| CFG-PEFY-AC-003 | PE creator attempts to approve their own proposal. | Denied and audited. |
+| CFG-PEFY-AC-003 | Reference Data Manager activates a complete PE Draft. | PE and initial version become Active; action is audited. |
 | CFG-PEFY-AC-004 | Active PE is amended. | Successor Draft is created; active version remains authoritative until successor activation. |
 | CFG-PEFY-AC-005 | PE with active contexts is retired. | Blocked with dependency explanation; no state change. |
 | CFG-PEFY-AC-006 | FY start year 2027 is entered. | `FY-2027-2028`, label `2027/28`, 1 July 2027 and 30 June 2028 are generated. |
 | CFG-PEFY-AC-007 | User attempts to edit dates of an available FY. | UI is read-only and direct API command is rejected. |
 | CFG-PEFY-AC-008 | FY is made available. | No PE/FY Context or downstream transaction is automatically created. |
-| CFG-PEFY-AC-009 | Context is created for inactive PE or unavailable FY. | Submission is blocked with safe prerequisite errors. |
+| CFG-PEFY-AC-009 | Context is enabled for inactive PE or unavailable FY. | Enablement is blocked with safe prerequisite errors. |
 | CFG-PEFY-AC-010 | Duplicate PE/FY pair is created concurrently. | Database uniqueness allows one stable context only; retry resolves to the existing result where idempotent. |
-| CFG-PEFY-AC-011 | Future context is approved. | It remains Scheduled and activates only at `active_from` after revalidation. |
-| CFG-PEFY-AC-012 | Current and next FY contexts are active for one PE. | Both may exist; authorized selector returns them according to capability and assignment. |
-| CFG-PEFY-AC-013 | Actor selects a context outside their assignment. | Server denies without disclosing out-of-scope data. |
+| CFG-PEFY-AC-011 | Future context is enabled. | It remains Scheduled and activates only at `active_from` after revalidation. |
+| CFG-PEFY-AC-012 | Current and next FY contexts are active for one PE. | Both may exist; authorized selector returns them according to native Role, User Permission and module rules. |
+| CFG-PEFY-AC-013 | Actor selects a context outside their native User Permission scope. | Server denies without disclosing out-of-scope data. |
 | CFG-PEFY-AC-014 | Remembered context is suspended after page load. | Next read/command revalidation removes or rejects it and refreshes the UI. |
 | CFG-PEFY-AC-015 | Context is closed. | It disappears from new-work selectors; existing downstream records remain unchanged. |
-| CFG-PEFY-AC-016 | Closed context is exceptionally reopened. | Full new governed route and audit are required; no direct toggle. |
-| CFG-PEFY-AC-017 | Stale expected version submits a decision. | `VERSION_CONFLICT`; no partial effects. |
-| CFG-PEFY-AC-018 | Same activation command is retried with the same idempotency key. | Original successful result is returned without a second audit decision. |
+| CFG-PEFY-AC-016 | Reference Data Manager reopens a closed context with new valid dates and a reason. | Context becomes Active or Scheduled after revalidation; action is audited. |
+| CFG-PEFY-AC-017 | Stale expected version submits a lifecycle action. | `VERSION_CONFLICT`; no partial effects. |
+| CFG-PEFY-AC-018 | Same activation command is retried with the same idempotency key. | Original successful result is returned without a second lifecycle entry. |
 | CFG-PEFY-AC-019 | System Administrator selects support context. | Read-only labelled support projection; no business actions. |
 | CFG-PEFY-AC-020 | Workspace loads through entry link, direct URL, refresh and browser back/forward. | Correct tab/record and shell render without duplicate Vue mount, console error or lost route identity. |
-| CFG-PEFY-AC-021 | Seed runs twice. | No duplicate PE, FY, context, version or decision records. |
-| CFG-PEFY-AC-022 | Downstream module requests all configured contexts client-side. | No such broad API exists; server returns only capability-authorized contexts. |
+| CFG-PEFY-AC-021 | Seed runs twice. | No duplicate PE, FY, context, version or lifecycle records. |
+| CFG-PEFY-AC-022 | Downstream module requests all configured contexts client-side. | No such broad API exists; server returns only contexts permitted through native Role, User Permission and module rules. |
 | CFG-PEFY-AC-023 | A design artboard in Section 12 is compared with its fixture table. | Every visible label, value, row, count, status and button matches; no additional visible content exists. |
 | CFG-PEFY-AC-024 | Section 12 is supplied to Claude Design without any other section. | Every specified artboard can be produced without inventing or requesting data; the downstream selector is explicitly retained rather than redesigned. |
 | CFG-PEFY-AC-025 | The Section 12 prompt text is inspected. | It contains no positive instruction for permission, validation, workflow, API, routing, event handling or state transition; those subjects appear only in the closed-input prohibition. |
@@ -986,6 +975,7 @@ Seeds are deterministic and idempotent. Running them twice creates no duplicate 
 ## 18. Implementation and test constraints
 
 - Use standard Frappe DocTypes, document services, permission APIs, transactions and audit facilities.
+- Use one Reference Data Manager Frappe Role. Do not implement the five v0.3 roles or any `reference_data.*` capability string.
 - Business transitions reside in Python services; Vue renders server projections and invokes explicit commands.
 - Use one Vue application per Frappe page wrapper and do not remount on every page show.
 - Use scoped component CSS and canonical `--kt-*` tokens. Do not import Claude Design runtime, Tailwind CDN or global generated CSS.
@@ -1004,16 +994,16 @@ Seeds are deterministic and idempotent. Running them twice creates no duplicate 
 - Storing module windows, budget status or plan state on Financial Year.
 - Editing an active PE version or available FY in place.
 - Deleting referenced PE, FY or context records.
-- Allowing `Administrator` or `System Administrator` to perform business approvals by default.
+- Treating System Manager or Administrator technical access as a downstream procurement approval.
 - Creating downstream records when an FY or context is activated.
-- Client-only permission, segregation, lifecycle or duplicate checks.
+- Client-only permission, lifecycle or duplicate checks.
 - Permanent parallel legacy and Vue maintenance screens.
 
 ## 20. Traceability sources
 
 | Source | Use |
 |---|---|
-| CFG-CHG-001 — Configuration and Governance Foundation v0.2 | Control-plane, versioning, assignment, segregation and audit principles. |
+| CFG-CHG-001 — Configuration and Governance Foundation v0.2 | Control-plane, versioning and audit principles retained where consistent with this simplification. |
 | PLN-GF-002 — Plan Cycle and PE/FY Governance v0.2 | Declared-context requirement, context resolution, fixtures and downstream Planning boundary. |
 | Public Finance Management Act, 2012 | Financial-year and public-finance control context: <https://new.kenyalaw.org/akn/ke/act/2012/18/eng@2024-04-26> |
 | Public Procurement and Asset Disposal Act, 2015 | PE accountability, structured decision-making and annual planning: <https://new.kenyalaw.org/akn/ke/act/2015/33/eng@2022-12-31> |
@@ -1021,4 +1011,4 @@ Seeds are deterministic and idempotent. Running them twice creates no duplicate 
 
 ---
 
-**Approval effect.** Approval of CFG-CHG-002 makes `ProcuringEntity`, `FinancialYear` and `PEFiscalYearContext` the canonical shared references for new KenTender implementation. It does not by itself authorize implementation of unrelated configuration or transactional functionality.
+**Approval effect.** Approval of CFG-CHG-002 v0.4 makes `ProcuringEntity`, `FinancialYear` and `PEFiscalYearContext` the canonical shared references for new KenTender implementation and establishes Reference Data Manager as their only maintenance Role. It does not by itself authorize repository changes, data migration, role cutover or unrelated configuration or transactional functionality.

@@ -33,6 +33,7 @@ class ResourceContext:
 	state: str = ""
 	relationships: dict[str, str] = field(default_factory=dict)
 	prior_actions: list[dict[str, str]] = field(default_factory=list)
+	pe_fy_context_id: str = ""
 
 
 @dataclass(frozen=True)

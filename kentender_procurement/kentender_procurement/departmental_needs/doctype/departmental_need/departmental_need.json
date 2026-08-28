@@ -9,6 +9,7 @@
   "need_reference",
   "title",
   "procuring_entity",
+  "pe_fy_context",
   "organisation_unit",
   "target_financial_year",
   "submitted_by",
@@ -49,6 +50,13 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "insert_after": "procuring_entity",
+   "label": "PE Fiscal Year Context",
+   "options": "PE Fiscal Year Context"
   },
   {
    "fieldname": "organisation_unit",
@@ -154,7 +162,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-18 23:19:24.757556",
+ "modified": "2026-08-27 20:03:17.026887",
  "modified_by": "Administrator",
  "module": "Departmental Needs",
  "name": "Departmental Need",

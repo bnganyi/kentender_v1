@@ -13,16 +13,11 @@ from kentender_core.services.workflow_tasks import claim_task
 NO_ACTIVE_OPERATIONAL_ASSIGNMENT = "NO_ACTIVE_OPERATIONAL_ASSIGNMENT"
 
 _PRESENTATION = {
-	"plan.item.complete": ("Planning details", "Complete Plan Item", "procurement-plan-item-editor"),
 	"plan.finance.confirm": ("Finance confirmation", "Confirm funding", "procurement-plan-item-editor"),
 	"plan.review": ("Planning review", "Review Plan", "procurement-plan-review"),
 	"plan.approve": ("Planning approval", "Approve Plan", "procurement-plan-review"),
 	"budget.review": ("Budget review", "Review Budget", "budget-review"),
 	"budget.approve": ("Budget approval", "Approve Budget", "budget-review"),
-	"demand.business.review": ("Business review", "Review Demand", "demand-review"),
-	"demand.enrich": ("Procurement enrichment", "Enrich Demand", "demand-review"),
-	"demand.funding.confirm": ("Budget confirmation", "Review funding", "demand-review"),
-	"demand.approve": ("Final approval", "Review Demand decision", "demand-review"),
 }
 
 

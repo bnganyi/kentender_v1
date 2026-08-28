@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import StatusPill from "../StatusPill.vue";
 import ActionConfirmDialog from "../ActionConfirmDialog.vue";
 import { referenceDataApi as api } from "../../data/referenceDataApi.js";
+import { classifyApiError } from "../../data/apiError.js";
 
 const props = defineProps({ code: { type: String, required: true } });
 const emit = defineEmits(["after-action", "open-context"]);
@@ -11,6 +12,7 @@ const detail = ref(null);
 const loading = ref(false);
 const busy = ref(false);
 const dialog = ref(null);
+const dialogError = ref("");
 
 async function load() {
 	loading.value = true;
@@ -24,25 +26,28 @@ onMounted(load);
 watch(() => props.code, load);
 
 const ACTION_CONFIG = {
-	Submit: { fn: () => api.submitFinancialYear(props.code), title: __("Submit for approval"), confirmLabel: __("Submit") },
-	Approve: { fn: () => api.makeFinancialYearAvailable(props.code), title: __("Approve — make available"), confirmLabel: __("Approve") },
+	"Make available": { fn: () => api.makeFinancialYearAvailable(props.code), title: __("Make available"), confirmLabel: __("Make available") },
 	Retire: { fn: () => api.retireFinancialYear(props.code), title: __("Retire financial year"), confirmLabel: __("Retire"), danger: true },
 };
 
 function openAction(label) {
 	const cfg = ACTION_CONFIG[label];
 	if (!cfg) return;
+	dialogError.value = "";
 	dialog.value = { label, ...cfg };
 }
 
 async function confirmAction() {
 	if (!dialog.value) return;
 	busy.value = true;
+	dialogError.value = "";
 	try {
 		await dialog.value.fn();
 		dialog.value = null;
 		await load();
 		emit("after-action");
+	} catch (err) {
+		dialogError.value = classifyApiError(err).banner;
 	} finally {
 		busy.value = false;
 	}
@@ -119,8 +124,10 @@ async function confirmAction() {
 			:confirm-label="dialog.confirmLabel"
 			:danger="!!dialog.danger"
 			:busy="busy"
+			:error-message="dialogError"
 			@confirm="confirmAction"
 			@cancel="dialog = null"
+			@clear-error="dialogError = ''"
 		/>
 	</template>
 </template>

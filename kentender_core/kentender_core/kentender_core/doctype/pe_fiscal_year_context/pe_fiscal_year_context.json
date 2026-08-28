@@ -41,12 +41,11 @@
    "search_index": 1
   },
   {
-   "default": "Draft",
    "fieldname": "context_status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Context Status",
-   "options": "Draft\nUnder Review\nAwaiting Approval\nApproved\nScheduled\nActive\nSuspended\nClosed",
+   "options": "Scheduled\nActive\nSuspended\nClosed",
    "reqd": 1
   },
   {

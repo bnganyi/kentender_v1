@@ -1,13 +1,14 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""CFG-CHG-002 §9 — downstream PE/FY Context resolution.
+"""CFG-CHG-002 v0.4 §9 — downstream PE/FY Context resolution.
 
-Not an extension of org_scope_access.py's User-Scope-Assignment-based model
-(that is a separate, older mechanism used by Strategy/Budget) — built on
-authorization_policy.resolve_effective_access() instead, the same engine the
-rest of this module's permission wiring already uses. See the tracker's
-decision log for why.
+Reference Data Manager is a global central Role (AUTH-ADR-001 v1.1 §5.2): it
+carries no PE-specific scope, so a holder is authorized to view every active
+context rather than a filtered subset. Everyone else has no reference-data
+maintenance view — a genuine per-module business context selector (Budget,
+Departmental Needs, Strategy, ...) is each owning module's own concern and is
+not implemented here.
 """
 
 from __future__ import annotations
@@ -15,19 +16,8 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import get_datetime, now_datetime
 
-from kentender_core.services.authorization_policy import resolve_effective_access
-from kentender_core.services.reference_data_permissions import require_context_capability
-
-# Any reference-data capability implies the holder may at least *view* contexts
-# scoped to the PEs they're assigned to — read access is not itself a separate
-# governed capability in §7's role table (every role there reads its own PE).
-_VIEW_IMPLYING_CAPABILITIES = {
-	"reference_data.context.create_draft",
-	"reference_data.context.recommend",
-	"reference_data.context.approve",
-}
+from kentender_core.services.reference_data_permissions import has_reference_data_read_access
 
 
 def _snapshot(context_row: dict) -> dict[str, Any]:
@@ -67,20 +57,13 @@ def resolve_authorized_contexts(
 	an out-of-scope remembered_context is silently dropped, not reported as
 	'exists but denied'."""
 	user = user or frappe.session.user
-	at = get_datetime(at_time) if at_time else now_datetime()
 
-	assignments = resolve_effective_access(user, at_time=at)
-	authorized_pes: set[str] = set()
-	for row in assignments:
-		if _VIEW_IMPLYING_CAPABILITIES.intersection(row.get("capabilities") or []):
-			authorized_pes.add(row["procuring_entity_id"])
-
-	if not authorized_pes:
+	if not has_reference_data_read_access(user):
 		return {"contexts": [], "auto_selected": None, "remembered_context_valid": False}
 
 	rows = frappe.get_all(
 		"PE Fiscal Year Context",
-		filters={"procuring_entity": ["in", sorted(authorized_pes)], "context_status": "Active"},
+		filters={"context_status": "Active"},
 		fields=["name", "procuring_entity", "financial_year", "context_status"],
 	)
 	contexts = [_snapshot(row) for row in rows]
@@ -96,19 +79,18 @@ def resolve_authorized_contexts(
 
 def validate_context_for_command(
 	user: str,
-	capability: str,
 	context_name: str,
 	*,
 	at_time=None,
 ) -> dict[str, Any]:
 	"""§10 ValidateContextForCommand — every downstream state-changing command
-	should call this before acting. Returns {"allowed": True} or throws
+	should call this before acting, to confirm the operating context it was
+	given is real and Active. This is a record-state check only: it never
+	requires Reference Data Manager (that Role governs who may maintain the
+	context, not who may transact within it — the owning module's own Role,
+	scope and state checks decide that). Returns {"allowed": True} or throws
 	PEFY_CONTEXT_NOT_ACTIVE for every denial path — never leaks whether a
-	genuinely out-of-scope context exists. AC-013 requires this literally: an
-	out-of-scope-but-real context and a non-existent one must be indistinguishable
-	to the caller, so a capability denial here is normalized to the same safe
-	message/title rather than letting authorization_policy's own distinct
-	CAPABILITY_NOT_ASSIGNED wording (which implies existence) leak through."""
+	genuinely out-of-scope context exists."""
 
 	def _deny():
 		frappe.throw("This PE/FY context is not available for new work.", title="PEFY_CONTEXT_NOT_ACTIVE")
@@ -116,14 +98,6 @@ def validate_context_for_command(
 	if not frappe.db.exists("PE Fiscal Year Context", context_name):
 		_deny()
 	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	try:
-		require_context_capability(user, capability, context_name, ctx.procuring_entity, ctx.financial_year)
-	except frappe.PermissionError:
-		# require_capability() already msgprint'd its own CAPABILITY_NOT_ASSIGNED-style
-		# message before raising — discard it so only the normalized safe message reaches
-		# the caller, or the leaked message itself would disclose that this context exists.
-		frappe.local.message_log = []
-		_deny()
 	if ctx.context_status != "Active":
 		_deny()
 	return {"allowed": True, "context": context_name, "context_status": ctx.context_status}

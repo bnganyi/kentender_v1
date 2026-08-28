@@ -46,10 +46,7 @@
    "role": "System Manager"
   },
   {
-   "role": "Central Reference Data Steward"
-  },
-  {
-   "role": "Central Configuration Approver"
+   "role": "Reference Data Manager"
   }
  ],
  "sequence_id": 100.0,

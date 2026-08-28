@@ -71,7 +71,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Version State",
-   "options": "Draft\nUnder Review\nApproved\nActive\nSuperseded\nRejected\nWithdrawn",
+   "options": "Draft\nActive\nSuperseded",
    "reqd": 1
   },
   {

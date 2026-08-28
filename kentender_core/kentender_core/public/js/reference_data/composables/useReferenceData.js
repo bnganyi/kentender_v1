@@ -1,15 +1,13 @@
 import { reactive, toRefs } from "vue";
 import { referenceDataApi as api } from "../data/referenceDataApi.js";
 
-// Classifies a frappe.call rejection into the two error states the register
-// screens distinguish (§12.9): "forbidden" (PermissionError) vs "server" (anything
-// else). frappe surfaces the raised exception's class name in the XHR response
-// body/headers depending on version; string-matching the message is the stable
-// signal across both.
+// Classifies a referenceDataApi rejection ({code, message, excType} — see
+// referenceDataApi.js's call()) into the two error states the register screens
+// distinguish (§12.9): "forbidden" (PermissionError) vs "server" (anything else).
 function classifyError(err) {
-	const message = (err && (err.message || err._server_messages || err.exc)) || "";
-	const text = typeof message === "string" ? message : JSON.stringify(message);
-	if (/PermissionError/i.test(text)) return { type: "forbidden", message: __("You do not have access to maintain reference data.") };
+	if (err && err.excType === "PermissionError") {
+		return { type: "forbidden", message: __("You do not have access to maintain reference data.") };
+	}
 	return { type: "server", message: __("Reference data could not be loaded.") };
 }
 

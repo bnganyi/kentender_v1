@@ -246,7 +246,7 @@
   {
    "child": 1,
    "collapsible": 0,
-   "display_depends_on": "eval: (frappe.user_roles || []).some(function(r) { return [\"System Manager\", \"Central Reference Data Steward\", \"Central Configuration Approver\"].includes(r); })",
+   "display_depends_on": "eval: (frappe.user_roles || []).some(function(r) { return [\"System Manager\", \"Reference Data Manager\"].includes(r); })",
    "indent": 0,
    "keep_closed": 0,
    "label": "Reference Data",
@@ -268,7 +268,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-26 20:23:38.836269",
+ "modified": "2026-08-28 13:18:20.737662",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

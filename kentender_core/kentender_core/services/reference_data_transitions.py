@@ -1,13 +1,15 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""CFG-CHG-002 §6.1/§6.2/§6.3 — Procuring Entity / Procuring Entity Version,
+"""CFG-CHG-002 v0.4 §6.1/§6.2/§6.3 — Procuring Entity / Procuring Entity Version,
 Financial Year, and PE Fiscal Year Context lifecycles.
 
-Table-driven, modeled on kentender_strategy.services.strategy_transitions.
-Permission via authorization_policy (reference_data_permissions); audit via
-audit_event_service.log_audit_event. No client-only enforcement — every guard
-here runs server-side and is re-checked on every call, never trusted from the UI.
+Every lifecycle action requires only the Reference Data Manager Frappe Role
+(reference_data_permissions.require_reference_data_manager) — no maker-checker,
+no separate review/recommend/approve stage, no reference_data.* capability
+string. Audit via audit_event_service.log_audit_event. No client-only
+enforcement — every guard here runs server-side and is re-checked on every
+call, never trusted from the UI.
 """
 
 from __future__ import annotations
@@ -42,7 +44,7 @@ def create_pe_draft(payload: dict, *, user: str | None = None) -> dict:
 	if frappe.db.exists("Procuring Entity", entity_code):
 		frappe.throw(_("A Procuring Entity with this code already exists"), title="PE_CODE_DUPLICATE")
 
-	perm.require_pe_create_capability(actor)
+	perm.require_reference_data_manager(actor)
 
 	pe = frappe.get_doc(
 		{
@@ -73,46 +75,73 @@ def create_pe_draft(payload: dict, *, user: str | None = None) -> dict:
 	version.insert(ignore_permissions=True)
 	pe.db_set("current_version_id", version.name, update_modified=False)
 
-	_audit(pe.name, perm.PE_CREATE_DRAFT, actor, {"version": version.name})
+	_audit(pe.name, "reference_data.pe.create_draft", actor, {"version": version.name})
 	return {"ok": True, "pe": pe.name, "version": version.name}
 
 
-def submit_pe(pe_name: str, *, user: str | None = None) -> dict:
-	"""§6.1 'DRAFT | Submit | Version UNDER_REVIEW'."""
+def update_pe_draft(pe_name: str, payload: dict, *, user: str | None = None) -> dict:
+	"""§6.1 'DRAFT | Edit draft | DRAFT' — a Draft PE's Version fields are still
+	editable up to Activate; entity_code is immutable once created (it's the PE's
+	own name)."""
 	actor = user or frappe.session.user
 	pe = frappe.get_doc("Procuring Entity", pe_name)
 	version = frappe.get_doc("Procuring Entity Version", pe.current_version_id)
 	if version.version_state != "Draft":
-		frappe.throw(_("Only a Draft version can be submitted"))
+		frappe.throw(_("Only a Draft version can be edited"))
 
-	perm.require_pe_capability(actor, perm.PE_CREATE_DRAFT, pe_name)
+	perm.require_reference_data_manager(actor)
 
-	version.version_state = "Under Review"
+	legal_name = payload.get("legal_name") or payload.get("display_name")
+	display_name = payload.get("display_name") or payload.get("legal_name")
+
+	version.legal_name = legal_name
+	version.display_name = display_name
+	version.pe_type_code = payload.get("pe_type_code")
+	version.timezone = payload.get("timezone") or version.timezone or "Africa/Nairobi"
 	version.save(ignore_permissions=True)
-	_audit(pe_name, "reference_data.pe.submit", actor, {"version": version.name})
-	return {"ok": True, "pe": pe_name, "version": version.name, "version_state": version.version_state}
+
+	pe.legal_name = legal_name
+	pe.entity_name = display_name
+	pe.effective_from = payload.get("effective_from") or pe.effective_from
+	pe.save(ignore_permissions=True)
+
+	_audit(pe.name, "reference_data.pe.update_draft", actor, {"version": version.name})
+	return {"ok": True, "pe": pe.name, "version": version.name}
 
 
-def approve_activate_pe(pe_name: str, *, user: str | None = None) -> dict:
-	"""§6.1 'UNDER_REVIEW | Approve and activate | PE ACTIVE; version ACTIVE'.
-	Maker-checker: the approver must differ from whoever created/submitted this PE
-	(enforced by the Separation of Duties Rule via authorization_policy's SoD check,
-	fed by prior_actions_for_pe's real audit-trail lookup — not a hand-rolled check)."""
+def activate_pe(pe_name: str, *, user: str | None = None) -> dict:
+	"""§6.1 'DRAFT | Activate | PE ACTIVE; version ACTIVE' and 'Amendment DRAFT |
+	Apply amendment | Successor version ACTIVE; prior version SUPERSEDED'. One
+	action covers both cases: an already-Active PE just supersedes its prior
+	version; a still-Draft PE also flips to Active for the first time."""
 	actor = user or frappe.session.user
 	pe = frappe.get_doc("Procuring Entity", pe_name)
 	version = frappe.get_doc("Procuring Entity Version", pe.current_version_id)
-	if version.version_state != "Under Review":
-		frappe.throw(_("Only a version Under Review can be approved"))
+	if version.version_state != "Draft":
+		frappe.throw(_("Only a Draft version can be activated"))
 
-	prior = perm.prior_actions_for_pe(pe_name)
-	perm.require_pe_capability(actor, perm.PE_APPROVE_ACTIVATE, pe_name, prior_actions=prior)
+	perm.require_reference_data_manager(actor)
+
+	is_amendment = pe.status == "Active"
+	if is_amendment:
+		for prior_name in frappe.get_all(
+			"Procuring Entity Version",
+			filters={"procuring_entity": pe_name, "version_state": "Active"},
+			pluck="name",
+		):
+			prior = frappe.get_doc("Procuring Entity Version", prior_name)
+			prior.version_state = "Superseded"
+			prior.save(ignore_permissions=True)
 
 	version.version_state = "Active"
 	version.valid_from = frappe.utils.today()
 	version.save(ignore_permissions=True)
-	pe.status = "Active"
-	pe.save(ignore_permissions=True)
-	_audit(pe_name, perm.PE_APPROVE_ACTIVATE, actor, {"version": version.name})
+	if not is_amendment:
+		pe.status = "Active"
+		pe.save(ignore_permissions=True)
+
+	action = "reference_data.pe.apply_amendment" if is_amendment else "reference_data.pe.activate"
+	_audit(pe_name, action, actor, {"version": version.name})
 	return {"ok": True, "pe": pe_name, "status": pe.status, "version": version.name}
 
 
@@ -125,7 +154,7 @@ def propose_amendment(pe_name: str, change_reason: str, *, user: str | None = No
 	if not (change_reason or "").strip():
 		frappe.throw(_("Change reason is required"))
 
-	perm.require_pe_capability(actor, perm.PE_PROPOSE_AMENDMENT, pe_name)
+	perm.require_reference_data_manager(actor)
 
 	current = frappe.get_doc("Procuring Entity Version", pe.current_version_id)
 	draft = frappe.get_doc(
@@ -142,9 +171,9 @@ def propose_amendment(pe_name: str, change_reason: str, *, user: str | None = No
 		}
 	)
 	draft.insert(ignore_permissions=True)
-	# submit_pe/approve_activate_pe always act on pe.current_version_id — it must
-	# follow the amendment draft immediately, the same way create_pe_draft points it
-	# at the version it just created, or those calls have nothing to progress.
+	# activate_pe always acts on pe.current_version_id — it must follow the
+	# amendment draft immediately, the same way create_pe_draft points it at
+	# the version it just created, or activate_pe has nothing to progress.
 	pe.db_set("current_version_id", draft.name, update_modified=False)
 	_audit(pe_name, "reference_data.pe.propose_amendment", actor, {"version": draft.name})
 	return {"ok": True, "pe": pe_name, "version": draft.name}
@@ -159,11 +188,11 @@ def suspend_pe(pe_name: str, reason: str, *, user: str | None = None) -> dict:
 	if not (reason or "").strip():
 		frappe.throw(_("A reason is required to suspend a Procuring Entity"))
 
-	perm.require_pe_capability(actor, perm.PE_SUSPEND, pe_name)
+	perm.require_reference_data_manager(actor)
 
 	pe.status = "Suspended"
 	pe.save(ignore_permissions=True)
-	_audit(pe_name, perm.PE_SUSPEND, actor, {"reason": reason})
+	_audit(pe_name, "reference_data.pe.suspend", actor, {"reason": reason})
 	return {"ok": True, "pe": pe_name, "status": pe.status}
 
 
@@ -174,11 +203,11 @@ def reinstate_pe(pe_name: str, *, user: str | None = None) -> dict:
 	if pe.status != "Suspended":
 		frappe.throw(_("Only a Suspended Procuring Entity can be reinstated"))
 
-	perm.require_pe_capability(actor, perm.PE_REINSTATE, pe_name)
+	perm.require_reference_data_manager(actor)
 
 	pe.status = "Active"
 	pe.save(ignore_permissions=True)
-	_audit(pe_name, perm.PE_REINSTATE, actor)
+	_audit(pe_name, "reference_data.pe.reinstate", actor)
 	return {"ok": True, "pe": pe_name, "status": pe.status}
 
 
@@ -211,12 +240,12 @@ def retire_pe(pe_name: str, reason: str, effective_date, *, user: str | None = N
 			title="REFERENCE_IN_USE",
 		)
 
-	perm.require_pe_capability(actor, perm.PE_RETIRE, pe_name)
+	perm.require_reference_data_manager(actor)
 
 	pe.status = "Retired"
 	pe.effective_to = effective_date
 	pe.save(ignore_permissions=True)
-	_audit(pe_name, perm.PE_RETIRE, actor, {"reason": reason, "effective_date": str(effective_date)})
+	_audit(pe_name, "reference_data.pe.retire", actor, {"reason": reason, "effective_date": str(effective_date)})
 	return {"ok": True, "pe": pe_name, "status": pe.status}
 
 
@@ -238,7 +267,7 @@ def _audit_fy(fy_name: str, action: str, actor: str, metadata: dict | None = Non
 def create_fy_draft(start_year: int, *, user: str | None = None) -> dict:
 	"""§6.2 '— | Create from start year | DRAFT'."""
 	actor = user or frappe.session.user
-	perm.require_fy_capability(actor, perm.FY_CREATE_DRAFT)
+	perm.require_reference_data_manager(actor)
 
 	fy = frappe.get_doc(
 		{
@@ -250,40 +279,24 @@ def create_fy_draft(start_year: int, *, user: str | None = None) -> dict:
 		}
 	)
 	fy.insert(ignore_permissions=True)
-	_audit_fy(fy.name, perm.FY_CREATE_DRAFT, actor)
+	_audit_fy(fy.name, "reference_data.fy.create_draft", actor)
 	return {"ok": True, "financial_year": fy.name, "label": fy.label}
 
 
-def submit_fy(fy_name: str, *, user: str | None = None) -> dict:
-	"""§6.2 'DRAFT | Submit | AWAITING_APPROVAL'."""
+def make_fy_available(fy_name: str, *, user: str | None = None) -> dict:
+	"""§6.2 'DRAFT | Make available | AVAILABLE'."""
 	actor = user or frappe.session.user
 	fy = frappe.get_doc("Financial Year", fy_name)
 	if fy.record_status != "Draft":
-		frappe.throw(_("Only a Draft Financial Year can be submitted"))
+		frappe.throw(_("Only a Draft Financial Year can be made available"))
 
-	perm.require_fy_capability(actor, perm.FY_CREATE_DRAFT, fy_name=fy_name)
-
-	fy.record_status = "Awaiting Approval"
-	fy.save(ignore_permissions=True)
-	_audit_fy(fy_name, "reference_data.fy.submit", actor)
-	return {"ok": True, "financial_year": fy_name, "record_status": fy.record_status}
-
-
-def approve_fy(fy_name: str, *, user: str | None = None) -> dict:
-	"""§6.2 'AWAITING_APPROVAL | Approve | AVAILABLE'. Maker-checker: same actor
-	cannot have both created/submitted and approved the same Financial Year (§7)."""
-	actor = user or frappe.session.user
-	fy = frappe.get_doc("Financial Year", fy_name)
-	if fy.record_status != "Awaiting Approval":
-		frappe.throw(_("Only a Financial Year Awaiting Approval can be made available"))
-
-	perm.require_fy_capability(actor, perm.FY_APPROVE_AVAILABLE, fy_name=fy_name)
+	perm.require_reference_data_manager(actor)
 
 	fy.record_status = "Available"
 	fy.approved_by = actor
 	fy.approved_at = frappe.utils.now_datetime()
 	fy.save(ignore_permissions=True)
-	_audit_fy(fy_name, perm.FY_APPROVE_AVAILABLE, actor)
+	_audit_fy(fy_name, "reference_data.fy.make_available", actor)
 	return {"ok": True, "financial_year": fy_name, "record_status": fy.record_status}
 
 
@@ -303,11 +316,11 @@ def retire_fy(fy_name: str, *, user: str | None = None) -> dict:
 			title="REFERENCE_IN_USE",
 		)
 
-	perm.require_fy_capability(actor, perm.FY_RETIRE, fy_name=fy_name)
+	perm.require_reference_data_manager(actor)
 
 	fy.record_status = "Retired"
 	fy.save(ignore_permissions=True)
-	_audit_fy(fy_name, perm.FY_RETIRE, actor)
+	_audit_fy(fy_name, "reference_data.fy.retire", actor)
 	return {"ok": True, "financial_year": fy_name, "record_status": fy.record_status}
 
 
@@ -344,8 +357,11 @@ def _audit_ctx(context_name: str, action: str, actor: str, metadata: dict | None
 	)
 
 
-def create_context_draft(pe_name: str, fy_name: str, active_from, active_to, *, user: str | None = None) -> dict:
-	"""§6.3 '— | Create draft | DRAFT'. BR-005: PE must be Active, FY must be Available."""
+def enable_context(pe_name: str, fy_name: str, active_from, active_to, *, user: str | None = None) -> dict:
+	"""§6.3 '— | Enable PE for Financial Year | ACTIVE or SCHEDULED'. One
+	governed action: no Draft/Submitted/Recommended/Approved sub-states.
+	BR-005: PE must be Active, FY must be Available. BR-006: active_to later
+	than active_from. Uniqueness on (pe, fy) is a database constraint."""
 	actor = user or frappe.session.user
 	pe_status = frappe.db.get_value("Procuring Entity", pe_name, "status")
 	if pe_status != "Active":
@@ -353,111 +369,35 @@ def create_context_draft(pe_name: str, fy_name: str, active_from, active_to, *, 
 	fy_status = frappe.db.get_value("Financial Year", fy_name, "record_status")
 	if fy_status != "Available":
 		frappe.throw(_("This Financial Year is not available for use"), title="FY_NOT_AVAILABLE")
+	if frappe.db.exists("PE Fiscal Year Context", {"procuring_entity": pe_name, "financial_year": fy_name}):
+		frappe.throw(_("This PE/FY context already exists"), title="PEFY_CONTEXT_DUPLICATE")
+	if get_datetime(active_to) <= get_datetime(active_from):
+		frappe.throw(_("The context availability end must be later than its start"), title="PEFY_DATES_INVALID")
 
-	# No context exists yet to name — evaluate_capability()'s scope matching only
-	# reads procuring_entity_id (already real: PE must be Active per BR-005 above),
-	# not resource_id, so an empty placeholder id is correct here, not a fake name.
-	perm.require_context_capability(actor, perm.CTX_CREATE_DRAFT, "", pe_name, fy_name)
+	perm.require_reference_data_manager(actor)
 
+	due_now = get_datetime(active_from) <= now_datetime()
 	ctx = frappe.get_doc(
 		{
 			"doctype": "PE Fiscal Year Context",
 			"procuring_entity": pe_name,
 			"financial_year": fy_name,
-			"context_status": "Draft",
+			"context_status": "Active" if due_now else "Scheduled",
 			"active_from": active_from,
 			"active_to": active_to,
 		}
 	)
 	ctx.insert(ignore_permissions=True)
-	_audit_ctx(ctx.name, perm.CTX_CREATE_DRAFT, actor)
+	_audit_ctx(ctx.name, "reference_data.context.enable", actor)
+	if due_now:
+		_audit_ctx(ctx.name, "reference_data.context.activate", actor, {"automated": False})
 	return {"ok": True, "context": ctx.name, "context_status": ctx.context_status}
 
 
-def update_context_draft(
-	context_name: str, active_from, active_to, *, user: str | None = None, expected_version: str | None = None
-) -> dict:
-	"""The 'Revise' half of §10's CreateOrRevisePEFYContext contract — editing a
-	still-Draft context's dates before submission. Not a versioned amendment (the
-	spec gives Context no such concept, unlike PE); only Draft may be revised."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Draft":
-		frappe.throw(_("Only a Draft context can be revised"))
-
-	perm.require_context_capability(actor, perm.CTX_CREATE_DRAFT, context_name, ctx.procuring_entity, ctx.financial_year)
-
-	ctx.active_from = active_from
-	ctx.active_to = active_to
-	ctx.save(ignore_permissions=True)
-	_audit_ctx(context_name, "reference_data.context.revise_draft", actor)
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
-def submit_context(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""§6.3 'DRAFT | Submit for review | UNDER_REVIEW'."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Draft":
-		frappe.throw(_("Only a Draft context can be submitted for review"))
-
-	perm.require_context_capability(actor, perm.CTX_CREATE_DRAFT, context_name, ctx.procuring_entity, ctx.financial_year)
-
-	ctx.context_status = "Under Review"
-	ctx.save(ignore_permissions=True)
-	_audit_ctx(context_name, "reference_data.context.submit", actor)
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
-def recommend_context(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""§6.3 'UNDER_REVIEW | Recommend | AWAITING_APPROVAL'."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Under Review":
-		frappe.throw(_("Only a context Under Review can be recommended"))
-
-	prior = perm.prior_actions_for_context(context_name)
-	perm.require_context_capability(
-		actor, perm.CTX_RECOMMEND, context_name, ctx.procuring_entity, ctx.financial_year, prior_actions=prior
-	)
-
-	ctx.context_status = "Awaiting Approval"
-	ctx.save(ignore_permissions=True)
-	_audit_ctx(context_name, perm.CTX_RECOMMEND, actor)
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
-def approve_context(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""§6.3 'AWAITING_APPROVAL | Approve | APPROVED or SCHEDULED'. Maker-checker:
-	the approver must differ from whoever created/submitted or recommended this
-	context (§7 'one actor may not satisfy two required decision stages')."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Awaiting Approval":
-		frappe.throw(_("Only a context Awaiting Approval can be approved"))
-
-	prior = perm.prior_actions_for_context(context_name)
-	perm.require_context_capability(
-		actor, perm.CTX_APPROVE, context_name, ctx.procuring_entity, ctx.financial_year, prior_actions=prior
-	)
-
-	due_now = get_datetime(ctx.active_from) <= now_datetime()
-	ctx.context_status = "Approved" if due_now else "Scheduled"
-	ctx.save(ignore_permissions=True)
-	_audit_ctx(context_name, perm.CTX_APPROVE, actor)
-	if due_now:
-		_activate_context(ctx, actor)
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
 def _activate_context(ctx, actor: str) -> None:
-	"""§6.3 'APPROVED/SCHEDULED | Reach active_from | ACTIVE'. Revalidates PE/FY
-	are still in force before activating — approval does not guarantee they still
-	are by the time active_from is reached."""
+	"""§6.3 'SCHEDULED | Reach active_from | ACTIVE'. Revalidates PE/FY are
+	still in force before activating — enablement does not guarantee they
+	still are by the time active_from is reached."""
 	pe_status = frappe.db.get_value("Procuring Entity", ctx.procuring_entity, "status")
 	fy_status = frappe.db.get_value("Financial Year", ctx.financial_year, "record_status")
 	if pe_status != "Active" or fy_status != "Available":
@@ -470,11 +410,11 @@ def _activate_context(ctx, actor: str) -> None:
 
 
 def activate_due_contexts() -> dict:
-	"""Scheduled job — CFG-303. Approved/Scheduled contexts whose active_from has
-	been reached, activated with the same revalidation as an inline approve."""
+	"""Scheduled job — CFG-303. Scheduled contexts whose active_from has been
+	reached, activated with the same revalidation as an inline enable."""
 	due = frappe.get_all(
 		"PE Fiscal Year Context",
-		filters={"context_status": ["in", ("Approved", "Scheduled")], "active_from": ["<=", now_datetime()]},
+		filters={"context_status": "Scheduled", "active_from": ["<=", now_datetime()]},
 		pluck="name",
 	)
 	for name in due:
@@ -494,7 +434,7 @@ def suspend_context(
 	if not (reason or "").strip():
 		frappe.throw(_("A reason is required to suspend a PE/FY context"))
 
-	perm.require_context_capability(actor, perm.CTX_APPROVE, context_name, ctx.procuring_entity, ctx.financial_year)
+	perm.require_reference_data_manager(actor)
 
 	ctx.context_status = "Suspended"
 	ctx.suspended_by = actor
@@ -506,21 +446,22 @@ def suspend_context(
 
 
 def reinstate_context(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""§6.3 'SUSPENDED | Reinstate | ACTIVE' — after prerequisite revalidation."""
+	"""§6.3 'SUSPENDED | Reinstate | ACTIVE or SCHEDULED' — after prerequisite revalidation."""
 	actor = user or frappe.session.user
 	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
 	_check_expected_version(ctx, expected_version)
 	if ctx.context_status != "Suspended":
 		frappe.throw(_("Only a Suspended context can be reinstated"))
 
-	perm.require_context_capability(actor, perm.CTX_APPROVE, context_name, ctx.procuring_entity, ctx.financial_year)
+	perm.require_reference_data_manager(actor)
 
 	pe_status = frappe.db.get_value("Procuring Entity", ctx.procuring_entity, "status")
 	fy_status = frappe.db.get_value("Financial Year", ctx.financial_year, "record_status")
 	if pe_status != "Active" or fy_status != "Available":
 		frappe.throw(_("Cannot reinstate: the Procuring Entity or Financial Year is no longer in force"))
 
-	ctx.context_status = "Active"
+	due_now = get_datetime(ctx.active_from) <= now_datetime()
+	ctx.context_status = "Active" if due_now else "Scheduled"
 	ctx.save(ignore_permissions=True)
 	_audit_ctx(context_name, "reference_data.context.reinstate", actor)
 	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
@@ -534,20 +475,21 @@ def close_context(
 	user: str | None = None,
 	expected_version: str | None = None,
 ) -> dict:
-	"""§6.3 'ACTIVE/SUSPENDED | Close | CLOSED'. Manual close requires reason +
-	explicit impact acknowledgement — does not cancel existing downstream records
-	(BR-013), only removes the context from new-work selectors."""
+	"""§6.3 'ACTIVE/SUSPENDED/SCHEDULED | Close | CLOSED'. Manual close requires
+	reason + explicit impact acknowledgement — does not cancel existing
+	downstream records (BR-013), only removes the context from new-work
+	selectors."""
 	actor = user or frappe.session.user
 	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
 	_check_expected_version(ctx, expected_version)
-	if ctx.context_status not in ("Active", "Suspended"):
-		frappe.throw(_("Only an Active or Suspended context can be closed"))
+	if ctx.context_status not in ("Active", "Suspended", "Scheduled"):
+		frappe.throw(_("Only an Active, Suspended or Scheduled context can be closed"))
 	if not (reason or "").strip():
 		frappe.throw(_("A reason is required to close a PE/FY context"))
 	if not acknowledged:
 		frappe.throw(_("You must acknowledge the impact before closing this context"))
 
-	perm.require_context_capability(actor, perm.CTX_APPROVE, context_name, ctx.procuring_entity, ctx.financial_year)
+	perm.require_reference_data_manager(actor)
 
 	ctx.context_status = "Closed"
 	ctx.closed_by = actor
@@ -583,72 +525,33 @@ def run_scheduled_context_transitions() -> dict:
 	return {"activated": activate_due_contexts()["activated"], "closed": close_due_contexts()["closed"]}
 
 
-def propose_context_reopen(
-	context_name: str, reason: str, *, user: str | None = None, expected_version: str | None = None
+def reopen_context(
+	context_name: str, reason: str, active_from, active_to, *, user: str | None = None, expected_version: str | None = None
 ) -> dict:
-	"""§6.3 'CLOSED | Exceptional reopen | ACTIVE' step 1 of 3 — 'new steward
-	proposal'. context_status has no dedicated reopen sub-state in the fixed §5.4
-	enum, so this step (and recommend, below) is tracked purely via the audit
-	trail; the document stays Closed until the final approval step."""
+	"""§6.3 'CLOSED | Reopen | ACTIVE or SCHEDULED'. One governed action with a
+	reason and new availability dates — no separate propose/recommend/approve
+	stages."""
 	actor = user or frappe.session.user
 	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
 	_check_expected_version(ctx, expected_version)
 	if ctx.context_status != "Closed":
-		frappe.throw(_("Only a Closed context can have an exceptional reopen proposed"))
+		frappe.throw(_("Only a Closed context can be reopened"))
 	if not (reason or "").strip():
-		frappe.throw(_("A reason is required to propose reopening a PE/FY context"))
+		frappe.throw(_("A reason is required to reopen a PE/FY context"))
+	if get_datetime(active_to) <= get_datetime(active_from):
+		frappe.throw(_("The context availability end must be later than its start"), title="PEFY_DATES_INVALID")
 
-	perm.require_context_capability(actor, perm.CTX_CREATE_DRAFT, context_name, ctx.procuring_entity, ctx.financial_year)
-
-	_audit_ctx(context_name, "reference_data.context.propose_reopen", actor, {"reason": reason})
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
-def recommend_context_reopen(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""Step 2 of 3 — 'professional recommendation'."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Closed":
-		frappe.throw(_("Only a Closed context can have an exceptional reopen recommended"))
-	prior = perm.prior_actions_for_context(context_name)
-	if "reference_data.context.propose_reopen" not in {row["capability"] for row in prior}:
-		frappe.throw(_("A reopen must be proposed before it can be recommended"))
-
-	perm.require_context_capability(
-		actor, perm.CTX_RECOMMEND, context_name, ctx.procuring_entity, ctx.financial_year, prior_actions=prior
-	)
-
-	_audit_ctx(context_name, "reference_data.context.recommend_reopen", actor)
-	return {"ok": True, "context": context_name, "context_status": ctx.context_status}
-
-
-def approve_context_reopen(context_name: str, *, user: str | None = None, expected_version: str | None = None) -> dict:
-	"""Step 3 of 3 — 'AO approval'. Only this step actually flips CLOSED -> ACTIVE;
-	full audit trail (propose + recommend + approve, three distinct actors via the
-	same SoD rules as original submission) is the governed route, not a toggle."""
-	actor = user or frappe.session.user
-	ctx = frappe.get_doc("PE Fiscal Year Context", context_name)
-	_check_expected_version(ctx, expected_version)
-	if ctx.context_status != "Closed":
-		frappe.throw(_("Only a Closed context can be exceptionally reopened"))
-	prior = perm.prior_actions_for_context(context_name)
-	prior_capabilities = {row["capability"] for row in prior}
-	if "reference_data.context.propose_reopen" not in prior_capabilities:
-		frappe.throw(_("A reopen must be proposed before it can be approved"))
-	if "reference_data.context.recommend_reopen" not in prior_capabilities:
-		frappe.throw(_("A reopen must be recommended before it can be approved"))
-
-	perm.require_context_capability(
-		actor, perm.CTX_APPROVE, context_name, ctx.procuring_entity, ctx.financial_year, prior_actions=prior
-	)
+	perm.require_reference_data_manager(actor)
 
 	pe_status = frappe.db.get_value("Procuring Entity", ctx.procuring_entity, "status")
 	fy_status = frappe.db.get_value("Financial Year", ctx.financial_year, "record_status")
 	if pe_status != "Active" or fy_status != "Available":
 		frappe.throw(_("Cannot reopen: the Procuring Entity or Financial Year is no longer in force"))
 
-	ctx.context_status = "Active"
+	due_now = get_datetime(active_from) <= now_datetime()
+	ctx.context_status = "Active" if due_now else "Scheduled"
+	ctx.active_from = active_from
+	ctx.active_to = active_to
 	ctx.save(ignore_permissions=True)
-	_audit_ctx(context_name, "reference_data.context.reopen", actor, {"prior_capabilities": sorted(prior_capabilities)})
+	_audit_ctx(context_name, "reference_data.context.reopen", actor, {"reason": reason})
 	return {"ok": True, "context": context_name, "context_status": ctx.context_status}

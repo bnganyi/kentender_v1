@@ -4,6 +4,8 @@ import StatusPill from "../StatusPill.vue";
 import ActionConfirmDialog from "../ActionConfirmDialog.vue";
 import CloseContextDialog from "../CloseContextDialog.vue";
 import { referenceDataApi as api } from "../../data/referenceDataApi.js";
+import { actionLabel } from "../../data/actionLabel.js";
+import { classifyApiError } from "../../data/apiError.js";
 
 const props = defineProps({ code: { type: String, required: true } });
 const emit = defineEmits(["after-action"]);
@@ -13,6 +15,8 @@ const loading = ref(false);
 const busy = ref(false);
 const dialog = ref(null);
 const closeDialogOpen = ref(false);
+const dialogError = ref("");
+const closeDialogError = ref("");
 
 async function load() {
 	loading.value = true;
@@ -26,33 +30,43 @@ onMounted(load);
 watch(() => props.code, load);
 
 const ACTION_CONFIG = {
-	"Submit for review": { key: "submit", title: __("Submit for review"), confirmLabel: __("Submit") },
-	Recommend: { key: "recommend", title: __("Recommend context"), confirmLabel: __("Recommend") },
-	Approve: { key: "approve", title: __("Approve context"), confirmLabel: __("Approve") },
 	Suspend: { key: "suspend", title: __("Suspend context"), confirmLabel: __("Suspend"), reasonLabel: __("Reason"), reasonRequired: true },
 	Reinstate: { key: "reinstate", title: __("Reinstate context"), confirmLabel: __("Reinstate") },
-	"Propose exceptional reopen": { key: "propose_reopen", title: __("Propose exceptional reopen"), confirmLabel: __("Propose reopen"), reasonLabel: __("Reason"), reasonRequired: true },
+	// Reopen keeps the context's prior availability window — CFG-CHG-002 v0.4
+	// §6.3/§13.4 also requires new dates be settable, which needs a dedicated
+	// date-entry dialog not yet built; this reuses the closed window as the
+	// default rather than blocking the one-step reopen action entirely.
+	Reopen: { key: "reopen", title: __("Reopen context"), confirmLabel: __("Reopen"), reasonLabel: __("Reason"), reasonRequired: true },
 };
 
 function openAction(label) {
 	if (label === "Close") {
+		closeDialogError.value = "";
 		closeDialogOpen.value = true;
 		return;
 	}
 	const cfg = ACTION_CONFIG[label];
 	if (!cfg) return;
+	dialogError.value = "";
 	dialog.value = { label, ...cfg };
 }
 
 async function confirmAction({ reason }) {
 	if (!dialog.value) return;
 	busy.value = true;
+	dialogError.value = "";
 	try {
 		const extra = dialog.value.reasonLabel ? { reason } : {};
+		if (dialog.value.key === "reopen") {
+			extra.active_from = detail.value.active_from;
+			extra.active_to = detail.value.active_to;
+		}
 		await api.decidePeFyContext(props.code, dialog.value.key, detail.value.expected_version, extra);
 		dialog.value = null;
 		await load();
 		emit("after-action");
+	} catch (err) {
+		dialogError.value = classifyApiError(err).banner;
 	} finally {
 		busy.value = false;
 	}
@@ -60,11 +74,14 @@ async function confirmAction({ reason }) {
 
 async function confirmClose({ reason }) {
 	busy.value = true;
+	closeDialogError.value = "";
 	try {
 		await api.decidePeFyContext(props.code, "close", detail.value.expected_version, { reason, acknowledged: 1 });
 		closeDialogOpen.value = false;
 		await load();
 		emit("after-action");
+	} catch (err) {
+		closeDialogError.value = classifyApiError(err).banner;
 	} finally {
 		busy.value = false;
 	}
@@ -93,7 +110,7 @@ const contextLine = computed(() =>
 					v-for="label in detail.available_actions"
 					:key="label"
 					type="button"
-					:class="['kt-btn', label === 'Approve' || label === 'Submit for review' || label === 'Recommend' ? 'kt-btn-primary' : 'kt-btn-secondary', label === 'Close' ? 'kt-danger' : '']"
+					:class="['kt-btn', label === 'Reinstate' || label === 'Reopen' ? 'kt-btn-primary' : 'kt-btn-secondary', label === 'Close' ? 'kt-danger' : '']"
 					@click="openAction(label)"
 				>
 					{{ label }}
@@ -138,7 +155,7 @@ const contextLine = computed(() =>
 					<tbody>
 						<tr v-for="(h, i) in [...detail.history].reverse()" :key="i">
 							<td class="kt-muted">{{ frappe.datetime.str_to_user(h.timestamp) }}</td>
-							<td>{{ h.action }}</td>
+							<td>{{ actionLabel(h.action) }}</td>
 							<td>{{ h.performed_by }}</td>
 						</tr>
 					</tbody>
@@ -155,9 +172,19 @@ const contextLine = computed(() =>
 			:reason-label="dialog.reasonLabel || ''"
 			:reason-required="!!dialog.reasonRequired"
 			:busy="busy"
+			:error-message="dialogError"
 			@confirm="confirmAction"
 			@cancel="dialog = null"
+			@clear-error="dialogError = ''"
 		/>
-		<CloseContextDialog v-if="closeDialogOpen" :context-line="contextLine" :busy="busy" @confirm="confirmClose" @cancel="closeDialogOpen = false" />
+		<CloseContextDialog
+			v-if="closeDialogOpen"
+			:context-line="contextLine"
+			:busy="busy"
+			:error-message="closeDialogError"
+			@confirm="confirmClose"
+			@cancel="closeDialogOpen = false"
+			@clear-error="closeDialogError = ''"
+		/>
 	</template>
 </template>

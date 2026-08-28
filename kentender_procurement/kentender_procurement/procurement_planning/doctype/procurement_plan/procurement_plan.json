@@ -11,6 +11,7 @@
   "title",
   "col_ctx",
   "procuring_entity",
+  "pe_fy_context",
   "financial_year",
   "period_start",
   "period_end",
@@ -70,6 +71,13 @@
    "read_only": 1,
    "in_list_view": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "label": "PE Fiscal Year Context",
+   "options": "PE Fiscal Year Context",
+   "insert_after": "procuring_entity"
   },
   {
    "fieldname": "financial_year",

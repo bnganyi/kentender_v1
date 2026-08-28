@@ -30,7 +30,7 @@ class TestReferenceDataSeedMvp1(IntegrationTestCase):
 				{
 					"document_type": "Procuring Entity",
 					"document_name": "PE-MOH",
-					"action": ["in", ["reference_data.pe.submit", "reference_data.pe.approve_activate"]],
+					"action": ["in", ["reference_data.pe.create_draft", "reference_data.pe.activate"]],
 				},
 			),
 			"ctx_moh_history": frappe.db.count("Audit Event", {"document_name": "CTX-MOH-2027-2028"}),
@@ -69,15 +69,20 @@ class TestReferenceDataSeedMvp1(IntegrationTestCase):
 			self.assertEqual(str(ctx.active_from), "2027-01-01 00:00:00")
 			self.assertEqual(str(ctx.active_to), "2028-09-30 23:59:00")
 
-	def test_governance_roles_granted_to_all_known_actors(self):
+	def test_reference_data_manager_granted_only_to_lydia(self):
+		"""CFG-CHG-002 v0.4 / AUTH-ADR-001 v1.1 §12.4 — one global Reference
+		Data Manager Role, granted only to the confirmed positive fixture
+		(Lydia Mwangi). The retired five-role model's other fixture actors
+		(Daniel Kariuki, Mercy Kilonzo, Samuel Otieno, Amina Hassan) receive no
+		Reference Data authority — Amina specifically must not be granted it
+		merely because she is a real, active user of the system elsewhere."""
 		upsert_reference_data_mvp1()
+		self.assertIn("Reference Data Manager", frappe.get_roles("lydia.mwangi@kentender.example.test"))
 		for email in (
-			"lydia.mwangi@kentender.example.test",
 			"daniel.kariuki@kentender.example.test",
 			"mercy.kilonzo@moh.example.test",
 			"samuel.otieno@moh.example.test",
 			"amina.hassan@moh.example.test",
 		):
-			roles = set(frappe.get_roles(email))
-			self.assertIn("Central Reference Data Steward", roles)
-			self.assertIn("Central Configuration Approver", roles)
+			if frappe.db.exists("User", email):
+				self.assertNotIn("Reference Data Manager", frappe.get_roles(email))

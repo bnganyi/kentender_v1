@@ -11,6 +11,7 @@
   "title",
   "col_id",
   "procuring_entity",
+  "pe_fy_context",
   "status",
   "section_period",
   "fiscal_period",
@@ -74,6 +75,13 @@
    "options": "Procuring Entity",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "label": "PE Fiscal Year Context",
+   "options": "PE Fiscal Year Context",
+   "insert_after": "procuring_entity"
   },
   {
    "fieldname": "status",

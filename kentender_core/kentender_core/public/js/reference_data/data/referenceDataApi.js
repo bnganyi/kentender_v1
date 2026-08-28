@@ -4,8 +4,37 @@
 
 const METHOD_PREFIX = "kentender_core.api.reference_data_api.";
 
+// Parses Frappe's raw error payload (from frappe.call's error callback) into
+// {code, message}, where `code` is the server's frappe.throw(..., title=...)
+// value when set. `silent:true` below stops frappe.call's default behaviour of
+// popping its own generic error dialog — screens handle {code, message} themselves.
+function parseServerError(r) {
+	let messages = [];
+	try {
+		if (r && r._server_messages) {
+			messages = JSON.parse(r._server_messages).map((m) => (typeof m === "string" ? JSON.parse(m) : m));
+		}
+	} catch (e) {
+		/* fall through to the generic message below */
+	}
+	const first = messages[0] || {};
+	return {
+		code: first.title || (r && r.exc_type) || null,
+		message: first.message || __("Something went wrong. Please try again."),
+		excType: (r && r.exc_type) || null,
+	};
+}
+
 function call(method, args) {
-	return frappe.call({ method: METHOD_PREFIX + method, args }).then((r) => r.message);
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: METHOD_PREFIX + method,
+			args,
+			silent: true,
+			callback: (r) => resolve(r.message),
+			error: (r) => reject(parseServerError(r)),
+		});
+	});
 }
 
 function newIdempotencyKey() {
@@ -19,6 +48,7 @@ export const referenceDataApi = {
 	listProcuringEntities: (params = {}) => call("list_procuring_entities", params),
 	getProcuringEntity: (peId) => call("get_procuring_entity", { pe_id: peId }),
 	createPe: (payload) => call("create_or_revise_pe", { payload }),
+	updatePeDraft: (peId, payload) => call("update_pe_draft", { pe_id: peId, payload }),
 	proposePeAmendment: (peId, changeReason) =>
 		call("create_or_revise_pe", { pe_id: peId, change_reason: changeReason }),
 	decidePeChange: (peId, action, extra = {}) =>
@@ -28,7 +58,6 @@ export const referenceDataApi = {
 	listFinancialYears: (params = {}) => call("list_financial_years", params),
 	getFinancialYear: (financialYearId) => call("get_financial_year", { financial_year_id: financialYearId }),
 	createFinancialYear: (startYear) => call("create_financial_year", { start_year: startYear }),
-	submitFinancialYear: (financialYearId) => call("submit_financial_year", { financial_year_id: financialYearId }),
 	makeFinancialYearAvailable: (financialYearId) =>
 		call("make_financial_year_available", { financial_year_id: financialYearId, idempotency_key: newIdempotencyKey() }),
 	retireFinancialYear: (financialYearId) =>
@@ -37,19 +66,13 @@ export const referenceDataApi = {
 	// --- PE Fiscal Year Context ---
 	listPeFyContexts: (params = {}) => call("list_pe_fy_contexts", params),
 	getPeFyContext: (contextId) => call("get_pe_fy_context", { context_id: contextId }),
-	createPeFyContext: (procuringEntity, financialYear, activeFrom, activeTo) =>
-		call("create_or_revise_pe_fy_context", {
+	enablePeFyContext: (procuringEntity, financialYear, activeFrom, activeTo) =>
+		call("enable_pe_fy_context", {
 			procuring_entity: procuringEntity,
 			financial_year: financialYear,
 			active_from: activeFrom,
 			active_to: activeTo,
-		}),
-	updatePeFyContextDraft: (contextId, activeFrom, activeTo, expectedVersion) =>
-		call("create_or_revise_pe_fy_context", {
-			context_id: contextId,
-			active_from: activeFrom,
-			active_to: activeTo,
-			expected_version: expectedVersion,
+			idempotency_key: newIdempotencyKey(),
 		}),
 	decidePeFyContext: (contextId, action, expectedVersion, extra = {}) =>
 		call("decide_pe_fy_context", {

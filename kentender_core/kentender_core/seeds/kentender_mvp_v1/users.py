@@ -28,7 +28,7 @@ from kentender_procurement.procurement_planning.services.planning_permissions im
 	ROLE_VIEWER,
 	ensure_planning_roles,
 )
-from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
+from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
 
 # (email, full_name, roles, pe, org_unit|None, include_descendants)
 # Miriam also carries Demand Requester for Contract v2.2 §7.5 single-scope create.
@@ -36,7 +36,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_MEDICAL,
 		"Dr Miriam Njeri",
-		("Strategy Officer", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
+		("Strategy Author", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
 		C.PE_MOH,
 		C.OU_DIR_DHP,
 		1,
@@ -44,15 +44,20 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_PUBLIC,
 		"Anne Achieng",
-		("Strategy Officer", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
+		("Strategy Author", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
 		1,
 	),
 	(
+		# STR-CHG-001 v1.5 §18.1 "not promoted automatically" policy: an
+		# existing bare Strategy Reviewer holder is not auto-granted any
+		# current Strategy role (that role was deleted outright, not
+		# merged into Strategy Approver). This fixture persona keeps its
+		# identity/scope but no Strategy governance role.
 		C.USER_STR_REVIEWER,
 		"MOH Strategy Reviewer",
-		("Strategy Reviewer",),
+		(),
 		C.PE_MOH,
 		None,
 		0,
@@ -84,7 +89,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_OFFICER,
 		"Kisumu Health Officer",
-		("Strategy Officer", "Budget Officer", ROLE_REQUESTER),
+		("Strategy Author", "Budget Officer", ROLE_REQUESTER),
 		C.PE_CGKIS,
 		C.OU_CGK_HEALTH,
 		1,
@@ -384,7 +389,7 @@ def _upsert_system_admin_no_requester() -> str:
 
 
 def upsert_canonical_users(*, commit: bool = True) -> dict[str, Any]:
-	ensure_strategy_roles()
+	ensure_strategy_governance_roles()
 	ensure_budget_roles()
 	ensure_demand_roles()
 	ensure_planning_roles()
