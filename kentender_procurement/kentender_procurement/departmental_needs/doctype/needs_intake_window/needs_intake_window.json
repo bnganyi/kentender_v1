@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "autoname": "field:needs_intake_window_id",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "needs_intake_window_id",
+  "procuring_entity",
+  "financial_year",
+  "opens_at",
+  "closes_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Immutable generated reference used by commands and audit.",
+   "fieldname": "needs_intake_window_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Needs Intake Window ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Financial Year",
+   "options": "Financial Year",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "UTC instant from which a new Need may be created or initially submitted.",
+   "fieldname": "opens_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Opens At",
+   "reqd": 1
+  },
+  {
+   "description": "Inclusive UTC instant after which a new Need cannot be created or initially submitted.",
+   "fieldname": "closes_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Closes At",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Monotonic optimistic-concurrency token checked by every write.",
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Needs Intake Window",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Procurement Planner",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Departmental Author"
+  },
+  {
+   "read": 1,
+   "role": "Head of User Department"
+  },
+  {
+   "read": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "procuring_entity,financial_year",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

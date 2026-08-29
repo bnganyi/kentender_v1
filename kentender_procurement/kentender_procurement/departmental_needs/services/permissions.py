@@ -1,3 +1,16 @@
+"""Native Frappe authorization for Departmental Needs (NDS-CHG-001 v1.1 §6).
+
+§6 and NDS-AC-044 require native Frappe Role, Workflow permission and User
+Permission only. Capability Profiles and Operational Scope Assignments are not
+consulted here, and a temporary acting HoD is expressed as the same
+``Head of User Department`` role plus a time-bound User Permission — never a
+delegate role (§1.1, NDS-AC-042).
+
+Frappe's own User Permission semantics apply: when a user has no User
+Permission rows for a doctype they are unrestricted on it; when they have any,
+they are restricted to exactly those values.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -5,24 +18,23 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_core.services.authorization_policy import (
-	ResourceContext,
-	evaluate_capability,
-	require_capability,
-	resolve_effective_access,
-)
 from kentender_procurement.departmental_needs.constants import (
-	CAP_CREATE,
-	CAP_EDIT_OWN,
-	CAP_OVERSIGHT_READ,
-	CAP_READ_ACCEPTED_FOR_PLANNING,
-	CAP_REVIEW,
-	CAP_SUBMIT,
-	CAP_VIEW_DEPARTMENT,
-	CAP_VIEW_OWN,
+	ROLE_AUDITOR,
+	ROLE_DEPARTMENTAL_AUTHOR,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
+	ROLE_PROCUREMENT_PLANNER,
 	STATE_ACCEPTED,
 )
 from kentender_procurement.departmental_needs.errors import fail
+
+# Roles that see technical/neutral records without a business role (§6).
+ADMINISTRATIVE_ROLES = ("System Manager", "Administrator")
+
+SCOPE_FIELDS = (
+	("Procuring Entity", "procuring_entity"),
+	("Organisation Unit", "organisation_unit"),
+	("Financial Year", "financial_year"),
+)
 
 
 def actor(user: str | None = None) -> str:
@@ -32,71 +44,161 @@ def actor(user: str | None = None) -> str:
 	return value
 
 
-def resource(need: Any) -> ResourceContext:
-	return ResourceContext(
-		"Departmental Need",
-		cstr(need.name),
-		cstr(need.procuring_entity),
-		cstr(need.target_financial_year),
-		cstr(need.organisation_unit),
-		state=cstr(need.status),
-		relationships={"submitted_by": cstr(need.submitted_by)},
+def roles_of(user: str) -> set[str]:
+	return set(frappe.get_roles(user))
+
+
+def has_role(user: str, role: str) -> bool:
+	return role in roles_of(user)
+
+
+def is_administrative(user: str) -> bool:
+	return bool(roles_of(user).intersection(ADMINISTRATIVE_ROLES))
+
+
+def permitted_values(user: str, doctype: str) -> set[str] | None:
+	"""Allowed values for one doctype, or ``None`` when unrestricted.
+
+	``None`` is Frappe's own meaning of "no User Permission rows for this
+	doctype", which is materially different from an empty set (restricted to
+	nothing) and must not be collapsed into it.
+	"""
+	rows = frappe.get_all(
+		"User Permission",
+		filters={"user": user, "allow": doctype},
+		fields=["for_value"],
+		limit_page_length=0,
 	)
+	if not rows:
+		return None
+	return {cstr(row.for_value) for row in rows}
+
+
+def in_scope(user: str, *, procuring_entity: str, organisation_unit: str, financial_year: str) -> bool:
+	"""Every scope dimension must pass its own User Permission restriction."""
+	values = {
+		"procuring_entity": cstr(procuring_entity),
+		"organisation_unit": cstr(organisation_unit),
+		"financial_year": cstr(financial_year),
+	}
+	for doctype, key in SCOPE_FIELDS:
+		allowed = permitted_values(user, doctype)
+		if allowed is not None and values[key] not in allowed:
+			return False
+	return True
+
+
+def _need_scope(need: Any) -> dict[str, str]:
+	return {
+		"procuring_entity": cstr(need.procuring_entity),
+		"organisation_unit": cstr(need.organisation_unit),
+		"financial_year": cstr(need.financial_year),
+	}
+
+
+def is_owner(need: Any, user: str) -> bool:
+	"""§4.2 fixes the framework ``owner`` as the author; no duplicate field."""
+	return cstr(need.owner) == cstr(user)
 
 
 def creation_contexts(user: str | None = None) -> list[dict[str, str]]:
+	"""PE/OU pairs in which this user may author a Need (§8.1 resolve contexts)."""
 	principal = actor(user)
-	rows = resolve_effective_access(principal, CAP_CREATE)
-	contexts: list[dict[str, str]] = []
-	seen: set[tuple[str, str]] = set()
-	for row in rows:
-		pe, ou = cstr(row.get("procuring_entity_id")), cstr(row.get("organisation_unit_id"))
-		if not pe or not ou or (pe, ou) in seen:
-			continue
-		if frappe.db.get_value("Organisation Unit", ou, "procuring_entity") != pe:
-			continue
-		seen.add((pe, ou))
-		contexts.append({
-			"procuring_entity": pe,
-			"procuring_entity_label": cstr(frappe.db.get_value("Procuring Entity", pe, "legal_name") or pe),
-			"organisation_unit": ou,
-			"organisation_unit_label": cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou),
-		})
+	if not (has_role(principal, ROLE_DEPARTMENTAL_AUTHOR) or is_administrative(principal)):
+		return []
+	allowed_entities = permitted_values(principal, "Procuring Entity")
+	allowed_units = permitted_values(principal, "Organisation Unit")
+	filters: dict[str, Any] = {"status": "Active"}
+	if allowed_units is not None:
+		filters["name"] = ("in", sorted(allowed_units) or [""])
+	if allowed_entities is not None:
+		filters["procuring_entity"] = ("in", sorted(allowed_entities) or [""])
+	contexts = [
+		{
+			"procuring_entity": cstr(row.procuring_entity),
+			"procuring_entity_label": cstr(
+				frappe.db.get_value("Procuring Entity", row.procuring_entity, "legal_name")
+				or row.procuring_entity
+			),
+			"organisation_unit": cstr(row.name),
+			"organisation_unit_label": cstr(row.unit_name or row.name),
+		}
+		for row in frappe.get_all(
+			"Organisation Unit",
+			filters=filters,
+			fields=["name", "unit_name", "procuring_entity"],
+			limit_page_length=0,
+		)
+		if row.procuring_entity
+	]
 	return sorted(contexts, key=lambda row: (row["procuring_entity_label"], row["organisation_unit_label"]))
 
 
 def require_create(user: str, pe: str, ou: str, financial_year: str) -> None:
 	if frappe.db.get_value("Organisation Unit", ou, "procuring_entity") != pe:
-		fail("NDS_ORGANISATION_UNIT_PE_MISMATCH", "The selected department does not belong to the selected Procuring Entity.")
-	require_capability(user, CAP_CREATE, ResourceContext("Departmental Need", "new", pe, financial_year, ou))
+		fail(
+			"NDS_ORGANISATION_UNIT_PE_MISMATCH",
+			"The selected department does not belong to the selected Procuring Entity.",
+		)
+	if not (has_role(user, ROLE_DEPARTMENTAL_AUTHOR) or is_administrative(user)):
+		fail("NDS_SCOPE_DENIED", "You do not hold the Departmental Author role.")
+	if not in_scope(user, procuring_entity=pe, organisation_unit=ou, financial_year=financial_year):
+		fail("NDS_SCOPE_DENIED", "You have no Departmental Needs permission for that context.")
 
 
 def can_view(need: Any, user: str) -> tuple[bool, str]:
-	"""§6 — a Planner sees only Accepted Needs in their assigned PE; every
-	other profile's scope is fully expressed by its capability grant alone.
-	This rule lives here, not in each caller, so every view/list/download
-	path is scoped identically by construction."""
-	ctx = resource(need)
-	if cstr(need.submitted_by) == user and evaluate_capability(user, CAP_VIEW_OWN, ctx).allowed:
+	"""One scope predicate for every read path (NDS-BR-019, NDS-AC-021)."""
+	scope = _need_scope(need)
+	if is_administrative(user):
+		return True, "oversight"
+	if not in_scope(user, **scope):
+		return False, "none"
+	held = roles_of(user)
+	if ROLE_DEPARTMENTAL_AUTHOR in held and is_owner(need, user):
 		return True, "owner"
-	for capability, profile in (
-		(CAP_VIEW_DEPARTMENT, "department"),
-		(CAP_REVIEW, "department"),
-		(CAP_READ_ACCEPTED_FOR_PLANNING, "planning"),
-		(CAP_OVERSIGHT_READ, "oversight"),
-	):
-		if profile == "planning" and cstr(need.status) != STATE_ACCEPTED:
-			continue
-		if evaluate_capability(user, capability, ctx).allowed:
-			return True, profile
+	if ROLE_HEAD_OF_USER_DEPARTMENT in held:
+		return True, "department"
+	# A Planner reads only the current accepted source (§6, §7).
+	if ROLE_PROCUREMENT_PLANNER in held and cstr(need.current_state) == STATE_ACCEPTED:
+		return True, "planning"
+	if ROLE_AUDITOR in held:
+		return True, "oversight"
 	return False, "none"
 
 
-def require_owner_command(need: Any, user: str, capability: str) -> None:
-	if cstr(need.submitted_by) != user:
-		fail("NDS_NOT_RECORD_OWNER", "Only the submitting user may perform this action.")
-	require_capability(user, capability, resource(need))
+def require_view(need: Any, user: str) -> str:
+	allowed, profile = can_view(need, user)
+	if not allowed:
+		# §9 — disclose no protected record data, including its existence.
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	return profile
 
 
-def owner_capability(action: str) -> str:
-	return CAP_EDIT_OWN if action == "edit" else CAP_SUBMIT
+def require_author_command(need: Any, user: str) -> None:
+	"""§5.1 — the Departmental Author who owns the Need performs these commands."""
+	if not is_owner(need, user):
+		fail("NDS_SCOPE_DENIED", "Only the authoring user may perform this action.")
+	if not (has_role(user, ROLE_DEPARTMENTAL_AUTHOR) or is_administrative(user)):
+		fail("NDS_SCOPE_DENIED", "You do not hold the Departmental Author role.")
+	if not in_scope(user, **_need_scope(need)):
+		fail("NDS_SCOPE_DENIED", "You have no Departmental Needs permission for that context.")
+
+
+def require_review_command(need: Any, user: str) -> None:
+	"""§5.1/§6 — the Head of User Department decides a submitted version."""
+	if not (has_role(user, ROLE_HEAD_OF_USER_DEPARTMENT) or is_administrative(user)):
+		fail("NDS_SCOPE_DENIED", "You do not hold the Head of User Department role.")
+	if not in_scope(user, **_need_scope(need)):
+		fail("NDS_SCOPE_DENIED", "You have no departmental review permission for that context.")
+
+
+def require_intake_window_command(user: str, *, procuring_entity: str, financial_year: str) -> None:
+	"""§6 — the Procurement Planner maintains the PE/FY intake window."""
+	if not (has_role(user, ROLE_PROCUREMENT_PLANNER) or is_administrative(user)):
+		fail("NDS_SCOPE_DENIED", "You do not hold the Procurement Planner role.")
+	allowed_entities = permitted_values(user, "Procuring Entity")
+	allowed_years = permitted_values(user, "Financial Year")
+	if allowed_entities is not None and cstr(procuring_entity) not in allowed_entities:
+		fail("NDS_SCOPE_DENIED", "You have no permission for that Procuring Entity.")
+	if allowed_years is not None and cstr(financial_year) not in allowed_years:
+		fail("NDS_SCOPE_DENIED", "You have no permission for that Financial Year.")

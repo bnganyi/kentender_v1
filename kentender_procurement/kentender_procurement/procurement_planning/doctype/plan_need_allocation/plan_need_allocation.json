@@ -8,7 +8,7 @@
  "field_order": [
   "plan_item",
   "departmental_need",
-  "departmental_need_item",
+  "departmental_need_version",
   "source_organisation_unit",
   "allocated_quantity",
   "status",
@@ -40,10 +40,10 @@
    "search_index": 1
   },
   {
-   "fieldname": "departmental_need_item",
+   "fieldname": "departmental_need_version",
    "fieldtype": "Link",
-   "label": "Departmental Need Item",
-   "options": "Departmental Need Item",
+   "label": "Departmental Need Version",
+   "options": "Departmental Need Version",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1

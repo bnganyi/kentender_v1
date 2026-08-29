@@ -7,26 +7,18 @@
  "engine": "InnoDB",
  "field_order": [
   "need_reference",
-  "title",
   "procuring_entity",
-  "pe_fy_context",
   "organisation_unit",
-  "target_financial_year",
-  "submitted_by",
-  "business_justification",
-  "required_by_date",
-  "delivery_or_use_location",
-  "indicative_cost",
-  "currency",
-  "status",
-  "revision_no",
-  "submitted_at",
-  "last_decision_at",
-  "concurrency_token",
+  "financial_year",
+  "current_state",
+  "current_version",
+  "current_accepted_version",
+  "record_version",
   "fixture_namespace"
  ],
  "fields": [
   {
+   "description": "Generated on first save as NDS-{PE code}-{FY start}-{4 digits}.",
    "fieldname": "need_reference",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -36,15 +28,10 @@
    "unique": 1
   },
   {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Title",
-   "reqd": 1
-  },
-  {
+   "description": "Defines the PE and permission boundary. Required and immutable.",
    "fieldname": "procuring_entity",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Procuring Entity",
    "options": "Procuring Entity",
    "read_only": 1,
@@ -52,15 +39,10 @@
    "search_index": 1
   },
   {
-   "fieldname": "pe_fy_context",
-   "fieldtype": "Link",
-   "insert_after": "procuring_entity",
-   "label": "PE Fiscal Year Context",
-   "options": "PE Fiscal Year Context"
-  },
-  {
+   "description": "Defines the owning department and review scope. Required and immutable.",
    "fieldname": "organisation_unit",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Organisation Unit",
    "options": "Organisation Unit",
    "read_only": 1,
@@ -68,85 +50,51 @@
    "search_index": 1
   },
   {
-   "fieldname": "target_financial_year",
-   "fieldtype": "Data",
-   "label": "Target Financial Year",
+   "description": "Defines the planning year and date boundary. Required and immutable.",
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial Year",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "submitted_by",
-   "fieldtype": "Link",
-   "label": "Submitted By",
-   "options": "User",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "business_justification",
-   "fieldtype": "Long Text",
-   "label": "Business Justification"
-  },
-  {
-   "fieldname": "required_by_date",
-   "fieldtype": "Date",
-   "label": "Required By"
-  },
-  {
-   "fieldname": "delivery_or_use_location",
-   "fieldtype": "Data",
-   "label": "Delivery or Use Location"
-  },
-  {
-   "fieldname": "indicative_cost",
-   "fieldtype": "Currency",
-   "label": "Indicative Cost",
-   "options": "currency"
-  },
-  {
-   "default": "KES",
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "read_only": 1,
-   "reqd": 1
   },
   {
    "default": "Draft",
-   "fieldname": "status",
+   "description": "System-maintained root state.",
+   "fieldname": "current_state",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Status",
+   "label": "Current State",
    "options": "Draft\nSubmitted\nReturned\nAccepted for planning\nNot taken forward\nWithdrawn",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "revision_no",
+   "description": "Points to the newest Draft or decided version for display and editing.",
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "label": "Current Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Points to the accepted version available to Planning. Empty until first acceptance.",
+   "fieldname": "current_accepted_version",
+   "fieldtype": "Link",
+   "label": "Current Accepted Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "description": "Monotonic optimistic-concurrency token checked by every write.",
+   "fieldname": "record_version",
    "fieldtype": "Int",
-   "label": "Revision No",
-   "read_only": 1
-  },
-  {
-   "fieldname": "submitted_at",
-   "fieldtype": "Datetime",
-   "label": "Submitted At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "last_decision_at",
-   "fieldtype": "Datetime",
-   "label": "Last Decision At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "concurrency_token",
-   "fieldtype": "Data",
-   "label": "Concurrency Token",
+   "label": "Record Version",
    "read_only": 1,
    "reqd": 1
   },
@@ -162,18 +110,51 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-27 20:03:17.026887",
+ "modified": "2026-08-29 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Departmental Needs",
  "name": "Departmental Need",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Departmental Author",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Head of User Department",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Procurement Planner"
+  },
+  {
+   "read": 1,
+   "role": "Auditor"
+  }
+ ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "need_reference,title",
+ "search_fields": "need_reference",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "title",
  "track_changes": 1
 }

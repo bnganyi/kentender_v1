@@ -1,0 +1,240 @@
+{
+ "actions": [],
+ "autoname": "field:decision_id",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "decision_id",
+  "departmental_need",
+  "need_version",
+  "withdrawal_request",
+  "action",
+  "actor",
+  "effective_assignment",
+  "scope",
+  "review_task",
+  "occurred_at",
+  "reason",
+  "prior_state",
+  "result_state",
+  "content_hash",
+  "correlation_id",
+  "request_id",
+  "source_ip",
+  "session_id",
+  "before_state_hash",
+  "after_state_hash",
+  "idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "decision_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Decision ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The exact version this decision applies to. Empty for a withdrawal-request decision.",
+   "fieldname": "need_version",
+   "fieldtype": "Link",
+   "label": "Need Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "withdrawal_request",
+   "fieldtype": "Link",
+   "label": "Withdrawal Request",
+   "options": "Need Withdrawal Request",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Action",
+   "options": "Create\nSave draft\nSubmit\nResubmit\nReturn for correction\nAccept for planning\nDo not take forward\nWithdraw\nCreate successor\nSave successor\nCancel successor\nSubmit successor\nReturn successor\nAccept successor\nDecline successor\nRequest withdrawal\nEvaluate withdrawal\nRe-evaluate withdrawal\nApprove withdrawal\nDecline withdrawal",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "effective_assignment",
+   "fieldtype": "Data",
+   "label": "Effective Assignment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Scope",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_task",
+   "fieldtype": "Link",
+   "label": "Review Task",
+   "options": "Departmental Need Review Task",
+   "read_only": 1,
+   "description": "The review task whose decision token authorised this decision."
+  },
+  {
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "label": "Occurred At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Required for Return for correction, Do not take forward, Request withdrawal and Decline withdrawal.",
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prior_state",
+   "fieldtype": "Data",
+   "label": "Prior State",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_state",
+   "fieldtype": "Data",
+   "label": "Result State",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "content_hash",
+   "fieldtype": "Data",
+   "label": "Content Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correlation_id",
+   "fieldtype": "Data",
+   "label": "Correlation ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "request_id",
+   "fieldtype": "Data",
+   "label": "Request ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "Source IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "label": "Session ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "before_state_hash",
+   "fieldtype": "Data",
+   "label": "Before State Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "after_state_hash",
+   "fieldtype": "Data",
+   "label": "After State Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Decision",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Administrator"
+  },
+  {
+   "read": 1,
+   "role": "Departmental Author"
+  },
+  {
+   "read": 1,
+   "role": "Head of User Department"
+  },
+  {
+   "read": 1,
+   "role": "Procurement Planner"
+  },
+  {
+   "read": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "decision_id,departmental_need",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "autoname": "field:withdrawal_request_id",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "withdrawal_request_id",
+  "departmental_need",
+  "accepted_version",
+  "requested_by",
+  "reason",
+  "status",
+  "planning_dependency_version",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Immutable generated reference used by queue, route and audit.",
+   "fieldname": "withdrawal_request_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Withdrawal Request ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Fixes the version the requester asks to withdraw.",
+   "fieldname": "accepted_version",
+   "fieldtype": "Link",
+   "label": "Accepted Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Enforces requester authority and maker-checker.",
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Explains the business change to the departmental reviewer; 20-1,000 characters.",
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Awaiting review",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Awaiting review\nAwaiting planning clearance\nApproved\nDeclined",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Identifies the Planning dependency result used by the current decision check. System-generated.",
+   "fieldname": "planning_dependency_version",
+   "fieldtype": "Data",
+   "label": "Planning Dependency Version",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Need Withdrawal Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Departmental Author"
+  },
+  {
+   "read": 1,
+   "role": "Head of User Department",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Procurement Planner"
+  },
+  {
+   "read": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "withdrawal_request_id,departmental_need",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

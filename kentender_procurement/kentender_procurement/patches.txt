@@ -12,6 +12,9 @@ kentender_procurement.patches.mvp1_teardown_retire_demand_intake_pre_sync
 kentender_procurement.patches.c02_drop_departmental_submission
 kentender_procurement.patches.pln_revision_preflight
 kentender_procurement.patches.pln_chg_016_preflight
+kentender_procurement.patches.nds_chg_001_v11_departmental_author_role
+kentender_procurement.patches.nds_chg_001_v11_drop_retired_need_doctypes
+kentender_procurement.patches.nds_chg_001_v11_decision_review_task
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
