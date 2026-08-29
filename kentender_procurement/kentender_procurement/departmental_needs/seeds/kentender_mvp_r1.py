@@ -17,13 +17,13 @@ CFG-CHG-002 precedent for ``PE-CGKIS`` — seeds never invent a fallback record
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import frappe
-from frappe.utils import now_datetime
+from frappe.utils import add_days, now_datetime
 from frappe.utils.password import update_password
 
-from kentender_procurement.departmental_needs.services.events import EVENT_ACCEPTED, publish_accepted
+from contextlib import contextmanager
+
+from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_AUDITOR,
 	ROLE_DEPARTMENTAL_AUTHOR,
@@ -33,10 +33,6 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_DRAFT,
 	STATE_RETURNED,
 	STATE_SUBMITTED,
-	VERSION_ACCEPTED,
-	VERSION_DRAFT,
-	VERSION_RETURNED,
-	VERSION_SUBMITTED,
 )
 
 PE = "PE-MOH"
@@ -131,12 +127,17 @@ RETURN_REASON = (
 	"if the approved training cohort has changed."
 )
 
-_ROOT_TO_VERSION = {
-	STATE_DRAFT: VERSION_DRAFT,
-	STATE_SUBMITTED: VERSION_SUBMITTED,
-	STATE_RETURNED: VERSION_RETURNED,
-	STATE_ACCEPTED: VERSION_ACCEPTED,
-}
+
+
+@contextmanager
+def _as(user: str):
+	"""Run a command as a real seeded actor, so `owner` and maker-checker hold."""
+	previous = frappe.session.user
+	frappe.set_user(user)
+	try:
+		yield
+	finally:
+		frappe.set_user(previous)
 
 
 def _ensure_role(name: str) -> None:
@@ -255,170 +256,136 @@ def _actors() -> None:
 	_user_permission(ACTING_REVIEWER, "Organisation Unit", OU_DIGITAL_HEALTH)
 
 
-def _need(spec: dict) -> str:
-	reference = spec["reference"]
-	root_values = {
-		"procuring_entity": PE,
-		"organisation_unit": spec["organisation_unit"],
-		"financial_year": FY,
-		"current_state": spec["state"],
-		"fixture_namespace": NS,
-	}
-	if frappe.db.exists("Departmental Need", reference):
-		frappe.db.set_value("Departmental Need", reference, root_values, update_modified=False)
-	else:
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need",
-				"need_reference": reference,
-				"record_version": 1,
-				**root_values,
-			}
-		).insert(ignore_permissions=True)
-	frappe.db.set_value("Departmental Need", reference, "owner", AUTHOR, update_modified=False)
-
-	version_id = f"{reference}-V001"
-	version_values = {
-		"departmental_need": reference,
-		"version_number": 1,
-		"version_status": _ROOT_TO_VERSION[spec["state"]],
-		"title": spec["title"],
-		"description": spec["description"],
-		"expected_operational_result": spec["expected_operational_result"],
-		"indicative_quantity": spec["indicative_quantity"],
-		"unit": spec["unit"],
-		"required_by_date": spec["required_by_date"],
-		"fixture_namespace": NS,
-	}
-	if frappe.db.exists("Departmental Need Version", version_id):
-		frappe.db.set_value(
-			"Departmental Need Version", version_id, version_values, update_modified=False
-		)
-	else:
-		frappe.get_doc(
-			{"doctype": "Departmental Need Version", "need_version_id": version_id, **version_values}
-		).insert(ignore_permissions=True)
-	frappe.db.set_value("Departmental Need Version", version_id, "owner", AUTHOR, update_modified=False)
-
-	current_version = version_id
-	if spec["state"] == STATE_RETURNED:
-		# §14.3 — Version 2 is the server-created editable copy of the returned V1.
-		current_version = f"{reference}-V002"
-		copy_values = {
-			**version_values,
-			"version_number": 2,
-			"version_status": VERSION_DRAFT,
-			"based_on_version": version_id,
-		}
-		if frappe.db.exists("Departmental Need Version", current_version):
-			frappe.db.set_value(
-				"Departmental Need Version", current_version, copy_values, update_modified=False
-			)
-		else:
-			frappe.get_doc(
-				{
-					"doctype": "Departmental Need Version",
-					"need_version_id": current_version,
-					**copy_values,
-				}
-			).insert(ignore_permissions=True)
-		frappe.db.set_value(
-			"Departmental Need Version", current_version, "owner", AUTHOR, update_modified=False
-		)
-
-	frappe.db.set_value(
-		"Departmental Need",
-		reference,
-		{
-			"current_version": current_version,
-			"current_accepted_version": version_id if spec["state"] == STATE_ACCEPTED else None,
-		},
-		update_modified=False,
-	)
-	return reference
+# §14.3 design-clock decision times (EAT), applied after the commands run.
+DECISION_TIMES = {
+	("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
+	("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
+	("NDS-MOH-2027-0003", "Return for correction"): "2026-11-24 13:35:00",
+}
 
 
-def _decision(need: str, *, action: str, prior: str, result: str, actor: str, reason: str = "", version: str = "") -> None:
-	key = f"nds-seed:{need}:{action}"
-	if frappe.db.exists("Departmental Need Decision", {"idempotency_key": key}):
-		return
-	frappe.get_doc(
-		{
-			"doctype": "Departmental Need Decision",
-			"decision_id": f"NDD-SEED-{uuid4().hex.upper()}",
-			"departmental_need": need,
-			"need_version": version or None,
-			"action": action,
-			"actor": actor,
-			"scope": f"{PE}/{frappe.db.get_value('Departmental Need', need, 'organisation_unit')}/{FY}",
-			"occurred_at": now_datetime(),
-			"reason": reason,
-			"prior_state": prior,
-			"result_state": result,
-			"idempotency_key": key,
-			"fixture_namespace": NS,
-		}
-	).insert(ignore_permissions=True)
+def _build_need(spec: dict) -> str:
+	"""Drive a Need to its §14.3 state through the real §8.2 commands (§14.7).
 
-
-def _accepted_event(need: str) -> None:
-	"""Publish the §7.1 accepted event for a seeded acceptance.
-
-	The seed writes its decisions directly rather than driving the commands, so
-	the outbox row that a real acceptance would have produced has to be created
-	alongside it — otherwise Procurement Planning, which consumes only the
-	published contract, would see no accepted Need at all.
+	Idempotent by reference: a rerun finds the Need already built and returns it
+	rather than driving `create_need` again, which would allocate the next free
+	reference and duplicate the fixture.
 	"""
-	doc = frappe.get_doc("Departmental Need", need)
-	if not doc.current_accepted_version:
-		return
-	if frappe.db.exists(
-		"Departmental Need Event",
-		{
-			"departmental_need": doc.name,
-			"event_type": EVENT_ACCEPTED,
-			"need_version": doc.current_accepted_version,
-		},
-	):
-		return
-	publish_accepted(
-		doc, frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+	reference = spec["reference"]
+	if frappe.db.exists("Departmental Need", reference):
+		return reference
+
+	with _as(AUTHOR):
+		created = lifecycle.create_need(
+			procuring_entity=PE,
+			organisation_unit=spec["organisation_unit"],
+			financial_year=FY,
+			title=spec["title"],
+			description=spec["description"],
+			expected_operational_result=spec["expected_operational_result"],
+			indicative_quantity=spec["indicative_quantity"],
+			unit=spec["unit"],
+			required_by_date=spec["required_by_date"],
+			idempotency_key=f"nds-seed:{reference}:create",
+		)
+	need = created["need"]
+	if need != reference:
+		frappe.throw(
+			f"Seed expected to generate {reference} but the command generated {need}. "
+			"Clear the Departmental Needs fixtures before reseeding (§14.7)."
+		)
+	_namespace(need, created["current_version"])
+
+	if spec["state"] == STATE_DRAFT:
+		return need
+
+	with _as(AUTHOR):
+		submitted = lifecycle.submit_need(
+			need=need,
+			expected_version=created["record_version"],
+			idempotency_key=f"nds-seed:{reference}:submit",
+		)
+	if spec["state"] == STATE_SUBMITTED:
+		return need
+
+	decision = "accept" if spec["state"] == STATE_ACCEPTED else "return"
+	task = frappe.db.get_value(
+		"Departmental Need Review Task",
+		{"departmental_need": need, "status": "Open"},
+		["name", "decision_token"],
+		as_dict=True,
 	)
+	with _as(REVIEWER):
+		result = lifecycle.review_need(
+			need=need,
+			decision=decision,
+			task=task.name,
+			expected_version=submitted["record_version"],
+			decision_token=task.decision_token,
+			idempotency_key=f"nds-seed:{reference}:{decision}",
+			reason=RETURN_REASON if decision == "return" else "",
+		)
+	if result.get("successor_version"):
+		# §14.3 — Version 2 is the server-created editable copy of the returned V1.
+		_namespace(need, result["successor_version"])
+	return need
+
+
+def _namespace(need: str, version: str = "") -> None:
+	frappe.db.set_value("Departmental Need", need, "fixture_namespace", NS, update_modified=False)
+	if version:
+		frappe.db.set_value(
+			"Departmental Need Version", version, "fixture_namespace", NS, update_modified=False
+		)
+
+
+def _stamp_design_clock() -> None:
+	"""§14.3 fixes exact decision times; the commands stamp the wall clock."""
+	for (need, action), when in DECISION_TIMES.items():
+		name = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": need, "action": action},
+			"name",
+			order_by="creation desc",
+		)
+		if name:
+			frappe.db.set_value(
+				"Departmental Need Decision", name, "occurred_at", when, update_modified=False
+			)
 
 
 def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:
-	"""Idempotent §14.3 default profile."""
+	"""Idempotent §14.3 default profile, built through the real commands (§14.7).
+
+	The §14.1 window is only open between 1 Sep and 25 Nov 2026, so seeding
+	opens it for the duration of the build and restores the exact §14.1 instants
+	afterwards. Nothing else about the fixture is adjusted: the states, versions,
+	content hashes, review tasks and published events are exactly what the
+	commands produced.
+	"""
 	_units()
 	_intake_window()
 	_actors()
-	created = [_need(spec) for spec in NEEDS]
-
-	_decision(
-		"NDS-MOH-2027-0001",
-		action="Accept for planning",
-		prior=STATE_SUBMITTED,
-		result=STATE_ACCEPTED,
-		actor=REVIEWER,
-		version="NDS-MOH-2027-0001-V001",
+	restore = frappe.db.get_value(
+		"Needs Intake Window", INTAKE_WINDOW, ["opens_at", "closes_at"], as_dict=True
 	)
-	_decision(
-		"NDS-MOH-2027-0002",
-		action="Submit",
-		prior=STATE_DRAFT,
-		result=STATE_SUBMITTED,
-		actor=AUTHOR,
-		version="NDS-MOH-2027-0002-V001",
+	now = now_datetime()
+	frappe.db.set_value(
+		"Needs Intake Window",
+		INTAKE_WINDOW,
+		{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
+		update_modified=False,
 	)
-	_decision(
-		"NDS-MOH-2027-0003",
-		action="Return for correction",
-		prior=STATE_SUBMITTED,
-		result=STATE_RETURNED,
-		actor=REVIEWER,
-		reason=RETURN_REASON,
-		version="NDS-MOH-2027-0003-V001",
-	)
-	_accepted_event("NDS-MOH-2027-0001")
+	try:
+		created = [_build_need(spec) for spec in NEEDS]
+	finally:
+		frappe.db.set_value(
+			"Needs Intake Window",
+			INTAKE_WINDOW,
+			{"opens_at": restore.opens_at, "closes_at": restore.closes_at},
+			update_modified=False,
+		)
+	_stamp_design_clock()
 	if commit:
 		frappe.db.commit()
 	return {"needs": created}
