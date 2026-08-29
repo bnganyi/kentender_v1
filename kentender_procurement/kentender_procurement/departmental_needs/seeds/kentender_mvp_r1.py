@@ -23,6 +23,7 @@ import frappe
 from frappe.utils import now_datetime
 from frappe.utils.password import update_password
 
+from kentender_procurement.departmental_needs.services.events import EVENT_ACCEPTED, publish_accepted
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_AUDITOR,
 	ROLE_DEPARTMENTAL_AUTHOR,
@@ -360,6 +361,31 @@ def _decision(need: str, *, action: str, prior: str, result: str, actor: str, re
 	).insert(ignore_permissions=True)
 
 
+def _accepted_event(need: str) -> None:
+	"""Publish the §7.1 accepted event for a seeded acceptance.
+
+	The seed writes its decisions directly rather than driving the commands, so
+	the outbox row that a real acceptance would have produced has to be created
+	alongside it — otherwise Procurement Planning, which consumes only the
+	published contract, would see no accepted Need at all.
+	"""
+	doc = frappe.get_doc("Departmental Need", need)
+	if not doc.current_accepted_version:
+		return
+	if frappe.db.exists(
+		"Departmental Need Event",
+		{
+			"departmental_need": doc.name,
+			"event_type": EVENT_ACCEPTED,
+			"need_version": doc.current_accepted_version,
+		},
+	):
+		return
+	publish_accepted(
+		doc, frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+	)
+
+
 def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:
 	"""Idempotent §14.3 default profile."""
 	_units()
@@ -392,6 +418,7 @@ def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:
 		reason=RETURN_REASON,
 		version="NDS-MOH-2027-0003-V001",
 	)
+	_accepted_event("NDS-MOH-2027-0001")
 	if commit:
 		frappe.db.commit()
 	return {"needs": created}

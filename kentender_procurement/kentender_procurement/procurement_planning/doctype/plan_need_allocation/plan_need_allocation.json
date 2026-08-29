@@ -9,6 +9,7 @@
   "plan_item",
   "departmental_need",
   "departmental_need_version",
+  "source_content_hash",
   "source_organisation_unit",
   "allocated_quantity",
   "status",
@@ -47,6 +48,13 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "description": "The accepted version's content hash at allocation time, retaining Need/version/hash lineage (NDS-AC-037).",
+   "fieldname": "source_content_hash",
+   "fieldtype": "Data",
+   "label": "Source Content Hash",
+   "read_only": 1
   },
   {
    "fieldname": "source_organisation_unit",

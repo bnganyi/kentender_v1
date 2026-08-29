@@ -1,0 +1,148 @@
+{
+ "actions": [],
+ "autoname": "field:event_id",
+ "creation": "2026-08-29 18:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_id",
+  "event_type",
+  "departmental_need",
+  "sequence",
+  "need_version",
+  "superseded_version",
+  "occurred_at",
+  "payload",
+  "status",
+  "consumer",
+  "delivered_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Immutable generated event identity, unique across the outbox.",
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Event ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "The versioned contract this payload satisfies (§7.1).",
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Event Type",
+   "options": "DepartmentalNeedAccepted.v2\nDepartmentalNeedSuperseded.v1\nDepartmentalNeedWithdrawn.v1",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Monotonic per Need. Consumers apply events in this order (§7.1).",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "need_version",
+   "fieldtype": "Link",
+   "label": "Need Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The version this event supersedes, for the supersession contract only.",
+   "fieldname": "superseded_version",
+   "fieldtype": "Link",
+   "label": "Superseded Version",
+   "options": "Departmental Need Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "label": "Occurred At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The exact §7.1 contract payload as JSON. Never edited after write.",
+   "fieldname": "payload",
+   "fieldtype": "Long Text",
+   "label": "Payload",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nDelivered",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The downstream module that acknowledged delivery.",
+   "fieldname": "consumer",
+   "fieldtype": "Data",
+   "label": "Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_at",
+   "fieldtype": "Datetime",
+   "label": "Delivered At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Event",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "read": 1, "role": "System Manager", "write": 1},
+  {"create": 1, "read": 1, "role": "Administrator", "write": 1},
+  {"read": 1, "role": "Procurement Planner"},
+  {"read": 1, "role": "Auditor"}
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "event_id,departmental_need,event_type",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

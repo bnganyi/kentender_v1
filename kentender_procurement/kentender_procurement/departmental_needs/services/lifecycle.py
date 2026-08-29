@@ -86,6 +86,11 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	require_create,
 	require_review_command,
 )
+from kentender_procurement.departmental_needs.services.events import (
+	publish_accepted,
+	publish_superseded,
+	publish_withdrawn,
+)
 from kentender_procurement.departmental_needs.services.usage import planning_usage_detail
 
 
@@ -746,7 +751,7 @@ def review_need(
 	reason_text = _require_reason(reason) if action in REASON_REQUIRED_ACTIONS else ""
 	_consume_task(task, doc.name, task_type, decision_token)
 	_set_version_status(version, version_status)
-	superseded, successor = "", ""
+	superseded, successor, earlier = "", "", None
 	if decision == "return":
 		# §5.1 / §5.2 / NDS-AC-011 — the submitted snapshot is preserved and a
 		# copied correction Draft is created server-side; it is never unlocked
@@ -757,12 +762,12 @@ def review_need(
 		doc.current_version = copy.name
 		successor = copy.name
 	elif decision == "accept":
-		# NDS-AC-017 — supersession and repointing happen in this one transaction.
+		# NDS-AC-017 — supersession, repointing and the published lineage all
+		# happen in this one transaction.
 		if task_type == TASK_SUCCESSOR_ACCEPTANCE:
 			superseded = cstr(doc.current_accepted_version)
-			_set_version_status(
-				frappe.get_doc("Departmental Need Version", superseded), VERSION_SUPERSEDED
-			)
+			earlier = frappe.get_doc("Departmental Need Version", superseded)
+			_set_version_status(earlier, VERSION_SUPERSEDED)
 		doc.current_accepted_version = version.name
 		doc.current_version = version.name
 	elif task_type == TASK_SUCCESSOR_ACCEPTANCE:
@@ -784,10 +789,19 @@ def review_need(
 		before_hash=before_hash,
 		content_hash=cstr(version.content_hash),
 	)
+	# §7.1 — the outbox row lands in this same transaction, so the event exists
+	# if and only if the acceptance committed.
+	event = ""
+	if decision == "accept":
+		if superseded:
+			event = publish_superseded(doc, earlier=earlier, successor=version)
+		else:
+			event = publish_accepted(doc, version)
 	notify_need_transition(doc, action=action)
 	result = _result(doc, action=action, task=task)
 	result["successor_version"] = successor
 	result["superseded_version"] = superseded
+	result["event_id"] = event
 	return result
 
 
@@ -1097,7 +1111,16 @@ def decide_withdrawal(
 			)
 		action, target = ACTION_APPROVE_WITHDRAWAL, STATE_WITHDRAWN
 		reason_text = ""
+		withdrawn_event = publish_withdrawn(
+			doc,
+			version=frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+			if doc.current_accepted_version
+			else None,
+			withdrawal_request=request.name,
+			decided_by=principal,
+		)
 	elif decision == "evaluate":
+		withdrawn_event = ""
 		if not dependency["included"]:
 			fail(
 				"NDS_STATE_CONFLICT",
@@ -1112,6 +1135,7 @@ def decide_withdrawal(
 		)
 		target, reason_text = STATE_ACCEPTED, ""
 	else:
+		withdrawn_event = ""
 		reason_text = _require_reason(reason)
 		_consume_task(task, doc.name, TASK_WITHDRAWAL, decision_token)
 		_update_request(request, WITHDRAWAL_DECLINED, dependency)
@@ -1136,6 +1160,7 @@ def decide_withdrawal(
 	result["withdrawal_request"] = request.name
 	result["withdrawal_status"] = _request_status(request.name)
 	result["dependency"] = dependency
+	result["event_id"] = withdrawn_event
 	return result
 
 
