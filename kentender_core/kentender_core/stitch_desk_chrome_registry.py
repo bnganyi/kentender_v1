@@ -49,24 +49,11 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 	# components in the Industry design system, not Stitch HTML ports (same
 	# precedent as kentender_strategy's Phase 7 rebuild above), so they do
 	# not get a row here — no coverage is being dropped.
-	{
-		"id": "departmental-needs",
-		"app": "kentender_procurement",
-		"fixture_rel": "public/js/departmental_needs_page.js",
-		"desk_route": "departmental-needs",
-		"primary_cta_testid": "",
-		"select_filter_attr": "",
-		"headline_selector": "[data-testid='departmental-needs-workspace'] h1",
-	},
-	{
-		"id": "departmental-needs-new",
-		"app": "kentender_procurement",
-		"fixture_rel": "public/js/departmental_needs_create_page.js",
-		"desk_route": "departmental-needs-new",
-		"primary_cta_testid": "kt-nds-create-submit",
-		"select_filter_attr": "",
-		"headline_selector": "[data-testid='departmental-needs-new'] h1",
-	},
+	# The Departmental Needs pages were removed in the NDS-CHG-001 v1.1 UI
+	# rebuild, and their fixture files are deleted with them. The replacement
+	# is a hand-authored Vue 3 page in the Industry design system, not a
+	# Stitch HTML port, so it does not get a row here — the same precedent as
+	# the Budget and Strategy rebuilds noted above. No coverage is dropped.
 	{
 		"id": "planning-workspace",
 		"app": "kentender_procurement",

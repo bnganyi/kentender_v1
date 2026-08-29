@@ -18,22 +18,13 @@
    "role": "System Manager"
   },
   {
-   "role": "Departmental Need Requester"
+   "role": "Departmental Author"
   },
   {
    "role": "Head of User Department"
   },
   {
-   "role": "Departmental Review Delegate"
-  },
-  {
-   "role": "Procurement Planner"
-  },
-  {
-   "role": "Budget Officer"
-  },
-  {
-   "role": "Accounting Officer"
+   "role": "Auditor"
   }
  ],
  "script": null,

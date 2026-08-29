@@ -65,7 +65,15 @@ def _version_facts(version: str) -> dict[str, Any]:
 		["name", "version_number", "version_status", "content_hash", *VERSION_CONTENT_FIELDS],
 		as_dict=True,
 	)
-	return dict(row) if row else {}
+	if not row:
+		return {}
+	facts = dict(row)
+	facts["unit_label"] = cstr(
+		frappe.db.get_value("Unit Of Measure", facts.get("unit"), "unit_label")
+		or facts.get("unit")
+		or ""
+	)
+	return facts
 
 
 def _quantity_label(version: dict[str, Any]) -> str:
@@ -78,7 +86,8 @@ def _quantity_label(version: dict[str, Any]) -> str:
 		or version.get("unit")
 		or ""
 	)
-	return f"{value} {label}".strip()
+	# NDS-DES-01/02 render the unit in lower case beside the quantity.
+	return f"{value} {label.lower()}".strip()
 
 
 def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
@@ -147,6 +156,7 @@ def get_workspace(
 			"actions": [],
 		}
 	fy = cstr(financial_year).strip()
+	_fy_rows = selectable_financial_years()
 	filters: dict[str, Any] = {
 		"procuring_entity": selected["procuring_entity"],
 		"organisation_unit": selected["organisation_unit"],
@@ -193,7 +203,7 @@ def get_workspace(
 				"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 				"quantity_label": _quantity_label(version),
 				"required_by": str(required_by or ""),
-				"required_by_label": formatdate(required_by, "d MMMM yyyy") if required_by else "",
+				"required_by_label": formatdate(required_by, "d MMM yyyy") if required_by else "",
 				"status": doc.current_state,
 				"planning_usage": planning_usage(doc.name),
 				"record_version": doc.record_version,
@@ -205,7 +215,13 @@ def get_workspace(
 		"outcome": "READY",
 		"contexts": contexts,
 		"financial_years": selectable_financial_years(),
-		"context": {**selected, "financial_year": fy},
+		"context": {
+			**selected,
+			"financial_year": fy,
+			"financial_year_label": next(
+				(row["label"] for row in _fy_rows if row["id"] == fy), fy
+			),
+		},
 		"needs": needs,
 		"count_label": f"{len(needs)} need" if len(needs) == 1 else f"{len(needs)} needs",
 		"actions": [{"code": "create", "label": "Create need"}],
@@ -341,6 +357,24 @@ def get_current_accepted_need(
 	}
 
 
+def _scope_labels(doc) -> dict[str, str]:
+	"""Display names for the Need's scope; the artboards never show raw IDs."""
+	return {
+		"procuring_entity": cstr(
+			frappe.db.get_value("Procuring Entity", doc.procuring_entity, "legal_name")
+			or doc.procuring_entity
+		),
+		"organisation_unit": cstr(
+			frappe.db.get_value("Organisation Unit", doc.organisation_unit, "unit_name")
+			or doc.organisation_unit
+		),
+		"financial_year": cstr(
+			frappe.db.get_value("Financial Year", doc.financial_year, "label")
+			or doc.financial_year
+		),
+	}
+
+
 def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 	principal = actor(user)
 	if not frappe.db.exists("Departmental Need", need):
@@ -367,9 +401,29 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				+ " at "
 				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
 			}
+	accepted = None
+	if doc.current_state == STATE_ACCEPTED:
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{
+				"departmental_need": doc.name,
+				"action": ("in", ["Accept for planning", "Accept successor"]),
+			},
+			["actor", "occurred_at"],
+			order_by="occurred_at desc",
+			as_dict=True,
+		)
+		if row:
+			accepted = {
+				"actor": row.actor,
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_at": str(row.occurred_at),
+			}
 	return {
 		"ok": True,
 		"need": doc.as_dict(no_nulls=True),
+		"scope_labels": _scope_labels(doc),
+		"accepted": accepted,
 		"current_version": _version_facts(doc.current_version),
 		"accepted_version": _version_facts(doc.current_accepted_version),
 		"latest_return": latest_return,
