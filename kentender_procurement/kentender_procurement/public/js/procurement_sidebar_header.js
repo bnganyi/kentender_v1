@@ -115,7 +115,7 @@
 		add(path);
 		var groups = [
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
-			["/desk/demands-workspace"],
+			["/desk/departmental-needs"],
 			["/desk/budget-hub", "/desk/budget-management"],
 			["/desk/planning-workspace", "/desk/procurement-planning", "/desk/planning-hub"],
 			["/desk/strategy-management"],
@@ -134,13 +134,10 @@
 			add("/desk/budget-hub");
 			add("/desk/budget-management");
 		}
-		if (
-			/^\/desk\/(demand-form|demand-review|demand-detail|demand-performance)(\/|$)/.test(
-				path
-			)
-		) {
-			add("/desk/demands-workspace");
-		}
+		// The demand-form/-review/-detail/-performance routes and the workspace
+		// they resolved to were all deleted with the Demands module
+		// (NDS-CHG-001 v1.1 Phase 8); Departmental Needs owns its own §10 routes
+		// and needs no ancestor mapping.
 		if (/^\/desk\/it-tender-configuration(?!-dashboard)([/-]|$)/.test(path)) {
 			add("/desk/it-tender-configuration-dashboard");
 		}

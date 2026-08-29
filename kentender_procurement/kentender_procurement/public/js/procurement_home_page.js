@@ -230,7 +230,7 @@
 			rows +
 			"</tbody></table></div>" +
 			'<div class="kt-ph-footer-link"><button type="button" class="kt-ph-link-btn" data-kt-ph-nav="' +
-			_esc(section.view_all_url || "/desk/demands-workspace") +
+			_esc(section.view_all_url || "/desk/departmental-needs") +
 			'">View all work <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_forward</span></button></div>';
 	}
 

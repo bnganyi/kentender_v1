@@ -100,6 +100,23 @@ PUBLISHED_TO_PLANNING = frozenset(
 # so the permitted set in this direction is empty by design.
 PUBLISHED_TO_NEEDS: frozenset[str] = frozenset()
 
+# Procurement Home renders the cross-module dashboard, so it consumes Needs too.
+# It was outside this guard until its pipeline was rewired (the two Demand-era
+# stages returned a hard-coded 0 and linked to a deleted route), which made the
+# boundary accidental there rather than enforced: nothing would have caught
+# Procurement Home querying `tabDepartmental Need` directly. `usage` is allowed
+# alongside `events` because the §4.7 planning-usage projection is the published
+# way to ask whether an Active Plan already represents an accepted version.
+HOME = "procurement_home"
+PUBLISHED_TO_HOME = frozenset(
+	{
+		f"kentender_procurement.{NEEDS}.constants",
+		f"kentender_procurement.{NEEDS}.services.events",
+		f"kentender_procurement.{NEEDS}.services.usage",
+		f"kentender_procurement.{NEEDS}.services.workspace",
+	}
+)
+
 
 def _sources(package: str) -> list[tuple[str, str]]:
 	"""Every non-test module in *package*, as (relative path, source).
@@ -188,6 +205,30 @@ class DepartmentalNeedsArchitectureTest(IntegrationTestCase):
 			offenders,
 			[],
 			msg=f"only {sorted(PUBLISHED_TO_PLANNING)} may be imported by Planning",
+		)
+
+	def test_procurement_home_never_touches_a_needs_table(self):
+		offenders = [
+			f"{relative}: {hit}"
+			for relative, source in _sources(HOME)
+			for hit in data_access_violations(source, NEEDS_DOCTYPES)
+		]
+		self.assertEqual(
+			offenders,
+			[],
+			msg="Procurement Home must count Accepted Needs through the published contract",
+		)
+
+	def test_procurement_home_imports_only_the_published_contract(self):
+		offenders = [
+			f"{relative}: {hit}"
+			for relative, source in _sources(HOME)
+			for hit in import_violations(source, NEEDS, PUBLISHED_TO_HOME)
+		]
+		self.assertEqual(
+			offenders,
+			[],
+			msg=f"only {sorted(PUBLISHED_TO_HOME)} may be imported by Procurement Home",
 		)
 
 	def test_needs_never_touches_a_planning_table(self):

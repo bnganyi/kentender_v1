@@ -101,3 +101,52 @@ reading the upload copy would build against unapproved text.
 **Fix.** Delete the upload copy, or move it under a clearly-dated `superseded/`
 directory. Left alone here because deleting a document is the Project Owner's call,
 not an implementation decision.
+
+---
+
+## FU-06 — No published count contract for Needs under review
+
+**What.** Procurement Home's pipeline previously carried a **Demands under
+review** stage. It was replaced rather than relabelled, because §8.1 publishes
+no contract that answers "how many Needs are awaiting departmental decision in
+this Procuring Entity". The stage was dropped instead of being wired, leaving a
+five-stage pipeline in which every number is real.
+
+**Why it matters.** The funnel now jumps from nothing to *Accepted needs
+awaiting planning*, so the review backlog is invisible on the landing page even
+though it is the stage a Head of User Department most needs to see. The
+information exists; only a published way to ask for it does not.
+
+**Why it was not just added.** §8.1 is a closed contract set, asserted by
+`test_departmental_needs_contracts.py` to equal its documented names exactly.
+Adding an endpoint is a specification change (an NDS-CHG-001 v1.2), not an
+implementation decision. Reading `tabDepartmental Need` from `procurement_home`
+would have been the alternative, and the architecture guard now explicitly
+forbids it — that module was outside the D1 boundary check until this change,
+which is why nothing caught the original defect.
+
+**Fix.** Add a scoped count read to §8.1 in the next NDS specification version
+(`get_needs_pipeline_counts`, PE-scoped, returning per-state counts), then
+restore the stage sourced from it.
+
+---
+
+## FU-07 — Procurement Home and Departmental Needs disagree about "financial year"
+
+**What.** Procurement Home derives an **integer start year** from Budget's
+`fiscal_period` column (`2026/27` → `2026`) and shows it as "FINANCIAL YEAR
+2026". Departmental Needs, Planning and Strategy key on **`Financial Year`
+records** (`FY-2027-2028`, label `2027/28`). The site currently has no Financial
+Year record starting before 2027, so the year the landing page displays
+corresponds to no record at all.
+
+**Why it matters.** Any Home counter that filters Needs by the selected year
+silently returns zero forever — exactly the failure FU-06's stage was replacing.
+`_count_needs_awaiting_planning` therefore sums across every Financial Year
+rather than the selected one, which is correct for a funnel count but means the
+page's year selector does not filter it.
+
+**Fix.** Decide which vocabulary is authoritative for cross-module context (the
+`Financial Year` doctype is the stronger candidate — three modules already use
+it) and migrate Procurement Home's selector onto it. Until then, do not add
+Home counters keyed on the integer year.

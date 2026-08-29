@@ -1,7 +1,22 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Procurement Home — six-stage mutually exclusive pipeline counts."""
+"""Procurement Home — five-stage mutually exclusive pipeline counts.
+
+The first two stages used to be **Demands under review** and **Approved demands
+awaiting planning**. NDS-CHG-001 v1.1 replaced the Demands module with
+Departmental Needs, and neither stage was updated: both counters returned a
+hard-coded `0` behind a guard their own comments described as "permanently
+unreachable", and both linked to `/desk/demands-workspace`, a route Phase 8
+deleted. The dashboard therefore showed two stages that always read zero and
+navigated to a 404.
+
+They are replaced by one stage that reports real data. There is no fifth
+counter for "needs under review" because §8.1 publishes no count contract for
+submitted Needs, and inventing one here would mean reading another module's
+tables directly — see FOLLOW_UPS FU-06. A five-stage pipeline whose every
+number is true is worth more than a six-stage one carrying a permanent zero.
+"""
 
 from __future__ import annotations
 
@@ -10,17 +25,18 @@ from typing import Any
 import frappe
 from frappe.utils import get_datetime, now_datetime
 
-from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
-from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-	demand_doctype_available,
+from kentender_procurement.departmental_needs.constants import USAGE_FULL
+from kentender_procurement.departmental_needs.services.events import (
+	current_accepted_events,
 )
+from kentender_procurement.departmental_needs.services.usage import planning_usage
+from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
 
 PIPELINE_STAGES = (
-	("demands_under_review", "Demands under review", "/desk/demands-workspace"),
 	(
-		"approved_awaiting_planning",
-		"Approved demands awaiting planning",
-		"/desk/demands-workspace",
+		"needs_awaiting_planning",
+		"Accepted needs awaiting planning",
+		"/desk/departmental-needs",
 	),
 	("plan_awaiting_tender", "Plan items awaiting tender initiation", "/desk"),
 	("tenders_in_preparation", "Tenders in preparation", "/desk/tender-management-v2"),
@@ -41,20 +57,31 @@ _TM_CLOSED_AWAITING = frozenset(("Closed", "Closed - No Valid Submissions", "Ope
 _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
-def _count_demands_under_review(pe: str, user: str) -> int:
-	_ = pe, user
-	# Demands package retired; guard is permanently unreachable but kept explicit.
-	if not demand_doctype_available():
-		return 0
-	return 0
+def _count_needs_awaiting_planning(pe: str) -> int:
+	"""Accepted Needs in this PE that no Active Plan yet represents.
 
+	Read through the published Departmental Needs surface, never its tables:
+	`current_accepted_events` is documented as "the published way for a consumer
+	to rebuild or reconcile its projection", and `planning_usage` is the §4.7
+	projection. That keeps the D1 ownership boundary real for this module too —
+	the architecture guard now covers `procurement_home`, not just Planning.
 
-def _count_approved_awaiting_planning(pe: str, user: str | None = None) -> int:
-	_ = pe, user
-	# Demands package retired; guard is permanently unreachable but kept explicit.
-	if not demand_doctype_available():
+	Summed across every Financial Year rather than the page's selected one,
+	because the two use different vocabularies: Procurement Home derives an
+	integer start year from Budget's `fiscal_period` (2026), while Needs key on
+	`Financial Year` records (`FY-2027-2028`). Filtering by the selected year
+	would silently reintroduce the permanent zero this stage exists to remove.
+	"""
+	if not frappe.db.exists("DocType", "Departmental Need"):
 		return 0
-	return 0
+	years = frappe.get_all("Financial Year", pluck="name", limit_page_length=0)
+	awaiting = 0
+	for year in years:
+		for payload in current_accepted_events(procuring_entity=pe, financial_year=year):
+			need = payload.get("need_id") or payload.get("need")
+			if need and planning_usage(need) != USAGE_FULL:
+				awaiting += 1
+	return awaiting
 
 
 def _packages_with_tender_initiation(pe: str) -> set[str]:
@@ -177,8 +204,7 @@ def get_home_pipeline(
 		procuring_entity
 	)
 	counts = {
-		"demands_under_review": _count_demands_under_review(procuring_entity, user),
-		"approved_awaiting_planning": _count_approved_awaiting_planning(procuring_entity, user),
+		"needs_awaiting_planning": _count_needs_awaiting_planning(procuring_entity),
 		"plan_awaiting_tender": _count_plan_awaiting_tender(procuring_entity),
 		"tenders_in_preparation": _count_tenders_in_preparation(procuring_entity),
 		"published_and_open": published_open,

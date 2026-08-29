@@ -143,6 +143,6 @@ def get_home_actions(
 		"ok": True,
 		"items": capped,
 		"pending_count": len(capped),
-		"view_all_url": "/desk/demands-workspace",
+		"view_all_url": "/desk/departmental-needs",
 		"empty": len(capped) == 0,
 	}
