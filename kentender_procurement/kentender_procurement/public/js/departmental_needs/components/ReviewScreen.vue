@@ -19,6 +19,8 @@
 				v-for="option in TABS"
 				:key="option.key"
 				class="kt-tab"
+				data-testid="nds-review-tab"
+				:data-tab="option.key"
 				:class="{ 'is-selected': tab === option.key }"
 				role="tab"
 				:aria-selected="tab === option.key"

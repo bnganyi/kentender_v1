@@ -13,7 +13,7 @@
 			Set when departments may create and initially submit needs for this Financial Year.
 		</p>
 
-		<div v-if="errorSummary" ref="errorEl" class="kt-error-summary" role="alert" tabindex="-1">
+		<div v-if="errorSummary" ref="errorEl" data-testid="nds-error-summary" class="kt-error-summary" role="alert" tabindex="-1">
 			{{ errorSummary }}
 		</div>
 
@@ -26,11 +26,11 @@
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-opens-at">Opens at</label>
-					<input id="nds-opens-at" class="kt-input" type="datetime-local" v-model="form.opens_at" />
+					<input id="nds-opens-at" data-testid="nds-opens-at" class="kt-input" type="datetime-local" v-model="form.opens_at" />
 				</div>
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-closes-at">Closes at</label>
-					<input id="nds-closes-at" class="kt-input" type="datetime-local" v-model="form.closes_at" />
+					<input id="nds-closes-at" data-testid="nds-closes-at" class="kt-input" type="datetime-local" v-model="form.closes_at" />
 					<div style="font-size: 12.5px; color: var(--color-neutral-600); margin-top: 6px">
 						The closing instant is inclusive.
 					</div>
@@ -39,7 +39,17 @@
 		</div>
 
 		<div class="kt-page-footer" style="justify-content: flex-end">
-			<button class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('save', form)">
+			<!-- §12.7 / §17 — the server decides who maintains the window
+			     (NDS-AC-043), and refuses anyone else with NDS_SCOPE_DENIED. The
+			     page does not offer a command the role does not hold, matching
+			     Create need (NDS-807). -->
+			<button
+				v-if="window.can_maintain"
+				class="kt-btn kt-btn-primary"
+				data-testid="nds-save-window"
+				:disabled="pending"
+				@click="$emit('save', form)"
+			>
 				Save window
 			</button>
 		</div>

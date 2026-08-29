@@ -24,6 +24,7 @@
 					<textarea
 						:id="fieldId"
 						ref="reasonEl"
+						data-testid="nds-dialog-reason"
 						class="kt-input"
 						rows="4"
 						:value="modelValue"
@@ -36,11 +37,12 @@
 				</div>
 			</div>
 			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
 					:class="destructive ? 'kt-btn-destructive' : 'kt-btn kt-btn-primary'"
+					data-testid="nds-dialog-confirm"
 					:disabled="pending"
 					@click="$emit('confirm')"
 				>

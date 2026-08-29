@@ -62,7 +62,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	REVIEWER,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import lifecycle
+from kentender_procurement.departmental_needs.services import lifecycle, workspace
 from kentender_procurement.departmental_needs.services.context import intake_window
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
@@ -766,3 +766,86 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(
 			self.status_of(accepted["current_accepted_version"]), VERSION_ACCEPTED
 		)
+
+
+class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
+	"""§12.2 — a submitted successor must appear in the reviewer's queue.
+
+	NDS-UI-02's queue is the only route to NDS-UI-05 (§10 gives the task screen
+	no menu entry of its own), so an action derived from the root Need state
+	strands the whole successor lifecycle: §5.2 deliberately holds the root at
+	`Accepted for planning` while the successor is under review, exactly so the
+	earlier accepted version stays effective for Planning.
+
+	Built through the real commands rather than the §14.5 `successor` seed
+	profile, which drives supersession all the way to Accepted and so never
+	leaves an open task to find.
+	"""
+
+	def submitted_successor(self):
+		accepted = self.accepted()
+		frappe.set_user(AUTHOR)
+		opened = lifecycle.create_accepted_need_successor(
+			need=accepted["need"],
+			expected_version=accepted["record_version"],
+			idempotency_key=self.key(),
+		)
+		saved = lifecycle.update_need(
+			need=accepted["need"],
+			expected_version=opened["record_version"],
+			idempotency_key=self.key(),
+			**self.content(required_by_date="2027-09-15"),
+		)
+		submitted = lifecycle.submit_need(
+			need=accepted["need"],
+			expected_version=saved["record_version"],
+			idempotency_key=self.key(),
+		)
+		frappe.set_user("Administrator")
+		return accepted, submitted
+
+	def reviewer_row(self, need: str) -> dict:
+		frappe.set_user(REVIEWER)
+		try:
+			result = workspace.get_workspace(
+				user=REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+			)
+		finally:
+			frappe.set_user("Administrator")
+		reference = frappe.db.get_value("Departmental Need", need, "need_reference")
+		rows = [row for row in result["needs"] if row["reference"] == reference]
+		self.assertEqual(len(rows), 1, msg=f"{reference} missing from the reviewer's rows")
+		return rows[0]
+
+	def test_the_root_stays_accepted_while_the_successor_waits(self):
+		accepted, _ = self.submitted_successor()
+		need = frappe.get_doc("Departmental Need", accepted["need"])
+		self.assertEqual(need.current_state, STATE_ACCEPTED)
+		self.assertEqual(
+			frappe.db.get_value(
+				"Departmental Need Review Task",
+				{"departmental_need": need.name, "status": TASK_OPEN},
+				"task_type",
+			),
+			"Successor acceptance",
+		)
+
+	def test_the_reviewer_is_offered_the_open_successor_decision(self):
+		accepted, _ = self.submitted_successor()
+		row = self.reviewer_row(accepted["need"])
+		self.assertEqual(row["actions"][0]["code"], "review")
+		self.assertTrue(row["actions"][0]["task"], msg="the action must carry its task")
+
+	def test_the_author_who_submitted_it_is_offered_no_decision(self):
+		"""NDS-AC-010 — maker-checker survives the change of derivation."""
+		accepted, _ = self.submitted_successor()
+		frappe.set_user(AUTHOR)
+		try:
+			result = workspace.get_workspace(
+				user=AUTHOR, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+			)
+		finally:
+			frappe.set_user("Administrator")
+		reference = frappe.db.get_value("Departmental Need", accepted["need"], "need_reference")
+		row = next(row for row in result["needs"] if row["reference"] == reference)
+		self.assertNotIn("review", {action["code"] for action in row["actions"]})

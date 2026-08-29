@@ -5,7 +5,16 @@
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<!-- §16.1 — one stable page-ready hook for every screen. A spec waits
+		     for [data-testid="nds-shell"][data-loading="false"] with the
+		     data-screen it expects, rather than racing a visual class. -->
+		<div
+			class="kt-shell"
+			data-testid="nds-shell"
+			:data-screen="selectionRequired ? 'context-selection' : screen"
+			:data-loading="loading ? 'true' : 'false'"
+			:data-reference="needReference || ''"
+		>
 			<ContextPicker
 				v-if="selectionRequired"
 				:contexts="workspace.contexts || []"
@@ -225,7 +234,11 @@ const selectionRequired = computed(
 	() =>
 		!loading.value &&
 		!error.value &&
-		["workspace", "review"].includes(screen.value) &&
+		// §12.1 — the intake window is defined per PE/FY, so it needs a resolved
+		// context exactly as the lists do. Without this the Procurement Planner,
+		// who is scoped to several Procuring Entities and no department, reached
+		// NDS-UI-08 with no context at all and edited a window bound to nothing.
+		["workspace", "review", "intake"].includes(screen.value) &&
 		(workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
 			// The context is PE/OU *and* FY (§12.1). With several selectable
 			// years, rows must not be listed against an unresolved one.
@@ -317,8 +330,13 @@ const reviewRows = computed(() => {
 	const rows = workspace.value.needs || [];
 	if (reviewTab.value !== "queue") return rows;
 	// §12.2 — the queue is Open tasks only, after maker-checker exclusion,
-	// which the server already applied by giving the row a review action.
-	return rows.filter((row) => (row.actions || []).some((a) => a.code === "review"));
+	// which the server already applied by giving the row a decision action.
+	// Both decision kinds belong here: an open withdrawal request is a decision
+	// this reviewer holds, and §10 gives NDS-UI-07 no other entry point.
+	const DECISIONS = ["review", "withdrawal"];
+	return rows.filter((row) =>
+		(row.actions || []).some((action) => DECISIONS.includes(action.code))
+	);
 });
 
 // --- loading ---------------------------------------------------------------
@@ -509,6 +527,10 @@ async function onSaveWindow(form) {
 function onRowAction(row, action) {
 	if (action.code === "review") {
 		go("review", action.task);
+	} else if (action.code === "withdrawal") {
+		// §12.6 — a withdrawal decision is its own screen (NDS-UI-07) under the
+		// same task, not the acceptance task screen.
+		go("review", action.task, "withdrawal");
 	} else if (action.code === "edit") {
 		go(row.reference, "edit");
 	} else {

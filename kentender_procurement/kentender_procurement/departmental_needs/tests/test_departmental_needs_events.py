@@ -7,9 +7,7 @@ reaches accepted Needs only through the published handoff contract.
 
 from __future__ import annotations
 
-import ast
 import json
-import pathlib
 from uuid import uuid4
 
 import frappe
@@ -411,83 +409,23 @@ class TestOutboxDelivery(EventCase):
 
 
 class TestPlanningBoundary(EventCase):
-	"""Firm D1 — Planning reaches Needs only through the published contract."""
+	"""Superseded by NDS-910 — see `test_departmental_needs_architecture.py`.
 
-	PLANNING_MODULES = (
-		"procurement_planning/services/need_allocations.py",
-		"procurement_planning/doctype/plan_need_allocation/plan_need_allocation.py",
-	)
+	Phase 5 wrote the D1 boundary guard here, scanning the two Planning files it
+	was rewriting at the time and only the Planning → Needs direction. Phase 9
+	replaced it with a scan over both packages in full, in both directions: the
+	narrow version passed while a deliberate `frappe.get_all("Departmental Need
+	Version", ...)` sat in `procurement_planning/services/__init__.py`, one of the
+	hundred-odd files it never opened.
 
-	# Frappe data access that names a doctype as its first argument.
-	ACCESSORS = {
-		"get_all",
-		"get_list",
-		"get_doc",
-		"new_doc",
-		"get_value",
-		"set_value",
-		"get_single_value",
-		"exists",
-		"count",
-		"delete",
-		"get_cached_doc",
-		"get_cached_value",
-	}
-	NEEDS_DOCTYPES = {
-		"Departmental Need",
-		"Departmental Need Version",
-		"Departmental Need Decision",
-		"Departmental Need Review Task",
-		"Departmental Need Event",
-		"Need Withdrawal Request",
-		"Needs Intake Window",
-		"Need Planning Usage Projection",
-	}
+	The DEBT-03 closure evidence points at the Phase 5 guard, so this class stays
+	as a signpost rather than vanishing from the history.
+	"""
 
-	def test_planning_never_queries_a_departmental_needs_table(self):
-		"""Detect real access, not the prose that forbids it.
+	def test_the_boundary_guard_lives_in_the_architecture_module(self):
+		from kentender_procurement.departmental_needs.tests import (
+			test_departmental_needs_architecture as architecture,
+		)
 
-		A plain text scan is useless in both directions here: these files
-		document the boundary in their docstrings, and stripping every string
-		literal to avoid that would also hide `frappe.get_all("Departmental
-		Need", …)` — the exact call the test exists to catch. So walk the AST
-		and look at what is actually being called, plus any raw SQL naming a
-		Needs table.
-		"""
-		root = pathlib.Path(lifecycle.__file__).parents[2]
-		offenders = []
-		for relative in self.PLANNING_MODULES:
-			tree = ast.parse((root / relative).read_text())
-			for node in ast.walk(tree):
-				if not isinstance(node, ast.Call):
-					continue
-				func = node.func
-				name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
-				first = node.args[0] if node.args else None
-				value = first.value if isinstance(first, ast.Constant) else None
-				if name in self.ACCESSORS and value in self.NEEDS_DOCTYPES:
-					offenders.append(f"{relative}: {name}({value!r})")
-				if name == "sql" and isinstance(value, str) and "tabDepartmental Need" in value:
-					offenders.append(f"{relative}: raw SQL on a Needs table")
-			for node in ast.walk(tree):
-				if isinstance(node, ast.Constant) and isinstance(node.value, str):
-					if "tabDepartmental Need" in node.value or "tabNeed " in node.value:
-						offenders.append(f"{relative}: SQL string naming a Needs table")
-		self.assertEqual(sorted(set(offenders)), [], f"direct Needs access survives: {offenders}")
-
-	def test_planning_imports_only_published_contracts(self):
-		root = pathlib.Path(lifecycle.__file__).parents[2]
-		allowed = {
-			"kentender_procurement.departmental_needs.services.events",
-			"kentender_procurement.departmental_needs.services.workspace",
-		}
-		offenders = []
-		for relative in self.PLANNING_MODULES:
-			for line in (root / relative).read_text().splitlines():
-				line = line.strip()
-				if not line.startswith("from kentender_procurement.departmental_needs"):
-					continue
-				module = line.split(" import ")[0].removeprefix("from ").strip()
-				if module not in allowed:
-					offenders.append(f"{relative}: {module}")
-		self.assertEqual(offenders, [], f"non-published import survives: {offenders}")
+		self.assertTrue(hasattr(architecture, "data_access_violations"))
+		self.assertTrue(hasattr(architecture, "import_violations"))

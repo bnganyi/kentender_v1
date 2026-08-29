@@ -74,12 +74,93 @@ export async function loginAsStrategyOfficer(page: Page) {
 	);
 }
 
-/** NDS-CHG-002 §10.1 — Departmental Need Requester (Grace Wanjiku). */
+/**
+ * NDS-CHG-001 v1.1 §14.2 — the seeded Departmental Needs actors.
+ *
+ * All four are created by `departmental_needs.seeds.kentender_mvp_r1._user`,
+ * which sets DEFAULT_SEED_PASSWORD on every run, so a reseed cannot silently
+ * lock these specs out.
+ *
+ * Logging in per role is the whole point: it is the only way to exercise the
+ * reviewer, withdrawal and intake screens, whose audiences never overlap. An
+ * interactive browser session cannot switch between them on this site (the
+ * logout endpoints return 403 and the session cookie is httpOnly), which is
+ * exactly why those screens went unverified until these specs existed —
+ * DEBT-06 in the Departmental Needs tracker.
+ */
+
+/** §14.2 — Departmental Author, scoped to two MoH departments (Grace Wanjiku). */
 export async function loginAsDepartmentalNeedsRequester(page: Page) {
 	await login(
 		page,
 		process.env.UI_NDS_REQUESTER_USER || 'grace.wanjiku@moh.example.test',
 		process.env.UI_NDS_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 — Head of User Department (Dr Peter Kimani), the departmental checker. */
+export async function loginAsDepartmentalNeedsReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_REVIEWER_USER || 'peter.kimani@moh.example.test',
+		process.env.UI_NDS_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 / NDS-AC-042 — acting HoD (Julia Njeri): same role, narrower scope. */
+export async function loginAsDepartmentalNeedsActingReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_ACTING_USER || 'julia.njeri@moh.example.test',
+		process.env.UI_NDS_ACTING_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 / NDS-AC-043 — Procurement Planner (Amina Hassan): intake window only. */
+export async function loginAsDepartmentalNeedsPlanner(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PLANNER_USER || 'amina.hassan@moh.example.test',
+		process.env.UI_NDS_PLANNER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/**
+ * Playwright-owned Departmental Needs actors (DEBT-07).
+ *
+ * Scoped to PE-CGKIS, whose Needs the UI suite may freely decide and withdraw
+ * — unlike the §14.3 demo actors above, whose fixtures the Python suite
+ * asserts. Created by `departmental_needs.seeds.playwright_ui_fixtures`, which
+ * sets DEFAULT_SEED_PASSWORD on every fixture rebuild.
+ *
+ * Each holds exactly one department (the Planner, one Procuring Entity), so
+ * they resolve a single context and never meet the §12.1 picker.
+ */
+
+/** Departmental Author for the Playwright fixture entity. */
+export async function loginAsNdsFixtureAuthor(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_AUTHOR || 'nds.pw.author@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Head of User Department for the Playwright fixture entity. */
+export async function loginAsNdsFixtureReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_REVIEWER || 'nds.pw.reviewer@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Procurement Planner for the Playwright fixture entity. */
+export async function loginAsNdsFixturePlanner(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_PLANNER || 'nds.pw.planner@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

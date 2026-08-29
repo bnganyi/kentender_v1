@@ -42,17 +42,18 @@
 			<div class="kt-card-title" style="margin-bottom: 16px">Requirement</div>
 			<div class="kt-field" style="margin-bottom: 16px">
 				<label for="nds-title">Title</label>
-				<input id="nds-title" ref="titleEl" class="kt-input" type="text" v-model="form.title" />
+				<input id="nds-title" ref="titleEl" data-testid="nds-title" class="kt-input" type="text" v-model="form.title" />
 				<div v-if="fieldErrors.title" class="kt-field-error">{{ fieldErrors.title }}</div>
 			</div>
 			<div class="kt-field" style="margin-bottom: 16px">
 				<label for="nds-description">Description</label>
-				<textarea id="nds-description" class="kt-input" v-model="form.description"></textarea>
+				<textarea id="nds-description" data-testid="nds-description" class="kt-input" v-model="form.description"></textarea>
 			</div>
 			<div class="kt-field" style="margin-bottom: 0">
 				<label for="nds-result">Expected operational result</label>
 				<textarea
 					id="nds-result"
+					data-testid="nds-result"
 					class="kt-input"
 					v-model="form.expected_operational_result"
 				></textarea>
@@ -72,6 +73,7 @@
 					<label for="nds-quantity">Indicative quantity</label>
 					<input
 						id="nds-quantity"
+						data-testid="nds-quantity"
 						class="kt-input"
 						type="number"
 						min="0"
@@ -82,7 +84,7 @@
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-unit">Unit</label>
 					<!-- §12.3 — options come from the governed active catalogue. -->
-					<select id="nds-unit" class="kt-input" v-model="form.unit">
+					<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit">
 						<option value="">Select a unit</option>
 						<option v-for="unit in units" :key="unit.name" :value="unit.name">
 							{{ unit.unit_label }}
@@ -94,6 +96,7 @@
 				<label for="nds-required-by">Required by</label>
 				<input
 					id="nds-required-by"
+					data-testid="nds-required-by"
 					class="kt-input"
 					type="date"
 					v-model="form.required_by_date"
@@ -102,14 +105,14 @@
 		</div>
 
 		<div class="kt-page-footer">
-			<button class="kt-btn kt-btn-ghost" :disabled="pending" @click="$emit('cancel')">
+			<button class="kt-btn kt-btn-ghost" data-testid="nds-editor-cancel" :disabled="pending" @click="$emit('cancel')">
 				{{ cancelLabel }}
 			</button>
 			<div style="display: flex; gap: 12px">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('save', form)">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending" @click="$emit('save', form)">
 					Save draft
 				</button>
-				<button class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('submit', form)">
+				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending" @click="$emit('submit', form)">
 					{{ submitLabel }}
 				</button>
 			</div>

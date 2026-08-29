@@ -92,15 +92,25 @@ def _quantity_label(version: dict[str, Any]) -> str:
 
 
 def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
-	"""One row exposes one action; the workspace button wires to actions[0]."""
-	if doc.current_state == STATE_SUBMITTED and profile == "department" and not is_owner(doc, principal):
-		task = _open_review_task(doc.name) or {}
+	"""One row exposes one action; the workspace button wires to actions[0].
+
+	§12.2 — the queue's subject is the **open review task**, not the root state.
+	NDS-UI-02 is the reviewer's only route to NDS-UI-05 and NDS-UI-07 (§10 gives
+	neither a menu entry), so an action keyed off `current_state == Submitted`
+	strands two of the three task types: §5.2 holds the root at `Accepted for
+	planning` for the whole successor lifecycle, and a withdrawal request never
+	moves the root at all. Both left an Open task the reviewer held and no row
+	that offered it.
+	"""
+	task = _open_review_task(doc.name)
+	if task and profile == "department" and not is_owner(doc, principal):
+		withdrawal = task["task_type"] == TASK_WITHDRAWAL
 		return [
 			{
-				"code": "review",
-				"label": "Review",
-				"task": task.get("name", ""),
-				"decision_token": task.get("decision_token", ""),
+				"code": "withdrawal" if withdrawal else "review",
+				"label": "Review withdrawal" if withdrawal else "Review",
+				"task": task["name"],
+				"decision_token": task["decision_token"],
 			}
 		]
 	if profile == "owner" and doc.current_state in {STATE_DRAFT, STATE_RETURNED}:

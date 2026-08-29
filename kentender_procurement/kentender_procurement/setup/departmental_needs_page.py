@@ -21,36 +21,34 @@ from __future__ import annotations
 
 import frappe
 
-# Roles that may open a Departmental Needs surface at all (§6).
+# §6/§10 — one Page ("departmental-needs") carries all eight NDS-UI routes, so
+# its role list is the union of everyone §6 admits to any Departmental Needs
+# surface. A role left out here is locked out of the whole module, not merely
+# out of the one route it should not see.
+#
+# Until Phase 9 this file still described the pre-v1.1 world of six Pages with
+# a role list each, and the survivor kept the narrow landing list — which left
+# the Procurement Planner unable to open the Page at all, and so unable to
+# reach the intake window §10 gives them a menu entry for (NDS-AC-043).
+#
+# Per-route authority is *not* expressed here. §17 puts it on the server: the
+# Planner reaching this Page reads only accepted sources (`can_view`), holds no
+# Need decision, and every command re-checks its own role. The §10 menu decides
+# what each role is shown.
 LANDING_ROLES: tuple[str, ...] = (
 	"Administrator",
 	"System Manager",
 	"Departmental Author",
 	"Head of User Department",
+	"Procurement Planner",
 	"Auditor",
 )
 
-# §10 — the departmental decision queue is not visible outside the department.
-REVIEW_ROLES: tuple[str, ...] = (
-	"Administrator",
-	"System Manager",
-	"Head of User Department",
-)
-
-# §10 / NDS-AC-043 — the Planner maintains the window and nothing else here.
-INTAKE_WINDOW_ROLES: tuple[str, ...] = (
-	"Administrator",
-	"System Manager",
-	"Procurement Planner",
-)
-
 PAGE_ROLES: dict[str, tuple[str, ...]] = {
+	# The five per-screen Pages this map used to name were deleted in Phase 7
+	# (patch nds_chg_001_v11_retire_legacy_pages); reconciling them recreated
+	# nothing but did assert they existed.
 	"departmental-needs": LANDING_ROLES,
-	"departmental-needs-new": LANDING_ROLES,
-	"departmental-needs-edit": LANDING_ROLES,
-	"departmental-needs-detail": LANDING_ROLES,
-	"departmental-needs-review": REVIEW_ROLES,
-	"departmental-needs-intake-window": INTAKE_WINDOW_ROLES,
 }
 
 

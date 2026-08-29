@@ -19,6 +19,8 @@
 					v-for="action in ownerActions"
 					:key="action.code"
 					class="kt-btn kt-btn-secondary"
+					data-testid="nds-owner-action"
+					:data-action="action.code"
 					@click="$emit(action.code)"
 				>
 					{{ action.label }}
@@ -76,6 +78,7 @@
 				<button
 					v-if="canOpenSuccessor"
 					class="kt-btn kt-btn-secondary"
+					data-testid="nds-open-successor"
 					@click="$emit('open-successor')"
 				>
 					Open update
@@ -102,7 +105,7 @@
 				<div style="font-size: 14px; color: var(--color-neutral-700)">
 					{{ usage.active_plan_item }}
 				</div>
-				<button class="kt-btn kt-btn-secondary" @click="$emit('view-plan-item')">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-view-plan-item" @click="$emit('view-plan-item')">
 					View Plan Item
 				</button>
 			</div>

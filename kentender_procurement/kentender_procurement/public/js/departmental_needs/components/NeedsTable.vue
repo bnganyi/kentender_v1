@@ -5,7 +5,7 @@
 	<div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden">
 		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-		<table class="kt-table" style="width: 100%">
+		<table class="kt-table" data-testid="nds-needs-table" style="width: 100%">
 			<thead>
 				<tr>
 					<th
@@ -19,7 +19,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="row in needs" :key="row.name">
+				<tr v-for="row in needs" :key="row.name" data-testid="nds-need-row" :data-reference="row.reference" :data-status="row.status">
 					<td v-for="column in columns" :key="column.key" :style="cellStyle(column)">
 						<template v-if="column.key === 'need'">
 							<span style="font-weight: 500">{{ row.title || "Untitled need" }}</span>
@@ -36,6 +36,8 @@
 								v-if="primaryAction(row)"
 								type="button"
 								class="kt-action-link"
+								data-testid="nds-row-action"
+								:data-action="primaryAction(row).code"
 								@click="$emit('action', row, primaryAction(row))"
 							>
 								{{ primaryAction(row).label }}

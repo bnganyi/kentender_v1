@@ -13,7 +13,7 @@
 			</div>
 		</div>
 
-		<div v-if="errorSummary" class="kt-error-summary" role="alert" tabindex="-1">
+		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-error-summary" role="alert" tabindex="-1">
 			{{ errorSummary }}
 		</div>
 
@@ -54,7 +54,7 @@
 				<div style="font-size: 14px; color: var(--color-neutral-700)">
 					{{ dependency.active_plan_item }}
 				</div>
-				<button class="kt-btn kt-btn-secondary" @click="$emit('view-plan-item')">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-view-plan-item" @click="$emit('view-plan-item')">
 					View Plan Item
 				</button>
 			</div>
@@ -62,17 +62,17 @@
 
 		<div class="kt-page-footer" :style="dependency.included ? 'justify-content: flex-end' : ''">
 			<template v-if="dependency.included">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('close')">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-withdrawal-close" :disabled="pending" @click="$emit('close')">
 					Close
 				</button>
 			</template>
 			<template v-else-if="!makerCheckerBlocked">
 				<span></span>
 				<div style="display: flex; gap: 12px">
-					<button class="kt-btn-destructive" :disabled="pending" @click="$emit('decline')">
+					<button class="kt-btn-destructive" data-testid="nds-withdrawal-decline" :disabled="pending" @click="$emit('decline')">
 						Decline withdrawal
 					</button>
-					<button class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('approve')">
+					<button class="kt-btn kt-btn-primary" data-testid="nds-withdrawal-approve" :disabled="pending" @click="$emit('approve')">
 						Approve withdrawal
 					</button>
 				</div>

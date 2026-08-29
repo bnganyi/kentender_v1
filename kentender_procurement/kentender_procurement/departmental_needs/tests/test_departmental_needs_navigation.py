@@ -362,3 +362,70 @@ class DepartmentalNeedsMenuIsNotAuthorizationTest(IntegrationTestCase):
 		# separate one; the closed fifteen-code set has no NDS_NOT_AUTHORIZED.
 		self.assertEqual(raised.exception.code, "NDS_SCOPE_DENIED")
 		self.assertIn(ROLE_PROCUREMENT_PLANNER, str(raised.exception))
+
+
+class DepartmentalNeedsPageRolesTest(IntegrationTestCase):
+	"""§6/§10 — one Page carries all eight routes, so one role list serves them.
+
+	The pre-v1.1 build had a Page per screen and could give each its own roles.
+	§10 collapses them into `departmental-needs`, so that Page's role list must
+	be the union of everyone §6 admits to *any* NDS surface — otherwise a role
+	is locked out of the whole module to protect one route it should not see.
+
+	The Procurement Planner is the case that proves it: NDS-AC-043 gives them
+	the intake window, §10 gives them its menu entry, and both are meaningless
+	if they cannot open the Page the route lives on.
+
+	Per-route authority stays where §17 requires it — on the server. The
+	Planner reaching the Page does not let them read a Draft Need or decide
+	anything; `can_view` gives them accepted sources only, and every command
+	re-checks its own role.
+	"""
+
+	def page_roles(self) -> set[str]:
+		return {row.role for row in frappe.get_doc("Page", "departmental-needs").roles}
+
+	def test_every_section_6_business_role_may_open_the_page(self):
+		for role in (
+			ROLE_DEPARTMENTAL_AUTHOR,
+			ROLE_HEAD_OF_USER_DEPARTMENT,
+			ROLE_PROCUREMENT_PLANNER,
+			"Auditor",
+		):
+			with self.subTest(role=role):
+				self.assertIn(role, self.page_roles())
+
+	def test_the_page_admits_no_role_section_1_1_removed(self):
+		"""NDS-AC-023 — Budget Officer and Accounting Officer get no surface."""
+		for role in ("Budget Officer", "Accounting Officer", "Departmental Review Delegate"):
+			with self.subTest(role=role):
+				self.assertNotIn(role, self.page_roles())
+
+	def test_the_checked_in_fixture_matches_the_live_record(self):
+		"""A fresh install must not reapply a different list.
+
+		The Phase 3 patch corrected the live Page once; the fixture is what a
+		new site reads, so the two drifting apart is invisible until someone
+		installs from scratch.
+		"""
+		path = _app_file(
+			"kentender_procurement",
+			"departmental_needs",
+			"page",
+			"departmental_needs",
+			"departmental_needs.json",
+		)
+		with open(path, encoding="utf-8") as handle:
+			fixture = {row["role"] for row in json.load(handle).get("roles") or []}
+		self.assertEqual(fixture, self.page_roles())
+
+	def test_the_role_source_names_only_pages_that_exist(self):
+		"""The generator still mapped five Pages Phase 7 deleted."""
+		from kentender_procurement.setup.departmental_needs_page import PAGE_ROLES
+
+		for page in PAGE_ROLES:
+			with self.subTest(page=page):
+				self.assertTrue(
+					frappe.db.exists("Page", page),
+					msg=f"{page} is reconciled but no longer exists",
+				)

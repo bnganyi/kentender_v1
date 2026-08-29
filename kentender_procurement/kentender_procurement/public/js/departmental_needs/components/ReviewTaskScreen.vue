@@ -10,7 +10,7 @@
 			</div>
 		</div>
 
-		<div v-if="errorSummary" class="kt-error-summary" role="alert" tabindex="-1">
+		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-error-summary" role="alert" tabindex="-1">
 			{{ errorSummary }}
 		</div>
 
@@ -38,15 +38,16 @@
 			<button
 				class="kt-btn kt-btn-secondary"
 				:disabled="pending"
+				data-testid="nds-decision-return"
 				@click="$emit('return')"
 			>
 				Return for correction
 			</button>
 			<div style="display: flex; gap: 12px">
-				<button class="kt-btn-destructive" :disabled="pending" @click="$emit('decline')">
+				<button class="kt-btn-destructive" data-testid="nds-decision-decline" :disabled="pending" @click="$emit('decline')">
 					Do not take forward
 				</button>
-				<button class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('accept')">
+				<button class="kt-btn kt-btn-primary" data-testid="nds-decision-accept" :disabled="pending" @click="$emit('accept')">
 					{{ acceptLabel }}
 				</button>
 			</div>

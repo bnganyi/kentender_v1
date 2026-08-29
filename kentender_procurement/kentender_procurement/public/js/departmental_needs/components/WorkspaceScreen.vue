@@ -18,6 +18,7 @@
 			<button
 				v-if="canCreate"
 				class="kt-btn kt-btn-primary"
+				data-testid="nds-create-need"
 				@click="$emit('create')"
 			>
 				Create need
@@ -85,6 +86,7 @@
 					<label class="sr-only" for="nds-search">Search title or reference</label>
 					<input
 						id="nds-search"
+						data-testid="nds-search"
 						class="kt-input"
 						type="text"
 						placeholder="Search title or reference"
@@ -96,6 +98,7 @@
 					<label class="sr-only" for="nds-status">Status</label>
 					<select
 						id="nds-status"
+						data-testid="nds-status-filter"
 						class="kt-input"
 						:value="status"
 						@change="$emit('update:status', $event.target.value)"
@@ -130,6 +133,7 @@
 				<button
 					v-if="canCreate"
 					class="kt-btn kt-btn-primary"
+					data-testid="nds-create-need-empty"
 					@click="$emit('create')"
 				>
 					Create need
@@ -143,7 +147,7 @@
 				@action="(row, action) => $emit('action', row, action)"
 			/>
 
-			<div v-if="needs.length" style="margin-top: 12px; font-size: 13px; color: var(--color-neutral-600)">
+			<div v-if="needs.length" data-testid="nds-count" style="margin-top: 12px; font-size: 13px; color: var(--color-neutral-600)">
 				{{ countLabel }}
 			</div>
 		</template>

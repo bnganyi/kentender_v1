@@ -22,12 +22,13 @@
 				</p>
 			</div>
 			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
 					:class="destructive ? 'kt-btn-destructive' : 'kt-btn kt-btn-primary'"
 					ref="confirmEl"
+					data-testid="nds-dialog-confirm"
 					:disabled="pending"
 					@click="$emit('confirm')"
 				>

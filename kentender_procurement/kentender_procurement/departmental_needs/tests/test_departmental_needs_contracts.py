@@ -17,6 +17,7 @@ from frappe.utils import add_days, now_datetime
 
 from kentender_procurement.departmental_needs import api
 from kentender_procurement.departmental_needs.constants import (
+	STATE_ACCEPTED,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
 )
@@ -26,12 +27,14 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	FY,
 	INTAKE_WINDOW,
 	OU_DIGITAL_HEALTH,
+	OU_HRMD,
 	PE,
 	PLANNER,
 	REVIEWER,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import lifecycle
+from kentender_procurement.departmental_needs.seeds import profiles
+from kentender_procurement.departmental_needs.services import lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import (
 	planning_usage,
 	project_planning_usage,
@@ -379,3 +382,66 @@ class TestPlanningUsageProjection(ContractCase):
 			"Departmental Need", need.name, ["current_state", "record_version"]
 		)
 		self.assertEqual(before, after)
+
+
+class ReviewQueueActionTest(IntegrationTestCase):
+	"""§12.2 — every open decision this reviewer holds reaches them via the queue.
+
+	NDS-UI-02's queue is the reviewer's only entry point to NDS-UI-05 and
+	NDS-UI-07; §10 gives neither screen a menu entry of its own. So the action
+	the workspace returns has to follow the **open review task**, not the root
+	Need state.
+
+	The distinction is not academic. §5.2 deliberately keeps the root at
+	`Accepted for planning` for the whole successor lifecycle, so a submitted
+	successor has an Open `Successor acceptance` task while the root is not
+	`Submitted` — and a withdrawal request never moves the root at all. Keying
+	the action off the root state stranded both: the task existed, the reviewer
+	held it, and no queue row offered it.
+	"""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		upsert_departmental_needs()
+
+	def setUp(self):
+		super().setUp()
+		self.addCleanup(frappe.set_user, "Administrator")
+		self.addCleanup(profiles.reset_profile, "successor")
+		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
+
+	def _row(self, reference: str, unit: str = OU_DIGITAL_HEALTH) -> dict:
+		frappe.set_user(REVIEWER)
+		result = workspace.get_workspace(
+			user=REVIEWER, procuring_entity=PE, organisation_unit=unit
+		)
+		frappe.set_user("Administrator")
+		rows = [row for row in result["needs"] if row["reference"] == reference]
+		self.assertEqual(len(rows), 1, msg=f"{reference} missing from the reviewer's rows")
+		return rows[0]
+
+	def test_initial_submission_offers_the_review_action(self):
+		row = self._row("NDS-MOH-2027-0002", unit=OU_HRMD)
+		codes = [action["code"] for action in row["actions"]]
+		self.assertEqual(codes[0], "review")
+		self.assertTrue(row["actions"][0]["task"], msg="the action must carry its task")
+
+	def test_open_withdrawal_offers_the_withdrawal_action(self):
+		profiles.apply_profile("withdrawal_blocked")
+		row = self._row("NDS-MOH-2027-0001")
+		self.assertEqual(row["actions"][0]["code"], "withdrawal")
+		self.assertTrue(row["actions"][0]["task"])
+
+	def test_the_author_is_never_offered_a_decision_on_their_own_need(self):
+		"""NDS-AC-010 — maker-checker holds however the action is derived."""
+		profiles.apply_profile("successor")
+		frappe.set_user(AUTHOR)
+		result = workspace.get_workspace(
+			user=AUTHOR, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+		)
+		frappe.set_user("Administrator")
+		for row in result["needs"]:
+			codes = {action["code"] for action in row["actions"]}
+			self.assertNotIn("review", codes)
+			self.assertNotIn("withdrawal", codes)

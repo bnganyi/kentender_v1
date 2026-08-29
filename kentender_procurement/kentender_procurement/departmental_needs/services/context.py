@@ -24,11 +24,14 @@ from kentender_procurement.departmental_needs.constants import (
 	INTAKE_NOT_CONFIGURED,
 	INTAKE_OPEN,
 	INTAKE_SCHEDULED,
+	ROLE_PROCUREMENT_PLANNER,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	creation_contexts,
+	has_role,
+	is_administrative,
 	require_intake_window_command,
 )
 
@@ -86,12 +89,28 @@ def selectable_financial_year(financial_year: str) -> dict:
 # --- §4.1 intake window ----------------------------------------------------
 
 
-def intake_window(procuring_entity: str, financial_year: str, *, at=None) -> dict[str, Any]:
+def _may_maintain(user: str | None = None) -> bool:
+	"""§6/NDS-AC-043 — only the Procurement Planner maintains the window.
+
+	Reported on the read so NDS-UI-08 can withhold the Save control from a user
+	who reaches the route another way. This is presentation, not the control:
+	`save_intake_window` refuses on its own with NDS_SCOPE_DENIED, and §17
+	forbids treating a hidden button as authorization. Offering a command the
+	role does not hold is the same defect fixed for Create need (NDS-807).
+	"""
+	principal = actor(user)
+	return has_role(principal, ROLE_PROCUREMENT_PLANNER) or is_administrative(principal)
+
+
+def intake_window(
+	procuring_entity: str, financial_year: str, *, at=None, user: str | None = None
+) -> dict[str, Any]:
 	"""The PE/FY window and its derived state at `at` (default: now).
 
 	Returns a result for every input, including a missing window, so that read
 	surfaces can render an honest "not configured" state without an exception.
 	"""
+	can_maintain = _may_maintain(user)
 	pe, fy = cstr(procuring_entity).strip(), cstr(financial_year).strip()
 	row = frappe.db.get_value(
 		"Needs Intake Window",
@@ -109,6 +128,7 @@ def intake_window(procuring_entity: str, financial_year: str, *, at=None) -> dic
 			"opens_at": "",
 			"closes_at": "",
 			"record_version": 0,
+			"can_maintain": can_maintain,
 		}
 	moment = get_datetime(at) if at else now_datetime()
 	opens_at, closes_at = get_datetime(row.opens_at), get_datetime(row.closes_at)
@@ -128,6 +148,7 @@ def intake_window(procuring_entity: str, financial_year: str, *, at=None) -> dic
 		"opens_at": str(row.opens_at),
 		"closes_at": str(row.closes_at),
 		"record_version": int(row.record_version or 0),
+		"can_maintain": can_maintain,
 	}
 
 
