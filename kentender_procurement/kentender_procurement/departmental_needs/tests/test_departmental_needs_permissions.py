@@ -39,7 +39,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	_user_permission,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import permissions
+from kentender_procurement.departmental_needs.services import permissions, workspace
 from kentender_procurement.departmental_needs.services.context import save_intake_window
 
 # §1.1 removed these outright; §6 names exactly five business roles.
@@ -396,3 +396,71 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 			)
 			offenders += [f"{path.name}:{token}" for token in prohibited if token in code]
 		self.assertEqual(offenders, [], f"parallel permission store referenced: {offenders}")
+
+
+class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
+	"""§8.1 — every §6 role that reads Needs must resolve a context.
+
+	`get_workspace` backs NDS-UI-01 *and* NDS-UI-02, so a role that cannot
+	resolve a context cannot open the review screen at all — no rows, no queue,
+	no register. §6 gives the Head of User Department departmental review
+	authority and §14.2 gives the Planner and Auditor PE/FY-scoped read access,
+	so none of them may be turned away by the context resolver.
+
+	Resolving a context is not authority: it names the PE/OU whose rows are
+	queried, and `can_view` still filters every row afterwards.
+	"""
+
+	def workspace_as(self, user: str, **selection) -> dict:
+		frappe.set_user(user)
+		return workspace.get_workspace(user=user, **selection)
+
+	def digital_health(self, user: str) -> dict:
+		"""One resolved context, so the result carries rows and actions."""
+		return self.workspace_as(
+			user, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+		)
+
+	def test_reviewer_resolves_the_departments_they_review(self):
+		result = self.workspace_as(REVIEWER)
+		self.assertNotEqual(
+			result["outcome"],
+			"NO_AUTHORISED_CONTEXT",
+			msg="the Head of User Department must be able to open the review screen",
+		)
+		units = {row["organisation_unit"] for row in result["contexts"]}
+		self.assertEqual(units, {OU_DIGITAL_HEALTH, OU_HRMD})
+
+	def test_planner_and_auditor_resolve_pe_scoped_contexts(self):
+		"""§14.2 — scoped by PE and FY only, so every OU under the PE is in view."""
+		for user in (PLANNER, AUDITOR):
+			with self.subTest(user=user):
+				result = self.workspace_as(user)
+				self.assertNotEqual(result["outcome"], "NO_AUTHORISED_CONTEXT")
+				entities = {row["procuring_entity"] for row in result["contexts"]}
+				self.assertIn(PE, entities)
+
+	def test_author_still_resolves_only_their_own_departments(self):
+		"""The widening must not reach beyond the roles that need it."""
+		result = self.workspace_as(AUTHOR)
+		units = {row["organisation_unit"] for row in result["contexts"]}
+		self.assertEqual(units, {OU_DIGITAL_HEALTH, OU_HRMD})
+
+	def test_a_user_with_no_departmental_role_resolves_nothing(self):
+		"""Resolution is still closed — it admits the §6 roles, not everyone."""
+		result = self.workspace_as(ISOLATION_REQUESTER)
+		self.assertNotIn(PE, {row["procuring_entity"] for row in result["contexts"]})
+
+	def test_create_is_offered_only_to_an_author(self):
+		"""§12.1 / §17 — the server decides the action; a reviewer never authors.
+
+		The client also hides Create need outside an Open intake window, but
+		that check cannot stand alone: intake is Open for part of the year, and
+		a reviewer would then be shown a command they do not hold.
+		"""
+		author_actions = {a["code"] for a in self.digital_health(AUTHOR).get("actions", [])}
+		self.assertIn("create", author_actions)
+		for user in (REVIEWER, PLANNER, AUDITOR):
+			with self.subTest(user=user):
+				codes = {a["code"] for a in self.digital_health(user).get("actions", [])}
+				self.assertNotIn("create", codes)

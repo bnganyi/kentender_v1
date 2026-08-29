@@ -36,6 +36,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	is_owner,
 	require_review_command,
 	require_view,
+	viewing_contexts,
 )
 from kentender_procurement.departmental_needs.services.usage import (
 	planning_usage,
@@ -110,7 +111,9 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 
 
 def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] | None, list[dict[str, str]]]:
-	contexts = creation_contexts(principal)
+	# Viewing, not authoring: this resolver also serves NDS-UI-02, whose only
+	# audience is the Head of User Department — a role that never authors.
+	contexts = viewing_contexts(principal)
 	if not contexts:
 		return None, contexts
 	if pe or ou:
@@ -224,7 +227,21 @@ def get_workspace(
 		},
 		"needs": needs,
 		"count_label": f"{len(needs)} need" if len(needs) == 1 else f"{len(needs)} needs",
-		"actions": [{"code": "create", "label": "Create need"}],
+		# §12.1 / §17 — the server decides the action. A reviewer, Planner or
+		# Auditor reaches this contract too (it backs NDS-UI-02 as well), and
+		# none of them authors, so Create need is offered only where the user
+		# could actually create in this context. The client's separate
+		# intake-window check narrows it further; it cannot stand alone,
+		# because intake is Open for part of every year.
+		"actions": (
+			[{"code": "create", "label": "Create need"}]
+			if any(
+				row["procuring_entity"] == selected["procuring_entity"]
+				and row["organisation_unit"] == selected["organisation_unit"]
+				for row in creation_contexts(principal)
+			)
+			else []
+		),
 	}
 
 

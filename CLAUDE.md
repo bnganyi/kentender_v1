@@ -90,13 +90,17 @@ Use `npm run test:ui:smoke` for the UI smoke checkpoint and `npm run test:ui` on
 
 ### Assets
 
-Never use plain `bench build` or an app-level Yarn build. Use the repository's Node wrapper:
+Never use plain `bench build` or an app-level Yarn build. Use the Node wrapper, which lives at the **bench root**, not in this repository:
 
 ```bash
-./scripts/bench-with-node.sh build --app <app>
+cd /home/midasuser/frappe-bench
+./scripts/bench-with-node.sh build --app <app>       # one app
+./scripts/bench-with-node.sh build --apps <a>,<b>    # several
 ```
 
-After CSS or JavaScript changes, clear the target site's cache and hard-refresh Desk. Do not mistake stale assets for a code defect.
+Frappe's asset build requires Node ≥ 24; the wrapper loads it from fnm/nvm and fails with a clear message rather than a cryptic Yarn engines error. `make build` and `make build-kentender` call the same wrapper and can be run from `apps/kentender_v1/` — but they build every app at once, which has been OOM-killed (exit 137) on this machine, so prefer the targeted `--app` form.
+
+After CSS or JavaScript changes, clear the target site's cache and hard-refresh Desk. Do not mistake stale assets for a code defect. Confirm the rebuild actually landed by checking that the bundle's content hash changed — an edit that silently failed to apply looks exactly like a caching problem otherwise.
 
 ### Bench lifecycle and seed data
 

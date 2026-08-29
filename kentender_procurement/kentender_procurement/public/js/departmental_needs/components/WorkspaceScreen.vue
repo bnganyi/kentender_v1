@@ -163,6 +163,7 @@ const props = defineProps({
 	context: { type: Object, default: () => ({}) },
 	intake: { type: Object, default: () => ({}) },
 	needs: { type: Array, default: () => [] },
+	actions: { type: Array, default: () => [] },
 	countLabel: { type: String, default: "" },
 	search: { type: String, default: "" },
 	status: { type: String, default: "" },
@@ -187,7 +188,15 @@ const columns = [
 	{ key: "action", label: "Action", align: "right" },
 ];
 
-const canCreate = computed(() => props.intake && props.intake.state === "Open");
+// §12.1 — Create need needs both: the server must offer the action (only an
+// author in this context does), and intake must be Open. The intake check
+// alone would show the button to a reviewer for as long as intake is Open.
+const canCreate = computed(
+	() =>
+		props.actions.some((action) => action.code === "create") &&
+		props.intake &&
+		props.intake.state === "Open"
+);
 
 const contextItems = computed(() => [
 	{ label: "Procuring Entity", value: props.context.procuring_entity_label || props.context.procuring_entity || "" },

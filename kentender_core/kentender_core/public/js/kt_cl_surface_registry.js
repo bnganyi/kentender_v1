@@ -212,15 +212,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
-	function crumbDemands() {
-		return crumb(__("Demands"), ["demands-workspace"]);
-	}
-	function trailDemands() {
-		return [crumbDashboard(), crumbDemands()];
-	}
-	function trailDemandsLeaf(leafLabel) {
-		return [crumbDashboard(), crumbDemands(), crumb(leafLabel)];
-	}
 
 	function crumbPlanning() {
 		return crumb(__("Procurement Planning"), ["planning-workspace"]);
@@ -528,69 +519,12 @@ frappe.provide("kentender_core.cl_surface_registry");
 		   production pages and kentender_core's reference_data page. Registering
 		   would let this legacy Civic Ledger router repaint a second, clashing
 		   toolbar on every in-page route change. See AGENTS.md §6.5. */
-		/* Demands MVP-1 — DEM-UI-01 workspace + stub routes keep shell on refresh. */
-		"DEM-UI-01": {
-			id: "DEM-UI-01",
-			label: "Demands",
-			routePrefixes: ["demands-workspace"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			/* Title/CTA live in Stitch canvas (Budget portfolio pattern). */
-			chrome: chrome(
-				__("Demands"),
-				__("Capture, review and fund business needs before Procurement Planning."),
-				trailDemands(),
-				[]
-			),
-		},
-		"DEM-UI-02": {
-			id: "DEM-UI-02",
-			label: "Demand Form",
-			routePrefixes: ["demand-form"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			/* Title/CTA live in Stitch canvas (Budget register pattern). */
-			chrome: chrome(
-				__("Demand Form"),
-				__("Create or correct a Demand before submission."),
-				trailDemandsLeaf(__("Demand Form")),
-				[]
-			),
-		},
-		"DEM-UI-04": {
-			id: "DEM-UI-04",
-			label: "Demand Review",
-			routePrefixes: ["demand-review"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Demand Review"),
-				__("Review and decide on Demands in the current stage."),
-				trailDemandsLeaf(__("Demand Review")),
-				[]
-			),
-		},
-		"DEM-UI-09": {
-			id: "DEM-UI-09",
-			label: "Demand Detail",
-			routePrefixes: ["demand-detail"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Demand Detail"),
-				__("Approved Demand overview and lifecycle tabs."),
-				trailDemandsLeaf(__("Demand Detail")),
-				[]
-			),
-		},
-		"DEM-UI-10": {
-			id: "DEM-UI-10",
-			label: "Demand Performance",
-			routePrefixes: ["demand-performance"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Demand Performance"),
-				__("Monitor Demand throughput, returns, and funding outcomes."),
-				trailDemandsLeaf(__("Demand Performance")),
-				[]
-			),
-		},
+		/* Demands (DEM-UI-01/02/04/09/10) was removed in NDS-CHG-001 v1.1 Phase 8.
+		   Departmental Needs replaced that module outright; its Pages
+		   (demands-workspace, demand-form, demand-review, demand-detail,
+		   demand-performance) no longer exist on any site, so these five entries
+		   only claimed routes that resolve to nothing. NDS-BR-020 / NDS-AC-030
+		   forbid keeping a legacy Demand route, alias or fixture. */
 		/* Procurement Planning MVP-1 — registered so the global shell router
 		   preserves native Civic Ledger chrome during client-side transitions. */
 		"PLN-UI-01": {
@@ -677,104 +611,36 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
-		/* Departmental Needs (NDS-CHG-002) — previously unregistered here, so
-		 * onRouteChange's resolveFromRoute() found no match on every route
-		 * settle and called leaveNative() unconditionally, including right
-		 * after a page's own enterShell() had just correctly entered native
-		 * mode (observed on browser back-navigation, where onRouteChange's
-		 * frappe.router "change" listener fires after the target page's own
-		 * on_page_show). Registering strips document.body of kt-cl-shell/
-		 * kt-cl-shell-native on every such route settle, which is why the
-		 * workspace's "Create need" button (and the rest of its chrome)
-		 * rendered as an unstyled black default button after navigating
-		 * away and back. Each page still calls its own enterShell() with a
-		 * dynamic per-record breadcrumb leaf (matching every other module's
-		 * dual-registration pattern, e.g. Budget/Strategy) — the static
-		 * trail below is only the fallback shown on the rare race where
-		 * onRouteChange's repaint wins. */
-		"NDS-UI-01": {
-			id: "NDS-UI-01",
-			label: "Departmental Needs",
-			routePrefixes: ["departmental-needs"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Departmental Needs"),
-				__("Capture and review departmental requirements for procurement planning."),
-				[crumb(__("Home"), ["Workspaces", "Procurement Home"]), crumb(__("Departmental Needs"))],
-				[]
-			),
-		},
-		"NDS-UI-02A": {
-			id: "NDS-UI-02A",
-			label: "Create Departmental Need",
-			routePrefixes: ["departmental-needs-new"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Create departmental need"),
-				"",
-				[
-					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
-					crumb(__("Departmental Needs"), ["departmental-needs"]),
-					crumb(__("Create need")),
-				],
-				[]
-			),
-		},
-		"NDS-UI-02B": {
-			id: "NDS-UI-02B",
-			label: "Edit Departmental Need",
-			routePrefixes: ["departmental-needs-edit"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Edit departmental need"),
-				"",
-				[
-					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
-					crumb(__("Departmental Needs"), ["departmental-needs"]),
-					crumb(__("Edit need")),
-				],
-				[]
-			),
-		},
-		"NDS-UI-02C": {
-			id: "NDS-UI-02C",
-			label: "Departmental Need Review",
-			routePrefixes: ["departmental-needs-review"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Departmental need review"),
-				"",
-				[
-					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
-					crumb(__("Departmental Needs"), ["departmental-needs"]),
-					crumb(__("Review")),
-				],
-				[]
-			),
-		},
-		"NDS-UI-03": {
-			id: "NDS-UI-03",
-			label: "Departmental Need Detail",
-			routePrefixes: ["departmental-needs-detail"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Departmental need"),
-				"",
-				[
-					crumb(__("Home"), ["Workspaces", "Procurement Home"]),
-					crumb(__("Departmental Needs"), ["departmental-needs"]),
-					crumb(__("Need")),
-				],
-				[]
-			),
-		},
+		// NDS-CHG-001 v1.1 — Departmental Needs intentionally has no entry here.
+		// It is an Industry-design-system page (Barlow tokens, kt_industry_tokens.css
+		// + departmental_needs_industry.css) with its own rail, mounted through
+		// kentender_core.industry.mountPageRail — not a Civic Ledger one. Registering
+		// it lets kt_cl_shell_router.js's global "change" listener resolve the route
+		// and force-render this registry's Civic Ledger toolbar into
+		// #kt-cl-chrome-host on every route settle, including the in-page segment
+		// navigation the single "departmental-needs" Page does for all eight NDS-UI
+		// routes — after departmental_needs_page.js's one-time clear of that host.
+		//
+		// Five entries (NDS-UI-01/02A/02B/02C/03) lived here until Phase 8. They were
+		// added under the retired NDS-CHG-002 Civic Ledger build and four of them
+		// named routes that no longer exist (departmental-needs-new/-edit/-review/
+		// -detail, deleted in Phase 7). Their comment argued registration was needed
+		// because an unresolved route makes onRouteChange call leaveNative() — true,
+		// but harmless for an Industry page: leaveNative() only drops the
+		// kt-cl-shell/-native body classes and removes the chrome host, and the
+		// native sidebar is hidden by body.kt-cl-shell:not(.kt-cl-shell-native)
+		// .body-sidebar-container, so losing both classes leaves the rail visible.
+		// departmental_needs_page.js hides .navbar/.page-head with its own inline
+		// !important styles, which leaveNative() does not touch. This matches
+		// Reference Data (below), Budget & Funding and Strategy, none of which are
+		// registered here.
 
 		// CFG-CHG-002 — Reference Data intentionally has no "CFG-PEFY-UI" entry here.
 		// It's an Industry-design-system page (Barlow tokens, kt_industry_tokens.css),
 		// not a Civic Ledger one (Tailwind/Material Symbols) — registering it would let
 		// kt_cl_shell_router.js's global route listener auto-render this registry's
 		// Civic Ledger toolbar into #kt-cl-chrome-host on every route settle (the same
-		// dual-registration race documented above for NDS-UI-01), which visually clashes
+		// hazard documented above for Departmental Needs), which visually clashes
 		// with kt_industry/components/PageRail.vue, the page's own DES-12 rail.
 		// reference_data_page.js still calls cl_shell.enterNative() directly (for the
 		// shared "procurement" sidebar only, no toolbar), so the sidebar keeps working

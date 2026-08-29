@@ -12,13 +12,22 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 # Civic Ledger IA: Planned capability overviews + Available modules.
-# Configuration is Disabled for deployment (omitted from export).
+# The legacy "Configuration" section is Disabled for deployment; the rows below
+# named "Configuration and Governance" are the replacement group shipped by
+# CFG-CHG-002 (Reference Data) and STD-CHG-001 (Standard Tender Documents).
+#
+# "Review tasks" and "Intake window" are NDS-CHG-001 v1.1 §10: the Departmental
+# Needs module menu is exactly three entries, and the latter two are sub-routes
+# of the same Page, so they are URL links rather than Page links. Their
+# display_depends_on is presentation only — see the role-visibility test below.
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Home",
 	"Analytics",
 	"Strategy Alignment",
 	"Budget & Funding",
 	"Departmental Needs",
+	"Review tasks",
+	"Intake window",
 	"Procurement Plans",
 	"Tender Management",
 	"Tender Configurations",
@@ -33,6 +42,9 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"STD Versions",
 	"Forms & Schemas",
 	"Import Review",
+	"Configuration and Governance",
+	"Reference Data",
+	"Standard Tender Documents",
 )
 
 

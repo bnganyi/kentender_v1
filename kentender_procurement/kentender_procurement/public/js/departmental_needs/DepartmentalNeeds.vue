@@ -24,6 +24,7 @@
 				:context="workspace.context || {}"
 				:intake="intake"
 				:needs="workspace.needs || []"
+				:actions="workspace.actions || []"
 				:count-label="workspace.count_label || ''"
 				v-model:search="search"
 				v-model:status="status"

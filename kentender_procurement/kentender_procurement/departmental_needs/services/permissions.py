@@ -141,11 +141,47 @@ def is_owner(need: Any, user: str) -> bool:
 	return cstr(need.owner) == cstr(user)
 
 
+# §6 names the roles that read Needs. The Author and Head of User Department
+# are departmental, so their contexts are the units their User Permissions name;
+# the Planner and Auditor are PE/FY-scoped (§14.2), so every unit under a
+# permitted Procuring Entity is in view for them.
+READING_ROLES = (
+	ROLE_DEPARTMENTAL_AUTHOR,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
+	ROLE_PROCUREMENT_PLANNER,
+	ROLE_AUDITOR,
+)
+
+
 def creation_contexts(user: str | None = None) -> list[dict[str, str]]:
 	"""PE/OU pairs in which this user may author a Need (§8.1 resolve contexts)."""
 	principal = actor(user)
 	if not (has_role(principal, ROLE_DEPARTMENTAL_AUTHOR) or is_administrative(principal)):
 		return []
+	return _contexts_in_scope(principal)
+
+
+def viewing_contexts(user: str | None = None) -> list[dict[str, str]]:
+	"""PE/OU pairs whose Needs this user may list (§8.1 resolve contexts).
+
+	Distinct from :func:`creation_contexts`, which answers "where may this user
+	*author*". `get_workspace` backs the review screen as well as the author
+	workspace, so resolving through the authoring question turned the Head of
+	User Department away from NDS-UI-02 entirely — no queue, no register — even
+	though §6 gives them departmental review authority.
+
+	Resolving a context grants nothing. It names the PE/OU pair whose rows are
+	queried; `can_view` still filters every row, and every command re-checks
+	its own authority. Widening this to the four §6 reading roles therefore
+	changes what a reviewer can *open*, not what anyone can see or do.
+	"""
+	principal = actor(user)
+	if not (roles_of(principal).intersection(READING_ROLES) or is_administrative(principal)):
+		return []
+	return _contexts_in_scope(principal)
+
+
+def _contexts_in_scope(principal: str) -> list[dict[str, str]]:
 	allowed_entities = permitted_values(principal, "Procuring Entity")
 	allowed_units = permitted_values(principal, "Organisation Unit")
 	filters: dict[str, Any] = {"status": "Active"}
