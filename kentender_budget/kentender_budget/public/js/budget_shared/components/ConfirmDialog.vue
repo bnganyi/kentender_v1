@@ -55,7 +55,7 @@ function onConfirm() {
 		@keydown="onKeydown"
 		tabindex="-1"
 	>
-		<div class="kt-dialog" style="width: 420px">
+		<div class="kt-dialog" style="width: 420px" role="dialog" aria-modal="true" :aria-label="title">
 			<h2 class="kt-dialog-title">{{ title }}</h2>
 			<p v-if="message" class="kt-muted">{{ message }}</p>
 			<textarea

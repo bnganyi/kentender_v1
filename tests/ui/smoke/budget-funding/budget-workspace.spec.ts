@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 
 import { test, expect } from "@playwright/test";
-import { loginAsBudgetOfficer, loginAsBusinessApprover } from "../../helpers/auth";
+import { loginAsBudgetOfficer, loginAsBudgetScopelessViewer } from "../../helpers/auth";
 
 /**
  * The "No baseline" / Register-button-visibility states for PE-CGKIS's
@@ -37,11 +37,20 @@ function seedCurrentBaseline(): void {
 	);
 }
 
+function seedScopelessViewer(): void {
+	execSync(
+		`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
+			"kentender_budget.seeds.playwright_ui_fixtures.ensure_scopeless_budget_viewer",
+		{ stdio: "pipe", timeout: 120_000 },
+	);
+}
+
 test.describe.configure({ mode: "serial" });
 
 test.describe("Budget & Funding workspace (BUD-UI-01)", () => {
 	test.beforeAll(() => {
 		seedCurrentBaseline();
+		seedScopelessViewer();
 	});
 
 	test.beforeEach(async ({ page }) => {
@@ -82,8 +91,13 @@ test.describe("Budget & Funding workspace (BUD-UI-01)", () => {
 		await expect(page.getByTestId("bud-line-header")).toBeVisible({ timeout: 20_000 });
 	});
 
-	test("Forbidden state for a user with no Budget role", async ({ page }) => {
-		await loginAsBusinessApprover(page);
+	test("Forbidden state for a Budget Viewer with no Procuring Entity scope", async ({ page }) => {
+		// A user holding no Budget role at all never reaches this in-app state —
+		// Frappe's own Page.roles gate blocks them with a generic "Not
+		// permitted" dialog before Vue ever mounts (confirmed live). Budget's
+		// own graceful Forbidden branch only fires for a role-holding user
+		// resolve_scoped_entity() then rejects for having no PE scope.
+		await loginAsBudgetScopelessViewer(page);
 		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
 		await expect(
 			page.getByText("You do not have access to this Budget & Funding context."),

@@ -283,11 +283,13 @@ def get_funding_activity(
 def get_budget_version_history(budget_version: str) -> dict[str, Any]:
 	"""§9.3/§12.5 History tab — Budget Version lifecycle events only, for the
 	exact submitted/active version, reverse chronological."""
-	version = frappe.get_doc("Budget Version", budget_version)
+	from kentender_budget.services.budget_contracts import _resolve_budget_version
+
+	version = _resolve_budget_version(budget_version)
 	require_budget_version_read_scope(version)
 	rows = frappe.get_all(
 		"Budget Audit Event",
-		filters={"budget_version": budget_version, "event_type": ["in", list(LIFECYCLE_EVENT_TYPES)]},
+		filters={"budget_version": version.name, "event_type": ["in", list(LIFECYCLE_EVENT_TYPES)]},
 		fields=_ACTIVITY_FIELDS,
 		order_by="event_at desc",
 	)

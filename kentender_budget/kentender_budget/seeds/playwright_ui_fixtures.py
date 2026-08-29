@@ -83,6 +83,46 @@ def upsert_playwright_current_baseline() -> dict[str, Any]:
 	return {"budget_code": BUD_PW_CURRENT, "version_code": BUD_PW_CURRENT_V1, "financial_year": fy, **result}
 
 
+BUD_PW_SCOPELESS_VIEWER = "bud.pw.scopeless.viewer@example.test"
+
+
+def ensure_scopeless_budget_viewer() -> str:
+	"""A real, non-admin user holding a Page-allowed Budget role (so Frappe's
+	own Page.roles gate lets them load /app/budget-funding at all) but with
+	*no* Procuring Entity scope (no User Permission/User Scope Assignment
+	row) — the only way to actually reach BudgetWorkspaceScreen.vue's own
+	graceful "Forbidden" branch. A user with zero Budget role never gets
+	past the Page's own role gate in the first place (a hard Frappe 403
+	dialog, not Budget's in-app state); Administrator/System Manager never
+	hits this branch either since resolve_scoped_entity() never fails
+	closed for them. Idempotent; safe to call every run."""
+	from frappe.utils.password import update_password
+
+	frappe.only_for(("System Manager", "Administrator"))
+	ensure_budget_roles()
+	email = BUD_PW_SCOPELESS_VIEWER
+	if not frappe.db.exists("User", email):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Playwright",
+				"last_name": "Scopeless Viewer",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	user = frappe.get_doc("User", email)
+	missing = [r for r in ("Desk User", "Budget Viewer") if r not in {row.role for row in user.roles}]
+	if missing:
+		user.add_roles(*missing)
+	update_password(email, "Test@123")
+	# Deliberately no ensure_user_permission/User Scope Assignment call — an
+	# unscoped Budget Viewer is exactly the fixture this test needs.
+	frappe.db.commit()
+	return email
+
+
 def _reset_budget(budget_ref: str) -> None:
 	"""Cascade-delete any existing Budget with this generated_reference, so a
 	Playwright-only fixture can be recreated fresh every test run (mirrors
@@ -95,7 +135,23 @@ def _reset_budget(budget_ref: str) -> None:
 		frappe.db.commit()
 
 
-BUD_PW_CREATE = "BUD-PW-CREATE"
+def _reset_budget_for_pe_fy(pe: str, fy: str) -> None:
+	"""Cascade-delete whatever Budget currently occupies this (Procuring
+	Entity, Financial Year) slot (BUD-BR-001: at most one), regardless of its
+	generated_reference. Unlike the seed helpers in kentender_mvp_v1_portfolio.py,
+	a Playwright spec drives real UI clicks through save_budget_version_draft's
+	own auto-allocator (allocate_budget_reference) — there is no post-hoc
+	rename step — so a prior run's Budget never has a predictable reference
+	to reset by; the (PE, FY) pair is the only stable key (confirmed live:
+	resetting by a fixed reference left a stray "CGKIS-BUD-2026-002" behind
+	that a subsequent run's own reset never matched, permanently blocking
+	this PE+FY slot's "no baseline" state)."""
+	from kentender_core.seeds.kentender_mvp_v1.clear import _delete_budget_graph
+
+	name = frappe.db.get_value("Budget", {"procuring_entity": pe, "financial_year": fy}, "name")
+	if name:
+		_delete_budget_graph(name, {})
+		frappe.db.commit()
 
 
 def reset_editor_create_fixture() -> dict[str, Any]:
@@ -110,7 +166,7 @@ def reset_editor_create_fixture() -> dict[str, Any]:
 	)
 	start_year = _current_fy_start_year()
 	fy = _ensure_isolated_fy(start_year, pe_cgk)
-	_reset_budget(BUD_PW_CREATE)
+	_reset_budget_for_pe_fy(pe_cgk, fy)
 	return {"procuring_entity": pe_cgk, "financial_year": fy}
 
 

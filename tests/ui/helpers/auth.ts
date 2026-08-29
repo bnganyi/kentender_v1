@@ -219,6 +219,17 @@ export async function loginAsBudgetViewer(page: Page) {
 	);
 }
 
+/**
+ * Holds "Budget Viewer" (so Frappe's own Page.roles gate lets them load
+ * /app/budget-funding at all) but has no Procuring Entity scope — the only
+ * way to reach Budget's own in-app "Forbidden" state rather than Frappe's
+ * generic "Not permitted" dialog. Seeded on demand via
+ * kentender_budget.seeds.playwright_ui_fixtures.ensure_scopeless_budget_viewer.
+ */
+export async function loginAsBudgetScopelessViewer(page: Page) {
+	await login(page, 'bud.pw.scopeless.viewer@example.test', 'Test@123');
+}
+
 /** Budget Officer (PE-MOH) — Peter Otieno; also holds Finance Confirmation Officer. */
 export async function loginAsBudgetOfficer(page: Page) {
 	await login(
