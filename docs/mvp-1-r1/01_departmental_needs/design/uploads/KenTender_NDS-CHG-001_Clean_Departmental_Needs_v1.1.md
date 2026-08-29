@@ -3,10 +3,10 @@
 | Control | Value |
 |---|---|
 | Document ID | NDS-CHG-001 |
-| Version | 1.0 |
-| Date | 23 August 2026 |
-| Status | Approved |
-| Approval | Product owner · 23 August 2026 |
+| Version | 1.1 |
+| Date | 28 August 2026 |
+| Status | Proposed for approval |
+| Change type | Complete consolidated successor to approved v1.0 |
 | Module | Departmental Needs |
 | Implementation posture | Clean correction in place; no compatibility layer |
 
@@ -14,7 +14,7 @@
 
 ## 1. Governing decision
 
-This document is the single implementation authority for Departmental Needs. It replaces NDS-CHG-001 v0.2, NDS-CHG-002 v0.1 and NDS-CHG-003 v0.1 wherever they conflict with it.
+On approval, this complete document becomes the single implementation authority for Departmental Needs. It consolidates v1.0 with the approved end-to-end requirement-lineage direction and replaces NDS-CHG-001 v0.2, NDS-CHG-002 v0.1, NDS-CHG-003 v0.1 and NDS-CHG-001 v1.0 wherever they conflict with it.
 
 The existing application is corrected in place. Usable code and the proven Claude Design → Vue 3 → Frappe Desk page pattern may be reused. Removed concepts are deleted rather than renamed, aliased, dual-read or retained behind feature flags.
 
@@ -22,7 +22,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.0 |
+| Earlier item | Disposition in v1.1 |
 |---|---|
 | One Need containing several item lines | Replace with one Need for one requirement. Quantity and unit belong directly to the Need. |
 | Planner combine, split or partially allocate Need lines | Remove from Departmental Needs. When Planning uses an accepted Need, it uses the current accepted version and full accepted quantity. |
@@ -44,6 +44,10 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Separate Needs intake and departmental-plan windows treated as interchangeable | Correct. Departmental Needs owns its minimal intake window; Procurement Planning owns its separate submission window. |
 | Planning source payload includes Strategy, requirement type or generic source evidence | Correct the payload. Those values are not owned by Departmental Needs. No Planning screen redesign is required. |
 | Accepted Need as the exclusive source of a DPP entry or Plan Item | Remove. Planning also permits a HoD or authorised departmental plan preparer to capture a direct departmental requirement. It does not create a synthetic Need. |
+| `business_justification` as a separate field that stops at Departmental Needs | Replace with `expected_operational_result`; the value is carried read-only into Planning and downstream lineage. |
+| Separate Departmental Review Delegate role | Remove. An acting HoD uses the same Head of User Department role and scoped native User Permission for the approved period. |
+| Separate Needs Configuration Manager role | Remove. The Procurement Planner maintains the PE/FY intake window through ordinary Frappe permission. |
+| Custom capability or operational-scope assignment as the permission source | Remove. Use native Frappe Role, Workflow permission and User Permission only. |
 | Legacy Demand migration and compatibility | Prohibited. Departmental Needs remains a clean domain. |
 
 ## 2. Purpose and outcomes
@@ -94,14 +98,14 @@ The six requester-entered values in section 4.3 pass this gate:
 |---|---|
 | Title | Identifies the Need in queues, selectors, details and Planning lineage. |
 | Description | Tells the departmental reviewer and Planner what is required. |
-| Business justification | Tells the departmental reviewer why the Need should be accepted. It is not copied into the Planning source payload. |
+| Expected operational result | States what should improve or become possible; it is reviewed by the HoD and carried read-only into Planning and downstream lineage. |
 | Indicative quantity | Supplies the full accepted quantity projected into the departmental plan. |
 | Unit | Gives meaning to the quantity and is projected into the departmental plan. |
 | Required by | Supports departmental review and the Planning schedule guard. |
 
 ## 3. Fixed ownership and dependency boundary
 
-- Configuration & Governance owns PE, organisation unit, Financial Year, timezone, unit catalogue and capability assignments. Departmental Needs reads them and never infers a first or current record.
+- Configuration & Governance owns PE, organisation unit, Financial Year, timezone, unit catalogue and Role and User Permission assignments. Departmental Needs reads them and never infers a first or current record.
 - Departmental Needs owns its intake window, Need identity, versions, review decisions and withdrawal requests.
 - Strategy Alignment owns Strategic Objectives. A Need stores no Strategy reference.
 - Budget & Funding owns Budgets, Budget Lines, funding source, currency, positions, reservations and commitments. Departmental Needs stores none of those values.
@@ -110,7 +114,7 @@ The six requester-entered values in section 4.3 pass this gate:
 
 | Information or decision | Owner | Departmental Needs relationship |
 |---|---|---|
-| PE, OU, FY, timezone, unit and capability assignment | Configuration & Governance | Resolve exact identifiers and fail closed when absent or ambiguous. |
+| PE, OU, FY, timezone, unit, Role and User Permission assignment | Configuration & Governance | Resolve exact identifiers and fail closed when absent or ambiguous. |
 | Needs intake open and close instants | Departmental Needs configuration | Gate initial Need creation and initial submission. |
 | Need and accepted Need version | Departmental Needs | Create, review, version and publish. |
 | Strategic Objective | Strategy Alignment / Procurement Planning | No Need field or write. |
@@ -178,7 +182,7 @@ One version of the requirement. Draft content is mutable only until submission. 
 | `version_status` | `Draft`, `Submitted`, `Returned`, `Accepted`, `Not taken forward`, `Withdrawn` or `Superseded`. |
 | `title` | Short queue and detail label. Required for first save; 5–160 characters. |
 | `description` | Plain-language statement of what is required. Required for submission; 10–1,000 characters. |
-| `business_justification` | Plain-language reason used by the departmental reviewer. Required for submission; 20–1,000 characters. |
+| `expected_operational_result` | Plain-language statement of what should improve or become possible after the requirement is met. Required for submission; 10–1,000 characters. |
 | `indicative_quantity` | Full quantity projected to Planning. Required for submission; greater than zero with at most three decimals. |
 | `unit_id` | Governed unit giving meaning to the quantity. Required for submission. |
 | `required_by_date` | Date the department needs the requirement. Required and inside the target FY. |
@@ -198,7 +202,7 @@ One open departmental decision task for one submitted version.
 | `status` | `Open`, `Completed` or `Cancelled`. |
 | `decision_token` | Server-generated optimistic token preventing two decisions on the same task. |
 
-The task is addressed to the effective departmental-review capability in the exact scope. It is not described as assigned to a named person until a decision actor completes it. There is no claim, release, priority, score, due-date or free-text task note.
+The task is available to users holding the Head of User Department role and the exact native User Permission scope. It is not described as assigned to a named person until a decision actor completes it. There is no claim, release, priority, score, due-date or free-text task note.
 
 ### 4.5 DepartmentalNeedDecision
 
@@ -248,16 +252,16 @@ This projection is not Need lifecycle state and users cannot edit it.
 
 | Current state | Command | Result | Authorised actor |
 |---|---|---|---|
-| No record | Save Draft | Draft Version 1 and generated Need reference | Requester |
-| Draft | Save Draft | Updated Draft | Originator |
-| Draft | Submit | Submitted | Originator |
-| Draft | Withdraw | Withdrawn | Originator |
-| Submitted | Return for correction | Submitted version becomes Returned; copied successor Draft is created; root displays Returned | Departmental Reviewer |
-| Submitted | Accept for planning | Submitted version becomes Accepted; root becomes Accepted for planning | Departmental Reviewer |
-| Submitted | Do not take forward | Submitted version and root become Not taken forward | Departmental Reviewer |
-| Returned | Save correction | Returned successor Draft updated; root remains Returned | Originator |
-| Returned | Resubmit | Successor Draft becomes Submitted | Originator |
-| Returned | Withdraw | Successor and root become Withdrawn | Originator |
+| No record | Save Draft | Draft Version 1 and generated Need reference | Departmental Author |
+| Draft | Save Draft | Updated Draft | Departmental Author who owns the Need |
+| Draft | Submit | Submitted | Departmental Author who owns the Need |
+| Draft | Withdraw | Withdrawn | Departmental Author who owns the Need |
+| Submitted | Return for correction | Submitted version becomes Returned; copied successor Draft is created; root displays Returned | Head of User Department |
+| Submitted | Accept for planning | Submitted version becomes Accepted; root becomes Accepted for planning | Head of User Department |
+| Submitted | Do not take forward | Submitted version and root become Not taken forward | Head of User Department |
+| Returned | Save correction | Returned successor Draft updated; root remains Returned | Departmental Author who owns the Need |
+| Returned | Resubmit | Successor Draft becomes Submitted | Departmental Author who owns the Need |
+| Returned | Withdraw | Successor and root become Withdrawn | Departmental Author who owns the Need |
 
 ### 5.2 Accepted successor lifecycle
 
@@ -282,7 +286,7 @@ There may be only one open successor per Need. No command edits, deletes or rewr
 | Awaiting planning clearance | Inclusion cleared | Approve | Need and accepted version become Withdrawn. |
 | Awaiting review or clearance | Any | Decline | Request becomes Declined; Need remains Accepted. |
 
-Planning clearance is not performed in Departmental Needs. The user follows the existing Planning amendment route. A Draft or Submitted DPP is not an Active Plan dependency; withdrawal may proceed and Planning will receive a stale/ineligible-source event.
+Planning clearance is not performed in Departmental Needs. The user follows the governed Planning successor-version route. A Draft or Submitted DPP is not an Active Plan dependency; withdrawal may proceed and Planning will receive a stale/ineligible-source event.
 
 ### 5.4 Invariants
 
@@ -292,7 +296,7 @@ Planning clearance is not performed in Departmental Needs. The user follows the 
 | NDS-BR-002 | Initial creation and initial submission require one Open Needs intake window for the same PE/FY. Existing authorised records remain readable after close. |
 | NDS-BR-003 | A correction of a version submitted before close may be resubmitted after close. An accepted successor may be proposed while the PE/FY context remains active. |
 | NDS-BR-004 | One Need represents one requirement and has exactly one quantity, one unit and one required-by date. It has no funding specification. |
-| NDS-BR-005 | The originator alone edits the initial Draft or returned correction. A separately assigned departmental reviewer decides it. |
+| NDS-BR-005 | The Departmental Author who owns the Need edits the initial Draft or returned correction. The Head of User Department decides the submitted version. |
 | NDS-BR-006 | The actor who submitted the version cannot decide that version. Maker-checker is rechecked on the server. |
 | NDS-BR-007 | Submission requires all six fields in section 4.3 and a current governed unit. |
 | NDS-BR-008 | Need creation, submission and acceptance do not select or validate a Budget Line, capture an amount, check funding or create a reservation. |
@@ -312,43 +316,43 @@ Planning clearance is not performed in Departmental Needs. The user follows the 
 
 ## 6. Roles and permissions
 
-| Role or capability | Permitted capability |
+| Native Frappe role | Permitted work |
 |---|---|
-| Departmental Need Requester | View own Needs; create and edit own Draft/Returned Need; submit, resubmit and withdraw before acceptance; propose an update or withdrawal of own accepted Need. |
+| Departmental Author | View own Needs; create and edit own Draft/Returned Need; submit, resubmit and withdraw before acceptance; propose an update or withdrawal of own accepted Need. |
 | Head of User Department | View Needs in assigned departmental scope; decide submitted Needs, successor updates and withdrawal requests, except own submitted version. |
-| Departmental Review Delegate | Perform the same exact review command only within an explicit effective delegation. No broader department access is inferred from the role name. |
-| Needs Configuration Manager | Set the intake open/close instants for an assigned PE/FY. No Need-review authority is implied. |
-| Procurement Planner | Read current accepted Need versions through the typed source contract and exact read-only deep link. No Departmental Needs workspace or mutation. |
+| Procurement Planner | Maintain the PE/FY intake window; read current accepted Need versions through the typed source contract and exact read-only deep link; no Need decision. |
 | Auditor | Read scoped Needs, versions, decisions and lineage; no business mutation. |
-| System Administrator | Inspect technical metadata and neutral records read-only unless separately assigned a business capability. |
+| System Administrator | Inspect technical metadata and neutral records read-only unless separately assigned a business role. |
 
-Assignments are scoped by PE, FY, optional OU, capability and effective dates. A selected context filters an already-authorised scope; it never grants authority. Combined roles are evaluated per command, not collapsed into the broadest label.
+Use native Frappe Role, Workflow permissions and User Permission for PE, FY and department scope. Do not use Capability Profiles, Operational Scope Assignments or another permission store. A selected context filters an already-authorised scope; it never grants authority.
+
+A temporary acting HoD receives the same Head of User Department role and scoped User Permission for the approved period. Do not create a delegate role.
 
 ## 7. Procurement Planning integration
 
 ### 7.1 Accepted source payload
 
-`DepartmentalNeedAccepted.v1` contains only:
+`DepartmentalNeedAccepted.v2` contains only:
 
 - event ID and accepted time;
 - Need ID and reference;
 - accepted version ID, number and content hash;
 - PE, OU and FY IDs;
-- title and description;
+- title, description and expected operational result;
 - indicative quantity and governed unit ID/display value;
 - required-by date.
 
-It does not contain business justification, Budget Line, indicative amount, funding source, currency, Strategy, requirement type, procurement method, location, attachment, source reference, generic evidence or notes.
+It does not contain Budget Line, indicative amount, funding source, currency, Strategy, requirement type, procurement method, location, attachment, source reference, generic evidence or notes.
 
 `DepartmentalNeedSuperseded.v1` identifies the Need, earlier accepted version/hash, successor accepted version/hash and the successor accepted payload. `DepartmentalNeedWithdrawn.v1` identifies the withdrawn accepted version and withdrawal decision. Delivery is transactional-outbox, idempotent and ordered per Need.
 
 ### 7.2 Planning treatment
 
 - A DPP entry has exactly one source origin: `Accepted Departmental Need` or `Direct departmental requirement`.
-- Planning creates or updates one DPP entry for every current accepted Need in the exact PE/FY/OU context. The Need-owned title, description, quantity, unit and required-by date remain read-only. Planning adds the Budget Line and indicative amount before DPP submission.
+- Planning creates or updates one DPP entry for every current accepted Need in the exact PE/FY/OU context. The Need-owned title, description, expected operational result, quantity, unit and required-by date remain read-only. Planning adds the Budget Line and indicative amount before DPP submission.
 - When Planning uses an accepted Need, it takes the full accepted quantity; there is no partial Need allocation or Planning quantity override in MVP-1.
 - A HoD or authorised departmental plan preparer may create a direct departmental requirement inside the department's Draft DPP without first creating a Need.
-- A direct departmental requirement captures only title, description, quantity, governed unit, required-by date, eligible Budget Line and indicative amount. It does not collect a bypass reason, business justification, attachment, source reference or synthetic Need reference.
+- A direct departmental requirement captures only title, description, expected operational result, quantity, governed unit, required-by date, eligible Budget Line and indicative amount. It does not collect a bypass reason, attachment, source reference or synthetic Need reference.
 - Direct requirements are Planning-owned and editable only while the applicable DPP version is Draft or Returned. The HoD's certification of the complete DPP is the departmental governance control.
 - A DPP may contain accepted-Need entries, direct entries or both. A DPP may consist entirely of direct entries.
 - A Plan Item may be formed from one or more accepted DPP entries of either source origin. Every source retains its exact DPP-entry lineage; only accepted-Need entries additionally retain Need/version/hash lineage.
@@ -369,12 +373,12 @@ Earlier Planning text or fixtures that require every Plan Item to originate from
 Earlier Planning text or seed payloads that source `strategy`, `requirement_type` or generic `source evidence` from Departmental Needs are also corrected:
 
 - Strategic Objective is selected on the Plan Item using the Strategy Alignment contract.
-- Requirement type is classified by the DPP Validator in Procurement Planning.
+- Requirement type is classified by the Procurement Planner in Procurement Planning.
 - No generic source-evidence field exists.
 
 Budget & Funding v1.1 text stating that Departmental Needs owns the selected Budget Line is superseded at this boundary. Procurement Planning owns the Budget Line and indicative amount on each DPP entry; Budget & Funding remains authoritative for Budget Line identity, eligibility and funding control.
 
-The previously constructed Planning shell, DPP workspace and Plan Item UI remain reusable. The Planning design contract must add one exact direct-requirement editor, identify the source origin on DPP entries, and provide Budget Line and indicative amount controls for accepted-Need entries. The direct-requirement editor uses the seven values above. The accepted-Need enrichment surface displays the five read-only Need facts plus the two Planning-owned funding controls. Neither surface copies the Departmental Needs review workflow or asks Claude Design to invent data. This Departmental Needs design contract creates no extra Needs screen or duplicate dashboard.
+The previously constructed Planning shell, DPP workspace and Plan Item UI remain reusable. The Planning design contract must add one exact direct-requirement editor, identify the source origin on DPP entries, and provide Budget Line and indicative amount controls for accepted-Need entries. The direct-requirement editor uses the eight values above. The accepted-Need enrichment surface displays the six read-only Need facts plus the two Planning-owned funding controls. Neither surface copies the Departmental Needs review workflow or asks Claude Design to invent data. This Departmental Needs design contract creates no extra Needs screen or duplicate dashboard.
 
 ## 8. Service and command contracts
 
@@ -406,7 +410,7 @@ All contracts are typed, versioned and server-authorised. Mutating commands requ
 | `cancel_accepted_need_successor` | Withdraw the originator's Draft successor and leave the earlier accepted version current. |
 | `request_accepted_need_withdrawal` | Create the only open withdrawal request with a required reason and one review task. |
 | `decide_accepted_need_withdrawal` | Recheck reviewer, maker-checker and live Planning dependency; approve, block for clearance or decline atomically. |
-| `save_needs_intake_window` | Create or update one PE/FY window after configuration capability, UTC and concurrency checks. |
+| `save_needs_intake_window` | Create or update one PE/FY window after Procurement Planner role, User Permission, UTC and concurrency checks. |
 | `project_need_planning_usage` | Accept an authenticated, ordered Planning event and update the read-only projection idempotently. |
 
 Notifications are durable post-commit effects for submit, return, accept, decline and withdrawal decisions. They are not separate business records or user-entered messages.
@@ -416,7 +420,7 @@ Notifications are durable post-commit effects for submit, return, accept, declin
 | Code | Required result |
 |---|---|
 | `NDS_CONTEXT_REQUIRED` | No single authorised PE/OU/FY context can be resolved. Create no record. |
-| `NDS_SCOPE_DENIED` | Actor lacks the exact current capability and scope. Disclose no protected record data. |
+| `NDS_SCOPE_DENIED` | Actor lacks the exact current Frappe role and User Permission scope. Disclose no protected record data. |
 | `NDS_INTAKE_NOT_OPEN` | Initial creation or initial submission is outside the Needs intake window. |
 | `NDS_FIELD_REQUIRED` | Return exact missing field identifiers; create no task or state change. |
 | `NDS_REQUIRED_BY_OUTSIDE_FY` | Required-by is outside the target FY. |
@@ -440,8 +444,8 @@ Errors are stable service results, not inferred from button visibility or free-t
 Its module menu contains only:
 
 - **Departmental Needs**;
-- **Review tasks**, visible only to an effective Head of User Department or Departmental Review Delegate; and
-- **Intake window**, visible only to an effective Needs Configuration Manager.
+- **Review tasks**, visible only to an effective Head of User Department; and
+- **Intake window**, visible only to an effective Procurement Planner.
 
 Procurement Planners use the existing Procurement Planning workspace. A Planning deep link may open NDS-UI-06 read-only for the exact accepted Need; it does not create a Planner landing page.
 
@@ -486,7 +490,7 @@ The approved desktop shell inside every artboard is:
 
 ### 11.2 NDS-DES-01 — Requester workspace
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs**
 
 **Page content header**
 
@@ -568,7 +572,7 @@ Below the table: **2 department needs**. No pagination control.
 
 ### 11.4 NDS-DES-03 — Create need
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 24 Nov 2026, 10:05 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Create need**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 24 Nov 2026, 10:05 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Create need**
 
 **Page content header**
 
@@ -593,9 +597,9 @@ All three rows use the approved read-only field component.
 |---|---|
 | Title | National digital health infrastructure upgrade |
 | Description | Procure and implement national digital health infrastructure across priority health facilities. |
-| Business justification | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| Expected operational result | Priority health facilities can use secure and interoperable digital health services. |
 
-Title uses one single-line input. Description and Business justification use separate multiline text areas.
+Title uses one single-line input. Description and Expected operational result use separate multiline text areas. The expected-result help text is: **Describe the practical result the department expects after this requirement is met.**
 
 **Quantity and timing card**
 
@@ -617,7 +621,7 @@ Do not show a Need reference, item table, add-item control, attachment, location
 
 ### 11.5 NDS-DES-04 — Returned correction
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 14:15 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0003 > Correct**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 14:15 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0003 > Correct**
 
 **Page content header**
 
@@ -646,7 +650,7 @@ Do not show a Need reference, item table, add-item control, attachment, location
 |---|---|
 | Title | Clinical training laptops for digital health rollout |
 | Description | Laptop computers for clinical training during the national digital health rollout. |
-| Business justification | Provide the equipment required for staff training on the deployed digital health services. |
+| Expected operational result | Provide the equipment required for staff training on the deployed digital health services. |
 
 **Quantity and timing card**
 
@@ -666,7 +670,7 @@ Use the same field components and arrangement as NDS-DES-03.
 
 ### 11.6 NDS-DES-05 — Submitted Need detail
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 12:30 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0002**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 12:30 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0002**
 
 **Page content header**
 
@@ -694,7 +698,7 @@ Use the same field components and arrangement as NDS-DES-03.
 | Label | Value |
 |---|---|
 | Description | Professional certification programme for staff supporting national digital health services. |
-| Business justification | Build internal capacity to operate and support national digital health platforms. |
+| Expected operational result | Build internal capacity to operate and support national digital health platforms. |
 | Indicative quantity | 1 programme |
 | Required by | 31 Dec 2027 |
 
@@ -725,7 +729,7 @@ All values use read-only display rows. Do not show a footer action, reviewer nam
 | Label | Value |
 |---|---|
 | Description | Professional certification programme for staff supporting national digital health services. |
-| Business justification | Build internal capacity to operate and support national digital health platforms. |
+| Expected operational result | Build internal capacity to operate and support national digital health platforms. |
 | Indicative quantity | 1 programme |
 | Required by | 31 Dec 2027 |
 
@@ -744,7 +748,7 @@ The entire submitted Need is visible on this artboard. Do not show editable fiel
 
 ### 11.8 NDS-DES-07 — Accepted Need detail
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 5 Jan 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 5 Jan 2027, 10:15 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001**
 
 **Page content header**
 
@@ -768,7 +772,7 @@ The entire submitted Need is visible on this artboard. Do not show editable fiel
 | Label | Value |
 |---|---|
 | Description | Procure and implement national digital health infrastructure across priority health facilities. |
-| Business justification | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| Expected operational result | Priority health facilities can use secure and interoperable digital health services. |
 | Indicative quantity | 1 programme |
 | Required by | 31 Aug 2027 |
 
@@ -784,7 +788,7 @@ All fields are read-only. Do not show a version-history table, source hash, Plan
 
 ### 11.9 NDS-DES-08 — Accepted Need update draft
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Need Requester · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 15 Dec 2026, 09:10 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001 > Create update**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 15 Dec 2026, 09:10 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001 > Create update**
 
 **Page content header**
 
@@ -812,7 +816,7 @@ All fields are read-only. Do not show a version-history table, source hash, Plan
 |---|---|
 | Title | National digital health infrastructure upgrade |
 | Description | Procure and implement national digital health infrastructure across priority health facilities. |
-| Business justification | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| Expected operational result | Priority health facilities can use secure and interoperable digital health services. |
 
 **Quantity and timing card**
 
@@ -861,7 +865,7 @@ Use the same components and arrangement as NDS-DES-03.
 | Label | Value |
 |---|---|
 | Description | Procure and implement national digital health infrastructure across priority health facilities. |
-| Business justification | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| Expected operational result | Priority health facilities can use secure and interoperable digital health services. |
 | Indicative quantity | 1 programme |
 | Required by | 15 Sep 2027 |
 
@@ -880,7 +884,7 @@ Do not collapse the full proposed details into the Changes table. Do not show ed
 
 ### 11.11 NDS-DES-10 — Intake window
 
-**Fixture context — outside the artboard:** Amina Hassan · `amina.hassan@moh.example.test` · Needs Configuration Manager · PE-MOH — Ministry of Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Intake window**
+**Fixture context — outside the artboard:** Amina Hassan · `amina.hassan@moh.example.test` · Procurement Planner · PE-MOH — Ministry of Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Intake window**
 
 **Page content header**
 
@@ -958,7 +962,7 @@ Do not show an attachment, source reference, Planning selector, approval checkbo
 |---|---|
 | Accepted version | Version 1 |
 | Description | Procure and implement national digital health infrastructure across priority health facilities. |
-| Business justification | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| Expected operational result | Priority health facilities can use secure and interoperable digital health services. |
 | Indicative quantity | 1 programme |
 | Required by | 31 Aug 2027 |
 
@@ -1041,7 +1045,7 @@ Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, 
 
 - The review queue returns only Open tasks in the actor's exact effective departmental-review scope after maker-checker exclusion.
 - The department register returns authorised Needs in that same PE/OU/FY. It does not grant actions outside an Open task.
-- A delegate sees only tasks covered by the exact current delegation. A role label alone returns no queue.
+- An acting HoD sees only tasks within the exact current User Permission scope and effective assignment period. The role label alone grants no cross-department access.
 - **Review** carries the stable task ID and current decision token to NDS-UI-05 or NDS-UI-07.
 - A successful decision removes the task from the queue. A concurrent decision returns `NDS_STALE_WRITE` and reloads the current neutral result.
 - Counts, queue rows and register rows use the same database scope predicate.
@@ -1092,7 +1096,7 @@ Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, 
 
 ### 12.7 NDS-UI-08 — Intake window
 
-- Resolve PE/FY options only from the actor's effective Needs-configuration assignments and active PE/FY Contexts.
+- Resolve PE/FY options only from the Procurement Planner's native User Permissions and active PE/FY Contexts.
 - Save validates `closes_at > opens_at`, converts displayed EAT values to UTC and uses optimistic concurrency.
 - Moving or closing a window does not rewrite, delete or hide an existing Need.
 - Initial create and submit commands evaluate the window at their server clock instant. The end instant is inclusive.
@@ -1140,10 +1144,10 @@ The PE, FY, OUs, units and assignments come from Configuration & Governance. See
 
 | Actor | Exact assignment |
 |---|---|
-| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Need Requester for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD / FY 2027/28 |
+| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Author for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD / FY 2027/28 |
 | `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department for both named OUs / FY 2027/28 |
-| `julia.njeri@moh.example.test` · Julia Njeri | Departmental Review Delegate for OU-MOH-DHI from 1 Oct to 30 Nov 2026 |
-| `amina.hassan@moh.example.test` · Amina Hassan | Needs Configuration Manager for PE-MOH / FY 2027/28 |
+| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department for OU-MOH-DHI from 1 Oct to 30 Nov 2026, using the same role and a time-bound native User Permission |
+| `amina.hassan@moh.example.test` · Amina Hassan | Procurement Planner for PE-MOH / FY 2027/28; may maintain the Needs intake window |
 | `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Procurement Planner for PE-MOH / FY 2027/28; accepted-source contract and exact detail link only |
 | `auditor.moh@example.test` · MOH Auditor | Read-only audit scope for PE-MOH / FY 2027/28 |
 | `requester.cgk@example.test` · CGK Requester | Separate PE-CGK scope used only for isolation tests |
@@ -1159,11 +1163,11 @@ No actor receives authority merely because they are Administrator or because a c
 | `NDS-MOH-2027-0003` | HR Management and Development | Clinical training laptops for digital health rollout | 200 each | 31 Dec 2027 | Returned; editable Version 2 | Not included |
 | `NDS-MOH-2027-0004` | Digital Health | Clinical deployment laptops for digital health rollout | 300 each | 31 Dec 2027 | Draft Version 1 | Not included |
 
-Exact descriptions and justifications:
+Exact descriptions and expected operational results:
 
-| Reference | Description | Business justification |
+| Reference | Description | Expected operational result |
 |---|---|---|
-| NDS-MOH-2027-0001 | Procure and implement national digital health infrastructure across priority health facilities. | Improve availability and reliability of interoperable digital health services used by priority health facilities. |
+| NDS-MOH-2027-0001 | Procure and implement national digital health infrastructure across priority health facilities. | Priority health facilities can use secure and interoperable digital health services. |
 | NDS-MOH-2027-0002 | Professional certification programme for staff supporting national digital health services. | Build internal capacity to operate and support national digital health platforms. |
 | NDS-MOH-2027-0003 | Laptop computers for clinical training during the national digital health rollout. | Provide the equipment required for staff training on the deployed digital health services. |
 | NDS-MOH-2027-0004 | Laptop computers for deployment at priority facilities during the national digital health rollout. | Provide endpoint equipment required to use the deployed digital health services. |
@@ -1196,7 +1200,19 @@ Terminal-state, stale-write, concurrent-decision, expired-delegation, window-bou
 
 Direct departmental requirement fixtures belong to Procurement Planning and create no Departmental Needs seed record. The Planning integration profile must prove a DPP containing only direct requirements and another containing both source origins without changing the four Needs above.
 
-### 14.6 Seed execution rules
+### 14.6 KEBS first-slice profile
+
+The KEBS end-to-end profile may create these three simple Needs, or create the same facts as direct Departmental Plan entries to prove that Needs remains optional:
+
+| Source line | Title | Quantity | Expected operational result |
+|---|---|---:|---|
+| `SRC-KEBS-ICT-001` | Business laptops | 25 Each | Mobile officers can run approved office and standards applications securely. |
+| `SRC-KEBS-ICT-002` | Desktop computers with monitors | 15 Each | Fixed workstations replace unsupported equipment at the Coast Region office. |
+| `SRC-KEBS-ICT-003` | Business tablets | 10 Each | Field officers can capture and review inspection information away from the office. |
+
+When Needs are used, their stable Need IDs become the source-line IDs passed to Planning. No specification, attachment, supplier qualification or Tender parameter is created at this stage.
+
+### 14.7 Seed execution rules
 
 - Seed keys and timestamps are deterministic and idempotent.
 - Seed scripts call domain builders or public commands that enforce the same invariants as production setup.
@@ -1229,9 +1245,9 @@ Direct departmental requirement fixtures belong to Procurement Planning and crea
 | NDS-AC-019 | Accepted withdrawal is maker-checked and cannot complete while an exact Active Plan dependency exists. |
 | NDS-AC-020 | Planning clearance occurs only in Procurement Planning; Departmental Needs exposes no foreign-module mutation. |
 | NDS-AC-021 | Search, counts, rows, detail, export and service access use the same server-side scope predicate. |
-| NDS-AC-022 | Requester, reviewer, delegate, configuration, Planner deep-link, auditor and System Administrator permissions match section 6 exactly. |
+| NDS-AC-022 | Departmental Author, Head of User Department, acting-HoD, Procurement Planner, auditor and System Administrator permissions match section 6 exactly. |
 | NDS-AC-023 | Budget Officer and Accounting Officer receive no Departmental Needs workspace, task or special action. |
-| NDS-AC-024 | The Planning source payload contains no Budget Line, amount, funding source, currency, Strategy, requirement type, business justification, generic evidence, location or attachment. |
+| NDS-AC-024 | The Planning source payload includes the expected operational result and contains no Budget Line, amount, funding source, currency, Strategy, requirement type, generic evidence, location or attachment. |
 | NDS-AC-025 | NDS-DES-01 through NDS-DES-14 render only their exact fixtures and exclusions. |
 | NDS-AC-026 | Breadcrumb and Frappe header remain outside every Claude Design artboard and use the existing framework components. |
 | NDS-AC-027 | Runtime behaviour is implemented from section 12, not inferred from static design output. |
@@ -1245,13 +1261,21 @@ Direct departmental requirement fixtures belong to Procurement Planning and crea
 | NDS-AC-035 | A DPP and its Plan Items may be formed entirely from direct departmental requirements, entirely from accepted Needs, or from both source origins. |
 | NDS-AC-036 | A direct departmental requirement creates no synthetic Need, Need review task, bypass reason or Need audit event. |
 | NDS-AC-037 | Accepted-Need entries retain Need/version/hash lineage; direct entries retain DPP-entry lineage and are never presented as accepted Needs. |
+| NDS-AC-038 | Expected operational result is present in the immutable Accepted version and `DepartmentalNeedAccepted.v2`. |
+| NDS-AC-039 | The Need ID remains the stable source-line identity through Planning. |
+| NDS-AC-040 | Planning receives the expected operational result read-only and receives no supplier obligation or Tender parameter. |
+| NDS-AC-041 | Only Departmental Author and Head of User Department perform Need lifecycle actions. |
+| NDS-AC-042 | An acting HoD uses the same role and a time-bound native User Permission; no delegate role exists. |
+| NDS-AC-043 | Procurement Planner maintains the intake window without receiving a Need decision. |
+| NDS-AC-044 | Native Frappe permissions enforce PE/FY/department scope without a parallel permission system. |
+| NDS-AC-045 | The KEBS Needs-origin and direct-Planning profiles preserve equivalent source facts. |
 
 ### 15.1 Minimum automated coverage
 
 | Test layer | Minimum coverage |
 |---|---|
 | Domain unit | Field validation, date, quantity, lifecycle, root/accepted/successor pointers, withdrawal dependency and usage projection. |
-| Permission unit | Own vs department vs delegated vs Planner contract vs auditor, cross-OU/PE/FY denial and maker-checker. |
+| Permission unit | Own vs department vs acting-HoD vs Planner contract vs auditor, cross-OU/PE/FY denial and maker-checker. |
 | Command integration | Draft, submit, return-copy, resubmit, accept, decline, successor, withdrawal, intake save, idempotency and concurrency. |
 | Contract integration | Accepted/superseded/withdrawn events, Planning usage event, stale hash, accepted-Need Planning enrichment, direct-only DPP and mixed-origin DPP. |
 | UI component | Exact fields, read-only derived values, role tables, dialogs, button states and no forbidden controls. |
@@ -1331,10 +1355,27 @@ This document is the single Departmental Needs authority. Its requirement, desig
 
 Where another approved module document owns a value or decision, its domain authority prevails for that value:
 
-1. Configuration & Governance for PE/FY/OU/unit/capability identity;
+1. Configuration & Governance for PE/FY/OU/unit identity and native Role/User Permission assignments;
 2. Budget & Funding v1.1 for Budget Line identity, funding source and currency as consumed by Procurement Planning, subject to the ownership correction in section 7.3;
 3. this document for Need capture, review, versions and withdrawal;
 4. Strategy Alignment v1.3 for Strategic Objectives; and
 5. Procurement Planning canonical/functional contracts for DPP, classification, Plan Items, Finance and Active Plan usage, as corrected by the accepted-source boundary in section 7.
 
 If an implementation ambiguity would add a field, action, screen, object or role, the default answer is **omit it** until a current operational purpose, named consumer, validation and effect are approved.
+
+## 19. E2E-REQ-001 conformance
+
+| Non-drift control | Conformance |
+|---|---|
+| Structured data is authoritative | The Need is structured and contains no attachment substitute. |
+| Fixed product forms | The Need has exactly six user-owned values. |
+| No generic configuration engine | No schema, mapping, manifest or STD control exists. |
+| Enter department data once | Accepted values pass to Planning with the same Need and version IDs. |
+| Procurement cannot silently rewrite | Planning receives accepted values read-only. |
+| Downstream obligations are linked | The Need creates the first stable source ID; detailed obligations are added later at Requisition. |
+| Native Frappe permissions and minimum roles | Four native roles cover the module; only Author and HoD make Need lifecycle decisions. |
+| No premature abstraction | No generic requirement model is introduced. |
+
+## 20. Approval effect
+
+NDS-CHG-001 v1.0 remains approved until this complete v1.1 successor is approved. On approval, v1.1 supersedes v1.0 in full and becomes the only Departmental Needs requirements document to consult.
