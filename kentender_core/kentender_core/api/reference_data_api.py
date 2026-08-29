@@ -221,3 +221,13 @@ def resolve_authorized_contexts(remembered_context: str | None = None):
 @frappe.whitelist()
 def validate_context_for_command(context_id: str):
 	return resolver.validate_context_for_command(frappe.session.user, context_id)
+
+
+@frappe.whitelist()
+def get_working_context(module: str, requested_context: str | None = None):
+	return resolver.resolve_working_context(module, frappe.session.user, requested_context=requested_context)
+
+
+@frappe.whitelist()
+def select_working_context(module: str, context_id: str):
+	return resolver.select_working_context(module, context_id, frappe.session.user)

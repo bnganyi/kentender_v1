@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, getdate
 
 from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
@@ -28,7 +28,6 @@ from kentender_budget.services.budget_authorization import (
 	require_budget_version_capability,
 	require_budget_version_read_scope,
 )
-from kentender_budget.services.budget_permissions import entity_for_user
 from kentender_budget.services.budget_reference import (
 	allocate_budget_line_version_reference,
 	allocate_budget_reference,
@@ -55,18 +54,38 @@ def format_kes_full(amount: float | None, *, currency: str = "KES") -> str:
 
 def resolve_scoped_entity(requested: str | None = None) -> str:
 	"""BUD-BR-001 — hard PE scope; no unscoped / cross-entity read for a
-	non-admin actor. Administrator/System Manager may pass any PE explicitly."""
-	roles = frappe.get_roles(frappe.session.user)
-	user_pe = entity_for_user()
+	non-admin actor. Administrator/System Manager may pass any PE explicitly.
+
+	Asserts scope against an already-known PE (a document's own
+	procuring_entity, or an explicit caller-supplied value) — it does not
+	pick "the current working context" for a screen with no PE of its own;
+	that's kentender_core.services.reference_data_resolver.resolve_working_context's
+	job (BUD-CHG-001 v1.2 Phase 8), used by get_budget_workspace and the
+	pre-creation branch of save_budget_version_draft.
+
+	Reads permitted_procuring_entities() directly rather than picking a
+	single "the" PE for the user first — a user legitimately scoped to more
+	than one Procuring Entity (e.g. a cross-entity Auditor) must be able to
+	pass any one of them, not just whichever one an earlier single-PE guess
+	happened to prefer."""
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
 	req = (requested or "").strip() or None
-	is_admin = "System Manager" in roles or frappe.session.user == "Administrator"
-	if is_admin:
-		return req or user_pe or ""
-	if not user_pe:
+	pes = permitted_procuring_entities()
+	if pes is None:
+		return req or ""
+	if not pes:
 		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError, title="BUDGET_SCOPE_REQUIRED")
-	if req and req != user_pe:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
-	return user_pe
+	if req:
+		if req not in pes:
+			frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
+		return req
+	if len(pes) == 1:
+		return next(iter(pes))
+	# More than one permitted PE and no explicit target — every current call
+	# site always asserts against an already-known document PE, so this is
+	# ambiguous input, not a genuine "pick my working context" request.
+	frappe.throw(_("A specific procuring entity is required"), frappe.PermissionError, title="BUDGET_SCOPE_REQUIRED")
 
 
 def _entity_label(pe_name: str | None) -> str:
@@ -415,29 +434,41 @@ def _version_summary(version) -> dict[str, Any]:
 	}
 
 
-def _current_financial_year() -> str:
-	"""Best-effort 'current' Financial Year — the one whose period contains
-	today. BUD-UI-01's context strip is read-only display, not a selector
-	(no cross-app PE/FY picker component exists yet); this is a narrow
-	workspace-only stopgap, not a general resolver, and does not handle a
-	user needing a non-current FY or multiple assigned PEs."""
-	today = getdate(nowdate())
-	return frappe.db.get_value("Financial Year", {"start_date": ["<=", today], "end_date": [">=", today]}, "name") or ""
-
-
-def get_budget_workspace(procuring_entity: str | None = None, financial_year: str | None = None) -> dict[str, Any]:
+def get_budget_workspace(context_id: str | None = None) -> dict[str, Any]:
 	"""BUD-UI-01 — current scoped Budget and operational position, or the
-	no-baseline state. Loading never shows zero balances (§12.1)."""
-	pe = resolve_scoped_entity(procuring_entity)
-	fy = (financial_year or "").strip() or _current_financial_year()
+	no-baseline state, for one explicit PE Fiscal Year Context (BUD-CHG-001
+	v1.2 Phase 8). No longer auto-resolves "today's" Financial Year or
+	guesses a single PE for the caller — the working context is resolved
+	(explicit selection, remembered preference, or auto-selected when the
+	caller has exactly one) by
+	kentender_core.services.reference_data_resolver.resolve_working_context,
+	which also correctly distinguishes an unrestricted actor (every context)
+	from a scoped one (their permitted Procuring Entities only) from a
+	no-access one — see that function's own docstring. When no context can
+	be resolved, the response carries selection_required=True with the
+	actor's own selectable contexts, instead of ever masquerading as "no
+	baseline"."""
+	from kentender_core.services.reference_data_resolver import resolve_working_context
+
+	resolved = resolve_working_context("budget", requested_context=context_id)
+	if resolved["selection_required"]:
+		return {
+			"selection_required": True,
+			"mode": resolved["mode"],
+			"contexts": resolved["contexts"],
+		}
+
+	selected = resolved["selected"]
+	pe = selected["procuring_entity"]["id"]
+	fy = selected["financial_year"]["id"]
 	result: dict[str, Any] = {
+		"selection_required": False,
+		"context_id": selected["context_id"],
 		"procuring_entity": {"id": pe, "name": _entity_label(pe)},
 		"financial_year": {"id": fy, "label": _fy_label(fy)},
 		"has_budget": False,
 		"can_register": False,
 	}
-	if not pe or not fy:
-		return result
 
 	budget_name = frappe.db.get_value("Budget", {"procuring_entity": pe, "financial_year": fy}, "name")
 	if not budget_name:
@@ -592,10 +623,21 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 	version_key = (payload.get("budget_version") or "").strip()
 
 	if not budget_key and not version_key:
-		pe = resolve_scoped_entity((payload.get("procuring_entity") or "").strip() or None)
-		fy = (payload.get("financial_year") or "").strip()
-		if not pe or not fy:
-			return {"ok": False, "errors": {"procuring_entity": _("Procuring Entity and Financial Year are required")}}
+		# BUD-CHG-001 v1.2 Phase 8 — the caller supplies the PE/FY as one
+		# explicit context_id (the working context it already selected via
+		# WorkingContextPicker), not a loose procuring_entity/financial_year
+		# pair. validate_context_for_command replaces the old inline
+		# existence+Active check with the shared kentender_core primitive
+		# every state-changing command should use (Active-only — creating a
+		# Budget against a Scheduled or Closed context is not allowed, even
+		# though *viewing* one is fine for history/preparation).
+		from kentender_core.services.reference_data_resolver import validate_context_for_command
+
+		context_id = (payload.get("context_id") or "").strip()
+		if not context_id:
+			return {"ok": False, "errors": {"context_id": _("A Procuring Entity / Financial Year context is required")}}
+		validate_context_for_command(frappe.session.user, context_id)
+		pe, fy = frappe.db.get_value("PE Fiscal Year Context", context_id, ["procuring_entity", "financial_year"])
 		require_budget_create_capability(frappe.session.user, pe)
 		if frappe.db.exists("Budget", {"procuring_entity": pe, "financial_year": fy}):
 			frappe.throw(
@@ -607,14 +649,6 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 		if errors:
 			return {"ok": False, "errors": errors}
 
-		if not frappe.db.exists(
-			"PE Fiscal Year Context", {"procuring_entity": pe, "financial_year": fy, "context_status": "Active"}
-		):
-			frappe.throw(
-				_("No Active PE/FY context is configured for this Procuring Entity and Financial Year"),
-				frappe.ValidationError,
-				title="BUDGET_CONFIG_MISSING",
-			)
 		budget = frappe.get_doc(
 			{
 				"doctype": "Budget",

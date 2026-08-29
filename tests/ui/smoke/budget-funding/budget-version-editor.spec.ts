@@ -23,12 +23,23 @@ const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
 const FIXTURE_FILE = path.resolve(__dirname, "fixtures/budget-approval-evidence.png");
 
+// BUD-CHG-001 v1.2 Phase 8 — see budget-workspace.spec.ts's own comment on
+// why an explicit ?context= is needed (PE-CGKIS's Officer/Viewer personas
+// here have several PE Fiscal Year Context rows, so mode resolves to
+// "multiple"). Once Route 1 resolves it with the explicit param, selecting
+// it also remembers it server-side — the client-side "Register" navigation
+// to Route 2 ("new") below inherits that same remembered context with no
+// further param needed, since Route 2 runs its own independent
+// useWorkingContext("budget") call for the same persona.
+let editorContext = "";
+
 function resetEditorCreateFixture(): void {
-	execSync(
+	const out = execSync(
 		`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
 			"kentender_budget.seeds.playwright_ui_fixtures.reset_editor_create_fixture",
 		{ stdio: "pipe", timeout: 120_000 },
-	);
+	).toString();
+	editorContext = JSON.parse(out).context_id;
 }
 
 test.describe.configure({ mode: "serial" });
@@ -44,7 +55,7 @@ test.describe("Budget Version editor (BUD-UI-02)", () => {
 
 	test("No baseline empty state offers Register for a scoped Officer", async ({ page }) => {
 		await loginAsBudgetOtherEntity(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
+		await page.goto(`/app/budget-funding?context=${editorContext}`, { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("budget-no-baseline")).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("budget-no-baseline")).toContainText(
 			"No approved procurement budget is registered for",
@@ -54,14 +65,14 @@ test.describe("Budget Version editor (BUD-UI-02)", () => {
 
 	test("No baseline empty state hides Register for a Viewer", async ({ page }) => {
 		await loginAsBudgetOtherEntityViewer(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
+		await page.goto(`/app/budget-funding?context=${editorContext}`, { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("budget-no-baseline")).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("budget-register-btn")).toHaveCount(0);
 	});
 
 	test("Officer registers a Budget, adds a line and submits for review", async ({ page }) => {
 		await loginAsBudgetOtherEntity(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
+		await page.goto(`/app/budget-funding?context=${editorContext}`, { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("budget-register-btn")).toBeVisible({ timeout: 30_000 });
 		await page.getByTestId("budget-register-btn").click();
 		await expect(page).toHaveURL(/\/budget-funding\/new$/, { timeout: 15_000 });

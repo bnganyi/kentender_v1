@@ -73,6 +73,20 @@ def _as_user(email: str):
 	frappe.set_user(email)
 
 
+def _context_id_for(pe: str, fy: str) -> str:
+	"""The PE Fiscal Year Context docname for (pe, fy) — BUD-CHG-001 v1.2
+	Phase 8's save_budget_version_draft takes one context_id, not a raw
+	procuring_entity/financial_year pair. Every caller here already
+	guarantees an Active context exists for the pair before calling this
+	(the callee's own validate_context_for_command re-checks it), so a
+	plain lookup is safe rather than duplicating PEFiscalYearContext's own
+	autoname() convention."""
+	name = frappe.db.get_value("PE Fiscal Year Context", {"procuring_entity": pe, "financial_year": fy}, "name")
+	if not name:
+		frappe.throw(f"Budget seed: no PE Fiscal Year Context exists for {pe}/{fy}")
+	return name
+
+
 def _budget_version_active(generated_reference: str) -> str | None:
 	return frappe.db.get_value(
 		"Budget Version", {"generated_reference": generated_reference, "status": "Active"}, "name"
@@ -111,8 +125,7 @@ def _upsert_active_baseline(
 		_as_user(officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": pe,
-				"financial_year": fy,
+				"context_id": _context_id_for(pe, fy),
 				"approval_reference": approval_reference,
 				"approval_date": _offset_date(60),
 				"authorised_total": authorised_total,
@@ -444,8 +457,7 @@ def _isolated_line(
 		_as_user(C.USER_BUD_OFFICER)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": pe,
-				"financial_year": isolated_fy,
+				"context_id": _context_id_for(pe, isolated_fy),
 				"approval_reference": f"{budget_ref} (Isolated test profile)",
 				"approval_date": _offset_date(30),
 				"authorised_total": approved_amount,

@@ -29,12 +29,26 @@ import { loginAsBudgetOfficer, loginAsBudgetScopelessViewer } from "../../helper
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
 
+// BUD-CHG-001 v1.2 Phase 8 — the workspace no longer auto-resolves a PE/FY
+// working context; a real Budget-role persona scoped to one PE (like every
+// persona these specs use) typically has *several* PE Fiscal Year Context
+// rows (one per fixture FY across this whole suite), so mode resolves to
+// "multiple", not "single" — the workspace would show the picker, not the
+// Active state, without an explicit context. Passing ?context=<id> in the
+// URL sidesteps the shared per-user "remembered" default entirely (which
+// would otherwise race across spec files run concurrently in different
+// workers against the same persona) — bench execute prints its function's
+// return value as JSON, so the fixture's own context_id is captured
+// directly rather than re-deriving the naming convention here.
+let currentBaselineContext = "";
+
 function seedCurrentBaseline(): void {
-	execSync(
+	const out = execSync(
 		`cd "${BENCH_ROOT}" && bench --site ${SITE} execute ` +
 			"kentender_budget.seeds.playwright_ui_fixtures.upsert_playwright_current_baseline",
 		{ stdio: "pipe", timeout: 120_000 },
-	);
+	).toString();
+	currentBaselineContext = JSON.parse(out).context_id;
 }
 
 function seedScopelessViewer(): void {
@@ -59,7 +73,7 @@ test.describe("Budget & Funding workspace (BUD-UI-01)", () => {
 
 	test("Active state shows the current-FY baseline, positions and lines preview", async ({ page }) => {
 		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
+		await page.goto(`/app/budget-funding?context=${currentBaselineContext}`, { waitUntil: "domcontentloaded" });
 
 		await expect(page.getByRole("heading", { name: "Budget & Funding", exact: true })).toBeVisible({
 			timeout: 30_000,
@@ -84,23 +98,26 @@ test.describe("Budget & Funding workspace (BUD-UI-01)", () => {
 
 	test("workspace lines preview View link opens Budget Line detail", async ({ page }) => {
 		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
+		await page.goto(`/app/budget-funding?context=${currentBaselineContext}`, { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("budget-lines-preview")).toBeVisible({ timeout: 30_000 });
 		await page.getByTestId("budget-lines-preview").getByRole("link", { name: "View" }).click();
 		await expect(page).toHaveURL(/\/budget-funding\/line\/BUD-PW-CURRENT-L1$/, { timeout: 15_000 });
 		await expect(page.getByTestId("bud-line-header")).toBeVisible({ timeout: 20_000 });
 	});
 
-	test("Forbidden state for a Budget Viewer with no Procuring Entity scope", async ({ page }) => {
+	test("No-access state for a Budget Viewer with no Procuring Entity scope", async ({ page }) => {
 		// A user holding no Budget role at all never reaches this in-app state —
 		// Frappe's own Page.roles gate blocks them with a generic "Not
-		// permitted" dialog before Vue ever mounts (confirmed live). Budget's
-		// own graceful Forbidden branch only fires for a role-holding user
-		// resolve_scoped_entity() then rejects for having no PE scope.
+		// permitted" dialog before Vue ever mounts (confirmed live). A
+		// role-holding user with zero permitted Procuring Entities is caught
+		// at context-resolution time (BUD-CHG-001 v1.2 Phase 8's
+		// WorkingContextPicker, mode="none") before get_budget_workspace is
+		// ever called — a clearer, purpose-built message than the old generic
+		// Forbidden card, which this exact scenario can no longer reach.
 		await loginAsBudgetScopelessViewer(page);
 		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
 		await expect(
-			page.getByText("You do not have access to this Budget & Funding context."),
+			page.getByText("You have no assigned Procuring Entity / Financial Year context."),
 		).toBeVisible({ timeout: 30_000 });
 	});
 });

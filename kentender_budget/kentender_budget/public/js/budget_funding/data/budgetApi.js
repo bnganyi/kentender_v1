@@ -3,8 +3,16 @@ import { frappeCall } from "../../budget_shared/data/frappeCall.js";
 const APP = "kentender_budget.api.budget_api";
 const REF_DATA = "kentender_core.api.reference_data_api";
 
-export function getBudgetWorkspace() {
-	return frappeCall(`${APP}.get_budget_workspace`, {});
+export function getBudgetWorkspace(contextId) {
+	return frappeCall(`${APP}.get_budget_workspace`, { context_id: contextId });
+}
+
+export function getWorkingContext(module, requestedContext) {
+	return frappeCall(`${REF_DATA}.get_working_context`, { module, requested_context: requestedContext });
+}
+
+export function selectWorkingContext(module, contextId) {
+	return frappeCall(`${REF_DATA}.select_working_context`, { module, context_id: contextId });
 }
 
 export function getBudgetVersionDraft(budgetVersion) {

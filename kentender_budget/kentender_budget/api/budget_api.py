@@ -18,8 +18,8 @@ def resolve_budget_context(procuring_entity: str | None = None, financial_year: 
 
 
 @frappe.whitelist()
-def get_budget_workspace(procuring_entity: str | None = None, financial_year: str | None = None):
-	return contracts.get_budget_workspace(procuring_entity=procuring_entity, financial_year=financial_year)
+def get_budget_workspace(context_id: str | None = None):
+	return contracts.get_budget_workspace(context_id=context_id)
 
 
 @frappe.whitelist()

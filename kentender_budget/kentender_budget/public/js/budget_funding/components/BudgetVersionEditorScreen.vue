@@ -2,6 +2,8 @@
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
+import { useWorkingContext } from "../../budget_shared/composables/useWorkingContext.js";
+import WorkingContextPicker from "../../budget_shared/components/WorkingContextPicker.vue";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
 import {
 	getBudgetWorkspace,
@@ -32,6 +34,17 @@ const saving = ref(false);
 const submitting = ref(false);
 
 // --- "new" (pre-creation) state: resolve PE/FY context only, no version yet ---
+// BUD-CHG-001 v1.2 Phase 8 — same working-context resolution as the
+// Workspace screen; a fresh Budget can't be registered without one.
+const {
+	loading: contextLoading,
+	mode: contextMode,
+	contexts: workingContexts,
+	selected: workingContext,
+	selectionRequired,
+	refresh: refreshContext,
+	select: selectContext,
+} = useWorkingContext("budget");
 const newContext = ref(null); // {procuring_entity, financial_year, can_register}
 
 // --- existing version state ---
@@ -91,7 +104,18 @@ function resetFormFromDraft() {
 async function loadNewContext() {
 	loading.value = true;
 	try {
-		const ws = await getBudgetWorkspace();
+		const requestedContext = new URLSearchParams(window.location.search).get("context") || undefined;
+		await refreshContext(requestedContext);
+		if (selectionRequired.value) return; // WorkingContextPicker renders instead of the form
+		await loadNewContextForSelected();
+	} finally {
+		loading.value = false;
+	}
+}
+
+async function loadNewContextForSelected() {
+	try {
+		const ws = await getBudgetWorkspace(workingContext.value.context_id);
 		if (!ws.can_register) {
 			forbidden.value = true;
 			return;
@@ -100,6 +124,14 @@ async function loadNewContext() {
 	} catch (e) {
 		if (e.httpStatus === 403) forbidden.value = true;
 		else actingError.value = e.message || String(e);
+	}
+}
+
+async function onSelectNewContext(contextId) {
+	loading.value = true;
+	try {
+		await selectContext(contextId);
+		await loadNewContextForSelected();
 	} finally {
 		loading.value = false;
 	}
@@ -168,8 +200,7 @@ async function saveDraft() {
 	try {
 		if (isNew.value) {
 			const payload = {
-				procuring_entity: newContext.value.procuring_entity.id,
-				financial_year: newContext.value.financial_year.id,
+				context_id: workingContext.value.context_id,
 				approval_reference: form.approval_reference,
 				approval_date: form.approval_date,
 				authorised_total: form.authorised_total,
@@ -310,7 +341,18 @@ function cancel() {
 
 		<!-- BUD-DES-02 — pre-creation: no tabs, footer actions -->
 		<template v-else-if="isNew">
-			<div class="kt-shell" style="padding-bottom: 96px">
+			<!-- Working-context selection (BUD-CHG-001 v1.2 Phase 8) — a fresh
+			     Budget can't be registered without one. -->
+			<div v-if="contextLoading || selectionRequired || contextMode === 'none'" class="kt-shell">
+				<WorkingContextPicker
+					:loading="contextLoading"
+					:mode="contextMode"
+					:contexts="workingContexts"
+					:selected="workingContext"
+					@select="onSelectNewContext"
+				/>
+			</div>
+			<div v-else class="kt-shell" style="padding-bottom: 96px">
 				<header style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
 					<h1 style="margin: 0">{{ __("Register approved budget") }}</h1>
 					<span class="kt-status is-draft">{{ __("Draft") }}</span>

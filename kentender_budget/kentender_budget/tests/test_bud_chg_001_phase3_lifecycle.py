@@ -79,6 +79,16 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 		return fy
 
 	@classmethod
+	def _fresh_context(cls) -> str:
+		"""BUD-CHG-001 v1.2 Phase 8 -- save_budget_version_draft's create
+		branch now takes one context_id, not a raw procuring_entity/
+		financial_year pair; _fresh_fy() already creates the matching PE
+		Fiscal Year Context row as a side effect, so just re-derive its
+		docname rather than tracking a second return value everywhere."""
+		fy = cls._fresh_fy()
+		return frappe.db.get_value("PE Fiscal Year Context", {"procuring_entity": PE_MOH, "financial_year": fy}, "name")
+
+	@classmethod
 	def tearDownClass(cls):
 		frappe.set_user("Administrator")
 		for doctype, name in reversed(cls._cleanup):
@@ -136,12 +146,10 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 		docnames. Uses its own fresh Financial Year (not the class-level
 		self.fy) so multiple test methods in the same class — each calling
 		this once — never collide on Budget's one-per-(PE, FY) rule."""
-		fy = self._fresh_fy()
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": fy,
+				"context_id": self._fresh_context(),
 				"approval_reference": f"TEST-{self.suffix}",
 				"approval_date": add_days(nowdate(), -10),
 				"authorised_total": dhi_amount + hwd_amount,
@@ -183,7 +191,7 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		editable initial fields, and are mandatory."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
-			{"procuring_entity": PE_MOH, "financial_year": self._fresh_fy(), "approval_reference": "", "approval_date": "", "authorised_total": 0}
+			{"context_id": self._fresh_context(), "approval_reference": "", "approval_date": "", "authorised_total": 0}
 		)
 		self.assertFalse(result["ok"])
 		self.assertIn("approval_reference", result["errors"])
@@ -194,8 +202,7 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		"""BUD-BR-001."""
 		self._as(self.officer)
 		payload = {
-			"procuring_entity": PE_MOH,
-			"financial_year": self._fresh_fy(),
+			"context_id": self._fresh_context(),
 			"approval_reference": f"DUP-{self.suffix}",
 			"approval_date": add_days(nowdate(), -5),
 			"authorised_total": 1000,
@@ -216,8 +223,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": self._fresh_fy(),
+				"context_id": self._fresh_context(),
 				"approval_reference": f"MISMATCH-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 100_000_000,
@@ -246,8 +252,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": self._fresh_fy(),
+				"context_id": self._fresh_context(),
 				"approval_reference": f"FIELDS-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -275,8 +280,7 @@ class TestSelfApprovalSegregation(_BudgetLifecycleTestBase):
 		self._as(self.dual)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": self._fresh_fy(),
+				"context_id": self._fresh_context(),
 				"approval_reference": f"SOD-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -309,8 +313,7 @@ class TestReturnBudgetVersion(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": self._fresh_fy(),
+				"context_id": self._fresh_context(),
 				"approval_reference": f"RET-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -457,8 +460,7 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 		with self.assertRaises(frappe.PermissionError):
 			contracts.save_budget_version_draft(
 				{
-					"procuring_entity": PE_MOH,
-					"financial_year": self._fresh_fy(),
+					"context_id": self._fresh_context(),
 					"approval_reference": "X",
 					"approval_date": add_days(nowdate(), -1),
 					"authorised_total": 100,
@@ -473,8 +475,7 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": PE_MOH,
-				"financial_year": self._fresh_fy(),
+				"context_id": self._fresh_context(),
 				"approval_reference": f"VIEW-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,

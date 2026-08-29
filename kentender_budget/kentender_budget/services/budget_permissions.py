@@ -44,48 +44,6 @@ def require_any_role(*roles: str) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def entity_for_user(user: str | None = None) -> str | None:
-	"""Best-effort procuring entity from User Scope Assignment / User Permission.
-
-	Returns None when no single procuring entity can be determined — including
-	for an unrestricted (Administrator / System Manager) user, who is not
-	implicitly scoped to any one entity. Callers decide whether a blank scope
-	is acceptable (e.g. an admin-level cross-entity read) or must fail closed.
-	"""
-	user = user or frappe.session.user
-	if user == "Guest":
-		return None
-	from kentender_core.services.org_scope_access import permitted_procuring_entities
-
-	pes = permitted_procuring_entities(user)
-	if pes is None:
-		return None
-	if len(pes) == 1:
-		return next(iter(pes))
-	if pes:
-		# Prefer default User Permission among permitted PEs.
-		default = frappe.db.get_value(
-			"User Permission",
-			{"user": user, "allow": "Procuring Entity", "is_default": 1},
-			"for_value",
-		)
-		if default in pes:
-			return default
-		return sorted(pes)[0]
-	pe = frappe.db.get_value(
-		"User Permission",
-		{"user": user, "allow": "Procuring Entity", "is_default": 1},
-		"for_value",
-	)
-	if pe:
-		return pe
-	return frappe.db.get_value(
-		"User Permission",
-		{"user": user, "allow": "Procuring Entity"},
-		"for_value",
-	)
-
-
 def assert_org_unit_in_scope(
 	procuring_entity: str | None,
 	owner_org_unit: str | None,

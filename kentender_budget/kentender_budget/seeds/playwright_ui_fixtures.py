@@ -31,6 +31,7 @@ from frappe.utils import getdate, nowdate
 
 from kentender_budget.seeds.kentender_mvp_v1_portfolio import (
 	_as_user,
+	_context_id_for,
 	_ensure_isolated_fy,
 	_offset_date,
 	_upsert_active_baseline,
@@ -80,7 +81,13 @@ def upsert_playwright_current_baseline() -> dict[str, Any]:
 		),
 	)
 	frappe.db.commit()
-	return {"budget_code": BUD_PW_CURRENT, "version_code": BUD_PW_CURRENT_V1, "financial_year": fy, **result}
+	return {
+		"budget_code": BUD_PW_CURRENT,
+		"version_code": BUD_PW_CURRENT_V1,
+		"financial_year": fy,
+		"context_id": _context_id_for(pe_moh, fy),
+		**result,
+	}
 
 
 BUD_PW_SCOPELESS_VIEWER = "bud.pw.scopeless.viewer@example.test"
@@ -167,7 +174,7 @@ def reset_editor_create_fixture() -> dict[str, Any]:
 	start_year = _current_fy_start_year()
 	fy = _ensure_isolated_fy(start_year, pe_cgk)
 	_reset_budget_for_pe_fy(pe_cgk, fy)
-	return {"procuring_entity": pe_cgk, "financial_year": fy}
+	return {"procuring_entity": pe_cgk, "financial_year": fy, "context_id": _context_id_for(pe_cgk, fy)}
 
 
 def _create_pending_task(
@@ -190,8 +197,7 @@ def _create_pending_task(
 		_as_user(submitter)
 		result = contracts.save_budget_version_draft(
 			{
-				"procuring_entity": pe,
-				"financial_year": fy,
+				"context_id": _context_id_for(pe, fy),
 				"approval_reference": f"{budget_ref} (Playwright fixture)",
 				"approval_date": _offset_date(5),
 				"authorised_total": approved_amount,
@@ -226,7 +232,12 @@ def _create_pending_task(
 			frappe.throw(f"Playwright fixture: could not submit {budget_ref}: {submit_result.get('blockers')}")
 
 		frappe.db.commit()
-		return {"budget": budget_name, "version": version_name, "version_code": f"{budget_ref}-V1"}
+		return {
+			"budget": budget_name,
+			"version": version_name,
+			"version_code": f"{budget_ref}-V1",
+			"context_id": _context_id_for(pe, fy),
+		}
 	finally:
 		frappe.set_user(prior_user)
 
