@@ -56,6 +56,11 @@ PE = "PE-CGKIS"
 OU = "CGK-DEPT-HEALTH"
 FY = "FY-2027-2028"
 WINDOW = f"NDS-IW-{PE}-{FY}"
+# A stable withdrawal reference: NDS-UI-07 prints it in the record kicker, so a
+# generated (deliberately unguessable) id would make the visual baseline differ
+# on every rebuild. The §14.5 profile renames its own fixture for the same
+# reason.
+WITHDRAWAL_REQUEST_ID = "NDS-WDR-CGKIS-PW-0001"
 
 AUTHOR = "nds.pw.author@example.test"
 REVIEWER = "nds.pw.reviewer@example.test"
@@ -332,13 +337,30 @@ def _withdrawal_fixture(*, cleared: bool) -> dict[str, Any]:
 			active_plan_item="" if cleared else "PPI-NDS-PW-0001",
 		)
 	with _as(AUTHOR):
-		lifecycle.request_withdrawal(
+		requested = lifecycle.request_withdrawal(
 			need=need,
 			expected_version=_record_version(need),
 			idempotency_key=_key(),
 			reason=(
 				"The county no longer requires this digitisation in the target financial year."
 			),
+		)
+	generated = requested["withdrawal_request"]
+	if generated != WITHDRAWAL_REQUEST_ID:
+		# rename_doc repoints the review task and decision links with it.
+		frappe.rename_doc(
+			"Need Withdrawal Request",
+			generated,
+			WITHDRAWAL_REQUEST_ID,
+			force=True,
+			show_alert=False,
+		)
+		frappe.db.set_value(
+			"Need Withdrawal Request",
+			WITHDRAWAL_REQUEST_ID,
+			"withdrawal_request_id",
+			WITHDRAWAL_REQUEST_ID,
+			update_modified=False,
 		)
 	_stamp_children(need)
 	frappe.db.commit()

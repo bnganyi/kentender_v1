@@ -92,7 +92,7 @@ const acceptLabel = computed(() =>
 
 const contextItems = computed(() => [
 	{ label: "Submitted by", value: props.requesterLabel },
-	{ label: "Submitted", value: formatInstant(props.openedAt) },
+	{ label: "Submitted", value: formatInstant(props.openedAt), volatile: true },
 	{ label: "Department", value: props.scope.organisation_unit || "" },
 	{ label: "Financial Year", value: props.scope.financial_year || "" },
 ]);

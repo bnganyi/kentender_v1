@@ -10,6 +10,7 @@
 				:key="item.label"
 				:label="item.label"
 				:value="item.value"
+				:volatile="!!item.volatile"
 				strong
 			/>
 		</div>

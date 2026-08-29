@@ -23,7 +23,7 @@
 			<div class="kt-card-title" style="margin-bottom: 16px">Request</div>
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px">
 				<ReadonlyRow label="Requested by" :value="requesterLabel" strong style="margin-top: 0" />
-				<ReadonlyRow label="Requested" :value="requestedLabel" strong style="margin-top: 0" />
+				<ReadonlyRow label="Requested" :value="requestedLabel" strong volatile style="margin-top: 0" />
 			</div>
 			<ReadonlyRow label="Reason" :value="request.reason" style="margin-top: 0" />
 		</div>

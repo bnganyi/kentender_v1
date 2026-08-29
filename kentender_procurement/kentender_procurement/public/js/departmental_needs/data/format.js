@@ -14,8 +14,13 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export function formatDate(value) {
 	if (!value) return "";
 	const [year, month, day] = String(value).slice(0, 10).split("-");
-	if (!year || !month || !day) return String(value);
-	return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`;
+	// Validity, not presence. "not-a-date" also splits into three truthy parts,
+	// and a presence-only guard let it through as the literal string
+	// "NaN undefined not" — rendered straight into the page, with no error to
+	// notice it by (caught by format.spec.js).
+	const monthName = MONTHS[Number(month) - 1];
+	if (!year || !monthName || !Number.isFinite(Number(day))) return String(value);
+	return `${Number(day)} ${monthName} ${year}`;
 }
 
 /** `24 Nov 2026, 12:20 EAT` — the artboards' instant format. */

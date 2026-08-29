@@ -31,7 +31,10 @@ const NEED = "NDS-CGKIS-2027-0001";
 test.describe.configure({ mode: "serial" });
 
 test.describe("NDS-UI-06 accepted source detail", () => {
-	test.beforeAll(() => resetFixture("reset_accepted_source_fixture"));
+	// beforeEach, not beforeAll: a sibling spec file's afterAll clears the
+	// shared fixture entity, so a suite-order change would otherwise leave these
+	// tests running against nothing.
+	test.beforeEach(() => resetFixture("reset_accepted_source_fixture"));
 	test.afterAll(() => clearFixtures());
 
 	test("a superseded version stays readable at the route that asked for it", async ({ page }) => {
