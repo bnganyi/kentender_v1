@@ -38,7 +38,13 @@ Primary dependency direction:
 
 `core -> strategy -> budget -> procurement -> stores -> assets`
 
-`suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
+Side applications consume published interfaces rather than owning core traceability records:
+
+- `kentender_suppliers`: supplier identity and qualification.
+- `kentender_governance`: approvals and delegation.
+- `kentender_compliance`: regulatory and audit-rule overlays.
+- `kentender_integrations`: external-system adapters; does not own business rules.
+- `kentender_transparency`: read-only or publication views; never transactional authority.
 
 Rules:
 
@@ -49,9 +55,9 @@ Rules:
 - Before changing a cross-app contract, identify the owner, consumers, compatibility impact, and contract tests.
 - Treat sibling bench apps such as Frappe and ERPNext as read-only unless an explicit task authorizes an upstream change or tracked core patch.
 
-The canonical traceability chain is:
+The canonical traceability chain (the only wording to use elsewhere — do not restate it with different labels) is:
 
-`Strategy -> Budget -> Demand/Requisition -> Plan -> Tender -> Bid -> Evaluation -> Award -> Contract -> Inspection -> Stores/Assets -> Reporting/Audit`
+`Strategy -> Budget -> Demand/Requisition -> Procurement Plan -> Tender -> Bid -> Evaluation -> Award -> Contract -> Inspection -> Stores/Assets -> Reporting/Audit`
 
 Preserve identifiers, record lineage, approvals, actor/time/reason evidence, and organizational scope across that chain.
 
@@ -90,6 +96,8 @@ While editing:
 - **API:** small explicit endpoints that validate input, authorize the actor, and call services.
 - **Client code:** interaction and presentation only; never the sole enforcement point for business rules.
 - **Utilities:** lightweight helpers, not hidden service layers.
+
+Within each app, use `doctype/` for persistence and thin lifecycle validation, `services/` for business operations, `api/` for explicit endpoints, and `utils/` only for lightweight helpers.
 
 Services must be callable independently of a particular page. Avoid duplicating a business operation in a controller, API method, fixture, and browser handler.
 
@@ -140,7 +148,7 @@ Never rely on hidden fields, disabled buttons, or client checks for authorizatio
 
 ## 6. Frappe UI construction standard
 
-The standard for complex screens is **Vue 3, mounted inside a real Frappe Desk Page**. This replaced hand-porting Tailwind/Stitch HTML into jQuery pages after a validated pilot (`kentender_strategy`'s `strategy_portfolio_pilot`) showed materially fewer defeat-CSS iterations and equivalent-or-better fit with Frappe's own patterns. Vue 3 is already vendored by Frappe framework's own esbuild pipeline (`esbuild-plugin-vue3`; the framework uses it internally for Form Builder, Workflow Builder, Print Format Builder) — mounting Vue in a Desk page requires no new dependency and no new build tooling.
+The standard for complex screens is **Vue 3, mounted inside a real Frappe Desk Page** — validated in `kentender_strategy`'s `strategy_portfolio_pilot` against hand-ported jQuery/Tailwind pages, with materially fewer defeat-CSS iterations. Frappe's own esbuild pipeline already vendors Vue 3 (`esbuild-plugin-vue3`, also used internally for Form Builder, Workflow Builder, and Print Format Builder), so this needs no new dependency or build tooling.
 
 Use tiered construction by screen type:
 
@@ -176,7 +184,7 @@ Do not use `frappe.confirm()`/`frappe.ui.Dialog` on a Vue-owned surface — they
 ### 6.4 Routing and lifecycle
 
 - Put durable record identity in the URL path segment: `frappe.set_route(slug, id)`, read back via `frappe.get_route()[1]`. Never pass identity as an object argument or rely on `frappe.route_options` — in-memory route state is lost on refresh and direct links.
-- Subscribe to `frappe.router.on("change", handler)` to react to in-page navigation (for example, opening/closing a route-addressable detail panel). **`frappe.router.off()` does not actually unbind anything** — Frappe's `EventEmitterMixin.off()` (`frappe/public/js/frappe/event_emitter.js`) rebuilds a fresh wrapper closure on every call and unbinds *that* from jQuery, not the wrapper `on()` originally bound, so the removal never matches. This is a confirmed framework bug, not app-specific. Mitigate with an active-flag guard — set `false` in `onUnmounted`, checked as the first line of the handler — rather than relying on `off()` to remove the listener; it stays bound but becomes inert.
+- Subscribe to `frappe.router.on("change", handler)` for in-page navigation (e.g. a route-addressable detail panel). **`frappe.router.off()` is a confirmed no-op** — `EventEmitterMixin.off()` (`frappe/public/js/frappe/event_emitter.js`) rebuilds a fresh closure each call and unbinds *that* instead of the original `on()` handler, so removal never matches. This is a framework bug, not app-specific. Mitigate with an active-flag guard instead — set `false` in `onUnmounted`, checked first in the handler — leaving the listener bound but inert.
 - Verify every applicable path before calling routing work done: direct load, `page.reload()`, and browser back/forward (`page.goBack()`/`goForward()`). This repo's UI test suite has essentially no back/forward coverage anywhere — there is no existing precedent to lean on; write it explicitly for new work.
 
 ### 6.5 Shared shell participation
@@ -189,7 +197,7 @@ Do not use `frappe.confirm()`/`frappe.ui.Dialog` on a Vue-owned surface — they
 ### 6.6 Styling
 
 - Port design tokens (colors, spacing, radius, shadow, font stacks) as CSS custom properties scoped under one wrapper class on the component root, not `:root` — the stylesheet is loaded globally once via `frappe.require`, so scoping under a class is what keeps it from leaking into Desk chrome or another screen.
-- Vue's `<style scoped>` (an auto-appended `data-v-*` attribute selector) is sufficient on its own to avoid Desk/Bootstrap style-bleed — confirmed empirically: a first-pass Vue screen rendered with zero button/select/table chrome bleed, no defeat-CSS iteration needed. Still avoid literal global class names Desk's own Bootstrap CSS already claims (`.btn`, `.table`, `.card`, and similar) inside scoped styles, as a matter of hygiene.
+- Vue's `<style scoped>` (`data-v-*` attribute selector) is sufficient on its own to avoid Desk/Bootstrap style-bleed — confirmed empirically on a first Vue screen with zero chrome bleed and no defeat-CSS iteration. Still avoid class names Desk's own Bootstrap CSS already claims (`.btn`, `.table`, `.card`, and similar) inside scoped styles, as a matter of hygiene.
 - Self-host any custom fonts using the existing `kt_cl_fonts.css` pattern (`kentender_core/public/css/kt_cl_fonts.css`): per-weight `@font-face` blocks split into `latin`/`latin-ext` subsets, one woff2 file each, registered via the owning app's own `hooks.py` `app_include_css`. Never load fonts from a CDN.
 
 ### 6.7 Testing
