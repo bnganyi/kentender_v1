@@ -42,6 +42,19 @@ check_accepted_need_withdrawal_dependency = frappe.whitelist()(lifecycle.check_w
 
 # --- §8.2 commands ---------------------------------------------------------
 
+# Frappe hands a whitelisted method the whole `form_dict`, and it only filters
+# that down to the declared parameters when the method has no `**kwargs`. The
+# endpoints below deliberately take `**kwargs` — so the framework's own
+# transport fields arrive as ordinary keyword arguments and, forwarded verbatim
+# into a keyword-only service signature, raise `TypeError` and surface to the
+# browser as a 500. They are dropped here rather than absorbed by the services,
+# which must keep explicit signatures (§8.2).
+_TRANSPORT_FIELDS = frozenset({"cmd", "csrf_token", "_"})
+
+
+def _command_args(kwargs: dict[str, Any]) -> dict[str, Any]:
+	return {key: value for key, value in kwargs.items() if key not in _TRANSPORT_FIELDS}
+
 
 @frappe.whitelist()
 def save_need_draft(**kwargs: Any) -> dict[str, Any]:
@@ -50,11 +63,12 @@ def save_need_draft(**kwargs: Any) -> dict[str, Any]:
 	One contract covers both, as §8.2 specifies: the presence of a Need decides
 	whether this is the first save or a later one.
 	"""
-	need = (kwargs.pop("need", "") or "").strip()
+	args = _command_args(kwargs)
+	need = (args.pop("need", "") or "").strip()
 	if need:
-		return lifecycle.update_need(need=need, **kwargs)
-	kwargs.pop("expected_version", None)
-	return lifecycle.create_need(**kwargs)
+		return lifecycle.update_need(need=need, **args)
+	args.pop("expected_version", None)
+	return lifecycle.create_need(**args)
 
 
 submit_need_version = frappe.whitelist()(lifecycle.submit_need)
@@ -76,16 +90,16 @@ project_need_planning_usage = frappe.whitelist()(project_planning_usage)
 @frappe.whitelist()
 def return_need_version(**kwargs: Any) -> dict[str, Any]:
 	"""Mark the submitted version Returned and create one copied correction Draft."""
-	return lifecycle.review_need(decision="return", **kwargs)
+	return lifecycle.review_need(decision="return", **_command_args(kwargs))
 
 
 @frappe.whitelist()
 def accept_need_version(**kwargs: Any) -> dict[str, Any]:
 	"""Accept the initial or successor version and publish lineage."""
-	return lifecycle.review_need(decision="accept", **kwargs)
+	return lifecycle.review_need(decision="accept", **_command_args(kwargs))
 
 
 @frappe.whitelist()
 def decline_need_version(**kwargs: Any) -> dict[str, Any]:
 	"""Close the initial Need or successor without changing an accepted version."""
-	return lifecycle.review_need(decision="decline", **kwargs)
+	return lifecycle.review_need(decision="decline", **_command_args(kwargs))

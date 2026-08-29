@@ -445,3 +445,137 @@ class ReviewQueueActionTest(IntegrationTestCase):
 			codes = {action["code"] for action in row["actions"]}
 			self.assertNotIn("review", codes)
 			self.assertNotIn("withdrawal", codes)
+
+
+class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
+	"""§8.2 over HTTP, not over a direct service call.
+
+	`frappe.handler` calls a whitelisted method with the entire `form_dict`, and
+	it only trims that down to the declared parameters when the method has no
+	`**kwargs`. Four §8.2 endpoints deliberately take `**kwargs` so that one
+	contract can cover create-or-update and so that each acceptance outcome is
+	its own endpoint — which means `cmd` (always present) and `csrf_token` (on
+	any POST) arrive as ordinary keyword arguments.
+
+	Forwarded into the keyword-only service signatures, they raise `TypeError`
+	and reach the browser as a 500. **This is exactly what happened**: every one
+	of the four was broken over HTTP while 242 Python tests passed, because each
+	test called the service directly and never went through the endpoint. The
+	assertions below therefore call the endpoints the way the framework does.
+	"""
+
+	def content(self, **overrides):
+		values = {
+			"title": "Clinical deployment laptops for rollout",
+			"description": "Laptop computers for deployment at priority health facilities.",
+			"expected_operational_result": "Facilities can use the deployed digital health services.",
+			"indicative_quantity": 10,
+			"unit": "UNIT-EACH",
+			"required_by_date": "2027-12-31",
+		}
+		values.update(overrides)
+		return values
+
+	def test_save_need_draft_accepts_a_first_save_carrying_cmd(self):
+		frappe.set_user(AUTHOR)
+		created = api.save_need_draft(
+			cmd="kentender_procurement.departmental_needs.api.save_need_draft",
+			csrf_token="irrelevant-but-present-on-every-post",
+			procuring_entity=PE,
+			organisation_unit=OU_DIGITAL_HEALTH,
+			financial_year=FY,
+			idempotency_key=self.key(),
+			**self.content(),
+		)
+		self.assertTrue(created["ok"])
+		self.assertTrue(created["need_reference"])
+
+	def test_save_need_draft_accepts_a_later_save_carrying_cmd(self):
+		# The failing browser path: the editor's Save draft button on an existing
+		# Draft, which forwards `need` and so takes the `update_need` branch.
+		frappe.set_user(AUTHOR)
+		created = api.save_need_draft(
+			procuring_entity=PE,
+			organisation_unit=OU_DIGITAL_HEALTH,
+			financial_year=FY,
+			idempotency_key=self.key(),
+			**self.content(),
+		)
+		saved = api.save_need_draft(
+			cmd="kentender_procurement.departmental_needs.api.save_need_draft",
+			need=created["need"],
+			expected_version=created["record_version"],
+			idempotency_key=self.key(),
+			**self.content(title="Clinical deployment laptops, revised"),
+		)
+		self.assertTrue(saved["ok"])
+
+	def test_each_acceptance_endpoint_accepts_cmd(self):
+		for endpoint, decision in (
+			(api.return_need_version, "return"),
+			(api.accept_need_version, "accept"),
+			(api.decline_need_version, "decline"),
+		):
+			with self.subTest(decision=decision):
+				frappe.set_user(AUTHOR)
+				created = api.save_need_draft(
+					procuring_entity=PE,
+					organisation_unit=OU_DIGITAL_HEALTH,
+					financial_year=FY,
+					idempotency_key=self.key(),
+					**self.content(),
+				)
+				submitted = lifecycle.submit_need(
+					need=created["need"],
+					expected_version=created["record_version"],
+					idempotency_key=self.key(),
+				)
+				frappe.set_user(REVIEWER)
+				result = endpoint(
+					cmd=f"kentender_procurement.departmental_needs.api.{endpoint.__name__}",
+					csrf_token="present-on-every-post",
+					need=submitted["need"],
+					task=submitted["task"],
+					expected_version=submitted["record_version"],
+					decision_token=frappe.db.get_value(
+						"Departmental Need Review Task", submitted["task"], "decision_token"
+					),
+					idempotency_key=self.key(),
+					reason=(
+						"The department no longer requires this equipment in the target year."
+						if decision in ("return", "decline")
+						else ""
+					),
+				)
+				self.assertTrue(result["ok"])
+				frappe.set_user("Administrator")
+
+	def test_no_command_endpoint_forwards_kwargs_without_filtering(self):
+		"""The static half: a new `**kwargs` endpoint must not reintroduce this.
+
+		Reading the source rather than calling it, so an endpoint added later is
+		covered without anyone remembering to write a request-shaped test.
+		"""
+		import ast
+
+		tree = ast.parse(inspect.getsource(api))
+		offenders = []
+		for node in ast.walk(tree):
+			if not isinstance(node, ast.FunctionDef) or not node.args.kwarg:
+				continue
+			kwarg_name = node.args.kwarg.arg
+			for call in (n for n in ast.walk(node) if isinstance(n, ast.Call)):
+				for keyword in call.keywords:
+					# `**kwargs` forwarded verbatim: keyword.arg is None for `**`.
+					if keyword.arg is None and isinstance(keyword.value, ast.Name):
+						if keyword.value.id == kwarg_name:
+							offenders.append(node.name)
+		self.assertEqual(
+			offenders,
+			[],
+			msg=(
+				"these endpoints forward **kwargs straight into a service; route them "
+				"through _command_args() so the framework's transport fields cannot "
+				"reach a keyword-only signature: " + ", ".join(sorted(set(offenders)))
+			),
+		)

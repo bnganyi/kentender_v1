@@ -23,6 +23,8 @@ from kentender_procurement.departmental_needs.constants import (
 	ACTION_ACCEPT_SUCCESSOR,
 	ACTION_EVALUATE_WITHDRAWAL,
 	ACTION_REEVALUATE_WITHDRAWAL,
+	DESCRIPTION_MAX,
+	DESCRIPTION_MIN,
 	INTAKE_CLOSED,
 	INTAKE_OPEN,
 	INTAKE_SCHEDULED,
@@ -62,7 +64,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	REVIEWER,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import lifecycle, workspace
+from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 from kentender_procurement.departmental_needs.services.context import intake_window
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
@@ -327,6 +329,48 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(copy.based_on_version, original)
 		self.assertEqual(copy.title, self.version(original).title)
 
+	def test_a_resubmitted_correction_keeps_the_returned_version_intact(self):
+		# Revision integrity. The return path is asserted above; this is the other
+		# half — that editing and resubmitting the correction writes to the *copy*
+		# and leaves the returned version readable exactly as it was decided. If
+		# the correction mutated the returned version instead, the Decision row
+		# for the return would point at content that no longer matches the reason
+		# it was returned for, and the audit trail would silently rewrite itself.
+		submitted = self.submit(self.create())
+		original = submitted["current_version"]
+		original_title = self.version(original).title
+		original_hash = self.version(original).content_hash
+		returned = self.decide(submitted, "return", reason=REASON)
+		correction = returned["successor_version"]
+
+		frappe.set_user(AUTHOR)
+		lifecycle.update_need(
+			need=returned["need"],
+			expected_version=returned["record_version"],
+			idempotency_key=self.key(),
+			**self.content(title="Clinical deployment laptops, corrected quantity"),
+		)
+		resubmitted = self.submit(
+			{
+				"need": returned["need"],
+				"record_version": frappe.db.get_value(
+					"Departmental Need", returned["need"], "record_version"
+				),
+			}
+		)
+
+		# The returned version is untouched in content, status and hash.
+		self.assertEqual(self.version(original).title, original_title)
+		self.assertEqual(self.version(original).content_hash, original_hash)
+		self.assertEqual(self.status_of(original), VERSION_RETURNED)
+		# The correction is a distinct, separately numbered version.
+		self.assertEqual(resubmitted["current_version"], correction)
+		self.assertEqual(self.status_of(correction), VERSION_SUBMITTED)
+		self.assertNotEqual(self.version(correction).content_hash, original_hash)
+		self.assertEqual(
+			self.version(correction).version_number, self.version(original).version_number + 1
+		)
+
 	def test_return_without_a_reason_is_refused(self):
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.decide(self.submit(self.create()), "return")
@@ -415,6 +459,144 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(caught.exception.code, "NDS_STATE_CONFLICT")
 
 
+class ContentValidationCase(DepartmentalNeedsCommandCase):
+	"""Shared saving helper for the two validation layers below."""
+
+	def save_draft(self, **overrides):
+		"""Save `overrides` onto a fresh Draft, returning the command result."""
+		result = self.create()
+		frappe.set_user(AUTHOR)
+		return lifecycle.update_need(
+			need=result["need"],
+			expected_version=result["record_version"],
+			idempotency_key=self.key(),
+			**self.content(**overrides),
+		)
+
+
+class TestDraftContentBounds(ContentValidationCase):
+	"""§4.3 — field *shape*, enforced by the version controller at save.
+
+	The module splits content rules across two layers, and the split is load
+	bearing rather than incidental: the controller checks the shape of a value
+	that was supplied, while presence is deferred to submission so that §12.3 /
+	NDS-AC-004's title-only Draft can still be saved. Asserting both here keeps
+	the boundary honest — several `_validate_submission` branches are in fact
+	unreachable through a normal save-then-submit because the controller has
+	already refused the value, and that is defence in depth, not dead code.
+	"""
+
+	def refuses_at_save(self, code: str, **overrides):
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.save_draft(**overrides)
+		self.assertEqual(caught.exception.code, code)
+
+	def test_a_description_below_the_minimum_is_refused_at_save(self):
+		self.refuses_at_save("NDS_FIELD_REQUIRED", description="x" * (DESCRIPTION_MIN - 1))
+
+	def test_a_description_above_the_maximum_is_refused_at_save(self):
+		self.refuses_at_save("NDS_FIELD_REQUIRED", description="x" * (DESCRIPTION_MAX + 1))
+
+	def test_an_expected_operational_result_out_of_bounds_is_refused_at_save(self):
+		# The v1.1 rename — the field Planning consumes downstream (§7.1).
+		self.refuses_at_save(
+			"NDS_FIELD_REQUIRED", expected_operational_result="x" * (DESCRIPTION_MIN - 1)
+		)
+
+	def test_a_zero_or_negative_quantity_is_refused_at_save(self):
+		# NDS-AC-005 — "present" is not enough; it must be a real quantity.
+		for quantity in (0, -1):
+			with self.subTest(quantity=quantity):
+				self.refuses_at_save("NDS_FIELD_REQUIRED", indicative_quantity=quantity)
+
+	def test_a_quantity_beyond_the_allowed_precision_is_refused_at_save(self):
+		# §4.3 allows three decimals; a fourth would be silently rounded into a
+		# different requirement than the one the requester entered.
+		self.refuses_at_save("NDS_FIELD_REQUIRED", indicative_quantity=2.5555)
+
+	def test_an_empty_free_text_value_still_saves(self):
+		# The boundary itself: bounds apply only to a supplied value, or the
+		# title-only Draft that NDS-AC-004 requires could never be saved.
+		saved = self.save_draft(description="", expected_operational_result="")
+		self.assertEqual(self.version(saved["current_version"]).description, "")
+
+	def test_a_unit_outside_the_governed_catalogue_cannot_be_stored(self):
+		# NDS-AC-006 — §1.1 removed free-text "Other" outright. An unknown code
+		# is refused by the Link itself, before any service-layer rule runs, so
+		# no ungoverned unit can reach a version row at all.
+		with self.assertRaises(frappe.LinkValidationError):
+			self.save_draft(unit="UNIT-NOT-GOVERNED")
+
+
+class TestSubmissionValidation(ContentValidationCase):
+	"""§5 / NDS-BR-007 — every `_validate_submission` rejection path.
+
+	Submission is where *completeness* is enforced. Each case below saves a
+	Draft that is legitimately saveable and not submittable, so the failure is
+	attributable to one submission rule rather than to a rejected save.
+	"""
+
+	def refuses(self, code: str, **overrides):
+		draft = self.save_draft(**overrides)
+		before = self.status_of(draft["current_version"])
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.submit(draft)
+		self.assertEqual(caught.exception.code, code)
+		# §5 — a rejected submission is a pure no-op, not a partial transition.
+		self.assertEqual(self.status_of(draft["current_version"]), before)
+		self.assertEqual(
+			frappe.db.count(
+				"Departmental Need Review Task",
+				{"departmental_need": draft["need"], "status": TASK_OPEN},
+			),
+			0,
+		)
+
+	def test_a_missing_description_is_refused(self):
+		self.refuses("NDS_FIELD_REQUIRED", description="")
+
+	def test_a_missing_expected_operational_result_is_refused(self):
+		self.refuses("NDS_FIELD_REQUIRED", expected_operational_result="")
+
+	def test_a_missing_quantity_is_refused(self):
+		self.refuses("NDS_FIELD_REQUIRED", indicative_quantity=None)
+
+	def test_a_missing_unit_is_refused(self):
+		self.refuses("NDS_FIELD_REQUIRED", unit="")
+
+	def test_an_inactive_governed_unit_is_refused(self):
+		# The subtler half of NDS-AC-006: the code exists and is spelled right,
+		# but the catalogue has retired it. A Link check alone would pass this,
+		# which is why the governance rule lives at submission and not only in
+		# the Link.
+		frappe.db.set_value(
+			"Unit Of Measure", "UNIT-PROGRAMME", "status", "Inactive", update_modified=False
+		)
+		self.addCleanup(
+			frappe.db.set_value,
+			"Unit Of Measure",
+			"UNIT-PROGRAMME",
+			"status",
+			"Active",
+			update_modified=False,
+		)
+		self.refuses("NDS_UNIT_INELIGIBLE", unit="UNIT-PROGRAMME")
+
+	def test_a_missing_required_by_date_is_refused(self):
+		self.refuses("NDS_FIELD_REQUIRED", required_by_date=None)
+
+	def test_a_required_by_date_outside_the_target_year_is_refused(self):
+		# NDS-AC-005 — the Need is raised against one financial year, so a date
+		# outside it would arrive in Planning as un-plannable in its own year.
+		self.refuses("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date="2030-01-31")
+
+	def test_a_complete_draft_submits(self):
+		# The control: without this, every assertion above could pass because
+		# submission is broken rather than because validation works.
+		submitted = self.submit(self.save_draft())
+		self.assertEqual(submitted["current_state"], STATE_SUBMITTED)
+
+
 class TestCommandControls(DepartmentalNeedsCommandCase):
 	"""§5.4 NDS-BR-018 / NDS-AC-028."""
 
@@ -453,6 +635,100 @@ class TestCommandControls(DepartmentalNeedsCommandCase):
 		self.assertTrue(second["idempotent"])
 		self.assertEqual(
 			frappe.db.count("Departmental Need Decision", {"idempotency_key": key}), 1
+		)
+
+	def test_replaying_an_accept_creates_no_second_decision_and_no_second_event(self):
+		# The highest-consequence replay, and the one the other tests miss: every
+		# replay assertion above drives `update_need`, whose worst case is a
+		# duplicated Draft save. A repeated *decision* is different in kind — it
+		# could accept twice, move `record_version` again, or emit a second
+		# `DepartmentalNeedAccepted.v2` that Planning would consume as a fresh
+		# acceptance. `review_need` reads the idempotency key before it touches
+		# the task, so the replay must return the first result untouched rather
+		# than failing on the now-consumed decision token.
+		submitted = self.submit(self.create())
+		key = self.key()
+		frappe.set_user(REVIEWER)
+		payload = dict(
+			need=submitted["need"],
+			decision="accept",
+			task=submitted["task"],
+			expected_version=submitted["record_version"],
+			decision_token=self.token(submitted["task"]),
+			idempotency_key=key,
+		)
+		first = lifecycle.review_need(**payload)
+		second = lifecycle.review_need(**payload)
+		self.assertFalse(first["idempotent"])
+		self.assertTrue(second["idempotent"])
+		# The replay reports the same committed state, and commits nothing new.
+		self.assertEqual(first["record_version"], second["record_version"])
+		self.assertEqual(
+			first["current_accepted_version"], second["current_accepted_version"]
+		)
+		self.assertEqual(
+			frappe.db.count("Departmental Need Decision", {"idempotency_key": key}), 1
+		)
+		self.assertEqual(
+			frappe.db.count(
+				"Departmental Need Event",
+				{
+					"departmental_need": submitted["need"],
+					"event_type": events.EVENT_ACCEPTED,
+				},
+			),
+			1,
+		)
+		self.assertEqual(
+			frappe.db.count(
+				"Departmental Need Review Task",
+				{"departmental_need": submitted["need"], "status": TASK_OPEN},
+			),
+			0,
+		)
+
+	def test_replaying_a_successor_accept_supersedes_only_once(self):
+		# §5.2 — a replayed successor acceptance is the one replay that could
+		# corrupt lineage rather than merely duplicate a row: superseding twice
+		# would mark the *successor* superseded by itself and leave Planning's
+		# pinned source pointing at a version that no longer reads as accepted.
+		accepted = self.accepted()
+		frappe.set_user(AUTHOR)
+		opened = lifecycle.create_accepted_need_successor(
+			need=accepted["need"],
+			expected_version=accepted["record_version"],
+			idempotency_key=self.key(),
+		)
+		submitted = self.submit(opened)
+		key = self.key()
+		frappe.set_user(REVIEWER)
+		payload = dict(
+			need=submitted["need"],
+			decision="accept",
+			task=submitted["task"],
+			expected_version=submitted["record_version"],
+			decision_token=self.token(submitted["task"]),
+			idempotency_key=key,
+		)
+		lifecycle.review_need(**payload)
+		replay = lifecycle.review_need(**payload)
+		self.assertTrue(replay["idempotent"])
+		need = frappe.get_doc("Departmental Need", accepted["need"])
+		self.assertEqual(need.current_accepted_version, opened["successor_version"])
+		# The successor is accepted, not superseded by its own replay.
+		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_ACCEPTED)
+		self.assertEqual(
+			self.status_of(accepted["current_accepted_version"]), VERSION_SUPERSEDED
+		)
+		self.assertEqual(
+			frappe.db.count(
+				"Departmental Need Event",
+				{
+					"departmental_need": accepted["need"],
+					"event_type": events.EVENT_SUPERSEDED,
+				},
+			),
+			1,
 		)
 
 	def test_every_decision_records_the_review_task_that_authorised_it(self):
