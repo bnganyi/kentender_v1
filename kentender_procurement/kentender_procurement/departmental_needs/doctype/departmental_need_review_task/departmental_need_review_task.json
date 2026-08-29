@@ -146,31 +146,29 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
    "role": "System Manager",
-   "write": 1
+   "read": 1,
+   "write": 1,
+   "create": 1
   },
   {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
    "role": "Administrator",
-   "write": 1
+   "read": 1,
+   "write": 1,
+   "create": 1
   },
   {
-   "read": 1,
+   "role": "Departmental Author",
+   "read": 1
+  },
+  {
    "role": "Head of User Department",
+   "read": 1,
    "write": 1
   },
   {
-   "read": 1,
-   "role": "Departmental Author"
-  },
-  {
-   "read": 1,
-   "role": "Auditor"
+   "role": "Auditor",
+   "read": 1
   }
  ],
  "row_format": "Dynamic",

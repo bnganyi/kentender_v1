@@ -42,7 +42,4 @@ class DepartmentalNeedReviewTask(Document):
 			)
 
 	def on_trash(self):
-		frappe.throw(
-			"Departmental Need Review Tasks are retained permanently.",
-			title="NDS_DELETE_FORBIDDEN",
-		)
+		fail("NDS_STATE_CONFLICT", "Departmental Need Review Tasks are retained permanently.")

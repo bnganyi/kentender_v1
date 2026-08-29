@@ -14,12 +14,13 @@ import frappe
 from frappe.model.document import Document
 
 from kentender_procurement.departmental_needs.constants import IMMUTABLE_NEED_SCOPE_FIELDS, NEED_STATES
+from kentender_procurement.departmental_needs.errors import fail
 
 
 class DepartmentalNeed(Document):
 	def validate(self):
 		if self.current_state not in NEED_STATES:
-			frappe.throw("Invalid Departmental Need state.", title="NDS_STATE_INVALID")
+			fail("NDS_STATE_CONFLICT", "Invalid Departmental Need state.")
 		self._require_unit_within_entity()
 		self._guard_immutable_scope()
 
@@ -28,9 +29,9 @@ class DepartmentalNeed(Document):
 			"Organisation Unit", self.organisation_unit, "procuring_entity"
 		)
 		if owning_entity != self.procuring_entity:
-			frappe.throw(
+			fail(
+				"NDS_CONTEXT_REQUIRED",
 				"Organisation Unit must belong to the selected Procuring Entity.",
-				title="NDS_ORGANISATION_UNIT_PE_MISMATCH",
 			)
 
 	def _guard_immutable_scope(self):
@@ -41,14 +42,10 @@ class DepartmentalNeed(Document):
 			return
 		changed = [f for f in IMMUTABLE_NEED_SCOPE_FIELDS if self.get(f) != before.get(f)]
 		if changed:
-			frappe.throw(
+			fail(
+				"NDS_STATE_CONFLICT",
 				f"Departmental Need scope is immutable. Attempted to change: {', '.join(changed)}.",
-				title="NDS_STATE_CONFLICT",
 			)
 
 	def on_trash(self):
-		frappe.throw(
-			"Departmental Needs are retained and cannot be deleted.",
-			frappe.PermissionError,
-			title="NDS_DELETE_FORBIDDEN",
-		)
+		fail("NDS_STATE_CONFLICT", "Departmental Needs are retained and cannot be deleted.")

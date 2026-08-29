@@ -55,6 +55,21 @@ ACTING_REVIEWER = "julia.njeri@moh.example.test"
 PLANNER = "amina.hassan@moh.example.test"
 PLANNER_READONLY = "mercy.kilonzo@moh.example.test"
 AUDITOR = "auditor.moh@example.test"
+# §14.2 — a separate PE scope used only to prove cross-PE isolation.
+ISOLATION_REQUESTER = "requester.cgk@example.test"
+ISOLATION_PE = "PE-CGKIS"
+
+# §14.2 acting Head of User Department: Julia Njeri, OU-MOH-DHI only, approved
+# 1 Oct to 30 Nov 2026. The time bound is expressed by the *existence* of the
+# native User Permission row: it is granted for the approved period and removed
+# when the period ends. Nothing beyond native Frappe permissions is consulted at
+# authorization time, so the framework's own permission engine and this module's
+# services always agree — and an ended assignment fails closed simply because
+# the row is gone (§6, NDS-AC-042, NDS-AC-010). Frappe's User Permission has no
+# validity fields, and adding them would let an expired row still satisfy List
+# View and REST access while the services refused it.
+ACTING_REVIEWER_FROM = "2026-10-01"
+ACTING_REVIEWER_UNTIL = "2026-11-30"
 
 # §14.1 governed units.
 UNITS = (
@@ -220,6 +235,11 @@ def _actors() -> None:
 	_user(PLANNER, "Amina Hassan", (ROLE_PROCUREMENT_PLANNER,))
 	_user(PLANNER_READONLY, "Mercy Kilonzo", (ROLE_PROCUREMENT_PLANNER,))
 	_user(AUDITOR, "MOH Auditor", (ROLE_AUDITOR,))
+	_user(ISOLATION_REQUESTER, "CGK Requester", (ROLE_DEPARTMENTAL_AUTHOR,))
+
+	# §14.2 — PE-CGKIS only. Holds the Departmental Author role but no PE-MOH
+	# scope, proving that a role never grants authority on its own.
+	_user_permission(ISOLATION_REQUESTER, "Procuring Entity", ISOLATION_PE)
 
 	for user in (AUTHOR, REVIEWER, PLANNER, PLANNER_READONLY, AUDITOR):
 		_user_permission(user, "Procuring Entity", PE)

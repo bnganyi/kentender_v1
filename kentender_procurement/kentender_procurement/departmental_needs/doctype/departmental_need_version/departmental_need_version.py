@@ -75,7 +75,4 @@ class DepartmentalNeedVersion(Document):
 			)
 
 	def on_trash(self):
-		frappe.throw(
-			"Departmental Need Versions are retained permanently.",
-			title="NDS_DELETE_FORBIDDEN",
-		)
+		fail("NDS_STATE_CONFLICT", "Departmental Need Versions are retained permanently.")

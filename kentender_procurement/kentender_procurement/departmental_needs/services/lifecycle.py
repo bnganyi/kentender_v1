@@ -54,6 +54,7 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_RETURNED,
 	STATE_SUBMITTED,
 	STATE_WITHDRAWN,
+	USAGE_FULL,
 	TASK_COMPLETED,
 	TASK_INITIAL_ACCEPTANCE,
 	TASK_OPEN,
@@ -85,6 +86,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	require_create,
 	require_review_command,
 )
+from kentender_procurement.departmental_needs.services.usage import planning_usage_detail
 
 
 def _token() -> str:
@@ -112,18 +114,45 @@ def _request_context() -> dict[str, str]:
 	}
 
 
-def _existing(idempotency_key: str) -> dict[str, Any] | None:
+def _fingerprint(payload: dict[str, Any]) -> str:
+	"""A stable digest of the caller's command payload (§8, §9).
+
+	`user` and the key itself are excluded: the same request replayed by the
+	same caller must match, and the key is the lookup, not part of the payload.
+	"""
+	material = {
+		key: cstr(value)
+		for key, value in sorted(payload.items())
+		if key not in {"user", "idempotency_key"} and value is not None
+	}
+	return hashlib.sha256(json.dumps(material, sort_keys=True).encode()).hexdigest()
+
+
+def _existing(idempotency_key: str, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
+	"""Replay a completed command, or reject the key if the payload differs.
+
+	§9 distinguishes a genuine retry from key reuse: the same key with a
+	different payload is `NDS_IDEMPOTENCY_CONFLICT`, never a silent replay of
+	the earlier command's result.
+	"""
 	key = cstr(idempotency_key).strip()
 	if not key:
 		fail("NDS_IDEMPOTENCY_CONFLICT", "An idempotency key is required.")
 	row = frappe.db.get_value(
 		"Departmental Need Decision",
 		{"idempotency_key": key},
-		["departmental_need", "action"],
+		["departmental_need", "action", "request_fingerprint"],
 		as_dict=True,
 	)
 	if not row:
 		return None
+	if payload is not None:
+		seen = cstr(row.request_fingerprint)
+		if seen and seen != _fingerprint(payload):
+			fail(
+				"NDS_IDEMPOTENCY_CONFLICT",
+				"This idempotency key was already used with a different request.",
+			)
 	need = frappe.get_doc("Departmental Need", row.departmental_need)
 	return _result(need, idempotent=True, action=row.action)
 
@@ -165,6 +194,7 @@ def _record_decision(
 	task: str = "",
 	before_hash: str = "",
 	content_hash: str = "",
+	fingerprint: str = "",
 ):
 	ctx = _request_context()
 	return frappe.get_doc(
@@ -191,6 +221,7 @@ def _record_decision(
 			"before_state_hash": before_hash,
 			"after_state_hash": _state_hash(need),
 			"idempotency_key": cstr(idempotency_key).strip(),
+			"request_fingerprint": fingerprint,
 		}
 	).insert(ignore_permissions=True)
 
@@ -484,7 +515,10 @@ def create_need(
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""Save Draft Version 1 and generate the Need reference (§5.1)."""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	fy = selectable_financial_year(financial_year)
@@ -520,6 +554,7 @@ def create_need(
 		need.save(ignore_permissions=True)
 		_record_decision(
 			need,
+			fingerprint=_fingerprint(payload),
 			action=ACTION_CREATE,
 			prior=STATE_DRAFT,
 			result=STATE_DRAFT,
@@ -546,7 +581,10 @@ def update_need(
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""Save the owner's Draft, returned correction or Draft successor (§5.1, §5.2)."""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -575,6 +613,7 @@ def update_need(
 	_bump(doc)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=action,
 		prior=doc.current_state,
 		result=doc.current_state,
@@ -590,7 +629,10 @@ def submit_need(
 	*, need: str, expected_version: int, idempotency_key: str, user: str | None = None
 ) -> dict[str, Any]:
 	"""Lock the version, hash it and open one departmental review task (§5.1, §5.2)."""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -627,6 +669,7 @@ def submit_need(
 	task = _open_task(doc, task_type=task_type, version=version.name)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=action,
 		prior=prior,
 		result=target,
@@ -658,7 +701,10 @@ def review_need(
 	root stays `Accepted for planning` throughout, because the earlier accepted
 	version remains effective until — and unless — the successor is accepted.
 	"""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -726,6 +772,7 @@ def review_need(
 	_bump(doc, target)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=action,
 		prior=prior,
 		result=target,
@@ -757,7 +804,10 @@ def withdraw_need(
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""Withdraw the owner's Draft or returned correction (§5.1)."""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -774,6 +824,7 @@ def withdraw_need(
 	_bump(doc, STATE_WITHDRAWN)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=ACTION_WITHDRAW,
 		prior=prior,
 		result=STATE_WITHDRAWN,
@@ -796,7 +847,10 @@ def create_accepted_need_successor(
 	The accepted version is untouched and remains effective (NDS-AC-016); the
 	root state does not move.
 	"""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -818,6 +872,7 @@ def create_accepted_need_successor(
 	_bump(doc)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=ACTION_CREATE_SUCCESSOR,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -843,7 +898,10 @@ def cancel_accepted_need_successor(
 
 	NDS-AC-033 — cancelling withdraws only that successor.
 	"""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -858,6 +916,7 @@ def cancel_accepted_need_successor(
 	_bump(doc)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=ACTION_CANCEL_SUCCESSOR,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -876,38 +935,35 @@ def cancel_accepted_need_successor(
 
 
 def check_withdrawal_dependency(need: str, accepted_version: str) -> dict[str, Any]:
-	"""§8.1 — the live Active Plan dependency for one exact accepted version.
+	"""§8.1 `check_accepted_need_withdrawal_dependency` — no mutation.
 
-	NDS-BR-016 ties the block to the exact version, and §5.3 is explicit that a
-	Draft or Submitted DPP is not an Active Plan dependency — only an Effective
-	allocation is. Phase 5 replaces this direct read of Planning's table with the
-	published `check_accepted_need_withdrawal_dependency` contract.
+	Reads the §4.7 projection Planning maintains, never Planning's own tables:
+	the firm D1 boundary makes `NeedPlanningUsageChanged.v1` the only channel.
+	NDS-BR-016 ties the block to the exact accepted version, and §5.3 is
+	explicit that a Draft or Submitted DPP is not an Active Plan dependency —
+	only an Active Plan inclusion is, which is precisely what the projection
+	reports.
 	"""
-	rows = frappe.get_all(
-		"Plan Need Allocation",
-		filters={
-			"departmental_need": cstr(need),
-			"departmental_need_version": cstr(accepted_version),
-			"status": "Effective",
-		},
-		fields=["name", "plan_item"],
-		order_by="name asc",
-		limit_page_length=0,
-	)
-	plan = (
-		cstr(frappe.db.get_value("Procurement Plan Item", rows[0].plan_item, "plan"))
-		if rows
-		else ""
-	)
+	detail = planning_usage_detail(cstr(need), cstr(accepted_version))
+	included = detail["usage"] == USAGE_FULL
+	# The token the reviewer's decision was taken against (§4.6).
 	fingerprint = hashlib.sha256(
-		json.dumps([row.name for row in rows], sort_keys=True).encode()
+		json.dumps(
+			{
+				"usage": detail["usage"],
+				"active_plan": detail["active_plan"],
+				"active_plan_item": detail["active_plan_item"],
+				"source_event_id": detail["source_event_id"],
+			},
+			sort_keys=True,
+		).encode()
 	).hexdigest()
 	return {
 		"need": cstr(need),
 		"accepted_version": cstr(accepted_version),
-		"included": bool(rows),
-		"active_plan": plan,
-		"active_plan_item": cstr(rows[0].plan_item) if rows else "",
+		"included": included,
+		"active_plan": detail["active_plan"],
+		"active_plan_item": detail["active_plan_item"],
 		"dependency_version": fingerprint,
 	}
 
@@ -921,7 +977,10 @@ def request_withdrawal(
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""Create the only open withdrawal request and one review task (§5.3)."""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -959,6 +1018,7 @@ def request_withdrawal(
 	_bump(doc)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=ACTION_REQUEST_WITHDRAWAL,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -994,7 +1054,10 @@ def decide_withdrawal(
 	(NDS-AC-019). `Evaluate` and `Re-evaluate` leave the task Open because the
 	request is not resolved; only `Approve` and `Decline` close it.
 	"""
-	if replay := _existing(idempotency_key):
+	# Captured before any local is bound, so the digest is exactly the
+	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
+	payload = dict(locals())
+	if replay := _existing(idempotency_key, payload):
 		return replay
 	principal = actor(user)
 	doc = _locked_need(need)
@@ -1057,6 +1120,7 @@ def decide_withdrawal(
 	_bump(doc, target)
 	_record_decision(
 		doc,
+		fingerprint=_fingerprint(payload),
 		action=action,
 		prior=STATE_ACCEPTED,
 		result=target,

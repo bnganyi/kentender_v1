@@ -124,9 +124,13 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			).insert(ignore_permissions=True)
 
 	def test_need_cannot_be_deleted(self):
+		# §13 retains every business record. Deletion is simply an invalid
+		# command for it, which is §9's NDS_STATE_CONFLICT — the same typed
+		# result the other four retention guards return.
 		need = self._new_need()
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(DepartmentalNeedError) as caught:
 			need.delete()
+		self.assertEqual(caught.exception.code, "NDS_STATE_CONFLICT")
 
 	# --- §4.3 version ------------------------------------------------------
 

@@ -131,6 +131,8 @@ TASK_CANCELLED = "Cancelled"
 USAGE_NOT_INCLUDED = "Not included"
 USAGE_FULL = "Fully included"
 
+USAGE_VALUES = frozenset({USAGE_NOT_INCLUDED, USAGE_FULL})
+
 # --- Native Frappe roles (§6) ---------------------------------------------
 ROLE_DEPARTMENTAL_AUTHOR = "Departmental Author"
 ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"

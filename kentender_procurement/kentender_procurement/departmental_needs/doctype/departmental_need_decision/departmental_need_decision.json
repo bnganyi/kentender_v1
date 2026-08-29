@@ -27,6 +27,7 @@
   "before_state_hash",
   "after_state_hash",
   "idempotency_key",
+  "request_fingerprint",
   "fixture_namespace"
  ],
  "fields": [
@@ -186,6 +187,13 @@
    "unique": 1
   },
   {
+   "description": "Digest of the command payload this key was first used with. A replay with a different payload is NDS_IDEMPOTENCY_CONFLICT (§9).",
+   "fieldname": "request_fingerprint",
+   "fieldtype": "Data",
+   "label": "Request Fingerprint",
+   "read_only": 1
+  },
+  {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "hidden": 1,
@@ -204,30 +212,28 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "read": 1,
-   "role": "System Manager"
+   "role": "System Manager",
+   "read": 1
   },
   {
-   "create": 1,
-   "read": 1,
-   "role": "Administrator"
+   "role": "Administrator",
+   "read": 1
   },
   {
-   "read": 1,
-   "role": "Departmental Author"
+   "role": "Departmental Author",
+   "read": 1
   },
   {
-   "read": 1,
-   "role": "Head of User Department"
+   "role": "Head of User Department",
+   "read": 1
   },
   {
-   "read": 1,
-   "role": "Procurement Planner"
+   "role": "Procurement Planner",
+   "read": 1
   },
   {
-   "read": 1,
-   "role": "Auditor"
+   "role": "Auditor",
+   "read": 1
   }
  ],
  "row_format": "Dynamic",

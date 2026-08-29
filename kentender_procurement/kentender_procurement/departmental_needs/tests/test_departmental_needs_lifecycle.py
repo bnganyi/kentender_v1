@@ -46,6 +46,8 @@ from kentender_procurement.departmental_needs.constants import (
 	VERSION_WITHDRAWN,
 	WITHDRAWAL_AWAITING_CLEARANCE,
 	WITHDRAWAL_AWAITING_REVIEW,
+	USAGE_FULL,
+	USAGE_NOT_INCLUDED,
 	WITHDRAWAL_DECLINED,
 )
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
@@ -56,11 +58,13 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	INTAKE_WINDOW,
 	OU_DIGITAL_HEALTH,
 	PE,
+	PLANNER,
 	REVIEWER,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.context import intake_window
+from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
 REASON = "The department no longer requires this equipment in the target financial year."
 
@@ -181,31 +185,31 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 	def status_of(self, name: str) -> str:
 		return frappe.db.get_value("Departmental Need Version", name, "version_status")
 
-	def effective_allocation(self, need: str, version: str) -> str:
-		"""An Active Plan dependency on one exact accepted version (§5.3)."""
-		doc = frappe.get_doc(
-			{
-				"doctype": "Plan Need Allocation",
-				"plan_item": "PPI-NDS-LIFECYCLE-TEST",
-				"departmental_need": need,
-				"departmental_need_version": version,
-				"source_organisation_unit": OU_DIGITAL_HEALTH,
-				"proposed_in_version": "PPV-NDS-LIFECYCLE-TEST",
-				"allocated_quantity": frappe.db.get_value(
-					"Departmental Need Version", version, "indicative_quantity"
-				),
-				"status": "Draft",
-				"idempotency_key": self.key(),
-			}
-		)
-		doc.flags.ignore_links = True
-		doc.insert(ignore_permissions=True)
-		return doc.name
+	def project_usage(self, need: str, version: str, usage: str) -> dict:
+		"""Report Planning usage the way Planning does — through the §8.2 event.
 
-	def make_effective(self, allocation: str) -> None:
-		frappe.db.set_value(
-			"Plan Need Allocation", allocation, "status", "Effective", update_modified=False
-		)
+		The withdrawal dependency is read from the §4.7 projection, never from
+		Planning's tables (firm D1 boundary), so the fixture publishes an event
+		rather than writing a Plan allocation.
+		"""
+		frappe.set_user(PLANNER)
+		try:
+			return project_planning_usage(
+				departmental_need=need,
+				accepted_version=version,
+				usage=usage,
+				source_event_id=self.key(),
+				active_plan="PLN-NDS-LIFECYCLE-TEST" if usage == USAGE_FULL else "",
+				active_plan_item="PPI-NDS-LIFECYCLE-TEST" if usage == USAGE_FULL else "",
+			)
+		finally:
+			frappe.set_user("Administrator")
+
+	def include_in_active_plan(self, need: str, version: str) -> dict:
+		return self.project_usage(need, version, USAGE_FULL)
+
+	def clear_from_active_plan(self, need: str, version: str) -> dict:
+		return self.project_usage(need, version, USAGE_NOT_INCLUDED)
 
 
 class TestNeedsIntakeWindow(DepartmentalNeedsCommandCase):
@@ -686,18 +690,30 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 			TASK_COMPLETED,
 		)
 
-	def test_a_draft_plan_allocation_is_not_an_active_plan_dependency(self):
-		# §5.3 — a Draft or Submitted DPP does not block withdrawal.
+	def test_a_draft_plan_is_not_an_active_plan_dependency(self):
+		"""§5.3 — a Draft or Submitted DPP does not block withdrawal.
+
+		Planning publishes `NeedPlanningUsageChanged.v1` only when an *Active*
+		Plan starts or stops representing the version (§7.2), so a Need sitting
+		in a Draft DPP has no projection at all — and no dependency.
+		"""
 		accepted, requested = self.requested()
-		self.effective_allocation(accepted["need"], accepted["current_accepted_version"])
+		self.assertFalse(
+			frappe.db.exists(
+				"Need Planning Usage Projection", accepted["current_accepted_version"]
+			)
+		)
+		self.assertEqual(self.decide_withdrawal(requested, "approve")["current_state"], STATE_WITHDRAWN)
+
+	def test_an_inclusion_that_planning_later_clears_stops_blocking(self):
+		accepted, requested = self.requested()
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_version"])
 		self.assertEqual(self.decide_withdrawal(requested, "approve")["current_state"], STATE_WITHDRAWN)
 
 	def test_approve_is_blocked_while_an_active_plan_dependency_exists(self):
 		accepted, requested = self.requested()
-		allocation = self.effective_allocation(
-			accepted["need"], accepted["current_accepted_version"]
-		)
-		self.make_effective(allocation)
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.decide_withdrawal(requested, "approve")
 		self.assertEqual(caught.exception.code, "NDS_ACTIVE_PLAN_DEPENDENCY")
@@ -708,10 +724,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_evaluate_moves_the_request_to_awaiting_planning_clearance(self):
 		accepted, requested = self.requested()
-		allocation = self.effective_allocation(
-			accepted["need"], accepted["current_accepted_version"]
-		)
-		self.make_effective(allocation)
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
 		self.assertEqual(evaluated["action"], ACTION_EVALUATE_WITHDRAWAL)
 		self.assertEqual(evaluated["withdrawal_status"], WITHDRAWAL_AWAITING_CLEARANCE)
@@ -724,10 +737,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_re_evaluating_while_still_included_changes_no_state(self):
 		accepted, requested = self.requested()
-		allocation = self.effective_allocation(
-			accepted["need"], accepted["current_accepted_version"]
-		)
-		self.make_effective(allocation)
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
 		again = self.decide_withdrawal(evaluated, "evaluate")
 		self.assertEqual(again["action"], ACTION_REEVALUATE_WITHDRAWAL)
@@ -736,15 +746,11 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_approve_succeeds_once_planning_clears_the_inclusion(self):
 		accepted, requested = self.requested()
-		allocation = self.effective_allocation(
-			accepted["need"], accepted["current_accepted_version"]
-		)
-		self.make_effective(allocation)
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
-		# Planning clears the inclusion through its own governed route.
-		frappe.db.set_value(
-			"Plan Need Allocation", allocation, "status", "Reversed", update_modified=False
-		)
+		# Planning clears the inclusion through its own governed route and
+		# publishes NeedPlanningUsageChanged.v1.
+		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_version"])
 		approved = self.decide_withdrawal(evaluated, "approve")
 		self.assertEqual(approved["current_state"], STATE_WITHDRAWN)
 		self.assertEqual(approved["withdrawal_status"], "Approved")

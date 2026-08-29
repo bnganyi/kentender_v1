@@ -40,7 +40,4 @@ class DepartmentalNeedDecision(Document):
 			fail("NDS_FIELD_REQUIRED", f"{self.action} does not collect a reason.")
 
 	def on_trash(self):
-		frappe.throw(
-			"Departmental Need Decisions are retained permanently.",
-			title="NDS_DELETE_FORBIDDEN",
-		)
+		fail("NDS_STATE_CONFLICT", "Departmental Need Decisions are retained permanently.")

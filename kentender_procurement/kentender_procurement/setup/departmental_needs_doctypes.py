@@ -23,14 +23,72 @@ def _f(label: str, fieldname: str, fieldtype: str = "Data", **extra):
 # §6 native roles. Business authority is enforced per command in
 # `departmental_needs/services/permissions.py` using these roles plus User
 # Permission scope; no capability or scope-assignment store is consulted.
-BUSINESS_PERMISSIONS: list[dict] = [
-	{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-	{"role": "Administrator", "read": 1, "write": 1, "create": 1, "delete": 1},
-	{"role": "Departmental Author", "read": 1, "write": 1, "create": 1},
-	{"role": "Head of User Department", "read": 1, "write": 1},
+#
+# Permissions are declared per doctype rather than as one blanket set, because
+# §6 grants materially different work to each role and NDS-AC-022 requires the
+# match to be exact. Budget Officer and Accounting Officer appear nowhere
+# (NDS-AC-023, §17). No role receives `delete` on a business record: §13 keeps
+# Needs, versions and decisions permanently, and the controllers block deletion.
+ADMIN_PERMISSIONS: list[dict] = [
+	{"role": "System Manager", "read": 1, "write": 1, "create": 1},
+	{"role": "Administrator", "read": 1, "write": 1, "create": 1},
+]
+
+# Read-only oversight: §6 gives the Auditor no business mutation, and the
+# Planner reads current accepted versions through the typed source contract.
+OVERSIGHT_READ: list[dict] = [
 	{"role": "Procurement Planner", "read": 1},
 	{"role": "Auditor", "read": 1},
 ]
+
+# The Need, its versions and its withdrawal requests: the Author creates and
+# edits their own; the HoD decides. Row-level ownership and PE/OU/FY scope are
+# applied by `services/permissions.py` and User Permission, not here.
+NEED_PERMISSIONS: list[dict] = [
+	*ADMIN_PERMISSIONS,
+	{"role": "Departmental Author", "read": 1, "write": 1, "create": 1},
+	{"role": "Head of User Department", "read": 1, "write": 1},
+	*OVERSIGHT_READ,
+]
+
+# §4.4 — the departmental decision queue. The Planner has no Need decision
+# (§6, NDS-AC-043), so the task is not readable by that role at all.
+REVIEW_TASK_PERMISSIONS: list[dict] = [
+	*ADMIN_PERMISSIONS,
+	{"role": "Departmental Author", "read": 1},
+	{"role": "Head of User Department", "read": 1, "write": 1},
+	{"role": "Auditor", "read": 1},
+]
+
+# §4.5 — an immutable record created only by a successful command. Nothing
+# outside the command layer writes it, so no business role gets write.
+DECISION_PERMISSIONS: list[dict] = [
+	{"role": "System Manager", "read": 1},
+	{"role": "Administrator", "read": 1},
+	{"role": "Departmental Author", "read": 1},
+	{"role": "Head of User Department", "read": 1},
+	*OVERSIGHT_READ,
+]
+
+# §4.1 / NDS-AC-043 — the Procurement Planner maintains the PE/FY window.
+# Everyone else in scope reads it to know whether intake is open.
+INTAKE_WINDOW_PERMISSIONS: list[dict] = [
+	*ADMIN_PERMISSIONS,
+	{"role": "Procurement Planner", "read": 1, "write": 1, "create": 1},
+	{"role": "Departmental Author", "read": 1},
+	{"role": "Head of User Department", "read": 1},
+	{"role": "Auditor", "read": 1},
+]
+
+# One explicit mapping so a new doctype cannot silently inherit the wrong set.
+PERMISSIONS_BY_DOCTYPE: dict[str, list[dict]] = {
+	"Departmental Need": NEED_PERMISSIONS,
+	"Departmental Need Version": NEED_PERMISSIONS,
+	"Need Withdrawal Request": NEED_PERMISSIONS,
+	"Departmental Need Review Task": REVIEW_TASK_PERMISSIONS,
+	"Departmental Need Decision": DECISION_PERMISSIONS,
+	"Needs Intake Window": INTAKE_WINDOW_PERMISSIONS,
+}
 
 STATES = "Draft\nSubmitted\nReturned\nAccepted for planning\nNot taken forward\nWithdrawn"
 VERSION_STATES = "Draft\nSubmitted\nReturned\nAccepted\nNot taken forward\nWithdrawn\nSuperseded"
@@ -155,6 +213,7 @@ SCHEMAS = (
 			_f("Before State Hash", "before_state_hash", read_only=1),
 			_f("After State Hash", "after_state_hash", read_only=1),
 			_f("Idempotency Key", "idempotency_key", reqd=1, unique=1, read_only=1, search_index=1),
+			_f("Request Fingerprint", "request_fingerprint", read_only=1),
 			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
 		],
 	},
@@ -204,7 +263,7 @@ def generate() -> list[str]:
 				"engine": "InnoDB",
 				"track_changes": 1,
 				"allow_rename": 0,
-				"permissions": BUSINESS_PERMISSIONS,
+				"permissions": PERMISSIONS_BY_DOCTYPE[schema["name"]],
 				**schema,
 			}
 		)

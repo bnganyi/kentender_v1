@@ -40,7 +40,10 @@ SCOPE_FIELDS = (
 def actor(user: str | None = None) -> str:
 	value = cstr(user or frappe.session.user).strip()
 	if not value or value == "Guest":
-		fail("NDS_AUTHENTICATION_REQUIRED", "Sign in to access Departmental Needs.")
+		# An unauthenticated caller holds neither the role nor the scope, so §9's
+		# scope denial is the correct stable result; there is no separate
+		# authentication code in the contract.
+		fail("NDS_SCOPE_DENIED", "Sign in to access Departmental Needs.")
 	return value
 
 
@@ -74,16 +77,53 @@ def permitted_values(user: str, doctype: str) -> set[str] | None:
 	return {cstr(row.for_value) for row in rows}
 
 
+# §6 — these two roles carry departmental authority, so their assignment must
+# name the department. The Planner and Auditor are scoped by PE and FY only
+# (§14.2), and requiring an Organisation Unit of them would deny the read access
+# §6 grants.
+DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
+
+
+def required_dimensions(user: str) -> tuple[str, ...]:
+	"""Scope dimensions this user's own role must name explicitly (NDS-BR-001)."""
+	if roles_of(user).intersection(DEPARTMENTAL_ROLES):
+		return ("Procuring Entity", "Organisation Unit", "Financial Year")
+	return ("Procuring Entity", "Financial Year")
+
+
 def in_scope(user: str, *, procuring_entity: str, organisation_unit: str, financial_year: str) -> bool:
-	"""Every scope dimension must pass its own User Permission restriction."""
+	"""Every scope dimension must be explicitly authorised (NDS-BR-001).
+
+	Frappe's own default is that a user with *no* User Permission rows for a
+	doctype is unrestricted on it. This module deliberately inverts that for
+	business roles, because NDS-BR-001 requires every Need to resolve to one
+	explicit authorised PE, OU and FY and states that missing, ambiguous or
+	expired scope fails closed.
+
+	The inversion also removes a privilege-escalation trap. Ending a temporary
+	acting assignment by deleting its only Organisation Unit row would, under
+	Frappe's default, leave that user unrestricted across *every* department —
+	silently widening their authority at the moment it was meant to end
+	(NDS-AC-042). Administrative users are exempt because §6 grants them
+	technical oversight rather than departmental authority.
+	"""
+	if is_administrative(user):
+		return True
 	values = {
 		"procuring_entity": cstr(procuring_entity),
 		"organisation_unit": cstr(organisation_unit),
 		"financial_year": cstr(financial_year),
 	}
+	required = required_dimensions(user)
 	for doctype, key in SCOPE_FIELDS:
 		allowed = permitted_values(user, doctype)
-		if allowed is not None and values[key] not in allowed:
+		if allowed is None:
+			# Unnamed dimension: fails closed when the user's own role is scoped
+			# by it, and is simply not a restriction otherwise.
+			if doctype in required:
+				return False
+			continue
+		if values[key] not in allowed:
 			return False
 	return True
 
@@ -136,8 +176,9 @@ def creation_contexts(user: str | None = None) -> list[dict[str, str]]:
 
 def require_create(user: str, pe: str, ou: str, financial_year: str) -> None:
 	if frappe.db.get_value("Organisation Unit", ou, "procuring_entity") != pe:
+		# §9 — no single authorised PE/OU/FY context can be resolved.
 		fail(
-			"NDS_ORGANISATION_UNIT_PE_MISMATCH",
+			"NDS_CONTEXT_REQUIRED",
 			"The selected department does not belong to the selected Procuring Entity.",
 		)
 	if not (has_role(user, ROLE_DEPARTMENTAL_AUTHOR) or is_administrative(user)):

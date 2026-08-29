@@ -49,7 +49,4 @@ class NeedWithdrawalRequest(Document):
 			)
 
 	def on_trash(self):
-		frappe.throw(
-			"Need Withdrawal Requests are retained permanently.",
-			title="NDS_DELETE_FORBIDDEN",
-		)
+		fail("NDS_STATE_CONFLICT", "Need Withdrawal Requests are retained permanently.")

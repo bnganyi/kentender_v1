@@ -1,45 +1,91 @@
-"""Thin whitelisted boundary for Departmental Needs services.
+"""Whitelisted Departmental Needs contracts (NDS-CHG-001 v1.1 §8).
 
-No writable DocType endpoint bypasses a command (§16.1). Attachment endpoints
-are removed with the attachment concept itself (§1.1, NDS-AC-029); the support
-lookup is removed with the support-lookup workflow (§1.1).
+Endpoint names are the §8.1 and §8.2 contract names exactly. No writable
+DocType endpoint bypasses a command (§16.1): every mutation below runs through
+`services/lifecycle.py`, which enforces scope, state, maker-checker, the
+optimistic record version, the decision token and the idempotency key.
 
-Phase 4 renames this surface to the exact §8.1/§8.2 contract names.
+Attachment and support-lookup endpoints are gone with the concepts themselves
+(§1.1, NDS-AC-029).
 """
+
+from __future__ import annotations
+
+from typing import Any
 
 import frappe
 
+from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.context import (
-	intake_window as _intake_window,
-	resolve_creation_context as _resolve_creation_context,
-	save_intake_window as _save_intake_window,
+	intake_window,
+	resolve_creation_context,
+	save_intake_window,
 )
-from kentender_procurement.departmental_needs.services.lifecycle import (
-	cancel_accepted_need_successor as _cancel_accepted_need_successor,
-	check_withdrawal_dependency as _check_withdrawal_dependency,
-	create_accepted_need_successor as _create_accepted_need_successor,
-	create_need as _create_need,
-	decide_withdrawal as _decide_withdrawal,
-	request_withdrawal as _request_withdrawal,
-	review_need as _review_need,
-	submit_need as _submit_need,
-	update_need as _update_need,
-	withdraw_need as _withdraw_need,
+from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+from kentender_procurement.departmental_needs.services.workspace import (
+	get_current_accepted_need as _get_current_accepted_need,
+	get_need,
+	get_review_task,
+	get_workspace,
 )
-from kentender_procurement.departmental_needs.services.workspace import get_need, get_workspace
 
-resolve_creation_context = frappe.whitelist()(_resolve_creation_context)
-get_workspace = frappe.whitelist()(get_workspace)
-get_need = frappe.whitelist()(get_need)
-get_intake_window = frappe.whitelist()(_intake_window)
-check_withdrawal_dependency = frappe.whitelist()(_check_withdrawal_dependency)
-create_need = frappe.whitelist()(_create_need)
-update_need = frappe.whitelist()(_update_need)
-submit_need = frappe.whitelist()(_submit_need)
-review_need = frappe.whitelist()(_review_need)
-withdraw_need = frappe.whitelist()(_withdraw_need)
-create_accepted_need_successor = frappe.whitelist()(_create_accepted_need_successor)
-cancel_accepted_need_successor = frappe.whitelist()(_cancel_accepted_need_successor)
-request_withdrawal = frappe.whitelist()(_request_withdrawal)
-decide_withdrawal = frappe.whitelist()(_decide_withdrawal)
-save_intake_window = frappe.whitelist()(_save_intake_window)
+# --- §8.1 read contracts ---------------------------------------------------
+
+resolve_needs_contexts = frappe.whitelist()(resolve_creation_context)
+get_needs_workspace = frappe.whitelist()(get_workspace)
+get_departmental_need = frappe.whitelist()(get_need)
+get_departmental_review_task = frappe.whitelist()(get_review_task)
+get_needs_intake_window = frappe.whitelist()(intake_window)
+get_current_accepted_need = frappe.whitelist()(_get_current_accepted_need)
+check_accepted_need_withdrawal_dependency = frappe.whitelist()(lifecycle.check_withdrawal_dependency)
+
+
+# --- §8.2 commands ---------------------------------------------------------
+
+
+@frappe.whitelist()
+def save_need_draft(**kwargs: Any) -> dict[str, Any]:
+	"""Create or update the originator's Draft; first save generates the reference.
+
+	One contract covers both, as §8.2 specifies: the presence of a Need decides
+	whether this is the first save or a later one.
+	"""
+	need = (kwargs.pop("need", "") or "").strip()
+	if need:
+		return lifecycle.update_need(need=need, **kwargs)
+	kwargs.pop("expected_version", None)
+	return lifecycle.create_need(**kwargs)
+
+
+submit_need_version = frappe.whitelist()(lifecycle.submit_need)
+withdraw_unaccepted_need = frappe.whitelist()(lifecycle.withdraw_need)
+create_accepted_need_successor = frappe.whitelist()(lifecycle.create_accepted_need_successor)
+cancel_accepted_need_successor = frappe.whitelist()(lifecycle.cancel_accepted_need_successor)
+request_accepted_need_withdrawal = frappe.whitelist()(lifecycle.request_withdrawal)
+decide_accepted_need_withdrawal = frappe.whitelist()(lifecycle.decide_withdrawal)
+save_needs_intake_window = frappe.whitelist()(save_intake_window)
+project_need_planning_usage = frappe.whitelist()(project_planning_usage)
+
+
+# §8.2 names one command per acceptance outcome. They share one implementation
+# so the maker-checker, state, token and lineage rules cannot drift apart, but
+# each is a distinct endpoint that cannot be turned into another by changing a
+# request parameter.
+
+
+@frappe.whitelist()
+def return_need_version(**kwargs: Any) -> dict[str, Any]:
+	"""Mark the submitted version Returned and create one copied correction Draft."""
+	return lifecycle.review_need(decision="return", **kwargs)
+
+
+@frappe.whitelist()
+def accept_need_version(**kwargs: Any) -> dict[str, Any]:
+	"""Accept the initial or successor version and publish lineage."""
+	return lifecycle.review_need(decision="accept", **kwargs)
+
+
+@frappe.whitelist()
+def decline_need_version(**kwargs: Any) -> dict[str, Any]:
+	"""Close the initial Need or successor without changing an accepted version."""
+	return lifecycle.review_need(decision="decline", **kwargs)

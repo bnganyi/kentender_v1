@@ -24,6 +24,7 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_SUBMITTED,
 	STATE_WITHDRAWN,
 	TASK_OPEN,
+	TASK_WITHDRAWAL,
 	VERSION_CONTENT_FIELDS,
 )
 from kentender_procurement.departmental_needs.errors import fail
@@ -33,9 +34,13 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	can_view,
 	creation_contexts,
 	is_owner,
+	require_review_command,
 	require_view,
 )
-from kentender_procurement.departmental_needs.services.usage import planning_usage
+from kentender_procurement.departmental_needs.services.usage import (
+	planning_usage,
+	planning_usage_detail,
+)
 
 
 def _open_review_task(need: str) -> dict[str, str] | None:
@@ -204,6 +209,135 @@ def get_workspace(
 		"needs": needs,
 		"count_label": f"{len(needs)} need" if len(needs) == 1 else f"{len(needs)} needs",
 		"actions": [{"code": "create", "label": "Create need"}],
+	}
+
+
+def get_review_task(*, task: str, decision_token: str = "", user: str | None = None) -> dict[str, Any]:
+	"""§8.1 `get_departmental_review_task` — the exact version under decision.
+
+	Returns the immutable version content, the requester, the scope and the
+	permitted decision labels. Labels come from the task type, never from what
+	the caller's screen happens to render (§17).
+	"""
+	principal = actor(user)
+	row = frappe.db.get_value(
+		"Departmental Need Review Task",
+		cstr(task).strip(),
+		[
+			"name",
+			"departmental_need",
+			"need_version",
+			"withdrawal_request",
+			"task_type",
+			"status",
+			"decision_token",
+			"opened_at",
+		],
+		as_dict=True,
+	)
+	if not row:
+		fail("NDS_SCOPE_DENIED", "Review task not found.")
+	doc = frappe.get_doc("Departmental Need", row.departmental_need)
+	# §4.4 — the task is available to holders of the HoD role in the exact scope.
+	require_review_command(doc, principal)
+	if decision_token and cstr(decision_token) != cstr(row.decision_token):
+		fail("NDS_STALE_WRITE", "This task was already decided. Reload and try again.")
+	version = _version_facts(row.need_version or doc.current_version)
+	withdrawal = None
+	if row.withdrawal_request:
+		withdrawal = frappe.db.get_value(
+			"Need Withdrawal Request",
+			row.withdrawal_request,
+			["name", "reason", "requested_by", "status", "accepted_version"],
+			as_dict=True,
+		)
+		withdrawal = dict(withdrawal) if withdrawal else None
+	decisions = (
+		["approve", "evaluate", "decline"]
+		if row.task_type == TASK_WITHDRAWAL
+		else ["return", "accept", "decline"]
+	)
+	return {
+		"ok": True,
+		"task": row.name,
+		"task_type": row.task_type,
+		"status": row.status,
+		"decision_token": row.decision_token,
+		"opened_at": str(row.opened_at or ""),
+		"need": doc.as_dict(no_nulls=True),
+		"version": version,
+		"withdrawal_request": withdrawal,
+		"requester_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
+		"scope": {
+			"procuring_entity": doc.procuring_entity,
+			"organisation_unit": doc.organisation_unit,
+			"financial_year": doc.financial_year,
+		},
+		"permitted_decisions": decisions if row.status == TASK_OPEN else [],
+		# A maker never decides their own version, so the label set is empty for
+		# them even when the task is open (NDS-BR-006).
+		"maker_checker_blocked": is_owner(doc, principal),
+	}
+
+
+def get_current_accepted_need(
+	*,
+	need: str,
+	expected_procuring_entity: str = "",
+	expected_financial_year: str = "",
+	expected_content_hash: str = "",
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""§8.1 — the typed accepted source contract for Procurement Planning.
+
+	Returns the §7.1 `DepartmentalNeedAccepted.v2` field set, or a typed
+	stale/not-accepted error. This is the only supported way for Planning to
+	read a Need (firm D1 boundary); the payload deliberately carries no Budget
+	Line, amount, funding source, currency, Strategy, requirement type,
+	location or attachment (NDS-AC-024).
+	"""
+	principal = actor(user)
+	name = cstr(need).strip()
+	if not frappe.db.exists("Departmental Need", name):
+		# Try the human reference before disclosing nothing.
+		name = cstr(frappe.db.get_value("Departmental Need", {"need_reference": name}, "name") or "")
+	if not name:
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	doc = frappe.get_doc("Departmental Need", name)
+	require_view(doc, principal)
+	if cstr(expected_procuring_entity) and cstr(expected_procuring_entity) != doc.procuring_entity:
+		fail("NDS_CONTEXT_REQUIRED", "The Need does not belong to the expected Procuring Entity.")
+	if cstr(expected_financial_year) and cstr(expected_financial_year) != doc.financial_year:
+		fail("NDS_CONTEXT_REQUIRED", "The Need does not belong to the expected financial year.")
+	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_version:
+		fail("NDS_NOT_ACCEPTED", "This Departmental Need has no current accepted version.")
+	version = frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+	if cstr(expected_content_hash) and cstr(expected_content_hash) != cstr(version.content_hash):
+		fail(
+			"NDS_SOURCE_STALE",
+			"The requested accepted version is no longer current. Refresh the source.",
+		)
+	unit_label = cstr(
+		frappe.db.get_value("Unit Of Measure", version.unit, "unit_label") or version.unit or ""
+	)
+	return {
+		"ok": True,
+		"contract": "DepartmentalNeedAccepted.v2",
+		"need": doc.name,
+		"need_reference": doc.need_reference,
+		"accepted_version": version.name,
+		"version_number": version.version_number,
+		"content_hash": version.content_hash,
+		"procuring_entity": doc.procuring_entity,
+		"organisation_unit": doc.organisation_unit,
+		"financial_year": doc.financial_year,
+		"title": version.title,
+		"description": version.description,
+		"expected_operational_result": version.expected_operational_result,
+		"indicative_quantity": flt(version.indicative_quantity),
+		"unit": version.unit,
+		"unit_label": unit_label,
+		"required_by_date": str(version.required_by_date or ""),
 	}
 
 

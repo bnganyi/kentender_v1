@@ -12,16 +12,15 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_procurement.departmental_needs.errors import fail
+
 
 class NeedsIntakeWindow(Document):
 	def validate(self):
 		if not self.opens_at or not self.closes_at:
-			frappe.throw("Opens at and Closes at are both required.", title="NDS_FIELD_REQUIRED")
+			fail("NDS_FIELD_REQUIRED", "Opens at and Closes at are both required.")
 		if str(self.closes_at) <= str(self.opens_at):
-			frappe.throw(
-				"Closes at must be later than Opens at.",
-				title="NDS_FIELD_REQUIRED",
-			)
+			fail("NDS_FIELD_REQUIRED", "Closes at must be later than Opens at.")
 		self._require_single_window_per_pe_fy()
 
 	def _require_single_window_per_pe_fy(self):
@@ -34,7 +33,7 @@ class NeedsIntakeWindow(Document):
 			},
 		)
 		if duplicate:
-			frappe.throw(
+			fail(
+				"NDS_STATE_CONFLICT",
 				f"A Needs Intake Window already exists for {self.procuring_entity} / {self.financial_year}.",
-				title="NDS_STATE_CONFLICT",
 			)
