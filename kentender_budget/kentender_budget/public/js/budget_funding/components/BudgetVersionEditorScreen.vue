@@ -246,7 +246,14 @@ function addLine() {
 		title: "",
 		owner_org_unit: "",
 		owner_org_unit_label: "",
-		funding_source: "",
+		// The funding source <select> has no blank placeholder option (only
+		// the real catalogue), so a browser renders its first option as
+		// visually selected regardless of v-model's value — leaving
+		// funding_source empty here reads as "already chosen" on screen but
+		// fails save with "Funding source is required" (confirmed live).
+		// Default to the first catalogue entry so the visible selection and
+		// the bound value always agree.
+		funding_source: fundingSources.value[0]?.id || "",
 		approved_amount: 0,
 		identity_locked: false,
 		can_remove: true,

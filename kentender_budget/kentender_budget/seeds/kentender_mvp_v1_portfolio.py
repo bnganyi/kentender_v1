@@ -503,6 +503,29 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 		title="Finance single-source test line", owner_org_unit=C.OU_DIR_DHP, approved_amount=100_000_000,
 		fy_start_year=2031,
 	)
+	if not frappe.db.exists("Funding Reservation", {"budget_line": line_name, "status": "Active"}):
+		prior_user = frappe.session.user
+		try:
+			_as_user(C.USER_BUD_OFFICER)
+			token = check_reserve.check_funding(
+				plan_item="BUD-SC-FIN-SINGLE-PPI", plan_version="BUD-SC-FIN-SINGLE-PLN", finance_task="BUD-SC-FIN-SINGLE-FNT",
+				source_set_hash="BUD-SC-FIN-SINGLE-HASH-PRECOND",
+				allocations=[
+					{
+						"budget_line": line_name,
+						"amount": 80_000_000,
+						"funding_source": FUNDING_SOURCE,
+						"plan_source_allocation": "BUD-SC-FIN-SINGLE-PSA-PRECOND",
+					}
+				],
+				correlation_id=frappe.generate_hash(length=12),
+			)
+			check_reserve.reserve_funding(
+				token=token["token"], finance_task="BUD-SC-FIN-SINGLE-FNT", source_set_hash="BUD-SC-FIN-SINGLE-HASH-PRECOND",
+				idempotency_key=frappe.generate_hash(length=12),
+			)
+		finally:
+			frappe.set_user(prior_user)
 	out["BUD-SC-FIN-SINGLE"] = {"version": version_name, "line": line_name}
 
 	# BUD-SC-FIN-COMBINED — DHI 100m + HWD 60m available; two-line combined confirmation.

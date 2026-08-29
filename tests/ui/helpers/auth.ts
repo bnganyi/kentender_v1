@@ -203,57 +203,82 @@ export async function loginAsAuditor(page: Page) {
 	);
 }
 
-/** BUD-SUP-002 — Budget Viewer (PE-MOH). */
+/**
+ * BUD-CHG-001 v1.2 §15.2 — dedicated Budget-only personas (PE-MOH unless
+ * noted). Reviewer/Authority are retired: v1.2 collapsed them into one
+ * Budget Approver role (see kentender_core.seeds.kentender_mvp_v1.constants
+ * RETIRED_DEMO_USERS and the budget-rebuild-kickoff memory).
+ */
+
+/** Budget Viewer (PE-MOH, read-only). */
 export async function loginAsBudgetViewer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_VIEWER_USER || 'moh.viewer@example.test',
+		process.env.UI_BUDGET_VIEWER_USER || 'bud.viewer.moh@example.test',
 		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Officer (PE-MOH). */
+/** Budget Officer (PE-MOH) — Peter Otieno; also holds Finance Confirmation Officer. */
 export async function loginAsBudgetOfficer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_BUDGET_OFFICER_USER || 'moh.budget.officer@example.test',
 		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Reviewer (PE-MOH). */
-export async function loginAsBudgetReviewer(page: Page) {
+/** Budget Approver (PE-MOH) — single decide-and-activate role (v1.2 §7). */
+export async function loginAsBudgetApprover(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_REVIEWER_USER || 'moh.budget.reviewer@example.test',
-		process.env.UI_BUDGET_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_APPROVER_USER || 'moh.budget.approver@example.test',
+		process.env.UI_BUDGET_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Authority (PE-MOH). */
-export async function loginAsBudgetAuthority(page: Page) {
+/** Budget Auditor (PE-MOH) — read-only across the funding ledger. */
+export async function loginAsBudgetAuditor(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_AUTHORITY_USER || 'moh.budget.authority@example.test',
-		process.env.UI_BUDGET_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_AUDITOR_USER || 'bud.auditor@example.test',
+		process.env.UI_BUDGET_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — dual Officer+Authority for AC-018 SoD (PE-MOH). */
-export async function loginAsBudgetOfficerAuthority(page: Page) {
+/** BUD-AC-008 — dual Officer+Approver, for self-approval-segregation checks (PE-MOH). */
+export async function loginAsBudgetOfficerApprover(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'moh.budget.officer.authority@example.test',
-		process.env.UI_BUDGET_OFFICER_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_OFFICER_APPROVER_USER || 'moh.budget.officer.authority@example.test',
+		process.env.UI_BUDGET_OFFICER_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Officer scoped to PE-MOE (cross-entity denial vs PE-MOH). */
+/** Kisumu (PE-CGKIS) Budget Officer — cross-PE isolation checks vs PE-MOH. */
 export async function loginAsBudgetOtherEntity(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'kisumu.health.officer@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'cgk.budget.officer@example.test',
 		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Kisumu (PE-CGKIS) Budget Approver. */
+export async function loginAsBudgetOtherEntityApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_USER || 'cgk.budget.approver@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Kisumu (PE-CGKIS) Budget Viewer — cross-PE read-scope denial checks. */
+export async function loginAsBudgetOtherEntityViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_USER || 'bud.viewer.kisumu@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
