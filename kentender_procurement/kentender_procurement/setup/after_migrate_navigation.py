@@ -17,6 +17,8 @@ import os
 import frappe
 from frappe.modules.import_file import import_file_by_path
 
+from kentender_procurement.setup import procurement_home_page
+
 
 def _sidebar_json_path(basename: str) -> str:
 	return os.path.join(
@@ -121,6 +123,12 @@ def sync_procurement_home_page() -> None:
 		)
 	if os.path.isfile(path):
 		import_file_by_path(path, force=True)
+	# The fixture carries a role list, but `setup/procurement_home_page.py` owns
+	# it: reconciling *after* the import means a role retired there is removed
+	# from the live record even if a stale JSON still names it. Hand-maintaining
+	# the list in the fixture alone locked 42 users out of the whole Desk once
+	# per module rebuild — see that module's docstring.
+	procurement_home_page.reconcile()
 	# Retire colliding Page slug if an older import created it.
 	if frappe.db.exists("Page", "procurement-home"):
 		frappe.delete_doc("Page", "procurement-home", force=True, ignore_permissions=True)
