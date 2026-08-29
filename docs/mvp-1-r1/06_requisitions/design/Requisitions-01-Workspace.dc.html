@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+body { margin: 0; }
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-800); }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-neutral-300);font-family:var(--font-body);display:flex;justify-content:center;padding:40px 24px">
+  <div data-screen-label="01" style="width:1440px;height:1024px;flex:none;background:var(--color-bg);box-shadow:var(--shadow-lg);overflow:auto;padding:48px 56px;display:flex;flex-direction:column;gap:32px">
+    <div>
+      <h1 style="font-size:30px;margin:0 0 6px">Procurement Requisitions</h1>
+      <p style="margin:0;opacity:.6;font-size:15px">Prepare precise departmental requests from approved Plan Items.</p>
+    </div>
+
+    <div>
+      <h6 class="kt-card-title" style="margin:0 0 12px">Ready to prepare</h6>
+      <table class="table">
+        <thead><tr><th>Plan Item</th><th>Department</th><th>Method</th><th style="text-align:right">Remaining value</th><th>Required by</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Supply and delivery of ICT equipment</td>
+            <td>Coast Region — Administration and ICT</td>
+            <td>Open Tender</td>
+            <td style="text-align:right">KES 4,875,000.00</td>
+            <td>30 Dec 2026</td>
+            <td><button type="button" class="btn btn-primary">Prepare Requisition</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h6 class="kt-card-title" style="margin:0 0 12px">My Drafts</h6>
+      <table class="table">
+        <thead><tr><th>Requisition</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td>REQ-KEBS-2026-ICT-0001</td>
+            <td><span class="kt-status is-draft">Draft</span></td>
+            <td class="text-muted">28 Aug 2026, 14:20</td>
+            <td><button type="button" class="btn btn-secondary">Continue</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h6 class="kt-card-title" style="margin:0 0 12px">Tasks</h6>
+      <div class="card blueprint" style="padding:20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <p class="card-body" style="margin:0">No Requisition decisions are waiting for you.</p>
+      </div>
+    </div>
+
+    <div>
+      <h6 class="kt-card-title" style="margin:0 0 12px">Recent Requisitions</h6>
+      <p class="text-muted" style="font-size:14px">No requisitions to show yet.</p>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

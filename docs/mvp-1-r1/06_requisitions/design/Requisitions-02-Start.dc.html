@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+body { margin: 0; }
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-800); }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-neutral-300);font-family:var(--font-body);display:flex;justify-content:center;padding:40px 24px">
+  <div data-screen-label="02" style="width:1440px;height:1024px;flex:none;background:var(--color-bg);box-shadow:var(--shadow-lg);overflow:auto;padding:48px 56px;display:flex;flex-direction:column;gap:28px">
+    <h1 style="font-size:26px;margin:0">Prepare Requisition from approved Plan Item</h1>
+
+    <div class="card blueprint" style="padding:24px;gap:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">From approved Procurement Plan</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+        <div><div class="kt-label" style="margin-bottom:4px">Plan Item</div><div style="font-size:14px">Supply and delivery of ICT equipment</div></div>
+        <div><div class="kt-label" style="margin-bottom:4px">Department</div><div style="font-size:14px">Coast Region — Administration and ICT</div></div>
+        <div><div class="kt-label" style="margin-bottom:4px">Procurement method</div><div style="font-size:14px">Open Tender</div></div>
+        <div><div class="kt-label" style="margin-bottom:4px">Planned completion</div><div style="font-size:14px">30 Dec 2026</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div><div class="kt-label" style="margin-bottom:4px">Planned value</div><div style="font-size:14px">KES 4,875,000.00</div></div>
+        <div><div class="kt-label" style="margin-bottom:4px">Business need</div><div style="font-size:14px">Replace unsupported end-user devices used by Coast Region officers.</div></div>
+      </div>
+      <div><div class="kt-label" style="margin-bottom:4px">Expected operational result</div><div style="font-size:14px">Officers can use secure, supported equipment for office and field work.</div></div>
+      <table class="table">
+        <thead><tr><th>Plan item line</th><th>Source line</th><th>Requirement</th><th style="text-align:right">Remaining quantity</th><th style="text-align:right">Remaining value</th></tr></thead>
+        <tbody>
+          <tr><td>PIL-KEBS-ICT-001</td><td>SRC-KEBS-ICT-001</td><td>Business laptops</td><td style="text-align:right">25 Each</td><td style="text-align:right">KES 3,000,000.00</td></tr>
+          <tr><td>PIL-KEBS-ICT-002</td><td>SRC-KEBS-ICT-002</td><td>Desktop computers with monitors</td><td style="text-align:right">15 Each</td><td style="text-align:right">KES 1,425,000.00</td></tr>
+          <tr><td>PIL-KEBS-ICT-003</td><td>SRC-KEBS-ICT-003</td><td>Business tablets</td><td style="text-align:right">10 Each</td><td style="text-align:right">KES 450,000.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card blueprint" style="padding:24px;gap:10px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:11px;opacity:.55">Requirement product</div>
+        <span class="tag tag-accent">IT Equipment</span>
+      </div>
+      <p class="text-muted" style="font-size:13px;margin:0;max-width:70ch">This release supports straightforward off-the-shelf IT equipment. Complex software, integration or migration is not supported.</p>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-secondary">Cancel</button>
+      <button type="button" class="btn btn-primary">Prepare Requisition</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>
