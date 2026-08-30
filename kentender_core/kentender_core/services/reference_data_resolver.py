@@ -159,7 +159,12 @@ def resolve_working_context(
 	*,
 	requested_context: str | None = None,
 ) -> dict[str, Any]:
-	"""Zero/one/many authorized PE/FY working contexts for `user`, scoped by
+	"""SUPERSEDED (CTX-CHG-001): new adopters use
+	kentender_core.services.working_context (global PE preference + per-module
+	FY), not this per-module context-id model. Kept only until Budget migrates
+	in CTX-CHG-001 Phase D, then deleted with select_working_context below.
+
+	Zero/one/many authorized PE/FY working contexts for `user`, scoped by
 	their own permitted Procuring Entities — distinct from
 	resolve_authorized_contexts() above, which is scoped to the global
 	Reference Data Manager role and sees every Active context regardless of
