@@ -18,7 +18,12 @@ const railTrail = computed(() => {
 	return items;
 });
 const railEl = ref(null);
-usePageRail(railEl, railTrail);
+// CTX-CHG-001 - the global PE switcher; a record-bound screen returns to
+// the portfolio (the record keeps its own context), the portfolio refetches.
+usePageRail(railEl, railTrail, {
+	showPeSwitcher: true,
+	onPeChange: () => refresh(),
+});
 
 const loading = ref(true);
 const error = ref(null);

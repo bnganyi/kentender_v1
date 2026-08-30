@@ -25,7 +25,12 @@ const railTrail = computed(() => [
 	{ label: __("Review Task") },
 ]);
 const railEl = ref(null);
-usePageRail(railEl, railTrail);
+// CTX-CHG-001 - the global PE switcher; a record-bound screen returns to
+// the portfolio (the record keeps its own context), the portfolio refetches.
+usePageRail(railEl, railTrail, {
+	showPeSwitcher: true,
+	onPeChange: () => frappe.set_route("strategy-portfolio"),
+});
 
 const { route, go } = useRouteState("strategy-review-task");
 const versionId = computed(() => route.value[1] || null);

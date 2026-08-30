@@ -49,18 +49,21 @@ def has_cross_entity_authority(user: str | None = None) -> bool:
 
 
 def entity_for_user(user: str | None = None) -> str | None:
-	"""Best-effort procuring entity from user defaults / Employee; may be None for Admin."""
+	"""Best-effort procuring entity; may be None (e.g. an unrestricted user
+	with several options and no selection).
+
+	CTX-CHG-001 — resolves the GLOBAL working PE preference, replacing the
+	legacy "Procuring Entity" user default (a User-Permission-shaped key
+	frappe.defaults can't round-trip, hence the old raw-defaults workaround).
+	"""
+	from kentender_core.services.working_context import get_working_pe
+
 	user = user or frappe.session.user
-	pe = frappe.defaults.get_user_default("Procuring Entity", user)
-	if pe:
-		return pe if isinstance(pe, str) else (pe[0] if pe else None)
-	# Frappe treats "Procuring Entity" as a user-permission key; a plain DefaultValue
-	# string is then ignored by get_user_default — fall back to raw defaults.
-	defaults = frappe.defaults.get_defaults(user) or {}
-	raw = defaults.get("Procuring Entity") or defaults.get("procuring_entity")
-	if isinstance(raw, (list, tuple)):
-		return raw[0] if len(raw) == 1 else None
-	return raw or None
+	try:
+		selected = get_working_pe(user)["selected"]
+	except frappe.PermissionError:
+		return None
+	return selected["id"] if selected else None
 
 
 def assert_entity_in_scope(procuring_entity: str | None, user: str | None = None) -> None:
