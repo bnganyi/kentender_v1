@@ -150,5 +150,22 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(rail.locator(".sidebar-item-label", { hasText: "Module Def" })).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("the page-rail breadcrumb returns to the workspace", async ({ page }) => {
+		/**
+		 * PageRail's goRoute applies the crumb's route as frappe.set_route
+		 * *segments*. This page passed a string ("/app/departmental-needs"),
+		 * which Function.apply spread into single characters — the click was a
+		 * garbage no-op (reported live 2026-08-30).
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		await page.locator(".kt-rail-crumb-link", { hasText: "Departmental Needs" }).click();
+		await expectScreen(page, "workspace");
+		await expect(page).toHaveURL(/\/desk\/departmental-needs$/);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
 });
 

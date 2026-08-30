@@ -58,6 +58,13 @@ const userInitials = initials(userName);
 
 function goRoute(route) {
 	if (!route) return;
+	// The contract is a segments array, applied as set_route arguments. A
+	// string path must not fall into apply(), which would spread it into
+	// single characters and navigate nowhere (the Needs breadcrumb defect).
+	if (typeof route === "string") {
+		frappe.set_route(route);
+		return;
+	}
 	frappe.set_route.apply(frappe, route);
 }
 

@@ -412,7 +412,7 @@ watch([search, status], () => {
 usePageRail(
 	railEl,
 	computed(() => [
-		{ label: "Departmental Needs", route: `/app/${PAGE}` },
+		{ label: "Departmental Needs", route: [PAGE] },
 		...(needReference.value ? [{ label: needReference.value }] : []),
 	])
 );
