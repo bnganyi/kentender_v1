@@ -133,6 +133,11 @@ restore the stage sourced from it.
 
 ## FU-07 — Procurement Home and Departmental Needs disagree about "financial year"
 
+**Superseded (2026-08-30):** carried forward as CTX-FU-02 in
+`docs/mvp-1-r1/00_common/KenTender_CTX-CHG-001_Working_Context_v1.0.md` —
+Home's context is now permission-scoped with its own per-module FY memory,
+but its int-year vocabulary remains until the unification lands.
+
 **What.** Procurement Home derives an **integer start year** from Budget's
 `fiscal_period` column (`2026/27` → `2026`) and shows it as "FINANCIAL YEAR
 2026". Departmental Needs, Planning and Strategy key on **`Financial Year`
