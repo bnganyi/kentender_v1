@@ -73,6 +73,13 @@
 		var root = host.querySelector("#kt-ph-root");
 		if (!root || root.__ktPhBound) return;
 		root.__ktPhBound = true;
+		// CTX-CHG-001 — a PE switched from the shared rail on any Vue page
+		// moves the same global preference this page resolves from.
+		document.addEventListener("kt:working-pe-changed", function () {
+			if (!root.isConnected) return;
+			_state.context = null;
+			_loadHome();
+		});
 		root.addEventListener("change", function (e) {
 			var t = e.target;
 			if (!t || !t.getAttribute) return;
