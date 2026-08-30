@@ -3,10 +3,10 @@
 | Control | Value |
 |---|---|
 | Document ID | PLN-CHG-001 |
-| Version | 1.1 |
-| Date | 28 August 2026 |
+| Version | 1.2 |
+| Date | 30 August 2026 |
 | Status | Approved |
-| Change type | Complete consolidated successor to approved v1.0 |
+| Change type | Complete consolidated successor to approved v1.1 |
 | Module | Procurement Planning |
 | Implementation posture | Correct the existing module in place; reuse the proven Planning UI and Claude Design → Vue 3 → Frappe Desk pattern |
 
@@ -14,7 +14,7 @@
 
 ## 1. Governing decision
 
-On approval, this complete document becomes the single implementation authority for Procurement Planning. It consolidates v1.0 with the approved end-to-end lineage direction and corrected statutory approval chain, and replaces the Planning documents listed in section 19 wherever they conflict with it.
+This complete document is the single implementation authority for Procurement Planning. It consolidates approved v1.1 with the lifecycle, reservation, segregation, context and navigation corrections defined here, and replaces the Planning documents listed in section 18 wherever they conflict with it.
 
 The existing application is corrected in place. Proven page structure, components, visual tokens and working Planning interactions are reused where they conform. Removed concepts are deleted rather than renamed, aliased, dual-read or retained behind feature flags.
 
@@ -22,7 +22,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.1 |
+| Earlier item | Disposition in v1.2 |
 |---|---|
 | Every DPP entry and Plan Item must originate from an accepted Need | Correct. A DPP entry originates from either an `Accepted Departmental Need` or a `Direct departmental requirement`. |
 | Accepted Need carries Strategy, requirement type, Budget Line, funding source, currency and amount into Planning | Remove. The Need supplies title, description, expected operational result, quantity, unit and required-by date only. Planning adds the Budget Line and indicative amount; the Procurement Planner classifies the entry; the Planner selects the Strategic Objective on the Plan Item. |
@@ -41,7 +41,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 | DPP readiness score or percentage | Remove. Readiness is an exact blocker list. |
 | Custom System Administrator Planning workspace | Remove. Support and audit use authorised framework records and logs; they receive no Planning business action. |
 | Planning-owned actual milestone entry and Monitoring Officer role | Remove from MVP-1. Tendering, Requisitions and Contract Management own actual operational events. Planning may display their read-only projections later. |
-| 71 separately specified Stitch frames | Replace with the smaller Claude Design contract in section 12. State variants are functional requirements unless a visually distinct artboard is explicitly required. |
+| 71 separately specified Stitch frames | Replace with the smaller Claude Design contract in section 11. State variants are functional requirements unless a visually distinct artboard is explicitly required. |
 | Stitch/Tailwind markup imported into Frappe | Replace with Claude Design as visual evidence, then Vue 3 SFCs mounted in Frappe Desk. No design-runtime file is shipped. |
 | Breadcrumb drawn inside the artboard | Remove. Breadcrumb is fixture data outside the artboard and is rendered by the existing Frappe header. |
 | Plan approval page shows only a summary | Correct. Every review, certification and approval task shows the complete submitted Plan details before its decision controls. |
@@ -52,6 +52,17 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Custom capability and Operational Scope Assignment permissions | Remove. Use native Frappe Role, Workflow permission and User Permission only. |
 | Publication acknowledges a Tender opportunity | Remove. Annual Plan publication does not create or advertise a Tender. |
 | Legacy compatibility and migrated Demand records | Prohibited. This remains a clean Planning domain. |
+| Draft Plan Item formation is irreversible | Correct. A Planner may dissolve an item while its Plan Version is mutable; sources return to the unallocated list and any effective reservations are released first. Submitted evidence is never dissolved. |
+| Reservation release left to implementation inference | Remove. Planning must call the Budget-owned release contract on the exact lifecycle triggers defined in sections 5 and 7. |
+| Generic maker-checker error without an action matrix | Remove. Section 6.1 defines the incompatible actions on one DPP submission or Plan Version. |
+| Returned Annual Plan resumes at an inferred stage | Remove. A correction is a copied Draft with a new submitted snapshot; every resubmission restarts at Accounting Officer adoption. Finance repeats only under the objective rules in section 5.2. |
+| Accepted DPP successor silently rewrites an allocated source | Prohibited. The affected Draft item is marked **Source correction required** and must be dissolved and re-formed. Submitted and Active evidence is never rewritten. |
+| Withdrawn initial DPP permanently closes the root | Correct. It may be reopened as the next Draft Version only while the initial submission window remains Open. |
+| Accepted Needs disappear when their department misses DPP submission | Remove. Planning shows **Not included — DPP submission window closed** while Departmental Needs retains the accepted records; this is visibility, not a late-submission bypass. |
+| Combined sources need not share currency | Correct. Sources must resolve to the same Budget and currency. Cross-currency Planning is outside MVP-1. |
+| One Plan Item can be consumed by only one Requisition | Remove. Requisitions may make sequential partial drawdowns while balances remain, subject to its one-open-Requisition rule. |
+| Browser-stored PE/FY choice is the operating authority | Prohibited. Server-side Role and User Permission define access. The Planning Financial Year is a visible, changeable module filter and never a permanent browser lock. |
+| Separate sidebar links for Finance, validation or approval queues | Prohibited. Procurement Planning has one workspace entry. Actionable work arrives through that workspace, the shared **My Work** surface and notifications; task routes are deep links, not menu items. |
 
 ## 2. Purpose and outcomes
 
@@ -90,7 +101,8 @@ The module shall not contain:
 - a generic note, comment, source reference, authority reference, evidence field, priority, score or completion percentage;
 - actual procurement milestone entry or a Planning Monitoring Officer;
 - editable technical identifiers, digests, audit actors or timestamps;
-- a custom Frappe shell, header, breadcrumb, global PE/FY selector or navigation system; or
+- a custom Frappe shell, header, breadcrumb or navigation system;
+- an authoritative browser-stored PE/FY context or a Planning-only work-queue menu; or
 - legacy routes, aliases, compatibility adapters, fallback records or migrated fixtures.
 
 ### 2.2 Data-purpose gate
@@ -134,7 +146,7 @@ The Planning values below pass this gate:
 | Information or decision | Owner | Planning relationship |
 |---|---|---|
 | PE/FY context, OU, timezone and assignments | Configuration & Governance | Resolve exact identifiers and fail closed when absent or ambiguous. |
-| DPP submission window | Procurement Planning configuration | Gate initial DPP submission and resubmission; opening a page creates nothing. |
+| DPP submission window | Procurement Planning configuration | Gate the first submission of a DPP root, including a reopened root with no accepted predecessor. Returned corrections and accepted-plan successors follow section 5.1. Opening a page creates nothing. |
 | Accepted Need facts | Departmental Needs | Project read-only title, description, quantity, unit and required-by date. |
 | Direct departmental requirement | Procurement Planning | Create and edit only inside a Draft or Returned DPP Version. |
 | Budget Line identity, funding source and currency | Budget & Funding | Select from eligible Active Budget Lines and read live funding through services. |
@@ -258,7 +270,7 @@ There is no claim, priority, score, generic note or AO recipient.
 | `plan_id` | Stable Annual Plan identity. |
 | `plan_reference` | Generated as `PLN-{PE code}-{FY start}-{3 digits}`. |
 | `pe_fy_context_id` | Fixes the PE/FY scope. Required and immutable. |
-| `title` | System-generated as `{Procuring Entity} Annual Procurement Plan {FY label}`. |
+| `title` | System-generated as `{Procuring Entity} Annual Procurement Plan {FY period}`. `FY period` is the display period without an `FY` prefix, for example `2027/28`. |
 | `active_version_id` | Points to the sole Active Version. Empty before activation. |
 | `open_successor_version_id` | Points to the sole Draft or in-governance successor. Empty when none. |
 | `record_version` | Optimistic-concurrency token. |
@@ -273,10 +285,11 @@ There is at most one AnnualProcurementPlan per PE/FY context and at most one ope
 | `plan_id` | Links to the stable Annual Plan. |
 | `version_number` | Generated sequence within the Annual Plan. |
 | `based_on_version_id` | Identifies the Active predecessor. Empty for Version 1. |
-| `version_status` | `Draft`, `Awaiting Accounting Officer`, `Awaiting statutory approval`, `Approved — publication pending`, `Publication failed`, `Active`, `Superseded` or `Cancelled`. |
+| `correction_of_plan_version_id` | Identifies the immutable submitted Plan Version returned by a governance actor. Empty unless this Draft is a correction. |
+| `version_status` | `Draft`, `Awaiting Accounting Officer`, `Awaiting statutory approval`, `Returned`, `Approved — publication pending`, `Publication failed`, `Active`, `Superseded` or `Cancelled`. |
 | `change_reason` | Required only for a successor Version; identifies the approved-plan change being proposed. |
 
-The mutable Draft content is locked when submitted. A return preserves the immutable submitted snapshot and creates the governed Draft correction state. The Active predecessor remains operational until the successor is approved, published and acknowledged.
+The mutable Draft content is locked when submitted. A return preserves that immutable Plan Version and creates the next numbered Draft Plan Version linked through `correction_of_plan_version_id`; it does not reopen the submitted record. The correction retains the returned Version's `based_on_version_id`, if any. Pending DPP additions cannot enter it. The Active predecessor remains operational until the correction or successor is approved, published and acknowledged.
 
 ### 4.9 PlanItem
 
@@ -297,10 +310,11 @@ The mutable Draft content is locked when submitted. A return preserves the immut
 | `award_notification_date` | Planned notification. |
 | `contract_signing_date` | Planned contract signing. |
 | `delivery_completion_date` | Planned delivery or implementation completion; not later than the earliest source required-by date. |
+| `item_state` | `Draft`, `Dissolved`, `Active`, `Removed in successor` or `Superseded`. A Dissolved item is historical, read-only and excluded from Plan totals. |
 | `finance_state` | Derived as `Not requested`, `Awaiting Finance`, `Confirmed`, `Returned` or `Stale`. |
 | `record_version` | Optimistic-concurrency token. |
 
-Quantity, unit, planned value, funding source and Budget Line breakdown are derived from source allocations. Contract period, lotting, Value Commitment, recommended method, generic basis and actual milestone fields do not exist.
+Quantity, unit, planned value, funding source and Budget Line breakdown are derived from source allocations. **Source correction required** is derived when an allocation no longer points to the current accepted DPP entry/version for its stable departmental source. Contract period, lotting, Value Commitment, recommended method, generic basis and actual milestone fields do not exist.
 
 ### 4.10 PlanSourceAllocation
 
@@ -313,15 +327,17 @@ Quantity, unit, planned value, funding source and Budget Line breakdown are deri
 | `need_id` / `need_version_id` | Preserves Need lineage only when the source has it. |
 | `quantity` / `unit_id` | Full accepted source quantity. |
 | `budget_line_id` / `indicative_amount_minor_units` | Full accepted source funding specification. |
-| `allocation_state` | `Draft`, `Active`, `Removed in successor` or `Superseded`. |
+| `allocation_state` | `Draft`, `Active`, `Released`, `Removed in successor` or `Superseded`. `Released` preserves a dissolved Draft item's lineage but makes the source available for new formation. |
 
-One accepted DPP entry is allocated exactly once and at full quantity in one open Plan Version. No split allocation or partial amount is permitted in MVP-1.
+One accepted DPP entry has at most one effective allocation and is allocated at full quantity in one open Plan Version. `Released` allocations are historical and do not block re-formation. No split allocation or partial amount is permitted in MVP-1.
 
 ### 4.11 FinanceTask, FinanceDecision and reservation reference
 
-The Planning-owned Finance task fixes one Plan Item, its exact source allocations, required amounts, assigned funding scope, Open/Completed status and concurrency token.
+The Planning-owned Finance task fixes one Plan Item, its exact source allocations, required amounts, assigned funding scope, `Open`, `Completed` or `Cancelled` status and concurrency token.
 
-The immutable Finance decision records `Confirm funding` or `Return to planner`, actor, effective assignment, time and required return reason where applicable. A successful confirmation stores one Budget-owned reservation reference per source allocation. It does not duplicate Budget position fields.
+The immutable Finance decision records `Confirm funding` or `Return to planner`, actor, effective assignment, time and required return reason where applicable. A successful confirmation stores one Budget-owned reservation reference per source allocation. Each reference is derived as `Active`, `Needs Attention`, `Partially Converted`, `Converted` or `Released` from Budget; Planning does not duplicate Budget position fields.
+
+Finance evidence becomes `Stale` only when at least one reservation is absent, released, `Needs Attention`, based on a changed source set, Budget Line, amount or currency, or fails Budget revalidation at Plan resubmission. A title, description, Strategic Objective, aggregation reason, method or schedule correction does not by itself invalidate an otherwise current reservation.
 
 ### 4.12 PlanGovernanceTask and PlanDecision
 
@@ -367,8 +383,9 @@ Read-only contract containing Plan, Version, Plan Item and allocation lineage; a
 | Accepted; change required | Create update | One Draft successor copied from Accepted Version | Departmental Author or HoD |
 | Draft successor | Submit update | Same validation route; Active Plan unchanged | HoD or acting HoD using the same role |
 | Draft / Returned with no downstream consumption | Withdraw DPP Version | Version Withdrawn; prior Accepted Version remains current when one exists | HoD or acting HoD using the same role |
+| Withdrawn with no accepted predecessor; initial window Open | Reopen departmental plan | Same DPP root; next numbered Draft Version | Departmental Author or HoD |
 
-The DPP may consist entirely of direct requirements. If current accepted Needs exist in the exact department/context, all must be represented exactly once before submission. Direct entries may be added in any number. A DPP with no entries cannot be submitted. The window gates the first submission. A correction returned from validation and a successor required by an authoritative source change may be resubmitted after window close; neither route admits a new unreviewed initial DPP.
+The DPP may consist entirely of direct requirements. If current accepted Needs exist in the exact department/context, all must be represented exactly once before submission. Direct entries may be added in any number. A DPP with no entries cannot be submitted. The window gates the first submission and any reopened root that still has no accepted predecessor. A correction returned from validation and a successor required by an authoritative source change may be resubmitted after window close; neither route admits a new unreviewed initial DPP.
 
 ### 5.2 Annual Plan lifecycle
 
@@ -377,16 +394,22 @@ The DPP may consist entirely of direct requirements. If current accepted Needs e
 | First DPP accepted; no Annual Plan | Project accepted entries | Annual Plan and Draft Version 1 created automatically; entries shown as unallocated | System, in the DPP-acceptance transaction |
 | Active; no successor | Begin plan update | Draft successor; Active Version unchanged | Procurement Planner |
 | Draft | Form Plan Items / save item | Draft updated | Procurement Planner |
+| Mutable Draft item | Dissolve Plan Item | Open Finance task cancelled; effective reservations released; allocations marked Released; sources return to unallocated | Procurement Planner |
 | Draft item | Request Finance confirmation | Open Finance task | Procurement Planner |
 | Awaiting Finance | Confirm funding | All source reservations created; item Confirmed | Budget Officer |
 | Awaiting Finance | Return to planner | No reservation; item Returned | Budget Officer |
 | Draft; every item Confirmed | Submit consolidated Plan | Immutable submitted snapshot and Accounting Officer task | Procurement Planner |
 | Awaiting Accounting Officer | Adopt and submit | Adoption decision and one statutory-approval task | Accounting Officer |
-| Awaiting Accounting Officer | Return for correction | Return decision and governed Draft correction | Accounting Officer |
+| Awaiting Accounting Officer | Return for correction | Submitted Version marked Returned; next numbered Draft correction created | Accounting Officer |
 | Awaiting statutory approval | Approve Annual Procurement Plan | Approved — publication pending | One statutory authority applicable to the PE |
-| Awaiting statutory approval | Return for correction | Return decision and governed Draft correction | One statutory authority applicable to the PE |
+| Awaiting statutory approval | Return for correction | Submitted Version marked Returned; next numbered Draft correction created | One statutory authority applicable to the PE |
+| Returned correction; ready | Submit corrected Plan | New immutable snapshot; Budget reservations revalidated; Finance repeated only if stale; route restarts at Accounting Officer | Procurement Planner |
 | Approved / Publication failed | Publish / Retry | Active only on exact acknowledgement; otherwise failed/indeterminate | System; technical retry by System Manager if required |
-| Draft successor | Cancel update | Successor Cancelled; Active Version unchanged | Procurement Planner |
+| Draft successor | Cancel update | Successor-only reservations released; successor Cancelled; Active Version and its reservations unchanged | Procurement Planner |
+
+A governance return never edits or reopens the submitted Version. It creates the next numbered Draft Plan Version containing exactly the sources present in the returned Version. DPP entries accepted while the Plan is submitted, returned or being corrected remain **Pending addition** until the corrected Version becomes Active; they enter only the later successor.
+
+On corrected-Plan submission, Budget revalidates every retained reservation. If the source set, Budget Line, amount or currency changed, or Budget reports a reservation absent, released or `Needs Attention`, the affected item returns to Finance before Plan submission can complete. When all reservations remain current, the correction proceeds without creating replacement reservations. Every corrected submission restarts at Accounting Officer adoption, including one returned at the statutory stage.
 
 ### 5.3 Invariants
 
@@ -397,7 +420,7 @@ The DPP may consist entirely of direct requirements. If current accepted Needs e
 5. Every submitted DPP entry has one eligible Budget Line and one positive indicative amount.
 6. Only the Procurement Planner classifies a submitted entry.
 7. Every accepted DPP entry is allocated exactly once and at full quantity in the submitted Plan Version.
-8. Sources may be combined only when PE/FY, requirement type, unit and procurement treatment are compatible.
+8. Sources may be combined only when PE/FY, Budget, currency, requirement type, unit and procurement treatment are compatible. Cross-currency combination is prohibited in MVP-1.
 9. Every Plan Item has exactly one current Active Strategic Objective.
 10. Plan Item value equals the sum of its source-allocation amounts.
 11. Finance confirmation is all-source and atomic; no partial reservation is permitted.
@@ -410,22 +433,39 @@ The DPP may consist entirely of direct requirements. If current accepted Needs e
 18. An Active item remains eligible until an acknowledged successor changes it, subject to funding and drawdown.
 19. An Active item with a Requisition drawdown, Tender handoff, commitment or contract cannot be removed through Planning.
 20. Submitted, decided, approved, Active and Superseded evidence is never edited or deleted.
+21. Draft dissolution and successor cancellation release only the unconverted reservation remainder linked to the affected Draft or successor; they never release an Active predecessor's reservation.
+22. An acknowledged successor releases the unconverted reservation remainder for each removed item in the same controlled activation process; downstream commitments remain untouched.
+23. A corrected Plan always returns to Accounting Officer adoption and never resumes directly at statutory approval.
+24. A database uniqueness constraint enforces one Annual Plan root per PE/FY and one open Version per Plan; concurrent first-DPP acceptance returns or reloads the winner rather than creating a duplicate.
 
 ## 6. Roles and permissions
 
 | Native Frappe role or legal capacity | Exact scope and permitted work |
 |---|---|
-| Departmental Author | One PE/FY/OU; open DPP, enrich Need-origin entries, create/edit direct entries and correct a returned Draft. Cannot submit unless also HoD. |
-| Head of User Department | One PE/FY/OU; all Author work plus certify, submit, resubmit and withdraw the departmental Version. |
-| Procurement Planner | Assigned PE/FY and permitted OUs; accept or return submitted DPPs, classify entries, consolidate accepted sources, form/edit Plan Items, request Finance, submit the Annual Plan and prepare successors. |
-| Budget Officer | Assigned PE/FY and Budget scope; view protected Finance tasks, confirm funding or return. Cannot edit Planning content. |
-| Accounting Officer | Adopt or return the complete consolidated Annual Procurement Plan. |
-| Responsible Cabinet Secretary / County Executive Committee Member for finance or responsible for the entity / Board of Directors or similar governing body | Approve or return the Accounting-Officer-adopted Plan. Exactly one route applies to the PE. |
-| Planning Auditor | Authorised neutral read of Plan and immutable evidence only. |
+| Departmental Author | Assigned PE/OU scope; open the relevant FY DPP, enrich Need-origin entries, create/edit direct entries and correct a returned Draft. Several people may hold this role for one department, and one person may cover several assigned departments. Cannot submit unless also HoD. |
+| Head of User Department | Assigned PE/OU scope; all Author work plus certify, submit, resubmit and withdraw the departmental Version. Only the effective HoD assignment may act at the command time. |
+| Procurement Planner | Assigned PE and permitted OUs; accept or return submitted DPPs, classify entries, consolidate accepted sources, form/edit Plan Items, request Finance, submit the Annual Plan and prepare successors. |
+| Budget Officer | Assigned PE and Budget scope; view protected Finance tasks, confirm funding or return. Cannot edit Planning content. |
+| Accounting Officer | Assigned PE; adopt or return the complete consolidated Annual Procurement Plan. |
+| Responsible Cabinet Secretary / County Executive Committee Member for finance or responsible for the entity / Board of Directors or similar governing body | Assigned PE and legal capacity; approve or return the Accounting-Officer-adopted Plan. Exactly one route applies to the PE. |
+| Planning Auditor | Authorised neutral read of Plan and immutable evidence for assigned PE/OU scope only. |
 
-Use Frappe Role, Workflow permissions and User Permission. Do not use Capability Profiles, Operational Scope Assignments or a second permission store. A role label alone grants no cross-scope authority. Every list, count, detail, button and command uses the same PE/FY/OU and task-scope predicates.
+Use Frappe Role, Workflow permissions and User Permission. User Permissions assign PE and, where relevant, OU or Budget scope; they are not recreated for each Financial Year. Eligible Financial Years derive from configured FY/context records and the requested operation's window or state. Do not use Capability Profiles, Operational Scope Assignments or a second permission store. A role label alone grants no cross-scope authority. Every list, count, detail, button and command uses the same PE/FY/OU and task-scope predicates.
 
 Publication is an idempotent system service. A technical retry may be available to System Manager, but it retries the same approved payload and is not a procurement decision.
+
+### 6.1 Maker-checker rules
+
+Role combinations are permitted. The conflict is between actions on the same evidence chain, not between role labels held by a user.
+
+| Earlier action by the same user | Later action prohibited on the same evidence chain |
+|---|---|
+| Submit one DPP submission as HoD | Accept or return that DPP submission as Procurement Planner |
+| Create the Version, form/dissolve an item, save any Planner-owned field, request Finance or submit one Annual Plan Version as Procurement Planner | Confirm or return Finance for that Version; adopt or return it as Accounting Officer; approve or return it as statutory authority |
+| Confirm or return Finance for any item in one Plan Version | Adopt or return that Version as Accounting Officer; approve or return it as statutory authority |
+| Adopt or return one Plan Version as Accounting Officer | Approve or return that Version as statutory authority |
+
+A Departmental Author may also be the effective HoD and submit the DPP: this is one departmental certification step, not an invented review level. For Annual Plans, the evidence chain includes the submitted Version and every correction derived through `correction_of_plan_version_id` until one Version activates or the open chain is cancelled. A correction does not reset segregation history. Administrator and System Manager receive no business-decision exception.
 
 ## 7. Cross-module integration contracts
 
@@ -438,6 +478,9 @@ Publication is an idempotent system service. A technical retry may be available 
 - A successor accepted event marks the earlier unsubmitted source stale and refreshes the Draft; if already submitted or consumed, it creates a correction requirement without rewriting evidence.
 - A withdrawn event removes only an unsubmitted/unconsumed source. Departmental Needs cannot publish withdrawal while an Active Plan dependency exists.
 - `NeedPlanningUsageChanged.v1` is published only when an Active Plan begins or ceases to represent the accepted Need version.
+- When a DPP successor is accepted and its predecessor entry is allocated to a mutable Draft item, Planning marks the item **Source correction required**, leaves the historical allocation unchanged but ineligible, and lists the successor entry as unallocated. It never moves the allocation automatically. The Planner dissolves and re-forms the item; any linked reservation is released first.
+- When the affected Plan Version is submitted or in governance, Planning blocks the decision and requires a governance return before correction. When the predecessor is Active, it remains authoritative and the successor entry waits for the next Plan successor.
+- Accepted Needs belonging to a department with no submitted DPP after window close remain visible in the Planning workspace as **Not included — DPP submission window closed**. Departmental Needs retains the accepted records. This creates no DPP and does not permit a late first submission.
 
 ### 7.2 Strategy selection
 
@@ -450,6 +493,17 @@ If the selected Objective ceases to be eligible before Plan submission, the item
 `ListEligibleBudgetLines` returns only Active Budget Lines valid for the same PE/FY and department/PE scope. The DPP entry stores the selected line ID and amount; funding source and currency display from Budget read services.
 
 `CheckAndReserveFunding` is called only from the protected Finance confirmation command. It rechecks each source allocation under lock and either creates every reservation or none. Planning stores reservation references; Budget remains authoritative for balances and ledger effects.
+
+`RevalidatePlanningReservations` checks the exact retained reservation set on corrected-Plan submission and before later downstream use. It creates no reservation. `ReleasePlanningReservations` calls Budget's authenticated `release_reservation` contract for the unconverted remainder of every affected reservation under one Planning correlation and idempotency key. Planning records the returned release references; it never edits Budget rows.
+
+Release occurs only for these Planning events:
+
+- dissolution of a mutable Draft item;
+- replacement of a financed Draft source after an accepted DPP successor;
+- cancellation of reservations created only for a Draft successor; and
+- activation of a successor that removes an Active item, after downstream checks prove no drawdown, Tender handoff, commitment or contract.
+
+A governance return does not release unchanged reservations. Cancelling a successor does not release any reservation belonging to the Active predecessor. A release failure rolls back the Planning transition and leaves the item blocked; Planning never marks a reservation released from a local assumption.
 
 Need acceptance, DPP save, DPP submission, DPP validation and Plan Item formation create no reservation.
 
@@ -465,7 +519,7 @@ It returns the Plan, Version and Plan Item IDs; PE/FY; requirement type; procure
 - approved and remaining quantity, unit and required-by date; and
 - Budget Line, allocated amount and remaining amount.
 
-The first slice consumes one Plan Item into one Requisition and preserves every selected `plan_source_allocation_id`. Drawdown and reversal are atomic and cannot exceed either the source row or Plan Item balance. Planning never creates the Requisition or technical specification, and a later Plan successor never silently changes an authorised Requisition.
+Each authorised Requisition draws a positive quantity and value from one eligible Plan Item and preserves every selected `plan_source_allocation_id`. Several sequential Requisitions may draw the same Plan Item while quantity/value remain. Procurement Requisitions enforces at most one open Requisition per `plan_item_id + requesting_org_unit_id`. Drawdown and reversal are atomic and cannot exceed either the source row or Plan Item balance. Planning never creates the Requisition or technical specification, and a later Plan successor never silently changes an authorised Requisition.
 
 ## 8. Service and command contracts
 
@@ -473,11 +527,11 @@ The first slice consumes one Plan Item into one Requisition and preserves every 
 
 | Contract | Required result |
 |---|---|
-| `ResolvePlanningContexts` | Zero, one or several authorised PE/FY contexts; no implicit first record. |
+| `ResolvePlanningContexts` | Authorised PEs/OUs from native assignments plus configured Financial Years available to the module; no implicit first record and no per-user FY assignment. |
 | `GetPlanningWorkspace` | Reconciled action queue, waiting work and current Plan state using one scope predicate. |
 | `GetDepartmentalPlan` | Current DPP Version, accepted Need coverage, direct entries, blockers and authorised commands. |
 | `GetDPPValidationTask` | Exact immutable submission, all entry details, funding specification, source origin and current decision controls. |
-| `ListAcceptedDPPSources` | Current accepted, unallocated entries for the exact PE/FY. |
+| `ListAcceptedDPPSources` | Current accepted, unallocated entries for the exact PE/FY. The read model joins each accepted DPP entry through the immutable `DPPValidationDecision` for that submission/version to obtain its classification; it does not invent a classification field on `DPPEntry` or `PlanSourceAllocation`. |
 | `GetPlanVersion` | Complete Version, all Plan Items, source allocations, Finance state, governance history and current commands. |
 | `GetPlanItem` | Exact item, all source rows, Objective, method, schedule and Finance state. |
 | `GetFinanceTask` | Protected current Budget positions and required/after-confirmation amounts for every source. |
@@ -489,7 +543,7 @@ The first slice consumes one Plan Item into one Requisition and preserves every 
 
 | Command | Core effect |
 |---|---|
-| `OpenDepartmentalPlan` | Idempotently create/reuse the one DPP root and Draft Version after exact authority checks. |
+| `OpenDepartmentalPlan` | Idempotently create/reuse the one DPP root and current Draft after exact authority checks; after withdrawal with no accepted predecessor, create the next Draft Version only while the initial window is Open. |
 | `SaveNeedFunding` | Add or change only Budget Line and amount on a current Need-origin Draft entry. |
 | `SaveDirectRequirement` | Create/update the eight permitted direct-entry values, including expected operational result. |
 | `RemoveDirectRequirement` | Remove an unsubmitted direct entry from the current Draft. |
@@ -497,6 +551,7 @@ The first slice consumes one Plan Item into one Requisition and preserves every 
 | `ReturnDepartmentalPlan` | Preserve submission, record structured issues and create the correction Draft. |
 | `AcceptDepartmentalPlan` | Record classifications, create/reuse the initial Draft Annual Plan when necessary and project accepted entries into its unallocated-source queue in the same transaction. |
 | `FormPlanItems` | Create one item per selected source or one combined item for compatible selected sources; allocate each source atomically. |
+| `DissolvePlanItem` | On a mutable Draft only, cancel an open Finance task, release every effective reservation, mark allocations Released and return the sources to the unallocated list atomically. |
 | `SavePlanItem` | Save only the Plan Item allow-list and recalculate exact blockers. |
 | `RequestFinanceConfirmation` | Validate the complete item and create/reuse one current Finance task. |
 | `ConfirmFunding` | Atomically reserve every source amount and record the Finance decision. |
@@ -504,11 +559,12 @@ The first slice consumes one Plan Item into one Requisition and preserves every 
 | `SubmitConsolidatedPlan` | Require all accepted sources allocated, all items complete and Finance current; create the immutable submission and Accounting Officer task. |
 | `AdoptAndSubmitPlan` | Record Accounting Officer adoption and create exactly one statutory-approval task resolved for the PE. |
 | `ApproveAnnualPlan` | Record approval and move the exact Version to publication pending. |
-| `ReturnPlanVersion` | Preserve the submitted snapshot, record actionable reason and open the governed correction state. |
+| `ReturnPlanVersion` | Mark the submitted Plan Version Returned, record the actionable reason and create the next numbered Draft correction linked to it. |
+| `SubmitCorrectedPlan` | Lock a new corrected snapshot, revalidate retained reservations, route stale items through Finance where required and then restart governance at Accounting Officer adoption. |
 | `PublishAnnualPlan` | Transmit the exact approved payload and activate only on acknowledged response. |
 | `BeginPlanUpdate` | Create the sole Draft successor from the Active Version. |
 | `RemovePlanItemInSuccessor` | Propose whole-item removal only when downstream checks permit it. |
-| `CancelPlanUpdate` | Cancel successor and leave Active Version unchanged. |
+| `CancelPlanUpdate` | Release successor-only reservations, cancel the successor and leave the Active Version and its reservations unchanged. |
 
 All mutating commands require an expected record version and idempotency key. Server-side Role, User Permission, state and live-data checks are repeated inside the transaction.
 
@@ -516,7 +572,7 @@ All mutating commands require an expected record version and idempotency key. Se
 
 | Code | Plain-language result |
 |---|---|
-| `PLN_NO_CONTEXT` | You do not have access to a Procurement Planning context. |
+| `PLN_NO_CONTEXT` | You do not have an assigned Procurement Planning scope, or no configured Financial Year is available. |
 | `PLN_WINDOW_CLOSED` | The initial departmental-plan submission window is closed. |
 | `PLN_NEED_COVERAGE_INCOMPLETE` | Add every current accepted Need to this departmental plan before submitting. |
 | `PLN_ENTRY_INCOMPLETE` | Complete the highlighted requirement fields before submitting. |
@@ -525,10 +581,13 @@ All mutating commands require an expected record version and idempotency key. Se
 | `PLN_CLASSIFICATION_INCOMPLETE` | Classify every submitted requirement before accepting the plan. |
 | `PLN_SOURCE_UNAVAILABLE` | One or more selected departmental entries are no longer available for Plan Item formation. |
 | `PLN_SOURCE_INCOMPATIBLE` | The selected entries cannot form one Plan Item. Create separate items. |
+| `PLN_SOURCE_CORRECTION_REQUIRED` | A departmental source changed. Dissolve and re-form the affected Draft item before continuing. |
+| `PLN_DISSOLUTION_BLOCKED` | This Plan Item is no longer in a mutable Draft and cannot be dissolved. |
 | `PLN_OBJECTIVE_INELIGIBLE` | Select an Active Strategic Objective valid for this Plan. |
 | `PLN_SCHEDULE_INVALID` | Correct the highlighted dates so the schedule is chronological and meets the required-by date. |
 | `PLN_FINANCE_SHORTFALL` | Funding is insufficient for one or more source allocations. No reservation was created. |
 | `PLN_FINANCE_STALE` | Funding confirmation is no longer current. Request confirmation again. |
+| `PLN_RESERVATION_RELEASE_FAILED` | Funding could not be released. The Planning change was not completed. Try again or quote the support reference. |
 | `PLN_REVIEW_STALE` | This task has already changed. Reload to see the current decision. |
 | `PLN_SEGREGATION_CONFLICT` | You cannot make this decision because you performed an incompatible earlier action. |
 | `PLN_PUBLICATION_FAILED` | Publication was not acknowledged. The approved Plan remains unchanged and may be retried. |
@@ -539,7 +598,7 @@ Unauthorised detail and task reads return the same not-found response as a nonex
 
 ## 10. UI architecture, menu and routes
 
-Procurement Planning is a top-level KenTender workspace named **Procurement Planning**.
+Procurement Planning has one KenTender navigation entry named **Procurement Planning**. It does not add sidebar entries for DPP review, Finance, Accounting Officer, statutory approval, publication or any other work queue.
 
 | Surface | Canonical Frappe Desk route | Primary user |
 |---|---|---|
@@ -552,7 +611,9 @@ Procurement Planning is a top-level KenTender workspace named **Procurement Plan
 | Governance task | `/app/procurement-planning/review/{task_id}` | Accounting Officer or the one statutory authority applicable to the PE |
 | Publication result | `/app/procurement-planning/publication/{publication_id}` | Neutral read; technical retry only for System Manager when required |
 
-The workspace shows only work the actor can perform or is waiting for. It does not duplicate Budget, Strategy, Needs or Configuration dashboards. Frappe supplies the Desk header, breadcrumb, global search, user menu and common navigation. The existing global PE/FY selector is reused and is never drawn inside a Claude Design artboard.
+The workspace shows only work the actor can perform or is waiting for. The same tasks may appear in the shared KenTender **My Work** surface and notifications. Task routes above are authorised deep links reached from a task row or notification; they are not menu definitions. The workspace does not duplicate Budget, Strategy, Needs or Configuration dashboards. Frappe supplies the Desk header, breadcrumb, global search, user menu and common navigation.
+
+Access is resolved server-side from native Role and PE/OU/Budget User Permission. Financial Year is not assigned to a user. It is derived from configured FY/context records and filtered by the operation's window and record state. A selected PE or FY is only a visible filter within Procurement Planning and never grants access. The page loads the sole eligible value directly; when several are eligible it shows a changeable Procuring Entity selector and a changeable Financial Year selector in the Planning page header. The last valid Planning selection may be stored as a server-side user preference for convenience. A browser value may cache presentation only and must be ignored when unauthorised, invalid or absent. Direct record and task routes derive PE/FY from the record and reauthorise it; they never depend on a prior browser selection.
 
 ### 10.1 Existing UI reuse and correction
 
@@ -565,7 +626,7 @@ The workspace shows only work the actor can perform or is waiting for. It does n
 | Accepted-Need funding editor | Add or correct using PLN-DES-03. |
 | Plan Item Strategy control | Add exactly one Strategic Objective selector. |
 | Governance task detail | Retain layout; show the complete Plan Item table and Plan output before decisions. |
-| Separate actor dashboards that differ only by disabled buttons | Collapse into role-scoped queues and neutral read-only detail. |
+| Separate actor dashboards or sidebar work-queue entries | Remove. Use one role-aware Planning workspace, shared My Work/notifications and authorised task deep links. |
 | Monitoring entry/history and custom support workspace | Retire. |
 | Stitch runtime, Tailwind utilities and vendor design markup | Keep only as historical visual evidence; never import into production. |
 
@@ -577,7 +638,7 @@ This section is the complete visual input to Claude Design. It defines appearanc
 
 - Produce desktop artboards at **1440 × 1024 px**.
 - Reuse the approved KenTender Strategy Portfolio and deployed Planning visual system: spacing, type scale, tokens, cards, badges, tables, fields, buttons, tabs, empty states and dialogs.
-- The artboard starts below the Frappe Desk header. Do not draw Frappe navigation, Desk header, breadcrumb, user menu, notifications, Help, global search or the global PE/FY selector.
+- The artboard starts below the Frappe Desk header. Do not draw Frappe navigation, Desk header, breadcrumb, user menu, notifications, Help or global search. When the named artboard is the Planning workspace, draw only the visible Planning context controls explicitly stated for that artboard.
 - Breadcrumb text is fixture data outside the artboard. It is supplied only to confirm location.
 - Use only the visible labels, values, badges, controls, sections and states stated for the artboard.
 - Do not invent data. If a value, column, control, message or state is not stated, omit it.
@@ -607,13 +668,13 @@ The approved page shell inside every artboard is:
 - Description: **Turn accepted departmental plans into a funded and approved Annual Procurement Plan.**
 - No header action button
 
-**Context strip**
+**Planning context row**
 
-| Label | Value |
-|---|---|
-| Procuring Entity | PE-MOH — Ministry of Health |
-| Financial Year | FY 2027/28 |
-| Annual Plan | Draft Version 1 |
+- Label **Procuring Entity** above a select showing **PE-MOH — Ministry of Health**.
+- Label **Financial Year** above a select showing **FY 2027/28**.
+- Quiet value **Annual Plan · Draft Version 1** to the right.
+
+Both selects use normal editable-select styling. Do not depict either value as permanently fixed or as a browser-wide context.
 
 **Your work card**
 
@@ -630,9 +691,9 @@ Heading: **Departmental plans**
 | Department | Version | Requirements | Value | Status | Action |
 |---|---:|---:|---:|---|---|
 | Digital Health | 1 | 1 | KES 80,000,000 | Accepted | View |
-| Human Resources Management and Development | 1 | 2 | KES 88,000,000 | Draft | View |
+| Human Resources Management and Development | 1 | 2 | KES 88,000,000 | Not submitted — window closed | View |
 
-Below the table: **2 departmental plans**. Do not show summary cards, charts, waiting queues or system support links.
+Below the table: **2 departmental plans**. Under it show the neutral message **2 accepted Needs are not included because the departmental-plan submission window closed.** Do not show a late-submit action, summary cards, charts, waiting queues or system support links.
 
 ### 11.3 PLN-DES-02 — Draft Departmental Procurement Plan
 
@@ -983,6 +1044,7 @@ Use a two-column field grid with these exact dates:
 **Sticky page footer**
 
 - Left-aligned secondary text button: **Back to Annual Plan**
+- Left-aligned secondary button: **Dissolve Plan Item**
 - Right-aligned secondary button: **Save draft**
 - Right-aligned primary button: **Request Finance confirmation**
 
@@ -999,10 +1061,10 @@ Use PLN-DES-09 page geometry with these exact replacements:
 
 Replace the single source card with **Departmental sources**:
 
-| Requirement | Department | Source origin | Quantity | Budget Line | Amount |
-|---|---|---|---:|---|---:|
-| Clinical training laptops for digital health rollout | Human Resources Management and Development | Accepted Departmental Need | 200 each | MOH-BL-HWD-2027 | KES 48,000,000 |
-| Clinical deployment laptops for digital health rollout | Digital Health | Accepted Departmental Need | 300 each | MOH-BL-DHI-2027 | KES 72,000,000 |
+| Requirement | Department | Source origin | Quantity | Required by | Budget Line | Amount |
+|---|---|---|---:|---|---|---:|
+| Clinical training laptops for digital health rollout | Human Resources Management and Development | Accepted Departmental Need | 200 each | 31 Dec 2027 | MOH-BL-HWD-2027 | KES 48,000,000 |
+| Clinical deployment laptops for digital health rollout | Digital Health | Accepted Departmental Need | 300 each | 31 Dec 2027 | MOH-BL-DHI-2027 | KES 72,000,000 |
 
 Below the table: **2 sources · 500 each · KES 120,000,000**.
 
@@ -1067,10 +1129,16 @@ Do not show editable amounts, Budget Line changes, optional note, partial confir
 **Page content header**
 
 - Eyebrow: **ACCOUNTING OFFICER ADOPTION · PLN-MOH-2027-001 · VERSION 1**
-- Title: **Ministry of Health Annual Procurement Plan FY 2027/28**
+- Title: **Ministry of Health Annual Procurement Plan 2027/28**
 - Status badge: **Awaiting Accounting Officer**
 
-Show the complete immutable Plan Version: every Plan Item, department, source origin, quantity, Strategic Objective, method, planned value, completion date and Finance result. Use the exact Version 1 Plan rows and totals defined in PLN-DES-07. Do not collapse the Plan into summary cards.
+**Immutable Plan table**
+
+| Plan Item | Department | Source origin | Quantity | Strategic Objective | Method | Value | Completion | Finance |
+|---|---|---|---:|---|---|---:|---|---|
+| PPI-MOH-2027-021 · National digital health infrastructure upgrade | Digital Health | Accepted Departmental Need | 1 programme | OBJ-MOH-2023-001 — Strengthen interoperable national digital health services | Open Tender | KES 80,000,000 | 31 Aug 2027 | Confirmed |
+
+Below the table: **1 Plan Item · KES 80,000,000**. Do not collapse the Plan into summary cards.
 
 **Decision statement:** **I adopt the complete consolidated Annual Procurement Plan Version 1 shown above and submit it for the statutory approval applicable to this Procuring Entity.**
 
@@ -1088,7 +1156,7 @@ Do not show professional review, Head of Procurement Function approval, editable
 **Page content header**
 
 - Eyebrow: **STATUTORY APPROVAL · PLN-MOH-2027-001 · VERSION 1**
-- Title: **Ministry of Health Annual Procurement Plan FY 2027/28**
+- Title: **Ministry of Health Annual Procurement Plan 2027/28**
 - Status badge: **Awaiting statutory approval**
 
 **Authority card**
@@ -1096,7 +1164,7 @@ Do not show professional review, Head of Procurement Function approval, editable
 - Capacity: **Responsible Cabinet Secretary**
 - Accounting Officer adoption: **Amina Hassan · 8 Dec 2026, 10:00 EAT**
 
-Show the same complete immutable Plan Version presented to the Accounting Officer. For a Board or similar body, replace the individual capacity row with **Governing body** and require **Resolution reference** before approval.
+Show the exact immutable Plan table and total defined in PLN-DES-11. For a Board or similar body, replace the individual capacity row with **Governing body** and require **Resolution reference** before approval.
 
 **Sticky page footer**
 
@@ -1174,7 +1242,7 @@ Use the approved KenTender empty, error and unavailable components with these ex
 
 | State | Heading | Text | Control |
 |---|---|---|---|
-| No authorised context | Procurement Planning is not available | You do not have an active Procurement Planning assignment for a Procuring Entity and Financial Year. | None |
+| No authorised context | Procurement Planning is not available | You do not have an assigned Procuring Entity scope, or no configured Financial Year is available for Planning. | None |
 | No departmental plan | No departmental plan yet | Open the departmental plan to review accepted Needs or add a direct requirement. | Open departmental plan |
 | No validation tasks | No departmental plans awaiting validation | New submissions will appear here. | None |
 | No accepted sources | No accepted departmental entries | Accepted departmental entries will appear here automatically. | None |
@@ -1188,11 +1256,15 @@ Only the load-error component may display a generated support reference. Do not 
 
 ### 12.1 PLN-UI-01 — Procurement Planning workspace
 
-- Resolve contexts only from native roles, User Permissions and configured PE/FY Contexts. One eligible context loads directly; several require deliberate selection in the existing global selector; none renders PLN-DES-16.
+- Resolve authorised PE and OU/Budget scope from native roles and User Permissions. Derive Financial Year options from configured records and operation windows; do not assign FY to the user. No client value grants access.
+- One eligible PE or FY loads directly. Several are shown in visible, changeable Planning selectors. A user may change Financial Year at any time; choosing a future year does not permanently bind later visits.
+- Store the last valid Planning selection as a server-side user preference only. Treat local storage as an optional cache, never as authority. Invalid or inaccessible cached values are discarded and the user can select again.
+- A direct task or record route resolves context from the record, reauthorises it and displays it. It never requires a prior selector choice.
 - The action queue contains only tasks the actor may decide now. Waiting work is neutral read-only information and never exposes disabled protected controls.
 - Workspace counts and rows use the same database scope and snapshot.
 - Opening the workspace or switching context creates no Planning record.
 - A departmental user sees their DPP work, a Procurement Planner sees submitted DPP tasks, a Planner sees accepted sources and Plan work, a Budget Officer sees Finance tasks, and each governance actor sees only their exact task.
+- No role receives a separate sidebar work-queue menu. The sole **Procurement Planning** entry, shared **My Work** and notifications link to the same authorised tasks.
 - Search and counts never disclose another PE, FY, OU, task or Plan.
 
 ### 12.2 PLN-UI-02 — Departmental Plan
@@ -1203,6 +1275,7 @@ Only the load-error component may display a generated support reference. Do not 
 - Draft save permits incomplete funding. Submission requires all entries complete, every current accepted Need covered once, every direct entry valid and at least one entry in total.
 - Only direct entries can be removed from a Draft. A current accepted Need cannot be omitted or locally deleted.
 - Source successor, withdrawal and Budget Line changes are rechecked on every save and submission.
+- If the initial Version was withdrawn without an accepted predecessor, **Open departmental plan** creates the next numbered Draft only while the original submission window is Open. It never revives or edits the withdrawn Version.
 - Initial HoD submission requires the exact certification checkbox, current role/User Permission and Open window. An acting HoD uses the same role with a time-bound User Permission. A returned correction or source-change successor requires the same certification and authority but may be resubmitted after the initial window closes. The certification text is server supplied, not client composed.
 - A successful submission routes to immutable submitted detail. The submitter sees neutral status while the Procurement Planner acts.
 - A returned submission loads the copied correction Draft and displays each structured issue next to its affected entry.
@@ -1240,7 +1313,7 @@ Only the load-error component may display a generated support reference. Do not 
 - **Accept departmental plan** requires one classification for every entry, current source versions, no unresolved issue and maker-checker compliance.
 - **Return to department** opens a structured issue dialog. At least one issue with affected entry, concise problem and correction required is mandatory.
 - Decision commands recheck task token, assignment, state, sources and segregation under one transaction.
-- Acceptance completes the task and places every accepted entry in the open Draft Annual Plan as an unallocated source. If this is the first accepted DPP for the PE/FY, the same transaction creates the Annual Plan root and Draft Version 1. It does not form a Plan Item, reserve funds or approve expenditure.
+- Acceptance completes the task and places every accepted entry in the open Draft Annual Plan as an unallocated source. If this is the first accepted DPP for the PE/FY, the same transaction inserts the uniquely constrained Annual Plan root and Draft Version 1. If a concurrent acceptance won that insert, the command reloads and reuses the winner inside the transaction. It does not form a Plan Item, reserve funds or approve expenditure.
 - Return completes the task, preserves the submission and creates the correction Draft atomically.
 
 ### 12.7 PLN-UI-07 and PLN-UI-08 — Annual Plan workbench and formation
@@ -1249,17 +1322,19 @@ Only the load-error component may display a generated support reference. Do not 
 - Each later DPP accepted before the initial Plan is submitted adds its entries automatically to the same Draft Version's unallocated-source queue.
 - The Planner may form Plan Items incrementally and does not wait for the submission window to close, every department to submit or a department to declare a nil plan.
 - A DPP accepted after the current Plan Version has been submitted cannot alter that immutable Version and does not interrupt its governance. Its entries appear as **Pending addition** in the workspace and become available in the next Draft successor after the current Version is activated.
+- A DPP successor that replaces a source already allocated to a mutable Draft item marks that item **Source correction required**. It does not rewrite or move the allocation. The Planner must dissolve and re-form the item from the current source.
 - Source selection lists only current accepted entries in the exact PE/FY that are not already allocated in the open Version.
 - One selected source creates one Plan Item without asking for an unnecessary second choice.
-- Several selected sources require **one each** or **one combined**. Combined formation requires compatible requirement type, unit and treatment and a complete aggregation reason before the item is ready.
+- Several selected sources require **one each** or **one combined**. Combined formation requires the same PE/FY, Budget, currency, requirement type, unit and treatment plus a complete aggregation reason before the item is ready.
 - Formation is atomic and idempotent. A unique active allocation prevents concurrent duplicate use.
 - A single created item opens its editor. Several separately created items return to the workbench.
 - The Planner never creates a blank source-less Plan Item.
 - Draft summary counts, value and blockers are derived from source allocations and current item states.
+- **Dissolve Plan Item** appears only for an item in a mutable Draft Version. Confirmation states that its sources will return to the unallocated list and any effective funding hold will be released. The server completes cancellation, release and allocation updates atomically or changes nothing.
 
 ### 12.8 PLN-UI-09 — Plan Item editor
 
-- Load an existing formed item and every allocation read-only. Source selection, regrouping and partial allocation are absent.
+- Load an existing formed item and every allocation read-only. Source selection, regrouping and partial allocation are absent; regrouping is done by dissolving the Draft item and forming again.
 - For a single source, default title from the source. For combined sources, require a Planner-entered package title and aggregation reason.
 - Strategic Objective options are only current eligible Active Objectives and show title plus hierarchy path.
 - The server assigns Open Tender as the sole admitted MVP method. It is displayed read-only and the UI does not present a one-option selector.
@@ -1267,7 +1342,7 @@ Only the load-error component may display a generated support reference. Do not 
 - Requirement type, quantity, unit, source details, Budget Lines and planned value are derived and read-only.
 - Schedule validation binds each failure to the exact date control and explains the chronological or required-by conflict.
 - **Save draft** creates no Finance task. **Request Finance confirmation** saves and fully validates in one transaction, then creates/reuses one current task.
-- A material change after Finance confirmation marks the evidence Stale and requires a new confirmation. No reservation is silently adjusted.
+- A change to the source set, Budget Line, amount or currency after Finance confirmation releases the affected Draft reservation remainder, marks Finance Stale and requires new confirmation. A title, description, Objective, aggregation reason, method or schedule edit retains the reservation but it is revalidated before Plan submission. No reservation is silently adjusted.
 
 ### 12.9 PLN-UI-10 — Finance task
 
@@ -1289,7 +1364,9 @@ Only the load-error component may display a generated support reference. Do not 
 - Every return requires one actionable correction. No reason category or optional note exists.
 - Every decision rechecks the exact role or legal capacity, native User Permission, task token, source currency, Objective eligibility and Finance freshness.
 - No Head of Procurement Function, professional reviewer, generic committee or publication approval is inserted.
-- A returned Version preserves the submitted snapshot. Only Planner-owned fields reopen in the governed correction state; a new submission repeats Finance when relevant.
+- A return preserves the submitted snapshot and creates a copied correction Draft containing only that snapshot's sources. Pending DPP additions remain outside it.
+- Corrected submission revalidates every reservation. It repeats Finance only for an item whose source set, Budget Line, amount or currency changed, whose reservation is absent, released or `Needs Attention`, or whose Budget revalidation fails.
+- Every corrected submission creates a new immutable snapshot and restarts at Accounting Officer adoption, including a correction returned from statutory approval.
 
 ### 12.11 PLN-UI-13 — Publication
 
@@ -1298,14 +1375,15 @@ Only the load-error component may display a generated support reference. Do not 
 - Failed or indeterminate transmission preserves approval and permits an idempotent technical retry of the same payload by System Manager.
 - There is no manual acknowledgement, payload edit, successful-result override or business publication decision.
 
-### 12.12 PLN-UI-15 — Active Plan and successor
+### 12.12 PLN-UI-14 — Active Plan and successor
 
 - Display the Active Version and its complete item baseline read-only.
 - Requisition availability is a live neutral projection, not a Planning edit control.
 - **Prepare plan update** creates/reuses the sole Draft successor after authority and state checks.
 - The Active predecessor remains operational while the successor is Draft, returned or under governance.
 - An item may be proposed for whole-item removal only after fresh downstream checks show no drawdown, Tender handoff, commitment or contract.
-- An acknowledged successor atomically becomes the sole Active Version; unchanged lineage is preserved and removed items cease future eligibility.
+- Cancelling a Draft successor releases only successor-created reservations and leaves the Active predecessor unchanged.
+- An acknowledged successor atomically becomes the sole Active Version; unchanged lineage is preserved, removed items cease future eligibility and their unconverted reservation remainder is released only after the downstream-use checks pass.
 - Planning displays later downstream status only from authoritative projections. It does not collect actual milestone dates.
 
 ### 12.13 Common page behaviour and accessibility
@@ -1324,8 +1402,8 @@ The audit record shall preserve:
 
 - DPP Draft creation, direct-entry changes and accepted-Need projection changes;
 - each DPP submission, certification actor/assignment, submitted rows, validation classification and return/accept decision;
-- Annual Plan and Version creation, each source allocation and every Planner field change;
-- Finance task iterations, Budget snapshots used for decisions and reservation references;
+- Annual Plan and Version creation, each source allocation, dissolution, source-correction flag and every Planner field change;
+- Finance task iterations, Budget snapshots used for decisions, reservation references, revalidation and release results;
 - each Accounting Officer and statutory-approval task and immutable decision;
 - publication attempts, adapter results, acknowledgement and activation;
 - successor creation, whole-item removal proposal, cancellation and supersession; and
@@ -1361,14 +1439,14 @@ Seeds fail when an authoritative prerequisite is absent or differs. They do not 
 
 | Actor | Exact assignment |
 |---|---|
-| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Author for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD / FY 2027/28 |
-| `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department for the two named OUs / FY 2027/28 |
-| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department for OU-MOH-DHI from 20 to 30 Nov 2026, using the same role and a time-bound native User Permission |
-| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Procurement Planner for PE-MOH / FY 2027/28; DPP classification and Annual Plan preparation |
-| `moh.budget.officer@example.test` · MOH Budget Officer | Finance confirmation for PE-MOH / FY 2027/28 |
-| `amina.hassan@moh.example.test` · Amina Hassan | Accounting Officer for PE-MOH / FY 2027/28 |
+| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Author for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD |
+| `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department for OU-MOH-HRMD and OU-MOH-DHI, except that his OU-MOH-DHI permission is ineffective from 26 to 30 Nov 2026 |
+| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department for OU-MOH-DHI from 26 to 30 Nov 2026, using the same role and a time-bound native User Permission; Peter's OU-MOH-DHI permission is ineffective during this period |
+| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Procurement Planner for PE-MOH; DPP classification and Annual Plan preparation |
+| `moh.budget.officer@example.test` · MOH Budget Officer | Finance confirmation for PE-MOH and the named Budget Lines |
+| `amina.hassan@moh.example.test` · Amina Hassan | Accounting Officer for PE-MOH |
 | `moh.plan.approver@example.test` · MOH statutory approver | Responsible Cabinet Secretary for the PE-MOH fixture; exactly one statutory route |
-| `peter.ouma@audit.example.test` · Peter Ouma | Planning Auditor read for PE-MOH / FY 2027/28 |
+| `peter.ouma@audit.example.test` · Peter Ouma | Planning Auditor read for PE-MOH |
 | `no.context@example.test` · No-context User | Authenticated with no Planning assignment |
 
 No seed business decision uses Administrator.
@@ -1471,12 +1549,12 @@ Profiles shall prove a direct-only DPP, a Need-only DPP and a mixed DPP. No prof
 
 ### 14.8 Isolated combined-source fixture
 
-| Source | Department | Quantity | Budget Line | Amount | Classification |
-|---|---|---:|---|---:|---|
-| Clinical training laptops for digital health rollout | Human Resources Management and Development | 200 each | MOH-BL-HWD-2027 | KES 48,000,000 | Goods |
-| Clinical deployment laptops for digital health rollout | Digital Health | 300 each | MOH-BL-DHI-2027 | KES 72,000,000 | Goods |
+| Source | Department | Quantity | Required by | Budget Line | Currency | Amount | Classification |
+|---|---|---:|---|---|---|---:|---|
+| Clinical training laptops for digital health rollout | Human Resources Management and Development | 200 each | 31 Dec 2027 | MOH-BL-HWD-2027 | KES | KES 48,000,000 | Goods |
+| Clinical deployment laptops for digital health rollout | Digital Health | 300 each | 31 Dec 2027 | MOH-BL-DHI-2027 | KES | KES 72,000,000 | Goods |
 
-The combined item is `PPI-MOH-2027-033`, totals 500 each and KES 120,000,000, and uses the exact title, description and aggregation reason in PLN-DES-09A. It is isolated because its funding requirements exceed the default live baseline.
+Both sources resolve to the one PE-MOH/FY-2027-2028 procurement Budget. The combined item is `PPI-MOH-2027-033`, totals 500 each and KES 120,000,000, completes on 31 Dec 2027, and uses the exact title, description and aggregation reason in PLN-DES-09A. It is isolated because its funding requirements exceed the default live baseline.
 
 ### 14.9 KEBS first-slice profile
 
@@ -1507,7 +1585,7 @@ The module is accepted only when all statements below are demonstrably true.
 
 | ID | Required result |
 |---|---|
-| PLN-AC-001 | Zero, one and multiple authorised PE/FY context cases fail closed and disclose no unauthorised data. |
+| PLN-AC-001 | Zero, one and multiple authorised PE plus configured-FY option cases fail closed and disclose no unauthorised data. |
 | PLN-AC-002 | Workspace reads and direct routes create no record. |
 | PLN-AC-003 | One DPP root is created idempotently per PE/FY/OU. |
 | PLN-AC-004 | Every current accepted Need appears once with six read-only facts, including expected operational result, and no Budget, Strategy or classification from Needs. |
@@ -1530,7 +1608,7 @@ The module is accepted only when all statements below are demonstrably true.
 | PLN-AC-021 | Finance task data is protected before serialization and displays a current As-at position. |
 | PLN-AC-022 | Funding confirmation creates all source reservations and one decision atomically, or none on shortfall. |
 | PLN-AC-023 | Need acceptance, DPP actions and Plan formation create no reservation. |
-| PLN-AC-024 | A material item/source/funding change makes prior Finance evidence Stale. |
+| PLN-AC-024 | A changed source set, Budget Line, amount or currency, or a failed Budget revalidation, makes prior Finance evidence Stale; narrative, Objective and schedule changes alone do not. |
 | PLN-AC-025 | Accounting Officer and statutory-approval tasks each show the complete immutable Plan before decisions. |
 | PLN-AC-026 | The Accounting Officer adopts or returns the complete consolidated Plan. |
 | PLN-AC-027 | Exactly one statutory authority approves or returns the same Accounting-Officer-adopted Version. |
@@ -1553,13 +1631,29 @@ The module is accepted only when all statements below are demonstrably true.
 | PLN-AC-044 | Native Frappe Role, Workflow permission and User Permission enforce PE/FY/OU scope without another permission store. |
 | PLN-AC-045 | Requisition eligibility exposes every source allocation, expected operational result and exact remaining quantity and value. |
 | PLN-AC-046 | The KEBS Needs-origin and direct-entry profiles produce equivalent approved source lineage. |
+| PLN-AC-047 | A mutable Draft Plan Item can be dissolved; open Finance work is cancelled, effective reservations are released and its sources become available for re-formation without deleting history. |
+| PLN-AC-048 | Dissolution is blocked after Plan submission and fails atomically when reservation release fails. |
+| PLN-AC-049 | Reservation revalidation and every Planning-triggered release use the Budget-owned service and preserve exact correlation evidence. |
+| PLN-AC-050 | Governance correction preserves the returned snapshot, excludes pending additions and restarts at Accounting Officer adoption. |
+| PLN-AC-051 | Finance repeats on correction only for the defined stale conditions; narrative, Objective and schedule changes alone do not create replacement reservations. |
+| PLN-AC-052 | Acceptance of a DPP successor never rewrites an allocated source; mutable Draft items require dissolve and re-form, submitted Plans require return, and Active Plans wait for a successor. |
+| PLN-AC-053 | A withdrawn initial DPP can reopen only as the next Version while the initial window is Open. |
+| PLN-AC-054 | Accepted Needs stranded by a closed DPP window remain visible with the exact not-included status and gain no late-submission bypass. |
+| PLN-AC-055 | Combined Plan Items reject different Budgets or currencies. |
+| PLN-AC-056 | Sequential Requisitions may draw one Plan Item while balances remain, subject to the Requisition module's one-open rule. |
+| PLN-AC-057 | The maker-checker matrix blocks every prohibited same-user action pair and no unlisted approval level is introduced. |
+| PLN-AC-058 | Concurrent first-DPP acceptance creates exactly one Annual Plan root and one open Version. |
+| PLN-AC-059 | Planning has one navigation entry and no role-specific work-queue menu. |
+| PLN-AC-060 | Planning context is server-authorised, visible and changeable; local storage never grants access or permanently binds PE/FY. |
+| PLN-AC-061 | Draft, Accounting Officer, statutory approval and Active surfaces render the same generated Annual Plan title and the governance surfaces use the exact immutable fixture row and total. |
+| PLN-AC-062 | The combined-source fixture has deterministic required-by dates and its completion date satisfies both sources. |
 
 ### 15.1 Minimum automated coverage
 
-1. Domain tests for DPP coverage, direct-entry fields, source immutability, classification, formation compatibility, schedule, Objective eligibility and lifecycle transitions.
+1. Domain tests for DPP coverage, direct-entry fields, source immutability, classification, formation/dissolution compatibility, correction restart, schedule, Objective eligibility and lifecycle transitions.
 2. Permission tests for every role, PE/FY/OU boundary, task assignment, acting-HoD period and maker-checker rule.
-3. Contract tests for Needs events, Strategy Objective selection, Budget Line eligibility, all-source reservation, publication adapter and Requisition eligibility.
-4. Transaction tests for submission, formation, Finance, governance, publication acknowledgement and concurrent retries.
+3. Contract tests for Needs events, Strategy Objective selection, Budget Line eligibility, all-source reservation, revalidation/release, publication adapter and Requisition eligibility.
+4. Transaction tests for submission, concurrent first-DPP acceptance, formation, dissolution, Finance, governance correction, successor cancellation, publication acknowledgement and concurrent retries.
 5. Vue component tests for exact fields, absent fields, task detail, errors, dialog copy and action visibility.
 6. Focused Playwright journeys for direct-only DPP, accepted-Need DPP, mixed DPP, integrated Active Plan, Finance shortfall, governance return and publication retry.
 
@@ -1575,7 +1669,7 @@ The module is accepted only when all statements below are demonstrably true.
 - Use scoped component styles and existing shared KenTender components before adding a new component.
 - Unmount Vue and detach listeners on Desk route change.
 - Self-host any approved fonts through the application asset pipeline; no CDN dependency.
-- Keep the Frappe header, breadcrumb, global selector and navigation outside the Vue artboard.
+- Keep the Frappe header, breadcrumb and navigation outside the Vue artboard. Render the Planning-specific PE/FY selectors inside the Planning workspace page content exactly as defined in PLN-DES-01.
 - Prefer server-computed projections tailored to each screen over client joins across DocTypes.
 
 ### 16.2 TDD and efficient verification
@@ -1628,12 +1722,16 @@ Implementation shall not:
 - create a source-less Plan Item or partially allocate a DPP entry;
 - accept a client-computed value, permission, state, balance or approval route as authoritative;
 - reserve only part of a combined item;
+- release or mark a Budget reservation through a local Planning-table update;
+- rewrite an allocated source automatically when a DPP successor is accepted;
 - hide full Plan details from the Accounting Officer or statutory approver;
 - insert professional review, Head of Procurement Function approval, a generic committee or publication approval into the Accounting Officer plus one-statutory-approval chain;
 - activate on approval or on an unacknowledged publication attempt;
 - expose create-Requisition or create-Tender actions from Planning;
 - import Claude Design runtime, `.dc.html`, Tailwind utilities or copied vendor markup into production;
-- draw or replace the Frappe breadcrumb/header/global selector inside the page;
+- create a role-specific sidebar work-queue entry;
+- treat a browser-stored PE/FY value as permission or prevent the user from changing an authorised Planning Financial Year;
+- draw or replace the Frappe breadcrumb or header inside the page;
 - maintain old routes, aliases, duplicate fields or compatibility reads; or
 - use a full-suite test run as the first diagnostic step for a focused defect.
 
@@ -1644,9 +1742,10 @@ This document incorporates the approved boundary decisions from:
 - CFG-CHG-002 v0.3 — PE/FY context and configuration ownership;
 - STR-CHG-001 v1.3 — exactly one Active Strategic Objective on each Plan Item and no Value Commitment;
 - BUD-CHG-001 v1.1 — Planning-owned Finance task, Budget-owned live position and reservations; and
-- NDS-CHG-001 v1.1 — optional consultation, direct departmental planning path, six Need values and Planning-owned DPP funding specification.
+- NDS-CHG-001 v1.1 — optional consultation, direct departmental planning path, six Need values and Planning-owned DPP funding specification; and
+- REQ-CHG-001 v1.2 — partial Plan Item drawdown, one-open-Requisition control, reversal and remaining balances.
 
-On approval, this document supersedes conflicting Planning requirements in:
+This document supersedes conflicting Planning requirements in:
 
 - PLN-CAN-001 v0.1;
 - PLN-CDR-001 v0.1;
@@ -1673,6 +1772,6 @@ Earlier UI assets remain evidence for reuse only. Where their fields, states, la
 
 ## 20. Approval effect
 
-PLN-CHG-001 v1.1 was approved by the Project Owner on 28 August 2026. It supersedes v1.0 in full and is the only Procurement Planning requirements document to consult.
+PLN-CHG-001 v1.2 was approved by the Project Owner on 30 August 2026. It supersedes v1.1 in full and is the only Procurement Planning requirements document to consult.
 
-This approval authorises implementation of the clean Procurement Planning module and conversion of section 11 into Claude Design artboards. It does not approve generated visual deviations, production publication configuration, a Procurement Requisition, a Tender or any field not defined here.
+Approval authorises implementation of the complete clean Procurement Planning module and conversion of section 11 into Claude Design artboards. It does not approve generated visual deviations, production publication configuration, a Procurement Requisition, a Tender or any field not defined here.
