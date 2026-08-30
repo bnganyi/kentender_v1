@@ -21,10 +21,22 @@ import PageRail from "./components/PageRail.vue";
 frappe.provide("kentender_core.industry");
 
 kentender_core.industry.mountPageRail = function (el, opts) {
-	const state = reactive({ trail: (opts && opts.trail) || [] });
+	opts = opts || {};
+	const state = reactive({
+		trail: opts.trail || [],
+		// CTX-CHG-001 — dormant unless the page opts in, so unconverted pages
+		// never show a switcher whose change they would ignore.
+		showPeSwitcher: !!opts.showPeSwitcher,
+		epoch: 0,
+	});
 	const app = createApp({
 		render() {
-			return h(PageRail, { trail: state.trail });
+			return h(PageRail, {
+				trail: state.trail,
+				showPeSwitcher: state.showPeSwitcher,
+				onPeChange: opts.onPeChange || null,
+				epoch: state.epoch,
+			});
 		},
 	});
 	app.config.globalProperties.__ = window.__;
@@ -33,6 +45,9 @@ kentender_core.industry.mountPageRail = function (el, opts) {
 	return {
 		update(trail) {
 			state.trail = trail;
+		},
+		refreshContext() {
+			state.epoch += 1;
 		},
 		unmount() {
 			app.unmount();

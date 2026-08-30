@@ -13,10 +13,16 @@
 // this composable's onMounted() runs.
 import { onMounted, onUnmounted, watch } from "vue";
 
-export function usePageRail(elRef, trailRef) {
+export function usePageRail(elRef, trailRef, opts) {
+	// CTX-CHG-001 — opts: { showPeSwitcher, onPeChange }. Dormant by default;
+	// a page that opts in receives the global PE switcher in the rail and its
+	// onPeChange callback when the user switches entity.
 	let handle = null;
 	onMounted(() => {
-		handle = kentender_core.industry.mountPageRail(elRef.value, { trail: trailRef.value });
+		handle = kentender_core.industry.mountPageRail(elRef.value, {
+			trail: trailRef.value,
+			...(opts || {}),
+		});
 	});
 	onUnmounted(() => {
 		handle?.unmount();
