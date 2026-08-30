@@ -127,6 +127,12 @@ CORE_CATALOGUES = {
 	"Procurement Method": {"title", "status", "fixture_namespace"},
 }
 
+# Added in Phase 2: the §8.2 idempotency store (decision log D-journal note).
+EXPECTED_FIELDS["Planning Command Journal"] = {
+	"idempotency_key", "command", "document_type", "document_name",
+	"request_fingerprint", "actor", "result", "occurred_at", "fixture_namespace",
+}
+
 LEGACY_DOCTYPES = (
 	"Procurement Plan", "Procurement Plan Version", "Procurement Plan Item",
 	"Procurement Plan Item Version", "Plan Need Allocation", "Plan Decision",
@@ -160,6 +166,7 @@ SCAN_DIRS = ("doctype", "services", "seeds", "tests")
 UNIQUE_INDEXES = {
 	("tabDepartmental Plan", "pln_uniq_dpp_root"),
 	("tabDepartmental Plan Version", "pln_uniq_dpp_version"),
+	("tabDepartmental Plan Entry", "pln_uniq_entry_id_per_version"),
 	("tabAnnual Plan Version", "pln_uniq_plan_version"),
 	("tabAnnual Plan Item", "pln_uniq_item_per_version"),
 	("tabPlan Source Allocation", "pln_uniq_alloc_per_version"),

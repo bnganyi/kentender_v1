@@ -1,12 +1,194 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 — Procurement Planning API surface.
+"""PLN-CHG-001 v1.2 — Procurement Planning API surface (§8.2 commands).
 
-Rebuilt from Phase 2 onward around the §8 command and read contracts. Every
-endpoint keeps an explicit signature (no bare **kwargs handed to services —
-the framework passes `cmd`/`csrf_token` through `form_dict`), and Playwright
-fixture endpoints live in seed/fixture modules, never here (decision D8).
+Every endpoint keeps an explicit signature: the framework passes the whole
+`form_dict` (including `cmd`/`csrf_token`) into a whitelisted method that
+declares **kwargs, which is exactly how NDS-914 broke four commands over HTTP
+while every direct-service test passed. Playwright fixture endpoints live in
+seed/fixture modules, never here (decision D8).
 """
 
 from __future__ import annotations
+
+import json
+from typing import Any
+
+import frappe
+
+from kentender_procurement.procurement_planning.services import (
+	dpp_lifecycle,
+	dpp_validation,
+	planning_context,
+)
+
+
+def _parse_json(value, default):
+	"""HTTP transports lists/dicts as JSON strings; direct callers pass values.
+	`from __future__ import annotations` disables Frappe's own coercion."""
+	if value is None:
+		return default
+	if isinstance(value, str):
+		return json.loads(value) if value.strip() else default
+	return value
+
+
+# --- context (PLN-UI-01 groundwork; CTX-CHG-001) -----------------------------
+
+
+@frappe.whitelist()
+def resolve_planning_context(
+	procuring_entity: str | None = None, financial_year: str | None = None
+) -> dict[str, Any]:
+	return planning_context.resolve_planning_context(
+		procuring_entity=procuring_entity, financial_year=financial_year
+	)
+
+
+@frappe.whitelist()
+def select_planning_context(procuring_entity: str, financial_year: str) -> dict[str, Any]:
+	return planning_context.select_planning_context(
+		procuring_entity=procuring_entity, financial_year=financial_year
+	)
+
+
+# --- §8.2 DPP commands -------------------------------------------------------
+
+
+@frappe.whitelist()
+def open_departmental_plan(
+	procuring_entity: str,
+	organisation_unit: str,
+	financial_year: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_lifecycle.open_departmental_plan(
+		procuring_entity=procuring_entity,
+		organisation_unit=organisation_unit,
+		financial_year=financial_year,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def save_need_funding(
+	dpp_version: str,
+	entry_id: str,
+	budget_line: str,
+	indicative_amount,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_lifecycle.save_need_funding(
+		dpp_version=dpp_version,
+		entry_id=entry_id,
+		budget_line=budget_line,
+		indicative_amount=indicative_amount,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def save_direct_requirement(
+	dpp_version: str,
+	values,
+	expected_record_version,
+	idempotency_key: str,
+	entry_id: str | None = None,
+) -> dict[str, Any]:
+	return dpp_lifecycle.save_direct_requirement(
+		dpp_version=dpp_version,
+		values=_parse_json(values, {}),
+		entry_id=entry_id,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def remove_direct_requirement(
+	dpp_version: str,
+	entry_id: str,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_lifecycle.remove_direct_requirement(
+		dpp_version=dpp_version,
+		entry_id=entry_id,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def submit_departmental_plan(
+	dpp_version: str,
+	certification_confirmed,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	confirmed = certification_confirmed in (True, 1, "1", "true", "True")
+	return dpp_lifecycle.submit_departmental_plan(
+		dpp_version=dpp_version,
+		certification_confirmed=confirmed,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def withdraw_departmental_plan_version(
+	dpp_version: str,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_lifecycle.withdraw_departmental_plan_version(
+		dpp_version=dpp_version,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def create_departmental_plan_update(
+	departmental_plan: str,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_lifecycle.create_departmental_plan_update(
+		departmental_plan=departmental_plan,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def return_departmental_plan(
+	task: str,
+	issues,
+	task_token: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_validation.return_departmental_plan(
+		task=task,
+		issues=_parse_json(issues, []),
+		task_token=task_token,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def accept_departmental_plan(
+	task: str,
+	classifications,
+	task_token: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	return dpp_validation.accept_departmental_plan(
+		task=task,
+		classifications=_parse_json(classifications, {}),
+		task_token=task_token,
+		idempotency_key=idempotency_key,
+	)

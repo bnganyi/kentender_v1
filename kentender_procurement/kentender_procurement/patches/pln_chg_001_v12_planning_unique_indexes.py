@@ -17,6 +17,8 @@ INDEXES = (
 	("tabDepartmental Plan", "pln_uniq_dpp_root", ("pe_fy_context", "organisation_unit")),
 	# monotonic version sequences cannot collide
 	("tabDepartmental Plan Version", "pln_uniq_dpp_version", ("departmental_plan", "version_number")),
+	# stable entry ids are unique within one DPP Version; successor copies reuse them
+	("tabDepartmental Plan Entry", "pln_uniq_entry_id_per_version", ("dpp_version", "entry_id")),
 	("tabAnnual Plan Version", "pln_uniq_plan_version", ("annual_plan", "version_number")),
 	# stable item / allocation ids are unique within one Plan Version
 	("tabAnnual Plan Item", "pln_uniq_item_per_version", ("plan_version", "plan_item_id")),

@@ -8,15 +8,10 @@ import frappe
 from frappe.utils import cstr, getdate
 
 from kentender_core.services.financial_context import enabled_fiscal_years
-from kentender_core.services.org_scope_access import user_scope_rows
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ALL_PLANNING_ROLES,
 )
 
-# PLN-CHG-001 v1.2 interim (Phase 1): the capability-era READ_PLAN_ROLES set is
-# gone; any §6 Planning role grants context resolution. Phase 2 (PLN-207)
-# re-bases eligibility fully onto native User Permission via
-# permitted_procuring_entities and drops the scope-assignment read below.
 READ_PLAN_ROLES = frozenset(ALL_PLANNING_ROLES)
 
 # CTX-CHG-001 — persistence moved to kentender_core.working_context: the
@@ -32,12 +27,15 @@ SOURCE_LEGACY = "legacy"
 
 
 def _authorised_entities(actor: str) -> list[dict[str, str]]:
-	pes = sorted({
-		cstr(row.get("procuring_entity")).strip()
-		for row in user_scope_rows(actor)
-		if cstr(row.get("role")).strip() in READ_PLAN_ROLES
-		and cstr(row.get("procuring_entity")).strip()
-	})
+	"""§6 / CTX-CHG-001 (closes DEBT-02): eligibility is a held Planning role
+	plus native Procuring Entity User Permission rows — no scope-assignment
+	store, no second permission layer."""
+	from kentender_procurement.procurement_planning.services.authority import (
+		permitted_pes,
+	)
+
+	holds_planning_role = bool(READ_PLAN_ROLES & set(frappe.get_roles(actor)))
+	pes = sorted(permitted_pes(actor)) if holds_planning_role else []
 	if not pes:
 		return []
 	meta = frappe.get_meta("Procuring Entity")

@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "field:entry_id",
+ "autoname": "format:DPER-{#####}",
  "creation": "2026-08-30 12:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -28,9 +28,9 @@
    "label": "Entry ID",
    "read_only": 1,
    "reqd": 1,
-   "unique": 1,
    "in_list_view": 1,
-   "description": "Immutable entry reference used by classification and source lineage."
+   "description": "Stable entry reference (DPPE-…) preserved when a successor DPP Version copies the entry; unique within one DPP Version (DB composite unique). It is the stable source_line_id for a direct entry (§4.4/§6 lineage).",
+   "search_index": 1
   },
   {
    "fieldname": "dpp_version",
