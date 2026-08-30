@@ -138,3 +138,49 @@ Already adopted: `services/planning_context.py` delegates to `kentender_core.ser
 3. Whether PlanItem needs a companion item-version doctype for successor bookkeeping or collapses into PlanVersion-scoped rows (Phase 1; §3.2 above).
 4. Publication destination adapter shape for `MOH-APP-SANDBOX-v1` (§14.1) — nothing exists for the acknowledged-payload protocol; design in Slice G.
 5. Which of the 42 existing test modules survive as-is vs are rewritten (Phase 0 catalogue).
+
+## Appendix A — Phase 0 file disposition catalogue (PLN-003)
+
+Recorded 30 August 2026. Disposition classes: **Port pattern** (delete the file, carry its proven mechanic into the replacement), **Replace** (delete; a v1.2 counterpart is built fresh), **Delete** (no counterpart), **Keep** (survives, possibly corrected). Demolition phase notes honour tracker rule 4: a file dies in the phase its replacement (or the removal of its last consumer) lands.
+
+### `procurement_planning/doctype/` — all 9 dropped by the Phase 1 patch
+
+`procurement_plan`, `procurement_plan_version` — Replace (P1; root/version shape informs the new schemas). `procurement_plan_item`, `procurement_plan_item_version` — Replace (P1; the two-level stable-item mechanic informs PLN-101). `plan_need_allocation` (schema created programmatically from `setup/departmental_needs_doctypes.py`) — Replace with PlanSourceAllocation (P1; its version-spanning lifecycle fields `proposed_in_version`/`effective_from_version`/`reversed_by_version` are the proven allocation mechanic). `plan_decision` — Port pattern into PlanDecision (P1). `plan_validation_result` — Delete (P1; v1.2 readiness is an exact blocker list computed at read time). `planning_handoff_snapshot` — Delete (P1; replaced conceptually by the §7.4 projection, which is computed, not stored). `publication_event` — Replace with PlanPublication (P1; already runtime-retired).
+
+### `procurement_planning/services/` — 29 files
+
+- Port pattern (P2): `planning_tasks.py` (token/idempotent-decision helpers — re-homed off core Workflow Task per D4), `record_plan_decision.py`, `_invariants.py`, `planning_notification_service.py` (recipients re-based off User Scope Assignment onto native User Permission), `submit_plan_for_review.py`/`approve_plan_version.py` (submit/decide/return transaction shape only — the review chain itself is prohibited).
+- Keep, corrected (P2): `planning_context.py` (CTX-CHG-001 delegation already correct).
+- Replace (P2 service core; consumed by slices): `get_planning_workspace.py`, `create_procurement_plan.py` (auto-create moves into DPP acceptance), `need_allocations.py` (→ DPP entry projection + formation), `open_or_create_plan_revision.py`, `plan_builder_successor.py`, `get_plan_builder.py`, `get_plan_item_editor.py`, `update_plan_item.py`, `plan_item_field_issues.py`, `validate_plan.py`, `plan_item_finance.py` (keep the check→reserve call shape; move release/revalidate to the published contracts), `remove_plan_item.py` (downstream-check pattern reused for `RemovePlanItemInSuccessor`), `get_plan_review.py`.
+- Delete (P1/P2 with the concepts they serve): `preference_reservation.py`, `get_plan_implementation.py` (actuals/monitoring), `create_planning_handoff_snapshot.py`, `aggregate_plan_allocations.py`, `get_support_plan.py` + `get_planning_create_scope.py` (support workspace / create-scope era), `planning_permissions.py` (capability layer, D4), `procurement_method_catalogue.py` (superseded by the governed catalogue read), `mvp1_constants.py` (vocabularies replaced).
+
+### `procurement_planning/api.py`
+
+Replace (P2 onward): rebuilt lean around the §8 commands; the ~900 lines of `prepare_planning_*` fixture endpoints move to fixture modules (D8); `list_eligible_demands`/`add_demand_to_plan` stubs die with the model (P1/P2).
+
+### `procurement_planning/page/` + `public/js/planning_*` + `public/css/planning_workspace.css`
+
+All six Stitch pages, 19 `planning_*.js` files, 9 `planning_ui_fixtures/*.js` and the 2,439-line CSS file: Replace/Delete in **Phase 3**. Rationale recorded in the decision log: these surfaces are already dark (nav parked at `coming-soon`; the workspace 404s on `Plan Demand Allocation`) and their API layer disappears in P1–P2, so they are dead code the moment the model lands; the module-level replacement (new Planning page + workspace) arrives in the same phase they are removed. `support_plan_view.js` dies with the support-workspace concept (P3).
+
+### `procurement_planning/seeds/` — 5 files
+
+Replace in **Phase 11** against §14 (`kentender_mvp_v1.py` upsert/clear/namespace wiring is the pattern to port; all five are Demand-coupled). Interim: the core orchestrator's planning stage is guarded on `frappe.db.exists("DocType", "Procurement Plan")`, so the P1 doctype drop makes the stage a no-op instead of a crash — verified before P1 closes; the old seed files must nonetheless be import-clean or detached in P1 to keep `make seed-kentender-mvp-v1` green through P1–P10.
+
+### `procurement_planning/tests/` — 41 modules (+ helpers)
+
+Replace wholesale across P1–P10 (they assert the old model; two import deleted Demand modules). Salvage as rewrite seeds: `test_planning_context_ctx_chg_001.py` (Keep, P2), the intent (not the code) of `test_planning_cross_entity_isolation.py`, `test_planning_pe_scope_selection.py`, `test_planning_permissions_matrix.py`, `test_planning_mvp1_invariants.py`.
+
+### Outside the module
+
+- `kentender_core`: `module_registry.py`/`kt_module_registry.js` planning entry (Keep, corrected P3), `services/my_work.py` `_PRESENTATION` plan.* rows (Delete P3), `services/authorization_role_registry.py` `procurement_planning.need_allocate` row (Delete P2), `seeds/kentender_mvp_v1/{planning,clear,validate,users}.py` + `dev_full_reseed.py` (Correct P11, guarded no-op through P1–P10), `kt_cl_surface_registry.js` 7 planning entries (Delete P3), `tests/test_desk_builder_layout_css.py` planning reference (inspect in its phase).
+- `kentender_procurement`: `hooks.py` planning blocks (Correct per-slice), `patches/ensure_planning_roles.py` (Replace P2), `workspace/procurement_planning.json` + `workspace_sidebar/*.json` + `setup/sidebar_availability.py` + `setup/after_migrate_navigation.py` (Correct P3, same-phase migrate), `departmental_needs` architecture/events tests referencing Planning (Keep — they enforce D5), `setup/tests/test_workspace_sidebar_fastpath.py` + `test_procurement_planning_sidebar_p5_001_contract.py` (Correct P3).
+- Root: `Makefile` planning gates (Correct per-slice; `ui-planning-builder-gate` already references two deleted test modules and `planning-add-demand.spec.ts`; `planning-plan-update.spec.ts` also missing), `tests/ui/smoke/planning/*` 11 specs + `tests/ui/helpers/planningRoles.ts` (Replace per-slice), `tests/ui/smoke/procurement/ui-smoke-rel-1610.spec.ts` + `stitch-desk/stitch-desk-chrome.spec.ts` (Correct P3 — they navigate `/app/procurement-planning`), `vitest.config.ts` (Extend P3, D9).
+
+## Appendix B — Phase 0 empirical findings (PLN-005/006/007/009)
+
+- **Route today:** `/app/procurement-planning` resolves to Workspace "Procurement Planning" (public, 9 stale roles, 0 links) and `planning_workspace_redirect.js` immediately forwards to `/desk/planning-workspace`, where the Stitch page renders an error state: `get_planning_workspace` returns 404 — "DocType Plan Demand Allocation not found" (observed logged in as Administrator, 30 Aug 2026). The module is broken in production today; there is no working behaviour to preserve at the UI layer.
+- **D3 resolution:** the Workspace, not a Page, owns the route; the redirect shim is the only thing making it land anywhere. Plan: delete the Workspace fixture + shim in P3 and claim the slug with the new Desk Page (same-phase migrate; sidebar JSON links checked).
+- **Slug audit:** no DocType exists named `Departmental Procurement Plan` or `Annual Procurement Plan` (the §10 collisions would be created by naive §4 naming); `Procurement Plan Item` exists and owns `procurement-plan-item`; existing Pages are `planning-workspace` + five `procurement-plan-*` names, none equal to a §10 slug.
+- **Design bundles:** all 16 PLN artboards reference only `_ds/kentender-industry-82d82607-…`; `industry-f4215206-…` is an orphan (removed in this phase).
+- **Needs outbox (PLN-009):** `consume_events(consumer=, need=, after_sequence=)` returns pending rows ordered `departmental_need asc, sequence asc`; `acknowledge(consumer=, event_ids=)`; sequence is taken under the Need's row lock; the module docstring names Procurement Planning as the intended consumer. The drain design in P2 fits the contract as-is.
+- **Record-version envelope (PLN-008):** `expected_version`/`concurrency_token` usage is pervasive in the old services (26 references in api.py alone) — the §8 envelope is a port, not an invention. The stable-item-vs-version question is deferred to PLN-101 with this input: the predecessor kept a stable item root + per-version content rows, and version-spanning allocation rows with lifecycle fields; the recommendation is one PlanItem doctype per §4.9 with a stable public `plan_item_id` carried across successor copies plus `(plan_version_id, plan_item_id)` uniqueness, and version-spanning PlanSourceAllocation rows using the proven lifecycle-field mechanic.
