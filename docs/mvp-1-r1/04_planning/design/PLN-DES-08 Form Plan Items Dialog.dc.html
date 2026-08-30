@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); position: relative; }
+    .content { max-width: 1200px; margin: 0 auto; padding: 32px 0 40px; filter: blur(1px); opacity: .55; }
+    .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
+    .page-title { margin: 0 0 4px; }
+    .strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; padding: 16px 20px; margin-top: 24px; }
+    .strip-field label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 4px; }
+    .strip-field .val { font-family: var(--font-heading); font-weight: 600; font-size: 16px; }
+    .card-pad { padding: 20px; margin-top: 20px; }
+    .num { text-align: right; }
+    .dim-bg { position: absolute; inset: 0; background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); z-index: 5; }
+    .dialog-wrap { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 24px; }
+    .dialog { width: min(640px, 100%); background: var(--color-bg); }
+    .source-table th, .source-table td { font-size: 13px; }
+    .result-row { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+    .radio-group { display: flex; flex-direction: column; gap: 10px; }
+    .section-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 8px; }
+    .dialog-section { border-top: 1px solid var(--color-divider); padding-top: 16px; margin-top: 4px; }
+    .summary-box { border: 1px solid var(--color-divider); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .result-row:not(:last-child) { border-bottom: 1px solid color-mix(in srgb, var(--color-divider) 60%, transparent); padding-bottom: 6px; }
+  </style>
+</helmet>
+<div class="artboard">
+  <div class="content">
+    <p class="eyebrow">ANNUAL PROCUREMENT PLAN</p>
+    <h1 class="page-title">Ministry of Health Annual Procurement Plan 2027/28</h1>
+    <div class="card blueprint strip"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="strip-field"><label>Accepted departmental entries</label><div class="val">1</div></div>
+      <div class="strip-field"><label>Allocated</label><div class="val">0</div></div>
+      <div class="strip-field"><label>Plan Items</label><div class="val">0</div></div>
+      <div class="strip-field"><label>Plan value</label><div class="val">KES 0</div></div>
+    </div>
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Accepted departmental entries</div>
+      <table class="table"><thead><tr><th>Requirement</th><th>Department</th><th class="num">Amount</th></tr></thead>
+        <tbody><tr><td>National digital health infrastructure upgrade</td><td>Digital Health</td><td class="num">KES 80,000,000</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="dim-bg"></div>
+  <div class="dialog-wrap">
+    <div class="dialog">
+      <div class="dialog-title">Form Plan Items</div>
+      <div class="dialog-body">Select accepted departmental entries and choose how they should form procurement packages.</div>
+      <table class="table source-table">
+        <thead><tr><th></th><th>Requirement</th><th>Department</th><th>Classification</th><th class="num">Quantity</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td>National digital health infrastructure upgrade</td>
+            <td>Digital Health</td>
+            <td>Non-consulting services</td>
+            <td class="num">1 programme</td>
+            <td class="num">KES 80,000,000</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="dialog-section">
+        <p class="section-label">Formation</p>
+        <div class="radio-group">
+          <label class="radio"><input type="radio" name="formation" checked><span class="dot"></span>Create one Plan Item for each selected requirement</label>
+          <label class="radio"><input type="radio" name="formation"><span class="dot"></span>Create one combined Plan Item from all selected requirements</label>
+        </div>
+      </div>
+      <div class="dialog-section">
+        <p class="section-label">Summary</p>
+        <div class="summary-box">
+          <div class="result-row"><span>Selected entries</span><strong>1</strong></div>
+          <div class="result-row"><span>Plan Items to create</span><strong>1</strong></div>
+          <div class="result-row"><span>Total value</span><strong>KES 80,000,000</strong></div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary">Cancel</button>
+        <button type="button" class="btn btn-primary">Create 1 Plan Item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>
