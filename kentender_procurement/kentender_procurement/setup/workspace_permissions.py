@@ -305,6 +305,16 @@ def patch_bootinfo(bootinfo) -> None:
 		if payload:
 			sidebar_items[route_key.lower()] = payload
 
+	# Step 4: drop Frappe's auto-generated module sidebar for "Departmental
+	# Needs". Frappe emits one boot sidebar per module (raw doctype list links:
+	# Departmental Need / Version / Decision …), and its sidebar JS resolves a
+	# 3-segment route inside the departmental-needs Page through the Page's
+	# module — swapping the whole rail to that doctype list before the page
+	# chrome swaps it back: two full rail rebuilds (a visible flash on an
+	# editor's first save) and, briefly, a navigation surface §10 forbids (the
+	# module menu is exactly three entries, none of them doctype list views).
+	sidebar_items.pop("departmental needs", None)
+
 	# Frappe builds `bootinfo.desktop_icons` in `get_bootinfo()` *before* `boot_session`
 	# hooks run. `DesktopIcon.is_permitted` reads `workspace_sidebar_item["procurement"]`
 	# — without a second pass the Procurement tile stays hidden for users whose sidebar

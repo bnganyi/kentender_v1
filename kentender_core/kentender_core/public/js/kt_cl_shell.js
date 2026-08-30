@@ -93,7 +93,18 @@ frappe.provide("kentender_core.cl_shell");
 				frappe.app.sidebar &&
 				typeof frappe.app.sidebar.setup === "function"
 			) {
-				frappe.app.sidebar.setup(title);
+				// setup() tears the whole workspace rail down and rebuilds it.
+				// Every in-page segment navigation re-enters here through the
+				// page controller's on_page_show (e.g. an editor's first save
+				// replacing /new with /{reference}/edit), and the rebuild made
+				// the rail visibly flash on each one. The rail only needs
+				// building when it is missing or showing another workspace.
+				var railBuilt =
+					frappe.app.sidebar.sidebar_title === title &&
+					document.querySelector(".body-sidebar .sidebar-item-container");
+				if (!railBuilt) {
+					frappe.app.sidebar.setup(title);
+				}
 			}
 		} catch (e) {
 			/* ignore — boot fast-path may already have the rail */

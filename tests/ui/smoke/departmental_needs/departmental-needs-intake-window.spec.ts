@@ -76,6 +76,60 @@ test.describe("NDS-UI-08 intake window", () => {
 		await page.locator('[data-testid="nds-save-window"]').click();
 
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toBeVisible();
+		// §12.6 — the refusal renders once, inline. frappe.call would also raise
+		// Frappe's own "Message" modal from _server_messages unless the adapter
+		// passes silent: true, covering the screen with a second copy. The modal
+		// mounts a tick *after* the summary renders (the rejection reaches the
+		// component before request.js shows messages), so an immediate
+		// zero-count check races past it — hence the bounded grace wait.
+		await page.waitForTimeout(500);
+		await expect(page.locator(".msgprint")).not.toBeVisible();
+	});
+
+	test("the rail entry opens the window in place, from the configuration group", async ({
+		page,
+		context,
+	}) => {
+		/**
+		 * Two rail contracts, both invisible to the Python export tests because
+		 * those read `procurement.json` rather than the rendered sidebar:
+		 *
+		 * 1. Frappe hard-codes `target="_blank"` on every `URL` sidebar row
+		 *    (`sidebar_item.html`), which opened NDS-UI-08 in a second browser
+		 *    tab. A sub-route cannot be a `Page` link — `link_to` is a Dynamic
+		 *    Link validated against a real `Page` record — so the row stays
+		 *    `URL` and `procurement_sidebar_header.js` strips the target for
+		 *    same-origin paths. A Frappe upgrade that reshapes
+		 *    `TypeLink.prototype.make` turns that patch into a silent no-op.
+		 * 2. NDS-UI-08 is configuration, so it is a child of the
+		 *    "Configuration and Governance" section rather than a flat row
+		 *    beside its module (see FOLLOW_UPS FU-08).
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixturePlanner(page);
+		await gotoNeeds(page);
+
+		const section = page.locator(
+			'.body-sidebar .sidebar-item-container.section-item[data-id="Configuration and Governance"]',
+		);
+		await expect(section).toBeVisible();
+		const entry = section.locator(
+			'a.item-anchor[href="/desk/departmental-needs/intake-window"]',
+		);
+		await expect(entry).toHaveCount(1);
+		await expect(entry).not.toHaveAttribute("target", /.+/);
+
+		// The group ships collapsed (`keep_closed`), but its state is remembered
+		// per browser, so only expand when the entry is actually hidden.
+		if (!(await entry.isVisible())) {
+			await section.locator(".item-anchor.section-break").first().click();
+		}
+		const tabsBefore = context.pages().length;
+		await entry.click();
+
+		await expect(page).toHaveURL(/\/desk\/departmental-needs\/intake-window$/);
+		expect(context.pages().length, "the rail must not open a second tab").toBe(tabsBefore);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
 	test("an author who types the route gets no window editor", async ({ page }) => {

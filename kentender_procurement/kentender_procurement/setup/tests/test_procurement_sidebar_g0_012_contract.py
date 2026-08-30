@@ -20,6 +20,10 @@ from frappe.tests import IntegrationTestCase
 # Needs module menu is exactly three entries, and the latter two are sub-routes
 # of the same Page, so they are URL links rather than Page links. Their
 # display_depends_on is presentation only — see the role-visibility test below.
+#
+# "Intake window" is the one that does not sit with its module: every
+# configuration entry is grouped under "Configuration and Governance", so it is
+# a child of that section rather than a flat spine row after "Review tasks".
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Home",
 	"Analytics",
@@ -27,7 +31,6 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Budget & Funding",
 	"Departmental Needs",
 	"Review tasks",
-	"Intake window",
 	"Procurement Plans",
 	"Tender Management",
 	"Tender Configurations",
@@ -43,6 +46,7 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Forms & Schemas",
 	"Import Review",
 	"Configuration and Governance",
+	"Intake window",
 	"Reference Data",
 	"Standard Tender Documents",
 )
@@ -67,7 +71,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_section_groups_and_children(self):
-		"""Tender Management + STD Administration Section-Break groups."""
+		"""Tender Management, STD Administration and Configuration groups."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -116,6 +120,17 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 				"STD Versions",
 				"Forms & Schemas",
 				"Import Review",
+			],
+		)
+		# Every configuration entry lives here, including the Departmental Needs
+		# intake window. Frappe nests one level only (Sidebar.find_nested_items),
+		# so a configuration group cannot be a Section Break inside this one.
+		self.assertEqual(
+			children_of("Configuration and Governance"),
+			[
+				"Intake window",
+				"Reference Data",
+				"Standard Tender Documents",
 			],
 		)
 

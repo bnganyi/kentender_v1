@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-08-19 20:39:15.373809",
+ "creation": "2026-08-30 11:42:31.874687",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -82,19 +82,6 @@
    "show_arrow": 0,
    "type": "Link",
    "url": "/desk/departmental-needs/review"
-  },
-  {
-   "child": 0,
-   "collapsible": 0,
-   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"Procurement Planner\")",
-   "icon": "month-view",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Intake window",
-   "link_type": "URL",
-   "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/departmental-needs/intake-window"
   },
   {
    "child": 0,
@@ -272,6 +259,18 @@
   {
    "child": 1,
    "collapsible": 0,
+   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"Procurement Planner\")",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Intake window",
+   "link_type": "URL",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "/desk/departmental-needs/intake-window"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
    "display_depends_on": "eval: (frappe.user_roles || []).some(function(r) { return [\"System Manager\", \"Reference Data Manager\"].includes(r); })",
    "indent": 0,
    "keep_closed": 0,
@@ -294,7 +293,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-29 17:16:26.962863",
+ "modified": "2026-08-30 11:42:31.874687",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

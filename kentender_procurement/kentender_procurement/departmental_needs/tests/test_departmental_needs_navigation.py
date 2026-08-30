@@ -157,12 +157,36 @@ class DepartmentalNeedsMenuTest(IntegrationTestCase):
 		)
 
 	def test_menu_entries_are_contiguous_and_in_order(self):
+		"""The two flow entries sit together; the configuration entry does not.
+
+		§10 lists the three entries together, but the rail groups every
+		configuration surface under "Configuration and Governance" — and Frappe
+		nests one level only (Sidebar.find_nested_items), so that group cannot
+		hold a Departmental Needs sub-group. NDS-UI-08 is therefore a child of
+		that section, away from the two business-flow rows.
+		"""
+		flow = [label for label, _, _, _ in MENU if label != "Intake window"]
 		start = self.labels.index("Departmental Needs")
 		self.assertEqual(
-			tuple(self.labels[start : start + len(MENU)]),
-			tuple(label for label, _, _, _ in MENU),
-			msg="The three §10 entries must sit together, workspace first",
+			tuple(self.labels[start : start + len(flow)]),
+			tuple(flow),
+			msg="The §10 flow entries must sit together, workspace first",
 		)
+
+	def test_intake_window_is_a_configuration_and_governance_child(self):
+		"""NDS-UI-08 is configuration, so it lives in the configuration group."""
+		section = self.labels.index("Configuration and Governance")
+		self.assertEqual(self.rows[section].get("type"), "Section Break")
+		intake = self.labels.index("Intake window")
+		self.assertGreater(intake, section)
+		self.assertEqual(int(self.rows[intake].get("child") or 0), 1)
+		# No Section Break may intervene, or the row belongs to another group.
+		between = [
+			row.get("label")
+			for row in self.rows[section + 1 : intake]
+			if row.get("type") == "Section Break"
+		]
+		self.assertEqual(between, [])
 
 	def test_module_sits_after_budget_and_before_planning(self):
 		"""§10 placement in the business-flow rail."""
