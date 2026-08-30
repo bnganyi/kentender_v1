@@ -14,7 +14,20 @@ const railTrail = computed(() => [
 	{ label: __("Budget & Funding") },
 ]);
 const railEl = ref(null);
-usePageRail(railEl, railTrail);
+// CTX-CHG-001 - the rail hosts the global PE switcher; a switch re-resolves
+// this module's context under the new entity (its own remembered FY applies).
+usePageRail(railEl, railTrail, {
+	showPeSwitcher: true,
+	onPeChange: async () => {
+		loading.value = true;
+		await refreshContext();
+		if (!selectionRequired.value && workingContext.value) {
+			await refresh();
+		} else {
+			loading.value = false;
+		}
+	},
+});
 
 // BUD-CHG-001 v1.2 Phase 8 — this screen has no explicit id of its own, so
 // the PE/FY working context must be resolved (explicit ?context= query

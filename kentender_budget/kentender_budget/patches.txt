@@ -6,3 +6,4 @@
 # MVP-1 preparatory teardown — drop legacy Budget & Funding DocTypes / pages.
 kentender_budget.patches.mvp1_teardown_drop_legacy_budget_doctypes
 kentender_budget.patches.normalize_budget_management_workspace
+kentender_budget.patches.migrate_budget_working_context_defaults

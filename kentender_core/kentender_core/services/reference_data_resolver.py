@@ -140,65 +140,57 @@ def _authorized_context_rows(user: str) -> tuple[str, list[dict[str, Any]]]:
 	return mode, contexts
 
 
-def _working_context_default_key(module: str) -> str:
-	"""frappe.defaults.get_user_default() silently fails to round-trip a
-	Title-Case/spaced key: is_a_user_permission_key() (frappe/defaults.py)
-	treats any key where `key != frappe.scrub(key)` as a User-Permission-
-	backed key and looks it up through that separate, unrelated mechanism
-	instead of returning the plain stored value — confirmed live (a value
-	set under "KT Budget Working Context" showed correctly in
-	get_defaults() but came back "" from get_user_default() for that exact
-	key). A pre-scrubbed snake_case key sidesteps the special-casing
-	entirely."""
-	return f"kt_{module.lower()}_working_context"
-
-
 def resolve_working_context(
 	module: str,
 	user: str | None = None,
 	*,
 	requested_context: str | None = None,
 ) -> dict[str, Any]:
-	"""SUPERSEDED (CTX-CHG-001): new adopters use
-	kentender_core.services.working_context (global PE preference + per-module
-	FY), not this per-module context-id model. Kept only until Budget migrates
-	in CTX-CHG-001 Phase D, then deleted with select_working_context below.
+	"""COMPAT SHIM (CTX-CHG-001 Phase D). The response contract is unchanged —
+	{mode, contexts, selected, selection_required} over PE Fiscal Year Context
+	rows — but the storage underneath is the corrected working-context model:
+	the GLOBAL working Procuring Entity plus this module's own remembered
+	Financial Year (kentender_core.services.working_context), not a per-module
+	context id. A context picked here therefore moves the caller's global PE —
+	visible in the PageRail switcher and every other module — while the FY
+	stays this module's own. The old kt_{module}_working_context defaults are
+	migrated by kentender_budget's Phase D patch.
 
-	Zero/one/many authorized PE/FY working contexts for `user`, scoped by
-	their own permitted Procuring Entities — distinct from
-	resolve_authorized_contexts() above, which is scoped to the global
-	Reference Data Manager role and sees every Active context regardless of
-	PE assignment. Administrator/System Manager get every non-Suspended
-	context (permitted_procuring_entities() returns None for them), never a
-	silently-empty "no baseline" result. The selected context is only a
-	working-context preference, never an authorization grant — business
-	actions stay gated by their own Role/capability checks, and a
-	state-changing command still calls validate_context_for_command()
-	(Active-only) at the point of that command.
+	Resolution stays never-authoritative: an explicit requested_context is
+	validated against the caller's authorized rows and then persisted (a deep
+	link is a deliberate choice); otherwise the global PE narrows the rows and
+	the module FY picks within them; a single candidate auto-selects; anything
+	else prompts. A working PE with no authorized context here falls back to
+	the full row set — a preference can never trap a module."""
+	from kentender_core.services import working_context as wc
 
-	Resolving via an explicit requested_context also remembers it (same as
-	select_working_context) — a deep link or a query-string context is a
-	deliberate choice, not a one-off override, and without this the very
-	next client-side route change (which carries no query string of its
-	own — confirmed live: Budget's useRouteState-based go() drops it) would
-	have nothing to fall back on and re-prompt for a selection it was
-	effectively just given."""
 	user = user or frappe.session.user
 	mode, contexts = _authorized_context_rows(user)
 	by_id = {c["context_id"]: c for c in contexts}
 
-	requested_context = (requested_context or "").strip() or None
-	selected = by_id.get(requested_context) if requested_context else None
-	if selected:
-		frappe.defaults.set_user_default(_working_context_default_key(module), selected["context_id"], user=user)
-
-	if not selected:
-		remembered_id = frappe.defaults.get_user_default(_working_context_default_key(module), user=user)
-		if remembered_id:
-			selected = by_id.get(remembered_id)
-
-	if not selected and mode == "single":
-		selected = contexts[0]
+	requested = by_id.get((requested_context or "").strip() or None)
+	if requested:
+		_persist_context_pair(module, requested, user)
+		selected = requested
+	else:
+		pe_selected = wc.get_working_pe(user)["selected"]
+		pool = contexts
+		if pe_selected:
+			subset = [c for c in contexts if c["procuring_entity"]["id"] == pe_selected["id"]]
+			if subset:
+				pool = subset
+		fy_state = wc.get_module_fy(
+			module, user, offered=[c["financial_year"]["id"] for c in pool]
+		)
+		selected = None
+		if fy_state["selected"]:
+			matches = [
+				c for c in pool if c["financial_year"]["id"] == fy_state["selected"]["id"]
+			]
+			if len(matches) == 1:
+				selected = matches[0]
+		if not selected and len(pool) == 1:
+			selected = pool[0]
 
 	return {
 		"mode": mode,
@@ -206,6 +198,24 @@ def resolve_working_context(
 		"selected": selected,
 		"selection_required": selected is None and mode != "none",
 	}
+
+
+def _persist_context_pair(module: str, context: dict[str, Any], user: str) -> None:
+	"""Remember a picked context as global PE + module FY; persistence must
+	never break a read, so a pair the working-context service will not accept
+	is simply not remembered."""
+	from kentender_core.services import working_context as wc
+
+	try:
+		wc.select_working_pe(context["procuring_entity"]["id"], user)
+		wc.select_module_fy(
+			module,
+			context["financial_year"]["id"],
+			user,
+			offered=[context["financial_year"]["id"]],
+		)
+	except Exception:
+		frappe.clear_last_message()
 
 
 def select_working_context(module: str, context_id: str, user: str | None = None) -> dict[str, Any]:
@@ -224,5 +234,5 @@ def select_working_context(module: str, context_id: str, user: str | None = None
 			title="PEFY_CONTEXT_NOT_AUTHORIZED",
 		)
 
-	frappe.defaults.set_user_default(_working_context_default_key(module), selected["context_id"], user=user)
+	_persist_context_pair(module, selected, user)
 	return selected

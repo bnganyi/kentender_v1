@@ -32,7 +32,9 @@ test.describe("Budget detail (BUD-UI-03)", () => {
 		const positions = page.getByTestId("budget-detail-position-cards");
 		await expect(positions).toContainText("KES 160,000,000"); // Approved
 
-		await expect(page.getByText("Ministry of Health", { exact: true })).toBeVisible();
+		// Scoped to the context card's value cell: the rail's CTX-CHG-001 PE chip
+		// also carries the entity name page-wide.
+		await expect(page.locator("div").filter({ hasText: /^Ministry of Health$/ })).toBeVisible();
 		await expect(page.getByText("MOH-FIN-BUD-2027-01 (Demo)")).toBeVisible();
 		await expect(page.getByRole("link", { name: /moh-approved-procurement-budget/ })).toBeVisible();
 	});

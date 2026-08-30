@@ -192,3 +192,142 @@ class TestModuleDimensions(WorkingContextCase):
 		)
 		with self.assertRaises(frappe.PermissionError):
 			wc.select_module_ou("needs", "OU-ELSEWHERE", self.user_one, offered=units)
+
+
+class TestLegacyResolverShim(WorkingContextCase):
+	"""CTX-CHG-001 Phase D — resolve/select_working_context keep their response
+	contract but store the corrected model: global PE + per-module FY."""
+
+	def setUp(self):
+		super().setUp()
+		self.fy = self._fy(2222)
+		self.ctx_a = self._context(self.pe_a, self.fy)
+		self.ctx_b = self._context(self.pe_b, self.fy)
+		self._permit(self.user_one, self.pe_a)
+		self._permit(self.user_one, self.pe_b)
+
+	def _fy(self, start_year: int) -> str:
+		name = f"FY-{start_year}-{start_year + 1}"
+		if not frappe.db.exists("Financial Year", name):
+			doc = frappe.get_doc(
+				{
+					"doctype": "Financial Year",
+					"start_year": start_year,
+					"label": f"{start_year}/{str(start_year + 1)[-2:]}",
+					"start_date": f"{start_year}-07-01",
+					"end_date": f"{start_year + 1}-06-30",
+					"record_status": "Available",
+				}
+			)
+			doc.name = name
+			doc.insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "Financial Year", name, force=True,
+			ignore_missing=True, ignore_permissions=True,
+		)
+		return name
+
+	def _context(self, pe: str, fy: str) -> str:
+		doc = frappe.get_doc(
+			{
+				"doctype": "PE Fiscal Year Context",
+				"procuring_entity": pe,
+				"financial_year": fy,
+				"context_status": "Active",
+				"active_from": "2020-01-01 00:00:00",
+				"active_to": "2099-12-31 23:59:59",
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "PE Fiscal Year Context", doc.name, force=True,
+			ignore_missing=True, ignore_permissions=True,
+		)
+		return doc.name
+
+	def test_selecting_a_context_moves_the_global_pe_and_module_fy(self):
+		from kentender_core.services.reference_data_resolver import select_working_context
+
+		select_working_context("budget", self.ctx_b, self.user_one)
+		self.assertEqual(wc.get_working_pe(self.user_one)["selected"]["id"], self.pe_b)
+		self.assertEqual(
+			frappe.defaults.get_user_default("kt_budget_financial_year", user=self.user_one),
+			self.fy,
+		)
+
+	def test_resolution_follows_a_pe_switched_elsewhere(self):
+		from kentender_core.services.reference_data_resolver import (
+			resolve_working_context,
+			select_working_context,
+		)
+
+		select_working_context("budget", self.ctx_a, self.user_one)
+		# The rail (or any other module) moves the global working PE…
+		wc.select_working_pe(self.pe_b, self.user_one)
+		resolved = resolve_working_context("budget", self.user_one)
+		# …and Budget's next resolution lands in the same entity, keeping its
+		# own remembered year.
+		self.assertIsNotNone(resolved["selected"])
+		self.assertEqual(resolved["selected"]["procuring_entity"]["id"], self.pe_b)
+		self.assertEqual(resolved["selected"]["financial_year"]["id"], self.fy)
+
+
+class TestBudgetDefaultsMigration(WorkingContextCase):
+	def test_patch_splits_and_is_idempotent(self):
+		from kentender_budget.patches.migrate_budget_working_context_defaults import execute
+
+		fy = "FY-2223-2224"
+		if not frappe.db.exists("Financial Year", fy):
+			doc = frappe.get_doc(
+				{
+					"doctype": "Financial Year",
+					"start_year": 2223,
+					"label": "2223/24",
+					"start_date": "2223-07-01",
+					"end_date": "2224-06-30",
+					"record_status": "Available",
+				}
+			)
+			doc.name = fy
+			doc.insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "Financial Year", fy, force=True,
+			ignore_missing=True, ignore_permissions=True,
+		)
+		ctx = frappe.get_doc(
+			{
+				"doctype": "PE Fiscal Year Context",
+				"procuring_entity": self.pe_a,
+				"financial_year": fy,
+				"context_status": "Active",
+				"active_from": "2020-01-01 00:00:00",
+				"active_to": "2099-12-31 23:59:59",
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "PE Fiscal Year Context", ctx.name, force=True,
+			ignore_missing=True, ignore_permissions=True,
+		)
+		frappe.defaults.set_user_default("kt_budget_working_context", ctx.name, user=self.user_one)
+		# Dangling id for the second user — dropped without migrating anything.
+		frappe.defaults.set_user_default("kt_budget_working_context", "CTX-GONE", user=self.user_two)
+
+		execute()
+		execute()  # idempotent
+
+		self.assertEqual(
+			frappe.defaults.get_user_default("kt_budget_financial_year", user=self.user_one), fy
+		)
+		self.assertEqual(
+			frappe.defaults.get_user_default("kt_working_procuring_entity", user=self.user_one),
+			self.pe_a,
+		)
+		for user in (self.user_one, self.user_two):
+			self.assertFalse(
+				frappe.defaults.get_user_default("kt_budget_working_context", user=user)
+			)
+			self.addCleanup(
+				frappe.defaults.clear_user_default, "kt_budget_financial_year", user
+			)
+			self.addCleanup(
+				frappe.defaults.clear_user_default, "kt_working_procuring_entity", user
+			)

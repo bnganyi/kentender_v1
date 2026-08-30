@@ -72,7 +72,20 @@ const railTrail = computed(() => {
 	return items;
 });
 const railEl = ref(null);
-usePageRail(railEl, railTrail);
+// CTX-CHG-001 - the global PE switcher; on a record-bound draft a switch
+// returns to the workspace (the record keeps its own context, rule 6), and
+// on the pre-creation flow it re-resolves the context under the new entity.
+usePageRail(railEl, railTrail, {
+	showPeSwitcher: true,
+	onPeChange: async () => {
+		if (!isNew.value) {
+			frappe.set_route("budget-funding");
+			return;
+		}
+		newContext.value = null;
+		await loadNewContext();
+	},
+});
 
 const form = reactive({
 	approval_reference: "",

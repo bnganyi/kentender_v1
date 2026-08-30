@@ -28,7 +28,12 @@ const railTrail = computed(() => [
 	{ label: detail.value?.budget?.code || budgetIdParam.value },
 ]);
 const railEl = ref(null);
-usePageRail(railEl, railTrail);
+// CTX-CHG-001 - the switcher stays visible on record screens; the record
+// itself keeps its own context (rule 6), so a switch goes to the workspace.
+usePageRail(railEl, railTrail, {
+	showPeSwitcher: true,
+	onPeChange: () => frappe.set_route("budget-funding"),
+});
 
 const loading = ref(true);
 const notFound = ref(false);
