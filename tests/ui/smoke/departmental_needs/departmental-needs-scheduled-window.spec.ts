@@ -31,15 +31,15 @@ test.describe("CTX-CHG-001 workspace context band", () => {
 		await expect(page.locator('[data-testid="nds-intake-state"]')).toHaveText("Open");
 		await expect(page.locator('[data-testid="nds-create-need"]')).toBeVisible();
 
-		// Select the future year: state flips to Scheduled with exact instants,
-		// creation disappears, the notice offers the way back.
+		// Select the future year: state flips to Scheduled with exact instants
+		// and creation disappears. The band alone carries this — the separate
+		// notice panel duplicated it and was removed (user request 2026-08-30).
 		await fySelect.selectOption(SCHEDULED_FY);
 		await expect(page.locator('[data-testid="nds-intake-state"]')).toHaveText("Scheduled");
 		await expect(page.locator('[data-testid="nds-intake-instants"]')).toContainText("Opens");
 		await expect(page.locator('[data-testid="nds-intake-instants"]')).toContainText("Closes");
 		await expect(page.locator('[data-testid="nds-create-need"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="nds-scheduled-notice"]')).toBeVisible();
-		await expect(page.locator('[data-testid="nds-change-fy"]')).toBeVisible();
+		await expect(page.locator('[data-testid="nds-scheduled-notice"]')).toHaveCount(0);
 
 		// And straight back — the selection is never a trap.
 		await fySelect.selectOption(OPEN_FY);

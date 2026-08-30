@@ -260,3 +260,24 @@ without opening each record.
 
 **Fix.** Fold the column and card row into the §11 compositions in the next
 NDS specification version. The NDS-908 baselines already carry them.
+
+---
+
+## FU-13 — frappe app-switcher phantom `/undefined` request poisons console-strict specs (2026-08-30)
+
+**What.** Every Desk page load fires one `GET /undefined` (404, Image).
+Traced via CDP: frappe's `sidebar_header.js` `populate_dropdown_menu()`
+builds a **detached** jQuery fragment (`this.dropdown_menu` resolves empty
+under the current sidebar markup) in which one icon-less dropdown item
+renders `<img src="${item.icon_url}">` with `icon_url` undefined; the parser
+fetches the image even though the fragment never enters the DOM. The console
+error surfaces only intermittently in Playwright, so unrelated specs failed
+their strict `collectConsoleErrors` assertion depending on run order —
+verified pre-existing by a stash-control run.
+
+**Interim.** `tests/ui/smoke/departmental_needs/helpers.ts` ignores exactly
+this resource error (URL ending `/undefined`).
+
+**Fix.** Frappe-core defect; on a frappe upgrade re-test and drop the
+suppression. Alternatively give every KenTender app real desktop-icon/logo
+data so no switcher item lacks both `icon` and `icon_url`.

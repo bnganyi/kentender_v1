@@ -137,6 +137,57 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("filters refresh the table in place — no skeleton flash", async ({ page }) => {
+		/**
+		 * Every search keystroke and status change used to re-enter the full
+		 * loading state, swapping the band and table for the skeleton card on a
+		 * round-trip each time (reported live 2026-08-30). Filter changes now
+		 * load quietly (rows stay mounted) and typing is debounced, so
+		 * data-loading must never flip while filtering.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page, "CGK-DEPT-HEALTH");
+		await expectScreen(page, "workspace");
+		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
+		await expect(row).toBeVisible();
+
+		// The skeleton appears exactly when the shell's data-loading flips, so
+		// zero observed flips proves the screen never flashed.
+		await page.evaluate(() => {
+			const shell = document.querySelector('[data-testid="nds-shell"]');
+			(window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips = 0;
+			new MutationObserver(() => {
+				(window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips += 1;
+			}).observe(shell as Node, { attributes: true, attributeFilter: ["data-loading"] });
+		});
+		let workspaceCalls = 0;
+		page.on("request", (request) => {
+			if (request.url().includes("get_needs_workspace")) workspaceCalls += 1;
+		});
+
+		await page
+			.locator('[data-testid="nds-search"]')
+			.pressSequentially("no-such-need", { delay: 40 });
+		// Filtered-to-empty names the real situation, not "no needs yet".
+		await expect(page.getByText("No needs match your filters")).toBeVisible();
+		await expect(page.getByText("No departmental needs yet")).toHaveCount(0);
+
+		await page.locator('[data-testid="nds-status-filter"]').selectOption("Draft");
+		await page.getByRole("button", { name: "Clear filters" }).click();
+		await expect(row).toBeVisible();
+
+		// Typing was debounced: 12 keystrokes must not mean 12 round-trips.
+		expect(workspaceCalls).toBeLessThanOrEqual(4);
+		expect(
+			await page.evaluate(
+				() => (window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips,
+			),
+		).toBe(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
 	test("a record detail route keeps the Procurement rail", async ({ page }) => {
 		/**
 		 * Frappe's sidebar resolves a 2-segment route through route[1] — here a

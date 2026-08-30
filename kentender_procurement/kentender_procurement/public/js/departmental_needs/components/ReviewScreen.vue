@@ -139,13 +139,21 @@
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 			<div style="font-family: var(--font-heading); font-size: 22px; font-weight: 600">
-				{{ tab === "queue" ? "Nothing awaiting review" : "No departmental needs yet" }}
+				{{
+					filtersActive
+						? "No needs match your filters"
+						: tab === "queue"
+							? "Nothing awaiting review"
+							: "No departmental needs yet"
+				}}
 			</div>
 			<p style="margin: 0; font-size: 14.5px; color: var(--color-neutral-700); max-width: 420px">
 				{{
-					tab === "queue"
-						? "Submitted needs for this department will appear here."
-						: "Needs created for this department and Financial Year will appear here."
+					filtersActive
+						? "Adjust the search or status filter, or clear the filters."
+						: tab === "queue"
+							? "Submitted needs for this department will appear here."
+							: "Needs created for this department and Financial Year will appear here."
 				}}
 			</p>
 		</div>
@@ -215,6 +223,9 @@ const REGISTER_COLUMNS = [
 ];
 
 const columns = computed(() => (props.tab === "queue" ? QUEUE_COLUMNS : REGISTER_COLUMNS));
+
+// Filtered-to-empty is "nothing matched", not "nothing awaiting review".
+const filtersActive = computed(() => !!(props.search || props.status));
 
 const countLabel = computed(() => {
 	const count = props.rows.length;

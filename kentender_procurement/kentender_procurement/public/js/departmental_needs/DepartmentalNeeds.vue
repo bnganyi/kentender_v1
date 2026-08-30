@@ -339,34 +339,51 @@ const reviewRows = computed(() => {
 
 // --- loading ---------------------------------------------------------------
 
-async function load() {
-	loading.value = true;
+// A monotonic token so a superseded load (the user kept typing, or navigated
+// away mid-flight) can never overwrite the newer response's state.
+let loadSeq = 0;
+
+async function load(opts) {
+	// quiet: refresh in place. The skeleton replaces the whole screen, so
+	// flipping `loading` on a mere filter change made every keystroke flash;
+	// a quiet load keeps the current rows visible until the new ones land.
+	const quiet = !!(opts && opts.quiet === true);
+	const seq = ++loadSeq;
+	if (!quiet) loading.value = true;
 	error.value = "";
 	errorSummary.value = "";
 	try {
 		if (screen.value === "task" || screen.value === "withdrawal") {
-			task.value = await api.getDepartmentalReviewTask(taskId.value);
+			const loaded = await api.getDepartmentalReviewTask(taskId.value);
+			if (seq !== loadSeq) return;
+			task.value = loaded;
 			if (screen.value === "withdrawal") {
 				const request = task.value.withdrawal_request || {};
-				dependency.value = await api.checkWithdrawalDependency(
+				const dep = await api.checkWithdrawalDependency(
 					(task.value.need || {}).name,
 					request.accepted_version
 				);
+				if (seq !== loadSeq) return;
+				dependency.value = dep;
 			}
 		} else if (needReference.value) {
-			detail.value = await api.getDepartmentalNeed(needReference.value);
+			const loaded = await api.getDepartmentalNeed(needReference.value);
+			if (seq !== loadSeq) return;
+			detail.value = loaded;
 			usage.value = { usage: detail.value.planning_usage };
 			acceptedBy.value = detail.value.accepted || {};
 			if (screen.value === "editor") await loadUnits();
 		} else {
 			const [entity, unit] = contextKey.value.split("::");
-			workspace.value = await api.getNeedsWorkspace({
+			const loaded = await api.getNeedsWorkspace({
 				procuring_entity: entity || "",
 				organisation_unit: unit || "",
 				financial_year: financialYear.value,
 				search: search.value,
 				status: status.value,
 			});
+			if (seq !== loadSeq) return;
+			workspace.value = loaded;
 			financialYears.value = workspace.value.financial_years || [];
 			// One eligible context loads directly (§12.1).
 			const resolved = workspace.value.context;
@@ -376,18 +393,22 @@ async function load() {
 				if (resolved.financial_year) financialYear.value = resolved.financial_year;
 			}
 			const context = workspace.value.context || {};
-			if (context.procuring_entity) {
-				intake.value = await api.getNeedsIntakeWindow(
+			if (!quiet && context.procuring_entity) {
+				// The intake window depends only on PE/FY, so a quiet filter
+				// refresh keeps the one already shown.
+				const window_ = await api.getNeedsIntakeWindow(
 					context.procuring_entity,
 					context.financial_year
 				);
+				if (seq !== loadSeq) return;
+				intake.value = window_;
 			}
 			if (screen.value === "editor" || screen.value === "intake") await loadUnits();
 		}
 	} catch (e) {
-		error.value = e.message;
+		if (seq === loadSeq) error.value = e.message;
 	} finally {
-		loading.value = false;
+		if (seq === loadSeq) loading.value = false;
 	}
 }
 
@@ -402,10 +423,22 @@ async function loadUnits() {
 }
 
 
-watch([screen, needReference, taskId], load, { immediate: true });
-watch([search, status], () => {
-	if (screen.value === "workspace" || screen.value === "review") load();
-});
+watch([screen, needReference, taskId], () => load(), { immediate: true });
+
+// §12.1 filters — refresh quietly (rows stay on screen) and debounce typing,
+// so the search asks the server once per pause, not once per keystroke.
+let searchDebounce = null;
+function refreshFilters(debounced) {
+	if (screen.value !== "workspace" && screen.value !== "review") return;
+	clearTimeout(searchDebounce);
+	if (debounced) {
+		searchDebounce = setTimeout(() => load({ quiet: true }), 250);
+	} else {
+		load({ quiet: true });
+	}
+}
+watch(search, () => refreshFilters(true));
+watch(status, () => refreshFilters(false));
 
 usePageRail(
 	railEl,

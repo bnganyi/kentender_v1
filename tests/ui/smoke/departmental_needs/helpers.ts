@@ -131,7 +131,16 @@ export async function selectContext(
 export function collectConsoleErrors(page: Page): string[] {
 	const errors: string[] = [];
 	page.on("console", (message) => {
-		if (message.type() === "error") errors.push(message.text());
+		// "Failed to load resource" alone is undiagnosable — name the URL.
+		const url = message.location()?.url;
+		// Known phantom, not ours: frappe's sidebar app-switcher builds a
+		// DETACHED jQuery fragment whose one icon-less item renders
+		// <img src="undefined">; the browser fetches /undefined (404) on every
+		// Desk load though nothing enters the DOM (traced 2026-08-30 via CDP:
+		// parser-initiated Image request, no matching element in any frame).
+		// It surfaced only intermittently, poisoning unrelated specs.
+		if (url && /\/undefined$/.test(url)) return;
+		if (message.type() === "error") errors.push(url ? `${message.text()} (${url})` : message.text());
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));
 	return errors;

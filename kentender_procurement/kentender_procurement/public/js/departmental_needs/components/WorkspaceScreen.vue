@@ -115,7 +115,6 @@
 						</div>
 						<select
 							id="nds-fy-band"
-							ref="fyBandEl"
 							class="kt-input"
 							data-testid="nds-fy-band-select"
 							style="max-width: 180px; padding: 6px 8px; font-size: 13.5px"
@@ -142,32 +141,6 @@
 						</div>
 					</div>
 				</div>
-			</div>
-
-			<!-- CTX-CHG-001 rule 4 — a Scheduled window never traps: records stay
-			     viewable, creation is simply disabled until the window opens, and
-			     another year is one click away. -->
-			<div
-				v-if="intake && intake.state === 'Scheduled'"
-				class="kt-card kt-blueprint"
-				data-testid="nds-scheduled-notice"
-				style="margin-bottom: 16px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px"
-			>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<p style="margin: 0; font-size: 14px">
-					Intake for {{ context.financial_year_label || context.financial_year }} opens
-					{{ formatInstant(intake.opens_at) }}. Existing records are viewable; creating and
-					submitting needs opens then.
-				</p>
-				<button
-					class="kt-btn kt-btn-secondary"
-					data-testid="nds-change-fy"
-					style="flex: none"
-					@click="focusFinancialYear"
-				>
-					Change financial year
-				</button>
 			</div>
 
 			<!-- §12.1 — search matches title or reference; status is the only filter. -->
@@ -213,15 +186,19 @@
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div style="font-family: var(--font-heading); font-size: 22px; font-weight: 600">
-					No departmental needs yet
+					{{ filtersActive ? "No needs match your filters" : "No departmental needs yet" }}
 				</div>
 				<p
 					style="margin: 0 0 8px; font-size: 14.5px; color: var(--color-neutral-700); max-width: 420px"
 				>
-					Create the first need for this department and Financial Year.
+					{{
+						filtersActive
+							? "Adjust the search or status filter, or clear the filters."
+							: "Create the first need for this department and Financial Year."
+					}}
 				</p>
 				<button
-					v-if="canCreate"
+					v-if="canCreate && !filtersActive"
 					class="kt-btn kt-btn-primary"
 					data-testid="nds-create-need-empty"
 					@click="$emit('create')"
@@ -245,7 +222,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import NeedsTable from "./NeedsTable.vue";
 import { formatInstant } from "../data/format.js";
 
@@ -274,12 +251,6 @@ defineEmits([
 	"change-context",
 ]);
 
-const fyBandEl = ref(null);
-
-function focusFinancialYear() {
-	fyBandEl.value?.focus();
-}
-
 const STATUSES = [
 	"Draft",
 	"Submitted",
@@ -300,6 +271,10 @@ const columns = [
 	{ key: "planning_usage", label: "Planning usage", status: true },
 	{ key: "action", label: "Action", align: "right" },
 ];
+
+// An empty list under active filters means "nothing matched", not "nothing
+// exists" — the create-first copy would misstate the workspace.
+const filtersActive = computed(() => !!(props.search || props.status));
 
 // §12.1 — Create need needs both: the server must offer the action (only an
 // author in this context does), and intake must be Open. The intake check

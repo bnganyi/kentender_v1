@@ -35,12 +35,14 @@ documents reference this specification instead of restating context rules.
    | Window state | Permitted behaviour |
    |---|---|
    | Open | Create and initially submit Needs |
-   | Scheduled | View existing records; creation disabled; offer *Change financial year* |
+   | Scheduled | View existing records; creation disabled; the band's FY selector offers the way to another year |
    | Closed | View records and permitted corrections; no new Need or initial submission |
 
    Selecting a future FY before its window opens never traps the user: it
-   disables *Create need* for that year behind an inline notice while another
-   FY stays one click away.
+   disables *Create need* for that year while the band's intake cell shows the
+   Scheduled state with both instants and its FY selector keeps another year
+   one click away. (A separate inline notice panel shipped first and was
+   removed on 2026-08-30 as duplicative of the band.)
 5. **Context persistence.** The last-used selection is a server-side user
    preference (`frappe.defaults`). Selection rules: a single eligible option
    auto-selects; several use the user's last valid module selection; a saved
