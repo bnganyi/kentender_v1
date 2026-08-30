@@ -73,13 +73,18 @@
 					<label for="nds-quantity">Indicative quantity</label>
 					<input
 						id="nds-quantity"
+						ref="quantityEl"
 						data-testid="nds-quantity"
 						class="kt-input"
 						type="number"
 						min="0"
 						step="0.001"
 						v-model="form.indicative_quantity"
+						@input="inputErrors.indicative_quantity = ''"
 					/>
+					<div v-if="inputErrors.indicative_quantity" class="kt-field-error" data-testid="nds-quantity-error">
+						{{ inputErrors.indicative_quantity }}
+					</div>
 				</div>
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-unit">Unit</label>
@@ -96,11 +101,16 @@
 				<label for="nds-required-by">Required by</label>
 				<input
 					id="nds-required-by"
+					ref="requiredByEl"
 					data-testid="nds-required-by"
 					class="kt-input"
 					type="date"
 					v-model="form.required_by_date"
+					@input="inputErrors.required_by_date = ''"
 				/>
+				<div v-if="inputErrors.required_by_date" class="kt-field-error" data-testid="nds-required-by-error">
+					{{ inputErrors.required_by_date }}
+				</div>
 			</div>
 		</div>
 
@@ -109,10 +119,10 @@
 				{{ cancelLabel }}
 			</button>
 			<div style="display: flex; gap: 12px">
-				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending" @click="$emit('save', form)">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending" @click="guardedEmit('save')">
 					Save draft
 				</button>
-				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending" @click="$emit('submit', form)">
+				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending" @click="guardedEmit('submit')">
 					{{ submitLabel }}
 				</button>
 			</div>
@@ -135,10 +145,39 @@ const props = defineProps({
 	fieldErrors: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["save", "submit", "cancel"]);
+const emit = defineEmits(["save", "submit", "cancel"]);
 
 const errorEl = ref(null);
 const titleEl = ref(null);
+const requiredByEl = ref(null);
+const quantityEl = ref(null);
+
+// A native date or number input holding unparseable text keeps the text
+// visible but reports value "" — submitting would silently drop what the
+// user typed (e.g. 31/09/2026) and the server would answer "…is required.",
+// pointing at a field that looks filled in. Surface the real problem instead.
+const inputErrors = reactive({ required_by_date: "", indicative_quantity: "" });
+
+function guardedEmit(event) {
+	inputErrors.required_by_date =
+		requiredByEl.value && requiredByEl.value.validity.badInput
+			? "Required by must be a real calendar date."
+			: "";
+	inputErrors.indicative_quantity =
+		quantityEl.value && quantityEl.value.validity.badInput
+			? "Indicative quantity must be a number."
+			: "";
+	const invalid = inputErrors.required_by_date
+		? requiredByEl.value
+		: inputErrors.indicative_quantity
+			? quantityEl.value
+			: null;
+	if (invalid) {
+		invalid.focus();
+		return;
+	}
+	emit(event, form);
+}
 
 const form = reactive({
 	title: "",

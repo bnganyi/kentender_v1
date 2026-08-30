@@ -11,7 +11,11 @@
 // instead of its real message. Extract the real message from the parsed response body instead.
 export async function frappeCall(method, args) {
 	try {
-		const response = await frappe.call({ method, args, freeze: false });
+		// silent — request.js otherwise raises Frappe's own "Message" modal for
+		// every _server_messages rejection, on top of the screen's inline
+		// error summary (§12.6): the same refusal rendered twice. The message
+		// itself still reaches the caller through extractErrorMessage below.
+		const response = await frappe.call({ method, args, freeze: false, silent: true });
 		return response.message;
 	} catch (xhr) {
 		const err = new Error(extractErrorMessage(xhr));

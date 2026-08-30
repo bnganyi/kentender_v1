@@ -104,4 +104,51 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("an unparseable typed date blocks the submit with a field error", async ({ page }) => {
+		/**
+		 * A native date input holding text that does not parse (the reported
+		 * case: 31/09/2026) keeps the text visible but reports value "" — the
+		 * old behaviour silently dropped it and the server answered
+		 * "Required-by date is required." for a field that looked filled in.
+		 * The editor now refuses to emit and names the real problem.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "/new");
+		await expectScreen(page, "editor");
+		await page.locator('[data-testid="nds-title"]').fill("Unparseable date guard");
+		// Partial keyboard entry leaves the input in the badInput state.
+		await page.locator('[data-testid="nds-required-by"]').click();
+		await page.keyboard.press("3");
+		await page.keyboard.press("1");
+		await page.locator('[data-testid="nds-submit"]').click();
+		await expect(page.locator('[data-testid="nds-required-by-error"]')).toHaveText(
+			"Required by must be a real calendar date.",
+		);
+		// Nothing was sent: no server summary, and the route did not change.
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("a record detail route keeps the Procurement rail", async ({ page }) => {
+		/**
+		 * Frappe's sidebar resolves a 2-segment route through route[1] — here a
+		 * Need reference, never a sidebar — then falls back through the Page's
+		 * Module Def, which replaced the reviewer's rail with Frappe's "Build"
+		 * module sidebar (observed live 2026-08-30). The route-first patch in
+		 * procurement_sidebar_header.js resolves route[0]'s boot alias instead;
+		 * this guards it for direct loads of record routes.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		const rail = page.locator(".body-sidebar");
+		await expect(rail.locator(".sidebar-item-label", { hasText: "Departmental Needs" })).toBeVisible();
+		await expect(rail.locator(".sidebar-item-label", { hasText: "Module Def" })).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
 });
+
