@@ -150,3 +150,93 @@ page's year selector does not filter it.
 `Financial Year` doctype is the stronger candidate — three modules already use
 it) and migrate Procurement Home's selector onto it. Until then, do not add
 Home counters keyed on the integer year.
+
+---
+
+## FU-08 — §10 menu placement now differs from the rail (2026-08-30)
+
+**What.** NDS-CHG-001 v1.1 §10 lists the module menu as three consecutive
+entries: **Departmental Needs**, **Review tasks**, **Intake window**. At the
+user's request the rail now groups every configuration surface under the
+**Configuration and Governance** section, so **Intake window** (NDS-UI-08) is a
+child of that section rather than a flat spine row beside its module. The other
+two entries are unchanged, as are all routes, roles and `display_depends_on`.
+
+**Why it matters.** Frappe nests one level only (`Sidebar.find_nested_items`),
+so a Departmental Needs sub-group *inside* Configuration and Governance is not
+expressible — the choice was flat-beside-module or child-of-configuration, and
+the second was taken. The tests that encoded §10's contiguity
+(`test_departmental_needs_navigation.py`,
+`test_procurement_sidebar_g0_012_contract.py`) were updated to match, so the
+specification is now the only place carrying the old arrangement.
+
+**Fix.** Restate §10 in the next NDS specification version: the module menu is
+two business-flow entries plus one configuration entry that lives in the
+Procurement configuration group.
+
+---
+
+## FU-09 — Frappe forces `target="_blank"` on every `URL` sidebar row (2026-08-30)
+
+**What.** `frappe/public/js/frappe/ui/sidebar/sidebar_item.html` renders
+`target="{%= item.link_type === "URL" ? "_blank" : "" %}"`, so both NDS sub-route
+rows opened a second browser tab. A sub-route cannot be a `Page` link — `link_to`
+is a Dynamic Link validated against a real `Page` record, and a dangling value
+fails the whole-site migrate — so the rows stay `URL` and
+`procurement_sidebar_header.js` (`patchInternalUrlTarget`) strips the target for
+same-origin paths, letting Frappe's own body click handler push-state them.
+
+**Why it matters.** It is a monkey patch over a framework template. A Frappe
+upgrade that changes `TypeLink.prototype.make`, or renames `item-anchor`, makes
+the patch a silent no-op — the rows would start opening new tabs again with no
+test failure, because the JSON contract tests only read the export.
+
+**Fix.** Either carry a Playwright assertion that the rail's `URL` rows have no
+`target` attribute, or upstream a `Frappe`-side option for internal URL rows.
+
+---
+
+## FU-10 — kentender_budget's `frappeCall.js` still double-renders refusals (2026-08-30)
+
+**What.** NDS's `frappeCall.js` now passes `silent: true` so a server refusal
+renders once, in the screen's own inline error summary, instead of also raising
+Frappe's native "Message" modal from `_server_messages`. The adapter is a
+declared verbatim copy of `kentender_budget/public/js/budget_shared/data/
+frappeCall.js` (AGENTS.md §6.6 — each app keeps its own copy), and the Budget
+copy still lacks the flag, so every Budget screen shows each refusal twice.
+
+**Why it matters.** Same defect, different app: fixing it here without running
+Budget's own Playwright suite would have been an unverified cross-app change,
+so it was left. The two copies have now deliberately diverged by one line.
+
+**Fix.** Add `silent: true` to the Budget copy and re-run Budget's UI gate;
+consider asserting `.msgprint` absence in one Budget refusal spec, as
+`departmental-needs-intake-window.spec.ts` now does.
+
+---
+
+## FU-11 — §8.1's Financial Year offer is now scope-filtered (2026-08-30)
+
+**What.** `selectable_financial_years` now intersects the Available, unexpired
+years with the caller's `Financial Year` User Permissions (native semantics: no
+rows = unrestricted; administrative users unrestricted), and `get_workspace`
+resolves a remembered year outside that offer to the single offered year
+instead of carrying it. NDS-CHG-001 v1.1 §8.1 described the plain Available
+list. Observed live: the KEBS foundation seed's `FY-2026-2027` was offered to
+the §14 MoH Planner, whose only year is `FY-2027-2028`; every command in that
+context — her intake-window save included — was a guaranteed
+`NDS_SCOPE_DENIED` at the very end of the flow.
+
+**Why it matters.** The offer and the §17 controls must not drift: offering a
+context every command refuses is the NDS-807 defect class. The commands
+themselves are unchanged and still re-check their own scope.
+
+**Fix.** Restate §8.1's context resolution in the next NDS specification
+version: contexts *and* years are offered only where the caller could act, and
+`can_maintain` on the intake read is scoped to the exact PE/FY (shared
+predicate with `save_needs_intake_window`). The same restatement should cover
+the remembered PE/OU pair: the client stores its last selection per browser
+origin, not per user, so after an account switch `get_needs_workspace` now
+resolves a pair outside the caller's contexts to "unselected" (auto-resolving
+a single context) instead of the previous hard `NDS_SCOPE_DENIED`, which
+dead-ended the next user's first load behind a Try-again loop.
