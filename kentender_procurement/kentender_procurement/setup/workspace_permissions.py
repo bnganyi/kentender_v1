@@ -78,16 +78,10 @@ _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 # and Frappe never calls ``setup()`` — leaving a stale or empty rail.  Keep each
 # settings DocType on at most one shipped sidebar (the main ``Procurement`` rail).
 _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
-	# Keep Planning surfaces nested under the main Procurement IA shell.
+	# Keep Planning surfaces nested under the main Procurement IA shell
+	# (PLN-CHG-001 v1.2: one page; the Stitch/Demand-era keys are gone).
 	"procurement planning": "Procurement",
 	"procurement-planning": "Procurement",
-	"planning-workspace": "Procurement",
-	"planning-hub": "Procurement",
-	"procurement-planning/approved-demands": "Procurement",
-	"approved-demands": "Procurement",
-	"procurement-planning/plans": "Procurement",
-	"plans": "Procurement",
-	"procurement-planning/packages": "Procurement",
 	"packages": "Procurement",
 	"procurement-planning/releases": "Procurement",
 	"releases": "Procurement",
@@ -159,8 +153,7 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		# Hub pages linked from the Procurement rail (Civic Ledger IA).
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",
-		"planning-workspace": "Procurement",
-		"planning-hub": "Procurement",
+		"procurement-planning": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",
 		"procurement-home": "Procurement",

@@ -71,7 +71,7 @@ app_include_css = [
 	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
 	# had its own ensureCss() fallback link-injection for exactly this case.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
-	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -81,7 +81,6 @@ app_include_js = [
 	# (planning_workspace_page.js, planning_register_page.js,
 	# planning_builder_page.js, planning_item_editor_page.js,
 	# planning_review_page.js, planning_approved_page.js).
-	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	# std_prod_engine.js (the legacy std-* route family's shared engine, ~4900
 	# lines) is now lazy-loaded by each of its 7 page_js controllers instead.
@@ -92,9 +91,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
-	# support_plan_view.js is already the page_js controller for route
-	# "support-plan-view" (Frappe lazy-loads it on navigation) — this was a
-	# pure duplicate global load with zero benefit.
 ]
 
 # include js, css files in header of web template
@@ -204,7 +200,6 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
-	"support-plan-view": "public/js/support_plan_view.js",
 	# NDS-CHG-001 v1.1 §10 — one Page for all eight NDS-UI routes; the root
 	# Vue component branches on route segments. The four legacy sub-pages
 	# (-new, -edit, -review, -detail) are removed by patch
@@ -234,12 +229,7 @@ page_js = {
 	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
 	"coming-soon": "public/js/coming_soon_page.js",
 	"publications": "public/js/publications_page.js",
-	"planning-workspace": "public/js/planning_workspace_page.js",
-	"procurement-plan-register": "public/js/planning_register_page.js",
-	"procurement-plan-builder": "public/js/planning_builder_page.js",
-	"procurement-plan-item-editor": "public/js/planning_item_editor_page.js",
-	"procurement-plan-review": "public/js/planning_review_page.js",
-	"procurement-plan-approved": "public/js/planning_approved_page.js",
+	"procurement-planning": "public/js/procurement_planning_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
@@ -496,6 +486,7 @@ boot_session = [
 # collects providers through this hook; core never imports this app).
 kt_my_work_providers = [
 	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
+	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
@@ -512,7 +503,6 @@ fixtures = [
 				[
 					"Governance & Configuration",
 					"Procurement Home",
-					"Procurement Planning",
 				],
 			]
 		],

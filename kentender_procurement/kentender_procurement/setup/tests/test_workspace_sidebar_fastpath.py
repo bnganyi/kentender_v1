@@ -49,8 +49,8 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		planning = items.get("procurement planning") or {}
 		planning_labels = [row.get("label") for row in planning.get("items") or []]
 		self.assertIn("Home", planning_labels)
-		# Civic Ledger IA: single canonical flat Procurement Plans link (P5-001).
-		self.assertIn("Procurement Plans", planning_labels)
+		# PLN-CHG-001 v1.2: single canonical flat Procurement Planning link (P5-001).
+		self.assertIn("Procurement Planning", planning_labels)
 		self.assertNotIn("Planning", planning_labels)
 		self.assertNotIn("Configuration", planning_labels)
 		for key in (
@@ -197,10 +197,10 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		proc = items.get("procurement") or {}
 		self.assertTrue(len(proc.get("items") or []) > 0)
+		# PLN-CHG-001 v1.2 — the module's route prefixes; the Demand-era
+		# "plans"/"releases" sub-route keys were retired with the Stitch UI.
 		for route_key in (
 			"procurement-planning",
-			"procurement-planning/plans",
-			"procurement-planning/releases",
 		):
 			self.assertIn(route_key, items, msg=f"PP3 route {route_key!r} requires boot fast-path key")
 			payload = items[route_key]

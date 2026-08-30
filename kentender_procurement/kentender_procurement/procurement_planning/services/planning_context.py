@@ -7,7 +7,6 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, getdate
 
-from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ALL_PLANNING_ROLES,
 )
@@ -54,7 +53,29 @@ def _authorised_entities(actor: str) -> list[dict[str, str]]:
 
 
 def _selectable_years(pe: str) -> tuple[list[dict[str, Any]], set[str]]:
-	periods = enabled_fiscal_years(include_past=True)
+	"""§10 — eligible Financial Years derive from configured FY/context
+	records (`PE Fiscal Year Context` + `Financial Year`), never from a user
+	assignment. The pre-v1.2 read of the ERPNext `Fiscal Year` doctype is gone
+	(it was the CTX-FU-02 vocabulary split: Planning's model links
+	`Financial Year`)."""
+	from frappe.utils import getdate, nowdate
+
+	today = getdate(nowdate())
+	contexts = frappe.get_all(
+		"PE Fiscal Year Context",
+		filters={"procuring_entity": pe, "context_status": "Active"},
+		pluck="financial_year",
+		limit_page_length=0,
+	)
+	if not contexts:
+		return [], set()
+	years = frappe.get_all(
+		"Financial Year",
+		filters={"name": ["in", contexts], "record_status": "Available"},
+		fields=["name", "label", "start_date", "end_date"],
+		order_by="start_date asc",
+		limit_page_length=0,
+	)
 	open_fys = set(frappe.get_all(
 		"Annual Plan",
 		filters={"procuring_entity": pe},
@@ -62,10 +83,29 @@ def _selectable_years(pe: str) -> tuple[list[dict[str, Any]], set[str]]:
 		limit_page_length=0,
 	))
 	options: list[dict[str, Any]] = []
-	for row in periods:
-		has_plan = row["id"] in open_fys
-		if row["is_current"] or row["is_future"] or has_plan:
-			options.append({**row, "has_open_plan": has_plan, "planning_open": bool(not row["is_past"] or has_plan)})
+	for row in years:
+		start, end = getdate(row.start_date), getdate(row.end_date)
+		is_current = start <= today <= end
+		is_future = start > today
+		is_past = end < today
+		has_plan = row.name in open_fys
+		if is_current or is_future or has_plan:
+			label = cstr(row.label)
+			if label and not label.upper().startswith("FY"):
+				label = f"FY {label}"
+			options.append(
+				{
+					"id": row.name,
+					"label": label or row.name,
+					"start_date": cstr(row.start_date),
+					"end_date": cstr(row.end_date),
+					"is_current": is_current,
+					"is_future": is_future,
+					"is_past": is_past,
+					"has_open_plan": has_plan,
+					"planning_open": bool(not is_past or has_plan),
+				}
+			)
 	return options, open_fys
 
 

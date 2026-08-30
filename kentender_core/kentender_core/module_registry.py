@@ -68,18 +68,20 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"sidebar_parent": "Procurement",
 	},
 	"procurement_planning": {
+		# PLN-CHG-001 v1.2 — one Vue-in-Desk page owns the workspace and its
+		# task deep links; record pages arrive with their slices.
 		"workspace_label": "Procurement Planning",
 		"sidebar_workspace_key": "procurement planning",
-		"desk_page": "planning-workspace",
-		"builder_page": "procurement-plan-builder",
-		"form_doctype": "Procurement Plan",
+		"desk_page": "procurement-planning",
+		"builder_page": "procurement-planning",
+		"form_doctype": "Annual Plan",
 		"state_key": "kt_pp_workbench_state",
 		"select_key": "kt_pp_workspace_select",
 		"route_prefixes": (
-			"planning-workspace",
-			"procurement-plan-register",
-			"procurement-plan-builder",
-			"Form/Procurement Plan",
+			"procurement-planning",
+			"departmental-procurement-plan",
+			"annual-procurement-plan",
+			"procurement-plan-item",
 		),
 		"sidebar_parent": "Procurement",
 	},

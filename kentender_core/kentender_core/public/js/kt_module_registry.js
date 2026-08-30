@@ -78,15 +78,16 @@ frappe.provide("kentender_core.module_registry");
 		},
 		procurement_planning: {
 			id: "procurement_planning",
-			workspaceSlug: "planning-workspace",
-			builderPage: "procurement-plan-builder",
+			// PLN-CHG-001 v1.2 — one Vue-in-Desk page; record pages arrive with their slices.
+			workspaceSlug: "procurement-planning",
+			builderPage: "procurement-planning",
 			workbenchLabel: __("Procurement Planning"),
 			backLabel: __("Back to Procurement Planning"),
 			sidebarWorkspaceKey: "procurement planning",
-			formDoctype: "Procurement Plan",
+			formDoctype: "Annual Plan",
 			stateKey: "kt_pp_workbench_state",
 			selectKey: "kt_pp_workspace_select",
-			routePrefixes: ["planning-workspace", "procurement-plan-register", "procurement-plan-builder", "Form/Procurement Plan"],
+			routePrefixes: ["procurement-planning", "departmental-procurement-plan", "annual-procurement-plan", "procurement-plan-item"],
 			taskLabels: {
 				form: __("Edit Plan"),
 			},

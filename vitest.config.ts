@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
 	test: {
@@ -15,6 +16,20 @@ export default defineConfig({
 					name: "std-engine-jsdom",
 					environment: "jsdom",
 					include: ["frontend/src/**/*.spec.tsx"],
+				},
+			},
+			{
+				// PLN-CHG-001 v1.2 §15.1(5) (decision D9) — real SFC component
+				// tests for the Procurement Planning screens: exact fields,
+				// absent fields, task detail, errors, dialog copy and action
+				// visibility, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "procurement-planning",
+					environment: "jsdom",
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/procurement_planning/**/*.spec.js",
+					],
 				},
 			},
 			{

@@ -6,8 +6,8 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-scope-auth-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
-.PHONY: ui-planning-builder-gate ui-planning-finance-gate ui-planning-approval-gate ui-planning-mvp1-gate ui-planning-a11y-gate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY:
 
 help:
 	@echo "Targets:"
@@ -68,14 +68,9 @@ help:
 	@echo "  make ui-civic-ledger-wg03-gate — WG-03 Document Preview (document artifact path) gate"
 	@echo "  make pub-domain-gate SITE=$(SITE) — Tender Publications domain API tests"
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
-	@echo "  make ui-demands-workspace-gate ui-planning-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
-	@echo "  make ui-planning-workspace-gate — Planning Gate 03 (PLN-UI-01…03) chrome + API + Playwright"
-	@echo "  make ui-planning-builder-gate — Planning Gate 04 (PLN-UI-04…06) chrome + API + Playwright"
-	@echo "  make ui-planning-finance-gate — PLN-UI-07/07A Finance confirm (SVC-007/008) domain + Playwright"
-	@echo "  make ui-planning-approval-gate — Planning Gate 05 (PLN-UI-08 review/approval + C02 absence)"
-	@echo "  make ui-planning-scope-auth-gate — PLN-GATE-C01 scope + task authority + route denial"
-	@echo "  make ui-planning-mvp1-gate — PLN-GATE-C07 seed/SCN + one chrome pass + Planning Playwright"
-	@echo "  make ui-planning-a11y-gate — PLN-NFR-004 labels / keyboard / focus / error association"
+	@echo "  make ui-demands-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
+	@echo "  make ui-planning-workspace-gate — PLN-CHG-001 v1.2 Slice A: workspace domain + vitest + Playwright"
+	@echo "  make — PLN-GATE-C01 scope + task authority + route denial"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
 	@echo "  make ui-demands-review-gate ui-demands-detail-gate — Demand review chrome gate + DEM-UI-04…08 API + Playwright"
 	@echo "  make ui-demands-detail-gate — Approved Demand detail (DEM-UI-09…09D) API + Playwright"
@@ -461,99 +456,19 @@ ui-demands-workspace-gate:
 		tests/ui/smoke/demands/demands-workspace.spec.ts
 
 # PLN-GATE-03 — workspace / register / empty builder (PLN-UI-01…03).
-ui-planning-workspace-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_workspace_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_register_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+# PLN-CHG-001 v1.2 — Planning gates are rebuilt slice by slice; each slice's
+# gate replaces its Stitch-era predecessor as its surface lands. Retired with
+# the Stitch UI (Phase 3): ui-planning-builder-gate, ui-planning-finance-gate,
+# ui-planning-approval-gate, ui-planning-scope-auth-gate, ui-planning-mvp1-gate,
+# ui-planning-a11y-gate — their v1.2 successors arrive with Phases 4-12.
+ui-planning-workspace-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_workspace
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_api_requests
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-workspace.spec.ts \
-		tests/ui/smoke/planning/planning-register.spec.ts \
-		tests/ui/smoke/planning/planning-builder.spec.ts
-
-# PLN-GATE-04 — Demand modal / populated builder / Plan Item editor (PLN-UI-04…06).
-ui-planning-builder-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_list_eligible_demands
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_add_demand_to_plan_gate04
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_update_plan_item
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_remove_plan_item
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_aggregate_plan_allocations
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_validate_plan
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-builder.spec.ts \
-		tests/ui/smoke/planning/planning-add-demand.spec.ts \
-		tests/ui/smoke/planning/planning-plan-item-editor.spec.ts \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
-
-# PLN-UI-07 / SVC-007 — Finance confirmation (sufficient) + 07A drawer/API reject.
-ui-planning-finance-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_fund_short_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_plan_item_finance
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-finance-confirm.spec.ts
-
-# PLN-GATE-05 — Consolidated review/approval (PLN-UI-08 / PLN-SVC-009…011).
-# Contribution gate removed in PLN-GATE-C02 (use test_planning_contribution_absent).
-ui-planning-approval-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_contribution_absent
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_submit_plan_for_review
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_record_plan_decision
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_approve_plan_version_gate05
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-plan-review.spec.ts
-
-# PLN-GATE-C01 — Scope + task authority (record vs task vs mutation; route denial).
-ui-planning-scope-auth-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_task_capability
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_permissions_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_pe_scope_selection
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-task-route-denial.spec.ts
-
-# PLN-GATE-C07 — canonical seed / SCN-ADD close-out. Chrome once; do not nest leaf chrome.
-ui-planning-mvp1-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_add_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_mvp_seed_contract
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_remove_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_fund_short_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_rem009_absent
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-plan-approved.spec.ts \
-		tests/ui/smoke/planning/planning-plan-update.spec.ts \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
-
-# PLN-NFR-004 — labels, keyboard, visible focus, error association (not WCAG AA).
-ui-planning-a11y-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
+		tests/ui/smoke/planning/planning-workspace.spec.ts
 
 ui-demands-form-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \

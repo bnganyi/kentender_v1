@@ -192,3 +192,14 @@ def accept_departmental_plan(
 		task_token=task_token,
 		idempotency_key=idempotency_key,
 	)
+
+
+@frappe.whitelist()
+def get_planning_workspace(
+	procuring_entity: str | None = None, financial_year: str | None = None
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import workspace
+
+	return workspace.get_planning_workspace(
+		procuring_entity=procuring_entity, financial_year=financial_year
+	)

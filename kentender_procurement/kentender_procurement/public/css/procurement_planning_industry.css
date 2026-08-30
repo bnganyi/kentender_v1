@@ -1,0 +1,152 @@
+/* Procurement Planning — PLN-CHG-001 v1.2 §11 supplementary Industry classes.
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
+ * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-skel …). The
+ * PLN-DES artboards define a handful of layout classes on top of it in their
+ * <helmet><style> blocks; those are ported here, scoped under .kt-pln so no
+ * rule can collide with another module's port of similarly named artboard
+ * classes (every app_include_css file is global).
+ *
+ * Nothing here restyles a shared class; a change to .kt-card or .kt-btn
+ * belongs in kt_industry_tokens.css.
+ */
+
+/* The artboards use un-prefixed custom properties (--color-*, --font-*) while
+ * the shared system defines only --kt-* tokens; every such var() would
+ * silently resolve to nothing (the NDS lesson). Alias the family once. */
+.kt-industry.kt-pln {
+	--color-bg: var(--kt-color-bg);
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-700: var(--kt-color-accent-800);
+	--color-neutral-100: var(--kt-color-surface);
+	--color-neutral-200: var(--kt-color-divider);
+	--color-neutral-600: #5b5e61;
+	--color-neutral-700: #44474a;
+	--color-neutral-800: #313437;
+	--color-divider: var(--kt-color-divider);
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
+/* PLN-DES-01 page content column: 1200px, 32px vertical padding (§11.1). */
+.kt-pln .kt-shell {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 32px 24px;
+}
+
+.kt-pln .pln-masthead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 24px;
+}
+
+/* PLN-DES-01 planning context row */
+.kt-pln .pln-strip {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-end;
+	gap: 24px;
+	padding: 16px 20px;
+	margin-top: 24px;
+}
+.kt-pln .pln-strip-field {
+	min-width: 220px;
+}
+.kt-pln .pln-strip-field label {
+	display: block;
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 4px;
+}
+.kt-pln .pln-strip-quiet {
+	margin-left: auto;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+}
+
+.kt-pln .pln-cards-col {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-top: 16px;
+}
+.kt-pln .pln-card-pad {
+	padding: 20px;
+}
+
+/* PLN-DES table treatment (ported from the _ds .table rules) */
+.kt-pln .pln-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+.kt-pln .pln-table th {
+	text-align: left;
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 13px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-text);
+	padding: 4px 16px;
+	border-bottom: 2px solid color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.kt-pln .pln-table td {
+	padding: 8px 16px;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.kt-pln .pln-table tbody tr:hover {
+	background: var(--color-neutral-100);
+}
+.kt-pln .pln-num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-pln .pln-table-caption {
+	margin: 10px 2px 0;
+	font-size: 13px;
+}
+
+/* PLN-DES-16 state cards */
+.kt-pln .pln-state-card {
+	padding: 32px 24px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	min-height: 200px;
+	justify-content: center;
+	margin-top: 16px;
+}
+.kt-pln .pln-state-card h3 {
+	font-family: var(--font-heading);
+	margin: 0;
+	font-size: 20px;
+}
+.kt-pln .pln-state-card p {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+	max-width: 40ch;
+}
+.kt-pln .pln-support-ref {
+	font-size: 12px;
+	color: var(--color-neutral-600);
+	margin-top: 4px;
+}
+
+.kt-pln .pln-skel-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr 1fr;
+	gap: 16px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--color-neutral-200);
+}

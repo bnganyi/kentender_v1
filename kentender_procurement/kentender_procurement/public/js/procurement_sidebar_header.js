@@ -156,7 +156,7 @@
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
 			["/desk/departmental-needs"],
 			["/desk/budget-hub", "/desk/budget-management"],
-			["/desk/planning-workspace", "/desk/procurement-planning", "/desk/planning-hub"],
+			["/desk/procurement-planning"],
 			["/desk/strategy-management"],
 		];
 		for (var g = 0; g < groups.length; g++) {

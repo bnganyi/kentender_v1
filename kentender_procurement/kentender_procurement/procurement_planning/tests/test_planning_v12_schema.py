@@ -9,9 +9,9 @@ option); (2) no removed-concept token survives in the module's server code
 (§1.1); (3) the Demand-era doctypes are gone and the composite uniqueness
 constraints for invariants 2/7/17/24 exist and actually reject duplicates.
 
-Scan scope note: the static scan covers doctype/, services/, seeds/, tests/
-and api.py. The legacy Stitch page/ directory is excluded until Phase 3
-deletes it (decision D10); Phase 3 widens the scan to the whole module.
+Scan scope note: the static scan covers the whole module — doctype/,
+services/, seeds/, tests/, page/ and api.py (page/ joined in Phase 3 when
+the Stitch pages were demolished, D10).
 """
 
 from __future__ import annotations
@@ -161,7 +161,7 @@ PROHIBITED_TOKENS = (
 	"require_capability",
 )
 
-SCAN_DIRS = ("doctype", "services", "seeds", "tests")
+SCAN_DIRS = ("doctype", "services", "seeds", "tests", "page")  # page/ added in Phase 3 (D10)
 
 UNIQUE_INDEXES = {
 	("tabDepartmental Plan", "pln_uniq_dpp_root"),

@@ -76,10 +76,9 @@
    "icon": "kanban",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Procurement Plans",
-   "link_to": "coming-soon",
+   "label": "Procurement Planning",
+   "link_to": "procurement-planning",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Procurement Plans\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -280,7 +279,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-31 01:47:28.357192",
+ "modified": "2026-08-31 10:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

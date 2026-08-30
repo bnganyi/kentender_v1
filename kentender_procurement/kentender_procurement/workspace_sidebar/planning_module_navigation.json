@@ -12,15 +12,15 @@
    "icon": "kanban",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Procurement Plans",
-   "link_to": "planning-workspace",
+   "label": "Procurement Planning",
+   "link_to": "procurement-planning",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/planning-workspace"
+   "url": "/desk/procurement-planning"
   }
  ],
- "modified": "2026-08-31 01:47:28.338595",
+ "modified": "2026-08-31 10:30:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Planning module navigation",

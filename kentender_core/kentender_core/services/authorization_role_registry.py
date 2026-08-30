@@ -86,7 +86,6 @@ CAPABILITY_ROLE_MAP: dict[str, str] = {
 	"departmental_needs.review": "Head of User Department",
 	"departmental_needs.read_accepted_for_planning": "Procurement Planner",
 	"departmental_needs.oversight_read": "Auditor",
-	"procurement_planning.need_allocate": "Procurement Planner",
 	# Strategy — READY (STR-CHG-001 v1.5: review capability retired)
 	"strategy.plan_version.author": "Strategy Author",
 	"strategy.plan_version.approve": "Strategy Approver",

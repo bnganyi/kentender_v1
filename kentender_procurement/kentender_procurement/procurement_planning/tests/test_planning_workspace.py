@@ -1,0 +1,153 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""PLN-CHG-001 v1.2 §12.1 workspace read-model tests (Phase 3).
+
+The read-offer parity rules (NDS-807/NDS-911 class): every open task the
+actor may decide appears as a row, nothing is offered that the command layer
+would refuse, and a read creates no record."""
+
+from __future__ import annotations
+
+from unittest.mock import patch
+from uuid import uuid4
+
+import frappe
+from frappe.tests import IntegrationTestCase
+
+from kentender_procurement.procurement_planning.services import (
+	budget_gateway,
+	dpp_lifecycle,
+	needs_intake,
+	workspace,
+)
+from kentender_procurement.procurement_planning.tests import fixtures as fx
+
+
+def key() -> str:
+	return uuid4().hex
+
+
+class WorkspaceCase(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		frappe.set_user("Administrator")
+		fx.ensure_world()
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user("Administrator")
+		fx.wipe_planning_rows()
+		self.addCleanup(frappe.set_user, "Administrator")
+		for target, attr, value in (
+			(budget_gateway, "eligible_line_ids", {fx.BUDGET_LINE}),
+			(needs_intake, "current_accepted_sources", []),
+		):
+			patched = patch.object(target, attr, return_value=value)
+			patched.start()
+			self.addCleanup(patched.stop)
+
+	def load(self, user):
+		frappe.set_user(user)
+		return workspace.get_planning_workspace(
+			procuring_entity=fx.PE, financial_year=fx.FY_OPEN, user=user
+		)
+
+	def submitted(self):
+		frappe.set_user(fx.AUTHOR)
+		opened = dpp_lifecycle.open_departmental_plan(
+			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
+			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		return dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+
+
+class TestWorkspace(WorkspaceCase):
+	def test_no_scope_user_fails_closed_without_record_creation(self):
+		before = frappe.db.count("Departmental Plan")
+		result = self.load(fx.OUTSIDER)  # holds a role but no PE permission
+		self.assertEqual(result["outcome"], "NO_SCOPE")
+		self.assertEqual(frappe.db.count("Departmental Plan"), before)
+
+	def test_author_is_offered_their_departments_plan_and_only_theirs(self):
+		frappe.set_user(fx.AUTHOR)
+		dpp_lifecycle.open_departmental_plan(
+			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
+			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		result = self.load(fx.AUTHOR)
+		self.assertEqual(result["outcome"], "OK")
+		departments = [row["department"] for row in result["departmental_plans"]]
+		self.assertEqual(departments, ["Alpha Department"])
+		items = [row["item"] for row in result["your_work"]]
+		self.assertIn("Continue departmental plan", items)
+
+	def test_every_open_validation_task_is_offered_to_the_planner(self):
+		self.submitted()
+		result = self.load(fx.PLANNER)
+		validate_rows = [
+			row for row in result["your_work"] if row["item"] == "Validate departmental plan"
+		]
+		open_tasks = frappe.db.count(
+			"Departmental Plan Validation Task",
+			{"procuring_entity": fx.PE, "status": "Open"},
+		)
+		self.assertEqual(len(validate_rows), open_tasks)
+		self.assertGreater(open_tasks, 0)
+		self.assertEqual(validate_rows[0]["scope"], "Alpha Department")
+
+	def test_auditor_sees_rows_but_is_offered_no_work(self):
+		self.submitted()
+		result = self.load(fx.AUDITOR)
+		self.assertEqual(result["outcome"], "OK")
+		self.assertEqual(result["your_work"], [])
+		self.assertEqual(len(result["departmental_plans"]), 1)
+
+	def test_workspace_read_creates_nothing(self):
+		counts = {
+			d: frappe.db.count(d)
+			for d in ("Departmental Plan", "Annual Plan", "Planning Command Journal")
+		}
+		self.load(fx.PLANNER)
+		for doctype, count in counts.items():
+			self.assertEqual(frappe.db.count(doctype), count, doctype)
+
+	def test_closed_window_shows_not_included_and_critical_status(self):
+		self._sources = patch.object(
+			needs_intake, "current_accepted_sources",
+			return_value=[fx.accepted_source()],
+		)
+		self._sources.start()
+		self.addCleanup(self._sources.stop)
+		frappe.set_user(fx.AUTHOR)
+		dpp_lifecycle.open_departmental_plan(
+			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
+			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		window = frappe.get_doc(
+			"Departmental Plan Submission Window", {"pe_fy_context": fx.CTX_OPEN}
+		)
+		original = window.closes_at
+		frappe.db.set_value(
+			"Departmental Plan Submission Window", window.name,
+			"closes_at", "2020-02-01 00:00:00", update_modified=False,
+		)
+		self.addCleanup(
+			frappe.db.set_value,
+			"Departmental Plan Submission Window", window.name, "closes_at", original,
+		)
+		result = self.load(fx.PLANNER)
+		self.assertIn("not included because the departmental-plan submission window closed",
+		              result["not_included_message"])
+		row = result["departmental_plans"][0]
+		self.assertEqual(row["status"], "Not submitted — window closed")
+		self.assertEqual(row["status_kind"], "critical")
