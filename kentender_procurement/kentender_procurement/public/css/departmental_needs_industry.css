@@ -11,6 +11,28 @@
  * .kt-card or .kt-btn, it belongs in kt_industry_tokens.css instead.
  */
 
+/* The NDS-DES artboard helmet styles below were ported verbatim, and they use
+ * un-prefixed custom properties (--color-*, --font-*, --radius-*) while the
+ * shared Industry system defines only --kt-* tokens (kt_industry_tokens.css).
+ * Every such var() silently resolved to nothing — the sticky page footer, for
+ * one, rendered with no background and let the form scroll through it. This
+ * block defines the whole un-prefixed family once, on the same scope, aliased
+ * onto the shared tokens (with a small neutral scale the shared set lacks),
+ * so each rule below resolves the value the artboard intended. */
+.kt-industry {
+	--color-bg: var(--kt-color-bg);
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-700: var(--kt-color-accent-800);
+	--color-neutral-100: var(--kt-color-surface);
+	--color-neutral-200: var(--kt-color-divider);
+	--color-neutral-600: #5b5e61;
+	--color-neutral-700: #44474a;
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
 /* NDS-DES-01/02/05/06/07/10/12 — status pill. Colour is never the only carrier
  * of state (§12.8): every pill also renders its own text label. */
 .kt-industry .kt-status {
