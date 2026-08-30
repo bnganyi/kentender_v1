@@ -139,6 +139,23 @@ def _actor(email: str, full_name: str, roles: tuple[str, ...], *, unit: bool) ->
 		base._user_permission(email, doctype, value)
 
 
+CONTEXT_PREFERENCE_KEYS = (
+	"kt_working_procuring_entity",
+	"kt_needs_org_unit",
+	"kt_needs_financial_year",
+)
+
+
+def _clear_context_preferences(*users: str) -> None:
+	"""CTX-CHG-001 — the working context is a per-user SERVER preference now,
+	so it survives across the serial spec files the way localStorage never
+	did. Every fixture reset clears the actors' remembered context, keeping
+	each spec file's starting state deterministic."""
+	for user in users or (AUTHOR, REVIEWER, PLANNER):
+		for key in CONTEXT_PREFERENCE_KEYS:
+			frappe.defaults.clear_user_default(key, user)
+
+
 def ensure_actors() -> dict[str, str]:
 	"""Three single-context actors, one per §6 role the specs log in as."""
 	_guard()
@@ -147,6 +164,7 @@ def ensure_actors() -> dict[str, str]:
 	# §14.2 — the Planner is scoped by PE and FY only; requiring a department
 	# of them would deny the read access §6 grants.
 	_actor(PLANNER, "Playwright Planner", (ROLE_PROCUREMENT_PLANNER,), unit=False)
+	_clear_context_preferences()
 	return {"author": AUTHOR, "reviewer": REVIEWER, "planner": PLANNER}
 
 
@@ -413,6 +431,64 @@ def reset_open_intake_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {"need": created["need"], "state": "Draft"}
+
+
+SCHEDULED_FY = "FY-2098-2099"
+SCHEDULED_WINDOW = f"NDS-IW-{PE}-{SCHEDULED_FY}"
+
+
+def reset_scheduled_window_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""CTX-CHG-001 rule 4 — a second selectable year whose intake is Scheduled.
+
+	The author may pick FY 2098/99 in the band, sees the Scheduled state with
+	its exact instants, cannot create, and is never trapped: the band offers
+	the way back to the Open year. Instants far future so the derived state
+	and the rendered text never roll (the NDS-908 lesson).
+	"""
+	_guard()
+	reset_open_intake_fixture(commit=False)
+	if not frappe.db.exists("Financial Year", SCHEDULED_FY):
+		doc = frappe.get_doc(
+			{
+				"doctype": "Financial Year",
+				"start_year": 2098,
+				"label": "2098/99",
+				"start_date": "2098-07-01",
+				"end_date": "2099-06-30",
+				"record_status": "Available",
+			}
+		)
+		doc.name = SCHEDULED_FY
+		doc.insert(ignore_permissions=True)
+	for user in (AUTHOR, REVIEWER, PLANNER):
+		if not frappe.db.exists(
+			"User Permission", {"user": user, "allow": "Financial Year", "for_value": SCHEDULED_FY}
+		):
+			frappe.get_doc(
+				{
+					"doctype": "User Permission",
+					"user": user,
+					"allow": "Financial Year",
+					"for_value": SCHEDULED_FY,
+				}
+			).insert(ignore_permissions=True)
+		frappe.clear_cache(user=user)
+	if not frappe.db.exists("Needs Intake Window", SCHEDULED_WINDOW):
+		frappe.get_doc(
+			{
+				"doctype": "Needs Intake Window",
+				"needs_intake_window_id": SCHEDULED_WINDOW,
+				"procuring_entity": PE,
+				"financial_year": SCHEDULED_FY,
+				"opens_at": "2098-07-01 00:00:00",
+				"closes_at": "2098-09-30 23:59:59",
+				"record_version": 0,
+				"fixture_namespace": NS_PW,
+			}
+		).insert(ignore_permissions=True)
+	if commit:
+		frappe.db.commit()
+	return {"financial_year": SCHEDULED_FY, "window": SCHEDULED_WINDOW, "state": "Scheduled"}
 
 
 def reset_intake_window_fixture() -> dict[str, Any]:

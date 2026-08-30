@@ -395,6 +395,99 @@ class TestRememberedContextHealing(DepartmentalNeedsPermissionCase):
 		self.assertEqual(offer["needs"], [])
 
 
+class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
+	"""CTX-CHG-001 — the working context is a server-side user preference.
+
+	Browser storage grants nothing and remembers nothing authoritative: an
+	explicit pick persists per user on the server (global working PE, this
+	module's OU and FY), resolves on the next request, never leaks between
+	users, and never gates a direct record link.
+	"""
+
+	CONTEXT_KEYS = (
+		"kt_working_procuring_entity",
+		"kt_needs_org_unit",
+		"kt_needs_financial_year",
+	)
+
+	def clear_preferences(self, *users) -> None:
+		for user in users:
+			for key in self.CONTEXT_KEYS:
+				frappe.defaults.clear_user_default(key, user)
+
+	def setUp(self):
+		super().setUp()
+		self.clear_preferences(AUTHOR, REVIEWER)
+		self.addCleanup(self.clear_preferences, AUTHOR, REVIEWER)
+
+	def test_an_explicit_selection_is_remembered_server_side(self):
+		frappe.set_user(AUTHOR)
+		picked = workspace.get_workspace(
+			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+		)
+		self.assertEqual(picked["outcome"], "READY")
+		# Rule 5.2 — a bare next request resolves the last valid selection.
+		resolved = workspace.get_workspace()
+		self.assertEqual(resolved["outcome"], "READY")
+		self.assertEqual(resolved["context"]["organisation_unit"], OU_DIGITAL_HEALTH)
+
+	def test_preferences_never_leak_between_users(self):
+		frappe.set_user(AUTHOR)
+		workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
+		# The reviewer shares the browser in the field; here they share nothing
+		# but the server — their own resolution must still prompt.
+		frappe.set_user(REVIEWER)
+		fresh = workspace.get_workspace()
+		self.assertEqual(fresh["outcome"], "CONTEXT_SELECTION_REQUIRED")
+
+	def test_the_module_financial_year_is_remembered(self):
+		other = "FY-2098-2099"
+		if not frappe.db.exists("Financial Year", other):
+			doc = frappe.get_doc(
+				{
+					"doctype": "Financial Year",
+					"start_year": 2098,
+					"label": "2098/99",
+					"start_date": "2098-07-01",
+					"end_date": "2099-06-30",
+					"record_status": "Available",
+				}
+			)
+			doc.name = other
+			doc.insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc, "Financial Year", other, force=True,
+			ignore_missing=True, ignore_permissions=True,
+		)
+		_user_permission(AUTHOR, "Financial Year", other)
+		self.addCleanup(
+			frappe.db.delete,
+			"User Permission",
+			{"user": AUTHOR, "allow": "Financial Year", "for_value": other},
+		)
+		frappe.clear_cache(user=AUTHOR)
+		self.addCleanup(frappe.clear_cache, user=AUTHOR)
+
+		frappe.set_user(AUTHOR)
+		picked = workspace.get_workspace(
+			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=other
+		)
+		self.assertEqual(picked["context"]["financial_year"], other)
+		resolved = workspace.get_workspace()
+		self.assertEqual(resolved["context"]["financial_year"], other)
+
+	def test_a_direct_record_link_ignores_the_working_preference(self):
+		"""Rule 6 — a record opens under its own stored context after
+		permission validation, whatever the preference happens to say."""
+		frappe.defaults.set_user_default(
+			"kt_working_procuring_entity", "PE-CGKIS", user=AUTHOR
+		)
+		frappe.set_user(AUTHOR)
+		read = workspace.get_need(need="NDS-MOH-2027-0001")
+		self.assertTrue(read["ok"])
+		self.assertEqual(read["need"]["procuring_entity"], PE)
+
+
 class TestPlannerAuthority(DepartmentalNeedsPermissionCase):
 	"""NDS-AC-043 — maintains the intake window, receives no Need decision."""
 

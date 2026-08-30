@@ -12,7 +12,55 @@
 
 		<div v-if="error" class="kt-error-summary" role="alert">{{ error }}</div>
 
-		<ContextCard :items="contextItems" />
+		<!-- CTX-CHG-001 rule 4 — the reviewer's band also keeps the department
+		     changeable and the Financial Year a live selector. -->
+		<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div class="kt-context-grid" style="grid-template-columns: repeat(3, 1fr)">
+				<div class="kt-readonly-row">
+					<div class="kt-readonly-label">Procuring Entity</div>
+					<div class="kt-readonly-value is-strong">
+						{{ context.procuring_entity_label || context.procuring_entity || "" }}
+					</div>
+				</div>
+				<div class="kt-readonly-row">
+					<div class="kt-readonly-label">
+						Department
+						<button
+							type="button"
+							class="kt-action-link"
+							data-testid="nds-change-context"
+							style="border: 0; background: none; padding: 0; margin-left: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 11.5px"
+							@click="$emit('change-context')"
+						>
+							Change
+						</button>
+					</div>
+					<div class="kt-readonly-value is-strong">
+						{{ context.organisation_unit_label || context.organisation_unit || "" }}
+					</div>
+				</div>
+				<div class="kt-readonly-row">
+					<div class="kt-readonly-label">
+						<label for="nds-review-fy-band">Financial Year</label>
+					</div>
+					<select
+						id="nds-review-fy-band"
+						class="kt-input"
+						data-testid="nds-fy-band-select"
+						style="max-width: 180px; padding: 6px 8px; font-size: 13.5px"
+						:value="context.financial_year || ''"
+						@change="$emit('select-financial-year', $event.target.value)"
+					>
+						<option v-if="!context.financial_year" value="" disabled>Select year…</option>
+						<option v-for="year in financialYears" :key="year.id" :value="year.id">
+							{{ year.label }}
+						</option>
+					</select>
+				</div>
+			</div>
+		</div>
 
 		<div class="kt-tabstrip" role="tablist">
 			<button
@@ -112,7 +160,6 @@
 
 <script setup>
 import { computed } from "vue";
-import ContextCard from "./ContextCard.vue";
 import NeedsTable from "./NeedsTable.vue";
 
 const props = defineProps({
@@ -123,8 +170,17 @@ const props = defineProps({
 	rows: { type: Array, default: () => [] },
 	search: { type: String, default: "" },
 	status: { type: String, default: "" },
+	financialYears: { type: Array, default: () => [] },
 });
-defineEmits(["update:tab", "update:search", "update:status", "clear-filters", "action"]);
+defineEmits([
+	"update:tab",
+	"update:search",
+	"update:status",
+	"clear-filters",
+	"action",
+	"select-financial-year",
+	"change-context",
+]);
 
 const TABS = [
 	{ key: "queue", label: "Review queue" },
@@ -168,9 +224,4 @@ const countLabel = computed(() => {
 	return count === 1 ? "1 department need" : `${count} department needs`;
 });
 
-const contextItems = computed(() => [
-	{ label: "Procuring Entity", value: props.context.procuring_entity_label || props.context.procuring_entity || "" },
-	{ label: "Department", value: props.context.organisation_unit_label || props.context.organisation_unit || "" },
-	{ label: "Financial Year", value: props.context.financial_year_label || props.context.financial_year || "" },
-]);
 </script>

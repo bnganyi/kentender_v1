@@ -35,12 +35,15 @@
 				:needs="workspace.needs || []"
 				:actions="workspace.actions || []"
 				:count-label="workspace.count_label || ''"
+				:financial-years="financialYears"
 				v-model:search="search"
 				v-model:status="status"
 				@clear-filters="clearFilters"
 				@create="go('new')"
 				@reload="load"
 				@action="onRowAction"
+				@select-financial-year="onSelectFinancialYear"
+				@change-context="onChangeContext"
 			/>
 
 			<ReviewScreen
@@ -50,10 +53,13 @@
 				:error="error"
 				:context="workspace.context || {}"
 				:rows="reviewRows"
+				:financial-years="financialYears"
 				v-model:search="search"
 				v-model:status="status"
 				@clear-filters="clearFilters"
 				@action="onRowAction"
+				@select-financial-year="onSelectFinancialYear"
+				@change-context="onChangeContext"
 			/>
 
 			<NeedEditorScreen
@@ -204,31 +210,17 @@ const reason = ref("");
 const reasonError = ref("");
 const financialYears = ref([]);
 
-// §12.1 — a saved selection is restored only if it is still authorised, which
-// the server decides: it is sent back as a request and accepted only when
-// get_needs_workspace resolves it to a context.
-const STORAGE_KEY = "kt-nds-context";
-const contextKey = ref(readStored("context"));
-const financialYear = ref(readStored("financial_year"));
-
-function readStored(field) {
-	try {
-		return (JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}")[field] || "");
-	} catch (e) {
-		return "";
-	}
-}
-
-function writeStored() {
-	try {
-		window.localStorage.setItem(
-			STORAGE_KEY,
-			JSON.stringify({ context: contextKey.value, financial_year: financialYear.value })
-		);
-	} catch (e) {
-		// A browser with storage disabled simply re-asks each visit.
-	}
-}
+// CTX-CHG-001 — the working context is a SERVER-SIDE user preference. These
+// refs carry only the current screen's resolved/explicit values; a bare load
+// sends nothing and the server resolves the caller's own remembered context
+// (global working PE, this module's department and financial year). Browser
+// storage grants nothing and is not even used as a cache — the old
+// per-origin localStorage leaked one user's context into the next login.
+const contextKey = ref("");
+const financialYear = ref("");
+// Rule 5.4 — "Change context" is always available: when set, the picker shows
+// even though the server could resolve a remembered context.
+const changingContext = ref(false);
 
 const selectionRequired = computed(
 	() =>
@@ -239,7 +231,8 @@ const selectionRequired = computed(
 		// who is scoped to several Procuring Entities and no department, reached
 		// NDS-UI-08 with no context at all and edited a window bound to nothing.
 		["workspace", "review", "intake"].includes(screen.value) &&
-		(workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
+		(changingContext.value ||
+			workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
 			// The context is PE/OU *and* FY (§12.1). With several selectable
 			// years, rows must not be listed against an unresolved one.
 			(financialYears.value.length > 1 && !financialYear.value))
@@ -247,14 +240,19 @@ const selectionRequired = computed(
 
 function onSelectContext(value) {
 	contextKey.value = value;
-	writeStored();
+	changingContext.value = false;
 	load();
 }
 
 function onSelectFinancialYear(value) {
 	financialYear.value = value;
-	writeStored();
 	load();
+}
+
+function onChangeContext() {
+	// Rule 5.4 — reopen the picker; the pick itself re-persists server-side.
+	contextKey.value = "";
+	changingContext.value = true;
 }
 
 // --- routing ---------------------------------------------------------------
@@ -373,9 +371,9 @@ async function load() {
 			// One eligible context loads directly (§12.1).
 			const resolved = workspace.value.context;
 			if (resolved && resolved.organisation_unit) {
+				// Mirror the server's resolution; the server is the memory.
 				contextKey.value = `${resolved.procuring_entity}::${resolved.organisation_unit}`;
 				if (resolved.financial_year) financialYear.value = resolved.financial_year;
-				writeStored();
 			}
 			const context = workspace.value.context || {};
 			if (context.procuring_entity) {
@@ -414,7 +412,23 @@ usePageRail(
 	computed(() => [
 		{ label: "Departmental Needs", route: [PAGE] },
 		...(needReference.value ? [{ label: needReference.value }] : []),
-	])
+	]),
+	{
+		// CTX-CHG-001 — the rail hosts the global PE switcher. A switch clears
+		// this module's transient selection and reloads; the server resolves
+		// the new PE's own remembered department and year.
+		showPeSwitcher: true,
+		onPeChange: () => {
+			contextKey.value = "";
+			financialYear.value = "";
+			changingContext.value = false;
+			if (["workspace", "review", "intake"].includes(screen.value)) {
+				load();
+			} else {
+				go();
+			}
+		},
+	}
 );
 
 // --- commands --------------------------------------------------------------

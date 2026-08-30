@@ -78,7 +78,97 @@
 		</div>
 
 		<template v-else>
-			<ContextCard :items="contextItems" />
+			<!-- CTX-CHG-001 rule 4 — the band always shows the selected PE, the
+			     selected department (with Change context), a CHANGEABLE Financial
+			     Year, and the intake state with its exact opening and closing
+			     instants. -->
+			<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<div class="kt-context-grid" style="grid-template-columns: repeat(4, 1fr)">
+					<div class="kt-readonly-row">
+						<div class="kt-readonly-label">Procuring Entity</div>
+						<div class="kt-readonly-value is-strong">
+							{{ context.procuring_entity_label || context.procuring_entity || "" }}
+						</div>
+					</div>
+					<div class="kt-readonly-row">
+						<div class="kt-readonly-label">
+							Department
+							<button
+								type="button"
+								class="kt-action-link"
+								data-testid="nds-change-context"
+								style="border: 0; background: none; padding: 0; margin-left: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 11.5px"
+								@click="$emit('change-context')"
+							>
+								Change
+							</button>
+						</div>
+						<div class="kt-readonly-value is-strong">
+							{{ context.organisation_unit_label || context.organisation_unit || "" }}
+						</div>
+					</div>
+					<div class="kt-readonly-row">
+						<div class="kt-readonly-label">
+							<label for="nds-fy-band">Financial Year</label>
+						</div>
+						<select
+							id="nds-fy-band"
+							ref="fyBandEl"
+							class="kt-input"
+							data-testid="nds-fy-band-select"
+							style="max-width: 180px; padding: 6px 8px; font-size: 13.5px"
+							:value="context.financial_year || ''"
+							@change="$emit('select-financial-year', $event.target.value)"
+						>
+							<option v-if="!context.financial_year" value="" disabled>Select year…</option>
+							<option v-for="year in financialYears" :key="year.id" :value="year.id">
+								{{ year.label }}
+							</option>
+						</select>
+					</div>
+					<div class="kt-readonly-row">
+						<div class="kt-readonly-label">Intake window</div>
+						<div class="kt-readonly-value is-strong" data-testid="nds-intake-state">
+							{{ intakeStateLabel }}
+						</div>
+						<div
+							v-if="intake && intake.configured"
+							style="font-size: 12.5px; color: var(--color-neutral-600); margin-top: 4px"
+							data-testid="nds-intake-instants"
+						>
+							Opens {{ formatInstant(intake.opens_at) }} · Closes {{ formatInstant(intake.closes_at) }}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- CTX-CHG-001 rule 4 — a Scheduled window never traps: records stay
+			     viewable, creation is simply disabled until the window opens, and
+			     another year is one click away. -->
+			<div
+				v-if="intake && intake.state === 'Scheduled'"
+				class="kt-card kt-blueprint"
+				data-testid="nds-scheduled-notice"
+				style="margin-bottom: 16px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px"
+			>
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<p style="margin: 0; font-size: 14px">
+					Intake for {{ context.financial_year_label || context.financial_year }} opens
+					{{ formatInstant(intake.opens_at) }}. Existing records are viewable; creating and
+					submitting needs opens then.
+				</p>
+				<button
+					class="kt-btn kt-btn-secondary"
+					data-testid="nds-change-fy"
+					style="flex: none"
+					@click="focusFinancialYear"
+				>
+					Change financial year
+				</button>
+			</div>
 
 			<!-- §12.1 — search matches title or reference; status is the only filter. -->
 			<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px">
@@ -155,8 +245,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import ContextCard from "./ContextCard.vue";
+import { computed, ref } from "vue";
 import NeedsTable from "./NeedsTable.vue";
 import { formatInstant } from "../data/format.js";
 
@@ -171,9 +260,25 @@ const props = defineProps({
 	countLabel: { type: String, default: "" },
 	search: { type: String, default: "" },
 	status: { type: String, default: "" },
+	financialYears: { type: Array, default: () => [] },
 });
 
-defineEmits(["create", "reload", "action", "update:search", "update:status", "clear-filters"]);
+defineEmits([
+	"create",
+	"reload",
+	"action",
+	"update:search",
+	"update:status",
+	"clear-filters",
+	"select-financial-year",
+	"change-context",
+]);
+
+const fyBandEl = ref(null);
+
+function focusFinancialYear() {
+	fyBandEl.value?.focus();
+}
 
 const STATUSES = [
 	"Draft",
@@ -206,20 +311,7 @@ const canCreate = computed(
 		props.intake.state === "Open"
 );
 
-const contextItems = computed(() => [
-	{ label: "Procuring Entity", value: props.context.procuring_entity_label || props.context.procuring_entity || "" },
-	{ label: "Department", value: props.context.organisation_unit_label || props.context.organisation_unit || "" },
-	{ label: "Financial Year", value: props.context.financial_year_label || props.context.financial_year || "" },
-	{ label: "Intake window", value: intakeLabel.value },
-]);
-
-// NDS-DES-14c — intake closed still shows existing records; only the label and
-// the missing Create button say so (§12.1).
-const intakeLabel = computed(() => {
-	const window = props.intake || {};
-	if (window.state === "Open") return `Open until ${formatInstant(window.closes_at)}`;
-	if (window.state === "Scheduled") return `Opens ${formatInstant(window.opens_at)}`;
-	if (window.state === "Closed") return `Closed ${formatInstant(window.closes_at)}`;
-	return "Not configured";
-});
+// NDS-DES-14c — a Scheduled or Closed window still shows existing records;
+// only the state, the instants and the missing Create button say so (§12.1).
+const intakeStateLabel = computed(() => (props.intake || {}).state || "Not configured");
 </script>

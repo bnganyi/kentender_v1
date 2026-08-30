@@ -127,9 +127,36 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 	return [{"code": "view", "label": "View"}] if profile != "none" else []
 
 
+def _persist_context_preference(principal: str, selected: dict[str, str]) -> None:
+	"""CTX-CHG-001 — an explicit pick is remembered server-side: the global
+	working PE plus this module's Organisation Unit. Persistence must never
+	break a read, so a preference the core service will not accept (e.g. a
+	PE readable here but no longer Active) is simply not remembered."""
+	from kentender_core.services.working_context import select_module_ou, select_working_pe
+
+	try:
+		select_working_pe(selected["procuring_entity"], principal)
+		select_module_ou(
+			"needs", selected["organisation_unit"], principal,
+			offered=[selected["organisation_unit"]],
+		)
+	except Exception:
+		frappe.clear_last_message()
+
+
 def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] | None, list[dict[str, str]]]:
 	# Viewing, not authoring: this resolver also serves NDS-UI-02, whose only
 	# audience is the Head of User Department — a role that never authors.
+	#
+	# CTX-CHG-001 resolution order: an explicit request (the user's pick —
+	# validated, then persisted) → the server-side preferences (global working
+	# PE narrowing the pool, this module's remembered Organisation Unit
+	# choosing within it) → auto-select a single option → prompt. Browser
+	# storage plays no part; a preference that no longer matches the caller's
+	# own contexts resolves to "prompt again", never to access and never to an
+	# error. When the working PE has no Needs context at all, the FULL context
+	# list stays on offer — the picker (which spans PEs) is the recovery path,
+	# so a PE choice made in another module can never trap this one.
 	contexts = viewing_contexts(principal)
 	if not contexts:
 		return None, contexts
@@ -143,18 +170,32 @@ def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] 
 			None,
 		)
 		if selected:
+			_persist_context_preference(principal, selected)
 			return selected, contexts
-		# §12.1 — a requested pair outside the caller's contexts is a *remembered*
-		# selection, not an act of authority: the picker only ever offers the
-		# rows above, but the client stores its last selection per browser
-		# origin, so an account switch replays the previous user's context.
-		# Failing here dead-ended that first load behind a Try-again that
-		# replayed the same request forever. It resolves to "unselected"
-		# instead, exactly as an unoffered remembered Financial Year does —
-		# rows stay filtered by `can_view`, and every command re-checks.
-	if len(contexts) > 1:
-		return None, contexts
-	return contexts[0], contexts
+		# A requested pair outside the caller's contexts is a *remembered*
+		# selection, not an act of authority — resolve to "unselected", exactly
+		# as an unoffered remembered Financial Year does; rows stay filtered by
+		# `can_view`, and every command re-checks (§12.1, §17).
+	from kentender_core.services.working_context import get_module_ou, get_working_pe
+
+	working_pe = get_working_pe(principal)["selected"]
+	pool = contexts
+	if working_pe:
+		subset = [row for row in contexts if row["procuring_entity"] == working_pe["id"]]
+		if subset:
+			pool = subset
+	if len(pool) == 1:
+		return pool[0], contexts
+	remembered_ou = get_module_ou(
+		"needs", principal, offered=[row["organisation_unit"] for row in pool]
+	)["selected"]
+	if remembered_ou:
+		selected = next(
+			(row for row in pool if row["organisation_unit"] == remembered_ou["id"]), None
+		)
+		if selected:
+			return selected, contexts
+	return None, contexts
 
 
 def get_workspace(
@@ -179,19 +220,22 @@ def get_workspace(
 			"needs": [],
 			"actions": [],
 		}
-	fy = cstr(financial_year).strip()
 	_fy_rows = selectable_financial_years(principal)
-	offered = [row["id"] for row in _fy_rows]
-	if fy and fy not in offered:
-		# §12.1 — the client sends back its remembered year. One outside the
-		# caller's offer (their scope changed, or the year was offered before
-		# the offer was scoped) resolves to "unselected" rather than a dead
-		# context every command would refuse; the commands still re-check.
-		fy = ""
-	if not fy and len(offered) == 1:
-		# A single offered year resolves without a selection, exactly as a
-		# single PE/OU context does.
-		fy = offered[0]
+	# CTX-CHG-001 — the module's own FY memory, resolved by the core service:
+	# an explicit year is validated against this module's offer and persisted
+	# (kt_needs_financial_year); a saved year outside the offer resolves to
+	# "unselected"; a single offered year auto-selects. Never authoritative —
+	# every command still re-checks its own scope and the intake window.
+	from kentender_core.services.working_context import get_module_fy
+
+	requested_fy = cstr(financial_year).strip()
+	try:
+		fy_state = get_module_fy("needs", principal, requested=requested_fy or None, offered=_fy_rows)
+	except frappe.PermissionError:
+		# A remembered/hand-typed year outside the offer must heal, not fail.
+		frappe.clear_last_message()
+		fy_state = get_module_fy("needs", principal, offered=_fy_rows)
+	fy = fy_state["selected"]["id"] if fy_state["selected"] else ""
 	filters: dict[str, Any] = {
 		"procuring_entity": selected["procuring_entity"],
 		"organisation_unit": selected["organisation_unit"],
