@@ -45,6 +45,12 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
 		await expect(row).toBeVisible();
 		await expect(row).toHaveAttribute("data-status", "Draft");
+		// Complete visibility of authorship: the workspace also serves the
+		// reviewer through the main rail entry, where rows are not their own.
+		await expect(
+			page.locator('[data-testid="nds-needs-table"] th', { hasText: "Requested by" }),
+		).toBeVisible();
+		await expect(row).toContainText("Playwright Author");
 		// §12.1 — a Draft belongs to its author, so the row offers Continue.
 		await expect(row.locator('[data-testid="nds-row-action"]')).toHaveAttribute(
 			"data-action",

@@ -192,13 +192,17 @@ function label(field) {
 const contextItems = computed(() => {
 	if (isAccepted.value) {
 		return [
+			{ label: "Requested by", value: props.authorLabel },
 			{ label: "Accepted by", value: props.acceptedByLabel || props.authorLabel },
 			{ label: "Accepted", value: formatInstant(props.acceptedAt) },
 			{ label: "Department", value: label("organisation_unit") },
 			{ label: "Financial Year", value: label("financial_year") },
 		];
 	}
+	// "Requested by" keeps authorship visible to a reviewer opening a Draft or
+	// Returned record from the departmental register (§6 view scope).
 	return [
+		{ label: "Requested by", value: props.authorLabel },
 		{ label: "Procuring Entity", value: label("procuring_entity") },
 		{ label: "Department", value: label("organisation_unit") },
 		{ label: "Financial Year", value: label("financial_year") },

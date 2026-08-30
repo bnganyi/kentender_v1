@@ -196,6 +196,13 @@
 .kt-industry .kt-context-grid {
 	display: grid;
 	gap: 16px;
+	align-items: start;
+}
+/* The 16px stacked-list margin between adjacent readonly rows leaks into the
+   grid, where every cell after the first is an adjacent sibling — pushing the
+   Department and Financial Year columns 16px below Procuring Entity. */
+.kt-industry .kt-context-grid > .kt-readonly-row + .kt-readonly-row {
+	margin-top: 0;
 }
 .kt-industry textarea.kt-input {
 	resize: vertical;

@@ -240,3 +240,18 @@ origin, not per user, so after an account switch `get_needs_workspace` now
 resolves a pair outside the caller's contexts to "unselected" (auto-resolving
 a single context) instead of the previous hard `NDS_SCOPE_DENIED`, which
 dead-ended the next user's first load behind a Try-again loop.
+
+---
+
+## FU-12 — "Requested by" added beyond the §11 static compositions (2026-08-30)
+
+**What.** At the user's request the NDS-UI-01 workspace table gained a
+"Requested by" column and the NDS-UI-04 detail context card a "Requested by"
+row (both from the read contracts' existing `author_label`). §11's static
+compositions (NDS-DES-01/05/07) do not show them: the workspace was drawn as
+the author's own list, but §6 also routes the Head of User Department through
+it, where rows are the whole department's and authorship must be visible
+without opening each record.
+
+**Fix.** Fold the column and card row into the §11 compositions in the next
+NDS specification version. The NDS-908 baselines already carry them.

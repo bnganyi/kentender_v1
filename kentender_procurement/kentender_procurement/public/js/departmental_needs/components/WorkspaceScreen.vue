@@ -185,6 +185,10 @@ const STATUSES = [
 
 const columns = [
 	{ key: "need", label: "Need" },
+	// The workspace also serves the Head of User Department through the main
+	// rail entry, where rows are the whole department's, not the viewer's own —
+	// authorship must be visible without opening each record.
+	{ key: "author_label", label: "Requested by" },
 	{ key: "quantity_label", label: "Quantity", align: "right" },
 	{ key: "required_by_label", label: "Required by" },
 	{ key: "status", label: "Status", status: true },
