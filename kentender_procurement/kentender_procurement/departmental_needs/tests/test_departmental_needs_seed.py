@@ -360,15 +360,21 @@ class TestKebsFirstSlice(SeedCase):
 		profiles.apply_profile("kebs")
 
 	def kebs_needs(self):
+		# Scoped to the three §14.6 titles: this test owns the seed's records,
+		# not the PE. Counting everything under PE-KEBS made the assertion fail
+		# the moment a real KEBS author created and had a genuine Need accepted
+		# on the same site (observed 2026-08-30), which is normal use, not a
+		# seed defect.
+		titles = tuple(spec["title"] for spec in profiles.KEBS_NEEDS)
 		return frappe.db.sql(
 			"""
 			select n.name, n.current_state, n.organisation_unit, n.financial_year,
 			       v.title, v.indicative_quantity, v.unit, v.expected_operational_result
 			from `tabDepartmental Need` n
 			join `tabDepartmental Need Version` v on v.name = n.current_accepted_version
-			where n.procuring_entity = %s order by n.name
+			where n.procuring_entity = %s and v.title in %s order by n.name
 			""",
-			kebs_foundation.PE,
+			(kebs_foundation.PE, titles),
 			as_dict=True,
 		)
 

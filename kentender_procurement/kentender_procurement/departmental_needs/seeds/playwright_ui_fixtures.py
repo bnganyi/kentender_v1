@@ -35,7 +35,6 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import add_days, now_datetime
 
 from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
 from kentender_procurement.departmental_needs.constants import (
@@ -67,8 +66,13 @@ REVIEWER = "nds.pw.reviewer@example.test"
 PLANNER = "nds.pw.planner@example.test"
 
 # The intake spec rewrites these freely; nothing else reads them.
-WINDOW_OPENS = "2026-09-01 00:00:00"
-WINDOW_CLOSES = "2027-06-30 23:59:59"
+# Far-future instants so the derived state ("Scheduled") and every rendered
+# date stay identical run after run — the NDS-908 baselines capture them
+# literally, so instants near *now* make the visual suite rot on a calendar
+# boundary (the previous 2026-09-01 open would have flipped the DES-10 chip
+# to "Open" on that day).
+WINDOW_OPENS = "2097-07-01 00:00:00"
+WINDOW_CLOSES = "2098-06-30 23:59:59"
 
 CONTENT = {
 	"title": "County health records digitisation",
@@ -201,9 +205,16 @@ def _stamp_children(need: str) -> None:
 
 
 def _open_window_now() -> None:
-	"""§5.1 gates creation and initial submission on an Open window."""
-	now = now_datetime()
-	ensure_window(str(add_days(now, -1)), str(add_days(now, 1)))
+	"""§5.1 gates creation and initial submission on an Open window.
+
+	The instants are fixed, not derived from *now*: the workspace chip renders
+	the literal close instant ("Open until 30 Aug 2026, 10:59 AM EAT"), so a
+	rolling ``now + 1 day`` close bakes the capture minute into the NDS-908
+	visual baselines — they could only ever match again on the day (and near
+	the minute) they were recorded. A close far in the future keeps the state
+	Open for every run and the rendered text identical.
+	"""
+	ensure_window("2026-07-01 00:00:00", "2098-06-30 23:59:59")
 
 
 def _submitted_need() -> str:
