@@ -40,7 +40,11 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import permissions, workspace
-from kentender_procurement.departmental_needs.services.context import save_intake_window
+from kentender_procurement.departmental_needs.services.context import (
+	intake_window,
+	resolve_creation_context,
+	save_intake_window,
+)
 
 # §1.1 removed these outright; §6 names exactly five business roles.
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")
@@ -260,6 +264,135 @@ class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 			with self.assertRaises(DepartmentalNeedError) as caught:
 				permissions.require_review_command(need, ACTING_REVIEWER)
 			self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
+class TestFinancialYearOffer(DepartmentalNeedsPermissionCase):
+	"""§8.1 offers only Financial Years the caller may act in.
+
+	Every scope check treats the FY as a required dimension (`in_scope`) or a
+	native restriction (`require_intake_window_command`), so a year outside the
+	caller's `Financial Year` User Permissions is a guaranteed NDS_SCOPE_DENIED
+	on every later command. Offering it anyway is the NDS-807 defect class — a
+	control the actor cannot use. Observed live: the KEBS foundation seed's
+	FY-2026-2027 was offered to the §14 MoH Planner, whose only year is
+	FY-2027-2028, and her intake save failed at the very end.
+	"""
+
+	OTHER_FY = "FY-2098-2099"
+
+	def other_year(self) -> None:
+		"""A second Available, unexpired year nobody in the §14 seed holds."""
+		if not frappe.db.exists("Financial Year", self.OTHER_FY):
+			doc = frappe.get_doc(
+				{
+					"doctype": "Financial Year",
+					"start_year": 2098,
+					"label": "2098/99",
+					"start_date": "2098-07-01",
+					"end_date": "2099-06-30",
+					"record_status": "Available",
+				}
+			)
+			doc.name = self.OTHER_FY
+			doc.insert(ignore_permissions=True)
+		self.addCleanup(
+			frappe.delete_doc,
+			"Financial Year",
+			self.OTHER_FY,
+			force=True,
+			ignore_missing=True,
+			ignore_permissions=True,
+		)
+
+	def test_an_unpermitted_financial_year_is_not_offered(self):
+		self.other_year()
+		frappe.set_user(PLANNER)
+		offer = workspace.get_workspace()
+		offered = {row["id"] for row in offer["financial_years"]}
+		self.assertIn(FY, offered)
+		self.assertNotIn(self.OTHER_FY, offered)
+		# The §8.1 resolve read makes the same offer to an author.
+		frappe.set_user(AUTHOR)
+		resolved = resolve_creation_context()
+		offered = {row["id"] for row in resolved["financial_years"]}
+		self.assertIn(FY, offered)
+		self.assertNotIn(self.OTHER_FY, offered)
+
+	def test_administrative_users_are_offered_every_available_year(self):
+		self.other_year()
+		frappe.set_user("Administrator")
+		offer = workspace.get_workspace(
+			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
+		)
+		offered = {row["id"] for row in offer["financial_years"]}
+		self.assertIn(FY, offered)
+		self.assertIn(self.OTHER_FY, offered)
+
+	def test_a_requested_unoffered_year_resolves_to_the_offered_one(self):
+		"""A remembered year outside the offer heals instead of dead-ending.
+
+		The client stores the last PE/OU/FY selection and sends it back on the
+		next visit. A stored year the caller cannot act in must resolve to the
+		single offered year — not stick, and not hard-fail a read the §17
+		commands still re-check individually.
+		"""
+		self.other_year()
+		frappe.set_user(PLANNER)
+		offer = workspace.get_workspace(
+			procuring_entity=PE,
+			organisation_unit=OU_DIGITAL_HEALTH,
+			financial_year=self.OTHER_FY,
+		)
+		self.assertEqual(offer["context"]["financial_year"], FY)
+
+	def test_can_maintain_is_scoped_to_the_window_year(self):
+		"""NDS-UI-08 withholds Save where the save would be refused (§17).
+
+		`can_maintain` is presentation, not the control — but presenting a Save
+		the command is guaranteed to refuse is the defect NDS-807 fixed for
+		Create need.
+		"""
+		self.other_year()
+		self.assertTrue(intake_window(PE, FY, user=PLANNER)["can_maintain"])
+		self.assertFalse(intake_window(PE, self.OTHER_FY, user=PLANNER)["can_maintain"])
+		# Administrative oversight stays unrestricted (§6).
+		self.assertTrue(intake_window(PE, self.OTHER_FY, user="Administrator")["can_maintain"])
+
+
+class TestRememberedContextHealing(DepartmentalNeedsPermissionCase):
+	"""§12.1 — a remembered PE/OU outside the caller's scope heals, not dead-ends.
+
+	The client stores its last PE/OU/FY selection per browser origin, not per
+	signed-in user, so after an account switch the next user's first load
+	replays the previous user's context. Observed live: the KEBS author
+	inherited the MoH Planner's stored context and got a hard
+	NDS_SCOPE_DENIED with a Try-again that replayed the same dead request
+	forever. The offer is the authority on what may be picked (the picker
+	lists only the caller's own contexts); a remembered value outside it
+	resolves to "unselected" — auto-resolving where one context exists —
+	while rows stay filtered by `can_view` and every command re-checks.
+	"""
+
+	def test_a_foreign_context_heals_to_the_single_own_context(self):
+		# Julia Njeri reviews Digital Health only — exactly one context.
+		frappe.set_user(ACTING_REVIEWER)
+		offer = workspace.get_workspace(
+			procuring_entity="PE-KEBS", organisation_unit="OU-KEBS-ICT"
+		)
+		self.assertTrue(offer["ok"])
+		self.assertEqual(offer["outcome"], "READY")
+		self.assertEqual(offer["context"]["procuring_entity"], PE)
+		self.assertEqual(offer["context"]["organisation_unit"], OU_DIGITAL_HEALTH)
+
+	def test_a_foreign_context_heals_to_selection_when_several_exist(self):
+		# Grace authors in two departments, so healing must re-ask, not guess.
+		frappe.set_user(AUTHOR)
+		offer = workspace.get_workspace(
+			procuring_entity="PE-KEBS", organisation_unit="OU-KEBS-ICT"
+		)
+		self.assertFalse(offer["ok"])
+		self.assertEqual(offer["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual(offer["needs"], [])
 
 
 class TestPlannerAuthority(DepartmentalNeedsPermissionCase):

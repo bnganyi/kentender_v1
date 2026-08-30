@@ -69,6 +69,13 @@ def _version_facts(version: str) -> dict[str, Any]:
 	if not row:
 		return {}
 	facts = dict(row)
+	# Frappe stores a Float ``None`` as 0.0, so a title-only Draft reads back
+	# with an indicative_quantity of 0 — a value NDS-AC-005 forbids an author
+	# to *supply*. The read reports absence as absence, or a faithful editor
+	# would round-trip the coerced 0 into a refusal on the author's own
+	# untouched draft.
+	if not facts.get("indicative_quantity"):
+		facts["indicative_quantity"] = None
 	facts["unit_label"] = cstr(
 		frappe.db.get_value("Unit Of Measure", facts.get("unit"), "unit_label")
 		or facts.get("unit")
@@ -135,12 +142,16 @@ def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] 
 			),
 			None,
 		)
-		if not selected:
-			fail(
-				"NDS_SCOPE_DENIED",
-				"The selected Departmental Needs context is outside your permitted scope.",
-			)
-		return selected, contexts
+		if selected:
+			return selected, contexts
+		# §12.1 — a requested pair outside the caller's contexts is a *remembered*
+		# selection, not an act of authority: the picker only ever offers the
+		# rows above, but the client stores its last selection per browser
+		# origin, so an account switch replays the previous user's context.
+		# Failing here dead-ended that first load behind a Try-again that
+		# replayed the same request forever. It resolves to "unselected"
+		# instead, exactly as an unoffered remembered Financial Year does —
+		# rows stay filtered by `can_view`, and every command re-checks.
 	if len(contexts) > 1:
 		return None, contexts
 	return contexts[0], contexts
@@ -164,12 +175,23 @@ def get_workspace(
 			"ok": False,
 			"outcome": "NO_AUTHORISED_CONTEXT" if not contexts else "CONTEXT_SELECTION_REQUIRED",
 			"contexts": contexts,
-			"financial_years": selectable_financial_years(),
+			"financial_years": selectable_financial_years(principal),
 			"needs": [],
 			"actions": [],
 		}
 	fy = cstr(financial_year).strip()
-	_fy_rows = selectable_financial_years()
+	_fy_rows = selectable_financial_years(principal)
+	offered = [row["id"] for row in _fy_rows]
+	if fy and fy not in offered:
+		# §12.1 — the client sends back its remembered year. One outside the
+		# caller's offer (their scope changed, or the year was offered before
+		# the offer was scoped) resolves to "unselected" rather than a dead
+		# context every command would refuse; the commands still re-check.
+		fy = ""
+	if not fy and len(offered) == 1:
+		# A single offered year resolves without a selection, exactly as a
+		# single PE/OU context does.
+		fy = offered[0]
 	filters: dict[str, Any] = {
 		"procuring_entity": selected["procuring_entity"],
 		"organisation_unit": selected["organisation_unit"],
@@ -227,7 +249,7 @@ def get_workspace(
 		"ok": True,
 		"outcome": "READY",
 		"contexts": contexts,
-		"financial_years": selectable_financial_years(),
+		"financial_years": _fy_rows,
 		"context": {
 			**selected,
 			"financial_year": fy,

@@ -25,7 +25,7 @@ from kentender_procurement.departmental_needs.constants import (
 	ROLE_PROCUREMENT_PLANNER,
 	STATE_ACCEPTED,
 )
-from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.errors import DepartmentalNeedError, fail
 
 # Roles that see technical/neutral records without a business role (§6).
 ADMINISTRATIVE_ROLES = ("System Manager", "Administrator")
@@ -279,3 +279,20 @@ def require_intake_window_command(user: str, *, procuring_entity: str, financial
 		fail("NDS_SCOPE_DENIED", "You have no permission for that Procuring Entity.")
 	if allowed_years is not None and cstr(financial_year) not in allowed_years:
 		fail("NDS_SCOPE_DENIED", "You have no permission for that Financial Year.")
+
+
+def may_maintain_intake_window(user: str, *, procuring_entity: str, financial_year: str) -> bool:
+	"""The same §6 judgement as a predicate, for `can_maintain` presentation.
+
+	NDS-UI-08 withholds its Save control with this; the control itself remains
+	:func:`require_intake_window_command` (§17). Kept as one shared judgement so
+	the offer can never drift from the command that refuses.
+	"""
+	try:
+		require_intake_window_command(
+			user, procuring_entity=procuring_entity, financial_year=financial_year
+		)
+	except DepartmentalNeedError:
+		frappe.clear_last_message()
+		return False
+	return True

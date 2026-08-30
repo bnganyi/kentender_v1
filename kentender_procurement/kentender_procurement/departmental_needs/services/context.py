@@ -24,14 +24,14 @@ from kentender_procurement.departmental_needs.constants import (
 	INTAKE_NOT_CONFIGURED,
 	INTAKE_OPEN,
 	INTAKE_SCHEDULED,
-	ROLE_PROCUREMENT_PLANNER,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	creation_contexts,
-	has_role,
 	is_administrative,
+	may_maintain_intake_window,
+	permitted_values,
 	require_intake_window_command,
 )
 
@@ -89,17 +89,20 @@ def selectable_financial_year(financial_year: str) -> dict:
 # --- §4.1 intake window ----------------------------------------------------
 
 
-def _may_maintain(user: str | None = None) -> bool:
-	"""§6/NDS-AC-043 — only the Procurement Planner maintains the window.
+def _may_maintain(user: str | None, *, procuring_entity: str, financial_year: str) -> bool:
+	"""§6/NDS-AC-043 — only a Planner scoped to this PE/FY maintains the window.
 
 	Reported on the read so NDS-UI-08 can withhold the Save control from a user
 	who reaches the route another way. This is presentation, not the control:
 	`save_intake_window` refuses on its own with NDS_SCOPE_DENIED, and §17
 	forbids treating a hidden button as authorization. Offering a command the
-	role does not hold is the same defect fixed for Create need (NDS-807).
+	role does not hold is the same defect fixed for Create need (NDS-807) — and
+	the role check alone offered Save on a Financial Year outside the Planner's
+	own User Permissions, whose save was a guaranteed NDS_SCOPE_DENIED.
 	"""
-	principal = actor(user)
-	return has_role(principal, ROLE_PROCUREMENT_PLANNER) or is_administrative(principal)
+	return may_maintain_intake_window(
+		actor(user), procuring_entity=procuring_entity, financial_year=financial_year
+	)
 
 
 def intake_window(
@@ -110,8 +113,8 @@ def intake_window(
 	Returns a result for every input, including a missing window, so that read
 	surfaces can render an honest "not configured" state without an exception.
 	"""
-	can_maintain = _may_maintain(user)
 	pe, fy = cstr(procuring_entity).strip(), cstr(financial_year).strip()
+	can_maintain = _may_maintain(user, procuring_entity=pe, financial_year=fy)
 	row = frappe.db.get_value(
 		"Needs Intake Window",
 		{"procuring_entity": pe, "financial_year": fy},
@@ -217,8 +220,18 @@ def save_intake_window(
 # --- §8.1 resolve_needs_contexts -------------------------------------------
 
 
-def selectable_financial_years() -> list[dict[str, Any]]:
-	"""Every Available, unexpired year, including future ones (§8.1)."""
+def selectable_financial_years(user: str | None = None) -> list[dict[str, Any]]:
+	"""Available, unexpired years the caller may act in, future ones included (§8.1).
+
+	The bare Available list offered years the caller held no `Financial Year`
+	User Permission for; every later command in such a context is a guaranteed
+	NDS_SCOPE_DENIED (`in_scope` treats the FY as a required dimension, and
+	`require_intake_window_command` as a native restriction), so offering one
+	is the NDS-807 defect class — a control the actor cannot use. Frappe's own
+	User Permission semantics decide the cut: no rows means unrestricted, any
+	rows mean exactly those years. Administrative users stay unrestricted (§6).
+	"""
+	principal = actor(user)
 	rows = frappe.get_all(
 		"Financial Year",
 		filters={"record_status": "Available", "end_date": (">=", nowdate())},
@@ -226,13 +239,17 @@ def selectable_financial_years() -> list[dict[str, Any]]:
 		order_by="start_year asc",
 		limit_page_length=0,
 	)
+	if not is_administrative(principal):
+		allowed = permitted_values(principal, "Financial Year")
+		if allowed is not None:
+			rows = [name for name in rows if name in allowed]
 	return [_financial_year_row(name) for name in rows]
 
 
 def resolve_creation_context(*, user: str | None = None) -> dict:
 	"""Exact eligible PE/OU/FY contexts and their intake state (§8.1)."""
 	contexts = creation_contexts(user)
-	financial_years = selectable_financial_years()
+	financial_years = selectable_financial_years(user)
 	entities = sorted({row["procuring_entity"] for row in contexts})
 	intake = [
 		intake_window(entity, cstr(fy["id"]))

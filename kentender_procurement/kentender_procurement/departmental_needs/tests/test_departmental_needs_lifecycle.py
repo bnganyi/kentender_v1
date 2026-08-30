@@ -288,6 +288,51 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			self.version(saved["current_version"]).title, "Revised clinical deployment laptops"
 		)
 
+	def test_a_partial_draft_round_trips_through_its_own_saved_values(self):
+		"""§12.3 — a partial Draft must stay saveable with what the read returns.
+
+		Frappe stores a Float ``None`` as 0.0, so a title-only Draft's stored
+		indicative_quantity is 0 — a value NDS-AC-005 forbids an author to
+		*supply*. §8.1's read therefore reports the absence as absence
+		(``None``), and an editor that round-trips exactly what it read saves
+		cleanly instead of being refused over a value the author never typed.
+		"""
+		created = self.create(
+			description="",
+			expected_operational_result="",
+			indicative_quantity=None,
+			unit="",
+			required_by_date=None,
+		)
+		read = workspace.get_need(need=created["need"])
+		self.assertIsNone(read["current_version"]["indicative_quantity"])
+		frappe.set_user(AUTHOR)
+		saved = lifecycle.update_need(
+			need=created["need"],
+			expected_version=created["record_version"],
+			idempotency_key=self.key(),
+			title=read["current_version"]["title"],
+			description=read["current_version"]["description"] or "",
+			expected_operational_result=read["current_version"]["expected_operational_result"] or "",
+			indicative_quantity=read["current_version"]["indicative_quantity"],
+			unit=read["current_version"]["unit"] or "",
+			required_by_date=read["current_version"]["required_by_date"],
+		)
+		self.assertEqual(saved["action"], "Save draft")
+
+	def test_submission_still_rejects_a_missing_quantity(self):
+		"""NDS-BR-007 keeps the presence invariant where it belongs — at submission."""
+		created = self.create(
+			description="A description long enough for the minimum bound.",
+			expected_operational_result="An operational result long enough as well.",
+			indicative_quantity=None,
+			unit="UNIT-EACH",
+			required_by_date="2027-12-31",
+		)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.submit(created)
+		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
+
 	def test_submit_locks_the_version_hashes_it_and_opens_one_task(self):
 		result = self.submit(self.create())
 		version = self.version(result["current_version"])
