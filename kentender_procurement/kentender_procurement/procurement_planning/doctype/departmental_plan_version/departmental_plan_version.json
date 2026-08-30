@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "autoname": "field:version_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "version_reference",
+  "departmental_plan",
+  "version_number",
+  "based_on_version",
+  "returned_from_submission",
+  "version_status",
+  "submission",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "version_reference",
+   "fieldtype": "Data",
+   "label": "Version Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Generated as {dpp_reference}-V{version_number}."
+  },
+  {
+   "fieldname": "departmental_plan",
+   "fieldtype": "Link",
+   "label": "Departmental Plan",
+   "options": "Departmental Plan",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "Departmental Plan Version",
+   "read_only": 1,
+   "description": "Accepted Version copied for an update. Empty on Version 1."
+  },
+  {
+   "fieldname": "returned_from_submission",
+   "fieldtype": "Link",
+   "label": "Returned From Submission",
+   "options": "Departmental Plan Submission",
+   "read_only": 1,
+   "description": "Submission whose return created this correction Draft; drives the returned-issue display (PLN-UI-02)."
+  },
+  {
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "label": "Version Status",
+   "options": "Draft\nSubmitted\nReturned\nAccepted\nSuperseded\nWithdrawn",
+   "default": "Draft",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "label": "Submission",
+   "options": "Departmental Plan Submission",
+   "read_only": 1,
+   "description": "Immutable submitted snapshot. Empty before submission."
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Monotonic optimistic-concurrency token checked by every mutating command."
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Departmental Plan Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Planning Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "version_reference"
+}

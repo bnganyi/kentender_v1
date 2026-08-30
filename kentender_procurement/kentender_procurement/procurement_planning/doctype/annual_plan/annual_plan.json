@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "autoname": "field:plan_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_reference",
+  "title",
+  "pe_fy_context",
+  "procuring_entity",
+  "financial_year",
+  "active_version",
+  "open_successor_version",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_reference",
+   "fieldtype": "Data",
+   "label": "Plan Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Generated as PLN-{PE code}-{FY start}-{3 digits}."
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "System-generated as {Procuring Entity} Annual Procurement Plan {FY period}."
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "label": "PE FY Context",
+   "options": "PE Fiscal Year Context",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "search_index": 1,
+   "description": "One Annual Plan root per PE/FY context (§4.7, invariant 24 — DB unique)."
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial Year",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "active_version",
+   "fieldtype": "Link",
+   "label": "Active Version",
+   "options": "Annual Plan Version",
+   "read_only": 1,
+   "description": "Points to the sole Active Version. Empty before activation."
+  },
+  {
+   "fieldname": "open_successor_version",
+   "fieldtype": "Link",
+   "label": "Open Successor Version",
+   "options": "Annual Plan Version",
+   "read_only": 1,
+   "description": "Points to the sole Draft or in-governance successor."
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Monotonic optimistic-concurrency token checked by every mutating command."
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Annual Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Budget Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1
+  },
+  {
+   "role": "Planning Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "plan_reference,title"
+}

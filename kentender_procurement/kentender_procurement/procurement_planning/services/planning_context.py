@@ -9,7 +9,15 @@ from frappe.utils import cstr, getdate
 
 from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_core.services.org_scope_access import user_scope_rows
-from kentender_procurement.procurement_planning.services.planning_permissions import READ_PLAN_ROLES
+from kentender_procurement.procurement_planning.services.planning_roles import (
+	ALL_PLANNING_ROLES,
+)
+
+# PLN-CHG-001 v1.2 interim (Phase 1): the capability-era READ_PLAN_ROLES set is
+# gone; any §6 Planning role grants context resolution. Phase 2 (PLN-207)
+# re-bases eligibility fully onto native User Permission via
+# permitted_procuring_entities and drops the scope-assignment read below.
+READ_PLAN_ROLES = frozenset(ALL_PLANNING_ROLES)
 
 # CTX-CHG-001 — persistence moved to kentender_core.working_context: the
 # GLOBAL working PE plus this module's kt_planning_financial_year. The old
@@ -50,8 +58,8 @@ def _authorised_entities(actor: str) -> list[dict[str, str]]:
 def _selectable_years(pe: str) -> tuple[list[dict[str, Any]], set[str]]:
 	periods = enabled_fiscal_years(include_past=True)
 	open_fys = set(frappe.get_all(
-		"Procurement Plan",
-		filters={"procuring_entity": pe, "lifecycle_state": "Open"},
+		"Annual Plan",
+		filters={"procuring_entity": pe},
 		pluck="financial_year",
 		limit_page_length=0,
 	))

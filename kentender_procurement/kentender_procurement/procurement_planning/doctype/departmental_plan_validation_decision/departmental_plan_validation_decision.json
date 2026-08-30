@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "autoname": "field:decision_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "decision_reference",
+  "task",
+  "submission",
+  "decision",
+  "classifications",
+  "issues",
+  "actor",
+  "authority_snapshot",
+  "decided_at",
+  "command_idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "decision_reference",
+   "fieldtype": "Data",
+   "label": "Decision Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Task",
+   "options": "Departmental Plan Validation Task",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "label": "Submission",
+   "options": "Departmental Plan Submission",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "label": "Decision",
+   "options": "Accept departmental plan\nReturn to department",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "classifications",
+   "fieldtype": "JSON",
+   "label": "Classifications",
+   "read_only": 1,
+   "description": "On acceptance: one governed requirement type per submitted entry (entry_id → Requirement Type)."
+  },
+  {
+   "fieldname": "issues",
+   "fieldtype": "JSON",
+   "label": "Issues",
+   "read_only": 1,
+   "description": "On return: structured issues — affected entry, concise problem, exact correction required."
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "authority_snapshot",
+   "fieldtype": "JSON",
+   "label": "Authority Snapshot",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "command_idempotency_key",
+   "fieldtype": "Data",
+   "label": "Command Idempotency Key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Departmental Plan Validation Decision",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1
+  },
+  {
+   "role": "Planning Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

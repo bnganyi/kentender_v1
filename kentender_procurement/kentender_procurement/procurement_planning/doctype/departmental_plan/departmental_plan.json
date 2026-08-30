@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "autoname": "field:dpp_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "dpp_reference",
+  "pe_fy_context",
+  "procuring_entity",
+  "organisation_unit",
+  "financial_year",
+  "current_state",
+  "current_version",
+  "current_accepted_version",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "dpp_reference",
+   "fieldtype": "Data",
+   "label": "DPP Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Generated as DPP-{PE code}-{OU code}-{FY start}-{3 digits}."
+  },
+  {
+   "fieldname": "pe_fy_context",
+   "fieldtype": "Link",
+   "label": "PE FY Context",
+   "options": "PE Fiscal Year Context",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "description": "Fixes the PE/FY scope. Required and immutable."
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "organisation_unit",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial Year",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "current_state",
+   "fieldtype": "Select",
+   "label": "Current State",
+   "options": "Draft\nSubmitted\nReturned\nAccepted\nWithdrawn",
+   "default": "Draft",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1,
+   "description": "Derived root display state (§4.2)."
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "label": "Current Version",
+   "options": "Departmental Plan Version",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Points to the current Draft, Returned or Submitted Version."
+  },
+  {
+   "fieldname": "current_accepted_version",
+   "fieldtype": "Link",
+   "label": "Current Accepted Version",
+   "options": "Departmental Plan Version",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Points to the latest accepted Version. Empty until acceptance."
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Monotonic optimistic-concurrency token checked by every mutating command."
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Departmental Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Planning Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "dpp_reference"
+}

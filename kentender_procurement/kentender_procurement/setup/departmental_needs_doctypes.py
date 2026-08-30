@@ -217,27 +217,9 @@ SCHEMAS = (
 			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
 		],
 	},
-	{
-		"name": "Plan Need Allocation",
-		"module": "Procurement Planning",
-		"autoname": "hash",
-		"fields": [
-			_f("Plan Item", "plan_item", "Link", options="Procurement Plan Item", reqd=1, search_index=1),
-			_f("Departmental Need", "departmental_need", "Link", options="Departmental Need", reqd=1, read_only=1, search_index=1),
-			_f("Departmental Need Version", "departmental_need_version", "Link", options="Departmental Need Version", reqd=1, read_only=1, search_index=1),
-			_f("Source Organisation Unit", "source_organisation_unit", "Link", options="Organisation Unit", reqd=1, read_only=1, search_index=1),
-			_f("Allocated Quantity", "allocated_quantity", "Float", reqd=1),
-			_f("Status", "status", "Select", options="Draft\nEffective\nReversed", default="Draft", reqd=1, in_list_view=1, search_index=1),
-			_f("Proposed In Version", "proposed_in_version", "Link", options="Procurement Plan Version", reqd=1, search_index=1),
-			_f("Effective From Version", "effective_from_version", "Link", options="Procurement Plan Version", read_only=1, search_index=1),
-			_f("Reversed By Version", "reversed_by_version", "Link", options="Procurement Plan Version", read_only=1),
-			_f("Effective At", "effective_at", "Datetime", read_only=1),
-			_f("Reversed At", "reversed_at", "Datetime", read_only=1),
-			_f("Reason", "reason", "Small Text"),
-			_f("Idempotency Key", "idempotency_key", reqd=1, read_only=1, search_index=1),
-			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
-		],
-	},
+	# "Plan Need Allocation" was declared here until PLN-CHG-001 v1.2 Phase 1:
+	# the v1.2 Planning model replaced it with Plan Source Allocation, and the
+	# legacy doctype was dropped by pln_chg_001_v12_drop_legacy_planning_doctypes.
 )
 
 

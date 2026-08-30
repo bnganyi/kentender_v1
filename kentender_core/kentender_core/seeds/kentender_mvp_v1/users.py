@@ -14,21 +14,61 @@ from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_core.seeds import constants as CoreC
 from kentender_core.seeds._common import ensure_user_permission
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
-from kentender_procurement.demands.services.demand_permissions import (
-	ROLE_BUSINESS,
-	ROLE_REQUESTER,
-	ensure_demand_roles,
-)
-from kentender_procurement.procurement_planning.services.planning_permissions import (
-	ROLE_ACCOUNTING_OFFICER,
-	ROLE_DESIGNATED_APPROVER,
-	ROLE_PLANNER,
-	ROLE_REVIEWER,
-	ROLE_TENDER_INITIATOR,
-	ROLE_VIEWER,
-	ensure_planning_roles,
+from kentender_procurement.procurement_planning.services.planning_roles import (
+	ensure_planning_roles as ensure_v12_planning_roles,
 )
 from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
+
+# Demand-era persona role literals, kept locally until the P11 §14 persona
+# rewrite (PLN tracker DEBT-01). Their owning modules were retired:
+# `demands.services.demand_permissions` and the capability-era
+# `procurement_planning.services.planning_permissions` no longer exist, and
+# importing them here had left this whole seed module unimportable.
+ROLE_REQUESTER = "Requester"
+ROLE_BUSINESS = "Business Approver"
+ROLE_PLANNER = "Procurement Planner"
+ROLE_REVIEWER = "Planning Reviewer"
+ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
+ROLE_DESIGNATED_APPROVER = "Designated Approver"
+ROLE_TENDER_INITIATOR = "Tender Initiator"
+ROLE_VIEWER = "Planning Viewer"
+ALL_PLANNING_ROLES = (
+	"Planning Contributor",
+	"Head of User Department",
+	ROLE_PLANNER,
+	ROLE_REVIEWER,
+	"Planning Authority",
+	ROLE_ACCOUNTING_OFFICER,
+	ROLE_DESIGNATED_APPROVER,
+	ROLE_TENDER_INITIATOR,
+	ROLE_VIEWER,
+	"Budget Officer",
+)
+_LEGACY_PERSONA_ROLES = (
+	ROLE_REQUESTER,
+	ROLE_BUSINESS,
+	ROLE_REVIEWER,
+	ROLE_DESIGNATED_APPROVER,
+	ROLE_TENDER_INITIATOR,
+	ROLE_VIEWER,
+	"Planning Contributor",
+	"Planning Authority",
+)
+
+
+def ensure_demand_roles() -> None:
+	"""Interim: keep the retired persona role names creatable on fresh sites
+	until the §14 personas replace them (DEBT-01)."""
+	for role in _LEGACY_PERSONA_ROLES:
+		if not frappe.db.exists("Role", role):
+			frappe.get_doc(
+				{"doctype": "Role", "role_name": role, "desk_access": 1}
+			).insert(ignore_permissions=True)
+
+
+def ensure_planning_roles() -> None:
+	ensure_v12_planning_roles()
+	ensure_demand_roles()
 
 # (email, full_name, roles, pe, org_unit|None, include_descendants)
 # Miriam also carries Demand Requester for Contract v2.2 §7.5 single-scope create.
