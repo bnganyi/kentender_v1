@@ -5,7 +5,7 @@
 | Document ID | REQ-CHG-001 |
 | Version | 1.2 |
 | Date | 28 August 2026 |
-| Status | Proposed for approval |
+| Status | Approved |
 | Change type | Complete replacement for proposed v1.1 and successor to approved v1.0 |
 | Module | Procurement Requisitions |
 | First released product | Straightforward IT equipment |
@@ -15,7 +15,7 @@
 
 ## 1. Governing decision
 
-On approval, this complete document becomes the only requirements document to consult for Procurement Requisitions. It supersedes approved REQ-CHG-001 v1.0 for new implementation work and withdraws the unapproved v1.1 draft.
+This complete document is the only requirements document to consult for Procurement Requisitions. It supersedes approved REQ-CHG-001 v1.0 for new implementation work and withdraws the unapproved v1.1 draft.
 
 The module shall not contain an STD selector, Requirements Composer Manifest, schema editor, mapping editor or generic requirements engine. Tender Preparation selects the released Tender template after Requisition authorisation.
 
@@ -1221,13 +1221,13 @@ This document implements and is subordinate to:
 - STD-ST-001 v0.3 — no STD Configuration module and code-owned released product pattern; and
 - STD-TPL-001 v0.3 — released `IT-EQUIPMENT-OPEN-V1` source and curation evidence, except where its attachment-primary assumption conflicts with E2E-REQ-001 v0.2.
 
-On approval, REQ-CHG-001 v1.2 supersedes approved REQ-CHG-001 v1.0 for new implementation work and withdraws proposed v1.1. The next required document is a complete Tender Preparation successor that replaces technical-PDF inheritance with the v1.2 structured handoff while retaining the released Goods template and five-task officer journey.
+REQ-CHG-001 v1.2 supersedes approved REQ-CHG-001 v1.0 for new implementation work and withdraws proposed v1.1. The next required document is a complete Tender Preparation successor that replaces technical-PDF inheritance with the v1.2 structured handoff while retaining the released Goods template and five-task officer journey.
 
 ## 23. Approval effect
 
-REQ-CHG-001 v1.0 remains the approved authority until this complete v1.2 successor is approved. Proposed v1.1 remains unapproved source material and must not be implemented. REQ-CHG-001 v1.2 is proposed for approval as the complete Procurement Requisitions authority.
+REQ-CHG-001 v1.2 was approved by the Project Owner on 28 August 2026. It supersedes v1.0 for new implementation work and is the complete Procurement Requisitions authority. Proposed v1.1 remains unapproved source material and must not be implemented.
 
-Approval will authorise:
+This approval authorises:
 
 - implementation of the fixed IT Equipment Requisition product;
 - conversion of section 13 into Claude Design artboards;
