@@ -46,22 +46,6 @@
 				@change-context="onChangeContext"
 			/>
 
-			<ReviewScreen
-				v-else-if="screen === 'review'"
-				v-model:tab="reviewTab"
-				:loading="loading"
-				:error="error"
-				:context="workspace.context || {}"
-				:rows="reviewRows"
-				:financial-years="financialYears"
-				v-model:search="search"
-				v-model:status="status"
-				@clear-filters="clearFilters"
-				@action="onRowAction"
-				@select-financial-year="onSelectFinancialYear"
-				@change-context="onChangeContext"
-			/>
-
 			<NeedEditorScreen
 				v-else-if="screen === 'editor'"
 				:mode="editorMode"
@@ -125,7 +109,7 @@
 				:pending="pending"
 				@approve="dialog = 'approve-withdrawal'"
 				@decline="dialog = 'decline-withdrawal'"
-				@close="go('review')"
+				@close="go()"
 				@view-plan-item="onViewPlanItem"
 			/>
 
@@ -179,7 +163,6 @@ import IntakeWindowScreen from "./components/IntakeWindowScreen.vue";
 import NeedDetailScreen from "./components/NeedDetailScreen.vue";
 import NeedEditorScreen from "./components/NeedEditorScreen.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
-import ReviewScreen from "./components/ReviewScreen.vue";
 import ReviewTaskScreen from "./components/ReviewTaskScreen.vue";
 import WithdrawalReviewScreen from "./components/WithdrawalReviewScreen.vue";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
@@ -195,7 +178,6 @@ const errorSummary = ref("");
 const fieldErrors = ref({});
 const search = ref("");
 const status = ref("");
-const reviewTab = ref("queue");
 
 const workspace = ref({});
 const detail = ref({});
@@ -230,7 +212,7 @@ const selectionRequired = computed(
 		// context exactly as the lists do. Without this the Procurement Planner,
 		// who is scoped to several Procuring Entities and no department, reached
 		// NDS-UI-08 with no context at all and edited a window bound to nothing.
-		["workspace", "review", "intake"].includes(screen.value) &&
+		["workspace", "intake"].includes(screen.value) &&
 		(changingContext.value ||
 			workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
 			// The context is PE/OU *and* FY (§12.1). With several selectable
@@ -266,7 +248,10 @@ const screen = computed(() => {
 	if (first === "new") return "editor";
 	if (first === "intake-window") return "intake";
 	if (first === "review") {
-		if (!second) return "review";
+		// The queue landing was removed (2026-08-30): review decisions reach
+		// the reviewer through My Work and notifications, and the workspace's
+		// own role-aware rows. A bare /review deep link redirects (below).
+		if (!second) return "workspace";
 		return third === "withdrawal" ? "withdrawal" : "task";
 	}
 	if (second === "edit") return "editor";
@@ -323,19 +308,6 @@ const withdrawalOpen = computed(
 const requesterLabel = computed(
 	() => (task.value.withdrawal_request || {}).requested_by || ""
 );
-
-const reviewRows = computed(() => {
-	const rows = workspace.value.needs || [];
-	if (reviewTab.value !== "queue") return rows;
-	// §12.2 — the queue is Open tasks only, after maker-checker exclusion,
-	// which the server already applied by giving the row a decision action.
-	// Both decision kinds belong here: an open withdrawal request is a decision
-	// this reviewer holds, and §10 gives NDS-UI-07 no other entry point.
-	const DECISIONS = ["review", "withdrawal"];
-	return rows.filter((row) =>
-		(row.actions || []).some((action) => DECISIONS.includes(action.code))
-	);
-});
 
 // --- loading ---------------------------------------------------------------
 
@@ -423,13 +395,22 @@ async function loadUnits() {
 }
 
 
+watch(
+	segments,
+	(value) => {
+		// Normalise the retired queue URL so history and bookmarks stay honest.
+		if (value[0] === "review" && !value[1]) go();
+	},
+	{ immediate: true }
+);
+
 watch([screen, needReference, taskId], () => load(), { immediate: true });
 
 // §12.1 filters — refresh quietly (rows stay on screen) and debounce typing,
 // so the search asks the server once per pause, not once per keystroke.
 let searchDebounce = null;
 function refreshFilters(debounced) {
-	if (screen.value !== "workspace" && screen.value !== "review") return;
+	if (screen.value !== "workspace") return;
 	clearTimeout(searchDebounce);
 	if (debounced) {
 		searchDebounce = setTimeout(() => load({ quiet: true }), 250);
@@ -455,7 +436,7 @@ usePageRail(
 			contextKey.value = "";
 			financialYear.value = "";
 			changingContext.value = false;
-			if (["workspace", "review", "intake"].includes(screen.value)) {
+			if (["workspace", "intake"].includes(screen.value)) {
 				load();
 			} else {
 				go();
@@ -715,7 +696,9 @@ async function decideWithdrawal(decision) {
 	);
 	if (!result) return;
 	closeDialog();
-	go("review");
+	// The decision is done; the workspace is the module's one landing (the
+	// queue screen was removed — My Work is the cross-module inbox).
+	go();
 }
 
 async function cancelSuccessor() {

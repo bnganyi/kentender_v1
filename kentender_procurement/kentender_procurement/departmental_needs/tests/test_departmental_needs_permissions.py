@@ -371,7 +371,24 @@ class TestRememberedContextHealing(DepartmentalNeedsPermissionCase):
 	lists only the caller's own contexts); a remembered value outside it
 	resolves to "unselected" — auto-resolving where one context exists —
 	while rows stay filtered by `can_view` and every command re-checks.
+
+	CTX-CHG-001 adds a server-side remembered selection between the rejected
+	explicit request and the prompt, so these tests clear the personas' saved
+	preferences first: on a lived-in site a real remembered department would
+	(correctly, rule 5) resolve instead of re-asking.
 	"""
+
+	CONTEXT_KEYS = (
+		"kt_working_procuring_entity",
+		"kt_needs_org_unit",
+		"kt_needs_financial_year",
+	)
+
+	def setUp(self):
+		super().setUp()
+		for user in (AUTHOR, ACTING_REVIEWER):
+			for key in self.CONTEXT_KEYS:
+				frappe.defaults.clear_user_default(key, user)
 
 	def test_a_foreign_context_heals_to_the_single_own_context(self):
 		# Julia Njeri reviews Digital Health only — exactly one context.

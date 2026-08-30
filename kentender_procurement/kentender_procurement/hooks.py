@@ -492,6 +492,12 @@ boot_session = [
 	"kentender_procurement.setup.workspace_permissions.patch_bootinfo",
 ]
 
+# NDS §4.4 review decisions surface in the shared My Work queue (kentender_core
+# collects providers through this hook; core never imports this app).
+kt_my_work_providers = [
+	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
+]
+
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
 # PP2 retired: release_procurement_package_to_tender removed
 

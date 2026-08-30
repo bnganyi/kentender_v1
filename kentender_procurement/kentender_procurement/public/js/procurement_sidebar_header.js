@@ -141,9 +141,10 @@
 	 * *path* expands by prefix — any sub-route lights its module hub up. An
 	 * item *href* expands only when it IS a hub alias: a sibling sub-route
 	 * href (`…/intake-window`, 38 chars) that also expanded by prefix became
-	 * "equivalent" to the hub on every departmental-needs route and, being
-	 * longer than `…/review` (31), stole the active state from Review tasks —
-	 * and lit Intake window up on the workspace itself.
+	 * "equivalent" to the hub on every departmental-needs route and lit
+	 * Intake window up on the workspace itself (observed 2026-08-30 while a
+	 * "Review tasks" entry still existed; the asymmetry stays load-bearing
+	 * for Intake window).
 	 */
 	function expandPathEquivalents(path, exact) {
 		var out = {};

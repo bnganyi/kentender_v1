@@ -281,3 +281,35 @@ this resource error (URL ending `/undefined`).
 **Fix.** Frappe-core defect; on a frappe upgrade re-test and drop the
 suppression. Alternatively give every KenTender app real desktop-icon/logo
 data so no switcher item lacks both `icon` and `icon_url`.
+
+---
+
+## FU-14 — §10 "Review tasks" menu entry was a specification defect (2026-08-30)
+
+**What.** NDS-CHG-001 v1.1 §10 specified a "Review tasks" sidebar entry and
+defined `/app/departmental-needs/review` as a review-queue landing. The
+requirement itself was wrong (author's correction, 2026-08-30): the KenTender
+pattern sends decisions to the established **My Work** queue and notification
+mechanism, keeps **Departmental Needs** as the only operational menu entry,
+and places **Intake window** under Configuration and Governance. A work queue
+is never exposed as a module sidebar entry.
+
+**Implemented correction.**
+- "Review tasks" removed from `workspace_sidebar/procurement.json`; the
+  navigation and G0-012 contract tests now pin the two-entry menu.
+- The queue landing screen (`ReviewScreen.vue`, bare `/review`) was removed;
+  the URL redirects to the workspace. The protected review-task record,
+  its permissions and the NDS-UI-05/NDS-UI-07 decision screens
+  (`/review/{task}`, `/review/{task}/withdrawal`) are unchanged.
+- Open departmental review tasks register with My Work through
+  kentender_core's new `kt_my_work_providers` hook
+  (`departmental_needs/services/my_work_provider.py`), mirroring §12.2
+  eligibility (HoD role, exact scope, maker-checker exclusion).
+- Reviewer notifications (submission, withdrawal request) now deep-link to
+  the exact decision screen; author notifications keep the record link.
+- The HoD's departmental register is the workspace itself (role-aware rows
+  with "Requested by"), not a separate menu entry.
+
+**Fix.** Restate §10 (two menu entries), §12.2 (My Work + notification as the
+reviewer's entry points) and the route table in the next complete NDS
+successor. This is a spec correction, not an implementation deviation.

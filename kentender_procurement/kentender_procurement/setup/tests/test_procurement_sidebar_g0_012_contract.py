@@ -16,21 +16,20 @@ from frappe.tests import IntegrationTestCase
 # named "Configuration and Governance" are the replacement group shipped by
 # CFG-CHG-002 (Reference Data) and STD-CHG-001 (Standard Tender Documents).
 #
-# "Review tasks" and "Intake window" are NDS-CHG-001 v1.1 §10: the Departmental
-# Needs module menu is exactly three entries, and the latter two are sub-routes
-# of the same Page, so they are URL links rather than Page links. Their
-# display_depends_on is presentation only — see the role-visibility test below.
-#
-# "Intake window" is the one that does not sit with its module: every
-# configuration entry is grouped under "Configuration and Governance", so it is
-# a child of that section rather than a flat spine row after "Review tasks".
+# NDS-CHG-001 v1.1 §10 gave Departmental Needs three menu entries; two remain.
+# "Review tasks" was a §10 specification defect (removed 2026-08-30, to be
+# corrected in the next complete NDS successor): review decisions reach the
+# HoD through My Work and notifications, and the workspace's role-aware rows,
+# never through a work-queue sidebar entry. "Intake window" is configuration,
+# so it sits as a child of "Configuration and Governance" — a URL link, since
+# it is a sub-route of the same Page. Its display_depends_on is presentation
+# only.
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Home",
 	"Analytics",
 	"Strategy Alignment",
 	"Budget & Funding",
 	"Departmental Needs",
-	"Review tasks",
 	"Procurement Plans",
 	"Tender Management",
 	"Tender Configurations",

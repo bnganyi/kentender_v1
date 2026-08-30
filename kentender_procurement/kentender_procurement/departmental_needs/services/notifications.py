@@ -18,7 +18,13 @@ from frappe import _
 from frappe.utils import cstr
 
 from kentender_core.services.notification_service import emit_notification_log
-from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
+from kentender_procurement.departmental_needs.constants import (
+	ROLE_HEAD_OF_USER_DEPARTMENT,
+	TASK_INITIAL_ACCEPTANCE,
+	TASK_OPEN,
+	TASK_SUCCESSOR_ACCEPTANCE,
+	TASK_WITHDRAWAL,
+)
 from kentender_procurement.departmental_needs.services.permissions import in_scope
 
 EVENT_SUBMITTED = "departmental_need_submitted"
@@ -112,6 +118,25 @@ def _recipients_for(event_type: str, need) -> list[str]:
 	return [author] if author and author != "Guest" else []
 
 
+def _open_task_route(need, event_type: str) -> str:
+	"""Route of the open review task this event created, or "" if not found."""
+	task_type = (
+		TASK_WITHDRAWAL if event_type == EVENT_WITHDRAWAL_REQUESTED
+		else ("in", [TASK_INITIAL_ACCEPTANCE, TASK_SUCCESSOR_ACCEPTANCE])
+	)
+	row = frappe.db.get_value(
+		"Departmental Need Review Task",
+		{"departmental_need": need.name, "status": TASK_OPEN, "task_type": task_type},
+		["name", "task_type"],
+		order_by="opened_at desc",
+		as_dict=True,
+	)
+	if not row:
+		return ""
+	suffix = "/withdrawal" if row.task_type == TASK_WITHDRAWAL else ""
+	return f"/app/departmental-needs/review/{row.name}{suffix}"
+
+
 def notify_need_transition(need, *, action: str) -> list[str | None]:
 	"""Emit Notification Log rows for a transition.
 
@@ -129,6 +154,13 @@ def notify_need_transition(need, *, action: str) -> list[str | None]:
 		label = need.need_reference or need.name
 		subject, message = subject_tpl.format(label), message_tpl.format(label)
 		route = f"/app/departmental-needs/{need.need_reference}"
+		if event_type in _REVIEWER_EVENTS:
+			# The reviewer's notification lands on the exact decision screen
+			# (NDS-UI-05 / NDS-UI-07), not the record: My Work and notifications
+			# are the reviewer's route to a decision — there is no queue menu.
+			task_route = _open_task_route(need, event_type)
+			if task_route:
+				route = task_route
 		token = f"{need.current_state}:{cstr(need.record_version)}"
 		created: list[str | None] = []
 		for user in recipients:

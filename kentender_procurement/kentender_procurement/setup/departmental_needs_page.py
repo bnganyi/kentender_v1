@@ -1,8 +1,10 @@
 """Departmental Needs Desk page roles (NDS-CHG-001 v1.1 §6, §10).
 
-§10 gives the module exactly three menu entries: **Departmental Needs**,
-**Review tasks** (effective Head of User Department only) and **Intake window**
-(effective Procurement Planner only). Procurement Planners use the Procurement
+§10 gave the module three menu entries; the operational menu now carries only
+**Departmental Needs** plus **Intake window** under Configuration and
+Governance (effective Procurement Planner only) — the "Review tasks" entry was
+a §10 specification defect (removed 2026-08-30; review decisions reach the
+Head of User Department through My Work and notifications). Procurement Planners use the Procurement
 Planning workspace and reach an accepted Need through a read-only deep link;
 they do not receive a landing page, and §17 forbids a Planner, Budget Officer,
 Accounting Officer or support dashboard in this module (NDS-AC-023).

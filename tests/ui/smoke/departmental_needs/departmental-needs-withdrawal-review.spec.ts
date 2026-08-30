@@ -27,13 +27,13 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 	test.afterAll(() => clearFixtures());
 
 	async function openWithdrawal(page: import("@playwright/test").Page) {
-		await gotoNeeds(page, "/review");
+		await gotoNeeds(page, "");
 		// §12.1 — two Financial Years are selectable, so the year must be
 		// resolved before rows are listed even though this actor has one department.
 		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "review");
-		// §12.2 — an open withdrawal is a decision this reviewer holds, so it
-		// reaches them through the same queue; §10 gives it no other entry.
+		await expectScreen(page, "workspace");
+		// §12.2 — an open withdrawal is a decision this reviewer holds; the
+		// workspace's role-aware row (like My Work) leads to NDS-UI-07.
 		await page
 			.locator(
 				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,

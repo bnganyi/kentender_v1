@@ -44,12 +44,16 @@ from kentender_procurement.departmental_needs.services.context import save_intak
 SIDEBAR_EXPORT = ("kentender_procurement", "workspace_sidebar", "procurement.json")
 REGISTRY = ("kentender_core", "public", "js", "kt_cl_surface_registry.js")
 
-# §10 — the module menu, in order. Each row is (label, link_type, target, role).
+# The module menu, in order. Each row is (label, link_type, target, role).
 # ``role`` is None where the entry is visible to every user who can reach the
 # module at all; the workspace itself resolves its own audience server-side.
+#
+# §10 also specified a "Review tasks" entry — a specification defect, removed
+# 2026-08-30 (to be corrected in the next complete NDS successor): review
+# decisions reach the Head of User Department through the shared My Work queue
+# and notification deep links, never through a work-queue sidebar entry.
 MENU: tuple[tuple[str, str, str, str | None], ...] = (
 	("Departmental Needs", "Page", "departmental-needs", None),
-	("Review tasks", "URL", "/desk/departmental-needs/review", ROLE_HEAD_OF_USER_DEPARTMENT),
 	("Intake window", "URL", "/desk/departmental-needs/intake-window", ROLE_PROCUREMENT_PLANNER),
 )
 

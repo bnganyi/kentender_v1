@@ -87,9 +87,9 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	test("NDS-DES-06 departmental review task", async ({ page }) => {
 		resetFixture("reset_review_task_fixture");
 		await loginAsNdsFixtureReviewer(page);
-		await gotoNeeds(page, "/review");
+		await gotoNeeds(page, "");
 		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "review");
+		await expectScreen(page, "workspace");
 		await page
 			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
 			.click();
@@ -103,9 +103,9 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	test("NDS-DES-12a withdrawal review, dependency blocked", async ({ page }) => {
 		resetFixture("reset_withdrawal_blocked_fixture");
 		await loginAsNdsFixtureReviewer(page);
-		await gotoNeeds(page, "/review");
+		await gotoNeeds(page, "");
 		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "review");
+		await expectScreen(page, "workspace");
 		await page
 			.locator(
 				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
@@ -121,9 +121,9 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	test("NDS-DES-12b withdrawal review, dependency cleared", async ({ page }) => {
 		resetFixture("reset_withdrawal_cleared_fixture");
 		await loginAsNdsFixtureReviewer(page);
-		await gotoNeeds(page, "/review");
+		await gotoNeeds(page, "");
 		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "review");
+		await expectScreen(page, "workspace");
 		await page
 			.locator(
 				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
@@ -151,9 +151,9 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	test("NDS-DES-11 reason dialog", async ({ page }) => {
 		resetFixture("reset_review_task_fixture");
 		await loginAsNdsFixtureReviewer(page);
-		await gotoNeeds(page, "/review");
+		await gotoNeeds(page, "");
 		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "review");
+		await expectScreen(page, "workspace");
 		await page
 			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
 			.click();
