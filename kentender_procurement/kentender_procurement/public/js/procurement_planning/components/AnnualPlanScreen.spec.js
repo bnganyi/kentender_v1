@@ -76,8 +76,16 @@ describe("AnnualPlanScreen — PLN-DES-07", () => {
 		row.trigger("click");
 	});
 
-	it("the Submit consolidated Plan button is present but disabled (DES-07)", () => {
+	it("the Submit consolidated Plan button is disabled until every item is Confirmed (DES-07)", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-submit-consolidated"]').attributes("disabled")).toBeDefined();
+	});
+
+	it("enables Submit consolidated Plan and emits once ready_for_submission is true", async () => {
+		const w = make({ ...PLAN, ready_for_submission: true });
+		const button = w.find('[data-testid="pln-submit-consolidated"]');
+		expect(button.attributes("disabled")).toBeUndefined();
+		await button.trigger("click");
+		expect(w.emitted("submit-consolidated")).toHaveLength(1);
 	});
 });

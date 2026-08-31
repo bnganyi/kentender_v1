@@ -98,32 +98,16 @@ def _allocations(item_name: str) -> list:
 	)
 
 
-def request_finance_confirmation(
-	*, plan_item: str, expected_record_version, idempotency_key: str, user: str | None = None,
-) -> dict[str, Any]:
-	actor = cstr(user or frappe.session.user)
-	payload = {"plan_item": plan_item}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
-
-	item = envelope.locked("Annual Plan Item", _item_doc_name(plan_item))
-	version = frappe.get_doc("Annual Plan Version", item.plan_version)
-	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	_authorise_planner(actor, plan.procuring_entity)
-	if item.item_state != "Draft" or version.version_status != "Draft":
-		fail("PLN_STALE_WRITE", "Another user changed this record. Reload before continuing.")
-	envelope.check_record_version(item, expected_record_version)
-
-	allocations = _allocations(item.name)
+def validate_item_complete(item, allocations: list, plan) -> None:
+	"""§12.8 "fully validates in one transaction" — the completeness gate
+	`SavePlanItem` deliberately skips. Shared by `RequestFinanceConfirmation`
+	and (Phase 8) `SubmitConsolidatedPlan`/`SubmitCorrectedPlan`, which
+	re-validate the same item facts at their own, later freeze point."""
 	if any(plan_read.source_correction_required(a.dpp_entry) for a in allocations):
 		fail(
 			"PLN_SOURCE_CORRECTION_REQUIRED",
 			"A departmental source changed. Dissolve and re-form the affected Draft item before continuing.",
 		)
-
-	# §12.8 "fully validates in one transaction" — the completeness gate
-	# Save draft deliberately skips.
 	if not cstr(item.strategic_objective).strip():
 		fail("PLN_OBJECTIVE_INELIGIBLE", "Select an Active Strategic Objective valid for this Plan.")
 	from kentender_procurement.procurement_planning.services import strategy_gateway
@@ -160,6 +144,27 @@ def request_finance_confirmation(
 			"PLN_SCHEDULE_INVALID",
 			"Correct the highlighted dates so the schedule is chronological and meets the required-by date.",
 		)
+
+
+def request_finance_confirmation(
+	*, plan_item: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	actor = cstr(user or frappe.session.user)
+	payload = {"plan_item": plan_item}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+
+	item = envelope.locked("Annual Plan Item", _item_doc_name(plan_item))
+	version = frappe.get_doc("Annual Plan Version", item.plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	_authorise_planner(actor, plan.procuring_entity)
+	if item.item_state != "Draft" or version.version_status != "Draft":
+		fail("PLN_STALE_WRITE", "Another user changed this record. Reload before continuing.")
+	envelope.check_record_version(item, expected_record_version)
+
+	allocations = _allocations(item.name)
+	validate_item_complete(item, allocations, plan)
 
 	source_set_hash = _source_set_hash(allocations)
 	required_amount = sum(flt(a.indicative_amount) for a in allocations)

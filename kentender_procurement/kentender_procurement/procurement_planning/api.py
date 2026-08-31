@@ -343,3 +343,69 @@ def return_from_finance(
 	return plan_finance.return_from_finance(
 		task=task, reason=reason, task_token=task_token, idempotency_key=idempotency_key,
 	)
+
+
+# --- Slice F: Governance (Phase 8) ------------------------------------------
+
+
+@frappe.whitelist()
+def submit_consolidated_plan(
+	plan_version: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.submit_consolidated_plan(
+		plan_version=plan_version, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def get_plan_governance_task(task: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	return plan_read.get_plan_governance_task(task=task)
+
+
+@frappe.whitelist()
+def adopt_and_submit_plan(task: str, task_token: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.adopt_and_submit_plan(
+		task=task, task_token=task_token, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def approve_annual_plan(
+	task: str, task_token: str, idempotency_key: str, resolution_reference: str = ""
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.approve_annual_plan(
+		task=task, task_token=task_token, resolution_reference=resolution_reference,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def return_plan_version(
+	task: str, reason: str, task_token: str, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.return_plan_version(
+		task=task, reason=reason, task_token=task_token, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def submit_corrected_plan(
+	plan_version: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.submit_corrected_plan(
+		plan_version=plan_version, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)

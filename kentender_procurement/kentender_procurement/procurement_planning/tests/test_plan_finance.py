@@ -220,7 +220,7 @@ class TestConfirmFunding(PlanFinanceCase):
 				idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_FINANCE_SHORTFALL")
-		self.assertEqual(frappe.db.count("Plan Reservation Reference"), 0)
+		self.assertEqual(frappe.db.count("Plan Reservation Reference", {"fixture_namespace": fx.NS}), 0)
 		self.assertEqual(frappe.get_doc("Plan Finance Task", task.name).status, "Open")
 
 	def test_the_hybrid_planner_who_requested_cannot_also_confirm(self):
@@ -270,7 +270,7 @@ class TestConfirmFunding(PlanFinanceCase):
 			idempotency_key=idem,
 		)
 		self.assertTrue(second["idempotent"])
-		self.assertEqual(frappe.db.count("Plan Reservation Reference"), 1)
+		self.assertEqual(frappe.db.count("Plan Reservation Reference", {"fixture_namespace": fx.NS}), 1)
 
 
 class TestReturnFromFinance(PlanFinanceCase):
@@ -290,7 +290,7 @@ class TestReturnFromFinance(PlanFinanceCase):
 			task_token=task.task_token, idempotency_key=key(),
 		)
 		self.assertEqual(result["action"], "returned")
-		self.assertEqual(frappe.db.count("Plan Reservation Reference"), 0)
+		self.assertEqual(frappe.db.count("Plan Reservation Reference", {"fixture_namespace": fx.NS}), 0)
 		frappe.set_user(fx.PLANNER)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertEqual(item["header"]["finance_state_badge"], "Returned")

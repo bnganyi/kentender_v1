@@ -49,6 +49,8 @@ OUTSIDER = "plnt.outsider@example.test"
 HYBRID = "plnt.hybrid@example.test"
 # §6.1 Finance-side segregation: Planner + Budget Officer together
 HYBRID_FINANCE = "plnt.hybridfinance@example.test"
+# §6.1 Governance-side segregation: Planner + Accounting Officer + Statutory
+HYBRID_AO = "plnt.hybridao@example.test"
 
 REQUIREMENT_TYPES = ("Goods", "Consulting services", "Non-consulting services")
 
@@ -211,6 +213,11 @@ def ensure_world() -> None:
 		alpha,
 	)
 	_user(HYBRID_FINANCE, ("Procurement Planner", "Budget Officer"), pe_scope)
+	_user(
+		HYBRID_AO,
+		("Procurement Planner", "Accounting Officer", "Plan Statutory Approver"),
+		pe_scope,
+	)
 	frappe.db.commit()
 
 

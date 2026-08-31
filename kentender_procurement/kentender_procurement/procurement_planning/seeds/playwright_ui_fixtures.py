@@ -474,6 +474,11 @@ def _wipe_pe(pe: str) -> None:
 	)
 	frappe.db.delete("Plan Finance Decision", {"task": ("in", finance_tasks or ("",))})
 	frappe.db.delete("Plan Finance Task", {"name": ("in", finance_tasks or ("",))})
+	governance_tasks = frappe.get_all(
+		"Plan Governance Task", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"
+	)
+	frappe.db.delete("Plan Governance Decision", {"task": ("in", governance_tasks or ("",))})
+	frappe.db.delete("Plan Governance Task", {"name": ("in", governance_tasks or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
@@ -979,3 +984,178 @@ def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {"pe": FN_PE, "task": requested["task"], "plan_item": item_id}
+
+
+# --- Slice F world: PE-PWGV (governance spec file) --------------------------
+
+GV_PE = "PE-PWGV"
+GV_OU = "OU-PWGV-DHI"
+GV_CTX = "CTX-PWGV-2098-2099"
+
+GV_AUTHOR = "pwgv.author@example.test"
+GV_HOD = "pwgv.hod@example.test"
+GV_PLANNER = "pwgv.planner@example.test"
+GV_BUDGET_OFFICER = "pwgv.budget@example.test"
+GV_AO = "pwgv.ao@example.test"
+GV_STATUTORY = "pwgv.statutory@example.test"
+
+
+def _ensure_gv_strategy_world() -> str:
+	existing = frappe.db.get_value(
+		"Strategy Node",
+		{"title": "PWGV Digital Objective", "node_type": "Strategic Objective"},
+		"name",
+	)
+	if existing:
+		return existing
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": "Playwright Governance Strategic Plan",
+			"procuring_entity_id": GV_PE,
+			"plan_role": "Primary",
+			"period_start": "2020-01-01",
+			"period_end": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2020-01-01",
+			"effective_to": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Pillar", "title": "PWGV Pillar", "display_order": 1,
+		}
+	).insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Programme", "title": "PWGV Programme", "display_order": 2,
+			"parent_node_id": pillar.name,
+		}
+	).insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Strategic Objective", "title": "PWGV Digital Objective",
+			"display_order": 3, "parent_node_id": programme.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("Strategic Plan Version", version.name, "status", "Active")
+	return objective.name
+
+
+def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PE-PWGV with one Plan Item Confirmed and the Annual Plan submitted —
+	an Open Accounting Officer adoption task (driven through the real
+	§5.1/§5.2/§8.2 commands) — the governance spec's start state."""
+	from uuid import uuid4
+
+	from kentender_procurement.procurement_planning.services import (
+		dpp_lifecycle,
+		dpp_validation,
+		plan_finance,
+		plan_governance,
+		plan_read,
+		plan_workbench,
+	)
+
+	_guard()
+	_ensure_pe_world(GV_PE, GV_OU, GV_CTX, budget_ref="PWGV")
+	objective = _ensure_gv_strategy_world()
+	_pe_actor(GV_AUTHOR, "Playwright Governance Author", ("Departmental Author",), GV_PE, GV_OU)
+	_pe_actor(
+		GV_HOD, "Playwright Governance HoD",
+		("Departmental Author", "Head of User Department"), GV_PE, GV_OU,
+	)
+	_pe_actor(GV_PLANNER, "Playwright Governance Planner", ("Procurement Planner",), GV_PE, None)
+	_pe_actor(GV_BUDGET_OFFICER, "Playwright Governance Budget Officer", ("Budget Officer",), GV_PE, None)
+	_pe_actor(GV_AO, "Playwright Governance AO", ("Accounting Officer",), GV_PE, None)
+	_pe_actor(GV_STATUTORY, "Playwright Governance Statutory", ("Plan Statutory Approver",), GV_PE, None)
+	_wipe_pe(GV_PE)
+	for user in (GV_AUTHOR, GV_HOD, GV_PLANNER, GV_BUDGET_OFFICER, GV_AO, GV_STATUTORY):
+		for pref_key in CONTEXT_PREFERENCE_KEYS:
+			frappe.defaults.clear_user_default(pref_key, user)
+
+	frappe.set_user(GV_AUTHOR)
+	opened = dpp_lifecycle.open_departmental_plan(
+		procuring_entity=GV_PE, organisation_unit=GV_OU,
+		financial_year=FY, idempotency_key=uuid4().hex, fixture_namespace="KENTENDER_PLAYWRIGHT",
+	)
+	added = dpp_lifecycle.save_direct_requirement(
+		dpp_version=opened["current_version"],
+		values={
+			"title": "National digital health infrastructure upgrade",
+			"description": "Procure and implement the national digital health infrastructure upgrade.",
+			"expected_operational_result": "The department operates the upgraded infrastructure.",
+			"quantity": 1,
+			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
+			"required_by_date": "2099-04-30",
+			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWGV-0001"}, "name"),
+			"indicative_amount": 80000000,
+		},
+		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(GV_HOD)
+	submitted = dpp_lifecycle.submit_departmental_plan(
+		dpp_version=opened["current_version"], certification_confirmed=True,
+		expected_record_version=added["record_version"], idempotency_key=uuid4().hex,
+	)
+	dpp_task = frappe.get_doc(
+		"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+	)
+	frappe.set_user(GV_PLANNER)
+	accepted = dpp_validation.accept_departmental_plan(
+		task=dpp_task.name, classifications={added["entry_id"]: "Non-consulting services"},
+		task_token=dpp_task.task_token, idempotency_key=uuid4().hex,
+	)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	formed = plan_workbench.form_plan_items(
+		plan_version=accepted["annual_plan_version"],
+		dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+		mode="each", expected_record_version=plan["record_version"], idempotency_key=uuid4().hex,
+	)
+	item_id = formed["created_items"][0]
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	plan_workbench.save_plan_item(
+		plan_item=item_id,
+		values={
+			"title": "National digital health infrastructure upgrade",
+			"description": "Procure and implement the national digital health infrastructure upgrade.",
+			"strategic_objective": objective, "aggregation_reason": "",
+			"invitation_date": "2098-08-01", "bid_opening_date": "2098-08-15",
+			"evaluation_completion_date": "2098-09-01", "award_approval_date": "2098-09-10",
+			"award_notification_date": "2098-09-15", "contract_signing_date": "2098-10-01",
+			"delivery_completion_date": "2098-10-15",
+		},
+		expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	requested = plan_finance.request_finance_confirmation(
+		plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	finance_task = frappe.get_doc("Plan Finance Task", requested["task"])
+	frappe.set_user(GV_BUDGET_OFFICER)
+	read = plan_read.get_finance_task(task=finance_task.name)
+	plan_finance.confirm_funding(
+		task=finance_task.name, task_token=finance_task.task_token,
+		check_token=read["budget_check_token"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(GV_PLANNER)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	submitted_plan = plan_governance.submit_consolidated_plan(
+		plan_version=plan["version_reference"], expected_record_version=plan["record_version"],
+		idempotency_key=uuid4().hex,
+	)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {
+		"pe": GV_PE, "task": submitted_plan["task"], "plan_reference": accepted["annual_plan"],
+	}

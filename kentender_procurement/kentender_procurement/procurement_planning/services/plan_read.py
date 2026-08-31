@@ -248,6 +248,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"badge": version.version_status,
 		},
 		"mutable": version.version_status == "Draft",
+		"is_correction": bool(version.correction_of_plan_version),
 		"summary": {
 			"accepted_entries": len(all_accepted),
 			"allocated": len(all_accepted) - len(unallocated),
@@ -483,4 +484,90 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		},
 		"as_at_display": _eat(frappe.utils.now_datetime()),
 		"lines": rows,
+	}
+
+
+def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
+	"""PLN-UI-11/12 — the Accounting Officer adoption (PLN-DES-11) and
+	statutory approval (PLN-DES-12) tasks, from the same read model and
+	screen: both fix the exact immutable `submitted_snapshot` (never a live
+	query — §13 evidence is never re-derived) and differ only in the
+	authority card and decision-statement copy."""
+	from kentender_procurement.procurement_planning.services import planning_roles
+
+	actor = cstr(user or frappe.session.user)
+	if not task or not frappe.db.exists("Plan Governance Task", task):
+		authority.not_found()
+	task_doc = frappe.get_doc("Plan Governance Task", task)
+	role = (
+		planning_roles.ROLE_ACCOUNTING_OFFICER if task_doc.stage == "Accounting Officer adoption"
+		else planning_roles.ROLE_PLAN_STATUTORY_APPROVER
+	)
+	authority.require_scope(actor, roles=(role,), procuring_entity=task_doc.procuring_entity)
+
+	version = frappe.get_doc("Annual Plan Version", task_doc.plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	pe_label = cstr(
+		frappe.db.get_value("Procuring Entity", plan.procuring_entity, "legal_name") or plan.procuring_entity
+	)
+	rows = json.loads(version.submitted_snapshot) if version.submitted_snapshot else []
+	total_value = sum(flt(row.get("value")) for row in rows)
+
+	authority_card = None
+	if task_doc.stage == "Statutory approval":
+		ao_decision = frappe.db.get_value(
+			"Plan Governance Task", {"plan_version": version.name, "stage": "Accounting Officer adoption"}, "decision"
+		)
+		ao_actor, ao_decided_at = "", ""
+		if ao_decision:
+			row = frappe.db.get_value(
+				"Plan Governance Decision", ao_decision, ["actor", "decided_at"], as_dict=True
+			)
+			ao_actor = cstr(frappe.db.get_value("User", row.actor, "full_name") or row.actor) if row else ""
+			ao_decided_at = _eat(row.decided_at) if row else ""
+		authority_card = {
+			"capacity": task_doc.capacity,
+			"is_board": task_doc.capacity == "Board of Directors or similar governing body",
+			"ao_adoption_line": f"{ao_actor} · {ao_decided_at}" if ao_actor else "",
+		}
+
+	return {
+		"outcome": "OK",
+		"task": task_doc.name,
+		"task_reference": task_doc.task_reference,
+		"task_token": task_doc.task_token,
+		"status": task_doc.status,
+		"stage": task_doc.stage,
+		"header": {
+			"eyebrow": f"{task_doc.stage.upper()} · {plan.plan_reference} · VERSION {version.version_number}",
+			"title": plan.title or f"{pe_label} Annual Procurement Plan",
+			"badge": version.version_status,
+		},
+		"authority_card": authority_card,
+		"decision_statement": (
+			"I adopt the complete consolidated Annual Procurement Plan Version "
+			f"{version.version_number} shown above and submit it for the statutory approval "
+			"applicable to this Procuring Entity."
+			if task_doc.stage == "Accounting Officer adoption" else ""
+		),
+		"items": rows,
+		"caption": f"{len(rows)} Plan Item{'s' if len(rows) != 1 else ''} · {_money(total_value)}",
+		"confirm_label": (
+			"Adopt and submit" if task_doc.stage == "Accounting Officer adoption"
+			else "Approve Annual Procurement Plan"
+		),
+		"return_dialog": (
+			{
+				"title": "Return Plan Version for correction?",
+				"lede": f"The submitted Version {version.version_number} remains unchanged. State the correction required.",
+			}
+			if task_doc.stage == "Accounting Officer adoption" else
+			{
+				"title": "Return adopted Plan Version for correction?",
+				"lede": (
+					f"The Accounting-Officer-adopted Version {version.version_number} remains unchanged. "
+					"State the correction required."
+				),
+			}
+		),
 	}

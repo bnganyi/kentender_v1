@@ -96,3 +96,27 @@ export function confirmFunding(args) {
 export function returnFromFinance(args) {
 	return frappeCall(`${BASE}.return_from_finance`, args);
 }
+
+export function submitConsolidatedPlan(args) {
+	return frappeCall(`${BASE}.submit_consolidated_plan`, args);
+}
+
+export function getPlanGovernanceTask(task) {
+	return frappeCall(`${BASE}.get_plan_governance_task`, { task });
+}
+
+export function adoptAndSubmitPlan(args) {
+	return frappeCall(`${BASE}.adopt_and_submit_plan`, args);
+}
+
+export function approveAnnualPlan(args) {
+	return frappeCall(`${BASE}.approve_annual_plan`, args);
+}
+
+export function returnPlanVersion(args) {
+	return frappeCall(`${BASE}.return_plan_version`, args);
+}
+
+export function submitCorrectedPlan(args) {
+	return frappeCall(`${BASE}.submit_corrected_plan`, args);
+}

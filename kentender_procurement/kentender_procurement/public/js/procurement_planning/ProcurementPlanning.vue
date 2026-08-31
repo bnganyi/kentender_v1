@@ -151,6 +151,7 @@
 					@open-form-dialog="formDialog = true"
 					@navigate="onNavigate"
 					@back="frappe.set_route(WORKSPACE_PAGE)"
+					@submit-consolidated="onSubmitConsolidatedPlan"
 				/>
 				<FormPlanItemsDialog
 					v-if="formDialog"
@@ -228,6 +229,43 @@
 					@cancel="financeReturnDialog = false"
 				/>
 			</template>
+
+			<template v-else-if="screen === 'governance'">
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+				<GovernanceTaskScreen
+					v-else
+					:task="governanceTask"
+					:pending="pending"
+					:error-summary="errorSummary"
+					@confirm="onGovernanceConfirm"
+					@open-return-dialog="governanceReturnDialog = true"
+				/>
+				<GovernanceReturnDialog
+					v-if="governanceReturnDialog"
+					:dialog="governanceTask.return_dialog"
+					:pending="pending"
+					:error="errorSummary"
+					@confirm="onGovernanceReturn"
+					@cancel="governanceReturnDialog = false"
+				/>
+			</template>
 		</div>
 	</div>
 </template>
@@ -247,6 +285,8 @@ import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
+import GovernanceTaskScreen from "./components/GovernanceTaskScreen.vue";
+import GovernanceReturnDialog from "./components/GovernanceReturnDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
@@ -272,6 +312,8 @@ const planItem = ref({});
 const formDialog = ref(false);
 const financeTask = ref({});
 const financeReturnDialog = ref(false);
+const governanceTask = ref({});
+const governanceReturnDialog = ref(false);
 
 // §10/§12.1 — explicit PE/FY are visible filters only; the server resolves
 // the remembered server-side preference on a bare load.
@@ -306,6 +348,9 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "finance" && segments.value[1]) {
 		return "finance";
 	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "review" && segments.value[1]) {
+		return "governance";
+	}
 	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
 	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
 	return "workspace";
@@ -317,6 +362,10 @@ const validationTaskId = computed(() =>
 
 const financeTaskId = computed(() =>
 	segments.value[0] === "finance" ? segments.value[1] || "" : ""
+);
+
+const governanceTaskId = computed(() =>
+	segments.value[0] === "review" ? segments.value[1] || "" : ""
 );
 
 const entryId = computed(() =>
@@ -384,6 +433,11 @@ async function load() {
 			if (seq !== loadSeq) return;
 			financeTask.value = loaded;
 			financeReturnDialog.value = false;
+		} else if (screen.value === "governance") {
+			const loaded = await api.getPlanGovernanceTask(governanceTaskId.value);
+			if (seq !== loadSeq) return;
+			governanceTask.value = loaded;
+			governanceReturnDialog.value = false;
 		}
 	} catch (e) {
 		if (seq !== loadSeq) return;
@@ -615,6 +669,53 @@ async function onReturnFromFinance(reason) {
 	}
 }
 
+async function onSubmitConsolidatedPlan() {
+	const command = annualPlan.value.is_correction ? "submit-corrected" : "submit-consolidated";
+	const apiCall = annualPlan.value.is_correction ? api.submitCorrectedPlan : api.submitConsolidatedPlan;
+	const result = await run(command, (key) =>
+		apiCall({
+			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+}
+
+async function onGovernanceConfirm(resolutionReference) {
+	const command = governanceTask.value.stage === "Accounting Officer adoption" ? "adopt" : "approve";
+	const result = await run(command, (key) =>
+		command === "adopt"
+			? api.adoptAndSubmitPlan({
+					task: governanceTask.value.task,
+					task_token: governanceTask.value.task_token,
+					idempotency_key: key,
+				})
+			: api.approveAnnualPlan({
+					task: governanceTask.value.task,
+					task_token: governanceTask.value.task_token,
+					resolution_reference: resolutionReference,
+					idempotency_key: key,
+				})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onGovernanceReturn(reason) {
+	const result = await run("return-plan-version", (key) =>
+		api.returnPlanVersion({
+			task: governanceTask.value.task,
+			reason,
+			task_token: governanceTask.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		governanceReturnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
 watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
 
 const railTrail = computed(() => {
@@ -624,6 +725,9 @@ const railTrail = computed(() => {
 	}
 	if (screen.value === "finance") {
 		trail.push({ label: "Finance" });
+	}
+	if (screen.value === "governance") {
+		trail.push({ label: "Review" });
 	}
 	if (dppReference.value) {
 		trail.push({ label: dppReference.value, route: [DPP_PAGE, dppReference.value] });

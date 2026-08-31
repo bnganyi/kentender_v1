@@ -126,9 +126,11 @@
 		<div class="pln-footer-bar">
 			<button class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
 			<button
+				v-if="plan.mutable"
 				class="kt-btn kt-btn-primary"
 				data-testid="pln-submit-consolidated"
-				disabled
+				:disabled="!plan.ready_for_submission || pending"
+				@click="$emit('submit-consolidated')"
 			>
 				Submit consolidated Plan
 			</button>
@@ -145,7 +147,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-defineEmits(["open-form-dialog", "navigate", "back"]);
+defineEmits(["open-form-dialog", "navigate", "back", "submit-consolidated"]);
 
 const badgeClass = computed(() =>
 	props.plan.header?.badge === "Draft" ? "is-draft" : "is-live"
