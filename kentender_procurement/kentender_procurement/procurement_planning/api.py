@@ -93,14 +93,20 @@ def save_need_funding(
 @frappe.whitelist()
 def save_direct_requirement(
 	dpp_version: str,
-	values,
+	entry_values,
 	expected_record_version,
 	idempotency_key: str,
 	entry_id: str | None = None,
 ) -> dict[str, Any]:
+	# `entry_values`, deliberately not `values`: a form-encoded field named
+	# "values" shadows frappe._dict.values() on frappe.local.form_dict, and
+	# frappe internals that call form_dict.values() then receive a string —
+	# observed live as the whole request degrading to Guest ("User None not
+	# found" + a not-whitelisted refusal) while the same payload succeeded as
+	# JSON. The NDS-914 transport-field family, new member.
 	return dpp_lifecycle.save_direct_requirement(
 		dpp_version=dpp_version,
-		values=_parse_json(values, {}),
+		values=_parse_json(entry_values, {}),
 		entry_id=entry_id,
 		expected_record_version=expected_record_version,
 		idempotency_key=idempotency_key,
@@ -203,3 +209,19 @@ def get_planning_workspace(
 	return workspace.get_planning_workspace(
 		procuring_entity=procuring_entity, financial_year=financial_year
 	)
+
+
+@frappe.whitelist()
+def get_departmental_plan(dpp_reference: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import dpp_read
+
+	return dpp_read.get_departmental_plan(dpp_reference=dpp_reference)
+
+
+@frappe.whitelist()
+def get_dpp_entry_editor(
+	dpp_reference: str, entry_id: str | None = None
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import dpp_read
+
+	return dpp_read.get_dpp_entry_editor(dpp_reference=dpp_reference, entry_id=entry_id)

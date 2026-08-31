@@ -150,3 +150,136 @@
 	padding: 14px 20px;
 	border-bottom: 1px solid var(--color-neutral-200);
 }
+
+/* PLN-DES-02/05 header row + reference line */
+.kt-pln .pln-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-pln .pln-header-left {
+	flex: 1;
+	min-width: 320px;
+}
+.kt-pln .pln-header-actions,
+.kt-pln .pln-footer-actions {
+	display: flex;
+	gap: 12px;
+	flex-shrink: 0;
+	padding-top: 4px;
+}
+.kt-pln .pln-quiet-ref {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 0 0 8px;
+}
+
+/* PLN-DES-02 four-column context strip */
+.kt-pln .pln-strip-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 24px;
+	padding: 16px 20px;
+	margin-top: 24px;
+}
+.kt-pln .pln-val {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 16px;
+}
+
+/* PLN-DES-02 amber readiness notice (+ a critical variant for refusals) */
+.kt-pln .pln-notice {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 18px;
+	border: 1px solid var(--kt-color-attention, #b26a00);
+	background: color-mix(in srgb, var(--kt-color-attention, #b26a00) 8%, transparent);
+	color: var(--kt-color-attention, #b26a00);
+	margin-top: 20px;
+	font-size: 14px;
+}
+.kt-pln .pln-notice p {
+	margin: 0;
+}
+.kt-pln .pln-notice-title {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 15px;
+	margin: 0;
+}
+.kt-pln .pln-notice.is-critical {
+	border-color: var(--kt-color-critical, #b3261e);
+	background: color-mix(in srgb, var(--kt-color-critical, #b3261e) 8%, transparent);
+	color: var(--kt-color-critical, #b3261e);
+}
+
+/* §12.2 — a structured return issue rendered next to its entry */
+.kt-pln .pln-issue {
+	padding: 8px 12px;
+	font-size: 13.5px;
+	border-left: 3px solid var(--kt-color-critical, #b3261e);
+	background: color-mix(in srgb, var(--kt-color-critical, #b3261e) 6%, transparent);
+}
+
+/* PLN-DES-05 certification card */
+.kt-pln .pln-cert-box {
+	border: 1px solid var(--color-neutral-200);
+	padding: 16px 18px;
+	margin-top: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.kt-pln .pln-cert-box p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+.kt-pln .pln-checkbox-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+
+/* sticky page footer (§11 sticky action footer) */
+.kt-pln .pln-footer-bar {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 0;
+	border-top: 1px solid var(--color-neutral-200);
+	margin-top: 32px;
+	background: var(--color-bg);
+}
+
+/* PLN-DES-03/04 editors: 900px column, two-column field grid */
+.kt-pln .pln-editor {
+	max-width: 900px;
+	margin: 0 auto;
+}
+.kt-pln .pln-field-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px 24px;
+}
+.kt-pln .pln-ro-field label,
+.kt-pln .pln-field label {
+	display: block;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 4px;
+}
+.kt-pln .pln-ro-field .pln-val {
+	font-family: var(--font-body);
+	font-weight: 400;
+	font-size: 15px;
+}

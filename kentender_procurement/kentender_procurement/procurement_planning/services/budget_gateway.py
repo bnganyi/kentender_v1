@@ -25,19 +25,61 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
+from contextlib import contextmanager
+
 from kentender_procurement.procurement_planning.errors import fail
+
+
+@contextmanager
+def _system_principal():
+	"""Temporarily evaluate one cross-module read as Administrator WITHOUT
+	`frappe.set_user`.
+
+	`frappe.set_user` is safe in patches/jobs but is destructive inside a web
+	request: it overwrites `session.user`, sets `session.sid` to the USERNAME
+	and empties `session.data` on the live session object — the request-end
+	session save then persists that mangled state, and every later request on
+	the same sid arrives as Guest ("User None not found" + a not-whitelisted
+	refusal). Observed live in the Slice B browser run; a `finally:
+	set_user(caller)` does NOT undo it (the sid/data stay mangled).
+
+	This swap restores the exact session fields and clears the caches
+	`set_user` would have cleared, so the web session survives intact."""
+	local = frappe.local
+	session = local.session
+	saved = (session.user, session.sid, session.data)
+	saved_form_dict = local.form_dict
+	saved_user_obj = getattr(local, "user_obj", None)
+	try:
+		session.user = "Administrator"
+		local.role_permissions = {}
+		local.user_obj = None
+		yield
+	finally:
+		session.user, session.sid, session.data = saved
+		local.form_dict = saved_form_dict
+		local.role_permissions = {}
+		local.user_obj = saved_user_obj
 
 
 def list_eligible_budget_lines(
 	*, procuring_entity: str, financial_year: str, source_org_unit: str | None = None
 ) -> list[dict[str, Any]]:
+	"""Runs as a system principal, deliberately: Budget's read scope admits only
+	Budget-side roles (`require_budget_read_scope`), while §7.3/§12.3 requires
+	the *departmental* author to see their department's eligible Active lines.
+	Every Planning caller authorises its own actor for the exact PE/OU first,
+	and the result is already narrowed to that department's eligible lines —
+	the pre-v1.2 module handled the same mismatch by reading Budget tables
+	directly, which is the boundary violation this gateway closes."""
 	from kentender_budget.api.budget_api import list_eligible_budget_lines as contract
 
-	return contract(
-		procuring_entity=procuring_entity,
-		financial_year=financial_year,
-		source_org_unit=source_org_unit,
-	)
+	with _system_principal():
+		return contract(
+			procuring_entity=procuring_entity,
+			financial_year=financial_year,
+			source_org_unit=source_org_unit,
+		)
 
 
 def eligible_line_ids(

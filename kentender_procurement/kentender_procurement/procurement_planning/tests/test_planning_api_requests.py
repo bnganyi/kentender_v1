@@ -89,7 +89,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		added = self.call(
 			"save_direct_requirement",
 			dpp_version=opened["current_version"],
-			values=json.dumps(fx.direct_values()),  # JSON string, as over HTTP
+			entry_values=json.dumps(fx.direct_values()),  # JSON string, as over HTTP
 			expected_record_version=str(opened["record_version"]),
 			idempotency_key=key(),
 		)
@@ -125,7 +125,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		)
 		added = self.call(
 			"save_direct_requirement", dpp_version=opened["current_version"],
-			values=json.dumps(fx.direct_values()),
+			entry_values=json.dumps(fx.direct_values()),
 			expected_record_version=str(opened["record_version"]),
 			idempotency_key=key(),
 		)

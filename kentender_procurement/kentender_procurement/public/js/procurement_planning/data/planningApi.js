@@ -21,3 +21,30 @@ export function selectPlanningContext(args) {
 export function openDepartmentalPlan(args) {
 	return frappeCall(`${BASE}.open_departmental_plan`, args);
 }
+
+export function getDepartmentalPlan(dppReference) {
+	return frappeCall(`${BASE}.get_departmental_plan`, { dpp_reference: dppReference });
+}
+
+export function getDppEntryEditor(dppReference, entryId) {
+	return frappeCall(`${BASE}.get_dpp_entry_editor`, {
+		dpp_reference: dppReference,
+		...(entryId ? { entry_id: entryId } : {}),
+	});
+}
+
+export function saveNeedFunding(args) {
+	return frappeCall(`${BASE}.save_need_funding`, args);
+}
+
+export function saveDirectRequirement(args) {
+	return frappeCall(`${BASE}.save_direct_requirement`, args);
+}
+
+export function submitDepartmentalPlan(args) {
+	return frappeCall(`${BASE}.submit_departmental_plan`, args);
+}
+
+export function removeDirectRequirement(args) {
+	return frappeCall(`${BASE}.remove_direct_requirement`, args);
+}
