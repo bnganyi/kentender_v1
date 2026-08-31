@@ -283,3 +283,33 @@
 	font-weight: 400;
 	font-size: 15px;
 }
+
+/* PLN-DES-06 — inline classification select + signed line */
+.kt-pln .pln-seg-select {
+	min-height: 32px;
+	font-size: 13px;
+	padding: 4px 8px;
+}
+.kt-pln .pln-signed {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+}
+
+/* §12.6 return dialog */
+.kt-pln .pln-dialog-lede {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+}
+.kt-pln .pln-issue-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--color-neutral-200);
+}
+.kt-pln .pln-dialog-error {
+	margin: 0;
+	font-size: 13.5px;
+	color: var(--kt-color-critical, #b3261e);
+}

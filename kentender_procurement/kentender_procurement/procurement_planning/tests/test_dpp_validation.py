@@ -140,6 +140,35 @@ class TestAcceptance(ValidationCase):
 		self.assertEqual(second["annual_plan"], first["annual_plan"])
 		self.assertEqual(frappe.db.count("Annual Plan", {"fixture_namespace": fx.NS}), 1)
 
+	def test_concurrent_first_acceptance_yields_one_winner(self):
+		"""Invariant 24: two first acceptances race to create the Annual Plan.
+		The DB unique on `pe_fy_context` decides the insert; the loser's
+		UniqueValidationError branch re-reads and lands on the winner."""
+		frappe.set_user("Administrator")
+		first = dpp_validation.ensure_annual_plan(
+			procuring_entity=fx.PE, financial_year=fx.FY_OPEN,
+			pe_fy_context=fx.CTX_OPEN, fixture_namespace=fx.NS,
+		)
+		real_get_value = frappe.db.get_value
+		raced = {"probe": False}
+
+		def racing_get_value(doctype, *args, **kwargs):
+			# the other session's committed insert is not yet visible to this
+			# session's existence probe — exactly the race the unique index closes
+			if doctype == "Annual Plan" and not raced["probe"]:
+				raced["probe"] = True
+				return None
+			return real_get_value(doctype, *args, **kwargs)
+
+		with patch.object(frappe.db, "get_value", side_effect=racing_get_value):
+			second = dpp_validation.ensure_annual_plan(
+				procuring_entity=fx.PE, financial_year=fx.FY_OPEN,
+				pe_fy_context=fx.CTX_OPEN, fixture_namespace=fx.NS,
+			)
+		self.assertTrue(raced["probe"])
+		self.assertEqual(second["plan_reference"], first["plan_reference"])
+		self.assertEqual(frappe.db.count("Annual Plan", {"fixture_namespace": fx.NS}), 1)
+
 	def test_hod_submitter_cannot_accept_their_own_submission(self):
 		"""The HYBRID persona legitimately holds HoD + Planner (§6.1); what is
 		blocked is deciding the submission they themselves certified."""

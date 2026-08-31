@@ -225,3 +225,10 @@ def get_dpp_entry_editor(
 	from kentender_procurement.procurement_planning.services import dpp_read
 
 	return dpp_read.get_dpp_entry_editor(dpp_reference=dpp_reference, entry_id=entry_id)
+
+
+@frappe.whitelist()
+def get_dpp_validation_task(task: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import dpp_read
+
+	return dpp_read.get_dpp_validation_task(task=task)

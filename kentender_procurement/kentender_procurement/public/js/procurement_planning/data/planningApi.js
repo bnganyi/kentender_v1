@@ -48,3 +48,15 @@ export function submitDepartmentalPlan(args) {
 export function removeDirectRequirement(args) {
 	return frappeCall(`${BASE}.remove_direct_requirement`, args);
 }
+
+export function getDppValidationTask(task) {
+	return frappeCall(`${BASE}.get_dpp_validation_task`, { task });
+}
+
+export function acceptDepartmentalPlan(args) {
+	return frappeCall(`${BASE}.accept_departmental_plan`, args);
+}
+
+export function returnDepartmentalPlan(args) {
+	return frappeCall(`${BASE}.return_departmental_plan`, args);
+}

@@ -84,6 +84,45 @@
 					@cancel="go(dppReference)"
 				/>
 			</template>
+
+			<template v-else-if="screen === 'dpp-review'">
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+				<DppValidationScreen
+					v-else
+					:detail="validation"
+					:classifications="classifications"
+					:pending="pending"
+					:error-summary="errorSummary"
+					@classify="onClassify"
+					@accept="onAccept"
+					@open-return-dialog="returnDialog = true"
+				/>
+				<ReturnIssuesDialog
+					v-if="returnDialog"
+					:entries="validation.entries || []"
+					:pending="pending"
+					:error="errorSummary"
+					@confirm="onReturnConfirm"
+					@cancel="returnDialog = false"
+				/>
+			</template>
 		</div>
 	</div>
 </template>
@@ -96,6 +135,8 @@ import * as api from "./data/planningApi.js";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
+import DppValidationScreen from "./components/DppValidationScreen.vue";
+import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
@@ -111,6 +152,9 @@ const workspace = ref({});
 const dpp = ref({});
 const editor = ref({});
 const certified = ref(false);
+const validation = ref({});
+const classifications = ref({});
+const returnDialog = ref(false);
 
 // §10/§12.1 — explicit PE/FY are visible filters only; the server resolves
 // the remembered server-side preference on a bare load.
@@ -130,8 +174,16 @@ const screen = computed(() => {
 		if (second === "add-direct" || second === "entry") return "dpp-entry";
 		return "dpp";
 	}
+	// §10 task deep links live under the workspace page's own prefix.
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
+		return "dpp-review";
+	}
 	return "workspace";
 });
+
+const validationTaskId = computed(() =>
+	segments.value[0] === "dpp-review" ? segments.value[1] || "" : ""
+);
 
 const entryId = computed(() =>
 	segments.value[1] === "entry" ? segments.value[2] || "" : ""
@@ -170,6 +222,12 @@ async function load() {
 			);
 			if (seq !== loadSeq) return;
 			editor.value = loaded;
+		} else if (screen.value === "dpp-review") {
+			const loaded = await api.getDppValidationTask(validationTaskId.value);
+			if (seq !== loadSeq) return;
+			validation.value = loaded;
+			classifications.value = {};
+			returnDialog.value = false;
 		}
 	} catch (e) {
 		if (seq !== loadSeq) return;
@@ -284,6 +342,37 @@ async function onSaveDirect(payload) {
 	if (result) go(dppReference.value);
 }
 
+function onClassify(entryId, value) {
+	classifications.value = { ...classifications.value, [entryId]: value };
+}
+
+async function onAccept() {
+	const result = await run("accept-dpp", (key) =>
+		api.acceptDepartmentalPlan({
+			task: validation.value.task,
+			classifications: JSON.stringify(classifications.value),
+			task_token: validation.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onReturnConfirm(issues) {
+	const result = await run("return-dpp", (key) =>
+		api.returnDepartmentalPlan({
+			task: validation.value.task,
+			issues: JSON.stringify(issues),
+			task_token: validation.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		returnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
 function onNavigate(routeSegments) {
 	if (!routeSegments || !routeSegments.length) return;
 	frappe.set_route(...routeSegments);
@@ -293,6 +382,9 @@ watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
 
 const railTrail = computed(() => {
 	const trail = [{ label: "Procurement Planning", route: [WORKSPACE_PAGE] }];
+	if (screen.value === "dpp-review") {
+		trail.push({ label: "DPP review" });
+	}
 	if (dppReference.value) {
 		trail.push({ label: dppReference.value, route: [DPP_PAGE, dppReference.value] });
 		if (screen.value === "dpp-entry") {

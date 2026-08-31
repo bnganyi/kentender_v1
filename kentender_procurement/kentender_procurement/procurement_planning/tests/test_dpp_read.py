@@ -203,3 +203,75 @@ class TestEntryEditorRead(DppReadCase):
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(frappe.DoesNotExistError):
 			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+
+
+class TestValidationTaskRead(DppReadCase):
+	def submitted_task(self):
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		return frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		), added
+
+	def test_task_read_serves_the_immutable_snapshot_not_live_rows(self):
+		task, added = self.submitted_task()
+		# mutate the live entry AFTER submission (only possible as Administrator
+		# here — the point is the read must not follow it)
+		frappe.set_user("Administrator")
+		frappe.db.set_value(
+			"Departmental Plan Entry",
+			{"entry_id": added["entry_id"]},
+			"title", "TAMPERED TITLE", update_modified=False,
+		)
+		frappe.set_user(fx.PLANNER)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(result["entries"][0]["title"], "Direct requirement")
+		self.assertEqual(result["context"]["requirements"], 1)
+		self.assertEqual(result["context"]["total_display"], "KES 1,000,000")
+		self.assertEqual(result["header"]["badge"], "Awaiting validation")
+		self.assertIn("Certified by", result["certification"]["signed_line"])
+		self.assertIn("Goods", result["requirement_types"])
+		self.assertFalse(result["maker_checker_blocked"])
+		self.assertEqual(result["task_token"], task.task_token)
+
+	def test_the_certifier_is_flagged_maker_checker_blocked(self):
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.HYBRID)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertFalse(result["maker_checker_blocked"])  # HYBRID did not certify this one
+		# now a submission the HYBRID certified themselves
+		fx.wipe_planning_rows()
+		frappe.set_user(fx.AUTHOR)
+		opened = dpp_lifecycle.open_departmental_plan(
+			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
+			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HYBRID)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		own_task = frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		)
+		result = dpp_read.get_dpp_validation_task(task=own_task.name)
+		self.assertTrue(result["maker_checker_blocked"])
+
+	def test_non_planner_gets_not_found(self):
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.AUTHOR)
+		with self.assertRaises(frappe.DoesNotExistError):
+			dpp_read.get_dpp_validation_task(task=task.name)

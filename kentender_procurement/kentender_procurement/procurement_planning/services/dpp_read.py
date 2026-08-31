@@ -367,3 +367,97 @@ def get_dpp_entry_editor(
 	)
 	payload["units"] = [{"id": row.name, "label": row.unit_label} for row in units]
 	return payload
+
+
+def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, Any]:
+	"""§8.1 GetDPPValidationTask / PLN-UI-06 — the exact immutable submission,
+	all entry details and the current decision controls (PLN-DES-06)."""
+	from kentender_procurement.procurement_planning.services.dpp_validation import (
+		_authorise_planner,
+	)
+
+	actor = cstr(user or frappe.session.user)
+	if not task or not frappe.db.exists("Departmental Plan Validation Task", task):
+		authority.not_found()
+	task_doc = frappe.get_doc("Departmental Plan Validation Task", task)
+	_authorise_planner(actor, task_doc)
+	submission = frappe.get_doc("Departmental Plan Submission", task_doc.submission)
+	version = frappe.get_doc("Departmental Plan Version", task_doc.dpp_version)
+	root = frappe.get_doc("Departmental Plan", version.departmental_plan)
+	labels = _labels(root)
+	snapshots = json.loads(submission.entry_snapshots)
+
+	submitted_by = cstr(
+		frappe.db.get_value("User", submission.submitted_by_user, "full_name")
+		or submission.submitted_by_user
+	)
+	total = sum(flt(row.get("indicative_amount")) for row in snapshots)
+	rows = [
+		{
+			"entry_id": row.get("entry_id"),
+			"title": row.get("title"),
+			"source_label": (
+				f"Accepted Need · {row.get('need')}"
+				if row.get("need")
+				else "Direct requirement"
+			),
+			"quantity_display": _quantity_display(row.get("quantity"), cstr(row.get("unit"))),
+			"required_by_display": _date(row.get("required_by_date")),
+			"budget_line_display": cstr(row.get("budget_line")),
+			"amount_display": _money(row.get("indicative_amount")),
+			"description": row.get("description"),
+			"expected_operational_result": row.get("expected_operational_result"),
+		}
+		for row in snapshots
+	]
+	requirement_types = frappe.get_all(
+		"Requirement Type", filters={"status": "Active"}, order_by="title asc", pluck="name"
+	)
+	decision_ref = cstr(task_doc.decision)
+	decided = None
+	if decision_ref:
+		decided = frappe.db.get_value(
+			"Departmental Plan Validation Decision",
+			decision_ref,
+			["decision", "decided_at"],
+			as_dict=True,
+		)
+	# §6.1 — the certifier never validates their own submission.
+	maker_checker_blocked = cstr(submission.submitted_by_user) == actor
+	return {
+		"outcome": "OK",
+		"task": task_doc.name,
+		"task_reference": task_doc.task_reference,
+		"task_token": task_doc.task_token,
+		"status": task_doc.status,
+		"maker_checker_blocked": maker_checker_blocked,
+		"header": {
+			"eyebrow": "DEPARTMENTAL PLAN REVIEW",
+			"title": f"Validate {labels['department_name']} departmental plan",
+			"reference_line": (
+				f"{root.dpp_reference} · Submitted Version {version.version_number}"
+			),
+			"badge": "Awaiting validation" if task_doc.status == "Open" else "Completed",
+			"badge_kind": "pending" if task_doc.status == "Open" else "live",
+		},
+		"context": {
+			"procuring_entity": cstr(
+				frappe.db.get_value("Procuring Entity", root.procuring_entity, "legal_name")
+				or root.procuring_entity
+			),
+			"department": labels["department_name"],
+			"financial_year": labels["financial_year"],
+			"submitted_by": submitted_by,
+			"submitted_at": _eat(submission.submitted_at),
+			"requirements": len(rows),
+			"total_display": _money(total),
+		},
+		"entries": rows,
+		"requirement_types": requirement_types,
+		"certification": {
+			"heading": "Departmental certification",
+			"text": submission.attestation_text,
+			"signed_line": f"Certified by {submitted_by} · {_eat(submission.submitted_at)}",
+		},
+		"decided": decided,
+	}
