@@ -110,7 +110,7 @@
 			<div class="pln-footer-bar">
 				<button class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
 				<button
-					v-if="!plan.has_open_successor"
+					v-if="plan.can_act && !plan.has_open_successor"
 					class="kt-btn kt-btn-primary" data-testid="pln-begin-update"
 					:disabled="pending" @click="$emit('begin-update')"
 				>

@@ -72,6 +72,17 @@ def _authorise_planner(actor: str, procuring_entity: str) -> None:
 	)
 
 
+def _actor_can_plan(actor: str, procuring_entity: str) -> bool:
+	"""Whether this reader could actually execute the Planner commands — the
+	read/offer layer must never present a control the actor's own role
+	cannot use (the NDS-807 defect class, found live by Phase 11's persona
+	browser pass: a read-only Planning Auditor was offered "Prepare plan
+	update" and the whole Draft edit surface)."""
+	return authority.has_role(actor, ROLE_PROCUREMENT_PLANNER) and (
+		procuring_entity in authority.permitted_pes(actor)
+	)
+
+
 def _plan_root(plan_reference: str):
 	name = frappe.db.get_value("Annual Plan", {"plan_reference": cstr(plan_reference)})
 	if not name:
@@ -211,6 +222,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	actor = cstr(user or frappe.session.user)
 	plan = _plan_root(plan_reference)
 	_authorise_planner(actor, plan.procuring_entity)
+	can_act = _actor_can_plan(actor, plan.procuring_entity)
 	version = _open_version(plan)
 
 	all_accepted = _accepted_entry_rows(plan.pe_fy_context)
@@ -247,7 +259,8 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"reference_line": f"{plan.plan_reference} · Version {version.version_number}",
 			"badge": version.version_status,
 		},
-		"mutable": version.version_status == "Draft",
+		"mutable": version.version_status == "Draft" and can_act,
+		"can_act": can_act,
 		"is_correction": bool(version.correction_of_plan_version),
 		"has_open_successor": bool(plan.open_successor_version),
 		"summary": {
@@ -386,6 +399,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 	version = frappe.get_doc("Annual Plan Version", item.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	_authorise_planner(actor, plan.procuring_entity)
+	can_act = _actor_can_plan(actor, plan.procuring_entity)
 
 	allocations = frappe.get_all(
 		"Plan Source Allocation",
@@ -446,7 +460,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		"outcome": "OK",
 		"plan_item_id": item.plan_item_id,
 		"record_version": int(item.record_version or 0),
-		"mutable": item.item_state == "Draft" and version.version_status == "Draft",
+		"mutable": item.item_state == "Draft" and version.version_status == "Draft" and can_act,
 		"combined": combined,
 		"source_correction_required": correction_required,
 		"header": {

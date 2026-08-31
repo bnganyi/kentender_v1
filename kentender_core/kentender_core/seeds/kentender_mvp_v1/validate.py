@@ -1122,6 +1122,18 @@ def validate_kentender_mvp_v1(
 				)
 			)
 
+	# PLN-CHG-001 v1.2 (Phase 11): the v1.2 Planning stage validates through
+	# the module's own §14.10 validator (same domain services commands use).
+	# The Demand-era "Procurement Plan" block above is permanently inert —
+	# that doctype was dropped in the v1.2 rebuild's Phase 1.
+	if include_planning:
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+			validate_planning_seed,
+		)
+
+		for row in validate_planning_seed():
+			checks.append(_check(row["check"], row["ok"], row.get("detail", "")))
+
 	failed = [c for c in checks if not c["ok"]]
 	ok = not failed
 	report = {

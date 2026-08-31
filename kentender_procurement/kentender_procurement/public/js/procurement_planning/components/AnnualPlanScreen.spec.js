@@ -97,6 +97,7 @@ const ACTIVE_PLAN = {
 	version_reference: "PLN-MOH-2027-001-V1",
 	record_version: 3,
 	mutable: false,
+	can_act: true,
 	has_open_successor: false,
 	header: {
 		eyebrow: "ANNUAL PROCUREMENT PLAN",
@@ -158,5 +159,12 @@ describe("AnnualPlanScreen — PLN-DES-14 the Active Plan", () => {
 
 		const withOpenSuccessor = make({ ...ACTIVE_PLAN, has_open_successor: true });
 		expect(withOpenSuccessor.find('[data-testid="pln-begin-update"]').exists()).toBe(false);
+	});
+
+	it("never offers Prepare plan update to a read-only viewer (the NDS-807 class)", () => {
+		// a Planning Auditor reads the same Active Plan but holds no command
+		// authority — the offer layer must match the command layer.
+		const auditor = make({ ...ACTIVE_PLAN, can_act: false });
+		expect(auditor.find('[data-testid="pln-begin-update"]').exists()).toBe(false);
 	});
 });

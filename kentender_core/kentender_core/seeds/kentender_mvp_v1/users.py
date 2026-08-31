@@ -19,56 +19,33 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 )
 from kentender_strategy.services.strategy_authorization import ensure_strategy_governance_roles
 
-# Demand-era persona role literals, kept locally until the P11 §14 persona
-# rewrite (PLN tracker DEBT-01). Their owning modules were retired:
-# `demands.services.demand_permissions` and the capability-era
-# `procurement_planning.services.planning_permissions` no longer exist, and
-# importing them here had left this whole seed module unimportable.
-ROLE_REQUESTER = "Requester"
-ROLE_BUSINESS = "Business Approver"
+# PLN-CHG-001 v1.2 Phase 11 (DEBT-01 closed): the Demand-era persona role
+# literals (Requester, Business Approver, Planning Reviewer, Designated
+# Approver, Tender Initiator, Planning Viewer, Planning Contributor) are
+# retired — no longer created on fresh sites, no longer assigned to any
+# fixture persona. The live v1.2 Planning roles come from the module's own
+# `ensure_planning_roles`; the §14.2 Planning personas themselves are
+# provisioned by the NDS and Planning module seeds with native roles and
+# User Permission rows only. "Planning Authority" is NOT retired here — it
+# remains a live role owned by procurement_lifecycle / tender-management.
 ROLE_PLANNER = "Procurement Planner"
-ROLE_REVIEWER = "Planning Reviewer"
 ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
-ROLE_DESIGNATED_APPROVER = "Designated Approver"
-ROLE_TENDER_INITIATOR = "Tender Initiator"
-ROLE_VIEWER = "Planning Viewer"
-ALL_PLANNING_ROLES = (
-	"Planning Contributor",
-	"Head of User Department",
-	ROLE_PLANNER,
-	ROLE_REVIEWER,
-	"Planning Authority",
-	ROLE_ACCOUNTING_OFFICER,
-	ROLE_DESIGNATED_APPROVER,
-	ROLE_TENDER_INITIATOR,
-	ROLE_VIEWER,
-	"Budget Officer",
-)
-_LEGACY_PERSONA_ROLES = (
-	ROLE_REQUESTER,
-	ROLE_BUSINESS,
-	ROLE_REVIEWER,
-	ROLE_DESIGNATED_APPROVER,
-	ROLE_TENDER_INITIATOR,
-	ROLE_VIEWER,
-	"Planning Contributor",
-	"Planning Authority",
-)
 
-
-def ensure_demand_roles() -> None:
-	"""Interim: keep the retired persona role names creatable on fresh sites
-	until the §14 personas replace them (DEBT-01)."""
-	for role in _LEGACY_PERSONA_ROLES:
-		if not frappe.db.exists("Role", role):
-			frappe.get_doc(
-				{"doctype": "Role", "role_name": role, "desk_access": 1}
-			).insert(ignore_permissions=True)
+# Retired names, kept ONLY so cleanup paths can strip stale assignments a
+# prior seed may have left on a long-lived site; never created or granted.
+_RETIRED_PERSONA_ROLES = (
+	"Requester",
+	"Business Approver",
+	"Planning Reviewer",
+	"Designated Approver",
+	"Tender Initiator",
+	"Planning Viewer",
+	"Planning Contributor",
+)
 
 
 def ensure_planning_roles() -> None:
 	ensure_v12_planning_roles()
-	ensure_demand_roles()
 
 # (email, full_name, roles, pe, org_unit|None, include_descendants)
 # Miriam also carries Demand Requester for Contract v2.2 §7.5 single-scope create.
@@ -76,7 +53,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_MEDICAL,
 		"Dr Miriam Njeri",
-		("Strategy Author", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
+		("Strategy Author", "Budget Officer"),
 		C.PE_MOH,
 		C.OU_DIR_DHP,
 		1,
@@ -84,7 +61,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_PUBLIC,
 		"Anne Achieng",
-		("Strategy Author", "Budget Officer", ROLE_REQUESTER, ROLE_BUSINESS),
+		("Strategy Author", "Budget Officer"),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
 		1,
@@ -115,7 +92,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_VIEWER,
 		"MOH Management Viewer",
-		("Strategy Viewer", "Budget Viewer", ROLE_VIEWER),
+		("Strategy Viewer", "Budget Viewer"),
 		C.PE_MOH,
 		None,
 		0,
@@ -123,7 +100,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_OFFICER,
 		"Kisumu Health Officer",
-		("Strategy Author", "Budget Officer", ROLE_REQUESTER),
+		("Strategy Author", "Budget Officer"),
 		C.PE_CGKIS,
 		C.OU_CGK_HEALTH,
 		1,
@@ -131,7 +108,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_VIEWER,
 		"Kisumu Management Viewer",
-		("Strategy Viewer", "Budget Viewer", ROLE_VIEWER),
+		("Strategy Viewer", "Budget Viewer"),
 		C.PE_CGKIS,
 		None,
 		0,
@@ -199,7 +176,9 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_PLANNING_REVIEWER,
 		"David Kiptoo",
-		(ROLE_REVIEWER,),
+		# Planning Reviewer was retired with the capability-era Planning
+		# module (DEBT-01); the persona keeps its identity/scope, no role.
+		(),
 		C.PE_MOH,
 		None,
 		0,
@@ -216,7 +195,8 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_TENDER_INITIATOR,
 		"MOH Tender Initiator",
-		(ROLE_TENDER_INITIATOR,),
+		# Tender Initiator retired (DEBT-01); identity/scope kept, no role.
+		(),
 		C.PE_MOH,
 		C.OU_DIR_DHP,
 		1,
@@ -232,7 +212,8 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_BUSINESS_APPROVER,
 		"James Mwangi",
-		(ROLE_BUSINESS,),
+		# Business Approver retired with the Demands module (DEBT-01).
+		(),
 		C.PE_MOH,
 		C.OU_DIR_HRMD,
 		1,
@@ -240,7 +221,9 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_HOP,
 		"Grace Wanjiku",
-		(ROLE_DESIGNATED_APPROVER,),
+		# Designated Approver retired (DEBT-01). Grace's live Planning-era
+		# roles come from the NDS/Planning module seeds, not this file.
+		(),
 		C.PE_MOH,
 		None,
 		0,
@@ -250,7 +233,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		# Finance Confirmation capability for FY 2027/28."
 		C.USER_BUD_OFFICER,
 		"Peter Otieno",
-		("Budget Officer", "Finance Confirmation Officer", ROLE_VIEWER),
+		("Budget Officer", "Finance Confirmation Officer"),
 		C.PE_MOH,
 		None,
 		0,
@@ -348,9 +331,29 @@ def _upsert_user(
 	return email
 
 
+def _strip_retired_persona_artifacts(email: str) -> None:
+	"""DEBT-01 cleanup: remove any retired-role grant or scope assignment a
+	prior seed left on a long-lived site. Never grants anything."""
+	if not frappe.db.exists("User", email):
+		return
+	user = frappe.get_doc("User", email)
+	have = {r.role for r in (user.roles or [])}
+	stale = [r for r in _RETIRED_PERSONA_ROLES if r in have]
+	if stale:
+		user.roles = [r for r in user.roles if r.role not in _RETIRED_PERSONA_ROLES]
+		user.save(ignore_permissions=True)
+	for name in frappe.get_all(
+		"User Scope Assignment",
+		filters={"user": email, "role": ("in", _RETIRED_PERSONA_ROLES)},
+		pluck="name",
+	):
+		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+
+
 def _upsert_multiscope_admin() -> str:
-	"""Contract §4.6 — System Manager + two explicit Demand Requester pairs; no silent default."""
-	ensure_demand_roles()
+	"""System Manager with explicit multi-PE User Permissions. The Demand-era
+	Requester role/scope pairs are retired (DEBT-01); the persona survives as
+	a plain multi-entity administrator fixture."""
 	email = C.USER_MULTISCOPE
 	if not frappe.db.exists("User", email):
 		frappe.get_doc(
@@ -365,77 +368,29 @@ def _upsert_multiscope_admin() -> str:
 		).insert(ignore_permissions=True)
 	user = frappe.get_doc("User", email)
 	_save_user_identity_if_changed(user, first_name="Multi", last_name="Scope Admin")
-	_add_missing_roles(user, "Desk User", "System Manager", ROLE_REQUESTER)
+	_add_missing_roles(user, "Desk User", "System Manager")
 	update_password(email, CoreC.TEST_PASSWORD)
 	ensure_user_permission(email, C.PE_MOH)
 	ensure_user_permission(email, C.PE_CGKIS)
 	_clear_fixture_assignments(email)
-	_upsert_scope(
-		user=email,
-		role=ROLE_REQUESTER,
-		pe=C.PE_MOH,
-		org_unit=C.OU_DIR_DHP,
-		include_descendants=1,
-	)
-	_upsert_scope(
-		user=email,
-		role=ROLE_REQUESTER,
-		pe=C.PE_CGKIS,
-		org_unit=C.OU_CGK_HEALTH,
-		include_descendants=1,
-	)
+	_strip_retired_persona_artifacts(email)
 	return email
 
 
 def ensure_administrator_planning_support_viewer() -> str:
-	"""Desk Administrator: cross-entity Planning Viewer (read-only support).
-
-	Grants no create/edit/approve/tender authority — Viewer USA only for MOH + Kisumu.
-	Strips accidental operational Planning roles from Administrator (support ≠ owner).
-	"""
-	from kentender_procurement.procurement_planning.services.planning_permissions import (
-		ALL_PLANNING_ROLES,
-	)
-
+	"""DEBT-01: the capability-era "Administrator as cross-entity Planning
+	Viewer" grant is retired with its role. In the v1.2 native model §6 gives
+	administrative users technical oversight without any Planning role, so
+	this now only STRIPS the retired grants a prior seed left behind."""
 	ensure_planning_roles()
 	email = "Administrator"
-	if not frappe.db.exists("User", email):
-		return email
-	user = frappe.get_doc("User", email)
-	# Remove operational Planning roles; keep support Viewer only.
-	have = {r.role for r in (user.roles or [])}
-	to_remove = [r for r in ALL_PLANNING_ROLES if r != ROLE_VIEWER and r in have]
-	if to_remove:
-		user.remove_roles(*to_remove)
-	_add_missing_roles(user, ROLE_VIEWER)
-	# Drop operational Planning USA rows for Administrator (keep fixture Viewer only).
-	for name in frappe.get_all(
-		"User Scope Assignment",
-		filters={"user": email},
-		pluck="name",
-	):
-		role = frappe.db.get_value("User Scope Assignment", name, "role")
-		ns = frappe.db.get_value("User Scope Assignment", name, "fixture_namespace")
-		if role == ROLE_VIEWER and ns == C.FIXTURE_NS:
-			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
-		elif role in ALL_PLANNING_ROLES and role != ROLE_VIEWER:
-			frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
-	for pe, ou in (
-		(C.PE_MOH, C.OU_DIR_DHP),
-		(C.PE_CGKIS, C.OU_CGK_HEALTH),
-	):
-		_upsert_scope(
-			user=email,
-			role=ROLE_VIEWER,
-			pe=pe,
-			org_unit=ou,
-			include_descendants=1,
-		)
+	_strip_retired_persona_artifacts(email)
 	return email
 
 
 def _upsert_system_admin_no_requester() -> str:
-	"""Contract §4.6 — System Manager only; proves admin alone cannot create Demands."""
+	"""System Manager only; historically proved admin alone cannot create
+	Demands — the retired-role strip keeps that guarantee durable."""
 	email = C.USER_SYSTEM_ADMIN
 	if not frappe.db.exists("User", email):
 		frappe.get_doc(
@@ -451,27 +406,15 @@ def _upsert_system_admin_no_requester() -> str:
 	user = frappe.get_doc("User", email)
 	_save_user_identity_if_changed(user, first_name="System", last_name="Admin")
 	_add_missing_roles(user, "Desk User", "System Manager")
-	# Strip accidental Requester role from prior seeds.
-	have = {r.role for r in user.roles}
-	if ROLE_REQUESTER in have:
-		user.roles = [r for r in user.roles if r.role != ROLE_REQUESTER]
-		user.save(ignore_permissions=True)
 	update_password(email, CoreC.TEST_PASSWORD)
 	_clear_fixture_assignments(email)
-	# Remove any non-fixture Requester USA that would defeat the blocked demo.
-	for name in frappe.get_all(
-		"User Scope Assignment",
-		filters={"user": email, "role": ROLE_REQUESTER},
-		pluck="name",
-	):
-		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+	_strip_retired_persona_artifacts(email)
 	return email
 
 
 def upsert_canonical_users(*, commit: bool = True) -> dict[str, Any]:
 	ensure_strategy_governance_roles()
 	ensure_budget_roles()
-	ensure_demand_roles()
 	ensure_planning_roles()
 	# Skip User→Contact sync (avoids RetryBackgroundJobError under tests / reseed).
 	prev_import = frappe.flags.in_import
