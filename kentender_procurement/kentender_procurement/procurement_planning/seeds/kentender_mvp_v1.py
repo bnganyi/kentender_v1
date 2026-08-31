@@ -619,6 +619,14 @@ def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
 			"isolated profile is loaded. Run reset_planning_seed() before reseeding "
 			"the integrated baseline (§14.10)."
 		)
+	if frappe.db.exists("Departmental Plan", {"procuring_entity": PE, "fixture_namespace": NS}):
+		# a leftover pre-Plan profile world (e.g. the §14.7 direct profile):
+		# no Annual Plan exists, but its DPP rows and this seed's own journal
+		# entries do — a rebuild over them replays stale record versions
+		# (found live after an interrupted profile run). Reset, then build.
+		reset_planning_seed()
+		_submission_window()
+		_destination()
 
 	with _open_window():
 		built = _build_accepted_dpp(prereqs)
@@ -706,16 +714,29 @@ def seed_direct_profile(*, commit: bool = False) -> dict[str, Any]:
 			procuring_entity=PE, organisation_unit=OU_DHI, financial_year=FY,
 			idempotency_key=_key("open-dhi-dpp"), fixture_namespace=NS,
 		)
+		need_entry_id = frappe.db.get_value(
+			"Departmental Plan Entry",
+			{"dpp_version": opened["current_version"], "need": NEED},
+			"entry_id",
+		)
+		funded = dpp_lifecycle.save_need_funding(
+			dpp_version=opened["current_version"], entry_id=need_entry_id,
+			budget_line=prereqs["bl_dhi"], indicative_amount=80000000,
+			expected_record_version=opened["record_version"], idempotency_key=_key("fund-need"),
+		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"],
 			values={**DIRECT_FIXTURE, "budget_line": prereqs["bl_dhi"]},
-			expected_record_version=opened["record_version"], idempotency_key=_key("add-direct"),
+			expected_record_version=funded["record_version"], idempotency_key=_key("add-direct"),
 		)
 	if commit:
 		frappe.db.commit()
 	return {
 		"ok": True, "profile": "direct",
-		"departmental_plan": opened["departmental_plan"], "entry_id": added["entry_id"],
+		"departmental_plan": opened["departmental_plan"],
+		"dpp_reference": opened["dpp_reference"],
+		"entry_id": added["entry_id"],
+		"need_entry_id": need_entry_id,
 	}
 
 

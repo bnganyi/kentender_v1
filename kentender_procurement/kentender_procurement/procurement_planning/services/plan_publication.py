@@ -205,6 +205,9 @@ def publish_annual_plan(*, plan_version: str, idempotency_key: str, user: str | 
 	"""§8.2/§12.11 — a system action; called automatically at the end of
 	`ApproveAnnualPlan`, never a standalone business command."""
 	actor = cstr(user or frappe.session.user)
+	replay = envelope.replay_or_none(idempotency_key, {"plan_version": plan_version})
+	if replay:
+		return replay
 	version = envelope.locked("Annual Plan Version", plan_version)
 	if version.version_status not in ("Approved — publication pending", "Publication failed"):
 		fail("PLN_REVIEW_STALE", "This task has already changed. Reload to see the current decision.")
@@ -249,8 +252,14 @@ def publish_annual_plan(*, plan_version: str, idempotency_key: str, user: str | 
 
 def retry_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§11.15/§12.11 — System Manager only; retries the SAME approved
-	payload, edits nothing, creates no new approval."""
+	payload, edits nothing, creates no new approval. Idempotent like every
+	§8.2 command — the missing replay guard here surfaced as a live
+	duplicate-key crash the first time the same retry key was ever presented
+	twice (Phase 12's evidence journey)."""
 	actor = cstr(user or frappe.session.user)
+	replay = envelope.replay_or_none(idempotency_key, {"publication": publication})
+	if replay:
+		return replay
 	if actor != "Administrator" and "System Manager" not in frappe.get_roles(actor):
 		authority.not_found()
 	if not publication or not frappe.db.exists("Annual Plan Publication", publication):

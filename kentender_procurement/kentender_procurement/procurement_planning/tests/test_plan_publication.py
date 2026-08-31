@@ -263,8 +263,15 @@ class TestActivationAndRetryPublication(PublicationCase):
 			plan_publication.retry_publication(publication=publication.name, idempotency_key=key())
 
 		frappe.set_user("Administrator")
-		retried = plan_publication.retry_publication(publication=publication.name, idempotency_key=key())
+		retry_key = key()
+		retried = plan_publication.retry_publication(publication=publication.name, idempotency_key=retry_key)
 		self.assertEqual(retried["result"], "Acknowledged")
+		# §8.2/§12.11 — the retry itself is idempotent: the same key replays
+		# the recorded result instead of attempting again (found live: the
+		# missing replay guard crashed on the key's second presentation).
+		replayed = plan_publication.retry_publication(publication=publication.name, idempotency_key=retry_key)
+		self.assertTrue(replayed["idempotent"])
+		self.assertEqual(replayed["publication"], retried["publication"])
 		self.assertEqual(
 			frappe.db.get_value("Annual Plan Version", failed_version, "version_status"), "Active"
 		)

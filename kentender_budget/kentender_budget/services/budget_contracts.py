@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import cstr, flt, getdate
 
 from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
@@ -244,22 +244,34 @@ def _line_version_for(budget_version_name: str, budget_line_name: str):
 
 def _plan_item_label(plan_item: str | None) -> str:
 	"""Budget Line detail's Active reservations table shows the Plan Item's
-	human reference ("PPI-MOH-2027-021 · National digital health
+	human reference ("PPI-MOH-2027-001 · National digital health
 	infrastructure upgrade"), not its raw docname. `Funding Reservation.plan_item`
 	only stores kentender_procurement's own docname (a plain Data field, not a
-	Link — no schema coupling), so this reads Procurement Plan Item's own
-	fields directly via frappe.db, the same cross-app read pattern already used
-	for Organisation Unit/Financial Year/Funding Source (reading another app's
-	doctype fields via the ORM is not "deep-importing internals" — that means
-	importing its Python modules)."""
+	Link — no schema coupling), so this reads the Plan Item's own fields
+	directly via frappe.db, the same cross-app read pattern already used for
+	Organisation Unit/Financial Year/Funding Source. PLN-CHG-001 v1.2's
+	rebuild replaced the Demand-era `Procurement Plan Item` (whose table was
+	dropped outright) with `Annual Plan Item` — reading the retired name
+	crashed every Budget position read that met a reservation, so this now
+	reads the live model and degrades to the raw reference for any row a
+	sibling test fixture wrote with a synthetic id."""
 	if not plan_item:
 		return ""
-	code = frappe.db.get_value("Procurement Plan Item", plan_item, "plan_item_code")
-	if not code:
+	if not frappe.db.exists("DocType", "Annual Plan Item"):
 		return plan_item
-	version_name = frappe.db.get_value("Procurement Plan Item", plan_item, "current_approved_item_version")
-	title = frappe.db.get_value("Procurement Plan Item Version", version_name, "requirement_title") if version_name else None
-	return f"{code} · {title}" if title else code
+	row = frappe.db.get_value(
+		"Annual Plan Item", plan_item, ["plan_item_id", "title"], as_dict=True
+	)
+	if not row:
+		return plan_item
+	return f"{row.plan_item_id} · {row.title}" if row.title else cstr(row.plan_item_id)
+
+
+def _plan_item_url(plan_item: str | None) -> str:
+	if not plan_item or not frappe.db.exists("DocType", "Annual Plan Item"):
+		return ""
+	plan_item_id = frappe.db.get_value("Annual Plan Item", plan_item, "plan_item_id")
+	return f"/app/procurement-plan-item/{plan_item_id}" if plan_item_id else ""
 
 
 def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
@@ -278,10 +290,11 @@ def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
 				"plan_item_label": _plan_item_label(r.plan_item),
 				# §12.4 "View Plan Item uses a server-returned authorised Planning
 				# URL. The Budget client does not build a route from a guessed
-				# naming rule." — this is Planning's own published route shape for
-				# its Plan Item editor (kentender_procurement/.../get_plan_review.py
-				# builds the identical string for the same doctype/page).
-				"plan_item_url": f"/app/procurement-plan-item-editor/{r.plan_item}" if r.plan_item else "",
+				# naming rule." — this is PLN-CHG-001 v1.2's own §10 route for the
+				# Plan Item editor, keyed by the stable business plan_item_id (the
+				# Demand-era `procurement-plan-item-editor` page was demolished
+				# with its module).
+				"plan_item_url": _plan_item_url(r.plan_item),
 				"original_amount": flt(r.original_amount),
 				"remaining_amount": flt(r.remaining_amount),
 				"status": r.status,
