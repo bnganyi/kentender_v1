@@ -295,6 +295,75 @@
 	color: var(--color-neutral-700);
 }
 
+/* PLN-DES-07 Plan Items empty state */
+.kt-pln .pln-empty-state {
+	padding: 40px 20px;
+	text-align: center;
+	color: var(--color-neutral-700);
+}
+.kt-pln .pln-empty-state h3 {
+	font-family: var(--font-heading);
+	color: var(--color-text);
+	margin: 0 0 6px;
+	font-size: 18px;
+}
+.kt-pln .pln-empty-state p {
+	margin: 0;
+}
+
+/* PLN-DES-08 Form Plan Items dialog: formation choice + result preview */
+.kt-pln .pln-dialog-section {
+	border-top: 1px solid var(--color-neutral-200);
+	padding-top: 16px;
+	margin-top: 4px;
+}
+.kt-pln .pln-section-label {
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 8px;
+}
+.kt-pln .pln-radio-group {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.kt-pln .pln-radio-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+.kt-pln .pln-summary-box {
+	border: 1px solid var(--color-neutral-200);
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.kt-pln .pln-result-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 14px;
+	padding: 4px 0;
+}
+.kt-pln .pln-result-row:not(:last-child) {
+	border-bottom: 1px solid color-mix(in srgb, var(--color-divider) 60%, transparent);
+	padding-bottom: 6px;
+}
+
+.kt-pln .pln-row-clickable {
+	cursor: pointer;
+}
+
+/* PLN-DES-09/09A Plan Item editor badges row */
+.kt-pln .pln-badges {
+	display: flex;
+	gap: 8px;
+	margin: 0 0 4px;
+}
+
 /* §12.6 return dialog */
 .kt-pln .pln-dialog-lede {
 	margin: 0;

@@ -23,9 +23,18 @@ INDEXES = (
 	# stable item / allocation ids are unique within one Plan Version
 	("tabAnnual Plan Item", "pln_uniq_item_per_version", ("plan_version", "plan_item_id")),
 	("tabPlan Source Allocation", "pln_uniq_alloc_per_version", ("plan_version", "allocation_id")),
-	# invariant 7: one accepted DPP entry allocated at most once per Plan Version
-	("tabPlan Source Allocation", "pln_uniq_entry_per_version", ("plan_version", "dpp_entry")),
 )
+# Invariant 7 (one accepted DPP entry allocated at most once per Plan Version)
+# is deliberately NOT a DB unique on (plan_version, dpp_entry): §4.10 requires
+# a Released allocation to stop blocking re-formation, and MariaDB has no
+# partial/filtered unique index to exempt Released rows. `FormPlanItems`
+# already row-locks the Annual Plan Version before creating any allocation
+# (services/plan_workbench.py), which fully serialises every command that
+# could double-allocate a source — the same guarantee a DB unique would add,
+# without permanently barring a dissolved-then-released source. A plain
+# composite unique here shipped in this patch's first version and was found
+# live in Phase 6 blocking exactly that re-formation path; dropped by
+# pln_chg_001_v12_drop_reformable_allocation_unique.
 
 
 def execute() -> None:

@@ -170,7 +170,12 @@ UNIQUE_INDEXES = {
 	("tabAnnual Plan Version", "pln_uniq_plan_version"),
 	("tabAnnual Plan Item", "pln_uniq_item_per_version"),
 	("tabPlan Source Allocation", "pln_uniq_alloc_per_version"),
-	("tabPlan Source Allocation", "pln_uniq_entry_per_version"),
+	# invariant 7 (one accepted DPP entry allocated at most once per Plan
+	# Version) is deliberately NOT a DB unique — see
+	# pln_chg_001_v12_drop_reformable_allocation_unique: §4.10 requires a
+	# Released allocation to stop blocking re-formation, which a plain
+	# composite unique cannot express on MariaDB. `FormPlanItems` row-locks
+	# the Annual Plan Version before creating any allocation instead.
 }
 
 
@@ -238,6 +243,12 @@ class TestPlanningV12Schema(IntegrationTestCase):
 		self.assertEqual(UNIQUE_INDEXES - {tuple(r) for r in rows}, set())
 
 	def test_dpp_root_uniqueness_rejects_a_duplicate(self):
+		# "the first row on the site" rather than a dedicated fixture: fragile
+		# by design (any PE Fiscal Year Context/Organisation Unit will do to
+		# prove the DB constraint), but by Phase 6 other slices' fixtures
+		# populate real Departmental Plan rows against exactly this kind of
+		# row — clear this scope's own residue first so only *this* pair's
+		# uniqueness is under test, not leftover fixture state.
 		ctx = frappe.get_all("PE Fiscal Year Context", limit=1, pluck="name")
 		ou = frappe.get_all("Organisation Unit", limit=1, pluck="name")
 		if not ctx or not ou:
@@ -245,6 +256,7 @@ class TestPlanningV12Schema(IntegrationTestCase):
 		ctx_doc = frappe.get_doc("PE Fiscal Year Context", ctx[0])
 		pe = ctx_doc.get("procuring_entity")
 		fy = ctx_doc.get("financial_year") or ctx_doc.get("fiscal_year")
+		frappe.db.delete("Departmental Plan", {"pe_fy_context": ctx[0], "organisation_unit": ou[0]})
 		fields = {
 			"doctype": "Departmental Plan",
 			"pe_fy_context": ctx[0],
@@ -257,6 +269,7 @@ class TestPlanningV12Schema(IntegrationTestCase):
 		}
 		first = frappe.get_doc(dict(fields, dpp_reference="DPP-SCHEMA-TEST-001"))
 		first.insert(ignore_permissions=True)
+		self.addCleanup(frappe.db.delete, "Departmental Plan", {"name": first.name})
 		second = frappe.get_doc(dict(fields, dpp_reference="DPP-SCHEMA-TEST-002"))
 		with self.assertRaises(Exception) as caught:
 			second.insert(ignore_permissions=True)

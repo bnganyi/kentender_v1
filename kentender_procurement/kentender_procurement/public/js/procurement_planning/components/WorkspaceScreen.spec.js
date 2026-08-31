@@ -23,7 +23,7 @@ const WORKSPACE = {
 			status: "Ready",
 			status_kind: "live",
 			action: "Open Annual Plan",
-			route: ["annual-procurement-plan"],
+			route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
 		},
 	],
 	departmental_plans: [
@@ -93,7 +93,7 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 		expect(row.text()).toContain("1 accepted departmental entry · KES 80,000,000");
 		expect(row.find(".kt-status").classes()).toContain("is-live");
 		await row.find("button").trigger("click");
-		expect(w.emitted("navigate")[0][0]).toEqual(["annual-procurement-plan"]);
+		expect(w.emitted("navigate")[0][0]).toEqual(["annual-procurement-plan", "PLN-MOH-2027-001"]);
 	});
 
 	it("hides the Your work card entirely when the actor has no work", () => {

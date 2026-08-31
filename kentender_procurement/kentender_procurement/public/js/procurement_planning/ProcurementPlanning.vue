@@ -123,6 +123,74 @@
 					@cancel="returnDialog = false"
 				/>
 			</template>
+
+			<template v-else-if="screen === 'plan'">
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+				<AnnualPlanScreen
+					v-else
+					:plan="annualPlan"
+					:pending="pending"
+					:error-summary="errorSummary"
+					@open-form-dialog="formDialog = true"
+					@navigate="onNavigate"
+					@back="frappe.set_route(WORKSPACE_PAGE)"
+				/>
+				<FormPlanItemsDialog
+					v-if="formDialog"
+					:entries="annualPlan.unallocated_sources || []"
+					:pending="pending"
+					:error="errorSummary"
+					@confirm="onFormConfirm"
+					@cancel="formDialog = false"
+				/>
+			</template>
+
+			<template v-else-if="screen === 'plan-item'">
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+				<PlanItemEditorScreen
+					v-else
+					:item="planItem"
+					:pending="pending"
+					:error-summary="errorSummary"
+					@save="onSavePlanItem"
+					@dissolve="onDissolvePlanItem"
+					@back="onBackToPlan"
+				/>
+			</template>
 		</div>
 	</div>
 </template>
@@ -137,9 +205,14 @@ import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
 import DppValidationScreen from "./components/DppValidationScreen.vue";
 import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
+import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
+import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
+import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
+const PLAN_PAGE = "annual-procurement-plan";
+const PLAN_ITEM_PAGE = "procurement-plan-item";
 const { route } = useRouteState(WORKSPACE_PAGE);
 
 const railEl = ref(null);
@@ -155,6 +228,9 @@ const certified = ref(false);
 const validation = ref({});
 const classifications = ref({});
 const returnDialog = ref(false);
+const annualPlan = ref({});
+const planItem = ref({});
+const formDialog = ref(false);
 
 // §10/§12.1 — explicit PE/FY are visible filters only; the server resolves
 // the remembered server-side preference on a bare load.
@@ -168,6 +244,14 @@ const dppReference = computed(() =>
 	pageSlug.value === DPP_PAGE ? segments.value[0] || "" : ""
 );
 
+const planReference = computed(() =>
+	pageSlug.value === PLAN_PAGE ? segments.value[0] || "" : ""
+);
+
+const planItemId = computed(() =>
+	pageSlug.value === PLAN_ITEM_PAGE ? segments.value[0] || "" : ""
+);
+
 const screen = computed(() => {
 	if (pageSlug.value === DPP_PAGE && dppReference.value) {
 		const second = segments.value[1];
@@ -178,6 +262,8 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
 		return "dpp-review";
 	}
+	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
+	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
 	return "workspace";
 });
 
@@ -191,6 +277,14 @@ const entryId = computed(() =>
 
 function go(...parts) {
 	frappe.set_route(DPP_PAGE, ...parts.filter(Boolean));
+}
+
+function onBackToPlan() {
+	if (planItem.value.plan_reference) {
+		frappe.set_route(PLAN_PAGE, planItem.value.plan_reference);
+	} else {
+		frappe.set_route(WORKSPACE_PAGE);
+	}
 }
 
 let loadSeq = 0;
@@ -228,6 +322,15 @@ async function load() {
 			validation.value = loaded;
 			classifications.value = {};
 			returnDialog.value = false;
+		} else if (screen.value === "plan") {
+			const loaded = await api.getAnnualPlan(planReference.value);
+			if (seq !== loadSeq) return;
+			annualPlan.value = loaded;
+			formDialog.value = false;
+		} else if (screen.value === "plan-item") {
+			const loaded = await api.getPlanItem(planItemId.value);
+			if (seq !== loadSeq) return;
+			planItem.value = loaded;
 		}
 	} catch (e) {
 		if (seq !== loadSeq) return;
@@ -378,6 +481,49 @@ function onNavigate(routeSegments) {
 	frappe.set_route(...routeSegments);
 }
 
+async function onFormConfirm(dppEntries, mode) {
+	const result = await run("form-plan-items", (key) =>
+		api.formPlanItems({
+			plan_version: annualPlan.value.version_reference,
+			dpp_entries: JSON.stringify(dppEntries),
+			mode,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		formDialog.value = false;
+		if (result.single) {
+			frappe.set_route(PLAN_ITEM_PAGE, result.created_items[0]);
+		} else {
+			await load();
+		}
+	}
+}
+
+async function onSavePlanItem(values) {
+	const result = await run("save-plan-item", (key) =>
+		api.savePlanItem({
+			plan_item: planItem.value.plan_item_id,
+			item_values: JSON.stringify(values),
+			expected_record_version: planItem.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load();
+}
+
+async function onDissolvePlanItem() {
+	const result = await run("dissolve-plan-item", (key) =>
+		api.dissolvePlanItem({
+			plan_item: planItem.value.plan_item_id,
+			expected_record_version: planItem.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) onBackToPlan();
+}
+
 watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
 
 const railTrail = computed(() => {
@@ -396,6 +542,18 @@ const railTrail = computed(() => {
 						  entryId.value,
 			});
 		}
+	}
+	if (planReference.value) {
+		trail.push({ label: planReference.value, route: [PLAN_PAGE, planReference.value] });
+	}
+	if (screen.value === "plan-item" && planItemId.value) {
+		if (!planReference.value && planItem.value.plan_reference) {
+			trail.push({
+				label: planItem.value.plan_reference,
+				route: [PLAN_PAGE, planItem.value.plan_reference],
+			});
+		}
+		trail.push({ label: planItemId.value });
 	}
 	return trail;
 });

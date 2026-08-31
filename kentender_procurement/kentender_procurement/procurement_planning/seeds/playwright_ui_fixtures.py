@@ -669,3 +669,136 @@ def reset_review_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {"pe": VC_PE, "task": task, "dpp_reference": opened["dpp_reference"]}
+
+
+# --- Slice D world: PE-PWPF (Annual Plan workbench spec file) ---------------
+
+PF_PE = "PE-PWPF"
+PF_OU = "OU-PWPF-DHI"
+PF_CTX = "CTX-PWPF-2098-2099"
+
+PF_AUTHOR = "pwpf.author@example.test"
+PF_HOD = "pwpf.hod@example.test"
+PF_PLANNER = "pwpf.planner@example.test"
+
+
+def _ensure_pf_strategy_world() -> str:
+	"""One Active primary Strategic Plan for PE-PWPF, covering the real test
+	clock, so the Plan Item editor's Objective select is never empty. Mirrors
+	the Python-test fixture at procurement_planning/tests/fixtures.py."""
+	existing = frappe.db.get_value(
+		"Strategy Node",
+		{"title": "PWPF Digital Objective", "node_type": "Strategic Objective"},
+		"name",
+	)
+	if existing:
+		return existing
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": "Playwright Plan Formation Strategic Plan",
+			"procuring_entity_id": PF_PE,
+			"plan_role": "Primary",
+			"period_start": "2020-01-01",
+			"period_end": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2020-01-01",
+			"effective_to": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Pillar", "title": "PWPF Pillar", "display_order": 1,
+		}
+	).insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Programme", "title": "PWPF Programme", "display_order": 2,
+			"parent_node_id": pillar.name,
+		}
+	).insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Strategic Objective", "title": "PWPF Digital Objective",
+			"display_order": 3, "parent_node_id": programme.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("Strategic Plan Version", version.name, "status", "Active")
+	return objective.name
+
+
+def reset_plan_workbench_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PE-PWPF with ONE accepted, unallocated departmental entry (driven
+	through the real §8.2 commands to Accepted) — the Annual Plan workbench
+	spec's start state: PLN-DES-07's exact "1 accepted / 0 allocated / 0
+	items" opening."""
+	from uuid import uuid4
+
+	from kentender_procurement.procurement_planning.services import (
+		dpp_lifecycle,
+		dpp_validation,
+	)
+
+	_guard()
+	_ensure_pe_world(PF_PE, PF_OU, PF_CTX, budget_ref="PWPF")
+	_ensure_pf_strategy_world()
+	_pe_actor(PF_AUTHOR, "Playwright Formation Author", ("Departmental Author",), PF_PE, PF_OU)
+	_pe_actor(
+		PF_HOD, "Playwright Formation HoD",
+		("Departmental Author", "Head of User Department"), PF_PE, PF_OU,
+	)
+	_pe_actor(PF_PLANNER, "Playwright Formation Planner", ("Procurement Planner",), PF_PE, None)
+	_wipe_pe(PF_PE)
+	for user in (PF_AUTHOR, PF_HOD, PF_PLANNER):
+		for pref_key in CONTEXT_PREFERENCE_KEYS:
+			frappe.defaults.clear_user_default(pref_key, user)
+
+	frappe.set_user(PF_AUTHOR)
+	opened = dpp_lifecycle.open_departmental_plan(
+		procuring_entity=PF_PE, organisation_unit=PF_OU, financial_year=FY,
+		idempotency_key=uuid4().hex, fixture_namespace="KENTENDER_PLAYWRIGHT",
+	)
+	added = dpp_lifecycle.save_direct_requirement(
+		dpp_version=opened["current_version"],
+		values={
+			"title": "National digital health infrastructure upgrade",
+			"description": "Procure and implement the national digital health infrastructure upgrade.",
+			"expected_operational_result": "The department operates the upgraded infrastructure.",
+			"quantity": 1,
+			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
+			"required_by_date": "2099-04-30",
+			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWPF-0001"}, "name"),
+			"indicative_amount": 80000000,
+		},
+		expected_record_version=opened["record_version"],
+		idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(PF_HOD)
+	submitted = dpp_lifecycle.submit_departmental_plan(
+		dpp_version=opened["current_version"], certification_confirmed=True,
+		expected_record_version=added["record_version"], idempotency_key=uuid4().hex,
+	)
+	task = frappe.get_doc(
+		"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+	)
+	frappe.set_user(PF_PLANNER)
+	accepted = dpp_validation.accept_departmental_plan(
+		task=task.name, classifications={added["entry_id"]: "Non-consulting services"},
+		task_token=task.task_token, idempotency_key=uuid4().hex,
+	)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {
+		"pe": PF_PE, "plan_reference": accepted["annual_plan"],
+		"dpp_reference": accepted["dpp_reference"],
+	}

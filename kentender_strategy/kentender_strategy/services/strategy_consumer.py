@@ -48,6 +48,14 @@ def resolve_strategy_context(
 	Supporting frameworks (Programme Strategy / Thematic Plan / Annual
 	Implementation Plan) active for the same PE/date are returned explicitly,
 	never folded into the primary context.
+
+	`primary_plan.version_id` is the Active Strategic Plan Version's own id —
+	the value `list_strategy_objectives`/`create_strategy_snapshot` require as
+	their `plan_version_id`, per this module's own docstrings. It was computed
+	internally but never surfaced on this return value; the first real
+	downstream caller (PLN-CHG-001 v1.2 Phase 6, kentender_procurement's
+	strategy_gateway) found the gap live rather than in this module's own
+	tests, which only assert `resolve_strategy_context`'s error paths.
 	"""
 	if not procuring_entity:
 		frappe.throw(_("Procuring entity is required"), frappe.ValidationError)
@@ -109,6 +117,7 @@ def resolve_strategy_context(
 		"effective_date": str(as_of),
 		"primary_plan": {
 			"id": primary["id"],
+			"version_id": primary["version_id"],
 			"code": primary["code"],
 			"name": primary["name"],
 			"start_date": str(primary["effective_from"]),

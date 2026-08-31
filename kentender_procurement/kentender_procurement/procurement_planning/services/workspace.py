@@ -274,6 +274,7 @@ def get_planning_workspace(
 			)
 		count, value = _accepted_unallocated(ctx)
 		if count:
+			plan_reference = frappe.db.get_value("Annual Plan", {"pe_fy_context": ctx}, "plan_reference")
 			plural = "entry" if count == 1 else "entries"
 			your_work.append(
 				{
@@ -282,7 +283,7 @@ def get_planning_workspace(
 					"status": "Ready",
 					"status_kind": "live",
 					"action": "Open Annual Plan",
-					"route": ["annual-procurement-plan"],
+					"route": ["annual-procurement-plan", plan_reference],
 				}
 			)
 

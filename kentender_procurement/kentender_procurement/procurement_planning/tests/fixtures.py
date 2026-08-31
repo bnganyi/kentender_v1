@@ -28,8 +28,13 @@ CTX_OPEN = "CTX-PLNT-2098-2099"
 CTX_CLOSED = "CTX-PLNT-2101-2102"
 UNIT = "UNIT-PLNT-EACH"
 BUDGET_LINE_REF = "BL-PLNT-0001"
-# the Budget Line docname is hash-generated; ensure_world() fills this in
+BUDGET_LINE_REF_2 = "BL-PLNT-0002"
+# the Budget Line docname is hash-generated; ensure_world() fills these in
 BUDGET_LINE = ""
+BUDGET_LINE_2 = ""
+# Strategy world (§7.2): hash-autonamed; ensure_world() fills these in
+STRATEGY_OBJECTIVE = ""
+STRATEGY_OBJECTIVE_PATH = "PLNT Pillar › PLNT Programme"
 
 AUTHOR = "plnt.author@example.test"
 HOD = "plnt.hod@example.test"
@@ -186,6 +191,7 @@ def ensure_world() -> None:
 			).insert(ignore_permissions=True)
 
 	_link_targets()
+	_strategy_world()
 
 	pe_scope = (("Procuring Entity", PE),)
 	alpha = pe_scope + (("Organisation Unit", OU_ALPHA),)
@@ -303,6 +309,20 @@ def _link_targets() -> None:
 	BUDGET_LINE = frappe.db.get_value(
 		"Budget Line", {"generated_reference": BUDGET_LINE_REF}, "name"
 	)
+	# a second line under the SAME Budget: PLN-DES-09A combines sources across
+	# different Budget Lines that still share one Budget (and its currency).
+	if not frappe.db.exists("Budget Line", {"generated_reference": BUDGET_LINE_REF_2}):
+		frappe.get_doc(
+			{
+				"doctype": "Budget Line",
+				"generated_reference": BUDGET_LINE_REF_2,
+				"budget": budget,
+			}
+		).insert(ignore_permissions=True)
+	global BUDGET_LINE_2
+	BUDGET_LINE_2 = frappe.db.get_value(
+		"Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name"
+	)
 	if not frappe.db.exists("Departmental Need", NEED):
 		frappe.get_doc(
 			{
@@ -339,6 +359,65 @@ def _link_targets() -> None:
 		update_modified=False,
 	)
 
+
+
+def _strategy_world() -> None:
+	"""§7.2 — one primary Active Strategic Plan for PE-PLNT covering the real
+	test clock (resolve_strategy_context defaults `effective_date` to today,
+	not to the pinned far-future FY window the rest of this world uses)."""
+	global STRATEGY_OBJECTIVE, STRATEGY_OBJECTIVE_PATH
+	existing = frappe.db.get_value(
+		"Strategy Node",
+		{"title": "PLNT Digital Objective", "node_type": "Strategic Objective"},
+		"name",
+	)
+	if existing:
+		STRATEGY_OBJECTIVE = existing
+		return
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": "Planning Test Strategic Plan",
+			"procuring_entity_id": PE,
+			"plan_role": "Primary",
+			"period_start": "2020-01-01",
+			"period_end": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2020-01-01",
+			"effective_to": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	# the structure guard only allows edits on a Draft/Returned version —
+	# build the hierarchy first, then activate.
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Pillar", "title": "PLNT Pillar", "display_order": 1,
+		}
+	).insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Programme", "title": "PLNT Programme", "display_order": 2,
+			"parent_node_id": pillar.name,
+		}
+	).insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Strategic Objective", "title": "PLNT Digital Objective",
+			"display_order": 3, "parent_node_id": programme.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("Strategic Plan Version", version.name, "status", "Active")
+	STRATEGY_OBJECTIVE = objective.name
+	STRATEGY_OBJECTIVE_PATH = "PLNT Pillar › PLNT Programme"
 
 
 def accepted_source(

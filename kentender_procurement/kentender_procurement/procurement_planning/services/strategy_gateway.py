@@ -30,7 +30,9 @@ def _active_plan_version(procuring_entity: str) -> str:
 		context = resolve_strategy_context(procuring_entity)
 	except Exception:
 		return ""
-	return cstr((context.get("primary_plan") or {}).get("id") or "")
+	# `primary_plan.id` is the Strategic Plan root; `list_strategy_objectives`
+	# and `create_strategy_snapshot` both key off the Active Version instead.
+	return cstr((context.get("primary_plan") or {}).get("version_id") or "")
 
 
 def list_eligible_strategic_objectives(
@@ -48,7 +50,12 @@ def list_eligible_strategic_objectives(
 	)
 	rows = []
 	for row in result.get("rows", []):
-		path = [cstr(node.get("title")) for node in row.get("path", [])]
+		# `list_strategy_objectives`'s own path is self-inclusive (ends with
+		# the objective itself, per `_node_ancestor_path`'s documented
+		# contract); PLN-DES-09/§7.2 show the ancestor path only — the
+		# objective's own title is already shown as the Strategic Objective
+		# field, one row up.
+		path = [cstr(node.get("title")) for node in row.get("path", [])[:-1]]
 		rows.append(
 			{
 				"id": cstr(row.get("id")),

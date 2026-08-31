@@ -231,6 +231,8 @@ page_js = {
 	"publications": "public/js/publications_page.js",
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
+	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
+	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",

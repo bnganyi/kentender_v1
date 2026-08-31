@@ -60,3 +60,23 @@ export function acceptDepartmentalPlan(args) {
 export function returnDepartmentalPlan(args) {
 	return frappeCall(`${BASE}.return_departmental_plan`, args);
 }
+
+export function getAnnualPlan(planReference) {
+	return frappeCall(`${BASE}.get_annual_plan`, { plan_reference: planReference });
+}
+
+export function getPlanItem(planItemId) {
+	return frappeCall(`${BASE}.get_plan_item`, { plan_item_id: planItemId });
+}
+
+export function formPlanItems(args) {
+	return frappeCall(`${BASE}.form_plan_items`, args);
+}
+
+export function dissolvePlanItem(args) {
+	return frappeCall(`${BASE}.dissolve_plan_item`, args);
+}
+
+export function savePlanItem(args) {
+	return frappeCall(`${BASE}.save_plan_item`, args);
+}

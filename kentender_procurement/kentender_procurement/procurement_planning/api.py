@@ -232,3 +232,69 @@ def get_dpp_validation_task(task: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import dpp_read
 
 	return dpp_read.get_dpp_validation_task(task=task)
+
+
+# --- Slice D: Annual Plan workbench, formation, Plan Item editor (Phase 6) --
+
+
+@frappe.whitelist()
+def get_annual_plan(plan_reference: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	return plan_read.get_annual_plan(plan_reference=plan_reference)
+
+
+@frappe.whitelist()
+def get_plan_item(plan_item_id: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	return plan_read.get_plan_item(plan_item_id=plan_item_id)
+
+
+@frappe.whitelist()
+def form_plan_items(
+	plan_version: str,
+	dpp_entries,
+	mode: str,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_workbench
+
+	return plan_workbench.form_plan_items(
+		plan_version=plan_version,
+		dpp_entries=_parse_json(dpp_entries, []),
+		mode=mode,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def dissolve_plan_item(
+	plan_item: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_workbench
+
+	return plan_workbench.dissolve_plan_item(
+		plan_item=plan_item,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def save_plan_item(
+	plan_item: str,
+	item_values,
+	expected_record_version,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_workbench
+
+	return plan_workbench.save_plan_item(
+		plan_item=plan_item,
+		values=_parse_json(item_values, {}),
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
