@@ -27,7 +27,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, flt, fmt_money, formatdate
 
-from kentender_procurement.procurement_planning.services import authority
+from kentender_procurement.procurement_planning.services import authority, needs_intake
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_BUDGET_OFFICER,
 	ROLE_PLANNING_AUDITOR,
@@ -249,6 +249,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		},
 		"mutable": version.version_status == "Draft",
 		"is_correction": bool(version.correction_of_plan_version),
+		"has_open_successor": bool(plan.open_successor_version),
 		"summary": {
 			"accepted_entries": len(all_accepted),
 			"allocated": len(all_accepted) - len(unallocated),
@@ -262,16 +263,125 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		),
 		"plan_items": items,
 		"ready_for_submission": ready_for_submission,
+		"active_view": _active_view(version, plan) if version.version_status == "Active" else None,
 	}
+
+
+def _decision_line(version_name: str, stage: str) -> str:
+	task = frappe.db.get_value(
+		"Plan Governance Task", {"plan_version": version_name, "stage": stage}, "decision"
+	)
+	if not task:
+		return ""
+	row = frappe.db.get_value(
+		"Plan Governance Decision", task, ["actor", "capacity", "decided_at"], as_dict=True
+	)
+	if not row:
+		return ""
+	who = cstr(frappe.db.get_value("User", row.actor, "full_name") or row.actor)
+	label = row.capacity if stage == "Statutory approval" else who
+	return f"{label} · {_eat(row.decided_at)}"
+
+
+def _active_view(version, plan) -> dict[str, Any]:
+	"""PLN-UI-14 — the Active Plan (PLN-DES-14): Plan Items with their
+	Requisition-availability projection (§7.4/Phase 10 owns the real
+	consuming projection; with zero Requisitions ever drawn in this MVP,
+	remaining quantity/value trivially equals the approved amount, so this
+	renders the exact same figures Phase 10's contract will until a
+	Requisition actually exists to draw against one)."""
+	items = frappe.get_all(
+		"Annual Plan Item",
+		filters={"plan_version": version.name, "item_state": "Active"},
+		fields=["name", "plan_item_id", "title", "requirement_type", "procurement_method", "delivery_completion_date"],
+		order_by="creation asc",
+	)
+	rows = []
+	departments = set()
+	for item in items:
+		allocations = frappe.get_all(
+			"Plan Source Allocation",
+			filters={"plan_item": item.name, "allocation_state": "Active"},
+			fields=["organisation_unit", "source_origin", "quantity", "unit", "indicative_amount"],
+		)
+		for a in allocations:
+			departments.add(a.organisation_unit)
+		origins = {a.source_origin for a in allocations}
+		total_qty = sum(flt(a.quantity) for a in allocations)
+		unit_label = cstr(frappe.db.get_value("Unit Of Measure", allocations[0].unit, "unit_label")) if allocations else ""
+		value = sum(flt(a.indicative_amount) for a in allocations)
+		rows.append(
+			{
+				"plan_item_id": item.plan_item_id,
+				"title": item.title,
+				"department": " / ".join(sorted({
+					cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou) for ou in {a.organisation_unit for a in allocations}
+				})),
+				"source_origin": next(iter(origins)) if len(origins) == 1 else "Multiple",
+				"procurement_method": item.procurement_method,
+				"delivery_completion_display": _date(item.delivery_completion_date),
+				"value_display": _money(value),
+				"requisition_availability_display": (
+					f"{total_qty:g} {unit_label.lower()} · {_money(value)}".strip()
+				),
+				"route": ["procurement-plan-item", item.plan_item_id],
+			}
+		)
+	item_value = sum(
+		flt(a.indicative_amount)
+		for a in frappe.get_all(
+			"Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": "Active"},
+			fields=["indicative_amount"],
+		)
+	)
+	return {
+		"summary": {
+			"plan_items": len(rows),
+			"value_display": _money(item_value),
+			"departments": len(departments),
+			"activated_display": _eat(version.activated_at),
+		},
+		"items": rows,
+		"governance_card": {
+			"ao_adoption_line": _decision_line(version.name, "Accounting Officer adoption"),
+			"statutory_approval_line": _decision_line(version.name, "Statutory approval"),
+			"publication_line": (
+				f"Acknowledged · {_eat(version.activated_at)}" if version.activated_at else ""
+			),
+		},
+	}
+
+
+def resolve_item_doc_name(plan_item_id: str) -> str:
+	"""A Plan Item's business id can name two live docs at once: the Active
+	predecessor's frozen copy and, once BeginPlanUpdate has run, its Draft
+	successor's copy of the exact same id (§5.2 invariant 22 carries every
+	id forward unchanged). Every command and this read model must agree on
+	which document 'the' item is — the one currently open to act on, the
+	same precedence `_open_version` already uses for the Version itself —
+	rather than an arbitrary row a bare `plan_item_id` filter could return
+	once both exist."""
+	rows = frappe.get_all(
+		"Annual Plan Item", filters={"plan_item_id": cstr(plan_item_id)},
+		fields=["name", "plan_version"],
+	)
+	if not rows:
+		authority.not_found()
+	if len(rows) == 1:
+		return rows[0].name
+	plan_name = frappe.db.get_value("Annual Plan Version", rows[0].plan_version, "annual_plan")
+	open_successor = cstr(frappe.db.get_value("Annual Plan", plan_name, "open_successor_version"))
+	for row in rows:
+		if row.plan_version == open_successor:
+			return row.name
+	return rows[0].name
 
 
 def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
 	"""PLN-UI-09 — the Plan Item editor, single-source (PLN-DES-09) or
 	combined (PLN-DES-09A) by the same read model and screen."""
 	actor = cstr(user or frappe.session.user)
-	name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": cstr(plan_item_id)})
-	if not name:
-		authority.not_found()
+	name = resolve_item_doc_name(plan_item_id)
 	item = frappe.get_doc("Annual Plan Item", name)
 	version = frappe.get_doc("Annual Plan Version", item.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
@@ -304,10 +414,9 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		)
 		need_reference_line = ""
 		if allocation.need:
-			need_version_number = frappe.db.get_value(
-				"Departmental Need Version", allocation.need_version, "version_number"
+			need_reference_line = (
+				f"{allocation.need} · Version {needs_intake.need_version_number(allocation.need_version)}"
 			)
-			need_reference_line = f"{allocation.need} · Version {need_version_number}"
 		sources.append(
 			{
 				"requirement": entry_title,

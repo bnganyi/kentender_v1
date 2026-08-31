@@ -89,3 +89,74 @@ describe("AnnualPlanScreen — PLN-DES-07", () => {
 		expect(w.emitted("submit-consolidated")).toHaveLength(1);
 	});
 });
+
+// PLN-CHG-001 v1.2 §5.2/§8.1 Phase 9 (Slice G) — the Active Plan (PLN-DES-14).
+const ACTIVE_PLAN = {
+	outcome: "OK",
+	plan_reference: "PLN-MOH-2027-001",
+	version_reference: "PLN-MOH-2027-001-V1",
+	record_version: 3,
+	mutable: false,
+	has_open_successor: false,
+	header: {
+		eyebrow: "ANNUAL PROCUREMENT PLAN",
+		title: "Ministry of Health Annual Procurement Plan 2027/28",
+		reference_line: "PLN-MOH-2027-001 · Version 1",
+		badge: "Active",
+	},
+	active_view: {
+		summary: {
+			plan_items: 1, value_display: "KES 80,000,000", departments: 1,
+			activated_display: "12 Sep 2027, 09:14 EAT",
+		},
+		items: [
+			{
+				plan_item_id: "PPI-1", title: "National digital health infrastructure upgrade",
+				department: "Digital Health", source_origin: "Accepted Departmental Need",
+				procurement_method: "Open Tender", delivery_completion_display: "15 Oct 2027",
+				value_display: "KES 80,000,000", requisition_availability_display: "1 programme · KES 80,000,000",
+				route: ["procurement-plan-item", "PPI-1"],
+			},
+		],
+		governance_card: {
+			ao_adoption_line: "Jane Author · 10 Sep 2027, 08:00 EAT",
+			statutory_approval_line: "Responsible Cabinet Secretary · 11 Sep 2027, 08:00 EAT",
+			publication_line: "Acknowledged · 12 Sep 2027, 09:14 EAT",
+		},
+	},
+};
+
+describe("AnnualPlanScreen — PLN-DES-14 the Active Plan", () => {
+	it("renders the Active summary strip, item row and governance card instead of the Draft workbench", () => {
+		const w = make(ACTIVE_PLAN);
+		expect(w.find('[data-testid="pln-plan-badge"]').text()).toBe("Active");
+		expect(w.find('[data-testid="pln-active-summary-strip"]').text()).toContain("KES 80,000,000");
+		const row = w.find('[data-testid="pln-active-view-PPI-1"]').element.closest("tr");
+		expect(row.textContent).toContain("National digital health infrastructure upgrade");
+		expect(row.textContent).toContain("KES 80,000,000");
+		const card = w.find('[data-testid="pln-active-governance"]');
+		expect(card.text()).toContain("Acknowledged");
+		expect(card.text()).toContain("Responsible Cabinet Secretary");
+		// the Draft-only surfaces are gone, not just hidden
+		expect(w.find('[data-testid="pln-plan-summary-strip"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-unallocated-sources"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-submit-consolidated"]').exists()).toBe(false);
+	});
+
+	it("navigates to the Plan Item route when View is clicked", async () => {
+		const w = make(ACTIVE_PLAN);
+		await w.find('[data-testid="pln-active-view-PPI-1"]').trigger("click");
+		expect(w.emitted("navigate")[0]).toEqual([["procurement-plan-item", "PPI-1"]]);
+	});
+
+	it("offers Prepare plan update only while no successor is already open", async () => {
+		const w = make(ACTIVE_PLAN);
+		const button = w.find('[data-testid="pln-begin-update"]');
+		expect(button.exists()).toBe(true);
+		await button.trigger("click");
+		expect(w.emitted("begin-update")).toHaveLength(1);
+
+		const withOpenSuccessor = make({ ...ACTIVE_PLAN, has_open_successor: true });
+		expect(withOpenSuccessor.find('[data-testid="pln-begin-update"]').exists()).toBe(false);
+	});
+});

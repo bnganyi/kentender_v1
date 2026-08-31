@@ -360,7 +360,19 @@ def approve_annual_plan(
 	).insert(ignore_permissions=True)
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
 	envelope.bump(version, version_status="Approved — publication pending")
-	result = {"ok": True, "idempotent": False, "action": "approved", "plan_version": version.name}
+
+	# §11.15/§12.11: publication is a system action, never a business-role
+	# command — it runs immediately, in the same transaction as approval.
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	published = plan_publication.publish_annual_plan(
+		plan_version=version.name, idempotency_key=f"{idempotency_key}:publish",
+	)
+
+	result = {
+		"ok": True, "idempotent": False, "action": "approved", "plan_version": version.name,
+		"publication_result": published["result"],
+	}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ApproveAnnualPlan", payload=payload,
 		result=result, document_type="Plan Governance Decision", document_name=decision.name,

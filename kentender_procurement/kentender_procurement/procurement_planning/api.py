@@ -409,3 +409,46 @@ def submit_corrected_plan(
 		plan_version=plan_version, expected_record_version=expected_record_version,
 		idempotency_key=idempotency_key,
 	)
+
+
+# --- Slice G: Publication, Active, successor (Phase 9) ----------------------
+
+
+@frappe.whitelist()
+def retry_publication(publication: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	return plan_publication.retry_publication(publication=publication, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def begin_plan_update(plan_reference: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	return plan_publication.begin_plan_update(
+		plan_reference=plan_reference, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def remove_plan_item_in_successor(
+	plan_item: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	return plan_publication.remove_plan_item_in_successor(
+		plan_item=plan_item, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def cancel_plan_update(
+	plan_reference: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	return plan_publication.cancel_plan_update(
+		plan_reference=plan_reference, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)

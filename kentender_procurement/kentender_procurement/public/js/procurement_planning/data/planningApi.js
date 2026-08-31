@@ -120,3 +120,11 @@ export function returnPlanVersion(args) {
 export function submitCorrectedPlan(args) {
 	return frappeCall(`${BASE}.submit_corrected_plan`, args);
 }
+
+export function beginPlanUpdate(args) {
+	return frappeCall(`${BASE}.begin_plan_update`, args);
+}
+
+export function retryPublication(args) {
+	return frappeCall(`${BASE}.retry_publication`, args);
+}

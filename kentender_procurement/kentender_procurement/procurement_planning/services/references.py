@@ -124,5 +124,9 @@ def governance_decision_reference(stage: str, version_reference: str) -> str:
 	return prefix + cstr(version_reference).removeprefix("PLN-")
 
 
-def publication_reference(plan_reference_value: str, attempt_number: int) -> str:
-	return f"PUB-{cstr(plan_reference_value).removeprefix('PLN-')}-A{int(attempt_number)}"
+def publication_reference(version_reference: str, attempt_number: int) -> str:
+	"""Keyed by the Version, not the Plan: `attempt_number` counts attempts
+	for one Version's own publication and resets for its successor, so the
+	reference must carry the Version reference too, or a first attempt at
+	V2 collides with V1's own first attempt (both otherwise 'attempt 1')."""
+	return f"PUB-{cstr(version_reference).removeprefix('PLN-')}-A{int(attempt_number)}"

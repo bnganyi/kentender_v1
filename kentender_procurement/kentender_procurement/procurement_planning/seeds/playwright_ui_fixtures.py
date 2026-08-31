@@ -479,6 +479,10 @@ def _wipe_pe(pe: str) -> None:
 	)
 	frappe.db.delete("Plan Governance Decision", {"task": ("in", governance_tasks or ("",))})
 	frappe.db.delete("Plan Governance Task", {"name": ("in", governance_tasks or ("",))})
+	# Phase 9 — a prior run's ApproveAnnualPlan auto-publishes, so an orphaned
+	# Annual Plan Publication would otherwise dangle once its Version is
+	# deleted below.
+	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
@@ -1158,4 +1162,190 @@ def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
 		frappe.db.commit()
 	return {
 		"pe": GV_PE, "task": submitted_plan["task"], "plan_reference": accepted["annual_plan"],
+	}
+
+
+# --- Slice G world: PE-PWPB (publication spec file) --------------------------
+
+PB_PE = "PE-PWPB"
+PB_OU = "OU-PWPB-DHI"
+PB_CTX = "CTX-PWPB-2098-2099"
+
+PB_AUTHOR = "pwpb.author@example.test"
+PB_HOD = "pwpb.hod@example.test"
+PB_PLANNER = "pwpb.planner@example.test"
+PB_BUDGET_OFFICER = "pwpb.budget@example.test"
+PB_AO = "pwpb.ao@example.test"
+PB_STATUTORY = "pwpb.statutory@example.test"
+
+
+def _ensure_pb_strategy_world() -> str:
+	existing = frappe.db.get_value(
+		"Strategy Node",
+		{"title": "PWPB Digital Objective", "node_type": "Strategic Objective"},
+		"name",
+	)
+	if existing:
+		return existing
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": "Playwright Publication Strategic Plan",
+			"procuring_entity_id": PB_PE,
+			"plan_role": "Primary",
+			"period_start": "2020-01-01",
+			"period_end": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2020-01-01",
+			"effective_to": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Pillar", "title": "PWPB Pillar", "display_order": 1,
+		}
+	).insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Programme", "title": "PWPB Programme", "display_order": 2,
+			"parent_node_id": pillar.name,
+		}
+	).insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Strategic Objective", "title": "PWPB Digital Objective",
+			"display_order": 3, "parent_node_id": programme.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("Strategic Plan Version", version.name, "status", "Active")
+	return objective.name
+
+
+def reset_publication_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PE-PWPB with one Plan Item, driven through the real §5.2/§8.2 chain
+	all the way to Active — PublishAnnualPlan runs automatically inside
+	ApproveAnnualPlan, so this is the Active Plan / Prepare plan update
+	spec's start state."""
+	from uuid import uuid4
+
+	from kentender_procurement.procurement_planning.services import (
+		dpp_lifecycle,
+		dpp_validation,
+		plan_finance,
+		plan_governance,
+		plan_read,
+		plan_workbench,
+	)
+
+	_guard()
+	_ensure_pe_world(PB_PE, PB_OU, PB_CTX, budget_ref="PWPB")
+	objective = _ensure_pb_strategy_world()
+	_pe_actor(PB_AUTHOR, "Playwright Publication Author", ("Departmental Author",), PB_PE, PB_OU)
+	_pe_actor(
+		PB_HOD, "Playwright Publication HoD",
+		("Departmental Author", "Head of User Department"), PB_PE, PB_OU,
+	)
+	_pe_actor(PB_PLANNER, "Playwright Publication Planner", ("Procurement Planner",), PB_PE, None)
+	_pe_actor(PB_BUDGET_OFFICER, "Playwright Publication Budget Officer", ("Budget Officer",), PB_PE, None)
+	_pe_actor(PB_AO, "Playwright Publication AO", ("Accounting Officer",), PB_PE, None)
+	_pe_actor(PB_STATUTORY, "Playwright Publication Statutory", ("Plan Statutory Approver",), PB_PE, None)
+	_wipe_pe(PB_PE)
+	for user in (PB_AUTHOR, PB_HOD, PB_PLANNER, PB_BUDGET_OFFICER, PB_AO, PB_STATUTORY):
+		for pref_key in CONTEXT_PREFERENCE_KEYS:
+			frappe.defaults.clear_user_default(pref_key, user)
+
+	frappe.set_user(PB_AUTHOR)
+	opened = dpp_lifecycle.open_departmental_plan(
+		procuring_entity=PB_PE, organisation_unit=PB_OU,
+		financial_year=FY, idempotency_key=uuid4().hex, fixture_namespace="KENTENDER_PLAYWRIGHT",
+	)
+	added = dpp_lifecycle.save_direct_requirement(
+		dpp_version=opened["current_version"],
+		values={
+			"title": "Regional laboratory equipment refresh",
+			"description": "Procure and install the regional laboratory equipment refresh.",
+			"expected_operational_result": "The department operates the refreshed equipment.",
+			"quantity": 1,
+			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
+			"required_by_date": "2099-04-30",
+			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWPB-0001"}, "name"),
+			"indicative_amount": 60000000,
+		},
+		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(PB_HOD)
+	submitted = dpp_lifecycle.submit_departmental_plan(
+		dpp_version=opened["current_version"], certification_confirmed=True,
+		expected_record_version=added["record_version"], idempotency_key=uuid4().hex,
+	)
+	dpp_task = frappe.get_doc(
+		"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+	)
+	frappe.set_user(PB_PLANNER)
+	accepted = dpp_validation.accept_departmental_plan(
+		task=dpp_task.name, classifications={added["entry_id"]: "Non-consulting services"},
+		task_token=dpp_task.task_token, idempotency_key=uuid4().hex,
+	)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	formed = plan_workbench.form_plan_items(
+		plan_version=accepted["annual_plan_version"],
+		dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+		mode="each", expected_record_version=plan["record_version"], idempotency_key=uuid4().hex,
+	)
+	item_id = formed["created_items"][0]
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	plan_workbench.save_plan_item(
+		plan_item=item_id,
+		values={
+			"title": "Regional laboratory equipment refresh",
+			"description": "Procure and install the regional laboratory equipment refresh.",
+			"strategic_objective": objective, "aggregation_reason": "",
+			"invitation_date": "2098-08-01", "bid_opening_date": "2098-08-15",
+			"evaluation_completion_date": "2098-09-01", "award_approval_date": "2098-09-10",
+			"award_notification_date": "2098-09-15", "contract_signing_date": "2098-10-01",
+			"delivery_completion_date": "2098-10-15",
+		},
+		expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	requested = plan_finance.request_finance_confirmation(
+		plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	finance_task = frappe.get_doc("Plan Finance Task", requested["task"])
+	frappe.set_user(PB_BUDGET_OFFICER)
+	read = plan_read.get_finance_task(task=finance_task.name)
+	plan_finance.confirm_funding(
+		task=finance_task.name, task_token=finance_task.task_token,
+		check_token=read["budget_check_token"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(PB_PLANNER)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	submitted_plan = plan_governance.submit_consolidated_plan(
+		plan_version=plan["version_reference"], expected_record_version=plan["record_version"],
+		idempotency_key=uuid4().hex,
+	)
+	ao_task = frappe.get_doc("Plan Governance Task", submitted_plan["task"])
+	frappe.set_user(PB_AO)
+	adopted = plan_governance.adopt_and_submit_plan(
+		task=ao_task.name, task_token=ao_task.task_token, idempotency_key=uuid4().hex,
+	)
+	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
+	frappe.set_user(PB_STATUTORY)
+	plan_governance.approve_annual_plan(
+		task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=uuid4().hex,
+	)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {
+		"pe": PB_PE, "plan_reference": accepted["annual_plan"], "item_id": item_id,
 	}

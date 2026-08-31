@@ -152,6 +152,7 @@
 					@navigate="onNavigate"
 					@back="frappe.set_route(WORKSPACE_PAGE)"
 					@submit-consolidated="onSubmitConsolidatedPlan"
+					@begin-update="onBeginUpdate"
 				/>
 				<FormPlanItemsDialog
 					v-if="formDialog"
@@ -680,6 +681,16 @@ async function onSubmitConsolidatedPlan() {
 		})
 	);
 	if (result) frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+}
+
+async function onBeginUpdate() {
+	const result = await run("begin-plan-update", (key) =>
+		api.beginPlanUpdate({
+			plan_reference: planReference.value,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load();
 }
 
 async function onGovernanceConfirm(resolutionReference) {

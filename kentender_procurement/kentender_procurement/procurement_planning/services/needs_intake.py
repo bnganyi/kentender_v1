@@ -33,14 +33,33 @@ def current_accepted_sources(
 		current_accepted_events,
 	)
 
-	return [
-		event["payload"]
-		for event in current_accepted_events(
-			procuring_entity=procuring_entity,
-			financial_year=financial_year,
-			organisation_unit=organisation_unit,
-		)
-	]
+	# `current_accepted_events` already returns the decoded §7.1 payload dicts
+	# themselves (`accepted_payload`'s own field set — `need_id`,
+	# `accepted_version_id`, etc.), not a `{"payload": ...}` envelope around
+	# them; every caller of this function before this phase mocked it away,
+	# so the mismatch was never actually exercised.
+	return current_accepted_events(
+		procuring_entity=procuring_entity,
+		financial_year=financial_year,
+		organisation_unit=organisation_unit,
+	)
+
+
+def need_version_number(need_version: str) -> int:
+	"""The version ordinal encoded in a Need Version's own deterministic id
+	(`{need_reference}-V{number:03d}`, set once at creation by
+	`departmental_needs.services.lifecycle._create_version` and never
+	renamed). Planning already legitimately holds this exact string — it is
+	the published event's own `accepted_version_id` (§7.1), pinned onto the
+	allocation/entry it sourced — so deriving a display number from it reads
+	no Needs table and needs no new contract surface; a fresh
+	`get_current_accepted_need` read would also be *wrong* here, since it
+	answers for the Need's current accepted version, not the pinned
+	(possibly since-superseded) one this reference line names."""
+	tail = cstr(need_version).rsplit("-V", 1)
+	if len(tail) != 2 or not tail[1].isdigit():
+		return 0
+	return int(tail[1])
 
 
 def current_accepted_version_of(

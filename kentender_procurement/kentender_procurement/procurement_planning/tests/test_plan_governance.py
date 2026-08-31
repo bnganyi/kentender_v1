@@ -227,7 +227,7 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 
 
 class TestAdoptApproveChain(GovernanceCase):
-	def test_adopt_creates_the_statutory_task_and_approve_publishes_pending(self):
+	def test_adopt_creates_the_statutory_task_and_approve_activates_the_plan(self):
 		accepted, item_id = self.confirmed_item()
 		submitted = self.submit(accepted["annual_plan"])
 		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
@@ -250,10 +250,25 @@ class TestAdoptApproveChain(GovernanceCase):
 			task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key(),
 		)
 		self.assertEqual(approved["action"], "approved")
+		# §11.15/§12.11: publication is a system action that runs inside
+		# ApproveAnnualPlan itself — the sandbox destination always
+		# acknowledges, so by the time approval returns the Version has
+		# already gone straight through "Approved — publication pending"
+		# to Active (invariant 16).
+		self.assertEqual(approved["publication_result"], "Acknowledged")
 		self.assertEqual(
 			frappe.db.get_value("Annual Plan Version", version.name, "version_status"),
-			"Approved — publication pending",
+			"Active",
 		)
+		self.assertEqual(
+			frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"),
+			version.name,
+		)
+		publication = frappe.get_doc(
+			"Annual Plan Publication", {"plan_version": version.name}
+		)
+		self.assertEqual(publication.result, "Acknowledged")
+		self.assertTrue(publication.external_reference)
 
 	def test_a_non_accounting_officer_is_refused(self):
 		"""The Planner who submitted holds no Accounting Officer role at all

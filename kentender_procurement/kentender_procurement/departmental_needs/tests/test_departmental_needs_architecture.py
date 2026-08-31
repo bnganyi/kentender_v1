@@ -109,6 +109,14 @@ PUBLISHED_TO_PLANNING = frozenset(
 		# without its exception type, so the errors module is part of the
 		# published surface (added for PLN-CHG-001 v1.2 Phase 2).
 		f"kentender_procurement.{NEEDS}.errors",
+		# The outbound half of the same handoff (§7.1/§4.7): Planning
+		# publishes NeedPlanningUsageChanged.v1 by calling
+		# `usage.project_planning_usage` directly (its own module docstring,
+		# and the PUBLISHED_TO_NEEDS comment below, already describe this as
+		# the intended direction) — added when Phase 9 built the first real
+		# publisher, closing a gap this guard's own allow-list had left open
+		# since Phase 2 only wired the read side.
+		f"kentender_procurement.{NEEDS}.services.usage",
 	}
 )
 

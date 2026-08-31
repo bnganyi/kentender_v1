@@ -51,10 +51,10 @@ def _authorise(actor: str, procuring_entity: str) -> None:
 
 
 def _item_doc_name(plan_item_id: str) -> str:
-	name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": cstr(plan_item_id)})
-	if not name:
-		authority.not_found()
-	return name
+	"""Delegates to `plan_read.resolve_item_doc_name` — see its docstring:
+	a bare `plan_item_id` can name two live docs at once from the moment a
+	Draft successor exists alongside its Active predecessor."""
+	return plan_read.resolve_item_doc_name(plan_item_id)
 
 
 def _open_tender_method() -> str:

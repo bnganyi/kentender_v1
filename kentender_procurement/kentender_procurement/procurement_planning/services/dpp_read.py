@@ -352,8 +352,7 @@ def get_dpp_entry_editor(
 			"budget_line": cstr(entry.budget_line),
 			"indicative_amount": flt(entry.indicative_amount) or None,
 			"need_reference_line": (
-				f"{entry.need} · Version "
-				f"{frappe.db.get_value('Departmental Need Version', entry.need_version, 'version_number')}"
+				f"{entry.need} · Version {needs_intake.need_version_number(entry.need_version)}"
 				if entry.need
 				else ""
 			),

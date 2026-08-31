@@ -61,7 +61,7 @@ test.beforeEach(() => {
 });
 
 test.describe("PLN-UI-11/12 Annual Plan governance", () => {
-	test("the Accounting Officer adopts, the Statutory approver approves, and the Plan is Approved — publication pending", async ({
+	test("the Accounting Officer adopts, the Statutory approver approves, and the Plan activates", async ({
 		page,
 	}) => {
 		test.setTimeout(120_000); // three logins + the full AO→Statutory chain
@@ -118,14 +118,21 @@ test.describe("PLN-UI-11/12 Annual Plan governance", () => {
 		await page.locator('[data-testid="pgt-confirm"]').click();
 		await expectReady(page, "workspace");
 
+		// §11.15/§12.11: PublishAnnualPlan runs automatically inside approval
+		// against the sandbox destination, which always acknowledges — so by
+		// the time the workbench reloads, the Version has already gone
+		// straight through "Approved — publication pending" to Active
+		// (invariant 16), and the workbench shows the PLN-DES-14 Active view.
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${PLAN_REFERENCE}`, {
 			waitUntil: "domcontentloaded",
 		});
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText(
-			"Approved — publication pending"
+		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Active");
+		await expect(page.locator('[data-testid="pln-active-items"]')).toContainText(
+			"National digital health infrastructure upgrade"
 		);
+		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("Acknowledged");
 
 		expect(pageErrors(errors), errors.join("\n")).toHaveLength(0);
 	});
