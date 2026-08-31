@@ -188,7 +188,44 @@
 					:error-summary="errorSummary"
 					@save="onSavePlanItem"
 					@dissolve="onDissolvePlanItem"
+					@request-finance="onRequestFinance"
 					@back="onBackToPlan"
+				/>
+			</template>
+
+			<template v-else-if="screen === 'finance'">
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+				<FinanceTaskScreen
+					v-else
+					:task="financeTask"
+					:pending="pending"
+					:error-summary="errorSummary"
+					@confirm="onConfirmFunding"
+					@open-return-dialog="financeReturnDialog = true"
+				/>
+				<FinanceReturnDialog
+					v-if="financeReturnDialog"
+					:pending="pending"
+					:error="errorSummary"
+					@confirm="onReturnFromFinance"
+					@cancel="financeReturnDialog = false"
 				/>
 			</template>
 		</div>
@@ -208,6 +245,8 @@ import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
+import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
+import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
@@ -231,6 +270,8 @@ const returnDialog = ref(false);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
+const financeTask = ref({});
+const financeReturnDialog = ref(false);
 
 // §10/§12.1 — explicit PE/FY are visible filters only; the server resolves
 // the remembered server-side preference on a bare load.
@@ -262,6 +303,9 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
 		return "dpp-review";
 	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "finance" && segments.value[1]) {
+		return "finance";
+	}
 	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
 	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
 	return "workspace";
@@ -269,6 +313,10 @@ const screen = computed(() => {
 
 const validationTaskId = computed(() =>
 	segments.value[0] === "dpp-review" ? segments.value[1] || "" : ""
+);
+
+const financeTaskId = computed(() =>
+	segments.value[0] === "finance" ? segments.value[1] || "" : ""
 );
 
 const entryId = computed(() =>
@@ -331,6 +379,11 @@ async function load() {
 			const loaded = await api.getPlanItem(planItemId.value);
 			if (seq !== loadSeq) return;
 			planItem.value = loaded;
+		} else if (screen.value === "finance") {
+			const loaded = await api.getFinanceTask(financeTaskId.value);
+			if (seq !== loadSeq) return;
+			financeTask.value = loaded;
+			financeReturnDialog.value = false;
 		}
 	} catch (e) {
 		if (seq !== loadSeq) return;
@@ -524,12 +577,53 @@ async function onDissolvePlanItem() {
 	if (result) onBackToPlan();
 }
 
+async function onRequestFinance() {
+	const result = await run("request-finance", (key) =>
+		api.requestFinanceConfirmation({
+			plan_item: planItem.value.plan_item_id,
+			expected_record_version: planItem.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE, "finance", result.task);
+}
+
+async function onConfirmFunding() {
+	const result = await run("confirm-funding", (key) =>
+		api.confirmFunding({
+			task: financeTask.value.task,
+			task_token: financeTask.value.task_token,
+			check_token: financeTask.value.budget_check_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onReturnFromFinance(reason) {
+	const result = await run("return-from-finance", (key) =>
+		api.returnFromFinance({
+			task: financeTask.value.task,
+			reason,
+			task_token: financeTask.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		financeReturnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
 watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
 
 const railTrail = computed(() => {
 	const trail = [{ label: "Procurement Planning", route: [WORKSPACE_PAGE] }];
 	if (screen.value === "dpp-review") {
 		trail.push({ label: "DPP review" });
+	}
+	if (screen.value === "finance") {
+		trail.push({ label: "Finance" });
 	}
 	if (dppReference.value) {
 		trail.push({ label: dppReference.value, route: [DPP_PAGE, dppReference.value] });

@@ -169,10 +169,11 @@
 					Save draft
 				</button>
 				<button
+					v-if="item.mutable && item.header?.finance_state_badge !== 'Confirmed'"
 					class="kt-btn kt-btn-primary"
 					data-testid="ppi-request-finance"
-					disabled
-					title="Finance confirmation lands in the next slice"
+					:disabled="pending"
+					@click="$emit('request-finance')"
 				>
 					Request Finance confirmation
 				</button>
@@ -190,7 +191,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-defineEmits(["save", "dissolve", "back"]);
+defineEmits(["save", "dissolve", "back", "request-finance"]);
 
 const SCHEDULE_FIELDS = [
 	{ key: "invitation_date", label: "Invitation or advertisement" },

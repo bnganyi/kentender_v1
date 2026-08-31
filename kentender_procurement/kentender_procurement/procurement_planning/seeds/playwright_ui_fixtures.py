@@ -452,6 +452,28 @@ def _wipe_pe(pe: str) -> None:
 	plan_versions = frappe.get_all(
 		"Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name"
 	)
+	# §7.3 Finance world: a prior run's Confirm may have created a REAL Budget
+	# Funding Reservation — leaving it behind would understate "Available" on
+	# the next run's identical Budget Line and turn a sufficient-funding spec
+	# flaky (found live: a retry of the same Playwright test failed on a
+	# stale reservation from the attempt before it). Scope by the *business*
+	# `plan_item_id` prefix, not a join through the live Annual Plan Item
+	# table — a Plan Reservation Reference from an already-deleted item is
+	# exactly the orphan this cleanup exists to catch, so it must stay
+	# findable after its parent item is gone.
+	pe_code = pe.removeprefix("PE-")
+	reservations = frappe.get_all(
+		"Plan Reservation Reference",
+		filters={"plan_item_id": ("like", f"PPI-{pe_code}-%")},
+		pluck="reservation",
+	)
+	frappe.db.delete("Funding Reservation", {"name": ("in", reservations or ("",))})
+	frappe.db.delete("Plan Reservation Reference", {"plan_item_id": ("like", f"PPI-{pe_code}-%")})
+	finance_tasks = frappe.get_all(
+		"Plan Finance Task", filters={"procuring_entity": pe}, pluck="name"
+	)
+	frappe.db.delete("Plan Finance Decision", {"task": ("in", finance_tasks or ("",))})
+	frappe.db.delete("Plan Finance Task", {"name": ("in", finance_tasks or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
@@ -802,3 +824,158 @@ def reset_plan_workbench_fixture(*, commit: bool = True) -> dict[str, Any]:
 		"pe": PF_PE, "plan_reference": accepted["annual_plan"],
 		"dpp_reference": accepted["dpp_reference"],
 	}
+
+
+# --- Slice E world: PE-PWFN (Finance confirmation spec file) ---------------
+
+FN_PE = "PE-PWFN"
+FN_OU = "OU-PWFN-DHI"
+FN_CTX = "CTX-PWFN-2098-2099"
+
+FN_AUTHOR = "pwfn.author@example.test"
+FN_HOD = "pwfn.hod@example.test"
+FN_PLANNER = "pwfn.planner@example.test"
+FN_BUDGET_OFFICER = "pwfn.budget@example.test"
+
+
+def _ensure_fn_strategy_world() -> str:
+	existing = frappe.db.get_value(
+		"Strategy Node",
+		{"title": "PWFN Digital Objective", "node_type": "Strategic Objective"},
+		"name",
+	)
+	if existing:
+		return existing
+	plan = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"title": "Playwright Finance Strategic Plan",
+			"procuring_entity_id": FN_PE,
+			"plan_role": "Primary",
+			"period_start": "2020-01-01",
+			"period_end": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	version = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan Version",
+			"plan_id": plan.name,
+			"version_number": 1,
+			"effective_from": "2020-01-01",
+			"effective_to": "2105-01-01",
+		}
+	).insert(ignore_permissions=True)
+	pillar = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Pillar", "title": "PWFN Pillar", "display_order": 1,
+		}
+	).insert(ignore_permissions=True)
+	programme = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Programme", "title": "PWFN Programme", "display_order": 2,
+			"parent_node_id": pillar.name,
+		}
+	).insert(ignore_permissions=True)
+	objective = frappe.get_doc(
+		{
+			"doctype": "Strategy Node", "plan_version_id": version.name,
+			"node_type": "Strategic Objective", "title": "PWFN Digital Objective",
+			"display_order": 3, "parent_node_id": programme.name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("Strategic Plan Version", version.name, "status", "Active")
+	return objective.name
+
+
+def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PE-PWFN with one Plan Item fully completed and an Open Finance task
+	(driven through the real §5.1/§5.2/§8.2 commands) — the Finance
+	confirmation spec's start state."""
+	from uuid import uuid4
+
+	from kentender_procurement.procurement_planning.services import (
+		dpp_lifecycle,
+		dpp_validation,
+		plan_finance,
+		plan_read,
+		plan_workbench,
+	)
+
+	_guard()
+	_ensure_pe_world(FN_PE, FN_OU, FN_CTX, budget_ref="PWFN")
+	objective = _ensure_fn_strategy_world()
+	_pe_actor(FN_AUTHOR, "Playwright Finance Author", ("Departmental Author",), FN_PE, FN_OU)
+	_pe_actor(
+		FN_HOD, "Playwright Finance HoD",
+		("Departmental Author", "Head of User Department"), FN_PE, FN_OU,
+	)
+	_pe_actor(FN_PLANNER, "Playwright Finance Planner", ("Procurement Planner",), FN_PE, None)
+	_pe_actor(FN_BUDGET_OFFICER, "Playwright Finance Officer", ("Budget Officer",), FN_PE, None)
+	_wipe_pe(FN_PE)
+	for user in (FN_AUTHOR, FN_HOD, FN_PLANNER, FN_BUDGET_OFFICER):
+		for pref_key in CONTEXT_PREFERENCE_KEYS:
+			frappe.defaults.clear_user_default(pref_key, user)
+
+	frappe.set_user(FN_AUTHOR)
+	opened = dpp_lifecycle.open_departmental_plan(
+		procuring_entity=FN_PE, organisation_unit=FN_OU,
+		financial_year=FY, idempotency_key=uuid4().hex, fixture_namespace="KENTENDER_PLAYWRIGHT",
+	)
+	added = dpp_lifecycle.save_direct_requirement(
+		dpp_version=opened["current_version"],
+		values={
+			"title": "National digital health infrastructure upgrade",
+			"description": "Procure and implement the national digital health infrastructure upgrade.",
+			"expected_operational_result": "The department operates the upgraded infrastructure.",
+			"quantity": 1,
+			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
+			"required_by_date": "2099-04-30",
+			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWFN-0001"}, "name"),
+			"indicative_amount": 80000000,
+		},
+		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user(FN_HOD)
+	submitted = dpp_lifecycle.submit_departmental_plan(
+		dpp_version=opened["current_version"], certification_confirmed=True,
+		expected_record_version=added["record_version"], idempotency_key=uuid4().hex,
+	)
+	dpp_task = frappe.get_doc(
+		"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+	)
+	frappe.set_user(FN_PLANNER)
+	accepted = dpp_validation.accept_departmental_plan(
+		task=dpp_task.name, classifications={added["entry_id"]: "Non-consulting services"},
+		task_token=dpp_task.task_token, idempotency_key=uuid4().hex,
+	)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	formed = plan_workbench.form_plan_items(
+		plan_version=accepted["annual_plan_version"],
+		dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+		mode="each", expected_record_version=plan["record_version"], idempotency_key=uuid4().hex,
+	)
+	item_id = formed["created_items"][0]
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	plan_workbench.save_plan_item(
+		plan_item=item_id,
+		values={
+			"title": "National digital health infrastructure upgrade",
+			"description": "Procure and implement the national digital health infrastructure upgrade.",
+			"strategic_objective": objective, "aggregation_reason": "",
+			"invitation_date": "2098-08-01", "bid_opening_date": "2098-08-15",
+			"evaluation_completion_date": "2098-09-01", "award_approval_date": "2098-09-10",
+			"award_notification_date": "2098-09-15", "contract_signing_date": "2098-10-01",
+			"delivery_completion_date": "2098-10-15",
+		},
+		expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	item = plan_read.get_plan_item(plan_item_id=item_id)
+	requested = plan_finance.request_finance_confirmation(
+		plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=uuid4().hex,
+	)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {"pe": FN_PE, "task": requested["task"], "plan_item": item_id}

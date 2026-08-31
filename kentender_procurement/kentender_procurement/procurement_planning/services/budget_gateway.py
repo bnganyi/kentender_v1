@@ -104,16 +104,25 @@ def check_funding(
 	allocations: list[dict[str, Any]],
 	correlation_id: str,
 ) -> dict[str, Any]:
+	"""Runs as a system principal, deliberately: Budget's own internal
+	capability check for this boundary requires its `Finance Confirmation
+	Officer` role (or Administrator/System Manager) — a different
+	vocabulary from Planning's `Budget Officer` role. `RequestFinanceConfirmation`/
+	`ConfirmFunding` authorise the Planning actor against Planning's own role
+	and PE scope first (masked not-found on failure); this call must not be
+	spuriously refused by Budget's unrelated role name (the same mismatch
+	`list_eligible_budget_lines` above already crosses)."""
 	from kentender_budget.api.budget_api import check_funding as contract
 
-	return contract(
-		plan_item=plan_item,
-		plan_version=plan_version,
-		finance_task=finance_task,
-		source_set_hash=source_set_hash,
-		allocations=allocations,
-		correlation_id=correlation_id,
-	)
+	with _system_principal():
+		return contract(
+			plan_item=plan_item,
+			plan_version=plan_version,
+			finance_task=finance_task,
+			source_set_hash=source_set_hash,
+			allocations=allocations,
+			correlation_id=correlation_id,
+		)
 
 
 def reserve_funding(
@@ -123,14 +132,16 @@ def reserve_funding(
 	source_set_hash: str,
 	idempotency_key: str,
 ) -> dict[str, Any]:
+	"""System principal for the same reason as `check_funding` above."""
 	from kentender_budget.api.budget_api import reserve_funding as contract
 
-	return contract(
-		token=check_token,
-		finance_task=finance_task,
-		source_set_hash=source_set_hash,
-		idempotency_key=idempotency_key,
-	)
+	with _system_principal():
+		return contract(
+			token=check_token,
+			finance_task=finance_task,
+			source_set_hash=source_set_hash,
+			idempotency_key=idempotency_key,
+		)
 
 
 def release_planning_reservations(

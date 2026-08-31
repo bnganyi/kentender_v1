@@ -80,3 +80,19 @@ export function dissolvePlanItem(args) {
 export function savePlanItem(args) {
 	return frappeCall(`${BASE}.save_plan_item`, args);
 }
+
+export function requestFinanceConfirmation(args) {
+	return frappeCall(`${BASE}.request_finance_confirmation`, args);
+}
+
+export function getFinanceTask(task) {
+	return frappeCall(`${BASE}.get_finance_task`, { task });
+}
+
+export function confirmFunding(args) {
+	return frappeCall(`${BASE}.confirm_funding`, args);
+}
+
+export function returnFromFinance(args) {
+	return frappeCall(`${BASE}.return_from_finance`, args);
+}

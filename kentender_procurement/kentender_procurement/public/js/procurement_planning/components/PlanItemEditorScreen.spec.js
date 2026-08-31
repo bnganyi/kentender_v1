@@ -105,10 +105,26 @@ describe("PlanItemEditorScreen — PLN-DES-09 single source", () => {
 		expect(payload.delivery_completion_date).toBe("2027-08-31");
 	});
 
-	it("Dissolve Plan Item and Request Finance confirmation are both present; only Request Finance is disabled", () => {
+	it("Dissolve Plan Item and Request Finance confirmation are both present and enabled while Draft", () => {
 		const w = make();
 		expect(w.find('[data-testid="ppi-dissolve"]').attributes("disabled")).toBeUndefined();
-		expect(w.find('[data-testid="ppi-request-finance"]').attributes("disabled")).toBeDefined();
+		expect(w.find('[data-testid="ppi-request-finance"]').attributes("disabled")).toBeUndefined();
+	});
+
+	it("emits request-finance on click", async () => {
+		const w = make();
+		await w.find('[data-testid="ppi-request-finance"]').trigger("click");
+		expect(w.emitted("request-finance")).toHaveLength(1);
+	});
+
+	it("hides Request Finance confirmation once the item is already Confirmed", () => {
+		const w = make({
+			...SINGLE,
+			header: { ...SINGLE.header, finance_state_badge: "Confirmed" },
+		});
+		expect(w.find('[data-testid="ppi-request-finance"]').exists()).toBe(false);
+		// Save/Dissolve stay available — a Confirmed item is still a mutable Draft
+		expect(w.find('[data-testid="ppi-save"]').exists()).toBe(true);
 	});
 });
 

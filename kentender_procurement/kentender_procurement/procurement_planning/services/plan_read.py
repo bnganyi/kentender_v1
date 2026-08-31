@@ -29,6 +29,7 @@ from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_procurement.procurement_planning.services import authority
 from kentender_procurement.procurement_planning.services.planning_roles import (
+	ROLE_BUDGET_OFFICER,
 	ROLE_PLANNING_AUDITOR,
 	ROLE_PROCUREMENT_PLANNER,
 )
@@ -40,6 +41,16 @@ def _money(amount: float) -> str:
 
 def _date(value) -> str:
 	return formatdate(value, "d MMM yyyy") if value else ""
+
+
+def _eat(value) -> str:
+	"""A UTC instant rendered as EAT (§12.13)."""
+	if not value:
+		return ""
+	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
+
+	local = convert_utc_to_timezone(get_datetime(value), "Africa/Nairobi")
+	return f"{format_datetime(local, 'd MMM yyyy, HH:mm')} EAT"
 
 
 def _unit_label(unit: str) -> str:
@@ -363,4 +374,113 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"contract_signing_date": cstr(item.contract_signing_date),
 			"delivery_completion_date": cstr(item.delivery_completion_date),
 		},
+	}
+
+
+def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
+	"""PLN-UI-10 — the Finance confirmation task (PLN-DES-10). Reloads every
+	Budget Line position live (§12.9: "the displayed As-at time must match
+	the snapshot") via the two published Budget reads; `check_funding` is
+	itself non-mutating (§9.1) and mints the short-lived check token the
+	Confirm command consumes."""
+	from kentender_procurement.procurement_planning.services import budget_gateway
+
+	actor = cstr(user or frappe.session.user)
+	if not task or not frappe.db.exists("Plan Finance Task", task):
+		authority.not_found()
+	task_doc = frappe.get_doc("Plan Finance Task", task)
+	authority.require_scope(
+		actor, roles=(ROLE_BUDGET_OFFICER,), procuring_entity=task_doc.procuring_entity,
+	)
+	item = frappe.get_doc("Annual Plan Item", task_doc.plan_item)
+	version = frappe.get_doc("Annual Plan Version", item.plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	ou_label = ""
+	allocations = frappe.get_all(
+		"Plan Source Allocation",
+		filters={"plan_item": item.name, "allocation_state": ("in", ("Draft", "Active"))},
+		fields=["name", "organisation_unit", "budget_line", "indicative_amount"],
+		order_by="creation asc",
+	)
+	if allocations:
+		ou_label = cstr(
+			frappe.db.get_value("Organisation Unit", allocations[0].organisation_unit, "unit_name")
+			or allocations[0].organisation_unit
+		)
+
+	lines_by_id = {
+		row["id"]: row
+		for row in budget_gateway.list_eligible_budget_lines(
+			procuring_entity=plan.procuring_entity, financial_year=plan.financial_year,
+		)
+	}
+
+	check_token = ""
+	all_sufficient = True
+	positions_by_line: dict[str, dict[str, Any]] = {}
+	decided = task_doc.status != "Open"
+	if not decided:
+		check = budget_gateway.check_funding(
+			plan_item=item.name, plan_version=version.name, finance_task=task_doc.name,
+			source_set_hash=task_doc.source_set_hash,
+			allocations=[
+				{
+					"budget_line": a.budget_line, "amount": flt(a.indicative_amount),
+					"plan_source_allocation": a.name,
+				}
+				for a in allocations
+			],
+			correlation_id=task_doc.name,
+		)
+		check_token = cstr(check.get("token"))
+		all_sufficient = bool(check.get("all_sufficient"))
+		positions_by_line = {row["budget_line"]: row for row in check.get("allocations", [])}
+
+	rows = []
+	for allocation in allocations:
+		line = lines_by_id.get(allocation.budget_line, {})
+		position = positions_by_line.get(allocation.budget_line, {})
+		rows.append(
+			{
+				"budget_line_label": (
+					f"{allocation.budget_line} — {line.get('title')}" if line.get("title") else allocation.budget_line
+				),
+				"funding_source": cstr(line.get("funding_source")) or "—",
+				"approved_display": _money(line.get("approved") or 0),
+				"reserved_display": _money(line.get("reserved") or 0),
+				"committed_display": _money(line.get("committed") or 0),
+				"available_display": _money(line.get("available") or 0),
+				"required_display": _money(position.get("requested_amount") or allocation.indicative_amount),
+				"available_after_display": _money(
+					position.get("available_after") if position else (line.get("available") or 0)
+				),
+				"sufficient": bool(position.get("sufficient", True)) if position else True,
+			}
+		)
+
+	return {
+		"outcome": "OK",
+		"task": task_doc.name,
+		"task_reference": task_doc.task_reference,
+		"task_token": task_doc.task_token,
+		"status": task_doc.status,
+		"decided": decided,
+		"budget_check_token": check_token,
+		"all_sufficient": all_sufficient,
+		"header": {
+			"eyebrow": "FINANCE CONFIRMATION",
+			"title": "Confirm funding for Plan Item",
+			"reference_line": f"{task_doc.task_reference} · {item.plan_item_id}",
+			"badge": "Awaiting Finance" if task_doc.status == "Open" else task_doc.status,
+		},
+		"plan_item": {
+			"title": item.title,
+			"department": ou_label,
+			"requirement_type": item.requirement_type,
+			"value_display": _money(sum(flt(a.indicative_amount) for a in allocations)),
+			"procurement_method": item.procurement_method,
+			"delivery_completion_display": _date(item.delivery_completion_date),
+		},
+		"as_at_display": _eat(frappe.utils.now_datetime()),
+		"lines": rows,
 	}

@@ -47,6 +47,8 @@ OUTSIDER = "plnt.outsider@example.test"
 # §6.1: role combinations are permitted — the conflict is between actions on
 # one evidence chain, not between labels. This persona holds HoD + Planner.
 HYBRID = "plnt.hybrid@example.test"
+# §6.1 Finance-side segregation: Planner + Budget Officer together
+HYBRID_FINANCE = "plnt.hybridfinance@example.test"
 
 REQUIREMENT_TYPES = ("Goods", "Consulting services", "Non-consulting services")
 
@@ -208,6 +210,7 @@ def ensure_world() -> None:
 		("Departmental Author", "Head of User Department", "Procurement Planner"),
 		alpha,
 	)
+	_user(HYBRID_FINANCE, ("Procurement Planner", "Budget Officer"), pe_scope)
 	frappe.db.commit()
 
 
@@ -323,6 +326,40 @@ def _link_targets() -> None:
 	BUDGET_LINE_2 = frappe.db.get_value(
 		"Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name"
 	)
+	# §7.3 Finance tests exercise the REAL check_funding/reserve_funding
+	# contracts (never mocked, unlike eligible_line_ids elsewhere) — an
+	# Active Budget Version with real approved amounts is required.
+	bv = frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name")
+	if not bv:
+		bv = frappe.get_doc(
+			{
+				"doctype": "Budget Version",
+				"generated_reference": "BUDV-PLNT-0001",
+				"budget": budget,
+				"version_number": 1,
+				"status": "Active",
+				"approval_reference": "PLNT-APPROVAL-1",
+				"approval_date": "2026-06-30",
+				"authorised_total": 100000000,
+				"currency": "KES",
+				"approval_document": "/files/plnt-approval.pdf",
+			}
+		).insert(ignore_permissions=True).name
+	fs = frappe.get_all("Funding Source", limit=1, pluck="name")
+	for line, ref in ((BUDGET_LINE, "BLV-PLNT-0001"), (BUDGET_LINE_2, "BLV-PLNT-0002")):
+		if not frappe.db.exists("Budget Line Version", {"budget_version": bv, "budget_line": line}):
+			frappe.get_doc(
+				{
+					"doctype": "Budget Line Version",
+					"generated_reference": ref,
+					"budget_version": bv,
+					"budget_line": line,
+					"title": "Digital health programme",
+					"funding_source": fs[0] if fs else None,
+					"approved_amount": 100000000,
+					"currency": "KES",
+				}
+			).insert(ignore_permissions=True)
 	if not frappe.db.exists("Departmental Need", NEED):
 		frappe.get_doc(
 			{

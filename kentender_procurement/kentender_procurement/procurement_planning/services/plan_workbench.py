@@ -25,6 +25,7 @@ from frappe.utils import cstr, flt, getdate
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import (
 	authority,
+	budget_gateway,
 	envelope,
 	plan_read,
 	references,
@@ -258,9 +259,30 @@ def dissolve_plan_item(
 		fail("PLN_DISSOLUTION_BLOCKED", "This Plan Item is no longer in a mutable Draft and cannot be dissolved.")
 	envelope.check_record_version(item, expected_record_version)
 
-	# Phase 7 owns Finance confirmation; a Phase-6-formed item carries no open
-	# task or reservation yet, but this defensively completes the atomic set
-	# §12.7 requires once Phase 7 lands (PLN-707).
+	# §7.3/PLN-707: release the unconverted remainder of every *effective*
+	# reservation first — a release failure must roll back the whole
+	# dissolution (the ProcurementPlanningError from release_planning_
+	# reservations propagates and aborts this request's transaction) rather
+	# than leave allocations Released with an unreleased reservation behind.
+	reservation_refs = frappe.get_all(
+		"Plan Reservation Reference", filters={"plan_item": item.name}, fields=["name", "reservation"]
+	)
+	if reservation_refs:
+		correlation_id = f"dissolve:{item.plan_item_id}:{idempotency_key}"
+		released = budget_gateway.release_planning_reservations(
+			reservation_refs=[{"reservation": r.reservation} for r in reservation_refs],
+			correlation_id=correlation_id, event_type="PlanItemDissolved",
+		)
+		for ref, outcome in zip(reservation_refs, released):
+			frappe.db.set_value(
+				"Plan Reservation Reference", ref.name,
+				{
+					"release_reference": outcome["reservation"]["reservation_code"],
+					"release_correlation": correlation_id,
+				},
+				update_modified=False,
+			)
+
 	open_tasks = frappe.get_all(
 		"Plan Finance Task", filters={"plan_item": item.name, "status": "Open"}, pluck="name"
 	)

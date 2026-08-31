@@ -298,3 +298,48 @@ def save_plan_item(
 		expected_record_version=expected_record_version,
 		idempotency_key=idempotency_key,
 	)
+
+
+# --- Slice E: Finance confirmation (Phase 7) --------------------------------
+
+
+@frappe.whitelist()
+def request_finance_confirmation(
+	plan_item: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	return plan_finance.request_finance_confirmation(
+		plan_item=plan_item,
+		expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def get_finance_task(task: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	return plan_read.get_finance_task(task=task)
+
+
+@frappe.whitelist()
+def confirm_funding(
+	task: str, task_token: str, check_token: str, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	return plan_finance.confirm_funding(
+		task=task, task_token=task_token, check_token=check_token, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def return_from_finance(
+	task: str, reason: str, task_token: str, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	return plan_finance.return_from_finance(
+		task=task, reason=reason, task_token=task_token, idempotency_key=idempotency_key,
+	)
