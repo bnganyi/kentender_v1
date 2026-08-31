@@ -284,6 +284,10 @@ def wipe_planning_rows() -> None:
 		{"plan_item_id": ("like", "PPI-PLNT-%")},
 	)
 	frappe.db.delete(
+		"Plan Drawdown Reference",
+		{"plan_item_id": ("like", "PPI-PLNT-%")},
+	)
+	frappe.db.delete(
 		"Annual Plan Publication",
 		{"plan_version": ("in", plan_versions or ("",))},
 	)

@@ -452,3 +452,40 @@ def cancel_plan_update(
 		plan_reference=plan_reference, expected_record_version=expected_record_version,
 		idempotency_key=idempotency_key,
 	)
+
+
+# --- §7.4 Requisition eligibility (Slice H) — published for a sibling
+# Requisitions module to call; no screen in this app calls these. ---
+
+
+@frappe.whitelist()
+def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.get_requisition_eligible_plan_item(plan_item_id=plan_item_id)
+
+
+@frappe.whitelist()
+def record_requisition_drawdown(
+	plan_item_id: str, requisition_reference: str, requesting_org_unit: str,
+	allocations, expected_record_version, idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.record_requisition_drawdown(
+		plan_item_id=plan_item_id, requisition_reference=requisition_reference,
+		requesting_org_unit=requesting_org_unit, allocations=_parse_json(allocations, []),
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def reverse_requisition_drawdown(
+	drawdown_reference: str, expected_record_version, idempotency_key: str
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.reverse_requisition_drawdown(
+		drawdown_reference=drawdown_reference, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key,
+	)

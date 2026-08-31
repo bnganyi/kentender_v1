@@ -133,6 +133,14 @@ EXPECTED_FIELDS["Planning Command Journal"] = {
 	"request_fingerprint", "actor", "result", "occurred_at", "fixture_namespace",
 }
 
+# Added in Phase 10 (Slice H): the §7.4 drawdown ledger — authoritative
+# Requisition drawdown references consumed from the owning module.
+EXPECTED_FIELDS["Plan Drawdown Reference"] = {
+	"plan_item", "plan_item_id", "allocation", "requisition_reference",
+	"requesting_org_unit", "quantity", "amount", "drawdown_state",
+	"reversal_reference", "record_version", "fixture_namespace",
+}
+
 LEGACY_DOCTYPES = (
 	"Procurement Plan", "Procurement Plan Version", "Procurement Plan Item",
 	"Procurement Plan Item Version", "Plan Need Allocation", "Plan Decision",
