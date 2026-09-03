@@ -1,8 +1,16 @@
 <script setup>
-// Recursive flat-indented hierarchy renderer shared by the Plan workspace
-// (read-only), the Structure editor (editable), and the Review task
-// (read-only) — STR-DES-04/05/07/10b. Matches the `tree` shape returned by
+// Recursive hierarchy renderer shared by the Plan workspace (read-only), the
+// Structure editor (editable), and the Review task (read-only) — STR-DES-04/
+// 05/07/10b. Matches the `tree` shape returned by
 // kentender_strategy.api.strategy_ui_api.get_strategy_tree.
+//
+// Row shape and indentation port STR-DES-04.dc.html class-for-class rather
+// than approximating from memory of the design tokens (AGENTS.md §6.6): each
+// node is two stacked lines — icon + bold title, then a second line
+// (indented under the title) holding the "· Type" label and the trailing
+// "Add …" action — and the parent/child connector is a single `border-left`
+// on the recursive children wrapper (the artboard's `.tree-kids`), not a
+// per-row drawn line segment.
 import { ref } from "vue";
 
 const props = defineProps({
@@ -47,7 +55,7 @@ const CHILD_TYPE = {
 
 // Single source of truth for the "Add …" row label, keyed by the type of
 // child that will actually be created — so the label can never drift from
-// what onAddChild() emits. Matches v1.4 §12.5's exact action table.
+// what onAddChild() emits. Matches v1.6 §12.5's exact action table.
 const ADD_CHILD_LABEL = {
 	Programme: "Add programme",
 	"Sub-programme": "Add sub-programme",
@@ -55,6 +63,14 @@ const ADD_CHILD_LABEL = {
 	"Performance Indicator": "Add indicator",
 	"Performance Target": "Add target",
 };
+
+// STR-DES-04: only the structural layers (Pillar/Programme/Sub-programme/
+// Strategic Objective) ever draw a collapse chevron. A Performance
+// Indicator's Targets have no collapse affordance at all — they render
+// directly beneath it, always expanded, matching STR-DES-04's markup (its
+// Performance Indicator and Performance Target rows never emit the chevron
+// <svg>, only the structural rows do).
+const COLLAPSIBLE_TYPES = new Set(["Pillar", "Programme", "Sub-programme", "Strategic Objective"]);
 
 function dot(nodeType) {
 	return DOT_COLOR[nodeType] || "#666";
@@ -70,8 +86,11 @@ const collapsed = ref(new Set());
 function hasChildren(node) {
 	return Boolean(node.children && node.children.length);
 }
+function canCollapse(node) {
+	return COLLAPSIBLE_TYPES.has(node.node_type) && hasChildren(node);
+}
 function isCollapsed(node) {
-	return collapsed.value.has(node.id);
+	return canCollapse(node) && collapsed.value.has(node.id);
 }
 function toggleCollapse(node, event) {
 	event.stopPropagation();
@@ -100,58 +119,50 @@ function onAddChild(node) {
 
 <template>
 	<template v-for="node in nodes" :key="node.id">
-		<div
-			class="kt-tree-row"
-			:class="{ selected: node.id === selectedId }"
-			:style="{ paddingLeft: `${8 + depth * 20}px` }"
-			@click="$emit('select', node)"
-		>
-			<template v-if="depth > 0">
-				<span class="kt-tree-line-v" :style="{ left: `${8 + depth * 20 - 11}px` }"></span>
-				<span class="kt-tree-line-h" :style="{ left: `${8 + depth * 20 - 11}px` }"></span>
-			</template>
-			<button
-				v-if="hasChildren(node)"
-				type="button"
-				class="kt-tree-toggle"
-				:class="{ collapsed: isCollapsed(node) }"
-				@click.stop="toggleCollapse(node, $event)"
-			>
-				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-			</button>
-			<span v-else class="kt-tree-toggle-spacer"></span>
-			<svg
-				width="15"
-				height="15"
-				viewBox="0 0 24 24"
-				fill="none"
-				:stroke="dot(node.node_type)"
-				stroke-width="1.5"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				style="flex-shrink: 0"
-				v-html="icon(node.node_type)"
-			></svg>
-			<span>{{ node.title }}</span>
-			<span v-if="isCollapsed(node)" class="kt-tree-hidden-count">({{ countDescendants(node) }} {{ __("hidden") }})</span>
-			<span class="kt-tree-type">{{ node.node_type }}</span>
-			<button
-				v-if="canAddChild(node)"
-				type="button"
-				class="kt-add-child"
-				@click.stop="onAddChild(node)"
-			>
-				{{ addChildLabel(node) }}
-			</button>
+		<div class="kt-tree-node" :class="{ selected: node.id === selectedId }" @click="$emit('select', node)">
+			<div class="kt-tree-row" :style="{ gap: canCollapse(node) ? '6px' : '8px' }">
+				<button
+					v-if="canCollapse(node)"
+					type="button"
+					class="kt-tree-toggle"
+					:class="{ collapsed: isCollapsed(node) }"
+					@click.stop="toggleCollapse(node, $event)"
+				>
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+				</button>
+				<svg
+					width="15"
+					height="15"
+					viewBox="0 0 24 24"
+					fill="none"
+					:stroke="dot(node.node_type)"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					style="flex-shrink: 0; margin-top: 2px"
+					v-html="icon(node.node_type)"
+				></svg>
+				<strong class="kt-tree-title">{{ node.title }}</strong>
+			</div>
+			<div class="kt-tree-meta" :style="{ paddingLeft: canCollapse(node) ? '33px' : '23px' }">
+				<span class="kt-tree-type">
+					&middot; {{ node.node_type }}
+					<span v-if="isCollapsed(node)" class="kt-tree-hidden-count">({{ countDescendants(node) }} {{ __("hidden") }})</span>
+				</span>
+				<button v-if="canAddChild(node)" type="button" class="kt-add-child" @click.stop="onAddChild(node)">
+					{{ addChildLabel(node) }}
+				</button>
+			</div>
 		</div>
-		<StructureTree
-			v-if="hasChildren(node) && !isCollapsed(node)"
-			:nodes="node.children"
-			:depth="depth + 1"
-			:selected-id="selectedId"
-			:read-only="readOnly"
-			@select="$emit('select', $event)"
-			@add-child="$emit('add-child', $event)"
-		/>
+		<div v-if="hasChildren(node) && !isCollapsed(node)" class="kt-tree-kids">
+			<StructureTree
+				:nodes="node.children"
+				:depth="depth + 1"
+				:selected-id="selectedId"
+				:read-only="readOnly"
+				@select="$emit('select', $event)"
+				@add-child="$emit('add-child', $event)"
+			/>
+		</div>
 	</template>
 </template>

@@ -338,46 +338,59 @@
 	gap: 12px;
 }
 
-/* — hierarchy tree row (indentation guides + toggle + trailing action) — */
-.kt-industry .kt-tree-row {
-	position: relative;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 6px 8px;
+/* — hierarchy tree row — STR-DES-04.dc.html ported class-for-class: each
+   node is two stacked lines (icon+title, then "· Type" + trailing action)
+   inside one clickable/selectable .kt-tree-node, and the parent/child
+   connector is a single border-left on the recursive children wrapper
+   (.kt-tree-kids), not a line segment drawn per row. — */
+.kt-industry .kt-tree-node {
+	padding: 7px 8px;
+	border: 1px solid transparent;
 	border-radius: var(--kt-radius-sm);
 	cursor: pointer;
 }
-.kt-industry .kt-tree-line-v,
-.kt-industry .kt-tree-line-h {
-	position: absolute;
-	background: var(--kt-color-divider);
-}
-.kt-industry .kt-tree-line-v { top: -7px; bottom: 14px; width: 1px; }
-.kt-industry .kt-tree-line-h { top: 14px; width: 8px; height: 1px; }
-.kt-industry .kt-tree-row.selected {
+.kt-industry .kt-tree-node.selected {
 	background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent);
-	outline: 1px solid var(--kt-color-accent);
+	border-color: var(--kt-color-accent);
 }
-.kt-industry .kt-tree-row:hover { background: color-mix(in srgb, var(--kt-color-text) 5%, transparent); }
-.kt-industry .kt-tree-type { margin-left: auto; font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); }
+.kt-industry .kt-tree-node:hover { background: color-mix(in srgb, var(--kt-color-text) 5%, transparent); }
+.kt-industry .kt-tree-row {
+	display: flex;
+	align-items: flex-start;
+}
+.kt-industry .kt-tree-title { font-weight: 600; line-height: 1.3; }
+.kt-industry .kt-tree-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 3px;
+}
+.kt-industry .kt-tree-kids {
+	margin-top: 6px;
+	margin-left: 9px;
+	padding-left: 11px;
+	border-left: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-tree-type { font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); white-space: nowrap; }
 .kt-industry .kt-tree-toggle {
 	flex: none;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 16px;
-	height: 16px;
+	width: 12px;
+	height: 12px;
+	margin-top: 3px;
 	padding: 0;
 	border: none;
 	background: transparent;
-	color: color-mix(in srgb, var(--kt-color-text) 62%, transparent);
+	opacity: 0.5;
+	color: var(--kt-color-text);
 	cursor: pointer;
 	transition: transform 0.12s ease;
 }
 .kt-industry .kt-tree-toggle.collapsed { transform: rotate(0deg); }
 .kt-industry .kt-tree-toggle:not(.collapsed) { transform: rotate(90deg); }
-.kt-industry .kt-tree-toggle-spacer { flex: none; width: 16px; }
 .kt-industry .kt-tree-hidden-count { font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); }
 
 /* — tabs — */
