@@ -689,7 +689,15 @@ async function saveNewPillar() {
 						</div>
 						<div
 							class="kt-card kt-blueprint"
-							style="width: 58%; position: sticky; top: 80px; max-height: calc(100vh - 96px); overflow-y: auto"
+							style="
+								width: 58%;
+								position: sticky;
+								top: 80px;
+								max-height: calc(100vh - 96px);
+								overflow-y: auto;
+								overflow-x: hidden;
+								scrollbar-gutter: stable;
+							"
 						>
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 							<p v-if="actionError" style="color: oklch(0.45 0.13 28); margin-top: 0">{{ actionError }}</p>
