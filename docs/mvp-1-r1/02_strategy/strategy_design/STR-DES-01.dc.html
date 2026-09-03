@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<dc-import name="Shell" breadcrumb="Home > Strategy Alignment" hint-size="100%,820px">
+<div data-screen-label="STR-DES-01" style="max-width:1180px;margin:0 auto;padding:var(--space-8) var(--space-6) var(--space-8)">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">Strategy Alignment</div>
+      <h1 style="font-size:30px;margin:0">Strategy Portfolio</h1>
+      <p style="color:var(--color-neutral-800);font-size:14px;margin:var(--space-2) 0 0;max-width:640px">Maintain the approved strategy structure used by Budget and Procurement Planning.</p>
+    </div>
+    <button type="button" class="btn btn-primary">New strategic plan</button>
+  </div>
+
+  <div style="display:flex;gap:var(--space-6);border-bottom:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+    <button type="button" style="background:none;border:none;border-bottom:2px solid var(--color-accent);color:var(--color-text);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">Plans <span style="opacity:.6;font-weight:400">1</span></button>
+    <button type="button" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--color-neutral-700);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">My work <span style="opacity:.6;font-weight:400">0</span></button>
+  </div>
+
+  <div class="card blueprint" style="padding:0">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div style="display:flex;gap:var(--space-3);padding:var(--space-4)">
+      <input class="input" style="flex:1" placeholder="Search plan or reference" />
+      <select class="input" style="width:200px"><option>All plan roles</option></select>
+      <select class="input" style="width:180px"><option>All statuses</option></select>
+    </div>
+    <table class="table">
+      <thead><tr><th>Strategic plan</th><th>Role</th><th>Period</th><th>Current version</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Ministry of Health Strategic Plan (Demo) &middot; STR-MOH-2023-001</td>
+          <td>Primary</td>
+          <td>2023/24&ndash;2027/28</td>
+          <td>Version 1</td>
+          <td><span class="kt-status is-live">Active</span></td>
+          <td><a href="./STR-DES-03.dc.html" class="btn btn-ghost" style="padding:4px 10px">View</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:var(--space-3) var(--space-4);font-size:12px;color:var(--color-neutral-700)">Showing 1 of 1 plan</div>
+  </div>
+</div>
+</dc-import>
+</x-dc>
+</body>
+</html>

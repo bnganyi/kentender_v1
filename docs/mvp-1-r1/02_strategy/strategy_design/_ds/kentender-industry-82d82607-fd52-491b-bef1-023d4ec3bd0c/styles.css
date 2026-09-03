@@ -2,24 +2,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
 
 :root {
-  --color-bg: #f2f2f3;
-  --color-surface: #e9e9ea;
-  --color-text: #1d1f20;
+  /* Ground vs surface is inverted from the original scheme: the ground is a
+     quiet steel-tinted paper and every filled object (card, dialog, input)
+     is WHITE — sheets pinned to the drawing board, running lighter-upward
+     with elevation instead of darker-downward. */
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f3; /* wells: disabled fills, header bands, code */
+  --color-text: #16181a;
   --color-accent: #416180;
-  --color-accent-2: #597ea3;
-  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+  --color-accent-2: #6b4f8c;
+  /* Solid hairline (neutral-300), not a transparency mix — hairlines that
+     were visible on the old grey surface would wash out on white. */
+  --color-divider: #d6d9dd;
+
+  /* Categorical data-viz palette — vivid, six hues, for chart series only.
+     Kept distinct from the UI accents above and the .kt-status semantic hues
+     below, so a chart color never reads as a UI action or a record state. */
+  --chart-1: #0891b2;
+  --chart-2: #ea580c;
+  --chart-3: #65a30d;
+  --chart-4: #c026d3;
+  --chart-5: #5a5ce2;
+  --chart-6: #b77c00;
+
+  /* Status hues — state-only (see .kt-status). Tokenized so theme.json can
+     record them; tints are SOLID precomputed values (not alpha) so a chip
+     renders identically on the white surface and the grey ground. */
+  --status-live: #047857;      --status-live-bg: #e7f8f2;
+  --status-draft: #003d9b;     --status-draft-bg: #e6eefa;
+  --status-pending: #434654;   --status-pending-bg: #f1f1f3;
+  --status-attention: #92610a; --status-attention-bg: #fdf0da;
+  --status-critical: #b0143a;  --status-critical-bg: #fce8ec;
 
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
-  --color-neutral-100: #f5f5f8;
-  --color-neutral-200: #e7e7ea;
-  --color-neutral-300: #d4d4d7;
-  --color-neutral-400: #b7b7ba;
-  --color-neutral-500: #98989b;
-  --color-neutral-600: #7a7a7d;
-  --color-neutral-700: #5d5d60;
-  --color-neutral-800: #424244;
-  --color-neutral-900: #2b2b2d;
+  /* Neutrals carry ~0.008 OKLCH chroma at the steel accent's hue angle —
+     imperceptible as "blue", but the greys read as cool paper rather than
+     dead concrete, consistent with the blueprint identity. */
+  --color-neutral-100: #f6f7f9;
+  --color-neutral-200: #e9ebee;
+  --color-neutral-300: #d6d9dd;
+  --color-neutral-400: #b8bcc2;
+  --color-neutral-500: #989da4;
+  --color-neutral-600: #7a7f86;
+  --color-neutral-700: #5c6167;
+  --color-neutral-800: #41454b;
+  --color-neutral-900: #2a2d32;
 
   --color-accent-100: #eef6ff;
   --color-accent-200: #d6ebff;
@@ -31,15 +60,15 @@
   --color-accent-800: #2c455d;
   --color-accent-900: #1d2d3d;
 
-  --color-accent-2-100: #eef6ff;
-  --color-accent-2-200: #d6ebff;
-  --color-accent-2-300: #bdd8f2;
-  --color-accent-2-400: #9ebbd8;
-  --color-accent-2-500: #7e9cb8;
-  --color-accent-2-600: #627d98;
-  --color-accent-2-700: #486077;
-  --color-accent-2-800: #314457;
-  --color-accent-2-900: #1f2d3a;
+  --color-accent-2-100: #f9f3ff;
+  --color-accent-2-200: #f1e3ff;
+  --color-accent-2-300: #e3ccf9;
+  --color-accent-2-400: #c8ace3;
+  --color-accent-2-500: #aa8cc5;
+  --color-accent-2-600: #8c6da7;
+  --color-accent-2-700: #6b4f8c;
+  --color-accent-2-800: #4a3763;
+  --color-accent-2-900: #2f2340;
 
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-heading-weight: 600;
@@ -58,9 +87,9 @@
 
   /* Elevation — derived from the ground: soft ink-tinted shadows on a
      light theme, a hairline edge + ambient darkness on a dark one. */
-  --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
-  --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2a2d32 12%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2a2d32 14%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2a2d32 20%, transparent);
 }
 
 body {
@@ -95,6 +124,10 @@ h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-headi
 .blueprint > .corner.br { bottom: -6px; right: -6px; }
 
 .duotone{position:relative;overflow:hidden}
+/* mix-blend-mode:color keeps the photo's own luminance, so the wash alone
+   wouldn't track the whiter page — lift the source a touch so images sit
+   with the new ground instead of anchoring the old grey. */
+.duotone img{filter:brightness(1.05) contrast(.97)}
 .duotone::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:var(--color-accent);mix-blend-mode:color}
 
@@ -118,14 +151,15 @@ h5 { font-size: 16px; }
 h6 { font-size: 13px; }
 h6 { letter-spacing: 0.08em; text-transform: uppercase; }
 p { margin: 0 0 var(--space-3); }
-a { color: var(--color-accent); text-underline-offset: 3px; }
+a { color: var(--color-accent-2-700); text-underline-offset: 3px; } /* violet = links, per the system's own rule; steel stays actions */
+a:hover { color: var(--color-accent-2-800); }
 img { display: block; max-width: 100%; }
 figure { margin: 0; }
 figcaption {
   font-size: 11px; margin-top: var(--space-1);
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-neutral-700);
 }
-.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.text-muted { color: var(--color-neutral-700); }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
@@ -148,23 +182,30 @@ figcaption {
   border-radius: var(--radius-md);
 }
 .btn svg { display: block; }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Disabled state is SOLID, not opacity — 45% opacity goes near-invisible
+   on the white surfaces. Overrides every variant, including primary. */
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--color-neutral-400);
+  background: var(--color-surface-2);
+  border-color: var(--color-neutral-200);
+}
 .btn-primary { background: var(--color-accent); color: #fff; }
 .btn-primary:hover { background: var(--color-accent-800); }
 .btn-primary:active { background: var(--color-accent-900); }
-.btn-secondary { border-color: var(--color-divider); }
-.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
-.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-secondary { border-color: var(--color-neutral-400); }
+.btn-secondary:hover { background: var(--color-neutral-100); }
+.btn-secondary:active { background: var(--color-neutral-200); }
 .btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
-.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
-.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.btn-ghost:hover { background: var(--color-accent-100); }
+.btn-ghost:active { background: var(--color-accent-200); }
 .btn-icon { width: 36px; height: 36px; padding: 0; }
 .btn-block { width: 100%; margin-top: var(--space-2); }
 
 /* — forms — */
 .field > label {
   display: block; font-size: 12px; margin-bottom: 5px;
-  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  color: var(--color-neutral-800);
 }
 .input {
   width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
@@ -174,7 +215,20 @@ figcaption {
 }
 .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+.input:disabled {
+  color: var(--color-neutral-500);
+  background: var(--color-surface-2);
+  border-color: var(--color-neutral-200);
+}
 textarea.input { min-height: 90px; resize: vertical; }
+.date-field {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit; font-size: 14px;
+  color: var(--color-text); background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.date-field:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.date-field svg { flex: none; color: var(--color-neutral-600); }
 .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
 .radio input, .seg-opt input {
   position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
@@ -186,11 +240,12 @@ textarea.input { min-height: 90px; resize: vertical; }
 .radio:hover .dot { border-color: var(--color-accent); }
 .radio input:checked + .dot {
   border-color: var(--color-accent); background: var(--color-accent);
-  box-shadow: inset 0 0 0 4px var(--color-bg);
+  box-shadow: inset 0 0 0 4px var(--color-surface);
 }
 .radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .seg {
   display: inline-flex; overflow: hidden;
+  background: var(--color-surface); /* white track on the grey ground */
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
 }
 .seg-opt {
@@ -198,8 +253,8 @@ textarea.input { min-height: 90px; resize: vertical; }
   padding: 7px 12px; font-size: 13px; cursor: pointer;
 }
 .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
-.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
-.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: #fff; }
+.seg-opt:not(:has(input:checked)):hover { background: var(--color-neutral-100); }
 .seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
 /* — cards — */
@@ -212,10 +267,10 @@ textarea.input { min-height: 90px; resize: vertical; }
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 17px; line-height: 1.2;
 }
-.card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.card-body { margin: 0; font-size: 13px; color: var(--color-neutral-800); flex: 1; }
 .card-meta {
   display: flex; align-items: center; gap: 6px; font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+  color: var(--color-neutral-700);
 }
 .elev-sm { box-shadow: var(--shadow-sm); }
 .elev-md { box-shadow: var(--shadow-md); }
@@ -229,7 +284,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
-.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-neutral { background: var(--color-neutral-200); color: var(--color-neutral-800); } /* 200: 100 vanishes on white cards */
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 
 /* — navigation — */
@@ -249,14 +304,16 @@ textarea.input { min-height: 90px; resize: vertical; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
   text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-neutral-700);
   padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
 }
 .table td {
   padding: var(--space-2);
   border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 }
-.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.table tbody tr:hover { background: var(--color-neutral-100); }
+/* Numeric columns in registers: right-aligned, non-jittering digits */
+.table .is-num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* — dialog — */
 .dialog-backdrop {
@@ -273,13 +330,13 @@ textarea.input { min-height: 90px; resize: vertical; }
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 20px;
 }
-.dialog-body { font-size: 14px; opacity: 0.85; }
+.dialog-body { font-size: 14px; color: var(--color-neutral-800); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 
 /* — blueprint frame: components are wireframe objects (see .blueprint
      and .corner above) — square, transparent, hairline-bordered — */
 .card, .btn, .input, .tag, .seg, .dialog { border-radius: 0; }
-.card, .dialog { background: transparent; border: 1px solid var(--color-divider); }
+.card, .dialog { background: var(--color-surface); border: 1px solid var(--color-divider); }
 .btn { border: 1px solid var(--color-divider); }
 .btn-primary { border-color: var(--color-accent); }
 .btn-ghost { border-color: transparent; }
@@ -313,23 +370,25 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 
 /* Live — in force now: Active, Available, Ready (Emerald) */
-.kt-status.is-live { background: #10b9811a; color: #047857; }
+.kt-status.is-live { background: var(--status-live-bg); color: var(--status-live); }
 
 /* Draft — authored, not submitted (institutional blue) */
-.kt-status.is-draft { background: #0052cc1a; color: #003d9b; }
+.kt-status.is-draft { background: var(--status-draft-bg); color: var(--status-draft); }
 
 /* Pending — awaiting evaluation: Not assessed (neutral) */
-.kt-status.is-pending { background: #7376851a; color: #434654; }
+.kt-status.is-pending { background: var(--status-pending-bg); color: var(--status-pending); }
 .kt-status.is-pending::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
 /* Attention — action needed: Configuration required (Amber) */
-.kt-status.is-attention { background: #f59e0b26; color: #92610a; }
+.kt-status.is-attention { background: var(--status-attention-bg); color: var(--status-attention); }
 
 /* Critical — stopped or removed: Suspended, Closed (Rose) */
-.kt-status.is-critical { background: #e11d481a; color: #b0143a; }
+.kt-status.is-critical { background: var(--status-critical-bg); color: var(--status-critical); }
 
 /* Table + section header emphasis */
 .table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--color-surface); /* registers sit in cards; set to var(--color-bg) if a table sits directly on the ground */
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 13px;
@@ -345,8 +404,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* Summary-card figures — same semantic tones as the chips */
 .kt-figure { display: inline-flex; align-items: center; gap: 12px; }
 .kt-figure::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: .9; }
-.kt-figure.is-live { color: #047857; }
-.kt-figure.is-attention { color: #92610a; }
+.kt-figure.is-live { color: var(--status-live); }
+.kt-figure.is-attention { color: var(--status-attention); }
 
 .kt-card-title {
   font-family: var(--font-heading);
@@ -359,4 +418,48 @@ textarea.input { min-height: 90px; resize: vertical; }
   border-bottom: 2px solid var(--color-accent);
   align-self: flex-start;
   margin: 0 0 16px;
+}
+
+/* Caption label — the small caption under a figure or beside a value (e.g. "Drawdown lines",
+   "Plan Item"). Opacity-dimmed text at 11px fails contrast on this ground (~2.5:1); this uses
+   a solid neutral-ramp step instead, plus weight, so captions stay legible next to bold values. */
+.kt-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+
+/* Destructive action — Withdraw bid, Delete draft. Derived from the rose
+   status hue: destruction IS state semantics, so this stays inside the
+   "no color beyond steel except to encode state" rule. Pair with a
+   .btn-secondary cancel, never two danger buttons in one row. */
+.btn-danger { background: var(--status-critical); border-color: var(--status-critical); color: #fff; }
+.btn-danger:hover { background: #8f102f; }
+.btn-danger:active { background: #700c25; }
+.btn-danger:focus-visible { outline-color: var(--status-critical); }
+
+/* Windows High Contrast / forced colors: tinted fills collapse to one
+   background, so shape must carry what tint no longer can. Text labels on
+   chips remain the primary channel for state. */
+@media (forced-colors: active) {
+  .kt-status, .tag { border: 1px solid currentColor; }
+  .kt-status.is-pending::before { box-shadow: none; border: 1.5px solid currentColor; }
+}
+
+/* Print — tender summaries and confirmations WILL be printed. Ink-safe:
+   black text, hairlines kept, chrome and actions dropped. */
+@media print {
+  body { background: #fff; color: #000; }
+  .nav, .btn, .dialog-backdrop, .seg { display: none; }
+  .card, .dialog, .elev-sm, .elev-md, .elev-lg { box-shadow: none; }
+  .card, .dialog { background: #fff; border-color: #000; }
+  .kt-status { background: none; color: #000; border: 1px solid #000; }
+  a { color: #000; }
+  .table thead th { position: static; border-bottom-color: #000; }
+}
+
+/* iOS Safari auto-zooms fields under 16px — a meaningful share of bidders
+   are on phones, so inputs step up on narrow viewports. */
+@media (max-width: 480px) {
+  .input, .date-field { font-size: 16px; }
 }
