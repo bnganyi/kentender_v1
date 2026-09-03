@@ -33,13 +33,20 @@ def demand_desk_route(demand_name: str, status: str | None = None) -> str:
 
 
 def _budget_line_label(source_funding_allocation: str | None) -> str:
+	"""Budget Line no longer carries a title directly (BUD-CHG-001 v1.2
+	§4.3/§4.4) — title lives on the Active Budget Version's Budget Line
+	Version."""
 	dfa = cstr(source_funding_allocation or "").strip()
 	if not dfa or not frappe.db.exists("Demand Funding Allocation", dfa):
 		return "—"
 	line = cstr(frappe.db.get_value("Demand Funding Allocation", dfa, "budget_line") or "")
 	if not line or not frappe.db.exists("Budget Line", line):
 		return "—"
-	return cstr(frappe.db.get_value("Budget Line", line, "title") or frappe.db.get_value("Budget Line", line, "generated_reference") or line)
+	budget = cstr(frappe.db.get_value("Budget Line", line, "budget") or "")
+	version_name = cstr(frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name") or "") if budget else ""
+	title = cstr(frappe.db.get_value("Budget Line Version", {"budget_version": version_name, "budget_line": line}, "title") or "") if version_name else ""
+	code = cstr(frappe.db.get_value("Budget Line", line, "generated_reference") or "")
+	return title or code or line
 
 
 def _source_rows(plan_item: str, currency: str) -> list[dict[str, Any]]:

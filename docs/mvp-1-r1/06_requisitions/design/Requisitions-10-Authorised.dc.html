@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+body { margin: 0; }
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-800); }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-neutral-300);font-family:var(--font-body);display:flex;justify-content:center;padding:40px 24px">
+  <div data-screen-label="10" style="width:1440px;height:1024px;flex:none;background:var(--color-bg);box-shadow:var(--shadow-lg);overflow:auto;padding:32px 56px;display:flex;flex-direction:column;gap:20px">
+    <div style="border-bottom:1px solid var(--color-divider);padding-bottom:20px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.55;margin-bottom:8px">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+        <h1 style="font-size:26px;margin:0">Supply and delivery of ICT equipment</h1>
+        <span class="{{ authStatusClass }}">{{ authHeaderStatus }}</span>
+      </div>
+      <div style="font-size:13px;opacity:.6">REQ-KEBS-2026-ICT-0001 · PPI-KEBS-2026-ICT-001 · Version 1</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Requisition</div><div style="font-size:14px">REQ-KEBS-2026-ICT-0001</div></div>
+      <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Handoff</div><div style="font-size:14px">HND-KEBS-2026-ICT-0001-v1</div></div>
+      <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Authorised version · digest</div><div style="font-size:14px">v1 · a41f…9c02</div></div>
+      <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Planning drawdown reference</div><div style="font-size:14px">DRW-KEBS-2026-ICT-0001</div></div>
+    </div>
+
+    <div>
+      <h6 class="kt-card-title" style="margin:0 0 10px">Drawn-down source lines</h6>
+      <table class="table">
+        <thead><tr><th>Source line</th><th>Plan item line</th><th>Requirement</th><th style="text-align:right">Quantity</th><th style="text-align:right">Value</th></tr></thead>
+        <tbody>
+          <tr><td>SRC-KEBS-ICT-001</td><td>PIL-KEBS-ICT-001</td><td>Business laptops</td><td style="text-align:right">25 Each</td><td style="text-align:right">KES 3,000,000.00</td></tr>
+          <tr><td>SRC-KEBS-ICT-002</td><td>PIL-KEBS-ICT-002</td><td>Desktop computers with monitors</td><td style="text-align:right">15 Each</td><td style="text-align:right">KES 1,425,000.00</td></tr>
+          <tr><td>SRC-KEBS-ICT-003</td><td>PIL-KEBS-ICT-003</td><td>Business tablets</td><td style="text-align:right">10 Each</td><td style="text-align:right">KES 450,000.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card blueprint" style="padding:20px;gap:10px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-title">Decision evidence</div>
+      <div style="font-size:13px">Head of User Department: Approved by Grace Achieng · 28 Aug 2026, 15:10 EAT</div>
+      <div style="font-size:13px">Head of Procurement Function: Authorised by David Kimani · 28 Aug 2026, 16:45 EAT</div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:12px;border-top:1px solid var(--color-divider)">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span class="{{ authStatusClass }}">{{ authStatusText }}</span>
+        <button type="button" class="btn btn-ghost" onClick="{{ toggleConsumed }}" style="font-size:12px">{{ toggleLabel }}</button>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button type="button" class="btn btn-secondary" style="display:{{ revokeDisplay }}">Revoke unconsumed authorisation</button>
+        <button type="button" class="btn btn-primary">Open Tender Preparation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { consumed: false };
+  renderVals() {
+    const isConsumed = this.state.consumed;
+    return {
+      isConsumed,
+      toggleConsumed: () => this.setState({ consumed: !this.state.consumed }),
+      authHeaderStatus: 'Authorised for Tender Preparation',
+      authStatusText: isConsumed ? 'Consumed by TND-KEBS-2026-0001 · IT Equipment — Open Tender v1.0' : 'Not yet consumed',
+      authStatusClass: isConsumed ? 'kt-status is-live' : 'kt-status is-pending',
+      revokeDisplay: isConsumed ? 'none' : 'inline-flex',
+      toggleLabel: isConsumed ? 'Preview: before consumption' : 'Preview: after Tender Preparation consumption',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

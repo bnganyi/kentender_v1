@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); }
+    .content { max-width: 1200px; margin: 0 auto; padding: 32px 0; }
+    .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
+    .page-title { margin: 0 0 8px; }
+    .page-desc { margin: 0; color: color-mix(in srgb, var(--color-text) 65%, transparent); font-size: 15px; max-width: 70ch; }
+    .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 16px 20px; margin-top: 24px; }
+    .strip-field label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 4px; }
+    .strip-field .val { font-family: var(--font-heading); font-weight: 600; font-size: 16px; }
+    .cards-col { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+    .card-pad { padding: 20px; }
+    .table-caption { margin: 10px 2px 0; font-size: 13px; }
+    .num { text-align: right; }
+  </style>
+</helmet>
+<div class="artboard">
+  <div class="content">
+    <p class="eyebrow">Procurement Planning</p>
+    <h1 class="page-title">Annual procurement planning</h1>
+    <p class="page-desc">Turn accepted departmental plans into a funded and approved Annual Procurement Plan.</p>
+
+    <div class="card blueprint strip"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="strip-field"><label>Procuring Entity</label><div class="val">PE-MOH — Ministry of Health</div></div>
+      <div class="strip-field"><label>Financial Year</label><div class="val">FY 2027/28</div></div>
+      <div class="strip-field"><label>Annual Plan</label><div class="val">Draft Version 1</div></div>
+    </div>
+
+    <div class="cards-col">
+      <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Your work</div>
+        <table class="table">
+          <thead><tr><th>Work item</th><th>Scope</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Form Plan Items</td>
+              <td>1 accepted departmental entry · KES 80,000,000</td>
+              <td><span class="kt-status is-live">Ready</span></td>
+              <td style="text-align:right"><button type="button" class="btn btn-secondary">Open Annual Plan</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Departmental plans</div>
+        <table class="table">
+          <thead><tr><th>Department</th><th class="num">Version</th><th class="num">Requirements</th><th class="num">Value</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Digital Health</td>
+              <td class="num">1</td>
+              <td class="num">1</td>
+              <td class="num">KES 80,000,000</td>
+              <td><span class="kt-status is-live">Accepted</span></td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost">View</button></td>
+            </tr>
+            <tr>
+              <td>Human Resources Management and Development</td>
+              <td class="num">1</td>
+              <td class="num">2</td>
+              <td class="num">KES 88,000,000</td>
+              <td><span class="kt-status is-draft">Draft</span></td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="table-caption text-muted">2 departmental plans</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>

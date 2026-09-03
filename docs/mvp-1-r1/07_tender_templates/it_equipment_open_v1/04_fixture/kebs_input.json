@@ -1,0 +1,128 @@
+{
+  "procuring_entity": {
+    "name": "Kenya Bureau of Standards",
+    "address": "Popo Road, Off Mombasa Road, P.O. Box 54974-00200, Nairobi",
+    "contact_office": "KEBS Procurement Directorate, procurement@kebs.org, +254 20 6948000"
+  },
+  "requisition": {
+    "requirement_title": "Supply and delivery of ICT equipment",
+    "authorised_quantity": "50 each",
+    "authorised_value": "KES 18,000,000",
+    "expected_delivery_date": "30 December 2026",
+    "related_services_authorized": true,
+    "reference": "REQ-KEBS-2026-ICT-0001"
+  },
+  "plan_item": {
+    "reference": "PI-KEBS-2026-ICT-0001"
+  },
+  "tender": {
+    "reference": "TND-KEBS-2026-0001",
+    "title": "Supply and delivery of ICT equipment",
+    "procurement_method": "Open Tender",
+    "issue_date": "8 October 2026",
+    "clarification_deadline": "19 October 2026, 17:00 EAT",
+    "submission_deadline": "29 October 2026, 11:00 EAT",
+    "validity_days": "120",
+    "validity_date": "26 February 2027",
+    "opening_datetime": "29 October 2026, 11:00 EAT",
+    "currency": "KES",
+    "tender_security": {
+      "type": "Tender Security",
+      "currency": "KES",
+      "amount": "300,000",
+      "bank_guarantee_expiry_date": "28 March 2027",
+      "insurance_guarantee_expiry_date": "26 March 2027"
+    },
+    "pre_tender_meeting": {
+      "enabled": false,
+      "details": ""
+    },
+    "approval": {
+      "official_name": "Jane Wanjiru",
+      "official_title": "Head of Procurement",
+      "approved_date": "8 October 2026",
+      "reference": "APR-KEBS-2026-0001"
+    }
+  },
+  "platform": {
+    "name": "KenTender",
+    "public_url": "https://tenders.kentender.go.ke"
+  },
+  "price": {
+    "fixed_price_confirmed": true,
+    "tax_display_treatment": "Shown separately"
+  },
+  "submission": {
+    "manufacturer_authorisation_required": true,
+    "datasheet_required": true,
+    "comparable_experience": {
+      "required": true,
+      "count": "2",
+      "period_years": "5"
+    },
+    "after_sales_support_required": true,
+    "after_sales_support_evidence": "Service-centre details and escalation contacts within Kenya",
+    "additional_evidence": {
+      "required": false,
+      "description": "",
+      "linked_requirement": ""
+    }
+  },
+  "contract": {
+    "payment_terms": "Payment within 30 days after delivery, inspection, acceptance and receipt of a valid invoice",
+    "payment_days": "30",
+    "performance_security": {
+      "required": true,
+      "percentage": "10",
+      "form_variant": "Unconditional Demand Bank Guarantee"
+    },
+    "delay_damages": {
+      "rate_per_week": "0.5",
+      "cap_percent": "10"
+    },
+    "inspection_acceptance_office": "KEBS Coast Region Office, Mombasa",
+    "contact_office": "KEBS Contracts Office, contracts@kebs.org, +254 20 6948000"
+  },
+  "technical_specification": {
+    "title": "ICT Equipment Technical Specification",
+    "version": "1.0",
+    "approval_date": "15 September 2026",
+    "publication_filename": "kebs_technical_specification.pdf",
+    "file_digest": "f3556acf6d3809a981bc625082fd12eb63b13a06d541f6a231db66918b8d5326"
+  },
+  "goods": [
+    {
+      "description": "Business laptops",
+      "quantity": "25",
+      "unit": "each",
+      "destination": "KEBS Coast Region Office, Mombasa",
+      "latest_delivery_date": "30 December 2026",
+      "minimum_warranty": "36 months"
+    },
+    {
+      "description": "Business desktop computers with monitors",
+      "quantity": "15",
+      "unit": "each",
+      "destination": "KEBS Coast Region Office, Mombasa",
+      "latest_delivery_date": "30 December 2026",
+      "minimum_warranty": "36 months"
+    },
+    {
+      "description": "Business tablets",
+      "quantity": "10",
+      "unit": "each",
+      "destination": "KEBS Coast Region Office, Mombasa",
+      "latest_delivery_date": "30 December 2026",
+      "minimum_warranty": "24 months"
+    }
+  ],
+  "related_services": [
+    {
+      "description": "Setup and configuration of supplied equipment, including operating system installation, standard software imaging and asset tagging",
+      "quantity": "50",
+      "unit": "each",
+      "place_of_performance": "KEBS Coast Region Office, Mombasa",
+      "completion_date": "30 December 2026"
+    }
+  ]
+}

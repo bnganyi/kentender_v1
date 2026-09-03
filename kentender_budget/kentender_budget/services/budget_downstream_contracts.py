@@ -1,9 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""get_funding_lineage — BUD-CHG-001 §12 logical integration contract.
-
-Lineage rows project from the shared Funding Lifecycle read model (BUD-SUP-005).
+"""BUD-CHG-001 v1.2 §9.1 `get_funding_lineage` — ordered Budget, version-at-
+confirmation, line, reservation, commitment and ledger identities for one
+Plan Item, source allocation, reservation, contract or commitment reference,
+within the caller's authorised scope.
 """
 
 from __future__ import annotations
@@ -11,165 +12,83 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import flt
+from frappe import _
 
-from kentender_budget.services.budget_funding_lifecycle import list_funding_lifecycle
-from kentender_budget.services.budget_line_contracts import format_kes_full
-from kentender_budget.services.budget_permissions import (
-	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
-	ROLE_OFFICER,
-	ROLE_REVIEWER,
-	ROLE_VIEWER,
-	require_any_role,
-)
-from kentender_budget.services.budget_authorization import CAP_BUDGET_EDIT, can_budget
-
-_USAGE_ROLES = (ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_VIEWER, ROLE_AUDITOR)
+from kentender_budget.services.budget_authorization import require_budget_version_read_scope
+from kentender_budget.services.budget_contracts import _active_version, resolve_scoped_entity
 
 
-def get_funding_lineage(budget: str) -> dict[str, Any]:
-	"""Read-only Budget Line → Reservation → Plan item → Tender → Contract lineage."""
-	require_any_role(*_USAGE_ROLES)
-	life = list_funding_lifecycle(budget)
-	currency = life["budget"].get("currency") or "KES"
-	rows = _usage_rows_from_lifecycle(life["events"], currency)
-	bud = life["budget"]
-	budget_doc = frappe.get_doc("Budget", bud["id"])
-	return {
-		"budget": {
-			"id": bud["id"],
-			"code": bud["code"],
-			"name": bud["name"],
-			"title": bud["title"],
-			"status": bud["status"],
-			"status_label": bud["status_label"],
-			"currency": currency,
-			"procuring_entity": bud["procuring_entity"],
-		},
-		"rows": rows,
-		"row_count": len(rows),
-		"pagination": {
-			"showing_from": 1 if rows else 0,
-			"showing_to": len(rows),
-			"total": len(rows),
-			"label": f"Showing 1 to {len(rows)} of {len(rows)} entries" if rows else "Showing 0 entries",
-		},
-		"capabilities": {
-			"primary_action": (
-				"request_revision"
-				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
-				else ""
-			),
-			"primary_label": (
-				"Request revision"
-				if bud["status"] == "Active" and can_budget(CAP_BUDGET_EDIT, budget_doc)
-				else ""
-			),
-			"view_funding_performance": True,
-			"read_only": True,
-		},
-	}
+def _resolve_reservations(*, plan_item: str | None, plan_source_allocation: str | None, reservation: str | None, contract: str | None, commitment: str | None) -> list[Any]:
+	if reservation:
+		key = reservation.strip()
+		name = key if frappe.db.exists("Funding Reservation", key) else frappe.db.get_value("Funding Reservation", {"generated_reference": key}, "name")
+		return [frappe.get_doc("Funding Reservation", name)] if name else []
+	if plan_source_allocation:
+		names = frappe.get_all("Funding Reservation", filters={"plan_source_allocation": plan_source_allocation}, pluck="name")
+		return [frappe.get_doc("Funding Reservation", n) for n in names]
+	if plan_item:
+		names = frappe.get_all("Funding Reservation", filters={"plan_item": plan_item}, pluck="name")
+		return [frappe.get_doc("Funding Reservation", n) for n in names]
+	if contract or commitment:
+		filters: dict[str, Any] = {}
+		if commitment:
+			key = commitment.strip()
+			filters["name"] = key if frappe.db.exists("Procurement Commitment", key) else frappe.db.get_value("Procurement Commitment", {"generated_reference": key}, "name")
+		if contract:
+			filters["contract"] = contract
+		com_names = frappe.get_all("Procurement Commitment", filters=filters, pluck="reservation")
+		return [frappe.get_doc("Funding Reservation", n) for n in set(com_names) if n]
+	return []
 
 
-def _usage_rows_from_lifecycle(events: list[dict[str, Any]], currency: str) -> list[dict[str, Any]]:
-	reservations = [
-		ev
-		for ev in events
-		if ev.get("kind") == "domain" and ev.get("source_doctype") == "Funding Reservation"
-	]
-	if not reservations:
-		return []
-
-	commitments_by_rsv: dict[str, list[dict[str, Any]]] = {}
-	for ev in events:
-		if ev.get("kind") != "domain" or ev.get("source_doctype") != "Procurement Commitment":
-			continue
-		payload = ev.get("domain_payload") or {}
-		rsv = payload.get("reservation") or ""
-		if rsv:
-			commitments_by_rsv.setdefault(rsv, []).append(payload)
-
-	line_ids = list(
-		{
-			(ev.get("domain_payload") or {}).get("budget_line")
-			for ev in reservations
-			if (ev.get("domain_payload") or {}).get("budget_line")
-		}
+def get_funding_lineage(
+	*,
+	plan_item: str | None = None,
+	plan_source_allocation: str | None = None,
+	reservation: str | None = None,
+	contract: str | None = None,
+	commitment: str | None = None,
+) -> dict[str, Any]:
+	reservations = _resolve_reservations(
+		plan_item=plan_item, plan_source_allocation=plan_source_allocation, reservation=reservation, contract=contract, commitment=commitment
 	)
-	line_titles: dict[str, str] = {}
-	if line_ids:
-		for row in frappe.get_all(
-			"Budget Line",
-			filters={"name": ("in", line_ids)},
-			fields=["name", "title", "generated_reference"],
-		):
-			line_titles[row.name] = row.title or row.generated_reference or row.name
+	if not reservations:
+		return {"rows": []}
 
-	# Preserve lifecycle order (already event_at desc); stable by source_code.
-	rows: list[dict[str, Any]] = []
-	for ev in reservations:
-		rsv = ev.get("domain_payload") or {}
-		coms = commitments_by_rsv.get(rsv.get("name") or "") or []
-		commitment_total = sum(flt(c.get("current_amount")) for c in coms)
-		primary = None
-		for c in coms:
-			if c.get("status") == "Active":
-				primary = c
-				break
-		if primary is None and coms:
-			primary = coms[0]
+	rows = []
+	for rsv in reservations:
+		budget = frappe.get_doc("Budget", rsv.budget)
+		resolve_scoped_entity(budget.procuring_entity)
+		version_at_creation = frappe.get_doc("Budget Version", rsv.budget_version_at_creation)
+		require_budget_version_read_scope(version_at_creation)
 
-		contract_code = (primary.get("contract_code") if primary else "") or ""
-		contract_title = (primary.get("contract_title") if primary else "") or ""
-		reserved = flt(rsv.get("remaining_reserved"))
-		requirement = (
-			line_titles.get(rsv.get("budget_line") or "")
-			or rsv.get("demand_title")
-			or rsv.get("generated_reference")
+		line = frappe.get_doc("Budget Line", rsv.budget_line)
+		line_version = frappe.db.get_value(
+			"Budget Line Version", {"budget_version": version_at_creation.name, "budget_line": line.name}, ["title"], as_dict=True
 		)
-		tender = (rsv.get("current_downstream_reference") or "").strip()
-		plan_item = (rsv.get("plan_item_code") or "").strip()
-
+		commitments = frappe.get_all(
+			"Procurement Commitment",
+			filters={"reservation": rsv.name},
+			fields=["name", "generated_reference", "contract", "current_amount", "status"],
+		)
 		rows.append(
 			{
-				"id": rsv.get("name"),
-				"code": rsv.get("generated_reference"),
-				"reservation_code": rsv.get("generated_reference"),
-				"requirement": requirement,
-				"demand_code": rsv.get("demand_code") or "",
-				"demand_name": rsv.get("demand_title") or "",
-				"plan_item_code": plan_item,
-				"plan_item_display": plan_item or "—",
-				"tender_code": tender,
-				"tender_display": tender or "—",
-				"contract_code": contract_code,
-				"contract_name": contract_title,
-				"contract_display": contract_code or ("Pending Award" if tender else "—"),
-				"reserved_balance": reserved,
-				"reserved_balance_display": format_kes_full(reserved, currency=currency),
-				"commitment": commitment_total,
-				"commitment_display": (
-					format_kes_full(commitment_total, currency=currency)
-					if commitment_total
-					else "—"
-				),
-				"status": rsv.get("status") or "",
-				"status_kind": _status_kind(rsv.get("status") or ""),
-				"original_amount": flt(rsv.get("original_amount")),
-				"action": "view",
-				"action_label": "View reservation",
+				"budget": {"id": budget.name, "code": budget.generated_reference},
+				"budget_version_at_creation": {"id": version_at_creation.name, "code": version_at_creation.generated_reference},
+				"budget_line": {"id": line.name, "code": line.generated_reference, "title": (line_version or {}).get("title") or ""},
+				"reservation": {
+					"id": rsv.name,
+					"code": rsv.generated_reference,
+					"status": rsv.status,
+					"plan_item": rsv.plan_item,
+					"plan_source_allocation": rsv.plan_source_allocation,
+					"original_amount": rsv.original_amount,
+					"remaining_amount": rsv.remaining_amount,
+				},
+				"commitments": [
+					{"id": c.name, "code": c.generated_reference, "contract": c.contract, "current_amount": c.current_amount, "status": c.status}
+					for c in commitments
+				],
 			}
 		)
-	return rows
-
-
-def _status_kind(status: str) -> str:
-	s = (status or "").strip().lower()
-	if s in ("active", "converted"):
-		return "ok"
-	if s in ("partially converted", "reserved"):
-		return "warn"
-	if s in ("released", "cancelled", "expired"):
-		return "muted"
-	return "ok"
+	return {"rows": rows}

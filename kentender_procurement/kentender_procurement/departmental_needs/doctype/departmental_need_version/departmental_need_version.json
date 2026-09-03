@@ -1,0 +1,178 @@
+{
+ "actions": [],
+ "autoname": "field:need_version_id",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "need_version_id",
+  "departmental_need",
+  "version_number",
+  "based_on_version",
+  "version_status",
+  "title",
+  "description",
+  "expected_operational_result",
+  "indicative_quantity",
+  "unit",
+  "required_by_date",
+  "content_hash",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Immutable reference used in review, events and Planning lineage.",
+   "fieldname": "need_version_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Need Version ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Generated sequence within the Need.",
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version Number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The version copied to create this correction or accepted successor. Empty only for the first Draft.",
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "Departmental Need Version",
+   "read_only": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Version Status",
+   "options": "Draft\nSubmitted\nReturned\nAccepted\nNot taken forward\nWithdrawn\nSuperseded",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Short queue and detail label. Required for first save; 5-160 characters.",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "description": "Plain-language statement of what is required. Required for submission; 10-1,000 characters.",
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "description": "Describe the practical result the department expects after this requirement is met. Required for submission; 10-1,000 characters.",
+   "fieldname": "expected_operational_result",
+   "fieldtype": "Text",
+   "label": "Expected Operational Result"
+  },
+  {
+   "description": "Full quantity projected to Planning. Greater than zero with at most three decimals.",
+   "fieldname": "indicative_quantity",
+   "fieldtype": "Float",
+   "label": "Indicative Quantity",
+   "precision": "3"
+  },
+  {
+   "description": "Governed unit giving meaning to the quantity.",
+   "fieldname": "unit",
+   "fieldtype": "Link",
+   "label": "Unit",
+   "options": "Unit Of Measure"
+  },
+  {
+   "description": "Date the department needs the requirement. Must fall inside the target Financial Year.",
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "label": "Required By"
+  },
+  {
+   "description": "Generated when the version is submitted; used for idempotency, staleness and downstream lineage.",
+   "fieldname": "content_hash",
+   "fieldtype": "Data",
+   "label": "Content Hash",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "need_version_id,title",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

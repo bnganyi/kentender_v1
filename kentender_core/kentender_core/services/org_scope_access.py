@@ -87,13 +87,16 @@ def permitted_procuring_entities(user: str | None = None) -> set[str] | None:
 		return None
 	rows = user_scope_rows(user)
 	if not rows:
-		# Fall back to User Permission PE if no scope rows yet.
-		pe = frappe.db.get_value(
+		# Fall back to User Permission PEs if no scope rows yet. ALL rows: the
+		# earlier single-row get_value silently narrowed a user permitted
+		# several entities to one arbitrary one (CTX-CHG-001 rule 1 — the
+		# permissions, not an accident of row order, determine access).
+		pes = frappe.get_all(
 			"User Permission",
-			{"user": user, "allow": "Procuring Entity"},
-			"for_value",
+			filters={"user": user, "allow": "Procuring Entity"},
+			pluck="for_value",
 		)
-		return {pe} if pe else set()
+		return {pe for pe in pes if pe}
 	return {r.procuring_entity for r in rows if r.procuring_entity}
 
 

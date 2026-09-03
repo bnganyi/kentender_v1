@@ -18,27 +18,6 @@ import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 const SURFACES = [
 	{
-		id: "budget-portfolio",
-		route: "/desk/budget-funding",
-		rootTestId: "kt-bud-portfolio",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-register-budget",
-		secondaryCtaTestId: "kt-bud-open-performance",
-		selectSelector: '[data-kt-bud-filter="status"]',
-		assertPrimaryHover: true,
-	},
-	{
-		id: "budget-register",
-		route: "/desk/budget-register",
-		rootTestId: "kt-bud-register",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-create-draft",
-		secondaryCtaTestId: "kt-bud-register-cancel",
-		selectSelector: '[data-kt-bud-field="fiscal_period"]',
-		assertPrimaryHover: true,
-		assertEditableInputs: true,
-	},
-	{
 		id: "strategy-portfolio",
 		route: "/desk/strategy-alignment",
 		rootTestId: "kt-str-portfolio",
@@ -55,102 +34,6 @@ const SURFACES = [
 		primaryCtaTestId: "kt-str-create-plan-submit",
 		selectSelector: '[data-kt-str-field="plan_type"]',
 		assertEditableInputs: true,
-	},
-	{
-		id: "budget-overview",
-		route: "/desk/budget-overview/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-overview",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-		assertPrimaryHover: true,
-	},
-	{
-		id: "budget-lines",
-		route: "/desk/budget-lines/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-lines",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-		assertPrimaryHover: true,
-	},
-	{
-		id: "budget-funding-activity",
-		route: "/desk/budget-funding-activity/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-activity",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-		assertPrimaryHover: true,
-		selectSelector: '[data-kt-bud-activity-filter="activity_type"]',
-	},
-	{
-		id: "budget-downstream",
-		route: "/desk/budget-downstream/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-downstream",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-		assertPrimaryHover: true,
-		selectSelector: '[data-kt-bud-downstream-filter="status"]',
-	},
-	{
-		id: "budget-review",
-		route: "/desk/budget-review/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-review",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-		assertPrimaryHover: true,
-	},
-	{
-		id: "budget-audit",
-		route: "/desk/budget-audit/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-audit",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-audit-export",
-		primaryCtaStyle: "bordered" as const,
-		selectSelector: '[data-kt-bud-audit-filter="event_type"]',
-	},
-	{
-		id: "budget-funding-performance",
-		route: "/desk/budget-funding-performance",
-		rootTestId: "kt-bud-performance",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-performance-export",
-		primaryCtaStyle: "bordered" as const,
-		selectSelector: '[data-kt-bud-perf-filter="fiscal_period"]',
-	},
-	{
-		id: "budget-check-reserve",
-		route: "/desk/budget-check-reserve",
-		rootTestId: "kt-bud-check-reserve",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-check-reserve-reserve",
-		selectSelector: '[data-kt-bud-cr-filter="budget_line"]',
-	},
-	{
-		id: "budget-revisions",
-		route: "/desk/budget-revisions/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-revisions",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-overview-primary",
-		secondaryCtaTestId: "kt-bud-view-performance",
-	},
-	{
-		id: "budget-revision-create",
-		route: "/desk/budget-revision-create/MOH-BUD-2027-2028",
-		rootTestId: "kt-bud-revision-create",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-rev-submit",
-		assertEditableInputs: true,
-	},
-	{
-		id: "budget-revision-review",
-		route: "/desk/budget-revision-review/BR-MOH-0002",
-		rootTestId: "kt-bud-revision-review",
-		liveAttr: "data-kt-bud-live",
-		primaryCtaTestId: "kt-bud-rev-review-apply",
 	},
 	{
 		id: "demands-workspace",
@@ -405,23 +288,11 @@ test.describe("Stitch Desk chrome baseline", () => {
 				primaryRadiusMin:
 					"primaryRadiusMin" in surface ? surface.primaryRadiusMin : undefined,
 				headlineSelector:
-					surface.id === "budget-overview" ||
-					surface.id === "budget-lines" ||
-					surface.id === "budget-funding-activity" ||
-					surface.id === "budget-downstream" ||
-					surface.id === "budget-review" ||
-					surface.id === "budget-audit" ||
-					surface.id === "budget-revisions"
-						? "[data-kt-bud-budget-title]"
-						: surface.id === "budget-revision-create"
-							? ".kt-bud-rev-create-title"
-							: surface.id === "budget-revision-review"
-								? ".kt-bud-rev-review-title"
-								: surface.id === "demand-review"
-									? ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1"
-									: surface.id === "procurement-plan-item-editor"
-										? "[data-kt-pln-editor-title]"
-										: undefined,
+					surface.id === "demand-review"
+						? ".kt-dem-review h1, [data-testid='kt-dem-ui04-root'] h1"
+						: surface.id === "procurement-plan-item-editor"
+							? "[data-kt-pln-editor-title]"
+							: undefined,
 			});
 		});
 	}

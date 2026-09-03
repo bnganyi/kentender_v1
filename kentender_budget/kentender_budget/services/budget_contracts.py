@@ -1,80 +1,43 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Budget portfolio / register contracts — BUD-UI-01 / BUD-FR-001–010 / Phase 2."""
+"""BUD-CHG-001 v1.2 — Budget/Budget Version identity, drafting and the
+canonical position calculations (§5). BUD-UI-01 workspace, BUD-UI-02 version
+editor Overview, BUD-UI-03 Overview tab.
+
+Owns: `resolve_budget_context`, `save_budget_version_draft`,
+`create_budget_successor_version`, and the shared position-calculation
+helpers every other contract module reuses. Submit/Return/Approve/Close live
+in `budget_readiness_contracts.py`; Budget Line drafting and eligible-line
+reads live in `budget_line_contracts.py`.
+"""
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
-from kentender_budget.services.budget_permissions import (
-	can_register_budget,
-	can_review_budget,
-	entity_for_user,
-	require_any_role,
-	user_roles,
-	visible_statuses_for_user,
-	ROLE_AUDITOR,
-	ROLE_AUTHORITY,
-	ROLE_OFFICER,
-	ROLE_REVIEWER,
-	ROLE_VIEWER,
-)
-from kentender_budget.services.budget_reference import allocate_budget_reference
 from kentender_budget.services.budget_authorization import (
-	CAP_BUDGET_EDIT,
-	CAP_BUDGET_LIST,
-	CAP_BUDGET_REVIEW,
-	CAP_BUDGET_VIEW,
-	authorized_budget_task,
-	can_budget,
-	require_budget_capability,
+	CAP_APPROVE,
+	CAP_EDIT,
+	has_budget_version_capability,
+	require_budget_create_capability,
+	require_budget_version_capability,
+	require_budget_version_read_scope,
+)
+from kentender_budget.services.budget_reference import (
+	allocate_budget_line_version_reference,
+	allocate_budget_reference,
+	allocate_budget_version_reference,
 )
 
-_FY_RE = re.compile(r"^(\d{4})/(\d{2})$")
-_BLOCKING_STATUSES = ("Draft", "Submitted", "Returned", "Active")
-_DEFAULT_FISCAL_PERIODS = (
-	"2028/29",
-	"2027/28",
-	"2026/27",
-	"2029/30",
-	"2030/31",
-	"2031/32",
-	"2032/33",
-	"2039/40",
-	"2040/41",
-	"2041/42",
-	"2042/43",
-	"2043/44",
-)
-
-# UI label for Submitted (pack Phase 1).
-_STATUS_UI = {
-	"Submitted": "Under review",
-}
-
-_SOURCE_UI = {
-	"Direct capture": "Direct capture",
-}
-
-
-def _entity_label(pe_name: str | None) -> str:
-	if not pe_name:
-		return ""
-	return (
-		frappe.db.get_value("Procuring Entity", pe_name, "entity_name")
-		or frappe.db.get_value("Procuring Entity", pe_name, "entity_code")
-		or pe_name
-	)
+_ACTIVE_RESERVATION_STATUSES = ("Active", "Partially Converted", "Needs Attention")
 
 
 def format_kes_compact(amount: float | None, *, currency: str = "KES") -> str:
-	"""Compact money for portfolio table (Stitch: KES 560M)."""
 	val = flt(amount)
 	if abs(val) >= 1_000_000:
 		m = val / 1_000_000.0
@@ -85,729 +48,756 @@ def format_kes_compact(amount: float | None, *, currency: str = "KES") -> str:
 	return f"{currency} {val:,.0f}"
 
 
-def resolve_scoped_entity(
-	requested: str | None = None,
-	*,
-	user_entity: str | None = None,
-	roles: set[str] | None = None,
-) -> str:
-	"""BUD-FR-001/002 — hard entity scope; no unscoped / cross-entity list for officers."""
-	roles = roles if roles is not None else user_roles()
-	user_pe = user_entity if user_entity is not None else entity_for_user()
+def format_kes_full(amount: float | None, *, currency: str = "KES") -> str:
+	return f"{currency} {flt(amount):,.0f}"
+
+
+def resolve_scoped_entity(requested: str | None = None) -> str:
+	"""BUD-BR-001 — hard PE scope; no unscoped / cross-entity read for a
+	non-admin actor. Administrator/System Manager may pass any PE explicitly.
+
+	Asserts scope against an already-known PE (a document's own
+	procuring_entity, or an explicit caller-supplied value) — it does not
+	pick "the current working context" for a screen with no PE of its own;
+	that's kentender_core.services.reference_data_resolver.resolve_working_context's
+	job (BUD-CHG-001 v1.2 Phase 8), used by get_budget_workspace and the
+	pre-creation branch of save_budget_version_draft.
+
+	Reads permitted_procuring_entities() directly rather than picking a
+	single "the" PE for the user first — a user legitimately scoped to more
+	than one Procuring Entity (e.g. a cross-entity Auditor) must be able to
+	pass any one of them, not just whichever one an earlier single-PE guess
+	happened to prefer."""
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
 	req = (requested or "").strip() or None
-	is_admin = "System Manager" in roles or "Administrator" in roles
-	if is_admin:
-		return req or user_pe or ""
-	if not user_pe:
-		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError)
-	if req and req != user_pe:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError)
-	return user_pe
+	pes = permitted_procuring_entities()
+	if pes is None:
+		return req or ""
+	if not pes:
+		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError, title="BUDGET_SCOPE_REQUIRED")
+	if req:
+		if req not in pes:
+			frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
+		return req
+	if len(pes) == 1:
+		return next(iter(pes))
+	# More than one permitted PE and no explicit target — every current call
+	# site always asserts against an already-known document PE, so this is
+	# ambiguous input, not a genuine "pick my working context" request.
+	frappe.throw(_("A specific procuring entity is required"), frappe.PermissionError, title="BUDGET_SCOPE_REQUIRED")
 
 
-def resolve_budget_context(
-	procuring_entity: str | None = None,
-	fiscal_period: str | None = None,
-	owner_org_unit: str | None = None,
-) -> dict[str, Any]:
-	"""BUD-CHG-001 §12 `resolve_budget_context` — the Active baseline for a PE/FY,
-	or a typed zero/multiple/ineligible error (BUD-CHG-001 §8: never a first-PE,
-	first-record or Administrator fallback).
-	"""
-	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
-	)
-	pe = resolve_scoped_entity(procuring_entity or entity_for_user() or None)
-	if not pe:
-		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError, title=_("Ineligible"))
-
-	fy = (fiscal_period or "").strip()
-	if not fy:
-		frappe.throw(_("Fiscal period is required"), frappe.ValidationError, title=_("Ineligible"))
-
-	if owner_org_unit:
-		from kentender_budget.services.budget_permissions import assert_org_unit_in_scope
-
-		assert_org_unit_in_scope(pe, owner_org_unit, require_write=False)
-
-	names = frappe.get_all(
-		"Budget",
-		filters={"procuring_entity": pe, "fiscal_period": fy, "status": "Active"},
-		pluck="name",
-	)
-	if not names:
-		frappe.throw(
-			_("No Active Budget baseline for this procuring entity and fiscal period"),
-			frappe.DoesNotExistError,
-			title=_("No Active baseline"),
-		)
-	if len(names) > 1:
-		frappe.throw(
-			_("Multiple Active Budget baselines found for this procuring entity and fiscal period"),
-			frappe.ValidationError,
-			title=_("Multiple Active baselines"),
-		)
-
-	doc = frappe.get_doc("Budget", names[0])
-	pe_code = frappe.db.get_value("Procuring Entity", pe, "entity_code") or pe
-	return {
-		"id": doc.name,
-		"code": doc.generated_reference,
-		"name": doc.title,
-		"status": doc.status,
-		"procuring_entity": {"id": pe, "code": pe_code, "name": _entity_label(pe)},
-		"fiscal_period": doc.fiscal_period,
-		"currency": doc.currency or "KES",
-		"owner_org_unit": owner_org_unit or "",
-	}
-
-
-def _line_totals(budget_name: str) -> dict[str, float]:
-	rows = frappe.get_all(
-		"Budget Line",
-		filters={"budget": budget_name, "is_active": 1},
-		fields=[
-			"approved_amount",
-			"amount_reserved",
-			"amount_committed",
-			"amount_actual",
-			"primary_strategy_linked",
-		],
-	)
-	approved = reserved = committed = actual = 0.0
-	lines_total = 0
-	lines_strategy_linked = 0
-	for r in rows:
-		approved += flt(r.approved_amount)
-		reserved += flt(r.amount_reserved)
-		committed += flt(r.amount_committed)
-		actual += flt(getattr(r, "amount_actual", None))
-		lines_total += 1
-		if int(getattr(r, "primary_strategy_linked", 0) or 0):
-			lines_strategy_linked += 1
-	available = approved - reserved - committed
-	outstanding = max(0.0, committed - actual)
-	return {
-		"approved": approved,
-		"reserved": reserved,
-		"committed": committed,
-		"available": available,
-		"actual": actual,
-		"outstanding": outstanding,
-		"lines_total": float(lines_total),
-		"lines_strategy_linked": float(lines_strategy_linked),
-	}
-
-
-def _attention(row) -> dict[str, Any]:
-	note = (row.attention_note or "").strip()
-	issues = int(row.readiness_issue_count or 0)
-	if note:
-		return {
-			"attention": note,
-			"attention_kind": "warning",
-			"has_exception": True,
-		}
-	if issues > 0:
-		label = f"{issues} readiness issue{'s' if issues != 1 else ''}"
-		return {
-			"attention": label,
-			"attention_kind": "info",
-			"has_exception": True,
-		}
-	return {
-		"attention": "None",
-		"attention_kind": "none",
-		"has_exception": False,
-	}
-
-
-def _action_for_status(status: str) -> dict[str, Any]:
-	if status == "Active":
-		return {"action": "open", "action_label": "Open", "action_muted": False}
-	if status == "Submitted":
-		return {"action": "review", "action_label": "Review", "action_muted": False}
-	if status in ("Draft", "Returned"):
-		return {"action": "open", "action_label": "Open", "action_muted": False}
-	# Closed / Cancelled — Stitch muted View.
-	return {"action": "view", "action_label": "View", "action_muted": True}
-
-
-def _available_display(status: str, available: float, currency: str) -> str:
-	# Stitch: Active shows remaining; Submitted "Not active"; Closed "KES 0".
-	if status == "Active":
-		return format_kes_compact(available, currency=currency)
-	if status == "Closed":
-		return format_kes_compact(available, currency=currency)
-	return "Not active"
-
-
-def _approved_for_portfolio(row, line_approved: float) -> float:
-	"""Portfolio APPROVED = registered baseline (external), not line allocation sum.
-
-	Drafts from Register have external_approved_total but no Budget Lines yet — using
-	line totals alone showed KES 0 after a successful save.
-	"""
-	header = flt(getattr(row, "external_approved_total", None))
-	if header > 0:
-		return header
-	return flt(line_approved)
-
-
-def _row_dto(row) -> dict[str, Any]:
-	totals = _line_totals(row.name)
-	attn = _attention(row)
-	action = {"action": "", "action_label": "", "action_muted": True}
-	if can_budget(CAP_BUDGET_VIEW, row):
-		action = {"action": "view", "action_label": "View", "action_muted": True}
-	if row.status in ("Draft", "Returned") and can_budget(CAP_BUDGET_EDIT, row):
-		action = {"action": "open", "action_label": "Open", "action_muted": False}
-	elif row.status == "Active" and can_budget(CAP_BUDGET_VIEW, row):
-		action = {"action": "open", "action_label": "Open", "action_muted": False}
-	elif row.status == "Submitted":
-		task, commands = authorized_budget_task(
-			actor=frappe.session.user,
-			subject_type="Budget",
-			subject_id=row.name,
-			capabilities=(CAP_BUDGET_REVIEW,),
-		)
-		if task and commands:
-			action = {"action": "review", "action_label": "Review", "action_muted": False, "task_id": task.name}
-	status_ui = _STATUS_UI.get(row.status, row.status)
-	source_ui = _SOURCE_UI.get(row.registration_source, row.registration_source or "Direct capture")
-	currency = row.currency or "KES"
-	approved = _approved_for_portfolio(row, totals["approved"])
-	return {
-		"id": row.name,
-		"code": row.generated_reference,
-		"name": row.title,
-		"title": row.title,
-		"procuring_entity": row.procuring_entity,
-		"procuring_entity_name": _entity_label(row.procuring_entity),
-		"fiscal_period": row.fiscal_period,
-		"start_date": row.start_date,
-		"end_date": row.end_date,
-		"currency": currency,
-		"budget_owner": row.budget_owner,
-		"registration_source": row.registration_source,
-		"registration_source_label": source_ui,
-		"authoritative_reference": row.authoritative_reference,
-		"status": row.status,
-		"status_label": status_ui,
-		"approved_amount": approved,
-		"available_amount": totals["available"],
-		"approved_display": format_kes_compact(approved, currency=currency),
-		"available_display": _available_display(row.status, totals["available"], currency),
-		**attn,
-		**action,
-	}
-
-
-def list_budgets(
-	procuring_entity: str | None = None,
-	status: str | None = None,
-	fiscal_period: str | None = None,
-	search: str | None = None,
-	registration_source: str | None = None,
-) -> list[dict[str, Any]]:
-	"""BUD-FR-001 / list_budgets — entity-scoped Budget portfolio rows."""
-	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
-	)
-	pe = resolve_scoped_entity(procuring_entity)
-	filters: dict[str, Any] = {}
-	if pe:
-		filters["procuring_entity"] = pe
-
-	status_val = (status or "").strip()
-	if status_val and status_val not in ("All Statuses", "All", "Status"):
-		if status_val == "Under review":
-			filters["status"] = "Submitted"
-		else:
-			filters["status"] = status_val
-	else:
-		allowed = visible_statuses_for_user()
-		if allowed:
-			filters["status"] = ["in", allowed]
-
-	period_val = (fiscal_period or "").strip()
-	if period_val and period_val not in ("All Periods", "All", "Fiscal Period"):
-		period_norm = period_val.replace("FY ", "").strip()
-		filters["fiscal_period"] = ["like", f"%{period_norm}%"]
-
-	source_val = (registration_source or "").strip()
-	if source_val and source_val not in ("All Sources", "All", "Source"):
-		if source_val in ("Manual registration", "Direct capture"):
-			filters["registration_source"] = "Direct capture"
-		elif source_val == "Controlled import":
-			filters["registration_source"] = "__none__"
-
-	or_filters = None
-	if search and search.strip():
-		q = search.strip()
-		or_filters = [
-			["title", "like", f"%{q}%"],
-			["authoritative_reference", "like", f"%{q}%"],
-			["generated_reference", "like", f"%{q}%"],
-		]
-
-	rows = frappe.get_all(
-		"Budget",
-		filters=filters,
-		or_filters=or_filters,
-		fields=[
-			"name",
-			"generated_reference",
-			"title",
-			"procuring_entity",
-			"fiscal_period",
-			"start_date",
-			"end_date",
-			"currency",
-			"budget_owner",
-			"registration_source",
-			"authoritative_reference",
-			"status",
-			"external_approved_total",
-			"attention_note",
-			"readiness_issue_count",
-		],
-		order_by="fiscal_period desc, modified desc",
-		limit_page_length=200,
-	)
-	return [_row_dto(r) for r in rows if can_budget(CAP_BUDGET_LIST, r) and can_budget(CAP_BUDGET_VIEW, r)]
-
-
-def get_budget_portfolio(procuring_entity: str | None = None) -> dict[str, Any]:
-	"""Portfolio strip counts + capabilities for BUD-UI-01."""
-	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
-	)
-	pe = resolve_scoped_entity(procuring_entity)
-	filters: dict[str, Any] = {}
-	if pe:
-		filters["procuring_entity"] = pe
-	allowed = visible_statuses_for_user()
-	if allowed:
-		filters["status"] = ["in", allowed]
-	rows = frappe.get_all(
-		"Budget",
-		filters=filters,
-		fields=["name", "procuring_entity", "fiscal_period", "status", "attention_note", "readiness_issue_count"],
-	)
-	counts = {
-		"active": 0,
-		"awaiting_review": 0,
-		"returned": 0,
-		"funding_exceptions": 0,
-		"draft": 0,
-		"closed": 0,
-	}
-	rows = [r for r in rows if can_budget(CAP_BUDGET_LIST, r) and can_budget(CAP_BUDGET_VIEW, r)]
-	for r in rows:
-		st = r.status or ""
-		if st == "Active":
-			counts["active"] += 1
-		elif st == "Submitted":
-			counts["awaiting_review"] += 1
-		elif st == "Returned":
-			counts["returned"] += 1
-		elif st == "Draft":
-			counts["draft"] += 1
-		elif st == "Closed":
-			counts["closed"] += 1
-		note = (r.attention_note or "").strip()
-		issues = int(r.readiness_issue_count or 0)
-		if note or issues > 0:
-			counts["funding_exceptions"] += 1
-
-	return {
-		"procuring_entity": pe,
-		"procuring_entity_name": _entity_label(pe),
-		"counts": counts,
-		"capabilities": {
-			# Registering a budget names its own PE inside the form (BUD-FR-001)
-			# — it never requires a pre-resolved portfolio-scope PE, exactly like
-			# `get_register_form_context()` (the page this button opens) already
-			# gates on `can_register_budget()` alone. Requiring `pe` here made the
-			# button invisible for a genuinely PE-unscoped-but-role-qualified user
-			# even though navigating straight to the register page would work.
-			"register_budget": can_register_budget(),
-			"review_budget": any((row.status == "Submitted" and _row_dto(row).get("action") == "review") for row in rows),
-			"view_funding_performance": bool(rows),
-		},
-		"budgets": list_budgets(procuring_entity=pe),
-	}
-
-
-def normalize_fiscal_period(raw: str | None) -> str:
-	"""Normalize `FY 2028/29` → `2028/29`."""
-	text = (raw or "").strip()
-	if text.upper().startswith("FY "):
-		text = text[3:].strip()
-	return text
-
-
-def fiscal_period_dates(fiscal_period: str) -> tuple[str, str]:
-	"""Kenya FY July–June: `2028/29` → 2028-07-01 … 2029-06-30."""
-	norm = normalize_fiscal_period(fiscal_period)
-	match = _FY_RE.match(norm)
-	if not match:
-		frappe.throw(_("Fiscal period must look like 2028/29"), frappe.ValidationError)
-	start_year = int(match.group(1))
-	end_yy = int(match.group(2))
-	expected_yy = (start_year + 1) % 100
-	if end_yy != expected_yy:
-		frappe.throw(_("Fiscal period year pair is inconsistent"), frappe.ValidationError)
-	end_year = start_year + 1
-	return f"{start_year:04d}-07-01", f"{end_year:04d}-06-30"
-
-
-def parse_money_amount(raw: Any) -> float | None:
-	"""Parse approved total with optional thousands separators."""
-	if raw is None:
-		return None
-	if isinstance(raw, (int, float)):
-		return float(raw)
-	text = str(raw).strip().replace(",", "").replace(" ", "")
-	if not text:
-		return None
-	try:
-		return float(text)
-	except ValueError:
-		return None
-
-
-def _entity_ref(pe_name: str | None) -> dict[str, str] | None:
+def _entity_label(pe_name: str | None) -> str:
 	if not pe_name:
-		return None
-	code = frappe.db.get_value("Procuring Entity", pe_name, "entity_code") or pe_name
-	return {
-		"id": pe_name,
-		"code": str(code),
-		"name": _entity_label(pe_name),
-	}
+		return ""
+	return frappe.db.get_value("Procuring Entity", pe_name, "legal_name") or pe_name
 
 
-def get_register_form_context() -> dict[str, Any]:
-	"""Defaults for Register approved budget focused page."""
-	if not can_register_budget():
-		frappe.throw(_("Not permitted to register budgets"), frappe.PermissionError)
-	pe = resolve_scoped_entity(None)
-	periods = []
-	for value in _DEFAULT_FISCAL_PERIODS:
-		periods.append({"value": value, "label": f"FY {value}"})
-	currencies = [c for c in ("KES", "USD") if frappe.db.exists("Currency", c)]
-	if not currencies:
-		currencies = ["KES"]
-	return {
-		"capabilities": {"register_budget": True},
-		"procuring_entity": _entity_ref(pe),
-		"fiscal_periods": periods,
-		"currencies": currencies,
-		"defaults": {
-			"currency": "KES" if "KES" in currencies else currencies[0],
-			"fiscal_period": "2028/29",
-			"budget_owner": "",
-			"title": "",
-		},
-	}
+def _fy_label(fy_name: str | None) -> str:
+	if not fy_name:
+		return ""
+	return frappe.db.get_value("Financial Year", fy_name, "label") or fy_name
 
 
-def _validate_register_payload(payload: dict) -> dict[str, str]:
-	errors: dict[str, str] = {}
-	title = (payload.get("title") or "").strip()
-	fiscal_period = normalize_fiscal_period(payload.get("fiscal_period"))
-	currency = (payload.get("currency") or "").strip()
-	budget_owner = (payload.get("budget_owner") or "").strip()
-	authoritative = (payload.get("authoritative_reference") or "").strip()
-	approval_date = payload.get("approval_date")
-	total = parse_money_amount(payload.get("external_approved_total"))
-
-	if not title:
-		errors["title"] = _("Budget title is required")
-	if not fiscal_period:
-		errors["fiscal_period"] = _("Fiscal period is required")
-	elif not _FY_RE.match(fiscal_period):
-		errors["fiscal_period"] = _("Fiscal period must look like 2028/29")
-	else:
-		try:
-			fiscal_period_dates(fiscal_period)
-		except Exception:
-			errors["fiscal_period"] = _("Fiscal period is not valid")
-
-	if not currency:
-		errors["currency"] = _("Currency is required")
-	elif not frappe.db.exists("Currency", currency):
-		errors["currency"] = _("Currency is not valid")
-
-	if not budget_owner:
-		errors["budget_owner"] = _("Budget owner is required")
-	if not authoritative:
-		errors["authoritative_reference"] = _("External approval reference is required")
-	if not approval_date:
-		errors["approval_date"] = _("Approval date is required")
-	else:
-		try:
-			getdate(approval_date)
-		except Exception:
-			errors["approval_date"] = _("Enter a valid approval date")
-
-	if total is None:
-		errors["external_approved_total"] = _("Approved total is required")
-	elif total <= 0:
-		errors["external_approved_total"] = _("Approved total must be greater than zero")
-
-	# Approval evidence is optional at Draft registration (may be attached later).
-
-	return errors
+def _org_unit_label(org_unit: str | None) -> str:
+	"""Empty owner_org_unit means PE-wide (Budget Line Version's own field
+	description) — that reads as a real label everywhere it's displayed, not
+	a blank cell."""
+	if not org_unit:
+		return _("PE-wide")
+	return frappe.db.get_value("Organisation Unit", org_unit, "unit_name") or org_unit
 
 
-def _blocking_budget_for_period(pe: str, fiscal_period: str) -> str | None:
-	"""Return generated_reference of Draft/Active/… aggregate for entity+period, if any."""
-	norm = normalize_fiscal_period(fiscal_period)
-	row = frappe.db.get_value(
-		"Budget",
-		{
-			"procuring_entity": pe,
-			"fiscal_period": norm,
-			"status": ["in", list(_BLOCKING_STATUSES)],
-		},
-		["generated_reference", "status"],
-		as_dict=True,
-	)
-	if not row:
-		return None
-	return row.generated_reference
+def _user_label(user: str | None) -> str:
+	if not user:
+		return ""
+	return frappe.db.get_value("User", user, "full_name") or user
 
 
-def _budget_dto(doc) -> dict[str, Any]:
-	return {
-		"id": doc.name,
-		"code": doc.generated_reference,
-		"name": doc.title,
-		"title": doc.title,
-		"status": doc.status,
-		"procuring_entity": doc.procuring_entity,
-		"procuring_entity_name": _entity_label(doc.procuring_entity),
-		"fiscal_period": doc.fiscal_period,
-		"start_date": doc.start_date,
-		"end_date": doc.end_date,
-		"currency": doc.currency,
-		"budget_owner": doc.budget_owner,
-		"registration_source": doc.registration_source,
-		"authoritative_reference": doc.authoritative_reference,
-		"approval_date": doc.approval_date,
-		"external_approved_total": flt(doc.external_approved_total),
-		"approval_evidence": doc.approval_evidence,
-	}
+def _display_datetime(value) -> str:
+	from frappe.utils import format_datetime, get_datetime
+
+	if not value:
+		return ""
+	return format_datetime(get_datetime(value))
 
 
-def register_budget(payload: dict | None = None) -> dict[str, Any]:
-	"""Create a Draft Budget via direct capture (BUD-FR-003–006). No lines."""
-	if not can_register_budget():
-		frappe.throw(_("Not permitted to register budgets"), frappe.PermissionError)
+def _display_date(value) -> str:
+	from frappe.utils import formatdate
 
-	payload = payload or {}
-	errors = _validate_register_payload(payload)
-	if errors:
-		return {"ok": False, "errors": errors}
-
-	pe = resolve_scoped_entity((payload.get("procuring_entity") or "").strip() or None)
-	if not pe:
-		return {"ok": False, "errors": {"procuring_entity": _("Procuring entity is required")}}
-
-	fiscal_period = normalize_fiscal_period(payload.get("fiscal_period"))
-	blocking = _blocking_budget_for_period(pe, fiscal_period)
-	if blocking:
-		return {
-			"ok": False,
-			"errors": {
-				"fiscal_period": _(
-					"A Draft, Submitted, Returned or Active budget already exists for this entity and fiscal period ({0})"
-				).format(blocking)
-			},
-		}
-
-	start_date, end_date = fiscal_period_dates(fiscal_period)
-	# Optional client dates must match derived FY bounds when provided.
-	if payload.get("start_date") and str(getdate(payload.get("start_date"))) != start_date:
-		return {
-			"ok": False,
-			"errors": {"start_date": _("Start date must match the selected fiscal period")},
-		}
-	if payload.get("end_date") and str(getdate(payload.get("end_date"))) != end_date:
-		return {
-			"ok": False,
-			"errors": {"end_date": _("End date must match the selected fiscal period")},
-		}
-
-	total = parse_money_amount(payload.get("external_approved_total"))
-	# Ignore any client-supplied generated_reference / code (BUD-FR-003).
-	ref = allocate_budget_reference(pe)
-	doc = frappe.get_doc(
-		{
-			"doctype": "Budget",
-			"generated_reference": ref,
-			"title": (payload.get("title") or "").strip(),
-			"procuring_entity": pe,
-			"status": "Draft",
-			"fiscal_period": fiscal_period,
-			"start_date": start_date,
-			"end_date": end_date,
-			"currency": (payload.get("currency") or "KES").strip(),
-			"budget_owner": (payload.get("budget_owner") or "").strip(),
-			"registration_source": "Direct capture",
-			"authoritative_reference": (payload.get("authoritative_reference") or "").strip(),
-			"approval_date": getdate(payload.get("approval_date")),
-			"external_approved_total": total,
-			"approval_evidence": (payload.get("approval_evidence") or "").strip(),
-		}
-	)
-	doc.insert()
-	try:
-		from kentender_budget.services.budget_audit_contracts import (
-			EVENT_BASELINE,
-			safe_record_event,
-		)
-
-		safe_record_event(
-			budget=doc.name,
-			event_type=EVENT_BASELINE,
-			record_code=doc.generated_reference,
-			record_doctype="Budget",
-			actor=frappe.session.user,
-			actor_kind="user",
-			before_summary="",
-			after_summary="Initial baseline",
-			change_summary="Initial baseline",
-			source_reference=doc.authoritative_reference or "",
-		)
-	except Exception:
-		pass
-	return {"ok": True, "budget": _budget_dto(doc)}
+	if not value:
+		return ""
+	return formatdate(value, "d MMM yyyy")
 
 
-def _resolve_budget(budget: str):
+def _funding_source_label(funding_source: str | None) -> str:
+	if not funding_source:
+		return ""
+	return frappe.db.get_value("Funding Source", funding_source, "label") or funding_source
+
+
+def _resolve_budget(key: str) -> Any:
 	"""Resolve Budget by generated_reference or document name."""
-	key = (budget or "").strip()
+	key = (key or "").strip()
 	if not key:
 		frappe.throw(_("Budget is required"), frappe.ValidationError)
 	name = frappe.db.get_value("Budget", {"generated_reference": key}, "name")
 	if not name and frappe.db.exists("Budget", key):
 		name = key
 	if not name:
-		frappe.throw(_("Budget {0} not found").format(key), frappe.DoesNotExistError)
+		frappe.throw(_("Budget {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
 	return frappe.get_doc("Budget", name)
 
 
-def _overview_capabilities(status: str) -> dict[str, Any]:
-	"""Status-aware header CTAs for Budget workspace Overview."""
-	if status == "Active":
-		return {
-			"primary_action": "request_revision",
-			"primary_label": "Request revision",
-			"view_funding_performance": True,
-			"open_lines": True,
-		}
-	if status in ("Draft", "Returned"):
-		return {
-			"primary_action": "open_lines",
-			"primary_label": "Budget lines",
-			"view_funding_performance": True,
-			"open_lines": True,
-		}
-	return {
-		"primary_action": "view_funding_performance",
-		"primary_label": "View funding performance",
-		"view_funding_performance": True,
-		"open_lines": True,
-	}
+def _resolve_budget_version(key: str) -> Any:
+	"""Resolve Budget Version by generated_reference or document name."""
+	key = (key or "").strip()
+	if not key:
+		frappe.throw(_("Budget Version is required"), frappe.ValidationError)
+	name = frappe.db.get_value("Budget Version", {"generated_reference": key}, "name")
+	if not name and frappe.db.exists("Budget Version", key):
+		name = key
+	if not name:
+		frappe.throw(_("Budget Version {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+	return frappe.get_doc("Budget Version", name)
 
 
-def _utilization_bar(approved: float, reserved: float, committed: float, available: float) -> dict[str, Any]:
-	base = approved if approved > 0 else 1.0
-	r_pct = round((reserved / base) * 100.0, 2)
-	c_pct = round((committed / base) * 100.0, 2)
-	a_pct = round(max(0.0, 100.0 - r_pct - c_pct), 2)
-	return {
-		"reserved_pct": r_pct,
-		"committed_pct": c_pct,
-		"available_pct": a_pct,
-		"total_pct": 100.0,
-		"total_display": format_kes_compact(approved),
-	}
+def _resolve_budget_line(key: str) -> Any:
+	"""Resolve Budget Line by generated_reference or document name — same
+	dual-lookup pattern as _resolve_budget/_resolve_budget_version. Every URL
+	that carries a Budget Line uses its code (line.code, e.g. via `go("line",
+	line.code)`), never the raw hash docname."""
+	key = (key or "").strip()
+	if not key:
+		frappe.throw(_("Budget Line is required"), frappe.ValidationError)
+	name = frappe.db.get_value("Budget Line", {"generated_reference": key}, "name")
+	if not name and frappe.db.exists("Budget Line", key):
+		name = key
+	if not name:
+		frappe.throw(_("Budget Line {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+	return frappe.get_doc("Budget Line", name)
 
 
-def get_budget_overview(budget: str) -> dict[str, Any]:
-	"""BUD-UI-03 — entity-scoped Overview DTO with derived funding totals."""
-	require_any_role(
-		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+def _active_version(budget_name: str) -> Any | None:
+	names = frappe.get_all("Budget Version", filters={"budget": budget_name, "status": "Active"}, pluck="name")
+	if not names:
+		return None
+	if len(names) > 1:
+		frappe.throw(
+			_("Multiple Active Budget Versions found for this Budget"),
+			frappe.ValidationError,
+			title="BUDGET_CONTEXT_AMBIGUOUS",
+		)
+	return frappe.get_doc("Budget Version", names[0])
+
+
+def _draft_version(budget_name: str) -> Any | None:
+	"""At most one open (Draft or Submitted for approval) successor may exist (§6.2)."""
+	names = frappe.get_all(
+		"Budget Version",
+		filters={"budget": budget_name, "status": ["in", ("Draft", "Submitted for approval")]},
+		pluck="name",
+		order_by="version_number desc",
 	)
-	doc = _resolve_budget(budget)
-	require_budget_capability(CAP_BUDGET_VIEW, doc)
-	# Hard PE scope for non-admin session users.
-	resolve_scoped_entity(doc.procuring_entity)
+	return frappe.get_doc("Budget Version", names[0]) if names else None
 
-	line = _line_totals(doc.name)
-	currency = doc.currency or "KES"
-	approved = _approved_for_portfolio(doc, line["approved"])
-	reserved = line["reserved"]
-	committed = line["committed"]
+
+def _line_position(budget_line_name: str, budget_line_version) -> dict[str, float]:
+	"""§5 canonical calculation for one Budget Line at the current time.
+
+	`budget_line_version` supplies `approved_amount`; Reserved/Committed are
+	summed from the stable Budget Line identity's reservations/commitments,
+	independent of which version is being displayed.
+	"""
+	approved = flt(budget_line_version.approved_amount) if budget_line_version else 0.0
+
+	reserved = flt(
+		frappe.db.sql(
+			"select coalesce(sum(remaining_amount), 0) from `tabFunding Reservation` "
+			"where budget_line = %s and status in %s",
+			(budget_line_name, _ACTIVE_RESERVATION_STATUSES),
+		)[0][0]
+	)
+
+	all_reservations = frappe.get_all("Funding Reservation", filters={"budget_line": budget_line_name}, pluck="name")
+	committed = 0.0
+	if all_reservations:
+		committed = flt(
+			frappe.db.sql(
+				"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
+				"where reservation in %s and status = 'Active'",
+				(all_reservations,),
+			)[0][0]
+		)
+
 	available = approved - reserved - committed
-	actual = line["actual"]
-	outstanding = max(0.0, committed - actual)
-	status_ui = _STATUS_UI.get(doc.status, doc.status)
-	source_ui = _SOURCE_UI.get(doc.registration_source, doc.registration_source or "Direct capture")
-	attn = _attention(doc)
-	lines_total = int(line["lines_total"])
-	lines_linked = int(line["lines_strategy_linked"])
+	return {"approved": approved, "reserved": reserved, "committed": committed, "available": available}
 
+
+def _line_version_for(budget_version_name: str, budget_line_name: str):
+	name = frappe.db.get_value(
+		"Budget Line Version", {"budget_version": budget_version_name, "budget_line": budget_line_name}, "name"
+	)
+	return frappe.get_doc("Budget Line Version", name) if name else None
+
+
+def _plan_item_label(plan_item: str | None) -> str:
+	"""Budget Line detail's Active reservations table shows the Plan Item's
+	human reference ("PPI-MOH-2027-021 · National digital health
+	infrastructure upgrade"), not its raw docname. `Funding Reservation.plan_item`
+	only stores kentender_procurement's own docname (a plain Data field, not a
+	Link — no schema coupling), so this reads Procurement Plan Item's own
+	fields directly via frappe.db, the same cross-app read pattern already used
+	for Organisation Unit/Financial Year/Funding Source (reading another app's
+	doctype fields via the ORM is not "deep-importing internals" — that means
+	importing its Python modules)."""
+	if not plan_item:
+		return ""
+	code = frappe.db.get_value("Procurement Plan Item", plan_item, "plan_item_code")
+	if not code:
+		return plan_item
+	version_name = frappe.db.get_value("Procurement Plan Item", plan_item, "current_approved_item_version")
+	title = frappe.db.get_value("Procurement Plan Item Version", version_name, "requirement_title") if version_name else None
+	return f"{code} · {title}" if title else code
+
+
+def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Funding Reservation",
+		filters={"budget_line": budget_line, "status": ["in", _ACTIVE_RESERVATION_STATUSES]},
+		fields=["name", "generated_reference", "plan_item", "original_amount", "remaining_amount", "status"],
+		order_by="creation asc",
+	)
+	out = []
+	for r in rows:
+		out.append(
+			{
+				"id": r.name,
+				"code": r.generated_reference,
+				"plan_item_label": _plan_item_label(r.plan_item),
+				# §12.4 "View Plan Item uses a server-returned authorised Planning
+				# URL. The Budget client does not build a route from a guessed
+				# naming rule." — this is Planning's own published route shape for
+				# its Plan Item editor (kentender_procurement/.../get_plan_review.py
+				# builds the identical string for the same doctype/page).
+				"plan_item_url": f"/app/procurement-plan-item-editor/{r.plan_item}" if r.plan_item else "",
+				"original_amount": flt(r.original_amount),
+				"remaining_amount": flt(r.remaining_amount),
+				"status": r.status,
+			}
+		)
+	return out
+
+
+def get_budget_line_position(budget_line: str, *, as_at_version: str | None = None) -> dict[str, Any]:
+	"""§9.1 `get_budget_line_position` — authorised line identity, active-version
+	amount and current positions. No mutation. BUD-UI-05 Budget Line detail."""
+	line = _resolve_budget_line(budget_line)
+	owning_version = _line_owning_version(line.name, as_at_version)
+	require_budget_version_read_scope(owning_version)
+	budget = frappe.get_doc("Budget", line.budget)
+	version_name = as_at_version or owning_version.name
+	line_version = _line_version_for(version_name, line.name) if version_name else None
+	position = _line_position(line.name, line_version)
 	return {
-		"id": doc.name,
-		"code": doc.generated_reference,
-		"name": doc.title,
-		"title": doc.title,
-		"status": doc.status,
-		"status_label": status_ui,
-		"procuring_entity": _entity_ref(doc.procuring_entity),
-		"fiscal_period": doc.fiscal_period,
-		"fiscal_period_label": f"FY {doc.fiscal_period}" if doc.fiscal_period else "",
-		"currency": currency,
-		"registration_source": doc.registration_source,
-		"registration_source_label": source_ui,
-		"authoritative_reference": doc.authoritative_reference or "",
-		"budget_owner": doc.budget_owner or "",
-		"approval_date": str(doc.approval_date) if doc.approval_date else "",
-		"last_synchronised": None,
-		"totals": {
-			"approved": approved,
-			"reserved": reserved,
-			"committed": committed,
-			"available": available,
-			"actual": actual,
-			"outstanding": outstanding,
-			"approved_display": format_kes_compact(approved, currency=currency),
-			"reserved_display": format_kes_compact(reserved, currency=currency),
-			"committed_display": format_kes_compact(committed, currency=currency),
-			"available_display": format_kes_compact(available, currency=currency),
-			"actual_display": format_kes_compact(actual, currency=currency),
-			"outstanding_display": format_kes_compact(outstanding, currency=currency),
+		"id": line.name,
+		"code": line.generated_reference,
+		"title": line_version.title if line_version else "",
+		"owner_org_unit": _org_unit_label(line_version.owner_org_unit) if line_version else "",
+		"funding_source": _funding_source_label(line_version.funding_source) if line_version else "",
+		"currency": line_version.currency if line_version else "KES",
+		"positions": position,
+		"budget": {
+			"id": budget.name,
+			"code": budget.generated_reference,
+			"procuring_entity": {"id": budget.procuring_entity, "name": _entity_label(budget.procuring_entity)},
+			"financial_year": {"id": budget.financial_year, "label": _fy_label(budget.financial_year)},
 		},
-		"utilization_bar": _utilization_bar(approved, reserved, committed, available),
-		"strategy": {
-			"lines_linked": lines_linked,
-			"lines_total": lines_total,
-			"lines_summary": f"{lines_linked} of {lines_total} lines linked to an Active primary target",
+		"version": {
+			"id": owning_version.name,
+			"version_number": owning_version.version_number,
+			"status": owning_version.status,
 		},
-		"attention": {
-			"kind": attn["attention_kind"],
-			"text": attn["attention"] if attn["attention"] != "None" else "",
-			"has_exception": attn["has_exception"],
-		},
-		"definitional_note": (
-			"Available equals approved funding less active reservations and contract commitments. "
-			"Actual expenditure is shown separately because it is already included within commitments."
-		),
-		"capabilities": _overview_capabilities(doc.status),
+		"reservations": _line_active_reservations(line.name),
 	}
+
+
+def _active_version_name_for_line(budget_line: str) -> str | None:
+	budget_name = frappe.db.get_value("Budget Line", budget_line, "budget")
+	version = _active_version(budget_name) if budget_name else None
+	return version.name if version else None
+
+
+def _line_owning_version(budget_line: str, as_at_version: str | None):
+	version_name = as_at_version or _active_version_name_for_line(budget_line)
+	if not version_name:
+		frappe.throw(_("Budget Line has no resolvable version context"), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+	return frappe.get_doc("Budget Version", version_name)
+
+
+def _version_totals(budget_version_name: str) -> dict[str, float]:
+	"""Budget totals are the sums of the Version's line positions (§5)."""
+	line_versions = frappe.get_all(
+		"Budget Line Version",
+		filters={"budget_version": budget_version_name},
+		fields=["budget_line", "approved_amount", "title", "owner_org_unit", "funding_source", "currency"],
+	)
+	approved = reserved = committed = available = 0.0
+	lines: list[dict[str, Any]] = []
+	codes = (
+		{
+			r.name: r.generated_reference
+			for r in frappe.get_all(
+				"Budget Line", filters={"name": ["in", [lv.budget_line for lv in line_versions]]}, fields=["name", "generated_reference"]
+			)
+		}
+		if line_versions
+		else {}
+	)
+	for lv in line_versions:
+		pos = _line_position(lv.budget_line, lv)
+		approved += pos["approved"]
+		reserved += pos["reserved"]
+		committed += pos["committed"]
+		available += pos["available"]
+		lines.append(
+			{
+				**lv,
+				"code": codes.get(lv.budget_line, ""),
+				"owner_org_unit_label": _org_unit_label(lv.owner_org_unit),
+				"funding_source_label": _funding_source_label(lv.funding_source),
+				"positions": pos,
+			}
+		)
+	return {
+		"approved": approved,
+		"reserved": reserved,
+		"committed": committed,
+		"available": available,
+		"lines": lines,
+	}
+
+
+def resolve_budget_context(procuring_entity: str | None = None, financial_year: str | None = None) -> dict[str, Any]:
+	"""§9.1 `resolve_budget_context` — the Active Budget/Version summary for a
+	PE/FY, or a typed not-found/ambiguous/ineligible error. Never a first-PE,
+	first-record or Administrator fallback (BUD-BR-001)."""
+	pe = resolve_scoped_entity(procuring_entity)
+	if not pe:
+		frappe.throw(_("No procuring entity assigned"), frappe.PermissionError, title="BUDGET_SCOPE_REQUIRED")
+	fy = (financial_year or "").strip()
+	if not fy:
+		frappe.throw(_("Financial Year is required"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
+	if not frappe.db.exists("Financial Year", fy):
+		frappe.throw(_("Financial Year {0} not found").format(fy), frappe.DoesNotExistError, title="BUDGET_CONFIG_MISSING")
+
+	budget_name = frappe.db.get_value("Budget", {"procuring_entity": pe, "financial_year": fy}, "name")
+	if not budget_name:
+		frappe.throw(
+			_("No Budget is registered for this Procuring Entity and Financial Year"),
+			frappe.DoesNotExistError,
+			title="BUDGET_CONTEXT_NOT_FOUND",
+		)
+	budget = frappe.get_doc("Budget", budget_name)
+	version = _active_version(budget_name)
+	if not version:
+		return {"budget": _budget_summary(budget), "version": None}
+	return {"budget": _budget_summary(budget), "version": _version_summary(version)}
+
+
+def _budget_summary(budget) -> dict[str, Any]:
+	return {
+		"id": budget.name,
+		"code": budget.generated_reference,
+		"title": budget.title,
+		"procuring_entity": {"id": budget.procuring_entity, "name": _entity_label(budget.procuring_entity)},
+		"financial_year": {"id": budget.financial_year, "label": _fy_label(budget.financial_year)},
+		"currency": budget.currency,
+	}
+
+
+def _version_summary(version) -> dict[str, Any]:
+	return {
+		"id": version.name,
+		"code": version.generated_reference,
+		"version_number": version.version_number,
+		"status": version.status,
+		"approval_reference": version.approval_reference,
+		# ISO (yyyy-mm-dd) — the version editor binds this straight into an
+		# <input type=date>. approval_date_display is the read-only sibling
+		# ("30 Sep 2026") for Workspace/Detail cards; keep both in sync here
+		# rather than at each call site.
+		"approval_date": str(version.approval_date) if version.approval_date else "",
+		"approval_date_display": _display_date(version.approval_date),
+		"authorised_total": flt(version.authorised_total),
+	}
+
+
+def get_budget_workspace(context_id: str | None = None) -> dict[str, Any]:
+	"""BUD-UI-01 — current scoped Budget and operational position, or the
+	no-baseline state, for one explicit PE Fiscal Year Context (BUD-CHG-001
+	v1.2 Phase 8). No longer auto-resolves "today's" Financial Year or
+	guesses a single PE for the caller — the working context is resolved
+	(explicit selection, remembered preference, or auto-selected when the
+	caller has exactly one) by
+	kentender_core.services.reference_data_resolver.resolve_working_context,
+	which also correctly distinguishes an unrestricted actor (every context)
+	from a scoped one (their permitted Procuring Entities only) from a
+	no-access one — see that function's own docstring. When no context can
+	be resolved, the response carries selection_required=True with the
+	actor's own selectable contexts, instead of ever masquerading as "no
+	baseline"."""
+	from kentender_core.services.reference_data_resolver import resolve_working_context
+
+	resolved = resolve_working_context("budget", requested_context=context_id)
+	if resolved["selection_required"]:
+		return {
+			"selection_required": True,
+			"mode": resolved["mode"],
+			"contexts": resolved["contexts"],
+		}
+
+	selected = resolved["selected"]
+	pe = selected["procuring_entity"]["id"]
+	fy = selected["financial_year"]["id"]
+	result: dict[str, Any] = {
+		"selection_required": False,
+		"context_id": selected["context_id"],
+		"procuring_entity": {"id": pe, "name": _entity_label(pe)},
+		"financial_year": {"id": fy, "label": _fy_label(fy)},
+		"has_budget": False,
+		"can_register": False,
+	}
+
+	budget_name = frappe.db.get_value("Budget", {"procuring_entity": pe, "financial_year": fy}, "name")
+	if not budget_name:
+		try:
+			require_budget_create_capability(frappe.session.user, pe)
+			result["can_register"] = True
+		except frappe.PermissionError:
+			pass
+		return result
+
+	budget = frappe.get_doc("Budget", budget_name)
+	version = _active_version(budget_name)
+	result["has_budget"] = True
+	result["budget"] = _budget_summary(budget)
+	if not version:
+		# A Budget row exists (an Officer saved a Draft) but nothing has been
+		# Activated yet — no artboard covers this directly (BUD-DES-16 "No
+		# baseline" only covers "no Budget row at all"); reuse that empty-state
+		# shell with a status-appropriate action instead of inventing a new
+		# visual. `action` is server-decided per AGENTS.md §6.2 — the client
+		# never derives it from status itself.
+		pending = _draft_version(budget_name)
+		if pending:
+			action = None
+			if has_budget_version_capability(frappe.session.user, CAP_EDIT, pending):
+				action = "open_draft"
+			elif pending.status == "Submitted for approval" and has_budget_version_capability(
+				frappe.session.user, CAP_APPROVE, pending
+			):
+				action = "open_task"
+			# A Viewer (no edit/approve capability on it) gets no disclosure that
+			# a Draft/Submitted version exists at all — falls back to the plain
+			# "No baseline" treatment client-side, matching the no-disclosure
+			# principle already applied to Forbidden/failure states (§12.1).
+			if action:
+				result["pending_version"] = {
+					"id": pending.name,
+					"code": pending.generated_reference,
+					"version_number": pending.version_number,
+					"status": pending.status,
+					"action": action,
+				}
+		return result
+
+	totals = _version_totals(version.name)
+	result["version"] = _version_summary(version)
+	result["positions"] = {
+		"approved": totals["approved"],
+		"reserved": totals["reserved"],
+		"committed": totals["committed"],
+		"available": totals["available"],
+	}
+	result["can_create_revision"] = has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	result["lines_preview"] = [_line_preview_row(row) for row in totals["lines"][:5]]
+	return result
+
+
+def _line_preview_row(row: dict[str, Any]) -> dict[str, Any]:
+	pos = row["positions"]
+	return {
+		"id": row["budget_line"],
+		"code": row.get("code", ""),
+		"title": row["title"],
+		"owner_org_unit": row.get("owner_org_unit_label", ""),
+		"approved": pos["approved"],
+		"reserved": pos["reserved"],
+		"committed": pos["committed"],
+		"available": pos["available"],
+	}
+
+
+def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
+	"""BUD-UI-02 Overview tab — the Draft (or Submitted) version's own field
+	values, for the version editor form."""
+	version = _resolve_budget_version(budget_version)
+	require_budget_version_read_scope(version)
+	budget = frappe.get_doc("Budget", version.budget)
+	return {
+		"budget": _budget_summary(budget),
+		"version": _version_summary(version),
+		"based_on": _version_summary(frappe.get_doc("Budget Version", version.based_on_budget_version))
+		if version.based_on_budget_version
+		else None,
+		"revision_type": version.revision_type or "",
+		"approval_document": version.approval_document or "",
+		"can_edit": version.status == "Draft" and has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+	}
+
+
+def get_budget_detail(budget: str) -> dict[str, Any]:
+	"""BUD-UI-03 Overview tab — Active/read-only funding position + context."""
+	doc = _resolve_budget(budget)
+	resolve_scoped_entity(doc.procuring_entity)
+	version = _active_version(doc.name)
+	if not version:
+		frappe.throw(_("No Active Budget Version"), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+	require_budget_version_read_scope(version)
+	totals = _version_totals(version.name)
+	return {
+		"budget": _budget_summary(doc),
+		"version": _version_summary(version),
+		"positions": {
+			"approved": totals["approved"],
+			"reserved": totals["reserved"],
+			"committed": totals["committed"],
+			"available": totals["available"],
+		},
+		"approval_document": version.approval_document,
+		"activation": {
+			"submitted_by": _user_label(version.submitted_by),
+			"submitted_at": _display_datetime(version.submitted_at),
+			"decided_by": _user_label(version.decided_by),
+			"decided_at": _display_datetime(version.decided_at),
+		},
+		"can_create_revision": has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+	}
+
+
+def _validate_draft_payload(payload: dict) -> dict[str, str]:
+	errors: dict[str, str] = {}
+	approval_reference = (payload.get("approval_reference") or "").strip()
+	approval_date = payload.get("approval_date")
+	total = payload.get("authorised_total")
+
+	if not approval_reference:
+		errors["approval_reference"] = _("Approval reference is required")
+	if not approval_date:
+		errors["approval_date"] = _("Approval date is required")
+	else:
+		try:
+			if getdate(approval_date) > getdate():
+				errors["approval_date"] = _("Approval date cannot be in the future")
+		except Exception:
+			errors["approval_date"] = _("Enter a valid approval date")
+	try:
+		total_val = flt(total)
+	except Exception:
+		total_val = 0
+	if not total or total_val <= 0:
+		errors["authorised_total"] = _("Authorised total must be greater than zero")
+	return errors
+
+
+def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `save_budget_version_draft` — create or update Draft approval
+	details with optimistic concurrency. Creates the Budget on first save."""
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	payload = payload or {}
+
+	budget_key = (payload.get("budget") or "").strip()
+	version_key = (payload.get("budget_version") or "").strip()
+
+	if not budget_key and not version_key:
+		# BUD-CHG-001 v1.2 Phase 8 — the caller supplies the PE/FY as one
+		# explicit context_id (the working context it already selected via
+		# WorkingContextPicker), not a loose procuring_entity/financial_year
+		# pair. validate_context_for_command replaces the old inline
+		# existence+Active check with the shared kentender_core primitive
+		# every state-changing command should use (Active-only — creating a
+		# Budget against a Scheduled or Closed context is not allowed, even
+		# though *viewing* one is fine for history/preparation).
+		from kentender_core.services.reference_data_resolver import validate_context_for_command
+
+		context_id = (payload.get("context_id") or "").strip()
+		if not context_id:
+			return {"ok": False, "errors": {"context_id": _("A Procuring Entity / Financial Year context is required")}}
+		validate_context_for_command(frappe.session.user, context_id)
+		pe, fy = frappe.db.get_value("PE Fiscal Year Context", context_id, ["procuring_entity", "financial_year"])
+		require_budget_create_capability(frappe.session.user, pe)
+		if frappe.db.exists("Budget", {"procuring_entity": pe, "financial_year": fy}):
+			frappe.throw(
+				_("A Budget already exists for this Procuring Entity and Financial Year"),
+				frappe.DuplicateEntryError,
+				title="BUDGET_ALREADY_EXISTS",
+			)
+		errors = _validate_draft_payload(payload)
+		if errors:
+			return {"ok": False, "errors": errors}
+
+		budget = frappe.get_doc(
+			{
+				"doctype": "Budget",
+				"generated_reference": allocate_budget_reference(pe, fy),
+				"procuring_entity": pe,
+				"financial_year": fy,
+				"currency": (payload.get("currency") or "KES").strip(),
+			}
+		)
+		budget.insert(ignore_permissions=True)
+		version = _create_draft_version(budget, payload, based_on=None)
+		return {"ok": True, "budget": _budget_summary(budget), "version": _version_summary(version)}
+
+	if version_key:
+		version = _resolve_budget_version(version_key)
+	else:
+		budget = _resolve_budget(budget_key)
+		version = _draft_version(budget.name)
+		if not version:
+			frappe.throw(_("No Draft Budget Version to update"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	if version.status != "Draft":
+		frappe.throw(_("Only a Draft version can be edited"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+
+	expected_version = payload.get("expected_modified")
+	if expected_version and str(version.modified) != str(expected_version):
+		frappe.throw(_("This Budget Version was changed by someone else"), frappe.ValidationError, title="BUDGET_STALE_WRITE")
+
+	errors = _validate_draft_payload(payload)
+	if errors:
+		return {"ok": False, "errors": errors}
+
+	version.approval_reference = (payload.get("approval_reference") or "").strip()
+	version.approval_date = getdate(payload.get("approval_date"))
+	version.authorised_total = flt(payload.get("authorised_total"))
+	if payload.get("approval_document"):
+		version.approval_document = payload["approval_document"]
+	if version.based_on_budget_version and payload.get("revision_type"):
+		version.revision_type = payload["revision_type"]
+	version.save(ignore_permissions=True)
+
+	from kentender_budget.services.budget_audit_contracts import EVENT_DRAFT_APPROVAL_SAVED, safe_record_event
+
+	safe_record_event(
+		budget=version.budget,
+		budget_version=version.name,
+		event_type=EVENT_DRAFT_APPROVAL_SAVED,
+		actor=frappe.session.user,
+		correlation_id=frappe.generate_hash(length=12),
+		calling_module="Budget & Funding",
+	)
+	return {"ok": True, "version": _version_summary(version)}
+
+
+def _create_draft_version(budget, payload: dict, *, based_on) -> Any:
+	next_number = (
+		frappe.db.count("Budget Version", {"budget": budget.name}) + 1
+		if not based_on
+		else (based_on.version_number + 1)
+	)
+	version = frappe.get_doc(
+		{
+			"doctype": "Budget Version",
+			"generated_reference": allocate_budget_version_reference(budget.generated_reference, next_number),
+			"budget": budget.name,
+			"version_number": next_number,
+			"based_on_budget_version": based_on.name if based_on else None,
+			"revision_type": payload.get("revision_type") if based_on else None,
+			"status": "Draft",
+			"approval_reference": (payload.get("approval_reference") or "").strip(),
+			"approval_date": getdate(payload.get("approval_date")) if payload.get("approval_date") else None,
+			"authorised_total": flt(payload.get("authorised_total")) if payload.get("authorised_total") else None,
+			"approval_document": payload.get("approval_document") or None,
+			"currency": budget.currency,
+			"submitted_by": None,
+		}
+	)
+	version.insert(ignore_permissions=True)
+
+	from kentender_budget.services.budget_audit_contracts import EVENT_VERSION_CREATED, safe_record_event
+
+	safe_record_event(
+		budget=budget.name,
+		budget_version=version.name,
+		event_type=EVENT_VERSION_CREATED,
+		actor=frappe.session.user,
+		correlation_id=frappe.generate_hash(length=12),
+		calling_module="Budget & Funding",
+	)
+
+	if based_on:
+		_copy_line_versions(based_on, version)
+	return version
+
+
+def _copy_line_versions(source_version, target_version) -> None:
+	rows = frappe.get_all(
+		"Budget Line Version",
+		filters={"budget_version": source_version.name},
+		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount", "currency"],
+	)
+	for row in rows:
+		line_code = frappe.db.get_value("Budget Line", row.budget_line, "generated_reference")
+		frappe.get_doc(
+			{
+				"doctype": "Budget Line Version",
+				"generated_reference": allocate_budget_line_version_reference(line_code, target_version.version_number),
+				"budget_version": target_version.name,
+				"budget_line": row.budget_line,
+				"title": row.title,
+				"owner_org_unit": row.owner_org_unit,
+				"funding_source": row.funding_source,
+				"approved_amount": row.approved_amount,
+				"currency": row.currency,
+			}
+		).insert(ignore_permissions=True)
+
+
+def create_budget_successor_version(budget: str, payload: dict | str | None = None) -> dict[str, Any]:
+	"""§9.2 `create_budget_successor_version` — copy the current Active
+	Version and line identities into one Draft successor. At most one open
+	successor may exist (§6.2)."""
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	payload = payload or {}
+
+	doc = _resolve_budget(budget)
+	active = _active_version(doc.name)
+	if not active:
+		frappe.throw(_("No Active Budget Version to revise"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	require_budget_version_capability(frappe.session.user, CAP_EDIT, active)
+
+	existing_draft = _draft_version(doc.name)
+	if existing_draft:
+		return {"ok": True, "version": _version_summary(existing_draft), "existing": True}
+
+	# approval_reference/date/authorised_total/approval_document are DB-mandatory
+	# on Budget Version from the first insert (see BudgetVersionEditorScreen.vue's
+	# own note on this for the baseline case). A successor has no pre-creation
+	# form (BUD-DES-14/15 only exist post-creation) — seed these from the prior
+	# Active version, matching how _copy_line_versions seeds the line data; the
+	# Officer edits them in the tabbed editor before Save/Submit.
+	seeded = {
+		"approval_reference": payload.get("approval_reference") or active.approval_reference,
+		"approval_date": payload.get("approval_date") or str(active.approval_date),
+		"authorised_total": payload.get("authorised_total") or active.authorised_total,
+		"approval_document": payload.get("approval_document") or active.approval_document,
+		"revision_type": payload.get("revision_type"),
+	}
+	version = _create_draft_version(doc, seeded, based_on=active)
+	return {"ok": True, "version": _version_summary(version)}

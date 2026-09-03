@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "autoname": "field:accepted_version",
+ "creation": "2026-08-29 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "departmental_need",
+  "accepted_version",
+  "usage",
+  "active_plan",
+  "active_plan_item",
+  "source_event_id",
+  "source_event_time",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "The Need this projection describes.",
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Fixes the exact source version the projection represents. One projection per accepted version.",
+   "fieldname": "accepted_version",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Accepted Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Not included",
+   "description": "Not included or Fully included. Partially included is removed by v1.1 §1.1.",
+   "fieldname": "usage",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Usage",
+   "options": "Not included\nFully included",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Planning's Active Plan identifier. Stored as text, not a Link: Departmental Needs must not query Procurement Planning tables. Empty when not included.",
+   "fieldname": "active_plan",
+   "fieldtype": "Data",
+   "label": "Active Plan",
+   "read_only": 1
+  },
+  {
+   "description": "Planning's Active Plan Item identifier, supporting View Plan Item. Empty when not included.",
+   "fieldname": "active_plan_item",
+   "fieldtype": "Data",
+   "label": "Active Plan Item",
+   "read_only": 1
+  },
+  {
+   "description": "Makes projection updates idempotent; a repeat of the same event is ignored.",
+   "fieldname": "source_event_id",
+   "fieldtype": "Data",
+   "label": "Source Event ID",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Orders projection updates so a late-arriving older event cannot overwrite a newer one.",
+   "fieldname": "source_event_time",
+   "fieldtype": "Datetime",
+   "label": "Source Event Time",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Need Planning Usage Projection",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "read": 1, "role": "System Manager", "write": 1},
+  {"create": 1, "read": 1, "role": "Administrator", "write": 1},
+  {"read": 1, "role": "Departmental Author"},
+  {"read": 1, "role": "Head of User Department"},
+  {"read": 1, "role": "Procurement Planner"},
+  {"read": 1, "role": "Auditor"}
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "departmental_need,usage",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

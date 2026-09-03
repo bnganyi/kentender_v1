@@ -426,22 +426,17 @@ def _projection_token(payload: dict[str, Any], evidence: list[Any]) -> str:
 
 
 def _eligible_source_rows(*, plan: Any, actor: str, actor_roles: set[str]) -> list[dict[str, Any]]:
-	if not actor_roles.intersection(ADD_DEMAND_ROLES):
-		return []
-	from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
-	return list_eligible_demands(plan=plan.name, user=actor)["demands"]
+	# CTX-CHG-001 — the Demand module is retired (NDS-BR-020) and its
+	# list_eligible_demands service was deleted with it; the stale import here
+	# took the WHOLE Planning workspace down with ModuleNotFoundError. Until
+	# Planning sources accepted Departmental Needs, there are simply no
+	# eligible source rows.
+	return []
 
 
 def _eligible_context_rows(*, pe: str, fy: str, actor: str, actor_roles: set[str]) -> list[dict[str, Any]]:
-	if not actor_roles.intersection(ADD_DEMAND_ROLES):
-		return []
-	from kentender_procurement.procurement_planning.services.list_eligible_demands import project_eligible_demands_for_context
-	start, end = period_dates_for_financial_year(fy)
-	currency = cstr(frappe.db.get_value("Procuring Entity", pe, "reporting_currency") or "KES")
-	return project_eligible_demands_for_context(
-		procuring_entity=pe, financial_year=fy, period_start=start, period_end=end,
-		currency=currency, user=actor,
-	)
+	# See _eligible_source_rows — same retirement, same honest empty result.
+	return []
 
 
 def get_planning_workspace(

@@ -8,7 +8,6 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, flt
 
-from kentender_procurement.procurement_planning.services.list_eligible_demands import list_eligible_demands
 from kentender_procurement.procurement_planning.services.plan_item_finance import effective_finance_status_from_values
 from kentender_procurement.procurement_planning.services.planning_permissions import READ_PLAN_ROLES, assert_planning_scope, has_any_operational_role, is_planning_read_only, require_operational_roles
 from kentender_procurement.procurement_planning.services.validate_plan import effective_validation_status_from_rows
@@ -214,7 +213,10 @@ def get_plan_builder(
 	validation = effective_validation_status_from_rows(
 		version=version.name, stored=cstr(version.validation_projection), rows=fingerprint_rows,
 	)
-	eligible = list_eligible_demands(plan=plan_name, user=actor)
+	# CTX-CHG-001 — Demands retired (NDS-BR-020); no eligible sources until
+	# the accepted-Needs integration lands. The stale import crashed the
+	# whole builder read.
+	eligible = {"demands": [], "eligible_demand_count": 0}
 	item_count = len(all_rows)
 	read_only = is_planning_read_only(actor)
 	all_complete = bool(item_count) and planning_complete == item_count

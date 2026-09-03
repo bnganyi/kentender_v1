@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+<script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+<style>
+a{color:var(--color-accent-700);text-decoration:none;}
+a:hover{color:var(--color-accent-900);text-decoration:underline;}
+body{margin:0;}
+.kt-card-title{font-family:var(--font-heading);text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--color-text);border-bottom:2px solid var(--color-accent);padding-bottom:8px}
+.kt-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.kt-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.kt-status.is-draft{background:oklch(93% .04 250);color:oklch(40% .10 250)}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);">
+<div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 24px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-neutral-300);font-size:12px;">
+  <a href="01-Workspace.dc.html">01 Workspace</a>
+  <a href="02-Start-Dialog.dc.html">02 Start dialog</a>
+  <a href="03-Five-Task-Workspace.dc.html" style="font-weight:700;color:var(--color-accent-900);border-bottom:2px solid var(--color-accent);padding-bottom:2px;">03 Five-task workspace</a>
+  <a href="04-Review-Readiness.dc.html">04 Review &amp; readiness</a>
+  <a href="05-Tender-Approval.dc.html">05 Tender approval</a>
+  <a href="06-Approved-Tender.dc.html">06 Approved Tender</a>
+  <a href="M01-Return-For-Correction.dc.html">M01 Return for correction</a>
+  <a href="M02-Reopen-Before-Publication.dc.html">M02 Reopen before publication</a>
+  <a href="S01-Empty-Error-States.dc.html">S01 Empty &amp; error states</a>
+</div>
+
+<div style="max-width:1280px;margin:0 auto;padding:32px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;color:var(--color-accent-700);text-transform:uppercase;">Tender Preparation</div>
+      <h1 style="font-family:var(--font-heading);font-size:28px;text-transform:uppercase;letter-spacing:.01em;margin:2px 0 4px;">Supply and delivery of ICT equipment</h1>
+      <div style="font-size:13px;color:var(--color-neutral-700);">TND-KEBS-2026-0001 · REQ-KEBS-2026-ICT-0001</div>
+    </div>
+    <span class="kt-status is-draft">Draft</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;margin-top:20px;">
+    <div>
+      <sc-for list="{{ taskNavItems }}" as="item" hint-placeholder-count="5">
+        <div onClick="{{ item.onClick }}" style="padding:12px 14px;border:1px solid var(--color-neutral-300);border-top:none;cursor:pointer;background:{{ item.bg }};">
+          <div style="font-family:var(--font-heading);font-size:14px;text-transform:uppercase;letter-spacing:.01em;">{{ item.label }}</div>
+          <div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px;">{{ item.sub }}</div>
+        </div>
+      </sc-for>
+      <a href="04-Review-Readiness.dc.html" style="display:block;padding:12px 14px;border:1px solid var(--color-neutral-300);border-top:none;color:var(--color-text);">
+        <div style="font-family:var(--font-heading);font-size:14px;text-transform:uppercase;letter-spacing:.01em;">Review and readiness</div>
+        <div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px;">Ready · 0 Blocking · 1 Warning</div>
+      </a>
+    </div>
+
+    <div class="card blueprint" style="padding:28px;min-height:460px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+      <sc-if value="{{ isTask1 }}">
+        <div class="kt-card-title" style="margin-bottom:20px;">1. Tender details</div>
+        <div style="font-size:12px;color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Read-only context</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:28px;">
+          <dc-import name="KtField" kind="readonly" label="Procuring Entity" value="PE-KEBS — Kenya Bureau of Standards" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Plan Item" value="PPI-KEBS-2026-014 — Supply and delivery of ICT equipment" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Requisition" value="REQ-KEBS-2026-ICT-0001" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Requirement type / method" value="Goods — IT equipment · Open Tender" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Authorised quantity / value" value="50 each · KES 18,000,000" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Expected delivery" value="30 Dec 2026" source="From authorised Requisition" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Template" value="IT Equipment — Open Tender · Version 1.0" source="Fixed by IT Equipment template v1.0" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Tender reference" value="TND-KEBS-2026-0001" source="Generated by KenTender" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Opening date and time" value="29 Oct 2026, 11:00 EAT" source="Generated by KenTender" hint-size="100%,60px"></dc-import>
+          <div style="grid-column:1/-1;">
+            <dc-import name="KtField" kind="file" label="Technical specification" value="ICT Equipment Technical Specifications v1.0.pdf" source="Version 1.0 · Approved 20 Sep 2026" hint-size="100%,60px"></dc-import>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Officer controls</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;">
+          <dc-import name="KtField" kind="text" label="Tender title" value="Supply and delivery of business ICT equipment" required="{{ true }}" help="Public title shown to Tenderers; max 160 characters" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="date" label="Issue date" value="8 Oct 2026" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="date" label="Clarification deadline" value="19 Oct 2026, 17:00 EAT" required="{{ true }}" help="Africa/Nairobi" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="date" label="Submission deadline" value="29 Oct 2026, 11:00 EAT" required="{{ true }}" help="Africa/Nairobi" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="number" label="Tender validity" value="120" suffix="days" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Tender security treatment" value="Tender Security" source="Fixed by IT Equipment template v1.0" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Tender security currency" value="KES" source="Fixed by IT Equipment template v1.0" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="number" label="Tender security amount" value="300,000.00" suffix="KES" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="switch" label="Pre-tender meeting" value="No" required="{{ true }}" hint-size="100%,70px"></dc-import>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTask2 }}">
+        <div class="kt-card-title" style="margin-bottom:20px;">2. Goods and delivery</div>
+        <dc-import name="KtField" kind="file" label="Authorised technical specification" value="ICT Equipment Technical Specifications v1.0.pdf" source="View / download only" hint-size="100%,60px"></dc-import>
+        <div class="table" style="margin-top:20px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr><th>#</th><th>Goods description</th><th style="text-align:right;">Qty</th><th>Unit ▾</th><th>Delivery location ▾</th><th>Latest delivery</th><th>Warranty</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Business laptops</td><td style="text-align:right;">25</td><td>Each</td><td>KEBS Coast Region Office, Mombasa</td><td>30 Dec 2026</td><td>36 months</td></tr>
+              <tr><td>2</td><td>Business desktop computers with monitors</td><td style="text-align:right;">15</td><td>Each</td><td>KEBS Coast Region Office, Mombasa</td><td>30 Dec 2026</td><td>36 months</td></tr>
+              <tr><td>3</td><td>Business tablets</td><td style="text-align:right;">10</td><td>Each</td><td>KEBS Coast Region Office, Mombasa</td><td>30 Dec 2026</td><td>24 months</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--color-neutral-600);">Item # generated · Unit and Delivery location are governed selections (▾) · rows editable only in Draft.</div>
+        <div style="margin-top:20px;font-size:13px;color:var(--color-neutral-600);">No related services authorised for this Requisition.</div>
+      </sc-if>
+
+      <sc-if value="{{ isTask3 }}">
+        <div class="kt-card-title" style="margin-bottom:20px;">3. Price schedule</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 24px;margin-bottom:24px;">
+          <dc-import name="KtField" kind="readonly" label="Price currency" value="KES" source="Fixed by IT Equipment template v1.0" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Prices fixed for contract period" value="Yes" source="Fixed by IT Equipment template v1.0" hint-size="100%,60px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Taxes shown separately" value="Yes" source="Fixed by IT Equipment template v1.0" hint-size="100%,60px"></dc-import>
+        </div>
+        <div class="table">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr><th>#</th><th>Item</th><th style="text-align:right;">Qty</th><th>Unit</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Tax</th><th style="text-align:right;">Line total</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Business laptops</td><td style="text-align:right;">25</td><td>Each</td><td colSpan="3" style="text-align:center;font-style:italic;color:var(--color-neutral-500);">Completed by Tenderer</td></tr>
+              <tr><td>2</td><td>Business desktop computers with monitors</td><td style="text-align:right;">15</td><td>Each</td><td colSpan="3" style="text-align:center;font-style:italic;color:var(--color-neutral-500);">Completed by Tenderer</td></tr>
+              <tr><td>3</td><td>Business tablets</td><td style="text-align:right;">10</td><td>Each</td><td colSpan="3" style="text-align:center;font-style:italic;color:var(--color-neutral-500);">Completed by Tenderer</td></tr>
+              <tr style="font-weight:600;"><td colSpan="4" style="text-align:right;">Tender total</td><td colSpan="3" style="text-align:center;font-style:italic;color:var(--color-neutral-500);">Calculated from Tenderer response</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:var(--color-neutral-600);">No officer-entered, fixture or estimated price. The authorised value is not copied into the supplier price schedule.</div>
+      </sc-if>
+
+      <sc-if value="{{ isTask4 }}">
+        <div class="kt-card-title" style="margin-bottom:20px;">4. Submission and evaluation</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);margin-bottom:20px;">Fixed sequence: eligibility check → pass/fail technical compliance → financial evaluation → award to lowest evaluated responsive Tender.</div>
+        <div style="display:grid;gap:20px;">
+          <dc-import name="KtField" kind="switch" label="Manufacturer authorisation required" value="Yes" required="{{ true }}" help="Yes adds the fixed Manufacturer Authorisation evidence row" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="switch" label="Product datasheets or brochures required" value="Yes" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Warranty confirmation required" value="Yes — always required" source="Fixed by IT Equipment template v1.0" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="switch" label="Past supply experience required" value="Yes" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-left:16px;border-left:2px solid var(--color-neutral-300);">
+            <dc-import name="KtField" kind="select" label="Minimum comparable contracts" value="2" required="{{ true }}" hint-size="100%,70px"></dc-import>
+            <dc-import name="KtField" kind="select" label="Experience period" value="5" suffix="years" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          </div>
+          <dc-import name="KtField" kind="switch" label="After-sales support evidence required" value="Yes" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <div style="padding-left:16px;border-left:2px solid var(--color-neutral-300);">
+            <dc-import name="KtField" kind="select" label="After-sales evidence" value="Kenya service-centre details and escalation contacts" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          </div>
+        </div>
+        <div style="margin-top:20px;font-size:13px;color:var(--color-neutral-600);">No additional evidence rows added.</div>
+      </sc-if>
+
+      <sc-if value="{{ isTask5 }}">
+        <div class="kt-card-title" style="margin-bottom:20px;">5. Contract terms</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;">
+          <dc-import name="KtField" kind="readonly" label="Delivery period" value="By 30 Dec 2026, per delivery schedule" source="Generated from Task 2" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="select" label="Inspection and acceptance location" value="KEBS Coast Region Office, Mombasa" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="readonly" label="Warranty period" value="36 months (Items 1–2) · 24 months (Item 3)" source="Generated from Task 2" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="select" label="Payment timing" value="30" suffix="days" required="{{ true }}" help="After delivery, inspection, acceptance and valid invoice" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="switch" label="Performance security required" value="Yes" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="number" label="Performance security percentage" value="10" suffix="%" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="number" label="Delay damages per week" value="0.5" suffix="%" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="number" label="Maximum delay damages" value="10" suffix="%" required="{{ true }}" hint-size="100%,70px"></dc-import>
+          <dc-import name="KtField" kind="select" label="Contract contact office" value="KEBS Contracts Office" required="{{ true }}" hint-size="100%,70px"></dc-import>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--color-neutral-300);">
+        <button class="btn btn-secondary">Save draft</button>
+        <sc-if value="{{ isTask5 }}" hint-placeholder-val="{{ false }}">
+          <a href="04-Review-Readiness.dc.html" class="btn btn-primary">Review Tender</a>
+        </sc-if>
+        <sc-if value="{{ !isTask5 }}" hint-placeholder-val="{{ true }}">
+          <button class="btn btn-primary" onClick="{{ continueTask }}">Continue</button>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const NAV_DEF = [
+  { n:1, label:'1. Tender details', sub:'Complete' },
+  { n:2, label:'2. Goods and delivery', sub:'Complete · 3 items' },
+  { n:3, label:'3. Price schedule', sub:'Complete · Generated from 3 items' },
+  { n:4, label:'4. Submission and evaluation', sub:'Complete' },
+  { n:5, label:'5. Contract terms', sub:'Complete' },
+];
+
+class Component extends DCLogic {
+  state = { activeTask: 1 };
+  selectTask = (n) => this.setState({ activeTask: n });
+  continueTask = () => this.setState(s => ({ activeTask: Math.min(s.activeTask + 1, 5) }));
+
+  renderVals() {
+    const s = this.state;
+    const taskNavItems = NAV_DEF.map(item => ({
+      ...item,
+      onClick: () => this.selectTask(item.n),
+      bg: item.n === s.activeTask ? 'var(--color-accent-100)' : 'var(--color-bg)',
+    }));
+    return {
+      taskNavItems,
+      isTask1: s.activeTask === 1, isTask2: s.activeTask === 2, isTask3: s.activeTask === 3,
+      isTask4: s.activeTask === 4, isTask5: s.activeTask === 5,
+      continueTask: this.continueTask,
+    };
+  }
+}
+</script>
+</body>
+</html>

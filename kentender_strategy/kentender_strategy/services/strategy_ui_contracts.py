@@ -72,7 +72,14 @@ def _allowed_pes() -> tuple[set[str], bool]:
 	user = frappe.session.user
 	if not any(r in roles for r in _LIFECYCLE_ROLES):
 		return set(), False
-	pes = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
+	# CTX-CHG-001 — the one canonical PE eligibility rule (User Scope
+	# Assignment with an all-rows User Permission fallback), replacing this
+	# module's fourth ad-hoc query.
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
+	pes = permitted_procuring_entities(user)
+	if pes is None:
+		return set(), True
 	return pes, False
 
 

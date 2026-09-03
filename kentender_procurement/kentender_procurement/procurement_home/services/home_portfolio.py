@@ -214,7 +214,7 @@ def get_home_portfolio(
 						"display": _fmt_money(unfunded, currency),
 						"currency": currency,
 						"tone": "exhausted",
-						"url": "/desk/demands-workspace",
+						"url": "/desk/departmental-needs",
 					},
 				]
 			)

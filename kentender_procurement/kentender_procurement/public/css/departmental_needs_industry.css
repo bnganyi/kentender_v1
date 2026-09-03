@@ -1,0 +1,253 @@
+/* Departmental Needs — NDS-CHG-001 v1.1 §11 supplementary Industry classes.
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared Industry system
+ * (.kt-card, .kt-btn, .kt-table, .kt-field, .kt-input, .kt-corner, .kt-dialog…).
+ * The NDS-DES artboards define a handful of classes on top of it in their own
+ * <helmet><style> blocks; those are ported here verbatim so the screens render
+ * exactly what the artboards specify, scoped under .kt-industry like the rest
+ * of the system.
+ *
+ * Nothing here restyles a shared class. If a rule below ever needs to change a
+ * .kt-card or .kt-btn, it belongs in kt_industry_tokens.css instead.
+ */
+
+/* The NDS-DES artboard helmet styles below were ported verbatim, and they use
+ * un-prefixed custom properties (--color-*, --font-*, --radius-*) while the
+ * shared Industry system defines only --kt-* tokens (kt_industry_tokens.css).
+ * Every such var() silently resolved to nothing — the sticky page footer, for
+ * one, rendered with no background and let the form scroll through it. This
+ * block defines the whole un-prefixed family once, on the same scope, aliased
+ * onto the shared tokens (with a small neutral scale the shared set lacks),
+ * so each rule below resolves the value the artboard intended. */
+.kt-industry {
+	--color-bg: var(--kt-color-bg);
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-700: var(--kt-color-accent-800);
+	--color-neutral-100: var(--kt-color-surface);
+	--color-neutral-200: var(--kt-color-divider);
+	--color-neutral-600: #5b5e61;
+	--color-neutral-700: #44474a;
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
+/* NDS-DES-01/02/05/06/07/10/12 — status pill. Colour is never the only carrier
+ * of state (§12.8): every pill also renders its own text label. */
+.kt-industry .kt-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px 3px 8px;
+	border-radius: 6px;
+	font-family: var(--font-body);
+	font-size: 12.5px;
+	font-weight: 600;
+}
+.kt-industry .kt-status .dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	flex: none;
+}
+.kt-industry .kt-status.is-live {
+	background: oklch(93% 0.06 155);
+	color: oklch(30% 0.09 155);
+}
+.kt-industry .kt-status.is-live .dot {
+	background: oklch(45% 0.13 155);
+}
+.kt-industry .kt-status.is-draft {
+	background: oklch(93% 0.03 250);
+	color: oklch(35% 0.08 250);
+}
+.kt-industry .kt-status.is-draft .dot {
+	background: oklch(50% 0.13 250);
+}
+.kt-industry .kt-status.is-pending {
+	background: var(--color-neutral-100);
+	color: var(--color-neutral-700);
+}
+.kt-industry .kt-status.is-pending .dot {
+	background: transparent;
+	border: 1.5px solid var(--color-neutral-700);
+}
+.kt-industry .kt-status.is-attention {
+	background: oklch(93% 0.07 70);
+	color: oklch(35% 0.1 55);
+}
+.kt-industry .kt-status.is-attention .dot {
+	background: oklch(55% 0.15 55);
+}
+
+/* NDS-DES-01/02 — the single row action. */
+.kt-industry .kt-action-link {
+	color: var(--color-accent-700);
+	font-weight: 600;
+	text-decoration: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	font-family: inherit;
+	font-size: inherit;
+}
+.kt-industry .kt-action-link:hover {
+	text-decoration: underline;
+}
+
+/* NDS-DES-03/05/06/07/12 — stacked read-only field rows. */
+.kt-industry .kt-readonly-row + .kt-readonly-row {
+	margin-top: 16px;
+}
+.kt-industry .kt-readonly-label {
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-neutral-600);
+	margin-bottom: 4px;
+}
+.kt-industry .kt-readonly-value {
+	font-size: 14.5px;
+}
+.kt-industry .kt-readonly-value.is-strong {
+	font-weight: 500;
+}
+
+/* NDS-DES-02 — review queue / department register tabs. */
+.kt-industry .kt-tabstrip {
+	display: flex;
+	gap: 24px;
+	border-bottom: 1px solid var(--color-neutral-200);
+	margin-bottom: 16px;
+}
+.kt-industry .kt-tabstrip .kt-tab {
+	font-family: var(--font-heading);
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	padding: 10px 2px;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+	color: var(--color-neutral-600);
+	background: none;
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+}
+.kt-industry .kt-tabstrip .kt-tab.is-selected {
+	color: var(--color-text);
+	border-bottom-color: var(--color-accent);
+}
+
+/* NDS-DES-06/12b — the destructive decision, distinct from the primary one. */
+.kt-industry .kt-btn-destructive {
+	background: none;
+	border: 1px solid oklch(55% 0.18 25);
+	color: oklch(45% 0.16 25);
+	border-radius: var(--radius-md);
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 14.5px;
+	cursor: pointer;
+	padding: 10px 18px;
+}
+.kt-industry .kt-btn-destructive:hover:not(:disabled) {
+	background: oklch(95% 0.03 25);
+}
+.kt-industry .kt-btn-destructive:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+/* NDS-DES-14a — loading skeleton rows. */
+.kt-industry .kt-skel-row {
+	display: grid;
+	grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr 0.8fr;
+	gap: 16px;
+	align-items: center;
+	padding: 14px 20px;
+}
+.kt-industry .kt-skel-row + .kt-skel-row {
+	border-top: 1px solid var(--color-neutral-200);
+}
+
+/* NDS-DES-03/06/10 — sticky command footer. */
+.kt-industry .kt-page-footer {
+	position: sticky;
+	bottom: 0;
+	left: 0;
+	background: var(--color-bg);
+	border-top: 1px solid var(--color-neutral-200);
+	padding: 16px 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 16px;
+}
+
+/* NDS-DES-01/02 — page masthead. */
+.kt-industry .kt-page-kicker {
+	font-family: var(--font-heading);
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: var(--color-accent-700);
+}
+.kt-industry .kt-page-title {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 34px;
+	margin: 4px 0 8px;
+	letter-spacing: 0.01em;
+}
+.kt-industry .kt-record-title {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 30px;
+	margin: 0;
+	letter-spacing: 0.01em;
+}
+.kt-industry .kt-page-lede {
+	font-size: 15px;
+	color: var(--color-neutral-700);
+	max-width: 640px;
+	margin: 0;
+}
+.kt-industry .kt-context-grid {
+	display: grid;
+	gap: 16px;
+	align-items: start;
+}
+/* The 16px stacked-list margin between adjacent readonly rows leaks into the
+   grid, where every cell after the first is an adjacent sibling — pushing the
+   Department and Financial Year columns 16px below Procuring Entity. */
+.kt-industry .kt-context-grid > .kt-readonly-row + .kt-readonly-row {
+	margin-top: 0;
+}
+.kt-industry textarea.kt-input {
+	resize: vertical;
+	min-height: 72px;
+	font-family: var(--font-body);
+}
+
+/* §12.8 — a validation summary the page can move focus to. */
+.kt-industry .kt-error-summary {
+	border: 1px solid oklch(55% 0.18 25);
+	background: oklch(97% 0.02 25);
+	color: oklch(40% 0.16 25);
+	border-radius: var(--radius-md);
+	padding: 12px 16px;
+	font-size: 14px;
+	margin-bottom: 16px;
+}
+.kt-industry .kt-error-summary:focus-visible {
+	outline: 2px solid oklch(55% 0.18 25);
+	outline-offset: 2px;
+}
+.kt-industry .kt-field-error {
+	color: oklch(45% 0.16 25);
+	font-size: 12.5px;
+	margin-top: 6px;
+}

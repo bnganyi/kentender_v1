@@ -73,6 +73,13 @@
 		var root = host.querySelector("#kt-ph-root");
 		if (!root || root.__ktPhBound) return;
 		root.__ktPhBound = true;
+		// CTX-CHG-001 — a PE switched from the shared rail on any Vue page
+		// moves the same global preference this page resolves from.
+		document.addEventListener("kt:working-pe-changed", function () {
+			if (!root.isConnected) return;
+			_state.context = null;
+			_loadHome();
+		});
 		root.addEventListener("change", function (e) {
 			var t = e.target;
 			if (!t || !t.getAttribute) return;
@@ -230,7 +237,7 @@
 			rows +
 			"</tbody></table></div>" +
 			'<div class="kt-ph-footer-link"><button type="button" class="kt-ph-link-btn" data-kt-ph-nav="' +
-			_esc(section.view_all_url || "/desk/demands-workspace") +
+			_esc(section.view_all_url || "/desk/departmental-needs") +
 			'">View all work <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_forward</span></button></div>';
 	}
 

@@ -6,26 +6,46 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_identity",
   "budget",
+  "budget_version",
   "budget_line",
-  "col_a",
+  "col_id",
   "event_type",
   "event_at",
+  "downstream_reference",
+  "section_records",
+  "reservation",
+  "commitment",
+  "col_records",
+  "amount",
+  "currency",
   "section_actor",
   "actor",
   "actor_kind",
-  "col_b",
-  "record_code",
-  "record_doctype",
-  "section_change",
-  "before_summary",
-  "after_summary",
-  "change_summary",
-  "source_reference",
+  "calling_module",
+  "col_actor",
+  "correlation_id",
+  "revalidation_failure_code",
   "reason",
+  "section_before",
+  "before_approved",
+  "before_reserved",
+  "before_committed",
+  "before_available",
+  "section_after",
+  "after_approved",
+  "after_reserved",
+  "after_committed",
+  "after_available",
   "fixture_namespace"
  ],
  "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
   {
    "fieldname": "budget",
    "fieldtype": "Link",
@@ -36,20 +56,28 @@
    "search_index": 1
   },
   {
+   "fieldname": "budget_version",
+   "fieldtype": "Link",
+   "label": "Budget Version",
+   "options": "Budget Version",
+   "search_index": 1
+  },
+  {
    "fieldname": "budget_line",
    "fieldtype": "Link",
    "label": "Budget Line",
-   "options": "Budget Line"
+   "options": "Budget Line",
+   "search_index": 1
   },
   {
-   "fieldname": "col_a",
+   "fieldname": "col_id",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "event_type",
    "fieldtype": "Select",
    "label": "Event Type",
-   "options": "Baseline registered\nBudget submitted\nBudget returned\nBudget reviewed\nBudget activated\nFunding reserved\nReservation released\nReservation revalidated\nReservation partially converted\nContract commitment recorded\nCommitment adjusted\nExpenditure snapshot recorded\nRevision applied\nLine changed",
+   "options": "Budget version created\nDraft approval details saved\nDraft lines saved\nBudget version submitted\nBudget version returned\nBudget version approved and activated\nBudget version superseded\nBudget closed\nCheck funding performed\nFunding reserved\nReservation revalidated\nReservation released\nReservation partially converted\nContract commitment recorded\nCommitment adjusted\nPermission denied\nConcurrency conflict",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
@@ -63,6 +91,49 @@
    "search_index": 1
   },
   {
+   "fieldname": "downstream_reference",
+   "fieldtype": "Data",
+   "label": "Downstream Reference",
+   "in_list_view": 1,
+   "description": "Plan allocation, contract or variation reference, as applicable."
+  },
+  {
+   "fieldname": "section_records",
+   "fieldtype": "Section Break",
+   "label": "Related Records"
+  },
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Reservation",
+   "options": "Funding Reservation",
+   "search_index": 1
+  },
+  {
+   "fieldname": "commitment",
+   "fieldtype": "Link",
+   "label": "Commitment",
+   "options": "Procurement Commitment",
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_records",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "currency"
+  },
+  {
+   "default": "KES",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
    "fieldname": "section_actor",
    "fieldtype": "Section Break",
    "label": "Actor"
@@ -72,7 +143,8 @@
    "fieldtype": "Data",
    "label": "Actor",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Actor or calling service."
   },
   {
    "fieldname": "actor_kind",
@@ -83,51 +155,89 @@
    "reqd": 1
   },
   {
-   "fieldname": "col_b",
+   "fieldname": "calling_module",
+   "fieldtype": "Data",
+   "label": "Calling Module"
+  },
+  {
+   "fieldname": "col_actor",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "record_code",
+   "fieldname": "correlation_id",
    "fieldtype": "Data",
-   "label": "Record Code",
+   "label": "Correlation ID",
    "reqd": 1,
-   "in_list_view": 1,
    "search_index": 1
   },
   {
-   "fieldname": "record_doctype",
+   "fieldname": "revalidation_failure_code",
    "fieldtype": "Data",
-   "label": "Record DocType"
-  },
-  {
-   "fieldname": "section_change",
-   "fieldtype": "Section Break",
-   "label": "Change"
-  },
-  {
-   "fieldname": "before_summary",
-   "fieldtype": "Small Text",
-   "label": "Before Summary"
-  },
-  {
-   "fieldname": "after_summary",
-   "fieldtype": "Small Text",
-   "label": "After Summary"
-  },
-  {
-   "fieldname": "change_summary",
-   "fieldtype": "Small Text",
-   "label": "Change Summary"
-  },
-  {
-   "fieldname": "source_reference",
-   "fieldtype": "Data",
-   "label": "Source Reference"
+   "label": "Revalidation Failure Code"
   },
   {
    "fieldname": "reason",
    "fieldtype": "Small Text",
-   "label": "Reason"
+   "label": "Reason",
+   "description": "Required decision reason where applicable (e.g. Return reason)."
+  },
+  {
+   "fieldname": "section_before",
+   "fieldtype": "Section Break",
+   "label": "Before Position"
+  },
+  {
+   "fieldname": "before_approved",
+   "fieldtype": "Currency",
+   "label": "Before: Approved",
+   "options": "currency"
+  },
+  {
+   "fieldname": "before_reserved",
+   "fieldtype": "Currency",
+   "label": "Before: Reserved",
+   "options": "currency"
+  },
+  {
+   "fieldname": "before_committed",
+   "fieldtype": "Currency",
+   "label": "Before: Committed",
+   "options": "currency"
+  },
+  {
+   "fieldname": "before_available",
+   "fieldtype": "Currency",
+   "label": "Before: Available",
+   "options": "currency"
+  },
+  {
+   "fieldname": "section_after",
+   "fieldtype": "Section Break",
+   "label": "After Position"
+  },
+  {
+   "fieldname": "after_approved",
+   "fieldtype": "Currency",
+   "label": "After: Approved",
+   "options": "currency"
+  },
+  {
+   "fieldname": "after_reserved",
+   "fieldtype": "Currency",
+   "label": "After: Reserved",
+   "options": "currency"
+  },
+  {
+   "fieldname": "after_committed",
+   "fieldtype": "Currency",
+   "label": "After: Committed",
+   "options": "currency"
+  },
+  {
+   "fieldname": "after_available",
+   "fieldtype": "Currency",
+   "label": "After: Available",
+   "options": "currency"
   },
   {
    "fieldname": "fixture_namespace",
@@ -139,7 +249,7 @@
  "index_web_pages_for_search": 0,
  "istable": 0,
  "links": [],
- "modified": "2026-08-05 00:00:00.000000",
+ "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Audit Event",
@@ -148,7 +258,7 @@
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 0,
@@ -156,7 +266,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,
@@ -178,19 +288,7 @@
    "print": 0,
    "read": 1,
    "report": 1,
-   "role": "Budget Reviewer",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 0,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Authority",
+   "role": "Budget Approver",
    "share": 0,
    "write": 0
   },
@@ -223,5 +321,6 @@
  "sort_order": "DESC",
  "states": [],
  "track_changes": 0,
- "is_submittable": 0
+ "is_submittable": 0,
+ "search_fields": "correlation_id,downstream_reference"
 }

@@ -108,34 +108,25 @@ class TestModuleRegistry(IntegrationTestCase):
 		# "strategy-portfolio" (Phase 7) is the real desk_page now.
 		self.assertNotIn("strategy-alignment", keys)
 		self.assertEqual(keys.get("strategy-portfolio"), "Procurement")
-		self.assertIn("budget-funding", keys)
+		# BUD-CHG-001 v1.2 Phase 5: the one "budget-funding" Page now exists
+		# (BUD-UI-01..05) — not "budget", which collides with the existing
+		# Budget doctype's own List View route.
+		self.assertEqual(keys.get("budget-funding"), "Procurement")
 		self.assertIn("form/demand", keys)
 
 	def test_budget_module_portfolio_route(self):
+		"""BUD-CHG-001 v1.2 Phase 5 — the one "budget-funding" Page (BUD-UI-01..05)."""
 		mod = get_module("budget")
 		self.assertEqual(mod["desk_page"], "budget-funding")
-		self.assertEqual(mod["form_doctype"], "Budget")
-		self.assertIn("budget-funding", mod["route_prefixes"])
+		self.assertEqual(mod["form_doctype"], "")
+		self.assertEqual(mod["route_prefixes"], ("budget-funding",))
 
 	def test_budget_route_prefixes_cover_all_page_js(self):
 		"""BUD-SUP-004 — every Budget Desk page must resolve to the budget module."""
 		mod = get_module("budget")
 		prefixes = {str(p) for p in (mod["route_prefixes"] or ())}
-		sidebar_keys = get_route_sidebar_keys()
 		for slug in _budget_page_js_slugs():
-			self.assertIn(
-				slug,
-				prefixes,
-				msg=f"budget route_prefixes missing page_js slug {slug!r}",
-			)
-			# Boot fast-path maps routes to the Procurement rail parent.
-			self.assertEqual(
-				sidebar_keys.get(slug.lower()),
-				"Procurement",
-				msg=f"get_route_sidebar_keys missing budget mapping for {slug!r}",
-			)
-		self.assertIn("Form/Budget", prefixes)
-		self.assertEqual(sidebar_keys.get("form/budget"), "Procurement")
+			self.assertIn(slug, prefixes, msg=f"budget route_prefixes missing page_js slug {slug!r}")
 
 	def test_budget_js_registry_route_prefixes_match_page_js(self):
 		"""BUD-SUP-004 — kt_module_registry.js must stay in sync with hooks.page_js."""
@@ -145,12 +136,7 @@ class TestModuleRegistry(IntegrationTestCase):
 		block = _budget_js_route_prefixes_block(source)
 		self.assertTrue(block, msg="budget routePrefixes array not found in kt_module_registry.js")
 		for slug in _budget_page_js_slugs():
-			self.assertIn(
-				f'"{slug}"',
-				block,
-				msg=f"kt_module_registry.js budget routePrefixes missing {slug!r}",
-			)
-		self.assertIn('"Form/Budget"', block)
+			self.assertIn(f'"{slug}"', block, msg=f"kt_module_registry.js budget routePrefixes missing {slug!r}")
 
 	def test_strategy_route_prefixes_cover_all_page_js(self):
 		"""STR-SUP-003 — every Strategy Desk page must resolve to the strategy module."""

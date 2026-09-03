@@ -70,8 +70,7 @@ app_include_css = [
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
 	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
 	# had its own ensureCss() fallback link-injection for exactly this case.
-	f"/assets/kentender_procurement/css/departmental_needs.css?v={_desk_asset_v('public/css/departmental_needs.css')}",
-	f"/assets/kentender_procurement/css/departmental_needs_forms.css?v={_desk_asset_v('public/css/departmental_needs_forms.css')}",
+	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
 	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",
 ]
 app_include_js = [
@@ -206,11 +205,11 @@ doctype_js = {
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
 	"support-plan-view": "public/js/support_plan_view.js",
+	# NDS-CHG-001 v1.1 §10 — one Page for all eight NDS-UI routes; the root
+	# Vue component branches on route segments. The four legacy sub-pages
+	# (-new, -edit, -review, -detail) are removed by patch
+	# nds_chg_001_v11_retire_legacy_pages.
 	"departmental-needs": "public/js/departmental_needs_page.js",
-	"departmental-needs-new": "public/js/departmental_needs_create_page.js",
-	"departmental-needs-edit": "public/js/departmental_needs_create_page.js",
-	"departmental-needs-review": "public/js/departmental_needs_review_page.js",
-	"departmental-needs-detail": "public/js/departmental_needs_detail_page.js",
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
@@ -491,6 +490,12 @@ after_migrate = [
 
 boot_session = [
 	"kentender_procurement.setup.workspace_permissions.patch_bootinfo",
+]
+
+# NDS §4.4 review decisions surface in the shared My Work queue (kentender_core
+# collects providers through this hook; core never imports this app).
+kt_my_work_providers = [
+	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.

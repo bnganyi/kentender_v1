@@ -6,48 +6,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "budget",
-  "budget_line",
-  "reservation",
   "generated_reference",
+  "reservation",
   "col_a",
+  "contract",
   "status",
-  "event_date",
-  "section_contract",
-  "contract_code",
-  "contract_title",
-  "col_b",
-  "original_amount",
   "current_amount",
-  "actual_expenditure",
-  "outstanding_amount",
   "currency",
-  "idempotency_key",
   "fixture_namespace"
  ],
  "fields": [
-  {
-   "fieldname": "budget",
-   "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "budget_line",
-   "fieldtype": "Link",
-   "label": "Budget Line",
-   "options": "Budget Line",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "reservation",
-   "fieldtype": "Link",
-   "label": "Funding Reservation",
-   "options": "Funding Reservation"
-  },
   {
    "fieldname": "generated_reference",
    "fieldtype": "Data",
@@ -58,71 +26,47 @@
    "read_only": 1
   },
   {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Funding Reservation",
+   "options": "Funding Reservation",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Prevents a commitment from bypassing the confirmed funding lineage."
+  },
+  {
    "fieldname": "col_a",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract",
+   "fieldtype": "Data",
+   "label": "Contract",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1,
+   "unique": 1,
+   "description": "Identifies the owning downstream contract; unique within the reservation lineage."
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Active\nClosed\nCancelled",
+   "options": "Active\nCancelled\nClosed",
    "reqd": 1,
    "default": "Active",
    "in_list_view": 1
   },
   {
-   "fieldname": "event_date",
-   "fieldtype": "Date",
-   "label": "Event Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_contract",
-   "fieldtype": "Section Break",
-   "label": "Contract"
-  },
-  {
-   "fieldname": "contract_code",
-   "fieldtype": "Data",
-   "label": "Contract Code",
-   "reqd": 1
-  },
-  {
-   "fieldname": "contract_title",
-   "fieldtype": "Data",
-   "label": "Contract Title",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "col_b",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "original_amount",
-   "fieldtype": "Currency",
-   "label": "Original Amount",
-   "reqd": 1,
-   "options": "currency"
-  },
-  {
    "fieldname": "current_amount",
    "fieldtype": "Currency",
    "label": "Current Amount",
+   "options": "currency",
    "reqd": 1,
-   "options": "currency"
-  },
-  {
-   "fieldname": "actual_expenditure",
-   "fieldtype": "Currency",
-   "label": "Actual Expenditure",
-   "options": "currency"
-  },
-  {
-   "fieldname": "outstanding_amount",
-   "fieldtype": "Currency",
-   "label": "Outstanding Amount",
-   "options": "currency"
+   "non_negative": 1,
+   "description": "Changed only through the adjustment service."
   },
   {
    "default": "KES",
@@ -133,12 +77,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "idempotency_key",
-   "fieldtype": "Data",
-   "label": "Idempotency Key",
-   "unique": 1
-  },
-  {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture Namespace",
@@ -147,7 +85,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-05 00:00:00.000000",
+ "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Procurement Commitment",
@@ -156,7 +94,7 @@
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 1,
@@ -186,19 +124,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Budget Reviewer",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Authority",
+   "role": "Budget Approver",
    "share": 0,
    "write": 0
   },
@@ -213,12 +139,23 @@
    "role": "Budget Viewer",
    "share": 0,
    "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
   }
  ],
- "sort_field": "event_date",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "title_field": "contract_title",
- "search_fields": "generated_reference,contract_code,contract_title"
+ "search_fields": "generated_reference,contract"
 }

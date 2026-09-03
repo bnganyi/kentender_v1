@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
+  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); }
+    .content { max-width: 900px; margin: 0 auto; padding: 32px 0 40px; }
+    .page-title { margin: 0 0 8px; }
+    .page-desc { margin: 0 0 8px; color: color-mix(in srgb, var(--color-text) 65%, transparent); font-size: 15px; max-width: 70ch; }
+    .card-pad { padding: 20px; margin-top: 20px; }
+    .kt-card-title { margin-bottom: 14px; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+    .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 4px; }
+    .ro-field .val { font-size: 15px; }
+    .footer-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px 0; border-top: 1px solid var(--color-divider); margin-top: 32px; }
+  </style>
+</helmet>
+<div class="artboard">
+  <div class="content">
+    <h1 class="page-title">Add direct requirement</h1>
+    <p class="page-desc">Add a requirement the department already knows it needs to procure.</p>
+    <span class="kt-status is-pending">New</span>
+
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="field-grid">
+        <div class="ro-field"><label>Procuring Entity</label><div class="val">PE-MOH — Ministry of Health</div></div>
+        <div class="ro-field"><label>Department</label><div class="val">OU-MOH-DHI — Digital Health</div></div>
+        <div class="ro-field"><label>Financial Year</label><div class="val">FY 2027/28</div></div>
+      </div>
+    </div>
+
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Requirement</div>
+      <div class="field-grid">
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Title</label>
+          <input type="text" class="input" value="Digital health platform security assessment">
+        </div>
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Description</label>
+          <textarea class="input">Assess the security of the national digital health platform and provide a prioritised remediation report.</textarea>
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <input type="text" class="input" value="1">
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <input type="text" class="input" value="Service">
+        </div>
+        <div class="field">
+          <label>Required by</label>
+          <input type="text" class="input" value="31 Oct 2027">
+        </div>
+      </div>
+    </div>
+
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Funding</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Budget Line</label>
+          <select class="input"><option>MOH-BL-DHI-2027 — Digital health infrastructure programme</option></select>
+        </div>
+        <div class="ro-field"><label>Currency</label><div class="val">KES</div></div>
+        <div class="field">
+          <label>Indicative amount</label>
+          <input type="text" class="input" value="20,000,000">
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <button type="button" class="btn btn-secondary">Cancel</button>
+      <button type="button" class="btn btn-primary">Add requirement</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+</body>
+</html>

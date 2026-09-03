@@ -8,7 +8,8 @@
  "field_order": [
   "plan_item",
   "departmental_need",
-  "departmental_need_item",
+  "departmental_need_version",
+  "source_content_hash",
   "source_organisation_unit",
   "allocated_quantity",
   "status",
@@ -40,13 +41,20 @@
    "search_index": 1
   },
   {
-   "fieldname": "departmental_need_item",
+   "fieldname": "departmental_need_version",
    "fieldtype": "Link",
-   "label": "Departmental Need Item",
-   "options": "Departmental Need Item",
+   "label": "Departmental Need Version",
+   "options": "Departmental Need Version",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "description": "The accepted version's content hash at allocation time, retaining Need/version/hash lineage (NDS-AC-037).",
+   "fieldname": "source_content_hash",
+   "fieldtype": "Data",
+   "label": "Source Content Hash",
+   "read_only": 1
   },
   {
    "fieldname": "source_organisation_unit",

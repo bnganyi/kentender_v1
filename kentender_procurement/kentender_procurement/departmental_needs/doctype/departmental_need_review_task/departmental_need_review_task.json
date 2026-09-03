@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "autoname": "field:review_task_id",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "review_task_id",
+  "departmental_need",
+  "need_version",
+  "withdrawal_request",
+  "task_type",
+  "procuring_entity",
+  "organisation_unit",
+  "financial_year",
+  "status",
+  "decision_token",
+  "opened_at",
+  "closed_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Immutable task reference used by the review route and command.",
+   "fieldname": "review_task_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Review Task ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Fixes the exact immutable content under review. Empty for a withdrawal task.",
+   "fieldname": "need_version",
+   "fieldtype": "Link",
+   "label": "Need Version",
+   "options": "Departmental Need Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "withdrawal_request",
+   "fieldtype": "Link",
+   "label": "Withdrawal Request",
+   "options": "Need Withdrawal Request",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "task_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Task Type",
+   "options": "Initial acceptance\nSuccessor acceptance\nWithdrawal",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "organisation_unit",
+   "fieldtype": "Link",
+   "label": "Organisation Unit",
+   "options": "Organisation Unit",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial Year",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nCompleted\nCancelled",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Server-generated optimistic token preventing two decisions on the same task.",
+   "fieldname": "decision_token",
+   "fieldtype": "Data",
+   "label": "Decision Token",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Departmental Need Review Task",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Departmental Author",
+   "read": 1
+  },
+  {
+   "role": "Head of User Department",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "review_task_id,departmental_need",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

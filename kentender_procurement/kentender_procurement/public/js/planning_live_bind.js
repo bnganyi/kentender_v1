@@ -201,7 +201,7 @@
 		$root.attr("data-kt-pln-live", "0");
 		var state = {
 			pe: $root.attr("data-kt-pln-pe") || "",
-			fy: $root.attr("data-kt-pln-fy") || "2027/28",
+			fy: $root.attr("data-kt-pln-fy") || "",
 			workFilter: $root.attr("data-kt-pln-work-filter") || "all",
 			search: "",
 			queueRows: [],
@@ -515,7 +515,7 @@
 		function refresh() {
 			return call("get_planning_workspace", {
 				procuring_entity: state.pe || null,
-				financial_year: state.fy || "2027/28",
+				financial_year: state.fy || "",
 				work_filter: state.workFilter || "all",
 			})
 				.then(paint)
@@ -538,7 +538,7 @@
 				state.pe = $(this).val() || "";
 			}
 			if (key === "financial_year") {
-				state.fy = $(this).val() || "2027/28";
+				state.fy = $(this).val() || "";
 			}
 			if (key === "work_type") {
 				state.workFilter = $(this).val() || "all";
@@ -882,6 +882,18 @@
 		}
 
 		$root.off(".ktPlnWs");
+		// CTX-CHG-001 — a PE switched from the shared rail on any Vue page is a
+		// change to the same global preference this workspace resolves from;
+		// re-resolve rather than keep painting the old entity.
+		$(document).off("kt:working-pe-changed.ktPlnWs").on(
+			"kt:working-pe-changed.ktPlnWs",
+			function () {
+				if (!$root.closest("body").length) return; // page unmounted
+				state.pe = "";
+				state.fy = "";
+				refresh();
+			}
+		);
 		$root.on("change.ktPlnWs", '[data-kt-pln-filter="procuring_entity"]', function () {
 			state.pe = $(this).val() || "";
 			state.fy = "";
@@ -1050,7 +1062,7 @@
 		function reload(selectedPe) {
 			return call("get_planning_create_scope", {
 				selected_pe: selectedPe || null,
-				financial_year: $root.find('[data-kt-field="financial_year"]').val() || "2027/28",
+				financial_year: $root.find('[data-kt-field="financial_year"]').val() || "",
 			})
 				.then(paint)
 				.catch(function (err) {

@@ -39,19 +39,15 @@ _NAMESPACES = (
 _PLAYWRIGHT_NAMESPACES = _NAMESPACES[2:]
 
 _BUDGET_CHILD_DOCTYPES = (
-	"Expenditure Snapshot",
-	"Procurement Commitment",
 	"Funding Reservation",
-	"Budget Revision",
 	"Budget Audit Event",
+	"Budget Version",
 	"Budget Line",
 )
 
 # Exact fixture budget codes (MOH + CGK + known edge codes).
 _CANONICAL_BUDGET_CODES = (
 	C.BUD_ACTIVE,
-	C.BUD_DRAFT,
-	C.BUD_CLOSED,
 	C.CGK_BUD_ACTIVE,
 )
 
@@ -75,6 +71,28 @@ def _unique(names: list[str]) -> list[str]:
 
 
 def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
+	# Procurement Commitment and Budget Line Version have no direct `budget`
+	# field (only `reservation` / `budget_version` respectively), so each
+	# needs its own hop through this Budget's own Funding Reservation / Budget
+	# Version rows, deleted before those parents.
+	if frappe.db.exists("DocType", "Procurement Commitment") and frappe.db.exists("DocType", "Funding Reservation"):
+		reservation_names = frappe.get_all("Funding Reservation", filters={"budget": budget_name}, pluck="name")
+		if reservation_names:
+			for name in frappe.get_all(
+				"Procurement Commitment", filters={"reservation": ["in", reservation_names]}, pluck="name"
+			):
+				frappe.delete_doc("Procurement Commitment", name, force=1, ignore_permissions=True)
+				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
+
+	if frappe.db.exists("DocType", "Budget Line Version") and frappe.db.exists("DocType", "Budget Version"):
+		version_names = frappe.get_all("Budget Version", filters={"budget": budget_name}, pluck="name")
+		if version_names:
+			for name in frappe.get_all(
+				"Budget Line Version", filters={"budget_version": ["in", version_names]}, pluck="name"
+			):
+				frappe.delete_doc("Budget Line Version", name, force=1, ignore_permissions=True)
+				deleted["Budget Line Version"] = deleted.get("Budget Line Version", 0) + 1
+
 	for doctype in _BUDGET_CHILD_DOCTYPES:
 		if not frappe.db.exists("DocType", doctype):
 			continue
@@ -124,15 +142,6 @@ def _collect_fixture_budgets(
 			frappe.get_all(
 				"Budget",
 				filters={"generated_reference": ["like", "MOH-BUD-PLN-%"]},
-				pluck="name",
-			)
-		)
-		# Budget registration Playwright stores its marker in the authoritative
-		# reference, not in the server-generated business reference.
-		names.extend(
-			frappe.get_all(
-				"Budget",
-				filters={"authoritative_reference": ["like", "MOH-FIN-BUD-PW-%"]},
 				pluck="name",
 			)
 		)
@@ -234,80 +243,12 @@ def clear_kentender_mvp_v1_budget(
 	):
 		_delete_budget_graph(budget_name, deleted)
 
-	if include_playwright and frappe.db.exists("DocType", "Budget Revision"):
-		revisions: list[str] = []
-		if frappe.db.has_column("Budget Revision", "fixture_namespace"):
-			revisions.extend(
-				frappe.get_all(
-					"Budget Revision",
-					filters={"fixture_namespace": ["in", list(_PLAYWRIGHT_NAMESPACES)]},
-					pluck="name",
-				)
-			)
-		# BUD-UI-08 used this exact reference/reason before it could persist a
-		# fixture namespace. Both values are required to avoid matching user data.
-		revisions.extend(
-			frappe.get_all(
-				"Budget Revision",
-				filters={
-					"external_approval_reference": "MOF/UI/REV-01",
-					"reason": "Playwright draft revision",
-				},
-				pluck="name",
-			)
-		)
-		for revision in _unique(revisions):
-			revision_code = frappe.db.get_value(
-				"Budget Revision", revision, "generated_reference"
-			)
-			if revision_code and frappe.db.exists("DocType", "Budget Audit Event"):
-				frappe.flags.allow_budget_audit_purge = True
-				try:
-					for audit_name in frappe.get_all(
-						"Budget Audit Event",
-						filters={
-							"record_doctype": "Budget Revision",
-							"record_code": revision_code,
-						},
-						pluck="name",
-					):
-						frappe.delete_doc(
-							"Budget Audit Event",
-							audit_name,
-							force=1,
-							ignore_permissions=True,
-						)
-						deleted["Budget Audit Event"] = (
-							deleted.get("Budget Audit Event", 0) + 1
-						)
-				finally:
-					frappe.flags.allow_budget_audit_purge = False
-			for file_name in frappe.get_all(
-				"File",
-				filters={
-					"attached_to_doctype": "Budget Revision",
-					"attached_to_name": revision,
-				},
-				pluck="name",
-			):
-				frappe.delete_doc("File", file_name, force=1, ignore_permissions=True)
-				deleted["File"] = deleted.get("File", 0) + 1
-			if frappe.db.exists("Budget Revision", revision):
-				frappe.delete_doc("Budget Revision", revision, force=1, ignore_permissions=True)
-				deleted["Budget Revision"] = deleted.get("Budget Revision", 0) + 1
-
 	# Orphan fixture lines / ledger by exact known canonical codes.
 	canonical_line_codes = (
 		(
 			C.BL_DHI_2027,
 			C.BL_HWD_2027,
-			C.BL_DHI_2028,
-			C.BL_HWD_2028,
-			C.CGK_BL_COLDCHAIN,
-			"MOH-BL-CLOSED-2026",
-			"MOH-BL-0003",
-			"MOH-BL-0005",
-			"MOH-BL-0006",
+			C.CGK_BL_DIGSVC,
 		)
 		if include_canonical
 		else ()

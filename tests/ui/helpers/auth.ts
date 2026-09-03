@@ -74,12 +74,93 @@ export async function loginAsStrategyOfficer(page: Page) {
 	);
 }
 
-/** NDS-CHG-002 §10.1 — Departmental Need Requester (Grace Wanjiku). */
+/**
+ * NDS-CHG-001 v1.1 §14.2 — the seeded Departmental Needs actors.
+ *
+ * All four are created by `departmental_needs.seeds.kentender_mvp_r1._user`,
+ * which sets DEFAULT_SEED_PASSWORD on every run, so a reseed cannot silently
+ * lock these specs out.
+ *
+ * Logging in per role is the whole point: it is the only way to exercise the
+ * reviewer, withdrawal and intake screens, whose audiences never overlap. An
+ * interactive browser session cannot switch between them on this site (the
+ * logout endpoints return 403 and the session cookie is httpOnly), which is
+ * exactly why those screens went unverified until these specs existed —
+ * DEBT-06 in the Departmental Needs tracker.
+ */
+
+/** §14.2 — Departmental Author, scoped to two MoH departments (Grace Wanjiku). */
 export async function loginAsDepartmentalNeedsRequester(page: Page) {
 	await login(
 		page,
 		process.env.UI_NDS_REQUESTER_USER || 'grace.wanjiku@moh.example.test',
 		process.env.UI_NDS_REQUESTER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 — Head of User Department (Dr Peter Kimani), the departmental checker. */
+export async function loginAsDepartmentalNeedsReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_REVIEWER_USER || 'peter.kimani@moh.example.test',
+		process.env.UI_NDS_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 / NDS-AC-042 — acting HoD (Julia Njeri): same role, narrower scope. */
+export async function loginAsDepartmentalNeedsActingReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_ACTING_USER || 'julia.njeri@moh.example.test',
+		process.env.UI_NDS_ACTING_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** §14.2 / NDS-AC-043 — Procurement Planner (Amina Hassan): intake window only. */
+export async function loginAsDepartmentalNeedsPlanner(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PLANNER_USER || 'amina.hassan@moh.example.test',
+		process.env.UI_NDS_PLANNER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/**
+ * Playwright-owned Departmental Needs actors (DEBT-07).
+ *
+ * Scoped to PE-CGKIS, whose Needs the UI suite may freely decide and withdraw
+ * — unlike the §14.3 demo actors above, whose fixtures the Python suite
+ * asserts. Created by `departmental_needs.seeds.playwright_ui_fixtures`, which
+ * sets DEFAULT_SEED_PASSWORD on every fixture rebuild.
+ *
+ * Each holds exactly one department (the Planner, one Procuring Entity), so
+ * they resolve a single context and never meet the §12.1 picker.
+ */
+
+/** Departmental Author for the Playwright fixture entity. */
+export async function loginAsNdsFixtureAuthor(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_AUTHOR || 'nds.pw.author@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Head of User Department for the Playwright fixture entity. */
+export async function loginAsNdsFixtureReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_REVIEWER || 'nds.pw.reviewer@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Procurement Planner for the Playwright fixture entity. */
+export async function loginAsNdsFixturePlanner(page: Page) {
+	await login(
+		page,
+		process.env.UI_NDS_PW_PLANNER || 'nds.pw.planner@example.test',
+		process.env.UI_NDS_PW_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
@@ -203,57 +284,93 @@ export async function loginAsAuditor(page: Page) {
 	);
 }
 
-/** BUD-SUP-002 — Budget Viewer (PE-MOH). */
+/**
+ * BUD-CHG-001 v1.2 §15.2 — dedicated Budget-only personas (PE-MOH unless
+ * noted). Reviewer/Authority are retired: v1.2 collapsed them into one
+ * Budget Approver role (see kentender_core.seeds.kentender_mvp_v1.constants
+ * RETIRED_DEMO_USERS and the budget-rebuild-kickoff memory).
+ */
+
+/** Budget Viewer (PE-MOH, read-only). */
 export async function loginAsBudgetViewer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_VIEWER_USER || 'moh.viewer@example.test',
+		process.env.UI_BUDGET_VIEWER_USER || 'bud.viewer.moh@example.test',
 		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Officer (PE-MOH). */
+/**
+ * Holds "Budget Viewer" (so Frappe's own Page.roles gate lets them load
+ * /app/budget-funding at all) but has no Procuring Entity scope — the only
+ * way to reach Budget's own in-app "Forbidden" state rather than Frappe's
+ * generic "Not permitted" dialog. Seeded on demand via
+ * kentender_budget.seeds.playwright_ui_fixtures.ensure_scopeless_budget_viewer.
+ */
+export async function loginAsBudgetScopelessViewer(page: Page) {
+	await login(page, 'bud.pw.scopeless.viewer@example.test', 'Test@123');
+}
+
+/** Budget Officer (PE-MOH) — Peter Otieno; also holds Finance Confirmation Officer. */
 export async function loginAsBudgetOfficer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_USER || 'moh.medicalservices.officer@example.test',
+		process.env.UI_BUDGET_OFFICER_USER || 'moh.budget.officer@example.test',
 		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Reviewer (PE-MOH). */
-export async function loginAsBudgetReviewer(page: Page) {
+/** Budget Approver (PE-MOH) — single decide-and-activate role (v1.2 §7). */
+export async function loginAsBudgetApprover(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_REVIEWER_USER || 'moh.budget.reviewer@example.test',
-		process.env.UI_BUDGET_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_APPROVER_USER || 'moh.budget.approver@example.test',
+		process.env.UI_BUDGET_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Authority (PE-MOH). */
-export async function loginAsBudgetAuthority(page: Page) {
+/** Budget Auditor (PE-MOH) — read-only across the funding ledger. */
+export async function loginAsBudgetAuditor(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_AUTHORITY_USER || 'moh.budget.authority@example.test',
-		process.env.UI_BUDGET_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_AUDITOR_USER || 'bud.auditor@example.test',
+		process.env.UI_BUDGET_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — dual Officer+Authority for AC-018 SoD (PE-MOH). */
-export async function loginAsBudgetOfficerAuthority(page: Page) {
+/** BUD-AC-008 — dual Officer+Approver, for self-approval-segregation checks (PE-MOH). */
+export async function loginAsBudgetOfficerApprover(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'moh.budget.officer.authority@example.test',
-		process.env.UI_BUDGET_OFFICER_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+		process.env.UI_BUDGET_OFFICER_APPROVER_USER || 'moh.budget.officer.authority@example.test',
+		process.env.UI_BUDGET_OFFICER_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
-/** BUD-SUP-002 — Budget Officer scoped to PE-MOE (cross-entity denial vs PE-MOH). */
+/** Kisumu (PE-CGKIS) Budget Officer — cross-PE isolation checks vs PE-MOH. */
 export async function loginAsBudgetOtherEntity(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'kisumu.health.officer@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'cgk.budget.officer@example.test',
 		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Kisumu (PE-CGKIS) Budget Approver. */
+export async function loginAsBudgetOtherEntityApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_USER || 'cgk.budget.approver@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+/** Kisumu (PE-CGKIS) Budget Viewer — cross-PE read-scope denial checks. */
+export async function loginAsBudgetOtherEntityViewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_USER || 'bud.viewer.kisumu@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

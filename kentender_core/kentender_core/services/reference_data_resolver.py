@@ -101,3 +101,138 @@ def validate_context_for_command(
 	if ctx.context_status != "Active":
 		_deny()
 	return {"allowed": True, "context": context_name, "context_status": ctx.context_status}
+
+
+def _authorized_context_rows(user: str) -> tuple[str, list[dict[str, Any]]]:
+	"""The PE Fiscal Year Context rows `user` may pick as a working context,
+	plus a mode tag: "unrestricted" (Administrator/System Manager — every
+	non-Suspended context), "single"/"multiple" (a scoped user's permitted
+	Procuring Entities have exactly one, or more than one, such context), or
+	"none" (no permitted Procuring Entity, or none has a usable context).
+	Suspended contexts are excluded (a temporarily-blocked state, not a
+	normal working context); Scheduled/Active/Closed are all selectable so a
+	user can prepare an upcoming FY or review a prior one — "today" is only
+	ever a default suggestion, never the sole resolution path."""
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
+	pes = permitted_procuring_entities(user)
+	filters: dict[str, Any] = {"context_status": ["!=", "Suspended"]}
+	if pes is not None:
+		if not pes:
+			return "none", []
+		filters["procuring_entity"] = ["in", sorted(pes)]
+
+	rows = frappe.get_all(
+		"PE Fiscal Year Context",
+		filters=filters,
+		fields=["name", "procuring_entity", "financial_year", "context_status"],
+		order_by="financial_year desc",
+	)
+	contexts = [_snapshot(row) for row in rows]
+	if pes is None:
+		mode = "unrestricted"
+	elif not contexts:
+		mode = "none"
+	elif len(contexts) == 1:
+		mode = "single"
+	else:
+		mode = "multiple"
+	return mode, contexts
+
+
+def resolve_working_context(
+	module: str,
+	user: str | None = None,
+	*,
+	requested_context: str | None = None,
+) -> dict[str, Any]:
+	"""COMPAT SHIM (CTX-CHG-001 Phase D). The response contract is unchanged —
+	{mode, contexts, selected, selection_required} over PE Fiscal Year Context
+	rows — but the storage underneath is the corrected working-context model:
+	the GLOBAL working Procuring Entity plus this module's own remembered
+	Financial Year (kentender_core.services.working_context), not a per-module
+	context id. A context picked here therefore moves the caller's global PE —
+	visible in the PageRail switcher and every other module — while the FY
+	stays this module's own. The old kt_{module}_working_context defaults are
+	migrated by kentender_budget's Phase D patch.
+
+	Resolution stays never-authoritative: an explicit requested_context is
+	validated against the caller's authorized rows and then persisted (a deep
+	link is a deliberate choice); otherwise the global PE narrows the rows and
+	the module FY picks within them; a single candidate auto-selects; anything
+	else prompts. A working PE with no authorized context here falls back to
+	the full row set — a preference can never trap a module."""
+	from kentender_core.services import working_context as wc
+
+	user = user or frappe.session.user
+	mode, contexts = _authorized_context_rows(user)
+	by_id = {c["context_id"]: c for c in contexts}
+
+	requested = by_id.get((requested_context or "").strip() or None)
+	if requested:
+		_persist_context_pair(module, requested, user)
+		selected = requested
+	else:
+		pe_selected = wc.get_working_pe(user)["selected"]
+		pool = contexts
+		if pe_selected:
+			subset = [c for c in contexts if c["procuring_entity"]["id"] == pe_selected["id"]]
+			if subset:
+				pool = subset
+		fy_state = wc.get_module_fy(
+			module, user, offered=[c["financial_year"]["id"] for c in pool]
+		)
+		selected = None
+		if fy_state["selected"]:
+			matches = [
+				c for c in pool if c["financial_year"]["id"] == fy_state["selected"]["id"]
+			]
+			if len(matches) == 1:
+				selected = matches[0]
+		if not selected and len(pool) == 1:
+			selected = pool[0]
+
+	return {
+		"mode": mode,
+		"contexts": contexts,
+		"selected": selected,
+		"selection_required": selected is None and mode != "none",
+	}
+
+
+def _persist_context_pair(module: str, context: dict[str, Any], user: str) -> None:
+	"""Remember a picked context as global PE + module FY; persistence must
+	never break a read, so a pair the working-context service will not accept
+	is simply not remembered."""
+	from kentender_core.services import working_context as wc
+
+	try:
+		wc.select_working_pe(context["procuring_entity"]["id"], user)
+		wc.select_module_fy(
+			module,
+			context["financial_year"]["id"],
+			user,
+			offered=[context["financial_year"]["id"]],
+		)
+	except Exception:
+		frappe.clear_last_message()
+
+
+def select_working_context(module: str, context_id: str, user: str | None = None) -> dict[str, Any]:
+	"""Record `context_id` as `user`'s remembered working context for
+	`module` (e.g. "budget"), after confirming it's one of their authorized
+	contexts. This only stores a preference — it is not a write-time
+	eligibility check; see validate_context_for_command() for that."""
+	user = user or frappe.session.user
+	_mode, contexts = _authorized_context_rows(user)
+	by_id = {c["context_id"]: c for c in contexts}
+	selected = by_id.get((context_id or "").strip())
+	if not selected:
+		frappe.throw(
+			"This PE/FY context is not available to you.",
+			frappe.PermissionError,
+			title="PEFY_CONTEXT_NOT_AUTHORIZED",
+		)
+
+	_persist_context_pair(module, selected, user)
+	return selected

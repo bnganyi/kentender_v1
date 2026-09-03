@@ -11,9 +11,6 @@ from typing import Any
 import frappe
 from frappe.utils import add_days, cstr, flt
 
-from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
-	add_demand_to_plan as _add_demand_to_plan,
-)
 from kentender_procurement.procurement_planning.services.aggregate_plan_allocations import (
 	aggregate_plan_allocations as _aggregate_plan_allocations,
 )
@@ -35,9 +32,6 @@ from kentender_procurement.procurement_planning.services.get_planning_workspace 
 from kentender_procurement.procurement_planning.services.planning_context import (
 	resolve_planning_context as _resolve_planning_context,
 	select_planning_context as _select_planning_context,
-)
-from kentender_procurement.procurement_planning.services.list_eligible_demands import (
-	list_eligible_demands as _list_eligible_demands,
 )
 from kentender_procurement.procurement_planning.services.update_plan_item import (
 	update_plan_item as _update_plan_item,
@@ -250,6 +244,20 @@ def get_plan_builder(
 	)
 
 
+def _demands_retired() -> None:
+	"""§NDS-BR-020 — the Demand module was retired with the Departmental Needs
+	greenfield rebuild; Planning's Demand-sourced formation flows are pending
+	their replacement (accepted Needs). Every entry point that reached the
+	deleted services raised ModuleNotFoundError at *import* time, taking the
+	entire Planning API (workspace, context, plans) down with it. Fail the
+	retired flows alone, loudly and honestly."""
+	frappe.throw(
+		"Demand-based plan formation was retired with the Demands module. "
+		"Planning will source accepted Departmental Needs; that integration is pending.",
+		title="PLN_DEMANDS_RETIRED",
+	)
+
+
 @frappe.whitelist()
 def list_eligible_demands(
 	plan: str | None = None,
@@ -257,12 +265,7 @@ def list_eligible_demands(
 	organisation_unit: str | None = None,
 	requested_demand: str | None = None,
 ) -> dict[str, Any]:
-	return _list_eligible_demands(
-		plan=plan or "",
-		search=search,
-		organisation_unit=organisation_unit,
-		requested_demand=requested_demand,
-	)
+	_demands_retired()
 
 
 @frappe.whitelist()
@@ -274,23 +277,7 @@ def add_demand_to_plan(
 	formation_reason: str | None = None,
 	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-	try:
-		return _add_demand_to_plan(
-			plan=plan or "",
-			demands=demands,
-			expected_version_token=expected_version_token,
-			formation_mode=formation_mode,
-			formation_reason=formation_reason,
-			idempotency_key=idempotency_key,
-		)
-	except Exception as exc:
-		msg = str(exc)
-		title = getattr(exc, "title", None) or ""
-		errors: dict[str, str] = {"form": msg}
-		title_u = cstr(title).upper()
-		if "FORMATION_REASON" in title_u or "reason for combining" in msg.lower():
-			errors["formation_reason"] = msg
-		return {"ok": False, "errors": errors}
+	_demands_retired()
 
 
 @frappe.whitelist()
@@ -565,9 +552,7 @@ def prepare_planning_gate04_ui(
 	``mixed_ou`` with ``eligible_count`` >= 2 seeds the second Demand under HRMD
 	so UI-04 can prove Combine is disabled (PLN-AC-016).
 	"""
-	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
-		add_demand_to_plan,
-	)
+	_demands_retired()  # CTX-CHG-001: deleted service; this fixture state is Demand-based
 	from kentender_procurement.procurement_planning.tests._gate01_helpers import (
 		attach_demand_funding,
 		make_approved_demand,
@@ -1017,9 +1002,7 @@ def prepare_planning_gate06_approved_ui(
 	from frappe.utils.password import update_password
 
 	from kentender_core.seeds.constants import TEST_PASSWORD
-	from kentender_procurement.procurement_planning.services.add_demand_to_plan import (
-		add_demand_to_plan,
-	)
+	_demands_retired()  # CTX-CHG-001: deleted service; this fixture state is Demand-based
 	from kentender_procurement.procurement_planning.services.create_planning_handoff_snapshot import (
 		create_planning_handoff_snapshot,
 	)

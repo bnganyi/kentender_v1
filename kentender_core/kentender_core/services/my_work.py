@@ -16,8 +16,11 @@ _PRESENTATION = {
 	"plan.finance.confirm": ("Finance confirmation", "Confirm funding", "procurement-plan-item-editor"),
 	"plan.review": ("Planning review", "Review Plan", "procurement-plan-review"),
 	"plan.approve": ("Planning approval", "Approve Plan", "procurement-plan-review"),
-	"budget.review": ("Budget review", "Review Budget", "budget-review"),
-	"budget.approve": ("Budget approval", "Approve Budget", "budget-review"),
+	# BUD-CHG-001 v1.2: Budget Version governance (submit/return/approve) moved
+	# off the Workflow Task queue entirely onto AUTH-ADR-001's native Role
+	# engine, mirroring Strategy — no "budget.*" entries here any more. Finance
+	# confirmation (plan.finance.confirm, above) is untouched: it's Procurement
+	# Planning's own task, not Budget Version governance.
 }
 
 
@@ -132,12 +135,35 @@ def _tasks(entity_ids: set[str]) -> list[Any]:
 	)
 
 
+def _provider_rows(user: str) -> dict[str, list[dict[str, Any]]]:
+	"""Module-published My Work rows, collected through the `kt_my_work_providers`
+	hook (dotted paths to callables taking `user=` and returning bucket lists).
+
+	Modules whose review work is governed by native roles + User Permission
+	scope rather than the Workflow Task engine (e.g. Departmental Needs §4.4)
+	still surface here, so My Work stays the one operational queue. A provider
+	failure never breaks the queue for everything else.
+	"""
+	merged: dict[str, list[dict[str, Any]]] = {"assigned": [], "claimable": [], "waiting": []}
+	for path in frappe.get_hooks("kt_my_work_providers") or []:
+		try:
+			rows = frappe.get_attr(path)(user=user) or {}
+			for bucket in merged:
+				merged[bucket].extend(rows.get(bucket) or [])
+		except Exception:
+			frappe.logger("kentender.my_work").error(
+				"my work provider failed | provider=%s", path, exc_info=True
+			)
+	return merged
+
+
 @frappe.whitelist()
 def get_my_work() -> dict[str, Any]:
 	user = frappe.session.user
 	assignments = _assignments(user)
+	provided = _provider_rows(user)
 	empty = {"assigned": [], "claimable": [], "waiting": []}
-	if not assignments:
+	if not assignments and not any(provided.values()):
 		return {
 			"state": "no_assignment",
 			"reason_code": NO_ACTIVE_OPERATIONAL_ASSIGNMENT,
@@ -152,6 +178,8 @@ def get_my_work() -> dict[str, Any]:
 	entity_ids = {row.procuring_entity_id for row in assignments}
 	queue_ids = _queue_ids(user)
 	buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
+	for bucket, rows in provided.items():
+		buckets[bucket].extend(rows)
 	for task in _tasks(entity_ids):
 		assigned = task.assigned_user_id == user or task.claimed_by == user
 		claimable = task.assignee_type == "Queue" and task.queue_id in queue_ids and not task.claimed_by

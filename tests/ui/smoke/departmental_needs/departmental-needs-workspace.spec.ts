@@ -1,74 +1,228 @@
-import { expect, test, type Page } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-import { login } from '../../helpers/auth';
+import { loginAsNdsFixtureAuthor } from "../../helpers/auth";
+import {
+	clearFixtures,
+	collectConsoleErrors,
+	expectScreen,
+	gotoNeeds,
+	resetFixture,
+	selectContext,
+} from "./helpers";
 
-const route =
-	'/desk/departmental-needs?procuring_entity=PE-MOH&organisation_unit=MOH-DIR-DHP&financial_year=2027%2F28';
+/**
+ * NDS-CHG-001 v1.1 — NDS-UI-01 requester workspace (`/app/departmental-needs`)
+ * and NDS-UI-03 need editor (`/app/departmental-needs/new`).
+ *
+ * Replaces the pre-v1.1 workspace/create/edit specs, which drove the retired
+ * NDS-CHG-002 routes and screens (`departmental-needs-new`, the items table,
+ * attachments, indicative cost) that §1.1 removed outright.
+ *
+ * Fixture: `reset_open_intake_fixture` — an Open intake window and one Draft
+ * under PE-CGKIS, because §5.1 gates creation on an Open window and the
+ * fixture entity's default window is deliberately Scheduled (the NDS-UI-08
+ * spec rewrites that one).
+ */
 
-async function loginAsDepartmentalReviewer(page: Page) {
-	await login(
-		page,
-		process.env.UI_NDS_REVIEWER_USER || 'peter.kimani@moh.example.test',
-		process.env.UI_NDS_REVIEWER_PASSWORD || 'admin',
-	);
-}
+const NEED = "NDS-CGKIS-2027-0001";
 
-async function openWorkspace(page: Page) {
-	await page.goto(route, { waitUntil: 'domcontentloaded' });
-	await expect(page.getByTestId('departmental-needs-workspace')).toBeVisible({ timeout: 30_000 });
-}
+test.describe.configure({ mode: "serial" });
 
-async function expectNoPageOverflow(page: Page) {
-	const dimensions = await page.evaluate(() => ({
-		clientWidth: document.documentElement.clientWidth,
-		scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-	}));
-	expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
-}
+test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
+	test.beforeEach(() => resetFixture("reset_open_intake_fixture"));
+	test.afterAll(() => clearFixtures());
 
-test.describe('NDS-UI-01 Departmental Needs workspace', () => {
-	test.beforeEach(async ({ page }) => {
-		await loginAsDepartmentalReviewer(page);
+	test("the workspace lists the author's needs with one action each", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page, "CGK-DEPT-HEALTH");
+		await expectScreen(page, "workspace");
+
+		// §1.1 replaced four summary cards and split action/waiting sections with
+		// one role-appropriate table, so exactly one table is the assertion.
+		await expect(page.locator('[data-testid="nds-needs-table"]')).toHaveCount(1);
+		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
+		await expect(row).toBeVisible();
+		await expect(row).toHaveAttribute("data-status", "Draft");
+		// Complete visibility of authorship: the workspace also serves the
+		// reviewer through the main rail entry, where rows are not their own.
+		await expect(
+			page.locator('[data-testid="nds-needs-table"] th', { hasText: "Requested by" }),
+		).toBeVisible();
+		await expect(row).toContainText("Playwright Author");
+		// §12.1 — a Draft belongs to its author, so the row offers Continue.
+		await expect(row.locator('[data-testid="nds-row-action"]')).toHaveAttribute(
+			"data-action",
+			"edit",
+		);
+		await expect(page.locator('[data-testid="nds-count"]')).toContainText("need");
+
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test('renders the exact scoped fixture and authorized review action', async ({ page }) => {
-		await openWorkspace(page);
-		await expect(page.getByRole('heading', { name: 'Departmental Needs', level: 1 })).toBeVisible();
-		// The context switcher's <select> options duplicate this text while hidden —
-		// disambiguate to the visible summary line.
-		await expect(page.getByText('Ministry of Health').first()).toBeVisible();
-		await expect(page.getByText('Directorate of Digital Health and Policy').first()).toBeVisible();
-		await expect(page.getByText('2027/28').first()).toBeVisible();
-		// 5 visible (Withdrawn NDS-MOH-2027-006 is excluded by design) — was 3 before
-		// Phase 7 added the Draft (-0004) and Not-taken-forward (-0005) seed fixtures.
-		await expect(page.getByTestId('nds-summary-total')).toContainText('5');
-		await expect(page.getByTestId('nds-summary-waiting')).toContainText('1');
-		await expect(page.getByTestId('nds-summary-accepted')).toContainText('1');
-		await expect(page.getByTestId('nds-summary-included')).toContainText('1');
-		// NDS-MOH-2027-002 legitimately appears in both the work-requiring-action
-		// and departmental-needs tables per the NDS-UI-01 fixture — disambiguate.
-		await expect(page.getByText('NDS-MOH-2027-002').first()).toBeVisible();
-		await expect(page.getByRole('button', { name: /Review/ }).first()).toBeVisible();
-		await expect(page.getByRole('button', { name: /Create need/ })).toHaveCount(0);
+	test("Create need is offered while intake is Open and opens the editor", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page, "CGK-DEPT-HEALTH");
+		await expectScreen(page, "workspace");
+
+		await page.locator('[data-testid="nds-create-need"]').click();
+		await expectScreen(page, "editor");
+
+		// §2.2 / NDS-AC-001 — exactly the six requester-entered values, and none
+		// of the fields §1.1 removed.
+		for (const field of [
+			"nds-title",
+			"nds-description",
+			"nds-result",
+			"nds-quantity",
+			"nds-unit",
+			"nds-required-by",
+		]) {
+			await expect(page.locator(`[data-testid="${field}"]`)).toBeVisible();
+		}
+		// NDS-AC-007 / NDS-AC-029 — no funding, cost, location or attachment.
+		for (const forbidden of ["indicative_cost", "currency", "budget_line", "attachment"]) {
+			await expect(page.locator(`[name="${forbidden}"]`)).toHaveCount(0);
+		}
+		await expect(page.getByText(/attach/i)).toHaveCount(0);
+
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	for (const viewport of [
-		{ name: 'desktop', width: 1440, height: 900 },
-		{ name: 'tablet', width: 1024, height: 768 },
-		{ name: 'mobile', width: 390, height: 844 },
-	]) {
-		test(`${viewport.name} layout keeps overflow inside table regions`, async ({ page }) => {
-			await page.setViewportSize(viewport);
-			await openWorkspace(page);
-			await expectNoPageOverflow(page);
+	test("a Draft opens in the editor and saves", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page, "CGK-DEPT-HEALTH");
+		await expectScreen(page, "workspace");
+
+		await page
+			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.click();
+		await expectScreen(page, "editor");
+
+		await page.locator('[data-testid="nds-title"]').fill("County health records digitisation v2");
+		await page.locator('[data-testid="nds-save-draft"]').click();
+
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("an unparseable typed date blocks the submit with a field error", async ({ page }) => {
+		/**
+		 * A native date input holding text that does not parse (the reported
+		 * case: 31/09/2026) keeps the text visible but reports value "" — the
+		 * old behaviour silently dropped it and the server answered
+		 * "Required-by date is required." for a field that looked filled in.
+		 * The editor now refuses to emit and names the real problem.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "/new");
+		await expectScreen(page, "editor");
+		await page.locator('[data-testid="nds-title"]').fill("Unparseable date guard");
+		// Partial keyboard entry leaves the input in the badInput state.
+		await page.locator('[data-testid="nds-required-by"]').click();
+		await page.keyboard.press("3");
+		await page.keyboard.press("1");
+		await page.locator('[data-testid="nds-submit"]').click();
+		await expect(page.locator('[data-testid="nds-required-by-error"]')).toHaveText(
+			"Required by must be a real calendar date.",
+		);
+		// Nothing was sent: no server summary, and the route did not change.
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("filters refresh the table in place — no skeleton flash", async ({ page }) => {
+		/**
+		 * Every search keystroke and status change used to re-enter the full
+		 * loading state, swapping the band and table for the skeleton card on a
+		 * round-trip each time (reported live 2026-08-30). Filter changes now
+		 * load quietly (rows stay mounted) and typing is debounced, so
+		 * data-loading must never flip while filtering.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page, "CGK-DEPT-HEALTH");
+		await expectScreen(page, "workspace");
+		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
+		await expect(row).toBeVisible();
+
+		// The skeleton appears exactly when the shell's data-loading flips, so
+		// zero observed flips proves the screen never flashed.
+		await page.evaluate(() => {
+			const shell = document.querySelector('[data-testid="nds-shell"]');
+			(window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips = 0;
+			new MutationObserver(() => {
+				(window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips += 1;
+			}).observe(shell as Node, { attributes: true, attributeFilter: ["data-loading"] });
 		});
-	}
+		let workspaceCalls = 0;
+		page.on("request", (request) => {
+			if (request.url().includes("get_needs_workspace")) workspaceCalls += 1;
+		});
 
-	test('workspace controls are keyboard focusable', async ({ page }) => {
-		await openWorkspace(page);
-		const review = page.getByRole('button', { name: /Review/ }).first();
-		await review.focus();
-		await expect(review).toBeFocused();
-		await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toBeVisible();
+		await page
+			.locator('[data-testid="nds-search"]')
+			.pressSequentially("no-such-need", { delay: 40 });
+		// Filtered-to-empty names the real situation, not "no needs yet".
+		await expect(page.getByText("No needs match your filters")).toBeVisible();
+		await expect(page.getByText("No departmental needs yet")).toHaveCount(0);
+
+		await page.locator('[data-testid="nds-status-filter"]').selectOption("Draft");
+		await page.getByRole("button", { name: "Clear filters" }).click();
+		await expect(row).toBeVisible();
+
+		// Typing was debounced: 12 keystrokes must not mean 12 round-trips.
+		expect(workspaceCalls).toBeLessThanOrEqual(4);
+		expect(
+			await page.evaluate(
+				() => (window as unknown as { __ktLoadingFlips: number }).__ktLoadingFlips,
+			),
+		).toBe(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("a record detail route keeps the Procurement rail", async ({ page }) => {
+		/**
+		 * Frappe's sidebar resolves a 2-segment route through route[1] — here a
+		 * Need reference, never a sidebar — then falls back through the Page's
+		 * Module Def, which replaced the reviewer's rail with Frappe's "Build"
+		 * module sidebar (observed live 2026-08-30). The route-first patch in
+		 * procurement_sidebar_header.js resolves route[0]'s boot alias instead;
+		 * this guards it for direct loads of record routes.
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		const rail = page.locator(".body-sidebar");
+		await expect(rail.locator(".sidebar-item-label", { hasText: "Departmental Needs" })).toBeVisible();
+		await expect(rail.locator(".sidebar-item-label", { hasText: "Module Def" })).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("the page-rail breadcrumb returns to the workspace", async ({ page }) => {
+		/**
+		 * PageRail's goRoute applies the crumb's route as frappe.set_route
+		 * *segments*. This page passed a string ("/app/departmental-needs"),
+		 * which Function.apply spread into single characters — the click was a
+		 * garbage no-op (reported live 2026-08-30).
+		 */
+		resetFixture("reset_open_intake_fixture");
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		await page.locator(".kt-rail-crumb-link", { hasText: "Departmental Needs" }).click();
+		await expectScreen(page, "workspace");
+		await expect(page).toHaveURL(/\/desk\/departmental-needs$/);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 });
+

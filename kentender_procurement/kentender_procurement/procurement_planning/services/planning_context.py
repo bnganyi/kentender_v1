@@ -11,8 +11,13 @@ from kentender_core.services.financial_context import enabled_fiscal_years
 from kentender_core.services.org_scope_access import user_scope_rows
 from kentender_procurement.procurement_planning.services.planning_permissions import READ_PLAN_ROLES
 
-PE_DEFAULT = "KT Planning Procuring Entity"
-FY_DEFAULT = "KT Planning Financial Year"
+# CTX-CHG-001 — persistence moved to kentender_core.working_context: the
+# GLOBAL working PE plus this module's kt_planning_financial_year. The old
+# Title-Case keys below never restored at all (frappe.defaults'
+# is_a_user_permission_key silently reroutes any key != scrub(key)); their
+# dead DefaultValue rows are deleted by the delete_planning_titlecase_defaults
+# patch, with nothing to migrate.
+PLANNING_MODULE = "planning"
 SOURCE_SELECTED = "selected"
 SOURCE_SAVED_DEFAULT = "saved_default"
 SOURCE_LEGACY = "legacy"
@@ -89,12 +94,20 @@ def resolve_planning_context(
 	if explicit_pe and explicit_pe not in allowed:
 		frappe.throw("Selected Procuring Entity is not in your Planning scope.", frappe.PermissionError, title="PLN_SCOPE_DENIED")
 
+	from kentender_core.services.working_context import get_working_pe
+
 	source = "explicit" if explicit_pe else ""
 	pe = explicit_pe
 	if not pe:
-		saved_pe = cstr(frappe.defaults.get_user_default(PE_DEFAULT, user=actor)).strip()
-		if saved_pe in allowed:
-			pe, source = saved_pe, "saved"
+		# The GLOBAL working PE applies only when it is inside Planning's own
+		# narrowed scope; outside it, this module simply prompts (never an
+		# error, never a trap — the rail switcher is the recovery path).
+		try:
+			working = get_working_pe(actor)["selected"]
+		except frappe.PermissionError:
+			working = None
+		if working and working["id"] in allowed:
+			pe, source = working["id"], "saved"
 		elif len(entities) == 1:
 			pe, source = entities[0]["id"], "sole_procuring_entity"
 	if not pe:
@@ -108,10 +121,13 @@ def resolve_planning_context(
 		fy = explicit_fy
 		source = "explicit"
 	else:
-		saved_pe = cstr(frappe.defaults.get_user_default(PE_DEFAULT, user=actor)).strip()
-		saved_fy = cstr(frappe.defaults.get_user_default(FY_DEFAULT, user=actor)).strip()
-		if saved_fy in by_id and (not saved_pe or saved_pe == pe):
-			fy = saved_fy
+		from kentender_core.services.working_context import get_module_fy
+
+		saved_fy_state = get_module_fy(
+			PLANNING_MODULE, actor, offered=[row["id"] for row in years]
+		)
+		if saved_fy_state["selected"]:
+			fy = saved_fy_state["selected"]["id"]
 			source = "saved"
 		else:
 			fy = _default_year(years, open_fys)
@@ -132,8 +148,19 @@ def resolve_planning_context(
 
 
 def select_planning_context(*, procuring_entity: str, financial_year: str, user: str | None = None) -> dict[str, Any]:
+	from kentender_core.services.working_context import select_module_fy, select_working_pe
+
 	actor = cstr(user or frappe.session.user).strip()
 	context = resolve_planning_context(procuring_entity=procuring_entity, financial_year=financial_year, user=actor)
-	frappe.defaults.set_user_default(PE_DEFAULT, context["procuring_entity"], user=actor)
-	frappe.defaults.set_user_default(FY_DEFAULT, context["financial_year"], user=actor)
+	try:
+		select_working_pe(context["procuring_entity"], actor)
+	except frappe.PermissionError:
+		# Readable through a Planning scope row but outside the global PE
+		# offer (e.g. a non-Active entity): keep the FY memory, skip the PE.
+		frappe.clear_last_message()
+	if context["financial_year"]:
+		select_module_fy(
+			PLANNING_MODULE, context["financial_year"], actor,
+			offered=[context["financial_year"]],
+		)
 	return context

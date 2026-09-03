@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "autoname": "field:unit_code",
+ "creation": "2026-08-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "unit_code",
+  "unit_label",
+  "status",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "Governed catalogue identifier, for example UNIT-PROGRAMME.",
+   "fieldname": "unit_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Code",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Display value shown beside a quantity, for example Programme.",
+   "fieldname": "unit_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Label",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nRetired",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Unit Of Measure",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "unit_code,unit_label",
+ "sort_field": "unit_code",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "unit_label",
+ "track_changes": 1
+}

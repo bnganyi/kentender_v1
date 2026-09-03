@@ -12,7 +12,18 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 # Civic Ledger IA: Planned capability overviews + Available modules.
-# Configuration is Disabled for deployment (omitted from export).
+# The legacy "Configuration" section is Disabled for deployment; the rows below
+# named "Configuration and Governance" are the replacement group shipped by
+# CFG-CHG-002 (Reference Data) and STD-CHG-001 (Standard Tender Documents).
+#
+# NDS-CHG-001 v1.1 §10 gave Departmental Needs three menu entries; two remain.
+# "Review tasks" was a §10 specification defect (removed 2026-08-30, to be
+# corrected in the next complete NDS successor): review decisions reach the
+# HoD through My Work and notifications, and the workspace's role-aware rows,
+# never through a work-queue sidebar entry. "Intake window" is configuration,
+# so it sits as a child of "Configuration and Governance" — a URL link, since
+# it is a sub-route of the same Page. Its display_depends_on is presentation
+# only.
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Home",
 	"Analytics",
@@ -33,6 +44,10 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"STD Versions",
 	"Forms & Schemas",
 	"Import Review",
+	"Configuration and Governance",
+	"Intake window",
+	"Reference Data",
+	"Standard Tender Documents",
 )
 
 
@@ -55,7 +70,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_section_groups_and_children(self):
-		"""Tender Management + STD Administration Section-Break groups."""
+		"""Tender Management, STD Administration and Configuration groups."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -104,6 +119,17 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 				"STD Versions",
 				"Forms & Schemas",
 				"Import Review",
+			],
+		)
+		# Every configuration entry lives here, including the Departmental Needs
+		# intake window. Frappe nests one level only (Sidebar.find_nested_items),
+		# so a configuration group cannot be a Section Break inside this one.
+		self.assertEqual(
+			children_of("Configuration and Governance"),
+			[
+				"Intake window",
+				"Reference Data",
+				"Standard Tender Documents",
 			],
 		)
 

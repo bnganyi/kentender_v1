@@ -11,20 +11,16 @@ def after_migrate():
 
 def _ensure_user_kt_scope_fields():
 	"""Custom fields on User for entity-scoped Strategy permissions (spec §3)."""
+	# kt_procuring_entity retired by CTX-CHG-001: the global working PE lives
+	# in frappe.defaults (kt_working_procuring_entity), migrated by
+	# migrate_kt_procuring_entity_to_working_pe.
 	fields = [
-		{
-			"fieldname": "kt_procuring_entity",
-			"label": "Procuring Entity (KenTender)",
-			"fieldtype": "Link",
-			"options": "Procuring Entity",
-			"insert_after": "username",
-		},
 		{
 			"fieldname": "kt_primary_department",
 			"label": "Primary Department (KenTender)",
 			"fieldtype": "Link",
 			"options": "Procuring Department",
-			"insert_after": "kt_procuring_entity",
+			"insert_after": "username",
 		},
 	]
 	for f in fields:

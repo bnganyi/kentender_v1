@@ -131,9 +131,7 @@ class TestStitchDeskChromeGate(FrappeTestCase):
 		self.assertTrue(cross.is_file(), cross)
 		spec = _read(cross)
 		self.assertIn("assertStitchDeskChrome", spec)
-		self.assertIn("budget-lines", spec)
 		self.assertIn("strategy-portfolio", spec)
-		self.assertIn("budget-revision-create", spec)
 		self.assertIn("strategy-plan-create", spec)
 		self.assertIn("assertEditableInputs", spec)
 		for surface in STITCH_DESK_SURFACES:

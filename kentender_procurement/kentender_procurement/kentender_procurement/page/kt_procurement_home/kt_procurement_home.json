@@ -12,64 +12,148 @@
  "page_name": "kt-procurement-home",
  "roles": [
   {
+   "role": "Accounting Officer"
+  },
+  {
    "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Requisitioner"
-  },
-  {
-   "role": "Department Approver"
-  },
-  {
-   "role": "Finance Reviewer"
-  },
-  {
-   "role": "Budget Officer"
-  },
-  {
-   "role": "Procurement Planner"
-  },
-  {
-   "role": "Planning Reviewer"
-  },
-  {
-   "role": "Planning Authority"
-  },
-  {
-   "role": "Procurement Officer"
-  },
-  {
-   "role": "Tender Manager"
   },
   {
    "role": "Auditor"
   },
   {
-   "role": "Requester"
+   "role": "Budget Activation Authority"
+  },
+  {
+   "role": "Budget Approver"
+  },
+  {
+   "role": "Budget Authority"
+  },
+  {
+   "role": "Budget Officer"
+  },
+  {
+   "role": "Budget Reviewer"
+  },
+  {
+   "role": "Budget Viewer"
   },
   {
    "role": "Business Approver"
   },
   {
-   "role": "Procurement Approval Authority"
+   "role": "Central Configuration Approver"
+  },
+  {
+   "role": "Central Reference Data Steward"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Departmental Author"
+  },
+  {
+   "role": "Designated Approver"
+  },
+  {
+   "role": "Finance Confirmation Officer"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Head of User Department"
+  },
+  {
+   "role": "KenTender Support Analyst"
+  },
+  {
+   "role": "KenTender Task Administrator"
+  },
+  {
+   "role": "PE Configuration Steward"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Planning Contributor"
   },
   {
    "role": "Planning Officer"
   },
   {
-   "role": "Demand Viewer"
+   "role": "Planning Reviewer"
   },
   {
-   "role": "Head of User Department"
+   "role": "Planning Viewer"
+  },
+  {
+   "role": "Procurement Approval Authority"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Professional Configuration Reviewer / HoPF"
+  },
+  {
+   "role": "Reference Data Manager"
+  },
+  {
+   "role": "Requester"
+  },
+  {
+   "role": "Requisitioner"
   },
   {
    "role": "STD Configurator"
   },
   {
    "role": "STD Reviewer"
+  },
+  {
+   "role": "STD Technical Inspector"
+  },
+  {
+   "role": "STD Template Activator"
+  },
+  {
+   "role": "STD Template Administrator"
+  },
+  {
+   "role": "STD Template Approver"
+  },
+  {
+   "role": "STD Template Auditor"
+  },
+  {
+   "role": "STD Template Importer"
+  },
+  {
+   "role": "STD Template Reviewer"
+  },
+  {
+   "role": "Strategy Approver"
+  },
+  {
+   "role": "Strategy Author"
+  },
+  {
+   "role": "Strategy Manager"
+  },
+  {
+   "role": "Strategy Viewer"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Tender Initiator"
   }
  ],
  "script": null,

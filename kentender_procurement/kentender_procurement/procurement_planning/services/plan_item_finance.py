@@ -152,6 +152,18 @@ def _source_finance_rows(plan_item: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _source_set_hash(sources: list[dict[str, Any]]) -> str:
+	"""Deterministic hash of the current source-allocation set for
+	`check_funding`/`reserve_funding`'s `source_set_hash` staleness guard
+	(BUD-CHG-001 v1.2 §8.2 step 5 / BUDGET_CHECK_STALE)."""
+	import hashlib
+
+	key = "|".join(
+		sorted(f"{s['budget_line_id']}:{s['funding_allocation']}:{flt(s['amount']):.2f}" for s in sources)
+	)
+	return hashlib.sha256(key.encode()).hexdigest()[:16]
+
+
 def _funding_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	"""Group Need Item rows by their authoritative Demand funding allocation."""
 	grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
@@ -165,15 +177,19 @@ def _funding_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _budget_line_display(line_id: str) -> dict[str, str]:
+	"""Budget Line no longer carries a title (BUD-CHG-001 v1.2 §4.3/§4.4) —
+	title lives on the Active Budget Line Version. This stays a raw,
+	permission-free label lookup (no amounts), matching this helper's
+	pre-existing security posture."""
 	empty = {"id": "", "code": "", "name": "", "display": "—"}
 	if not line_id or not frappe.db.exists("Budget Line", line_id):
 		return empty
-	title = cstr(frappe.db.get_value("Budget Line", line_id, "title") or "").strip()
-	code = cstr(
-		frappe.db.get_value("Budget Line", line_id, "generated_reference")
-		or frappe.db.get_value("Budget Line", line_id, "budget_line_code")
-		or ""
-	).strip()
+	budget = cstr(frappe.db.get_value("Budget Line", line_id, "budget") or "")
+	version_name = cstr(frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name") or "") if budget else ""
+	title = cstr(
+		frappe.db.get_value("Budget Line Version", {"budget_version": version_name, "budget_line": line_id}, "title") or ""
+	).strip() if version_name else ""
+	code = cstr(frappe.db.get_value("Budget Line", line_id, "generated_reference") or "").strip()
 	name = title or code or line_id
 	if name == line_id and len(line_id) <= 12 and name.isalnum():
 		name = code or "Budget Line"
@@ -188,7 +204,7 @@ def _existing_reservation(dfa: Any | None, line_id: str, *, iv: Any | None = Non
 	if not rsv_name or not frappe.db.exists("Funding Reservation", rsv_name):
 		return None
 	rsv = frappe.get_doc("Funding Reservation", rsv_name)
-	if cstr(rsv.status) not in ("Reserved", "Partially converted"):
+	if cstr(rsv.status) not in ("Active", "Partially Converted", "Needs Attention"):
 		return None
 	if line_id and cstr(rsv.budget_line) != line_id:
 		return None
@@ -412,7 +428,7 @@ def _task_payload(
 	if existing_rsv:
 		sufficient = True
 		available_before = flt(check.get("available_before") if check else 0) + flt(
-			existing_rsv.remaining_reserved
+			existing_rsv.remaining_amount
 		)
 		available_after = flt(check.get("available_before") if check else 0)
 	elif check:
@@ -538,36 +554,53 @@ def get_plan_finance_task(
 	line_id = cstr(dfa.budget_line if dfa else "").strip()
 	line = _budget_line_display(line_id)
 	existing = _existing_reservation(dfa, line_id, iv=iv)
-	check: dict[str, Any] | None = None
-	if line_id:
-		from kentender_budget.services.budget_check_reserve_contracts import check_funding
-
-		with _as_user(actor):
-			check = check_funding(
-				budget_line=line_id,
-				requested_amount=flt(iv.confirmed_estimate),
-				demand=demand["demand"] if demand else None,
-				procuring_entity=cstr(plan.procuring_entity).strip(),
-			)
+	# The single "primary" demand row above and `_funding_sources` below both
+	# read the same `Plan Demand Allocation` set (`_source_demand_row` is just
+	# `_source_finance_rows` narrowed to the first row) — a real check is
+	# always driven from the complete `sources` set per BUD-BR-010's atomic
+	# multi-allocation model, never one line in isolation.
 	payload = _task_payload(
 		item=item,
 		plan=plan,
 		iv=iv,
 		actor=actor,
-		check=check,
+		check=None,
 		demand=demand,
 		line=line,
 		existing_rsv=existing,
 	)
-	sources = _source_finance_rows(item.name)
+	sources = _funding_sources(_source_finance_rows(item.name))
 	if sources:
 		from kentender_budget.services.budget_check_reserve_contracts import check_funding
+
+		allocations = [
+			{"budget_line": s["budget_line_id"], "plan_source_allocation": s["funding_allocation"], "amount": s["amount"]}
+			for s in sources
+			if s["budget_line_id"]
+		]
+		results_by_line: dict[str, dict[str, Any]] = {}
+		if allocations:
+			with _as_user(actor):
+				check = check_funding(
+					plan_item=item.name,
+					plan_version=iv.name,
+					finance_task=cstr(iv.finance_task_id),
+					source_set_hash=_source_set_hash(sources),
+					allocations=allocations,
+					correlation_id=frappe.generate_hash(length=12),
+				)
+			results_by_line = {r["budget_line"]: r for r in check["allocations"]}
 		for source in sources:
-			if not source["budget_line_id"]:
+			r = results_by_line.get(source["budget_line_id"]) if source["budget_line_id"] else None
+			if not r:
 				source["funding_check"] = {"sufficient": False, "available_before": 0, "available_after": 0, "shortfall": source["amount"]}
 				continue
-			with _as_user(actor):
-				source["funding_check"] = check_funding(budget_line=source["budget_line_id"], requested_amount=source["amount"], demand=source["demand"], procuring_entity=cstr(plan.procuring_entity))
+			source["funding_check"] = {
+				"sufficient": bool(r["sufficient"]),
+				"available_before": r["available_before"],
+				"available_after": r["available_after"],
+				"shortfall": r["shortfall"],
+			}
 		payload["sources"] = sources
 		payload["sufficient"] = all(bool(s["funding_check"].get("sufficient")) for s in sources)
 		payload["variant"] = "sufficient" if payload["sufficient"] else "shortfall"
@@ -666,43 +699,51 @@ def confirm_plan_item_funding(
 	if not sources or any(not row["budget_line_id"] for row in sources):
 		return {"ok": False, "errors": {"form": "Every source must have a proposed Budget Line before funding can be confirmed."}}
 	from kentender_budget.services.budget_check_reserve_contracts import check_funding, reserve_funding
-	checks = []
+
+	allocations = [
+		{"budget_line": s["budget_line_id"], "plan_source_allocation": s["funding_allocation"], "amount": s["amount"]}
+		for s in sources
+	]
+	source_set_hash = _source_set_hash(sources)
+	correlation_id = cstr(idempotency_key)
 	with _as_user(actor):
-		for source in sources:
-			dfa = frappe.get_doc("Demand Funding Allocation", source["funding_allocation"]) if source["funding_allocation"] else None
-			existing = _existing_reservation(dfa, source["budget_line_id"], iv=iv)
-			if existing and flt(existing.remaining_reserved) >= flt(source["amount"]):
-				check = {"sufficient": True, "shortfall": 0, "existing_reservation": existing.name}
-			else:
-				check = check_funding(budget_line=source["budget_line_id"], requested_amount=source["amount"], demand=source["demand"], procuring_entity=cstr(plan.procuring_entity))
-			checks.append(check)
-	if not all(check.get("sufficient") for check in checks):
-		shortfall = sum(flt(check.get("shortfall")) for check in checks)
+		check = check_funding(
+			plan_item=item.name,
+			plan_version=iv.name,
+			finance_task=task_id,
+			source_set_hash=source_set_hash,
+			allocations=allocations,
+			correlation_id=correlation_id,
+		)
+	if not check["all_sufficient"]:
+		shortfall = sum(flt(r["shortfall"]) for r in check["allocations"])
 		return {"ok": False, "error_code": ERR_INSUFFICIENT_FUNDING, "errors": {"form": f"This Plan Item cannot be confirmed because its source Budget Lines are short by {_money(shortfall, cstr(iv.currency or plan.currency))}."}}
+	with _as_user(actor):
+		# §8.2/BUD-BR-010/011 — one atomic call across the complete source set;
+		# repeating the same idempotency_key returns the original effective
+		# reservation set unchanged, replacing the old per-source
+		# "existing reservation, sufficient, skip" short-circuit outright.
+		result = reserve_funding(
+			token=check["token"],
+			finance_task=task_id,
+			source_set_hash=source_set_hash,
+			idempotency_key=correlation_id,
+			actor=actor,
+		)
 	reservation_names: list[str] = []
 	reservation_codes: list[str] = []
-	owned = 0
-	from kentender_core.seeds.kentender_mvp_v1 import constants as C
-	with _as_user(actor):
-		for index, source in enumerate(sources):
-			dfa = frappe.get_doc("Demand Funding Allocation", source["funding_allocation"]) if source["funding_allocation"] else None
-			existing = _existing_reservation(dfa, source["budget_line_id"], iv=iv)
-			if existing and flt(existing.remaining_reserved) >= flt(source["amount"]):
-				reservation_names.append(cstr(existing.name))
-				reservation_codes.append(cstr(existing.generated_reference or existing.name))
-				continue
-			preferred_ref = None
-			if len(sources) == 1 and cstr(item.plan_item_code) == C.PLAN_ITEM_CODE:
-				preferred_ref = C.RSV_CODE
-			elif len(sources) == 1 and cstr(item.plan_item_code) == C.PLAN_ITEM_CODE_SCN:
-				preferred_ref = C.RSV_CODE_SCN
-			result = reserve_funding(budget_line=source["budget_line_id"], demand_name=source["demand"], requested_amount=source["amount"], idempotency_key=f"{cstr(idempotency_key)}:source:{index}", actor=actor, procuring_entity=cstr(plan.procuring_entity), generated_reference=preferred_ref)
-			name = cstr(result.get("reservation_id"))
-			code = cstr(result.get("reservation_code") or name)
-			reservation_names.append(name); reservation_codes.append(code)
-			owned += 0 if result.get("reused") else 1
-			if source["funding_allocation"]:
-				frappe.db.set_value("Demand Funding Allocation", source["funding_allocation"], {"funding_reservation": name, "reservation_status": cstr(result.get("status") or "Reserved")}, update_modified=False)
+	results_by_line = {r["budget_line"]: r for r in result["reservations"]}
+	owned = 0 if result.get("reused") else len(result["reservations"])
+	for source in sources:
+		r = results_by_line.get(source["budget_line_id"])
+		if not r:
+			continue
+		name = cstr(r.get("reservation_id"))
+		code = cstr(r.get("reservation_code") or name)
+		reservation_names.append(name)
+		reservation_codes.append(code)
+		if source["funding_allocation"]:
+			frappe.db.set_value("Demand Funding Allocation", source["funding_allocation"], {"funding_reservation": name, "reservation_status": cstr(r.get("status") or "Active")}, update_modified=False)
 	amount = sum(row["amount"] for row in sources)
 	line_id = sources[0]["budget_line_id"] if len(sources) == 1 else "MULTIPLE"
 	reservation_name = ",".join(reservation_names)

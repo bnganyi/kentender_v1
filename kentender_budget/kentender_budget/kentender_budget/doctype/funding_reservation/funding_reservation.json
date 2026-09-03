@@ -6,42 +6,23 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "budget",
-  "budget_line",
   "generated_reference",
+  "budget",
+  "budget_version_at_creation",
   "col_a",
+  "budget_line",
   "status",
-  "event_date",
-  "section_demand",
-  "demand_code",
-  "demand_title",
+  "section_source",
+  "plan_item",
+  "plan_source_allocation",
   "col_b",
   "original_amount",
-  "remaining_reserved",
+  "remaining_amount",
   "currency",
-  "section_downstream",
-  "plan_item_code",
-  "current_downstream_reference",
-  "idempotency_key",
+  "correlation_id",
   "fixture_namespace"
  ],
  "fields": [
-  {
-   "fieldname": "budget",
-   "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "budget_line",
-   "fieldtype": "Link",
-   "label": "Budget Line",
-   "options": "Budget Line",
-   "reqd": 1,
-   "search_index": 1
-  },
   {
    "fieldname": "generated_reference",
    "fieldtype": "Data",
@@ -49,42 +30,74 @@
    "reqd": 1,
    "unique": 1,
    "in_list_view": 1,
+   "search_index": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_version_at_creation",
+   "fieldtype": "Link",
+   "label": "Budget Version At Creation",
+   "options": "Budget Version",
+   "reqd": 1,
+   "read_only": 1,
+   "description": "Preserves the version under which the reservation was confirmed."
   },
   {
    "fieldname": "col_a",
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Reserved\nPartially converted\nConverted\nNeeds attention\nReleased\nCancelled\nExpired",
+   "options": "Active\nPartially Converted\nConverted\nReleased\nNeeds Attention",
    "reqd": 1,
-   "default": "Reserved",
-   "in_list_view": 1
+   "default": "Active",
+   "in_list_view": 1,
+   "search_index": 1
   },
   {
-   "fieldname": "event_date",
-   "fieldtype": "Date",
-   "label": "Event Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_demand",
+   "fieldname": "section_source",
    "fieldtype": "Section Break",
-   "label": "Demand"
+   "label": "Source Allocation"
   },
   {
-   "fieldname": "demand_code",
+   "fieldname": "plan_item",
    "fieldtype": "Data",
-   "label": "Demand Code"
+   "label": "Plan Item",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1,
+   "description": "Links the reservation to the governed Plan Item."
   },
   {
-   "fieldname": "demand_title",
+   "fieldname": "plan_source_allocation",
    "fieldtype": "Data",
-   "label": "Demand Title",
-   "in_list_view": 1
+   "label": "Plan Source Allocation",
+   "reqd": 1,
+   "read_only": 1,
+   "unique": 1,
+   "search_index": 1,
+   "description": "Distinguishes multiple source allocations and prevents duplicate or partial confirmation."
   },
   {
    "fieldname": "col_b",
@@ -94,15 +107,18 @@
    "fieldname": "original_amount",
    "fieldtype": "Currency",
    "label": "Original Amount",
+   "options": "currency",
    "reqd": 1,
-   "options": "currency"
+   "non_negative": 1,
+   "read_only": 1
   },
   {
-   "fieldname": "remaining_reserved",
+   "fieldname": "remaining_amount",
    "fieldtype": "Currency",
-   "label": "Remaining Reserved",
+   "label": "Remaining Amount",
+   "options": "currency",
    "reqd": 1,
-   "options": "currency"
+   "non_negative": 1
   },
   {
    "default": "KES",
@@ -113,27 +129,13 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_downstream",
-   "fieldtype": "Section Break",
-   "label": "Downstream"
-  },
-  {
-   "fieldname": "plan_item_code",
+   "fieldname": "correlation_id",
    "fieldtype": "Data",
-   "label": "Procurement Plan Item Code",
+   "label": "Correlation ID",
    "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "current_downstream_reference",
-   "fieldtype": "Data",
-   "label": "Current Downstream Reference"
-  },
-  {
-   "fieldname": "idempotency_key",
-   "fieldtype": "Data",
-   "label": "Idempotency Key",
-   "unique": 1
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Makes Finance retries idempotent and binds every reservation in one all-source confirmation transaction."
   },
   {
    "fieldname": "fixture_namespace",
@@ -144,7 +146,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-05 00:00:00.000000",
+ "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Funding Reservation",
@@ -153,7 +155,7 @@
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 1,
@@ -183,19 +185,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Budget Reviewer",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Authority",
+   "role": "Budget Approver",
    "share": 0,
    "write": 0
   },
@@ -210,12 +200,23 @@
    "role": "Budget Viewer",
    "share": 0,
    "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
   }
  ],
- "sort_field": "event_date",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "title_field": "demand_title",
- "search_fields": "generated_reference,demand_code,demand_title"
+ "search_fields": "generated_reference,plan_item,plan_source_allocation"
 }

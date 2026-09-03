@@ -17,6 +17,8 @@ import os
 import frappe
 from frappe.modules.import_file import import_file_by_path
 
+from kentender_procurement.setup import procurement_home_page
+
 
 def _sidebar_json_path(basename: str) -> str:
 	return os.path.join(
@@ -121,6 +123,12 @@ def sync_procurement_home_page() -> None:
 		)
 	if os.path.isfile(path):
 		import_file_by_path(path, force=True)
+	# The fixture carries a role list, but `setup/procurement_home_page.py` owns
+	# it: reconciling *after* the import means a role retired there is removed
+	# from the live record even if a stale JSON still names it. Hand-maintaining
+	# the list in the fixture alone locked 42 users out of the whole Desk once
+	# per module rebuild — see that module's docstring.
+	procurement_home_page.reconcile()
 	# Retire colliding Page slug if an older import created it.
 	if frappe.db.exists("Page", "procurement-home"):
 		frappe.delete_doc("Page", "procurement-home", force=True, ignore_permissions=True)
@@ -129,23 +137,12 @@ def sync_procurement_home_page() -> None:
 		frappe.db.set_value("Workspace", "Procurement Home", "is_hidden", 1)
 
 
-def sync_demands_pages() -> None:
-	"""DEM-UI pages must exist before sidebar Link To: demands-workspace."""
-	app_path = frappe.get_app_path("kentender_procurement")
-	for folder in (
-		"demands_workspace",
-		"demand_form",
-		"demand_review",
-		"demand_detail",
-		"demand_performance",
-	):
-		for candidate in (
-			os.path.join(app_path, "demands", "page", folder, f"{folder}.json"),
-			os.path.join(app_path, "page", folder, f"{folder}.json"),
-		):
-			if os.path.isfile(candidate):
-				import_file_by_path(candidate, force=True)
-				break
+# sync_demands_pages() was removed in NDS-CHG-001 v1.1 Phase 8. It re-imported
+# the five DEM-UI Page fixtures so the rail's "Link To: demands-workspace" row
+# would validate. Departmental Needs replaced that module: the fixtures, the
+# demands/ package and every Demand Page are gone, and no sidebar row targets
+# them, so the loop found nothing on every after_migrate. NDS-BR-020 forbids
+# keeping a legacy Demand fixture or route.
 
 
 def run() -> None:
@@ -153,7 +150,6 @@ def run() -> None:
 	if frappe.db.exists("DocType", "Page"):
 		sync_coming_soon_page()
 		sync_procurement_home_page()
-		sync_demands_pages()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

@@ -40,12 +40,32 @@ class TestHomeServiceContract(IntegrationTestCase):
 		self.assertEqual(items[0]["urgency"], "Overdue")
 		self.assertEqual(items[1]["urgency"], "Due soon")
 
-	def test_pipeline_has_exactly_six_stages_no_eval_award(self):
-		self.assertEqual(len(PIPELINE_STAGES), 6)
+	def test_pipeline_stops_before_evaluation_award_and_contract(self):
+		# Five since NDS-CHG-001 v1.1: the two Demand-era stages were replaced by
+		# one Accepted-needs stage. The count is incidental; the invariant this
+		# test exists for is that the funnel stops at publication.
+		self.assertEqual(len(PIPELINE_STAGES), 5)
 		labels = " ".join(s[1].lower() for s in PIPELINE_STAGES)
 		self.assertNotIn("evaluation", labels)
 		self.assertNotIn("award", labels)
 		self.assertNotIn("contract", labels)
+
+	def test_no_stage_links_to_a_route_the_rebuild_deleted(self):
+		"""Both Demand stages pointed at `/desk/demands-workspace` — a 404.
+
+		A stage whose count is always zero looks merely empty; one that also
+		navigates nowhere is the tell. Nothing asserted either, because the NDS
+		static scan covers the `departmental_needs` package and the navigation
+		scan covers the sidebar — neither reads `procurement_home`.
+		"""
+		retired = ("demands-workspace", "demand-form", "demand-review", "demand-detail")
+		for key, label, url in PIPELINE_STAGES:
+			for route in retired:
+				self.assertNotIn(route, url, msg=f"stage {key!r} ({label}) links to {url}")
+
+	def test_no_stage_carries_retired_demand_terminology(self):
+		labels = " ".join(s[1].lower() for s in PIPELINE_STAGES)
+		self.assertNotIn("demand", labels, msg=f"§1.1 replaced Demands with Needs: {labels}")
 
 	def test_list_fiscal_years_uses_budget_fiscal_period(self):
 		"""Budget DocType stores fiscal_period (e.g. 2026/27), not fiscal_year."""
@@ -85,7 +105,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 			self.assertNotIn("Approve", item.get("action_label") or "")
 			self.assertNotIn("Reject", item.get("action_label") or "")
 		stages = (payload.get("pipeline") or {}).get("stages") or []
-		self.assertEqual(len(stages), 6)
+		self.assertEqual(len(stages), 5)
 		# Bid confidentiality — no bid counts in JSON
 		blob = frappe.as_json(payload).lower()
 		self.assertNotIn("bid_count", blob)
@@ -111,7 +131,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 
 		payload = get_procurement_home()
 		self.assertTrue(payload.get("ok"))
-		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 6)
+		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 5)
 
 	def test_deadline_items_include_stitch_action_icons(self):
 		frappe.set_user("Administrator")
