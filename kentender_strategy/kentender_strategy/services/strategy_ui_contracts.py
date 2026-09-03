@@ -618,3 +618,19 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 			)
 
 	return {"changes": changes, "limitation": DIFF_LIMITATION_NOTE}
+
+
+def list_available_fiscal_years() -> list[str]:
+	"""§3: 'Strategy references... reads the Fiscal Year catalogue only.' A
+	Structure editor needs the full catalogue to offer as a Performance
+	Target period — not the single currently-open year
+	`get_site_configuration()` returns, and not the Configuration
+	Administrator-gated `list_fiscal_years()` in kentender_core, which any
+	Strategy Author calling this has no reason to hold. `ignore_permissions`
+	is safe here: Fiscal Year rows carry only date ranges, no business data,
+	and Strategy has no create/write path onto the doctype regardless.
+	"""
+	rows = frappe.get_all(
+		"Fiscal Year", fields=["name"], order_by="year_start_date desc", limit_page_length=0, ignore_permissions=True
+	)
+	return [r.name for r in rows]

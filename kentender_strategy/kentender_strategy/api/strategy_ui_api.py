@@ -48,3 +48,8 @@ def get_version_review_overview(plan_version_id: str):
 @frappe.whitelist()
 def diff_strategy_versions(compare_version_id: str, base_version_id: str | None = None):
 	return ui.diff_strategy_versions(base_version_id or None, compare_version_id)
+
+
+@frappe.whitelist()
+def list_available_fiscal_years():
+	return ui.list_available_fiscal_years()

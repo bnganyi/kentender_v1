@@ -1,30 +1,35 @@
 // Shared frappe.call wrapper for the Strategy Vue-in-Desk data adapters.
+// Verbatim copy of kentender_budget's / the NDS frappeCall.js (AGENTS.md
+// §6.6 — each app keeps its own copy of this pure helper).
 //
 // frappe.call() returns the raw jqXHR on failure (see frappe/public/js/frappe/request.js —
 // $.ajax(...).fail(...) rejects with the jqXHR itself, not an Error). Awaiting it and doing
 // `e.message || String(e)` therefore always falls through to String(jqXHR), which stringifies
 // to "[object Object]" — every server-side frappe.throw()/validation error surfaced this way
 // instead of its real message. Extract the real message from the parsed response body instead.
-// Frappe pops its own msgprint dialog for any server exception carrying
-// _server_messages — so a refusal surfaced twice: once as a raw framework
-// dialog titled with the internal error code (AUTH_ROLE_REQUIRED), and again
-// as the screen's own inline message. request.js skips its dialog whenever a
-// per-call error_handlers entry matches the exception type, so registering
-// no-op handlers for the refusal types leaves exactly one, in-app message.
-const SILENCED_EXC_TYPES = ["PermissionError", "ValidationError"];
-const noopHandlers = Object.fromEntries(SILENCED_EXC_TYPES.map((t) => [t, () => {}]));
-
 export async function frappeCall(method, args) {
 	try {
-		const response = await frappe.call({
-			method,
-			args,
-			freeze: false,
-			error_handlers: noopHandlers,
-		});
+		// silent — request.js otherwise raises Frappe's own "Message" modal for
+		// every _server_messages rejection, on top of the screen's inline error
+		// summary: the same refusal rendered twice. An earlier version of this
+		// file tried to suppress that per exception *type* (error_handlers keyed
+		// by "ValidationError"/"PermissionError"), but Frappe's automatic field
+		// validation raises specific subclasses — MandatoryError,
+		// LinkValidationError, UniqueValidationError — whose exc_type never
+		// matched the allowlist, so the raw framework dialog still popped for
+		// every missing-mandatory-field or bad-Link refusal. `silent: true`
+		// suppresses frappe's own dialog unconditionally, regardless of
+		// exception type; the message itself still reaches the caller through
+		// extractErrorMessage below.
+		const response = await frappe.call({ method, args, freeze: false, silent: true });
 		return response.message;
 	} catch (xhr) {
-		throw new Error(extractErrorMessage(xhr));
+		const err = new Error(extractErrorMessage(xhr));
+		// frappe.PermissionError responds with HTTP 403 (frappe/exceptions.py) —
+		// exposed so a caller can distinguish "forbidden" from any other
+		// failure without re-parsing the raw jqXHR itself.
+		err.httpStatus = xhr && xhr.status;
+		throw err;
 	}
 }
 

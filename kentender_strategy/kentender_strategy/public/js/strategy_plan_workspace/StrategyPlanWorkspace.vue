@@ -13,6 +13,7 @@ import {
 	submitVersion,
 	createSuccessorVersion,
 	getFinancialYears,
+	getIndicatorUnits,
 } from "./data/strategyPlanApi.js";
 
 const { route, go } = useRouteState("strategy-plan-workspace");
@@ -41,6 +42,7 @@ const historyLoaded = ref(false);
 const actionError = ref(null);
 const acting = ref(false);
 const financialYears = ref([]);
+const indicatorUnits = ref([]);
 
 onMounted(async () => {
 	try {
@@ -48,6 +50,12 @@ onMounted(async () => {
 	} catch (e) {
 		// Non-fatal: the Financial year select just stays empty; targets can
 		// still be created against Target By Date instead.
+	}
+	try {
+		indicatorUnits.value = await getIndicatorUnits();
+	} catch (e) {
+		// Non-fatal: the Unit field's suggestions just stay empty; it's still
+		// a free-typed field either way.
 	}
 });
 
@@ -136,7 +144,7 @@ function saveDraft() {
 	frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
 }
 
-const confirmDialog = ref(null); // 'submit' | null
+const confirmDialog = ref(null); // 'submit' | 'create-successor' | 'delete-node' | 'delete-target' | 'discard-changes' | null
 
 async function doSubmit() {
 	if (!workspace.value?.current_version) return;
@@ -178,6 +186,39 @@ const creatingChildOf = ref(null); // { parent, childType } while composing a ne
 const savingNode = ref(false);
 const addingTargetTo = ref(null); // the Performance Indicator node, while the Add Performance Target dialog is open
 
+// Snapshot of editForm right after a legitimate selection/composition starts
+// — the baseline isEditFormDirty compares against, so switching to a
+// different tree item mid-edit can be caught and confirmed rather than
+// silently discarding whatever the author just typed.
+const editFormBaseline = ref(null);
+function snapshotEditForm() {
+	editFormBaseline.value = JSON.stringify(editForm);
+}
+const isEditFormDirty = computed(() => {
+	if (!editFormBaseline.value) return false;
+	if (!selectedNode.value && !creatingChildOf.value) return false;
+	return JSON.stringify(editForm) !== editFormBaseline.value;
+});
+const pendingNavigation = ref(null);
+function guardedNavigate(run) {
+	if (isEditFormDirty.value) {
+		pendingNavigation.value = run;
+		confirmDialog.value = "discard-changes";
+	} else {
+		run();
+	}
+}
+function confirmDiscardChanges() {
+	confirmDialog.value = null;
+	const run = pendingNavigation.value;
+	pendingNavigation.value = null;
+	if (run) run();
+}
+function cancelDiscardChanges() {
+	confirmDialog.value = null;
+	pendingNavigation.value = null;
+}
+
 function selectNode(node) {
 	creatingChildOf.value = null;
 	selectedNode.value = node;
@@ -188,6 +229,7 @@ function selectNode(node) {
 		definition: node.definition,
 		unit: node.unit,
 	});
+	snapshotEditForm();
 }
 
 // Performance Target has no standalone editor panel of its own — it is only
@@ -195,34 +237,39 @@ function selectNode(node) {
 // Selecting a target row in the tree opens that parent indicator's panel
 // with the target's row already in edit mode, instead of a blank panel.
 function handleTreeSelect(node) {
-	if (node.node_type === "Performance Target") {
-		const path = findPath(tree.value.tree, node.id, []);
-		const parent = path && path.length >= 2 ? path[path.length - 2] : null;
-		if (parent) {
-			selectNode(parent);
-			startEditTarget(node);
-			return;
+	guardedNavigate(() => {
+		if (node.node_type === "Performance Target") {
+			const path = findPath(tree.value.tree, node.id, []);
+			const parent = path && path.length >= 2 ? path[path.length - 2] : null;
+			if (parent) {
+				selectNode(parent);
+				startEditTarget(node);
+				return;
+			}
 		}
-	}
-	selectNode(node);
+		selectNode(node);
+	});
 }
 
 function startAddChild({ parent, childType }) {
-	if (childType === "Performance Target") {
-		// STR-DES-05b: adding a target opens a dialog over the indicator's own
-		// detail view — it never replaces it, unlike every other child type.
-		selectNode(parent);
-		addingTargetTo.value = parent;
-		return;
-	}
-	selectedNode.value = null;
-	creatingChildOf.value = { parent, childType };
-	Object.assign(editForm, {
-		title: "",
-		display_order: (parent.children ? parent.children.length : 0) + 1,
-		indicator_name: "",
-		definition: "",
-		unit: "",
+	guardedNavigate(() => {
+		if (childType === "Performance Target") {
+			// STR-DES-05b: adding a target opens a dialog over the indicator's
+			// own detail view — it never replaces it, unlike every other child type.
+			selectNode(parent);
+			addingTargetTo.value = parent;
+			return;
+		}
+		selectedNode.value = null;
+		creatingChildOf.value = { parent, childType };
+		Object.assign(editForm, {
+			title: "",
+			display_order: (parent.children ? parent.children.length : 0) + 1,
+			indicator_name: "",
+			definition: "",
+			unit: "",
+		});
+		snapshotEditForm();
 	});
 }
 
@@ -311,11 +358,25 @@ async function saveTargetEdit(t) {
 	}
 }
 
-async function deleteTarget(t) {
+// Targets are leaves — no descendant check needed, just a plain confirm
+// before an irreversible delete (STR-DES-05's Delete action had none).
+const pendingDeleteTarget = ref(null);
+
+function askDeleteTarget(t) {
+	pendingDeleteTarget.value = t;
+	confirmDialog.value = "delete-target";
+}
+
+async function confirmDeleteTarget() {
+	const t = pendingDeleteTarget.value;
+	if (!t) return;
+	confirmDialog.value = null;
 	savingNode.value = true;
 	actionError.value = null;
 	try {
 		await saveStructureDraft(currentVersionId.value, { deletes: [{ doctype: "Performance Target", name: t.id }] });
+		frappe.show_alert({ message: __("Target deleted"), indicator: "green" });
+		pendingDeleteTarget.value = null;
 		await refreshTree();
 	} catch (e) {
 		actionError.value = e.message || String(e);
@@ -346,6 +407,7 @@ async function saveNodeEdit() {
 			});
 		}
 		frappe.show_alert({ message: __("Changes saved"), indicator: "green" });
+		snapshotEditForm();
 		await refreshTree();
 	} catch (e) {
 		actionError.value = e.message || String(e);
@@ -354,13 +416,43 @@ async function saveNodeEdit() {
 	}
 }
 
-async function deleteSelectedNode() {
+// STR-BR-007/§12.3: a node with descendants (child nodes, or an indicator
+// measuring it) cannot be removed until they are removed first — the server
+// enforces this and rejects with STRATEGY_INVALID_HIERARCHY. Checking it
+// here too avoids sending a doomed request: the dialog tells the author
+// immediately what to do, instead of a round-trip that ends in a rejection
+// they can only see in the error banner.
+const deleteNodeBlockedReason = computed(() => {
+	const n = selectedNode.value;
+	if (!n) return null;
+	if (n.children && n.children.length) {
+		if (n.node_type === "Performance Indicator") return __("Delete its targets first, then delete this indicator.");
+		if (n.node_type === "Strategic Objective") return __("Delete or move its indicators first, then delete this objective.");
+		return __("Delete or move its child items first, then delete this one.");
+	}
+	return null;
+});
+
+function askDeleteNode() {
+	if (!selectedNode.value) return;
+	confirmDialog.value = "delete-node";
+}
+
+async function confirmDeleteNode() {
 	if (!selectedNode.value || !currentVersionId.value) return;
+	if (deleteNodeBlockedReason.value) {
+		// Informational only — nothing to send, the dialog's "OK" just closes it.
+		confirmDialog.value = null;
+		return;
+	}
 	const doctype = selectedNode.value.node_type === "Performance Indicator" ? "Performance Indicator" : "Strategy Node";
+	const label = selectedNode.value.node_type === "Performance Indicator" ? __("Indicator deleted") : __("Node deleted");
+	confirmDialog.value = null;
 	savingNode.value = true;
 	actionError.value = null;
 	try {
 		await saveStructureDraft(currentVersionId.value, { deletes: [{ doctype, name: selectedNode.value.id }] });
+		frappe.show_alert({ message: label, indicator: "green" });
 		selectedNode.value = null;
 		await refreshTree();
 	} catch (e) {
@@ -504,7 +596,7 @@ async function saveNewPillar() {
 					</div>
 				</header>
 
-				<p v-if="actionError" style="color: oklch(0.45 0.13 28)">{{ actionError }}</p>
+				<p v-if="actionError && tab !== 'structure'" style="color: oklch(0.45 0.13 28)">{{ actionError }}</p>
 
 				<div class="kt-tabs">
 					<div class="kt-tab" :aria-selected="tab === 'overview'" @click="switchTab('overview')">{{ __("Overview") }}</div>
@@ -596,12 +688,13 @@ async function saveNewPillar() {
 						</div>
 						<div class="kt-card kt-blueprint" style="width: 58%">
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+							<p v-if="actionError" style="color: oklch(0.45 0.13 28); margin-top: 0">{{ actionError }}</p>
 							<template v-if="creatingChildOf">
 								<div class="kt-card-title">{{ __("New") }} {{ creatingChildOf.childType }}</div>
 								<template v-if="creatingChildOf.childType === 'Performance Indicator'">
 									<div class="kt-field"><label>{{ __("Indicator name") }}</label><input v-model="editForm.indicator_name" class="kt-input" /></div>
 									<div class="kt-field"><label>{{ __("Definition") }}</label><textarea v-model="editForm.definition" class="kt-input" rows="2"></textarea></div>
-									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" /></div>
+									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" list="kt-indicator-units" /></div>
 								</template>
 								<template v-else>
 									<div class="kt-field"><label>{{ __("Title") }}</label><input v-model="editForm.title" class="kt-input" /></div>
@@ -627,7 +720,7 @@ async function saveNewPillar() {
 								<template v-if="selectedNode.node_type === 'Performance Indicator'">
 									<div class="kt-field"><label>{{ __("Indicator name") }}</label><input v-model="editForm.indicator_name" class="kt-input" :disabled="!workspace.is_editable_draft" /></div>
 									<div class="kt-field"><label>{{ __("Definition") }}</label><textarea v-model="editForm.definition" class="kt-input" rows="2" :disabled="!workspace.is_editable_draft"></textarea></div>
-									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" :disabled="!workspace.is_editable_draft" /></div>
+									<div class="kt-field"><label>{{ __("Unit") }}</label><input v-model="editForm.unit" class="kt-input" list="kt-indicator-units" :disabled="!workspace.is_editable_draft" /></div>
 									<div class="kt-card-title" style="margin-top: 16px">{{ __("Targets") }}</div>
 									<table class="kt-table">
 										<thead><tr><th>{{ __("Period") }}</th><th>{{ __("Expected result") }}</th><th v-if="workspace.is_editable_draft">{{ __("Action") }}</th></tr></thead>
@@ -639,7 +732,7 @@ async function saveNewPillar() {
 													<td v-if="workspace.is_editable_draft">
 														<a href="#" @click.prevent="startEditTarget(t)">{{ __("Edit") }}</a>
 														&nbsp;
-														<a href="#" style="color: oklch(0.45 0.13 28)" @click.prevent="deleteTarget(t)">{{ __("Delete") }}</a>
+														<a href="#" style="color: oklch(0.45 0.13 28)" @click.prevent="askDeleteTarget(t)">{{ __("Delete") }}</a>
 													</td>
 												</tr>
 												<tr v-else>
@@ -679,7 +772,7 @@ async function saveNewPillar() {
 									v-if="workspace.is_editable_draft && selectedNode.node_type !== 'Performance Target'"
 									style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--kt-color-divider)"
 								>
-									<button type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="savingNode" @click="deleteSelectedNode">
+									<button type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="savingNode" @click="askDeleteNode">
 										{{ selectedNode.node_type === "Performance Indicator" ? __("Delete indicator") : __("Delete node") }}
 									</button>
 									<button type="button" class="kt-btn kt-btn-primary" :disabled="savingNode" @click="saveNodeEdit">
@@ -727,6 +820,36 @@ async function saveNewPillar() {
 			@confirm="doCreateSuccessor"
 			@cancel="confirmDialog = null"
 		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'discard-changes'"
+			:title="__('Discard unsaved changes?')"
+			:message="__('Switching to a different item will discard what you just typed here.')"
+			:confirm-label="__('Discard changes')"
+			@confirm="confirmDiscardChanges"
+			@cancel="cancelDiscardChanges"
+		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'delete-node'"
+			:title="
+				deleteNodeBlockedReason
+					? __('This item has children')
+					: selectedNode?.node_type === 'Performance Indicator'
+					? __('Delete this indicator?')
+					: __('Delete this node?')
+			"
+			:message="deleteNodeBlockedReason || __('This cannot be undone.')"
+			:confirm-label="deleteNodeBlockedReason ? __('OK') : __('Delete')"
+			@confirm="confirmDeleteNode"
+			@cancel="confirmDialog = null"
+		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'delete-target'"
+			:title="__('Delete this target?')"
+			:message="__('This cannot be undone.')"
+			:confirm-label="__('Delete')"
+			@confirm="confirmDeleteTarget"
+			@cancel="confirmDialog = null"
+		/>
 		<AddTargetDialog
 			:open="Boolean(addingTargetTo)"
 			:financial-years="financialYears"
@@ -735,5 +858,8 @@ async function saveNewPillar() {
 			@confirm="confirmAddTarget"
 			@cancel="closeTargetDialog"
 		/>
+		<datalist id="kt-indicator-units">
+			<option v-for="u in indicatorUnits" :key="u" :value="u"></option>
+		</datalist>
 	</div>
 </template>
