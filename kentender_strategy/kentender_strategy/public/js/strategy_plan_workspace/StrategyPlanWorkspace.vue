@@ -696,7 +696,6 @@ async function saveNewPillar() {
 								max-height: calc(100vh - 96px);
 								overflow-y: auto;
 								overflow-x: hidden;
-								scrollbar-gutter: stable;
 							"
 						>
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
