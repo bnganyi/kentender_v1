@@ -12,6 +12,12 @@ const props = defineProps({
 	financialYears: { type: Array, default: () => [] },
 	unit: { type: String, default: "" },
 	saving: { type: Boolean, default: false },
+	// Unlike ConfirmDialog's callers, this dialog stays open across the async
+	// save (it only closes on success) — a rejection (e.g. a duplicate
+	// Fiscal Year target) previously rendered into the panel behind this
+	// backdrop, invisible while the dialog was up: the dialog looked like it
+	// just did nothing.
+	error: { type: String, default: "" },
 });
 const emit = defineEmits(["confirm", "cancel"]);
 
@@ -49,6 +55,7 @@ function onConfirm() {
 			<p class="kt-muted" style="font-size: 14px; margin: 0">
 				{{ __("Set the expected value and period for this indicator.") }}
 			</p>
+			<p v-if="error" style="color: oklch(0.45 0.13 28); font-size: 14px; margin: 8px 0 0">{{ error }}</p>
 
 			<div class="kt-field" style="margin: 0 0 20px">
 				<label for="kt-add-target-period">{{ __("Period") }}</label>

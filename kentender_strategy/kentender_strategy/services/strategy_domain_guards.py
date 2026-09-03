@@ -232,3 +232,15 @@ def validate_performance_target(doc) -> None:
 		target_by_date = frappe.utils.getdate(doc.target_by_date)
 		if not (period_start <= target_by_date <= period_end):
 			frappe.throw(_("Target By Date must fall within the plan period"))
+
+	# §12.3: "One Indicator cannot contain two Targets for the same Fiscal
+	# Year or the same target-by date." Sibling scope is the indicator, not
+	# the plan version — two different indicators may each carry their own
+	# FY 2027/28 target.
+	sibling_filters = {"indicator_id": doc.indicator_id, "name": ["!=", doc.name or ""]}
+	sibling_filters["financial_year_id" if has_fy else "target_by_date"] = (
+		doc.financial_year_id if has_fy else doc.target_by_date
+	)
+	if frappe.db.exists("Performance Target", sibling_filters):
+		period_label = doc.financial_year_id if has_fy else doc.target_by_date
+		frappe.throw(_("This indicator already has a target for {0}").format(period_label))

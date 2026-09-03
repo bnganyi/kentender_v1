@@ -257,6 +257,7 @@ function startAddChild({ parent, childType }) {
 			// STR-DES-05b: adding a target opens a dialog over the indicator's
 			// own detail view — it never replaces it, unlike every other child type.
 			selectNode(parent);
+			actionError.value = null;
 			addingTargetTo.value = parent;
 			return;
 		}
@@ -855,6 +856,7 @@ async function saveNewPillar() {
 			:financial-years="financialYears"
 			:unit="addingTargetTo?.unit"
 			:saving="savingNode"
+			:error="actionError"
 			@confirm="confirmAddTarget"
 			@cancel="closeTargetDialog"
 		/>
