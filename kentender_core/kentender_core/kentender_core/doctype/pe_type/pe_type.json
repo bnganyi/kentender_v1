@@ -44,6 +44,7 @@
  "name": "PE Type",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
+ "quick_entry": 1,
  "permissions": [
   {
    "create": 1,

@@ -19,11 +19,11 @@
 	--color-text: var(--kt-color-text);
 	--color-accent: var(--kt-color-accent);
 	--color-accent-700: var(--kt-color-accent-800);
-	--color-neutral-100: var(--kt-color-surface);
-	--color-neutral-200: var(--kt-color-divider);
-	--color-neutral-600: #5b5e61;
-	--color-neutral-700: #44474a;
-	--color-neutral-800: #313437;
+	--color-neutral-100: var(--kt-color-neutral-100);
+	--color-neutral-200: var(--kt-color-neutral-200);
+	--color-neutral-600: var(--kt-color-neutral-600);
+	--color-neutral-700: var(--kt-color-neutral-700);
+	--color-neutral-800: var(--kt-color-neutral-800);
 	--color-divider: var(--kt-color-divider);
 	--font-heading: var(--kt-font-heading);
 	--font-body: var(--kt-font-body);

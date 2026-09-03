@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2026-09-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "pe_name",
+  "pe_code",
+  "pe_type",
+  "column_break_spe",
+  "ppra_registration",
+  "timezone",
+  "section_break_spe_audit",
+  "configured_by",
+  "configured_at"
+ ],
+ "fields": [
+  {
+   "description": "Official legal name of the procuring entity this site represents.",
+   "fieldname": "pe_name",
+   "fieldtype": "Data",
+   "label": "Entity Name",
+   "reqd": 1
+  },
+  {
+   "description": "Stable uppercase code, for example PE-MOH. Immutable after the site is configured (CFG-CHG-002 v0.6 §4.1).",
+   "fieldname": "pe_code",
+   "fieldtype": "Data",
+   "label": "Entity Code",
+   "reqd": 1
+  },
+  {
+   "description": "Descriptive only. Nothing branches on it in this release.",
+   "fieldname": "pe_type",
+   "fieldtype": "Select",
+   "label": "Entity Type",
+   "options": "National Government Ministry\nState Department\nState Corporation\nCounty Government\nCounty Corporation\nConstitutional Commission\nPublic University\nOther Public Entity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_spe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ppra_registration",
+   "fieldtype": "Data",
+   "label": "PPRA Registration"
+  },
+  {
+   "default": "Africa/Nairobi",
+   "fieldname": "timezone",
+   "fieldtype": "Data",
+   "label": "Timezone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_spe_audit",
+   "fieldtype": "Section Break",
+   "label": "Configuration Record"
+  },
+  {
+   "fieldname": "configured_by",
+   "fieldtype": "Link",
+   "label": "Configured By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "configured_at",
+   "fieldtype": "Datetime",
+   "label": "Configured At",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "module": "Kentender Core",
+ "name": "Site Procuring Entity",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

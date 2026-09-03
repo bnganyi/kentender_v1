@@ -245,6 +245,18 @@
   {
    "child": 1,
    "collapsible": 0,
+   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"System Manager\")",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "System setup",
+   "link_to": "system-setup",
+   "link_type": "Page",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
    "display_depends_on": "eval: (frappe.user_roles || []).includes(\"Procurement Planner\")",
    "indent": 0,
    "keep_closed": 0,
@@ -279,7 +291,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-31 11:50:50.599438",
+ "modified": "2026-09-03 17:08:03.239672",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

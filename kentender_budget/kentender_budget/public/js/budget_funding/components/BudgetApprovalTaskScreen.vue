@@ -51,9 +51,12 @@ const historyLoaded = ref(false);
 const showReturnDialog = ref(false);
 const showApproveConfirm = ref(false);
 
-async function load() {
+// `quiet` refreshes in place — used after Approve/Return, which redisplay
+// the same task's (now updated) state rather than navigating away.
+async function load(opts) {
 	if (!versionIdParam.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	serverError.value = false;
@@ -113,7 +116,7 @@ async function submitReturn(reason) {
 		}
 		frappe.show_alert({ message: __("Returned"), indicator: "orange" });
 		showReturnDialog.value = false;
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -132,7 +135,7 @@ async function submitApprove() {
 			return;
 		}
 		frappe.show_alert({ message: __("Approved and activated"), indicator: "green" });
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {

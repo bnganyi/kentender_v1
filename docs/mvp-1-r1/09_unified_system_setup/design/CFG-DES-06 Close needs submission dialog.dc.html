@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #e4e7ec; font-family: var(--font-body); color: var(--color-text); }
+a { color: var(--color-accent-2-700); }
+a:hover { color: var(--color-accent-2-800); }
+</style>
+</helmet>
+<div style="padding:40px 20px 60px">
+
+  <div style="width:1440px;margin:0 auto 18px;padding-bottom:10px;border-bottom:1px dashed var(--color-neutral-400);display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;font-family:var(--font-heading);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">
+    <span style="color:var(--color-accent-700);font-weight:700">CFG-DES-06 — Close needs submission dialog</span>
+    <span>Administrator</span>
+    <span>Over CFG-DES-03, dimmed</span>
+  </div>
+
+  <div style="position:relative;width:1440px;min-height:1024px;margin:0 auto;background:var(--color-bg);border:1px solid var(--color-divider);overflow:hidden">
+
+    <div style="filter:saturate(.55) brightness(1.02);opacity:.9">
+      <div style="max-width:1200px;margin:0 auto;padding:32px 0">
+        <div style="margin-bottom:24px">
+          <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">CONFIGURATION AND GOVERNANCE</div>
+          <h1 style="margin:0 0 8px;font-family:var(--font-heading);font-size:32px;line-height:1.1">System setup</h1>
+          <p style="margin:0;font-size:14px;color:var(--color-neutral-800);max-width:70ch">Configure this KenTender site, its financial years, organisational structure and user responsibilities.</p>
+        </div>
+        <div style="display:flex;gap:2px;border-bottom:2px solid var(--color-divider);margin-bottom:24px">
+          <span style="padding:10px 18px;margin-bottom:-2px;font-size:14px;color:var(--color-neutral-800)">Procuring entity</span>
+          <span style="padding:10px 18px;margin-bottom:-2px;font-family:var(--font-heading);font-size:14px;font-weight:600;color:var(--color-accent-800);background:var(--color-accent-100);border-bottom:2px solid var(--color-accent)">Fiscal years</span>
+          <span style="padding:10px 18px;margin-bottom:-2px;font-size:14px;color:var(--color-neutral-800)">Organisation structure</span>
+          <span style="padding:10px 18px;margin-bottom:-2px;font-size:14px;color:var(--color-neutral-800)">Users and responsibilities</span>
+        </div>
+        <div class="card blueprint elev-sm" style="padding:0;gap:0;overflow:visible">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <table class="table">
+            <thead>
+              <tr><th>Financial year</th><th>Period</th><th>Phase</th><th>Needs submission</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr><td style="font-weight:600">FY 2026/27</td><td>1 Jul 2026 – 30 Jun 2027</td><td>Current</td><td><span class="tag tag-neutral">Closed</span></td><td><a href="#open">Open needs submission</a></td></tr>
+              <tr><td style="font-weight:600">FY 2027/28</td><td>1 Jul 2027 – 30 Jun 2028</td><td>Upcoming</td><td><span class="kt-status is-live">Open until 25 Nov 2026, 23:59 EAT</span></td><td><a href="#close">Close needs submission</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:120px">
+      <div class="dialog blueprint elev-lg" style="width:520px;max-width:100%;overflow:visible;background:var(--color-surface)" data-screen-label="CFG-DES-06">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Close needs submission?</div>
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:16px;padding-top:4px">
+
+          <p style="margin:0;font-size:13.5px;color:var(--color-neutral-900)">Departments will no longer be able to create or submit needs for FY 2027/28. Needs already submitted or accepted are unaffected.</p>
+
+          <div class="field">
+            <label>Reason</label>
+            <div class="input" style="font-size:14px;min-height:72px;align-items:flex-start">Needs call closed on the date announced in circular MOH/PROC/2026/07.</div>
+          </div>
+
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-danger">Close needs submission</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

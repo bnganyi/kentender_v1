@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-2-700); text-decoration: none; }
+    a:hover { color: var(--color-accent-2-800); }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); min-height: 100vh; padding: 56px 5vw 140px; font-family: var(--font-body); color: var(--color-text);">
+
+  <div style="max-width: 1320px; margin: 0 auto 48px;">
+    <a href="KenTender Admin UI Fixtures.dc.html" style="font-size: 13px; color: var(--color-neutral-700);">&larr; All fixtures</a>
+    <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-700); margin-top: 10px;">AUTH-UI-01</div>
+    <h1 style="margin: 8px 0 0; font-size: 36px;">Organisation structure</h1>
+  </div>
+
+  <!-- ============ AUTH-DES-01 : populated tree ============ -->
+  <section id="org-tree" style="max-width: 1320px; margin: 0 auto 72px;">
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;">
+      <span class="tag tag-accent-2">AUTH-DES-01</span>
+      <span style="font-family: var(--font-heading); font-size: 15px; letter-spacing: .04em; color: var(--color-neutral-800);">Populated tree, unit selected</span>
+    </div>
+    <div class="blueprint" style="position: relative; background: var(--color-bg); padding: 40px 48px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px;">
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-700);">CONFIGURATION AND GOVERNANCE</div>
+          <h2 style="margin: 6px 0 8px; font-size: 30px;">Organisation structure</h2>
+          <p style="margin: 0; max-width: 56ch; font-size: 14px; color: var(--color-neutral-800);">Maintain the departments and organisational units used to scope KenTender responsibilities.</p>
+        </div>
+        <div class="field" style="width: 240px; flex: none; margin: 0;">
+          <label>Procuring Entity</label>
+          <div class="date-field"><span>Ministry of Health</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="input" style="display: flex; align-items: center; gap: 8px; color: var(--color-neutral-600);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Search organisation units</span>
+          </div>
+          <div class="card blueprint" style="padding: 8px; gap: 0;">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 8px; font-family: var(--font-heading); font-weight: 600;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span style="flex: 1;">Ministry of Health</span>
+              <span class="kt-label" style="font-weight: 400; color: var(--color-neutral-600);">PE-MOH</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 26px; background: var(--color-accent-100); font-weight: 600;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span style="flex: 1;">Directorate of Digital Health and Policy</span>
+              <span class="kt-label" style="font-weight: 400; color: var(--color-accent-800);">OU-MOH-DHP</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 46px;">
+              <span style="flex: 1;">Digital Health</span>
+              <span class="kt-label" style="font-weight: 400; color: var(--color-neutral-600);">OU-MOH-DHI</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 26px;">
+              <span style="flex: 1;">Human Resources Management and Development</span>
+              <span class="kt-label" style="font-weight: 400; color: var(--color-neutral-600);">OU-MOH-HRMD</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary" style="align-self: flex-start;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Add organisation unit</button>
+        </div>
+        <div class="card blueprint" style="padding: 28px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="card-kicker">ORGANISATION UNIT</div>
+          <div class="card-title" style="font-size: 24px;">Directorate of Digital Health and Policy</div>
+          <div class="kt-label">OU-MOH-DHP &middot; Ministry of Health</div>
+          <div style="margin-top: 6px;"><span class="kt-status is-live">Active</span></div>
+          <hr class="hr">
+          <div style="display: flex; gap: 48px; margin-bottom: 8px;">
+            <div><div class="kt-label">FULL PATH</div><div style="font-size: 14px; margin-top: 4px;">Ministry of Health &rarr; Directorate of Digital Health and Policy</div></div>
+            <div><div class="kt-label">DESCENDANTS</div><div style="font-size: 14px; margin-top: 4px;">1 descendant unit</div></div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary">Add organisation unit</button>
+            <button type="button" class="btn btn-secondary">Edit name</button>
+            <button type="button" class="btn btn-secondary">Deactivate</button>
+          </div>
+          <a href="#" style="display: inline-block; margin-top: 14px; font-size: 13px;">View 2 affected responsibilities &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Organisation structure states ============ -->
+  <section id="org-states" style="max-width: 1320px; margin: 0 auto;">
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;">
+      <span class="tag tag-accent-2">12.1.3</span>
+      <span style="font-family: var(--font-heading); font-size: 15px; letter-spacing: .04em; color: var(--color-neutral-800);">Empty &amp; error states</span>
+    </div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div class="card blueprint" style="flex: 1; min-width: 270px; padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-label">NO PE CONFIGURED</div>
+        <h4 style="margin: 4px 0 0; font-size: 17px;">No Procuring Entity is configured</h4>
+        <p class="text-muted" style="font-size: 13px; margin: 0 0 6px; max-width: 30ch;">Create and activate a Procuring Entity before maintaining its organisation structure.</p>
+        <a href="#">Open Procuring Entities &rarr;</a>
+      </div>
+      <div class="card blueprint" style="flex: 1; min-width: 270px; padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-label" style="color: var(--status-attention);">NEEDS REPAIR</div>
+        <h4 style="margin: 4px 0 0; font-size: 17px;">Organisation structure needs repair</h4>
+        <p class="text-muted" style="font-size: 13px; margin: 0; max-width: 30ch;">The root organisation unit for this Procuring Entity is missing. Run the governed repair before assigning responsibilities.</p>
+      </div>
+      <div class="card blueprint" style="flex: 1; min-width: 270px; padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-label">EMPTY ROOT</div>
+        <h4 style="margin: 4px 0 0; font-size: 17px;">No departments or units yet</h4>
+        <p class="text-muted" style="font-size: 13px; margin: 0 0 10px; max-width: 30ch;">Add the first organisation unit beneath this Procuring Entity.</p>
+        <button type="button" class="btn btn-primary">Add organisation unit</button>
+      </div>
+      <div class="card blueprint" style="flex: 1; min-width: 270px; padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-label" style="color: var(--status-critical);">LOAD FAILURE</div>
+        <h4 style="margin: 4px 0 0; font-size: 17px;">Something went wrong</h4>
+        <p class="text-muted" style="font-size: 13px; margin: 0 0 10px; max-width: 30ch;">We couldn&rsquo;t load the organisation structure. Reference corr-7f3a29e1.</p>
+        <button type="button" class="btn btn-secondary">Try again</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>

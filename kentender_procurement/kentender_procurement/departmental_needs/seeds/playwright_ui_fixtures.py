@@ -119,7 +119,9 @@ def _actor(email: str, full_name: str, roles: tuple[str, ...], *, unit: bool) ->
 	every fixture calls `ensure_actors`, so that is the normal path, not an
 	edge case.
 	"""
-	wanted_scope = [("Procuring Entity", PE), ("Financial Year", FY)]
+	# No Financial Year row (CTX-CHG-001 §4): FY eligibility comes from the PE
+	# Fiscal Year Context registry, not a per-user assignment.
+	wanted_scope = [("Procuring Entity", PE)]
 	if unit:
 		# §6/NDS-BR-001 — a departmental role must name its department, or this
 		# module denies access rather than falling back to unrestricted.
@@ -460,19 +462,27 @@ def reset_scheduled_window_fixture(*, commit: bool = True) -> dict[str, Any]:
 		)
 		doc.name = SCHEDULED_FY
 		doc.insert(ignore_permissions=True)
-	for user in (AUTHOR, REVIEWER, PLANNER):
-		if not frappe.db.exists(
-			"User Permission", {"user": user, "allow": "Financial Year", "for_value": SCHEDULED_FY}
-		):
-			frappe.get_doc(
-				{
-					"doctype": "User Permission",
-					"user": user,
-					"allow": "Financial Year",
-					"for_value": SCHEDULED_FY,
-				}
-			).insert(ignore_permissions=True)
-		frappe.clear_cache(user=user)
+	# CTX-CHG-001 §4: what makes this year selectable is a governed PE Fiscal
+	# Year Context (kentender_core), never a per-user Financial Year
+	# assignment — the same registry `context.selectable_financial_years`
+	# reads. Run through the real governed action (`enable_context`), then
+	# force-activate exactly as `reference_data.py`'s own MVP seed does: this
+	# fixture wants the context immediately Active, not scheduled for its
+	# real `active_from`.
+	if not frappe.db.exists(
+		"PE Fiscal Year Context", {"procuring_entity": PE, "financial_year": SCHEDULED_FY}
+	):
+		from kentender_core.seeds.kentender_mvp_v1.reference_data import STEWARD_EMAIL
+		from kentender_core.services import reference_data_transitions as ctx_txn
+
+		result = ctx_txn.enable_context(
+			PE, SCHEDULED_FY, "2098-07-01 00:00:00", "2099-09-30 23:59:00", user=STEWARD_EMAIL
+		)
+		if result["context_status"] != "Active":
+			frappe.db.set_value(
+				"PE Fiscal Year Context", result["context"], "context_status", "Active",
+				update_modified=False,
+			)
 	if not frappe.db.exists("Needs Intake Window", SCHEDULED_WINDOW):
 		frappe.get_doc(
 			{

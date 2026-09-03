@@ -68,7 +68,9 @@ ROOT_STATUS = {
 }
 
 
-def _dpp_rows(ctx: str, permitted_ous: set[str] | None, window_state: str) -> list[dict[str, Any]]:
+def _dpp_rows(
+	ctx: str, permitted_ous: set[str] | None, window_state: str, can_open_dpp: bool
+) -> list[dict[str, Any]]:
 	roots = frappe.get_all(
 		"Departmental Plan",
 		filters={"pe_fy_context": ctx},
@@ -108,7 +110,10 @@ def _dpp_rows(ctx: str, permitted_ous: set[str] | None, window_state: str) -> li
 				"value": _money(sum(flt(e.indicative_amount) for e in entries)),
 				"status": status,
 				"status_kind": kind,
-				"route": ["departmental-procurement-plan", root.dpp_reference],
+				"route": (
+					["departmental-procurement-plan", root.dpp_reference]
+					if can_open_dpp else None
+				),
 			}
 		)
 	return rows
@@ -206,9 +211,19 @@ def get_planning_workspace(
 		         ROLE_PLAN_STATUTORY_APPROVER, ROLE_BUDGET_OFFICER}
 	)
 	permitted_ous = None if oversight else (permitted_org_units(actor) or set())
+	# Mirrors dpp_read._access: Accounting Officer/Plan Statutory Approver/
+	# Budget Officer are PE-wide "oversight" for this roll-up, but the DPP
+	# page itself never authorises them — offering a route there is the
+	# NDS-807 read-offer-vs-command class of defect.
+	can_open_dpp = bool(
+		roles & {
+			ROLE_HEAD_OF_USER_DEPARTMENT, ROLE_DEPARTMENTAL_AUTHOR,
+			ROLE_PROCUREMENT_PLANNER, ROLE_PLANNING_AUDITOR,
+		}
+	)
 
 	window_state = _window_state(ctx)
-	dpp_rows = _dpp_rows(ctx, permitted_ous, window_state)
+	dpp_rows = _dpp_rows(ctx, permitted_ous, window_state, can_open_dpp)
 	your_work: list[dict[str, Any]] = []
 
 	if departmental and permitted_ous is not None:

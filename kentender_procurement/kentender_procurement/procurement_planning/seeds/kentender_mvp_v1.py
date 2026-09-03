@@ -378,14 +378,17 @@ def _actors() -> None:
 	_user(AUDITOR, "Peter Ouma", ("Planning Auditor",))
 	_user(NO_CONTEXT, "No-context User", ())
 
+	# No Financial Year User Permission for anyone (CTX-CHG-001 §4,
+	# CTX-FU-02): Planning never checked one (§6, planning_context.py), and
+	# granting it here was pure leftover — worse, it was accidentally
+	# load-bearing for a DIFFERENT module, silently narrowing these same
+	# shared actors' Departmental Needs Financial Year offer.
 	for user in (AUTHOR, HOD, PLANNER, BUDGET_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR):
 		_user_permission(user, "Procuring Entity", PE)
-		_user_permission(user, "Financial Year", FY)
 	for user in (AUTHOR, HOD):
 		for unit in (OU_DHI, OU_HRMD):
 			_user_permission(user, "Organisation Unit", unit)
 	_user_permission(ACTING_HOD, "Procuring Entity", PE)
-	_user_permission(ACTING_HOD, "Financial Year", FY)
 	_user_permission(ACTING_HOD, "Organisation Unit", OU_DHI)
 
 

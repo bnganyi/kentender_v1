@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-2-700); text-decoration: none; }
+    a:hover { color: var(--color-accent-2-800); }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); min-height: 100vh; padding: 56px 5vw 140px; font-family: var(--font-body); color: var(--color-text);">
+
+  <div style="max-width: 1320px; margin: 0 auto 48px;">
+    <a href="KenTender Admin UI Fixtures.dc.html" style="font-size: 13px; color: var(--color-neutral-700);">&larr; All fixtures</a>
+    <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-700); margin-top: 10px;">AUTH-UI-03</div>
+    <h1 style="margin: 8px 0 0; font-size: 36px;">Assign responsibility</h1>
+  </div>
+
+  <section style="max-width: 1320px; margin: 0 auto;">
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;">
+      <span class="tag tag-accent-2">AUTH-DES-03 / 04</span>
+      <span style="font-family: var(--font-heading); font-size: 15px; letter-spacing: .04em; color: var(--color-neutral-800);">Permanent, Acting, and a conflict</span>
+    </div>
+    <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start;">
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="kt-label">PERMANENT &middot; GRACE WANJIKU</div>
+        <div class="dialog blueprint" style="width: 420px;" role="dialog" aria-modal="true">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Assign responsibility</div>
+          <div class="dialog-body" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="field"><label>User</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Grace Wanjiku</span><span class="kt-label" style="font-weight: 400;">grace.wanjiku</span></div></div>
+            <div class="field"><label>Responsibility</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Departmental Author</span><span class="tag tag-outline">Organisation Unit</span></div></div>
+            <div class="field"><label>Procuring Entity</label><div class="input"><span>Ministry of Health</span></div></div>
+            <div class="field"><label>Organisation Unit</label><div class="input"><span>Digital Health</span></div></div>
+            <div class="field"><label>Appointment</label>
+              <div class="seg" style="width: 100%;">
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" name="apt-a" checked>Permanent</label>
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" name="apt-a">Acting</label>
+              </div>
+            </div>
+            <div class="field"><label>Effective from</label><div class="date-field"><span style="color: var(--color-neutral-600);">From now</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+            <div style="background: var(--color-surface-2); padding: 12px 14px; font-size: 13px; line-height: 1.5;">Grace Wanjiku will be Departmental Author for Digital Health from now with no scheduled end.</div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Assign responsibility</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="kt-label">ACTING &middot; JULIA NJERI</div>
+        <div class="dialog blueprint" style="width: 420px;" role="dialog" aria-modal="true">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Assign responsibility</div>
+          <div class="dialog-body" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="field"><label>User</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Julia Njeri</span><span class="kt-label" style="font-weight: 400;">julia.njeri</span></div></div>
+            <div class="field"><label>Responsibility</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Head of User Department</span><span class="tag tag-outline">Organisation Unit</span></div></div>
+            <div class="field"><label>Procuring Entity</label><div class="input"><span>Ministry of Health</span></div></div>
+            <div class="field"><label>Organisation Unit</label><div class="input"><span>Digital Health</span></div></div>
+            <div class="field"><label>Appointment</label>
+              <div class="seg" style="width: 100%;">
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" name="apt-b">Permanent</label>
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" name="apt-b" checked>Acting</label>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="field"><label>Effective from</label><div class="date-field"><span>1 Oct 2026</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+              <div class="field"><label>Effective to</label><div class="date-field"><span>30 Nov 2026</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+            </div>
+            <div class="field"><label>Authority reference</label><input class="input" value="MOH/HR/ACT/2026/041"></div>
+            <div style="background: var(--color-surface-2); padding: 12px 14px; font-size: 13px; line-height: 1.5;">Julia Njeri will be Head of User Department for Digital Health from 1 Oct 2026 to 30 Nov 2026.</div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Assign responsibility</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="kt-label">CONFLICT + VALIDATION</div>
+        <div class="dialog blueprint" style="width: 420px;" role="dialog" aria-modal="true">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Assign responsibility</div>
+          <div class="dialog-body" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="field"><label>User</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Julia Njeri</span><span class="kt-label" style="font-weight: 400;">julia.njeri</span></div></div>
+            <div class="field"><label>Responsibility</label><div class="input" style="display: flex; align-items: center; justify-content: space-between;"><span>Head of User Department</span><span class="tag tag-outline">Organisation Unit</span></div></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="field"><label>Effective from</label><div class="date-field"><span>1 Oct 2026</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+              <div class="field"><label>Effective to</label><div class="date-field"><span>30 Nov 2026</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+            </div>
+            <div class="field"><label style="color: var(--status-critical);">Authority reference</label><input class="input" style="border-color: var(--status-critical);" value="" placeholder="Required for Acting assignments">
+              <div style="font-size: 12px; color: var(--status-critical); margin-top: 4px;">Authority reference is required for Acting assignments (2&ndash;160 characters).</div></div>
+            <div style="background: var(--status-attention-bg); color: var(--status-attention); padding: 10px 12px; font-size: 13px; line-height: 1.4; display: flex; gap: 8px; align-items: flex-start;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <span>This overlaps an existing Enabled assignment for Digital Health &middot; Head of User Department. Revoke it before this one can be enabled.</span>
+            </div>
+          </div>
+          <div class="dialog-actions" style="flex-wrap: wrap; justify-content: flex-end;">
+            <div style="width: 100%; font-size: 12px; color: var(--color-neutral-600); text-align: right;">Resolve the conflicting assignment to continue</div>
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary" disabled>Assign responsibility</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>

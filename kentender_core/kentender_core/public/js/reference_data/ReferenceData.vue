@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import PageRail from "../kt_industry/components/PageRail.vue";
 import SummaryCards from "./components/SummaryCards.vue";
 import TabStrip from "./components/TabStrip.vue";
@@ -15,10 +15,22 @@ import ContextNew from "./components/context/ContextNew.vue";
 import { useReferenceData } from "./composables/useReferenceData.js";
 import { useRouteState } from "./composables/useRouteState.js";
 
-const { pe, fy, context, peTypes, refreshPe, refreshFy, refreshContext, refreshAll } = useReferenceData();
+const { pe, fy, context, peTypes, refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes } = useReferenceData();
 onMounted(refreshAll);
 
 const { state: route, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
+
+// The registers and the summary cards above them are read once on mount, so a
+// record created or activated on the New/Detail view stayed invisible here
+// until the user reloaded the browser. Refetch whenever a register comes back
+// into view; quiet, so the rows already on screen are not flashed away and
+// back on every return.
+watch(
+	() => route.value.view,
+	(view) => {
+		if (view === "list") refreshAll({ quiet: true });
+	}
+);
 
 const NEW_LABEL = { pe: "New procuring entity", fy: "New financial year", context: "New PE/FY context" };
 
@@ -94,7 +106,7 @@ const availableFyOptionsForContext = computed(() =>
 		</template>
 
 		<template v-else-if="route.view === 'new'">
-			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" @created="(code) => openRecord('pe', code)" @cancel="closeToList('pe')" />
+			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" @created="(code) => openRecord('pe', code)" @cancel="closeToList('pe')" @pe-type-created="loadPeTypes" />
 			<FyNew v-else-if="route.tab === 'fy'" @created="(code) => openRecord('fy', code)" @cancel="closeToList('fy')" />
 			<ContextNew
 				v-else
@@ -106,7 +118,7 @@ const availableFyOptionsForContext = computed(() =>
 		</template>
 
 		<template v-else-if="route.view === 'edit'">
-			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" :edit-code="route.code" @created="(code) => openRecord('pe', code)" @cancel="openRecord('pe', route.code)" />
+			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" :edit-code="route.code" @created="(code) => openRecord('pe', code)" @cancel="openRecord('pe', route.code)" @pe-type-created="loadPeTypes" />
 		</template>
 
 		<template v-else-if="route.view === 'detail'">

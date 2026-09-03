@@ -3,10 +3,10 @@
 | Control | Value |
 |---|---|
 | Document ID | PLN-CHG-001 |
-| Version | 1.2 |
-| Date | 30 August 2026 |
-| Status | Approved |
-| Change type | Complete consolidated successor to approved v1.1 |
+| Version | 1.4 |
+| Date | 31 August 2026 |
+| Status | Proposed for approval |
+| Change type | Complete consolidated successor to approved v1.3 |
 | Module | Procurement Planning |
 | Implementation posture | Correct the existing module in place; reuse the proven Planning UI and Claude Design → Vue 3 → Frappe Desk pattern |
 
@@ -14,7 +14,7 @@
 
 ## 1. Governing decision
 
-This complete document is the single implementation authority for Procurement Planning. It consolidates approved v1.1 with the lifecycle, reservation, segregation, context and navigation corrections defined here, and replaces the Planning documents listed in section 18 wherever they conflict with it.
+This complete document is the single implementation authority for Procurement Planning. It consolidates approved v1.3 with the role-bound assignment and organisation-tree rules in AUTH-ADR-001 v1.2 and replaces the Planning documents listed in section 18 wherever they conflict with it.
 
 The existing application is corrected in place. Proven page structure, components, visual tokens and working Planning interactions are reused where they conform. Removed concepts are deleted rather than renamed, aliased, dual-read or retained behind feature flags.
 
@@ -22,7 +22,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.2 |
+| Earlier item | Disposition in v1.4 |
 |---|---|
 | Every DPP entry and Plan Item must originate from an accepted Need | Correct. A DPP entry originates from either an `Accepted Departmental Need` or a `Direct departmental requirement`. |
 | Accepted Need carries Strategy, requirement type, Budget Line, funding source, currency and amount into Planning | Remove. The Need supplies title, description, expected operational result, quantity, unit and required-by date only. Planning adds the Budget Line and indicative amount; the Procurement Planner classifies the entry; the Planner selects the Strategic Objective on the Plan Item. |
@@ -49,7 +49,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Head of Procurement Function approves the Annual Plan | Remove. The Head of Procurement Function is not an Annual Plan approval stage. |
 | Publication Operator as a business role | Remove. Publication is an idempotent system action after statutory approval. |
 | Separate departmental preparer and validator roles | Replace with Departmental Author and Procurement Planner respectively. |
-| Custom capability and Operational Scope Assignment permissions | Remove. Use native Frappe Role, Workflow permission and User Permission only. |
+| Separate Frappe Role, User Permission, User Scope Assignment or capability records as authority | Remove. Use one role-bound User Responsibility Assignment and the AUTH-ADR-001 v1.2 resolver. |
 | Publication acknowledges a Tender opportunity | Remove. Annual Plan publication does not create or advertise a Tender. |
 | Legacy compatibility and migrated Demand records | Prohibited. This remains a clean Planning domain. |
 | Draft Plan Item formation is irreversible | Correct. A Planner may dissolve an item while its Plan Version is mutable; sources return to the unallocated list and any effective reservations are released first. Submitted evidence is never dissolved. |
@@ -61,7 +61,8 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Accepted Needs disappear when their department misses DPP submission | Remove. Planning shows **Not included — DPP submission window closed** while Departmental Needs retains the accepted records; this is visibility, not a late-submission bypass. |
 | Combined sources need not share currency | Correct. Sources must resolve to the same Budget and currency. Cross-currency Planning is outside MVP-1. |
 | One Plan Item can be consumed by only one Requisition | Remove. Requisitions may make sequential partial drawdowns while balances remain, subject to its one-open-Requisition rule. |
-| Browser-stored PE/FY choice is the operating authority | Prohibited. Server-side Role and User Permission define access. The Planning Financial Year is a visible, changeable module filter and never a permanent browser lock. |
+| Browser-stored PE/FY choice is the operating authority | Prohibited. Server-side role-bound User Responsibility Assignment defines organisational authority. The Planning Financial Year is a visible, changeable module filter and never a permanent browser lock. |
+| Financial Year or PE/FY Context assigned to a user | Prohibited. Durable authority is the role-bound PE/OU assignment; the applicable FY derives from configured records, operation windows and record state. |
 | Separate sidebar links for Finance, validation or approval queues | Prohibited. Procurement Planning has one workspace entry. Actionable work arrives through that workspace, the shared **My Work** surface and notifications; task routes are deep links, not menu items. |
 
 ## 2. Purpose and outcomes
@@ -136,7 +137,7 @@ The Planning values below pass this gate:
 
 ## 3. Fixed ownership and dependency boundary
 
-- Configuration & Governance owns PE, organisation unit, Financial Year, timezone, unit catalogue, requirement-type catalogue, procurement-method catalogue, module windows, statutory approval route and native Role/User Permission assignments.
+- Configuration & Governance owns PE, Organisation Unit, Financial Year, timezone, unit catalogue, requirement-type catalogue, procurement-method catalogue, module windows and statutory approval route. `kentender_core` owns the business-role registry, User Responsibility Assignment, Organisation Unit scope resolution and administration surface.
 - Departmental Needs owns accepted Need identity, accepted versions and the six requirement facts supplied to Planning.
 - Strategy Alignment owns Strategic Plans and Active Strategic Objectives. Planning stores the selected Objective lineage on a Plan Item and never edits Strategy.
 - Budget & Funding owns Budget identity, Budget Lines, funding source, currency, live positions, reservations, commitments and ledger events.
@@ -145,7 +146,8 @@ The Planning values below pass this gate:
 
 | Information or decision | Owner | Planning relationship |
 |---|---|---|
-| PE/FY context, OU, timezone and assignments | Configuration & Governance | Resolve exact identifiers and fail closed when absent or ambiguous. |
+| PE/FY context, OU and timezone | Configuration & Governance | Resolve exact governed identifiers and fail closed when absent or ambiguous. |
+| Business responsibility and organisational scope | `kentender_core` under AUTH-ADR-001 v1.2 | Resolve the exact active role-bound assignment and PE/OU scope; never infer one from a separate Role or permission row. |
 | DPP submission window | Procurement Planning configuration | Gate the first submission of a DPP root, including a reopened root with no accepted predecessor. Returned corrections and accepted-plan successors follow section 5.1. Opening a page creates nothing. |
 | Accepted Need facts | Departmental Needs | Project read-only title, description, quantity, unit and required-by date. |
 | Direct departmental requirement | Procurement Planning | Create and edit only inside a Draft or Returned DPP Version. |
@@ -245,7 +247,7 @@ The immutable HoD-certified snapshot of one DPP Version.
 | `submitted_entry_snapshots` | Immutable ordered rows containing each entry and its source lineage, funding specification and source version. |
 | `attestation_text` | Exact fixed certification rendered with department and FY. |
 | `submitted_by_user_id` | Records the HoD or acting HoD who certified the plan. |
-| `authority_snapshot` | Records the native role and User Permission used for the decision. |
+| `authority_snapshot` | Records the exact User Responsibility Assignment ID and immutable role/PE/OU/effective-period snapshot used for the decision. |
 | `submitted_at` | Server decision instant. |
 
 The attestation is:
@@ -254,7 +256,7 @@ The attestation is:
 
 ### 4.6 DPPValidationTask and DPPValidationDecision
 
-`DPPValidationTask` identifies the exact submitted DPP Version, PE/FY/OU scope, Open/Completed status and decision token. It is visible only to a Procurement Planner with the exact native User Permission scope.
+`DPPValidationTask` identifies the exact submitted DPP Version, PE/FY/OU record scope, Open/Completed status and decision token. It is visible only to a Procurement Planner with an active PE-scoped User Responsibility Assignment covering the submitted DPP. The task routes work but grants no authority; its FY is record data, not a user grant.
 
 `DPPValidationDecision` is immutable and records:
 
@@ -335,7 +337,7 @@ One accepted DPP entry has at most one effective allocation and is allocated at 
 
 The Planning-owned Finance task fixes one Plan Item, its exact source allocations, required amounts, assigned funding scope, `Open`, `Completed` or `Cancelled` status and concurrency token.
 
-The immutable Finance decision records `Confirm funding` or `Return to planner`, actor, effective assignment, time and required return reason where applicable. A successful confirmation stores one Budget-owned reservation reference per source allocation. Each reference is derived as `Active`, `Needs Attention`, `Partially Converted`, `Converted` or `Released` from Budget; Planning does not duplicate Budget position fields.
+The immutable Finance decision records `Confirm funding` or `Return to planner`, actor, exact User Responsibility Assignment ID and snapshot, time and required return reason where applicable. A successful confirmation stores one Budget-owned reservation reference per source allocation. Each reference is derived as `Active`, `Needs Attention`, `Partially Converted`, `Converted` or `Released` from Budget; Planning does not duplicate Budget position fields.
 
 Finance evidence becomes `Stale` only when at least one reservation is absent, released, `Needs Attention`, based on a changed source set, Budget Line, amount or currency, or fails Budget revalidation at Plan resubmission. A title, description, Strategic Objective, aggregation reason, method or schedule correction does not by itself invalidate an otherwise current reservation.
 
@@ -438,19 +440,20 @@ On corrected-Plan submission, Budget revalidates every retained reservation. If 
 23. A corrected Plan always returns to Accounting Officer adoption and never resumes directly at statutory approval.
 24. A database uniqueness constraint enforces one Annual Plan root per PE/FY and one open Version per Plan; concurrent first-DPP acceptance returns or reloads the winner rather than creating a duplicate.
 
-## 6. Roles and permissions
+## 6. Roles, assignments and permissions
 
-| Native Frappe role or legal capacity | Exact scope and permitted work |
-|---|---|
-| Departmental Author | Assigned PE/OU scope; open the relevant FY DPP, enrich Need-origin entries, create/edit direct entries and correct a returned Draft. Several people may hold this role for one department, and one person may cover several assigned departments. Cannot submit unless also HoD. |
-| Head of User Department | Assigned PE/OU scope; all Author work plus certify, submit, resubmit and withdraw the departmental Version. Only the effective HoD assignment may act at the command time. |
-| Procurement Planner | Assigned PE and permitted OUs; accept or return submitted DPPs, classify entries, consolidate accepted sources, form/edit Plan Items, request Finance, submit the Annual Plan and prepare successors. |
-| Budget Officer | Assigned PE and Budget scope; view protected Finance tasks, confirm funding or return. Cannot edit Planning content. |
-| Accounting Officer | Assigned PE; adopt or return the complete consolidated Annual Procurement Plan. |
-| Responsible Cabinet Secretary / County Executive Committee Member for finance or responsible for the entity / Board of Directors or similar governing body | Assigned PE and legal capacity; approve or return the Accounting-Officer-adopted Plan. Exactly one route applies to the PE. |
-| Planning Auditor | Authorised neutral read of Plan and immutable evidence for assigned PE/OU scope only. |
+| Business responsibility or legal capacity | Central scope classification | Exact permitted work |
+|---|---|---|
+| Departmental Author | Organisation Unit | Open the relevant FY DPP in the assigned OU subtree, enrich Need-origin entries, create/edit direct entries and correct a returned Draft. Several people may hold this responsibility for one department, and one person may cover several assigned departments. Cannot submit unless also assigned HoD responsibility. |
+| Head of User Department | Organisation Unit | All Author work plus certify, submit, resubmit and withdraw the departmental Version. Only an effective HoD assignment covering the DPP's OU may act at command time. |
+| Procurement Planner | Procuring Entity | Accept or return submitted DPPs, classify entries, consolidate accepted sources, form/edit Plan Items, request Finance, submit the Annual Plan and prepare successors across the assigned PE. |
+| Budget Officer | Procuring Entity | View protected Finance tasks, confirm funding or return within the assigned PE. The exact task and Budget service eligibility narrow the records; the role assignment does not carry a separate free-standing Budget scope. |
+| Accounting Officer | Procuring Entity | Adopt or return the complete consolidated Annual Procurement Plan for the assigned PE. |
+| Responsible Cabinet Secretary / County Executive Committee Member for finance or responsible for the entity / Board of Directors or similar governing body | Procuring Entity and exact legal capacity | Approve or return the Accounting-Officer-adopted Plan where that distinct statutory route is approved. Exactly one route applies to the PE. |
+| Planning Auditor | Procuring Entity or approved oversight scope | Neutral read of Plan and immutable evidence; no business mutation. |
+| Administrator / System Manager | Technical read-all under AUTH-ADR-001 v1.2 | Inspect all Planning records, tasks, files and evidence; no Planning decision without the applicable business responsibility assignment. |
 
-Use Frappe Role, Workflow permissions and User Permission. User Permissions assign PE and, where relevant, OU or Budget scope; they are not recreated for each Financial Year. Eligible Financial Years derive from configured FY/context records and the requested operation's window or state. Do not use Capability Profiles, Operational Scope Assignments or a second permission store. A role label alone grants no cross-scope authority. Every list, count, detail, button and command uses the same PE/FY/OU and task-scope predicates.
+User Responsibility Assignment is the sole source of the relationship between a business responsibility and PE/OU scope. Frappe Roles are synchronized framework projections and Frappe User Permission, User Scope Assignment, Capability Profile and Operational Scope Assignment grant no Planning authority. Eligible Financial Years derive from configured FY/context records and the requested operation's window or state. Every list, count, detail, file, export, button and command uses the same shared AUTH resolver plus Planning's task, state and domain predicates.
 
 Publication is an idempotent system service. A technical retry may be available to System Manager, but it retries the same approved payload and is not a procurement decision.
 
@@ -527,7 +530,7 @@ Each authorised Requisition draws a positive quantity and value from one eligibl
 
 | Contract | Required result |
 |---|---|
-| `ResolvePlanningContexts` | Authorised PEs/OUs from native assignments plus configured Financial Years available to the module; no implicit first record and no per-user FY assignment. |
+| `ResolvePlanningContexts` | Authorised PEs/OUs and matching assignment IDs from the shared AUTH resolver plus configured Financial Years available to the module; no implicit first record and no per-user FY assignment. |
 | `GetPlanningWorkspace` | Reconciled action queue, waiting work and current Plan state using one scope predicate. |
 | `GetDepartmentalPlan` | Current DPP Version, accepted Need coverage, direct entries, blockers and authorised commands. |
 | `GetDPPValidationTask` | Exact immutable submission, all entry details, funding specification, source origin and current decision controls. |
@@ -566,7 +569,7 @@ Each authorised Requisition draws a positive quantity and value from one eligibl
 | `RemovePlanItemInSuccessor` | Propose whole-item removal only when downstream checks permit it. |
 | `CancelPlanUpdate` | Release successor-only reservations, cancel the successor and leave the Active Version and its reservations unchanged. |
 
-All mutating commands require an expected record version and idempotency key. Server-side Role, User Permission, state and live-data checks are repeated inside the transaction.
+All mutating commands require an expected record version and idempotency key. Server-side role-bound assignment, record scope, state, task, segregation and live-data checks are repeated inside the transaction.
 
 ## 9. Error contract
 
@@ -613,7 +616,7 @@ Procurement Planning has one KenTender navigation entry named **Procurement Plan
 
 The workspace shows only work the actor can perform or is waiting for. The same tasks may appear in the shared KenTender **My Work** surface and notifications. Task routes above are authorised deep links reached from a task row or notification; they are not menu definitions. The workspace does not duplicate Budget, Strategy, Needs or Configuration dashboards. Frappe supplies the Desk header, breadcrumb, global search, user menu and common navigation.
 
-Access is resolved server-side from native Role and PE/OU/Budget User Permission. Financial Year is not assigned to a user. It is derived from configured FY/context records and filtered by the operation's window and record state. A selected PE or FY is only a visible filter within Procurement Planning and never grants access. The page loads the sole eligible value directly; when several are eligible it shows a changeable Procuring Entity selector and a changeable Financial Year selector in the Planning page header. The last valid Planning selection may be stored as a server-side user preference for convenience. A browser value may cache presentation only and must be ignored when unauthorised, invalid or absent. Direct record and task routes derive PE/FY from the record and reauthorise it; they never depend on a prior browser selection.
+Access is resolved server-side from the active User Responsibility Assignment for the required role and record PE/OU. Financial Year is not assigned to a user. It is derived from configured FY/context records and filtered by the operation's window and record state. A selected PE or FY is only a visible filter within Procurement Planning and never grants access. The page loads the sole eligible value directly; when several are eligible it shows a changeable Procuring Entity selector and a changeable Financial Year selector in the Planning page header. The last valid Planning selection may be stored as a server-side user preference for convenience. A browser value may cache presentation only and must be ignored when unauthorised, invalid or absent. Direct record and task routes derive PE/FY from the record and reauthorise it; they never depend on a prior browser selection.
 
 ### 10.1 Existing UI reuse and correction
 
@@ -1256,7 +1259,7 @@ Only the load-error component may display a generated support reference. Do not 
 
 ### 12.1 PLN-UI-01 — Procurement Planning workspace
 
-- Resolve authorised PE and OU/Budget scope from native roles and User Permissions. Derive Financial Year options from configured records and operation windows; do not assign FY to the user. No client value grants access.
+- Resolve authorised PE/OU scope and matching responsibility assignment from the shared AUTH resolver. Derive Financial Year options from configured records and operation windows; do not assign FY to the user. No client value grants access.
 - One eligible PE or FY loads directly. Several are shown in visible, changeable Planning selectors. A user may change Financial Year at any time; choosing a future year does not permanently bind later visits.
 - Store the last valid Planning selection as a server-side user preference only. Treat local storage as an optional cache, never as authority. Invalid or inaccessible cached values are discarded and the user can select again.
 - A direct task or record route resolves context from the record, reauthorises it and displays it. It never requires a prior selector choice.
@@ -1276,7 +1279,7 @@ Only the load-error component may display a generated support reference. Do not 
 - Only direct entries can be removed from a Draft. A current accepted Need cannot be omitted or locally deleted.
 - Source successor, withdrawal and Budget Line changes are rechecked on every save and submission.
 - If the initial Version was withdrawn without an accepted predecessor, **Open departmental plan** creates the next numbered Draft only while the original submission window is Open. It never revives or edits the withdrawn Version.
-- Initial HoD submission requires the exact certification checkbox, current role/User Permission and Open window. An acting HoD uses the same role with a time-bound User Permission. A returned correction or source-change successor requires the same certification and authority but may be resubmitted after the initial window closes. The certification text is server supplied, not client composed.
+- Initial HoD submission requires the exact certification checkbox, an active Head of User Department assignment covering the DPP's OU and an Open window. An acting HoD uses the same responsibility through a dated Acting assignment. A returned correction or source-change successor requires the same certification and authority but may be resubmitted after the initial window closes. The certification text is server supplied, not client composed.
 - A successful submission routes to immutable submitted detail. The submitter sees neutral status while the Procurement Planner acts.
 - A returned submission loads the copied correction Draft and displays each structured issue next to its affected entry.
 
@@ -1301,7 +1304,7 @@ Only the load-error component may display a generated support reference. Do not 
 ### 12.5 PLN-UI-05 — HoD submission
 
 - Recalculate readiness from current authoritative sources when the page loads and again inside the submit transaction.
-- Certification is available only to the HoD or acting HoD holding the same role and exact current OU/FY User Permission.
+- Certification is available only to a substantive or acting HoD with an active role-bound assignment whose OU subtree contains the DPP. The DPP's Financial Year must be eligible under the current Planning window and record state; it is not an assignment dimension.
 - Submission locks one immutable snapshot and creates one validation task atomically.
 - A repeated command with the same idempotency key returns the original submission and task.
 - A concurrent source, Budget Line or DPP change returns `PLN_DPP_STALE` and creates no partial submission.
@@ -1362,7 +1365,7 @@ Only the load-error component may display a generated support reference. Do not 
 - The statutory authority may approve the Accounting-Officer-adopted Plan or return it for correction.
 - For a Board or similar body, approval records the collective decision and mandatory resolution reference; the data-entry user is not represented as the sole authority.
 - Every return requires one actionable correction. No reason category or optional note exists.
-- Every decision rechecks the exact role or legal capacity, native User Permission, task token, source currency, Objective eligibility and Finance freshness.
+- Every decision rechecks the exact role-bound responsibility or legal capacity, matching assignment, task token, source currency, Objective eligibility and Finance freshness.
 - No Head of Procurement Function, professional reviewer, generic committee or publication approval is inserted.
 - A return preserves the submitted snapshot and creates a copied correction Draft containing only that snapshot's sources. Pending DPP additions remain outside it.
 - Corrected submission revalidates every reservation. It repeats Finance only for an item whose source set, Budget Line, amount or currency changed, whose reservation is absent, released or `Needs Attention`, or whose Budget revalidation fails.
@@ -1439,14 +1442,14 @@ Seeds fail when an authoritative prerequisite is absent or differs. They do not 
 
 | Actor | Exact assignment |
 |---|---|
-| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Author for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD |
-| `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department for OU-MOH-HRMD and OU-MOH-DHI, except that his OU-MOH-DHI permission is ineffective from 26 to 30 Nov 2026 |
-| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department for OU-MOH-DHI from 26 to 30 Nov 2026, using the same role and a time-bound native User Permission; Peter's OU-MOH-DHI permission is ineffective during this period |
-| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Procurement Planner for PE-MOH; DPP classification and Annual Plan preparation |
-| `moh.budget.officer@example.test` · MOH Budget Officer | Finance confirmation for PE-MOH and the named Budget Lines |
-| `amina.hassan@moh.example.test` · Amina Hassan | Accounting Officer for PE-MOH |
-| `moh.plan.approver@example.test` · MOH statutory approver | Responsible Cabinet Secretary for the PE-MOH fixture; exactly one statutory route |
-| `peter.ouma@audit.example.test` · Peter Ouma | Planning Auditor read for PE-MOH |
+| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Two Departmental Author User Responsibility Assignments: PE-MOH / OU-MOH-DHI and PE-MOH / OU-MOH-HRMD |
+| `peter.kimani@moh.example.test` · Dr Peter Kimani | Permanent Head of User Department assignment for OU-MOH-HRMD; DHI assignment ending 25 Nov 2026 and a successor DHI assignment starting 1 Dec 2026 |
+| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department assignment for PE-MOH / OU-MOH-DHI from 26 to 30 Nov 2026 with authority reference |
+| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | PE-scoped Procurement Planner assignment for PE-MOH; DPP classification and Annual Plan preparation |
+| `moh.budget.officer@example.test` · MOH Budget Officer | PE-scoped Budget Officer assignment for PE-MOH; exact Finance tasks and Budget eligibility narrow the named lines |
+| `amina.hassan@moh.example.test` · Amina Hassan | PE-scoped Accounting Officer assignment for PE-MOH |
+| `moh.plan.approver@example.test` · MOH statutory approver | Exact approved statutory-capacity assignment for PE-MOH; exactly one statutory route |
+| `peter.ouma@audit.example.test` · Peter Ouma | PE-scoped Planning Auditor assignment for PE-MOH |
 | `no.context@example.test` · No-context User | Authenticated with no Planning assignment |
 
 No seed business decision uses Administrator.
@@ -1623,12 +1626,12 @@ The module is accepted only when all statements below are demonstrably true.
 | PLN-AC-036 | Planning has no actual-milestone entry, Monitoring Officer action or custom support workspace. |
 | PLN-AC-037 | All counts, queues, details and actions use the same PE/FY/OU and task predicates. |
 | PLN-AC-038 | Same idempotency key returns the original result; concurrent different commands yield one winner and one stale result. |
-| PLN-AC-039 | Cross-PE, cross-FY and out-of-scope direct URLs disclose no record existence. |
+| PLN-AC-039 | Cross-PE, cross-OU and otherwise out-of-scope direct URLs disclose no record existence. FY-specific mutations are allowed or denied by the owning operation's configured window and record-state rules, not by a user FY grant. |
 | PLN-AC-040 | Seed reset and rerun produce the exact baseline without duplicates or semantic drift. |
 | PLN-AC-041 | No Head of Procurement Function, professional reviewer, generic approval committee or publication approver exists in the Annual Plan chain. |
 | PLN-AC-042 | A Board or similar-body approval records the collective decision and resolution reference. |
 | PLN-AC-043 | Publication is an idempotent system action; any technical retry reuses the exact approved payload. |
-| PLN-AC-044 | Native Frappe Role, Workflow permission and User Permission enforce PE/FY/OU scope without another permission store. |
+| PLN-AC-044 | One role-bound User Responsibility Assignment and the shared AUTH resolver enforce PE/OU authority; Frappe User Permission, User Scope Assignment and Financial Year grants do not authorize Planning. |
 | PLN-AC-045 | Requisition eligibility exposes every source allocation, expected operational result and exact remaining quantity and value. |
 | PLN-AC-046 | The KEBS Needs-origin and direct-entry profiles produce equivalent approved source lineage. |
 | PLN-AC-047 | A mutable Draft Plan Item can be dissolved; open Finance work is cancelled, effective reservations are released and its sources become available for re-formation without deleting history. |
@@ -1647,6 +1650,11 @@ The module is accepted only when all statements below are demonstrably true.
 | PLN-AC-060 | Planning context is server-authorised, visible and changeable; local storage never grants access or permanently binds PE/FY. |
 | PLN-AC-061 | Draft, Accounting Officer, statutory approval and Active surfaces render the same generated Annual Plan title and the governance surfaces use the exact immutable fixture row and total. |
 | PLN-AC-062 | The combined-source fixture has deterministic required-by dates and its completion date satisfies both sources. |
+| PLN-AC-063 | A user with different responsibilities in different OUs cannot exercise either responsibility outside its own assignment. |
+| PLN-AC-064 | A PE-wide Planner responsibility and an OU-scoped departmental responsibility coexist without narrowing or broadening each other. |
+| PLN-AC-065 | One parent-OU assignment covers descendants inside the same PE and never a sibling outside the subtree or another PE. |
+| PLN-AC-066 | Tasks route eligible work but cannot authorize a user who lacks the matching role-bound assignment. |
+| PLN-AC-067 | Decision evidence stores the exact User Responsibility Assignment exercised. |
 
 ### 15.1 Minimum automated coverage
 
@@ -1708,6 +1716,20 @@ Do not rerun hundreds of unrelated tests while one focused failure is being diag
 - zero page-specific console errors and failed network requests; and
 - confirmation that no design-runtime or removed field remains in production code.
 
+### 16.4 Required AUTH-ADR-001 v1.2 correction slice
+
+Implement the authorization correction as one controlled cross-module slice:
+
+1. Replace every Planning use of Frappe User Permission, User Scope Assignment or module-local scope logic with the shared AUTH-ADR-001 v1.2 resolver and exact role-bound assignment ID.
+2. Resolve DPP departmental work from OU-scoped Author/HoD assignments and Annual Plan, Finance and governance work from the applicable PE-scoped responsibility.
+3. Remove Financial Year from every user grant, required dimension and seed. Continue to gate operations through the record FY, configured context, DPP window and Plan state.
+4. Use one resolver predicate for workspaces, counts, DPP/Plan details, tasks, files, exports and every command. Do not keep a read-path fallback to User Scope Assignment.
+5. Make the Planning PE/FY selector optional, visible and changeable. Direct record and task routes derive context from the record and reauthorize it.
+6. Store the exact User Responsibility Assignment ID and snapshot on every DPP certification, validation, Finance and Plan-governance decision.
+7. Replace seeds with exact role-bound assignments, including the non-overlapping Peter/Julia acting-HoD periods. Do not seed business roles to Administrator.
+8. Add Cartesian-product, mixed PE/OU scope, OU-tree descendant, cross-PE, acting-period and task-without-assignment regression tests.
+9. Cut over all Planning authorization callers atomically with the shared resolver; remove obsolete rows only after the cross-module gate passes.
+
 ## 17. Prohibited shortcuts
 
 Implementation shall not:
@@ -1730,6 +1752,8 @@ Implementation shall not:
 - expose create-Requisition or create-Tender actions from Planning;
 - import Claude Design runtime, `.dc.html`, Tailwind utilities or copied vendor markup into production;
 - create a role-specific sidebar work-queue entry;
+- authorize Planning from a Frappe Role, Frappe User Permission, User Scope Assignment, task or browser context without a matching User Responsibility Assignment;
+- add Financial Year, module or capability strings to a User Responsibility Assignment;
 - treat a browser-stored PE/FY value as permission or prevent the user from changing an authorised Planning Financial Year;
 - draw or replace the Frappe breadcrumb or header inside the page;
 - maintain old routes, aliases, duplicate fields or compatibility reads; or
@@ -1739,10 +1763,11 @@ Implementation shall not:
 
 This document incorporates the approved boundary decisions from:
 
+- AUTH-ADR-001 v1.2 — sole role-bound authority, PE-bounded Organisation Unit tree, no per-user Financial Year and non-authoritative UI context;
 - CFG-CHG-002 v0.3 — PE/FY context and configuration ownership;
 - STR-CHG-001 v1.3 — exactly one Active Strategic Objective on each Plan Item and no Value Commitment;
 - BUD-CHG-001 v1.1 — Planning-owned Finance task, Budget-owned live position and reservations; and
-- NDS-CHG-001 v1.1 — optional consultation, direct departmental planning path, six Need values and Planning-owned DPP funding specification; and
+- NDS-CHG-001 v1.3 — optional consultation, direct departmental planning path, six Need values, role-bound departmental scope and Planning-owned DPP funding specification; and
 - REQ-CHG-001 v1.2 — partial Plan Item drawdown, one-open-Requisition control, reversal and remaining balances.
 
 This document supersedes conflicting Planning requirements in:
@@ -1772,6 +1797,6 @@ Earlier UI assets remain evidence for reuse only. Where their fields, states, la
 
 ## 20. Approval effect
 
-PLN-CHG-001 v1.2 was approved by the Project Owner on 30 August 2026. It supersedes v1.1 in full and is the only Procurement Planning requirements document to consult.
+On approval, PLN-CHG-001 v1.4 supersedes v1.3 in full and becomes the only Procurement Planning requirements document to consult.
 
 Approval authorises implementation of the complete clean Procurement Planning module and conversion of section 11 into Claude Design artboards. It does not approve generated visual deviations, production publication configuration, a Procurement Requisition, a Tender or any field not defined here.

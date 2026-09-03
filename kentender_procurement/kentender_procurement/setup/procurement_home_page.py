@@ -51,7 +51,6 @@ LANDING_ROLES: tuple[str, ...] = (
 	# --- Strategy Alignment (STR-CHG-001 v1.5) ---------------------------
 	"Strategy Author",
 	"Strategy Approver",
-	"Strategy Manager",
 	"Strategy Viewer",
 	# --- Budget & Funding (BUD-CHG-001 v1.2) -----------------------------
 	"Budget Officer",

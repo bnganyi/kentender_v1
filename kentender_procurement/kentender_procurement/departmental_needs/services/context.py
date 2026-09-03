@@ -221,28 +221,49 @@ def save_intake_window(
 
 
 def selectable_financial_years(user: str | None = None) -> list[dict[str, Any]]:
-	"""Available, unexpired years the caller may act in, future ones included (§8.1).
+	"""Financial Years configured for the caller's permitted Procuring
+	Entities (§8.1) — never a per-user Financial Year assignment.
 
-	The bare Available list offered years the caller held no `Financial Year`
-	User Permission for; every later command in such a context is a guaranteed
-	NDS_SCOPE_DENIED (`in_scope` treats the FY as a required dimension, and
-	`require_intake_window_command` as a native restriction), so offering one
-	is the NDS-807 defect class — a control the actor cannot use. Frappe's own
-	User Permission semantics decide the cut: no rows means unrestricted, any
-	rows mean exactly those years. Administrative users stay unrestricted (§6).
+	CTX-CHG-001 §4 / CTX-FU-02: Financial Year eligibility is a property of
+	the governed `PE Fiscal Year Context` registry (kentender_core) — the same
+	source Planning and Budget already read — not an identity grant. A bare
+	`Financial Year` User Permission made this NDS-807 defect class possible:
+	the offer diverged per user even when their Procuring Entity access was
+	identical, so one actor could be shown a year a later command was
+	guaranteed to refuse (`require_intake_window_command`), or — as observed
+	live — denied a year genuinely open for their own Procuring Entity because
+	an unrelated module's fixture happened to grant them a narrower FY row.
+
+	This is the *browse* offer only: it says which years are configured for
+	this PE, not which ones may be created in right now. Whether "Create need"
+	is actually enabled for a given (PE, FY) pair is a separate question,
+	answered by that pair's Needs Intake Window state alone
+	(`require_open_intake`, `intake_window`) — seeing a year here is never
+	licence to create in it.
 	"""
 	principal = actor(user)
+	pe_filter: dict[str, Any] = {}
+	if not is_administrative(principal):
+		allowed_entities = permitted_values(principal, "Procuring Entity")
+		if allowed_entities is not None:
+			if not allowed_entities:
+				return []
+			pe_filter["procuring_entity"] = ("in", sorted(allowed_entities))
+	contexts = frappe.get_all(
+		"PE Fiscal Year Context",
+		filters={**pe_filter, "context_status": "Active"},
+		pluck="financial_year",
+		limit_page_length=0,
+	)
+	if not contexts:
+		return []
 	rows = frappe.get_all(
 		"Financial Year",
-		filters={"record_status": "Available", "end_date": (">=", nowdate())},
+		filters={"name": ("in", sorted(set(contexts))), "record_status": "Available"},
 		pluck="name",
 		order_by="start_year asc",
 		limit_page_length=0,
 	)
-	if not is_administrative(principal):
-		allowed = permitted_values(principal, "Financial Year")
-		if allowed is not None:
-			rows = [name for name in rows if name in allowed]
 	return [_financial_year_row(name) for name in rows]
 
 

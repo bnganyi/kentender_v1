@@ -37,7 +37,6 @@ by calling ``frappe.has_permission`` as each existing test user.
 
 | User | Role |
 |---|---|
-| ``strategy.manager@moh.test`` | Strategy Manager |
 | ``planning.authority@moh.test`` | Planning Authority |
 | ``requisitioner@moh.test`` | Requisitioner |
 | ``planner@moh.test`` | Procurement Planner |
@@ -61,7 +60,6 @@ by calling ``frappe.has_permission`` as each existing test user.
 | PERM-MATRIX-002 | All 9 internal roles have read on Procurement Handoff Card (DocPerm check). |
 | PERM-MATRIX-003 | Only System Manager / Administrator have write on Procurement Journey. |
 | PERM-MATRIX-004 | Only System Manager / Administrator have write on Procurement Handoff Card. |
-| PERM-USER-001 | Strategy Manager user: journey_read=True, handoff_read=True. |
 | PERM-USER-002 | Planning Authority user: journey_read=True, handoff_read=True. |
 | PERM-USER-003 | Requisitioner user: journey_read=True, handoff_read=True. |
 | PERM-USER-004 | Procurement Planner user: journey_read=True, handoff_read=True. |
@@ -110,7 +108,6 @@ _GUEST = "Guest"
 
 # Users known to exist on this site with specific single procurement roles
 _ROLE_USERS: dict[str, str] = {
-    "Strategy Manager":    "strategy.manager@moh.test",
     "Planning Authority":  "planning.authority@moh.test",
     "Requisitioner":       "requisitioner@moh.test",
     "Procurement Planner": "planner@moh.test",
@@ -185,7 +182,7 @@ class TestPermissionGuardStandalone(IntegrationTestCase):
         """PERM-GUARD-007: JOURNEY_READ_ROLES contains all 10 expected internal roles."""
         expected = {
             "System Manager", "Administrator",
-            "Strategy Manager", "Planning Authority",
+            "Planning Authority",
             "Requisitioner", "Procurement Planner",
             "Procurement Officer", "Finance Reviewer",
             "Department Approver", "Auditor",
@@ -224,7 +221,7 @@ class TestDocPermMatrix(IntegrationTestCase):
         frappe.set_user(_ADMIN)
         read_roles = self._get_roles_with_read("Procurement Journey")
         expected_read = {
-            "Strategy Manager", "Planning Authority", "Requisitioner",
+            "Planning Authority", "Requisitioner",
             "Procurement Planner", "Procurement Officer", "Finance Reviewer",
             "Department Approver", "Auditor", "Administrator", "System Manager",
         }
@@ -240,7 +237,7 @@ class TestDocPermMatrix(IntegrationTestCase):
         frappe.set_user(_ADMIN)
         read_roles = self._get_roles_with_read("Procurement Handoff Card")
         expected_read = {
-            "Strategy Manager", "Planning Authority", "Requisitioner",
+            "Planning Authority", "Requisitioner",
             "Procurement Planner", "Procurement Officer", "Finance Reviewer",
             "Department Approver", "Auditor", "Administrator", "System Manager",
         }
@@ -299,11 +296,10 @@ class TestPerUserPermissions(IntegrationTestCase):
             f"FAIL: {role_label} ({user}) should have handoff read — DocPerm missing?",
         )
 
-    # PERM-USER-001 to PERM-USER-008
-    def test_user_001_strategy_manager(self):
-        """PERM-USER-001: Strategy Manager has journey + handoff read."""
-        self._check_user(_ROLE_USERS["Strategy Manager"], "Strategy Manager")
-
+    # PERM-USER-002 to PERM-USER-008
+    # PERM-USER-001 covered "Strategy Manager", a Role deleted in STR-CHG-001
+    # v1.7 — it named Strategy authority it never carried after the rebuild and
+    # survived only as this cross-app read grant.
     def test_user_002_planning_authority(self):
         """PERM-USER-002: Planning Authority has journey + handoff read."""
         self._check_user(_ROLE_USERS["Planning Authority"], "Planning Authority")

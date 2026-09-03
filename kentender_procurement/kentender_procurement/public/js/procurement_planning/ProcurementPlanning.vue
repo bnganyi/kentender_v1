@@ -82,6 +82,7 @@
 					@save-funding="onSaveFunding"
 					@save-direct="onSaveDirect"
 					@cancel="go(dppReference)"
+					@unit-created="(unit) => editor.units = [...(editor.units || []), unit]"
 				/>
 			</template>
 
@@ -387,9 +388,15 @@ function onBackToPlan() {
 
 let loadSeq = 0;
 
-async function load() {
+// `quiet` refreshes in place — the skeleton replaces the whole screen, so
+// flipping `loading` after every action or PE/FY change made the screen
+// flash on each round-trip; a quiet load keeps the current content mounted
+// until the new data lands. Only the route-driven watch below (a genuine
+// navigation to different content) shows the skeleton.
+async function load(opts) {
+	const quiet = !!(opts && opts.quiet === true);
 	const seq = ++loadSeq;
-	loading.value = true;
+	if (!quiet) loading.value = true;
 	error.value = "";
 	errorSummary.value = "";
 	try {
@@ -472,12 +479,12 @@ async function persistSelection() {
 function onSelectPe(value) {
 	procuringEntity.value = value;
 	financialYear.value = "";
-	load().then(persistSelection);
+	load({ quiet: true }).then(persistSelection);
 }
 
 function onSelectFy(value) {
 	financialYear.value = value;
-	load().then(persistSelection);
+	load({ quiet: true }).then(persistSelection);
 }
 
 async function run(action, fn) {
@@ -503,7 +510,7 @@ async function onOpenDepartmentalPlan(organisationUnit) {
 			idempotency_key: key,
 		})
 	);
-	if (result) await load();
+	if (result) await load({ quiet: true });
 }
 
 function onOpenEntry(row) {
@@ -523,7 +530,7 @@ async function onSubmit() {
 			idempotency_key: key,
 		})
 	);
-	if (result) await load();
+	if (result) await load({ quiet: true });
 }
 
 async function onSaveFunding(payload) {
@@ -604,7 +611,7 @@ async function onFormConfirm(dppEntries, mode) {
 		if (result.single) {
 			frappe.set_route(PLAN_ITEM_PAGE, result.created_items[0]);
 		} else {
-			await load();
+			await load({ quiet: true });
 		}
 	}
 }
@@ -618,7 +625,7 @@ async function onSavePlanItem(values) {
 			idempotency_key: key,
 		})
 	);
-	if (result) await load();
+	if (result) await load({ quiet: true });
 }
 
 async function onDissolvePlanItem() {
@@ -690,7 +697,7 @@ async function onBeginUpdate() {
 			idempotency_key: key,
 		})
 	);
-	if (result) await load();
+	if (result) await load({ quiet: true });
 }
 
 async function onGovernanceConfirm(resolutionReference) {
@@ -772,7 +779,7 @@ usePageRail(railEl, railTrail, {
 	onPeChange: () => {
 		procuringEntity.value = "";
 		financialYear.value = "";
-		if (screen.value === "workspace") load();
+		if (screen.value === "workspace") load({ quiet: true });
 		else frappe.set_route(WORKSPACE_PAGE);
 	},
 });

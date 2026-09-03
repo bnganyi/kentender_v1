@@ -112,6 +112,27 @@ class TestWorkspace(WorkspaceCase):
 		self.assertEqual(result["your_work"], [])
 		self.assertEqual(len(result["departmental_plans"]), 1)
 
+	def test_finance_and_governance_oversight_roles_see_rows_without_a_dead_end_view_link(self):
+		"""Budget Officer/Accounting Officer/Plan Statutory Approver are
+		classified as PE-wide oversight so they see every departmental plan's
+		status, but `dpp_read._access` never authorises them to open the DPP
+		page itself — offering a route there is the NDS-807 read-offer-vs-
+		command class of defect (PLN-CHG-001 v1.2 §6, §12.1 route table)."""
+		self.submitted()
+		for user in (fx.BUDGET_OFFICER, fx.ACCOUNTING_OFFICER, fx.STATUTORY):
+			with self.subTest(user=user):
+				result = self.load(user)
+				self.assertEqual(result["outcome"], "OK")
+				self.assertEqual(len(result["departmental_plans"]), 1)
+				self.assertFalse(result["departmental_plans"][0].get("route"))
+
+	def test_planner_and_auditor_keep_the_dpp_view_route(self):
+		self.submitted()
+		for user in (fx.PLANNER, fx.AUDITOR):
+			with self.subTest(user=user):
+				result = self.load(user)
+				self.assertTrue(result["departmental_plans"][0].get("route"))
+
 	def test_workspace_read_creates_nothing(self):
 		counts = {
 			d: frappe.db.count(d)

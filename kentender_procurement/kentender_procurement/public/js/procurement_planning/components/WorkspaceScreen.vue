@@ -192,6 +192,7 @@
 								</td>
 								<td style="text-align: right">
 									<button
+										v-if="row.route"
 										class="kt-btn kt-btn-ghost"
 										@click="$emit('navigate', row.route)"
 									>

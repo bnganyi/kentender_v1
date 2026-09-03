@@ -52,6 +52,12 @@ app_include_css = [
 	# Shared "Industry" design-system tokens (CFG-CHG-002 and future Vue-in-Desk-page
 	# modules) — scoped under .kt-industry, never :root; safe to load globally.
 	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_asset_version('public/css/kt_industry_tokens.css')}",
+	# AUTH-ADR-001 v1.3 §12 — page compositions for the two Configuration and
+	# Governance surfaces, in a static file because the esbuild pipeline
+	# discards <style scoped> CSS (no dist/css output, no assets.json entry).
+	# Same delivery as NDS/Planning's *_industry.css; every rule is scoped
+	# under .kt-industry with page-unique class names.
+	f"/assets/kentender_core/css/kt_admin_configuration.css?v={_asset_version('public/css/kt_admin_configuration.css')}",
 ]
 boot_session = ["kentender_core.services.my_work.patch_bootinfo_home"]
 
@@ -88,6 +94,12 @@ app_include_js = [
 # Never append ?v= to page_js values — Frappe resolves them as disk paths.
 page_js = {
 	"kt-cl-components": "public/js/kt_cl_components_gallery_page.js",
+	# CFG-CHG-002 v0.6 §9 / AUTH-ADR-001 v1.6 §12 — the one System setup page.
+	# page_js is Frappe's own lazy mechanism: the controller loads only when
+	# the user navigates to that exact route, and pulls its Vue bundle with
+	# frappe.require() (AGENTS.md §6.9). The former organisation-structure and
+	# user-responsibilities pages are removed without an alias (§12).
+	"system-setup": "public/js/system_setup_page.js",
 	"user-operational-acc": "public/js/authorization_admin_pages.js",
 	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
 	"access-diagnostic": "public/js/authorization_admin_pages.js",
@@ -138,7 +150,7 @@ page_js = {
 # ------------
 
 # before_install = "kentender_core.install.before_install"
-# after_install = "kentender_core.install.after_install"
+after_install = "kentender_core.install.after_install"
 
 after_migrate = "kentender_core.install.after_migrate"
 
@@ -232,7 +244,28 @@ scheduler_events = {
 			"kentender_core.services.reference_data_transitions.run_scheduled_context_transitions"
 		],
 	},
+	"hourly": [
+		# CFG-CHG-002 v0.6 CFG-BR-008 — close needs submission when the
+		# configured instant passes, audited with System as actor. A
+		# convenience, never the security control (§11.3).
+		"kentender_core.services.site_configuration.close_due_needs_submissions",
+	],
+	"daily": [
+		# AUTH-ADR-001 v1.6 §5.7 — remove Frappe Role projections left behind
+		# by time-expired assignments. A lingering Role grants no business
+		# authority on its own; this only prevents false orphan diagnostics.
+		"kentender_core.services.responsibility_administration.reconcile_role_projections",
+	],
 }
+
+# AUTH-ADR-001 v1.6 §5.3 — the declarative scope map. Each app declares which
+# field carries the Organisation Unit on which of its DocTypes; the generic
+# hook implementation in services/authorization.py reads the merged hook.
+# Deliberately empty of production DocTypes here: §11.3 step 4 registers the
+# predicate with no production caller switched — each module's cutover slice
+# adds its own entries (and the matching permission_query_conditions /
+# has_permission rows below) in that module's hooks.py.
+kentender_scope_map: dict[str, str] = {}
 
 # Testing
 # -------

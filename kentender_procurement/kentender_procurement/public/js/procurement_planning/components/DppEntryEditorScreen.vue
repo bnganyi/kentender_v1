@@ -97,9 +97,20 @@
 					</div>
 					<div class="pln-field">
 						<label for="dpp-unit">Unit</label>
-						<select id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit">
-							<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
-						</select>
+						<div style="display: flex; gap: 8px; align-items: center">
+							<select id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit" style="flex: 1">
+								<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
+							</select>
+							<button
+								type="button"
+								class="kt-btn kt-btn-ghost"
+								style="white-space: nowrap"
+								data-testid="dpp-unit-new"
+								@click="createUnit"
+							>
+								+ New
+							</button>
+						</div>
 					</div>
 					<div class="pln-field">
 						<label for="dpp-required-by">Required by</label>
@@ -155,6 +166,7 @@
 
 <script setup>
 import { computed, reactive, watch } from "vue";
+import { quickCreate } from "../../pln_shared/composables/quickCreate.js";
 
 const props = defineProps({
 	editor: { type: Object, default: () => ({}) },
@@ -162,7 +174,14 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save-funding", "save-direct", "cancel"]);
+const emit = defineEmits(["save-funding", "save-direct", "cancel", "unit-created"]);
+
+async function createUnit() {
+	const doc = await quickCreate("Unit Of Measure");
+	if (!doc) return;
+	form.unit = doc.name;
+	emit("unit-created", { id: doc.name, label: doc.unit_label });
+}
 
 const entry = computed(() => props.editor.entry || {});
 const context = computed(() => props.editor.context || {});

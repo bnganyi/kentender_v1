@@ -33,6 +33,23 @@ export default defineConfig({
 				},
 			},
 			{
+				// AUTH-ADR-001 v1.6 §18.2 items 22–24 — SFC component tests for the
+				// System setup tabs and dialogs: field variants per registry scope,
+				// server-decided action visibility, and state rendering, alongside
+				// (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "system-setup",
+					environment: "jsdom",
+					setupFiles: [
+						"kentender_core/kentender_core/public/js/system_setup/vitest.setup.js",
+					],
+					include: [
+						"kentender_core/kentender_core/public/js/system_setup/**/*.spec.js",
+					],
+				},
+			},
+			{
 				// NDS-906 — the Departmental Needs presentation helpers. These are
 				// plain ES modules with no Vue or frappe dependency, so they need
 				// no component toolchain; the components that consume them are

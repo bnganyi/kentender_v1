@@ -150,9 +150,12 @@ async function onSelectNewContext(contextId) {
 	}
 }
 
-async function loadDraft() {
+// `quiet` refreshes in place — used after Save/Submit, which redisplay the
+// same version's (now updated) draft rather than navigating away.
+async function loadDraft(opts) {
 	if (!versionKey.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	try {
@@ -247,7 +250,7 @@ async function saveDraft() {
 			if (linesResult === false) return;
 		}
 		frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
-		await loadDraft();
+		await loadDraft({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -326,7 +329,7 @@ async function submitForReview() {
 			return;
 		}
 		frappe.show_alert({ message: __("Submitted for review"), indicator: "green" });
-		await loadDraft();
+		await loadDraft({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {

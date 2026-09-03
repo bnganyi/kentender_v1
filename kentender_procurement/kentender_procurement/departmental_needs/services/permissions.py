@@ -33,7 +33,6 @@ ADMINISTRATIVE_ROLES = ("System Manager", "Administrator")
 SCOPE_FIELDS = (
 	("Procuring Entity", "procuring_entity"),
 	("Organisation Unit", "organisation_unit"),
-	("Financial Year", "financial_year"),
 )
 
 
@@ -85,10 +84,17 @@ DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
 
 
 def required_dimensions(user: str) -> tuple[str, ...]:
-	"""Scope dimensions this user's own role must name explicitly (NDS-BR-001)."""
+	"""Scope dimensions this user's own role must name explicitly (NDS-BR-001).
+
+	Financial Year is deliberately absent (CTX-CHG-001 §4, CTX-FU-02): it is
+	never a per-user identity grant, only ever a property of the governed
+	`PE Fiscal Year Context` registry and, for creation specifically, the
+	Needs Intake Window's own Open/Scheduled/Closed state — see
+	`context.selectable_financial_years` and `context.require_open_intake`.
+	"""
 	if roles_of(user).intersection(DEPARTMENTAL_ROLES):
-		return ("Procuring Entity", "Organisation Unit", "Financial Year")
-	return ("Procuring Entity", "Financial Year")
+		return ("Procuring Entity", "Organisation Unit")
+	return ("Procuring Entity",)
 
 
 def in_scope(user: str, *, procuring_entity: str, organisation_unit: str, financial_year: str) -> bool:
@@ -97,7 +103,7 @@ def in_scope(user: str, *, procuring_entity: str, organisation_unit: str, financ
 	Frappe's own default is that a user with *no* User Permission rows for a
 	doctype is unrestricted on it. This module deliberately inverts that for
 	business roles, because NDS-BR-001 requires every Need to resolve to one
-	explicit authorised PE, OU and FY and states that missing, ambiguous or
+	explicit authorised PE and OU, and states that missing, ambiguous or
 	expired scope fails closed.
 
 	The inversion also removes a privilege-escalation trap. Ending a temporary
@@ -106,13 +112,16 @@ def in_scope(user: str, *, procuring_entity: str, organisation_unit: str, financ
 	silently widening their authority at the moment it was meant to end
 	(NDS-AC-042). Administrative users are exempt because §6 grants them
 	technical oversight rather than departmental authority.
+
+	`financial_year` is accepted (every caller passes a Need's or a command's
+	own FY) but no longer checked: it is not a scope dimension (see
+	`required_dimensions`).
 	"""
 	if is_administrative(user):
 		return True
 	values = {
 		"procuring_entity": cstr(procuring_entity),
 		"organisation_unit": cstr(organisation_unit),
-		"financial_year": cstr(financial_year),
 	}
 	required = required_dimensions(user)
 	for doctype, key in SCOPE_FIELDS:
@@ -270,15 +279,18 @@ def require_review_command(need: Any, user: str) -> None:
 
 
 def require_intake_window_command(user: str, *, procuring_entity: str, financial_year: str) -> None:
-	"""§6 — the Procurement Planner maintains the PE/FY intake window."""
+	"""§6 — the Procurement Planner maintains the PE/FY intake window.
+
+	`financial_year` is accepted for the caller's own record-keeping (it names
+	which window is being saved) but is not itself a permission dimension
+	(CTX-CHG-001 §4) — only the Procuring Entity and the Planner role gate
+	this command.
+	"""
 	if not (has_role(user, ROLE_PROCUREMENT_PLANNER) or is_administrative(user)):
 		fail("NDS_SCOPE_DENIED", "You do not hold the Procurement Planner role.")
 	allowed_entities = permitted_values(user, "Procuring Entity")
-	allowed_years = permitted_values(user, "Financial Year")
 	if allowed_entities is not None and cstr(procuring_entity) not in allowed_entities:
 		fail("NDS_SCOPE_DENIED", "You have no permission for that Procuring Entity.")
-	if allowed_years is not None and cstr(financial_year) not in allowed_years:
-		fail("NDS_SCOPE_DENIED", "You have no permission for that Financial Year.")
 
 
 def may_maintain_intake_window(user: str, *, procuring_entity: str, financial_year: str) -> bool:

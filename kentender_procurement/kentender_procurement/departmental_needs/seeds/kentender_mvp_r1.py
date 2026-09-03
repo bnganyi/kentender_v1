@@ -243,16 +243,19 @@ def _actors() -> None:
 	# scope, proving that a role never grants authority on its own.
 	_user_permission(ISOLATION_REQUESTER, "Procuring Entity", ISOLATION_PE)
 
+	# No Financial Year User Permission for anyone (CTX-CHG-001 §4,
+	# CTX-FU-02): Financial Year is never a per-user assignment, only a
+	# property of the governed PE Fiscal Year Context registry, read by
+	# `context.selectable_financial_years`; creation is separately gated by
+	# each PE/FY's own Needs Intake Window state.
 	for user in (AUTHOR, REVIEWER, PLANNER, PLANNER_READONLY, AUDITOR):
 		_user_permission(user, "Procuring Entity", PE)
-		_user_permission(user, "Financial Year", FY)
 	for user in (AUTHOR, REVIEWER):
 		for unit in (OU_DIGITAL_HEALTH, OU_HRMD):
 			_user_permission(user, "Organisation Unit", unit)
 
 	# Acting HoD: Digital Health only, proving scope is narrower than the role.
 	_user_permission(ACTING_REVIEWER, "Procuring Entity", PE)
-	_user_permission(ACTING_REVIEWER, "Financial Year", FY)
 	_user_permission(ACTING_REVIEWER, "Organisation Unit", OU_DIGITAL_HEALTH)
 
 

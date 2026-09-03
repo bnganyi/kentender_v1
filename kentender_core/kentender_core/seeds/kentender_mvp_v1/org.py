@@ -52,7 +52,7 @@ def _upsert_unit(
 		"unit_name": name,
 		"procuring_entity": pe,
 		"unit_type": unit_type,
-		"parent_org_unit": parent or "",
+		"parent_organisation_unit": parent or "",
 		"status": "Active",
 		"fixture_namespace": C.FIXTURE_NS,
 	}

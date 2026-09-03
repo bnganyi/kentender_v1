@@ -5,22 +5,60 @@
  * Vue-in-Desk-page modules). Namespaced under .kt-industry, never :root, so
  * this stylesheet can never leak into Desk chrome or any other screen.
  *
+ * Tokens re-tuned per docs/mvp-1-r1/00_common/KenTender Industry Design
+ * Refinement.md, carried over from the regenerated PLN-CHG-001 v1.2 artboard
+ * bundle (docs/mvp-1-r1/04_planning/design/_ds/kentender-industry-.../styles.css,
+ * the current source of truth for the system's look): ground vs surface is
+ * inverted — cards/dialogs/inputs are white sheets pinned to a steel-tinted
+ * paper ground, running lighter-upward with elevation instead of darker-
+ * downward — plus the knock-on fixes the doc calls out (solid, heavier
+ * hairlines; solid disabled tokens instead of opacity; solid status-chip
+ * tints instead of alpha, re-checked for is-pending on white).
+ *
  * Fonts: Barlow / Barlow Condensed, self-hosted (kt_cl_fonts.css, Phase 6 of
  * CFG-CHG-002) — no CDN @import, unlike the raw Claude Design artboard export.
  */
 
 .kt-industry {
-	--kt-color-bg: #f2f2f3;
-	--kt-color-surface: #e9e9ea;
-	--kt-color-text: #1d1f20;
+	--kt-color-bg: #f4f5f7;
+	--kt-color-surface: #ffffff;
+	--kt-color-surface-2: #eef0f3;
+	--kt-color-text: #16181a;
 	--kt-color-accent: #416180;
-	--kt-color-accent-2: #597ea3;
-	--kt-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+	--kt-color-accent-2: #6b4f8c;
+	/* Solid hairline (neutral-300), not a transparency mix — a mix against
+	   the old dark text washes out on the new white surfaces. */
+	--kt-color-divider: #d6d9dd;
+
+	/* Neutral ramp — generated in OKLCH with a whisper of the accent's hue
+	   angle (~0.008 chroma) so greys read as cool paper, not dead concrete. */
+	--kt-color-neutral-100: #f6f7f9;
+	--kt-color-neutral-200: #e9ebee;
+	--kt-color-neutral-300: #d6d9dd;
+	--kt-color-neutral-400: #b8bcc2;
+	--kt-color-neutral-500: #989da4;
+	--kt-color-neutral-600: #7a7f86;
+	--kt-color-neutral-700: #5c6167;
+	--kt-color-neutral-800: #41454b;
+	--kt-color-neutral-900: #2a2d32;
 
 	--kt-color-accent-100: #eef6ff;
 	--kt-color-accent-200: #d6ebff;
 	--kt-color-accent-800: #2c455d;
 	--kt-color-accent-900: #1d2d3d;
+
+	/* Status vocabulary (see .kt-status below) — solid precomputed tints,
+	   not alpha, so a chip renders identically on a white card and the grey
+	   ground. --kt-color-attention/-critical alias the two hues so callers
+	   that need a single-hue emphasis colour (a notice, an inline error)
+	   don't duplicate the palette. */
+	--kt-status-live: #047857; --kt-status-live-bg: #e7f8f2;
+	--kt-status-draft: #003d9b; --kt-status-draft-bg: #e6eefa;
+	--kt-status-pending: #434654; --kt-status-pending-bg: #f1f1f3;
+	--kt-status-attention: #92610a; --kt-status-attention-bg: #fdf0da;
+	--kt-status-critical: #b0143a; --kt-status-critical-bg: #fce8ec;
+	--kt-color-attention: var(--kt-status-attention);
+	--kt-color-critical: var(--kt-status-critical);
 
 	--kt-font-heading: "Barlow Condensed", "Arial Narrow", sans-serif;
 	--kt-font-heading-weight: 600;
@@ -37,8 +75,8 @@
 	--kt-radius-md: 4px;
 	--kt-radius-lg: 7px;
 
-	--kt-shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
-	--kt-shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+	--kt-shadow-sm: 0 1px 2px color-mix(in srgb, #2a2d32 12%, transparent);
+	--kt-shadow-lg: 0 12px 32px color-mix(in srgb, #2a2d32 20%, transparent);
 
 	background: var(--kt-color-bg);
 	color: var(--kt-color-text);
@@ -118,13 +156,25 @@
 	padding: 0 20px;
 	white-space: nowrap;
 }
-.kt-industry .kt-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Disabled is a SOLID treatment, not opacity — 45% opacity goes near-
+   invisible on the new white surfaces. Specificity (.kt-btn:disabled) beats
+   every single-class variant below regardless of source order, so this wins
+   over .kt-btn-primary's fill too. */
+.kt-industry .kt-btn:disabled {
+	cursor: not-allowed;
+	color: var(--kt-color-neutral-400);
+	background: var(--kt-color-surface-2);
+	border-color: var(--kt-color-neutral-200);
+}
 .kt-industry .kt-btn-primary { background: var(--kt-color-accent); color: #fff; border-color: var(--kt-color-accent); }
 .kt-industry .kt-btn-primary:hover:not(:disabled) { background: var(--kt-color-accent-800); }
-.kt-industry .kt-btn-primary.kt-danger { background: oklch(0.45 0.13 28); border-color: oklch(0.45 0.13 28); }
+/* Destructive action is derived from the rose status hue — destruction IS
+   state semantics, so it stays inside the "no colour beyond steel except to
+   encode state" rule rather than inventing its own red. */
+.kt-industry .kt-btn-primary.kt-danger { background: var(--kt-status-critical); border-color: var(--kt-status-critical); }
 .kt-industry .kt-btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-text) 7%, transparent); }
-.kt-industry .kt-btn-secondary.kt-danger { color: oklch(0.45 0.13 28); border-color: oklch(0.45 0.13 28); }
-.kt-industry .kt-btn-secondary.kt-danger:hover:not(:disabled) { background: oklch(0.45 0.13 28 / 0.08); }
+.kt-industry .kt-btn-secondary.kt-danger { color: var(--kt-status-critical); border-color: var(--kt-status-critical); }
+.kt-industry .kt-btn-secondary.kt-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-status-critical) 8%, transparent); }
 .kt-industry .kt-btn-ghost { color: var(--kt-color-accent); border-color: transparent; padding-inline: var(--kt-space-1); }
 .kt-industry .kt-btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent); }
 
@@ -149,8 +199,9 @@
 .kt-industry .kt-input:hover { border-color: color-mix(in srgb, var(--kt-color-text) 45%, transparent); }
 .kt-industry .kt-input:focus-visible { border-color: var(--kt-color-accent); outline-offset: 0; }
 .kt-industry .kt-input:disabled {
-	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
-	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
+	color: var(--kt-color-neutral-500);
+	background: var(--kt-color-surface-2);
+	border-color: var(--kt-color-neutral-200);
 }
 .kt-industry select.kt-input {
 	appearance: none;
@@ -170,12 +221,17 @@
 }
 
 /* — cards — */
+/* Cards are filled white sheets pinned to the drawing board, not transparent
+   outlines — the hairline border + corner marks do the "blueprint" work, the
+   fill reads as paper. This was the one rule that made every earlier bg/
+   surface tune invisible: with background:transparent no surface colour was
+   ever painted here at all. */
 .kt-industry .kt-card {
 	display: flex;
 	flex-direction: column;
 	gap: var(--kt-space-2);
 	padding: 24px 26px;
-	background: transparent;
+	background: var(--kt-color-surface);
 	border: 1px solid var(--kt-color-divider);
 }
 .kt-industry .kt-card-title {
@@ -369,8 +425,8 @@
 
 /* — figures (summary card numbers) — */
 .kt-industry .kt-figure { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 44px; line-height: 1; }
-.kt-industry .kt-figure.is-live { color: #047857; }
-.kt-industry .kt-figure.is-attention { color: #92610a; }
+.kt-industry .kt-figure.is-live { color: var(--kt-status-live); }
+.kt-industry .kt-figure.is-attention { color: var(--kt-status-attention); }
 
 /* — dialog — */
 .kt-industry .kt-dialog-backdrop {
@@ -379,16 +435,18 @@
 	display: grid;
 	place-items: center;
 	padding: var(--kt-space-4);
-	background: color-mix(in srgb, #1d1f20 55%, transparent);
+	background: color-mix(in srgb, var(--kt-color-neutral-900) 50%, transparent);
 	z-index: 100;
 }
+/* The dialog is a sheet like a card, not the page ground — white-on-scrim,
+   matching .kt-card's fill. */
 .kt-industry .kt-dialog {
 	width: min(620px, 100%);
 	display: flex;
 	flex-direction: column;
 	gap: 18px;
 	padding: 30px 32px;
-	background: var(--kt-color-bg);
+	background: var(--kt-color-surface);
 	box-shadow: var(--kt-shadow-lg);
 }
 .kt-industry .kt-dialog-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 26px; margin: 0; }
@@ -417,12 +475,16 @@
 	background: currentColor;
 	flex: none;
 }
-.kt-industry .kt-status.is-live { background: #10b9811a; color: #047857; }
-.kt-industry .kt-status.is-draft { background: #0052cc1a; color: #003d9b; }
-.kt-industry .kt-status.is-pending { background: #7376851a; color: #434654; }
+/* Solid precomputed tints, not alpha — an alpha tint over #e9e9ea (the old,
+   darker-than-ground surface) read as a soft wash; the same alpha over white
+   goes chalky, and is-pending's neutral tint in particular nearly vanished.
+   Solid --kt-status-*-bg values render identically on a white card. */
+.kt-industry .kt-status.is-live { background: var(--kt-status-live-bg); color: var(--kt-status-live); }
+.kt-industry .kt-status.is-draft { background: var(--kt-status-draft-bg); color: var(--kt-status-draft); }
+.kt-industry .kt-status.is-pending { background: var(--kt-status-pending-bg); color: var(--kt-status-pending); }
 .kt-industry .kt-status.is-pending::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
-.kt-industry .kt-status.is-attention { background: #f59e0b26; color: #92610a; }
-.kt-industry .kt-status.is-critical { background: #e11d481a; color: #b0143a; }
+.kt-industry .kt-status.is-attention { background: var(--kt-status-attention-bg); color: var(--kt-status-attention); }
+.kt-industry .kt-status.is-critical { background: var(--kt-status-critical-bg); color: var(--kt-status-critical); }
 
 /* — empty / loading / error register states — */
 .kt-industry .kt-skel {

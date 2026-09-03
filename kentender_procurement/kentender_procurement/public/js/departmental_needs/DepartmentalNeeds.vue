@@ -52,6 +52,7 @@
 				:version="detail.current_version || {}"
 				:context="editorContext"
 				:units="units"
+				@unit-created="(unit) => units.push(unit)"
 				:return-reason="detail.latest_return"
 				:error-summary="errorSummary"
 				:field-errors="fieldErrors"
@@ -223,12 +224,12 @@ const selectionRequired = computed(
 function onSelectContext(value) {
 	contextKey.value = value;
 	changingContext.value = false;
-	load();
+	load({ quiet: true });
 }
 
 function onSelectFinancialYear(value) {
 	financialYear.value = value;
-	load();
+	load({ quiet: true });
 }
 
 function onChangeContext() {
@@ -437,7 +438,7 @@ usePageRail(
 			financialYear.value = "";
 			changingContext.value = false;
 			if (["workspace", "intake"].includes(screen.value)) {
-				load();
+				load({ quiet: true });
 			} else {
 				go();
 			}
@@ -482,7 +483,7 @@ async function onSaveDraft(form) {
 	if (!result) return;
 	// §12.3 — the first save replaces the route with the generated reference.
 	if (!needReference.value) go(result.need_reference, "edit");
-	else await load();
+	else await load({ quiet: true });
 }
 
 async function onSubmit(form) {
@@ -679,7 +680,7 @@ async function requestWithdrawal() {
 	);
 	if (!result) return;
 	closeDialog();
-	await load();
+	await load({ quiet: true });
 }
 
 async function decideWithdrawal(decision) {

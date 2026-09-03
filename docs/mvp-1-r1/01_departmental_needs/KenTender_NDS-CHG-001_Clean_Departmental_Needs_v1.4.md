@@ -3,10 +3,10 @@
 | Control | Value |
 |---|---|
 | Document ID | NDS-CHG-001 |
-| Version | 1.1 |
-| Date | 28 August 2026 |
-| Status | Approved |
-| Change type | Complete consolidated successor to approved v1.0 |
+| Version | 1.4 |
+| Date | 1 September 2026 |
+| Status | Proposed for approval |
+| Change type | Complete consolidated successor to v1.3 |
 | Module | Departmental Needs |
 | Implementation posture | Clean correction in place; no compatibility layer |
 
@@ -14,7 +14,7 @@
 
 ## 1. Governing decision
 
-On approval, this complete document becomes the single implementation authority for Departmental Needs. It consolidates v1.0 with the approved end-to-end requirement-lineage direction and replaces NDS-CHG-001 v0.2, NDS-CHG-002 v0.1, NDS-CHG-003 v0.1 and NDS-CHG-001 v1.0 wherever they conflict with it.
+This complete document is the single implementation authority for Departmental Needs. It consolidates all approved content with the one-site-one-PE, role-bound assignment, site-local Organisation Unit and ERPNext Fiscal Year rules in AUTH-ADR-001 v1.5 and replaces NDS-CHG-001 v0.2, NDS-CHG-002 v0.1, NDS-CHG-003 v0.1 and NDS-CHG-001 v1.0–v1.3.
 
 The existing application is corrected in place. Usable code and the proven Claude Design → Vue 3 → Frappe Desk page pattern may be reused. Removed concepts are deleted rather than renamed, aliased, dual-read or retained behind feature flags.
 
@@ -22,7 +22,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 
 ### 1.1 Conflict and disposition register
 
-| Earlier item | Disposition in v1.1 |
+| Earlier item | Disposition in v1.4 |
 |---|---|
 | One Need containing several item lines | Replace with one Need for one requirement. Quantity and unit belong directly to the Need. |
 | Planner combine, split or partially allocate Need lines | Remove from Departmental Needs. When Planning uses an accepted Need, it uses the current accepted version and full accepted quantity. |
@@ -41,13 +41,17 @@ Completion requires one coherent result across schema, services, permissions, sc
 | `/departmental-needs`, `/desk/departmental-needs` and legacy `/demands` routes | Replace with the canonical Frappe Desk routes in section 10. No redirect or alias. |
 | Accepted Need treated as permanently unchangeable | Correct. The accepted version is immutable, but a separately reviewed successor may replace it. |
 | Direct withdrawal of an accepted Need | Retain only through a reviewed withdrawal request. An Active Plan dependency must be cleared first. |
-| Separate Needs intake and departmental-plan windows treated as interchangeable | Correct. Departmental Needs owns its minimal intake window; Procurement Planning owns its separate submission window. |
+| Scheduled Needs intake window with opening and closing instants | Remove. MVP 1 uses one manually maintained **Needs submission open** flag on the applicable ERPNext Fiscal Year. |
 | Planning source payload includes Strategy, requirement type or generic source evidence | Correct the payload. Those values are not owned by Departmental Needs. No Planning screen redesign is required. |
 | Accepted Need as the exclusive source of a DPP entry or Plan Item | Remove. Planning also permits a HoD or authorised departmental plan preparer to capture a direct departmental requirement. It does not create a synthetic Need. |
 | `business_justification` as a separate field that stops at Departmental Needs | Replace with `expected_operational_result`; the value is carried read-only into Planning and downstream lineage. |
-| Separate Departmental Review Delegate role | Remove. An acting HoD uses the same Head of User Department role and scoped native User Permission for the approved period. |
-| Separate Needs Configuration Manager role | Remove. The Procurement Planner maintains the PE/FY intake window through ordinary Frappe permission. |
-| Custom capability or operational-scope assignment as the permission source | Remove. Use native Frappe Role, Workflow permission and User Permission only. |
+| Separate Departmental Review Delegate role | Remove. An acting HoD uses the same Head of User Department responsibility through one dated User Responsibility Assignment. |
+| Separate Needs Configuration Manager role | Remove. Administrator or System Manager maintains the Needs-submission flag directly in System setup; no business approval is created. |
+| Separate Role, User Permission, User Scope Assignment or capability records as authority | Remove. Use one role-bound User Responsibility Assignment and the AUTH-ADR-001 v1.5 resolver. |
+| Financial Year or PE/FY Context assigned to each user | Remove. Assign durable site-wide or department scope once. Derive the creation year from the one ERPNext Fiscal Year whose Needs-submission flag is Open. |
+| PE selector and PE key repeated on Needs configuration | Remove. The site has one PE; it is never selected and no PE/FY Context exists. |
+| Browser-stored PE/FY selection required before module entry | Remove. The module opens without it; any PE, department or FY control is a visible, changeable local filter only. |
+| Separate **Review tasks** work-queue menu | Remove. Pending departmental reviews appear inside the ordinary Departmental Needs workspace for the HoD. |
 | Legacy Demand migration and compatibility | Prohibited. Departmental Needs remains a clean domain. |
 
 ## 2. Purpose and outcomes
@@ -56,7 +60,7 @@ Departmental Needs shall provide:
 
 - wider consultation on requirements that departments may consider for procurement planning;
 - a simple way for a departmental requester to state one anticipated requirement;
-- clear PE, department and Financial Year ownership;
+- clear departmental authority with Fiscal Year owned by each Need and governed by one simple open/closed submission flag;
 - departmental maker-checker review;
 - immutable accepted versions that Procurement Planning can consume safely;
 - controlled correction of an accepted Need through a successor version;
@@ -105,8 +109,8 @@ The six requester-entered values in section 4.3 pass this gate:
 
 ## 3. Fixed ownership and dependency boundary
 
-- Configuration & Governance owns PE, organisation unit, Financial Year, timezone, unit catalogue and Role and User Permission assignments. Departmental Needs reads them and never infers a first or current record.
-- Departmental Needs owns its intake window, Need identity, versions, review decisions and withdrawal requests.
+- Configuration & Governance owns the site PE, Organisation Unit, ERPNext Fiscal Year, timezone, unit catalogue and the namespaced Needs-submission flag. `kentender_core` owns the business-role registry, User Responsibility Assignment, Organisation Unit scope resolution and administration surface. Departmental Needs never assigns Fiscal Years to users.
+- Departmental Needs owns Need identity, versions, review decisions and withdrawal requests. It owns no intake-window record.
 - Strategy Alignment owns Strategic Objectives. A Need stores no Strategy reference.
 - Budget & Funding owns Budgets, Budget Lines, funding source, currency, positions, reservations and commitments. Departmental Needs stores none of those values.
 - Procurement Planning owns requirement classification, DPP entries, direct departmental requirements, Plan Items, source allocations, Finance tasks and Plan inclusion. It cannot edit a Need.
@@ -114,8 +118,9 @@ The six requester-entered values in section 4.3 pass this gate:
 
 | Information or decision | Owner | Departmental Needs relationship |
 |---|---|---|
-| PE, OU, FY, timezone, unit, Role and User Permission assignment | Configuration & Governance | Resolve exact identifiers and fail closed when absent or ambiguous. |
-| Needs intake open and close instants | Departmental Needs configuration | Gate initial Need creation and initial submission. |
+| Site PE, OU, Fiscal Year, timezone and unit | Configuration & Governance | Resolve exact governed records; do not invent fallbacks or PE choices. |
+| Business responsibility and organisational scope | `kentender_core` under AUTH-ADR-001 v1.5 | Resolve the exact active role-bound assignment and OU subtree. |
+| Needs submission open/closed flag | Configuration & Governance on ERPNext Fiscal Year | Gate initial Need creation and initial submission; direct audited setup action with no approval. |
 | Need and accepted Need version | Departmental Needs | Create, review, version and publish. |
 | Strategic Objective | Strategy Alignment / Procurement Planning | No Need field or write. |
 | Requirement classification, direct requirement and Plan treatment | Procurement Planning | Consume an accepted Need when used, or capture a direct departmental requirement without creating a Need. |
@@ -136,19 +141,15 @@ Departmental Needs shall not import a downstream DocType controller or query a d
 
 All identifiers are generated by the server. Framework audit fields remain framework-managed and are not repeated as user data.
 
-### 4.1 NeedsIntakeWindow
+### 4.1 Fiscal Year Needs-submission control
 
-The only Departmental Needs configuration record for initial intake.
+Departmental Needs creates no intake-window DocType. MVP 1 adds or exposes one namespaced Boolean on the canonical ERPNext Fiscal Year:
 
 | Field | Operational purpose and system effect |
 |---|---|
-| `needs_intake_window_id` | Immutable generated reference used by commands and audit. |
-| `procuring_entity_id` | Fixes the PE scope. Required. |
-| `financial_year_id` | Fixes the target FY. Required. |
-| `opens_at` | UTC instant from which a new Need may be created or initially submitted. Required. |
-| `closes_at` | Inclusive UTC instant after which a new Need cannot be created or initially submitted. Required and later than `opens_at`. |
+| `kentender_needs_submission_open` | `1` permits initial Need creation and initial submission for that Fiscal Year; `0` blocks both. Default `0`. |
 
-There is at most one NeedsIntakeWindow for one PE/FY. `Scheduled`, `Open` and `Closed` are derived from the configured clock and are not stored statuses. There is no window title, description, reason, source reference, approval, attachment or manual status.
+At most one Fiscal Year may have the flag enabled. Administrator or System Manager changes it directly through System setup. The server records who changed it and when. There are no `opens_at`, `closes_at`, `Scheduled`, approval, title, description, reason, source-reference or attachment fields.
 
 ### 4.2 DepartmentalNeed
 
@@ -158,7 +159,6 @@ The stable identity and scope of one requirement.
 |---|---|
 | `need_id` | Immutable internal identity used by services and lineage. |
 | `need_reference` | Generated on first save as `NDS-{PE code}-{FY start}-{4 digits}`; used by routes and users. |
-| `procuring_entity_id` | Defines the PE and permission boundary. Required and immutable. |
 | `org_unit_id` | Defines the owning department and review scope. Required and immutable. |
 | `financial_year_id` | Defines the planning year and date boundary. Required and immutable. |
 | `owner` (Frappe framework field) | Defines whose Need appears in **My needs** and who may correct it. Fixed on first save; do not create a duplicate originator field. |
@@ -198,15 +198,15 @@ One open departmental decision task for one submitted version.
 | `need_id` | Links the task to the stable Need. |
 | `need_version_id` | Fixes the exact immutable content under review. |
 | `task_type` | `Initial acceptance`, `Successor acceptance` or `Withdrawal`. |
-| `procuring_entity_id` / `org_unit_id` / `financial_year_id` | Fixes the departmental queue and permission scope. |
+| `org_unit_id` / `financial_year_id` | Fixes the departmental queue and permission scope. The site PE is implicit. |
 | `status` | `Open`, `Completed` or `Cancelled`. |
 | `decision_token` | Server-generated optimistic token preventing two decisions on the same task. |
 
-The task is available to users holding the Head of User Department role and the exact native User Permission scope. It is not described as assigned to a named person until a decision actor completes it. There is no claim, release, priority, score, due-date or free-text task note.
+The task is available only to users with an active Head of User Department responsibility assignment whose OU subtree contains the Need. The task routes eligible work but grants no authority. Its Fiscal Year comes from the Need; it is not a user permission or assignment dimension. The task is not described as assigned to a named person until a decision actor completes it. There is no claim, release, priority, score, due-date or free-text task note.
 
 ### 4.5 DepartmentalNeedDecision
 
-An immutable record created only by a successful command. It contains decision ID, Need ID, version or withdrawal-request ID, action, actor, effective assignment, timestamp, required reason when applicable, prior state, resulting state, content hash and command correlation ID.
+An immutable record created only by a successful command. It contains decision ID, Need ID, version or withdrawal-request ID, action, actor, exact User Responsibility Assignment ID and snapshot, timestamp, required reason when applicable, prior state, resulting state, content hash and command correlation ID.
 
 Reasons exist only for:
 
@@ -292,9 +292,9 @@ Planning clearance is not performed in Departmental Needs. The user follows the 
 
 | ID | Rule and enforcement |
 |---|---|
-| NDS-BR-001 | Every Need resolves to one explicit authorised PE, OU and FY. Missing, ambiguous or expired scope fails closed. |
-| NDS-BR-002 | Initial creation and initial submission require one Open Needs intake window for the same PE/FY. Existing authorised records remain readable after close. |
-| NDS-BR-003 | A correction of a version submitted before close may be resubmitted after close. An accepted successor may be proposed while the PE/FY context remains active. |
+| NDS-BR-001 | Every Need resolves to one authorised Organisation Unit and one target Fiscal Year. The site PE is implicit. Missing or ambiguous OU authority or an ineligible Fiscal Year fails closed. |
+| NDS-BR-002 | Initial creation and initial submission require `kentender_needs_submission_open = 1` on the same Fiscal Year. Existing authorised records remain readable after the flag is closed. |
+| NDS-BR-003 | Closing Needs submission makes existing Draft and Returned initial versions read-only and blocks initial resubmission. Accepted versions, successor proposals and withdrawal requests remain governed by their own lifecycle and are not rewritten by the flag. |
 | NDS-BR-004 | One Need represents one requirement and has exactly one quantity, one unit and one required-by date. It has no funding specification. |
 | NDS-BR-005 | The Departmental Author who owns the Need edits the initial Draft or returned correction. The Head of User Department decides the submitted version. |
 | NDS-BR-006 | The actor who submitted the version cannot decide that version. Maker-checker is rechecked on the server. |
@@ -314,19 +314,21 @@ Planning clearance is not performed in Departmental Needs. The user follows the 
 | NDS-BR-020 | No legacy Demand schema, state, route, service, permission, test or fixture is used. |
 | NDS-BR-021 | A direct departmental requirement is created and governed in Procurement Planning. It does not create, impersonate or backfill a Departmental Need. |
 
-## 6. Roles and permissions
+## 6. Roles, assignments and permissions
 
-| Native Frappe role | Permitted work |
-|---|---|
-| Departmental Author | View own Needs; create and edit own Draft/Returned Need; submit, resubmit and withdraw before acceptance; propose an update or withdrawal of own accepted Need. |
-| Head of User Department | View Needs in assigned departmental scope; decide submitted Needs, successor updates and withdrawal requests, except own submitted version. |
-| Procurement Planner | Maintain the PE/FY intake window; read current accepted Need versions through the typed source contract and exact read-only deep link; no Need decision. |
-| Auditor | Read scoped Needs, versions, decisions and lineage; no business mutation. |
-| System Administrator | Inspect technical metadata and neutral records read-only unless separately assigned a business role. |
+| Business responsibility | Central scope classification | Permitted work |
+|---|---|---|
+| Departmental Author | Organisation Unit | View own Needs; create and edit own Draft/Returned Need; submit, resubmit and withdraw before acceptance; propose an update or withdrawal of own accepted Need. |
+| Head of User Department | Organisation Unit | View Needs in the assigned OU subtree; decide submitted Needs, successor updates and withdrawal requests, except own submitted version. |
+| Procurement Planner | Site-wide | Read current accepted Need versions through the typed source contract and exact read-only deep link; no Need decision and no separate intake-window workspace. |
+| Auditor | Site-wide or approved OU oversight scope | Read scoped Needs, versions, decisions and lineage; no business mutation. |
+| Administrator / System Manager | Technical read-all under AUTH-ADR-001 v1.5 | Inspect all Needs, versions, tasks and technical metadata read-only; maintain the Fiscal Year Needs-submission flag in System setup; no Need decision unless the person also has the applicable business responsibility assignment. |
 
-Use native Frappe Role, Workflow permissions and User Permission for PE, FY and department scope. Do not use Capability Profiles, Operational Scope Assignments or another permission store. A selected context filters an already-authorised scope; it never grants authority.
+User Responsibility Assignment is the sole source of the role-to-site-wide/OU relationship. Frappe Roles are synchronized framework projections and Frappe User Permission, User Scope Assignment, Capability Profile and Operational Scope Assignment grant no Departmental Needs authority. Organisation Unit assignment includes that node and its descendants in the site tree. Fiscal Year eligibility derives from the open Needs-submission flag for initial creation and submission, or from the existing Need for later reads and decisions.
 
-A temporary acting HoD receives the same Head of User Department role and scoped User Permission for the approved period. Do not create a delegate role.
+No global browser context is required to enter Departmental Needs. A visible PE, department or Financial Year control is a local, changeable filter only. It does not grant authority, cannot permanently bind later visits and is not required for a direct record or review-task route.
+
+A temporary acting HoD receives the same Head of User Department responsibility through a dated Acting User Responsibility Assignment for the exact OU. Do not create a delegate role or another approval level.
 
 ## 7. Procurement Planning integration
 
@@ -349,7 +351,7 @@ It does not contain Budget Line, indicative amount, funding source, currency, St
 ### 7.2 Planning treatment
 
 - A DPP entry has exactly one source origin: `Accepted Departmental Need` or `Direct departmental requirement`.
-- Planning creates or updates one DPP entry for every current accepted Need in the exact PE/FY/OU context. The Need-owned title, description, expected operational result, quantity, unit and required-by date remain read-only. Planning adds the Budget Line and indicative amount before DPP submission.
+- Planning creates or updates one DPP entry for every current accepted Need in the exact site/Fiscal-Year/OU context. The Need-owned title, description, expected operational result, quantity, unit and required-by date remain read-only. Planning adds the Budget Line and indicative amount before DPP submission.
 - When Planning uses an accepted Need, it takes the full accepted quantity; there is no partial Need allocation or Planning quantity override in MVP-1.
 - A HoD or authorised departmental plan preparer may create a direct departmental requirement inside the department's Draft DPP without first creating a Need.
 - A direct departmental requirement captures only title, description, expected operational result, quantity, governed unit, required-by date, eligible Budget Line and indicative amount. It does not collect a bypass reason, attachment, source reference or synthetic Need reference.
@@ -388,11 +390,13 @@ All contracts are typed, versioned and server-authorised. Mutating commands requ
 
 | Contract | Required input | Output and effect |
 |---|---|---|
-| `resolve_needs_contexts` | Actor and optional requested context | Exact eligible PE/OU/FY contexts and intake state. No fallback authority. |
-| `get_needs_workspace` | Context, projection, search, status and paging | Authorised role-specific rows and counts from one predicate. |
+| `resolve_needs_scope` | Actor and required Departmental Needs responsibility | Exact authorised site-wide/OU scopes and matching assignment IDs from the AUTH-ADR-001 v1.5 resolver. No Fiscal Year permission or fallback authority. |
+| `list_needs_financial_years` | Actor | ERPNext Fiscal Years represented by existing Needs visible in the actor's authorised OU scope. This supplies browsing filters only. |
+| `list_need_create_targets` | Actor | Authorised OUs combined with the one ERPNext Fiscal Year whose Needs-submission flag is Open. Zero, one or several OU targets drive the exact Create behaviour in section 12.1. |
+| `get_needs_workspace` | Optional OU, Fiscal Year, status, search and paging filters | Authorised role-specific rows and counts across the actor's durable scope from one predicate. Filters are optional and non-authoritative. |
 | `get_departmental_need` | Need reference and optional accepted version | Authorised detail, current accepted source, open successor and Planning usage. No mutation. |
 | `get_departmental_review_task` | Review task ID and decision token | Exact immutable version, requester, scope and permitted decision labels. |
-| `get_needs_intake_window` | PE/FY | Open/close instants and derived Scheduled/Open/Closed state. |
+| `get_needs_submission_state` | None | The open Fiscal Year, or `Closed` when none is open, plus audit-safe display metadata. |
 | `get_current_accepted_need` | Need ID/reference, expected context and optional expected hash | Current accepted payload or typed stale/not-accepted error for Planning. |
 | `check_accepted_need_withdrawal_dependency` | Need ID and accepted version | Current Active Plan dependency result and version token. No mutation. |
 
@@ -410,7 +414,6 @@ All contracts are typed, versioned and server-authorised. Mutating commands requ
 | `cancel_accepted_need_successor` | Withdraw the originator's Draft successor and leave the earlier accepted version current. |
 | `request_accepted_need_withdrawal` | Create the only open withdrawal request with a required reason and one review task. |
 | `decide_accepted_need_withdrawal` | Recheck reviewer, maker-checker and live Planning dependency; approve, block for clearance or decline atomically. |
-| `save_needs_intake_window` | Create or update one PE/FY window after Procurement Planner role, User Permission, UTC and concurrency checks. |
 | `project_need_planning_usage` | Accept an authenticated, ordered Planning event and update the read-only projection idempotently. |
 
 Notifications are durable post-commit effects for submit, return, accept, decline and withdrawal decisions. They are not separate business records or user-entered messages.
@@ -419,9 +422,9 @@ Notifications are durable post-commit effects for submit, return, accept, declin
 
 | Code | Required result |
 |---|---|
-| `NDS_CONTEXT_REQUIRED` | No single authorised PE/OU/FY context can be resolved. Create no record. |
-| `NDS_SCOPE_DENIED` | Actor lacks the exact current Frappe role and User Permission scope. Disclose no protected record data. |
-| `NDS_INTAKE_NOT_OPEN` | Initial creation or initial submission is outside the Needs intake window. |
+| `NDS_CONTEXT_REQUIRED` | No authorised Organisation Unit can be resolved. Create no record. |
+| `NDS_SCOPE_DENIED` | Actor lacks the exact current role-bound User Responsibility Assignment for the record's OU scope. Disclose no protected record data. |
+| `NDS_INTAKE_NOT_OPEN` | Needs submission is closed for the target Fiscal Year. |
 | `NDS_FIELD_REQUIRED` | Return exact missing field identifiers; create no task or state change. |
 | `NDS_REQUIRED_BY_OUTSIDE_FY` | Required-by is outside the target FY. |
 | `NDS_UNIT_INELIGIBLE` | Unit is absent or inactive. |
@@ -439,26 +442,27 @@ Errors are stable service results, not inferred from button visibility or free-t
 
 ## 10. UI architecture, menu and routes
 
-**Departmental Needs** is a top-level KenTender module placed after **Budget & Funding** and before **Procurement Planning** in the business-flow menu.
+**Departmental Needs** is one top-level KenTender module entry placed after **Budget & Funding** and before **Procurement Planning** in the business-flow menu.
 
-Its module menu contains only:
+There is no separate menu item for **Review tasks**, **My needs**, a departmental register or another work queue. The Departmental Needs workspace presents the role-appropriate content:
 
-- **Departmental Needs**;
-- **Review tasks**, visible only to an effective Head of User Department; and
-- **Intake window**, visible only to an effective Procurement Planner.
+- a Departmental Author sees **My needs** and **Create need**;
+- a Head of User Department sees **Needs requiring your decision** followed by the departmental register; and
+- a user holding both roles sees both sections on the same workspace.
 
 Procurement Planners use the existing Procurement Planning workspace. A Planning deep link may open NDS-UI-06 read-only for the exact accepted Need; it does not create a Planner landing page.
 
 | Screen | Canonical route | Purpose |
 |---|---|---|
-| NDS-UI-01 Requester workspace | `/app/departmental-needs` | Create and track the current user's Needs. |
-| NDS-UI-02 Department review | `/app/departmental-needs/review` | Review queue and departmental register. |
+| NDS-UI-01 Departmental Needs workspace | `/app/departmental-needs` | Present My needs and/or Needs requiring your decision according to the actor's role. |
+| NDS-UI-02 Department review projection | `/app/departmental-needs?view=department` | Deep-linkable in-page reviewer projection; not a menu entry or separate queue application. |
 | NDS-UI-03 Need editor | `/app/departmental-needs/new` or `/app/departmental-needs/{need_reference}/edit` | Create, correct or propose an accepted successor using the same six fields. |
 | NDS-UI-04 Need detail | `/app/departmental-needs/{need_reference}` | Read current and accepted Need state, Planning usage and permitted next action. |
 | NDS-UI-05 Review task | `/app/departmental-needs/review/{review_task_id}` | Inspect the complete submitted version and make one departmental decision. |
 | NDS-UI-06 Accepted source detail | `/app/departmental-needs/{need_reference}/accepted/{version_number}` | Read-only exact accepted version for Planning lineage. |
 | NDS-UI-07 Withdrawal review | `/app/departmental-needs/review/{review_task_id}/withdrawal` | Inspect the full accepted Need, request reason and live Planning dependency. |
-| NDS-UI-08 Intake window | `/app/departmental-needs/intake-window` | Maintain only the PE/FY open and close instants. |
+
+The Needs-submission flag is maintained only in the Fiscal Years section of `/app/system-setup` under CFG-CHG-002 v0.5. Departmental Needs exposes no configuration route or page action.
 
 The proven Vue-in-Frappe page pattern and approved KenTender design tokens shall be reused. This document does not authorise a second application shell, custom header, breadcrumb, global context selector or general Procurement Home dashboard.
 
@@ -490,7 +494,7 @@ The approved desktop shell inside every artboard is:
 
 ### 11.2 NDS-DES-01 — Requester workspace
 
-**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs**
+**Fixture context — outside the artboard:** Grace Wanjiku · `grace.wanjiku@moh.example.test` · Departmental Author · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs**. No global browser PE/FY context is preselected or required.
 
 **Page content header**
 
@@ -505,13 +509,13 @@ The approved desktop shell inside every artboard is:
 |---|---|
 | Procuring Entity | PE-MOH — Ministry of Health |
 | Department | OU-MOH-DHI — Digital Health |
-| Financial Year | FY 2027/28 |
-| Intake window | Open until 25 Nov 2026, 23:59 EAT |
+| Open intake | FY 2027/28 · Open until 25 Nov 2026, 23:59 EAT |
 
 **Filter row**
 
 - Search input with placeholder: **Search title or reference**
 - Status select showing: **All statuses**
+- Financial Year select showing: **All financial years**
 - Secondary button: **Clear filters**
 
 **My needs table**
@@ -523,14 +527,14 @@ The approved desktop shell inside every artboard is:
 
 Below the table: **2 needs** on the left. No pagination control.
 
-### 11.3 NDS-DES-02 — Department review
+### 11.3 NDS-DES-02 — Department review projection in the shared workspace
 
-**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Review tasks**
+**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs**. This is the reviewer content of the same Departmental Needs entry, not a separate menu or application.
 
 **Page content header**
 
 - Eyebrow: **DEPARTMENTAL NEEDS**
-- Title: **Department review**
+- Title: **Departmental Needs**
 - Description: **Review submitted needs and view the department's current needs.**
 - No header action button
 
@@ -542,22 +546,17 @@ Below the table: **2 needs** on the left. No pagination control.
 | Department | OU-MOH-HRMD — Human Resources Management and Development |
 | Financial Year | FY 2027/28 |
 
-**Tabs**
-
-- **Review queue** — selected
-- **Department needs**
-
-**Review queue table**
+**Needs requiring your decision**
 
 | Need | Submitted by | Quantity | Required by | Status | Action |
 |---|---|---:|---|---|---|
 | NDS-MOH-2027-0002 · Digital health workforce certification programme | Grace Wanjiku | 1 programme | 31 Dec 2027 | Submitted | Review |
 
-Below the table: **1 need awaiting review**. Do not show an assignee column, summary card or action menu.
+Below the table: **1 need awaiting review**. Do not show an assignee column, summary card, tab or action menu.
 
-**Department needs tab variant**
+**Department needs**
 
-Use the same page header and context strip. Select **Department needs** and show:
+Below the decision section, show:
 
 - Search input with placeholder: **Search title or reference**
 - Status select showing: **All statuses**
@@ -706,7 +705,7 @@ All values use read-only display rows. Do not show a footer action, reviewer nam
 
 ### 11.7 NDS-DES-06 — Departmental review task
 
-**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 12:35 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Review tasks > NDS-MOH-2027-0002**
+**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-HRMD — Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 12:35 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0002 > Review**
 
 **Page content header**
 
@@ -836,7 +835,7 @@ Use the same components and arrangement as NDS-DES-03.
 
 ### 11.10 NDS-DES-09 — Accepted Need update review
 
-**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 15 Dec 2026, 10:05 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Review tasks > NDS-MOH-2027-0001 > Version 2**
+**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 15 Dec 2026, 10:05 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001 > Version 2 > Review**
 
 **Page content header**
 
@@ -882,41 +881,9 @@ Use the same components and arrangement as NDS-DES-03.
 
 Do not collapse the full proposed details into the Changes table. Do not show editable fields or a reason input.
 
-### 11.11 NDS-DES-10 — Intake window
+### 11.11 NDS-DES-10 — Reserved; no Departmental Needs configuration screen
 
-**Fixture context — outside the artboard:** Amina Hassan · `amina.hassan@moh.example.test` · Procurement Planner · PE-MOH — Ministry of Health · FY 2027/28 · 24 Nov 2026, 15:00 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Intake window**
-
-**Page content header**
-
-- Eyebrow: **DEPARTMENTAL NEEDS CONFIGURATION**
-- Title: **Intake window**
-- Description: **Set when departments may create and initially submit needs for this Financial Year.**
-- Status badge: **Open**
-- No header action button
-
-**Context card**
-
-| Field label | Displayed value |
-|---|---|
-| Procuring Entity | PE-MOH — Ministry of Health |
-| Financial Year | FY 2027/28 |
-
-Both rows use read-only field components.
-
-**Window card**
-
-| Field label | Displayed value |
-|---|---|
-| Opens at | 1 Sep 2026, 00:00 EAT |
-| Closes at | 25 Nov 2026, 23:59 EAT |
-
-Both rows use the approved date-time component.
-
-**Page footer**
-
-- Right-aligned primary button: **Save window**
-
-Do not show a title, description, manual status, reason, source reference, approval field, attachment, audit panel or module-readiness card.
+The former Intake window artboard is withdrawn. No replacement Departmental Needs artboard, route or page action is authorised. The simple **Needs submission** Open/Closed control appears in the Fiscal Years section of the single System setup surface defined by CFG-CHG-002 v0.5.
 
 ### 11.12 NDS-DES-11 — Withdrawal request dialog
 
@@ -939,7 +906,7 @@ Do not show an attachment, source reference, Planning selector, approval checkbo
 
 #### Blocked variant
 
-**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 5 Jan 2027, 10:30 EAT · Frappe header breadcrumb: **Home > Departmental Needs > Review tasks > Withdraw NDS-MOH-2027-0001**
+**Fixture context — outside the artboard:** Dr Peter Kimani · `peter.kimani@moh.example.test` · Head of User Department · PE-MOH — Ministry of Health · OU-MOH-DHI — Digital Health · FY 2027/28 · 5 Jan 2027, 10:30 EAT · Frappe header breadcrumb: **Home > Departmental Needs > NDS-MOH-2027-0001 > Withdrawal review**
 
 **Page content header**
 
@@ -1021,31 +988,46 @@ Produce four separate variants using the NDS-DES-01 shell, page header and conte
 |---|---|
 | Loading | Table card with the text **Loading departmental needs…** and approved skeleton rows. |
 | Empty | Heading **No departmental needs yet**; text **Create the first need for this department and Financial Year.**; primary button **Create need**. |
-| Intake closed | Context strip value **Intake window · Closed 25 Nov 2026, 23:59 EAT**; omit **Create need**; retain the exact existing rows. |
-| No authorised context | Heading **Departmental Needs is not available**; text **You do not have an active Departmental Needs assignment for a configured Procuring Entity, department and Financial Year.**; no table or action. |
+| Needs submission closed | Context strip value **Needs submission · Closed**; omit **Create need**; retain the exact existing rows and make initial Draft/Returned Needs read-only. |
+| No authorised scope | Heading **Departmental Needs is not available**; text **You have not been assigned a Departmental Needs responsibility for an organisation unit.**; no table or action. |
+| No open Fiscal Year | Retain authorised existing rows; show text **Needs submission is currently closed. You can continue viewing existing needs.**; omit **Create need**. |
 | Error | Heading **Departmental Needs could not be loaded**; text **Try again. If the problem continues, contact support.**; secondary button **Try again**. |
 
-### 11.16 Existing Frappe and KenTender controls
+### 11.16 NDS-DES-15 — Create target choice
 
-Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, dialogs, toasts and accessibility primitives. KenTender supplies the established tokens and shared Vue components. Claude Design supplies only the page content defined in sections 11.2–11.15.
+Produce one 520 px standard modal over NDS-DES-01 only for the fixture state in which the actor has more than one eligible Organisation Unit while one Fiscal Year is open for Needs submission.
+
+- Title: **Create need for**
+- Text: **Choose the department for this need.**
+- Department select: **Digital Health**
+- Financial Year: read-only **FY 2027/28**
+- Footer buttons: **Cancel** and primary **Continue**
+
+Every department option is returned by the server from an authorised OU assignment. The Fiscal Year is the one year whose Needs-submission flag is Open and is never selected in this dialog. Do not show a PE control, closed or unauthorised options, global-context checkbox, remember-context option, date field or administrative instruction.
+
+### 11.17 Existing Frappe and KenTender controls
+
+Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, dialogs, toasts and accessibility primitives. KenTender supplies the established tokens and shared Vue components. Claude Design supplies only the page content defined in sections 11.2–11.16.
 
 ## 12. Functional interaction requirements — excluded from design prompts
 
 ### 12.1 NDS-UI-01 — Requester workspace
 
-- Resolve eligible contexts from effective requester assignments and configured PE/FY Contexts. Restore a saved selection only if it remains authorised.
-- One eligible context loads directly. Several require explicit selection in the existing Frappe/KenTender context control before rows are requested. None renders the no-authorised-context state.
-- Load only the actor's Needs in the selected PE/OU/FY. Search matches title or reference. Status is the only list filter.
-- **Create need** is available only while the Needs intake window is Open. It routes to NDS-UI-03 with the resolved immutable context.
+- Enter the workspace directly from the actor's Departmental Author or Head of User Department responsibility assignments. Do not require a global context, a pre-entry selection screen, a Frappe User Permission or a Financial Year assignment.
+- Load all of the actor's authorised own Needs across assigned departments and Fiscal Years. If the actor is an HoD, also load the in-page decision section under the same route. Search matches title or reference; department, Fiscal Year and status are optional local filters. There is no PE filter.
+- One department may display directly. Several remain available through ordinary changeable filters; they do not block page entry. The last valid filter may be remembered for convenience but is never authority and always has a visible reset.
+- Derive create targets by combining active Departmental Author OU assignments with the one ERPNext Fiscal Year whose `kentender_needs_submission_open` flag is enabled. Do not use a Fiscal Year permission, the list's current FY filter or a browser-stored context.
+- If the flag is Open and exactly one authorised OU exists, **Create need** opens NDS-UI-03 immediately with that department and Fiscal Year. If several OUs exist, show the standard **Create need for** dialog defined in NDS-DES-15. If none exists or submission is Closed, omit the action and show the exact closed/no-scope message while retaining existing rows.
 - **Continue** and **Correct** route to the actor's editable current version. **View** routes to NDS-UI-04.
 - Submitted, accepted, terminal and another actor's versions are never editable through a direct URL.
-- Intake close removes new creation and initial submission; it does not hide existing authorised records.
+- Closing Needs submission blocks new creation and initial submission, makes existing initial Draft/Returned Needs read-only and does not hide accepted or historical authorised records.
+- Changing, clearing or restoring any local filter immediately changes the view and never changes a record's ownership or the actor's authority.
 
 ### 12.2 NDS-UI-02 — Department review
 
-- The review queue returns only Open tasks in the actor's exact effective departmental-review scope after maker-checker exclusion.
-- The department register returns authorised Needs in that same PE/OU/FY. It does not grant actions outside an Open task.
-- An acting HoD sees only tasks within the exact current User Permission scope and effective assignment period. The role label alone grants no cross-department access.
+- The in-page decision section returns only Open tasks in the actor's exact effective OU review scope after maker-checker exclusion, across every Fiscal Year represented by those tasks.
+- The department register returns authorised Needs in that same OU scope. Optional local filters may narrow by Fiscal Year; they do not grant actions outside an Open task.
+- An acting HoD sees only tasks within the exact OU subtree and effective period of the dated Acting assignment. The Frappe role label alone grants no cross-department access.
 - **Review** carries the stable task ID and current decision token to NDS-UI-05 or NDS-UI-07.
 - A successful decision removes the task from the queue. A concurrent decision returns `NDS_STALE_WRITE` and reloads the current neutral result.
 - Counts, queue rows and register rows use the same database scope predicate.
@@ -1094,13 +1076,12 @@ Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, 
 - Decline requires the exact decision dialog reason, leaves the accepted version current and completes the review task.
 - The requester cannot decide their own withdrawal request.
 
-### 12.7 NDS-UI-08 — Intake window
+### 12.7 Needs-submission state consumption
 
-- Resolve PE/FY options only from the Procurement Planner's native User Permissions and active PE/FY Contexts.
-- Save validates `closes_at > opens_at`, converts displayed EAT values to UTC and uses optimistic concurrency.
-- Moving or closing a window does not rewrite, delete or hide an existing Need.
-- Initial create and submit commands evaluate the window at their server clock instant. The end instant is inclusive.
-- The page exposes no manual status command or approval lifecycle.
+- Departmental Needs reads the canonical ERPNext Fiscal Year and its namespaced Needs-submission flag through the Configuration & Governance service.
+- The module exposes no command for changing the flag and no Intake window page.
+- Initial create and submit commands recheck the flag server-side in the same transaction as their write.
+- Closing does not rewrite, delete or hide an existing Need; it makes initial Draft/Returned records read-only as specified in NDS-BR-003.
 
 ### 12.8 Common page behaviour and accessibility
 
@@ -1114,7 +1095,7 @@ Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, 
 ## 13. Audit and historical integrity
 
 - Framework audit fields identify record creation and technical updates. DepartmentalNeedDecision records business transitions.
-- Draft autosaves or routine saves do not create user-authored notes. Material command audit includes actor, effective assignment, command, correlation ID, record token, prior/result state and submitted content hash.
+- Draft autosaves or routine saves do not create user-authored notes. Material command audit includes actor, exact User Responsibility Assignment ID and snapshot, command, correlation ID, record token, prior/result state and submitted content hash.
 - Submitted content is immutable. Return creates a copied Draft successor; it never makes the submitted row editable.
 - Accepted content is immutable. A replacement becomes effective only through successor acceptance.
 - Decision reasons remain attached to their exact decision and version. They are not copied into the next Draft as an editable field.
@@ -1129,30 +1110,29 @@ Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, 
 
 | Fixture | Exact value |
 |---|---|
-| Procuring Entity | `PE-MOH` — Ministry of Health |
-| Financial Year | `FY-2027-2028` — FY 2027/28 · 1 Jul 2027 to 30 Jun 2028 |
+| Site Procuring Entity | `PE-MOH` — Ministry of Health; configured once and not repeated on OU records |
+| ERPNext Fiscal Year | `FY-2027-2028` — FY 2027/28 · 1 Jul 2027 to 30 Jun 2028 |
 | OU 1 | `OU-MOH-DHI` — Digital Health |
 | OU 2 | `OU-MOH-HRMD` — Human Resources Management and Development |
 | Unit 1 | `UNIT-PROGRAMME` — Programme |
 | Unit 2 | `UNIT-EACH` — Each |
-| Needs intake window | 1 Sep 2026, 00:00:00 EAT to 25 Nov 2026, 23:59:59 EAT inclusive |
+| Needs submission | `FY-2027-2028.kentender_needs_submission_open = 1` |
 | Design clock | `2026-11-24T12:00:00Z` · 24 Nov 2026, 15:00 EAT unless an artboard states another exact time |
 
-The PE, FY, OUs, units and assignments come from Configuration & Governance. Seeds fail if any authoritative prerequisite differs; they do not invent fallback records.
+The site PE, ERPNext Fiscal Year, Needs-submission flag, OUs, units and assignments come from Configuration & Governance. Seeds fail if any authoritative prerequisite differs; they do not invent fallback records.
 
 ### 14.2 Actors and assignments
 
 | Actor | Exact assignment |
 |---|---|
-| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Departmental Author for PE-MOH / OU-MOH-DHI and OU-MOH-HRMD / FY 2027/28 |
-| `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department for both named OUs / FY 2027/28 |
-| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department for OU-MOH-DHI from 1 Oct to 30 Nov 2026, using the same role and a time-bound native User Permission |
-| `amina.hassan@moh.example.test` · Amina Hassan | Procurement Planner for PE-MOH / FY 2027/28; may maintain the Needs intake window |
-| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Procurement Planner for PE-MOH / FY 2027/28; accepted-source contract and exact detail link only |
-| `auditor.moh@example.test` · MOH Auditor | Read-only audit scope for PE-MOH / FY 2027/28 |
-| `requester.cgk@example.test` · CGK Requester | Separate PE-CGK scope used only for isolation tests |
+| `grace.wanjiku@moh.example.test` · Grace Wanjiku | Two Departmental Author User Responsibility Assignments: OU-MOH-DHI and OU-MOH-HRMD; no PE or Fiscal Year assignment |
+| `peter.kimani@moh.example.test` · Dr Peter Kimani | Head of User Department assignment at an approved common parent OU covering both named descendants, or two exact leaf assignments if no such parent exists; no Financial Year assignment |
+| `julia.njeri@moh.example.test` · Julia Njeri | Acting Head of User Department assignment for OU-MOH-DHI from 1 Oct to 30 Nov 2026 with authority reference |
+| `amina.hassan@moh.example.test` · Amina Hassan | Site-wide Procurement Planner; accepted-source contract and exact detail link only |
+| `mercy.kilonzo@moh.example.test` · Mercy Kilonzo | Site-wide Procurement Planner; accepted-source contract and exact detail link only |
+| `auditor.moh@example.test` · MOH Auditor | Site-wide read-only audit responsibility across Fiscal Years |
 
-No actor receives authority merely because they are Administrator or because a context selector contains a value.
+No actor receives authority merely because they are Administrator or because a filter contains a value. Administrator maintains the Needs-submission flag as audited setup, not as a Need decision.
 
 ### 14.3 Default Needs
 
@@ -1196,7 +1176,7 @@ Acceptance emits the exact supersession event without altering Version 1.
 
 The withdrawal profile creates `NDS-WDR-MOH-2027-0001` with the exact NDS-DES-11 reason. Its blocked variant uses the Active Plan dependency in section 14.4; its cleared variant supplies `Not included` and no Plan references.
 
-Terminal-state, stale-write, concurrent-decision, expired-delegation, window-boundary and PE-CGK isolation records exist only in named isolated test profiles. They are not added to the default four-row workspace fixture.
+Terminal-state, stale-write, concurrent-decision, expired-delegation, open/closed-flag and sibling-OU isolation records exist only in named isolated test profiles. They are not added to the default four-row workspace fixture.
 
 Direct departmental requirement fixtures belong to Procurement Planning and create no Departmental Needs seed record. The Planning integration profile must prove a DPP containing only direct requirements and another containing both source origins without changing the four Needs above.
 
@@ -1225,8 +1205,8 @@ When Needs are used, their stable Need IDs become the source-line IDs passed to 
 | ID | Acceptance criterion |
 |---|---|
 | NDS-AC-001 | One Need contains exactly the six requester-entered values in section 2.2 and no item child table or funding field. |
-| NDS-AC-002 | Context is explicit and server-authorised; first-record, current-FY and Administrator fallbacks do not exist. |
-| NDS-AC-003 | Initial create and submit succeed only inside the configured Needs intake window, including its exact inclusive boundaries. |
+| NDS-AC-002 | OU authority is explicit and server-authorised; the site PE is implicit and the target Fiscal Year is derived from the one open Needs-submission flag or the existing record. First-record and current-FY fallbacks do not exist. |
+| NDS-AC-003 | Initial create and submit succeed only when the target ERPNext Fiscal Year's Needs-submission flag is Open; Closed blocks both atomically. |
 | NDS-AC-004 | A valid partial Draft saves after title; submission rejects every missing required value without side effects. |
 | NDS-AC-005 | Required-by must be inside the target FY and quantity must be positive. |
 | NDS-AC-006 | Unit is selected only from the active governed catalogue; no free-text `Other` value is stored. |
@@ -1244,11 +1224,11 @@ When Needs are used, their stable Need IDs become the source-line IDs passed to 
 | NDS-AC-018 | Successor decline leaves the earlier accepted version current. |
 | NDS-AC-019 | Accepted withdrawal is maker-checked and cannot complete while an exact Active Plan dependency exists. |
 | NDS-AC-020 | Planning clearance occurs only in Procurement Planning; Departmental Needs exposes no foreign-module mutation. |
-| NDS-AC-021 | Search, counts, rows, detail, export and service access use the same server-side scope predicate. |
-| NDS-AC-022 | Departmental Author, Head of User Department, acting-HoD, Procurement Planner, auditor and System Administrator permissions match section 6 exactly. |
+| NDS-AC-021 | Search, counts, rows, detail, export and service access use the same server-side OU scope and record-Fiscal-Year eligibility predicates. |
+| NDS-AC-022 | Departmental Author, Head of User Department, acting-HoD, Procurement Planner and auditor permissions match section 6; System Administrator can inspect all records and maintain the setup flag but cannot make a Need decision without the business role and OU scope. |
 | NDS-AC-023 | Budget Officer and Accounting Officer receive no Departmental Needs workspace, task or special action. |
 | NDS-AC-024 | The Planning source payload includes the expected operational result and contains no Budget Line, amount, funding source, currency, Strategy, requirement type, generic evidence, location or attachment. |
-| NDS-AC-025 | NDS-DES-01 through NDS-DES-14 render only their exact fixtures and exclusions. |
+| NDS-AC-025 | NDS-DES-01 through NDS-DES-15 render only their exact fixtures and exclusions. |
 | NDS-AC-026 | Breadcrumb and Frappe header remain outside every Claude Design artboard and use the existing framework components. |
 | NDS-AC-027 | Runtime behaviour is implemented from section 12, not inferred from static design output. |
 | NDS-AC-028 | Stale, duplicate and concurrent commands create no overwritten version, duplicate task, duplicate event or duplicate decision. |
@@ -1265,18 +1245,27 @@ When Needs are used, their stable Need IDs become the source-line IDs passed to 
 | NDS-AC-039 | The Need ID remains the stable source-line identity through Planning. |
 | NDS-AC-040 | Planning receives the expected operational result read-only and receives no supplier obligation or Tender parameter. |
 | NDS-AC-041 | Only Departmental Author and Head of User Department perform Need lifecycle actions. |
-| NDS-AC-042 | An acting HoD uses the same role and a time-bound native User Permission; no delegate role exists. |
-| NDS-AC-043 | Procurement Planner maintains the intake window without receiving a Need decision. |
-| NDS-AC-044 | Native Frappe permissions enforce PE/FY/department scope without a parallel permission system. |
+| NDS-AC-042 | An acting HoD uses the same responsibility through a dated Acting User Responsibility Assignment; no delegate role or extra approval level exists. |
+| NDS-AC-043 | Administrator or System Manager opens or closes Needs submission directly from the System setup Fiscal Years section; there is no intake-window workflow or Need decision. |
+| NDS-AC-044 | One role-bound User Responsibility Assignment and the shared AUTH resolver enforce durable site-wide/OU scope without Frappe User Permission, User Scope Assignment or a Fiscal Year grant as authority. |
 | NDS-AC-045 | The KEBS Needs-origin and direct-Planning profiles preserve equivalent source facts. |
+| NDS-AC-046 | Departmental Needs opens directly without a global context or pre-entry selection screen. |
+| NDS-AC-047 | With one eligible Open intake target, **Create need** opens the editor immediately with no intermediate choice. |
+| NDS-AC-048 | With several authorised OUs and one open Fiscal Year, the user chooses only the department in one compact dialog; PE and Fiscal Year are not selectable. |
+| NDS-AC-049 | A Departmental Author assigned to one OU can create in the one open Fiscal Year without annual access provisioning. |
+| NDS-AC-050 | Choosing or filtering a future, closed or different Fiscal Year never binds later visits, hides other authorised records or prevents creation when administrators later open an eligible year. |
+| NDS-AC-051 | HoD decision work appears inside the ordinary Departmental Needs workspace and no separate **Review tasks** work-queue menu exists. |
+| NDS-AC-052 | `NeedsIntakeWindow`, `PEFiscalYearContext`, PE selectors and repeated PE keys are absent from the Departmental Needs schema and UI. |
+| NDS-AC-053 | At most one ERPNext Fiscal Year has Needs submission Open; opening another year closes the previous year atomically after confirmation. |
+| NDS-AC-054 | Closing Needs submission makes initial Draft and Returned Needs read-only without changing Accepted, Withdrawn or historical records. |
 
 ### 15.1 Minimum automated coverage
 
 | Test layer | Minimum coverage |
 |---|---|
 | Domain unit | Field validation, date, quantity, lifecycle, root/accepted/successor pointers, withdrawal dependency and usage projection. |
-| Permission unit | Own vs department vs acting-HoD vs Planner contract vs auditor, cross-OU/PE/FY denial and maker-checker. |
-| Command integration | Draft, submit, return-copy, resubmit, accept, decline, successor, withdrawal, intake save, idempotency and concurrency. |
+| Permission unit | Own vs department vs acting-HoD vs Planner contract vs auditor, role/scope Cartesian-product denial, OU-descendant and cross-OU denial, multi-FY browsing without annual assignment, administrator inspection and maker-checker. |
+| Command integration | Draft, submit, return-copy, resubmit, accept, decline, successor, withdrawal, open/closed-flag enforcement, idempotency and concurrency. |
 | Contract integration | Accepted/superseded/withdrawn events, Planning usage event, stale hash, accepted-Need Planning enrichment, direct-only DPP and mixed-origin DPP. |
 | UI component | Exact fields, read-only derived values, role tables, dialogs, button states and no forbidden controls. |
 | Browser smoke | Frappe login → route → create/submit; reviewer opens full detail and returns/accepts; successor comparison; withdrawal blocked/cleared; no console or own-request errors. |
@@ -1330,6 +1319,23 @@ When a failure occurs, preserve the first useful traceback, server response, bro
 - visual comparison for all approved artboards at 1440 × 1024; and
 - schema scan proving every prohibited field, object and legacy route is absent.
 
+### 16.4 Required AUTH-ADR-001 v1.5 correction slice
+
+Implement this correction as one controlled slice. Do not combine it with unrelated Planning or Tender work.
+
+1. Replace every Departmental Needs use of Frappe User Permission, User Scope Assignment or module-local scope logic with the shared AUTH-ADR-001 v1.5 resolver and role-bound assignment ID.
+2. Remove `Financial Year` and PE from `required_dimensions()`, remove every FY/PE grant check and remove any `allowed_years` identity gate. Retain record, OU, flag, state and maker-checker controls.
+3. Make `selectable_financial_years()` return ERPNext Fiscal Years represented by existing authorised records. This function supplies filters only.
+4. Implement `list_need_create_targets()` separately. It combines active Departmental Author OU assignments with the one ERPNext Fiscal Year whose Needs-submission flag is Open.
+5. Replace all list, count, detail, task, file, export and command scope checks in the same controlled cutover; no fallback to an older store is permitted.
+6. Stop seeds and profiles from creating Frappe User Permission, User Scope Assignment or Financial Year access as Departmental Needs authority; create exact User Responsibility Assignments instead.
+7. After production code and seeds no longer read the old stores, clean obsolete rows under the AUTH migration plan. Never run cleanup first.
+8. Add a Cartesian-product regression: Grace may be Author in OU-DHI while acting HoD in OU-HRMD and must not exercise either responsibility in the other OU.
+9. Verify Grace can browse FY 2026/27 and FY 2027/28 without an annual permission edit, can create only while the applicable Fiscal Year flag is Open, and is never trapped by a remembered year.
+10. Verify a parent-OU HoD assignment covers its two named descendants but never a sibling outside that subtree.
+11. Remove `NeedsIntakeWindow`, its routes, commands, seeds and tests. Remove all PE/FY Context reads.
+12. Verify closing the flag makes initial Draft/Returned Needs read-only and opening another Fiscal Year leaves at most one open flag after one atomic command.
+
 ## 17. Prohibited shortcuts
 
 - Do not preserve the item child table as a hidden or single-row implementation.
@@ -1340,12 +1346,16 @@ When a failure occurs, preserve the first useful traceback, server response, bro
 - Do not implement the direct-requirement editor inside Departmental Needs; it belongs to the DPP workspace in Procurement Planning.
 - Do not edit an accepted or submitted snapshot in place.
 - Do not let Planning query Departmental Needs tables or mutate a Need.
-- Do not infer role authority from a UI tab, route, role label, ownership alone or Administrator status.
+- Do not infer role authority from a UI tab, route, Frappe role label, ownership alone or Administrator status.
 - Do not implement a Planner, Budget Officer, Accounting Officer or support dashboard in this module.
 - Do not introduce `Partially included`, quantity override or a Plan allocation child table.
 - Do not copy runtime rules into Claude Design prompts or infer runtime behavior from generated HTML.
 - Do not import Claude Design canvas runtime files into production.
 - Do not create a second Frappe header, breadcrumb, shell or global context selector.
+- Do not create a Frappe User Permission, User Scope Assignment, Financial Year grant or module-local access record as Departmental Needs authority.
+- Do not require a pre-entry PE/FY/department selection screen, store an authoritative context in the browser or make a saved filter irreversible.
+- Do not create `NeedsIntakeWindow`, `PEFiscalYearContext`, opening/closing instants, scheduled intake states, PE selectors or repeated PE keys.
+- Do not add a separate menu item for a work queue. HoD decision work belongs inside the ordinary Departmental Needs workspace.
 - Do not add compatibility redirects, legacy Demand fields, migration branches, dual reads or fallback fixtures.
 - Do not run hundreds of unrelated tests after each small correction.
 
@@ -1355,11 +1365,12 @@ This document is the single Departmental Needs authority. Its requirement, desig
 
 Where another approved module document owns a value or decision, its domain authority prevails for that value:
 
-1. Configuration & Governance for PE/FY/OU/unit identity and native Role/User Permission assignments;
-2. Budget & Funding v1.1 for Budget Line identity, funding source and currency as consumed by Procurement Planning, subject to the ownership correction in section 7.3;
-3. this document for Need capture, review, versions and withdrawal;
-4. Strategy Alignment v1.3 for Strategic Objectives; and
-5. Procurement Planning canonical/functional contracts for DPP, classification, Plan Items, Finance and Active Plan usage, as corrected by the accepted-source boundary in section 7.
+1. AUTH-ADR-001 v1.5 for role-bound User Responsibility Assignments, the site-local Organisation Unit tree, shared scope resolution, non-authoritative module filters, no per-user Fiscal Year assignment and administrator inspection;
+2. CFG-CHG-002 v0.5 for the one site PE, ERPNext Fiscal Year, Needs-submission flag, OU and unit identity;
+3. Budget & Funding v1.1 for Budget Line identity, funding source and currency as consumed by Procurement Planning, subject to the ownership correction in section 7.3;
+4. this document for Need capture, review, versions and withdrawal;
+5. Strategy Alignment v1.3 for Strategic Objectives; and
+6. Procurement Planning canonical/functional contracts for DPP, classification, Plan Items, Finance and Active Plan usage, as corrected by the accepted-source boundary in section 7.
 
 If an implementation ambiguity would add a field, action, screen, object or role, the default answer is **omit it** until a current operational purpose, named consumer, validation and effect are approved.
 
@@ -1373,9 +1384,9 @@ If an implementation ambiguity would add a field, action, screen, object or role
 | Enter department data once | Accepted values pass to Planning with the same Need and version IDs. |
 | Procurement cannot silently rewrite | Planning receives accepted values read-only. |
 | Downstream obligations are linked | The Need creates the first stable source ID; detailed obligations are added later at Requisition. |
-| Native Frappe permissions and minimum roles | Four native roles cover the module; only Author and HoD make Need lifecycle decisions. |
+| Minimum role-bound responsibilities | Four registered responsibilities cover the module; only Author and HoD make Need lifecycle decisions. Site-wide/OU responsibility assignments are durable and Fiscal Year is derived from the record/open flag. |
 | No premature abstraction | No generic requirement model is introduced. |
 
 ## 20. Approval effect
 
-NDS-CHG-001 v1.1 was approved by the Project Owner on 28 August 2026. It supersedes v1.0 in full and is the only Departmental Needs requirements document to consult.
+On approval, NDS-CHG-001 v1.4 supersedes v1.3 in full and becomes the only Departmental Needs requirements document to consult. Implementation shall adopt AUTH-ADR-001 v1.5 User Responsibility Assignments and the shared resolver; use the site PE implicitly; remove every older scope authority, Fiscal Year user grant, `NeedsIntakeWindow`, PE/FY Context, PE selector, authoritative browser context and pre-entry selector; consume the ERPNext Fiscal Year Needs-submission flag; and keep pending review work inside the ordinary Departmental Needs workspace rather than a separate **Review tasks** menu.

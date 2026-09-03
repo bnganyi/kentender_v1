@@ -447,7 +447,6 @@ def apply_kebs() -> dict[str, Any]:
 	for user in (author, reviewer):
 		base._user_permission(user, "Procuring Entity", kebs_foundation.PE)
 		base._user_permission(user, "Organisation Unit", kebs_foundation.OU)
-		base._user_permission(user, "Financial Year", kebs_foundation.FY)
 
 	window = _kebs_window()
 	built = []

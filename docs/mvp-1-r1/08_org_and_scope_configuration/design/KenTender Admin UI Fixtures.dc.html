@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-2-700); text-decoration: none; }
+    a:hover { color: var(--color-accent-2-800); }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); min-height: 100vh; padding: 56px 5vw 140px; font-family: var(--font-body); color: var(--color-text);">
+
+  <div style="max-width: 1000px; margin: 0 auto 48px;">
+    <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-700);">AUTH-ADR-001 &middot; Section 12 fixtures</div>
+    <h1 style="margin: 8px 0 12px; font-size: 40px;">Configuration &amp; Governance &mdash; admin UI</h1>
+    <p style="max-width: 72ch; color: var(--color-neutral-800); font-size: 15px; margin: 0;">Organisation structure and User responsibilities, as static content-canvas fixtures per AUTH-DES-01&ndash;05. Frappe&rsquo;s sidebar, header and breadcrumb are intentionally not drawn &mdash; each screen below is page content only.</p>
+  </div>
+
+  <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <a href="Organisation Structure.dc.html" class="card blueprint elev-sm" style="padding: 24px; color: inherit;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">AUTH-UI-01</div>
+      <div class="card-title">Organisation structure</div>
+      <p class="card-body">Populated tree with a unit selected, plus no-PE, needs-repair, empty-root and load-failure states.</p>
+    </a>
+    <a href="User Responsibilities Register.dc.html" class="card blueprint elev-sm" style="padding: 24px; color: inherit;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">AUTH-UI-02</div>
+      <div class="card-title">User responsibilities</div>
+      <p class="card-body">Populated register, plus loading, empty, forbidden and server-failure states.</p>
+    </a>
+    <a href="Assign Responsibility Dialog.dc.html" class="card blueprint elev-sm" style="padding: 24px; color: inherit;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">AUTH-UI-03</div>
+      <div class="card-title">Assign responsibility</div>
+      <p class="card-body">Permanent and Acting appointments, plus an overlap conflict with a validation error.</p>
+    </a>
+    <a href="Revoke Responsibility Dialog.dc.html" class="card blueprint elev-sm" style="padding: 24px; color: inherit;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">AUTH-UI-05</div>
+      <div class="card-title">Revoke responsibility</div>
+      <p class="card-body">The revoke confirmation dialog with its required reason field.</p>
+    </a>
+    <a href="Responsibility Detail.dc.html" class="card blueprint elev-sm" style="padding: 24px; color: inherit; grid-column: 1 / -1;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-kicker">AUTH-UI-04 / 06</div>
+      <div class="card-title">Responsibility detail</div>
+      <p class="card-body">Full assignment detail with Access diagnostics expanded.</p>
+    </a>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

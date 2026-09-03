@@ -19,10 +19,16 @@ const railEl = ref(null);
 usePageRail(railEl, railTrail, {
 	showPeSwitcher: true,
 	onPeChange: async () => {
-		loading.value = true;
+		// Quiet only when a workspace is already on screen — the previous
+		// content stays visible while the new one loads, instead of flashing
+		// the skeleton over it. Before any workspace has ever resolved,
+		// `workspace.value` is still null, so this stays loud (see the
+		// documented gap-crash risk on `onSelectContext` below).
+		const quiet = !!workspace.value;
+		if (!quiet) loading.value = true;
 		await refreshContext();
 		if (!selectionRequired.value && workingContext.value) {
-			await refresh();
+			await refresh({ quiet });
 		} else {
 			loading.value = false;
 		}
@@ -48,8 +54,9 @@ const forbidden = ref(false);
 const serverError = ref(false);
 const workspace = ref(null);
 
-async function refresh() {
-	loading.value = true;
+async function refresh(opts) {
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	forbidden.value = false;
 	serverError.value = false;
 	try {

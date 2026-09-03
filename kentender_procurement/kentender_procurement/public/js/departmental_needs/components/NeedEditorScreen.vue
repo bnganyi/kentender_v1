@@ -89,12 +89,23 @@
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-unit">Unit</label>
 					<!-- §12.3 — options come from the governed active catalogue. -->
-					<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit">
-						<option value="">Select a unit</option>
-						<option v-for="unit in units" :key="unit.name" :value="unit.name">
-							{{ unit.unit_label }}
-						</option>
-					</select>
+					<div style="display: flex; gap: 8px; align-items: center">
+						<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit" style="flex: 1">
+							<option value="">Select a unit</option>
+							<option v-for="unit in units" :key="unit.name" :value="unit.name">
+								{{ unit.unit_label }}
+							</option>
+						</select>
+						<button
+							type="button"
+							class="kt-btn kt-btn-ghost"
+							style="white-space: nowrap"
+							data-testid="nds-unit-new"
+							@click="createUnit"
+						>
+							+ New
+						</button>
+					</div>
 				</div>
 			</div>
 			<div class="kt-field" style="margin: 0; max-width: 340px">
@@ -134,6 +145,7 @@
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import ContextCard from "./ContextCard.vue";
 import StatusPill from "./StatusPill.vue";
+import { quickCreate } from "../../nds_shared/composables/quickCreate.js";
 
 const props = defineProps({
 	mode: { type: String, default: "create" }, // create | correct | successor
@@ -145,7 +157,14 @@ const props = defineProps({
 	fieldErrors: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-const emit = defineEmits(["save", "submit", "cancel"]);
+const emit = defineEmits(["save", "submit", "cancel", "unit-created"]);
+
+async function createUnit() {
+	const doc = await quickCreate("Unit Of Measure");
+	if (!doc) return;
+	form.unit = doc.name;
+	emit("unit-created", { name: doc.name, unit_label: doc.unit_label });
+}
 
 const errorEl = ref(null);
 const titleEl = ref(null);

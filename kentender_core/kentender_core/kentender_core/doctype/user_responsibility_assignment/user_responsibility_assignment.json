@@ -1,0 +1,179 @@
+{
+ "actions": [],
+ "autoname": "URA-.#####",
+ "creation": "2026-09-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "business_role",
+  "organisation_unit",
+  "column_break_ura_scope",
+  "appointment_type",
+  "authority_reference",
+  "effective_from",
+  "effective_to",
+  "status",
+  "section_break_ura_audit",
+  "assigned_by",
+  "assigned_at",
+  "column_break_ura_audit",
+  "revoked_by",
+  "revoked_at",
+  "revocation_reason",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "A responsibility registered in kentender_core.services.business_role_registry.",
+   "fieldname": "business_role",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Business Responsibility",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "organisation_unit",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Organisation Unit",
+   "options": "Organisation Unit",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_ura_scope",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Permanent",
+   "fieldname": "appointment_type",
+   "fieldtype": "Select",
+   "label": "Appointment Type",
+   "options": "Permanent\nActing",
+   "reqd": 1
+  },
+  {
+   "description": "The instrument appointing this officer. Required for an acting appointment.",
+   "fieldname": "authority_reference",
+   "fieldtype": "Data",
+   "label": "Authority Reference"
+  },
+  {
+   "description": "UTC instant. Blank means effective immediately once Enabled.",
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "label": "Effective From"
+  },
+  {
+   "description": "UTC instant. Blank means no scheduled end.",
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To"
+  },
+  {
+   "default": "Enabled",
+   "description": "Stored value only. Scheduled, Active and Expired are derived from the effective period at read time (AUTH-ADR-001 v1.6 §4.6).",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Enabled\nRevoked",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_ura_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_at",
+   "fieldtype": "Datetime",
+   "label": "Assigned At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ura_audit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "revoked_by",
+   "fieldtype": "Link",
+   "label": "Revoked By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revoked_at",
+   "fieldtype": "Datetime",
+   "label": "Revoked At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "revocation_reason",
+   "fieldtype": "Small Text",
+   "label": "Revocation Reason",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "search_index": 1
+  }
+ ],
+ "module": "Kentender Core",
+ "name": "User Responsibility Assignment",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "write": 1
+  }
+ ],
+ "search_fields": "user,business_role,organisation_unit",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -187,13 +187,24 @@ class TestScopeIsolation(DepartmentalNeedsPermissionCase):
 			)
 		)
 
-	def test_cross_financial_year_is_denied(self):
-		self.assertFalse(
+	def test_financial_year_is_not_a_scope_dimension(self):
+		"""CTX-CHG-001 §4 — Financial Year gates nothing in `in_scope`; a real
+		PE/OU pair is authorised regardless of which FY string is passed
+		alongside it, including one that names no real Financial Year at all.
+		Which years are actually selectable is a separate question, answered
+		by `context.selectable_financial_years` from the PE's configured
+		fiscal context, never from `in_scope`."""
+		self.assertTrue(
 			permissions.in_scope(
 				REVIEWER,
 				procuring_entity=PE,
 				organisation_unit=OU_DIGITAL_HEALTH,
 				financial_year="FY-2099-2100",
+			)
+		)
+		self.assertTrue(
+			permissions.in_scope(
+				REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=FY
 			)
 		)
 
@@ -267,21 +278,36 @@ class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 
 
 class TestFinancialYearOffer(DepartmentalNeedsPermissionCase):
-	"""§8.1 offers only Financial Years the caller may act in.
+	"""§8.1 offers Financial Years configured for the caller's Procuring
+	Entity — never a per-user Financial Year assignment (CTX-CHG-001 §4,
+	CTX-FU-02).
 
-	Every scope check treats the FY as a required dimension (`in_scope`) or a
-	native restriction (`require_intake_window_command`), so a year outside the
-	caller's `Financial Year` User Permissions is a guaranteed NDS_SCOPE_DENIED
-	on every later command. Offering it anyway is the NDS-807 defect class — a
-	control the actor cannot use. Observed live: the KEBS foundation seed's
-	FY-2026-2027 was offered to the §14 MoH Planner, whose only year is
-	FY-2027-2028, and her intake save failed at the very end.
+	NDS-CHG-001 v1.1 modelled Financial Year as its own independent User
+	Permission dimension, ANDed against Procuring Entity in `in_scope`. That
+	is a category error: an FY grant unpaired from any PE applies to *every*
+	PE the user can reach, so it can never mean "access to a financial year"
+	in any coherent sense — the only real-world fact it can express is "this
+	year is configured for this entity", which is exactly what
+	`PE Fiscal Year Context` (kentender_core) already records, unconditional
+	on who is asking. Observed live: Planning's own seed granted every shared
+	actor (Grace, Peter, Julia) a `Financial Year` permission scoped to
+	Planning's single financial year; that row silently hid a second,
+	genuinely configured year's intake window from them in Departmental
+	Needs — two different modules disagreeing about the same person's access
+	to the same fact.
+
+	The fix also separates two questions NDS-CHG-001 v1.1 conflated: seeing a
+	year (this class) and being allowed to create in it (gated separately, by
+	that PE/FY's own Needs Intake Window state — see `TestPlannerAuthority`
+	and `context.require_open_intake`, untouched by this change).
 	"""
 
 	OTHER_FY = "FY-2098-2099"
 
-	def other_year(self) -> None:
-		"""A second Available, unexpired year nobody in the §14 seed holds."""
+	def other_year(self, *, configure_context: bool = False) -> None:
+		"""A second Available Financial Year. Not offered to anyone until
+		`configure_context` gives it an Active PE Fiscal Year Context for PE —
+		configuration, not identity, is what makes a year selectable now."""
 		if not frappe.db.exists("Financial Year", self.OTHER_FY):
 			doc = frappe.get_doc(
 				{
@@ -303,38 +329,60 @@ class TestFinancialYearOffer(DepartmentalNeedsPermissionCase):
 			ignore_missing=True,
 			ignore_permissions=True,
 		)
+		if not configure_context:
+			return
+		from kentender_core.seeds.kentender_mvp_v1.reference_data import STEWARD_EMAIL
+		from kentender_core.services import reference_data_transitions as ctx_txn
 
-	def test_an_unpermitted_financial_year_is_not_offered(self):
+		result = ctx_txn.enable_context(
+			PE, self.OTHER_FY, "2098-07-01 00:00:00", "2099-09-30 23:59:00", user=STEWARD_EMAIL
+		)
+		context_name = result["context"]
+		if result["context_status"] != "Active":
+			frappe.db.set_value(
+				"PE Fiscal Year Context", context_name, "context_status", "Active",
+				update_modified=False,
+			)
+		self.addCleanup(
+			frappe.delete_doc, "PE Fiscal Year Context", context_name,
+			force=True, ignore_missing=True, ignore_permissions=True,
+		)
+
+	def test_an_unconfigured_financial_year_is_not_offered(self):
+		"""No PE Fiscal Year Context row for PE means a PE-permitted user does
+		not see the year. (Administrator is unrestricted across every
+		Procuring Entity by design, §6, so its own offer is a system-wide
+		union — not asserted here against a single PE's configuration.)"""
 		self.other_year()
 		frappe.set_user(PLANNER)
-		offer = workspace.get_workspace()
+		offer = workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
 		offered = {row["id"] for row in offer["financial_years"]}
-		self.assertIn(FY, offered)
-		self.assertNotIn(self.OTHER_FY, offered)
-		# The §8.1 resolve read makes the same offer to an author.
-		frappe.set_user(AUTHOR)
-		resolved = resolve_creation_context()
-		offered = {row["id"] for row in resolved["financial_years"]}
 		self.assertIn(FY, offered)
 		self.assertNotIn(self.OTHER_FY, offered)
 
-	def test_administrative_users_are_offered_every_available_year(self):
-		self.other_year()
-		frappe.set_user("Administrator")
-		offer = workspace.get_workspace(
-			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-		)
-		offered = {row["id"] for row in offer["financial_years"]}
-		self.assertIn(FY, offered)
-		self.assertIn(self.OTHER_FY, offered)
+	def test_a_configured_year_is_offered_identically_to_every_permitted_user(self):
+		"""The point of the fix: two different users holding the same
+		Procuring Entity permission see the identical Financial Year offer —
+		no per-user divergence is possible once FY is not itself a grant."""
+		self.other_year(configure_context=True)
+		frappe.set_user(PLANNER)
+		offer = workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
+		offered_planner = {row["id"] for row in offer["financial_years"]}
+		frappe.set_user(AUTHOR)
+		resolved = resolve_creation_context()
+		offered_author = {row["id"] for row in resolved["financial_years"]}
+		self.assertIn(self.OTHER_FY, offered_planner)
+		self.assertEqual(offered_planner, offered_author)
 
 	def test_a_requested_unoffered_year_resolves_to_the_offered_one(self):
 		"""A remembered year outside the offer heals instead of dead-ending.
 
 		The client stores the last PE/OU/FY selection and sends it back on the
-		next visit. A stored year the caller cannot act in must resolve to the
-		single offered year — not stick, and not hard-fail a read the §17
-		commands still re-check individually.
+		next visit. A stored year not configured for this PE must never come
+		back as the active context — not stick, and not hard-fail a read the
+		§17 commands still re-check individually. (PE-MOH may legitimately
+		have more than one configured year, so this does not assume a single
+		exclusive default — only that the unconfigured one never wins.)
 		"""
 		self.other_year()
 		frappe.set_user(PLANNER)
@@ -343,19 +391,23 @@ class TestFinancialYearOffer(DepartmentalNeedsPermissionCase):
 			organisation_unit=OU_DIGITAL_HEALTH,
 			financial_year=self.OTHER_FY,
 		)
-		self.assertEqual(offer["context"]["financial_year"], FY)
+		self.assertIn(FY, {row["id"] for row in offer["financial_years"]})
+		self.assertNotEqual(offer["context"]["financial_year"], self.OTHER_FY)
 
-	def test_can_maintain_is_scoped_to_the_window_year(self):
-		"""NDS-UI-08 withholds Save where the save would be refused (§17).
-
-		`can_maintain` is presentation, not the control — but presenting a Save
-		the command is guaranteed to refuse is the defect NDS-807 fixed for
-		Create need.
-		"""
+	def test_can_maintain_no_longer_depends_on_financial_year(self):
+		"""NDS-UI-08 withholds Save where the save would be refused (§17), but
+		Financial Year dropped out of `require_intake_window_command`'s gate —
+		Procuring Entity and the Planner role are what still govern it."""
 		self.other_year()
 		self.assertTrue(intake_window(PE, FY, user=PLANNER)["can_maintain"])
-		self.assertFalse(intake_window(PE, self.OTHER_FY, user=PLANNER)["can_maintain"])
-		# Administrative oversight stays unrestricted (§6).
+		# Unaffected by this change: FY was never required to be configured
+		# for a Planner to maintain its window (that always was, and stays,
+		# a separate concern from Financial Year offer/selectability).
+		self.assertTrue(intake_window(PE, self.OTHER_FY, user=PLANNER)["can_maintain"])
+		# What still gates it: role (Procuring Entity is covered elsewhere —
+		# `TestScopeIsolation.test_cross_procuring_entity_is_denied` — and
+		# `require_intake_window_command`'s own PE check is untouched here).
+		self.assertFalse(intake_window(PE, FY, user=AUTHOR)["can_maintain"])
 		self.assertTrue(intake_window(PE, self.OTHER_FY, user="Administrator")["can_maintain"])
 
 
@@ -476,14 +528,24 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 			frappe.delete_doc, "Financial Year", other, force=True,
 			ignore_missing=True, ignore_permissions=True,
 		)
-		_user_permission(AUTHOR, "Financial Year", other)
-		self.addCleanup(
-			frappe.db.delete,
-			"User Permission",
-			{"user": AUTHOR, "allow": "Financial Year", "for_value": other},
+		# What makes `other` selectable at all (CTX-CHG-001 §4): an Active PE
+		# Fiscal Year Context for PE, not a per-user Financial Year grant.
+		from kentender_core.seeds.kentender_mvp_v1.reference_data import STEWARD_EMAIL
+		from kentender_core.services import reference_data_transitions as ctx_txn
+
+		result = ctx_txn.enable_context(
+			PE, other, "2098-07-01 00:00:00", "2099-09-30 23:59:00", user=STEWARD_EMAIL
 		)
-		frappe.clear_cache(user=AUTHOR)
-		self.addCleanup(frappe.clear_cache, user=AUTHOR)
+		context_name = result["context"]
+		if result["context_status"] != "Active":
+			frappe.db.set_value(
+				"PE Fiscal Year Context", context_name, "context_status", "Active",
+				update_modified=False,
+			)
+		self.addCleanup(
+			frappe.delete_doc, "PE Fiscal Year Context", context_name,
+			force=True, ignore_missing=True, ignore_permissions=True,
+		)
 
 		frappe.set_user(AUTHOR)
 		picked = workspace.get_workspace(

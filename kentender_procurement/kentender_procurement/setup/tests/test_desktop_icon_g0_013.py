@@ -18,7 +18,9 @@ class TestDesktopIconG013RoleGate(IntegrationTestCase):
 		roles = {r.role for r in (doc.roles or [])}
 		self.assertEqual(
 			roles,
-			{"System Manager", "Administrator", "Strategy Manager"},
+			# "Strategy Manager" removed with the Role itself (STR-CHG-001 v1.7):
+			# it named Strategy authority it never carried after the rebuild.
+			{"System Manager", "Administrator", "Strategy Author"},
 			msg="G0-011: Planning Authority must not get Strategy home tile; specialists above only.",
 		)
 

@@ -46,6 +46,18 @@ const CORE_READINESS_UNASSESSED = [
 
 const canSave = computed(() => form.pe && form.fy && form.activeFrom && form.activeTo);
 
+// Procuring Entity and Financial Year are governed aggregates with their own
+// Draft/Activate (resp. Draft/Available) lifecycle — not simple lookups a
+// quick-entry dialog can create correctly. The escape hatch here is
+// navigation to their own screen, not an inline dialog; this form's few
+// fields are cheap to re-enter afterwards.
+function createProcuringEntity() {
+	frappe.set_route("reference-data", "pe", "new");
+}
+function createFinancialYear() {
+	frappe.set_route("reference-data", "fy", "new");
+}
+
 function toApiDatetime(localValue) {
 	// <input type="datetime-local"> gives "YYYY-MM-DDTHH:mm" — the server (Datetime
 	// fieldtype) expects "YYYY-MM-DD HH:mm:ss".
@@ -88,18 +100,28 @@ async function enableContext() {
 				<div></div>
 				<div class="kt-field">
 					<label>{{ __("Procuring Entity") }}</label>
-					<select class="kt-input" v-model="form.pe" :style="fieldErrors.pe ? 'border-color:#b0143a' : ''">
-						<option value="" disabled>{{ __("Select procuring entity") }}</option>
-						<option v-for="p in peOptions" :key="p.pe_id" :value="p.pe_id">{{ p.code }} — {{ p.legal_name }}</option>
-					</select>
+					<div style="display:flex;gap:8px;align-items:center">
+						<select class="kt-input" v-model="form.pe" style="flex:1" :style="fieldErrors.pe ? 'border-color:#b0143a' : ''">
+							<option value="" disabled>{{ __("Select procuring entity") }}</option>
+							<option v-for="p in peOptions" :key="p.pe_id" :value="p.pe_id">{{ p.code }} — {{ p.legal_name }}</option>
+						</select>
+						<button type="button" class="kt-btn kt-btn-ghost" style="white-space:nowrap" @click="createProcuringEntity">
+							{{ __("+ New") }}
+						</button>
+					</div>
 					<div v-if="fieldErrors.pe" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.pe }}</div>
 				</div>
 				<div class="kt-field">
 					<label>{{ __("Financial Year") }}</label>
-					<select class="kt-input" v-model="form.fy" :style="fieldErrors.fy ? 'border-color:#b0143a' : ''">
-						<option value="" disabled>{{ __("Select financial year") }}</option>
-						<option v-for="f in fyOptions" :key="f.financial_year_id" :value="f.financial_year_id">{{ f.label }}</option>
-					</select>
+					<div style="display:flex;gap:8px;align-items:center">
+						<select class="kt-input" v-model="form.fy" style="flex:1" :style="fieldErrors.fy ? 'border-color:#b0143a' : ''">
+							<option value="" disabled>{{ __("Select financial year") }}</option>
+							<option v-for="f in fyOptions" :key="f.financial_year_id" :value="f.financial_year_id">{{ f.label }}</option>
+						</select>
+						<button type="button" class="kt-btn kt-btn-ghost" style="white-space:nowrap" @click="createFinancialYear">
+							{{ __("+ New") }}
+						</button>
+					</div>
 					<div v-if="fieldErrors.fy" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.fy }}</div>
 				</div>
 				<div class="kt-field">

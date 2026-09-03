@@ -16,23 +16,27 @@ def _is_admin(user: str) -> bool:
 
 
 def descendant_org_units(root: str) -> set[str]:
-	"""Return root + all descendants (parent_org_unit tree)."""
+	"""Return root + all descendants, from the nested-set range (AUTH-ADR-001 v1.2 §6.2).
+
+	One indexed `lft`/`rgt` comparison replaces the breadth-first walk this used
+	to do, which issued a query per level on every scope check. A node whose
+	range has not been stamped yet (`rgt` still 0, before the nested-set patch
+	runs) would otherwise match nothing at all, so fall back to the node itself
+	rather than silently reporting an empty subtree.
+	"""
 	if not root:
 		return set()
-	out = {root}
-	frontier = [root]
-	while frontier:
-		parent = frontier.pop()
-		children = frappe.get_all(
+	bounds = frappe.db.get_value("Organisation Unit", root, ["lft", "rgt"], as_dict=True)
+	if not bounds or not bounds.rgt:
+		return {root}
+	return set(
+		frappe.get_all(
 			"Organisation Unit",
-			filters={"parent_org_unit": parent},
+			filters={"lft": (">=", bounds.lft), "rgt": ("<=", bounds.rgt)},
 			pluck="name",
+			limit_page_length=0,
 		)
-		for child in children:
-			if child not in out:
-				out.add(child)
-				frontier.append(child)
-	return out
+	) | {root}
 
 
 def ownership_path_label(org_unit: str | None) -> str:
@@ -46,7 +50,7 @@ def ownership_path_label(org_unit: str | None) -> str:
 		row = frappe.db.get_value(
 			"Organisation Unit",
 			cur,
-			["unit_name", "unit_type", "parent_org_unit"],
+			["unit_name", "unit_type", "parent_organisation_unit"],
 			as_dict=True,
 		)
 		if not row:
@@ -57,7 +61,7 @@ def ownership_path_label(org_unit: str | None) -> str:
 			or ""
 		)
 		parts.append(f"{row.unit_name} ({type_label})" if type_label else row.unit_name)
-		cur = row.parent_org_unit
+		cur = row.parent_organisation_unit
 		guard += 1
 	return " › ".join(reversed(parts))
 

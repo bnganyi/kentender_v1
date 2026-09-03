@@ -15,7 +15,6 @@ DEPT_FIN = "FIN — Finance"
 DEPT_PROC = "PROC — Procurement"
 
 BUSINESS_ROLES = (
-	"Strategy Manager",
 	"Planning Authority",
 	"Planning Reviewer",
 	"Requisitioner",
@@ -28,7 +27,6 @@ BUSINESS_ROLES = (
 
 # (email, full_name, business_role, department_label)
 SEED_USERS = (
-	("strategy.manager@moh.test", "Strategy Manager MOH", "Strategy Manager", DEPT_CLIN),
 	("planning.authority@moh.test", "Planning Authority MOH", "Planning Authority", DEPT_FIN),
 	("planning.reviewer@moh.test", "Planning Reviewer MOH", "Planning Reviewer", DEPT_PROC),
 	("requisitioner@moh.test", "Requisitioner MOH", "Requisitioner", DEPT_CLIN),

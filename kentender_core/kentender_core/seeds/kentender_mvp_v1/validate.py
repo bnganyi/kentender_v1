@@ -315,13 +315,13 @@ def validate_kentender_mvp_v1(
 		row = frappe.db.get_value(
 			"Organisation Unit",
 			code,
-			["procuring_entity", "parent_org_unit", "unit_type"],
+			["procuring_entity", "parent_organisation_unit", "unit_type"],
 			as_dict=True,
 		)
 		checks.append(_check(f"org.unit.{code}", bool(row)))
-		if row and row.parent_org_unit:
+		if row and row.parent_organisation_unit:
 			parent_pe = frappe.db.get_value(
-				"Organisation Unit", row.parent_org_unit, "procuring_entity"
+				"Organisation Unit", row.parent_organisation_unit, "procuring_entity"
 			)
 			checks.append(
 				_check(
