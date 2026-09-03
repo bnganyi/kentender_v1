@@ -23,10 +23,10 @@ from kentender_strategy.services.strategy_authorization import (
 )
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 
-PE = "PE-MOH"
-FY = "FY-2027-2028"
+# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
+FY = "2027-2028"
 
-# AUTH-ADR-001 — map the old profile_id fixture strings onto the real Roles.
+# Map the old profile_id fixture strings onto the v1.6 Site-wide roles.
 _PROFILE_ROLE = {
 	"CAP-STRATEGY-AUTHOR": ROLE_STRATEGY_AUTHOR,
 	"CAP-STRATEGY-APPROVAL-AUTHORITY": ROLE_STRATEGY_APPROVER,
@@ -49,31 +49,41 @@ class Phase7TestBase(FrappeTestCase):
 		return doc
 
 	def _user(self, label: str) -> str:
-		email = f"str.p7.{label}.{self.suffix}@test.local"
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User", "email": email, "first_name": label, "enabled": 1, "send_welcome_email": 0}
-			).insert(ignore_permissions=True)
-		)
+		email = f"kt.test.str.p7.{label}.{self.suffix}@test.local"
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": label,
+				"enabled": 1,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+		self._track(doc)
 		return email
 
-	def _assign(self, user: str, profile_id: str, pe: str = PE) -> None:
-		frappe.get_doc("User", user).add_roles(_PROFILE_ROLE[profile_id])
-		if frappe.db.exists("User Permission", {"user": user, "allow": "Procuring Entity", "for_value": pe}):
-			return
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
-			).insert(ignore_permissions=True)
-		)
+	def _assign(self, user: str, profile_id: str) -> None:
+		"""v1.6 (CU-308) — a real Enabled Site-wide assignment through the
+		administration command."""
+		from kentender_core.services import responsibility_administration as administration
 
-	def _plan_and_version(self, pe: str = PE, **version_kwargs) -> tuple[str, str]:
+		outcome = administration.grant(
+			user=user,
+			business_role=_PROFILE_ROLE[profile_id],
+			organisation_unit="",
+			fixture_namespace="STR_CU3XX_TESTS",
+			actor="Administrator",
+		)
+		self._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
+
+	def _plan_and_version(self, **version_kwargs) -> tuple[str, str]:
 		plan = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Strategic Plan",
 					"title": f"Phase 7 Test Plan {self.suffix}",
-					"procuring_entity_id": pe,
 					"plan_role": "Primary",
 					"period_start": "2040-07-01",
 					"period_end": "2045-06-30",
@@ -180,16 +190,20 @@ class TestPortfolio(Phase7TestBase):
 		row = next(p for p in result["plans"] if p["id"] == plan_id)
 		self.assertEqual(row["current_version"]["status"], "Draft")
 
-	def test_other_pe_plan_not_visible_to_scoped_author(self):
-		self._plan_and_version(pe="PE-CGKIS")
+	def test_portfolio_rows_carry_no_procuring_entity(self):
+		"""v1.6 replacement for the retired cross-PE visibility test: the PE
+		dimension is gone from the row contract; the payload's identity
+		banner names the one configured site entity instead."""
+		self._plan_and_version()
 		user = self._user("authormoh")
-		self._assign(user, "CAP-STRATEGY-AUTHOR", pe=PE)
+		self._assign(user, "CAP-STRATEGY-AUTHOR")
 		frappe.set_user(user)
 		result = ui.get_strategy_portfolio()
 		frappe.set_user("Administrator")
 		self.assertFalse(result["forbidden"])
 		for row in result["plans"]:
-			self.assertEqual(row["procuring_entity"]["id"], PE)
+			self.assertNotIn("procuring_entity", row)
+		self.assertTrue(result["procuring_entity"]["id"])
 
 
 class TestPlanWorkspaceAndTree(Phase7TestBase):

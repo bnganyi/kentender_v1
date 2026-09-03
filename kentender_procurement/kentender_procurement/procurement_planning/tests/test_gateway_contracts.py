@@ -51,10 +51,12 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 	def test_the_published_strategy_contracts_still_carry_the_expected_parameters(self):
 		from kentender_strategy.services import strategy_consumer
 
-		self.assertIn(
-			"procuring_entity",
-			self.params(strategy_consumer.resolve_strategy_context),
-		)
+		# CU-306 — resolve_strategy_context is site-local (one site = one PE):
+		# no procuring_entity parameter exists any more, and the gateway calls
+		# it with no entity argument.
+		params = set(self.params(strategy_consumer.resolve_strategy_context))
+		self.assertNotIn("procuring_entity", params)
+		self.assertIn("effective_date", params)
 		self.assertIn(
 			"plan_version_id", self.params(strategy_consumer.list_strategy_objectives)
 		)

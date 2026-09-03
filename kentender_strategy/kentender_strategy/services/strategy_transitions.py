@@ -104,7 +104,6 @@ def _assert_no_primary_overlap(doc) -> None:
 	other_plans = frappe.get_all(
 		"Strategic Plan",
 		filters={
-			"procuring_entity_id": plan.procuring_entity_id,
 			"plan_role": "Primary",
 			"name": ["!=", plan.name],
 		},

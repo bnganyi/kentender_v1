@@ -16,15 +16,14 @@ from frappe.tests.utils import FrappeTestCase
 from kentender_strategy.services.strategy_audit import list_events, record_event
 from kentender_strategy.services.strategy_reference import REF_RE
 
-PE = "PE-MOH"
-FY = "FY-2027-2028"
+# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
+FY = "2027-2028"
 
 
 def _plan(**kwargs) -> dict:
 	data = {
 		"doctype": "Strategic Plan",
 		"title": "Phase 1 Test Plan",
-		"procuring_entity_id": PE,
 		"plan_role": "Primary",
 		"period_start": "2027-07-01",
 		"period_end": "2032-06-30",

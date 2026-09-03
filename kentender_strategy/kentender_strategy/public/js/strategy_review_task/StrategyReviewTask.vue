@@ -27,10 +27,9 @@ const railTrail = computed(() => [
 const railEl = ref(null);
 // CTX-CHG-001 - the global PE switcher; a record-bound screen returns to
 // the portfolio (the record keeps its own context), the portfolio refetches.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("strategy-portfolio"),
-});
+// No rail PE switcher — a review task already belongs to one plan's Procuring
+// Entity, so the control could only ever bounce the reviewer off their task.
+usePageRail(railEl, railTrail);
 
 const { route, go } = useRouteState("strategy-review-task");
 const versionId = computed(() => route.value[1] || null);
@@ -48,9 +47,13 @@ const actingError = ref(null);
 const acting = ref(false);
 const showReturnDialog = ref(false);
 
-async function load() {
+// `quiet` refreshes in place, without flashing the skeleton over the
+// current content — used after Approve/Return, which redisplay the same
+// version's (now updated) overview rather than navigating away.
+async function load(opts) {
 	if (!versionId.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	try {
@@ -109,7 +112,7 @@ async function submitReturn(reason) {
 		await returnVersion(versionId.value, reason);
 		frappe.show_alert({ message: __("Returned"), indicator: "orange" });
 		showReturnDialog.value = false;
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -126,7 +129,7 @@ async function submitAdvance() {
 	try {
 		await approveVersion(versionId.value);
 		frappe.show_alert({ message: __("Approved and activated"), indicator: "green" });
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -168,7 +171,6 @@ async function submitAdvance() {
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 							<div class="kt-card-title">{{ __("Plan identity") }}</div>
 							<div class="kt-row"><dt>{{ __("Strategic plan") }}</dt><dd>{{ overview.plan.title }}</dd></div>
-							<div class="kt-row"><dt>{{ __("Procuring Entity") }}</dt><dd>{{ overview.plan.procuring_entity?.name }}</dd></div>
 							<div class="kt-row"><dt>{{ __("Organisation scope") }}</dt><dd>{{ __("PE-wide") }}</dd></div>
 							<div class="kt-row"><dt>{{ __("Plan role") }}</dt><dd>{{ overview.plan.plan_role }}</dd></div>
 							<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ overview.plan.period_label }}</dd></div>

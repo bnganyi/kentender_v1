@@ -1,11 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.5 Phase 3 — roles and permissions on authorization_policy.
+"""STR-CHG-001 v1.5 Phase 3 roles/permissions, reworked for AUTH-ADR-001
+v1.6 (CU-301/CU-308): authority is an Enabled Site-wide User Responsibility
+Assignment resolved by `kentender_core.services.authorization` — no
+capability map, no User Permission scope, no Procuring Entity dimension.
 
 Covers STR-BR-001-004 and STR-AC-003, 004, 010, 021, 022 at the service
-layer (contract/UI-level verification of AC-021/022 is Phase 4/7/9 scope).
-Rebuilt for v1.5's 2-role model: no Separation of Duties Rule is seeded any
-more for Strategy — the only remaining rule is the direct same-version
-self-check in strategy_authorization._blocked_by_self_approval (see Phase 2).
+layer. Denials surface as the closed §10 vocabulary
+(`ResponsibilityError`), not `frappe.PermissionError`.
+
+This runner has no per-test rollback: every record this suite creates is
+tracked and deleted in tearDown, and grants flow through the real
+administration command so the Role projection is created and removed the
+production way.
 """
 
 from __future__ import annotations
@@ -15,40 +21,37 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_core.services.authorization_role_registry import CAPABILITY_ROLE_MAP
+from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.business_role_registry import REGISTRY, SCOPE_SITE
+from kentender_core.services.responsibility_errors import ResponsibilityError
 from kentender_strategy.services.strategy_authorization import (
-	CAP_APPROVE,
-	CAP_AUTHOR,
 	ROLE_STRATEGY_APPROVER,
 	ROLE_STRATEGY_AUTHOR,
 	ensure_strategy_governance_roles,
 )
 from kentender_strategy.services.strategy_transitions import available_actions, transition_plan_version
 
-PE_MOH = "PE-MOH"
-PE_CGKIS = "PE-CGKIS"
+FIXTURE_NS = "STR_CU3XX_TESTS"
 
 
 class TestGovernanceSeed(FrappeTestCase):
-	def test_seed_is_idempotent_and_creates_expected_rows(self):
+	def test_roles_exist_and_registry_binds_them_site_wide(self):
 		ensure_strategy_governance_roles()
 		second_run = ensure_strategy_governance_roles()
 		self.assertEqual(second_run, {"roles": [], "sod_rules": []})
 
 		for role in (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER):
 			self.assertTrue(frappe.db.exists("Role", role))
+			# v1.6 — the business role is registered Site-wide and projects
+			# its same-named Frappe Role.
+			entry = REGISTRY[role]
+			self.assertEqual(entry.scope_type, SCOPE_SITE)
+			self.assertIn(role, entry.frappe_roles)
 
-		# AUTH-ADR-001 — authority is the Role + a native User Permission, not
-		# a Capability Profile; confirm the registry maps each capability to
-		# its expected Role instead of asserting on a retired profile record.
-		self.assertEqual(CAPABILITY_ROLE_MAP[CAP_AUTHOR], ROLE_STRATEGY_AUTHOR)
-		self.assertEqual(CAPABILITY_ROLE_MAP[CAP_APPROVE], ROLE_STRATEGY_APPROVER)
 
-
-class TestSeededProfileEnforcement(FrappeTestCase):
-	"""Uses the real, production-named CAP-STRATEGY-* profiles seeded above
-	(not throwaway Phase 2 fixtures) to confirm the seed itself grants the
-	right capability and nothing else."""
+class TestGovernanceEnforcement(FrappeTestCase):
+	"""Grants through the real v1.6 administration command; the transition
+	service must honour exactly the granted responsibility and nothing else."""
 
 	def setUp(self):
 		ensure_strategy_governance_roles()
@@ -65,30 +68,40 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 		return doc
 
 	def _user(self, label: str) -> str:
-		email = f"str.gov.{label}.{self.suffix}@test.local"
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User", "email": email, "first_name": label, "enabled": 1, "send_welcome_email": 0}
-			).insert(ignore_permissions=True)
-		)
+		email = f"kt.test.str.gov.{label}.{self.suffix}@test.local"
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": label,
+				"enabled": 1,
+				"send_welcome_email": 0,
+				# v1.6 §4.2 — only a System User can hold a responsibility;
+				# Frappe flips a role-less user back to Website User on save,
+				# so Desk User is always added (same as core's v16 fixtures).
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+		self._track(doc)
 		return email
 
-	def _grant(self, user: str, capability: str, pe: str) -> None:
-		role = CAPABILITY_ROLE_MAP[capability]
-		frappe.get_doc("User", user).add_roles(role)
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
-			).insert(ignore_permissions=True)
+	def _grant(self, user: str, business_role: str) -> None:
+		outcome = administration.grant(
+			user=user,
+			business_role=business_role,
+			organisation_unit="",
+			fixture_namespace=FIXTURE_NS,
+			actor="Administrator",
 		)
+		self._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
 
-	def _plan_and_version(self, pe: str) -> str:
+	def _plan_and_version(self) -> str:
 		plan = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Strategic Plan",
 					"title": f"Governance Test Plan {self.suffix}",
-					"procuring_entity_id": pe,
 					"plan_role": "Primary",
 					"period_start": "2027-07-01",
 					"period_end": "2032-06-30",
@@ -161,50 +174,53 @@ class TestSeededProfileEnforcement(FrappeTestCase):
 				{
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
-					"financial_year_id": "FY-2027-2028",
+					# CU-305 — targets bind the canonical ERPNext Fiscal Year.
+					"financial_year_id": "2027-2028",
 					"comparison": "At least",
 					"target_value": 80,
 				}
 			).insert(ignore_permissions=True)
 		)
 
-	def test_author_profile_grants_only_author_capability(self):
+	def test_author_assignment_grants_only_author_capability(self):
 		author = self._user("author")
-		self._grant(author, CAP_AUTHOR, PE_MOH)
-		version = self._plan_and_version(PE_MOH)
+		self._grant(author, ROLE_STRATEGY_AUTHOR)
+		version = self._plan_and_version()
 		self._fill_hierarchy(version)
 
 		frappe.set_user(author)
 		self.assertEqual(available_actions(version, author), ["Submit for approval"])
 		out = transition_plan_version(version, "Submit for approval")
 		self.assertEqual(out["status"], "Submitted for approval")
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Approve")
 
 	def test_unassigned_user_denied_stc_ac_004(self):
 		outsider = self._user("outsider")
-		version = self._plan_and_version(PE_MOH)
+		version = self._plan_and_version()
 		self._fill_hierarchy(version)
 		frappe.set_user(outsider)
 		self.assertEqual(available_actions(version, outsider), [])
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Submit for approval")
 
 	def test_administrator_without_assignment_has_no_workflow_capability(self):
-		"""STR-CHG-001 §1.1/§19 — no Administrator fallback authority."""
-		version = self._plan_and_version(PE_MOH)
+		"""STR-CHG-001 §1.1/§19 + AUTH-AC-018 — no technical fallback authority."""
+		version = self._plan_and_version()
 		self._fill_hierarchy(version)
 		frappe.set_user("Administrator")
 		self.assertEqual(available_actions(version, "Administrator"), [])
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Submit for approval")
 
-	def test_assignment_scoped_to_other_pe_denied_stc_br_001(self):
-		author = self._user("author2")
-		self._grant(author, CAP_AUTHOR, PE_CGKIS)
-		version = self._plan_and_version(PE_MOH)
+	def test_approver_assignment_does_not_author(self):
+		"""v1.6 replacement for the retired cross-PE denial (the PE dimension
+		is gone): holding the *other* strategy responsibility never authors."""
+		approver = self._user("approver")
+		self._grant(approver, ROLE_STRATEGY_APPROVER)
+		version = self._plan_and_version()
 		self._fill_hierarchy(version)
-		frappe.set_user(author)
-		self.assertEqual(available_actions(version, author), [])
-		with self.assertRaises(frappe.PermissionError):
+		frappe.set_user(approver)
+		self.assertEqual(available_actions(version, approver), [])
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Submit for approval")

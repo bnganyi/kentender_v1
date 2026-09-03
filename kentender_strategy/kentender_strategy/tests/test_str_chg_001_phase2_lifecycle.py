@@ -17,12 +17,16 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_core.services.authorization_role_registry import CAPABILITY_ROLE_MAP
-from kentender_strategy.services.strategy_authorization import CAP_APPROVE, CAP_AUTHOR
+from kentender_core.services.responsibility_errors import ResponsibilityError
+from kentender_strategy.services.strategy_authorization import (
+	CAP_APPROVE,
+	CAP_AUTHOR,
+	ensure_strategy_governance_roles,
+)
 from kentender_strategy.services.strategy_transitions import available_actions, transition_plan_version
 
-PE = "PE-MOH"
-FY = "FY-2027-2028"
+# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
+FY = "2027-2028"
 
 
 class TestPlanVersionLifecycle(FrappeTestCase):
@@ -40,26 +44,39 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 		return doc
 
 	def _user(self, label: str) -> str:
-		email = f"str.lifecycle.{label}.{self.suffix}@test.local"
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User", "email": email, "first_name": label, "enabled": 1, "send_welcome_email": 0}
-			).insert(ignore_permissions=True)
-		)
+		email = f"kt.test.str.lifecycle.{label}.{self.suffix}@test.local"
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": label,
+				"enabled": 1,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+		self._track(doc)
 		return email
 
 	def _actor(self, label: str, capabilities: list[str]) -> str:
+		"""v1.6 (CU-308) — authority is an Enabled Site-wide assignment
+		granted through the real administration command, never a raw Role +
+		User Permission pair."""
+		from kentender_core.services import responsibility_administration as administration
+
 		user = self._user(label)
+		ensure_strategy_governance_roles()
 		for capability in capabilities:
-			role = CAPABILITY_ROLE_MAP[capability]
-			if not frappe.db.exists("Role", role):
-				frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
-			frappe.get_doc("User", user).add_roles(role)
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": PE}
-			).insert(ignore_permissions=True)
-		)
+			role = {CAP_AUTHOR: "Strategy Author", CAP_APPROVE: "Strategy Approver"}[capability]
+			outcome = administration.grant(
+				user=user,
+				business_role=role,
+				organisation_unit="",
+				fixture_namespace="STR_CU3XX_TESTS",
+				actor="Administrator",
+			)
+			self._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
 		return user
 
 	def _plan_and_version(self, **version_kwargs) -> tuple[str, str]:
@@ -68,8 +85,7 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 				{
 					"doctype": "Strategic Plan",
 					"title": f"Lifecycle Test Plan {self.suffix}",
-					"procuring_entity_id": PE,
-					"plan_role": version_kwargs.pop("plan_role", "Primary"),
+								"plan_role": version_kwargs.pop("plan_role", "Primary"),
 					"period_start": "2040-07-01",
 					"period_end": "2045-06-30",
 				}
@@ -197,9 +213,9 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 		frappe.set_user(dual)
 		transition_plan_version(version, "Submit for approval")
 		self.assertCountEqual(available_actions(version, dual), [])
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Approve")
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			transition_plan_version(version, "Return", reason="A properly detailed return reason.")
 
 	def test_dual_role_actor_may_approve_a_version_someone_else_submitted(self):

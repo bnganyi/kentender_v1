@@ -51,7 +51,7 @@
    "fieldname": "financial_year_id",
    "fieldtype": "Link",
    "label": "Financial Year",
-   "options": "Financial Year",
+   "options": "Fiscal Year",
    "description": "Anchors an annual target to a configured Financial Year. Exactly one of Financial Year / Target By Date must be set."
   },
   {

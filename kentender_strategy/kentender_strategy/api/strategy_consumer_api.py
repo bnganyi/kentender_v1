@@ -38,12 +38,14 @@ def _obj(value):
 
 @frappe.whitelist()
 def resolve_strategy_context(
-	procuring_entity: str,
 	organisation_unit: str | None = None,
 	effective_date: str | None = None,
+	procuring_entity: str | None = None,
 ):
+	# `procuring_entity` is accepted and ignored (transport-compat bridge for
+	# pre-cutover callers): one site is one entity (CU-306).
 	return consumer.resolve_strategy_context(
-		procuring_entity, organisation_unit=organisation_unit or None, effective_date=effective_date or None
+		organisation_unit=organisation_unit or None, effective_date=effective_date or None
 	)
 
 
@@ -71,6 +73,7 @@ def get_strategy_lineage(node_id: str):
 
 @frappe.whitelist()
 def list_active_targets(procuring_entity: str | None = None, plan_code: str | None = None):
+	# `procuring_entity` accepted and ignored (pre-CU-4xx bridge).
 	"""Relocated from the retired `strategy_api.py` (STR-CHG-001 v1.6 cleanup)
 	— the Budget Line "primary target" picker's live dropdown source
 	(`kentender_budget`'s `budget_live_bind.js::loadTargetOptions`)."""

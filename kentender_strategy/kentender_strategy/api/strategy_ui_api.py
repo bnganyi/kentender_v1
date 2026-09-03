@@ -15,8 +15,9 @@ from kentender_strategy.services import strategy_ui_contracts as ui
 
 
 @frappe.whitelist()
-def get_strategy_portfolio(procuring_entity: str | None = None):
-	return ui.get_strategy_portfolio(procuring_entity=procuring_entity or None)
+def get_strategy_portfolio():
+	# CU-303 — one site is one Procuring Entity; no entity parameter exists.
+	return ui.get_strategy_portfolio()
 
 
 @frappe.whitelist()

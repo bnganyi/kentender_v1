@@ -12,14 +12,16 @@ references them by name (re-verified by grep before writing this patch):
 - Strategy Reviewer
 - Strategy Approval Authority (renamed to Strategy Approver in v1.5)
 
-Does NOT delete "Strategy Manager" — that Role is still live outside
-Strategy's own workflow: kentender_procurement's Procurement Lifecycle
-G0-011 role matrix (`procurement_lifecycle/api/permission_guard.py`'s
-`JOURNEY_READ_ROLES`) and DocPerm rows on kentender_procurement's
-`Procurement Journey`/`Procurement Handoff Card` and kentender_core's
-`Procuring Department`/`Procuring Entity` doctypes all still grant read
-access to "Strategy Manager" holders. Deleting that Role would silently
-break those cross-app read grants, so it is intentionally left alone here.
+Did NOT delete "Strategy Manager" at the time, because kentender_procurement's
+Procurement Lifecycle G0-011 role matrix and DocPerm rows on Procurement
+Journey / Procurement Handoff Card / Procuring Department / Procuring Entity
+still granted read through it.
+
+Superseded: those grants were removed and the Role deleted in
+`str_chg_001_v1_7_delete_strategy_manager_role.py`. Sparing it here left a
+Role whose name promised Strategy authority it had not carried since the
+rebuild — holders saw "STRATEGY MANAGER" in the Desk header and were then
+refused AUTH_ROLE_REQUIRED by every Strategy action.
 """
 
 from __future__ import annotations

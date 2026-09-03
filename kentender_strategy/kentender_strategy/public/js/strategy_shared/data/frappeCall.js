@@ -5,9 +5,23 @@
 // `e.message || String(e)` therefore always falls through to String(jqXHR), which stringifies
 // to "[object Object]" — every server-side frappe.throw()/validation error surfaced this way
 // instead of its real message. Extract the real message from the parsed response body instead.
+// Frappe pops its own msgprint dialog for any server exception carrying
+// _server_messages — so a refusal surfaced twice: once as a raw framework
+// dialog titled with the internal error code (AUTH_ROLE_REQUIRED), and again
+// as the screen's own inline message. request.js skips its dialog whenever a
+// per-call error_handlers entry matches the exception type, so registering
+// no-op handlers for the refusal types leaves exactly one, in-app message.
+const SILENCED_EXC_TYPES = ["PermissionError", "ValidationError"];
+const noopHandlers = Object.fromEntries(SILENCED_EXC_TYPES.map((t) => [t, () => {}]));
+
 export async function frappeCall(method, args) {
 	try {
-		const response = await frappe.call({ method, args, freeze: false });
+		const response = await frappe.call({
+			method,
+			args,
+			freeze: false,
+			error_handlers: noopHandlers,
+		});
 		return response.message;
 	} catch (xhr) {
 		throw new Error(extractErrorMessage(xhr));

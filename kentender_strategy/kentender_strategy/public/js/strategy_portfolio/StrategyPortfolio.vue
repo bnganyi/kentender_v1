@@ -20,23 +20,31 @@ const railTrail = computed(() => {
 const railEl = ref(null);
 // CTX-CHG-001 - the global PE switcher; a record-bound screen returns to
 // the portfolio (the record keeps its own context), the portfolio refetches.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => refresh(),
-});
+// No rail PE switcher: Strategy reads its own scope from the acting user and
+// the portfolio endpoint takes no PE argument, so switching there re-fetched
+// exactly the same rows — an offered control that changed nothing. The PE a
+// plan belongs to is chosen on the plan itself.
+usePageRail(railEl, railTrail);
 
 const loading = ref(true);
 const error = ref(null);
 const forbidden = ref(false);
 const plans = ref([]);
 const myWork = ref([]);
+// CU-304 — one site is one Procuring Entity: the banner names the site
+// identity the server returns; there is nothing to select.
 const procuringEntity = ref(null);
+const canCreate = ref(false);
 const activeTab = ref("plans");
 
 const filters = reactive({ q: "", role: "", status: "" });
 
-async function refresh() {
-	loading.value = true;
+// `quiet` refreshes in place — switching PE from the rail without leaving
+// this list stayed on-screen, so flipping `loading` flashed the skeleton
+// over rows already on screen.
+async function refresh(opts) {
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	error.value = null;
 	forbidden.value = false;
 	try {
@@ -47,6 +55,7 @@ async function refresh() {
 			plans.value = data.plans;
 			myWork.value = data.my_work;
 			procuringEntity.value = data.procuring_entity;
+			canCreate.value = !!data.can_create_plan;
 		}
 	} catch (e) {
 		error.value = e;
@@ -117,16 +126,16 @@ function openCreateForm() {
 	go("new");
 }
 
+// Offer "New strategic plan" only where the create command would actually
+// succeed: `can_create_plan` is the server's own gate result (read-offer-vs-
+// command parity — a System Manager reads everything and authors nothing).
+const canCreatePlan = computed(() => !forbidden.value && canCreate.value);
+
 async function submitDraft() {
-	if (!procuringEntity.value) {
-		saveError.value = "No Procuring Entity is available for your account to create a plan under.";
-		return;
-	}
 	saving.value = true;
 	saveError.value = null;
 	try {
 		const result = await saveNewPlanDraft({
-			procuring_entity_id: procuringEntity.value.id,
 			plan_role: draft.plan_role,
 			title: draft.title,
 			period_start: draft.period_start,
@@ -165,7 +174,7 @@ async function submitDraft() {
 							{{ __("Maintain the approved strategy structure used by Budget and Procurement Planning.") }}
 						</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" @click="openCreateForm" v-if="!forbidden">
+					<button type="button" class="kt-btn kt-btn-primary" @click="openCreateForm" v-if="canCreatePlan">
 						{{ __("New strategic plan") }}
 					</button>
 				</header>
@@ -173,6 +182,7 @@ async function submitDraft() {
 				<div v-if="procuringEntity" class="kt-card" style="padding: 10px 16px">
 					<span class="kt-muted">{{ __("Procuring Entity") }}: </span>
 					<strong>{{ procuringEntity.name }}</strong>
+					<!-- CU-304: the one configured site entity — identity, not a filter -->
 				</div>
 
 				<div class="kt-tabs">
@@ -193,7 +203,7 @@ async function submitDraft() {
 
 				<div v-else-if="!loading && activeTab === 'plans' && plans.length === 0" class="kt-card kt-empty">
 					<h2>{{ __("No strategic plans exist for this scope.") }}</h2>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="openCreateForm" v-if="!forbidden">
+					<button type="button" class="kt-btn kt-btn-secondary" @click="openCreateForm" v-if="canCreatePlan">
 						{{ __("New strategic plan") }}
 					</button>
 				</div>
@@ -319,13 +329,15 @@ async function submitDraft() {
 						</div>
 						<div class="kt-field">
 							<label>{{ __("Procuring Entity") }}</label>
+							<!-- CU-304 — one site, one entity: read-only identity, never a
+							     selector. -->
 							<div class="kt-input" style="background: color-mix(in srgb, var(--kt-color-text) 6%, transparent)">
-								{{ procuringEntity ? procuringEntity.name : __("Unavailable") }}
+								{{ (procuringEntity && procuringEntity.name) || __("Unavailable") }}
 							</div>
 						</div>
 						<div class="kt-field">
 							<label>{{ __("Organisation scope") }}</label>
-							<select class="kt-input" disabled><option>{{ __("PE-wide") }}</option></select>
+							<select class="kt-input" disabled><option>{{ __("Entity-wide") }}</option></select>
 						</div>
 						<div class="kt-field">
 							<label>{{ __("Plan role") }}</label>

@@ -394,6 +394,19 @@ def _seed_kisumu_plan() -> dict[str, Any]:
 
 
 def upsert_kentender_mvp_v1_strategy(*, reset: bool = False) -> dict[str, Any]:
+	# CU-307 — SUPERSEDED, archived not deleted (tracker precedent): this seed
+	# builds a two-Procuring-Entity world (MOH + Kisumu) that cannot exist on
+	# an AUTH-ADR-001 v1.6 one-PE site, and grants roles outside the User
+	# Responsibility Assignment command. Strategy actors now come from
+	# kentender_core.seeds.site_setup (Mercy Kilonzo → Strategy Author) plus
+	# the /app/system-setup register.
+	# Returns a marker instead of throwing so kentender_core's legacy seed
+	# orchestrator (which imports this by name) can continue for the modules
+	# still awaiting their own cutover slices.
+	return {
+		"ok": False,
+		"superseded": "AUTH-ADR-001 v1.6 — use kentender_core.seeds.site_setup.run",
+	}
 	if reset:
 		clear_kentender_mvp_v1_strategy()
 	_ensure_config_prerequisites()

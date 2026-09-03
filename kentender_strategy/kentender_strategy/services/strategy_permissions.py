@@ -1,5 +1,15 @@
 # Copyright (c) 2026, KenTender and contributors
-"""REQ §12 role helpers for Strategy MVP-1."""
+"""REQ §12 role helpers for Strategy MVP-1, on AUTH-ADR-001 v1.6 (CU-303).
+
+One site is one Procuring Entity, so every PE-scope helper this module used
+to export (`entity_for_user`, `assert_entity_in_scope`,
+`has_cross_entity_authority`, `assert_org_unit_in_scope`) is gone with the
+concepts behind it: there is no working context, no per-user PE set, and no
+cross-entity authority. What remains are plain role checks used only to
+decide what to OFFER — every command re-authorises through
+`strategy_authorization`'s `require_*` helpers, which resolve real
+User Responsibility Assignments.
+"""
 
 from __future__ import annotations
 
@@ -9,11 +19,6 @@ from frappe import _
 ROLE_VIEWER = "Strategy Viewer"
 ROLE_PLANNING = "Planning Authority"
 ROLE_AUDITOR = "Auditor"
-
-# STR-CHG-001 v1.5/v1.6 — the pre-rebuild role set (Strategy Officer, Strategy
-# Manager, Strategy Reviewer) is retired. Only Strategy Viewer (plain native
-# permission role, current model) plus the cross-domain Planning Authority /
-# Auditor roles this module references for scope checks remain here.
 
 
 def user_roles(user: str | None = None) -> set[str]:
@@ -33,8 +38,13 @@ def require_any_role(*roles: str) -> None:
 
 
 def can_edit_draft_plan() -> bool:
-	"""REQ §12 — Create/edit Draft plans: STR-CHG-001 v1.5's Strategy Author."""
-	return bool(user_roles().intersection({"Strategy Author", "System Manager"}))
+	"""REQ §12 — offer create/edit of Draft plans to Strategy Author holders.
+
+	Offer-only: the Frappe Role exists purely as the projection of an Enabled
+	Site-wide assignment (v1.6 §5.2); the command itself re-authorises via
+	`require_plan_create_capability`/`require_plan_version_capability`, so a
+	System Manager sees no authoring offer and holds no authoring power."""
+	return "Strategy Author" in user_roles()
 
 
 def can_create_successor_plan() -> bool:
@@ -42,67 +52,10 @@ def can_create_successor_plan() -> bool:
 	return can_edit_draft_plan()
 
 
-def has_cross_entity_authority(user: str | None = None) -> bool:
-	"""STR-FR-002 — cross-entity context switch (Planning Authority / System Manager)."""
-	roles = user_roles(user)
-	return bool(roles.intersection({ROLE_PLANNING, ROLE_AUDITOR, "System Manager"}))
-
-
-def entity_for_user(user: str | None = None) -> str | None:
-	"""Best-effort procuring entity; may be None (e.g. an unrestricted user
-	with several options and no selection).
-
-	CTX-CHG-001 — resolves the GLOBAL working PE preference, replacing the
-	legacy "Procuring Entity" user default (a User-Permission-shaped key
-	frappe.defaults can't round-trip, hence the old raw-defaults workaround).
-	"""
-	from kentender_core.services.working_context import get_working_pe
-
-	user = user or frappe.session.user
-	try:
-		selected = get_working_pe(user)["selected"]
-	except frappe.PermissionError:
-		return None
-	return selected["id"] if selected else None
-
-
-def assert_entity_in_scope(procuring_entity: str | None, user: str | None = None) -> None:
-	"""Raise PermissionError when PE is outside the user's authorised entity scope."""
-	user = user or frappe.session.user
-	if has_cross_entity_authority(user):
-		return
-	from kentender_core.services.org_scope_access import permitted_procuring_entities
-
-	pes = permitted_procuring_entities(user)
-	if pes is None:
-		return
-	if pes and procuring_entity in pes:
-		return
-	# Legacy fallback when User Scope Assignment is absent.
-	own = entity_for_user(user)
-	if not procuring_entity or not own or procuring_entity != own:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError)
-
-
-def assert_org_unit_in_scope(
-	procuring_entity: str | None,
-	owner_org_unit: str | None,
-	user: str | None = None,
-	*,
-	require_write: bool = False,
-) -> None:
-	"""PE + Organisation Unit ownership gate (User Scope Assignment)."""
-	from kentender_core.services.org_scope_access import assert_can_access_owned_record
-
-	assert_can_access_owned_record(
-		procuring_entity=procuring_entity,
-		owner_org_unit=owner_org_unit,
-		user=user,
-		require_write=require_write,
-	)
-
-
 def ownership_path_for_unit(owner_org_unit: str | None) -> str:
-	from kentender_core.services.org_scope_access import ownership_path_label
+	"""Display path for a plan's owning Organisation Unit (site-local tree)."""
+	if not owner_org_unit:
+		return ""
+	from kentender_core.services.organisation_structure import _path_of
 
-	return ownership_path_label(owner_org_unit)
+	return " › ".join(_path_of(owner_org_unit))

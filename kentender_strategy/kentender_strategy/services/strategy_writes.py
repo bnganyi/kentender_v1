@@ -20,9 +20,10 @@ from kentender_strategy.services.strategy_authorization import (
 )
 from kentender_strategy.services.strategy_transitions import _check_expected_version, _version_payload
 
+# CU-303 — procuring_entity_id is contract-dropped (D2): never read, never
+# written; the column survives until the removal phase.
 PLAN_IDENTITY_FIELDS = (
 	"title",
-	"procuring_entity_id",
 	"owner_org_unit_id",
 	"plan_role",
 	"parent_primary_plan_id",
@@ -36,7 +37,6 @@ def _plan_payload(plan) -> dict:
 	return {
 		"plan_id": plan.name,
 		"title": plan.title,
-		"procuring_entity_id": plan.procuring_entity_id,
 		"owner_org_unit_id": plan.owner_org_unit_id,
 		"plan_role": plan.plan_role,
 		"parent_primary_plan_id": plan.parent_primary_plan_id,
@@ -83,10 +83,9 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 		)
 		return {"plan": _plan_payload(plan), "version": _version_payload(version)}
 
-	procuring_entity_id = payload.get("procuring_entity_id")
-	if not procuring_entity_id:
-		frappe.throw(_("Procuring entity is required"), frappe.ValidationError, title="STRATEGY_SCOPE_REQUIRED")
-	require_plan_create_capability(frappe.session.user, procuring_entity_id)
+	# CU-303 — one site is one Procuring Entity: no entity is supplied,
+	# validated or stamped (the physical column falls to RM per D2).
+	require_plan_create_capability(frappe.session.user)
 
 	plan = frappe.get_doc(
 		{"doctype": "Strategic Plan", **{f: payload.get(f) for f in PLAN_IDENTITY_FIELDS}}

@@ -48,26 +48,53 @@ TARGET_CODE: Final[str] = "WORKS-MASTER-TARGET"
 
 
 def _seed_actors() -> dict[str, str]:
-	"""Reuses the real §16 MOH actors (author/approver) rather than minting a
-	second parallel actor set — the same-version self-check (§6.2/§18.1)
-	still requires two distinct actors: the author who submits and the
-	approver who returns/approves, so one fixture actor could not legally
-	perform both lifecycle stages on its own version anyway."""
-	from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
-		ACTORS,
-		ensure_strategy_governance_actors,
+	"""CU-307 — two governed fixture actors on the one-site model: the
+	same-version self-check (§6.2/§18.1) still requires distinct author and
+	approver, and their authority is a real Enabled Site-wide User
+	Responsibility Assignment granted through the administration command
+	(idempotent), never a raw Role insert."""
+	from kentender_core.services import responsibility_administration as administration
+	from kentender_strategy.services.strategy_authorization import (
+		ROLE_STRATEGY_APPROVER,
+		ROLE_STRATEGY_AUTHOR,
+		ensure_strategy_governance_roles,
 	)
 
-	ensure_strategy_governance_actors()
-	return {
-		"author": ACTORS["author_moh"],
-		"approver": ACTORS["approver_moh"],
+	ensure_strategy_governance_roles()
+	actors = {
+		"author": ("works.master.author@moh.example.test", ROLE_STRATEGY_AUTHOR, "Works Author"),
+		"approver": ("works.master.approver@moh.example.test", ROLE_STRATEGY_APPROVER, "Works Approver"),
 	}
+	out: dict[str, str] = {}
+	for key, (email, role, label) in actors.items():
+		if not frappe.db.exists("User", email):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": label,
+					"enabled": 1,
+					"send_welcome_email": 0,
+					"user_type": "System User",
+				}
+			).insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		administration.grant(
+			user=email,
+			business_role=role,
+			organisation_unit="",
+			fixture_namespace=FIXTURE_NS,
+			actor="Administrator",
+		)
+		out[key] = email
+	return out
 
 
 def resolve_procuring_entity_moh() -> str | None:
-	"""STR-CHG-001 §13 — no first-PE fallback; a named lookup only."""
-	return PE_MOH if frappe.db.exists("Procuring Entity", PE_MOH) else None
+	"""CU-303 — the site's own configured entity code (one site = one PE);
+	None while the site is unconfigured. Name kept for cross-app imports."""
+	code = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
+	return code or None
 
 
 def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
@@ -76,10 +103,10 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 	the exact keys kentender_budget's own test reads."""
 	pe = resolve_procuring_entity_moh()
 	if not pe:
-		return {"ok": False, "reason": "STRATEGY_CONFIG_MISSING", "detail": f"{PE_MOH} is not configured"}
+		return {"ok": False, "reason": "STRATEGY_CONFIG_MISSING", "detail": "the site procuring entity is not configured"}
 
 	existing_plan = frappe.db.get_value(
-		"Strategic Plan", {"title": FIXTURE_TITLE, "procuring_entity_id": pe}, "name"
+		"Strategic Plan", {"title": FIXTURE_TITLE, "fixture_namespace": FIXTURE_NS}, "name"
 	)
 	if existing_plan:
 		version = frappe.db.get_value(
@@ -98,7 +125,6 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 		{
 			"doctype": "Strategic Plan",
 			"title": FIXTURE_TITLE,
-			"procuring_entity_id": pe,
 			"plan_role": "Primary",
 			"period_start": "2031-07-01",
 			"period_end": "2035-06-30",

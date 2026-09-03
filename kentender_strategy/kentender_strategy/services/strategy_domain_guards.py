@@ -66,15 +66,15 @@ def validate_strategic_plan(doc) -> None:
 		parent = frappe.db.get_value(
 			"Strategic Plan",
 			doc.parent_primary_plan_id,
-			["plan_role", "procuring_entity_id"],
+			["plan_role"],
 			as_dict=True,
 		)
 		if not parent:
 			frappe.throw(_("Parent primary plan is not valid"))
 		if parent.plan_role != PLAN_ROLE_PRIMARY:
 			frappe.throw(_("A Supporting Framework's parent must be a Primary plan"))
-		if parent.procuring_entity_id != doc.procuring_entity_id:
-			frappe.throw(_("A Supporting Framework must belong to the same procuring entity as its parent"))
+		# CU-303 — one site is one procuring entity, so the same-entity rule
+		# holds by construction and is no longer checked.
 
 	if not doc.is_new():
 		prev_role = frappe.db.get_value("Strategic Plan", doc.name, "plan_role")

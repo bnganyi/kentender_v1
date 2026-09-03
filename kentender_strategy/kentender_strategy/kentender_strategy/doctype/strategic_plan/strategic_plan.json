@@ -54,16 +54,22 @@
    "fieldtype": "Link",
    "label": "Procuring Entity",
    "options": "Procuring Entity",
-   "description": "Defines the owning PE and is used in permission and context resolution.",
-   "reqd": 1,
-   "search_index": 1
+   "description": "Deprecated (AUTH-ADR-001 v1.6 CU-303): one site is one procuring entity. Column retained until the removal phase.",
+   "reqd": 0,
+   "search_index": 1,
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "pe_fy_context",
    "fieldtype": "Link",
    "label": "PE Fiscal Year Context",
    "options": "PE Fiscal Year Context",
-   "insert_after": "procuring_entity_id"
+   "insert_after": "procuring_entity_id",
+   "reqd": 0,
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Deprecated (AUTH-ADR-001 v1.6 CU-303): one site is one procuring entity. Column retained until the removal phase."
   },
   {
    "fieldname": "owner_org_unit_id",

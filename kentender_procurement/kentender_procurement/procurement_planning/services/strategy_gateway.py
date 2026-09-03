@@ -26,8 +26,11 @@ from kentender_procurement.procurement_planning.errors import fail
 def _active_plan_version(procuring_entity: str) -> str:
 	from kentender_strategy.services.strategy_consumer import resolve_strategy_context
 
+	# CU-306 — strategy's contract is site-local (one site = one PE); this
+	# gateway keeps its own PE-shaped signature for planning's pre-cutover
+	# callers (CU-2xx) but no longer forwards the entity.
 	try:
-		context = resolve_strategy_context(procuring_entity)
+		context = resolve_strategy_context()
 	except Exception:
 		return ""
 	# `primary_plan.id` is the Strategic Plan root; `list_strategy_objectives`

@@ -37,9 +37,9 @@ def get_version_readiness(plan_version_id: str) -> dict:
 	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
 	plan = frappe.get_doc("Strategic Plan", version.plan_id)
 
-	identity_ready = bool(
-		plan.title and plan.procuring_entity_id and plan.period_start and plan.period_end
-	)
+	# CU-303 — entity identity is the site's own; a plan's identity is its
+	# title and period (procuring_entity_id contract-dropped per D2).
+	identity_ready = bool(plan.title and plan.period_start and plan.period_end)
 
 	counts = _node_type_counts(plan_version_id)
 	hierarchy_ready = counts.get("Pillar", 0) > 0 and counts.get("Strategic Objective", 0) > 0

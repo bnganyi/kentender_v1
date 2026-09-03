@@ -24,8 +24,28 @@ DOCTYPE_REF: dict[str, tuple[str, str]] = {
 REF_RE = re.compile(r"^[A-Z0-9]+-(SP|SPV|NODE|IND|TGT)-\d{4}$")
 
 
+def site_slug() -> str:
+	"""CU-303 — business prefix from the one configured site entity
+	(Site Procuring Entity.pe_code, PE-MOH → MOH). Fails closed when the
+	site is unconfigured: references are never allocated without identity."""
+	code = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
+	if not code:
+		frappe.throw(_("Configure the site's procuring entity before creating strategy records"))
+	code = str(code).strip().upper()
+	if code.startswith("PE-"):
+		code = code[3:]
+	slug = re.sub(r"[^A-Z0-9]", "", code)
+	if not slug:
+		frappe.throw(_("The site entity code is not usable for references"))
+	return slug
+
+
 def pe_slug(procuring_entity: str | None) -> str:
-	"""Business prefix from PE entity_code (PE-MOH → MOH)."""
+	"""Business prefix from PE entity_code (PE-MOH → MOH).
+
+	LEGACY (pre-cutover bridge): still exported for kentender_budget's
+	budget_reference, which cuts over in CU-4xx. Strategy's own allocation
+	uses `site_slug()` and never reads the legacy Procuring Entity store."""
 	if not procuring_entity:
 		frappe.throw(_("Procuring entity is required to allocate a reference"))
 	code = frappe.db.get_value("Procuring Entity", procuring_entity, "entity_code") or procuring_entity
@@ -65,12 +85,14 @@ def _series_current(series_key: str) -> int | None:
 	return int(row[0][0]) if row else None
 
 
-def allocate_reference(procuring_entity: str, type_token: str) -> str:
-	"""Allocate next never-reuse `{PE}-{TYPE}-####` for the entity.
+def allocate_reference(type_token: str) -> str:
+	"""Allocate the next never-reuse `{SITE}-{TYPE}-####` reference.
 
-	Uses Frappe naming series (same family as Package/Demand). Series is advanced
-	on each call so allocate paths do not reuse numbers. On first use for a prefix,
-	the series is seeded past any existing max so remapped seed codes are not reissued.
+	CU-303 — the prefix comes from the one configured site entity; no
+	Procuring Entity parameter exists. Uses Frappe naming series (same family
+	as Package/Demand). Series is advanced on each call so allocate paths do
+	not reuse numbers. On first use for a prefix, the series is seeded past
+	any existing max so remapped seed codes are not reissued.
 	"""
 	from frappe.model.naming import make_autoname
 
@@ -78,7 +100,7 @@ def allocate_reference(procuring_entity: str, type_token: str) -> str:
 	if type_token not in REF_TYPE_META:
 		frappe.throw(_("Unknown reference type: {0}").format(type_token))
 	doctype, field = REF_TYPE_META[type_token]
-	slug = pe_slug(procuring_entity)
+	slug = site_slug()
 	prefix = f"{slug}-{type_token}-"
 	series_key = prefix  # Series.name is the prefix including trailing '-'
 	# Seed series past current max once (idempotent when series already ahead).
@@ -118,14 +140,12 @@ def assert_reference_immutable(doc, field: str) -> None:
 	)
 
 
-def ensure_doc_reference(doc, type_token: str, procuring_entity: str | None, field: str) -> str:
+def ensure_doc_reference(doc, type_token: str, field: str) -> str:
 	"""Assign reference on insert when empty. Returns the reference value."""
 	current = (doc.get(field) or "").strip()
 	if current:
 		return current
-	if not doc.is_new() and current:
-		return current
-	ref = allocate_reference(procuring_entity, type_token)
+	ref = allocate_reference(type_token)
 	doc.set(field, ref)
 	return ref
 
@@ -153,35 +173,12 @@ def _plan_version_id_for_doc(doc) -> str | None:
 	return None
 
 
-def resolve_pe_for_doc(doc) -> str:
-	"""Procuring entity for reference allocation.
-
-	Fail-closed (STR-CHG-001 §6 — every owned record carries one procuring_entity):
-	raises rather than silently returning an unusable value.
-	"""
-	pe = doc.get("procuring_entity_id")
-	if not pe:
-		if doc.doctype == "Strategic Plan":
-			pe = doc.get("procuring_entity_id")
-		else:
-			plan_id = _plan_id_for_doc(doc)
-			if plan_id:
-				pe = frappe.db.get_value("Strategic Plan", plan_id, "procuring_entity_id")
-	if not pe:
-		frappe.throw(
-			_("Could not resolve a procuring entity for {0}").format(frappe.unscrub(doc.doctype)),
-			frappe.ValidationError,
-		)
-	return pe
-
-
 def before_insert_assign_reference(doc) -> None:
 	meta = DOCTYPE_REF.get(doc.doctype)
 	if not meta:
 		return
 	type_token, field = meta
-	pe = resolve_pe_for_doc(doc)
-	ensure_doc_reference(doc, type_token, pe, field)
+	ensure_doc_reference(doc, type_token, field)
 
 
 def validate_reference_field(doc) -> None:

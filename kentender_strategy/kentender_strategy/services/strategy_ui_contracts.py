@@ -32,6 +32,7 @@ from kentender_strategy.services.strategy_authorization import (
 	CAP_AUTHOR,
 	ROLE_STRATEGY_APPROVER,
 	ROLE_STRATEGY_AUTHOR,
+	has_plan_create_capability,
 	has_plan_version_capability,
 )
 from kentender_strategy.services.strategy_readiness import get_version_readiness
@@ -46,48 +47,19 @@ def _ref(id_: str | None, name: str | None = None) -> dict | None:
 	return {"id": id_, "name": name or id_}
 
 
-def _pe_label(pe_id: str | None) -> str | None:
-	if not pe_id:
-		return None
-	row = frappe.db.get_value("Procuring Entity", pe_id, ["entity_name", "entity_code"], as_dict=True)
-	if not row:
-		return pe_id
-	code = row.entity_code or pe_id
-	name = row.entity_name or code
-	return f"{code} — {name}" if name != code else code
-
-
 _LIFECYCLE_ROLES = (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER)
 
 
-def _allowed_pes() -> tuple[set[str], bool]:
-	"""(pes, unrestricted). `unrestricted=True` means no PE filter applies —
-	System Manager / Strategy Viewer / Auditor, per STR-302/STR-303's own
-	documented deferral of PE-scoped read capabilities for those roles.
-	Author/Approver are scoped to whichever Procuring Entities their real
-	native User Permission grants (AUTH-ADR-001)."""
+def _can_read() -> bool:
+	"""CU-303 — one site is one Procuring Entity, so read eligibility is a
+	pure role check: the unrestricted read roles (STR §7's plain-permission
+	readers) plus the two governance roles, whose Frappe Roles exist only as
+	projections of Enabled Site-wide assignments (v1.6 §5.2). No PE set, no
+	working context, no User Permission scope."""
 	roles = frappe.get_roles()
-	if any(r in roles for r in UNRESTRICTED_READ_ROLES):
-		return set(), True
-	user = frappe.session.user
-	if not any(r in roles for r in _LIFECYCLE_ROLES):
-		return set(), False
-	# CTX-CHG-001 — the one canonical PE eligibility rule (User Scope
-	# Assignment with an all-rows User Permission fallback), replacing this
-	# module's fourth ad-hoc query.
-	from kentender_core.services.org_scope_access import permitted_procuring_entities
-
-	pes = permitted_procuring_entities(user)
-	if pes is None:
-		return set(), True
-	return pes, False
+	return any(r in roles for r in UNRESTRICTED_READ_ROLES + _LIFECYCLE_ROLES)
 
 
-def _user_can_view_plan(procuring_entity_id: str | None) -> bool:
-	pes, unrestricted = _allowed_pes()
-	if unrestricted:
-		return True
-	return bool(procuring_entity_id and procuring_entity_id in pes)
 
 
 def _plan_dto(plan) -> dict:
@@ -96,7 +68,6 @@ def _plan_dto(plan) -> dict:
 		"reference": plan.plan_id,
 		"title": plan.title,
 		"plan_role": plan.plan_role,
-		"procuring_entity": _ref(plan.procuring_entity_id, _pe_label(plan.procuring_entity_id)),
 		"organisation_unit_id": plan.owner_org_unit_id,
 		"period_start": str(plan.period_start) if plan.period_start else None,
 		"period_end": str(plan.period_end) if plan.period_end else None,
@@ -164,33 +135,24 @@ def _latest_version_row(plan_name: str) -> dict | None:
 	return rows[0] if rows else None
 
 
-def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
-	"""STR-UI-01 payload: plan table rows + My work + PE banner.
+def get_strategy_portfolio() -> dict:
+	"""STR-UI-01 payload: plan table rows + My work + the site identity.
 
-	Returns `{"forbidden": True}` rather than raising when the caller holds
-	none of the read-eligible roles/capabilities — lets the Vue page render
-	its own Forbidden state (STR-DES-12) instead of a raw exception."""
-	pes, unrestricted = _allowed_pes()
-	if not unrestricted and not pes:
+	CU-303 — one site is one Procuring Entity: no entity parameter, filter
+	or per-user PE set exists. Returns `{"forbidden": True}` rather than
+	raising when the caller holds none of the read-eligible roles — lets the
+	Vue page render its own Forbidden state (STR-DES-12) instead of a raw
+	exception."""
+	if not _can_read():
 		return {"forbidden": True}
-
-	filters: dict[str, Any] = {}
-	if procuring_entity:
-		if not unrestricted and procuring_entity not in pes:
-			return {"forbidden": True}
-		filters["procuring_entity_id"] = procuring_entity
-	elif not unrestricted:
-		filters["procuring_entity_id"] = ["in", sorted(pes)]
 
 	plans = frappe.get_all(
 		"Strategic Plan",
-		filters=filters,
 		fields=[
 			"name",
 			"plan_id",
 			"title",
 			"plan_role",
-			"procuring_entity_id",
 			"owner_org_unit_id",
 			"period_start",
 			"period_end",
@@ -222,23 +184,26 @@ def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
 			}
 		)
 
-	shown_pe = None
-	if procuring_entity:
-		shown_pe = _ref(procuring_entity, _pe_label(procuring_entity))
-	elif len(pes) == 1:
-		only_pe = next(iter(pes))
-		shown_pe = _ref(only_pe, _pe_label(only_pe))
+	# CU-303 — the identity banner shows the one configured site entity.
+	from kentender_core.services.site_configuration import get_site_configuration
+
+	site = get_site_configuration()
+	pe = site.get("procuring_entity") or {}
+	shown_pe = _ref(pe.get("pe_code"), pe.get("pe_name")) if site.get("configured") else None
 
 	return {
 		"forbidden": False,
 		"procuring_entity": shown_pe,
+		# Read-offer-vs-command parity: the create action is offered only
+		# when save_strategy_plan_draft's own gate would pass.
+		"can_create_plan": has_plan_create_capability(frappe.session.user),
 		"plans": rows,
-		"my_work": _my_work_versions(pes, unrestricted),
+		"my_work": _my_work_versions(),
 		"counts": {"plans": len(rows)},
 	}
 
 
-def _my_work_versions(pes: set[str], unrestricted: bool) -> list[dict]:
+def _my_work_versions() -> list[dict]:
 	versions = frappe.get_all(
 		"Strategic Plan Version",
 		filters={"status": "Submitted for approval"},
@@ -247,11 +212,9 @@ def _my_work_versions(pes: set[str], unrestricted: bool) -> list[dict]:
 	out = []
 	for v in versions:
 		plan = frappe.db.get_value(
-			"Strategic Plan", v.plan_id, ["plan_id", "title", "procuring_entity_id"], as_dict=True
+			"Strategic Plan", v.plan_id, ["plan_id", "title"], as_dict=True
 		)
 		if not plan:
-			continue
-		if not unrestricted and plan.procuring_entity_id not in pes:
 			continue
 		actions = available_actions(v.name)
 		if not actions:
@@ -388,7 +351,7 @@ def get_plan_workspace(plan_id: str) -> dict:
 	if not frappe.db.exists("Strategic Plan", plan_id):
 		return {"not_found": True}
 	plan = frappe.get_doc("Strategic Plan", plan_id)
-	if not _user_can_view_plan(plan.procuring_entity_id):
+	if not _can_read():
 		return {"forbidden": True}
 
 	versions = frappe.get_all(
@@ -457,7 +420,7 @@ def get_plan_history(plan_id: str) -> list[dict]:
 	if not frappe.db.exists("Strategic Plan", plan_id):
 		return []
 	plan = frappe.get_doc("Strategic Plan", plan_id)
-	if not _user_can_view_plan(plan.procuring_entity_id):
+	if not _can_read():
 		return []
 	version_names = frappe.get_all(
 		"Strategic Plan Version", filters={"plan_id": plan.name}, pluck="name"
@@ -487,7 +450,7 @@ def get_version_history(plan_version_id: str) -> list[dict]:
 		return []
 	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
 	plan = frappe.get_doc("Strategic Plan", version.plan_id)
-	if not _user_can_view_plan(plan.procuring_entity_id):
+	if not _can_read():
 		return []
 	out = [
 		{
@@ -512,7 +475,7 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 		return {"not_found": True}
 	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
 	plan = frappe.get_doc("Strategic Plan", version.plan_id)
-	if not _user_can_view_plan(plan.procuring_entity_id):
+	if not _can_read():
 		return {"forbidden": True}
 
 	user = frappe.session.user

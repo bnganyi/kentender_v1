@@ -27,10 +27,9 @@ const railTrail = computed(() => [
 const railEl = ref(null);
 // CTX-CHG-001 - the global PE switcher; a record-bound screen returns to
 // the portfolio (the record keeps its own context), the portfolio refetches.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("strategy-portfolio"),
-});
+// No rail PE switcher — a plan already belongs to one Procuring Entity, so
+// the control could only ever bounce the user off the record they opened.
+usePageRail(railEl, railTrail);
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -75,9 +74,14 @@ function eventStatusClass(eventName) {
 	return "is-draft";
 }
 
-async function loadWorkspace() {
+// `quiet` refreshes in place — flipping `loading` after every action
+// replaced the whole screen with the skeleton on each round-trip. Only the
+// planId-driven watch below (a genuine navigation to a different plan)
+// shows the skeleton.
+async function loadWorkspace(opts) {
 	if (!planId.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	actionError.value = null;
@@ -142,7 +146,7 @@ async function doSubmit() {
 	try {
 		await submitVersion(workspace.value.current_version.id);
 		frappe.show_alert({ message: __("Submitted for approval"), indicator: "green" });
-		await loadWorkspace();
+		await loadWorkspace({ quiet: true });
 	} catch (e) {
 		actionError.value = e.message || String(e);
 	} finally {
@@ -158,7 +162,7 @@ async function doCreateSuccessor() {
 		const result = await createSuccessorVersion(planId.value);
 		frappe.show_alert({ message: __("Successor version created"), indicator: "green" });
 		historyLoaded.value = false;
-		await loadWorkspace();
+		await loadWorkspace({ quiet: true });
 		go(planId.value, "structure");
 	} catch (e) {
 		actionError.value = e.message || String(e);
@@ -517,7 +521,6 @@ async function saveNewPillar() {
 							<div class="kt-card kt-blueprint">
 								<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 								<div class="kt-card-title">{{ __("Plan identity") }}</div>
-								<div class="kt-row"><dt>{{ __("Procuring Entity") }}</dt><dd>{{ workspace.plan.procuring_entity?.name }}</dd></div>
 								<div class="kt-row"><dt>{{ __("Organisation scope") }}</dt><dd>{{ __("PE-wide") }}</dd></div>
 								<div class="kt-row"><dt>{{ __("Plan role") }}</dt><dd>{{ workspace.plan.plan_role }}</dd></div>
 								<div class="kt-row"><dt>{{ __("Plan period") }}</dt><dd>{{ workspace.plan.period_label }}</dd></div>

@@ -36,17 +36,17 @@ def _covers_date(start, end, as_of) -> bool:
 
 
 def resolve_strategy_context(
-	procuring_entity: str,
 	organisation_unit: str | None = None,
 	effective_date: str | None = None,
 ) -> dict:
-	"""STR-CHG-001 §12 — resolve_strategy_context.
+	"""STR-CHG-001 §12 — resolve_strategy_context (site-local, CU-306).
 
-	Input: PE, optional OU, effective date (defaults to today). Output: exactly
-	one primary Active plan context, or a typed error when zero or multiple
-	primary Active plans cover the PE at that date — never a silent pick.
+	Input: optional OU, effective date (defaults to today) — one site is one
+	Procuring Entity, so no entity parameter exists. Output: exactly one
+	primary Active plan context, or a typed error when zero or multiple
+	primary Active plans cover the site at that date — never a silent pick.
 	Supporting frameworks (Programme Strategy / Thematic Plan / Annual
-	Implementation Plan) active for the same PE/date are returned explicitly,
+	Implementation Plan) active for the same date are returned explicitly,
 	never folded into the primary context.
 
 	`primary_plan.version_id` is the Active Strategic Plan Version's own id —
@@ -57,12 +57,10 @@ def resolve_strategy_context(
 	strategy_gateway) found the gap live rather than in this module's own
 	tests, which only assert `resolve_strategy_context`'s error paths.
 	"""
-	if not procuring_entity:
-		frappe.throw(_("Procuring entity is required"), frappe.ValidationError)
 	as_of = getdate(effective_date) if effective_date else getdate()
 
 	def _active_versions(plan_role: str) -> list[dict]:
-		filters = {"procuring_entity_id": procuring_entity, "plan_role": plan_role}
+		filters = {"plan_role": plan_role}
 		if organisation_unit and plan_role == PLAN_ROLE_SUPPORTING:
 			filters["owner_org_unit_id"] = organisation_unit
 		plans = frappe.get_all("Strategic Plan", filters=filters, fields=["name", "plan_id", "title"])
@@ -97,14 +95,14 @@ def resolve_strategy_context(
 	covering = _active_versions(PLAN_ROLE_PRIMARY)
 	if not covering:
 		frappe.throw(
-			_("No primary Active strategic plan covers {0} for this procuring entity").format(as_of),
+			_("No primary Active strategic plan covers {0} for this site").format(as_of),
 			frappe.DoesNotExistError,
 		)
 	if len(covering) > 1:
 		frappe.throw(
 			_(
-				"Multiple primary Active strategic plans cover {0} for this procuring "
-				"entity — ambiguous lineage"
+				"Multiple primary Active strategic plans cover {0} for this site "
+				"— ambiguous lineage"
 			).format(as_of),
 			frappe.ValidationError,
 		)
@@ -112,7 +110,8 @@ def resolve_strategy_context(
 	supporting = _active_versions(PLAN_ROLE_SUPPORTING)
 
 	return {
-		"procuring_entity": procuring_entity,
+		# Informational site-identity snapshot for consumers that record it.
+		"procuring_entity": frappe.db.get_single_value("Site Procuring Entity", "pe_code") or "",
 		"organisation_unit": organisation_unit,
 		"effective_date": str(as_of),
 		"primary_plan": {
@@ -344,18 +343,23 @@ def target_snapshot_fields(target_id: str) -> dict | None:
 
 
 def _validated_strategy_reference(target_id: str, *, require_active: bool = True) -> dict:
-	"""Validate a Performance Target id and return the Strategy Reference dict."""
+	"""Validate a Performance Target id and return the Strategy Reference dict.
+
+	CU-308 fix of a latent pre-rebuild query: `Performance Target` carries no
+	`plan_version`/`status`/`target_code`/`title` columns on the Phase 1
+	schema — the version is reached through the target's indicator, exactly
+	as `resolve_performance_target_id` above already does."""
 	tgt = frappe.db.get_value(
-		"Performance Target",
-		target_id,
-		["name", "plan_version", "status", "target_code", "title"],
-		as_dict=True,
+		"Performance Target", target_id, ["name", "indicator_id"], as_dict=True
 	)
 	if not tgt:
 		frappe.throw(_("Unknown Performance Target"))
+	plan_version_id = frappe.db.get_value(
+		"Performance Indicator", tgt.indicator_id, "plan_version_id"
+	)
 	result = validate_strategy_reference(
 		{
-			"plan_version_id": tgt.plan_version,
+			"plan_version_id": plan_version_id,
 			"node_id": tgt.name,
 			"node_type": "PerformanceTarget",
 		}
@@ -440,4 +444,6 @@ def validated_supporting_target_row(
 
 
 def active_target_options(procuring_entity: str | None = None, plan_code: str | None = None) -> list[dict]:
-	return list_active_targets(procuring_entity=procuring_entity, plan_code=plan_code)
+	# `procuring_entity` is accepted and ignored (pre-CU-4xx bridge for
+	# kentender_budget's picker): one site is one entity.
+	return list_active_targets(plan_code=plan_code)

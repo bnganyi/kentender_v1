@@ -10,11 +10,8 @@ from frappe import _
 
 from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_permissions import (
-	assert_entity_in_scope,
 	can_create_successor_plan,
 	can_edit_draft_plan,
-	entity_for_user,
-	has_cross_entity_authority,
 	ownership_path_for_unit,
 	require_any_role,
 )
@@ -125,7 +122,7 @@ def list_strategy_plans(
 	period: str | None = None,
 ) -> list[dict]:
 	filters: dict[str, Any] = {}
-	pe = procuring_entity or entity_for_user()
+	pe = None  # CU-303 — one site, one entity; no per-user PE narrowing
 	if pe:
 		filters["procuring_entity"] = pe
 	if status and status not in ("Status", "All"):
@@ -203,7 +200,7 @@ def _parent_plan_ref(parent_id: str | None) -> dict | None:
 
 
 def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
-	pe = procuring_entity or entity_for_user()
+	pe = None  # CU-303 — one site, one entity; no per-user PE narrowing
 	filters = {"procuring_entity": pe} if pe else {}
 	plans = frappe.get_all(
 		"Strategic Plan",
@@ -938,7 +935,9 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 	tree = get_strategy_tree(plan_version=plan_version, plan_code=plan_code)
 	plan_id = tree["plan"]["id"]
 	plan_doc = frappe.get_doc("Strategic Plan", plan_id)
-	assert_entity_in_scope(plan_doc.procuring_entity)
+	# CU-303 — one site, one entity: the PE scope assertion is gone with the
+	# concept (this legacy function already reads pre-Phase-1 fields and is
+	# documented above as broken; RM-phase fodder).
 
 	pe_id = plan_doc.procuring_entity
 	pe_ref = _ref(pe_id, _entity_code(pe_id), _entity_label(pe_id))
@@ -1109,7 +1108,7 @@ def list_active_targets(procuring_entity: str | None = None, plan_code: str | No
 	`indicator_id`). Confirmed via Phase 4's already-correct sibling
 	functions `validate_strategy_reference`/`build_strategy_reference` in
 	this same file, which this now matches."""
-	pe = procuring_entity or entity_for_user()
+	pe = None  # CU-303 — one site, one entity; no per-user PE narrowing
 	plan_filters: dict[str, Any] = {}
 	if pe:
 		plan_filters["procuring_entity_id"] = pe
