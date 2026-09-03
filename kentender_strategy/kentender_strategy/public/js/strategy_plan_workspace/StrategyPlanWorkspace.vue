@@ -687,19 +687,21 @@ async function saveNewPillar() {
 							/>
 							<p v-if="!tree.tree.length" class="kt-muted">{{ __("No structure yet.") }}</p>
 						</div>
-						<div
-							class="kt-card kt-blueprint"
-							style="
-								width: 58%;
-								position: sticky;
-								top: 80px;
-								max-height: calc(100vh - 96px);
-								overflow-y: auto;
-								overflow-x: hidden;
-							"
-						>
+						<div class="kt-card kt-blueprint" style="width: 58%; position: sticky; top: 80px">
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-							<p v-if="actionError" style="color: oklch(0.45 0.13 28); margin-top: 0">{{ actionError }}</p>
+							<!--
+								The corner decorations above sit outside this inner wrapper on
+								purpose: they're `position: absolute; bottom: -6px` (a few px
+								past the card's own padding box, per kt_industry_tokens.css),
+								which is invisible under the outer card's default
+								`overflow: visible`. Putting overflow-y on the SAME box as the
+								corners makes the browser treat that -6px as real scrollable
+								content, so a scrollbar rendered unconditionally regardless of
+								how short the real content was. Scrolling only the inner
+								wrapper keeps the corners outside that box entirely.
+							-->
+							<div style="max-height: calc(100vh - 96px); overflow-y: auto; overflow-x: hidden">
+								<p v-if="actionError" style="color: oklch(0.45 0.13 28); margin-top: 0">{{ actionError }}</p>
 							<template v-if="creatingChildOf">
 								<div class="kt-card-title">{{ __("New") }} {{ creatingChildOf.childType }}</div>
 								<template v-if="creatingChildOf.childType === 'Performance Indicator'">
@@ -792,6 +794,7 @@ async function saveNewPillar() {
 								</div>
 							</template>
 							<p v-else class="kt-muted">{{ __("Select a hierarchy item to view or edit it.") }}</p>
+							</div>
 						</div>
 					</div>
 				</template>
