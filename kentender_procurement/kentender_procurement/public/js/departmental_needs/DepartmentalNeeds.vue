@@ -31,7 +31,7 @@
 				:error="error"
 				:outcome="workspace.outcome"
 				:context="workspace.context || {}"
-				:intake="intake"
+				:submission="submissionState"
 				:needs="workspace.needs || []"
 				:actions="workspace.actions || []"
 				:count-label="workspace.count_label || ''"
@@ -39,7 +39,7 @@
 				v-model:search="search"
 				v-model:status="status"
 				@clear-filters="clearFilters"
-				@create="go('new')"
+				@create="onCreateClick"
 				@reload="load"
 				@action="onRowAction"
 				@select-financial-year="onSelectFinancialYear"
@@ -114,14 +114,6 @@
 				@view-plan-item="onViewPlanItem"
 			/>
 
-			<IntakeWindowScreen
-				v-else-if="screen === 'intake'"
-				:window="intake"
-				:context="workspace.context || {}"
-				:error-summary="errorSummary"
-				:pending="pending"
-				@save="onSaveWindow"
-			/>
 		</div>
 
 		<!-- §11.13 / §11.12 — the exact reason dialogs. -->
@@ -149,6 +141,17 @@
 			@confirm="confirmDialog.onConfirm()"
 			@cancel="closeDialog"
 		/>
+
+		<!-- NDS-DES-15 §11.16/§12.1 — shown only when more than one authorised
+		     Organisation Unit is eligible to create in the one open Fiscal Year. -->
+		<CreateTargetDialog
+			v-if="createTargetDialog"
+			:organisation-units="createTargetChoices.organisation_units || []"
+			:financial-year-label="createTargetChoices.financial_year_label || ''"
+			:pending="pending"
+			@continue="onCreateTargetContinue"
+			@cancel="createTargetDialog = false"
+		/>
 	</div>
 </template>
 
@@ -160,7 +163,7 @@ import * as api from "./data/needsApi.js";
 import { quantityWithUnit } from "./data/format.js";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import ContextPicker from "./components/ContextPicker.vue";
-import IntakeWindowScreen from "./components/IntakeWindowScreen.vue";
+import CreateTargetDialog from "./components/CreateTargetDialog.vue";
 import NeedDetailScreen from "./components/NeedDetailScreen.vue";
 import NeedEditorScreen from "./components/NeedEditorScreen.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
@@ -183,7 +186,8 @@ const status = ref("");
 const workspace = ref({});
 const detail = ref({});
 const task = ref({});
-const intake = ref({});
+// get_needs_submission_state() shape: { open, financial_year, label, closes_at }.
+const submissionState = ref({ open: false, financial_year: "", label: "", closes_at: "" });
 const usage = ref({});
 const dependency = ref({});
 const units = ref([]);
@@ -192,13 +196,21 @@ const dialog = ref("");
 const reason = ref("");
 const reasonError = ref("");
 const financialYears = ref([]);
+const createTargetDialog = ref(false);
+const createTargetChoices = ref({});
+// The exact department + the one open Fiscal Year resolved for the Need
+// currently being created — from list_need_create_targets, never from the
+// workspace's FY filter (see editorContext).
+const createContext = ref(null);
 
 // CTX-CHG-001 — the working context is a SERVER-SIDE user preference. These
 // refs carry only the current screen's resolved/explicit values; a bare load
 // sends nothing and the server resolves the caller's own remembered context
-// (global working PE, this module's department and financial year). Browser
-// storage grants nothing and is not even used as a cache — the old
-// per-origin localStorage leaked one user's context into the next login.
+// (this module's department and financial year). AUTH-ADR-001 v1.6 §1.1 — the
+// site is exactly one implicit Procuring Entity, so there is no PE dimension
+// to remember. Browser storage grants nothing and is not even used as a
+// cache — the old per-origin localStorage leaked one user's context into the
+// next login.
 const contextKey = ref("");
 const financialYear = ref("");
 // Rule 5.4 — "Change context" is always available: when set, the picker shows
@@ -209,14 +221,10 @@ const selectionRequired = computed(
 	() =>
 		!loading.value &&
 		!error.value &&
-		// §12.1 — the intake window is defined per PE/FY, so it needs a resolved
-		// context exactly as the lists do. Without this the Procurement Planner,
-		// who is scoped to several Procuring Entities and no department, reached
-		// NDS-UI-08 with no context at all and edited a window bound to nothing.
-		["workspace", "intake"].includes(screen.value) &&
+		screen.value === "workspace" &&
 		(changingContext.value ||
 			workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
-			// The context is PE/OU *and* FY (§12.1). With several selectable
+			// The context is department *and* FY (§12.1). With several selectable
 			// years, rows must not be listed against an unresolved one.
 			(financialYears.value.length > 1 && !financialYear.value))
 );
@@ -247,7 +255,6 @@ const screen = computed(() => {
 	const [first, second, third] = segments.value;
 	if (!first) return "workspace";
 	if (first === "new") return "editor";
-	if (first === "intake-window") return "intake";
 	if (first === "review") {
 		// The queue landing was removed (2026-08-30): review decisions reach
 		// the reviewer through My Work and notifications, and the workspace's
@@ -262,7 +269,7 @@ const screen = computed(() => {
 
 const needReference = computed(() => {
 	const [first, second] = segments.value;
-	if (!first || ["new", "review", "intake-window"].includes(first)) return "";
+	if (!first || ["new", "review"].includes(first)) return "";
 	return first;
 });
 
@@ -291,12 +298,17 @@ const editorMode = computed(() => {
 });
 
 const editorContext = computed(() => {
-	if (!needReference.value) return workspace.value.context || {};
+	// NDS-DES-15 / §12.1 — the create target's own resolved department and the
+	// one open Fiscal Year, never the workspace's FY *filter* (which offers
+	// only years already represented by existing Needs — empty on a first
+	// Need, and unrelated to which year is open for creation). Falls back to
+	// the workspace context only for a direct URL load of /new (no
+	// createContext yet resolved).
+	if (!needReference.value) return createContext.value || workspace.value.context || {};
 	// The artboards show scope by name, never by ID.
 	const need = detail.value.need || {};
 	const labels = detail.value.scope_labels || {};
 	return {
-		procuring_entity_label: labels.procuring_entity || need.procuring_entity,
 		organisation_unit_label: labels.organisation_unit || need.organisation_unit,
 		financial_year_label: labels.financial_year || need.financial_year,
 	};
@@ -347,10 +359,8 @@ async function load(opts) {
 			acceptedBy.value = detail.value.accepted || {};
 			if (screen.value === "editor") await loadUnits();
 		} else {
-			const [entity, unit] = contextKey.value.split("::");
 			const loaded = await api.getNeedsWorkspace({
-				procuring_entity: entity || "",
-				organisation_unit: unit || "",
+				organisation_unit: contextKey.value || "",
 				financial_year: financialYear.value,
 				search: search.value,
 				status: status.value,
@@ -362,21 +372,17 @@ async function load(opts) {
 			const resolved = workspace.value.context;
 			if (resolved && resolved.organisation_unit) {
 				// Mirror the server's resolution; the server is the memory.
-				contextKey.value = `${resolved.procuring_entity}::${resolved.organisation_unit}`;
+				contextKey.value = resolved.organisation_unit;
 				if (resolved.financial_year) financialYear.value = resolved.financial_year;
 			}
-			const context = workspace.value.context || {};
-			if (!quiet && context.procuring_entity) {
-				// The intake window depends only on PE/FY, so a quiet filter
-				// refresh keeps the one already shown.
-				const window_ = await api.getNeedsIntakeWindow(
-					context.procuring_entity,
-					context.financial_year
-				);
+			if (!quiet) {
+				// The Needs-submission flag is a site-wide read, independent of the
+				// selected department, so a quiet filter refresh keeps the one
+				// already shown.
+				submissionState.value = await api.getNeedsSubmissionState();
 				if (seq !== loadSeq) return;
-				intake.value = window_;
 			}
-			if (screen.value === "editor" || screen.value === "intake") await loadUnits();
+			if (screen.value === "editor") await loadUnits();
 		}
 	} catch (e) {
 		if (seq === loadSeq) error.value = e.message;
@@ -387,12 +393,16 @@ async function load(opts) {
 
 async function loadUnits() {
 	if (units.value.length) return;
-	units.value = await frappe.db.get_list("Unit Of Measure", {
-		filters: { status: "Active" },
-		fields: ["name", "unit_label"],
-		order_by: "unit_label asc",
+	// NDS-CHG-001 v1.6 §1.1/§16.4.11 — units come from ERPNext's native `UOM`,
+	// enabled only. `uom_name` is mapped to `unit_label` so NeedEditorScreen's
+	// dropdown needs no separate field-name awareness.
+	const rows = await frappe.db.get_list("UOM", {
+		filters: { enabled: 1 },
+		fields: ["name", "uom_name"],
+		order_by: "uom_name asc",
 		limit: 200,
 	});
+	units.value = rows.map((row) => ({ name: row.name, unit_label: row.uom_name || row.name }));
 }
 
 
@@ -422,28 +432,15 @@ function refreshFilters(debounced) {
 watch(search, () => refreshFilters(true));
 watch(status, () => refreshFilters(false));
 
+// AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit Procuring Entity,
+// so the rail's PE switcher stays dormant here (matching Budget's and
+// Strategy's own already-cut-over pages); there is nothing to switch between.
 usePageRail(
 	railEl,
 	computed(() => [
 		{ label: "Departmental Needs", route: [PAGE] },
 		...(needReference.value ? [{ label: needReference.value }] : []),
-	]),
-	{
-		// CTX-CHG-001 — the rail hosts the global PE switcher. A switch clears
-		// this module's transient selection and reloads; the server resolves
-		// the new PE's own remembered department and year.
-		showPeSwitcher: true,
-		onPeChange: () => {
-			contextKey.value = "";
-			financialYear.value = "";
-			changingContext.value = false;
-			if (["workspace", "intake"].includes(screen.value)) {
-				load({ quiet: true });
-			} else {
-				go();
-			}
-		},
-	}
+	])
 );
 
 // --- commands --------------------------------------------------------------
@@ -507,12 +504,56 @@ async function onSubmit(form) {
 }
 
 function contextArgs() {
-	const context = workspace.value.context || {};
+	const context = createContext.value || workspace.value.context || {};
 	return {
-		procuring_entity: context.procuring_entity,
 		organisation_unit: context.organisation_unit,
-		financial_year: context.financial_year || intake.value.financial_year,
+		financial_year: context.financial_year,
 	};
+}
+
+// NDS-DES-15 / §12.1 — resolved at click time from the exact authorised
+// create targets, never from a Fiscal Year permission, the list's current FY
+// filter or a browser-stored context.
+async function onCreateClick() {
+	const targets = await api.listNeedCreateTargets();
+	if (!targets.open || !(targets.organisation_units || []).length) {
+		// Server state moved since the last load (flag just closed, or the
+		// actor's create scope changed) — refresh the list rather than guess.
+		await load({ quiet: true });
+		return;
+	}
+	if (targets.organisation_units.length === 1) {
+		await enterCreateEditor(targets, targets.organisation_units[0].organisation_unit);
+		return;
+	}
+	createTargetChoices.value = targets;
+	createTargetDialog.value = true;
+}
+
+async function enterCreateEditor(targets, organisationUnit) {
+	const selected = (targets.organisation_units || []).find(
+		(row) => row.organisation_unit === organisationUnit
+	);
+	createContext.value = {
+		organisation_unit: organisationUnit,
+		organisation_unit_label: selected?.organisation_unit_label || organisationUnit,
+		financial_year: targets.financial_year,
+		financial_year_label: targets.financial_year_label,
+	};
+	// Reuses the same server-side preference persistence the department picker
+	// uses, so the workspace list reflects the chosen department on return —
+	// a convenience, not what the editor itself reads (see editorContext).
+	if (contextKey.value !== organisationUnit) {
+		contextKey.value = organisationUnit;
+		changingContext.value = false;
+		await load({ quiet: true });
+	}
+	go("new");
+}
+
+function onCreateTargetContinue(organisationUnit) {
+	createTargetDialog.value = false;
+	enterCreateEditor(createTargetChoices.value, organisationUnit);
 }
 
 async function onCreateSuccessor() {
@@ -537,20 +578,6 @@ function onEditorCancel() {
 		return;
 	}
 	go(needReference.value);
-}
-
-async function onSaveWindow(form) {
-	const context = workspace.value.context || {};
-	const result = await run("save-window", () =>
-		api.saveNeedsIntakeWindow({
-			procuring_entity: context.procuring_entity,
-			financial_year: context.financial_year,
-			opens_at: form.opens_at.replace("T", " "),
-			closes_at: form.closes_at.replace("T", " "),
-			expected_version: intake.value.record_version || 0,
-		})
-	);
-	if (result) intake.value = result;
 }
 
 function onRowAction(row, action) {

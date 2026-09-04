@@ -1,12 +1,17 @@
-"""Phase 8 shell and navigation tests for NDS-CHG-001 v1.1 §10.
+"""Phase 8 shell and navigation tests for NDS-CHG-001 v1.6 §10.
 
 §10 fixes three things this module has to get right outside its own code:
 
 1. Departmental Needs is a top-level module placed **after** Budget & Funding
    and **before** Procurement Planning in the business-flow rail.
-2. Its module menu contains exactly three entries — Departmental Needs, Review
-   tasks (effective Head of User Department only) and Intake window (effective
-   Procurement Planner only) — and nothing else.
+2. Its module menu contains exactly one entry — Departmental Needs — and
+   nothing else. "Review tasks" was removed 2026-08-30 (a specification
+   defect: review decisions reach the Head of User Department through My
+   Work, never a work-queue sidebar entry). "Intake window" was removed by
+   NDS-CHG-001 v1.6 §4.1/§11.11/§16.4.11: the windowed intake mechanism no
+   longer exists in this module at all — the Needs-submission flag lives only
+   in the Fiscal Years section of `/app/system-setup` (CFG-CHG-002 v0.6), and
+   Departmental Needs exposes no configuration route or page action for it.
 3. Every entry targets one of the eight canonical §10 routes. No legacy
    NDS-CHG-002 route survives anywhere in the navigation surface (NDS-AC-030,
    NDS-BR-020).
@@ -14,8 +19,7 @@
 The menu's ``display_depends_on`` is evaluated **client-side** by
 ``frappe.utils.eval`` in Frappe's own ``sidebar.js`` (``create_sidebar``). It
 decides what a user is shown, never what a user may do — §17 forbids inferring
-authority from a route, tab or role label. ``test_hidden_row_is_not_the_control``
-proves the server still refuses the command behind a hidden row.
+authority from a route, tab or role label.
 """
 
 from __future__ import annotations
@@ -32,14 +36,6 @@ from kentender_procurement.departmental_needs.constants import (
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_PLANNER,
 )
-from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
-from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
-	AUTHOR,
-	FY,
-	PE,
-	upsert_departmental_needs,
-)
-from kentender_procurement.departmental_needs.services.context import save_intake_window
 
 SIDEBAR_EXPORT = ("kentender_procurement", "workspace_sidebar", "procurement.json")
 REGISTRY = ("kentender_core", "public", "js", "kt_cl_surface_registry.js")
@@ -49,12 +45,13 @@ REGISTRY = ("kentender_core", "public", "js", "kt_cl_surface_registry.js")
 # module at all; the workspace itself resolves its own audience server-side.
 #
 # §10 also specified a "Review tasks" entry — a specification defect, removed
-# 2026-08-30 (to be corrected in the next complete NDS successor): review
-# decisions reach the Head of User Department through the shared My Work queue
-# and notification deep links, never through a work-queue sidebar entry.
+# 2026-08-30: review decisions reach the Head of User Department through the
+# shared My Work queue and notification deep links, never through a
+# work-queue sidebar entry. NDS-CHG-001 v1.6 §4.1/§11.11/§16.4.11 additionally
+# retires "Intake window" outright — the module owns no configuration route
+# at all, so the menu is now exactly this one entry.
 MENU: tuple[tuple[str, str, str, str | None], ...] = (
 	("Departmental Needs", "Page", "departmental-needs", None),
-	("Intake window", "URL", "/desk/departmental-needs/intake-window", ROLE_PROCUREMENT_PLANNER),
 )
 
 # Every retired route this module replaced, named in full. §1.1 removes them
@@ -146,8 +143,8 @@ class DepartmentalNeedsMenuTest(IntegrationTestCase):
 		self.rows = _sidebar_rows()
 		self.labels = [row.get("label") or "" for row in self.rows]
 
-	def test_menu_is_exactly_the_three_entries(self):
-		"""§10: 'Its module menu contains only' these three."""
+	def test_menu_is_exactly_the_one_entry(self):
+		"""§10/§4.1/§11.11: 'Its module menu contains only' this one entry."""
 		ours = [
 			row
 			for row in self.rows
@@ -157,40 +154,8 @@ class DepartmentalNeedsMenuTest(IntegrationTestCase):
 		self.assertEqual(
 			[row.get("label") for row in ours],
 			[label for label, _, _, _ in MENU],
-			msg="§10 fixes the Departmental Needs module menu at exactly three entries",
+			msg="§10/§16.4.11 fix the Departmental Needs module menu at exactly one entry",
 		)
-
-	def test_menu_entries_are_contiguous_and_in_order(self):
-		"""The two flow entries sit together; the configuration entry does not.
-
-		§10 lists the three entries together, but the rail groups every
-		configuration surface under "Configuration and Governance" — and Frappe
-		nests one level only (Sidebar.find_nested_items), so that group cannot
-		hold a Departmental Needs sub-group. NDS-UI-08 is therefore a child of
-		that section, away from the two business-flow rows.
-		"""
-		flow = [label for label, _, _, _ in MENU if label != "Intake window"]
-		start = self.labels.index("Departmental Needs")
-		self.assertEqual(
-			tuple(self.labels[start : start + len(flow)]),
-			tuple(flow),
-			msg="The §10 flow entries must sit together, workspace first",
-		)
-
-	def test_intake_window_is_a_configuration_and_governance_child(self):
-		"""NDS-UI-08 is configuration, so it lives in the configuration group."""
-		section = self.labels.index("Configuration and Governance")
-		self.assertEqual(self.rows[section].get("type"), "Section Break")
-		intake = self.labels.index("Intake window")
-		self.assertGreater(intake, section)
-		self.assertEqual(int(self.rows[intake].get("child") or 0), 1)
-		# No Section Break may intervene, or the row belongs to another group.
-		between = [
-			row.get("label")
-			for row in self.rows[section + 1 : intake]
-			if row.get("type") == "Section Break"
-		]
-		self.assertEqual(between, [])
 
 	def test_module_sits_after_budget_and_before_planning(self):
 		"""§10 placement in the business-flow rail."""
@@ -215,31 +180,17 @@ class DepartmentalNeedsMenuTest(IntegrationTestCase):
 				self.assertEqual(actual, target)
 
 	def test_role_visibility_matches_section_10(self):
+		"""§16.4.11 leaves no role-gated Departmental Needs menu entry at all."""
 		by_label = {row.get("label"): row for row in self.rows}
 		for label, _link_type, _target, role in MENU:
 			with self.subTest(label=label):
+				self.assertIsNone(role, msg="No remaining entry is role-gated")
 				condition = by_label[label].get("display_depends_on") or ""
-				if role is None:
-					self.assertEqual(
-						condition,
-						"",
-						msg="The module entry itself is not role-gated in the menu",
-					)
-					continue
-				self.assertIn(role, condition)
-				self.assertIn("frappe.user_roles", condition)
-				# Exactly one role — §10 names one audience per entry, and a
-				# second name here would silently widen who is shown the link.
-				named = [
-					r
-					for r in (
-						ROLE_DEPARTMENTAL_AUTHOR,
-						ROLE_HEAD_OF_USER_DEPARTMENT,
-						ROLE_PROCUREMENT_PLANNER,
-					)
-					if r in condition
-				]
-				self.assertEqual(named, [role])
+				self.assertEqual(
+					condition,
+					"",
+					msg="The module entry itself is not role-gated in the menu",
+				)
 
 	def test_boot_sidebar_preserves_url_and_visibility(self):
 		"""The row is useless if boot drops either field.
@@ -352,44 +303,12 @@ class DepartmentalNeedsSurfaceRegistryTest(IntegrationTestCase):
 		)
 
 
-class DepartmentalNeedsMenuIsNotAuthorizationTest(IntegrationTestCase):
-	"""§17 — a hidden menu row is presentation; the server is the control."""
-
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		upsert_departmental_needs()
-
-	def setUp(self):
-		super().setUp()
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def test_hidden_row_is_not_the_control(self):
-		"""An author does not see Intake window — and cannot save one either.
-
-		``display_depends_on`` runs in the browser and is trivially bypassed by
-		typing the route. The refusal below is the actual control.
-		"""
-		condition = next(
-			row.get("display_depends_on") or ""
-			for row in _sidebar_rows()
-			if row.get("label") == "Intake window"
-		)
-		self.assertNotIn(ROLE_DEPARTMENTAL_AUTHOR, condition)
-
-		frappe.set_user(AUTHOR)
-		with self.assertRaises(DepartmentalNeedError) as raised:
-			save_intake_window(
-				procuring_entity=PE,
-				financial_year=FY,
-				opens_at="2026-09-01 00:00:00",
-				closes_at="2026-09-30 23:59:59",
-			)
-		# §9 defines NDS_SCOPE_DENIED as "actor lacks the exact current Frappe
-		# role and User Permission scope" — a missing role is that code, not a
-		# separate one; the closed fifteen-code set has no NDS_NOT_AUTHORIZED.
-		self.assertEqual(raised.exception.code, "NDS_SCOPE_DENIED")
-		self.assertIn(ROLE_PROCUREMENT_PLANNER, str(raised.exception))
+# NDS-CHG-001 v1.6 §4.1/§11.11/§16.4.11 retired the whole Intake window
+# mechanism the old `DepartmentalNeedsMenuIsNotAuthorizationTest` exercised —
+# §17's principle (a hidden menu row is presentation, not the control) still
+# holds, but NDS owns no configuration command any more to prove it against;
+# `DepartmentalNeedsMenuTest.test_role_visibility_matches_section_10` above
+# already confirms the menu itself is not role-gated.
 
 
 class DepartmentalNeedsPageRolesTest(IntegrationTestCase):

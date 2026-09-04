@@ -27,7 +27,6 @@ from kentender_procurement.departmental_needs.constants import (
 	DESCRIPTION_MIN,
 	INTAKE_CLOSED,
 	INTAKE_OPEN,
-	INTAKE_SCHEDULED,
 	ROLE_DEPARTMENTAL_AUTHOR,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
@@ -65,7 +64,6 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
-from kentender_procurement.departmental_needs.services.context import intake_window
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
 REASON = "The department no longer requires this equipment in the target financial year."
@@ -214,40 +212,14 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		return self.project_usage(need, version, USAGE_NOT_INCLUDED)
 
 
-class TestNeedsIntakeWindow(DepartmentalNeedsCommandCase):
-	"""§4.1 / NDS-AC-003 — derived state with inclusive boundaries."""
-
-	def test_state_is_derived_with_inclusive_boundaries(self):
-		frappe.db.set_value(
-			"Needs Intake Window",
-			INTAKE_WINDOW,
-			{"opens_at": "2026-09-01 00:00:00", "closes_at": "2026-11-25 23:59:59"},
-			update_modified=False,
-		)
-		states = {
-			at: intake_window(PE, FY, at=at)["state"]
-			for at in (
-				"2026-08-31 23:59:59",
-				"2026-09-01 00:00:00",
-				"2026-11-25 23:59:59",
-				"2026-11-26 00:00:00",
-			)
-		}
-		self.assertEqual(
-			states,
-			{
-				"2026-08-31 23:59:59": INTAKE_SCHEDULED,
-				# Both boundary instants are inside the window.
-				"2026-09-01 00:00:00": INTAKE_OPEN,
-				"2026-11-25 23:59:59": INTAKE_OPEN,
-				"2026-11-26 00:00:00": INTAKE_CLOSED,
-			},
-		)
-
-	def test_unconfigured_window_reports_rather_than_raises(self):
-		window = intake_window(PE, "FY-1999-2000")
-		self.assertFalse(window["configured"])
-		self.assertEqual(window["state"], "Not configured")
+# NDS-CHG-001 v1.6 §4.1/§16.4.11 retired the windowed opens_at/closes_at model
+# (and its "Scheduled" state) entirely — the old `TestNeedsIntakeWindow` class
+# tested a mechanism that no longer exists. `services/context.py`'s
+# `needs_submission_state()`/`require_open_intake()` implement the new plain
+# Open/Closed flag; a regression suite for that lands with the Phase 6/7 seed
+# and test rewrite (IMPLEMENTATION_TRACKER.md NDS-G06/NDS-G07), since the
+# fixture this file's classes share (`DepartmentalNeedsCommandCase`) still
+# builds through the pre-v1.6 `upsert_departmental_needs()`/window helpers.
 
 
 class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):

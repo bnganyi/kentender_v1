@@ -203,7 +203,6 @@ const contextItems = computed(() => {
 	// Returned record from the departmental register (§6 view scope).
 	return [
 		{ label: "Requested by", value: props.authorLabel },
-		{ label: "Procuring Entity", value: label("procuring_entity") },
 		{ label: "Department", value: label("organisation_unit") },
 		{ label: "Financial Year", value: label("financial_year") },
 	];

@@ -40,18 +40,25 @@ from kentender_procurement.departmental_needs.services.usage import (
 	project_planning_usage,
 )
 
-# §8.1 — every read contract, by its exact name.
+# §8.1 — every read contract, by its exact name. NDS-CHG-001 v1.6 renamed
+# `resolve_needs_contexts` to `resolve_needs_scope`, added
+# `list_needs_financial_years`/`list_need_create_targets`, and replaced
+# `get_needs_intake_window` with the read-only `get_needs_submission_state`
+# (§4.1/§16.4.11 — NDS owns no intake-window configuration route at all).
 READ_CONTRACTS = (
-	"resolve_needs_contexts",
+	"resolve_needs_scope",
+	"list_needs_financial_years",
+	"list_need_create_targets",
 	"get_needs_workspace",
 	"get_departmental_need",
 	"get_departmental_review_task",
-	"get_needs_intake_window",
+	"get_needs_submission_state",
 	"get_current_accepted_need",
 	"check_accepted_need_withdrawal_dependency",
 )
 
-# §8.2 — every command contract, by its exact name.
+# §8.2 — every command contract, by its exact name. `save_needs_intake_window`
+# is gone with the `Needs Intake Window` doctype (§4.1/§16.4.11).
 COMMAND_CONTRACTS = (
 	"save_need_draft",
 	"submit_need_version",
@@ -63,7 +70,6 @@ COMMAND_CONTRACTS = (
 	"cancel_accepted_need_successor",
 	"request_accepted_need_withdrawal",
 	"decide_accepted_need_withdrawal",
-	"save_needs_intake_window",
 	"project_need_planning_usage",
 )
 

@@ -160,10 +160,10 @@ const props = defineProps({
 const emit = defineEmits(["save", "submit", "cancel", "unit-created"]);
 
 async function createUnit() {
-	const doc = await quickCreate("Unit Of Measure");
+	const doc = await quickCreate("UOM");
 	if (!doc) return;
 	form.unit = doc.name;
-	emit("unit-created", { name: doc.name, unit_label: doc.unit_label });
+	emit("unit-created", { name: doc.name, unit_label: doc.uom_name });
 }
 
 const errorEl = ref(null);
@@ -258,7 +258,6 @@ const submitLabel = computed(() =>
 const cancelLabel = computed(() => (props.mode === "successor" ? "Cancel update" : "Cancel"));
 
 const contextItems = computed(() => [
-	{ label: "Procuring Entity", value: props.context.procuring_entity_label || props.context.procuring_entity || "" },
 	{ label: "Department", value: props.context.organisation_unit_label || props.context.organisation_unit || "" },
 	{ label: "Financial Year", value: props.context.financial_year_label || props.context.financial_year || "" },
 ]);

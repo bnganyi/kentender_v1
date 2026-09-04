@@ -17,7 +17,9 @@ User Permission mechanism it describes is exactly what this cycle retires
 offer). The remaining items (FU-01..06, FU-07..10, FU-12..14) are independent
 infrastructure debts, unaffected by the v1.6 cutover, and stay open as written
 — FU-06 in particular (a missing Procurement Home pipeline-count contract) is
-untouched: v1.6 adds no such contract to §8.1.
+untouched: v1.6 adds no such contract to §8.1. A new **FU-15** is added below,
+discovered by Phase 5's own browser verification and worth reading before
+starting Phase 6.
 
 ---
 
@@ -324,3 +326,47 @@ is never exposed as a module sidebar entry.
 **Fix.** Restate §10 (two menu entries), §12.2 (My Work + notification as the
 reviewer's entry points) and the route table in the next complete NDS
 successor. This is a spec correction, not an implementation deviation.
+
+---
+
+## FU-15 — `upsert_departmental_needs()` is currently broken; Phase 6 is a hard test-suite prerequisite (2026-09-04)
+
+**What.** The module's own MVP seed builder,
+`seeds/kentender_mvp_r1.py::upsert_departmental_needs()`, throws
+`ModuleNotFoundError`/`ImportError` trying to insert a `Needs Intake Window`
+document — a doctype NDS-CHG-001 v1.6 Phase 1 deleted outright. Confirmed live
+via `bench execute`. Because nearly every Phase 2/3/4-era Python test class's
+`setUp`/`setUpClass` calls this function (`test_departmental_needs_permissions.py`,
+`test_departmental_needs_lifecycle.py`, `test_departmental_needs_seed.py`,
+`test_departmental_needs_contracts.py`), those classes now error at fixture
+setup regardless of any fix to the test file's own body. Several of these
+files also still open-code writes to `Needs Intake Window` in their own
+`setUp` (e.g. `DepartmentalNeedsCommandCase.open_window()`/`close_window()`
+in `test_departmental_needs_lifecycle.py`), so fixing the seed builder alone
+would not be sufficient either — those helpers need the same v1.6 rewrite.
+
+**Why it matters.** This is not an independent, deferrable phase the way it
+reads in the Implementation Plan's phase list — it is a **blocking
+prerequisite** for almost the entire NDS Python test suite. A future session
+should not attempt a file-by-file Phase 7 test rewrite before Phase 6 (seeds
+onto `User Responsibility Assignment` grants, ERPNext `Fiscal Year`/`UOM`, no
+`Needs Intake Window`) lands — the fixtures underneath would still be broken
+regardless of how correct the test file's own assertions are.
+
+**Separately, but discovered the same way:** a single broken import in *any*
+one of those test files was enough to abort Frappe's entire app-wide test
+discovery (`frappe/testing/discovery.py::discover_all_tests` wraps its whole
+directory walk in one `try/except`), so `bench run-tests --app
+kentender_procurement` with no `--module` filter could not run at all — for
+any module in the app, not just Departmental Needs — until this session fixed
+the import-time breaks (see `IMPLEMENTATION_TRACKER.md` headline finding 11 /
+row NDS-511). That specific abort is now fixed; the underlying seed breakage
+above is not.
+
+**Fix.** Phase 6 (seed rewrite) first, then Phase 7 (test-suite rewrite) —
+in that order, not in parallel per-file. `test_departmental_needs_navigation.py`
+is the one file whose classes are seed-independent and is already fully green
+(NDS-512); its two remaining failures are pre-existing Procurement Planning
+naming drift (`"Procurement Plans"` → `"Procurement Planning"`, and a
+`"departmental"` substring collision with Planning's own `departmental-
+procurement-plan` page), out of this module's scope.

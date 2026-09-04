@@ -1,12 +1,13 @@
-<!-- §12.1 — several eligible contexts require explicit selection before rows
+<!-- §12.1 — several eligible departments require explicit selection before rows
      are requested. Reuses the same <select class="kt-input"> inside a
      .kt-card.kt-blueprint.kt-empty that the Budget working-context picker
      uses, so the two modules present the same control.
 
-     Departmental Needs is scoped by PE *and* department, so the picker offers
-     the PE/OU pair the §8.1 resolve_needs_contexts contract returns — not the
-     PE/FY pair Budget uses. Selecting a context is a filter over an already
-     authorised scope; it never grants authority (§6). -->
+     NDS-CHG-001 v1.6 §1.1 / AUTH-ADR-001 v1.6 §1.1 — the site is exactly one
+     implicit Procuring Entity, so the picker offers only the department the
+     §8.1 resolve_needs_scope/get_needs_workspace contracts return. Selecting
+     a department is a filter over an already authorised scope; it never
+     grants authority (§6). -->
 <template>
 	<div class="kt-card kt-blueprint kt-empty" data-testid="nds-context-picker">
 		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
@@ -23,9 +24,9 @@
 				data-testid="nds-context-select"
 				@change="$emit('select-context', $event.target.value)"
 			>
-				<option value="" disabled>Choose a Procuring Entity and department…</option>
-				<option v-for="option in contexts" :key="key(option)" :value="key(option)">
-					{{ label(option) }}
+				<option value="" disabled>Choose a department…</option>
+				<option v-for="option in contexts" :key="option.organisation_unit" :value="option.organisation_unit">
+					{{ option.organisation_unit_label }}
 				</option>
 			</select>
 			<select
@@ -53,12 +54,4 @@ defineProps({
 	financialYear: { type: String, default: "" },
 });
 defineEmits(["select-context", "select-financial-year"]);
-
-function key(option) {
-	return `${option.procuring_entity}::${option.organisation_unit}`;
-}
-
-function label(option) {
-	return `${option.procuring_entity_label} · ${option.organisation_unit_label}`;
-}
 </script>

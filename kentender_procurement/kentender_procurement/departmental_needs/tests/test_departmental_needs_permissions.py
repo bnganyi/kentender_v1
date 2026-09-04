@@ -40,11 +40,20 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import permissions, workspace
-from kentender_procurement.departmental_needs.services.context import (
-	intake_window,
-	resolve_creation_context,
-	save_intake_window,
-)
+from kentender_procurement.departmental_needs.services.context import resolve_creation_context
+
+# NDS-CHG-001 v1.6 §6/§16.4 rewrote authorization onto the AUTH-ADR-001 v1.6
+# resolver (kentender_core.services.authorization / User Responsibility
+# Assignment); `services/permissions.py` and `services/context.py` dropped
+# `intake_window`, `save_intake_window` and every User-Permission-era
+# function these tests still called by name below. This file's fixtures
+# (`upsert_departmental_needs`, `_user_permission`) also still build the
+# pre-v1.6 world. A full rewrite is tracked as IMPLEMENTATION_TRACKER.md
+# NDS-G06 (seeds) / NDS-G07 (this suite) — until then, most classes below
+# error at runtime rather than pass; keeping this import block resolvable is
+# what lets the rest of the app's test suite be discovered at all (a broken
+# import here previously aborted `bench run-tests --app kentender_procurement`
+# for every module, not just this one).
 
 # §1.1 removed these outright; §6 names exactly five business roles.
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")

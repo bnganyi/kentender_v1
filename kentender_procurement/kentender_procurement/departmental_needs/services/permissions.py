@@ -214,10 +214,16 @@ def _all_active_units() -> list[dict[str, str]]:
 
 
 def creation_contexts(user: str | None = None) -> list[dict[str, str]]:
-	"""Organisation Units in which this user may author a Need (§8.1, §16.4.4)."""
+	"""Organisation Units in which this user may author a Need (§8.1, §16.4.4).
+
+	Unlike :func:`viewing_contexts`, technical status grants no widening here:
+	§6 gives Administrator/System Manager read-all, but "no Need decision
+	unless the person also has the applicable business responsibility
+	assignment" — `require_create` never grants a technical reader authority
+	to create, so offering every Organisation Unit here would let the client
+	present a "Create need" action the server always refuses.
+	"""
 	principal = actor(user)
-	if is_technical(principal):
-		return _all_active_units()
 	return _unit_rows(permitted_ou_scopes(principal, ROLE_DEPARTMENTAL_AUTHOR))
 
 

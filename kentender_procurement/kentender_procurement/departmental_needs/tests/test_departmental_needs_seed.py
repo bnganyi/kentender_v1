@@ -44,8 +44,17 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	REVIEWER,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services.context import intake_window
+from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
+
+# NDS-CHG-001 v1.6 §14/§16.4 retargets this fixture onto ERPNext `Fiscal Year`
+# and `UOM`, User Responsibility Assignment grants, and the plain Open/Closed
+# Needs-submission flag — `seeds/kentender_mvp_r1.py` and this file still
+# build/assert the pre-v1.6 world (`Needs Intake Window`, `Unit Of Measure`,
+# `User Permission`). Tracked as IMPLEMENTATION_TRACKER.md NDS-G06 (seeds) /
+# NDS-G07 (this suite); until the seed rewrite lands, `upsert_departmental_needs()`
+# itself raises, so every class below errors at setUpClass regardless of this
+# file's own content.
 
 # §14.3 — reference, department, quantity, required-by, state.
 DEFAULT_NEEDS = {
@@ -110,7 +119,7 @@ class TestConfigurationPrerequisites(SeedCase):
 	def test_the_window_is_open_at_the_design_clock(self):
 		# §14.1's design clock is 24 Nov 2026, inside the window.
 		self.assertEqual(
-			intake_window(PE, FY, at="2026-11-24 15:00:00")["state"], INTAKE_OPEN
+			needs_submission_state(FY, at="2026-11-24 15:00:00")["state"], INTAKE_OPEN
 		)
 
 

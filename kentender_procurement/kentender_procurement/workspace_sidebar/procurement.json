@@ -257,18 +257,6 @@
   {
    "child": 1,
    "collapsible": 0,
-   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"Procurement Planner\")",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Intake window",
-   "link_type": "URL",
-   "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/departmental-needs/intake-window"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
    "display_depends_on": "eval: (frappe.user_roles || []).some(function(r) { return [\"System Manager\", \"Reference Data Manager\"].includes(r); })",
    "indent": 0,
    "keep_closed": 0,
@@ -291,7 +279,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-04 14:41:17.382074",
+ "modified": "2026-09-04 19:06:34.535603",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

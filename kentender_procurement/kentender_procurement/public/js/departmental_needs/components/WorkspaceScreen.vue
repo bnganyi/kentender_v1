@@ -78,20 +78,15 @@
 		</div>
 
 		<template v-else>
-			<!-- CTX-CHG-001 rule 4 — the band always shows the selected PE, the
-			     selected department (with Change context), a CHANGEABLE Financial
-			     Year, and the intake state with its exact opening and closing
-			     instants. -->
+			<!-- §12.1 — the band shows the selected department (with Change
+			     context), a CHANGEABLE Financial Year, and the Needs-submission
+			     state with its exact close instant when set. There is no PE
+			     dimension (AUTH-ADR-001 v1.6 §1.1 — the site is exactly one
+			     implicit Procuring Entity). -->
 			<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-context-grid" style="grid-template-columns: repeat(4, 1fr)">
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">Procuring Entity</div>
-						<div class="kt-readonly-value is-strong">
-							{{ context.procuring_entity_label || context.procuring_entity || "" }}
-						</div>
-					</div>
+				<div class="kt-context-grid" style="grid-template-columns: repeat(3, 1fr)">
 					<div class="kt-readonly-row">
 						<div class="kt-readonly-label">
 							Department
@@ -128,20 +123,30 @@
 						</select>
 					</div>
 					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">Intake window</div>
-						<div class="kt-readonly-value is-strong" data-testid="nds-intake-state">
-							{{ intakeStateLabel }}
+						<div class="kt-readonly-label">Needs submission</div>
+						<div class="kt-readonly-value is-strong" data-testid="nds-submission-state">
+							{{ submission.open ? "Open" : "Closed" }}
 						</div>
 						<div
-							v-if="intake && intake.configured"
+							v-if="submission.open && submission.closes_at"
 							style="font-size: 12.5px; color: var(--color-neutral-600); margin-top: 4px"
-							data-testid="nds-intake-instants"
+							data-testid="nds-submission-closes-at"
 						>
-							Opens {{ formatInstant(intake.opens_at) }} · Closes {{ formatInstant(intake.closes_at) }}
+							Closes {{ formatInstant(submission.closes_at) }}
 						</div>
 					</div>
 				</div>
 			</div>
+
+			<!-- §11.15 "No open Fiscal Year" — existing rows stay visible and
+			     readable; only the notice and the missing Create button say so. -->
+			<p
+				v-if="!submission.open && needs.length"
+				data-testid="nds-submission-closed-notice"
+				style="margin: 0 0 16px; font-size: 13.5px; color: var(--color-neutral-700)"
+			>
+				Needs submission is currently closed. You can continue viewing existing needs.
+			</p>
 
 			<!-- §12.1 — search matches title or reference; status is the only filter. -->
 			<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px">
@@ -231,7 +236,8 @@ const props = defineProps({
 	error: { type: String, default: "" },
 	outcome: { type: String, default: "" },
 	context: { type: Object, default: () => ({}) },
-	intake: { type: Object, default: () => ({}) },
+	// get_needs_submission_state() shape: { open, financial_year, label, closes_at }.
+	submission: { type: Object, default: () => ({}) },
 	needs: { type: Array, default: () => [] },
 	actions: { type: Array, default: () => [] },
 	countLabel: { type: String, default: "" },
@@ -277,16 +283,9 @@ const columns = [
 const filtersActive = computed(() => !!(props.search || props.status));
 
 // §12.1 — Create need needs both: the server must offer the action (only an
-// author in this context does), and intake must be Open. The intake check
-// alone would show the button to a reviewer for as long as intake is Open.
+// author in this context does), and Needs submission must be Open. The flag
+// check alone would show the button to a reviewer for as long as it is Open.
 const canCreate = computed(
-	() =>
-		props.actions.some((action) => action.code === "create") &&
-		props.intake &&
-		props.intake.state === "Open"
+	() => props.actions.some((action) => action.code === "create") && !!props.submission.open
 );
-
-// NDS-DES-14c — a Scheduled or Closed window still shows existing records;
-// only the state, the instants and the missing Create button say so (§12.1).
-const intakeStateLabel = computed(() => (props.intake || {}).state || "Not configured");
 </script>
