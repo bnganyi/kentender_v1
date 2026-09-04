@@ -19,8 +19,15 @@ infrastructure debts, unaffected by the v1.6 cutover, and stay open as written
 — FU-06 in particular (a missing Procurement Home pipeline-count contract) is
 untouched: v1.6 adds no such contract to §8.1. **FU-15** (added by Phase 5's
 browser verification) is resolved by Phase 6's seed rewrite, per its own
-2026-09-04 update note. **FU-16** is new, discovered by Phase 6 itself, and
-worth reading before Phase 7 touches any Playwright spec.
+2026-09-04 update note. **FU-16** and **FU-17** are new, discovered by Phase 6
+and Phase 7 (NDS-713) respectively. **FU-18, FU-19 and FU-20** are new,
+added by Phase 10's acceptance-criteria mapping: FU-18 is a spec-text
+ambiguity needing Project Owner confirmation (not a defect); FU-19 is real,
+missing automated-regression coverage inside this module (three specific
+NDS-AC gaps, none currently believed broken); FU-20 is a Procurement
+Planning-owned finding (that module's own test suite cannot currently execute
+against this site) surfaced while trying to verify Planning-owned acceptance
+criteria that are correctly out of this cycle's own scope.
 
 ---
 
@@ -465,3 +472,202 @@ tracker rule 6 means the next author should not "delete later". A small
 `departmental_needs.seeds._purge_need_graph(needs)` helper shared by both
 resets would remove the duplication; not done here to keep the Phase 7 diff
 to tests and the two defects.
+
+**Update 2026-09-04, NDS-713 (Playwright half of Phase 7).** Two more real
+defects in the same family — a Phase 6 rewrite regression and a permission
+gap, both found only by actually driving the fixture actors through a real
+browser rather than as Administrator — surfaced while getting
+`npm run test:ui:smoke:nds` green, and were fixed in the same session:
+
+3. `playwright_ui_fixtures.py::_ensure_user` never called `update_password`,
+   so a newly-created NDS Playwright actor (`nds.pw.author@example.test`,
+   `nds.pw.reviewer@example.test`, `nds.pw.planner@example.test`) had no
+   password at all — every one of these actors was unable to log in
+   ("Invalid Login") for the entire time this defect existed. Confirmed live
+   2026-09-04 by attempting the actual browser login the specs use. This is a
+   Phase 6 seed-rewrite regression: the pre-Phase-6 fixture used
+   `kentender_mvp_r1`'s `base._user`, whose own docstring notes it "saves the
+   User twice (add_roles, then update_password)" — the rewritten
+   `_ensure_user` kept the role assignment half and silently dropped the
+   password half. Fixed by calling `update_password(email, TEST_PASSWORD)`
+   unconditionally (new user or existing), matching the same unconditional
+   call in `kentender_core.seeds._common.upsert_seed_user`.
+4. ERPNext's native `UOM` doctype (retargeted onto by D6) carries DocPerm
+   rows only for ERPNext's own Item/Stock/Sales roles — none of Departmental
+   Needs' three business roles (`Departmental Author`, `Head of User
+   Department`, `Procurement Planner`) had read access. Every real
+   Departmental Author's "Create need" flow hit Frappe's own "Insufficient
+   Permission for UOM" dialog from `DepartmentalNeeds.vue::loadUnits()`'s
+   client-side `frappe.db.get_list("UOM", ...)` call — and because that read
+   sits inside the editor's one shared `load()` promise, the failure left
+   `data-loading` stuck `"true"` forever (the form still rendered underneath
+   the dialog, since `NeedEditorScreen` doesn't gate on `loading`, so this
+   looked like a passing screen to anything short of a real click-through).
+   Phase 5's own live verification (NDS-504/NDS-G05) never caught this
+   because it was done as Administrator, who bypasses every DocPerm.
+
+**Why it matters.** Both defects are invisible to every Python test and to
+any browser verification done as Administrator — the exact blind spot this
+module's own accumulated experience already warns about (see
+`IMPLEMENTATION_TRACKER.md` headline finding 9 and NDS-509/510). A UI gate
+that only ever logs in as an unrestricted user cannot catch either class of
+bug.
+
+**Fix (done).** (3) `_ensure_user` now calls `update_password` unconditionally.
+(4) A new idempotent patch, `kentender_procurement.patches.
+nds_chg_001_v16_grant_uom_read_permission`, grants a `Custom DocPerm` read
+row on `UOM` for the three Departmental Needs business roles — the normal
+Frappe mechanism for extending permissions on a doctype this app does not
+own, rather than a new §8.1 endpoint or an edit to erpnext's own doctype
+JSON. Both fixes are live-verified: fixture-actor login succeeds, and
+`Custom DocPerm` for `UOM` shows `read: 1` for all three roles.
+
+**Still open.** No other Departmental Needs screen was audited for a similar
+DocPerm gap on a core/ERPNext doctype it reads client-side — `UOM` is the
+only one currently read that way (Fiscal Year and Organisation Unit reads
+all go through server-side `frappe.get_all`/`frappe.db.get_value`, which
+bypass DocType permissions, per `services/context.py`'s existing pattern).
+If a future screen adds another direct client-side `frappe.db.get_list()`
+against a doctype this module doesn't own, check its DocPerm table against
+these three roles before assuming it works — Administrator-only verification
+will not catch a gap.
+
+---
+
+## FU-18 — Resubmit of a Returned correction is not re-gated on a closed intake flag; the spec text is internally tensioned on this point (2026-09-04)
+
+**What.** `services/lifecycle.py::submit_need` calls `require_open_intake` only
+when `prior == STATE_DRAFT` (the very first Draft → Submitted transition). A
+*resubmit* of a Returned correction (`prior == STATE_RETURNED`) is never gated
+on the flag at all, by explicit design — the inline comment reads "the initial
+submission needs the flag Open; a correction of a version submitted before
+close does not" — and is proven by a real, currently-passing test:
+`test_a_returned_correction_may_be_resubmitted_after_the_window_closes`
+(`test_departmental_needs_lifecycle.py`) closes the flag and then successfully
+resubmits a returned correction in the same transaction.
+
+**Why it matters.** NDS-CHG-001 v1.6's own text is not unambiguous on this
+point. NDS-BR-002 and AC-003 both use the qualifier "initial" ("initial
+creation and initial submission require the flag Open"), which supports the
+implemented reading. But NDS-BR-003's own final sentence, unqualified, reads
+"Submission stays blocked while the flag is closed" — and the v1.6 "New in
+v1.6" disposition table's own rationale for the correction ("a draft that can
+be neither finished nor cleanly abandoned is dead weight, and intake
+extensions are routine") reads as an argument for allowing exactly this
+resubmit path, but was written to justify Draft/Returned *editability*, not
+explicitly *resubmission*. Both readings are defensible; the code picked one
+and it is well-tested, but no Project Owner sign-off on this specific
+resubmit-while-closed question is recorded anywhere.
+
+**Why it was not treated as a defect.** The chosen reading is internally
+consistent (matches AC-003's own "initial" wording), product-sensible (a
+correction already in the review pipeline before close is not new intake
+demand), and deliberately commented in the source rather than accidental. This
+pass does not silently accept or reverse it — per this repo's own convention
+of surfacing rather than guessing at an ambiguous business rule.
+
+**Fix.** A Project Owner should confirm, in the next NDS specification
+version, that "initial submission" in NDS-BR-002/AC-003 is the controlling,
+narrower phrase and that NDS-BR-003's later "Submission stays blocked" applies
+only to the *initial* path — or state the opposite and require `submit_need`
+to gate the resubmit branch too. Either way, restate NDS-BR-003 so the two
+sentences do not read as contradicting each other.
+
+---
+
+## FU-19 — Three NDS-owned acceptance criteria have no automated regression: multi-OU create dialog, multi-Fiscal-Year browsing, save-draft-while-closed (2026-09-04)
+
+**What.** Phase 10's acceptance-criteria mapping (`IMPLEMENTATION_TRACKER.md`
+Phase 10 work register) found three real, specific gaps in this module's own
+automated test coverage — not functional defects (in two of the three, source
+inspection or a one-time live check supports the implementation being
+correct), but criteria this tracker cannot honestly call `Done` without an
+observed, checked-in result:
+
+1. **NDS-AC-048 — the NDS-DES-15 "Create need for" multi-OU dialog.**
+   `list_need_create_targets` is checked only for being a whitelisted contract
+   *name*, never for its actual zero/one/several-OU return shape. No
+   Playwright spec exercises `CreateTargetDialog.vue` at all — confirmed by
+   grep, zero hits for `CreateTargetDialog`/`create-target`/`Create need for`
+   under `tests/ui/`. The Playwright `AUTHOR` fixture is single-OU only, so
+   the suite cannot structurally reach this branch. The only evidence is
+   Phase 5's one-time manual browser check (NDS-507), performed *before*
+   Phase 6/7 rewrote the seed/actor world.
+2. **NDS-AC-050 — multi-Fiscal-Year browsing / remembered-year trap
+   (§16.4 step 9).** Already honestly recorded at the Phase 2 gate level
+   (`NDS-G02`: "steps 9/10/13 still proven live only") but not previously
+   mapped to its exact AC id. No test file in this module references a second
+   Fiscal Year; `list_needs_financial_years`/`selectable_financial_years` is,
+   like `list_need_create_targets`, only checked for whitelisting.
+3. **NDS-AC-054 (half) — Save draft stays enabled on a Draft/Returned Need
+   while intake is closed.** `close_window()` is called exactly 3 times in
+   `test_departmental_needs_lifecycle.py`; none combines it with `update_need`
+   (the save-draft command) — only with create, submit, and resubmit (see
+   FU-18). Source inspection confirms `update_need` never calls
+   `require_open_intake`, so the behaviour is almost certainly correct, but
+   that is code-reading, not an observed test result.
+
+Separately, and lower-severity: **NDS-AC-025** (design fidelity) currently
+rests on visual-regression baselines (NDS-908) rather than the newer,
+mechanized `design-fidelity` Playwright gate (structural landmarks + geometry
+measured directly off the `.dc.html` artboard) that AGENTS.md §6.6 says every
+UI phase should ship and that System Setup/Budget already have
+(`tests/ui/smoke/design-fidelity/`). This module's `.dc.html` artboards were
+themselves edited this cycle (the PE row removed), which is exactly the
+"reused component, changed artboard" case AGENTS.md §6.6 says needs either the
+fidelity gate or an explicit, owner-signed-off exception — neither exists for
+Departmental Needs today.
+
+**Why it matters.** All four are the kind of gap that is invisible right up
+until the one specific scenario is exercised — exactly the failure mode this
+module has already hit twice this cycle (NDS-509/510, NDS-713's two
+Playwright-only defects). A future session should not assume these paths are
+covered just because the surrounding suite is green.
+
+**Fix.** Add, in a future session scoped for it (not required to reopen this
+NDS-CHG-001 v1.6 cycle, since nothing here is a known defect): a Python test
+for `list_need_create_targets`'s multi-OU return shape plus a Playwright spec
+giving one fixture actor two Organisation Units to reach `CreateTargetDialog`;
+a Python or Playwright test exercising a second Fiscal Year to prove browsing
+and creation-eligibility survive a remembered/filtered year; a lifecycle test
+combining `close_window()` with `update_need`; and, if this module's screens
+are touched again, a `departmental-needs-fidelity.spec.ts` following the
+System Setup/Budget pattern.
+
+---
+
+## FU-20 — Procurement Planning's own test suite cannot currently execute against this site (2026-09-04)
+
+**What.** While attempting to independently verify NDS-CHG-001 v1.6's
+Planning-owned acceptance criteria (AC-031, AC-034–037, AC-045 — the
+direct-departmental-requirement editor, mixed-origin DPP, and KEBS-equivalence
+requirements) for Phase 10, running
+`kentender_procurement.procurement_planning.tests.test_dpp_lifecycle` live
+errored at `setUpClass` with `ValidationError: Exactly one root organisation
+unit exists per site`. Planning's own fixture builder
+(`procurement_planning/tests/fixtures.py::ensure_world`) still creates a
+second `Procuring Entity`-scoped Organisation Unit tree, an `Organisation Unit
+Type` record and the legacy custom `Financial Year` doctype — none compatible
+with the one-PE/one-root-OU/ERPNext-`Fiscal Year` model this site now runs
+under (the same model NDS-CHG-001 v1.6 cut Departmental Needs over to this
+cycle).
+
+**Why it matters.** This tracker's own Decision log already records that
+"Procurement Planning is not yet cut over to AUTH-ADR-001... and is two spec
+versions behind approved" as a known, out-of-scope-for-NDS fact. This finding
+sharpens that: it is not only Planning's *authorization layer* that is behind
+— Planning's entire test suite currently cannot execute at all against this
+site's real state, meaning no one can currently get a fresh green confirmation
+of *any* Planning behaviour, including functionality (direct requirements,
+mixed-origin DPP) that predates and is unrelated to the AUTH-ADR-001 cutover
+itself.
+
+**Why this was not fixed here.** Out of scope for a Departmental Needs
+rebuild cycle — Planning is a separate module with its own tracker and its
+own Project Owner-approved scope. This session made no change to
+`kentender_procurement/procurement_planning/`.
+
+**Fix.** A future Planning rebuild session (or an interim, narrowly-scoped
+fixture repair) needs to rewrite `tests/fixtures.py::ensure_world` onto the
+current site model before any of Planning's own acceptance criteria — NDS's
+AC-031/034–037/045 included — can be evidenced by a live, passing test again.

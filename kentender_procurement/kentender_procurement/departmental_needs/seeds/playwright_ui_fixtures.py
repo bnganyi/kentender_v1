@@ -37,6 +37,7 @@ from uuid import uuid4
 
 import frappe
 
+from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import organisation_structure as structure
 from kentender_core.services import responsibility_administration as administration
 from kentender_procurement.departmental_needs.constants import (
@@ -101,22 +102,31 @@ def _guard() -> None:
 
 
 def _ensure_user(email: str, full_name: str) -> None:
-	if frappe.db.exists("User", email):
-		return
-	first, _, last = full_name.partition(" ")
-	doc = frappe.get_doc(
-		{
-			"doctype": "User",
-			"email": email,
-			"first_name": first,
-			"last_name": last,
-			"send_welcome_email": 0,
-			"user_type": "System User",
-			"enabled": 1,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-	doc.add_roles("Desk User")
+	if not frappe.db.exists("User", email):
+		first, _, last = full_name.partition(" ")
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": first,
+				"last_name": last,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+				"enabled": 1,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+	# Every reset must leave the actor able to log in with the standard test
+	# password, whether the User row is brand new or already existed — a plain
+	# insert() sets no password at all, which silently made every NDS
+	# Playwright actor unable to authenticate (found live: "Invalid Login" for
+	# an actor `ensure_actors()` had already created). Matches
+	# kentender_core.seeds._common.upsert_seed_user's own unconditional
+	# `update_password(...)` call.
+	from frappe.utils.password import update_password
+
+	update_password(email, TEST_PASSWORD)
 
 
 def _fixture_unit() -> str:

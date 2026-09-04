@@ -472,11 +472,15 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 
 		Comments and docstrings are stripped before scanning: several of them
 		exist precisely to say these stores must not be used, and matching that
-		prose would make the guard fire on its own documentation.
+		prose would make the guard fire on its own documentation. Ordinary
+		string literals (e.g. a real `frappe.get_all("User Permission", ...)`
+		call) are kept — an earlier stripper blanked every string, which made
+		this guard vacuous against the exact violation it exists to catch
+		(see `test_departmental_needs_static_scan.py::strip_python`).
 		"""
-		import io
 		import pathlib
-		import tokenize
+
+		from kentender_procurement.departmental_needs.tests.test_departmental_needs_static_scan import strip_python
 
 		module = pathlib.Path(permissions.__file__).parent.parent
 		prohibited = (
@@ -486,18 +490,13 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 			"Capability Profile",
 			"Operational Scope Assignment",
 			"Authorization Delegation",
-			'"User Permission"',
-			"'User Permission'",
+			"User Permission",
 		)
 		offenders = []
 		for path in sorted(module.rglob("*.py")):
 			if "tests" in path.parts or "__pycache__" in path.parts:
 				continue
-			code = "".join(
-				token.string
-				for token in tokenize.generate_tokens(io.StringIO(path.read_text()).readline)
-				if token.type not in (tokenize.COMMENT, tokenize.STRING)
-			)
+			code = strip_python(path.read_text())
 			offenders += [f"{path.name}:{token}" for token in prohibited if token in code]
 		self.assertEqual(offenders, [], f"parallel permission store referenced: {offenders}")
 

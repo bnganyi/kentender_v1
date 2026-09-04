@@ -4,22 +4,22 @@ import { loginAsNdsFixtureReviewer } from "../../helpers/auth";
 import { clearFixtures, collectConsoleErrors, expectScreen, gotoNeeds, resetFixture, selectContext } from "./helpers";
 
 /**
- * NDS-CHG-001 v1.1 — NDS-UI-07 withdrawal review
+ * NDS-CHG-001 v1.6 — NDS-UI-07 withdrawal review
  * (`/app/departmental-needs/review/{review_task_id}/withdrawal`).
  *
  * The second of the four screens DEBT-06 recorded as unproven. Its audience is
  * the Head of User Department only.
  *
  * Fixtures are `reset_withdrawal_blocked_fixture` / `_cleared_fixture` under
- * PE-CGKIS (DEBT-07), rebuilt per test, so these specs execute a real Approve
- * without touching the §14.3 demo Needs.
+ * the dedicated Playwright Organisation Unit (DEBT-07), rebuilt per test, so
+ * these specs execute a real Approve without touching the §14.3 demo Needs.
  *
  * §12.6 is the rule under test: the screen reads the Planning dependency
  * **fresh** on every load and never trusts a cached button state, because the
  * dependency can clear or appear between the request and the decision.
  */
 
-const NEED = "NDS-CGKIS-2027-0001";
+let NEED = "";
 
 test.describe.configure({ mode: "serial" });
 
@@ -28,9 +28,10 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 
 	async function openWithdrawal(page: import("@playwright/test").Page) {
 		await gotoNeeds(page, "");
-		// §12.1 — two Financial Years are selectable, so the year must be
-		// resolved before rows are listed even though this actor has one department.
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		// §12.1 — defensive no-op here: this actor holds exactly one department
+		// grant, so the workspace resolves straight to "workspace" with no
+		// picker to select (see selectContext's own doc comment in helpers.ts).
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		// §12.2 — an open withdrawal is a decision this reviewer holds; the
 		// workspace's role-aware row (like My Work) leads to NDS-UI-07.
@@ -43,7 +44,7 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 	}
 
 	test("an Active Plan dependency blocks the decision (NDS-DES-12a)", async ({ page }) => {
-		resetFixture("reset_withdrawal_blocked_fixture");
+		NEED = resetFixture<{ need: string }>("reset_withdrawal_blocked_fixture").need;
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await openWithdrawal(page);
@@ -60,7 +61,7 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 	});
 
 	test("a cleared dependency allows Approve and Decline (NDS-DES-12b)", async ({ page }) => {
-		resetFixture("reset_withdrawal_cleared_fixture");
+		NEED = resetFixture<{ need: string }>("reset_withdrawal_cleared_fixture").need;
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await openWithdrawal(page);
@@ -73,7 +74,7 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 	});
 
 	test("approving a cleared withdrawal completes it", async ({ page }) => {
-		resetFixture("reset_withdrawal_cleared_fixture");
+		NEED = resetFixture<{ need: string }>("reset_withdrawal_cleared_fixture").need;
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await openWithdrawal(page);

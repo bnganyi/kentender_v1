@@ -1,10 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import {
-	loginAsNdsFixtureAuthor,
-	loginAsNdsFixturePlanner,
-	loginAsNdsFixtureReviewer,
-} from "../../helpers/auth";
+import { loginAsNdsFixtureAuthor, loginAsNdsFixtureReviewer } from "../../helpers/auth";
 import {
 	clearFixtures,
 	collectConsoleErrors,
@@ -42,9 +38,18 @@ import {
  * Deliberately not asserted here: the exact copy of each field. That is what
  * the functional specs check, and duplicating it in an image makes the
  * baseline churn on every wording change without adding coverage.
+ *
+ * NDS-CHG-001 v1.6 — every baseline is re-shot with no Procuring Entity
+ * row/column anywhere (D4 removed the concept outright), and the NDS-DES-10
+ * "Intake window" baseline is retired along with the screen and fixture it
+ * covered: `IntakeWindowScreen.vue`, its `/intake-window` route and
+ * `reset_intake_window_fixture` were all deleted in Phase 5/6 (D3 — NDS owns
+ * no intake-configuration surface; "Needs submission" is a plain Open/Closed
+ * flag read via `kentender_core.services.site_configuration`, not a window
+ * with its own screen). Every Need reference below is read from its
+ * fixture's own JSON return value, never hardcoded (FU-16/FU-17).
  */
 
-const NEED = "NDS-CGKIS-2027-0001";
 const SHOT = { maxDiffPixels: 300, animations: "disabled" as const };
 
 /** The rail shows the signed-in user, so mask it out of every comparison. */
@@ -58,13 +63,14 @@ function chrome(page: import("@playwright/test").Page) {
 test.describe.configure({ mode: "serial" });
 
 test.describe("NDS-908 visual references at 1440 × 1024", () => {
+	test.afterAll(() => clearFixtures());
 
 	test("NDS-DES-01 workspace with rows", async ({ page }) => {
 		resetFixture("reset_open_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await expect(page.locator('[data-testid="nds-shell"]')).toHaveScreenshot(
 			"nds-des-01-workspace.png",
@@ -85,13 +91,13 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	});
 
 	test("NDS-DES-06 departmental review task", async ({ page }) => {
-		resetFixture("reset_review_task_fixture");
+		const need = resetFixture<{ need: string }>("reset_review_task_fixture").need;
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page
-			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.locator(`[data-testid="nds-need-row"][data-reference="${need}"] [data-testid="nds-row-action"]`)
 			.click();
 		await expectScreen(page, "task");
 		await expect(page.locator('[data-testid="nds-shell"]')).toHaveScreenshot(
@@ -101,14 +107,14 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	});
 
 	test("NDS-DES-12a withdrawal review, dependency blocked", async ({ page }) => {
-		resetFixture("reset_withdrawal_blocked_fixture");
+		const need = resetFixture<{ need: string }>("reset_withdrawal_blocked_fixture").need;
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page
 			.locator(
-				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
+				`[data-testid="nds-need-row"][data-reference="${need}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
 			)
 			.click();
 		await expectScreen(page, "withdrawal");
@@ -119,14 +125,14 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 	});
 
 	test("NDS-DES-12b withdrawal review, dependency cleared", async ({ page }) => {
-		resetFixture("reset_withdrawal_cleared_fixture");
+		const need = resetFixture<{ need: string }>("reset_withdrawal_cleared_fixture").need;
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page
 			.locator(
-				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
+				`[data-testid="nds-need-row"][data-reference="${need}"] [data-testid="nds-row-action"][data-action="withdrawal"]`,
 			)
 			.click();
 		await expectScreen(page, "withdrawal");
@@ -136,26 +142,14 @@ test.describe("NDS-908 visual references at 1440 × 1024", () => {
 		);
 	});
 
-	test("NDS-DES-10 intake window", async ({ page }) => {
-		resetFixture("reset_intake_window_fixture");
-		await loginAsNdsFixturePlanner(page);
-		await gotoNeeds(page, "/intake-window");
-		await selectContext(page, "CGK-DEPT-HEALTH");
-		await expectScreen(page, "intake");
-		await expect(page.locator('[data-testid="nds-shell"]')).toHaveScreenshot(
-			"nds-des-10-intake-window.png",
-			chrome(page),
-		);
-	});
-
 	test("NDS-DES-11 reason dialog", async ({ page }) => {
-		resetFixture("reset_review_task_fixture");
+		const need = resetFixture<{ need: string }>("reset_review_task_fixture").need;
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page
-			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.locator(`[data-testid="nds-need-row"][data-reference="${need}"] [data-testid="nds-row-action"]`)
 			.click();
 		await expectScreen(page, "task");
 		await page.locator('[data-testid="nds-decision-return"]').click();
