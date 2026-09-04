@@ -1,0 +1,176 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Regulatory Reference",
+ "autoname": "format:REG-{fiscal_year}-{##}",
+ "fields": [
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gazette_reference",
+   "fieldtype": "Data",
+   "label": "Gazette Reference",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nSuperseded",
+   "default": "Active",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_rr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reservation_target_percent",
+   "fieldtype": "Percent",
+   "label": "Reservation Target (%)",
+   "read_only": 1,
+   "description": "Regulation 149 / section 53(6): share of planned value reserved for youth, women and persons with disabilities."
+  },
+  {
+   "fieldname": "county_resident_target_percent",
+   "fieldtype": "Percent",
+   "label": "County Resident-Tenderer Minimum (%)",
+   "read_only": 1,
+   "description": "Regulation 40(5): applies only where the site entity is a county entity."
+  },
+  {
+   "fieldname": "exclusive_preference_works_amount",
+   "fieldtype": "Currency",
+   "label": "Exclusive Preference Threshold \u2014 Works",
+   "read_only": 1,
+   "description": "Regulation 163: works, construction materials and other materials made in Kenya."
+  },
+  {
+   "fieldname": "exclusive_preference_goods_services_amount",
+   "fieldtype": "Currency",
+   "label": "Exclusive Preference Threshold \u2014 Goods and Services",
+   "read_only": 1
+  },
+  {
+   "fieldname": "market_price_index_published",
+   "fieldtype": "Check",
+   "label": "Market Price Index Published",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_bands",
+   "fieldtype": "Section Break",
+   "label": "Threshold Matrix (Second Schedule)"
+  },
+  {
+   "fieldname": "threshold_bands",
+   "fieldtype": "Table",
+   "label": "Threshold Bands",
+   "options": "Regulatory Threshold Band",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_res",
+   "fieldtype": "Section Break",
+   "label": "Preference and Reservation Categories (section 157(4))"
+  },
+  {
+   "fieldname": "reservation_categories",
+   "fieldtype": "Table",
+   "label": "Reservation Categories",
+   "options": "Regulatory Reservation Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_mpi",
+   "fieldtype": "Section Break",
+   "label": "Market Price Index (section 54(3))"
+  },
+  {
+   "fieldname": "market_prices",
+   "fieldtype": "Table",
+   "label": "Market Prices",
+   "options": "Regulatory Market Price",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_buf",
+   "fieldtype": "Section Break",
+   "label": "Schedule Buffer Defaults"
+  },
+  {
+   "fieldname": "schedule_buffers",
+   "fieldtype": "Table",
+   "label": "Schedule Buffers",
+   "options": "Regulatory Schedule Buffer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "field_order": [
+  "fiscal_year",
+  "effective_from",
+  "gazette_reference",
+  "status",
+  "column_break_rr",
+  "reservation_target_percent",
+  "county_resident_target_percent",
+  "exclusive_preference_works_amount",
+  "exclusive_preference_goods_services_amount",
+  "market_price_index_published",
+  "section_break_bands",
+  "threshold_bands",
+  "section_break_res",
+  "reservation_categories",
+  "section_break_mpi",
+  "market_prices",
+  "section_break_buf",
+  "schedule_buffers",
+  "fixture_namespace"
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "track_changes": 1
+}

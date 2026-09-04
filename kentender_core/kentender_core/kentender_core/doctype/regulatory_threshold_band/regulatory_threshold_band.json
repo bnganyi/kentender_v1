@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Regulatory Threshold Band",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Goods\nWorks\nServices",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Link",
+   "label": "Procurement Method",
+   "options": "Procurement Method",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "max_amount",
+   "fieldtype": "Currency",
+   "label": "Maximum Amount",
+   "description": "0 means no fixed maximum (determined by the funds allocated, or subject to the section's conditions).",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "options": "Per request\nPer item per financial year\nPer procurement\nFunds allocated\nSection conditions",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "statutory_reference",
+   "fieldtype": "Data",
+   "label": "Statutory Reference"
+  }
+ ],
+ "field_order": [
+  "procurement_category",
+  "procurement_method",
+  "max_amount",
+  "basis",
+  "statutory_reference"
+ ],
+ "permissions": []
+}

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""CFG-CHG-002 v0.6 §5–§8 — site configuration commands.
+"""CFG-CHG-002 v0.9 §5–§8 — site configuration commands.
 
 One site is one Procuring Entity, configured once at first run and never
 selected afterwards. Fiscal years are ERPNext `Fiscal Year` records extended
@@ -36,6 +36,37 @@ FLAG_CLOSES_AT = "kentender_needs_submission_closes_at"
 FLAG_CHANGED_BY = "kentender_flag_changed_by"
 FLAG_CHANGED_AT = "kentender_flag_changed_at"
 
+# CFG-CHG-002 v0.9 §4.2 — the departmental-plan intake flag follows the same
+# pattern as needs intake (CFG-BR-013: at most one year open, independent of
+# the needs flag). Procurement Planning reads it and never writes it.
+DPP_FLAG_OPEN = "kentender_dpp_submission_open"
+DPP_FLAG_CLOSES_AT = "kentender_dpp_submission_closes_at"
+
+# CFG-CHG-002 v0.9 §4.1 / CFG-BR-014 — the statutory approval route above the
+# accounting officer (regulation 40(4); Third Schedule signature block). Four
+# values, no `None`: exactly one route applies to every entity.
+STATUTORY_APPROVAL_ROUTES: tuple[str, ...] = (
+	"Cabinet Secretary",
+	"County Executive Committee Member",
+	"Board of Directors",
+	"Council",
+)
+# The route derived from the entity type when a first-run configure command
+# does not name one (the System setup artboards carry no route control yet);
+# it is editable afterwards through `update_procuring_entity` and is never
+# blank. Recorded as PLN tracker D10.
+_ROUTE_BY_PE_TYPE: dict[str, str] = {
+	"National Government Ministry": "Cabinet Secretary",
+	"State Department": "Cabinet Secretary",
+	"Constitutional Commission": "Cabinet Secretary",
+	"Other Public Entity": "Cabinet Secretary",
+	"State Corporation": "Board of Directors",
+	"County Corporation": "Board of Directors",
+	"County Government": "County Executive Committee Member",
+	"Public University": "Council",
+}
+_COUNTY_PE_TYPES: frozenset[str] = frozenset({"County Government", "County Corporation"})
+
 PE_TYPES: tuple[str, ...] = (
 	"National Government Ministry",
 	"State Department",
@@ -58,6 +89,11 @@ KT_FISCAL_YEAR_REFERENCES: tuple[tuple[str, str], ...] = (
 	# NDS-CHG-001 v1.6 §16.4.11 — Departmental Needs binds to the canonical
 	# year (retired its own bespoke `Financial Year` doctype).
 	("Departmental Need", "financial_year"),
+	# PLN-CHG-001 v1.12 §4.2/§4.7 — Procurement Planning binds its two roots
+	# to the canonical year (D7). Guarded by column presence in
+	# `_reference_count` until the Planning cutover lands.
+	("Departmental Plan", "fiscal_year"),
+	("Annual Plan", "fiscal_year"),
 )
 
 
@@ -91,6 +127,7 @@ def get_site_configuration() -> dict[str, Any]:
 	configured = bool(single.pe_code)
 	root = _root_unit()
 	open_year = _open_intake_year() if _flag_fields_ready() else None
+	dpp_year = _open_intake_year(DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT) if _dpp_flag_fields_ready() else None
 
 	return {
 		"configured": configured,
@@ -100,6 +137,8 @@ def get_site_configuration() -> dict[str, Any]:
 			"pe_type": single.pe_type or "",
 			"ppra_registration": single.ppra_registration or "",
 			"timezone": single.timezone or "Africa/Nairobi",
+			"statutory_approval_route": single.get("statutory_approval_route") or "",
+			"entity_is_county": bool(single.get("entity_is_county")),
 			"configured_by": single.configured_by or "",
 			"configured_at": str(single.configured_at or ""),
 			"configured_at_label": display_datetime(single.configured_at),
@@ -119,8 +158,48 @@ def get_site_configuration() -> dict[str, Any]:
 			if open_year
 			else None
 		),
+		"dpp_submission": (
+			{
+				"fiscal_year": dpp_year["name"],
+				"label": _fy_label(dpp_year["year_start_date"]),
+				"closes_at": str(dpp_year.get(DPP_FLAG_CLOSES_AT) or ""),
+			}
+			if dpp_year
+			else None
+		),
+		"statutory_approval_routes": list(STATUTORY_APPROVAL_ROUTES),
 		"timezone": (single.timezone or "Africa/Nairobi"),
 	}
+
+
+def get_dpp_submission_state(fiscal_year: str = "") -> dict[str, Any]:
+	"""CFG v0.9 §11.5 — the departmental-plan intake flag as modules read it.
+
+	Read-only. With a Fiscal Year: that year's flag and close instant. Without:
+	the one open year, if any. Never a permission dimension (PLN v1.12 §4.1).
+	"""
+	if not _dpp_flag_fields_ready():
+		return {"fiscal_year": fiscal_year or "", "open": False, "closes_at": "", "installed": False}
+	if fiscal_year:
+		row = frappe.db.get_value(
+			FY_DOCTYPE, fiscal_year, ["name", "year_start_date", DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT], as_dict=True
+		)
+		if not row:
+			return {"fiscal_year": fiscal_year, "open": False, "closes_at": "", "installed": True}
+		closes = row.get(DPP_FLAG_CLOSES_AT)
+		is_open = bool(row.get(DPP_FLAG_OPEN)) and not (closes and get_datetime(closes) <= now_datetime())
+		return {
+			"fiscal_year": row["name"],
+			"label": _fy_label(row["year_start_date"]),
+			"open": is_open,
+			"closes_at": str(closes or "") if is_open else "",
+			"closes_label": display_datetime(closes) if is_open and closes else "",
+			"installed": True,
+		}
+	open_year = _open_intake_year(DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT)
+	if not open_year:
+		return {"fiscal_year": "", "open": False, "closes_at": "", "installed": True}
+	return get_dpp_submission_state(open_year["name"])
 
 
 def _timezone_options(current: str) -> list[str]:
@@ -160,6 +239,8 @@ def list_fiscal_years() -> dict[str, Any]:
 	fields = ["name", "year", "year_start_date", "year_end_date", "disabled", "modified"]
 	if _flag_fields_ready():
 		fields += [FLAG_OPEN, FLAG_CLOSES_AT]
+	if _dpp_flag_fields_ready():
+		fields += [DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT]
 	rows = frappe.get_all(
 		FY_DOCTYPE,
 		fields=fields,
@@ -172,6 +253,7 @@ def list_fiscal_years() -> dict[str, Any]:
 		start, end = getdate(row["year_start_date"]), getdate(row["year_end_date"])
 		phase = "Current" if start <= today <= end else ("Upcoming" if start > today else "Past")
 		open_flag = bool(row.get(FLAG_OPEN))
+		dpp_open = bool(row.get(DPP_FLAG_OPEN))
 		out.append(
 			{
 				"fiscal_year": row["name"],
@@ -185,6 +267,11 @@ def list_fiscal_years() -> dict[str, Any]:
 				"needs_submission_closes_at": str(row.get(FLAG_CLOSES_AT) or "") if open_flag else "",
 				"needs_submission_closes_label": (
 					display_datetime(row.get(FLAG_CLOSES_AT)) if open_flag else ""
+				),
+				"dpp_submission_open": dpp_open,
+				"dpp_submission_closes_at": str(row.get(DPP_FLAG_CLOSES_AT) or "") if dpp_open else "",
+				"dpp_submission_closes_label": (
+					display_datetime(row.get(DPP_FLAG_CLOSES_AT)) if dpp_open else ""
 				),
 				"reference_count": _reference_count(row["name"]),
 				"expected_version": str(row["modified"]),
@@ -220,6 +307,8 @@ def configure_procuring_entity(
 	pe_type: str,
 	ppra_registration: str = "",
 	timezone: str = "Africa/Nairobi",
+	statutory_approval_route: str = "",
+	entity_is_county: bool | None = None,
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
 	"""§7 `ConfigureProcuringEntity` — first-run configuration.
@@ -241,6 +330,8 @@ def configure_procuring_entity(
 			fail_cfg("CFG_PE_INVALID", "Enter the entity's official legal name (2–200 characters).")
 		if pe_type not in PE_TYPES:
 			fail_cfg("CFG_PE_INVALID", "Select the entity type.")
+		route = _valid_route(statutory_approval_route, pe_type)
+		county = _COUNTY_PE_TYPES.__contains__(pe_type) if entity_is_county is None else bool(entity_is_county)
 
 		single = frappe.get_doc(SITE_PE_DOCTYPE)
 		single.pe_name = name
@@ -248,6 +339,8 @@ def configure_procuring_entity(
 		single.pe_type = pe_type
 		single.ppra_registration = (ppra_registration or "").strip()
 		single.timezone = (timezone or "Africa/Nairobi").strip() or "Africa/Nairobi"
+		single.statutory_approval_route = route
+		single.entity_is_county = 1 if county else 0
 		single.configured_by = actor
 		single.configured_at = now_datetime()
 		single.save(ignore_permissions=True)
@@ -296,7 +389,17 @@ def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = 
 	if expected_version and str(single.modified) != str(expected_version):
 		fail_cfg("CFG_VERSION_CONFLICT")
 
-	before = {field: single.get(field) for field in ("pe_name", "pe_type", "ppra_registration", "timezone")}
+	before = {
+		field: single.get(field)
+		for field in (
+			"pe_name",
+			"pe_type",
+			"ppra_registration",
+			"timezone",
+			"statutory_approval_route",
+			"entity_is_county",
+		)
+	}
 	if "pe_name" in payload:
 		name = " ".join((payload["pe_name"] or "").split())
 		if not (2 <= len(name) <= 200):
@@ -310,6 +413,14 @@ def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = 
 		single.ppra_registration = (payload["ppra_registration"] or "").strip()
 	if "timezone" in payload:
 		single.timezone = (payload["timezone"] or "").strip() or "Africa/Nairobi"
+	if "statutory_approval_route" in payload:
+		single.statutory_approval_route = _valid_route(payload["statutory_approval_route"], single.pe_type)
+	if "entity_is_county" in payload:
+		single.entity_is_county = 1 if payload["entity_is_county"] else 0
+	if not single.get("statutory_approval_route"):
+		# A site configured before v0.9 carries no route yet; derive it once
+		# so the record never saves without one (CFG-BR-014).
+		single.statutory_approval_route = _valid_route("", single.pe_type)
 	single.save(ignore_permissions=True)
 
 	after = {field: single.get(field) for field in before}
@@ -457,13 +568,89 @@ def open_needs_submission(
 	concurrent opens serialise on the lock, and the loser sees the winner's
 	state before writing.
 	"""
+	return _open_intake_flag(
+		FLAG_OPEN,
+		FLAG_CLOSES_AT,
+		"needs_submission",
+		fiscal_year=fiscal_year,
+		closes_at=closes_at,
+		reason=reason,
+		expected_version=expected_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+def close_needs_submission(
+	*, fiscal_year: str, reason: str = "", expected_version: str = "", idempotency_key: str = ""
+) -> dict[str, Any]:
+	"""§7 `CloseNeedsSubmission` — audited with actor, instant and reason."""
+	return _close_intake_flag(
+		FLAG_OPEN,
+		FLAG_CLOSES_AT,
+		"needs_submission",
+		fiscal_year=fiscal_year,
+		reason=reason,
+		expected_version=expected_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+def open_dpp_submission(
+	*,
+	fiscal_year: str,
+	closes_at: str = "",
+	reason: str = "",
+	expected_version: str = "",
+	idempotency_key: str = "",
+) -> dict[str, Any]:
+	"""CFG v0.9 §4.2 / CFG-BR-013 — open departmental-plan intake for one year,
+	atomically closing any other year that has it open. Independent of the
+	needs flag: both may be open for different years at once."""
+	return _open_intake_flag(
+		DPP_FLAG_OPEN,
+		DPP_FLAG_CLOSES_AT,
+		"dpp_submission",
+		fiscal_year=fiscal_year,
+		closes_at=closes_at,
+		reason=reason,
+		expected_version=expected_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+def close_dpp_submission(
+	*, fiscal_year: str, reason: str = "", expected_version: str = "", idempotency_key: str = ""
+) -> dict[str, Any]:
+	"""CFG v0.9 §4.2 — close departmental-plan intake, audited."""
+	return _close_intake_flag(
+		DPP_FLAG_OPEN,
+		DPP_FLAG_CLOSES_AT,
+		"dpp_submission",
+		fiscal_year=fiscal_year,
+		reason=reason,
+		expected_version=expected_version,
+		idempotency_key=idempotency_key,
+	)
+
+
+def _open_intake_flag(
+	flag_open: str,
+	flag_closes_at: str,
+	purpose: str,
+	*,
+	fiscal_year: str,
+	closes_at: str,
+	reason: str,
+	expected_version: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
 	actor = require_configuration_administrator()
-	_require_flag_fields()
+	_require_flag_fields(flag_open)
 
 	def _do() -> dict[str, Any]:
 		doc = _locked_fiscal_year(fiscal_year, expected_version)
 		if doc.get("disabled"):
-			fail_cfg("CFG_INTAKE_NOT_OPEN", "A disabled financial year cannot open needs submission.")
+			fail_cfg("CFG_INTAKE_NOT_OPEN", "A disabled financial year cannot open submission.")
 
 		close_instant = None
 		if (closes_at or "").strip():
@@ -474,32 +661,28 @@ def open_needs_submission(
 		# The database-level equivalent guard: lock all open rows, then close
 		# them in this same transaction (one atomic command, never two writes
 		# the user issues separately — §5.1).
-		frappe.db.sql(
-			f"select name from `tabFiscal Year` where `{FLAG_OPEN}` = 1 for update"
-		)
-		previously_open = frappe.get_all(
-			FY_DOCTYPE, filters={FLAG_OPEN: 1}, pluck="name", limit_page_length=0
-		)
+		frappe.db.sql(f"select name from `tabFiscal Year` where `{flag_open}` = 1 for update")
+		previously_open = frappe.get_all(FY_DOCTYPE, filters={flag_open: 1}, pluck="name", limit_page_length=0)
 		closed: list[str] = []
 		for other in previously_open:
 			if other == doc.name:
 				continue
-			_write_flag(other, open_flag=0, closes_at=None, actor=actor)
+			_write_flag(other, open_flag=0, closes_at=None, actor=actor, flag_open=flag_open, flag_closes_at=flag_closes_at)
 			closed.append(other)
 			log_audit_event(
 				event_type="site_configuration",
 				document_type=FY_DOCTYPE,
 				document_name=other,
-				action="close_needs_submission",
+				action=f"close_{purpose}",
 				metadata={"reason": f"Replaced by {doc.name}", "replaced_by": doc.name},
 			)
 
-		_write_flag(doc.name, open_flag=1, closes_at=close_instant, actor=actor)
+		_write_flag(doc.name, open_flag=1, closes_at=close_instant, actor=actor, flag_open=flag_open, flag_closes_at=flag_closes_at)
 		log_audit_event(
 			event_type="site_configuration",
 			document_type=FY_DOCTYPE,
 			document_name=doc.name,
-			action="open_needs_submission",
+			action=f"open_{purpose}",
 			metadata={
 				"reason": reason or "",
 				"closes_at": str(close_instant or ""),
@@ -508,31 +691,37 @@ def open_needs_submission(
 		)
 		return {"fiscal_year": doc.name, "open": True, "closed_other_years": closed}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, "open_needs_submission", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"open_{purpose}", _do)
 
 
-def close_needs_submission(
-	*, fiscal_year: str, reason: str = "", expected_version: str = "", idempotency_key: str = ""
+def _close_intake_flag(
+	flag_open: str,
+	flag_closes_at: str,
+	purpose: str,
+	*,
+	fiscal_year: str,
+	reason: str,
+	expected_version: str,
+	idempotency_key: str,
 ) -> dict[str, Any]:
-	"""§7 `CloseNeedsSubmission` — audited with actor, instant and reason."""
 	actor = require_configuration_administrator()
-	_require_flag_fields()
+	_require_flag_fields(flag_open)
 
 	def _do() -> dict[str, Any]:
 		doc = _locked_fiscal_year(fiscal_year, expected_version)
-		if not doc.get(FLAG_OPEN):
+		if not doc.get(flag_open):
 			fail_cfg("CFG_INTAKE_NOT_OPEN")
-		_write_flag(doc.name, open_flag=0, closes_at=None, actor=actor)
+		_write_flag(doc.name, open_flag=0, closes_at=None, actor=actor, flag_open=flag_open, flag_closes_at=flag_closes_at)
 		log_audit_event(
 			event_type="site_configuration",
 			document_type=FY_DOCTYPE,
 			document_name=doc.name,
-			action="close_needs_submission",
+			action=f"close_{purpose}",
 			metadata={"reason": reason or ""},
 		)
 		return {"fiscal_year": doc.name, "open": False}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, "close_needs_submission", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"close_{purpose}", _do)
 
 
 def set_fiscal_year_disabled(
@@ -547,6 +736,8 @@ def set_fiscal_year_disabled(
 		blockers: list[str] = []
 		if _flag_fields_ready() and doc.get(FLAG_OPEN):
 			blockers.append("Needs submission is open for this financial year.")
+		if _dpp_flag_fields_ready() and doc.get(DPP_FLAG_OPEN):
+			blockers.append("Departmental plan submission is open for this financial year.")
 		count = _reference_count(doc.name)
 		if count:
 			blockers.append(f"{count} KenTender records reference this financial year.")
@@ -571,22 +762,31 @@ def close_due_needs_submissions() -> dict[str, Any]:
 	rechecks the flag server-side in its own transaction (§11.3). Audited
 	with `System` as actor.
 	"""
-	if not _flag_fields_ready():
+	return _close_due(FLAG_OPEN, FLAG_CLOSES_AT, "needs_submission")
+
+
+def close_due_dpp_submissions() -> dict[str, Any]:
+	"""CFG v0.9 §4.2 — the same hourly closure for departmental-plan intake."""
+	return _close_due(DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT, "dpp_submission")
+
+
+def _close_due(flag_open: str, flag_closes_at: str, purpose: str) -> dict[str, Any]:
+	if not frappe.db.has_column(FY_DOCTYPE, flag_open):
 		return {"closed": []}
 	due = frappe.get_all(
 		FY_DOCTYPE,
-		filters={FLAG_OPEN: 1, FLAG_CLOSES_AT: ("<=", now_datetime())},
+		filters={flag_open: 1, flag_closes_at: ("<=", now_datetime())},
 		pluck="name",
 		limit_page_length=0,
 	)
 	closed = []
 	for name in due:
-		_write_flag(name, open_flag=0, closes_at=None, actor="System")
+		_write_flag(name, open_flag=0, closes_at=None, actor="System", flag_open=flag_open, flag_closes_at=flag_closes_at)
 		log_audit_event(
 			event_type="site_configuration",
 			document_type=FY_DOCTYPE,
 			document_name=name,
-			action="close_needs_submission",
+			action=f"close_{purpose}",
 			performed_by="Administrator",
 			metadata={"reason": "Scheduled close instant reached.", "actor": "System"},
 		)
@@ -627,6 +827,17 @@ def _site_company() -> str:
 	return companies[0] if len(companies) == 1 else ""
 
 
+def _valid_route(route: str, pe_type: str) -> str:
+	"""CFG-BR-014 — a route is always present; derive from the entity type when
+	the caller names none, refuse an unknown value."""
+	value = (route or "").strip()
+	if not value:
+		return _ROUTE_BY_PE_TYPE.get(pe_type or "", "Cabinet Secretary")
+	if value not in STATUTORY_APPROVAL_ROUTES:
+		fail_cfg("CFG_PE_INVALID", "Select the statutory approval route.")
+	return value
+
+
 def _locked_fiscal_year(fiscal_year: str, expected_version: str):
 	frappe.db.sql("select name from `tabFiscal Year` where name = %s for update", fiscal_year)
 	if not frappe.db.exists(FY_DOCTYPE, fiscal_year):
@@ -635,7 +846,8 @@ def _locked_fiscal_year(fiscal_year: str, expected_version: str):
 		FY_DOCTYPE,
 		fiscal_year,
 		["name", "year_start_date", "year_end_date", "disabled", "modified",
-		 *((FLAG_OPEN, FLAG_CLOSES_AT) if _flag_fields_ready() else ())],
+		 *((FLAG_OPEN, FLAG_CLOSES_AT) if _flag_fields_ready() else ()),
+		 *((DPP_FLAG_OPEN, DPP_FLAG_CLOSES_AT) if _dpp_flag_fields_ready() else ())],
 		as_dict=True,
 	)
 	if expected_version and str(doc.modified) != str(expected_version):
@@ -643,24 +855,32 @@ def _locked_fiscal_year(fiscal_year: str, expected_version: str):
 	return doc
 
 
-def _write_flag(fiscal_year: str, *, open_flag: int, closes_at, actor: str) -> None:
+def _write_flag(
+	fiscal_year: str,
+	*,
+	open_flag: int,
+	closes_at,
+	actor: str,
+	flag_open: str = FLAG_OPEN,
+	flag_closes_at: str = FLAG_CLOSES_AT,
+) -> None:
 	frappe.db.set_value(
 		FY_DOCTYPE,
 		fiscal_year,
 		{
-			FLAG_OPEN: open_flag,
-			FLAG_CLOSES_AT: closes_at,
+			flag_open: open_flag,
+			flag_closes_at: closes_at,
 			FLAG_CHANGED_BY: actor if actor != "System" else "Administrator",
 			FLAG_CHANGED_AT: now_datetime(),
 		},
 	)
 
 
-def _open_intake_year() -> dict[str, Any] | None:
+def _open_intake_year(flag_open: str = FLAG_OPEN, flag_closes_at: str = FLAG_CLOSES_AT) -> dict[str, Any] | None:
 	rows = frappe.get_all(
 		FY_DOCTYPE,
-		filters={FLAG_OPEN: 1},
-		fields=["name", "year_start_date", FLAG_CLOSES_AT],
+		filters={flag_open: 1},
+		fields=["name", "year_start_date", flag_closes_at],
 		limit_page_length=1,
 	)
 	return rows[0] if rows else None
@@ -669,7 +889,7 @@ def _open_intake_year() -> dict[str, Any] | None:
 def _reference_count(fiscal_year: str) -> int:
 	total = 0
 	for doctype, fieldname in KT_FISCAL_YEAR_REFERENCES:
-		if frappe.db.exists("DocType", doctype):
+		if frappe.db.exists("DocType", doctype) and frappe.db.has_column(doctype, fieldname):
 			total += frappe.db.count(doctype, {fieldname: fiscal_year})
 	return total
 
@@ -678,8 +898,12 @@ def _flag_fields_ready() -> bool:
 	return frappe.db.has_column(FY_DOCTYPE, FLAG_OPEN)
 
 
-def _require_flag_fields() -> None:
-	if not _flag_fields_ready():
+def _dpp_flag_fields_ready() -> bool:
+	return frappe.db.has_column(FY_DOCTYPE, DPP_FLAG_OPEN)
+
+
+def _require_flag_fields(flag_open: str = FLAG_OPEN) -> None:
+	if not frappe.db.has_column(FY_DOCTYPE, flag_open):
 		fail_cfg(
 			"CFG_PE_INVALID",
 			"The financial-year intake fields are not installed yet. Run a migration first.",

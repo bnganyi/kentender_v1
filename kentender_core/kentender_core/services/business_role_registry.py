@@ -114,63 +114,55 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	_entry(
 		"Procurement Planner",
 		SCOPE_SITE,
-		"NDS-CHG-001 v1.6 / PLN-CHG-001 v1.4 §6",
+		"NDS-CHG-001 v1.6 / PLN-CHG-001 v1.12 §6",
 		sod_tags=("procurement_validation", "plan_preparation"),
 	),
-	# NDS registers "Auditor"; PLN registers "Planning Auditor". Both are
-	# kept: §4.4 makes the module document the source of the exact role name,
-	# so they are not merged into one label. ADR §4.4 permits an OU-scoped
-	# Auditor "where an approved oversight scope is narrower than the site";
-	# no approved document declares that narrowing yet, so Site-wide governs.
+	# One Auditor label serves NDS, Budget and Planning (PLN-CHG-001 v1.12 §6
+	# names "Auditor"; the earlier "Planning Auditor" label was retired in the
+	# v1.12 cutover, tracker D6). ADR §4.4 permits an OU-scoped Auditor "where
+	# an approved oversight scope is narrower than the site"; no approved
+	# document declares that narrowing yet, so Site-wide governs.
 	_entry(
 		"Auditor",
 		SCOPE_SITE,
-		"NDS-CHG-001 v1.6 / BUD-CHG-001 v1.3 §7",
+		"NDS-CHG-001 v1.6 / BUD-CHG-001 v1.5 §7 / PLN-CHG-001 v1.12 §6",
 		sod_tags=("oversight_read",),
 	),
-	# --- Procurement Planning (PLN-CHG-001 v1.4 §6) ----------------------
-	# Budget Officer serves two approved documents: Budget authoring
-	# (BUD-CHG-001 v1.3 §7) and the Planning Finance task (PLN §6). Which of
-	# Budget Officer / Finance Confirmation Officer owns the Planning Finance
-	# confirmation is an open conflict between those two documents; both are
-	# registered and neither is quietly retired here.
+	# --- Procurement Planning (PLN-CHG-001 v1.12 §6) ---------------------
+	# Budget Officer authors budget versions and holds no Planning task
+	# (BUD v1.5 §7; PLN v1.12 §6). The Planning Finance task is gated on
+	# Finance Confirmation Officer below.
 	_entry(
 		"Budget Officer",
 		SCOPE_SITE,
-		"BUD-CHG-001 v1.3 §7 / PLN-CHG-001 v1.4 §6",
-		sod_tags=("budget_authoring", "finance_confirmation"),
+		"BUD-CHG-001 v1.5 §7",
+		sod_tags=("budget_authoring",),
 	),
 	_entry(
 		"Accounting Officer",
 		SCOPE_SITE,
-		"PLN-CHG-001 v1.4 §6",
+		"PLN-CHG-001 v1.12 §6",
 		sod_tags=("plan_adoption",),
 	),
-	# §6: "Exactly one route applies to the PE." The applicable capacity —
-	# responsible Cabinet Secretary, County Executive Committee Member, Board
-	# or similar governing body — is resolved from the site's own governed
-	# entity type at decision time, not by a separate role per capacity.
+	# §4.12: "Exactly one route applies." The applicable capacity — Cabinet
+	# Secretary, County Executive Committee Member, Board of Directors or
+	# Council — is resolved from the site's configured
+	# `statutory_approval_route` at decision time, not by a role per capacity.
 	_entry(
 		"Plan Statutory Approver",
 		SCOPE_SITE,
-		"PLN-CHG-001 v1.4 §6",
+		"PLN-CHG-001 v1.12 §6",
 		sod_tags=("statutory_approval",),
-	),
-	_entry(
-		"Planning Auditor",
-		SCOPE_SITE,
-		"PLN-CHG-001 v1.4 §6",
-		sod_tags=("oversight_read",),
 	),
 	# --- Budget & Funding (BUD-CHG-001 v1.3 §7) --------------------------
 	# There is no Budget Viewer role under v1.3 — read access is produced by
 	# the registered permission hooks (DocPerm + kentender_scope_map) acting
 	# on the actor's assignments, not a fourth business responsibility.
-	_entry("Budget Approver", SCOPE_SITE, "BUD-CHG-001 v1.3 §7", sod_tags=("budget_approval",)),
+	_entry("Budget Approver", SCOPE_SITE, "BUD-CHG-001 v1.5 §7", sod_tags=("budget_approval",)),
 	_entry(
 		"Finance Confirmation Officer",
 		SCOPE_SITE,
-		"BUD-CHG-001 v1.3 §7",
+		"BUD-CHG-001 v1.5 §7 / PLN-CHG-001 v1.12 §6",
 		sod_tags=("finance_confirmation",),
 	),
 	# --- Strategy Alignment (STR-CHG-001 v1.5 §7) ------------------------

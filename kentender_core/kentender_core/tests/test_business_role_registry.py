@@ -72,10 +72,13 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		self.assertNotIn("System Manager", registry.REGISTRY)
 		self.assertEqual(registry.TECHNICAL_ROLES, frozenset({"Administrator", "System Manager"}))
 
-	def test_both_auditor_labels_are_registered_unmerged(self):
-		"""NDS names `Auditor`; PLN names `Planning Auditor`; §4.4 keeps both."""
+	def test_one_auditor_label_serves_every_module(self):
+		"""NDS, Budget and PLN v1.12 all name `Auditor`; the earlier
+		`Planning Auditor` label is retired (PLN tracker D6)."""
 		self.assertIn("Auditor", registry.REGISTRY)
-		self.assertIn("Planning Auditor", registry.REGISTRY)
+		self.assertNotIn("Planning Auditor", registry.REGISTRY)
+		self.assertEqual(registry.scope_type("Finance Confirmation Officer"), registry.SCOPE_SITE)
+		self.assertNotIn("finance_confirmation", registry.REGISTRY["Budget Officer"].sod_tags)
 
 	def test_strategy_roles_are_site_wide(self):
 		"""§20 — Strategy Author and Approver bind to Site-wide scope."""

@@ -11,6 +11,7 @@
   "usage",
   "active_plan",
   "active_plan_item",
+  "not_proceeding_reason",
   "source_event_id",
   "source_event_time",
   "fixture_namespace"
@@ -40,12 +41,12 @@
   },
   {
    "default": "Not included",
-   "description": "Not included or Fully included. Partially included is removed by v1.1 §1.1.",
+   "description": "Not included or Fully included. Partially included is removed by v1.1 \u00a71.1.",
    "fieldname": "usage",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Usage",
-   "options": "Not included\nFully included",
+   "options": "Not included\nFully included\nNot proceeding",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -63,6 +64,13 @@
    "fieldtype": "Data",
    "label": "Active Plan Item",
    "read_only": 1
+  },
+  {
+   "fieldname": "not_proceeding_reason",
+   "fieldtype": "Small Text",
+   "label": "Not Proceeding Reason",
+   "read_only": 1,
+   "description": "PLN-CHG-001 v1.12 \u00a74.4 \u2014 the department's reason for not proceeding this financial year, published by Planning."
   },
   {
    "description": "Makes projection updates idempotent; a repeat of the same event is ignored.",
@@ -99,12 +107,34 @@
  "name": "Need Planning Usage Projection",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "read": 1, "role": "System Manager", "write": 1},
-  {"create": 1, "read": 1, "role": "Administrator", "write": 1},
-  {"read": 1, "role": "Departmental Author"},
-  {"read": 1, "role": "Head of User Department"},
-  {"read": 1, "role": "Procurement Planner"},
-  {"read": 1, "role": "Auditor"}
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Departmental Author"
+  },
+  {
+   "read": 1,
+   "role": "Head of User Department"
+  },
+  {
+   "read": 1,
+   "role": "Procurement Planner"
+  },
+  {
+   "read": 1,
+   "role": "Auditor"
+  }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,

@@ -36,6 +36,9 @@ SITE = {
 	"pe_type": "National Government Ministry",
 	"ppra_registration": "PPRA/PE/2019/0114",
 	"timezone": "Africa/Nairobi",
+	# CFG-CHG-002 v0.9 §4.1 / PLN-CHG-001 v1.12 §14.6 — the configured route.
+	"statutory_approval_route": "Cabinet Secretary",
+	"entity_is_county": False,
 }
 
 UNITS = (
@@ -47,6 +50,67 @@ UNITS = (
 
 FISCAL_START_YEARS = (2026, 2027)
 INTAKE = {"start_year": 2027, "closes_at": "2026-11-25 23:59:00"}
+# PLN-CHG-001 v1.12 §14.1 — departmental-plan intake for FY 2027/28 closes
+# 30 Nov 2026, 23:59:59 EAT (stored UTC).
+DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
+
+# CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
+# catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four
+# types incl. Works; the eleven Third Schedule methods, Open Tender first).
+REQUIREMENT_TYPES = ("Non-consulting services", "Consulting services", "Goods", "Works")
+PROCUREMENT_METHODS = (
+	"Open Tender",
+	"Direct Procurement",
+	"Restricted Tender",
+	"Request for Quotations",
+	"Low Value Procurement",
+	"Community Participation",
+	"Design Competition",
+	"Electronic Reverse Auction",
+	"Force Account",
+	"Competitive Negotiations",
+	"Request for Proposals",
+)
+
+# CFG-CHG-002 v0.9 §4.4A / PLN-CHG-001 v1.12 §14.1 — the Second Schedule
+# matrix in force for FY 2027/28. `max_amount` 0 = no fixed maximum.
+_KES = 1.0
+THRESHOLD_BANDS = (
+	# (method, goods max, works max, services max, basis, reference)
+	("Low Value Procurement", 50_000, 100_000, 50_000, "Per item per financial year", "Second Schedule; s.107"),
+	("Request for Quotations", 3_000_000, 5_000_000, 3_000_000, "Per request", "Second Schedule; s.105"),
+	("Restricted Tender", 30_000_000, 30_000_000, 20_000_000, "Per procurement", "Second Schedule; s.102(1)(b)"),
+	("Open Tender", 0, 0, 0, "Funds allocated", "Second Schedule; s.96"),
+	("Request for Proposals", 0, 0, 0, "Funds allocated", "Second Schedule; s.116"),
+	("Direct Procurement", 0, 0, 0, "Section conditions", "Second Schedule; s.103"),
+	("Community Participation", 0, 0, 0, "Funds allocated", "reg 109"),
+	("Design Competition", 0, 0, 0, "Funds allocated", "s.92(1)"),
+	("Electronic Reverse Auction", 0, 0, 0, "Funds allocated", "s.92(1)"),
+	("Force Account", 0, 0, 0, "Funds allocated", "reg 95"),
+	("Competitive Negotiations", 0, 0, 0, "Funds allocated", "s.92(1)"),
+)
+# PLN-CHG-001 v1.12 §4.9 governed reservation values; rank 1 = highest
+# advantage (section 156 / regulation 153), 0 = None.
+RESERVATION_CATEGORIES = (
+	("None", 0, False, ""),
+	("Youth", 1, False, "s.157(4); reg 149"),
+	("Women", 1, False, "s.157(4); reg 149"),
+	("Persons with disabilities", 1, False, "s.157(4); reg 149"),
+	("Other disadvantaged group", 2, False, "s.157(4)"),
+	("Micro, small and medium enterprise", 3, False, "s.157(4)"),
+	("Regional — county", 4, True, "reg 151"),
+	("Regional — sub-county", 4, True, "reg 151"),
+	("Regional — constituency", 4, True, "reg 151"),
+	("National reservation — citizen contractor", 5, False, "s.157(8)(a); reg 163"),
+)
+REGULATORY_REFERENCE = {
+	"gazette_reference": "PPADR 2020 Second Schedule (rev. 2022) — FY 2027/28",
+	"effective_from": "2027-07-01",
+	"reservation_target_percent": 30,
+	"county_resident_target_percent": 20,
+	"exclusive_preference_works_amount": 1_000_000_000,
+	"exclusive_preference_goods_services_amount": 500_000_000,
+}
 
 ACTORS = (
 	# (local part, full name)
@@ -127,6 +191,9 @@ def run(*, commit: bool = True) -> dict:
 		"company": _seed_company(),
 		"fiscal_years": _seed_fiscal_years(),
 		"intake": _seed_intake(),
+		"dpp_intake": _seed_dpp_intake(),
+		"catalogues": _seed_catalogues(),
+		"regulatory_reference": _seed_regulatory_reference(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
 		"assignments": _seed_assignments(),
@@ -152,6 +219,8 @@ def _seed_site() -> str:
 				"pe_type": SITE["pe_type"],
 				"ppra_registration": SITE["ppra_registration"],
 				"timezone": SITE["timezone"],
+				"statutory_approval_route": SITE["statutory_approval_route"],
+				"entity_is_county": SITE["entity_is_county"],
 			}
 		)
 		return "updated"
@@ -212,6 +281,67 @@ def _seed_intake() -> str:
 		reason="Annual needs call issued under circular MOH/PROC/2026/07.",
 	)
 	return f"opened: {target}"
+
+
+def _seed_dpp_intake() -> str:
+	target = configuration._fy_name(DPP_INTAKE["start_year"])
+	if frappe.db.get_value("Fiscal Year", target, configuration.DPP_FLAG_OPEN):
+		return f"already open: {target}"
+	configuration.open_dpp_submission(
+		fiscal_year=target,
+		closes_at=DPP_INTAKE["closes_at"],
+		reason="Departmental procurement plans called for FY 2027/28 under regulation 40(3).",
+	)
+	return f"opened: {target}"
+
+
+def _seed_catalogues() -> dict[str, int]:
+	created = 0
+	for doctype, titles in (("Requirement Type", REQUIREMENT_TYPES), ("Procurement Method", PROCUREMENT_METHODS)):
+		for title in titles:
+			if frappe.db.exists(doctype, title):
+				if frappe.db.get_value(doctype, title, "status") != "Active":
+					frappe.db.set_value(doctype, title, "status", "Active", update_modified=False)
+				continue
+			frappe.get_doc({"doctype": doctype, "title": title, "status": "Active"}).insert(ignore_permissions=True)
+			created += 1
+	return {"created": created, "requirement_types": len(REQUIREMENT_TYPES), "procurement_methods": len(PROCUREMENT_METHODS)}
+
+
+def _seed_regulatory_reference() -> str:
+	from kentender_core.services import regulatory_reference as register
+
+	fiscal_year = configuration._fy_name(DPP_INTAKE["start_year"])
+	bands = []
+	for method, goods, works, services, basis, reference in THRESHOLD_BANDS:
+		for category, amount in (("Goods", goods), ("Works", works), ("Services", services)):
+			bands.append(
+				{
+					"procurement_category": category,
+					"procurement_method": method,
+					"max_amount": amount,
+					"basis": basis,
+					"statutory_reference": reference,
+				}
+			)
+	outcome = register.register_regulatory_reference(
+		fiscal_year=fiscal_year,
+		effective_from=REGULATORY_REFERENCE["effective_from"],
+		gazette_reference=REGULATORY_REFERENCE["gazette_reference"],
+		threshold_bands=bands,
+		reservation_categories=[
+			{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}
+			for name, rank, regional, ref in RESERVATION_CATEGORIES
+		],
+		reservation_target_percent=REGULATORY_REFERENCE["reservation_target_percent"],
+		county_resident_target_percent=REGULATORY_REFERENCE["county_resident_target_percent"],
+		exclusive_preference_works_amount=REGULATORY_REFERENCE["exclusive_preference_works_amount"],
+		exclusive_preference_goods_services_amount=REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"],
+		market_prices=[],
+		schedule_buffers=[],
+		fixture_namespace=FIXTURE_TAG,
+	)
+	return f"{outcome['reference']}{'' if outcome['created'] else ' (existing)'}"
 
 
 def _seed_uoms() -> dict[str, int]:

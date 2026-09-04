@@ -3,7 +3,7 @@
 **Authority:** `KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_12.md` (approved 3 September 2026).
 **Companions:** `02_PLN_Rebuild_Gap_Analysis.md`, `03_PLN_Rebuild_Implementation_Plan.md` (decision register D1–D15, owner defaults O1–O6, phase design, execution rules).
 **Supersedes-in-tracking:** the v1.2 cycle (closed 31 August 2026, archived as `IMPLEMENTATION_TRACKER_v1_2_closed.md`, 136 Python + 69 vitest + 29 Playwright green in its final state). That work is the baseline this cycle corrects; its 32 headline findings remain valid.
-**Status:** Phase 0 closed 5 September 2026. Phases 1–8 Planned.
+**Status:** Phases 0–1 closed 5 September 2026. Phase 2 In progress.
 **Started:** 5 September 2026.
 
 ## Tracker rules
@@ -40,7 +40,7 @@
 | Gate | Exit condition | Status | Evidence / gap |
 |---|---|---|---|
 | PLN-G00 | Plan, tracker, gap analysis authored; baseline recorded; artboards and sibling docs committed; orphan bundle removed; no product code changed | Done | 2026-09-05. Baseline: `test_planning_v12_schema` Ran 6 FAILED (failures=2); `test_dpp_lifecycle` / `test_planning_workspace` error in `setUpClass` ("Exactly one root organisation unit exists per site"), Ran 0; Playwright not runnable (PE worlds). Orphan `_ds/industry-f4215206…` deleted. Docs written; commit is this phase's. |
-| PLN-G01 | Sibling contracts live: DPP flags + commands + job, Site PE route/county, regulator register + read service + seed, registry roles, catalogues seeded, Budget affordability + reference, NDS `Not proceeding`; owning-app tests green; migrate clean | Planned | |
+| PLN-G01 | Sibling contracts live: DPP flags + commands + job, Site PE route/county, regulator register + read service + seed, registry roles, catalogues seeded, Budget affordability + reference, NDS `Not proceeding`; owning-app tests green; migrate clean | Done | 2026-09-05. PLN-101..109 Done with row evidence; core 25 + 3 + 13, Budget 2, NDS 31 tests OK; migrate clean; no Planning code touched. |
 | PLN-G02 | Planning schema + services cut over (D2–D12); Python suite green on the D13 world; migrate clean; retired-concept scan planted-violation-proven; NDS/Budget/Strategy contract suites green | Planned | |
 | PLN-G03 | Slice A (DES-01, 02, 03, 04, 05, 06, 16) per rule 6 | Planned | |
 | PLN-G04 | Slice B (DES-07, 08, 09, 09A) per rule 6 | Planned | |
@@ -63,15 +63,15 @@
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN-101 | `kentender_core/install.py`: `kentender_dpp_submission_open` / `_closes_at` custom fields (D8) | Planned | |
-| PLN-102 | `site_configuration.open_dpp_submission` / `close_dpp_submission` / `close_due_dpp_submissions` + hourly hook; `KT_FISCAL_YEAR_REFERENCES` gains Planning doctypes; `get_site_configuration` exposes both intake years | Planned | |
-| PLN-103 | Site PE `statutory_approval_route` (four values, required) + `entity_is_county`; seed `Cabinet Secretary`; `site_setup` opens the DPP flag on 2027-2028 (D10) | Planned | |
-| PLN-104 | Regulator reference doctypes + `get_regulatory_reference(fiscal_year)` + §14.1 seed (D9); effective-dating test | Planned | |
-| PLN-105 | Registry: Finance Confirmation Officer for Planning; retire `Planning Auditor`; citations → v1.12 (D6) | Planned | |
-| PLN-106 | Core seed for `Requirement Type` (4 incl. Works) and `Procurement Method` (11) | Planned | |
-| PLN-107 | Budget `check_plan_affordability` + `reference` in `list_eligible_budget_lines`; request-shaped tests (D11) | Planned | |
-| PLN-108 | NDS `Not proceeding` usage value with reason (D12) | Planned | |
-| PLN-109 | `bench migrate` clean; owning-app focused suites green; seeds idempotent | Planned | |
+| PLN-101 | `kentender_core/install.py`: `kentender_dpp_submission_open` / `_closes_at` custom fields (D8) | Done  / `kentender_core/install.py::_ensure_fiscal_year_flag_fields` adds `kentender_dpp_submission_open` / `_closes_at`; live after `bench migrate` (`get_value(Fiscal Year 2027-2028, [needs_open, dpp_open])` → `[1, 1]`). |
+| PLN-102 | `site_configuration.open_dpp_submission` / `close_dpp_submission` / `close_due_dpp_submissions` + hourly hook; `KT_FISCAL_YEAR_REFERENCES` gains Planning doctypes; `get_site_configuration` exposes both intake years | Done  / `site_configuration.py`: generic `_open_intake_flag`/`_close_intake_flag`/`_close_due` behind unchanged needs commands + new `open_dpp_submission`/`close_dpp_submission`/`close_due_dpp_submissions`/`get_dpp_submission_state`; `get_site_configuration` exposes `dpp_submission` + route/county; `list_fiscal_years` rows carry DPP flag; disable guard names the DPP flag; `KT_FISCAL_YEAR_REFERENCES` + column-guarded `_reference_count`; hourly hook added. `test_site_configuration` Ran 25 OK (2 new classes: DPP flag independence/atomic move/scheduled close; route derivation/update/rejection). Also fixed a pre-existing test hygiene defect: the suite left the §8 seed's open flags moved onto far-future years (NDS contracts errored in setUpClass until reseeded) — base class now restores them. |
+| PLN-103 | Site PE `statutory_approval_route` (four values, required) + `entity_is_county`; seed `Cabinet Secretary`; `site_setup` opens the DPP flag on 2027-2028 (D10) | Done  / Site PE JSON gains `statutory_approval_route` (four values) + `entity_is_county`; controller derives a route from `pe_type` when blank (CFG-BR-014, never None); `configure_procuring_entity`/`update_procuring_entity` accept both; `site_setup.SITE` seeds `Cabinet Secretary`; `_seed_dpp_intake` opens the DPP flag on 2027-2028 closing 2026-11-30 23:59:59 EAT. Seed output: `"dpp_intake": "opened: 2027-2028"`. |
+| PLN-104 | Regulator reference doctypes + `get_regulatory_reference(fiscal_year)` + §14.1 seed (D9); effective-dating test | Done  / New doctypes `Regulatory Reference` (+ child `Regulatory Threshold Band`, `Regulatory Reservation Category`, `Regulatory Market Price`, `Regulatory Schedule Buffer`), immutable after insert, superseding on re-register; `services/regulatory_reference.py::get_regulatory_reference(fiscal_year)` / `register_regulatory_reference`; §14.1 seed (`REG-2027-2028-01`: 33 bands, 10 categories, 30%/20%, 1bn/500m, price index unpublished). `test_regulatory_reference` Ran 3 OK (unavailable-without-raise, category-keyed matrix + immutability + supersession retained, canonical seed figures). |
+| PLN-105 | Registry: Finance Confirmation Officer for Planning; retire `Planning Auditor`; citations → v1.12 (D6) | Done  / Registry: `Planning Auditor` retired, `Auditor` cites PLN v1.12, `Budget Officer` loses `finance_confirmation`, `Finance Confirmation Officer` cites PLN v1.12 §6, Accounting Officer / Plan Statutory Approver / Procurement Planner → v1.12. `test_business_role_registry` Ran 13 OK (one-auditor test replaces the both-labels test). |
+| PLN-106 | Core seed for `Requirement Type` (4 incl. Works) and `Procurement Method` (11) | Done  / `site_setup._seed_catalogues`: 4 Requirement Types (incl. Works) + 11 Procurement Methods; seed output `"catalogues": {"created": 15, ...}`. |
+| PLN-107 | Budget `check_plan_affordability` + `reference` in `list_eligible_budget_lines`; request-shaped tests (D11) | Done  / `budget_line_contracts.check_plan_affordability(fiscal_year, planned_totals)` (dict or rows; per-line approved/planned/positions/as_at; blocking within-approved with exact excess; advisory within-available; unknown lines fail closed) + `reference` on `list_eligible_budget_lines`; whitelisted in `budget_api`. `test_bud_chg_001_v15_affordability` Ran 2 OK (evaluated as system principal — Planning's gateway posture). |
+| PLN-108 | NDS `Not proceeding` usage value with reason (D12) | Done  / NDS `USAGE_NOT_PROCEEDING`, projection Select + `not_proceeding_reason`, `project_planning_usage(not_proceeding_reason=)` mandatory for that outcome. `test_departmental_needs_contracts` Ran 31 OK (new not-proceeding test). |
+| PLN-109 | `bench migrate` clean; owning-app focused suites green; seeds idempotent | Done  / `bench migrate` clean (after_migrate hooks ran); `site_setup.run` twice → existing/updated, no duplicates (`REG-2027-2028-01 (existing)` on rerun path); suites listed above green. |
 
 ## Work register — Phase 2: Planning cutover
 

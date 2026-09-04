@@ -36,7 +36,30 @@ class ConfigurationTestCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		cls.addClassCleanup(purge)
+		# These tests move the single-open intake flags onto far-future years;
+		# restore whichever years were open beforehand so the canonical §8 seed
+		# world (and every sibling suite that depends on it) is left intact.
+		cls._open_before = {
+			flag: frappe.get_all("Fiscal Year", filters={flag: 1}, pluck="name")
+			for flag in (configuration.FLAG_OPEN, configuration.DPP_FLAG_OPEN)
+			if frappe.db.has_column("Fiscal Year", flag)
+		}
+		cls.addClassCleanup(cls._restore_open_flags)
 		cls.root = fx.ensure_site_configured()
+		frappe.db.commit()
+
+	@classmethod
+	def _restore_open_flags(cls):
+		frappe.set_user("Administrator")
+		for flag, years in cls._open_before.items():
+			opener = (
+				configuration.open_needs_submission
+				if flag == configuration.FLAG_OPEN
+				else configuration.open_dpp_submission
+			)
+			for year in years:
+				if frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, flag):
+					opener(fiscal_year=year, reason="test cleanup: restore the previously open year")
 		frappe.db.commit()
 
 	def code(self, caught) -> str:
@@ -307,3 +330,68 @@ class TestNeedsSubmissionFlag(ConfigurationTestCase):
 			self.assertIn("2099-11-25", out["needs_submission"]["closes_at"])
 		finally:
 			configuration.close_needs_submission(fiscal_year=one, reason="Test reset.")
+
+
+class TestDppIntakeFlag(ConfigurationTestCase):
+	"""CFG-CHG-002 v0.9 §4.2 / CFG-BR-013 — the departmental-plan intake flag
+	follows the needs-flag pattern and is independent of it."""
+
+	def test_dpp_flag_opens_closes_and_is_independent_of_needs_intake(self):
+		y1, y2 = self.fy(Y1), self.fy(Y2)
+		configuration.open_needs_submission(fiscal_year=y1)
+		out = configuration.open_dpp_submission(fiscal_year=y2, closes_at=str(now_datetime().replace(year=2099)))
+		self.assertTrue(out["open"])
+		state = configuration.get_dpp_submission_state(y2)
+		self.assertTrue(state["open"])
+		self.assertEqual(configuration.get_dpp_submission_state()["fiscal_year"], y2)
+		# Independent flags: needs stays open on Y1 while DPP is open on Y2.
+		self.assertTrue(frappe.db.get_value("Fiscal Year", y1, configuration.FLAG_OPEN))
+		self.assertFalse(frappe.db.get_value("Fiscal Year", y1, configuration.DPP_FLAG_OPEN))
+		site = configuration.get_site_configuration()
+		self.assertEqual(site["needs_submission"]["fiscal_year"], y1)
+		self.assertEqual(site["dpp_submission"]["fiscal_year"], y2)
+		# At most one year open: opening Y1 closes Y2 atomically.
+		moved = configuration.open_dpp_submission(fiscal_year=y1)
+		self.assertEqual(moved["closed_other_years"], [y2])
+		self.assertFalse(configuration.get_dpp_submission_state(y2)["open"])
+		# Disable guard names the DPP flag.
+		with self.assertRaises(ConfigurationError) as caught:
+			configuration.set_fiscal_year_disabled(fiscal_year=y1, disabled=True)
+		self.assertEqual(self.code(caught), "CFG_FY_IN_USE")
+		configuration.close_dpp_submission(fiscal_year=y1, reason="test close")
+		configuration.close_needs_submission(fiscal_year=y1, reason="test close")
+		self.assertFalse(configuration.get_dpp_submission_state()["open"])
+
+	def test_scheduled_close_reaches_the_dpp_flag(self):
+		y2 = self.fy(Y2)
+		configuration.open_dpp_submission(fiscal_year=y2, closes_at=str(now_datetime().replace(year=2099)))
+		frappe.db.set_value(
+			"Fiscal Year", y2, configuration.DPP_FLAG_CLOSES_AT, now_datetime().replace(year=2001), update_modified=False
+		)
+		closed = configuration.close_due_dpp_submissions()
+		self.assertIn(y2, closed["closed"])
+		self.assertFalse(frappe.db.get_value("Fiscal Year", y2, configuration.DPP_FLAG_OPEN))
+
+
+class TestStatutoryApprovalRoute(ConfigurationTestCase):
+	"""CFG-CHG-002 v0.9 §4.1 / CFG-BR-014 — a route is always present and
+	never None; CFG-AC-030."""
+
+	def test_site_carries_a_route_and_rejects_an_unknown_one(self):
+		single = frappe.get_doc(configuration.SITE_PE_DOCTYPE)
+		before = single.statutory_approval_route
+		self.assertIn(before, configuration.STATUTORY_APPROVAL_ROUTES)
+		out = configuration.update_procuring_entity(payload={"statutory_approval_route": "Council"})
+		self.assertTrue(out["updated"])
+		self.assertEqual(configuration.get_site_configuration()["procuring_entity"]["statutory_approval_route"], "Council")
+		with self.assertRaises(ConfigurationError) as caught:
+			configuration.update_procuring_entity(payload={"statutory_approval_route": "None"})
+		self.assertEqual(self.code(caught), "CFG_PE_INVALID")
+		configuration.update_procuring_entity(payload={"statutory_approval_route": before, "entity_is_county": False})
+		self.assertFalse(configuration.get_site_configuration()["procuring_entity"]["entity_is_county"])
+
+	def test_route_derives_from_entity_type_on_first_run(self):
+		self.assertEqual(configuration._valid_route("", "County Government"), "County Executive Committee Member")
+		self.assertEqual(configuration._valid_route("", "State Corporation"), "Board of Directors")
+		self.assertEqual(configuration._valid_route("", "Public University"), "Council")
+		self.assertEqual(configuration._valid_route("", "National Government Ministry"), "Cabinet Secretary")

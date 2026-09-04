@@ -41,6 +41,16 @@ class SiteProcuringEntity(Document):
 			)
 		if not (self.timezone or "").strip():
 			self.timezone = "Africa/Nairobi"
+		# CFG-BR-014 — a route is required and has no None value. A record
+		# configured before v0.9 derives one from its entity type on first save
+		# rather than failing every later descriptive edit.
+		from kentender_core.services.site_configuration import STATUTORY_APPROVAL_ROUTES, _valid_route
+
+		route = (self.get("statutory_approval_route") or "").strip()
+		if route and route not in STATUTORY_APPROVAL_ROUTES:
+			frappe.throw("Select the statutory approval route.", title="CFG_PE_INVALID")
+		if not route:
+			self.statutory_approval_route = _valid_route("", self.pe_type)
 
 		# CFG-BR-002 — pe_code is immutable after first save, on every path
 		# including a direct API or fixture write, not only the UI command.

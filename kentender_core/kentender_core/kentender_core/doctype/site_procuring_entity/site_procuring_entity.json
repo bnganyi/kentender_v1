@@ -10,6 +10,8 @@
   "column_break_spe",
   "ppra_registration",
   "timezone",
+  "statutory_approval_route",
+  "entity_is_county",
   "section_break_spe_audit",
   "configured_by",
   "configured_at"
@@ -23,7 +25,7 @@
    "reqd": 1
   },
   {
-   "description": "Stable uppercase code, for example PE-MOH. Immutable after the site is configured (CFG-CHG-002 v0.6 §4.1).",
+   "description": "Stable uppercase code, for example PE-MOH. Immutable after the site is configured (CFG-CHG-002 v0.6 \u00a74.1).",
    "fieldname": "pe_code",
    "fieldtype": "Data",
    "label": "Entity Code",
@@ -52,6 +54,20 @@
    "fieldtype": "Data",
    "label": "Timezone",
    "reqd": 1
+  },
+  {
+   "description": "CFG-CHG-002 v0.9 \u00a74.1 / regulation 40(4): the authority that approves the consolidated annual procurement plan above the accounting officer. Exactly one route applies; there is no None.",
+   "fieldname": "statutory_approval_route",
+   "fieldtype": "Select",
+   "label": "Statutory Approval Route",
+   "options": "Cabinet Secretary\nCounty Executive Committee Member\nBoard of Directors\nCouncil"
+  },
+  {
+   "default": "0",
+   "description": "CFG-CHG-002 v0.9 \u00a74.1: set where the entity is a county government entity (regulation 40(5) county resident-tenderer reservation).",
+   "fieldname": "entity_is_county",
+   "fieldtype": "Check",
+   "label": "County Entity"
   },
   {
    "fieldname": "section_break_spe_audit",

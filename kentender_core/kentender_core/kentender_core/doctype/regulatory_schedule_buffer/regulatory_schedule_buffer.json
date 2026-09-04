@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Regulatory Schedule Buffer",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Goods\nWorks\nServices",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Link",
+   "label": "Procurement Method",
+   "options": "Procurement Method",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "award_approval_buffer_days",
+   "fieldtype": "Int",
+   "label": "Award Approval Buffer (days)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "notification_buffer_days",
+   "fieldtype": "Int",
+   "label": "Notification Buffer (days)",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "field_order": [
+  "procurement_category",
+  "procurement_method",
+  "award_approval_buffer_days",
+  "notification_buffer_days"
+ ],
+ "permissions": []
+}

@@ -91,6 +91,14 @@ def list_eligible_budget_lines(
 
 
 @frappe.whitelist()
+def check_plan_affordability(fiscal_year: str | None = None, planned_totals=None):
+	"""BUD v1.5 §9.1 — non-mutating plan affordability statement."""
+	from kentender_budget.services import budget_line_contracts as lines
+
+	return lines.check_plan_affordability(fiscal_year=fiscal_year or "", planned_totals=planned_totals)
+
+
+@frappe.whitelist()
 def get_budget_approval_task(budget_version: str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 

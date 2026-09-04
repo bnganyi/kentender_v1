@@ -249,6 +249,8 @@ scheduler_events = {
 		# configured instant passes, audited with System as actor. A
 		# convenience, never the security control (§11.3).
 		"kentender_core.services.site_configuration.close_due_needs_submissions",
+		# CFG-CHG-002 v0.9 §4.2 — the same closure for departmental-plan intake.
+		"kentender_core.services.site_configuration.close_due_dpp_submissions",
 	],
 	"daily": [
 		# AUTH-ADR-001 v1.6 §5.7 — remove Frappe Role projections left behind

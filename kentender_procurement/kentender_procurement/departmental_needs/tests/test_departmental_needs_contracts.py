@@ -324,6 +324,26 @@ class TestPlanningUsageProjection(ContractCase):
 		self.assertEqual(result["active_plan_item"], "PPI-MOH-2027-021")
 		self.assertEqual(planning_usage(self.accepted_need().name), USAGE_FULL)
 
+	def test_not_proceeding_outcome_carries_the_departmental_reason(self):
+		"""PLN-CHG-001 v1.12 §4.4 / PLN-AC-092 — the department's not-proceeding
+		decision reaches Departmental Needs with its reason; the reason is
+		mandatory for that outcome only."""
+		from kentender_procurement.departmental_needs.constants import USAGE_NOT_PROCEEDING
+		from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
+
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(usage=USAGE_NOT_PROCEEDING, active_plan="", active_plan_item="")
+		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
+		result = self.project(
+			usage=USAGE_NOT_PROCEEDING,
+			active_plan="",
+			active_plan_item="",
+			not_proceeding_reason="Requirement deferred to the following financial year by the department.",
+		)
+		self.assertEqual(result["usage"], USAGE_NOT_PROCEEDING)
+		self.assertIn("deferred", result["not_proceeding_reason"])
+		self.assertEqual(planning_usage(self.accepted_need().name), USAGE_NOT_PROCEEDING)
+
 	def test_replaying_the_same_event_is_a_no_op(self):
 		event = self.key()
 		self.project(source_event_id=event)

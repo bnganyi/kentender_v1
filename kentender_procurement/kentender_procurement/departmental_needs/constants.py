@@ -135,8 +135,12 @@ TASK_CANCELLED = "Cancelled"
 # `Partially included` is removed by §1.1 and forbidden by §17.
 USAGE_NOT_INCLUDED = "Not included"
 USAGE_FULL = "Fully included"
+# PLN-CHG-001 v1.12 §4.4 / PLN-AC-092 — the department recorded, in its
+# departmental procurement plan, that it is not proceeding with this accepted
+# Need this financial year; Planning publishes the outcome back here.
+USAGE_NOT_PROCEEDING = "Not proceeding"
 
-USAGE_VALUES = frozenset({USAGE_NOT_INCLUDED, USAGE_FULL})
+USAGE_VALUES = frozenset({USAGE_NOT_INCLUDED, USAGE_FULL, USAGE_NOT_PROCEEDING})
 
 # --- Business responsibilities (§6) ----------------------------------------
 # These are also the projected Frappe Role names (AUTH-ADR-001 v1.6 §5.7) and

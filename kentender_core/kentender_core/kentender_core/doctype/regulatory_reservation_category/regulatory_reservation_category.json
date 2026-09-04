@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Regulatory Reservation Category",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Data",
+   "label": "Category",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "advantage_rank",
+   "fieldtype": "Int",
+   "label": "Advantage Rank",
+   "description": "Lower is the higher advantage (section 156 / regulation 153). 0 for None.",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_regional",
+   "fieldtype": "Check",
+   "label": "Regional Scheme",
+   "default": "0"
+  },
+  {
+   "fieldname": "statutory_reference",
+   "fieldtype": "Data",
+   "label": "Statutory Reference"
+  }
+ ],
+ "field_order": [
+  "category",
+  "advantage_rank",
+  "is_regional",
+  "statutory_reference"
+ ],
+ "permissions": []
+}
