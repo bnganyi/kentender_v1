@@ -8,16 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
-  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
   <style>
-    .kt-status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 6px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; }
-    .kt-status .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-    .kt-status.is-pending { background: var(--color-neutral-100); color: var(--color-neutral-700); }
-    .kt-status.is-pending .dot { background: transparent; border: 1.5px solid var(--color-neutral-700); }
-    .kt-status.is-attention { background: oklch(93% 0.07 70); color: oklch(35% 0.1 55); }
-    .kt-status.is-attention .dot { background: oklch(55% 0.15 55); }
-    .kt-action-link:hover { text-decoration: underline; }
+    .kt-action-link:hover { text-decoration: underline; color: var(--color-accent-2-800); }
     .kt-tab { font-family: var(--font-heading); font-size: 15px; font-weight: 600; letter-spacing: 0.01em; padding: 10px 2px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--color-neutral-600); }
     .kt-tab.is-selected { color: var(--color-text); border-bottom-color: var(--color-accent); }
   </style>
@@ -27,17 +21,13 @@
   <div style="width: 1200px; padding: 32px 0; min-height: 1024px;">
     <div style="margin-bottom: 24px;">
       <div style="font-family: var(--font-heading); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--color-accent-700);">DEPARTMENTAL NEEDS</div>
-      <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; margin: 4px 0 8px; letter-spacing: 0.01em;">Department review</h1>
+      <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; margin: 4px 0 8px; letter-spacing: 0.01em;">Departmental Needs</h1>
       <p style="font-size: 15px; color: var(--color-neutral-700); max-width: 640px; margin: 0;">Review submitted needs and view the department's current needs.</p>
     </div>
 
     <div class="card blueprint" style="margin-bottom: 20px; padding: 20px 24px;">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-        <div>
-          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Procuring Entity</div>
-          <div style="font-size: 14.5px; font-weight: 500;">PE-MOH — Ministry of Health</div>
-        </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
         <div>
           <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Department</div>
           <div style="font-size: 14.5px; font-weight: 500;">OU-MOH-HRMD — Human Resources Management and Development</div>
@@ -73,8 +63,8 @@
             <td>Grace Wanjiku</td>
             <td style="text-align: right;">1 programme</td>
             <td>31 Dec 2027</td>
-            <td><span class="kt-status is-pending"><i class="dot"></i>Submitted</span></td>
-            <td style="text-align: right;"><a href="#" class="kt-action-link" style="color: var(--color-accent-700); font-weight: 600; text-decoration: none;">Review</a></td>
+            <td><span class="kt-status is-pending">Submitted</span></td>
+            <td style="text-align: right;"><a href="#" class="kt-action-link" style="color: var(--color-accent-2-700); font-weight: 600; text-decoration: none;">Review</a></td>
           </tr>
         </tbody>
       </table>
