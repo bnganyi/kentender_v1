@@ -1,18 +1,21 @@
-"""Phase 6 seed-contract tests for NDS-CHG-001 v1.1 §14.
+"""Phase 6 seed-contract tests for NDS-CHG-001 v1.6 §14.
 
 Asserts the §14.1 prerequisites, the §14.2 actors and assignments, the exact
-§14.3 default Needs, and that the §14.4/§14.5 profiles are independently
+§14.3 default Needs, and that the §14.4/§14.5/§14.6 profiles are independently
 selectable and resettable (§14.7) — including that applying and resetting one
 leaves the four-row default fixture untouched.
 """
 
 from __future__ import annotations
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.departmental_needs.constants import (
 	INTAKE_OPEN,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
 	STATE_RETURNED,
@@ -25,45 +28,29 @@ from kentender_procurement.departmental_needs.constants import (
 	VERSION_SUBMITTED,
 	VERSION_SUPERSEDED,
 )
-from kentender_core.seeds import kebs_foundation
 from kentender_procurement.departmental_needs.seeds import profiles
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	ACTING_REVIEWER,
 	AUDITOR,
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
+	NS,
 	PLANNER,
 	REVIEWER,
+	_granted_units,
 	upsert_departmental_needs,
 )
-
-# NDS-CHG-001 v1.6 §14 rewrote this seed onto the AUTH-ADR-001 v1.6 resolver
-# and Configuration & Governance's own canonical fixture world
-# (kentender_core.seeds.site_setup); `PE`, `INTAKE_WINDOW`/`INTAKE_OPENS_AT`/
-# `INTAKE_CLOSES_AT`, `ISOLATION_PE`/`ISOLATION_REQUESTER` and the static
-# `OU_DIGITAL_HEALTH`/`OU_HRMD` constants no longer exist (Organisation Units
-# are resolved from each actor's real grant, not a module-level constant).
-# This file's bodies below still assert the pre-v1.6 shape and are Phase 7
-# work (IMPLEMENTATION_TRACKER.md NDS-G07) — keeping this import block
-# resolvable is what lets the rest of the app's test suite be discovered.
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
 
-# NDS-CHG-001 v1.6 §14/§16.4 retargets this fixture onto ERPNext `Fiscal Year`
-# and `UOM`, User Responsibility Assignment grants, and the plain Open/Closed
-# Needs-submission flag — `seeds/kentender_mvp_r1.py` and this file still
-# build/assert the pre-v1.6 world (`Needs Intake Window`, `Unit Of Measure`,
-# `User Permission`). Tracked as IMPLEMENTATION_TRACKER.md NDS-G06 (seeds) /
-# NDS-G07 (this suite); until the seed rewrite lands, `upsert_departmental_needs()`
-# itself raises, so every class below errors at setUpClass regardless of this
-# file's own content.
-
-# §14.3 — reference, department, quantity, required-by, state. The department
-# slot is a placeholder, not a real Organisation Unit id: since Phase 6,
-# `kentender_mvp_r1.py` resolves the two departments from Grace's actual
-# grants at build time rather than a module-level constant, so a static id
-# here would be a guess. Comparing this slot against the built Need's
-# `organisation_unit` is Phase 7 work.
+# §14.3 — reference, department label, quantity, required-by, state. The
+# department is asserted by its real Organisation Unit *name* rather than a
+# hardcoded id: `kentender_mvp_r1.py` resolves the two departments from
+# Grace's actual grants at build time (the site carries a documented
+# pre-existing Organisation Unit naming duplication — see
+# AUTH_IMPLEMENTATION_TRACKER_v2.0.md conflict C4 — so a hardcoded id would be
+# a guess about which duplicate).
 DEFAULT_NEEDS = {
 	"NDS-MOH-2027-0001": ("Digital Health", 1, "2027-08-31", STATE_ACCEPTED),
 	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, "2027-12-31", STATE_SUBMITTED),
@@ -96,32 +83,28 @@ class SeedCase(IntegrationTestCase):
 	def current_version(self, reference: str):
 		return frappe.get_doc("Departmental Need Version", self.need(reference).current_version)
 
+	def unit_name(self, organisation_unit: str) -> str:
+		return frappe.db.get_value("Organisation Unit", organisation_unit, "unit_name")
+
 
 class TestConfigurationPrerequisites(SeedCase):
-	"""§14.1."""
+	"""§14.1 — every prerequisite here is Configuration & Governance's own
+	canonical fixture world (`kentender_core.seeds.site_setup`); this module
+	never creates or repairs any of it."""
 
-	def test_the_governed_units_are_active(self):
-		for code, label in (("UNIT-PROGRAMME", "Programme"), ("UNIT-EACH", "Each")):
-			row = frappe.db.get_value(
-				"Unit Of Measure", code, ["unit_label", "status"], as_dict=True
-			)
-			self.assertEqual((row.unit_label, row.status), (label, "Active"))
+	def test_the_governed_units_are_enabled(self):
+		for name in ("Programme", "Each"):
+			self.assertTrue(frappe.db.get_value("UOM", name, "enabled"), name)
 
-	def test_the_intake_window_holds_the_exact_specified_instants(self):
+	def test_the_needs_submission_flag_is_open_on_the_fixture_year(self):
 		row = frappe.db.get_value(
-			"Needs Intake Window", INTAKE_WINDOW, ["opens_at", "closes_at"], as_dict=True
+			"Fiscal Year",
+			FY,
+			["kentender_needs_submission_open", "kentender_needs_submission_closes_at"],
+			as_dict=True,
 		)
-		self.assertEqual(str(row.opens_at), INTAKE_OPENS_AT)
-		self.assertEqual(str(row.closes_at), INTAKE_CLOSES_AT)
-
-	def test_seeding_restores_the_window_it_opened_to_build(self):
-		# The build needs an Open window; the fixture must not keep one.
-		upsert_departmental_needs()
-		row = frappe.db.get_value(
-			"Needs Intake Window", INTAKE_WINDOW, ["opens_at", "closes_at"], as_dict=True
-		)
-		self.assertEqual(str(row.opens_at), INTAKE_OPENS_AT)
-		self.assertEqual(str(row.closes_at), INTAKE_CLOSES_AT)
+		self.assertTrue(row.kentender_needs_submission_open)
+		self.assertEqual(str(row.kentender_needs_submission_closes_at), "2026-11-25 23:59:00")
 
 	def test_the_window_is_open_at_the_design_clock(self):
 		# §14.1's design clock is 24 Nov 2026, inside the window.
@@ -134,57 +117,52 @@ class TestActorsAndAssignments(SeedCase):
 	"""§14.2."""
 
 	def test_every_named_actor_exists_and_is_enabled(self):
-		for user in (AUTHOR, REVIEWER, ACTING_REVIEWER, PLANNER, AUDITOR, ISOLATION_REQUESTER):
+		for user in (AUTHOR, REVIEWER, ACTING_REVIEWER, PLANNER, AUDITOR):
 			self.assertTrue(frappe.db.get_value("User", user, "enabled"), f"{user} is disabled")
 
 	def test_the_author_is_scoped_to_both_named_departments(self):
-		units = set(
-			frappe.get_all(
-				"User Permission",
-				filters={"user": AUTHOR, "allow": "Organisation Unit"},
-				pluck="for_value",
-			)
+		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
+		self.assertEqual(
+			set(units), {"Digital Health", "Human Resources Management and Development"}
 		)
-		self.assertEqual(units, {OU_DIGITAL_HEALTH, OU_HRMD})
 
 	def test_the_acting_head_is_scoped_to_one_department_only(self):
-		units = frappe.get_all(
-			"User Permission",
-			filters={"user": ACTING_REVIEWER, "allow": "Organisation Unit"},
-			pluck="for_value",
+		units = _granted_units(ACTING_REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT)
+		self.assertEqual(set(units), {"Digital Health"})
+		row = frappe.db.get_value(
+			"User Responsibility Assignment",
+			{
+				"user": ACTING_REVIEWER,
+				"business_role": ROLE_HEAD_OF_USER_DEPARTMENT,
+				"status": "Enabled",
+			},
+			"appointment_type",
 		)
-		self.assertEqual(units, [OU_DIGITAL_HEALTH])
+		self.assertEqual(row, "Acting")
 
-	def test_the_isolation_actor_is_scoped_to_another_entity(self):
-		entities = frappe.get_all(
-			"User Permission",
-			filters={"user": ISOLATION_REQUESTER, "allow": "Procuring Entity"},
-			pluck="for_value",
+	def test_the_auditor_is_scoped_site_wide(self):
+		row = frappe.db.get_value(
+			"User Responsibility Assignment",
+			{"user": AUDITOR, "business_role": "Auditor", "status": "Enabled"},
+			"organisation_unit",
 		)
-		self.assertEqual(entities, [ISOLATION_PE])
-
-	def test_the_isolation_actor_owns_no_seeded_need(self):
-		# §14.5 — isolation records stay out of the four-row fixture.
-		self.assertEqual(
-			frappe.get_all("Departmental Need", filters={"owner": ISOLATION_REQUESTER}, pluck="name"),
-			[],
-		)
+		self.assertIn(row, (None, ""))
 
 
 class TestDefaultNeeds(SeedCase):
 	"""§14.3."""
 
+	def default_references(self) -> set[str]:
+		return set(frappe.get_all("Departmental Need", filters={"fixture_namespace": NS}, pluck="name"))
+
 	def test_exactly_the_four_specified_needs_exist(self):
-		references = set(
-			frappe.get_all("Departmental Need", filters={"procuring_entity": PE}, pluck="name")
-		)
-		self.assertEqual(references, set(DEFAULT_NEEDS))
+		self.assertEqual(self.default_references(), set(DEFAULT_NEEDS))
 
 	def test_each_need_matches_its_specified_row(self):
-		for reference, (unit, quantity, required_by, state) in DEFAULT_NEEDS.items():
+		for reference, (unit_label, quantity, required_by, state) in DEFAULT_NEEDS.items():
 			need = self.need(reference)
 			version = self.current_version(reference)
-			self.assertEqual(need.organisation_unit, unit, reference)
+			self.assertEqual(self.unit_name(need.organisation_unit), unit_label, reference)
 			self.assertEqual(need.current_state, state, reference)
 			self.assertEqual(int(version.indicative_quantity), quantity, reference)
 			self.assertEqual(str(version.required_by_date), required_by, reference)
@@ -224,7 +202,7 @@ class TestDefaultNeeds(SeedCase):
 
 	def test_every_need_is_owned_by_the_named_author(self):
 		owners = set(
-			frappe.get_all("Departmental Need", filters={"procuring_entity": PE}, pluck="owner")
+			frappe.get_all("Departmental Need", filters={"fixture_namespace": NS}, pluck="owner")
 		)
 		self.assertEqual(owners, {AUTHOR})
 
@@ -286,7 +264,7 @@ class TestSelectableProfiles(SeedCase):
 	def default_fingerprint(self):
 		return frappe.get_all(
 			"Departmental Need",
-			filters={"procuring_entity": PE},
+			filters={"fixture_namespace": NS},
 			fields=["name", "current_state", "current_version", "current_accepted_version"],
 			order_by="name",
 		)
@@ -367,20 +345,26 @@ class TestSelectableProfiles(SeedCase):
 
 
 class TestKebsFirstSlice(SeedCase):
-	"""§14.6 / NDS-AC-045 — proved through the real Needs-origin route."""
+	"""§14.6 / NDS-AC-045 — proved through the real Needs-origin route.
+
+	NDS-CHG-001 v1.6 §14.6 still requires this profile, but its old
+	dependency on `kentender_core.seeds.kebs_foundation` — a second,
+	fabricated Procuring Entity — is retired outright by AUTH-ADR-001 v1.6
+	§1.1 (the site is exactly one implicit Procuring Entity). Phase 6
+	rebuilt the profile onto a dedicated Organisation Unit under the site's
+	own single tree instead, with no external foundation fixture to install
+	first.
+	"""
 
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		kebs_foundation.install()
 		profiles.apply_profile("kebs")
 
+	def kebs_unit(self) -> str:
+		return frappe.db.get_value("Organisation Unit", {"unit_name": profiles.KEBS_OU_NAME}, "name")
+
 	def kebs_needs(self):
-		# Scoped to the three §14.6 titles: this test owns the seed's records,
-		# not the PE. Counting everything under PE-KEBS made the assertion fail
-		# the moment a real KEBS author created and had a genuine Need accepted
-		# on the same site (observed 2026-08-30), which is normal use, not a
-		# seed defect.
 		titles = tuple(spec["title"] for spec in profiles.KEBS_NEEDS)
 		return frappe.db.sql(
 			"""
@@ -388,16 +372,11 @@ class TestKebsFirstSlice(SeedCase):
 			       v.title, v.indicative_quantity, v.unit, v.expected_operational_result
 			from `tabDepartmental Need` n
 			join `tabDepartmental Need Version` v on v.name = n.current_accepted_version
-			where n.procuring_entity = %s and v.title in %s order by n.name
+			where n.fixture_namespace = %s and v.title in %s order by n.name
 			""",
-			(kebs_foundation.PE, titles),
+			(profiles.NS_KEBS, titles),
 			as_dict=True,
 		)
-
-	def test_the_canonical_foundation_is_installed_and_usable(self):
-		state = kebs_foundation.verify()
-		self.assertTrue(state["installed"], state["missing"])
-		self.assertTrue(state["usable"], state)
 
 	def test_all_three_source_lines_reach_accepted_through_the_real_lifecycle(self):
 		# NDS-AC-045 must not be satisfied by writing rows or by the direct
@@ -405,10 +384,11 @@ class TestKebsFirstSlice(SeedCase):
 		# actors, so the acceptance it claims actually happened.
 		rows = self.kebs_needs()
 		self.assertEqual(len(rows), 3)
+		unit = self.kebs_unit()
 		for row in rows:
 			self.assertEqual(row.current_state, STATE_ACCEPTED, row.name)
-			self.assertEqual(row.organisation_unit, kebs_foundation.OU)
-			self.assertEqual(row.financial_year, kebs_foundation.FY)
+			self.assertEqual(row.organisation_unit, unit)
+			self.assertEqual(row.financial_year, FY)
 
 	def test_the_source_facts_match_the_specified_first_slice(self):
 		by_title = {row.title: row for row in self.kebs_needs()}
@@ -421,8 +401,6 @@ class TestKebsFirstSlice(SeedCase):
 			)
 
 	def test_each_accepted_need_published_its_source_payload(self):
-		import json
-
 		for row in self.kebs_needs():
 			payload = frappe.db.get_value(
 				"Departmental Need Event",
@@ -434,62 +412,10 @@ class TestKebsFirstSlice(SeedCase):
 			self.assertEqual(body["title"], row.title)
 			self.assertEqual(body["indicative_quantity"], row.indicative_quantity)
 			self.assertEqual(body["expected_operational_result"], row.expected_operational_result)
-			self.assertEqual(body["procuring_entity_id"], kebs_foundation.PE)
-
-	def test_the_needs_belong_to_the_canonical_context(self):
-		self.assertTrue(
-			frappe.db.exists(
-				"PE Fiscal Year Context",
-				{
-					"name": kebs_foundation.CONTEXT,
-					"procuring_entity": kebs_foundation.PE,
-					"financial_year": kebs_foundation.FY,
-					"context_status": "Active",
-				},
-			)
-		)
+			self.assertNotIn("procuring_entity_id", body)
 
 	def test_the_profile_is_resettable_and_reappliable(self):
 		profiles.reset_profile("kebs")
-		self.assertEqual(
-			frappe.db.count("Departmental Need", {"procuring_entity": kebs_foundation.PE}), 0
-		)
+		self.assertEqual(frappe.db.count("Departmental Need", {"fixture_namespace": profiles.NS_KEBS}), 0)
 		profiles.apply_profile("kebs")
-		self.assertEqual(
-			frappe.db.count("Departmental Need", {"procuring_entity": kebs_foundation.PE}), 3
-		)
-
-
-class TestKebsFoundationGuards(SeedCase):
-	"""The canonical fixture is never created silently by a consumer."""
-
-	def test_the_profile_fails_clearly_when_the_foundation_is_absent(self):
-		# §14.1/§14.6 — seeds never invent a fallback record.
-		profiles.reset_profile("kebs")
-		kebs_foundation.remove()
-		self.assertFalse(kebs_foundation.verify()["installed"])
-		with self.assertRaises(frappe.ValidationError) as caught:
-			profiles.apply_profile("kebs")
-		message = str(caught.exception)
-		self.assertIn("canonical KEBS foundation fixture", message)
-		self.assertIn("kebs_foundation.install", message)
-		# The failure creates nothing.
-		self.assertEqual(
-			frappe.db.count("Departmental Need", {"procuring_entity": kebs_foundation.PE}), 0
-		)
-		self.assertFalse(frappe.db.exists("Procuring Entity", kebs_foundation.PE))
-
-	def test_verify_names_exactly_what_is_missing(self):
-		profiles.reset_profile("kebs")
-		kebs_foundation.remove()
-		state = kebs_foundation.verify()
-		self.assertIn(f"Procuring Entity {kebs_foundation.PE}", state["missing"])
-		self.assertIn(f"Organisation Unit {kebs_foundation.OU}", state["missing"])
-
-	def test_the_foundation_refuses_to_drop_records_still_in_use(self):
-		kebs_foundation.install()
-		profiles.apply_profile("kebs")
-		with self.assertRaises(frappe.ValidationError) as caught:
-			kebs_foundation.remove()
-		self.assertIn("still reference", str(caught.exception))
-		profiles.reset_profile("kebs")
+		self.assertEqual(frappe.db.count("Departmental Need", {"fixture_namespace": profiles.NS_KEBS}), 3)

@@ -1,14 +1,18 @@
-"""Phase 3 permission tests for NDS-CHG-001 v1.1 §6.
+"""Phase 3 permission tests for NDS-CHG-001 v1.6 §6.
 
-Covers the five native roles and the access profiles they resolve to, the
-acting-HoD arrangement (NDS-AC-042), cross-OU/PE/FY denial, the Planner's
-intake-window-only authority (NDS-AC-043), and the absence of any parallel
-permission store (NDS-AC-044) or Budget/Accounting Officer surface
-(NDS-AC-023).
+Covers the five business roles and the access profiles they resolve to, the
+acting-HoD arrangement (NDS-AC-042), cross-OU denial, the closed §9 error
+contract, and the absence of any parallel permission store (NDS-AC-044) or
+Budget/Accounting Officer surface (NDS-AC-023).
 
 Authorization is asserted through the services the commands actually call, not
 through role names alone: §17 forbids inferring authority from a role label,
-route, ownership alone or Administrator status.
+route, ownership alone or Administrator status. Every scope-ending action below
+goes through the real `kentender_core.services.responsibility_administration`
+`grant`/`revoke` commands — never a raw `User Permission`/`Has Role` write —
+since AUTH-ADR-001 v1.6 makes `User Responsibility Assignment` the sole
+authority source; a Frappe Role is a synchronized projection of it, not an
+independent grant.
 """
 
 from __future__ import annotations
@@ -16,12 +20,12 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.responsibility_administration import grant, revoke
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_AUDITOR,
 	ROLE_DEPARTMENTAL_AUTHOR,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_PLANNER,
-	STATE_ACCEPTED,
 	STATE_SUBMITTED,
 )
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
@@ -29,31 +33,18 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	ACTING_REVIEWER,
 	AUDITOR,
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
 	PLANNER,
 	REVIEWER,
+	_granted_units,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import permissions, workspace
 from kentender_procurement.departmental_needs.services.context import resolve_creation_context
 
-# NDS-CHG-001 v1.6 §6/§16.4 rewrote authorization onto the AUTH-ADR-001 v1.6
-# resolver (kentender_core.services.authorization / User Responsibility
-# Assignment); `services/permissions.py` and `services/context.py` dropped
-# `intake_window`, `save_intake_window` and every User-Permission-era
-# function these tests still called by name below, and §14's own seed rewrite
-# (Phase 6) dropped `PE`, `ISOLATION_REQUESTER` and the static
-# `OU_DIGITAL_HEALTH`/`OU_HRMD` constants along with `_user_permission` itself
-# — Organisation Units are resolved from each actor's real grant now, and
-# scope is granted through `kentender_core.services.responsibility_
-# administration.grant`, never a `User Permission` row. A full rewrite of
-# this file is tracked as IMPLEMENTATION_TRACKER.md NDS-G07 — until then,
-# most classes below error at runtime rather than pass; keeping this import
-# block resolvable is what lets the rest of the app's test suite be
-# discovered at all (a broken import here previously aborted `bench
-# run-tests --app kentender_procurement` for every module, not just this one).
-
-# §1.1 removed these outright; §6 names exactly five business roles.
+# §1.1 removed these outright; §6 names exactly four business roles (plus
+# technical read-all, which is not a business role).
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")
 
 # §17 / NDS-AC-023 — no Departmental Needs surface, task or special action.
@@ -65,8 +56,24 @@ NDS_DOCTYPES = (
 	"Departmental Need Decision",
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
-	"Needs Intake Window",
 )
+
+# A real actor who holds zero currently-Enabled NDS authority: Samuel Otieno's
+# only grant (Head of User Department, Directorate of Digital Health and
+# Policy) expired 31 Aug 2026, per KT-STD-001 §8.3 / site_setup.py. Using a
+# real, expired grant proves the fail-closed behaviour without inventing a
+# separate isolation actor — AUTH-ADR-001 v1.6 has no PE dimension left to
+# isolate against.
+NO_GRANT_USER = "samuel.otieno@moh.example.test"
+
+NS_TEST_GRANT = "KENTENDER_NDS_PERMISSIONS_TEST"
+
+# A disposable Acting Head of User Department with a window that always
+# covers "now" — Julia's own real Acting appointment (§14.2) is only
+# effective 1 Oct-30 Nov 2026, which is not always the date this suite runs
+# on, but `TestActingHeadOfDepartment` needs to exercise "is currently acting"
+# behaviour regardless of the calendar.
+ACTING_TEST_USER = "nds.test.acting.hod@example.test"
 
 
 class DepartmentalNeedsPermissionCase(IntegrationTestCase):
@@ -74,6 +81,9 @@ class DepartmentalNeedsPermissionCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
+		cls.ou = units["Digital Health"]
+		cls.ou_hrmd = units["Human Resources Management and Development"]
 
 	def setUp(self):
 		super().setUp()
@@ -90,44 +100,66 @@ class DepartmentalNeedsPermissionCase(IntegrationTestCase):
 		"""NDS-MOH-2027-0002 — Submitted, HR Management and Development."""
 		return self.need("NDS-MOH-2027-0002")
 
-	def drop_scope(self, user: str, doctype: str, value: str) -> None:
-		"""End a scope assignment by removing the native User Permission row.
+	def drop_scope(self, user: str, business_role: str, organisation_unit: str) -> None:
+		"""End a real assignment by revoking it — restored on cleanup.
 
-		Restored on cleanup rather than relying on transaction rollback:
-		`frappe.clear_cache` can commit, and a leaked revocation would silently
-		change what every later test in the class is actually asserting.
+		AUTH-ADR-001 v1.6 makes `User Responsibility Assignment` the sole
+		authority source, so "ending" an assignment (however it was granted —
+		Permanent or Acting) is exactly `revoke()`, which also strips the
+		Frappe Role `grant()` synced onto the user. There is no separate
+		"scope row" to drop independently of the role any more — one
+		assignment carries both atomically.
 		"""
-		existed = frappe.db.exists(
-			"User Permission", {"user": user, "allow": doctype, "for_value": value}
+		assignment = frappe.db.get_value(
+			"User Responsibility Assignment",
+			{
+				"user": user,
+				"business_role": business_role,
+				"organisation_unit": organisation_unit,
+				"status": "Enabled",
+			},
+			["name", "appointment_type", "authority_reference", "effective_from", "effective_to"],
+			as_dict=True,
 		)
-		frappe.db.delete("User Permission", {"user": user, "allow": doctype, "for_value": value})
-		frappe.clear_cache(user=user)
-		if existed:
-			self.addCleanup(self._restore_scope, user, doctype, value)
-
-	def _restore_scope(self, user: str, doctype: str, value: str) -> None:
-		if not frappe.db.exists(
-			"User Permission", {"user": user, "allow": doctype, "for_value": value}
-		):
-			_user_permission(user, doctype, value)
-		frappe.clear_cache(user=user)
-
-	def drop_role(self, user: str, role: str) -> None:
-		"""End a role assignment, as revoking an acting appointment does."""
-		existed = frappe.db.exists(
-			"Has Role", {"parent": user, "parenttype": "User", "role": role}
+		if not assignment:
+			return
+		revoke(assignment.name, reason="Test-only revocation.", actor="Administrator")
+		self.addCleanup(
+			self._restore_scope,
+			user,
+			business_role,
+			organisation_unit,
+			assignment.appointment_type,
+			assignment.authority_reference,
+			assignment.effective_from,
+			assignment.effective_to,
 		)
-		frappe.db.delete("Has Role", {"parent": user, "parenttype": "User", "role": role})
-		frappe.clear_cache(user=user)
-		if existed:
-			self.addCleanup(self._restore_role, user, role)
 
-	def _restore_role(self, user: str, role: str) -> None:
-		if not frappe.db.exists("Has Role", {"parent": user, "parenttype": "User", "role": role}):
-			doc = frappe.get_doc("User", user)
-			doc.append("roles", {"role": role})
-			doc.save(ignore_permissions=True)
-		frappe.clear_cache(user=user)
+	def _restore_scope(
+		self,
+		user: str,
+		business_role: str,
+		organisation_unit: str,
+		appointment_type: str,
+		authority_reference: str,
+		effective_from,
+		effective_to,
+	) -> None:
+		kwargs = {"appointment_type": appointment_type or "Permanent"}
+		if authority_reference:
+			kwargs["authority_reference"] = authority_reference
+		if effective_from:
+			kwargs["effective_from"] = str(effective_from)
+		if effective_to:
+			kwargs["effective_to"] = str(effective_to)
+		grant(
+			user=user,
+			business_role=business_role,
+			organisation_unit=organisation_unit,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+			**kwargs,
+		)
 
 
 class TestAccessProfiles(DepartmentalNeedsPermissionCase):
@@ -156,76 +188,47 @@ class TestAccessProfiles(DepartmentalNeedsPermissionCase):
 	def test_a_denied_read_does_not_disclose_the_record(self):
 		# §9 — NDS_SCOPE_DENIED must disclose no protected record data.
 		with self.assertRaises(DepartmentalNeedError) as caught:
-			permissions.require_view(self.accepted_need(), ISOLATION_REQUESTER)
+			permissions.require_view(self.accepted_need(), NO_GRANT_USER)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 		self.assertEqual(str(caught.exception), "Departmental Need not found.")
 
 
-class TestScopeIsolation(DepartmentalNeedsPermissionCase):
-	"""NDS-BR-001/019 — every dimension is checked, and a role grants nothing."""
+class TestScopeGating(DepartmentalNeedsPermissionCase):
+	"""NDS-BR-001/019 — every dimension is checked, and a role grants nothing
+	on its own. AUTH-ADR-001 v1.6 §1.1 removed the Procuring Entity dimension
+	entirely (the site is exactly one implicit PE), so scope is Organisation
+	Unit only now."""
 
 	def test_a_role_without_scope_grants_no_access(self):
-		# The isolation requester holds Departmental Author but is scoped to
-		# another Procuring Entity entirely.
-		self.assertIn(ROLE_DEPARTMENTAL_AUTHOR, permissions.roles_of(ISOLATION_REQUESTER))
-		self.assertEqual(permissions.can_view(self.accepted_need(), ISOLATION_REQUESTER), (False, "none"))
-
-	def test_cross_procuring_entity_is_denied(self):
+		# Samuel's only grant (§14.2) expired 31 Aug 2026 — the stored `status`
+		# field stays "Enabled" forever unless explicitly revoked (expiry is a
+		# time-derived read, not a stored state transition), but the resolver
+		# still denies him: `_within_period` checks `effective_to` directly.
 		self.assertFalse(
 			permissions.in_scope(
-				ISOLATION_REQUESTER,
-				procuring_entity=PE,
-				organisation_unit=OU_DIGITAL_HEALTH,
-				financial_year=FY,
+				NO_GRANT_USER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou
 			)
 		)
+		self.assertEqual(permissions.can_view(self.accepted_need(), NO_GRANT_USER), (False, "none"))
 
 	def test_cross_organisation_unit_is_denied(self):
-		self.drop_scope(REVIEWER, "Organisation Unit", OU_HRMD)
+		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_hrmd)
 		self.assertFalse(
-			permissions.in_scope(
-				REVIEWER, procuring_entity=PE, organisation_unit=OU_HRMD, financial_year=FY
-			)
+			permissions.in_scope(REVIEWER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou_hrmd)
 		)
 		# The remaining unit is unaffected: scope narrows, it does not collapse.
 		self.assertTrue(
-			permissions.in_scope(
-				REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=FY
-			)
-		)
-
-	def test_financial_year_is_not_a_scope_dimension(self):
-		"""CTX-CHG-001 §4 — Financial Year gates nothing in `in_scope`; a real
-		PE/OU pair is authorised regardless of which FY string is passed
-		alongside it, including one that names no real Financial Year at all.
-		Which years are actually selectable is a separate question, answered
-		by `context.selectable_financial_years` from the PE's configured
-		fiscal context, never from `in_scope`."""
-		self.assertTrue(
-			permissions.in_scope(
-				REVIEWER,
-				procuring_entity=PE,
-				organisation_unit=OU_DIGITAL_HEALTH,
-				financial_year="FY-2099-2100",
-			)
-		)
-		self.assertTrue(
-			permissions.in_scope(
-				REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=FY
-			)
+			permissions.in_scope(REVIEWER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou)
 		)
 
 	def test_missing_scope_fails_closed_for_a_business_role(self):
-		# NDS-BR-001 — this module deliberately inverts Frappe's "no rows means
-		# unrestricted" default for business roles. `permitted_values` still
-		# reports None faithfully; `in_scope` is what fails closed.
-		self.drop_scope(REVIEWER, "Organisation Unit", OU_DIGITAL_HEALTH)
-		self.drop_scope(REVIEWER, "Organisation Unit", OU_HRMD)
-		self.assertIsNone(permissions.permitted_values(REVIEWER, "Organisation Unit"))
+		# NDS-BR-001 — a business role with no covering assignment anywhere is
+		# denied, never falls back to "unrestricted" the way a bare Frappe Role
+		# would under the framework's own default permission semantics.
+		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou)
+		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_hrmd)
 		self.assertFalse(
-			permissions.in_scope(
-				REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=FY
-			)
+			permissions.in_scope(REVIEWER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou)
 		)
 
 	def test_administrative_users_remain_unrestricted(self):
@@ -233,258 +236,99 @@ class TestScopeIsolation(DepartmentalNeedsPermissionCase):
 		# authority, so the fail-closed rule above must not lock out setup.
 		self.assertTrue(
 			permissions.in_scope(
-				"Administrator",
-				procuring_entity=PE,
-				organisation_unit=OU_DIGITAL_HEALTH,
-				financial_year=FY,
+				"Administrator", business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou
 			)
 		)
 
 
 class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
-	"""NDS-AC-042 — same role, scoped User Permission, no delegate role."""
+	"""NDS-AC-042 — an Acting appointment is one time-bound URA row, not a
+	separate delegate role."""
 
 	def test_no_delegate_role_exists(self):
 		self.assertEqual(
 			frappe.get_all("Role", filters={"name": ("in", list(RETIRED_ROLES))}, pluck="name"), []
 		)
 
-	def test_the_acting_head_holds_the_same_role_as_the_substantive_head(self):
-		self.assertIn(ROLE_HEAD_OF_USER_DEPARTMENT, permissions.roles_of(ACTING_REVIEWER))
-		self.assertIn(ROLE_HEAD_OF_USER_DEPARTMENT, permissions.roles_of(REVIEWER))
+	def test_the_acting_head_holds_a_real_time_bound_assignment(self):
+		row = frappe.db.get_value(
+			"User Responsibility Assignment",
+			{
+				"user": ACTING_REVIEWER,
+				"business_role": ROLE_HEAD_OF_USER_DEPARTMENT,
+				"organisation_unit": self.ou,
+				"status": "Enabled",
+			},
+			["appointment_type", "effective_from", "effective_to"],
+			as_dict=True,
+		)
+		self.assertEqual(row.appointment_type, "Acting")
+		self.assertTrue(row.effective_from and row.effective_to)
+		# The synced Frappe Role projection exists too — a UI convenience, not
+		# an independent authority source (§6).
+		self.assertTrue(
+			frappe.db.exists(
+				"Has Role",
+				{"parent": ACTING_REVIEWER, "parenttype": "User", "role": ROLE_HEAD_OF_USER_DEPARTMENT},
+			)
+		)
+
+	def _ensure_acting_test_user(self) -> str:
+		if not frappe.db.exists("User", ACTING_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": ACTING_TEST_USER,
+					"first_name": "Acting",
+					"last_name": "Test Reviewer",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=ACTING_TEST_USER,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou,
+			appointment_type="Acting",
+			authority_reference="Test-only acting appointment.",
+			effective_from="2020-01-01 00:00:00",
+			effective_to="2099-12-31 23:59:59",
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return ACTING_TEST_USER
 
 	def test_the_acting_head_decides_only_within_the_assigned_unit(self):
-		# Julia Njeri acts for Digital Health only, while Dr Kimani covers both.
-		permissions.require_review_command(self.accepted_need(), ACTING_REVIEWER)
+		# Acts for Digital Health only, while Dr Kimani covers both.
+		acting = self._ensure_acting_test_user()
+		permissions.require_review_command(self.accepted_need(), acting)
 		with self.assertRaises(DepartmentalNeedError) as caught:
-			permissions.require_review_command(self.hrmd_need(), ACTING_REVIEWER)
+			permissions.require_review_command(self.hrmd_need(), acting)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 		permissions.require_review_command(self.hrmd_need(), REVIEWER)
 
 	def test_an_ended_acting_assignment_fails_closed(self):
-		# The approved period is expressed by the assignment's existence: when it
-		# ends, the scoped row and the role are both removed.
-		permissions.require_review_command(self.accepted_need(), ACTING_REVIEWER)
-		self.drop_scope(ACTING_REVIEWER, "Organisation Unit", OU_DIGITAL_HEALTH)
-		self.drop_role(ACTING_REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT)
+		# The approved period is expressed by the assignment's existence: when
+		# it ends (revoked), authority stops immediately — `_within_period`
+		# would also catch a naturally-expired `effective_to`, but this proves
+		# the earlier, explicit end works the same way.
+		acting = self._ensure_acting_test_user()
+		permissions.require_review_command(self.accepted_need(), acting)
+		self.drop_scope(acting, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou)
 		with self.assertRaises(DepartmentalNeedError) as caught:
-			permissions.require_review_command(self.accepted_need(), ACTING_REVIEWER)
+			permissions.require_review_command(self.accepted_need(), acting)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
-
-	def test_removing_only_the_scope_row_does_not_widen_authority(self):
-		# The escalation this module's fail-closed `in_scope` exists to prevent:
-		# under Frappe's default semantics, deleting an acting HoD's only
-		# Organisation Unit row would leave them unrestricted across *every*
-		# department at the exact moment their assignment ended.
-		self.drop_scope(ACTING_REVIEWER, "Organisation Unit", OU_DIGITAL_HEALTH)
-		self.assertIn(ROLE_HEAD_OF_USER_DEPARTMENT, permissions.roles_of(ACTING_REVIEWER))
-		for need in (self.accepted_need(), self.hrmd_need()):
-			with self.assertRaises(DepartmentalNeedError) as caught:
-				permissions.require_review_command(need, ACTING_REVIEWER)
-			self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
-
-
-class TestFinancialYearOffer(DepartmentalNeedsPermissionCase):
-	"""§8.1 offers Financial Years configured for the caller's Procuring
-	Entity — never a per-user Financial Year assignment (CTX-CHG-001 §4,
-	CTX-FU-02).
-
-	NDS-CHG-001 v1.1 modelled Financial Year as its own independent User
-	Permission dimension, ANDed against Procuring Entity in `in_scope`. That
-	is a category error: an FY grant unpaired from any PE applies to *every*
-	PE the user can reach, so it can never mean "access to a financial year"
-	in any coherent sense — the only real-world fact it can express is "this
-	year is configured for this entity", which is exactly what
-	`PE Fiscal Year Context` (kentender_core) already records, unconditional
-	on who is asking. Observed live: Planning's own seed granted every shared
-	actor (Grace, Peter, Julia) a `Financial Year` permission scoped to
-	Planning's single financial year; that row silently hid a second,
-	genuinely configured year's intake window from them in Departmental
-	Needs — two different modules disagreeing about the same person's access
-	to the same fact.
-
-	The fix also separates two questions NDS-CHG-001 v1.1 conflated: seeing a
-	year (this class) and being allowed to create in it (gated separately, by
-	that PE/FY's own Needs Intake Window state — see `TestPlannerAuthority`
-	and `context.require_open_intake`, untouched by this change).
-	"""
-
-	OTHER_FY = "FY-2098-2099"
-
-	def other_year(self, *, configure_context: bool = False) -> None:
-		"""A second Available Financial Year. Not offered to anyone until
-		`configure_context` gives it an Active PE Fiscal Year Context for PE —
-		configuration, not identity, is what makes a year selectable now."""
-		if not frappe.db.exists("Financial Year", self.OTHER_FY):
-			doc = frappe.get_doc(
-				{
-					"doctype": "Financial Year",
-					"start_year": 2098,
-					"label": "2098/99",
-					"start_date": "2098-07-01",
-					"end_date": "2099-06-30",
-					"record_status": "Available",
-				}
-			)
-			doc.name = self.OTHER_FY
-			doc.insert(ignore_permissions=True)
-		self.addCleanup(
-			frappe.delete_doc,
-			"Financial Year",
-			self.OTHER_FY,
-			force=True,
-			ignore_missing=True,
-			ignore_permissions=True,
-		)
-		if not configure_context:
-			return
-		from kentender_core.seeds.kentender_mvp_v1.reference_data import STEWARD_EMAIL
-		from kentender_core.services import reference_data_transitions as ctx_txn
-
-		result = ctx_txn.enable_context(
-			PE, self.OTHER_FY, "2098-07-01 00:00:00", "2099-09-30 23:59:00", user=STEWARD_EMAIL
-		)
-		context_name = result["context"]
-		if result["context_status"] != "Active":
-			frappe.db.set_value(
-				"PE Fiscal Year Context", context_name, "context_status", "Active",
-				update_modified=False,
-			)
-		self.addCleanup(
-			frappe.delete_doc, "PE Fiscal Year Context", context_name,
-			force=True, ignore_missing=True, ignore_permissions=True,
-		)
-
-	def test_an_unconfigured_financial_year_is_not_offered(self):
-		"""No PE Fiscal Year Context row for PE means a PE-permitted user does
-		not see the year. (Administrator is unrestricted across every
-		Procuring Entity by design, §6, so its own offer is a system-wide
-		union — not asserted here against a single PE's configuration.)"""
-		self.other_year()
-		frappe.set_user(PLANNER)
-		offer = workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
-		offered = {row["id"] for row in offer["financial_years"]}
-		self.assertIn(FY, offered)
-		self.assertNotIn(self.OTHER_FY, offered)
-
-	def test_a_configured_year_is_offered_identically_to_every_permitted_user(self):
-		"""The point of the fix: two different users holding the same
-		Procuring Entity permission see the identical Financial Year offer —
-		no per-user divergence is possible once FY is not itself a grant."""
-		self.other_year(configure_context=True)
-		frappe.set_user(PLANNER)
-		offer = workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
-		offered_planner = {row["id"] for row in offer["financial_years"]}
-		frappe.set_user(AUTHOR)
-		resolved = resolve_creation_context()
-		offered_author = {row["id"] for row in resolved["financial_years"]}
-		self.assertIn(self.OTHER_FY, offered_planner)
-		self.assertEqual(offered_planner, offered_author)
-
-	def test_a_requested_unoffered_year_resolves_to_the_offered_one(self):
-		"""A remembered year outside the offer heals instead of dead-ending.
-
-		The client stores the last PE/OU/FY selection and sends it back on the
-		next visit. A stored year not configured for this PE must never come
-		back as the active context — not stick, and not hard-fail a read the
-		§17 commands still re-check individually. (PE-MOH may legitimately
-		have more than one configured year, so this does not assume a single
-		exclusive default — only that the unconfigured one never wins.)
-		"""
-		self.other_year()
-		frappe.set_user(PLANNER)
-		offer = workspace.get_workspace(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
-			financial_year=self.OTHER_FY,
-		)
-		self.assertIn(FY, {row["id"] for row in offer["financial_years"]})
-		self.assertNotEqual(offer["context"]["financial_year"], self.OTHER_FY)
-
-	def test_can_maintain_no_longer_depends_on_financial_year(self):
-		"""NDS-UI-08 withholds Save where the save would be refused (§17), but
-		Financial Year dropped out of `require_intake_window_command`'s gate —
-		Procuring Entity and the Planner role are what still govern it."""
-		self.other_year()
-		self.assertTrue(intake_window(PE, FY, user=PLANNER)["can_maintain"])
-		# Unaffected by this change: FY was never required to be configured
-		# for a Planner to maintain its window (that always was, and stays,
-		# a separate concern from Financial Year offer/selectability).
-		self.assertTrue(intake_window(PE, self.OTHER_FY, user=PLANNER)["can_maintain"])
-		# What still gates it: role (Procuring Entity is covered elsewhere —
-		# `TestScopeIsolation.test_cross_procuring_entity_is_denied` — and
-		# `require_intake_window_command`'s own PE check is untouched here).
-		self.assertFalse(intake_window(PE, FY, user=AUTHOR)["can_maintain"])
-		self.assertTrue(intake_window(PE, self.OTHER_FY, user="Administrator")["can_maintain"])
-
-
-class TestRememberedContextHealing(DepartmentalNeedsPermissionCase):
-	"""§12.1 — a remembered PE/OU outside the caller's scope heals, not dead-ends.
-
-	The client stores its last PE/OU/FY selection per browser origin, not per
-	signed-in user, so after an account switch the next user's first load
-	replays the previous user's context. Observed live: the KEBS author
-	inherited the MoH Planner's stored context and got a hard
-	NDS_SCOPE_DENIED with a Try-again that replayed the same dead request
-	forever. The offer is the authority on what may be picked (the picker
-	lists only the caller's own contexts); a remembered value outside it
-	resolves to "unselected" — auto-resolving where one context exists —
-	while rows stay filtered by `can_view` and every command re-checks.
-
-	CTX-CHG-001 adds a server-side remembered selection between the rejected
-	explicit request and the prompt, so these tests clear the personas' saved
-	preferences first: on a lived-in site a real remembered department would
-	(correctly, rule 5) resolve instead of re-asking.
-	"""
-
-	CONTEXT_KEYS = (
-		"kt_working_procuring_entity",
-		"kt_needs_org_unit",
-		"kt_needs_financial_year",
-	)
-
-	def setUp(self):
-		super().setUp()
-		for user in (AUTHOR, ACTING_REVIEWER):
-			for key in self.CONTEXT_KEYS:
-				frappe.defaults.clear_user_default(key, user)
-
-	def test_a_foreign_context_heals_to_the_single_own_context(self):
-		# Julia Njeri reviews Digital Health only — exactly one context.
-		frappe.set_user(ACTING_REVIEWER)
-		offer = workspace.get_workspace(
-			procuring_entity="PE-KEBS", organisation_unit="OU-KEBS-ICT"
-		)
-		self.assertTrue(offer["ok"])
-		self.assertEqual(offer["outcome"], "READY")
-		self.assertEqual(offer["context"]["procuring_entity"], PE)
-		self.assertEqual(offer["context"]["organisation_unit"], OU_DIGITAL_HEALTH)
-
-	def test_a_foreign_context_heals_to_selection_when_several_exist(self):
-		# Grace authors in two departments, so healing must re-ask, not guess.
-		frappe.set_user(AUTHOR)
-		offer = workspace.get_workspace(
-			procuring_entity="PE-KEBS", organisation_unit="OU-KEBS-ICT"
-		)
-		self.assertFalse(offer["ok"])
-		self.assertEqual(offer["outcome"], "CONTEXT_SELECTION_REQUIRED")
-		self.assertEqual(offer["needs"], [])
 
 
 class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
-	"""CTX-CHG-001 — the working context is a server-side user preference.
+	"""CTX-CHG-001 — the working Organisation Unit is a server-side, per-user,
+	per-module preference (`kt_needs_org_unit`). AUTH-ADR-001 v1.6 removed the
+	Procuring Entity dimension this module used to remember alongside it."""
 
-	Browser storage grants nothing and remembers nothing authoritative: an
-	explicit pick persists per user on the server (global working PE, this
-	module's OU and FY), resolves on the next request, never leaks between
-	users, and never gates a direct record link.
-	"""
-
-	CONTEXT_KEYS = (
-		"kt_working_procuring_entity",
-		"kt_needs_org_unit",
-		"kt_needs_financial_year",
-	)
+	CONTEXT_KEYS = ("kt_needs_org_unit", "kt_needs_financial_year")
 
 	def clear_preferences(self, *users) -> None:
 		for user in users:
@@ -498,99 +342,51 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 
 	def test_an_explicit_selection_is_remembered_server_side(self):
 		frappe.set_user(AUTHOR)
-		picked = workspace.get_workspace(
-			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-		)
+		picked = workspace.get_workspace(organisation_unit=self.ou)
 		self.assertEqual(picked["outcome"], "READY")
 		# Rule 5.2 — a bare next request resolves the last valid selection.
 		resolved = workspace.get_workspace()
 		self.assertEqual(resolved["outcome"], "READY")
-		self.assertEqual(resolved["context"]["organisation_unit"], OU_DIGITAL_HEALTH)
+		self.assertEqual(resolved["context"]["organisation_unit"], self.ou)
 
 	def test_preferences_never_leak_between_users(self):
 		frappe.set_user(AUTHOR)
-		workspace.get_workspace(procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH)
+		workspace.get_workspace(organisation_unit=self.ou)
 		# The reviewer shares the browser in the field; here they share nothing
-		# but the server — their own resolution must still prompt.
+		# but the server — their own resolution must still prompt (Peter has
+		# two departments, so no single one auto-selects).
 		frappe.set_user(REVIEWER)
 		fresh = workspace.get_workspace()
 		self.assertEqual(fresh["outcome"], "CONTEXT_SELECTION_REQUIRED")
 
-	def test_the_module_financial_year_is_remembered(self):
-		other = "FY-2098-2099"
-		if not frappe.db.exists("Financial Year", other):
-			doc = frappe.get_doc(
-				{
-					"doctype": "Financial Year",
-					"start_year": 2098,
-					"label": "2098/99",
-					"start_date": "2098-07-01",
-					"end_date": "2099-06-30",
-					"record_status": "Available",
-				}
-			)
-			doc.name = other
-			doc.insert(ignore_permissions=True)
-		self.addCleanup(
-			frappe.delete_doc, "Financial Year", other, force=True,
-			ignore_missing=True, ignore_permissions=True,
-		)
-		# What makes `other` selectable at all (CTX-CHG-001 §4): an Active PE
-		# Fiscal Year Context for PE, not a per-user Financial Year grant.
-		from kentender_core.seeds.kentender_mvp_v1.reference_data import STEWARD_EMAIL
-		from kentender_core.services import reference_data_transitions as ctx_txn
-
-		result = ctx_txn.enable_context(
-			PE, other, "2098-07-01 00:00:00", "2099-09-30 23:59:00", user=STEWARD_EMAIL
-		)
-		context_name = result["context"]
-		if result["context_status"] != "Active":
-			frappe.db.set_value(
-				"PE Fiscal Year Context", context_name, "context_status", "Active",
-				update_modified=False,
-			)
-		self.addCleanup(
-			frappe.delete_doc, "PE Fiscal Year Context", context_name,
-			force=True, ignore_missing=True, ignore_permissions=True,
-		)
-
+	def test_a_remembered_unit_outside_the_offer_heals_to_unselected(self):
+		"""A remembered OU the caller no longer holds resolves to "unselected"
+		(re-prompt where more than one context exists), never to access and
+		never to a hard error — the offer itself is the authority on what may
+		be picked. Grace has two real contexts, so a single-context shortcut
+		cannot mask this: healing must actually run `get_module_ou`."""
+		frappe.defaults.set_user_default("kt_needs_org_unit", "OU-DOES-NOT-EXIST", user=AUTHOR)
 		frappe.set_user(AUTHOR)
-		picked = workspace.get_workspace(
-			procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH, financial_year=other
-		)
-		self.assertEqual(picked["context"]["financial_year"], other)
-		resolved = workspace.get_workspace()
-		self.assertEqual(resolved["context"]["financial_year"], other)
+		offer = workspace.get_workspace()
+		self.assertEqual(offer["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual({row["organisation_unit"] for row in offer["contexts"]}, {self.ou, self.ou_hrmd})
 
 	def test_a_direct_record_link_ignores_the_working_preference(self):
-		"""Rule 6 — a record opens under its own stored context after
-		permission validation, whatever the preference happens to say."""
-		frappe.defaults.set_user_default(
-			"kt_working_procuring_entity", "PE-CGKIS", user=AUTHOR
-		)
+		"""Rule 6 — a record opens under its own stored scope after permission
+		validation, whatever the remembered preference happens to say."""
+		frappe.defaults.set_user_default("kt_needs_org_unit", self.ou_hrmd, user=AUTHOR)
 		frappe.set_user(AUTHOR)
 		read = workspace.get_need(need="NDS-MOH-2027-0001")
 		self.assertTrue(read["ok"])
-		self.assertEqual(read["need"]["procuring_entity"], PE)
+		self.assertEqual(read["need"]["organisation_unit"], self.ou)
 
 
 class TestPlannerAuthority(DepartmentalNeedsPermissionCase):
-	"""NDS-AC-043 — maintains the intake window, receives no Need decision."""
-
-	def test_the_planner_may_maintain_the_intake_window(self):
-		frappe.set_user(PLANNER)
-		result = save_intake_window(
-			procuring_entity=PE,
-			financial_year=FY,
-			opens_at="2026-09-01 00:00:00",
-			closes_at="2026-11-25 23:59:59",
-			expected_version=frappe.db.get_value(
-				"Needs Intake Window",
-				{"procuring_entity": PE, "financial_year": FY},
-				"record_version",
-			),
-		)
-		self.assertTrue(result["ok"])
+	"""NDS-AC-043 — Site-wide read of accepted sources, no Need decision, no
+	authoring authority. NDS owns no intake-window configuration surface any
+	more (§4.1/§11.11/§16.4.11) — the Needs-submission flag is Configuration &
+	Governance's own, maintained in `/app/system-setup`, never through an NDS
+	command."""
 
 	def test_the_planner_receives_no_need_decision(self):
 		with self.assertRaises(DepartmentalNeedError) as caught:
@@ -599,14 +395,7 @@ class TestPlannerAuthority(DepartmentalNeedsPermissionCase):
 
 	def test_the_planner_may_not_author_a_need(self):
 		with self.assertRaises(DepartmentalNeedError) as caught:
-			permissions.require_create(PLANNER, PE, OU_DIGITAL_HEALTH, FY)
-		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
-
-	def test_a_head_of_department_may_not_maintain_the_intake_window(self):
-		with self.assertRaises(DepartmentalNeedError) as caught:
-			permissions.require_intake_window_command(
-				REVIEWER, procuring_entity=PE, financial_year=FY
-			)
+			permissions.require_create(PLANNER, self.ou)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 
 	def test_the_planner_has_no_review_task_visibility(self):
@@ -678,7 +467,8 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 			self.assertEqual(deletable, set(), f"{doctype} grants delete to {deletable}")
 
 	def test_the_module_consults_no_parallel_permission_store(self):
-		"""NDS-AC-044 — native Frappe Role and User Permission only.
+		"""NDS-AC-044 — the AUTH-ADR-001 v1.6 resolver and native Frappe Role
+		projections only.
 
 		Comments and docstrings are stripped before scanning: several of them
 		exist precisely to say these stores must not be used, and matching that
@@ -696,6 +486,8 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 			"Capability Profile",
 			"Operational Scope Assignment",
 			"Authorization Delegation",
+			'"User Permission"',
+			"'User Permission'",
 		)
 		offenders = []
 		for path in sorted(module.rglob("*.py")):
@@ -716,11 +508,11 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 	`get_workspace` backs NDS-UI-01 *and* NDS-UI-02, so a role that cannot
 	resolve a context cannot open the review screen at all — no rows, no queue,
 	no register. §6 gives the Head of User Department departmental review
-	authority and §14.2 gives the Planner and Auditor PE/FY-scoped read access,
-	so none of them may be turned away by the context resolver.
+	authority and §14.2 gives the Planner and Auditor Site-wide read access, so
+	none of them may be turned away by the context resolver.
 
-	Resolving a context is not authority: it names the PE/OU whose rows are
-	queried, and `can_view` still filters every row afterwards.
+	Resolving a context is not authority: it names the Organisation Unit whose
+	rows are queried, and `can_view` still filters every row afterwards.
 	"""
 
 	def workspace_as(self, user: str, **selection) -> dict:
@@ -729,9 +521,7 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 
 	def digital_health(self, user: str) -> dict:
 		"""One resolved context, so the result carries rows and actions."""
-		return self.workspace_as(
-			user, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-		)
+		return self.workspace_as(user, organisation_unit=self.ou)
 
 	def test_reviewer_resolves_the_departments_they_review(self):
 		result = self.workspace_as(REVIEWER)
@@ -741,34 +531,38 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 			msg="the Head of User Department must be able to open the review screen",
 		)
 		units = {row["organisation_unit"] for row in result["contexts"]}
-		self.assertEqual(units, {OU_DIGITAL_HEALTH, OU_HRMD})
+		self.assertEqual(units, {self.ou, self.ou_hrmd})
 
-	def test_planner_and_auditor_resolve_pe_scoped_contexts(self):
-		"""§14.2 — scoped by PE and FY only, so every OU under the PE is in view."""
+	def test_planner_and_auditor_resolve_every_active_unit(self):
+		"""§14.2 — Site-wide, so every active Organisation Unit is in view."""
 		for user in (PLANNER, AUDITOR):
 			with self.subTest(user=user):
 				result = self.workspace_as(user)
 				self.assertNotEqual(result["outcome"], "NO_AUTHORISED_CONTEXT")
-				entities = {row["procuring_entity"] for row in result["contexts"]}
-				self.assertIn(PE, entities)
+				units = {row["organisation_unit"] for row in result["contexts"]}
+				self.assertIn(self.ou, units)
+				self.assertIn(self.ou_hrmd, units)
 
 	def test_author_still_resolves_only_their_own_departments(self):
 		"""The widening must not reach beyond the roles that need it."""
 		result = self.workspace_as(AUTHOR)
 		units = {row["organisation_unit"] for row in result["contexts"]}
-		self.assertEqual(units, {OU_DIGITAL_HEALTH, OU_HRMD})
+		self.assertEqual(units, {self.ou, self.ou_hrmd})
 
 	def test_a_user_with_no_departmental_role_resolves_nothing(self):
 		"""Resolution is still closed — it admits the §6 roles, not everyone."""
-		result = self.workspace_as(ISOLATION_REQUESTER)
-		self.assertNotIn(PE, {row["procuring_entity"] for row in result["contexts"]})
+		result = self.workspace_as(NO_GRANT_USER)
+		units = {row["organisation_unit"] for row in result["contexts"]}
+		self.assertNotIn(self.ou, units)
+		self.assertNotIn(self.ou_hrmd, units)
 
 	def test_create_is_offered_only_to_an_author(self):
 		"""§12.1 / §17 — the server decides the action; a reviewer never authors.
 
-		The client also hides Create need outside an Open intake window, but
-		that check cannot stand alone: intake is Open for part of the year, and
-		a reviewer would then be shown a command they do not hold.
+		The client also hides Create need outside an Open Needs-submission
+		flag, but that check cannot stand alone: the flag is Open for part of
+		the year, and a reviewer would then be shown a command they do not
+		hold.
 		"""
 		author_actions = {a["code"] for a in self.digital_health(AUTHOR).get("actions", [])}
 		self.assertIn("create", author_actions)

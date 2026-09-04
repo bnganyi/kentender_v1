@@ -169,12 +169,19 @@ def ensure_actors() -> dict[str, str]:
 def reset_all(*, commit: bool = False) -> dict[str, Any]:
 	"""Remove every Playwright-owned row, leaving the §14 seed untouched."""
 	_guard()
+	needs = frappe.db.get_all("Departmental Need", filters={"fixture_namespace": NS_PW}, pluck="name")
 	removed = {}
 	for doctype in _NAMESPACED:
 		names = frappe.db.get_all(doctype, filters={"fixture_namespace": NS_PW}, pluck="name")
 		if names:
 			frappe.db.delete(doctype, {"name": ("in", names)})
 		removed[doctype] = len(names)
+	# A deleted Need's reference is free for the next command to reuse (§14.7's
+	# reference counter only sees what currently exists), so a stray
+	# Notification Log row addressed to the old `document_name` would
+	# otherwise leak into whatever Need is next assigned that same reference.
+	if needs:
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
 	if commit:
 		frappe.db.commit()
 	return {"namespace": NS_PW, "removed": removed}

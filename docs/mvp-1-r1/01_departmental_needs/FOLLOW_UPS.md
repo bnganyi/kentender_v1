@@ -414,3 +414,54 @@ already does. Isolation between fixture families is now provided by
 Organisation Unit + `fixture_namespace` only (see `playwright_ui_fixtures.py`'s
 dedicated "Playwright — Departmental Needs" OU and `_kebs_unit()`'s "Coast
 Region — Administration and ICT" OU), not by a separate reference sequence.
+
+**Update 2026-09-04, Phase 7:** the reference-reuse this item describes turned
+out to have a sharper consequence than a fragile assertion — see FU-17.
+
+---
+
+## FU-17 — Reference reuse leaked old `Notification Log` rows onto new Needs; raw URA deletes left stale Frappe Roles (2026-09-04)
+
+**What.** Two defects in Phase 6's own seed/fixture resets, found by the Phase
+7 test rewrite and fixed in the same commit:
+
+1. Neither `profiles.reset_kebs()` nor `playwright_ui_fixtures.reset_all()`
+   deleted `Notification Log` rows for the Needs they removed. Because the
+   `need_reference` counter only sees Needs that currently exist (FU-16),
+   the next `create_need` re-issues the deleted reference — and every stale
+   notification addressed to the old `document_name` silently attaches to
+   the new, unrelated Need. Observed live as phantom recipients
+   (`head.kebs@example.test`, `nds.pw.author@example.test`) in a fresh
+   notification-recipient assertion; 11 orphaned rows were purged from the
+   site.
+2. `reset_kebs()` removed disposable actors' `User Responsibility Assignment`
+   rows with a raw `frappe.db.delete`, which bypasses `_sync_projection` —
+   the step that would normally strip the Frappe Role `grant()` synced onto
+   the user. The actors therefore kept a stale `Head of User Department` /
+   `Departmental Author` role with no assignment behind it, and kept
+   surfacing as candidates in `notifications._reviewers()`'s `Has Role` scan
+   (the resolver then correctly denied them, but only after they had been
+   enumerated).
+
+**Why it matters.** Both are invisible to every command test — a Need still
+creates, submits and accepts with a phantom notification recipient or a stale
+role in place. They only show up in the one place that asserts *exactly who
+was told*. The first is also a standing hazard for any future reset that hard
+deletes a Need: `Notification Log` is not a child of `Departmental Need` and
+nothing cascades to it.
+
+**Fix (done).** Both resets now delete `Notification Log` by
+`document_type`/`document_name` before removing the Need rows;
+`reset_kebs()` strips the two business roles from its disposable actors
+unconditionally (not only when an assignment was found — an earlier reset
+predating this fix could already have left the role stale with nothing to key
+off). `reset_all()` deliberately does *not* touch its actors: the Playwright
+actors are designed to persist across resets (`ensure_actors()` is
+find-or-create), so their grants are real and current, not stale.
+
+**Still open.** Any *new* fixture reset that hard-deletes a Need must repeat
+the `Notification Log` cleanup — there is no shared helper for it yet, and
+tracker rule 6 means the next author should not "delete later". A small
+`departmental_needs.seeds._purge_need_graph(needs)` helper shared by both
+resets would remove the duplication; not done here to keep the Phase 7 diff
+to tests and the two defects.

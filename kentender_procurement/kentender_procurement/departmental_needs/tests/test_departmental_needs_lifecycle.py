@@ -17,17 +17,17 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, now_datetime
 
+from kentender_core.services.responsibility_administration import grant
+from kentender_core.services.site_configuration import close_needs_submission, open_needs_submission
 from kentender_procurement.departmental_needs.constants import (
 	ACTION_ACCEPT_SUCCESSOR,
 	ACTION_EVALUATE_WITHDRAWAL,
 	ACTION_REEVALUATE_WITHDRAWAL,
 	DESCRIPTION_MAX,
 	DESCRIPTION_MIN,
-	INTAKE_CLOSED,
-	INTAKE_OPEN,
 	ROLE_DEPARTMENTAL_AUTHOR,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
 	STATE_NOT_TAKEN_FORWARD,
@@ -53,25 +53,23 @@ from kentender_procurement.departmental_needs.constants import (
 )
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
-	ACTING_REVIEWER,
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
 	PLANNER,
 	REVIEWER,
+	_granted_units,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
-# NDS-CHG-001 v1.6 §14 rewrote the seed onto the AUTH-ADR-001 v1.6 resolver;
-# `PE`, `INTAKE_WINDOW` and the static `OU_DIGITAL_HEALTH` constant no longer
-# exist (Organisation Units are resolved from each actor's real grant). This
-# file's fixture helpers below (`open_window`/`close_window`/`create`/
-# `create_as`) still build the pre-v1.6 world and are Phase 7 work
-# (IMPLEMENTATION_TRACKER.md NDS-G07) — keeping this import block resolvable
-# is what lets the rest of the app's test suite be discovered.
-
 REASON = "The department no longer requires this equipment in the target financial year."
+
+# A namespace for the ad-hoc URA grants this file's own fixtures make (e.g.
+# `author_reviewer`, `second_reviewer`) — never the canonical KT_STD_001_S8
+# world `kentender_core.seeds.site_setup` owns.
+NS_TEST_GRANT = "KENTENDER_NDS_LIFECYCLE_TEST"
 
 
 class DepartmentalNeedsCommandCase(IntegrationTestCase):
@@ -79,56 +77,99 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		# Grace's real, granted Digital Health Organisation Unit (§14.2) — the
+		# fixture default this file's commands build against. Resolved from
+		# her actual assignment, never a hardcoded doc name, since the site
+		# carries a documented pre-existing Organisation Unit naming
+		# duplication (AUTH_IMPLEMENTATION_TRACKER_v2.0.md conflict C4).
+		cls.ou = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)["Digital Health"]
 
 	def setUp(self):
 		super().setUp()
 		self.addCleanup(frappe.set_user, "Administrator")
-		self.open_window()
 
 	# --- fixtures ----------------------------------------------------------
 
-	def open_window(self):
-		"""Put the seeded §14.1 window around "now" for this transaction only."""
-		now = now_datetime()
-		frappe.db.set_value(
-			"Needs Intake Window",
-			INTAKE_WINDOW,
-			{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
-			update_modified=False,
-		)
-
 	def close_window(self):
-		now = now_datetime()
-		frappe.db.set_value(
-			"Needs Intake Window",
-			INTAKE_WINDOW,
-			{"opens_at": add_days(now, -3), "closes_at": add_days(now, -1)},
-			update_modified=False,
-		)
+		"""Close Needs submission on the fixture Fiscal Year for this test only.
+
+		The flag is a durable, Configuration-&-Governance-owned toggle now
+		(§4.1) — already Open on `FY` by `kentender_core.seeds.site_setup`
+		before this class's `setUpClass` even runs. `IntegrationTestCase`
+		only rolls back once, in `addClassCleanup`, at the very end of the
+		whole class — not between individual test methods — so closing it
+		here without an explicit reopen would leave every alphabetically
+		later test in the same class seeing it Closed.
+
+		Changing the flag is a governed, Administrator-only command (unlike
+		the old direct `Needs Intake Window` write, which bypassed
+		permissions entirely) — a preceding `self.decide(...)`/`self.submit(
+		...)` call leaves `frappe.session.user` as whichever actor issued
+		that command, so the change runs explicitly as Administrator and
+		restores whatever user was current before it.
+		"""
+		previous = frappe.session.user
+		frappe.set_user("Administrator")
+		try:
+			close_needs_submission(fiscal_year=FY, reason="Test-only closure.", idempotency_key=self.key())
+		finally:
+			frappe.set_user(previous)
+		self.addCleanup(self._reopen_window)
+
+	def _reopen_window(self):
+		previous = frappe.session.user
+		frappe.set_user("Administrator")
+		try:
+			open_needs_submission(
+				fiscal_year=FY,
+				closes_at="2026-11-25 23:59:00",
+				reason="Test cleanup: restore the seeded default.",
+				idempotency_key=self.key(),
+			)
+		finally:
+			frappe.set_user(previous)
 
 	def key(self) -> str:
 		return f"nds-test-{uuid4().hex}"
 
 	def author_reviewer(self) -> str:
-		"""The reviewer, additionally holding the Departmental Author role.
+		"""The reviewer, additionally holding a real Departmental Author URA.
 
 		Maker-checker only becomes reachable for someone who *has* review
-		authority: an author without the Head of User Department role is a plain
-		scope denial, and naming maker-checker to them would disclose that the
-		record exists.
+		authority via a real grant — AUTH-ADR-001 v1.6 makes User
+		Responsibility Assignment the sole authority source; a synchronized
+		Frappe role alone grants nothing.
 		"""
-		user = frappe.get_doc("User", REVIEWER)
-		if not any(row.role == ROLE_DEPARTMENTAL_AUTHOR for row in user.roles):
-			user.append("roles", {"role": ROLE_DEPARTMENTAL_AUTHOR})
-			user.save(ignore_permissions=True)
-			frappe.clear_cache(user=REVIEWER)
+		grant(
+			user=REVIEWER,
+			business_role=ROLE_DEPARTMENTAL_AUTHOR,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
 		return REVIEWER
+
+	def second_reviewer(self) -> str:
+		"""A Head of User Department in the same scope, distinct from REVIEWER.
+
+		Grace already holds Departmental Author here (§14.2); granting her
+		Head of User Department too gives a second real reviewer without
+		relying on Julia's Acting appointment, which is only effective
+		1 Oct-30 Nov 2026 and so is not always active when this suite runs.
+		"""
+		grant(
+			user=AUTHOR,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return AUTHOR
 
 	def create_as(self, user: str, **overrides):
 		frappe.set_user(user)
 		return lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(**overrides),
@@ -140,7 +181,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
-			"unit": "UNIT-EACH",
+			"unit": "Each",
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -149,8 +190,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 	def create(self, **overrides):
 		frappe.set_user(AUTHOR)
 		return lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(**overrides),
@@ -303,7 +343,7 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			description="A description long enough for the minimum bound.",
 			expected_operational_result="An operational result long enough as well.",
 			indicative_quantity=None,
-			unit="UNIT-EACH",
+			unit="Each",
 			required_by_date="2027-12-31",
 		)
 		with self.assertRaises(DepartmentalNeedError) as caught:
@@ -547,7 +587,7 @@ class TestDraftContentBounds(ContentValidationCase):
 		# is refused by the Link itself, before any service-layer rule runs, so
 		# no ungoverned unit can reach a version row at all.
 		with self.assertRaises(frappe.LinkValidationError):
-			self.save_draft(unit="UNIT-NOT-GOVERNED")
+			self.save_draft(unit="Not A Real Uom")
 
 
 class TestSubmissionValidation(ContentValidationCase):
@@ -591,18 +631,11 @@ class TestSubmissionValidation(ContentValidationCase):
 		# but the catalogue has retired it. A Link check alone would pass this,
 		# which is why the governance rule lives at submission and not only in
 		# the Link.
-		frappe.db.set_value(
-			"Unit Of Measure", "UNIT-PROGRAMME", "status", "Inactive", update_modified=False
-		)
+		frappe.db.set_value("UOM", "Programme", "enabled", 0, update_modified=False)
 		self.addCleanup(
-			frappe.db.set_value,
-			"Unit Of Measure",
-			"UNIT-PROGRAMME",
-			"status",
-			"Active",
-			update_modified=False,
+			frappe.db.set_value, "UOM", "Programme", "enabled", 1, update_modified=False
 		)
-		self.refuses("NDS_UNIT_INELIGIBLE", unit="UNIT-PROGRAMME")
+		self.refuses("NDS_UNIT_INELIGIBLE", unit="Programme")
 
 	def test_a_missing_required_by_date_is_refused(self):
 		self.refuses("NDS_FIELD_REQUIRED", required_by_date=None)
@@ -948,7 +981,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 			idempotency_key=self.key(),
 		)
 		# A second Head of User Department in the same scope accepts it.
-		frappe.set_user(ACTING_REVIEWER)
+		frappe.set_user(self.second_reviewer())
 		accepted = lifecycle.review_need(
 			need=submitted["need"],
 			decision="accept",
@@ -1105,9 +1138,7 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 	def reviewer_row(self, need: str) -> dict:
 		frappe.set_user(REVIEWER)
 		try:
-			result = workspace.get_workspace(
-				user=REVIEWER, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-			)
+			result = workspace.get_workspace(user=REVIEWER, organisation_unit=self.ou)
 		finally:
 			frappe.set_user("Administrator")
 		reference = frappe.db.get_value("Departmental Need", need, "need_reference")
@@ -1139,9 +1170,7 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 		accepted, _ = self.submitted_successor()
 		frappe.set_user(AUTHOR)
 		try:
-			result = workspace.get_workspace(
-				user=AUTHOR, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-			)
+			result = workspace.get_workspace(user=AUTHOR, organisation_unit=self.ou)
 		finally:
 			frappe.set_user("Administrator")
 		reference = frappe.db.get_value("Departmental Need", accepted["need"], "need_reference")

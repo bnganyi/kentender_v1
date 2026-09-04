@@ -24,19 +24,14 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.errors import ERROR_CODES, DepartmentalNeedError, fail
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
 	PLANNER,
 	REVIEWER,
+	_granted_units,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.seeds import profiles
-
-# NDS-CHG-001 v1.6 §14's Phase 6 seed rewrite dropped `PE`, `INTAKE_WINDOW`
-# and the static `OU_DIGITAL_HEALTH`/`OU_HRMD` constants — Organisation Units
-# are resolved from each actor's real grant now. This file's bodies below
-# still pass `procuring_entity=`/reference these names and are Phase 7 work
-# (IMPLEMENTATION_TRACKER.md NDS-G07); keeping this import block resolvable
-# is what lets the rest of the app's test suite be discovered.
 from kentender_procurement.departmental_needs.services import lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import (
 	planning_usage,
@@ -82,17 +77,13 @@ class ContractCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
+		cls.ou = units["Digital Health"]
+		cls.ou_hrmd = units["Human Resources Management and Development"]
 
 	def setUp(self):
 		super().setUp()
 		self.addCleanup(frappe.set_user, "Administrator")
-		now = now_datetime()
-		frappe.db.set_value(
-			"Needs Intake Window",
-			INTAKE_WINDOW,
-			{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
-			update_modified=False,
-		)
 
 	def key(self) -> str:
 		return f"nds-contract-{uuid4().hex}"
@@ -129,10 +120,7 @@ class TestContractSurface(ContractCase):
 
 	def test_every_mutating_command_requires_an_idempotency_key(self):
 		exempt = {
-			# §8.2 scopes these by role and record version rather than a decision
-			# token: the window is a single PE/FY record, and a usage projection
-			# is made idempotent by its own source event ID.
-			"save_needs_intake_window",
+			# A usage projection is made idempotent by its own source event ID.
 			"project_need_planning_usage",
 		}
 		for name in COMMAND_CONTRACTS:
@@ -205,13 +193,12 @@ class TestIdempotencyConflict(ContractCase):
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
-			"unit": "UNIT-EACH",
+			"unit": "Each",
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
 		return lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=key,
 			**values,
@@ -252,7 +239,6 @@ class TestAcceptedSourceContract(ContractCase):
 			"accepted_version",
 			"version_number",
 			"content_hash",
-			"procuring_entity",
 			"organisation_unit",
 			"financial_year",
 			"title",
@@ -268,6 +254,8 @@ class TestAcceptedSourceContract(ContractCase):
 	def test_the_payload_carries_nothing_the_spec_excludes(self):
 		# NDS-AC-024 — no Budget Line, amount, funding source, currency,
 		# Strategy, requirement type, location, attachment or evidence.
+		# AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit Procuring
+		# Entity, so the payload carries no `procuring_entity` either.
 		payload = self.read()
 		for excluded in (
 			"budget_line",
@@ -282,6 +270,7 @@ class TestAcceptedSourceContract(ContractCase):
 			"attachments",
 			"source_reference",
 			"notes",
+			"procuring_entity",
 		):
 			self.assertNotIn(excluded, payload)
 
@@ -393,7 +382,7 @@ class TestPlanningUsageProjection(ContractCase):
 		self.assertEqual(before, after)
 
 
-class ReviewQueueActionTest(IntegrationTestCase):
+class ReviewQueueActionTest(ContractCase):
 	"""§12.2 — every open decision this reviewer holds reaches them via the queue.
 
 	NDS-UI-02's queue is the reviewer's only entry point to NDS-UI-05 and
@@ -409,36 +398,28 @@ class ReviewQueueActionTest(IntegrationTestCase):
 	held it, and no queue row offered it.
 	"""
 
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		upsert_departmental_needs()
-
 	def setUp(self):
 		super().setUp()
-		self.addCleanup(frappe.set_user, "Administrator")
 		self.addCleanup(profiles.reset_profile, "successor")
 		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
 
-	def _row(self, reference: str, unit: str = "") -> dict:
+	def _row(self, reference: str, unit: str) -> dict:
 		frappe.set_user(REVIEWER)
-		result = workspace.get_workspace(
-			user=REVIEWER, procuring_entity=PE, organisation_unit=unit
-		)
+		result = workspace.get_workspace(user=REVIEWER, organisation_unit=unit)
 		frappe.set_user("Administrator")
 		rows = [row for row in result["needs"] if row["reference"] == reference]
 		self.assertEqual(len(rows), 1, msg=f"{reference} missing from the reviewer's rows")
 		return rows[0]
 
 	def test_initial_submission_offers_the_review_action(self):
-		row = self._row("NDS-MOH-2027-0002", unit=OU_HRMD)
+		row = self._row("NDS-MOH-2027-0002", unit=self.ou_hrmd)
 		codes = [action["code"] for action in row["actions"]]
 		self.assertEqual(codes[0], "review")
 		self.assertTrue(row["actions"][0]["task"], msg="the action must carry its task")
 
 	def test_open_withdrawal_offers_the_withdrawal_action(self):
 		profiles.apply_profile("withdrawal_blocked")
-		row = self._row("NDS-MOH-2027-0001")
+		row = self._row("NDS-MOH-2027-0001", unit=self.ou)
 		self.assertEqual(row["actions"][0]["code"], "withdrawal")
 		self.assertTrue(row["actions"][0]["task"])
 
@@ -446,9 +427,7 @@ class ReviewQueueActionTest(IntegrationTestCase):
 		"""NDS-AC-010 — maker-checker holds however the action is derived."""
 		profiles.apply_profile("successor")
 		frappe.set_user(AUTHOR)
-		result = workspace.get_workspace(
-			user=AUTHOR, procuring_entity=PE, organisation_unit=OU_DIGITAL_HEALTH
-		)
+		result = workspace.get_workspace(user=AUTHOR, organisation_unit=self.ou)
 		frappe.set_user("Administrator")
 		for row in result["needs"]:
 			codes = {action["code"] for action in row["actions"]}
@@ -479,7 +458,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
-			"unit": "UNIT-EACH",
+			"unit": "Each",
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -490,8 +469,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 		created = api.save_need_draft(
 			cmd="kentender_procurement.departmental_needs.api.save_need_draft",
 			csrf_token="irrelevant-but-present-on-every-post",
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(),
@@ -504,8 +482,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 		# Draft, which forwards `need` and so takes the `update_need` branch.
 		frappe.set_user(AUTHOR)
 		created = api.save_need_draft(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(),
@@ -528,8 +505,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 			with self.subTest(decision=decision):
 				frappe.set_user(AUTHOR)
 				created = api.save_need_draft(
-					procuring_entity=PE,
-					organisation_unit=OU_DIGITAL_HEALTH,
+					organisation_unit=self.ou,
 					financial_year=FY,
 					idempotency_key=self.key(),
 					**self.content(),

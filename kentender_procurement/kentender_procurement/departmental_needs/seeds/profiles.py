@@ -531,12 +531,30 @@ def reset_kebs() -> dict[str, Any]:
 			frappe.db.delete(doctype, {"departmental_need": ("in", needs)})
 		frappe.db.delete("Need Planning Usage Projection", {"departmental_need": ("in", needs)})
 		frappe.db.delete("Departmental Need Version", {"departmental_need": ("in", needs)})
+		# A deleted Need's reference is free for the next command to reuse
+		# (§14.7's reference counter only sees what currently exists), so a
+		# stray Notification Log row addressed to the old `document_name`
+		# would otherwise leak into whatever Need is next assigned that same
+		# reference.
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
 		frappe.db.delete("Departmental Need", {"name": ("in", needs)})
 	for user in (KEBS_AUTHOR, KEBS_REVIEWER):
 		assignments = frappe.get_all(
 			"User Responsibility Assignment", filters={"user": user, "fixture_namespace": NS_KEBS}, pluck="name"
 		)
 		frappe.db.delete("User Responsibility Assignment", {"name": ("in", assignments)})
+		# Raw deletion bypasses `_sync_projection`, which is what would
+		# normally remove the Frappe Role a grant synced onto the user — do
+		# that explicitly (unconditionally, since an earlier reset before
+		# this fix existed could already have left the role stale with no
+		# assignment left to key off) so a disposable KEBS actor does not
+		# keep looking like a real Head of User Department/Departmental
+		# Author candidate (via the `Has Role` scan `_reviewers()` starts
+		# from) once their actual authority is gone.
+		if frappe.db.exists("User", user):
+			frappe.get_doc("User", user).remove_roles(
+				"Departmental Author", "Head of User Department"
+			)
 	return {"profile": "kebs", "removed": needs}
 
 
