@@ -154,7 +154,7 @@ def _not_included(ctx: str, pe: str, fy: str, window_state: str) -> str:
 	if window_state != "Closed":
 		return ""
 	try:
-		sources = needs_intake.current_accepted_sources(pe, fy)
+		sources = needs_intake.current_accepted_sources(fy)
 	except Exception:
 		return ""
 	covered_ous = set(

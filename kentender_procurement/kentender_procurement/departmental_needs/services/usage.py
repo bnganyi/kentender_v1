@@ -27,7 +27,7 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
-	has_role,
+	in_scope,
 	is_administrative,
 )
 
@@ -92,8 +92,13 @@ def project_planning_usage(
 	newer projection (§4.7).
 	"""
 	principal = actor(user)
-	# The event is Planning's to publish; §6 gives no other role this authority.
-	if not (has_role(principal, ROLE_PROCUREMENT_PLANNER) or is_administrative(principal)):
+	# The event is Planning's to publish; §6 gives no other role this
+	# authority. Procurement Planner is Site-wide (AUTH-ADR-001 v1.6 §4.4),
+	# so the Organisation Unit passed to the scope check is immaterial.
+	if not (
+		in_scope(principal, business_role=ROLE_PROCUREMENT_PLANNER, organisation_unit="")
+		or is_administrative(principal)
+	):
 		fail("NDS_SCOPE_DENIED", "Only Procurement Planning may project Need planning usage.")
 	usage_value = cstr(usage).strip()
 	if usage_value not in USAGE_VALUES:

@@ -311,9 +311,7 @@ def save_need_funding(
 	entry = frappe.get_doc("Departmental Plan Entry", name)
 	if entry.source_origin != needs_intake.NEED_ORIGIN:
 		fail("PLN_ENTRY_INCOMPLETE", "Only a Need-origin entry takes funding details here.")
-	current = needs_intake.current_accepted_version_of(
-		entry.need, root.procuring_entity, root.financial_year
-	)
+	current = needs_intake.current_accepted_version_of(entry.need, root.financial_year)
 	if current != cstr(entry.need_version):
 		fail("PLN_DPP_STALE", "This departmental plan changed. Reload and review the current Version.")
 	_validate_funding(root, budget_line, indicative_amount)

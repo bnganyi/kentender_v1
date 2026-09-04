@@ -1,4 +1,4 @@
-"""Stable Departmental Needs states, actions and field bounds (NDS-CHG-001 v1.1)."""
+"""Stable Departmental Needs states, actions and field bounds (NDS-CHG-001 v1.6)."""
 
 # --- Root states (§4.2) ---------------------------------------------------
 STATE_DRAFT = "Draft"
@@ -19,8 +19,9 @@ NEED_STATES = frozenset(
 	}
 )
 
-# PE, OU and FY are fixed at creation (§4.2).
-IMMUTABLE_NEED_SCOPE_FIELDS = ("procuring_entity", "organisation_unit", "financial_year")
+# OU and FY are fixed at creation (§4.2). The site Procuring Entity is
+# implicit (AUTH-ADR-001 v1.6 §1.1) and carries no field here.
+IMMUTABLE_NEED_SCOPE_FIELDS = ("organisation_unit", "financial_year")
 
 # --- Version statuses (§4.3) ----------------------------------------------
 VERSION_DRAFT = "Draft"
@@ -74,10 +75,14 @@ WITHDRAWAL_DECLINED = "Declined"
 
 OPEN_WITHDRAWAL_STATUSES = frozenset({WITHDRAWAL_AWAITING_REVIEW, WITHDRAWAL_AWAITING_CLEARANCE})
 
-# --- Intake window derived state (§4.1, NDS-AC-003) -----------------------
-# Derived from the stored instants at read time; never stored on the window.
-INTAKE_NOT_CONFIGURED = "Not configured"
-INTAKE_SCHEDULED = "Scheduled"
+# --- Needs-submission state (§4.1, NDS-AC-003, NDS-AC-055) ----------------
+# Derived read-only from `Fiscal Year.kentender_needs_submission_open` (a
+# plain Boolean) via `kentender_core.services.site_configuration` — never a
+# module-owned window record. There is no `Scheduled` state under v1.6: the
+# flag is a binary Open/Closed at the instant it is read, and reaching
+# `kentender_needs_submission_closes_at` closes it with the same effect as a
+# manual close (the hourly `close_due_needs_submissions` job, or an
+# in-transaction recheck at command time, whichever runs first).
 INTAKE_OPEN = "Open"
 INTAKE_CLOSED = "Closed"
 
@@ -133,13 +138,17 @@ USAGE_FULL = "Fully included"
 
 USAGE_VALUES = frozenset({USAGE_NOT_INCLUDED, USAGE_FULL})
 
-# --- Native Frappe roles (§6) ---------------------------------------------
+# --- Business responsibilities (§6) ----------------------------------------
+# These are also the projected Frappe Role names (AUTH-ADR-001 v1.6 §5.7) and
+# the exact `business_role` strings registered in
+# `kentender_core.services.business_role_registry`.
 ROLE_DEPARTMENTAL_AUTHOR = "Departmental Author"
 ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"
 ROLE_PROCUREMENT_PLANNER = "Procurement Planner"
 ROLE_AUDITOR = "Auditor"
 
-# No capability identifiers are defined here. §6 and NDS-AC-044 require native
-# Frappe Role, Workflow permission and User Permission only — see
-# `services/permissions.py`. Do not reintroduce a Capability Profile,
-# Operational Scope Assignment or any other parallel permission store.
+# No capability identifiers are defined here. §6 requires the shared
+# AUTH-ADR-001 v1.6 resolver (`kentender_core.services.authorization`) and its
+# `User Responsibility Assignment` — see `services/permissions.py`. Do not
+# reintroduce Frappe User Permission, a Capability Profile, an Operational
+# Scope Assignment or any other parallel permission store as authority.

@@ -1,14 +1,23 @@
 """Generate Departmental Needs records through Frappe's DocType lifecycle.
 
-Schemas follow NDS-CHG-001 v1.1 §4. Permissions are native Frappe Role
-permissions (§6, NDS-AC-044) and are declared on each DocType's checked-in
-JSON; this generator only bootstraps a fresh environment (NDS-AC-032).
+Schemas follow NDS-CHG-001 v1.6 §4. Coarse DocType permissions are declared
+on each DocType's checked-in JSON; business authority is enforced per
+command through the AUTH-ADR-001 v1.6 resolver in
+`departmental_needs/services/permissions.py` — no Frappe User Permission,
+capability or scope-assignment store (§6, §16.4). This generator only
+bootstraps a fresh environment (NDS-AC-032).
 
 Retired by v1.1 §1.1 and removed here: `Departmental Need Item` (one Need is
 one requirement), `Departmental Need Attachment` (no decision requires a
 document) and `Departmental Need Review` (superseded by
 `Departmental Need Decision`). See patch
 `nds_chg_001_v11_drop_retired_need_doctypes`.
+
+Retired by v1.6 and removed here: `Needs Intake Window` (replaced by two
+namespaced fields on ERPNext's `Fiscal Year`, owned by Configuration &
+Governance) and the `procuring_entity` field on every doctype below (the
+site is implicitly one Procuring Entity). See patch
+`nds_chg_001_v16_drop_needs_intake_window`.
 """
 
 from __future__ import annotations
@@ -70,16 +79,6 @@ DECISION_PERMISSIONS: list[dict] = [
 	*OVERSIGHT_READ,
 ]
 
-# §4.1 / NDS-AC-043 — the Procurement Planner maintains the PE/FY window.
-# Everyone else in scope reads it to know whether intake is open.
-INTAKE_WINDOW_PERMISSIONS: list[dict] = [
-	*ADMIN_PERMISSIONS,
-	{"role": "Procurement Planner", "read": 1, "write": 1, "create": 1},
-	{"role": "Departmental Author", "read": 1},
-	{"role": "Head of User Department", "read": 1},
-	{"role": "Auditor", "read": 1},
-]
-
 # One explicit mapping so a new doctype cannot silently inherit the wrong set.
 PERMISSIONS_BY_DOCTYPE: dict[str, list[dict]] = {
 	"Departmental Need": NEED_PERMISSIONS,
@@ -87,7 +86,6 @@ PERMISSIONS_BY_DOCTYPE: dict[str, list[dict]] = {
 	"Need Withdrawal Request": NEED_PERMISSIONS,
 	"Departmental Need Review Task": REVIEW_TASK_PERMISSIONS,
 	"Departmental Need Decision": DECISION_PERMISSIONS,
-	"Needs Intake Window": INTAKE_WINDOW_PERMISSIONS,
 }
 
 STATES = "Draft\nSubmitted\nReturned\nAccepted for planning\nNot taken forward\nWithdrawn"
@@ -101,9 +99,8 @@ SCHEMAS = (
 		"search_fields": "need_reference",
 		"fields": [
 			_f("Need Reference", "need_reference", reqd=1, unique=1, read_only=1, in_list_view=1),
-			_f("Procuring Entity", "procuring_entity", "Link", options="Procuring Entity", reqd=1, read_only=1, search_index=1),
 			_f("Organisation Unit", "organisation_unit", "Link", options="Organisation Unit", reqd=1, read_only=1, search_index=1),
-			_f("Financial Year", "financial_year", "Link", options="Financial Year", reqd=1, read_only=1, search_index=1),
+			_f("Financial Year", "financial_year", "Link", options="Fiscal Year", reqd=1, read_only=1, search_index=1),
 			_f("Current State", "current_state", "Select", options=STATES, default="Draft", reqd=1, read_only=1, in_list_view=1, search_index=1),
 			_f("Current Version", "current_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
 			_f("Current Accepted Version", "current_accepted_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
@@ -127,24 +124,9 @@ SCHEMAS = (
 			_f("Description", "description", "Text"),
 			_f("Expected Operational Result", "expected_operational_result", "Text"),
 			_f("Indicative Quantity", "indicative_quantity", "Float", precision="3"),
-			_f("Unit", "unit", "Link", options="Unit Of Measure"),
+			_f("Unit", "unit", "Link", options="UOM"),
 			_f("Required By", "required_by_date", "Date"),
 			_f("Content Hash", "content_hash", read_only=1, search_index=1),
-			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
-		],
-	},
-	{
-		"name": "Needs Intake Window",
-		"module": "Departmental Needs",
-		"autoname": "field:needs_intake_window_id",
-		"search_fields": "procuring_entity,financial_year",
-		"fields": [
-			_f("Needs Intake Window ID", "needs_intake_window_id", reqd=1, unique=1, read_only=1, in_list_view=1),
-			_f("Procuring Entity", "procuring_entity", "Link", options="Procuring Entity", reqd=1, read_only=1, search_index=1, in_list_view=1),
-			_f("Financial Year", "financial_year", "Link", options="Financial Year", reqd=1, read_only=1, search_index=1, in_list_view=1),
-			_f("Opens At", "opens_at", "Datetime", reqd=1, in_list_view=1),
-			_f("Closes At", "closes_at", "Datetime", reqd=1, in_list_view=1),
-			_f("Record Version", "record_version", "Int", default="0", reqd=1, read_only=1),
 			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
 		],
 	},
@@ -159,9 +141,8 @@ SCHEMAS = (
 			_f("Need Version", "need_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
 			_f("Withdrawal Request", "withdrawal_request", "Link", options="Need Withdrawal Request", read_only=1, search_index=1),
 			_f("Task Type", "task_type", "Select", options="Initial acceptance\nSuccessor acceptance\nWithdrawal", reqd=1, read_only=1, in_list_view=1, search_index=1),
-			_f("Procuring Entity", "procuring_entity", "Link", options="Procuring Entity", reqd=1, read_only=1, search_index=1),
 			_f("Organisation Unit", "organisation_unit", "Link", options="Organisation Unit", reqd=1, read_only=1, search_index=1),
-			_f("Financial Year", "financial_year", "Link", options="Financial Year", reqd=1, read_only=1, search_index=1),
+			_f("Financial Year", "financial_year", "Link", options="Fiscal Year", reqd=1, read_only=1, search_index=1),
 			_f("Status", "status", "Select", options="Open\nCompleted\nCancelled", default="Open", reqd=1, read_only=1, in_list_view=1, search_index=1),
 			_f("Decision Token", "decision_token", reqd=1, read_only=1),
 			_f("Opened At", "opened_at", "Datetime", reqd=1, read_only=1),

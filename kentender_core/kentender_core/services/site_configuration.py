@@ -55,6 +55,9 @@ _PE_CODE_PATTERN = re.compile(r"^[A-Z][A-Z0-9-]{2,19}$")
 KT_FISCAL_YEAR_REFERENCES: tuple[tuple[str, str], ...] = (
 	# CU-305 — Strategy's performance targets bind to the canonical year.
 	("Performance Target", "financial_year_id"),
+	# NDS-CHG-001 v1.6 §16.4.11 — Departmental Needs binds to the canonical
+	# year (retired its own bespoke `Financial Year` doctype).
+	("Departmental Need", "financial_year"),
 )
 
 

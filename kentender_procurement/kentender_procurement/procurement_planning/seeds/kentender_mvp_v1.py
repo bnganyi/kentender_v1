@@ -256,7 +256,7 @@ def verify_prerequisites() -> dict[str, str]:
 
 	need(
 		f"Departmental Need {NEED} Accepted for planning",
-		needs_intake.current_accepted_version_of(NEED, PE, FY),
+		needs_intake.current_accepted_version_of(NEED, FY),
 	)
 	if missing:
 		frappe.throw(
@@ -667,7 +667,7 @@ def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
 	from kentender_procurement.departmental_needs.services import usage as needs_usage
 	from kentender_procurement.procurement_planning.services import needs_intake
 
-	accepted_version = needs_intake.current_accepted_version_of(NEED, PE, FY)
+	accepted_version = needs_intake.current_accepted_version_of(NEED, FY)
 	if accepted_version and needs_usage.is_actively_included(accepted_version):
 		needs_usage.project_planning_usage(
 			departmental_need=NEED, accepted_version=accepted_version, usage="Not included",
@@ -1139,7 +1139,7 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	from kentender_procurement.departmental_needs.services import usage as needs_usage
 	from kentender_procurement.procurement_planning.services import needs_intake
 
-	accepted_version = needs_intake.current_accepted_version_of(NEED, PE, FY)
+	accepted_version = needs_intake.current_accepted_version_of(NEED, FY)
 	check(
 		"need_usage.fully_included",
 		bool(accepted_version) and needs_usage.is_actively_included(accepted_version),

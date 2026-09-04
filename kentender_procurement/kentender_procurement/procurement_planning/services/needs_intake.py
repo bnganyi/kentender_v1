@@ -27,7 +27,7 @@ DIRECT_ORIGIN = "Direct departmental requirement"
 
 
 def current_accepted_sources(
-	procuring_entity: str, financial_year: str, organisation_unit: str = ""
+	financial_year: str, organisation_unit: str = ""
 ) -> list[dict[str, Any]]:
 	from kentender_procurement.departmental_needs.services.events import (
 		current_accepted_events,
@@ -37,9 +37,9 @@ def current_accepted_sources(
 	# themselves (`accepted_payload`'s own field set — `need_id`,
 	# `accepted_version_id`, etc.), not a `{"payload": ...}` envelope around
 	# them; every caller of this function before this phase mocked it away,
-	# so the mismatch was never actually exercised.
+	# so the mismatch was never actually exercised. The site Procuring
+	# Entity is implicit (AUTH-ADR-001 v1.6 §1.1) — there is no PE parameter.
 	return current_accepted_events(
-		procuring_entity=procuring_entity,
 		financial_year=financial_year,
 		organisation_unit=organisation_unit,
 	)
@@ -62,9 +62,7 @@ def need_version_number(need_version: str) -> int:
 	return int(tail[1])
 
 
-def current_accepted_version_of(
-	need: str, procuring_entity: str, financial_year: str
-) -> str:
+def current_accepted_version_of(need: str, financial_year: str) -> str:
 	"""The Need's current accepted version through the published §8.1 contract,
 	or "" when it has none / is out of scope. Never reads Needs tables (D5)."""
 	from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
@@ -75,15 +73,14 @@ def current_accepted_version_of(
 	try:
 		# System principal, deliberately: this is Planning's server-side source
 		# consistency check, not a user read. NDS's viewer model (owner-author /
-		# HoD / Planner with explicit PE+OU+FY User Permission rows) governs
-		# people opening Needs; Planning actors hold no FY rows at all (§6:
-		# User Permissions are not recreated per Financial Year) and a
-		# departmental colleague may legitimately enrich a Need they did not
-		# author. The acting user was already authorised for the DPP scope by
-		# the calling command.
+		# HoD / Planner with an explicit OU-scoped or Site-wide responsibility
+		# assignment, AUTH-ADR-001 v1.6) governs people opening Needs; Planning
+		# actors hold no Financial Year assignment at all (Fiscal Year is never
+		# a per-user grant) and a departmental colleague may legitimately
+		# enrich a Need they did not author. The acting user was already
+		# authorised for the DPP scope by the calling command.
 		payload = get_current_accepted_need(
 			need=need,
-			expected_procuring_entity=procuring_entity,
 			expected_financial_year=financial_year,
 			user="Administrator",
 		)
@@ -120,9 +117,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 		 "fixture_namespace"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(
-		root.procuring_entity, root.financial_year, root.organisation_unit
-	)
+	sources = current_accepted_sources(root.financial_year, root.organisation_unit)
 	by_need = {cstr(payload["need_id"]): payload for payload in sources}
 	existing = frappe.get_all(
 		"Departmental Plan Entry",
@@ -175,9 +170,7 @@ def coverage_gaps(version_doc) -> list[str]:
 		["procuring_entity", "organisation_unit", "financial_year"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(
-		root.procuring_entity, root.financial_year, root.organisation_unit
-	)
+	sources = current_accepted_sources(root.financial_year, root.organisation_unit)
 	rows = frappe.get_all(
 		"Departmental Plan Entry",
 		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},

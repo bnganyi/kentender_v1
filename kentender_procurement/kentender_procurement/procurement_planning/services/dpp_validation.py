@@ -234,7 +234,7 @@ def accept_departmental_plan(
 	for row in snapshots:
 		if row.get("need"):
 			current = needs_intake.current_accepted_version_of(
-				row["need"], task_doc.procuring_entity, task_doc.financial_year
+				row["need"], task_doc.financial_year
 			)
 			if current != cstr(row.get("need_version")):
 				fail(

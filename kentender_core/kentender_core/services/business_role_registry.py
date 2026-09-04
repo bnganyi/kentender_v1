@@ -98,23 +98,23 @@ def _entry(
 
 
 _ENTRIES: tuple[BusinessRole, ...] = (
-	# --- Departmental Needs (NDS-CHG-001 v1.4) ---------------------------
+	# --- Departmental Needs (NDS-CHG-001 v1.6) ---------------------------
 	_entry(
 		"Departmental Author",
 		SCOPE_OU,
-		"NDS-CHG-001 v1.4",
+		"NDS-CHG-001 v1.6",
 		sod_tags=("need_authoring", "departmental_plan_authoring"),
 	),
 	_entry(
 		"Head of User Department",
 		SCOPE_OU,
-		"NDS-CHG-001 v1.4",
+		"NDS-CHG-001 v1.6",
 		sod_tags=("need_decision", "departmental_certification"),
 	),
 	_entry(
 		"Procurement Planner",
 		SCOPE_SITE,
-		"NDS-CHG-001 v1.4 / PLN-CHG-001 v1.4 §6",
+		"NDS-CHG-001 v1.6 / PLN-CHG-001 v1.4 §6",
 		sod_tags=("procurement_validation", "plan_preparation"),
 	),
 	# NDS registers "Auditor"; PLN registers "Planning Auditor". Both are
@@ -125,7 +125,7 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	_entry(
 		"Auditor",
 		SCOPE_SITE,
-		"NDS-CHG-001 v1.4 / BUD-CHG-001 v1.3 §7",
+		"NDS-CHG-001 v1.6 / BUD-CHG-001 v1.3 §7",
 		sod_tags=("oversight_read",),
 	),
 	# --- Procurement Planning (PLN-CHG-001 v1.4 §6) ----------------------

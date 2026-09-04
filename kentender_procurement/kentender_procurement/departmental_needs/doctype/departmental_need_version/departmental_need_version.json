@@ -97,11 +97,11 @@
    "precision": "3"
   },
   {
-   "description": "Governed unit giving meaning to the quantity.",
+   "description": "Governed unit giving meaning to the quantity. ERPNext UOM, enabled=1 only (NDS-CHG-001 v1.6 §4.3).",
    "fieldname": "unit",
    "fieldtype": "Link",
    "label": "Unit",
-   "options": "Unit Of Measure"
+   "options": "UOM"
   },
   {
    "description": "Date the department needs the requirement. Must fall inside the target Financial Year.",

@@ -28,7 +28,7 @@ from kentender_procurement.departmental_needs.constants import (
 	VERSION_CONTENT_FIELDS,
 )
 from kentender_procurement.departmental_needs.errors import fail
-from kentender_procurement.departmental_needs.services.context import selectable_financial_years
+from kentender_procurement.departmental_needs.services.context import fy_label, selectable_financial_years
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	can_view,
@@ -77,9 +77,7 @@ def _version_facts(version: str) -> dict[str, Any]:
 	if not facts.get("indicative_quantity"):
 		facts["indicative_quantity"] = None
 	facts["unit_label"] = cstr(
-		frappe.db.get_value("Unit Of Measure", facts.get("unit"), "unit_label")
-		or facts.get("unit")
-		or ""
+		frappe.db.get_value("UOM", facts.get("unit"), "uom_name") or facts.get("unit") or ""
 	)
 	return facts
 
@@ -90,9 +88,7 @@ def _quantity_label(version: dict[str, Any]) -> str:
 		return ""
 	value = int(quantity) if float(quantity).is_integer() else quantity
 	label = cstr(
-		frappe.db.get_value("Unit Of Measure", version.get("unit"), "unit_label")
-		or version.get("unit")
-		or ""
+		frappe.db.get_value("UOM", version.get("unit"), "uom_name") or version.get("unit") or ""
 	)
 	# NDS-DES-01/02 render the unit in lower case beside the quantity.
 	return f"{value} {label.lower()}".strip()
@@ -127,71 +123,52 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 	return [{"code": "view", "label": "View"}] if profile != "none" else []
 
 
-def _persist_context_preference(principal: str, selected: dict[str, str]) -> None:
-	"""CTX-CHG-001 — an explicit pick is remembered server-side: the global
-	working PE plus this module's Organisation Unit. Persistence must never
-	break a read, so a preference the core service will not accept (e.g. a
-	PE readable here but no longer Active) is simply not remembered."""
-	from kentender_core.services.working_context import select_module_ou, select_working_pe
+def _persist_context_preference(principal: str, organisation_unit: str) -> None:
+	"""An explicit pick is remembered server-side as this module's own
+	Organisation Unit filter (§12.1) — never authority, and never a
+	Procuring Entity dimension (the site has exactly one, implicit).
+	Persistence must never break a read, so a preference the core service
+	will not accept is simply not remembered."""
+	from kentender_core.services.working_context import select_module_ou
 
 	try:
-		select_working_pe(selected["procuring_entity"], principal)
-		select_module_ou(
-			"needs", selected["organisation_unit"], principal,
-			offered=[selected["organisation_unit"]],
-		)
+		select_module_ou("needs", organisation_unit, principal, offered=[organisation_unit])
 	except Exception:
 		frappe.clear_last_message()
 
 
-def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] | None, list[dict[str, str]]]:
+def _selected_context(principal: str, organisation_unit: str) -> tuple[dict[str, str] | None, list[dict[str, str]]]:
 	# Viewing, not authoring: this resolver also serves NDS-UI-02, whose only
 	# audience is the Head of User Department — a role that never authors.
 	#
-	# CTX-CHG-001 resolution order: an explicit request (the user's pick —
-	# validated, then persisted) → the server-side preferences (global working
-	# PE narrowing the pool, this module's remembered Organisation Unit
-	# choosing within it) → auto-select a single option → prompt. Browser
-	# storage plays no part; a preference that no longer matches the caller's
-	# own contexts resolves to "prompt again", never to access and never to an
-	# error. When the working PE has no Needs context at all, the FULL context
-	# list stays on offer — the picker (which spans PEs) is the recovery path,
-	# so a PE choice made in another module can never trap this one.
+	# Resolution order (§12.1): an explicit request (the user's pick —
+	# validated against the caller's authorised contexts, then persisted) →
+	# this module's remembered Organisation Unit if still offered →
+	# auto-select a single option → prompt. A remembered selection outside
+	# the caller's current contexts resolves to "unselected", never to access
+	# and never to an error (§17).
 	contexts = viewing_contexts(principal)
 	if not contexts:
 		return None, contexts
-	if pe or ou:
+	if organisation_unit:
 		selected = next(
-			(
-				row
-				for row in contexts
-				if row["procuring_entity"] == pe and row["organisation_unit"] == ou
-			),
-			None,
+			(row for row in contexts if row["organisation_unit"] == organisation_unit), None
 		)
 		if selected:
-			_persist_context_preference(principal, selected)
+			_persist_context_preference(principal, selected["organisation_unit"])
 			return selected, contexts
-		# A requested pair outside the caller's contexts is a *remembered*
-		# selection, not an act of authority — resolve to "unselected", exactly
-		# as an unoffered remembered Financial Year does; rows stay filtered by
-		# `can_view`, and every command re-checks (§12.1, §17).
-	from kentender_core.services.working_context import get_module_ou, get_working_pe
+		# A requested unit outside the caller's contexts is a *remembered*
+		# selection, not an act of authority — resolve to "unselected".
+	if len(contexts) == 1:
+		return contexts[0], contexts
+	from kentender_core.services.working_context import get_module_ou
 
-	working_pe = get_working_pe(principal)["selected"]
-	pool = contexts
-	if working_pe:
-		subset = [row for row in contexts if row["procuring_entity"] == working_pe["id"]]
-		if subset:
-			pool = subset
-	if len(pool) == 1:
-		return pool[0], contexts
-	remembered_ou = get_module_ou(
-		"needs", principal, offered=[row["organisation_unit"] for row in pool]
+	remembered = get_module_ou(
+		"needs", principal, offered=[row["organisation_unit"] for row in contexts]
 	)["selected"]
-	if remembered_ou:
+	if remembered:
 		selected = next(
-			(row for row in pool if row["organisation_unit"] == remembered_ou["id"]), None
+			(row for row in contexts if row["organisation_unit"] == remembered["id"]), None
 		)
 		if selected:
 			return selected, contexts
@@ -200,7 +177,6 @@ def _selected_context(principal: str, pe: str, ou: str) -> tuple[dict[str, str] 
 
 def get_workspace(
 	*,
-	procuring_entity: str = "",
 	organisation_unit: str = "",
 	financial_year: str = "",
 	search: str = "",
@@ -208,9 +184,7 @@ def get_workspace(
 	user: str | None = None,
 ) -> dict[str, Any]:
 	principal = actor(user)
-	selected, contexts = _selected_context(
-		principal, cstr(procuring_entity).strip(), cstr(organisation_unit).strip()
-	)
+	selected, contexts = _selected_context(principal, cstr(organisation_unit).strip())
 	if not selected:
 		return {
 			"ok": False,
@@ -236,10 +210,7 @@ def get_workspace(
 		frappe.clear_last_message()
 		fy_state = get_module_fy("needs", principal, offered=_fy_rows)
 	fy = fy_state["selected"]["id"] if fy_state["selected"] else ""
-	filters: dict[str, Any] = {
-		"procuring_entity": selected["procuring_entity"],
-		"organisation_unit": selected["organisation_unit"],
-	}
+	filters: dict[str, Any] = {"organisation_unit": selected["organisation_unit"]}
 	if fy:
 		filters["financial_year"] = fy
 	if cstr(status).strip():
@@ -251,7 +222,6 @@ def get_workspace(
 			"name",
 			"need_reference",
 			"owner",
-			"procuring_entity",
 			"organisation_unit",
 			"financial_year",
 			"current_state",
@@ -312,8 +282,7 @@ def get_workspace(
 		"actions": (
 			[{"code": "create", "label": "Create need"}]
 			if any(
-				row["procuring_entity"] == selected["procuring_entity"]
-				and row["organisation_unit"] == selected["organisation_unit"]
+				row["organisation_unit"] == selected["organisation_unit"]
 				for row in creation_contexts(principal)
 			)
 			else []
@@ -378,7 +347,6 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		"withdrawal_request": withdrawal,
 		"requester_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 		"scope": {
-			"procuring_entity": doc.procuring_entity,
 			"organisation_unit": doc.organisation_unit,
 			"financial_year": doc.financial_year,
 		},
@@ -392,7 +360,6 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 def get_current_accepted_need(
 	*,
 	need: str,
-	expected_procuring_entity: str = "",
 	expected_financial_year: str = "",
 	expected_content_hash: str = "",
 	user: str | None = None,
@@ -414,8 +381,6 @@ def get_current_accepted_need(
 		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
 	doc = frappe.get_doc("Departmental Need", name)
 	require_view(doc, principal)
-	if cstr(expected_procuring_entity) and cstr(expected_procuring_entity) != doc.procuring_entity:
-		fail("NDS_CONTEXT_REQUIRED", "The Need does not belong to the expected Procuring Entity.")
 	if cstr(expected_financial_year) and cstr(expected_financial_year) != doc.financial_year:
 		fail("NDS_CONTEXT_REQUIRED", "The Need does not belong to the expected financial year.")
 	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_version:
@@ -426,9 +391,7 @@ def get_current_accepted_need(
 			"NDS_SOURCE_STALE",
 			"The requested accepted version is no longer current. Refresh the source.",
 		)
-	unit_label = cstr(
-		frappe.db.get_value("Unit Of Measure", version.unit, "unit_label") or version.unit or ""
-	)
+	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
 	return {
 		"ok": True,
 		"contract": "DepartmentalNeedAccepted.v2",
@@ -437,7 +400,6 @@ def get_current_accepted_need(
 		"accepted_version": version.name,
 		"version_number": version.version_number,
 		"content_hash": version.content_hash,
-		"procuring_entity": doc.procuring_entity,
 		"organisation_unit": doc.organisation_unit,
 		"financial_year": doc.financial_year,
 		"title": version.title,
@@ -452,19 +414,13 @@ def get_current_accepted_need(
 
 def _scope_labels(doc) -> dict[str, str]:
 	"""Display names for the Need's scope; the artboards never show raw IDs."""
+	fy_start = frappe.db.get_value("Fiscal Year", doc.financial_year, "year_start_date")
 	return {
-		"procuring_entity": cstr(
-			frappe.db.get_value("Procuring Entity", doc.procuring_entity, "legal_name")
-			or doc.procuring_entity
-		),
 		"organisation_unit": cstr(
 			frappe.db.get_value("Organisation Unit", doc.organisation_unit, "unit_name")
 			or doc.organisation_unit
 		),
-		"financial_year": cstr(
-			frappe.db.get_value("Financial Year", doc.financial_year, "label")
-			or doc.financial_year
-		),
+		"financial_year": fy_label(fy_start) if fy_start else cstr(doc.financial_year),
 	}
 
 

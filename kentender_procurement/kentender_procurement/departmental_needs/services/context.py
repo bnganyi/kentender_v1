@@ -1,15 +1,17 @@
-"""Needs context and intake window (NDS-CHG-001 v1.1 §4.1, §5.4, §8.1, §8.2).
+"""Needs context and Fiscal Year / submission state (NDS-CHG-001 v1.6 §3, §4.1, §8.1, §16.4).
 
-The intake window is a real `Needs Intake Window` record for one PE/FY, and its
-`Scheduled` / `Open` / `Closed` state is derived at read time from the stored
-instants — never stored (§4.1). Boundaries are inclusive on both ends
-(NDS-AC-003), so a command at exactly `opens_at` or exactly `closes_at`
-succeeds.
+The Needs-submission flag is two namespaced fields on ERPNext's native
+`Fiscal Year` (`kentender_needs_submission_open`, `_closes_at`), owned and
+maintained exclusively by Configuration & Governance through
+`/app/system-setup` (CFG-CHG-002 v0.6). Departmental Needs never creates,
+writes or exposes a configuration route for either field — it reads them
+read-only through `kentender_core.services.site_configuration`, and every
+create/submit command rechecks the flag server-side inside its own
+transaction so a flag that closes between page load and submit is caught
+(§12.7, NDS-AC-056).
 
-Only initial creation and initial submission are gated on an Open window
-(NDS-BR-002). A correction of a version submitted before close may be
-resubmitted after close, and an accepted successor may be proposed while the
-PE/FY context remains active (NDS-BR-003).
+There is no `Needs Intake Window` doctype and no `Scheduled` state under
+v1.6: the flag is a plain Open/Closed Boolean at the instant it is read.
 """
 
 from __future__ import annotations
@@ -17,271 +19,182 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, get_datetime, getdate, now_datetime, nowdate
+from frappe.utils import cstr, get_datetime, getdate, now_datetime
 
-from kentender_procurement.departmental_needs.constants import (
-	INTAKE_CLOSED,
-	INTAKE_NOT_CONFIGURED,
-	INTAKE_OPEN,
-	INTAKE_SCHEDULED,
-)
+from kentender_procurement.departmental_needs.constants import INTAKE_CLOSED, INTAKE_OPEN
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	creation_contexts,
 	is_administrative,
-	may_maintain_intake_window,
-	permitted_values,
-	require_intake_window_command,
+	viewing_contexts,
 )
 
+FY_DOCTYPE = "Fiscal Year"
+FLAG_OPEN = "kentender_needs_submission_open"
+FLAG_CLOSES_AT = "kentender_needs_submission_closes_at"
 
-def _financial_year_row(financial_year: str) -> dict[str, Any]:
-	"""One `Financial Year` record, normalised.
 
-	Departmental Needs scope is the governed `Financial Year` catalogue — the
-	same doctype the Need's Link field, the `Financial Year` User Permission
-	dimension and the reference generator all use. It is deliberately *not*
-	ERPNext's `Fiscal Year`, whose identifiers (`2027/28`) belong to a different
-	space from the governed ones (`FY-2027-2028`).
+def fy_label(year_start_date) -> str:
+	start = getdate(year_start_date)
+	return f"FY {start.year}/{str(start.year + 1)[-2:]}"
+
+
+def _fiscal_year_row(financial_year: str) -> dict[str, Any]:
+	"""One ERPNext `Fiscal Year` record, normalised (§3, §16.2, §16.4.11).
+
+	Departmental Needs reads the canonical ERPNext Fiscal Year directly — no
+	KenTender-owned year doctype and no `PE Fiscal Year Context` registry.
 	"""
 	wanted = cstr(financial_year).strip()
 	row = frappe.db.get_value(
-		"Financial Year",
-		wanted,
-		["name", "label", "start_year", "start_date", "end_date", "record_status"],
-		as_dict=True,
+		FY_DOCTYPE, wanted, ["name", "year_start_date", "year_end_date", "disabled"], as_dict=True
 	)
 	if not row:
 		fail("NDS_CONTEXT_REQUIRED", f"Financial year {wanted or '(blank)'} is not configured.")
-	today = getdate(nowdate())
 	return {
 		"id": row.name,
-		"label": cstr(row.label or row.name),
-		"start_year": row.start_year,
-		"start_date": str(row.start_date),
-		"end_date": str(row.end_date),
-		"record_status": cstr(row.record_status),
-		"is_current": getdate(row.start_date) <= today <= getdate(row.end_date),
-		"is_future": getdate(row.start_date) > today,
-		"is_past": getdate(row.end_date) < today,
+		"label": fy_label(row.year_start_date),
+		"start_date": str(row.year_start_date),
+		"end_date": str(row.year_end_date),
+		"disabled": bool(row.disabled),
 	}
 
 
 def selectable_financial_year(financial_year: str) -> dict:
-	"""The FY must be an available, unexpired context (§5.4 NDS-BR-001).
+	"""The FY must be a configured, non-disabled year (§5.4, NDS-BR-001).
 
-	A *future* target year is the normal case, not an error: §14.1's intake
-	window collects FY 2027/28 Needs between 1 Sep and 25 Nov 2026. What governs
-	*when* a Need may be created is the intake window (NDS-BR-002), not whether
-	the target year has started. Only a missing, non-Available or expired year
-	fails closed, with the §9 `NDS_CONTEXT_REQUIRED` code rather than an
-	invented one.
+	A future or past target year is not itself an error — what governs
+	*when* a Need may be created is the Needs-submission flag on that exact
+	year (NDS-BR-002), not whether the year has started or ended. Only a
+	missing or administratively disabled year fails closed here, with the
+	§9 `NDS_CONTEXT_REQUIRED` code.
 	"""
-	row = _financial_year_row(financial_year)
-	if row["record_status"] != "Available":
+	row = _fiscal_year_row(financial_year)
+	if row["disabled"]:
 		fail("NDS_CONTEXT_REQUIRED", "That financial year is not available for Departmental Needs.")
-	if row["is_past"]:
-		fail("NDS_CONTEXT_REQUIRED", "That financial year is closed for Departmental Needs.")
 	return row
 
 
-# --- §4.1 intake window ----------------------------------------------------
+# --- §4.1 / §16.4 Needs-submission flag -------------------------------------
 
 
-def _may_maintain(user: str | None, *, procuring_entity: str, financial_year: str) -> bool:
-	"""§6/NDS-AC-043 — only a Planner scoped to this PE/FY maintains the window.
-
-	Reported on the read so NDS-UI-08 can withhold the Save control from a user
-	who reaches the route another way. This is presentation, not the control:
-	`save_intake_window` refuses on its own with NDS_SCOPE_DENIED, and §17
-	forbids treating a hidden button as authorization. Offering a command the
-	role does not hold is the same defect fixed for Create need (NDS-807) — and
-	the role check alone offered Save on a Financial Year outside the Planner's
-	own User Permissions, whose save was a guaranteed NDS_SCOPE_DENIED.
-	"""
-	return may_maintain_intake_window(
-		actor(user), procuring_entity=procuring_entity, financial_year=financial_year
+def _flag_row(financial_year: str) -> dict[str, Any] | None:
+	return frappe.db.get_value(
+		FY_DOCTYPE, cstr(financial_year).strip(), [FLAG_OPEN, FLAG_CLOSES_AT], as_dict=True
 	)
 
 
-def intake_window(
-	procuring_entity: str, financial_year: str, *, at=None, user: str | None = None
-) -> dict[str, Any]:
-	"""The PE/FY window and its derived state at `at` (default: now).
+def needs_submission_state(financial_year: str, *, at=None) -> dict[str, Any]:
+	"""The flag's derived Open/Closed state for one exact Fiscal Year (NDS-AC-003).
 
-	Returns a result for every input, including a missing window, so that read
-	surfaces can render an honest "not configured" state without an exception.
+	Reaching `kentender_needs_submission_closes_at` closes intake with the
+	same effect as a manual close (NDS-AC-055) — checked here directly
+	rather than trusting only the hourly `close_due_needs_submissions` job,
+	so a command issued after the instant passes but before that job has
+	run is still rejected (NDS-AC-056, §16.4 step 13).
 	"""
-	pe, fy = cstr(procuring_entity).strip(), cstr(financial_year).strip()
-	can_maintain = _may_maintain(user, procuring_entity=pe, financial_year=fy)
-	row = frappe.db.get_value(
-		"Needs Intake Window",
-		{"procuring_entity": pe, "financial_year": fy},
-		["name", "opens_at", "closes_at", "record_version"],
-		as_dict=True,
-	)
-	if not row:
-		return {
-			"procuring_entity": pe,
-			"financial_year": fy,
-			"configured": False,
-			"state": INTAKE_NOT_CONFIGURED,
-			"window": "",
-			"opens_at": "",
-			"closes_at": "",
-			"record_version": 0,
-			"can_maintain": can_maintain,
-		}
-	moment = get_datetime(at) if at else now_datetime()
-	opens_at, closes_at = get_datetime(row.opens_at), get_datetime(row.closes_at)
-	# Inclusive on both boundaries (NDS-AC-003).
-	if moment < opens_at:
-		state = INTAKE_SCHEDULED
-	elif moment <= closes_at:
-		state = INTAKE_OPEN
-	else:
-		state = INTAKE_CLOSED
+	fy = cstr(financial_year).strip()
+	row = _flag_row(fy)
+	if not row or not row.get(FLAG_OPEN):
+		return {"financial_year": fy, "state": INTAKE_CLOSED, "closes_at": ""}
+	closes_at = row.get(FLAG_CLOSES_AT)
+	if closes_at and get_datetime(closes_at) <= get_datetime(at or now_datetime()):
+		return {"financial_year": fy, "state": INTAKE_CLOSED, "closes_at": str(closes_at)}
+	return {"financial_year": fy, "state": INTAKE_OPEN, "closes_at": str(closes_at or "")}
+
+
+def require_open_intake(financial_year: str, *, at=None) -> dict[str, Any]:
+	"""Gate initial creation and initial submission on the flag being Open (NDS-BR-002)."""
+	state = needs_submission_state(financial_year, at=at)
+	if state["state"] != INTAKE_OPEN:
+		fail(
+			"NDS_INTAKE_NOT_OPEN",
+			"Departmental Needs submission is not open for this financial year.",
+		)
+	return state
+
+
+def get_needs_submission_state() -> dict[str, Any]:
+	"""§8.1 `get_needs_submission_state` — the one open Fiscal Year, or Closed.
+
+	Departmental Needs exposes no command for changing the flag and no
+	intake-window page (§4.1, §17) — this is the module's only read of it.
+	"""
+	from kentender_core.services.site_configuration import get_site_configuration
+
+	needs_submission = get_site_configuration().get("needs_submission")
+	if not needs_submission:
+		return {"open": False, "financial_year": "", "label": "", "closes_at": ""}
 	return {
-		"procuring_entity": pe,
-		"financial_year": fy,
-		"configured": True,
-		"state": state,
-		"window": row.name,
-		"opens_at": str(row.opens_at),
-		"closes_at": str(row.closes_at),
-		"record_version": int(row.record_version or 0),
-		"can_maintain": can_maintain,
+		"open": True,
+		"financial_year": needs_submission["fiscal_year"],
+		"label": needs_submission["label"],
+		"closes_at": cstr(needs_submission.get("closes_at") or ""),
 	}
 
 
-def require_open_intake(procuring_entity: str, financial_year: str, *, at=None) -> dict[str, Any]:
-	"""Gate initial creation and initial submission on an Open window (NDS-BR-002)."""
-	window = intake_window(procuring_entity, financial_year, at=at)
-	if window["state"] != INTAKE_OPEN:
-		fail(
-			"NDS_INTAKE_NOT_OPEN",
-			"The Departmental Needs intake window for this entity and financial year is not open.",
-		)
-	return window
-
-
-def save_intake_window(
-	*,
-	procuring_entity: str,
-	financial_year: str,
-	opens_at: str,
-	closes_at: str,
-	expected_version: int = 0,
-	user: str | None = None,
-) -> dict[str, Any]:
-	"""§8.2 `save_needs_intake_window` — one window per PE/FY, Planner-only.
-
-	Ordering and single-window uniqueness are enforced by the DocType controller,
-	so this command owns authorization and the optimistic-lock check only.
-	"""
-	principal = actor(user)
-	pe, fy = cstr(procuring_entity).strip(), cstr(financial_year).strip()
-	require_intake_window_command(principal, procuring_entity=pe, financial_year=fy)
-	existing = frappe.db.get_value(
-		"Needs Intake Window", {"procuring_entity": pe, "financial_year": fy}, "name"
-	)
-	if existing:
-		rows = frappe.db.sql(
-			"select name, record_version from `tabNeeds Intake Window` where name=%s for update",
-			existing,
-			as_dict=True,
-		)
-		if cstr(rows[0].record_version) != cstr(expected_version):
-			fail(
-				"NDS_STALE_WRITE",
-				"This intake window changed after it was opened. Reload and try again.",
-			)
-		doc = frappe.get_doc("Needs Intake Window", existing)
-		doc.opens_at = opens_at
-		doc.closes_at = closes_at
-		doc.record_version = int(doc.record_version or 0) + 1
-		doc.save(ignore_permissions=True)
-	else:
-		doc = frappe.get_doc(
-			{
-				"doctype": "Needs Intake Window",
-				"needs_intake_window_id": f"NDS-IW-{pe}-{fy}",
-				"procuring_entity": pe,
-				"financial_year": fy,
-				"opens_at": opens_at,
-				"closes_at": closes_at,
-				"record_version": 1,
-			}
-		).insert(ignore_permissions=True)
-	return {"ok": True, **intake_window(pe, fy)}
-
-
-# --- §8.1 resolve_needs_contexts -------------------------------------------
+# --- §8.1 reads --------------------------------------------------------------
 
 
 def selectable_financial_years(user: str | None = None) -> list[dict[str, Any]]:
-	"""Financial Years configured for the caller's permitted Procuring
-	Entities (§8.1) — never a per-user Financial Year assignment.
+	"""§8.1 `list_needs_financial_years` — years represented by existing Needs
+	visible in the actor's authorised Organisation Unit scope.
 
-	CTX-CHG-001 §4 / CTX-FU-02: Financial Year eligibility is a property of
-	the governed `PE Fiscal Year Context` registry (kentender_core) — the same
-	source Planning and Budget already read — not an identity grant. A bare
-	`Financial Year` User Permission made this NDS-807 defect class possible:
-	the offer diverged per user even when their Procuring Entity access was
-	identical, so one actor could be shown a year a later command was
-	guaranteed to refuse (`require_intake_window_command`), or — as observed
-	live — denied a year genuinely open for their own Procuring Entity because
-	an unrelated module's fixture happened to grant them a narrower FY row.
-
-	This is the *browse* offer only: it says which years are configured for
-	this PE, not which ones may be created in right now. Whether "Create need"
-	is actually enabled for a given (PE, FY) pair is a separate question,
-	answered by that pair's Needs Intake Window state alone
-	(`require_open_intake`, `intake_window`) — seeing a year here is never
-	licence to create in it.
+	This supplies browsing filters only (§16.4 step 3); it is never itself an
+	authority to create in a given year — that is `require_open_intake`.
 	"""
 	principal = actor(user)
-	pe_filter: dict[str, Any] = {}
+	filters: dict[str, Any] = {}
 	if not is_administrative(principal):
-		allowed_entities = permitted_values(principal, "Procuring Entity")
-		if allowed_entities is not None:
-			if not allowed_entities:
-				return []
-			pe_filter["procuring_entity"] = ("in", sorted(allowed_entities))
-	contexts = frappe.get_all(
-		"PE Fiscal Year Context",
-		filters={**pe_filter, "context_status": "Active"},
-		pluck="financial_year",
-		limit_page_length=0,
+		contexts = viewing_contexts(principal)
+		if not contexts:
+			return []
+		units = {row["organisation_unit"] for row in contexts}
+		filters["organisation_unit"] = ("in", sorted(units))
+	names = frappe.get_all(
+		"Departmental Need", filters=filters, pluck="financial_year", distinct=True, limit_page_length=0
 	)
-	if not contexts:
+	if not names:
 		return []
 	rows = frappe.get_all(
-		"Financial Year",
-		filters={"name": ("in", sorted(set(contexts))), "record_status": "Available"},
-		pluck="name",
-		order_by="start_year asc",
+		FY_DOCTYPE,
+		filters={"name": ("in", sorted(set(names)))},
+		fields=["name", "year_start_date"],
+		order_by="year_start_date asc",
 		limit_page_length=0,
 	)
-	return [_financial_year_row(name) for name in rows]
+	return [{"id": row.name, "label": fy_label(row.year_start_date)} for row in rows]
+
+
+def list_need_create_targets(user: str | None = None) -> dict[str, Any]:
+	"""§8.1 `list_need_create_targets` / §16.4 step 4.
+
+	Combines active Departmental Author Organisation Unit assignments with
+	the one ERPNext Fiscal Year whose Needs-submission flag is Open. Zero,
+	one or several OU targets drive the exact Create behaviour in §12.1: no
+	Fiscal Year permission, remembered filter or browser-stored context ever
+	substitutes for this.
+	"""
+	principal = actor(user)
+	organisation_units = creation_contexts(principal)
+	state = get_needs_submission_state()
+	return {
+		"organisation_units": organisation_units,
+		"financial_year": state["financial_year"] if state["open"] else "",
+		"financial_year_label": state["label"] if state["open"] else "",
+		"open": bool(state["open"] and organisation_units),
+	}
 
 
 def resolve_creation_context(*, user: str | None = None) -> dict:
-	"""Exact eligible PE/OU/FY contexts and their intake state (§8.1)."""
+	"""Exact eligible Organisation Units and Needs-submission state (§8.1)."""
 	contexts = creation_contexts(user)
-	financial_years = selectable_financial_years(user)
-	entities = sorted({row["procuring_entity"] for row in contexts})
-	intake = [
-		intake_window(entity, cstr(fy["id"]))
-		for entity in entities
-		for fy in financial_years
-	]
+	state = get_needs_submission_state()
 	return {
 		"ok": bool(contexts),
 		"outcome": "READY" if contexts else "NO_ACTIVE_OPERATIONAL_ASSIGNMENT",
 		"contexts": contexts,
 		"requires_selection": len(contexts) > 1,
-		"financial_years": financial_years,
-		"intake": intake,
+		"needs_submission": state,
 	}

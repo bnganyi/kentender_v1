@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "need_reference",
-  "procuring_entity",
   "organisation_unit",
   "financial_year",
   "current_state",
@@ -28,18 +27,7 @@
    "unique": 1
   },
   {
-   "description": "Defines the PE and permission boundary. Required and immutable.",
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "description": "Defines the owning department and review scope. Required and immutable.",
+   "description": "Defines the owning department and review scope. Required and immutable. The site PE is implicit (AUTH-ADR-001 v1.6 §1.1).",
    "fieldname": "organisation_unit",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -50,11 +38,11 @@
    "search_index": 1
   },
   {
-   "description": "Defines the planning year and date boundary. Required and immutable.",
+   "description": "Defines the planning year and date boundary. Required and immutable. The canonical ERPNext Fiscal Year (NDS-CHG-001 v1.6 §3).",
    "fieldname": "financial_year",
    "fieldtype": "Link",
    "label": "Financial Year",
-   "options": "Financial Year",
+   "options": "Fiscal Year",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
