@@ -140,3 +140,21 @@ class TestReferenceDataApi(IntegrationTestCase):
 		self.assertIn(self.pe_type, codes)
 		for row in result["rows"]:
 			self.assertTrue(row["label"])
+
+	def test_list_organisation_units_without_procuring_entity_returns_active_units(self):
+		"""Regression: procuring_entity is an optional narrowing filter, not a
+		requirement — omitting it (as every current caller does; Organisation
+		Unit's own procuring_entity field is deprecated and never set by
+		organisation_structure.add_organisation_unit) used to return
+		{"rows": []} unconditionally, silently emptying the Owner scope
+		picklist on Budget's Budget Lines tab for every user."""
+		from kentender_core.services import organisation_structure as structure
+
+		frappe.set_user("Administrator")
+		unit = structure.add_organisation_unit(name=f"Test API Unit {self.suffix}")["unit"]
+		try:
+			result = api.list_organisation_units()
+			ids = {row["id"] for row in result["rows"]}
+			self.assertIn(unit, ids)
+		finally:
+			frappe.delete_doc("Organisation Unit", unit, force=True, ignore_permissions=True)
