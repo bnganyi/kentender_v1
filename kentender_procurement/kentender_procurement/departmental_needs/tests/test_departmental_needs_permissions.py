@@ -30,13 +30,8 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUDITOR,
 	AUTHOR,
 	FY,
-	ISOLATION_REQUESTER,
-	OU_DIGITAL_HEALTH,
-	OU_HRMD,
-	PE,
 	PLANNER,
 	REVIEWER,
-	_user_permission,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import permissions, workspace
@@ -46,14 +41,17 @@ from kentender_procurement.departmental_needs.services.context import resolve_cr
 # resolver (kentender_core.services.authorization / User Responsibility
 # Assignment); `services/permissions.py` and `services/context.py` dropped
 # `intake_window`, `save_intake_window` and every User-Permission-era
-# function these tests still called by name below. This file's fixtures
-# (`upsert_departmental_needs`, `_user_permission`) also still build the
-# pre-v1.6 world. A full rewrite is tracked as IMPLEMENTATION_TRACKER.md
-# NDS-G06 (seeds) / NDS-G07 (this suite) — until then, most classes below
-# error at runtime rather than pass; keeping this import block resolvable is
-# what lets the rest of the app's test suite be discovered at all (a broken
-# import here previously aborted `bench run-tests --app kentender_procurement`
-# for every module, not just this one).
+# function these tests still called by name below, and §14's own seed rewrite
+# (Phase 6) dropped `PE`, `ISOLATION_REQUESTER` and the static
+# `OU_DIGITAL_HEALTH`/`OU_HRMD` constants along with `_user_permission` itself
+# — Organisation Units are resolved from each actor's real grant now, and
+# scope is granted through `kentender_core.services.responsibility_
+# administration.grant`, never a `User Permission` row. A full rewrite of
+# this file is tracked as IMPLEMENTATION_TRACKER.md NDS-G07 — until then,
+# most classes below error at runtime rather than pass; keeping this import
+# block resolvable is what lets the rest of the app's test suite be
+# discovered at all (a broken import here previously aborted `bench
+# run-tests --app kentender_procurement` for every module, not just this one).
 
 # §1.1 removed these outright; §6 names exactly five business roles.
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")

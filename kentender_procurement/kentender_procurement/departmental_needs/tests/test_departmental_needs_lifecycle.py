@@ -56,15 +56,20 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	ACTING_REVIEWER,
 	AUTHOR,
 	FY,
-	INTAKE_WINDOW,
-	OU_DIGITAL_HEALTH,
-	PE,
 	PLANNER,
 	REVIEWER,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+
+# NDS-CHG-001 v1.6 §14 rewrote the seed onto the AUTH-ADR-001 v1.6 resolver;
+# `PE`, `INTAKE_WINDOW` and the static `OU_DIGITAL_HEALTH` constant no longer
+# exist (Organisation Units are resolved from each actor's real grant). This
+# file's fixture helpers below (`open_window`/`close_window`/`create`/
+# `create_as`) still build the pre-v1.6 world and are Phase 7 work
+# (IMPLEMENTATION_TRACKER.md NDS-G07) — keeping this import block resolvable
+# is what lets the rest of the app's test suite be discovered.
 
 REASON = "The department no longer requires this equipment in the target financial year."
 

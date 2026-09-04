@@ -25,15 +25,18 @@ from kentender_procurement.departmental_needs.errors import ERROR_CODES, Departm
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUTHOR,
 	FY,
-	INTAKE_WINDOW,
-	OU_DIGITAL_HEALTH,
-	OU_HRMD,
-	PE,
 	PLANNER,
 	REVIEWER,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.seeds import profiles
+
+# NDS-CHG-001 v1.6 §14's Phase 6 seed rewrite dropped `PE`, `INTAKE_WINDOW`
+# and the static `OU_DIGITAL_HEALTH`/`OU_HRMD` constants — Organisation Units
+# are resolved from each actor's real grant now. This file's bodies below
+# still pass `procuring_entity=`/reference these names and are Phase 7 work
+# (IMPLEMENTATION_TRACKER.md NDS-G07); keeping this import block resolvable
+# is what lets the rest of the app's test suite be discovered.
 from kentender_procurement.departmental_needs.services import lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import (
 	planning_usage,
@@ -417,7 +420,7 @@ class ReviewQueueActionTest(IntegrationTestCase):
 		self.addCleanup(profiles.reset_profile, "successor")
 		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
 
-	def _row(self, reference: str, unit: str = OU_DIGITAL_HEALTH) -> dict:
+	def _row(self, reference: str, unit: str = "") -> dict:
 		frappe.set_user(REVIEWER)
 		result = workspace.get_workspace(
 			user=REVIEWER, procuring_entity=PE, organisation_unit=unit

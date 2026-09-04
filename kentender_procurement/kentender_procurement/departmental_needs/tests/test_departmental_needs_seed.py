@@ -32,18 +32,20 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUDITOR,
 	AUTHOR,
 	FY,
-	INTAKE_CLOSES_AT,
-	INTAKE_OPENS_AT,
-	INTAKE_WINDOW,
-	ISOLATION_PE,
-	ISOLATION_REQUESTER,
-	OU_DIGITAL_HEALTH,
-	OU_HRMD,
-	PE,
 	PLANNER,
 	REVIEWER,
 	upsert_departmental_needs,
 )
+
+# NDS-CHG-001 v1.6 §14 rewrote this seed onto the AUTH-ADR-001 v1.6 resolver
+# and Configuration & Governance's own canonical fixture world
+# (kentender_core.seeds.site_setup); `PE`, `INTAKE_WINDOW`/`INTAKE_OPENS_AT`/
+# `INTAKE_CLOSES_AT`, `ISOLATION_PE`/`ISOLATION_REQUESTER` and the static
+# `OU_DIGITAL_HEALTH`/`OU_HRMD` constants no longer exist (Organisation Units
+# are resolved from each actor's real grant, not a module-level constant).
+# This file's bodies below still assert the pre-v1.6 shape and are Phase 7
+# work (IMPLEMENTATION_TRACKER.md NDS-G07) — keeping this import block
+# resolvable is what lets the rest of the app's test suite be discovered.
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
 
@@ -56,12 +58,17 @@ from kentender_procurement.departmental_needs.services.usage import planning_usa
 # itself raises, so every class below errors at setUpClass regardless of this
 # file's own content.
 
-# §14.3 — reference, department, quantity, required-by, state.
+# §14.3 — reference, department, quantity, required-by, state. The department
+# slot is a placeholder, not a real Organisation Unit id: since Phase 6,
+# `kentender_mvp_r1.py` resolves the two departments from Grace's actual
+# grants at build time rather than a module-level constant, so a static id
+# here would be a guess. Comparing this slot against the built Need's
+# `organisation_unit` is Phase 7 work.
 DEFAULT_NEEDS = {
-	"NDS-MOH-2027-0001": (OU_DIGITAL_HEALTH, 1, "2027-08-31", STATE_ACCEPTED),
-	"NDS-MOH-2027-0002": (OU_HRMD, 1, "2027-12-31", STATE_SUBMITTED),
-	"NDS-MOH-2027-0003": (OU_HRMD, 200, "2027-12-31", STATE_RETURNED),
-	"NDS-MOH-2027-0004": (OU_DIGITAL_HEALTH, 300, "2027-12-31", STATE_DRAFT),
+	"NDS-MOH-2027-0001": ("Digital Health", 1, "2027-08-31", STATE_ACCEPTED),
+	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, "2027-12-31", STATE_SUBMITTED),
+	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 200, "2027-12-31", STATE_RETURNED),
+	"NDS-MOH-2027-0004": ("Digital Health", 300, "2027-12-31", STATE_DRAFT),
 }
 
 # §14.3 exact expected operational results.

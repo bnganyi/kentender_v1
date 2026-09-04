@@ -55,6 +55,11 @@ ACTORS = (
 	("julia.njeri", "Julia Njeri"),
 	("mercy.kilonzo", "Mercy Kilonzo"),
 	("samuel.otieno", "Samuel Otieno"),
+	# NDS-CHG-001 v1.6 §14.2 (2026-09-04): Departmental Needs' Auditor actor,
+	# per KT-STD-001 §8.3's shared register. Extends the register the same way
+	# CU-307 extended Mercy's assignments — one canonical fixture world, not a
+	# module-owned duplicate.
+	("naomi.chebet", "Naomi Chebet"),
 )
 
 ASSIGNMENTS = (
@@ -63,7 +68,15 @@ ASSIGNMENTS = (
 	# §8.3 — the Cartesian-product regression fixture: the same user holds a
 	# different role in a different unit.
 	("grace.wanjiku", "Head of User Department", "Human Resources Management and Development", {}),
+	# NDS-CHG-001 v1.6 §14.2 (2026-09-04): Grace authors in both departments
+	# the module's default Needs live in.
+	("grace.wanjiku", "Departmental Author", "Human Resources Management and Development", {}),
 	("peter.kimani", "Head of User Department", "Human Resources Management and Development", {}),
+	# NDS-CHG-001 v1.6 §14.2 (2026-09-04): Peter reviews both departments the
+	# module's default Needs live in. Digital Health and HRMD share no
+	# covering parent below the site root, so §14.2's fallback applies — two
+	# exact leaf assignments rather than one parent grant.
+	("peter.kimani", "Head of User Department", "Digital Health", {}),
 	(
 		"julia.njeri",
 		"Head of User Department",
@@ -80,6 +93,8 @@ ASSIGNMENTS = (
 	# Mercy holds the Site-wide Strategy Author responsibility. Extends the
 	# KT-STD §8.3 register; approvers are granted through the admin UI.
 	("mercy.kilonzo", "Strategy Author", None, {}),
+	# NDS-CHG-001 v1.6 §14.2 (2026-09-04) — Site-wide Auditor, read-only.
+	("naomi.chebet", "Auditor", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",

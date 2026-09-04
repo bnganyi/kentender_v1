@@ -17,9 +17,10 @@ User Permission mechanism it describes is exactly what this cycle retires
 offer). The remaining items (FU-01..06, FU-07..10, FU-12..14) are independent
 infrastructure debts, unaffected by the v1.6 cutover, and stay open as written
 — FU-06 in particular (a missing Procurement Home pipeline-count contract) is
-untouched: v1.6 adds no such contract to §8.1. A new **FU-15** is added below,
-discovered by Phase 5's own browser verification and worth reading before
-starting Phase 6.
+untouched: v1.6 adds no such contract to §8.1. **FU-15** (added by Phase 5's
+browser verification) is resolved by Phase 6's seed rewrite, per its own
+2026-09-04 update note. **FU-16** is new, discovered by Phase 6 itself, and
+worth reading before Phase 7 touches any Playwright spec.
 
 ---
 
@@ -370,3 +371,46 @@ is the one file whose classes are seed-independent and is already fully green
 naming drift (`"Procurement Plans"` → `"Procurement Planning"`, and a
 `"departmental"` substring collision with Planning's own `departmental-
 procurement-plan` page), out of this module's scope.
+
+**Update 2026-09-04, Phase 6 landed:** the seed rewrite this item called for
+is done (`IMPLEMENTATION_TRACKER.md` Phase 6, NDS-601–613) — confirmed live,
+`upsert_departmental_needs()` now builds all 4 default Needs correctly and
+the 4 previously setUpClass-erroring test files now execute their bodies
+(31/61/42/30 tests ran, not 0). Phase 7 (rewriting those bodies' own stale
+`PE`/`OU_DIGITAL_HEALTH`/`ISOLATION_REQUESTER`/etc. assertions) remains open
+exactly as this item describes.
+
+---
+
+## FU-16 — Playwright fixtures no longer draw a separate `need_reference` sequence (2026-09-04)
+
+**What.** `seeds/playwright_ui_fixtures.py` used to build its Needs under a
+dedicated `PE-CGKIS` Procuring Entity specifically so its `need_reference`
+sequence (`NDS-{PE code}-{FY start}-####`) never collided with the §14.3
+default profile's `NDS-MOH-2027-0001..0004`. AUTH-ADR-001 v1.6 §1.1 makes the
+site exactly one implicit Procuring Entity, so that isolation mechanism no
+longer exists — and CFG-BR-010 keeps at most one Fiscal Year Open at a time,
+which forces every seed/fixture that creates a Need (the default profile, the
+§14.6 KEBS profile, and the Playwright fixtures) onto the *same* open Fiscal
+Year, and therefore the *same* reference-number counter. Live-verified: with
+the default profile's 4 Needs already seeded, the KEBS profile's three Needs
+came back as `NDS-MOH-2027-0005..0007`, and a Playwright fixture applied
+afterward took `NDS-MOH-2027-0008`.
+
+**Why it matters.** No test in this repo currently asserts an exact
+`need_reference` for anything the KEBS or Playwright fixtures create — every
+consumer reads the reference off the command's own return value, never a
+hardcoded string — so nothing is broken today. But this is a standing
+constraint a future session must not design past: a Playwright spec (or a
+Phase 7 automated test) that hardcodes an expected reference number for a
+fixture-created Need will be fragile against run order, and reseeding the
+default profile *after* Playwright/KEBS fixtures have already consumed
+numbers in the same sequence will not reset that counter back to 0001.
+
+**Fix.** None needed unless a future spec starts asserting exact reference
+numbers for non-default-profile Needs — if that happens, assert on content
+(title, state, scope) instead, the way every current fixture consumer
+already does. Isolation between fixture families is now provided by
+Organisation Unit + `fixture_namespace` only (see `playwright_ui_fixtures.py`'s
+dedicated "Playwright — Departmental Needs" OU and `_kebs_unit()`'s "Coast
+Region — Administration and ICT" OU), not by a separate reference sequence.
