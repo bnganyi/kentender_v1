@@ -749,12 +749,13 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 	if existing_draft:
 		return {"ok": True, "version": _version_summary(existing_draft), "existing": True}
 
-	# approval_reference/date/authorised_total/approval_document are DB-mandatory
-	# on Budget Version from the first insert (see BudgetVersionEditorScreen.vue's
-	# own note on this for the baseline case). A successor has no pre-creation
-	# form (BUD-DES-14/15 only exist post-creation) — seed these from the prior
-	# Active version, matching how _copy_line_versions seeds the line data; the
-	# Officer edits them in the tabbed editor before Save/Submit.
+	# approval_reference/date/authorised_total are DB-mandatory on Budget Version
+	# from the first insert (approval_document is not — it is only required
+	# before submission for review, see budget_readiness_contracts._evaluate_readiness).
+	# A successor has no pre-creation form (BUD-DES-14/15 only exist
+	# post-creation) — seed these from the prior Active version, matching how
+	# _copy_line_versions seeds the line data; the Officer edits them in the
+	# tabbed editor before Save/Submit.
 	seeded = {
 		"approval_reference": payload.get("approval_reference") or active.approval_reference,
 		"approval_date": payload.get("approval_date") or str(active.approval_date),
