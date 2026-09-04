@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
+import KtErrorBanner from "./KtErrorBanner.vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
@@ -31,6 +32,17 @@ const forbidden = ref(false);
 const actingError = ref(null);
 const saving = ref(false);
 const submitting = ref(false);
+
+// The inline banner (rendered from actingError below) is the durable,
+// authoritative error state — it must survive a re-render and not rely on
+// the user having seen a transient toast. The toast is a supplementary
+// attention-getter (a muted inline banner alone is easy to miss when it
+// appears above the fold without any layout shift drawing the eye to it),
+// never the only signal — see AGENTS.md §6.10.
+function setActingError(message) {
+	actingError.value = message;
+	frappe.show_alert({ message, indicator: "red" }, 7);
+}
 
 // --- "new" (pre-creation) state: resolve the Fiscal Year filter only, no
 // version yet. One site is one Procuring Entity — the same local Fiscal
@@ -207,7 +219,7 @@ async function saveDraft() {
 			};
 			const result = await saveBudgetVersionDraft(payload);
 			if (!result.ok) {
-				actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not save.");
+				setActingError(Object.values(result.errors || {}).join(" ") || __("Could not save."));
 				return;
 			}
 			frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
@@ -225,7 +237,7 @@ async function saveDraft() {
 		};
 		const result = await saveBudgetVersionDraft(payload);
 		if (!result.ok) {
-			actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not save.");
+			setActingError(Object.values(result.errors || {}).join(" ") || __("Could not save."));
 			return;
 		}
 		if (linesLoaded.value) {
@@ -235,7 +247,7 @@ async function saveDraft() {
 		frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
 		await loadDraft({ quiet: true });
 	} catch (e) {
-		actingError.value = e.message || String(e);
+		setActingError(e.message || String(e));
 	} finally {
 		saving.value = false;
 	}
@@ -259,9 +271,9 @@ async function saveLinesOnly() {
 		.concat((linesEditor.value.removed || []).map((budget_line) => ({ budget_line, remove: true })));
 	const result = await saveBudgetLinesDraft({ budget_version: versionKey.value, lines });
 	if (!result.ok) {
-		actingError.value = Object.entries(result.errors || {})
+		setActingError(Object.entries(result.errors || {})
 			.map(([, v]) => v)
-			.join(" ") || __("Could not save Budget Lines.");
+			.join(" ") || __("Could not save Budget Lines."));
 		return false;
 	}
 	linesEditor.value.removed = [];
@@ -308,13 +320,13 @@ async function submitForReview() {
 		}
 		const result = await submitBudgetVersion(versionKey.value);
 		if (!result.ok) {
-			actingError.value = (result.blockers || []).map((b) => b.message).join(" ") || __("Not ready to submit.");
+			setActingError((result.blockers || []).map((b) => b.message).join(" ") || __("Not ready to submit."));
 			return;
 		}
 		frappe.show_alert({ message: __("Submitted for review"), indicator: "green" });
 		await loadDraft({ quiet: true });
 	} catch (e) {
-		actingError.value = e.message || String(e);
+		setActingError(e.message || String(e));
 	} finally {
 		submitting.value = false;
 	}
@@ -368,7 +380,7 @@ function cancel() {
 					<span class="kt-status is-draft">{{ __("Draft") }}</span>
 				</header>
 
-				<p v-if="actingError" style="color: oklch(0.45 0.13 28)">{{ actingError }}</p>
+				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div class="kt-card kt-blueprint">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -433,7 +445,7 @@ function cancel() {
 					</div>
 				</div>
 
-				<p v-if="actingError" style="color: oklch(0.45 0.13 28)">{{ actingError }}</p>
+				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div class="kt-tabs">
 					<div class="kt-tab" :aria-selected="tab === 'overview'" @click="switchTab('overview')" data-testid="bud-editor-tab-overview">{{ __("Overview") }}</div>
@@ -553,7 +565,7 @@ function cancel() {
 								</tr>
 							</tbody>
 						</table>
-						<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" @click="addLine" data-testid="bud-editor-add-line-btn">{{ __("Add Budget Line") }}</button>
+						<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" style="align-self: flex-start" @click="addLine" data-testid="bud-editor-add-line-btn">{{ __("Add Budget Line") }}</button>
 					</div>
 				</template>
 			</div>

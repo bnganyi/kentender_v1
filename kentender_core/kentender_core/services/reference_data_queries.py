@@ -54,13 +54,28 @@ def list_pe_types() -> dict[str, Any]:
 # catalogue read.
 
 
-def list_organisation_units(procuring_entity: str) -> dict[str, Any]:
+def list_organisation_units(procuring_entity: str | None = None) -> dict[str, Any]:
+	"""`procuring_entity` is an optional narrowing filter, not a requirement:
+	a caller that still tracks a PE-scoped working context may pass one, but
+	the default (omitted) lists every Active Organisation Unit on the site.
+	Organisation Unit's own `procuring_entity` field is documented as
+	deprecated (AUTH-ADR-001 v1.6 §1.1: "one site is one Procuring Entity,
+	so every unit belongs to the site PE by construction... dropped in the
+	removal phase") and is hidden/read-only — the current
+	`organisation_structure.add_organisation_unit` creation path never sets
+	it at all. Requiring a non-empty procuring_entity to return anything was
+	therefore doubly broken: Budget's own listOrganisationUnits() never
+	passed one (returning {"rows": []} unconditionally — the Owner scope
+	picklist on the Budget Lines tab was silently empty for every user,
+	every row), and even a caller that resolved and passed "the" PE would
+	still match nothing, since units aren't stamped with it any more."""
 	pe = (procuring_entity or "").strip()
-	if not pe:
-		return {"rows": []}
+	filters: dict[str, Any] = {"status": "Active"}
+	if pe:
+		filters["procuring_entity"] = pe
 	rows = frappe.get_all(
 		"Organisation Unit",
-		filters={"procuring_entity": pe, "status": "Active"},
+		filters=filters,
 		fields=["name", "unit_name"],
 		order_by="unit_name asc",
 	)

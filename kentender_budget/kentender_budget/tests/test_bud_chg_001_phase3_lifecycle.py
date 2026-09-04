@@ -210,6 +210,55 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		with self.assertRaises(frappe.DuplicateEntryError):
 			contracts.save_budget_version_draft(dict(payload))
 
+	def test_registering_a_budget_does_not_require_an_approval_document(self):
+		"""Approval document is not required to register/save-draft a Budget
+		Version — only before it can be submitted for review (see
+		test_submit_blocked_without_approval_document below). Regression test:
+		Procurement Budget Version.approval_document was DB `reqd: 1`, so even
+		though `_validate_draft_payload` never checked it, the very first
+		`.insert()` still raised Frappe's own generic MandatoryError before the
+		user ever reached the file upload step."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"NODOC-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 1000,
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		self._track("Procurement Budget Version", result["version"]["id"])
+		self._track("Procurement Budget", result["budget"]["id"])
+
+	def test_submit_blocked_without_approval_document(self):
+		"""Optional at draft save, still mandatory before submission
+		(BUD-BR-018-family evidence guard in `_evaluate_readiness`)."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"NODOC-SUBMIT-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 10_000_000,
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		version = result["version"]["id"]
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
+
+		lines_result = lines_svc.save_budget_lines_draft(
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+		)
+		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
+
+		submit_result = readiness.submit_budget_version({"budget_version": version})
+		self.assertFalse(submit_result["ok"])
+		self.assertTrue(any(b["code"] == "evidence.approval_document" for b in submit_result["blockers"]))
+
 
 class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 	def test_submit_blocked_when_line_total_does_not_match_authorised_total(self):
