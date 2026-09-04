@@ -8,6 +8,17 @@ Nothing here blocks the module: all ten phases are complete, all gates are Done,
 and 246 Python tests, 23 Playwright specs and 16 vitest tests are green. These
 are the things a future session would otherwise have to rediscover.
 
+**2026-09-04 update.** The module is now mid a further rebuild cycle,
+NDS-CHG-001 v1.1 → v1.6 (AUTH-ADR-001 v1.6 cutover; see
+`02_NDS_Rebuild_Gap_Analysis.md` and `IMPLEMENTATION_TRACKER.md`). **FU-11**
+below is addressed by that cycle rather than left open: the `Financial Year`
+User Permission mechanism it describes is exactly what this cycle retires
+(NDS-CHG-001 v1.6 §16.4 step 3 replaces it with a record-driven, non-authoritative
+offer). The remaining items (FU-01..06, FU-07..10, FU-12..14) are independent
+infrastructure debts, unaffected by the v1.6 cutover, and stay open as written
+— FU-06 in particular (a missing Procurement Home pipeline-count contract) is
+untouched: v1.6 adds no such contract to §8.1.
+
 ---
 
 ## FU-01 — One Playwright fixture entity per spec file

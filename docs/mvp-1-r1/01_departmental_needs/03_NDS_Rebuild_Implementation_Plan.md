@@ -1,133 +1,133 @@
-# Departmental Needs rebuild — implementation plan
+# Departmental Needs rebuild — implementation plan (v1.1 → v1.6)
 
-**Authority:** `KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1.1.md` (the single implementation authority; this plan sequences work against it and adds no new requirements).
+**Authority:** `KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_6.md` (the single implementation authority; this plan sequences work against it and adds no new requirements).
 **Companions:** `02_NDS_Rebuild_Gap_Analysis.md` (what is wrong today), `IMPLEMENTATION_TRACKER.md` (phase status, evidence, decision log).
 **Status:** Phase 0 complete (gap analysis, this plan, tracker authored). Phases 1–10 not started.
-**Author date:** 2026-08-29
+**Author date:** 2026-09-04
 
 ## 1. Governing approach
 
-Same workflow as CFG-CHG-002 (PE/FY), STR-CHG-001 v1.3 (Strategy), BUD-CHG-001 v1.2 (Budget) and STD-CHG-001 v1.3 (STD Configuration): research first, author plan + tracker, then execute phase by phase with the tracker's rows as the evidence ledger. No row is `Done` on inspection alone — each cites a command, test name, diff, or described screenshot.
+Same workflow as the module's own v1.1 cycle and Budget's BUD-CHG-001 v1.3 cutover: research first, author plan + tracker, then execute phase by phase with the tracker's rows as the evidence ledger. No row is `Done` on inspection alone — each cites a command, test name, diff, or described screenshot.
 
-NDS-CHG-001 v1.1's own posture governs disposition: **corrected in place, no alias, no redirect, no dual-read, no compatibility flag** (§1, §17). Where this plan says "delete," the deletion lands in the same phase as its replacement — never deferred as future cleanup. §17's prohibited-shortcuts list is a standing constraint on every phase, not a final check.
+This is a **correction in place against an already-working module**, not a rebuild from scratch. §1's posture is unchanged from v1.1: no alias, no redirect, no dual-read, no compatibility flag. Where this plan says "delete," the deletion lands in the same phase as its replacement — never deferred as future cleanup. §17's prohibited-shortcuts list (plus KT-STD-001 §10's universal list) is a standing constraint on every phase, not a final check.
 
-The transactional pattern in `services/lifecycle.py` (idempotency key → row lock → optimistic token → authorization → state guard → validation → mutate → audit event with before/after hashes → routed task dispatch) is the module's main existing asset. **Reuse the pattern; replace what it operates on.**
+Two existing assets are explicitly preserved, not rewritten from zero:
 
-## 2. Decision register (resolve before or during the named phase)
+- `services/lifecycle.py`'s transactional pattern (idempotency key → row lock → optimistic token → authorization → state guard → validation → mutate → audit event → routed task dispatch) — only its authorization call sites change.
+- The Vue-in-Desk/Industry frontend and its eight existing screens — only the PE dimension, the intake-window screen, and the unit source change.
 
-| # | Decision | Recommendation | Phase | Why it needs recording |
+## 2. Decision register
+
+| # | Decision | Resolution | Phase | Why it needs recording |
 |---|---|---|---|---|
-| D1 | Owning app for Departmental Needs | **FIRM — decided by the Project Owner, 2026-08-29.** Departmental Needs and Procurement Planning remain **separate modules within `kentender_procurement`**. Planning consumes Accepted Needs **only** through the published handoff contract. Direct access to Departmental Needs DocTypes, tables or internal services is **prohibited** and **enforced by automated architecture tests** (Phase 9, NDS-910). **No additional Frappe app is introduced.** | 1 | Settled, not open. The boundary is executable rather than conventional: an architecture test fails the build if Planning imports a Needs DocType, queries a `tabDepartmental Need*` table, or calls a `departmental_needs.services.*` internal. |
-| D2 | Permission engine | Native Frappe Role + DocType permission + User Permission, per §6 / NDS-AC-044 | 3 | **Diverges from CFG-CHG-002 and STR-CHG-001**, which both adopted `kentender_core.services.authorization_policy`. The spec is authority for this module; the platform-level split must stay visible rather than be silently resolved either way. |
-| D3 | `DepartmentalNeedReviewTask` modelling | Typed projection over `kentender_core`'s `Workflow Task`, not a parallel task store | 1 | The core engine already supplies routing, decision tokens and atomic completion. §4.4's required fields (`task_type`, `decision_token`, scope) can be satisfied by the existing record plus a typed read contract. Revisit only if the projection cannot express `task_type` cleanly. |
-| D4 | `DepartmentalNeedVersion` as standalone doctype vs. child table | Standalone doctype | 1 | Versions are referenced by review tasks, decisions, events and Planning lineage by their own ID (`need_version_id`) — a child table cannot carry stable cross-record identity. |
-| D5 | Planning usage direction | Planning publishes `NeedPlanningUsageChanged.v1`; Needs stops reading `Plan Need Allocation` | 5 | §3 forbids querying a downstream table. Requires coordination with PLN-CHG-001 v1.1 — the one genuinely cross-module dependency in this rebuild. |
-| D6 | Existing live Need records | Rebuild fixtures; no data migration | 1 | §1.1 prohibits legacy migration and compatibility; live rows in this module are seeded/test data, not production records. **Confirm against the target site before dropping anything.** |
-| D7 | Frontend stack | Vue-in-Desk per `AGENTS.md` §6 and §16.1, replacing the jQuery page controllers | 7 | §16.1 explicitly names the `frappe.ui.make_app_page()` → bundle → `createApp().mount()` pattern proven by the Strategy pilot. |
+| D1 (carried, unchanged) | Owning app / module boundary | Departmental Needs stays a module inside `kentender_procurement`, separate from Procurement Planning. Planning consumes Accepted Needs only through the published event contract; direct access to Needs DocTypes/tables/internal services stays prohibited and architecture-tested (`test_departmental_needs_architecture.py`). | — | Firm Project Owner decision from the v1.1 cycle; nothing in v1.6 revisits it. Restated so it isn't re-litigated. |
+| D2 (**reversed** from v1.1) | Authorization mechanism | Replace native Frappe Role + User Permission with the AUTH-ADR-001 v1.6 resolver (`kentender_core.services.authorization.authorise_record`/`require_responsibility`) backed by `User Responsibility Assignment`, matching Budget's and Strategy's already-migrated pattern. | 2 | v1.1's decision compared against the *legacy* `authorization_policy`/Capability-Profile engine, not today's resolver — see Gap Analysis §5. NDS-CHG-001 v1.6 §6 and its own §16.4 correction-slice checklist are unambiguous and controlling. |
+| D3 | `Needs Intake Window` doctype | **Delete outright.** Replace with read-only consumption of `Fiscal Year.kentender_needs_submission_open`/`_closes_at` (already shipped by `kentender_core/install.py`) via `kentender_core.services.site_configuration`. | 1 | §4.1/§16.4.11/§17 forbid NDS owning any part of the flag; the fields and admin commands already exist centrally. |
+| D4 | `procuring_entity` field | Removed from every NDS doctype and every published payload. | 1 | Site is implicitly one PE (AUTH-ADR-001 v1.6 §1.1); NDS §4 carries no PE field in its v1.6 domain model. |
+| D5 | Fiscal Year source | `Departmental Need.financial_year` retargets from KenTender's own `Financial Year` doctype to ERPNext's native `Fiscal Year`. | 1 | NDS-CHG-001 v1.6 §3, §16.2, §16.4.11 — remove all `PE Fiscal Year Context` reads along with it. |
+| D6 | Unit source | `Departmental Need Version.unit` retargets from KenTender's own `Unit Of Measure` doctype to ERPNext's native `UOM` (`enabled=1`). | 1 | v1.6 §1.1 "New in v1.6"; corrects a v1.1-era defect (a native equivalent existed and was overlooked when `Unit Of Measure` was built). |
+| D7 | Field naming | Keep existing plain Link field names (`organisation_unit`, `financial_year`, `unit`); do not rename to match v1.6 prose's `_id` suffixes. | 1 | Matches `User Responsibility Assignment`'s own field-naming convention (also defined in AUTH-ADR-001 v1.6) and every sibling module. A literal rename would be pure churn with no behavioural or contractual benefit. |
+| D8 (carried, unchanged) | Frontend stack | Stays Vue-in-Desk on the Industry design system, unregistered from `kt_cl_surface_registry.js`/`STITCH_DESK_SURFACES`. | 5 | Confirmed deliberate, documented convention shared by every Industry-design sibling (Budget, Strategy, Planning, System Setup); overrides the generic AUTH-ADR-001 §14.5 instruction, as already recorded elsewhere in the repo. |
+| D9 | Acting-HoD mechanism | Move from "same role + time-bound scoped User Permission (existence = time bound)" to one `User Responsibility Assignment` row with `appointment_type = Acting`, `effective_from`/`effective_to`, required `authority_reference`. | 2 | AUTH-ADR-001 v1.6 §4.5 models Acting as a real, auditable, dated record rather than a presence/absence check. |
+| D10 | AUTH_* vs NDS_* error codes | Departmental Needs keeps its own closed §9 error-code set. Service-layer code catches `ResponsibilityError`/its `.code` from the resolver and remaps to the matching `NDS_*` code via the module's existing `errors.py::fail()`; no raw `AUTH_*` code reaches a client. | 2 | AUTH-ADR-001 v1.6 §10 describes its codes as "the shared vocabulary of the resolver, not a replacement for a module's published error contract." |
 
 ## 3. Phase sequence
 
 Each phase lists its exit condition. Detailed per-item rows live in `IMPLEMENTATION_TRACKER.md`.
 
 ### Phase 0 — Plan and tracker *(complete)*
-Author `02_NDS_Rebuild_Gap_Analysis.md`, this plan, and the tracker. Reconcile the stale `design/uploads/` pre-approval draft.
+Author `02_NDS_Rebuild_Gap_Analysis.md`, this plan, and reset the tracker. Light-touch annotation of `FOLLOW_UPS.md` (FU-11 now resolved by this rebuild rather than open; FU-06 remains open — v1.6 adds no pipeline-count contract).
 
 ### Phase 1 — Domain model
-The spine everything else depends on.
+- Delete `Needs Intake Window` doctype, its table (patch), and every schema reference (D3).
+- Remove `procuring_entity` from `Departmental Need`, `Departmental Need Review Task`, `Departmental Need Decision`, and the `DepartmentalNeedAccepted.v2` payload builder (D4). Patch to drop the column; static scan proving absence.
+- Retarget `Departmental Need.financial_year` from KenTender's `Financial Year` to ERPNext's `Fiscal Year` (D5). Update every query/report that joins on the old doctype.
+- Retarget `Departmental Need Version.unit` from KenTender's `Unit Of Measure` to ERPNext's `UOM`, filtered `enabled=1` (D6). Retire the custom doctype once nothing references it.
+- Delete the three empty leftover directories (`departmental_need_attachment/`, `departmental_need_item/`, `departmental_need_review/`) — filesystem cruft from the v1.1 cutover, already dropped from the DB.
+- Bump `kentender_core/services/business_role_registry.py::REGISTRY`'s citation for `Departmental Author`/`Head of User Department` from `NDS-CHG-001 v1.4` to `v1.6`; confirm `Procurement Planner` (Site-wide) and `Auditor` entries exist.
 
-- Create `Needs Intake Window` (`procuring_entity_id`, `financial_year_id`, `opens_at`, `closes_at`; unique per PE/FY; Scheduled/Open/Closed derived, never stored).
-- Create `Departmental Need Version` (§4.3: `version_number`, `based_on_version_id`, `version_status` incl. `Superseded`, `title` 5–160, `description` 10–1,000, `expected_operational_result` 10–1,000, `indicative_quantity` > 0 ≤ 3dp, `unit_id` Link to governed catalogue, `required_by_date`, `content_hash`).
-- Create `Need Withdrawal Request` (§4.6: 4-value status incl. `Awaiting planning clearance`, `planning_dependency_version`, reason 20–1,000; at most one open per Need).
-- Slim `Departmental Need` to the §4.2 root: drop `title`, `business_justification`, `required_by_date`, `delivery_or_use_location`, `indicative_cost`, `currency`, `revision_no`, `submitted_by`, `pe_fy_context`; add `current_version_id`, `current_accepted_version_id`; rename `concurrency_token` → `record_version`; change `target_financial_year` from Data to a real Link.
-- Delete `Departmental Need Item` and `Departmental Need Attachment` doctypes outright.
-- Split `Departmental Need Review` into the §4.5 decision record; keep the idempotency ledger mechanism.
-- Rename role `Departmental Need Requester` → `Departmental Author`.
+**Exit:** schema matches NDS-CHG-001 v1.6 §4 exactly (no `procuring_entity`, no `Needs Intake Window`, Fiscal Year/UOM retargeted); clean `bench migrate` on the target site; static scan proves the three removed concepts absent.
 
-**Exit:** schema matches §4 exactly; `bench migrate` clean on the target site; no prohibited field survives a static scan.
+### Phase 2 — Services and authorization
+This phase executes NDS-CHG-001 v1.6 §16.4's 13-step checklist directly (see Gap Analysis §5 for the full step-by-step mapping); it is not re-derived here.
 
-### Phase 2 — Services and lifecycle
-- Rewrite `services/lifecycle.py` against §5.1/5.2/5.3 with the existing transactional pattern intact.
-- Add the missing successor lifecycle: `create_accepted_need_successor`, `cancel_accepted_need_successor`; return-creates-copied-Draft (NDS-AC-011); successor acceptance supersedes atomically (NDS-AC-017); successor decline leaves the earlier accepted version current (NDS-AC-018).
-- Complete the withdrawal lifecycle: `Approve` / `Evaluate` (→ `Awaiting planning clearance`) / re-evaluate / `Decline`, maker-checked (NDS-AC-019).
-- Correct `_validate_submission()` bounds to §4.3 and delete validation for removed fields.
-- Delete `services/attachments.py`.
-- Rewrite `services/context.py` to read the real intake window with inclusive boundaries (NDS-AC-003).
-- Reduce `services/usage.py` to `Not included` / `Fully included`.
-- Extend `services/notifications.py` to cover withdrawal decisions.
+- Rewrite `services/permissions.py` onto `kentender_core.services.authorization.authorise_record`/`require_responsibility`, `User Responsibility Assignment`, and `descendants_of` for OU-subtree checks (D2). Remove every `frappe.get_all("User Permission", ...)` call.
+- Rewrite `services/context.py`: remove `PE Fiscal Year Context` reads and the custom `Financial Year` resolution entirely; read the Needs-submission flag via `kentender_core.services.site_configuration`; implement `list_need_create_targets()` (Departmental Author OU assignments × the one open-flagged Fiscal Year) and a filter-only `selectable_financial_years()`.
+- Update `services/my_work_provider.py` and `services/notifications.py` call sites onto the new `permissions.py` surface.
+- Implement acting-HoD via `User Responsibility Assignment(appointment_type=Acting, ...)` (D9); remove the scoped-User-Permission mechanism.
+- Map `ResponsibilityError`/AUTH_* codes onto the module's own `NDS_*` set at the service boundary (D10).
+- Add the Cartesian-product OU-isolation regression (§16.4 step 8: Grace as Author in one OU and acting HoD in another must never cross) and the parent-OU-covers-descendants-not-siblings test (step 10).
 
-**Exit:** every §8.2 command exists with its §9 error codes; §5 tables fully traversable in tests.
+**Exit:** every §16.4 step evidenced; zero `User Permission`/`PE Fiscal Year Context` reads remain in Departmental Needs code; every scoped read/command routes through the shared resolver.
 
-### Phase 3 — Permissions
-- Replace this module's `authorization_policy` usage with native Frappe Role + DocType permission + User Permission (D2).
-- Populate the `Departmental Need` permissions array; scope PE/FY/department through User Permission.
-- Implement acting HoD as the same `Head of User Department` role plus a time-bound scoped User Permission; delete the `Departmental Review Delegate` role and the `Authorization Delegation` path in `notifications.py`.
-- Remove `Budget Officer`, `Accounting Officer` and the Planner landing page from `setup/departmental_needs_page.py` (NDS-AC-023).
-- Give the Procurement Planner intake-window maintenance and the read-only accepted-source deep link only (NDS-AC-043).
-- Delete the support-lookup surface (`workspace.py::get_support_need`).
+### Phase 3 — API and command surface
+- Rename `resolve_needs_contexts` → `resolve_needs_scope`, reshaped onto assignment/OU-scope output, PE removed.
+- Add `list_needs_financial_years`, `list_need_create_targets`, `get_needs_submission_state` (read-only, sourced from `site_configuration`).
+- Delete `get_needs_intake_window` and `save_needs_intake_window` outright — no replacement write command exists in Departmental Needs (System Setup owns the write).
+- Confirm the §8.2 command set's existing whitelisted names are unchanged; update each command's internal authorization call to the Phase 2 surface and drop any PE parameter from its signature/payload.
 
-**Exit:** NDS-AC-022, 041–044 evidenced; no custom capability string remains in this module.
+**Exit:** whitelisted contract set matches NDS-CHG-001 v1.6 §8.1/§8.2 exactly (tested by name equality, matching the existing `test_every_read_contract_is_whitelisted_under_its_exact_name` pattern); no writable DocType endpoint bypasses a command.
 
-### Phase 4 — API and command surface
-Rewrite `api.py` to the §8.1 read contracts and §8.2 commands, with the full §9 error contract as stable machine-readable codes. Mutating commands require idempotency key + expected token. No writable DocType endpoint bypasses a command (§16.1).
+### Phase 4 — Planning integration payload check
+- Confirm `DepartmentalNeedAccepted.v2`, `DepartmentalNeedSuperseded.v1`, `DepartmentalNeedWithdrawn.v1` payload builders drop `procuring_entity` and otherwise still match §7.1 exactly (OU + FY id, title/description/expected-result, quantity/unit, required-by date, content hash).
+- Cross-app check: grep the whole repo for real consumers of the `procuring_entity` field in the current payload before removing it (Procurement Planning is the only consumer; confirm via `procurement_planning/services/needs_intake.py`).
+- No outbox mechanism change — `Departmental Need Event`'s transactional-outbox delivery is unaffected.
 
-**Exit:** every §8.1/§8.2 contract whitelisted and reachable; every §9 code returnable.
+**Exit:** contract tests green on all three events with the corrected field set; no Planning-side code references the removed PE field.
 
-### Phase 5 — Planning integration
-- Emit `DepartmentalNeedAccepted.v2` with exactly the §7.1 field list, including `expected_operational_result` (NDS-AC-038, 024).
-- Add `DepartmentalNeedSuperseded.v1` and `DepartmentalNeedWithdrawn.v1`; transactional-outbox delivery, idempotent and ordered per Need.
-- Consume `NeedPlanningUsageChanged.v1` instead of querying `Plan Need Allocation` (D5).
-- Verify Need ID remains the stable source-line identity through Planning (NDS-AC-039) and that Planning receives values read-only (NDS-AC-040).
-- **Cross-app check:** grep the whole repo for real consumers of the old payload before changing it.
+### Phase 5 — Frontend
+- Remove the PE dimension from `ContextPicker.vue` (and the `kt_working_procuring_entity` user-default it reads); keep OU (and Fiscal-Year-flag awareness) only.
+- Delete `IntakeWindowScreen.vue` and its `/intake-window` route; replace any Fiscal-Year-flag display with a read-only line in the existing context strip, sourced from `get_needs_submission_state` (§11.11 — no NDS-owned configuration screen).
+- Switch `NeedEditorScreen.vue`'s unit source to ERPNext `UOM`.
+- Update NDS-DES-15 "Create need for" dialog behaviour to be driven by `list_need_create_targets`.
+- Confirm no artboard-facing copy changes are needed (KT-STD-001 §2.2 fixture-context PE lines were never rendered in the first place; spot-checked against §11.2–11.16).
 
-**Exit:** contract tests green on all three events; no Needs→Planning table query remains.
+**Exit:** no PE control, selector or column on any screen (NDS-AC-058 equivalent); intake-window route returns 404/redirects to the workspace; production-mode asset build clean with the changed bundle's content hash verified.
 
 ### Phase 6 — Seeds and fixtures
-Rebuild `seeds/` to §14: prerequisites (§14.1), seven actors (§14.2), the four exact Needs with their exact descriptions and expected operational results (§14.3), and the independently selectable Planning-usage (§14.4), successor and withdrawal (§14.5) and KEBS first-slice (§14.6) profiles. Deterministic and idempotent (§14.7); no legacy Demand, partial allocation, reservation, Requisition or Tender.
+- Rewrite `seeds/kentender_mvp_r1.py` and `seeds/profiles.py` to grant `User Responsibility Assignment` rows through the `kentender_core` administration command, not raw `User Permission` inserts.
+- Align actors to KT-STD-001 §8.3: drop `amina.hassan@moh.example.test` from this module's fixtures, replace `auditor.moh@example.test` with `naomi.chebet@moh.example.test`, keep Grace/Peter/Julia/Mercy per §14.2's exact assignments.
+- Seed against ERPNext `Fiscal Year` `2027-2028`, opened via `site_configuration.open_needs_submission`, instead of a `Needs Intake Window` record.
+- Seed units from ERPNext `UOM` (`Programme`, `Each`), confirming both are `enabled=1`.
+- Update `seeds/playwright_ui_fixtures.py` to the same actor/FY/unit changes.
 
-**Exit:** seeds run twice with identical results; NDS-AC-032, 045 evidenced.
+**Exit:** seeds run twice with identical results (idempotent, per KT-STD-001 §8.6); §14 prerequisites and actor table satisfied exactly.
 
-### Phase 7 — Frontend
-Rebuild all eight §10 screens as Vue-in-Desk (D7), porting the `.dc.html` artboards class-for-class rather than rebuilding layout from prose.
+### Phase 7 — Permission, domain and lifecycle tests
+- Rewrite `test_departmental_needs_permissions.py`: remove `User Permission` manipulation and cross-`PE-CGKIS` isolation tests; invert `test_the_module_consults_no_parallel_permission_store` to forbid `User Permission` as an authority source and require `kentender_core.services.authorization` usage; add the Phase 2 Cartesian-product and parent/descendant tests.
+- Rewrite `test_departmental_needs_domain_model.py`: remove `procuring_entity`/intake-window assertions; add ERPNext-Fiscal-Year/UOM-Link assertions.
+- Update `test_departmental_needs_lifecycle.py`, `test_departmental_needs_events.py`, `test_departmental_needs_contracts.py`, `test_departmental_needs_seed.py`, `test_departmental_needs_my_work.py`, `test_departmental_needs_audit_and_notifications.py` for the new field/contract shapes; no behavioural rewrite expected beyond field/authorization plumbing.
+- Retire `departmental-needs-intake-window.spec.ts` and `departmental-needs-scheduled-window.spec.ts` outright; update the remaining five Playwright specs for the single-PE, resolver-backed context.
 
-- NDS-UI-01 workspace (DES-01) with all five states (DES-14a–e), one table, minimal filters, no summary cards.
-- NDS-UI-02 department review with both tabs (DES-02, 02b).
-- NDS-UI-03 editor (DES-03, 04, 08) — six fields only, expected-result help text, no items/attachments/cost/location.
-- NDS-UI-04 detail (DES-05 Submitted, DES-07 Accepted) with Create update / Request withdrawal / View Plan Item.
-- NDS-UI-05 review task (DES-06, 09) with dialogs DES-13a/13b.
-- NDS-UI-06 accepted source detail.
-- NDS-UI-07 withdrawal review (DES-12a blocked, 12b cleared) + request dialog DES-11.
-- NDS-UI-08 intake window (DES-10).
+**Exit:** full module Python suite green; updated Playwright suite green (`npm run test:ui:smoke:nds`, single-worker per FU-01).
 
-Register only §10's canonical routes; no redirect or alias (NDS-AC-030). Add stable accessible test selectors, not CSS-class selectors (§16.1). Route changes unmount Vue and cancel stale requests; use an active-flag guard, not `frappe.router.off()`.
+### Phase 8 — Static and architecture scans
+Extend `test_departmental_needs_static_scan.py`'s prohibited-concept list to include `Needs Intake Window`, `procuring_entity`, the custom `Financial Year`/`Unit Of Measure` doctypes, and any remaining `User Permission`-as-authority read. Confirm `test_departmental_needs_architecture.py`'s D1 boundary guard is untouched and still passes.
 
-**Exit:** all eight routes render live data; production-mode asset build clean.
+**Exit:** static scan proves every retired concept absent from source, not just from the database; architecture guard green.
 
-### Phase 8 — Shell and registry wiring
-Register routes in `kt_cl_surface_registry.js`; module menu with only the three §10 entries and their role visibility; module placed after Budget & Funding and before Procurement Planning; `hooks.py` updated; old page records and JS/CSS deleted. Watch the known workspace-sidebar reverse-sync hazard — a dangling Workspace/Page link fails the whole-site migrate.
+### Phase 9 — Full verification
+- Full module suite (`bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.departmental_needs.tests.*`).
+- Production-mode asset build (`./scripts/bench-with-node.sh build --app kentender_procurement` from the bench root) — closes the still-open v1.1 follow-up FU-02 opportunistically, since a rebuild of this size needs one anyway.
+- Full Playwright suite, single-worker, with visual baselines re-shot (no PE row now present in any screenshot).
+- Live browser walkthrough: golden path plus at least one interactive re-render, zero console errors, zero failed own requests.
 
-**Exit:** clean `bench migrate`; menu visibility correct per role.
+**Exit:** KT-STD-001 §6's required release evidence satisfied in full for this change unit.
 
-### Phase 9 — Tests
-- Rewrite the Python suite against the corrected model; delete `test_departmental_needs_attachments.py` and the delegate-review case.
-- Cover §15.1's six layers: domain unit, permission unit, command integration, contract integration, UI component, browser smoke.
-- Playwright specs for all eight screens.
-- Static-scan test proving every prohibited field, object, role and legacy route is absent (§16.3) — extends the existing `test_departmental_needs_completeness_gaps.py` boundary-test pattern.
-- Visual regression references at 1440 × 1024 for every artboard, modal and workspace state.
+### Phase 10 — Acceptance sign-off
+Map every NDS-CHG-001 v1.6 §15 acceptance criterion (NDS-AC-001–058) to its evidence; confirm §19 E2E-REQ-001 conformance; update `FOLLOW_UPS.md` with anything deliberately deferred; update project memory.
 
-**Exit:** clean module suite; clean accepted-source and Planning contract tests.
-
-### Phase 10 — Verification and release evidence
-Full NDS-AC-001–045 mapping with per-criterion evidence; §19 E2E-REQ-001 conformance check against all eight non-drift controls; live browser walkthrough of the golden path and edge cases, verifying first paint **and** at least one interactive re-render; zero page console errors and zero failed own requests; schema scan per §16.3. Tracker rows move to `Done` only with real observed evidence.
+**Exit:** all applicable ACs evidenced Done in the tracker; nothing claimed without an observed result.
 
 ## 4. Files in scope
 
-**Rebuild:** `departmental_needs/doctype/departmental_need/`, `services/{lifecycle,permissions,context,usage,workspace,notifications,constants,errors}.py`, `api.py`, `seeds/kentender_mvp_r1.py`, `setup/departmental_needs_doctypes.py`, `setup/departmental_needs_page.py`, `tests/`.
+**Delete:** `doctype/needs_intake_window/`, `doctype/departmental_need_attachment/` `departmental_need_item/` `departmental_need_review/` (empty dirs), `public/js/departmental_needs/components/IntakeWindowScreen.vue`, `tests/ui/smoke/departmental_needs/departmental-needs-intake-window.spec.ts` and `-scheduled-window.spec.ts`, `kentender_core`'s `Unit Of Measure` doctype (once unreferenced), the module's own `Financial Year`-doctype read paths.
 
-**Create:** `doctype/needs_intake_window/`, `doctype/departmental_need_version/`, `doctype/need_withdrawal_request/`, the Vue bundle and components for eight screens, Playwright specs for the four missing screens.
+**Rewrite:** `departmental_needs/services/{permissions,context,my_work_provider,notifications}.py`, `doctype/departmental_need/`, `doctype/departmental_need_version/`, `doctype/departmental_need_review_task/`, `doctype/departmental_need_decision/`, `api.py` (read-contract surface only), `setup/departmental_needs_doctypes.py`, `seeds/{kentender_mvp_r1,profiles,playwright_ui_fixtures}.py`, `public/js/departmental_needs/components/ContextPicker.vue`, `public/js/departmental_needs/components/NeedEditorScreen.vue`, `tests/test_departmental_needs_{permissions,domain_model,static_scan}.py`.
 
-**Delete:** `doctype/departmental_need_item/`, `doctype/departmental_need_attachment/`, `services/attachments.py`, `tests/test_departmental_needs_attachments.py`, `public/js/departmental_needs_*.js`, `public/css/departmental_needs*.css`, the five legacy `page/*` records.
+**Touch (small, mechanical):** `services/lifecycle.py`, `services/usage.py`, `services/workspace.py`, `services/events.py` (drop the PE field from payload builders / query filters only), `kentender_core/services/business_role_registry.py` (citation bump), remaining Playwright specs, remaining Python test modules (field/contract shape only).
 
-**Touch:** `kentender_procurement/hooks.py`, `kentender_core/public/js/kt_cl_surface_registry.js`, `procurement_planning/services/need_allocations.py` (usage-projection direction), `docs/mvp-1-r1/01_departmental_needs/design/uploads/` (stale draft).
+**Not touched:** `kentender_core/kentender_core/install.py`, `kentender_core/services/site_configuration.py` (already correct), the Frappe `Page`/route registration, `kt_cl_surface_registry.js`/`STITCH_DESK_SURFACES` (correctly absent), Procurement Planning's own authorization mechanism (out of scope — see Gap Analysis §10.2).
 
 ## 5. Verification commands
 
@@ -139,13 +139,17 @@ bench --site kentender.midas.com run-tests --app kentender_procurement \
 # focused Playwright
 npx playwright test tests/ui/smoke/departmental_needs/<spec>.spec.ts -g "<test name>"
 
-# assets (from apps/kentender_v1) — never plain `bench build`
+# focused vitest
+npx vitest run --project departmental-needs
+
+# assets (from /home/midasuser/frappe-bench) — never plain `bench build`
 ./scripts/bench-with-node.sh build --app kentender_procurement
 
-# bench lifecycle
-make validate-links && make migrate SITE=kentender.midas.com && make clear SITE=kentender.midas.com
+# bench lifecycle (from /home/midasuser/frappe-bench)
+bench --site kentender.midas.com migrate
+make validate-links && make clear SITE=kentender.midas.com
 make seed-kentender-mvp-v1 SITE=kentender.midas.com
 make seed-kentender-mvp-v1-validate SITE=kentender.midas.com
 ```
 
-Per §16.2 and `CLAUDE.md`: red/green on the focused node first, then the affected group, then the module suite once. Do not rerun the repository suite after each small fix. After CSS/JS changes, clear the site cache and hard-refresh Desk before diagnosing a code defect.
+Per KT-STD-001 §5 and `CLAUDE.md`: red/green on the focused node first, then the affected group, then the module suite once. Do not rerun the whole repository suite after each small fix — Phase 2's authorization rewrite is shared infrastructure in the sense KT-STD-001 §5 means it, so its own release gate additionally requires the affected-module tests (Phase 7) and the cross-app architecture guard (Phase 8), not just a happy-path module test. After CSS/JS changes, clear the site cache and hard-refresh Desk before diagnosing a code defect; confirm the rebuild landed by checking the bundle's content hash changed.
