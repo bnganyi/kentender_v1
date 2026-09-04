@@ -206,8 +206,13 @@ These fixtures are canonical across every KenTender document, seed and artboard.
 | Mercy Kilonzo | `mercy.kilonzo@moh.example.test` | Procurement Planner | Site-wide |
 | Samuel Otieno | `samuel.otieno@moh.example.test` | Head of User Department, expired | `OU-MOH-DHP` |
 | Administrator | `administrator@moh.example.test` | Technical only | — |
+| Naomi Chebet | `naomi.chebet@moh.example.test` | Auditor | Site-wide |
+| Josphat Mwangi | `josphat.mwangi@moh.example.test` | Budget Officer, and separately Finance Confirmation Officer | Site-wide |
+| Beatrice Kamau | `beatrice.kamau@moh.example.test` | Budget Approver | Site-wide |
 
 Grace additionally holds Head of User Department in `OU-MOH-HRMD` in the Cartesian-product regression fixture, so the same-user-different-scope test has a concrete subject.
+
+Naomi Chebet, Josphat Mwangi and Beatrice Kamau are added per BUD-CHG-001 v1.3 §15.1 (D2, BUD-CHG-001's own tracker). Naomi Chebet was independently named by STR-CHG-001 v1.6 §14.1 as a shared Auditor fixture but that document's own addition was never applied to this register until now; Strategy's other two named actors (Esther Muthoni, Dr Alfred Ochieng) remain STR-CHG-001's own open gap and are not added here.
 
 ### 8.4 Fiscal years
 
@@ -231,6 +236,16 @@ Enabled ERPNext `UOM` records: `Each`, `Programme`, `Set`, `Lot`, `Kilogram`, `L
 ### 8.7 Fixture consistency
 
 Every artboard fixture, seed record and test fixture across all documents refers to the same register. Where an artboard needs a state the seed does not contain — a blocked action, a conflict notice, an unsaved draft — the change unit states it as an artboard-only fixture and says so explicitly, so a seed-versus-artboard comparison does not report a false mismatch.
+
+### 8.8 Fixture instants
+
+Per-module reference timestamps used by that module's own "as of" fixture states (e.g. an approval or submission dialog fixture). This subsection exists because more than one change unit's own text names "§8.5" as the target for this content; §8.5 is Units of measure, not a timeline register, so each module's instant is recorded here instead, under its own row, without repurposing §8.5.
+
+| Module | Instant |
+|---|---|
+| Budget & Funding | Budget journeys — 1 Oct 2026 through 16 Mar 2027, EAT (BUD-CHG-001 v1.3 §15.1) |
+
+Strategy Alignment's own instant (STR-CHG-001 v1.6 §14.1: Strategy journeys — 24–25 Nov 2026, between 11:00 and 17:00 EAT) is not yet added here — it is Strategy's own open gap (mirrors the §8.3 actor gap noted above), to be added by that document's own tracker.
 
 ---
 

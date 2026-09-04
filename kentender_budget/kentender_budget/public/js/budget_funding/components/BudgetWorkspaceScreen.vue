@@ -2,8 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
-import { useWorkingContext } from "../../budget_shared/composables/useWorkingContext.js";
-import WorkingContextPicker from "../../budget_shared/components/WorkingContextPicker.vue";
+import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
 import { getBudgetWorkspace } from "../data/budgetApi.js";
 
@@ -14,40 +13,11 @@ const railTrail = computed(() => [
 	{ label: __("Budget & Funding") },
 ]);
 const railEl = ref(null);
-// CTX-CHG-001 - the rail hosts the global PE switcher; a switch re-resolves
-// this module's context under the new entity (its own remembered FY applies).
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: async () => {
-		// Quiet only when a workspace is already on screen — the previous
-		// content stays visible while the new one loads, instead of flashing
-		// the skeleton over it. Before any workspace has ever resolved,
-		// `workspace.value` is still null, so this stays loud (see the
-		// documented gap-crash risk on `onSelectContext` below).
-		const quiet = !!workspace.value;
-		if (!quiet) loading.value = true;
-		await refreshContext();
-		if (!selectionRequired.value && workingContext.value) {
-			await refresh({ quiet });
-		} else {
-			loading.value = false;
-		}
-	},
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
-// BUD-CHG-001 v1.2 Phase 8 — this screen has no explicit id of its own, so
-// the PE/FY working context must be resolved (explicit ?context= query
-// param, remembered preference, or auto-selected when the actor has
-// exactly one) before it can call getBudgetWorkspace at all.
-const {
-	loading: contextLoading,
-	mode: contextMode,
-	contexts: workingContexts,
-	selected: workingContext,
-	selectionRequired,
-	refresh: refreshContext,
-	select: selectContext,
-} = useWorkingContext("budget");
+const fyFilter = useFiscalYearFilter();
 
 const loading = ref(true);
 const forbidden = ref(false);
@@ -60,7 +30,7 @@ async function refresh(opts) {
 	forbidden.value = false;
 	serverError.value = false;
 	try {
-		workspace.value = await getBudgetWorkspace(workingContext.value.context_id);
+		workspace.value = await getBudgetWorkspace(fyFilter.selected.value);
 	} catch (e) {
 		if (e.httpStatus === 403) {
 			forbidden.value = true;
@@ -72,26 +42,21 @@ async function refresh(opts) {
 	}
 }
 
-async function initContext() {
-	const requestedContext = new URLSearchParams(window.location.search).get("context") || undefined;
-	await refreshContext(requestedContext);
-	if (!selectionRequired.value && workingContext.value) {
+onMounted(async () => {
+	await fyFilter.load();
+	if (fyFilter.selected.value) {
 		await refresh();
 	} else {
 		loading.value = false;
 	}
-}
-onMounted(initContext);
+});
 
-async function onSelectContext(contextId) {
-	// Set loading before awaiting anything — selectContext() itself flips
-	// selectionRequired to false as soon as it resolves, and without this
-	// the template's next re-render can land in the gap between
-	// "selectionRequired is now false" and "refresh() has set loading back
-	// to true", reading workspace.has_budget while workspace is still null
-	// (confirmed live: a real TypeError, not hypothetical).
-	loading.value = true;
-	await selectContext(contextId);
+async function onSelectFy(fy) {
+	fyFilter.select(fy);
+	if (!fy) {
+		workspace.value = null;
+		return;
+	}
 	await refresh();
 }
 
@@ -123,36 +88,33 @@ function registerBudget() {
 				<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
 				<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
 				<p class="kt-muted" style="margin: 0; max-width: 70ch">
-					{{ __("View the approved procurement budget and the funding position used by Procurement Planning.") }}
+					{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}
 				</p>
 			</header>
 
-			<div style="display: flex; gap: 40px; padding-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
-				<div>
-					<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procuring Entity") }}</div>
-					<div style="font-size: 15px; font-weight: 500">{{ workspace?.procuring_entity?.name || "—" }}</div>
-				</div>
-				<div>
-					<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div>
-					<div style="font-size: 15px; font-weight: 500">{{ workspace?.financial_year?.label || "—" }}</div>
-				</div>
-				<div>
-					<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Currency") }}</div>
-					<div style="font-size: 15px; font-weight: 500">{{ workspace?.budget?.currency || "KES" }}</div>
-				</div>
+			<!-- Filter row (BUD-DES-01) — a local view filter, never a gate: it
+			     grants nothing and is remembered only with this visible reset. -->
+			<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
+				<label class="kt-field-label" style="margin: 0" for="bud-ws-fy">{{ __("Fiscal Year") }}</label>
+				<select
+					id="bud-ws-fy"
+					class="kt-input"
+					style="width: auto; min-width: 160px"
+					:disabled="fyFilter.loading.value"
+					:value="fyFilter.selected.value"
+					data-testid="budget-fy-filter"
+					@change="onSelectFy($event.target.value)"
+				>
+					<option value="" disabled>{{ __("Select a fiscal year") }}</option>
+					<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+				</select>
 			</div>
 
-			<!-- Working-context selection (BUD-CHG-001 v1.2 Phase 8) — precedes
-			     every other state; the screen below can't resolve anything
-			     without a PE/FY context first. -->
-			<WorkingContextPicker
-				v-if="contextLoading || selectionRequired || contextMode === 'none'"
-				:loading="contextLoading"
-				:mode="contextMode"
-				:contexts="workingContexts"
-				:selected="workingContext"
-				@select="onSelectContext"
-			/>
+			<!-- No fiscal year selected yet — never auto-picked (§12.1). -->
+			<div v-if="!fyFilter.loading.value && !fyFilter.selected.value" class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<h2>{{ __("Select a fiscal year to view its procurement budget.") }}</h2>
+			</div>
 
 			<!-- Loading (BUD-DES-16) -->
 			<template v-else-if="loading">
@@ -193,7 +155,7 @@ function registerBudget() {
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="5" y="11" width="14" height="10" rx="1" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
 				</svg>
-				<h2>{{ __("You do not have access to this Budget & Funding context.") }}</h2>
+				<h2>{{ __("You do not have access to Budget & Funding.") }}</h2>
 				<p class="kt-muted">{{ __("Ask your KenTender administrator to review your Budget assignment.") }}</p>
 			</div>
 
@@ -214,7 +176,7 @@ function registerBudget() {
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
 				</svg>
-				<h2>{{ __("No approved procurement budget is registered for {0}.", [workspace.financial_year?.label || "—"]) }}</h2>
+				<h2>{{ __("No approved procurement budget is registered for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
 				<p class="kt-muted">{{ __("Register the externally approved budget before Procurement Planning requests funding confirmation.") }}</p>
 				<button v-if="workspace.can_register" type="button" class="kt-btn kt-btn-primary" @click="registerBudget" data-testid="budget-register-btn">
 					{{ __("Register approved budget") }}
@@ -224,15 +186,16 @@ function registerBudget() {
 			<!-- Budget exists but nothing Active yet — no artboard covers this
 			     directly; reuses the empty-state shell with a status-appropriate
 			     action instead of "Register" (registering again would violate
-			     the one-Budget-per-PE/FY rule). A Viewer never sees this branch:
-			     the server omits pending_version entirely for them, so they fall
-			     through to the "No baseline" branch above instead. -->
+			     the one-Budget-per-fiscal-year rule). A reader with no edit/
+			     approve capability never sees this branch: the server omits
+			     pending_version entirely for them, so they fall through to the
+			     "No baseline" branch above instead. -->
 			<div v-else-if="!workspace.version" class="kt-card kt-blueprint kt-empty" data-testid="budget-pending-draft">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
 				</svg>
-				<h2>{{ __("A Draft budget is in progress for {0}.", [workspace.financial_year?.label || "—"]) }}</h2>
+				<h2>{{ __("A Draft budget is in progress for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
 				<p class="kt-muted">{{ __("Continue the draft before it can go Active.") }}</p>
 				<button
 					v-if="workspace.pending_version"
@@ -338,3 +301,10 @@ function registerBudget() {
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.kt-field-label {
+	font-size: 12px;
+	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+}
+</style>

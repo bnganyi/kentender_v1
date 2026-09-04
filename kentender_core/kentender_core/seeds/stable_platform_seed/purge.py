@@ -103,33 +103,33 @@ def _delete_package_cascade(package_code: str) -> None:
 
 def _purge_budgets(*, dry_run: bool) -> list[str]:
 	# MVP-1 Budget: identity is generated_reference (legacy field was budget_name).
-	if not _doctype_exists("Budget"):
+	if not _doctype_exists("Procurement Budget"):
 		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget", fields=["name", "generated_reference", "title"]):
+	for row in frappe.get_all("Procurement Budget", fields=["name", "generated_reference", "title"]):
 		code = (row.get("generated_reference") or row.get("title") or "").strip()
 		if code in _KEEP_BUDGET_NAMES or row["name"] in _KEEP_BUDGET_NAMES:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
-		frappe.db.sql("UPDATE `tabBudget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
-		for line in frappe.get_all("Budget Line", filters={"budget": row["name"]}, pluck="name"):
+		frappe.db.sql("UPDATE `tabProcurement Budget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
+		for line in frappe.get_all("Procurement Budget Line", filters={"budget": row["name"]}, pluck="name"):
 			frappe.flags.budget_line_force_delete = True
 			try:
-				_hard_delete("Budget Line", line)
+				_hard_delete("Procurement Budget Line", line)
 			finally:
 				frappe.flags.budget_line_force_delete = False
-		_hard_delete("Budget", row["name"])
+		_hard_delete("Procurement Budget", row["name"])
 	return removed
 
 
 def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 	# MVP-1 Budget Line: identity is generated_reference (legacy was budget_line_code).
-	if not _doctype_exists("Budget Line"):
+	if not _doctype_exists("Procurement Budget Line"):
 		return []
 	removed: list[str] = []
-	for row in frappe.get_all("Budget Line", fields=["name", "generated_reference", "title"]):
+	for row in frappe.get_all("Procurement Budget Line", fields=["name", "generated_reference", "title"]):
 		code = (row.get("generated_reference") or row.get("title") or "").strip()
 		if code in _KEEP_BUDGET_LINE_CODES:
 			continue
@@ -138,7 +138,7 @@ def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 			continue
 		frappe.flags.budget_line_force_delete = True
 		try:
-			_hard_delete("Budget Line", row["name"])
+			_hard_delete("Procurement Budget Line", row["name"])
 		finally:
 			frappe.flags.budget_line_force_delete = False
 	return removed

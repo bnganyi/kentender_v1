@@ -1,59 +1,69 @@
 # Copyright (c) 2026, KenTender and contributors
-"""BUD-CHG-001 v1.2 §7/§17.1 capability wiring, on AUTH-ADR-001's native
-Frappe Role + User Permission engine (kentender_core.services.authorization_native)
-— not kentender_core's older Operational Scope Assignment/Workflow Task +
-Workflow Routing Rule task-queue engine, and not a "My Work" queue entry.
+"""BUD-CHG-001 v1.3 §7/§17.1 capability wiring on AUTH-ADR-001 v1.6 (Phase 4):
+one site is one Procuring Entity, and the three Budget governance
+responsibilities are Site-wide business responsibilities resolved through
+`kentender_core.services.authorization` — no capability strings, no
+ResourceContext, no User-Permission scope checks. Mirrors
+`kentender_strategy.services.strategy_authorization`'s v1.6 rewrite.
 
-v1.2 collapses the 3-role/3-capability model (Officer/Reviewer/Activation
-Authority) onto 2 roles/capabilities (Officer/Approver), mirroring Strategy's
-STR-CHG-001 v1.5 collapse exactly (kentender_strategy.services.strategy_authorization).
-Segregation of duties is a single same-version self-check, not a pairwise
-rule table: "the submitting Officer cannot approve the same version, even if
-that user also holds Budget Approver" (§6.2/§12.5). Enforced directly here
-via the version's own audit trail (Budget Audit Event — the FundingLedgerEvent
-object), not kentender_core's general capability-pair SoD machinery.
+Segregation of duties stays a single same-version self-check, not a pairwise
+rule table: "the submitting Budget Officer cannot approve the same version,
+even if that user also holds Budget Approver" (§6/§17.1), enforced here from
+the version's own submission audit event (Budget Audit Event), never a
+stored field or a general capability-pair engine.
+
+Reads are a separate concern from writes (§5.3 vs §5.5 of the ADR): a write
+requires an Active site-wide `User Responsibility Assignment`
+(`authorise_record`, below); a read is governed by the registered
+`permission_query_conditions`/`has_permission` hooks acting on DocPerm plus
+the caller's assignments (`kentender_scope_map`, registered in this app's
+`hooks.py` — BUD-CHG-001 v1.3 §17.1, AUTH-ADR-001 v1.6 §5.3). Budget's own
+`require_budget_read_scope` below exists only to make backend service code
+actually invoke those hooks — a raw `frappe.get_doc()` call does not.
 """
 
 from __future__ import annotations
 
 import frappe
-from frappe import _
 
-from kentender_core.services.authorization_native import evaluate_role_capability, require_role_capability
-from kentender_core.services.authorization_policy import ResourceContext
+from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+from kentender_core.services.responsibility_errors import fail
 
-CAP_LIST = "budget.list"
-CAP_VIEW = "budget.view"
 CAP_CREATE = "budget.create"
 CAP_EDIT = "budget.edit"
 CAP_SUBMIT = "budget.submit"
 CAP_RETURN = "budget.return"
 CAP_APPROVE = "budget.approve"
-CAP_EXPORT = "budget.export"
 
-# BUD-CHG-001 v1.2 §7: only 2 Budget Version workflow roles remain. Budget
-# Reviewer is removed outright (not renamed, not aliased). Budget Activation
-# Authority is renamed to Budget Approver — same responsibility, new name.
-# Budget Viewer is intentionally not part of this governance-role tuple —
-# read access stays a plain Frappe Role driving ordinary DocType permissions,
-# outside the capability engine entirely (same as Strategy Viewer).
+# §7 — exactly three Budget business responsibilities, all Site-wide. There
+# is no Budget Viewer role in this vocabulary; read access is a DocPerm/
+# scope-map concern, never a capability.
 ROLE_BUDGET_OFFICER = "Budget Officer"
 ROLE_BUDGET_APPROVER = "Budget Approver"
+ROLE_FINANCE_CONFIRMATION_OFFICER = "Finance Confirmation Officer"
 
 BUDGET_GOVERNANCE_ROLES = (
 	ROLE_BUDGET_OFFICER,
 	ROLE_BUDGET_APPROVER,
+	ROLE_FINANCE_CONFIRMATION_OFFICER,
 )
+
+_BUSINESS_ROLE_FOR_CAPABILITY = {
+	CAP_CREATE: ROLE_BUDGET_OFFICER,
+	CAP_EDIT: ROLE_BUDGET_OFFICER,
+	CAP_SUBMIT: ROLE_BUDGET_OFFICER,
+	CAP_RETURN: ROLE_BUDGET_APPROVER,
+	CAP_APPROVE: ROLE_BUDGET_APPROVER,
+}
 
 
 def ensure_budget_governance_roles() -> dict:
-	"""Idempotent: create the 2 BUD-CHG-001 v1.2 §7 Frappe Roles. No
-	Separation of Duties Rule is seeded any more — with only 2 capabilities
-	the only remaining rule is the direct same-version self-check in
-	`_blocked_by_self_approval` below, not a capability-pair rule.
+	"""Idempotent: create the 3 BUD-CHG-001 v1.3 §7 Frappe Roles (the
+	registry's projections for the three business responsibilities).
 
-	Does not grant any Role to a specific user — provisioning real named
-	actors is a separate seed-contract concern (§15.2)."""
+	Does not grant any Role to a specific user — under v1.6 a grant flows
+	only through the User Responsibility Assignment administration command,
+	which projects the Frappe Role itself."""
 	created = {"roles": []}
 
 	for role in BUDGET_GOVERNANCE_ROLES:
@@ -66,24 +76,21 @@ def ensure_budget_governance_roles() -> dict:
 	return created
 
 
-def resource_context_for_version(version) -> ResourceContext:
-	"""Build a ResourceContext for one Budget Version, resolving its owning
-	Budget for Procuring Entity scope."""
-	if isinstance(version, str):
-		version = frappe.get_doc("Budget Version", version)
-	procuring_entity = frappe.db.get_value("Budget", version.budget, "procuring_entity")
-	return ResourceContext(
-		resource_type="Budget Version",
-		resource_id=version.name,
-		procuring_entity_id=procuring_entity or "",
-		state=version.status or "",
-	)
+def _business_role(capability: str) -> str:
+	role = _BUSINESS_ROLE_FOR_CAPABILITY.get(capability)
+	if not role:
+		fail("AUTH_CONFIGURATION_INVALID")
+	return role
+
+
+def _version_name(version) -> str:
+	return version if isinstance(version, str) else version.name
 
 
 def _submitted_by(version_name: str) -> str | None:
 	"""The user who performed this version's own "Submit for review" — read
-	from its ledger trail (§17.1: "the version's own submission audit
-	event"), not a stored field."""
+	from its ledger trail (§17.1: "the version's submission audit event"),
+	not a stored field."""
 	event = frappe.db.get_value(
 		"Budget Audit Event",
 		{"budget_version": version_name, "event_type": "Budget version submitted"},
@@ -94,8 +101,8 @@ def _submitted_by(version_name: str) -> str | None:
 
 
 def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> bool:
-	"""§6.2/§12.5: "the submitting Officer cannot approve the same version" —
-	a same-version self-check, not a general capability-pair rule. Return is
+	"""§6/§17.1: "the submitting Officer cannot approve the same version" — a
+	same-version self-check, not a general capability-pair rule. Return is
 	not restricted by self-submission (only Approve is)."""
 	if capability != CAP_APPROVE:
 		return False
@@ -105,81 +112,55 @@ def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> 
 def require_budget_version_capability(
 	user: str, capability: str, version, *, correlation_id: str = ""
 ) -> None:
-	if isinstance(version, str):
-		version_name = version
-	else:
-		version_name = version.name
-	resource = resource_context_for_version(version)
-	require_role_capability(
-		user,
-		capability,
-		resource,
-		sod_blocked=_blocked_by_self_approval(user, capability, version_name),
+	"""Raise unless `user` holds the Enabled Site-wide assignment for this
+	capability's business role — and, for Approve, is not the version's own
+	submitter."""
+	version_name = _version_name(version)
+	if _blocked_by_self_approval(user, capability, version_name):
+		fail("AUTH_SEGREGATION_BLOCKED")
+	decision = authorise_record(
+		user=user,
+		business_role=_business_role(capability),
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
 	)
+	if not decision.allowed:
+		fail(decision.reason_code or "AUTH_RESPONSIBILITY_REQUIRED")
 
 
 def has_budget_version_capability(user: str, capability: str, version) -> bool:
-	if isinstance(version, str):
-		version_name = version
-	else:
-		version_name = version.name
+	version_name = _version_name(version)
 	if _blocked_by_self_approval(user, capability, version_name):
 		return False
-	return evaluate_role_capability(user, capability, resource_context_for_version(version))[0]
+	return authorise_record(
+		user=user,
+		business_role=_business_role(capability),
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	).allowed
 
 
-def require_budget_create_capability(user: str, procuring_entity_id: str) -> None:
-	"""Creating a brand-new Budget: the PE already exists at creation time, so
-	a normal Role+PE-scope check applies directly (no bootstrap workaround
-	needed, same as Strategy's `require_plan_create_capability`)."""
-	require_role_capability(
-		user,
-		CAP_CREATE,
-		ResourceContext(resource_type="Budget", resource_id="", procuring_entity_id=procuring_entity_id),
+def require_budget_create_capability(user: str) -> None:
+	"""Creating a brand-new Budget: one site is one Procuring Entity, so a
+	plain Site-wide responsibility check applies directly — no PE parameter,
+	no bootstrap workaround needed (mirrors Strategy's
+	`require_plan_create_capability`)."""
+	decision = authorise_record(
+		user=user,
+		business_role=ROLE_BUDGET_OFFICER,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
 	)
+	if not decision.allowed:
+		fail(decision.reason_code or "AUTH_RESPONSIBILITY_REQUIRED")
 
 
-# AUTH-ADR-001 maps each capability string to exactly one Role (§5.2) — there
-# is no single "view" capability shared across Officer/Approver/Viewer/Auditor.
-# Read access to a Budget/Version in progress is not itself a workflow action
-# (§7: "Read access is not a third Strategy workflow role", mirrored here) —
-# it only needs "does this user hold any Budget-related Role with PE scope",
-# not a same-version segregation check. `CAP_VIEW` stays reserved for the
-# neutral Budget Viewer read surface (§9.1's Active-only reads); this is the
-# check every other read contract in this module uses instead.
-#
-# Finance Confirmation Officer is included because BUD-UI-05 ("Open Budget &
-# Funding" from a Planning Finance surface) opens Budget Line detail directly
-# for that role — a distinct capability from Finance's own check_funding/
-# reserve_funding authority (BUDGET_FINANCE_TASK_DENIED in
-# budget_check_reserve_contracts.py), which stays a separate check.
-_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Budget Viewer", "Auditor", "Finance Confirmation Officer")
-
-# §7: "Viewer may view Active, Superseded and Closed Budgets only" — a Draft
-# or Submitted-for-approval version is governance-workflow-in-progress
-# content, visible only to the roles actually party to that workflow (plus
-# Auditor). This must hold for a direct version URL too, not just for what a
-# listing chooses to surface (Phase 4: "the same scope predicate gates...
-# direct URLs").
-_DRAFT_STATUSES = ("Draft", "Submitted for approval")
-_DRAFT_READ_ROLES = (ROLE_BUDGET_OFFICER, ROLE_BUDGET_APPROVER, "Auditor")
-
-
-def require_budget_read_scope(procuring_entity_id: str, *, status: str | None = None) -> None:
-	user = frappe.session.user
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-		return
-	roles = frappe.get_roles(user)
-	allowed_roles = _DRAFT_READ_ROLES if status in _DRAFT_STATUSES else _READ_ROLES
-	if not any(role in roles for role in allowed_roles):
-		frappe.throw(_("Not permitted to view Budget & Funding"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
-	pe_scope = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
-	if pe_scope and procuring_entity_id not in pe_scope:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_PERMISSION_DENIED")
+def require_budget_read_scope(doctype: str, name: str) -> None:
+	"""§5.3 — explicitly triggers the registered `has_permission` hook (which
+	`frappe.get_doc()` alone does not do) so backend service code gets the
+	same DocPerm + `kentender_scope_map` scoping a Desk list view would."""
+	frappe.has_permission(doctype, doc=name, user=frappe.session.user, throw=True)
 
 
 def require_budget_version_read_scope(version) -> None:
-	if isinstance(version, str):
-		version = frappe.get_doc("Budget Version", version)
-	procuring_entity = frappe.db.get_value("Budget", version.budget, "procuring_entity")
-	require_budget_read_scope(procuring_entity or "", status=version.status)
+	require_budget_read_scope("Procurement Budget Version", _version_name(version))

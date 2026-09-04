@@ -42,35 +42,35 @@ _KEEP_STD_INSTANCE: Final[str] = "STDINST-TND-MOH-2026-001"
 
 def _purge_budgets(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	for row in frappe.get_all("Budget", fields=["name", "budget_name"]):
+	for row in frappe.get_all("Procurement Budget", fields=["name", "budget_name"]):
 		if (row.get("budget_name") or "").strip() == BUDGET_NAME:
 			continue
 		removed.append(row["name"])
 		if dry_run:
 			continue
-		frappe.db.sql("UPDATE `tabBudget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
-		for line in frappe.get_all("Budget Line", filters={"budget": row["name"]}, pluck="name"):
-			if frappe.db.exists("Budget Line", line):
+		frappe.db.sql("UPDATE `tabProcurement Budget` SET `status`=%s WHERE `name`=%s", ("Draft", row["name"]))
+		for line in frappe.get_all("Procurement Budget Line", filters={"budget": row["name"]}, pluck="name"):
+			if frappe.db.exists("Procurement Budget Line", line):
 				frappe.flags.budget_line_force_delete = True
 				try:
-					frappe.delete_doc("Budget Line", line, force=True, ignore_permissions=True)
+					frappe.delete_doc("Procurement Budget Line", line, force=True, ignore_permissions=True)
 				finally:
 					frappe.flags.budget_line_force_delete = False
-		if frappe.db.exists("Budget", row["name"]):
-			frappe.delete_doc("Budget", row["name"], force=True, ignore_permissions=True)
+		if frappe.db.exists("Procurement Budget", row["name"]):
+			frappe.delete_doc("Procurement Budget", row["name"], force=True, ignore_permissions=True)
 	return removed
 
 
 def _purge_budget_lines(*, dry_run: bool) -> list[str]:
 	removed: list[str] = []
-	for row in frappe.get_all("Budget Line", fields=["name", "budget_line_code"]):
+	for row in frappe.get_all("Procurement Budget Line", fields=["name", "budget_line_code"]):
 		if (row.get("budget_line_code") or "").strip() == BUDGET_LINE_CODE:
 			continue
 		removed.append(row["name"])
-		if not dry_run and frappe.db.exists("Budget Line", row["name"]):
+		if not dry_run and frappe.db.exists("Procurement Budget Line", row["name"]):
 			frappe.flags.budget_line_force_delete = True
 			try:
-				frappe.delete_doc("Budget Line", row["name"], force=True, ignore_permissions=True)
+				frappe.delete_doc("Procurement Budget Line", row["name"], force=True, ignore_permissions=True)
 			finally:
 				frappe.flags.budget_line_force_delete = False
 	return removed

@@ -74,27 +74,29 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 			1,
 		)
 		self.assertEqual(
-			frappe.db.count("Budget", {"generated_reference": C.BUD_ACTIVE}),
+			frappe.db.count("Procurement Budget", {"generated_reference": C.BUD_ACTIVE}),
 			1,
 		)
+		# BUD-CHG-001 v1.3: one site is one Procuring Entity — there is no
+		# second-PE (Kisumu) Budget baseline any more (§1.1/§15.6).
 		self.assertEqual(
-			frappe.db.count("Budget", {"generated_reference": C.CGK_BUD_ACTIVE}),
-			1,
+			frappe.db.count("Procurement Budget", {"generated_reference": C.CGK_BUD_ACTIVE}),
+			0,
 		)
 		self.assertEqual(
-			frappe.db.count("Budget Line", {"generated_reference": C.BL_DHI_2027}),
+			frappe.db.count("Procurement Budget Line", {"generated_reference": C.BL_DHI_2027}),
 			1,
 		)
 
 	def test_org_unit_owners_on_lines(self):
 		dhi = frappe.db.get_value(
-			"Budget Line",
+			"Procurement Budget Line",
 			{"generated_reference": C.BL_DHI_2027},
 			["owner_org_unit"],
 			as_dict=True,
 		)
 		hwd = frappe.db.get_value(
-			"Budget Line",
+			"Procurement Budget Line",
 			{"generated_reference": C.BL_HWD_2027},
 			["owner_org_unit"],
 			as_dict=True,
@@ -113,16 +115,6 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 			"Organisation Unit", child.parent_org_unit, "procuring_entity"
 		)
 		self.assertEqual(child.procuring_entity, parent_pe)
-
-	def test_kisumu_budget_present(self):
-		line = frappe.db.get_value(
-			"Budget Line",
-			{"generated_reference": C.CGK_BL_COLDCHAIN},
-			["owner_org_unit", "approved_amount"],
-			as_dict=True,
-		)
-		self.assertTrue(line)
-		self.assertEqual(line.owner_org_unit, C.OU_CGK_HEALTH)
 
 	def test_unit_isolation_api(self):
 		pe_moh = frappe.db.get_value("Procuring Entity", {"entity_code": C.PE_MOH}, "name")
@@ -365,28 +357,29 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				"summary": "Playwright strategy created",
 			}
 		).insert(ignore_permissions=True)
+		leftover_fy = "2099-2100"
+		if not frappe.db.exists("Fiscal Year", leftover_fy):
+			frappe.get_doc(
+				{
+					"doctype": "Fiscal Year",
+					"year": leftover_fy,
+					"year_start_date": "2099-07-01",
+					"year_end_date": "2100-06-30",
+				}
+			).insert(ignore_permissions=True)
 		budget = frappe.get_doc(
 			{
-				"doctype": "Budget",
+				"doctype": "Procurement Budget",
 				"generated_reference": "MOH-BUD-PW-LEFTOVER-001",
-				"title": "Playwright leftover budget",
-				"procuring_entity": pe,
-				"status": "Draft",
-				"fiscal_period": "2099/00",
-				"start_date": "2099-07-01",
-				"end_date": "2100-06-30",
+				"fiscal_year": leftover_fy,
 				"currency": "KES",
-				"budget_owner": "Playwright",
-				"registration_source": "Direct capture",
-				"authoritative_reference": "MOH-FIN-BUD-PW-LEFTOVER-001",
-				"approval_date": "2099-06-15",
 			}
 		).insert(ignore_permissions=True)
 		canonical_budget = frappe.db.get_value(
-			"Budget", {"generated_reference": C.BUD_ACTIVE}, "name"
+			"Procurement Budget", {"generated_reference": C.BUD_ACTIVE}, "name"
 		)
 		canonical_line = frappe.db.get_value(
-			"Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
+			"Procurement Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
 		)
 		revision = frappe.get_doc(
 			{
@@ -451,7 +444,7 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 		)
 		self.assertFalse(frappe.db.exists("Strategic Plan", strategy.name))
 		self.assertFalse(frappe.db.exists("Strategy Audit Event", strategy_audit.name))
-		self.assertFalse(frappe.db.exists("Budget", budget.name))
+		self.assertFalse(frappe.db.exists("Procurement Budget", budget.name))
 		self.assertFalse(frappe.db.exists("Budget Revision", revision.name))
 		self.assertFalse(frappe.db.exists("Budget Audit Event", budget_audit.name))
 		self.assertTrue(

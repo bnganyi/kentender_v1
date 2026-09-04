@@ -10,7 +10,7 @@ from typing import Any
 import frappe
 from frappe.utils.password import update_password
 
-from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
 from kentender_core.seeds import constants as CoreC
 from kentender_core.seeds._common import ensure_user_permission
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
@@ -80,10 +80,15 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
-		# BUD-CHG-001 v1.2 §15.2 — Budget Reviewer + Budget Activation Authority
-		# collapsed into one Budget Approver role/persona.
+		# BUD-CHG-001 v1.3 §15.1 — required named Budget Approver actor. The
+		# real Site-wide `User Responsibility Assignment` this role needs to
+		# actually authorise anything is granted separately, by Budget's own
+		# `ensure_budget_actor_assignments()` — this tuple only creates the
+		# User and its Frappe Role projection (old-engine `User Scope
+		# Assignment` rows this loop also creates are inert for Budget's own
+		# authorization, which reads `authorise_record()` only).
 		C.USER_BUD_APPROVER,
-		"MOH Budget Approver",
+		"Beatrice Kamau",
 		("Budget Approver",),
 		C.PE_MOH,
 		None,
@@ -92,7 +97,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_VIEWER,
 		"MOH Management Viewer",
-		("Strategy Viewer", "Budget Viewer"),
+		("Strategy Viewer",),
 		C.PE_MOH,
 		None,
 		0,
@@ -108,7 +113,7 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 	(
 		C.USER_KISUMU_VIEWER,
 		"Kisumu Management Viewer",
-		("Strategy Viewer", "Budget Viewer"),
+		("Strategy Viewer",),
 		C.PE_CGKIS,
 		None,
 		0,
@@ -126,6 +131,10 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
+		# BUD-CHG-001 v1.3: there is no Budget Viewer role — this whole persona
+		# is Phase 6's to replace (BUD-604's Naomi Chebet/Josphat Mwangi/
+		# Beatrice Kamau), not just role-strip; left as-is for now (Phase 5
+		# only touched the combined Strategy+Budget Viewer tuples above).
 		C.USER_BUD_VIEWER_MOH,
 		"MOH Budget Viewer",
 		("Budget Viewer",),
@@ -134,8 +143,11 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
+		# BUD-CHG-001 v1.3 §15.1 — required named Auditor actor (reused from
+		# STR-CHG-001 v1.6 §14.1). Real assignment: see the comment on
+		# USER_BUD_APPROVER above.
 		C.USER_BUD_AUDITOR,
-		"Budget Auditor",
+		"Naomi Chebet",
 		("Auditor",),
 		C.PE_MOH,
 		None,
@@ -229,10 +241,11 @@ _USER_SPECS: tuple[tuple[Any, ...], ...] = (
 		0,
 	),
 	(
-		# BUD-CHG-001 v1.2 §15.2 — "Budget Officer and separately assigned MOH
-		# Finance Confirmation capability for FY 2027/28."
+		# BUD-CHG-001 v1.3 §15.1 — required named Budget Officer, and
+		# separately Finance Confirmation Officer. Real assignment: see the
+		# comment on USER_BUD_APPROVER above.
 		C.USER_BUD_OFFICER,
-		"Peter Otieno",
+		"Josphat Mwangi",
 		("Budget Officer", "Finance Confirmation Officer"),
 		C.PE_MOH,
 		None,
@@ -414,7 +427,7 @@ def _upsert_system_admin_no_requester() -> str:
 
 def upsert_canonical_users(*, commit: bool = True) -> dict[str, Any]:
 	ensure_strategy_governance_roles()
-	ensure_budget_roles()
+	ensure_budget_governance_roles()
 	ensure_planning_roles()
 	# Skip User→Contact sync (avoids RetryBackgroundJobError under tests / reseed).
 	prev_import = frappe.flags.in_import

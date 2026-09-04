@@ -71,13 +71,19 @@ def list_eligible_budget_lines(
 	Every Planning caller authorises its own actor for the exact PE/OU first,
 	and the result is already narrowed to that department's eligible lines —
 	the pre-v1.2 module handled the same mismatch by reading Budget tables
-	directly, which is the boundary violation this gateway closes."""
+	directly, which is the boundary violation this gateway closes.
+
+	BUD-CHG-001 v1.3 Phase 4: Budget's own `list_eligible_budget_lines`
+	dropped `procuring_entity` (one site is one Procuring Entity) and renamed
+	`financial_year` to `fiscal_year`. This gateway's own external signature
+	is unchanged — Planning's own PE/FY threading is that module's separate,
+	not-yet-landed change unit (tracker cross-doc reference) — only the
+	forwarded call is updated to match Budget's new published contract."""
 	from kentender_budget.api.budget_api import list_eligible_budget_lines as contract
 
 	with _system_principal():
 		return contract(
-			procuring_entity=procuring_entity,
-			financial_year=financial_year,
+			fiscal_year=financial_year,
 			source_org_unit=source_org_unit,
 		)
 

@@ -95,7 +95,7 @@ _OPEN_MODULE_ROUTE_ALLOWED_DOCTYPES: Final[frozenset[str]] = frozenset(
         "Procurement Package",
         "Procurement Plan",
         "Strategy Objective",
-        "Budget Line",
+        "Procurement Budget Line",
     }
 )
 

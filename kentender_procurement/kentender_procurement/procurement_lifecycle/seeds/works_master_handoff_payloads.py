@@ -51,7 +51,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 			"target_module": "Budget",
 			"source_object_type": "Strategy Objective",
 			"source_object_code": "OBJ-MOH-HOSP-RENOV",
-			"target_object_type": "Budget Line",
+			"target_object_type": "Procurement Budget Line",
 			"target_object_code": "BUD-MOH-INFRA-2026-001",
 			"status": "Consumed",
 			"generated_by": "USER-STRAT-001",
@@ -84,7 +84,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 			"handoff_title": "Budget Funding Confirmation",
 			"source_module": "Budget",
 			"target_module": "Demands",
-			"source_object_type": "Budget Line",
+			"source_object_type": "Procurement Budget Line",
 			"source_object_code": "BUD-MOH-INFRA-2026-001",
 			"target_object_type": "Demand",
 			"target_object_code": "DEM-MOH-2026-001",
@@ -107,7 +107,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 				"strategic_objective": "OBJ-MOH-HOSP-RENOV",
 			},
 			"evidence_links": [
-				_el("Budget Line", "Budget Line", "BUD-MOH-INFRA-2026-001", "Budget"),
+				_el("Procurement Budget Line", "Procurement Budget Line", "BUD-MOH-INFRA-2026-001", "Budget"),
 			],
 			"technical_refs": {
 				"budget_code": "BUDGET-MOH-2026",

@@ -24,13 +24,13 @@
   {
    "fieldname": "budget",
    "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
+   "label": "Procurement Budget",
+   "options": "Procurement Budget",
    "reqd": 1,
    "read_only": 1,
    "in_list_view": 1,
    "search_index": 1,
-   "description": "Prevents the line identity from moving to another PE/FY Budget."
+   "description": "Prevents the line identity from moving to another Fiscal Year's Budget."
   },
   {
    "fieldname": "fixture_namespace",
@@ -44,7 +44,7 @@
  "modified": "2026-08-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
- "name": "Budget Line",
+ "name": "Procurement Budget Line",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
@@ -92,7 +92,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Budget Viewer",
+   "role": "Auditor",
    "share": 0,
    "write": 0
   },
@@ -100,11 +100,11 @@
    "create": 0,
    "delete": 0,
    "email": 0,
-   "export": 1,
-   "print": 1,
+   "export": 0,
+   "print": 0,
    "read": 1,
-   "report": 1,
-   "role": "Auditor",
+   "report": 0,
+   "role": "Finance Confirmation Officer",
    "share": 0,
    "write": 0
   }

@@ -63,8 +63,8 @@ def _rewrite_link_fields(old: str, new: str) -> dict[str, int]:
 	for dt, field in (
 		("Demand", "procuring_entity"),
 		("Procuring Department", "procuring_entity"),
-		("Budget", "procuring_entity"),
-		("Budget Line", "procuring_entity"),
+		("Procurement Budget", "procuring_entity"),
+		("Procurement Budget Line", "procuring_entity"),
 		# ("Strategic Plan", "procuring_entity"),  # removed MVP-1 strategy teardown
 		("Procurement Plan", "procuring_entity"),
 	):
@@ -98,7 +98,7 @@ def _delete_pe_if_unused(code: str) -> bool:
 	# Still referenced?
 	for dt, field in (
 		("Demand", "procuring_entity"),
-		("Budget", "procuring_entity"),
+		("Procurement Budget", "procuring_entity"),
 		("Procurement Package", "procuring_entity_code"),
 		("Tender Configuration", "procuring_entity_code"),
 	):

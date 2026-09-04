@@ -7,13 +7,14 @@ import BudgetDetailScreen from "./components/BudgetDetailScreen.vue";
 import BudgetApprovalTaskScreen from "./components/BudgetApprovalTaskScreen.vue";
 import BudgetLineDetailScreen from "./components/BudgetLineDetailScreen.vue";
 
-// BUD-CHG-001 v1.2 §10 — all five Budget screens share one Frappe Page
-// ("budget-funding", not the spec's literal "budget" — that collides with
-// the existing Budget doctype's own List View route in Frappe's client
-// router, see budget_funding_page.js). Each screen owns its own
-// usePageRail() call (mirrors kentender_strategy's separate pages, just
-// dispatched from one root instead of five bundles) — only ever one is
-// mounted at a time via v-if, so only one PageRail instance is ever active.
+// BUD-CHG-001 v1.3 §10/D5 — all five Budget screens share one Frappe Page
+// ("budget-funding", not the spec's literal "budget" — that permanently
+// collides with ERPNext's own restored Budget DocType's List View route in
+// Frappe's client router, see budget_funding_page.js's own note). Each
+// screen owns its own usePageRail() call (mirrors kentender_strategy's
+// separate pages, just dispatched from one root instead of five bundles) —
+// only ever one is mounted at a time via v-if, so only one PageRail
+// instance is ever active.
 const { route } = useRouteState("budget-funding");
 
 const screen = computed(() => {

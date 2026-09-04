@@ -24,6 +24,10 @@ OU_BETA = "OU-PLNT-BETA"
 # nothing here rots on a calendar boundary or collides with the §14 world.
 FY_OPEN = "FY-2098-2099"
 FY_CLOSED = "FY-2101-2102"
+# BUD-CHG-001 v1.3 Phase 4 — Procurement Budget is keyed by the real ERPNext
+# Fiscal Year (not Planning's own legacy Financial Year/PE Fiscal Year
+# Context world above); same pinned far-future window as FY_OPEN.
+BUDGET_FISCAL_YEAR = "2098-2099"
 CTX_OPEN = "CTX-PLNT-2098-2099"
 CTX_CLOSED = "CTX-PLNT-2101-2102"
 UNIT = "UNIT-PLNT-EACH"
@@ -152,6 +156,15 @@ def ensure_world() -> None:
 					"record_status": "Available",
 				}
 			).insert(ignore_permissions=True)
+	if not frappe.db.exists("Fiscal Year", BUDGET_FISCAL_YEAR):
+		frappe.get_doc(
+			{
+				"doctype": "Fiscal Year",
+				"year": BUDGET_FISCAL_YEAR,
+				"year_start_date": "2098-07-01",
+				"year_end_date": "2099-06-30",
+			}
+		).insert(ignore_permissions=True)
 	for name, fy in ((CTX_OPEN, FY_OPEN), (CTX_CLOSED, FY_CLOSED)):
 		if not frappe.db.exists("PE Fiscal Year Context", name):
 			# the context autonames itself CTX-{PE}-{FY years}; `name` must match
@@ -300,51 +313,50 @@ def _link_targets() -> None:
 	"""Real rows behind the Link fields the entries carry. Tests are exempt
 	from the D5 AST boundary (its own docstring says so); production code
 	still only ever touches Needs through the published contracts."""
-	if not frappe.db.exists("Budget", {"generated_reference": "BUD-PLNT-0001"}):
+	if not frappe.db.exists("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}):
 		frappe.get_doc(
 			{
-				"doctype": "Budget",
+				"doctype": "Procurement Budget",
 				"generated_reference": "BUD-PLNT-0001",
-				"procuring_entity": PE,
-				"financial_year": FY_OPEN,
+				"fiscal_year": BUDGET_FISCAL_YEAR,
 				"currency": "KES",
 			}
 		).insert(ignore_permissions=True)
-	budget = frappe.db.get_value("Budget", {"generated_reference": "BUD-PLNT-0001"}, "name")
-	if not frappe.db.exists("Budget Line", {"generated_reference": BUDGET_LINE_REF}):
+	budget = frappe.db.get_value("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}, "name")
+	if not frappe.db.exists("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF}):
 		frappe.get_doc(
 			{
-				"doctype": "Budget Line",
+				"doctype": "Procurement Budget Line",
 				"generated_reference": BUDGET_LINE_REF,
 				"budget": budget,
 			}
 		).insert(ignore_permissions=True)
 	global BUDGET_LINE
 	BUDGET_LINE = frappe.db.get_value(
-		"Budget Line", {"generated_reference": BUDGET_LINE_REF}, "name"
+		"Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF}, "name"
 	)
 	# a second line under the SAME Budget: PLN-DES-09A combines sources across
 	# different Budget Lines that still share one Budget (and its currency).
-	if not frappe.db.exists("Budget Line", {"generated_reference": BUDGET_LINE_REF_2}):
+	if not frappe.db.exists("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF_2}):
 		frappe.get_doc(
 			{
-				"doctype": "Budget Line",
+				"doctype": "Procurement Budget Line",
 				"generated_reference": BUDGET_LINE_REF_2,
 				"budget": budget,
 			}
 		).insert(ignore_permissions=True)
 	global BUDGET_LINE_2
 	BUDGET_LINE_2 = frappe.db.get_value(
-		"Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name"
+		"Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name"
 	)
 	# §7.3 Finance tests exercise the REAL check_funding/reserve_funding
 	# contracts (never mocked, unlike eligible_line_ids elsewhere) — an
 	# Active Budget Version with real approved amounts is required.
-	bv = frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name")
+	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
 		bv = frappe.get_doc(
 			{
-				"doctype": "Budget Version",
+				"doctype": "Procurement Budget Version",
 				"generated_reference": "BUDV-PLNT-0001",
 				"budget": budget,
 				"version_number": 1,
@@ -358,10 +370,10 @@ def _link_targets() -> None:
 		).insert(ignore_permissions=True).name
 	fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 	for line, ref in ((BUDGET_LINE, "BLV-PLNT-0001"), (BUDGET_LINE_2, "BLV-PLNT-0002")):
-		if not frappe.db.exists("Budget Line Version", {"budget_version": bv, "budget_line": line}):
+		if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": line}):
 			frappe.get_doc(
 				{
-					"doctype": "Budget Line Version",
+					"doctype": "Procurement Budget Line Version",
 					"generated_reference": ref,
 					"budget_version": bv,
 					"budget_line": line,

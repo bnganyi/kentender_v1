@@ -67,9 +67,9 @@ def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
 				frappe.get_all("Demand", pluck="procuring_entity", distinct=True, limit=50)
 				or []
 			)
-		if frappe.db.exists("DocType", "Budget") and frappe.db.has_column("Budget", "procuring_entity"):
+		if frappe.db.exists("DocType", "Procurement Budget") and frappe.db.has_column("Procurement Budget", "procuring_entity"):
 			active |= set(
-				frappe.get_all("Budget", pluck="procuring_entity", distinct=True, limit=50) or []
+				frappe.get_all("Procurement Budget", pluck="procuring_entity", distinct=True, limit=50) or []
 			)
 		names = [p for p in preferred if frappe.db.exists("Procuring Entity", p)]
 		for n in sorted(active):
@@ -86,35 +86,26 @@ def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
 
 
 def list_available_fiscal_years(procuring_entity: str | None = None) -> list[int]:
-	"""Distinct FY start years from Budget rows (column is fiscal_period, not fiscal_year)."""
+	"""Distinct FY start years from Budget rows.
+
+	BUD-CHG-001 v1.3 Phase 4: `Procurement Budget` is keyed by the real
+	ERPNext `fiscal_year` (e.g. "2027-2028") — there is no `fiscal_period`
+	column (there never was) and no `procuring_entity` column any more (one
+	site is one Procuring Entity); `procuring_entity` is accepted only for
+	this function's own external callers' backward compatibility and is
+	otherwise unused."""
 	out: list[int] = []
-	if frappe.db.exists("DocType", "Budget"):
-		filters: dict[str, Any] = {}
-		if procuring_entity and frappe.db.has_column("Budget", "procuring_entity"):
-			filters["procuring_entity"] = procuring_entity
-		if frappe.db.has_column("Budget", "fiscal_period"):
-			periods = frappe.get_all(
-				"Budget",
-				filters=filters or None,
-				pluck="fiscal_period",
-				distinct=True,
-			)
-			out = sorted(
-				{y for p in periods if (y := year_from_fiscal_period(p)) is not None},
-				reverse=True,
-			)
-		elif frappe.db.has_column("Budget", "fiscal_year"):
-			years = frappe.get_all(
-				"Budget",
-				filters=filters or None,
-				pluck="fiscal_year",
-				distinct=True,
-				order_by="fiscal_year desc",
-			)
-			out = sorted(
-				{y for raw in years if (y := year_from_fiscal_period(raw)) is not None},
-				reverse=True,
-			)
+	if frappe.db.exists("DocType", "Procurement Budget") and frappe.db.has_column("Procurement Budget", "fiscal_year"):
+		years = frappe.get_all(
+			"Procurement Budget",
+			pluck="fiscal_year",
+			distinct=True,
+			order_by="fiscal_year desc",
+		)
+		out = sorted(
+			{y for raw in years if (y := year_from_fiscal_period(raw)) is not None},
+			reverse=True,
+		)
 	if not out:
 		from frappe.utils import now_datetime
 

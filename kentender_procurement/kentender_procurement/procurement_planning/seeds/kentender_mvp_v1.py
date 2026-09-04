@@ -202,14 +202,14 @@ def _key(step: str) -> str:
 
 
 def _budget_line(reference: str) -> str:
-	name = frappe.db.get_value("Budget Line", {"generated_reference": reference}, "name")
+	name = frappe.db.get_value("Procurement Budget Line", {"generated_reference": reference}, "name")
 	if not name:
 		return ""
 	active = frappe.get_all(
-		"Budget Line Version", filters={"budget_line": name}, fields=["budget_version"],
+		"Procurement Budget Line Version", filters={"budget_line": name}, fields=["budget_version"],
 	)
 	for row in active:
-		if frappe.db.get_value("Budget Version", row.budget_version, "status") == "Active":
+		if frappe.db.get_value("Procurement Budget Version", row.budget_version, "status") == "Active":
 			return name
 	return ""
 
@@ -1032,7 +1032,7 @@ def seed_kebs_profiles(*, commit: bool = False) -> dict[str, Any]:
 	missing = []
 	if not frappe.db.exists("Procuring Entity", "PE-KEBS"):
 		missing.append("Procuring Entity PE-KEBS")
-	if not frappe.get_all("Budget Line", filters={"generated_reference": ("like", "%KEBS%")}, limit=1):
+	if not frappe.get_all("Procurement Budget Line", filters={"generated_reference": ("like", "%KEBS%")}, limit=1):
 		missing.append("an authoritative KEBS Budget Line (Budget module seed)")
 	if not frappe.get_all(
 		"Strategic Plan", filters={"procuring_entity_id": "PE-KEBS"}, limit=1

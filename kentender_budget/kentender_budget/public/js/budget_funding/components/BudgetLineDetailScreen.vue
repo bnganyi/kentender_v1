@@ -17,12 +17,9 @@ const railTrail = computed(() => [
 	{ label: line.value?.code || lineIdParam.value },
 ]);
 const railEl = ref(null);
-// CTX-CHG-001 - the switcher stays visible on record screens; the record
-// itself keeps its own context (rule 6), so a switch goes to the workspace.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("budget-funding"),
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -96,12 +93,8 @@ watch(lineIdParam, (v, prev) => {
 						<div style="font-size: 15px; font-weight: 500">{{ line.budget.code }} · {{ __("Version {0}", [line.version.version_number]) }}</div>
 					</div>
 					<div>
-						<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procuring Entity") }}</div>
-						<div style="font-size: 15px; font-weight: 500">{{ line.budget.procuring_entity.name }}</div>
-					</div>
-					<div>
 						<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div>
-						<div style="font-size: 15px; font-weight: 500">{{ line.budget.financial_year.label }}</div>
+						<div style="font-size: 15px; font-weight: 500">{{ line.budget.fiscal_year.label }}</div>
 					</div>
 				</div>
 

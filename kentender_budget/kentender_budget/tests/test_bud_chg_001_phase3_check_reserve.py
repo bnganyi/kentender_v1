@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §8.2/§9.1 — check_funding/reserve_funding/convert_reservation
+"""BUD-CHG-001 v1.3 §8.2/§9.1 — check_funding/reserve_funding/convert_reservation
 arithmetic and concurrency rules (§16.1 "Finance and arithmetic" rule group:
 BUD-BR-009-016; BUD-AC-011-021).
 """
@@ -15,8 +15,6 @@ from kentender_budget.services import budget_check_reserve_contracts as check_re
 from kentender_budget.services import budget_commitment_contracts as commitment_svc
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import (
 	FUNDING_SOURCE,
-	OU_DHP,
-	OU_HRMD,
 	_BudgetLifecycleTestBase,
 )
 
@@ -34,7 +32,7 @@ class _FinanceTestBase(_BudgetLifecycleTestBase):
 	def _new_dhi_line(self, *, approved_amount=100_000_000) -> tuple[str, str]:
 		"""One fresh Active baseline's DHI line — returns (budget, budget_line)."""
 		budget, version = self._create_active_baseline(dhi_amount=approved_amount, hwd_amount=1)
-		line = frappe.db.get_value("Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
+		line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
 		return budget, line
 
 
@@ -89,8 +87,8 @@ class TestCombinedSourceAtomicity(_FinanceTestBase):
 		"""BUD-AC-014 — combined-source confirmation creates all reservations
 		atomically or none."""
 		budget, version = self._create_active_baseline(dhi_amount=100_000_000, hwd_amount=60_000_000)
-		dhi = frappe.db.get_value("Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
-		hwd = frappe.db.get_value("Budget Line Version", {"budget_version": version, "title": "HWD test line"}, "budget_line")
+		dhi = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
+		hwd = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": "HWD test line"}, "budget_line")
 		self._as(self.finance_officer)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-3", plan_version="TEST-PLN-3", finance_task="TEST-FNT-3", source_set_hash="TEST-HASH-3",
@@ -207,13 +205,13 @@ class TestClosedBudgetRejectsNewReservations(_FinanceTestBase):
 		"""BUD-BR-023 — a Closed Budget admits no new reservations, with the
 		specific BUDGET_CLOSED code (not a generic not-eligible error)."""
 		budget, version = self._create_active_baseline(dhi_amount=10_000_000, hwd_amount=1)
-		line = frappe.db.get_value("Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
+		line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": "DHI test line"}, "budget_line")
 
 		frappe.set_user("Administrator")
-		financial_year = frappe.db.get_value("Budget", budget, "financial_year")
-		frappe.db.set_value("Financial Year", financial_year, "end_date", "2000-01-01", update_modified=False)
+		fiscal_year = frappe.db.get_value("Procurement Budget", budget, "fiscal_year")
+		frappe.db.set_value("Fiscal Year", fiscal_year, "year_end_date", "2000-01-01", update_modified=False)
 		frappe.db.set_value(
-			"Budget Version",
+			"Procurement Budget Version",
 			version,
 			{"status": "Closed", "closed_by": "Administrator", "closed_at": frappe.utils.now_datetime()},
 			update_modified=False,

@@ -2,8 +2,21 @@
 # Patches added in this section will be executed before doctypes are migrated
 # Read docs to understand patches: https://frappeframework.com/docs/v14/user/en/database-migrations
 
+# BUD-CHG-001 v1.3 Phase 2 — Budget DocType family rename (must run before
+# schema sync compares the DB against this app's already-renamed JSON files).
+kentender_budget.patches.bud_chg_001_v1_3_phase2_rename_budget_doctypes
+
+# BUD-CHG-001 v1.3 Phase 4 — drop procuring_entity, rename financial_year to
+# fiscal_year on Procurement Budget (must run before schema sync for the same
+# reason as the Phase 2 rename above — see the patch's own docstring).
+kentender_budget.patches.bud_chg_001_v1_3_phase4_drop_pe_rename_fy
+
 [post_model_sync]
 # MVP-1 preparatory teardown — drop legacy Budget & Funding DocTypes / pages.
 kentender_budget.patches.mvp1_teardown_drop_legacy_budget_doctypes
 kentender_budget.patches.normalize_budget_management_workspace
 kentender_budget.patches.migrate_budget_working_context_defaults
+
+# BUD-CHG-001 v1.3 Phase 4 — BUD-BR-002 database-level guard: at most one
+# Active Procurement Budget Version per Budget.
+kentender_budget.patches.bud_chg_001_v1_3_phase4_active_version_unique_index

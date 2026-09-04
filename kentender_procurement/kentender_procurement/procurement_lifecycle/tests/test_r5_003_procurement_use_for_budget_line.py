@@ -24,7 +24,7 @@ class TestR5003ProcurementUseForBudgetLine(IntegrationTestCase):
 
     def _works_bl_name(self) -> str | None:
         """Return the Frappe name of the WORKS Budget Line, or None if missing."""
-        return frappe.db.exists("Budget Line", _WORKS_BL)
+        return frappe.db.exists("Procurement Budget Line", _WORKS_BL)
 
     # ------------------------------------------------------------------
     # Guard tests

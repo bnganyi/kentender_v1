@@ -59,10 +59,10 @@ def _pe_name() -> str:
 
 
 def _ensure_budget_line() -> str:
-	if frappe.db.exists("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}):
-		return frappe.db.get_value("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}, "name")
+	if frappe.db.exists("Procurement Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}):
+		return frappe.db.get_value("Procurement Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}, "name")
 	# Fallback: any PE-MOH line
-	name = frappe.db.get_value("Budget Line", {"procuring_entity": PE_MOH}, "name")
+	name = frappe.db.get_value("Procurement Budget Line", {"procuring_entity": PE_MOH}, "name")
 	if not name:
 		frappe.throw("No Budget Line for PE-MOH — load stable platform first.")
 	return name

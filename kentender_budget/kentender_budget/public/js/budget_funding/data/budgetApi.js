@@ -3,16 +3,21 @@ import { frappeCall } from "../../budget_shared/data/frappeCall.js";
 const APP = "kentender_budget.api.budget_api";
 const REF_DATA = "kentender_core.api.reference_data_api";
 
-export function getBudgetWorkspace(contextId) {
-	return frappeCall(`${APP}.get_budget_workspace`, { context_id: contextId });
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: Budget's
+// own workspace is keyed by Fiscal Year alone, never a combined PE+FY
+// "working context" (kentender_core.api.reference_data_api.get_working_context/
+// select_working_context are still real, live endpoints — other, still
+// PE-scoped modules use them — Budget's own contracts just no longer do).
+export function getBudgetWorkspace(fiscalYear) {
+	return frappeCall(`${APP}.get_budget_workspace`, { fiscal_year: fiscalYear });
 }
 
-export function getWorkingContext(module, requestedContext) {
-	return frappeCall(`${REF_DATA}.get_working_context`, { module, requested_context: requestedContext });
+export function listAvailableFiscalYears() {
+	return frappeCall(`${APP}.list_available_fiscal_years`, {});
 }
 
-export function selectWorkingContext(module, contextId) {
-	return frappeCall(`${REF_DATA}.select_working_context`, { module, context_id: contextId });
+export function resolveBudgetContext(fiscalYear) {
+	return frappeCall(`${APP}.resolve_budget_context`, { fiscal_year: fiscalYear });
 }
 
 export function getBudgetVersionDraft(budgetVersion) {
@@ -39,8 +44,8 @@ export function submitBudgetVersion(budgetVersion) {
 	return frappeCall(`${APP}.submit_budget_version`, { payload: { budget_version: budgetVersion } });
 }
 
-export function listOrganisationUnits(procuringEntity) {
-	return frappeCall(`${REF_DATA}.list_organisation_units`, { procuring_entity: procuringEntity });
+export function listOrganisationUnits() {
+	return frappeCall(`${REF_DATA}.list_organisation_units`, {});
 }
 
 export function listFundingSources() {

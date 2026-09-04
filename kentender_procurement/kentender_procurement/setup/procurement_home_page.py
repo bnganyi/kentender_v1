@@ -52,13 +52,12 @@ LANDING_ROLES: tuple[str, ...] = (
 	"Strategy Author",
 	"Strategy Approver",
 	"Strategy Viewer",
-	# --- Budget & Funding (BUD-CHG-001 v1.2) -----------------------------
+	# --- Budget & Funding (BUD-CHG-001 v1.3) -----------------------------
+	# Exactly 3 roles under v1.3 — Reviewer/Authority/Activation Authority/
+	# Viewer were collapsed or removed outright, not renamed. "Finance
+	# Reviewer" is a Contract Management role, not Budget's — kept here.
 	"Budget Officer",
-	"Budget Reviewer",
 	"Budget Approver",
-	"Budget Authority",
-	"Budget Activation Authority",
-	"Budget Viewer",
 	"Accounting Officer",
 	"Finance Confirmation Officer",
 	"Finance Reviewer",

@@ -94,7 +94,7 @@ def _entry_doc(dpp_entry: str, pe_fy_context: str):
 
 
 def _entry_budget(entry) -> str:
-	return cstr(frappe.db.get_value("Budget Line", entry.budget_line, "budget"))
+	return cstr(frappe.db.get_value("Procurement Budget Line", entry.budget_line, "budget"))
 
 
 def _compatible(entries: list) -> bool:

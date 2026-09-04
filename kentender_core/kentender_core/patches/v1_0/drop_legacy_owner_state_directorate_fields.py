@@ -17,7 +17,7 @@ _DOCTYPES = (
 	"Performance Measurement",
 	"Strategy Corrective Action",
 	"Plan Value Commitment",
-	"Budget Line",
+	"Procurement Budget Line",
 )
 
 

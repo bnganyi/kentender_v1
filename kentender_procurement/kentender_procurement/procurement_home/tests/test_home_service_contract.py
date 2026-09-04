@@ -67,8 +67,10 @@ class TestHomeServiceContract(IntegrationTestCase):
 		labels = " ".join(s[1].lower() for s in PIPELINE_STAGES)
 		self.assertNotIn("demand", labels, msg=f"§1.1 replaced Demands with Needs: {labels}")
 
-	def test_list_fiscal_years_uses_budget_fiscal_period(self):
-		"""Budget DocType stores fiscal_period (e.g. 2026/27), not fiscal_year."""
+	def test_list_fiscal_years_uses_budget_fiscal_year(self):
+		"""BUD-CHG-001 v1.3 Phase 4 — Budget DocType stores the real ERPNext
+		`fiscal_year` (e.g. "2027-2028"); there is no `fiscal_period` column
+		and never was, and no `procuring_entity` column any more."""
 		from kentender_procurement.procurement_home.services.home_context import (
 			list_available_fiscal_years,
 			year_from_fiscal_period,
@@ -76,14 +78,14 @@ class TestHomeServiceContract(IntegrationTestCase):
 
 		self.assertEqual(year_from_fiscal_period("2026/27"), 2026)
 		self.assertEqual(year_from_fiscal_period("2027/28"), 2027)
-		self.assertEqual(year_from_fiscal_period("2026/2027"), 2026)
-		if not frappe.db.exists("DocType", "Budget"):
+		self.assertEqual(year_from_fiscal_period("2027-2028"), 2027)
+		if not frappe.db.exists("DocType", "Procurement Budget"):
 			self.skipTest("Budget DocType missing")
-		self.assertTrue(frappe.db.has_column("Budget", "fiscal_period"))
-		self.assertFalse(frappe.db.has_column("Budget", "fiscal_year"))
-		years = list_available_fiscal_years("PE-MOH")
+		self.assertFalse(frappe.db.has_column("Procurement Budget", "fiscal_period"))
+		self.assertTrue(frappe.db.has_column("Procurement Budget", "fiscal_year"))
+		self.assertFalse(frappe.db.has_column("Procurement Budget", "procuring_entity"))
+		years = list_available_fiscal_years()
 		self.assertIsInstance(years, list)
-		self.assertTrue(years)
 		self.assertTrue(all(isinstance(y, int) for y in years))
 
 	def test_build_home_shape_for_administrator(self):

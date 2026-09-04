@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §6/§9.2/§12.5 — Budget Version readiness, submission and
+"""BUD-CHG-001 v1.3 §6/§9.2/§12.5 — Budget Version readiness, submission and
 the single Budget Approver decision (Return or Approve, one atomic action —
 no separate recommend-then-activate two-step). BUD-UI-04 Approval task.
 """
@@ -32,7 +32,6 @@ from kentender_budget.services.budget_contracts import (
 	_user_label,
 	_version_summary,
 	_version_totals,
-	resolve_scoped_entity,
 )
 
 _MIN_RETURN_REASON = 10
@@ -67,7 +66,7 @@ def _evaluate_readiness(version) -> list[dict[str, str]]:
 		issues.append(_issue("evidence.authorised_total", _("Authorised total must be greater than zero")))
 
 	lines = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": version.name},
 		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 	)
@@ -78,7 +77,7 @@ def _evaluate_readiness(version) -> list[dict[str, str]]:
 	if version.authorised_total and abs(flt(version.authorised_total) - line_total) >= 0.01:
 		issues.append(_issue("lines.total_mismatch", _("Budget Line total does not equal the authorised total")))
 
-	based_on = frappe.get_doc("Budget Version", version.based_on_budget_version) if version.based_on_budget_version else None
+	based_on = frappe.get_doc("Procurement Budget Version", version.based_on_budget_version) if version.based_on_budget_version else None
 	if based_on:
 		issues.extend(_evaluate_successor_guards(version, based_on, lines))
 
@@ -90,7 +89,7 @@ def _evaluate_successor_guards(version, based_on, lines: list[dict]) -> list[dic
 	prior_lines = {
 		l.budget_line: l
 		for l in frappe.get_all(
-			"Budget Line Version",
+			"Procurement Budget Line Version",
 			filters={"budget_version": based_on.name},
 			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		)
@@ -180,14 +179,13 @@ def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
 	tab substitutes the current Active version."""
 	version = _resolve_budget_version(budget_version)
 	require_budget_version_read_scope(version)
-	budget = frappe.get_doc("Budget", version.budget)
-	resolve_scoped_entity(budget.procuring_entity)
+	budget = frappe.get_doc("Procurement Budget", version.budget)
 
 	issues = _evaluate_readiness(version)
 	return {
 		"budget": _budget_summary(budget),
 		"version": _version_summary(version),
-		"based_on": _version_summary(frappe.get_doc("Budget Version", version.based_on_budget_version))
+		"based_on": _version_summary(frappe.get_doc("Procurement Budget Version", version.based_on_budget_version))
 		if version.based_on_budget_version
 		else None,
 		"revision_type": version.revision_type or "",
@@ -215,7 +213,7 @@ def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
 	require_budget_version_read_scope(version)
 
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": version.name},
 		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		order_by="title asc",
@@ -224,7 +222,7 @@ def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
 		{
 			r.name: r.generated_reference
 			for r in frappe.get_all(
-				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+				"Procurement Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
 			)
 		}
 		if rows
@@ -266,7 +264,7 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 	require_budget_version_read_scope(version)
 
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": version.name},
 		fields=["budget_line", "title", "approved_amount"],
 		order_by="title asc",
@@ -275,7 +273,7 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 		{
 			r.name: r.generated_reference
 			for r in frappe.get_all(
-				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+				"Procurement Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
 			)
 		}
 		if rows
@@ -300,7 +298,7 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 	prior = {
 		l.budget_line: flt(l.approved_amount)
 		for l in frappe.get_all(
-			"Budget Line Version", filters={"budget_version": version.based_on_budget_version}, fields=["budget_line", "approved_amount"]
+			"Procurement Budget Line Version", filters={"budget_version": version.based_on_budget_version}, fields=["budget_line", "approved_amount"]
 		)
 	}
 	changes = []
@@ -433,21 +431,35 @@ def approve_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
 	if expected_modified and str(version.modified) != str(expected_modified):
 		frappe.throw(_("This Budget Version was changed by someone else"), frappe.ValidationError, title="BUDGET_STALE_WRITE")
 
+	# BUD-BR-021 — "under one transaction lock": lock every version row for
+	# this Budget before revalidating readiness against a lock-free read
+	# above and flipping status, so a concurrent approval on a sibling
+	# successor cannot race this one.
+	frappe.db.sql(
+		"select name from `tabProcurement Budget Version` where budget=%s for update",
+		(version.budget,),
+	)
+
 	issues = _evaluate_readiness(version)
 	if issues:
 		return {"ok": False, "code": "BUDGET_NOT_READY", "blockers": issues}
 
 	prior_active = _active_version(version.budget)
 
-	version.status = "Active"
-	version.decided_by = frappe.session.user
-	version.decided_at = now_datetime()
-	version.save(ignore_permissions=True)
-
+	# BUD-BR-002's database-level unique guard admits at most one Active
+	# version per Budget at any instant — the prior Active version must be
+	# superseded *before* the new one is saved as Active, not after, or the
+	# new version's own save collides with the guard while the old row is
+	# still Active.
 	if prior_active and prior_active.name != version.name:
 		prior_active.status = "Superseded"
 		prior_active.superseded_at = now_datetime()
 		prior_active.save(ignore_permissions=True)
+
+	version.status = "Active"
+	version.decided_by = frappe.session.user
+	version.decided_at = now_datetime()
+	version.save(ignore_permissions=True)
 
 	correlation_id = frappe.generate_hash(length=12)
 	from kentender_budget.services.budget_audit_contracts import EVENT_APPROVED, EVENT_SUPERSEDED, safe_record_event
@@ -482,9 +494,9 @@ def close_budget(payload: dict | str | None = None) -> dict[str, Any]:
 		frappe.throw(_("No Active Budget Version to close"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 	require_budget_version_capability(frappe.session.user, CAP_APPROVE, version)
 
-	end_date = frappe.db.get_value("Financial Year", doc.financial_year, "end_date")
+	end_date = frappe.db.get_value("Fiscal Year", doc.fiscal_year, "year_end_date")
 	if end_date and getdate() <= getdate(end_date):
-		return {"ok": False, "errors": {"financial_year": _("The Financial Year has not yet ended")}}
+		return {"ok": False, "errors": {"fiscal_year": _("The Fiscal Year has not yet ended")}}
 
 	totals = _version_totals(version.name)
 	if totals["reserved"] > 0:

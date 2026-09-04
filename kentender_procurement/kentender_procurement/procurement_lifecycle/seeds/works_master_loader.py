@@ -59,7 +59,7 @@ WORKS_BASE_STEP_ROWS: Final[tuple[dict[str, Any], ...]] = (
 		"label": "Funding Available",
 		"status_category": "Completed",
 		"owner_module": "Budget",
-		"source_object_type": "Budget Line",
+		"source_object_type": "Procurement Budget Line",
 		"source_object_code": "BUD-MOH-INFRA-2026-001",
 		"handoff_code": "BUDCONF-MOH-2026-001",
 		"last_action": "Budget funding confirmed",

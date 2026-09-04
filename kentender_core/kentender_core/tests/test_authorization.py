@@ -294,12 +294,16 @@ class TestHookPredicates(AuthorizationTestCase):
 		inside = {"doctype": "KT Test Scoped", "organisation_unit": self.leaf}
 		outside = {"doctype": "KT Test Scoped", "organisation_unit": self.hr}
 		with self.relevant(("Departmental Author",)):
-			self.assertIsNone(self.scoped(auth.has_permission, inside, "read", self.grace))
+			# BUD-CHG-001 v1.3 Phase 4 (D6): `True`, not `None`, is the correct
+			# "not vetoing" return — Frappe's has_controller_permissions coerces
+			# a bare None to a deny for this hook (see authorization.py's own
+			# has_permission docstring).
+			self.assertTrue(self.scoped(auth.has_permission, inside, "read", self.grace))
 			self.assertFalse(self.scoped(auth.has_permission, outside, "read", self.grace))
 
 	def test_has_permission_leaves_technical_reads_to_the_framework(self):
 		doc = {"doctype": "KT Test Scoped", "organisation_unit": self.hr}
-		self.assertIsNone(self.scoped(auth.has_permission, doc, "read", self.techie))
+		self.assertTrue(self.scoped(auth.has_permission, doc, "read", self.techie))
 
 	def test_report_match_conditions_is_the_same_predicate(self):
 		"""§5.4/§18.2.9 — reports obtain the identical condition string."""

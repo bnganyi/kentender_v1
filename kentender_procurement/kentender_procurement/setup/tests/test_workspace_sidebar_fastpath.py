@@ -157,7 +157,14 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			self.fail("Departmental Needs sidebar label not found — cannot verify G0-012 order")
 
 	def test_bootinfo_includes_builder_route_sidebar_keys(self):
-		"""Context-preserving navigation: builder/form routes must map to Procurement sidebar."""
+		"""Context-preserving navigation: builder/form routes must map to Procurement sidebar.
+
+		FOLLOW_UPS.md FU-04 (closed): "budget-builder" was retired along with
+		the old Budget builder route (the rebuilt UI has no builder page — see
+		kentender_core.module_registry's "budget" entry, whose real
+		get_route_sidebar_keys() correctly no longer emits it); removed from
+		this expected list rather than asserting a route that no longer exists.
+		"""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		bootinfo: dict = {"workspace_sidebar_item": {}}
@@ -167,7 +174,6 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertTrue(len(proc.get("items") or []) > 0, msg="Procurement sidebar baseline required")
 		for route_key in (
 			"strategy-builder",
-			"budget-builder",
 			"form/demand",
 			"procurement-home",
 			"plc-procurement-journey",

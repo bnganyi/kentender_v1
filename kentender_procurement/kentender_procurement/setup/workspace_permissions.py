@@ -127,11 +127,17 @@ try:
 
 	_KT_ROUTE_TO_SIDEBAR: dict[str, str] = get_route_sidebar_keys()
 except Exception:
+	# FOLLOW_UPS.md FU-04 (closed): "budget-builder" and "form/budget" removed
+	# from this fallback — both named retired Budget routes (the old builder
+	# page, and the KenTender "Budget" DocType form, which the rebuilt BUD-
+	# CHG-001 v1.3 UI no longer uses at all; "Budget" now names ERPNext's own
+	# restored accounting doctype, which Procurement's rail has no reason to
+	# claim). This dict is exercised only when get_route_sidebar_keys() itself
+	# raises — dead in normal operation — so this was never live, but it would
+	# have silently reintroduced the stale mapping on that fallback path.
 	_KT_ROUTE_TO_SIDEBAR = {
 		"strategy-builder": "Procurement",
-		"budget-builder": "Procurement",
 		"form/strategic plan": "Procurement",
-		"form/budget": "Procurement",
 		"form/demand": "Procurement",
 		"form/procurement package": "Procurement",
 		"form/ktsm supplier profile": "Procurement",

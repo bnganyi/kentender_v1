@@ -65,8 +65,8 @@
   {
    "fieldname": "budget_line",
    "fieldtype": "Link",
-   "label": "Budget Line",
-   "options": "Budget Line",
+   "label": "Procurement Budget Line",
+   "options": "Procurement Budget Line",
    "read_only": 1,
    "reqd": 1
   },

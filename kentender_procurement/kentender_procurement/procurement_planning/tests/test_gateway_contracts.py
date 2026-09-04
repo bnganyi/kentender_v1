@@ -24,7 +24,7 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 		from kentender_budget.api import budget_api
 
 		expected = {
-			"list_eligible_budget_lines": {"procuring_entity", "financial_year", "source_org_unit"},
+			"list_eligible_budget_lines": {"fiscal_year", "source_org_unit"},
 			"check_funding": {
 				"plan_item", "plan_version", "finance_task", "source_set_hash",
 				"allocations", "correlation_id",
@@ -47,6 +47,12 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 					missing, set(),
 					f"budget_api.{name} lost parameters the Planning gateway passes",
 				)
+
+		# BUD-CHG-001 v1.3 Phase 4 — one site is one Procuring Entity: no
+		# procuring_entity parameter exists any more on Budget's own
+		# published contracts, mirroring Strategy's CU-306 fix above.
+		self.assertNotIn("procuring_entity", self.params(budget_api.list_eligible_budget_lines))
+		self.assertNotIn("procuring_entity", self.params(budget_api.resolve_budget_context))
 
 	def test_the_published_strategy_contracts_still_carry_the_expected_parameters(self):
 		from kentender_strategy.services import strategy_consumer

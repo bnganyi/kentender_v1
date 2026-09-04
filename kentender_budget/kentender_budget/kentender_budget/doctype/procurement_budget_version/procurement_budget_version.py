@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import getdate
 
 
-class BudgetVersion(Document):
+class ProcurementBudgetVersion(Document):
 	def validate(self):
 		if self.based_on_budget_version and not self.revision_type:
 			frappe.throw(_("Revision type is required for a successor Budget Version."))

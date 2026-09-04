@@ -65,20 +65,32 @@ class TestG015CrossAppWorkspaceBoot(IntegrationTestCase):
 		dw = DeskWorkspace(page, True)
 		self.assertTrue(dw.is_permitted(), msg=f"{user} must read Procurement Home for spine entry")
 
-	def test_requisitioner_can_access_strategy_and_budget_workspace_shells(self):
-		"""Frappe ``desktop.Workspace.is_permitted`` requires a role overlap when Workspace.roles is non-empty."""
+	def test_requisitioner_can_access_strategy_workspace_shell(self):
+		"""Frappe ``desktop.Workspace.is_permitted`` requires a role overlap when Workspace.roles is non-empty.
+
+		FOLLOW_UPS.md FU-01/FU-02 (closed): originally looped over
+		("Strategy Management", "Budget Management") — Budget Management is
+		retired (BUD-CHG-001 v1.3 has no Workspace of its own; Procurement's
+		rail points at the budget-funding Page instead), so only Strategy
+		Management is checked here now.
+
+		FOLLOW_UPS.md FU-03 (still open): this same access check on Strategy
+		Management is independently reported failing for the requisitioner
+		persona (a Strategy-owned module allow-list / Workspace.app question,
+		not Budget's) — left open, not investigated further here.
+		"""
 		user = "requisitioner@moh.test"
 		if not frappe.db.exists("User", user):
 			self.skipTest("Seeded requisitioner not on site")
 		frappe.set_user(user)
-		for ws_name in ("Strategy Management", "Budget Management"):
-			page = _workspace_page_dict(ws_name)
-			self.assertTrue(page, msg=f"Missing Workspace {ws_name}")
-			try:
-				dw = DeskWorkspace(page, True)
-			except frappe.PermissionError as e:
-				self.fail(f"{user} cannot load {ws_name} (module allow-list?): {e}")
-			self.assertTrue(
-				dw.is_permitted(),
-				msg=f"{user} must be permitted to read {ws_name} for G0-012 spine wrappers (G0-015)",
-			)
+		ws_name = "Strategy Management"
+		page = _workspace_page_dict(ws_name)
+		self.assertTrue(page, msg=f"Missing Workspace {ws_name}")
+		try:
+			dw = DeskWorkspace(page, True)
+		except frappe.PermissionError as e:
+			self.fail(f"{user} cannot load {ws_name} (module allow-list?): {e}")
+		self.assertTrue(
+			dw.is_permitted(),
+			msg=f"{user} must be permitted to read {ws_name} for G0-012 spine wrappers (G0-015)",
+		)

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Thin whitelisted wrappers for BUD-CHG-001 v1.2's §9.1/§9.2 contracts.
+"""Thin whitelisted wrappers for BUD-CHG-001 v1.3's §9.1/§9.2 contracts.
 Every function here is a pass-through; all business logic and server-side
 authorization lives in the `services/` modules."""
 
@@ -13,13 +13,18 @@ from kentender_budget.services import budget_contracts as contracts
 
 
 @frappe.whitelist()
-def resolve_budget_context(procuring_entity: str | None = None, financial_year: str | None = None):
-	return contracts.resolve_budget_context(procuring_entity=procuring_entity, financial_year=financial_year)
+def resolve_budget_context(fiscal_year: str | None = None):
+	return contracts.resolve_budget_context(fiscal_year=fiscal_year)
 
 
 @frappe.whitelist()
-def get_budget_workspace(context_id: str | None = None):
-	return contracts.get_budget_workspace(context_id=context_id)
+def list_available_fiscal_years():
+	return contracts.list_available_fiscal_years()
+
+
+@frappe.whitelist()
+def get_budget_workspace(fiscal_year: str | None = None):
+	return contracts.get_budget_workspace(fiscal_year=fiscal_year)
 
 
 @frappe.whitelist()
@@ -70,8 +75,7 @@ def get_budget_lines_active(budget: str | None = None):
 
 @frappe.whitelist()
 def list_eligible_budget_lines(
-	procuring_entity: str | None = None,
-	financial_year: str | None = None,
+	fiscal_year: str | None = None,
 	source_org_unit: str | None = None,
 	funding_source: str | None = None,
 	search: str | None = None,
@@ -79,8 +83,7 @@ def list_eligible_budget_lines(
 	from kentender_budget.services import budget_line_contracts as lines
 
 	return lines.list_eligible_budget_lines(
-		procuring_entity=procuring_entity or "",
-		financial_year=financial_year or "",
+		fiscal_year=fiscal_year or "",
 		source_org_unit=source_org_unit,
 		funding_source=funding_source,
 		search=search,

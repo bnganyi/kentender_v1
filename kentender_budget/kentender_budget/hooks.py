@@ -44,3 +44,38 @@ page_js = {
 
 after_migrate = "kentender_budget.install.after_migrate"
 before_tests = "kentender_budget.install.before_tests"
+
+# BUD-CHG-001 v1.3 §17.1 / AUTH-ADR-001 v1.6 §5.3 — Budget's own first
+# production use of the declarative scope map (tracker D6): a DocType absent
+# from this map falls through to native DocPerm; one present with zero
+# matching User Responsibility Assignment rows is a hard deny, closing the
+# gap a stale/unsynced Frappe Role grant would otherwise leave open.
+#
+# All four registered DocTypes are read only by Site-wide business roles
+# (Budget Officer, Budget Approver, Finance Confirmation Officer, Auditor —
+# kentender_core.services.business_role_registry), so no role ever narrows
+# by the `ou_field` value itself; "name" is a real column on every DocType,
+# used only so `scope_condition()` always has a syntactically valid column
+# to reference if that ever changes. `owner_org_unit_id` on Procurement
+# Budget Line Version is deliberately NOT used here (§17.1/§18: it is
+# BUD-BR-007 line-eligibility data, never a scope field).
+kentender_scope_map = {
+	"Procurement Budget": "name",
+	"Procurement Budget Version": "name",
+	"Procurement Budget Line": "name",
+	"Procurement Budget Line Version": "name",
+}
+
+permission_query_conditions = {
+	"Procurement Budget": "kentender_core.services.authorization.permission_query_conditions",
+	"Procurement Budget Version": "kentender_core.services.authorization.permission_query_conditions",
+	"Procurement Budget Line": "kentender_core.services.authorization.permission_query_conditions",
+	"Procurement Budget Line Version": "kentender_core.services.authorization.permission_query_conditions",
+}
+
+has_permission = {
+	"Procurement Budget": "kentender_core.services.authorization.has_permission",
+	"Procurement Budget Version": "kentender_core.services.authorization.has_permission",
+	"Procurement Budget Line": "kentender_core.services.authorization.has_permission",
+	"Procurement Budget Line Version": "kentender_core.services.authorization.has_permission",
+}

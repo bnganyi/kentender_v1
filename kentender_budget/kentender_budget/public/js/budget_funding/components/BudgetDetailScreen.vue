@@ -28,12 +28,9 @@ const railTrail = computed(() => [
 	{ label: detail.value?.budget?.code || budgetIdParam.value },
 ]);
 const railEl = ref(null);
-// CTX-CHG-001 - the switcher stays visible on record screens; the record
-// itself keeps its own context (rule 6), so a switch goes to the workspace.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("budget-funding"),
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -221,8 +218,7 @@ async function createRevision() {
 							<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 							<div class="kt-card-title">{{ __("Budget context") }}</div>
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
-								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procuring Entity") }}</div><div style="font-size: 14px; font-weight: 500">{{ detail.budget.procuring_entity.name }}</div></div>
-								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div><div style="font-size: 14px; font-weight: 500">{{ detail.budget.financial_year.label }}</div></div>
+								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div><div style="font-size: 14px; font-weight: 500">{{ detail.budget.fiscal_year.label }}</div></div>
 								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Currency") }}</div><div style="font-size: 14px; font-weight: 500">{{ detail.budget.currency }}</div></div>
 								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Active version") }}</div><div style="font-size: 14px; font-weight: 500">{{ __("Version {0}", [detail.version.version_number]) }}</div></div>
 							</div>

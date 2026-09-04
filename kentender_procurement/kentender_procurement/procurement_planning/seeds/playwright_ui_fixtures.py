@@ -350,23 +350,23 @@ def ensure_dpp_world(*, commit: bool = True) -> dict[str, Any]:
 	# code paths (the NDS test-exemption precedent); Budget's own fixture
 	# builders own richer worlds.
 	budget = frappe.db.get_value(
-		"Budget", {"procuring_entity": DPP_PE, "financial_year": FY}, "name"
+		"Procurement Budget", {"procuring_entity": DPP_PE, "financial_year": FY}, "name"
 	)
 	if not budget:
 		budget = frappe.get_doc(
 			{
-				"doctype": "Budget",
+				"doctype": "Procurement Budget",
 				"generated_reference": "BUD-PWDP-0001",
 				"procuring_entity": DPP_PE,
 				"financial_year": FY,
 				"currency": "KES",
 			}
 		).insert(ignore_permissions=True).name
-	bv = frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name")
+	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
 		bv = frappe.get_doc(
 			{
-				"doctype": "Budget Version",
+				"doctype": "Procurement Budget Version",
 				"generated_reference": "BUDV-PWDP-0001",
 				"budget": budget,
 				"version_number": 1,
@@ -378,20 +378,20 @@ def ensure_dpp_world(*, commit: bool = True) -> dict[str, Any]:
 				"approval_document": "/files/pwdp-approval.pdf",
 			}
 		).insert(ignore_permissions=True).name
-	line = frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWDP-0001"}, "name")
+	line = frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWDP-0001"}, "name")
 	if not line:
 		line = frappe.get_doc(
 			{
-				"doctype": "Budget Line",
+				"doctype": "Procurement Budget Line",
 				"generated_reference": "BL-PWDP-0001",
 				"budget": budget,
 			}
 		).insert(ignore_permissions=True).name
-	if not frappe.db.exists("Budget Line Version", {"budget_version": bv, "budget_line": line}):
+	if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": line}):
 		fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 		frappe.get_doc(
 			{
-				"doctype": "Budget Line Version",
+				"doctype": "Procurement Budget Line Version",
 				"generated_reference": "BLV-PWDP-0001",
 				"budget_version": bv,
 				"budget_line": line,
@@ -566,22 +566,22 @@ def _ensure_pe_world(pe: str, ou: str, ctx: str, *, budget_ref: str) -> None:
 				"fixture_namespace": "KENTENDER_PLAYWRIGHT",
 			}
 		).insert(ignore_permissions=True)
-	budget = frappe.db.get_value("Budget", {"procuring_entity": pe, "financial_year": FY}, "name")
+	budget = frappe.db.get_value("Procurement Budget", {"procuring_entity": pe, "financial_year": FY}, "name")
 	if not budget:
 		budget = frappe.get_doc(
 			{
-				"doctype": "Budget",
+				"doctype": "Procurement Budget",
 				"generated_reference": f"BUD-{budget_ref}-0001",
 				"procuring_entity": pe,
 				"financial_year": FY,
 				"currency": "KES",
 			}
 		).insert(ignore_permissions=True).name
-	bv = frappe.db.get_value("Budget Version", {"budget": budget, "status": "Active"}, "name")
+	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
 		bv = frappe.get_doc(
 			{
-				"doctype": "Budget Version",
+				"doctype": "Procurement Budget Version",
 				"generated_reference": f"BUDV-{budget_ref}-0001",
 				"budget": budget,
 				"version_number": 1,
@@ -593,20 +593,20 @@ def _ensure_pe_world(pe: str, ou: str, ctx: str, *, budget_ref: str) -> None:
 				"approval_document": f"/files/{budget_ref.lower()}-approval.pdf",
 			}
 		).insert(ignore_permissions=True).name
-	line = frappe.db.get_value("Budget Line", {"generated_reference": f"BL-{budget_ref}-0001"}, "name")
+	line = frappe.db.get_value("Procurement Budget Line", {"generated_reference": f"BL-{budget_ref}-0001"}, "name")
 	if not line:
 		line = frappe.get_doc(
 			{
-				"doctype": "Budget Line",
+				"doctype": "Procurement Budget Line",
 				"generated_reference": f"BL-{budget_ref}-0001",
 				"budget": budget,
 			}
 		).insert(ignore_permissions=True).name
-	if not frappe.db.exists("Budget Line Version", {"budget_version": bv, "budget_line": line}):
+	if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": line}):
 		fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 		frappe.get_doc(
 			{
-				"doctype": "Budget Line Version",
+				"doctype": "Procurement Budget Line Version",
 				"generated_reference": f"BLV-{budget_ref}-0001",
 				"budget_version": bv,
 				"budget_line": line,
@@ -682,7 +682,7 @@ def reset_review_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"quantity": 1,
 			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
 			"required_by_date": "2099-04-30",
-			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWVC-0001"}, "name"),
+			"budget_line": frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWVC-0001"}, "name"),
 			"indicative_amount": 20000000,
 		},
 		expected_record_version=opened["record_version"],
@@ -807,7 +807,7 @@ def reset_plan_workbench_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"quantity": 1,
 			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
 			"required_by_date": "2099-04-30",
-			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWPF-0001"}, "name"),
+			"budget_line": frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWPF-0001"}, "name"),
 			"indicative_amount": 80000000,
 		},
 		expected_record_version=opened["record_version"],
@@ -941,7 +941,7 @@ def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"quantity": 1,
 			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
 			"required_by_date": "2099-04-30",
-			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWFN-0001"}, "name"),
+			"budget_line": frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWFN-0001"}, "name"),
 			"indicative_amount": 80000000,
 		},
 		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,
@@ -1101,7 +1101,7 @@ def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"quantity": 1,
 			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
 			"required_by_date": "2099-04-30",
-			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWGV-0001"}, "name"),
+			"budget_line": frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWGV-0001"}, "name"),
 			"indicative_amount": 80000000,
 		},
 		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,
@@ -1277,7 +1277,7 @@ def reset_publication_fixture(*, commit: bool = True) -> dict[str, Any]:
 			"quantity": 1,
 			"unit": frappe.get_all("Unit Of Measure", filters={"status": "Active"}, limit=1, pluck="name")[0],
 			"required_by_date": "2099-04-30",
-			"budget_line": frappe.db.get_value("Budget Line", {"generated_reference": "BL-PWPB-0001"}, "name"),
+			"budget_line": frappe.db.get_value("Procurement Budget Line", {"generated_reference": "BL-PWPB-0001"}, "name"),
 			"indicative_amount": 60000000,
 		},
 		expected_record_version=opened["record_version"], idempotency_key=uuid4().hex,

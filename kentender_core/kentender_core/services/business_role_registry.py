@@ -125,19 +125,19 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	_entry(
 		"Auditor",
 		SCOPE_SITE,
-		"NDS-CHG-001 v1.4 / BUD-CHG-001 v1.2 §7",
+		"NDS-CHG-001 v1.4 / BUD-CHG-001 v1.3 §7",
 		sod_tags=("oversight_read",),
 	),
 	# --- Procurement Planning (PLN-CHG-001 v1.4 §6) ----------------------
 	# Budget Officer serves two approved documents: Budget authoring
-	# (BUD-CHG-001 v1.2 §7) and the Planning Finance task (PLN §6). Which of
+	# (BUD-CHG-001 v1.3 §7) and the Planning Finance task (PLN §6). Which of
 	# Budget Officer / Finance Confirmation Officer owns the Planning Finance
 	# confirmation is an open conflict between those two documents; both are
 	# registered and neither is quietly retired here.
 	_entry(
 		"Budget Officer",
 		SCOPE_SITE,
-		"BUD-CHG-001 v1.2 §7 / PLN-CHG-001 v1.4 §6",
+		"BUD-CHG-001 v1.3 §7 / PLN-CHG-001 v1.4 §6",
 		sod_tags=("budget_authoring", "finance_confirmation"),
 	),
 	_entry(
@@ -162,13 +162,15 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"PLN-CHG-001 v1.4 §6",
 		sod_tags=("oversight_read",),
 	),
-	# --- Budget & Funding (BUD-CHG-001 v1.2 §7) --------------------------
-	_entry("Budget Viewer", SCOPE_SITE, "BUD-CHG-001 v1.2 §7", sod_tags=("budget_read",)),
-	_entry("Budget Approver", SCOPE_SITE, "BUD-CHG-001 v1.2 §7", sod_tags=("budget_approval",)),
+	# --- Budget & Funding (BUD-CHG-001 v1.3 §7) --------------------------
+	# There is no Budget Viewer role under v1.3 — read access is produced by
+	# the registered permission hooks (DocPerm + kentender_scope_map) acting
+	# on the actor's assignments, not a fourth business responsibility.
+	_entry("Budget Approver", SCOPE_SITE, "BUD-CHG-001 v1.3 §7", sod_tags=("budget_approval",)),
 	_entry(
 		"Finance Confirmation Officer",
 		SCOPE_SITE,
-		"BUD-CHG-001 v1.2 §7",
+		"BUD-CHG-001 v1.3 §7",
 		sod_tags=("finance_confirmation",),
 	),
 	# --- Strategy Alignment (STR-CHG-001 v1.5 §7) ------------------------

@@ -454,20 +454,30 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 
 	Registered alongside the query hook because query conditions only hide
 	documents from lists; without this, a direct route to a known name would
-	still open a filtered-out record. Returns False to deny; None to leave
-	the decision to the framework's other checks. It only ever *restricts* —
-	granting a business mutation is `require_responsibility`'s job.
+	still open a filtered-out record. It only ever *restricts* — granting a
+	business mutation is `require_responsibility`'s job.
+
+	Returns `False` to veto; `True` everywhere else. Frappe's own
+	`has_controller_permissions` (frappe/permissions.py) has no real
+	"abstain" state for this hook despite reading as if it might: it does
+	`if not controller_permission: return bool(controller_permission)`, so a
+	bare `None` is coerced to `False` and denies exactly like an explicit
+	veto — confirmed directly the first time this hook was registered and
+	exercised end-to-end (BUD-CHG-001 v1.3 Phase 4, D6), which is also why no
+	earlier app noticed: none had registered `kentender_scope_map` before.
+	`True` is the correct "not vetoing" return everywhere DocPerm alone
+	should decide.
 	"""
 	if doc is None:
-		return None
+		return True
 	principal = _actor(user)
 	if is_technical(principal):
-		return None
+		return True
 
 	doctype = getattr(doc, "doctype", "") or (doc.get("doctype") if isinstance(doc, dict) else "")
 	ou_field = scope_map().get(doctype)
 	if not ou_field:
-		return None
+		return True
 
 	record_unit = _record_organisation_unit(doc)
 	rows = _effective_rows(principal, None, business_roles=_relevant_business_roles(doctype))
@@ -475,10 +485,10 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 		return False
 	for row in rows:
 		if not require_registered(row["business_role"]).requires_organisation_unit:
-			return None
+			return True
 	units = descendants_of({row["organisation_unit"] for row in rows if row["organisation_unit"]})
 	if record_unit and record_unit in units:
-		return None
+		return True
 	return False
 
 

@@ -6,7 +6,7 @@ def execute():
 	pairs = [
 		("Kentender Strategy", "Strategy"),
 		("Kentender Procurement", "Procurement"),
-		("Kentender Budget", "Budget"),
+		("Kentender Budget", "Procurement Budget"),
 	]
 	for old, new in pairs:
 		if frappe.db.exists("Workspace Sidebar", old) and not frappe.db.exists("Workspace Sidebar", new):

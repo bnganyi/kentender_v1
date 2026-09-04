@@ -114,8 +114,8 @@
   {
    "fieldname": "budget_line",
    "fieldtype": "Link",
-   "label": "Budget Line",
-   "options": "Budget Line",
+   "label": "Procurement Budget Line",
+   "options": "Procurement Budget Line",
    "search_index": 1,
    "description": "Planning-selected Active eligible Budget Line. Required before submission."
   },

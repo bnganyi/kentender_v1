@@ -50,7 +50,7 @@ def _budget_line_entries(names: list[str]) -> list[dict[str, Any]]:
 	if not names:
 		return []
 	rows = frappe.get_all(
-		"Budget Line",
+		"Procurement Budget Line",
 		filters={"name": ["in", names]},
 		fields=["name", "budget_line_code", "budget_line_name"],
 		order_by="modified desc",
@@ -108,7 +108,7 @@ def build_procurement_links_payload(strategy_node_doctype: str, name: str) -> di
 			limit=200,
 		)
 		bl_names = frappe.get_all(
-			"Budget Line",
+			"Procurement Budget Line",
 			filters={"output_indicator": nm},
 			pluck="name",
 			order_by="modified desc",
@@ -146,7 +146,7 @@ def build_procurement_links_payload(strategy_node_doctype: str, name: str) -> di
 		if nm not in name_candidates:
 			name_candidates.append(nm)
 		bl_names = frappe.get_all(
-			"Budget Line",
+			"Procurement Budget Line",
 			filters={"performance_target": ["in", name_candidates]},
 			pluck="name",
 			order_by="modified desc",
