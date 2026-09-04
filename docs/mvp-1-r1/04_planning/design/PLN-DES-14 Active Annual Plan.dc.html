@@ -20,14 +20,19 @@
     .quiet-ref { font-size: 13px; color: var(--color-neutral-700); margin: 0 0 8px; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
     .header-left { flex: 1; min-width: 320px; }
-    .strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; padding: 16px 20px; margin-top: 24px; }
+    .strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; padding: 16px 20px; margin-top: 24px; }
     .strip-field label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
     .strip-field .val { font-family: var(--font-heading); font-weight: 600; font-size: 16px; }
     .card-pad { padding: 20px; margin-top: 20px; }
+    .card-subhead { font-size: 13px; color: var(--color-neutral-700); margin: 4px 0 14px; }
     .field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
     .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
     .ro-field .val { font-size: 15px; }
     .num { text-align: right; }
+    .baseline-val { font-variant-numeric: tabular-nums; }
+    .forecast-val { display: inline-block; padding: 3px 8px; border: 1px solid var(--color-divider); font-variant-numeric: tabular-nums; }
+    .actual-val { color: var(--color-neutral-700); font-style: italic; }
+    .schedule-table th, .schedule-table td { font-size: 13px; }
   </style>
 </helmet>
 <div class="artboard">
@@ -46,6 +51,7 @@
       <div class="strip-field"><label>Plan Items</label><div class="val">1</div></div>
       <div class="strip-field"><label>Approved value</label><div class="val">KES 80,000,000</div></div>
       <div class="strip-field"><label>Departments</label><div class="val">1</div></div>
+      <div class="strip-field"><label>Schedule health</label><div class="val">0 of 1 item behind baseline</div></div>
       <div class="strip-field"><label>Activated</label><div class="val">10 Dec 2026, 15:00 EAT</div></div>
     </div>
 
@@ -63,11 +69,78 @@
             <td>31 Aug 2027</td>
             <td class="num">KES 80,000,000</td>
             <td>1 programme · KES 80,000,000</td>
-            <td style="text-align:right"><button type="button" class="btn btn-ghost">View</button></td>
+            <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ toggleSchedule }}">{{ scheduleToggleLabel }}</button></td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <sc-if value="{{ scheduleOpen }}" hint-placeholder-val="{{ true }}">
+      <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Schedule — National digital health infrastructure upgrade</div>
+        <table class="table schedule-table">
+          <thead><tr><th>Milestone</th><th>Baseline</th><th>Forecast</th><th>Actual</th><th>Variance vs baseline</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Invitation or advertisement</td>
+              <td class="baseline-val">1 May 2027</td>
+              <td><span class="forecast-val">1 May 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Bid opening</td>
+              <td class="baseline-val">22 May 2027</td>
+              <td><span class="forecast-val">22 May 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Evaluation completion</td>
+              <td class="baseline-val">21 Jun 2027</td>
+              <td><span class="forecast-val">21 Jun 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Tender award approval</td>
+              <td class="baseline-val">26 Jun 2027</td>
+              <td><span class="forecast-val">26 Jun 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Notification of award</td>
+              <td class="baseline-val">28 Jun 2027</td>
+              <td><span class="forecast-val">28 Jun 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Contract signing</td>
+              <td class="baseline-val">12 Jul 2027</td>
+              <td><span class="forecast-val">12 Jul 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ openShiftDialog }}">Shift schedule from here</button></td>
+            </tr>
+            <tr>
+              <td>Delivery or implementation completion</td>
+              <td class="baseline-val">31 Aug 2027</td>
+              <td><span class="forecast-val">31 Aug 2027</span></td>
+              <td class="actual-val">—</td>
+              <td>—</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="kt-card-title">Adoption, approval and publication</div>
@@ -81,6 +154,19 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { scheduleOpen: true };
+  renderVals() {
+    const open = this.state.scheduleOpen;
+    return {
+      scheduleOpen: open,
+      scheduleToggleLabel: open ? 'Hide schedule' : 'View',
+      toggleSchedule: () => this.setState(s => ({ scheduleOpen: !s.scheduleOpen })),
+      openShiftDialog: () => window.open('PLN-DES-14A Shift Schedule Dialog.dc.html', '_blank'),
+    };
+  }
+}
+</script>
 </body>
 </html>

@@ -18,8 +18,8 @@
     .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
     .page-title { margin: 0 0 4px; }
     .quiet-ref { font-size: 13px; color: var(--color-neutral-700); margin: 0 0 8px; }
-    .badges { display: flex; gap: 8px; margin: 0 0 4px; }
     .card-pad { padding: 20px; margin-top: 20px; }
+    .card-subhead { font-size: 13px; color: var(--color-neutral-700); margin: 4px 0 14px; }
     .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
     .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
     .ro-field .val { font-size: 15px; }
@@ -27,6 +27,16 @@
     .table-caption { margin: 10px 2px 0; font-size: 13px; color: var(--color-neutral-700); }
     .footer-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 1px solid var(--color-divider); margin-top: 32px; }
     .footer-actions { display: flex; gap: 12px; }
+    .helper-text { font-size: 12px; color: var(--color-neutral-700); margin: 10px 2px 0; }
+    .baseline-table td, .baseline-table th { font-size: 14px; }
+    .disclosure { margin-top: 16px; border-top: 1px solid var(--color-divider); padding-top: 14px; }
+    .disclosure-trigger { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-body); color: var(--color-accent-700); font-weight: 600; font-size: 13px; }
+    .chevron { transition: transform .15s ease; }
+    .chevron.open { transform: rotate(90deg); }
+    .disclosure-summary { font-size: 13px; color: var(--color-neutral-700); margin: 8px 0 0; }
+    .periods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 24px; margin-top: 14px; }
+    .periods-grid .field label { font-size: 12px; }
+    .periods-grid .period-note { font-size: 11px; color: var(--color-neutral-700); margin-top: 4px; }
   </style>
 </helmet>
 <div class="artboard">
@@ -34,15 +44,12 @@
     <p class="eyebrow">PLAN ITEM</p>
     <h1 class="page-title">Clinical training and deployment laptops for digital health rollout</h1>
     <p class="quiet-ref">PPI-MOH-2027-033 · Draft Version 1</p>
-    <div class="badges">
-      <span class="kt-status is-draft">Proposed</span>
-      <span class="kt-status is-pending">Finance not requested</span>
-    </div>
+    <span class="kt-status is-draft">Proposed</span>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="kt-card-title">Departmental sources</div>
       <table class="table">
-        <thead><tr><th>Requirement</th><th>Department</th><th>Source origin</th><th class="num">Quantity</th><th>Required by</th><th>Budget Line</th><th class="num">Amount</th></tr></thead>
+        <thead><tr><th>Requirement</th><th>Department</th><th>Source origin</th><th class="num">Quantity</th><th>Required by</th><th>Procurement Budget Line</th><th class="num">Amount</th></tr></thead>
         <tbody>
           <tr>
             <td>Clinical training laptops for digital health rollout</td>
@@ -68,7 +75,7 @@
     </div>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="kt-card-title">Procurement package</div>
+      <div class="kt-card-title">Identity</div>
       <div class="field-grid">
         <div class="field" style="grid-column: 1 / -1">
           <label>Plan Item title</label>
@@ -79,40 +86,133 @@
           <textarea class="input">Procure one standard laptop specification and deployment service for the national digital-health rollout across both source departments.</textarea>
         </div>
         <div class="ro-field"><label>Requirement type</label><div class="val">Goods</div></div>
-        <div class="field">
-          <label>Strategic Objective</label>
-          <select class="input"><option>OBJ-MOH-2023-001 — Strengthen interoperable national digital health services</option></select>
-        </div>
-        <div class="ro-field" style="grid-column: 1 / -1"><label>Objective path</label><div class="val">Digital health systems › Health policy, standards and regulation › Digital health governance</div></div>
-        <div class="ro-field"><label>Procurement method</label><div class="val">Open Tender</div></div>
         <div class="ro-field" style="grid-column: 1 / -1"><label>Aggregation reason</label><div class="val">Procure one standard laptop specification and deployment service for the same national digital-health rollout.</div></div>
       </div>
     </div>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="kt-card-title">Planned schedule</div>
+      <div class="kt-card-title">Classification and method</div>
       <div class="field-grid">
-        <div class="ro-field"><label>Invitation or advertisement</label><div class="val">1 May 2027</div></div>
-        <div class="ro-field"><label>Bid opening</label><div class="val">23 May 2027</div></div>
-        <div class="ro-field"><label>Evaluation completion</label><div class="val">23 Jun 2027</div></div>
-        <div class="ro-field"><label>Tender award approval</label><div class="val">10 Jul 2027</div></div>
-        <div class="ro-field"><label>Notification of award</label><div class="val">14 Jul 2027</div></div>
-        <div class="ro-field"><label>Contract signing</label><div class="val">1 Aug 2027</div></div>
-        <div class="ro-field"><label>Delivery or implementation completion</label><div class="val">31 Dec 2027</div></div>
+        <div class="field">
+          <label>Strategic Objective</label>
+          <select class="input"><option>OBJ-MOH-2023-001 — Strengthen interoperable national digital health services</option></select>
+        </div>
+        <div class="ro-field"><label>Objective path</label><div class="val">Digital health systems › Health policy, standards and regulation › Digital health governance</div></div>
+        <div class="ro-field"><label>Procurement method</label><div class="val">Open Tender</div></div>
+        <div class="ro-field"><label>Value band</label><div class="val">Above KES 5,000,000 · Open Tender admissible</div></div>
+      </div>
+    </div>
+
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Preference and structure</div>
+      <div class="field-grid">
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Preference and reservation</label>
+          <select class="input"><option>None</option></select>
+          <p class="helper-text">Recorded for the entity's 30% target. Choose None only where no reservation applies.</p>
+        </div>
+        <div class="field">
+          <label>Plan horizon</label>
+          <select class="input"><option>Single year</option></select>
+        </div>
+        <div class="field">
+          <label>Aggregation</label>
+          <select class="input"><option>Aggregated into this package</option></select>
+        </div>
+        <div class="field">
+          <label>Lotting</label>
+          <select class="input"><option>Single lot</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title">Baseline schedule</div>
+      <p class="card-subhead">Computed from your target invitation date using the governed periods for this procurement's category and method. Locked once this Plan Version is submitted.</p>
+
+      <div class="field" style="max-width: 280px">
+        <label>Target invitation date</label>
+        <input type="date" class="input" value="2027-05-01">
+      </div>
+
+      <table class="table baseline-table" style="margin-top: 16px">
+        <thead><tr><th>Milestone</th><th>Baseline date</th></tr></thead>
+        <tbody>
+          <tr><td>Invitation or advertisement</td><td>1 May 2027</td></tr>
+          <tr><td>Bid opening</td><td>22 May 2027</td></tr>
+          <tr><td>Evaluation completion</td><td>21 Jun 2027</td></tr>
+          <tr><td>Tender award approval</td><td>26 Jun 2027</td></tr>
+          <tr><td>Notification of award</td><td>28 Jun 2027</td></tr>
+          <tr><td>Contract signing</td><td>12 Jul 2027</td></tr>
+          <tr><td>Delivery or implementation completion</td><td>31 Dec 2027 · from the authorised Requisition</td></tr>
+        </tbody>
+      </table>
+      <p class="helper-text">Delivery completion is the department's own required-by date. The computed contract signing date must leave a reasonable delivery period before it.</p>
+
+      <div class="disclosure">
+        <button type="button" class="disclosure-trigger" onClick="{{ togglePeriods }}">
+          <svg class="chevron {{ chevronClass }}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+          Adjust periods
+        </button>
+        <sc-if value="{{ periodsClosed }}" hint-placeholder-val="{{ true }}">
+          <p class="disclosure-summary">Using governed defaults for Goods · Open Tender</p>
+        </sc-if>
+        <sc-if value="{{ periodsOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="periods-grid">
+            <div class="field">
+              <label>Tendering period</label>
+              <input type="number" class="input" value="21">
+              <p class="period-note">21 days · minimum 7</p>
+            </div>
+            <div class="field">
+              <label>Evaluation period</label>
+              <input type="number" class="input" value="30">
+              <p class="period-note">30 days · maximum 30</p>
+            </div>
+            <div class="field">
+              <label>Award approval buffer</label>
+              <input type="number" class="input" value="5">
+              <p class="period-note">5 days · governed default for this category and method, not a statutory figure</p>
+            </div>
+            <div class="field">
+              <label>Notification buffer</label>
+              <input type="number" class="input" value="2">
+              <p class="period-note">2 days · governed default for this category and method, not a statutory figure</p>
+            </div>
+            <div class="field">
+              <label>Standstill period</label>
+              <input type="number" class="input" value="14">
+              <p class="period-note">14 days · minimum 14</p>
+            </div>
+          </div>
+        </sc-if>
       </div>
     </div>
 
     <div class="footer-bar">
-      <button type="button" class="btn btn-ghost">Back to Annual Plan</button>
       <div class="footer-actions">
-        <button type="button" class="btn btn-secondary">Save draft</button>
-        <button type="button" class="btn btn-primary">Request Finance confirmation</button>
+        <button type="button" class="btn btn-ghost">Back to Annual Plan</button>
+        <button type="button" class="btn btn-secondary">Dissolve Plan Item</button>
       </div>
+      <button type="button" class="btn btn-primary">Save draft</button>
     </div>
   </div>
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { periodsOpen: false };
+  renderVals() {
+    const open = this.state.periodsOpen;
+    return {
+      periodsOpen: open,
+      periodsClosed: !open,
+      chevronClass: open ? 'open' : '',
+      togglePeriods: () => this.setState(s => ({ periodsOpen: !s.periodsOpen })),
+    };
+  }
+}
+</script>
 </body>
 </html>

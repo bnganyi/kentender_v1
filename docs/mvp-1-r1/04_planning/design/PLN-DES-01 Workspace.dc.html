@@ -17,15 +17,21 @@
     .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
     .page-title { margin: 0 0 8px; }
     .page-desc { margin: 0; color: var(--color-neutral-800); font-size: 15px; max-width: 70ch; }
-    .strip { display: flex; flex-direction: row; align-items: flex-end; gap: 24px; padding: 16px 20px; margin-top: 24px; }
-    .strip-field { min-width: 220px; }
-    .strip-field label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
-    .strip-field .val { font-family: var(--font-heading); font-weight: 600; font-size: 16px; }
-    .strip-quiet { margin-left: auto; font-size: 14px; color: var(--color-neutral-700); }
+    .strip { display: flex; flex-direction: row; align-items: center; gap: 12px; margin-top: 20px; }
+    .strip-field { display: flex; align-items: center; gap: 8px; }
+    .strip-field label { font-size: 14px; color: var(--color-neutral-800); }
+    .strip-field select { width: auto; }
+    .strip-quiet { font-size: 14px; color: var(--color-neutral-700); }
     .cards-col { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
     .card-pad { padding: 20px; }
-    .table-caption { margin: 10px 2px 0; font-size: 13px; }
+    .table-caption { margin: 10px 2px 0; font-size: 13px; color: var(--color-neutral-700); }
+    .card-subhead { font-size: 13px; color: var(--color-neutral-700); margin: 4px 0 14px; }
     .num { text-align: right; }
+    .ready-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .ready-headline { font-family: var(--font-heading); font-weight: 600; font-size: 18px; }
+    .ready-sub { font-size: 13px; color: var(--color-neutral-700); margin-top: 4px; }
+    .notice { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px; border: 1px solid var(--status-attention); background: var(--status-attention-bg); color: var(--status-attention); font-size: 14px; }
+    .notice-title { font-family: var(--font-heading); font-weight: 600; font-size: 15px; margin: 0; }
   </style>
 </helmet>
 <div class="artboard">
@@ -34,30 +40,31 @@
     <h1 class="page-title">Annual procurement planning</h1>
     <p class="page-desc">Turn accepted departmental plans into a funded and approved Annual Procurement Plan.</p>
 
-    <div class="card blueprint strip"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="strip-field"><label>Procuring Entity</label><select class="input"><option>PE-MOH — Ministry of Health</option></select></div>
+    <div class="strip">
       <div class="strip-field"><label>Financial Year</label><select class="input"><option>FY 2027/28</option></select></div>
-      <div class="strip-quiet">Annual Plan · Draft Version 1</div>
+      <span class="strip-quiet">· Annual Plan · Draft Version 1</span>
     </div>
 
     <div class="cards-col">
       <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="kt-card-title">Your work</div>
-        <table class="table">
-          <thead><tr><th>Work item</th><th>Scope</th><th>Status</th><th></th></tr></thead>
-          <tbody>
-            <tr>
-              <td>Form Plan Items</td>
-              <td>1 accepted departmental entry · KES 80,000,000</td>
-              <td><span class="kt-status is-live">Ready</span></td>
-              <td style="text-align:right"><button type="button" class="btn btn-secondary">Open Annual Plan</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="kt-card-title">Ready to consolidate</div>
+        <div class="ready-row">
+          <div>
+            <div class="ready-headline">1 accepted departmental entry ready to consolidate</div>
+            <div class="ready-sub">Digital Health · KES 80,000,000</div>
+          </div>
+          <button type="button" class="btn btn-primary">Open Annual Plan</button>
+        </div>
+      </div>
+
+      <div class="notice">
+        <p class="notice-title">2 accepted Needs are not included in any departmental plan</p>
+        <p>2 accepted Needs from Human Resources Management and Development were not included because the departmental-plan submission window closed before they were added. Ask the department to raise this with your KenTender administrator.</p>
       </div>
 
       <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="kt-card-title">Departmental plans</div>
+        <div class="kt-card-title">Departmental plans feeding this Annual Plan</div>
+        <p class="card-subhead">These are the accepted and pending plans behind the entry above.</p>
         <table class="table">
           <thead><tr><th>Department</th><th class="num">Version</th><th class="num">Requirements</th><th class="num">Value</th><th>Status</th><th></th></tr></thead>
           <tbody>
@@ -79,8 +86,7 @@
             </tr>
           </tbody>
         </table>
-        <p class="table-caption text-muted">2 departmental plans</p>
-        <p class="table-caption text-muted">2 accepted Needs are not included because the departmental-plan submission window closed.</p>
+        <p class="table-caption">2 departmental plans</p>
       </div>
     </div>
   </div>

@@ -7,7 +7,7 @@ a defect class with no live surface in MVP-1. Nothing here blocks the module's
 acceptance contract except FU-01, whose §14.9 acceptance row (PLN-AC-046) is
 explicitly marked Open in the tracker.
 
-**Status:** all open as of 31 August 2026.
+**Status:** annotated 5 September 2026 at the start of the v1.12 correction cycle (`IMPLEMENTATION_TRACKER.md`): FU-02 and FU-06 are closed by that cycle (D11 adds `reference` to the Budget contract; DES-13 now has an artboard and is built); FU-01, FU-03, FU-04, FU-05, FU-07 are carried unchanged. Reservation-related wording in FU-05/FU-06 is moot under v1.12 §7.3 (Planning holds no reservation).
 
 ## Register
 
