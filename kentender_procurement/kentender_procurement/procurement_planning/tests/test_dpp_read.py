@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §8.1 GetDepartmentalPlan / editor read-model tests (Phase 4)."""
+"""PLN-CHG-001 v1.12 §8.1 GetDepartmentalPlan / editor read-model tests (Phase 4)."""
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ class DppReadCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
 		super().setUp()
@@ -40,7 +41,7 @@ class DppReadCase(IntegrationTestCase):
 		for target, attr, value in (
 			(budget_gateway, "eligible_line_ids", {fx.BUDGET_LINE}),
 			(budget_gateway, "list_eligible_budget_lines",
-			 [{"id": fx.BUDGET_LINE, "title": "Test line", "approved": 100000000}]),
+			 [{"id": fx.BUDGET_LINE, "reference": fx.BUDGET_LINE_REF, "title": "Test line", "approved": 100000000}]),
 			(needs_intake, "current_accepted_sources", []),
 		):
 			patched = patch.object(target, attr, return_value=value)
@@ -50,8 +51,8 @@ class DppReadCase(IntegrationTestCase):
 	def opened(self):
 		frappe.set_user(fx.AUTHOR)
 		return dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 
 
@@ -71,10 +72,10 @@ class TestGetDepartmentalPlan(DppReadCase):
 			expected_record_version=opened["record_version"], idempotency_key=key(),
 		)
 		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
-		self.assertEqual(result["header"]["title"], "Alpha Department departmental plan")
+		self.assertEqual(result["header"]["title"], f"{fx.OU_ALPHA_NAME} departmental plan")
 		self.assertEqual(result["header"]["badge"], "Draft")
 		self.assertEqual(result["readiness"]["title"], "1 requirement needs funding details")
-		self.assertIn("Select a Budget Line and enter the indicative amount",
+		self.assertIn("Select a Procurement Budget Line and enter the indicative amount",
 		              result["readiness"]["text"])
 		by_origin = {row["source_origin"]: row for row in result["entries"]}
 		need_row = by_origin["Accepted Departmental Need"]
@@ -106,8 +107,8 @@ class TestGetDepartmentalPlan(DppReadCase):
 		hod_view = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(hod_view["can_submit"])
 		self.assertTrue(hod_view["certification"]["show"])
-		self.assertIn("Alpha Department", hod_view["certification"]["text"])
-		self.assertIn("FY 2098/99", hod_view["certification"]["text"])
+		self.assertIn(fx.OU_ALPHA_NAME, hod_view["certification"]["text"])
+		self.assertIn("FY 2101/02", hod_view["certification"]["text"])
 		self.assertEqual(hod_view["totals_caption"], "1 requirement · KES 1,000,000")
 
 	def test_returned_plan_attaches_issues_to_their_entries(self):
@@ -184,7 +185,7 @@ class TestEntryEditorRead(DppReadCase):
 		entry = result["entry"]
 		self.assertEqual(entry["title"], "Test requirement")
 		self.assertEqual(entry["quantity_display"], "1 each")
-		self.assertEqual(entry["required_by_display"], "31 May 2099")
+		self.assertEqual(entry["required_by_display"], "31 May 2102")
 		self.assertEqual(entry["need_reference_line"], "NEED-PLNT-0001 · Version 1")
 		self.assertEqual(result["currency"], "KES")
 		self.assertEqual(result["budget_lines"][0]["id"], fx.BUDGET_LINE)
@@ -252,8 +253,8 @@ class TestValidationTaskRead(DppReadCase):
 		fx.wipe_planning_rows()
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(),

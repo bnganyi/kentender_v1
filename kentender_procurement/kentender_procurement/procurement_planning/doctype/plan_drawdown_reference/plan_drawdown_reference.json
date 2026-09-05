@@ -52,7 +52,7 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1,
-   "description": "Procurement Requisitions' own authoritative reference (§7.4) — an opaque string here, since no Requisition DocType is owned by, or exists in, this repo (§2.1 scope exclusions)."
+   "description": "Procurement Requisitions' own authoritative reference (\u00a77.4) \u2014 an opaque string here, since no Requisition DocType is owned by, or exists in, this repo (\u00a72.1 scope exclusions)."
   },
   {
    "fieldname": "requesting_org_unit",
@@ -134,7 +134,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

@@ -113,7 +113,7 @@
    "fieldname": "unit",
    "fieldtype": "Link",
    "label": "Unit",
-   "options": "Unit Of Measure",
+   "options": "UOM",
    "read_only": 1,
    "reqd": 1
   },
@@ -188,7 +188,7 @@
    "create": 1
   },
   {
-   "role": "Budget Officer",
+   "role": "Finance Confirmation Officer",
    "read": 1
   },
   {
@@ -200,7 +200,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

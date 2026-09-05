@@ -34,6 +34,7 @@ class PlanningCommandCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
 		super().setUp()
@@ -54,9 +55,8 @@ class PlanningCommandCase(IntegrationTestCase):
 	def open_alpha(self, *, user=fx.AUTHOR, fy=fx.FY_OPEN):
 		frappe.set_user(user)
 		return dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE,
 			organisation_unit=fx.OU_ALPHA,
-			financial_year=fy,
+			fiscal_year=fy,
 			idempotency_key=key(),
 			fixture_namespace=fx.NS,
 		)
@@ -83,7 +83,7 @@ class PlanningCommandCase(IntegrationTestCase):
 class TestOpenDepartmentalPlan(PlanningCommandCase):
 	def test_open_creates_one_root_and_reuses_it(self):
 		first = self.open_alpha()
-		self.assertTrue(first["dpp_reference"].startswith("DPP-PLNT-ALPHA-2098-"))
+		self.assertTrue(first["dpp_reference"].startswith(fx.dpp_prefix()))
 		self.assertEqual(first["current_state"], "Draft")
 		again = self.open_alpha()
 		self.assertTrue(again["idempotent"])
@@ -96,12 +96,12 @@ class TestOpenDepartmentalPlan(PlanningCommandCase):
 		frappe.set_user(fx.AUTHOR)
 		one = key()
 		first = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=one, fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=one, fixture_namespace=fx.NS,
 		)
 		replay = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=one, fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=one, fixture_namespace=fx.NS,
 		)
 		self.assertTrue(replay["idempotent"])
 		self.assertEqual(replay["departmental_plan"], first["departmental_plan"])
@@ -137,8 +137,8 @@ class TestOpenDepartmentalPlan(PlanningCommandCase):
 		frappe.set_user(fx.OUTSIDER)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			dpp_lifecycle.open_departmental_plan(
-				procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-				financial_year=fx.FY_OPEN, idempotency_key=key(),
+				organisation_unit=fx.OU_ALPHA,
+				fiscal_year=fx.FY_OPEN, idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_NO_CONTEXT")
 
@@ -161,7 +161,7 @@ class TestDirectRequirements(PlanningCommandCase):
 		added = self.add_direct(opened)
 		self.assertEqual(added["action"], "direct_added")
 		entry_id = added["entry_id"]
-		self.assertTrue(entry_id.startswith("DPPE-PLNT-ALPHA-2098-"))
+		self.assertTrue(entry_id.startswith(fx.dpp_prefix().replace("DPP-", "DPPE-")))
 		frappe.set_user(fx.AUTHOR)
 		edited = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"],
@@ -187,7 +187,7 @@ class TestDirectRequirements(PlanningCommandCase):
 	def test_required_by_must_fall_inside_the_financial_year(self):
 		opened = self.open_alpha()
 		with self.assertRaises(ProcurementPlanningError) as caught:
-			self.add_direct(opened, required_by_date="2097-01-01")
+			self.add_direct(opened, required_by_date="2100-01-01")
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
 
 	def test_ineligible_budget_line_is_refused(self):
@@ -328,8 +328,8 @@ class TestSubmission(PlanningCommandCase):
 			"Departmental Plan Submission",
 			{"submission_reference": result["submission_reference"]},
 		)
-		self.assertIn("Alpha Department", submission.attestation_text)
-		self.assertIn("FY 2098/99", submission.attestation_text)
+		self.assertIn(fx.OU_ALPHA_NAME, submission.attestation_text)
+		self.assertIn("FY 2101/02", submission.attestation_text)
 		self.assertEqual(submission.submitted_by_user, fx.HOD)
 		task = frappe.get_doc(
 			"Departmental Plan Validation Task", {"submission": submission.name}
@@ -339,7 +339,7 @@ class TestSubmission(PlanningCommandCase):
 
 	def test_first_submission_outside_window_is_refused(self):
 		opened = self.open_alpha(fy=fx.FY_CLOSED)
-		added = self.add_direct(opened, required_by_date="2102-05-31")
+		added = self.add_direct(opened, required_by_date="2104-05-31")
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			self.submit({**opened, "record_version": added["record_version"]})
 		self.assertEqual(caught.exception.code, "PLN_WINDOW_CLOSED")

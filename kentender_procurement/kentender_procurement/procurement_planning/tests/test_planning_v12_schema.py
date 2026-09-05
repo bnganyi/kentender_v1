@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 Phase 1 — schema contract tests.
+"""PLN-CHG-001 v1.12 — schema contract tests.
 
 Guards three things: (1) every §4 doctype exists with exactly its allow-listed
 fields (§2.2 data-purpose gate: an undocumented field is a defect, not an
@@ -29,13 +29,9 @@ STANDARD_FIELDS = {
 }
 
 EXPECTED_FIELDS: dict[str, set[str]] = {
-	"Departmental Plan Submission Window": {
-		"pe_fy_context", "opens_at", "closes_at", "fixture_namespace",
-	},
 	"Departmental Plan": {
-		"dpp_reference", "pe_fy_context", "procuring_entity", "organisation_unit",
-		"financial_year", "current_state", "current_version", "current_accepted_version",
-		"record_version", "fixture_namespace",
+		"dpp_reference", "fiscal_year", "organisation_unit", "current_state", "current_version",
+		"current_accepted_version", "record_version", "fixture_namespace",
 	},
 	"Departmental Plan Version": {
 		"version_reference", "departmental_plan", "version_number", "based_on_version",
@@ -45,7 +41,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Departmental Plan Entry": {
 		"entry_id", "dpp_version", "source_origin", "need", "need_version", "title",
 		"description", "expected_operational_result", "quantity", "unit",
-		"required_by_date", "budget_line", "indicative_amount", "fixture_namespace",
+		"required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason",
+		"fixture_namespace",
 	},
 	"Departmental Plan Submission": {
 		"submission_reference", "dpp_version", "submission_number", "entry_snapshots",
@@ -53,9 +50,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"submitted_at", "fixture_namespace",
 	},
 	"Departmental Plan Validation Task": {
-		"task_reference", "submission", "dpp_version", "procuring_entity",
-		"organisation_unit", "financial_year", "status", "decision", "task_token",
-		"record_version", "fixture_namespace",
+		"task_reference", "submission", "dpp_version", "organisation_unit", "fiscal_year",
+		"status", "decision", "task_token", "record_version", "fixture_namespace",
 	},
 	"Departmental Plan Validation Decision": {
 		"decision_reference", "task", "submission", "decision", "classifications",
@@ -63,23 +59,33 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"command_idempotency_key", "fixture_namespace",
 	},
 	"Annual Plan": {
-		"plan_reference", "title", "pe_fy_context", "procuring_entity",
-		"financial_year", "active_version", "open_successor_version", "record_version",
-		"fixture_namespace",
+		"plan_reference", "title", "fiscal_year", "active_version", "open_successor_version",
+		"record_version", "fixture_namespace",
 	},
 	"Annual Plan Version": {
 		"version_reference", "annual_plan", "version_number", "based_on_version",
-		"correction_of_plan_version", "version_status", "change_reason",
+		"correction_of_plan_version", "version_status", "change_reason", "funding_state",
+		"funding_line_totals_hash", "splitting_confirmation", "late_activation_reason",
 		"submitted_snapshot", "snapshot_hash", "submitted_by_user", "submitted_at",
 		"activated_at", "record_version", "fixture_namespace",
 	},
 	"Annual Plan Item": {
 		"plan_item_id", "plan_version", "title", "description", "strategic_objective",
 		"strategy_plan", "strategy_plan_version", "objective_path", "requirement_type",
-		"procurement_method", "aggregation_reason", "invitation_date",
-		"bid_opening_date", "evaluation_completion_date", "award_approval_date",
-		"award_notification_date", "contract_signing_date", "delivery_completion_date",
-		"item_state", "finance_state", "record_version", "fixture_namespace",
+		"procurement_method", "aggregation_reason", "procurement_category",
+		"plan_horizon", "multi_year_justification", "aggregation_indicator", "lotting_indicator",
+		"lot_count", "reservation_category", "reservation_category_reason",
+		"county_resident_reservation", "exclusive_preference", "threshold_band_at_readiness",
+		"baseline_invitation_date", "tendering_period_days", "evaluation_period_days",
+		"award_approval_buffer_days", "notification_buffer_days", "standstill_period_days",
+		"baseline_invitation_date", "baseline_bid_opening_date", "baseline_evaluation_completion_date", "baseline_award_approval_date", "baseline_award_notification_date", "baseline_contract_signing_date", "baseline_delivery_completion_date",
+		"forecast_invitation_date", "forecast_bid_opening_date", "forecast_evaluation_completion_date", "forecast_award_approval_date", "forecast_award_notification_date", "forecast_contract_signing_date", "forecast_delivery_completion_date",
+		"actual_invitation_date", "actual_bid_opening_date", "actual_evaluation_completion_date", "actual_award_approval_date", "actual_award_notification_date", "actual_contract_signing_date", "actual_delivery_completion_date",
+		"item_status", "item_state", "record_version", "fixture_namespace",
+	},
+	"Plan Item Forecast Revision": {
+		"plan_item", "plan_item_id", "milestone", "previous_forecast_date", "new_forecast_date",
+		"reason", "cascade_id", "revised_by", "revised_at", "fixture_namespace",
 	},
 	"Plan Source Allocation": {
 		"allocation_id", "plan_item", "plan_item_id", "plan_version", "dpp_entry",
@@ -88,24 +94,16 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"allocation_state", "fixture_namespace",
 	},
 	"Plan Finance Task": {
-		"task_reference", "plan_item", "plan_item_id", "plan_version",
-		"procuring_entity", "source_set_hash", "required_amount", "status", "decision",
-		"task_token", "record_version", "fixture_namespace",
+		"task_reference", "plan_version", "plan_value", "line_totals_hash", "affordability_statement",
+		"status", "decision", "task_token", "record_version", "fixture_namespace",
 	},
 	"Plan Finance Decision": {
-		"decision_reference", "task", "decision", "return_reason", "actor",
-		"authority_snapshot", "decided_at", "command_idempotency_key",
-		"fixture_namespace",
-	},
-	"Plan Reservation Reference": {
-		"finance_decision", "plan_item", "plan_item_id", "allocation", "reservation",
-		"budget_line", "amount", "release_reference", "release_correlation",
-		"fixture_namespace",
+		"decision_reference", "task", "decision", "return_reason", "affordability_statement", "actor",
+		"authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace",
 	},
 	"Plan Governance Task": {
 		"task_reference", "annual_plan", "plan_version", "stage", "capacity",
-		"procuring_entity", "status", "decision", "task_token", "record_version",
-		"fixture_namespace",
+		"status", "decision", "task_token", "record_version", "fixture_namespace",
 	},
 	"Plan Governance Decision": {
 		"decision_reference", "task", "plan_version", "stage", "decision", "capacity",
@@ -114,8 +112,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	},
 	"Annual Plan Publication": {
 		"publication_reference", "plan_version", "destination", "attempt_number",
-		"result", "payload_hash", "external_reference", "attempted_at",
-		"acknowledged_at", "fixture_namespace",
+		"result", "payload_hash", "payload", "legal_character", "external_reference",
+		"attempted_at", "acknowledged_at", "fixture_namespace",
 	},
 	"Annual Plan Publication Destination": {
 		"destination_id", "title", "adapter", "active", "fixture_namespace",
@@ -145,6 +143,9 @@ LEGACY_DOCTYPES = (
 	"Procurement Plan", "Procurement Plan Version", "Procurement Plan Item",
 	"Procurement Plan Item Version", "Plan Need Allocation", "Plan Decision",
 	"Plan Validation Result", "Planning Handoff Snapshot", "Publication Event",
+	# PLN-CHG-001 v1.12 (tracker D8/D11): the window record and the
+	# Planning-held reservation reference are retired.
+	"Departmental Plan Submission Window", "Plan Reservation Reference",
 )
 
 # §1.1 removed-concept tokens. Each is specific enough not to collide with a
@@ -155,7 +156,6 @@ PROHIBITED_TOKENS = (
 	"expected_lot_count",
 	"recommended_method",
 	"method_basis",
-	"multi_year_justification",
 	"annual_funding_schedule",
 	"preference_reservation_scheme",
 	"schedule_change_reason",
@@ -167,9 +167,28 @@ PROHIBITED_TOKENS = (
 	"planning_permissions",
 	"Operational Scope Assignment",
 	"require_capability",
+	# PLN-CHG-001 v1.12 §16.2 / tracker rule 3
+	"pe_fy_context",
+	"procuring_entity",
+	"PEFiscalYearContext",
+	"User Permission",
+	"Funding Reservation",
+	"reserve_funding",
+	"release_reservation",
+	"revalidate_reservations",
+	"Unit Of Measure",
+	"Planning Auditor",
+	"finance_state",
+	"Pending addition\"",
 )
 
-SCAN_DIRS = ("doctype", "services", "seeds", "tests", "page")  # page/ added in Phase 3 (D10)
+# Tests proving a retired concept is ABSENT from the live site must name it once.
+ALLOWED_MENTIONS = {
+	("tests/test_plan_finance.py", "Funding Reservation"),
+	("tests/test_plan_publication.py", "Funding Reservation"),
+}
+
+SCAN_DIRS = ("doctype", "services", "tests", "page")  # seeds/ rejoins in Phase 7 (v1.12 tracker PLN-701)
 
 UNIQUE_INDEXES = {
 	("tabDepartmental Plan", "pln_uniq_dpp_root"),
@@ -238,7 +257,7 @@ class TestPlanningV12Schema(IntegrationTestCase):
 				continue
 			text = open(path, encoding="utf-8").read()
 			for token in PROHIBITED_TOKENS:
-				if token in text:
+				if token in text and (os.path.relpath(path, MODULE_DIR), token) not in ALLOWED_MENTIONS:
 					hits.append(f"{os.path.relpath(path, MODULE_DIR)}: {token}")
 		self.assertEqual(hits, [], "removed-concept tokens found: " + "; ".join(hits))
 
@@ -251,26 +270,17 @@ class TestPlanningV12Schema(IntegrationTestCase):
 		self.assertEqual(UNIQUE_INDEXES - {tuple(r) for r in rows}, set())
 
 	def test_dpp_root_uniqueness_rejects_a_duplicate(self):
-		# "the first row on the site" rather than a dedicated fixture: fragile
-		# by design (any PE Fiscal Year Context/Organisation Unit will do to
-		# prove the DB constraint), but by Phase 6 other slices' fixtures
-		# populate real Departmental Plan rows against exactly this kind of
-		# row — clear this scope's own residue first so only *this* pair's
-		# uniqueness is under test, not leftover fixture state.
-		ctx = frappe.get_all("PE Fiscal Year Context", limit=1, pluck="name")
+		"""Invariant 2 / 28 — one DPP root per Fiscal Year and Organisation
+		Unit, enforced by the rekeyed `pln_uniq_dpp_root` (v1.12 D7)."""
+		fy = frappe.get_all("Fiscal Year", limit=1, pluck="name")
 		ou = frappe.get_all("Organisation Unit", limit=1, pluck="name")
-		if not ctx or not ou:
-			self.skipTest("no PE Fiscal Year Context / Organisation Unit on this site")
-		ctx_doc = frappe.get_doc("PE Fiscal Year Context", ctx[0])
-		pe = ctx_doc.get("procuring_entity")
-		fy = ctx_doc.get("financial_year") or ctx_doc.get("fiscal_year")
-		frappe.db.delete("Departmental Plan", {"pe_fy_context": ctx[0], "organisation_unit": ou[0]})
+		if not fy or not ou:
+			self.skipTest("no Fiscal Year / Organisation Unit on this site")
+		frappe.db.delete("Departmental Plan", {"fiscal_year": fy[0], "organisation_unit": ou[0]})
 		fields = {
 			"doctype": "Departmental Plan",
-			"pe_fy_context": ctx[0],
-			"procuring_entity": pe,
+			"fiscal_year": fy[0],
 			"organisation_unit": ou[0],
-			"financial_year": fy,
 			"current_state": "Draft",
 			"record_version": 0,
 			"fixture_namespace": "KENTENDER_TEST",
@@ -282,6 +292,17 @@ class TestPlanningV12Schema(IntegrationTestCase):
 		with self.assertRaises(Exception) as caught:
 			second.insert(ignore_permissions=True)
 		self.assertIn("Duplicate", str(caught.exception))
+
+	def test_no_retired_planning_permission_hook_paths_survive(self):
+		"""PLN-AC-044 — Planning consults no User Permission and registers
+		its DPP family in the scope map; the Annual Plan family stays out."""
+		import kentender_procurement.hooks as hooks
+
+		self.assertIn("Departmental Plan", hooks.kentender_scope_map)
+		self.assertIn("Departmental Plan Validation Task", hooks.kentender_scope_map)
+		self.assertNotIn("Annual Plan", hooks.kentender_scope_map)
+		self.assertNotIn("Annual Plan Publication Destination", hooks.kentender_scope_map)
+		self.assertFalse(os.path.exists(os.path.join(MODULE_DIR, "services", "authority.py")))
 
 	def test_controllers_are_thin(self):
 		"""No doctype controller may exceed shape validation — a crude but

@@ -11,7 +11,6 @@
   "plan_version",
   "stage",
   "capacity",
-  "procuring_entity",
   "status",
   "decision",
   "task_token",
@@ -61,15 +60,6 @@
    "read_only": 1,
    "reqd": 1,
    "description": "Resolved from governed PE data; e.g. Responsible Cabinet Secretary, County Executive Committee Member, Board of Directors."
-  },
-  {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "fieldname": "status",
@@ -147,7 +137,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

@@ -1,50 +1,40 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §7.3 — the Budget & Funding contracts, under the spec's
-verbs (decision D6).
+"""PLN-CHG-001 v1.12 §7.3 — the Budget & Funding contracts, under the spec's
+verbs (decision D6/D11).
 
-Planning calls only Budget's published API module and never reads Budget Line
-tables directly (the pre-v1.2 module did — a boundary violation this file
-closes). Name deltas the adapters carry:
+Planning calls only Budget's published API module and never reads Budget
+tables directly. Two contracts remain after v1.7's lifecycle simplification:
 
-	ListEligibleBudgetLines      → budget_api.list_eligible_budget_lines
-	CheckAndReserveFunding       → budget_api.check_funding → 300 s token →
-	                               budget_api.reserve_funding (all-or-none)
-	ReleasePlanningReservations  → budget_api.release_reservation per
-	                               reservation, one Planning correlation +
-	                               idempotency key per batch, unconverted
-	                               remainder only
-	RevalidatePlanningReservations → budget_api.revalidate_reservations
+	ListEligibleBudgetLines   → budget_api.list_eligible_budget_lines
+	CheckPlanAffordability    → budget_api.check_plan_affordability
+
+Planning creates no reservation at any point (§7.3, BUD-BR-009): the v1.2
+module's check/reserve/release/revalidate gateway paths are deleted, not
+wrapped. Neither contract takes a Procuring Entity argument (§16.2).
 """
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import Any
 
 import frappe
 from frappe.utils import cstr
 
-from contextlib import contextmanager
-
-from kentender_procurement.procurement_planning.errors import fail
-
 
 @contextmanager
 def _system_principal():
 	"""Temporarily evaluate one cross-module read as Administrator WITHOUT
-	`frappe.set_user`.
+	`frappe.set_user` (v1.2 finding: `set_user` inside a web request mangles
+	the live session so every later request arrives as Guest).
 
-	`frappe.set_user` is safe in patches/jobs but is destructive inside a web
-	request: it overwrites `session.user`, sets `session.sid` to the USERNAME
-	and empties `session.data` on the live session object — the request-end
-	session save then persists that mangled state, and every later request on
-	the same sid arrives as Guest ("User None not found" + a not-whitelisted
-	refusal). Observed live in the Slice B browser run; a `finally:
-	set_user(caller)` does NOT undo it (the sid/data stay mangled).
-
-	This swap restores the exact session fields and clears the caches
-	`set_user` would have cleared, so the web session survives intact."""
+	Budget's read scope admits only Budget-side responsibilities; §7.3/§12.3
+	require the *departmental* author to see their department's eligible
+	Active lines and the Planner to see the affordability statement. Every
+	Planning caller authorises its own actor first; the result is already
+	narrowed to the department or the plan's own totals."""
 	local = frappe.local
 	session = local.session
 	saved = (session.user, session.sid, session.data)
@@ -62,151 +52,41 @@ def _system_principal():
 		local.user_obj = saved_user_obj
 
 
-def list_eligible_budget_lines(
-	*, procuring_entity: str, financial_year: str, source_org_unit: str | None = None
-) -> list[dict[str, Any]]:
-	"""Runs as a system principal, deliberately: Budget's read scope admits only
-	Budget-side roles (`require_budget_read_scope`), while §7.3/§12.3 requires
-	the *departmental* author to see their department's eligible Active lines.
-	Every Planning caller authorises its own actor for the exact PE/OU first,
-	and the result is already narrowed to that department's eligible lines —
-	the pre-v1.2 module handled the same mismatch by reading Budget tables
-	directly, which is the boundary violation this gateway closes.
-
-	BUD-CHG-001 v1.3 Phase 4: Budget's own `list_eligible_budget_lines`
-	dropped `procuring_entity` (one site is one Procuring Entity) and renamed
-	`financial_year` to `fiscal_year`. This gateway's own external signature
-	is unchanged — Planning's own PE/FY threading is that module's separate,
-	not-yet-landed change unit (tracker cross-doc reference) — only the
-	forwarded call is updated to match Budget's new published contract."""
+def list_eligible_budget_lines(*, fiscal_year: str, source_org_unit: str | None = None) -> list[dict[str, Any]]:
+	"""BUD v1.5 §9.1 — Active eligible lines (Entity-wide or matching the
+	source unit), each with its human `reference`."""
 	from kentender_budget.api.budget_api import list_eligible_budget_lines as contract
 
 	with _system_principal():
-		return contract(
-			fiscal_year=financial_year,
-			source_org_unit=source_org_unit,
-		)
+		return contract(fiscal_year=fiscal_year, source_org_unit=source_org_unit)
 
 
-def eligible_line_ids(
-	*, procuring_entity: str, financial_year: str, source_org_unit: str | None = None
-) -> set[str]:
+def eligible_line_ids(*, fiscal_year: str, source_org_unit: str | None = None) -> set[str]:
 	return {
 		cstr(row.get("id") or row.get("name"))
-		for row in list_eligible_budget_lines(
-			procuring_entity=procuring_entity,
-			financial_year=financial_year,
-			source_org_unit=source_org_unit,
-		)
+		for row in list_eligible_budget_lines(fiscal_year=fiscal_year, source_org_unit=source_org_unit)
 	}
 
 
-def check_funding(
-	*,
-	plan_item: str,
-	plan_version: str,
-	finance_task: str,
-	source_set_hash: str,
-	allocations: list[dict[str, Any]],
-	correlation_id: str,
-) -> dict[str, Any]:
-	"""Runs as a system principal, deliberately: Budget's own internal
-	capability check for this boundary requires its `Finance Confirmation
-	Officer` role (or Administrator/System Manager) — a different
-	vocabulary from Planning's `Budget Officer` role. `RequestFinanceConfirmation`/
-	`ConfirmFunding` authorise the Planning actor against Planning's own role
-	and PE scope first (masked not-found on failure); this call must not be
-	spuriously refused by Budget's unrelated role name (the same mismatch
-	`list_eligible_budget_lines` above already crosses)."""
-	from kentender_budget.api.budget_api import check_funding as contract
+def line_labels(fiscal_year: str) -> dict[str, dict[str, Any]]:
+	"""`id` → {reference, title, label, funding_source, currency} for display."""
+	out = {}
+	for row in list_eligible_budget_lines(fiscal_year=fiscal_year):
+		reference = cstr(row.get("reference")) or cstr(row.get("id"))
+		out[cstr(row.get("id"))] = {
+			"reference": reference,
+			"title": cstr(row.get("title")),
+			"label": f"{reference} — {row.get('title')}" if row.get("title") else reference,
+			"funding_source": cstr(row.get("funding_source")),
+			"approved": row.get("approved"),
+		}
+	return out
+
+
+def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, float]) -> dict[str, Any]:
+	"""BUD v1.5 §8.2 — non-mutating; blocking within-approved, advisory
+	within-available. No token, no lock, no ledger event."""
+	from kentender_budget.api.budget_api import check_plan_affordability as contract
 
 	with _system_principal():
-		return contract(
-			plan_item=plan_item,
-			plan_version=plan_version,
-			finance_task=finance_task,
-			source_set_hash=source_set_hash,
-			allocations=allocations,
-			correlation_id=correlation_id,
-		)
-
-
-def reserve_funding(
-	*,
-	check_token: str,
-	finance_task: str,
-	source_set_hash: str,
-	idempotency_key: str,
-) -> dict[str, Any]:
-	"""System principal for the same reason as `check_funding` above."""
-	from kentender_budget.api.budget_api import reserve_funding as contract
-
-	with _system_principal():
-		return contract(
-			token=check_token,
-			finance_task=finance_task,
-			source_set_hash=source_set_hash,
-			idempotency_key=idempotency_key,
-		)
-
-
-def release_planning_reservations(
-	*,
-	reservation_refs: list[dict[str, Any]],
-	correlation_id: str,
-	event_type: str,
-) -> list[dict[str, Any]]:
-	"""Release the unconverted remainder of every reference under one Planning
-	correlation. A failure rolls the calling transition back (§7.3): the
-	ProcurementPlanningError below must propagate, never be swallowed."""
-	from kentender_budget.api.budget_api import release_reservation as contract
-
-	results = []
-	for index, ref in enumerate(reservation_refs, start=1):
-		try:
-			results.append(
-				contract(
-					reservation=ref["reservation"],
-					amount=None,  # unconverted remainder
-					downstream_event_id=f"{correlation_id}:{index}",
-					downstream_event_type=event_type,
-					idempotency_key=f"{correlation_id}:{ref['reservation']}",
-				)
-			)
-		except Exception:
-			frappe.log_error(
-				title="PLN_RESERVATION_RELEASE_FAILED",
-				message=f"correlation={correlation_id} reservation={ref.get('reservation')}",
-			)
-			fail(
-				"PLN_RESERVATION_RELEASE_FAILED",
-				"Funding could not be released. The Planning change was not "
-				f"completed. Try again or quote support reference {correlation_id}.",
-			)
-	return results
-
-
-def revalidate_planning_reservations(
-	*, reservations: list[str], correlation_id: str, event_type: str
-) -> dict[str, Any]:
-	from kentender_budget.api.budget_api import revalidate_reservations as contract
-
-	return contract(
-		reservations=reservations,
-		downstream_event_id=correlation_id,
-		downstream_event_type=event_type,
-		idempotency_key=correlation_id,
-	)
-
-
-def reservation_states(reservations: list[str]) -> dict[str, str]:
-	"""Read-only §4.11 derivation: Budget stays authoritative for status."""
-	if not reservations:
-		return {}
-	rows = frappe.get_all(
-		"Funding Reservation",
-		filters={"name": ["in", reservations]},
-		fields=["name", "status"],
-		limit_page_length=0,
-	)
-	return {row.name: row.status for row in rows}
+		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)

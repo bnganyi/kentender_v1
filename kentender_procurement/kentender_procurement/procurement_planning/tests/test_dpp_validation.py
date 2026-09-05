@@ -31,6 +31,7 @@ class ValidationCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
 		super().setUp()
@@ -51,8 +52,8 @@ class ValidationCase(IntegrationTestCase):
 	def submitted_task(self):
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(),
@@ -98,7 +99,7 @@ class TestAcceptance(ValidationCase):
 		task = self.submitted_task()
 		result = self.accept(task)
 		self.assertEqual(result["action"], "accepted")
-		self.assertTrue(result["annual_plan"].startswith("PLN-PLNT-2098-"))
+		self.assertTrue(result["annual_plan"].startswith(fx.plan_prefix()))
 		self.assertTrue(result["annual_plan_version"].endswith("-V1"))
 		decision = frappe.get_doc(
 			"Departmental Plan Validation Decision",
@@ -142,12 +143,12 @@ class TestAcceptance(ValidationCase):
 
 	def test_concurrent_first_acceptance_yields_one_winner(self):
 		"""Invariant 24: two first acceptances race to create the Annual Plan.
-		The DB unique on `pe_fy_context` decides the insert; the loser's
+		The DB unique on (fiscal_year, organisation_unit) decides the insert; the loser's
 		UniqueValidationError branch re-reads and lands on the winner."""
 		frappe.set_user("Administrator")
 		first = dpp_validation.ensure_annual_plan(
-			procuring_entity=fx.PE, financial_year=fx.FY_OPEN,
-			pe_fy_context=fx.CTX_OPEN, fixture_namespace=fx.NS,
+			fiscal_year=fx.FY_OPEN,
+			fixture_namespace=fx.NS,
 		)
 		real_get_value = frappe.db.get_value
 		raced = {"probe": False}
@@ -162,8 +163,8 @@ class TestAcceptance(ValidationCase):
 
 		with patch.object(frappe.db, "get_value", side_effect=racing_get_value):
 			second = dpp_validation.ensure_annual_plan(
-				procuring_entity=fx.PE, financial_year=fx.FY_OPEN,
-				pe_fy_context=fx.CTX_OPEN, fixture_namespace=fx.NS,
+				fiscal_year=fx.FY_OPEN,
+				fixture_namespace=fx.NS,
 			)
 		self.assertTrue(raced["probe"])
 		self.assertEqual(second["plan_reference"], first["plan_reference"])
@@ -174,8 +175,8 @@ class TestAcceptance(ValidationCase):
 		blocked is deciding the submission they themselves certified."""
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(),
@@ -296,20 +297,9 @@ class TestReturn(ValidationCase):
 			"Departmental Plan Version", {"version_reference": result["correction_version"]}
 		)
 		root = frappe.get_doc("Departmental Plan", correction.departmental_plan)
-		# close the window under the correction, then resubmit — §5.1 allows it
-		window = frappe.get_doc(
-			"Departmental Plan Submission Window", {"pe_fy_context": fx.CTX_OPEN}
-		)
-		original_close = window.closes_at
-		frappe.db.set_value(
-			"Departmental Plan Submission Window", window.name,
-			"closes_at", "2020-02-01 00:00:00", update_modified=False,
-		)
-		self.addCleanup(
-			frappe.db.set_value,
-			"Departmental Plan Submission Window", window.name,
-			"closes_at", original_close,
-		)
+		# close intake under the correction, then resubmit — §5.1 allows it
+		fx.close_test_intake()
+		self.addCleanup(fx.open_test_intake)
 		frappe.set_user(fx.HOD)
 		resubmitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=correction.name, certification_confirmed=True,

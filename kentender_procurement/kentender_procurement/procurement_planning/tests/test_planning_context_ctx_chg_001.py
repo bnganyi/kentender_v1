@@ -1,9 +1,10 @@
-"""CTX-CHG-001 Phase E — Planning context on the corrected persistence model.
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
 
-Split out of test_planning_context_chg016.py, which no longer imports (it
-still references the retired Demands-era demand_financial_year service and has
-been un-runnable since that module's deletion).
-"""
+"""PLN-CHG-001 v1.12 §8.1 `ResolvePlanningContexts` / §10 — the Financial
+Year is a visible, changeable filter derived from configured records; there
+is no Procuring Entity to select and no per-user year grant (PLN-AC-001,
+PLN-AC-060)."""
 
 from __future__ import annotations
 
@@ -17,68 +18,66 @@ from kentender_procurement.procurement_planning.services.planning_context import
 	select_planning_context,
 )
 
+BASE = "kentender_procurement.procurement_planning.services.planning_context"
+
+
+def _year(id_, *, current=False, future=False, past=False, intake=False, plan=False):
+	return {
+		"id": id_, "label": f"FY {id_}", "start_date": f"{id_[:4]}-07-01", "end_date": f"{int(id_[:4]) + 1}-06-30",
+		"is_current": current, "is_future": future, "is_past": past, "intake_open": intake, "has_open_plan": plan,
+		"planning_open": True,
+	}
+
+
 PERIODS = [
-	{"id": "2027/28", "label": "2027/28", "start_date": "2027-07-01", "end_date": "2028-06-30", "is_current": True, "is_future": False, "is_past": False},
-	{"id": "2028/29", "label": "2028/29", "start_date": "2028-07-01", "end_date": "2029-06-30", "is_current": False, "is_future": True, "is_past": False},
-	{"id": "2026/27", "label": "2026/27", "start_date": "2026-07-01", "end_date": "2027-06-30", "is_current": False, "is_future": False, "is_past": True},
+	_year("2026-2027", past=True),
+	_year("2027-2028", current=True),
+	_year("2028-2029", future=True),
 ]
 
 
-class TestPlanningContextPersistence(TestCase):
-	def test_default_precedence_current_future_past_then_current_without_plan(self) -> None:
-		self.assertEqual(_default_year(PERIODS, {"2027/28", "2028/29", "2026/27"}), "2027/28")
-		self.assertEqual(_default_year(PERIODS, {"2028/29", "2026/27"}), "2028/29")
-		self.assertEqual(_default_year(PERIODS, {"2026/27"}), "2026/27")
-		self.assertEqual(_default_year(PERIODS, set()), "2027/28")
-
-	@patch("kentender_core.services.working_context.select_module_fy")
-	@patch("kentender_core.services.working_context.select_working_pe")
-	@patch("kentender_procurement.procurement_planning.services.planning_context.resolve_planning_context")
-	def test_deliberate_selection_writes_the_corrected_model(self, resolve, select_pe, select_fy) -> None:
-		# CTX-CHG-001 — the write goes to the global working PE plus this
-		# module's own kt_planning_financial_year, nothing else.
-		resolve.return_value = {"procuring_entity": "PE-MOH", "financial_year": "2027/28"}
-		result = select_planning_context(procuring_entity="PE-MOH", financial_year="2027/28", user="planner@example.test")
-		self.assertEqual(result["financial_year"], "2027/28")
-		select_pe.assert_called_once_with("PE-MOH", "planner@example.test")
-		select_fy.assert_called_once_with(
-			PLANNING_MODULE, "2027/28", "planner@example.test", offered=["2027/28"]
-		)
+class TestDefaultYear(TestCase):
+	def test_default_precedence_intake_open_then_open_plan_then_current_then_future(self) -> None:
+		self.assertEqual(_default_year([dict(PERIODS[0], intake_open=True), PERIODS[1], PERIODS[2]]), "2026-2027")
+		self.assertEqual(_default_year([PERIODS[0], PERIODS[1], dict(PERIODS[2], has_open_plan=True)]), "2028-2029")
+		self.assertEqual(_default_year(PERIODS), "2027-2028")
+		self.assertEqual(_default_year([PERIODS[2]]), "2028-2029")
+		self.assertEqual(_default_year([]), "")
 
 
-class TestPlanningContextRoundTrip(TestCase):
-	"""A selection must actually restore on the next request.
+class TestResolution(TestCase):
+	def test_no_responsibility_resolves_to_no_scope_without_a_selector(self) -> None:
+		with patch(f"{BASE}.authz.holds_any_planning_responsibility", return_value=False), patch(f"{BASE}._site", return_value={"pe_name": "x", "pe_code": "PE-X"}):
+			result = resolve_planning_context(user="nobody@example.test")
+		self.assertTrue(result["no_scope"])
+		self.assertEqual(result["financial_years"], [])
+		self.assertNotIn("procuring_entities", result)
 
-	The old Title-Case default keys never round-tripped (frappe.defaults'
-	is_a_user_permission_key rerouted them), so "remember my selection" was a
-	silent no-op that this exact test would have caught. Runs against the real
-	frappe.defaults storage with the eligibility helpers mocked.
-	"""
-
-	def test_selection_restores_on_the_next_resolution(self) -> None:
+	def test_selection_round_trips_through_the_module_preference(self) -> None:
 		import frappe
 
 		user = "Administrator"
-		entities = [{"id": "PE-RT", "code": "PE-RT", "name": "Round Trip", "label": "Round Trip"}]
-		years = (
-			[dict(PERIODS[0], has_open_plan=True, planning_open=True),
-			 dict(PERIODS[1], has_open_plan=False, planning_open=True)],
-			{"2027/28"},
-		)
-		base = "kentender_procurement.procurement_planning.services.planning_context"
 		frappe.defaults.clear_user_default("kt_planning_financial_year", user)
 		try:
-			with patch(f"{base}._authorised_entities", return_value=entities), patch(
-				f"{base}._selectable_years", return_value=years
-			), patch(
-				"kentender_core.services.working_context.select_working_pe"
-			), patch(
-				"kentender_core.services.working_context.get_working_pe",
-				return_value={"selected": {"id": "PE-RT"}},
-			):
-				select_planning_context(procuring_entity="PE-RT", financial_year="2028/29", user=user)
+			with patch(f"{BASE}.authz.holds_any_planning_responsibility", return_value=True), patch(
+				f"{BASE}.selectable_years", return_value=list(PERIODS)
+			), patch(f"{BASE}._site", return_value={"pe_name": "x", "pe_code": "PE-X"}):
+				selected = select_planning_context(financial_year="2028-2029", user=user)
+				self.assertEqual(selected["financial_year"], "2028-2029")
+				self.assertEqual(selected["resolved_financial_year_source"], "selected")
 				restored = resolve_planning_context(user=user)
-			self.assertEqual(restored["financial_year"], "2028/29")
+			self.assertEqual(restored["financial_year"], "2028-2029")
 			self.assertEqual(restored["resolved_financial_year_source"], "saved_default")
+			self.assertFalse(restored["selection_required"])
 		finally:
 			frappe.defaults.clear_user_default("kt_planning_financial_year", user)
+
+	def test_an_unoffered_year_is_refused_not_trapped(self) -> None:
+		import frappe
+
+		with patch(f"{BASE}.authz.holds_any_planning_responsibility", return_value=True), patch(
+			f"{BASE}.selectable_years", return_value=list(PERIODS)
+		), patch(f"{BASE}._site", return_value={"pe_name": "x", "pe_code": "PE-X"}):
+			with self.assertRaises(frappe.ValidationError):
+				resolve_planning_context(financial_year="2099-2100", user="Administrator")
+		self.assertEqual(PLANNING_MODULE, "planning")

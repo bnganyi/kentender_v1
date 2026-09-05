@@ -12,6 +12,8 @@
   "attempt_number",
   "result",
   "payload_hash",
+  "payload",
+  "legal_character",
   "external_reference",
   "attempted_at",
   "acknowledged_at",
@@ -72,6 +74,20 @@
    "description": "Digest of the exact approved payload generated from the immutable Version."
   },
   {
+   "fieldname": "payload",
+   "fieldtype": "JSON",
+   "label": "Canonical Payload (OCDS planning stage)",
+   "read_only": 1,
+   "description": "The exact approved payload transmitted, OCDS-shaped (\u00a74.13)."
+  },
+  {
+   "fieldname": "legal_character",
+   "fieldtype": "Data",
+   "label": "Legal Character",
+   "read_only": 1,
+   "default": "Invitation to treat (section 53(12))"
+  },
+  {
    "fieldname": "external_reference",
    "fieldtype": "Data",
    "label": "External Reference",
@@ -129,7 +145,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

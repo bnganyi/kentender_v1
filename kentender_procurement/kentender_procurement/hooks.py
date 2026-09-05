@@ -365,16 +365,38 @@ page_js = {
 kentender_scope_map = {
 	"Departmental Need": "organisation_unit",
 	"Departmental Need Review Task": "organisation_unit",
+	# PLN-CHG-001 v1.12 §16.4 (tracker D3): only the DPP family read by the
+	# Organisation-Unit-scoped Author/HoD is registered. The Annual Plan
+	# family has Site-wide readers only and stays unregistered (CU-302: a
+	# registered DocType with a non-registry read role resolves to 1=0).
+	"Departmental Plan": "organisation_unit",
+	"Departmental Plan Validation Task": "organisation_unit",
 }
+
+_PLN_AUTHZ = "kentender_procurement.procurement_planning.services.planning_authorization"
 
 permission_query_conditions = {
 	"Departmental Need": "kentender_core.services.authorization.permission_query_conditions",
 	"Departmental Need Review Task": "kentender_core.services.authorization.permission_query_conditions",
+	"Departmental Plan": "kentender_core.services.authorization.permission_query_conditions",
+	"Departmental Plan Validation Task": "kentender_core.services.authorization.permission_query_conditions",
+	# DPP children carry no OU column; Planning resolves through the parent
+	# chain and delegates to the core predicate (D3).
+	"Departmental Plan Version": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Entry": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Submission": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.permission_query_conditions",
 }
 
 has_permission = {
 	"Departmental Need": "kentender_core.services.authorization.has_permission",
 	"Departmental Need Review Task": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan Validation Task": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan Version": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Entry": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Submission": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.has_permission",
 }
 
 # Document Events
@@ -389,6 +411,14 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
+
+# PLN-CHG-001 v1.12 §8.3 — the daily approaching-milestone nudge. Creates no
+# task, no state and no blocking condition; deduplicated per item/milestone/day.
+scheduler_events = {
+	"daily": [
+		"kentender_procurement.procurement_planning.services.schedule.check_approaching_milestones",
+	],
+}
 
 # scheduler_events = {
 # 	"all": [

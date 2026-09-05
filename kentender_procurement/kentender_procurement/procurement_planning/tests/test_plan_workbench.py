@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §5.2/§8 Annual Plan workbench tests (Phase 6, Slice D)."""
+"""PLN-CHG-001 v1.12 §5.2/§8 Annual Plan workbench tests (Phase 6, Slice D)."""
 
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ class PlanWorkbenchCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
 		super().setUp()
@@ -55,8 +56,8 @@ class PlanWorkbenchCase(IntegrationTestCase):
 		dpp_entry doc name, dpp root doc name)."""
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(**overrides),
@@ -89,8 +90,8 @@ class PlanWorkbenchCase(IntegrationTestCase):
 		(acceptance result, entry_a doc name, entry_b doc name)."""
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added_a = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(**spec_a),
@@ -161,8 +162,15 @@ class TestFormPlanItemsSingle(PlanWorkbenchCase):
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertFalse(item["combined"])
 		self.assertEqual(len(item["sources"]), 1)
-		self.assertEqual(item["item"]["title"], "Direct requirement")
-		self.assertEqual(item["item"]["requirement_type"], "Goods")
+		self.assertEqual(item["identity"]["title"], "Direct requirement")
+		self.assertEqual(item["identity"]["requirement_type"], "Goods")
+		self.assertEqual(item["identity"]["procurement_category"], "Goods")
+		self.assertEqual(item["classification"]["procurement_method"], "Open Tender")
+		self.assertIn("Open Tender", item["classification"]["admissible_methods"])
+		self.assertEqual(item["preference"]["plan_horizon"], "Single year")
+		self.assertEqual(item["preference"]["lotting_indicator"], "Single lot")
+		self.assertEqual(item["preference"]["reservation_category"], "")
+		self.assertEqual(item["baseline"]["periods"]["tendering_period_days"], 21)
 		self.assertFalse(item["source_correction_required"])
 
 	def test_forming_the_same_entry_twice_is_refused(self):
@@ -272,78 +280,141 @@ class TestFormPlanItemsCombine(PlanWorkbenchCase):
 
 
 class TestSavePlanItem(PlanWorkbenchCase):
-	def test_save_updates_allow_listed_fields_and_snapshots_objective(self):
+	def test_save_updates_allow_listed_fields_derives_baseline_and_snapshots_objective(self):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		result = plan_workbench.save_plan_item(
 			plan_item=item_id,
-			values={
-				"title": "Renamed procurement package",
-				"description": "A sufficiently long procurement description for the package.",
-				"strategic_objective": fx.STRATEGY_OBJECTIVE,
-				"aggregation_reason": "",
-				"invitation_date": "2098-08-01", "bid_opening_date": "2098-08-15",
-				"evaluation_completion_date": "2098-09-01", "award_approval_date": "2098-09-10",
-				"award_notification_date": "2098-09-15", "contract_signing_date": "2098-10-01",
-				"delivery_completion_date": "2098-10-15",
-			},
+			values=fx.item_values(title="Renamed procurement package", description="A sufficiently long procurement description for the package."),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(result["action"], "saved")
 		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
-		self.assertEqual(refreshed["item"]["title"], "Renamed procurement package")
-		self.assertEqual(refreshed["item"]["strategic_objective"], fx.STRATEGY_OBJECTIVE)
-		self.assertEqual(refreshed["item"]["objective_path"], fx.STRATEGY_OBJECTIVE_PATH)
-		self.assertEqual(refreshed["schedule"]["delivery_completion_date"], "2098-10-15")
+		self.assertEqual(refreshed["identity"]["title"], "Renamed procurement package")
+		self.assertEqual(refreshed["classification"]["strategic_objective"], fx.STRATEGY_OBJECTIVE)
+		self.assertEqual(refreshed["classification"]["objective_path"], fx.STRATEGY_OBJECTIVE_PATH)
+		# PLN-AC-115 — the seven baseline dates are derived from the anchor
+		rows = {r["milestone"]: r["date"] for r in refreshed["baseline"]["rows"]}
+		self.assertEqual(rows["invitation"], "2101-09-01")
+		self.assertEqual(rows["bid_opening"], "2101-09-22")
+		self.assertEqual(rows["evaluation_completion"], "2101-10-22")
+		self.assertEqual(rows["award_approval"], "2101-10-27")
+		self.assertEqual(rows["award_notification"], "2101-10-29")
+		self.assertEqual(rows["contract_signing"], "2101-11-12")
+		self.assertEqual(rows["delivery_completion"], "2102-04-30")
+		self.assertTrue(refreshed["baseline"]["delivery_boundary_ok"])
+		self.assertEqual(refreshed["blockers"], [])
+		self.assertEqual(refreshed["preference"]["reservation_category"], "None")
 
-	def test_save_rejects_unknown_field(self):
+	def test_save_rejects_unknown_and_derived_fields(self):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id, values={"title": "x" * 10, "description": "y" * 20, "lotting": "no"},
+				plan_item=item_id, values={"title": "x" * 10, "description": "y" * 20, "priority": "High"},
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
-
-	def test_save_rejects_out_of_order_schedule(self):
-		_, item_id = self.one_item()
-		item = plan_read.get_plan_item(plan_item_id=item_id)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id,
-				values={
-					"title": "Valid title", "description": "A valid procurement description text.",
-					"invitation_date": "2098-09-01", "bid_opening_date": "2098-08-01",
-				},
+				plan_item=item_id, values={"baseline_bid_opening_date": "2101-10-01"},
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_SCHEDULE_INVALID")
 
-	def test_save_rejects_delivery_after_required_by(self):
+	def test_governed_periods_are_enforced_server_side(self):
+		"""PLN-AC-114 — floors and ceilings bound to their input."""
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		for field, value, code in (
+			("tendering_period_days", 6, "PLN_TENDERING_PERIOD_BELOW_MINIMUM"),
+			("evaluation_period_days", 31, "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM"),
+			("standstill_period_days", 13, "PLN_STANDSTILL_BELOW_MINIMUM"),
+		):
+			with self.subTest(field=field):
+				with self.assertRaises(ProcurementPlanningError) as caught:
+					plan_workbench.save_plan_item(
+						plan_item=item_id, values=fx.item_values(**{field: value}),
+						expected_record_version=item["record_version"], idempotency_key=key(),
+					)
+				self.assertEqual(caught.exception.code, code)
+				self.assertEqual(caught.exception.detail.get("field"), field)
+
+	def test_delivery_boundary_is_a_readiness_blocker_not_a_save_error(self):
+		"""Invariant 12a — an anchor too close to the required-by date saves
+		but blocks readiness with the exact code."""
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(baseline_invitation_date="2102-04-01"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertFalse(refreshed["baseline"]["delivery_boundary_ok"])
+		self.assertIn("PLN_DELIVERY_BOUNDARY_INSUFFICIENT", [b["code"] for b in refreshed["blockers"]])
+
+	def test_a_method_outside_the_resolved_band_is_refused(self):
+		"""PLN-AC-070/091 — Low Value Procurement is not admissible for KES 1,000,000 of goods."""
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertNotIn("Low Value Procurement", item["classification"]["admissible_methods"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(procurement_method="Low Value Procurement"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_METHOD_NOT_ADMISSIBLE")
+		self.assertIn("Open Tender", caught.exception.detail["admissible_methods"])
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method="Request for Proposals"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		self.assertTrue(plan_read.get_plan_item(plan_item_id=item_id)["classification"]["value_band"])
+
+	def test_plan_contents_and_reservation_rules(self):
+		"""Invariants 24, 24aa, 24b."""
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id,
-				values={
-					"title": "Valid title", "description": "A valid procurement description text.",
-					"delivery_completion_date": "2099-06-01",
-				},
+				plan_item=item_id, values=fx.item_values(plan_horizon="Multi-year"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_SCHEDULE_INVALID")
+		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(lotting_indicator="Packaged into lots"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
+		# a lower-advantage scheme than the proposal needs a retained reason
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values=fx.item_values(
+				reservation_category="Micro, small and medium enterprise",
+				reservation_category_reason="The requirement suits registered MSME suppliers in this category.",
+				lotting_indicator="Packaged into lots", lot_count=3,
+			),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(refreshed["preference"]["lot_count"], 3)
+		self.assertEqual(refreshed["preference"]["reservation_category"], "Micro, small and medium enterprise")
 
 	def test_save_rejects_ineligible_objective(self):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id,
-				values={
-					"title": "Valid title", "description": "A valid procurement description text.",
-					"strategic_objective": "NOT-A-REAL-OBJECTIVE",
-				},
+				plan_item=item_id, values=fx.item_values(strategic_objective="NOT-A-REAL-OBJECTIVE"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_OBJECTIVE_INELIGIBLE")
@@ -432,7 +503,7 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
 				plan_item=item_id,
-				values={"title": flagged["item"]["title"], "description": flagged["item"]["description"]},
+				values={"title": flagged["identity"]["title"], "description": flagged["identity"]["description"]},
 				expected_record_version=flagged["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_SOURCE_CORRECTION_REQUIRED")

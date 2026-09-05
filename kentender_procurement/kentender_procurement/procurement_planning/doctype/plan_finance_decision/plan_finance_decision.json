@@ -10,6 +10,7 @@
   "task",
   "decision",
   "return_reason",
+  "affordability_statement",
   "actor",
   "authority_snapshot",
   "decided_at",
@@ -39,7 +40,7 @@
    "fieldname": "decision",
    "fieldtype": "Select",
    "label": "Decision",
-   "options": "Confirm funding\nReturn to planner",
+   "options": "Confirm plan funding\nReturn to planner",
    "read_only": 1,
    "reqd": 1,
    "in_list_view": 1
@@ -50,6 +51,12 @@
    "label": "Return Reason",
    "read_only": 1,
    "description": "Required for Return to planner."
+  },
+  {
+   "fieldname": "affordability_statement",
+   "fieldtype": "JSON",
+   "label": "Affordability Statement at Decision",
+   "read_only": 1
   },
   {
    "fieldname": "actor",
@@ -111,7 +118,7 @@
    "create": 1
   },
   {
-   "role": "Budget Officer",
+   "role": "Finance Confirmation Officer",
    "read": 1
   },
   {
@@ -119,7 +126,11 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
    "read": 1
   }
  ],

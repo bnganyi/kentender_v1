@@ -1,15 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §4.6 / §5 — DPP validation decisions.
+"""PLN-CHG-001 v1.12 §4.6 / §5 — DPP validation decisions.
 
 `AcceptDepartmentalPlan` records one governed classification per submitted
-entry on the immutable decision (never on the entry — §8.1), marks the
-Version accepted, and in the same transaction creates or reuses the initial
-Draft Annual Plan under the DB uniqueness constraint (invariants 2/24): a
-concurrent first acceptance reloads the winner instead of duplicating.
-`ReturnDepartmentalPlan` preserves the submitted snapshot and creates the
-copied correction Draft with the structured issues attached.
+entry that proceeds (never on the entry — §8.1), marks the Version accepted,
+publishes the §4.4 not-proceeding outcome back to Departmental Needs for any
+entry the department recorded as not proceeding, and in the same
+transaction creates or reuses the initial Draft Annual Plan under the DB
+uniqueness constraint (invariants 2/28): a concurrent first acceptance
+reloads the winner instead of duplicating. `ReturnDepartmentalPlan`
+preserves the submitted snapshot and creates the copied correction Draft
+with the structured issues attached.
 """
 
 from __future__ import annotations
@@ -21,60 +23,23 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import (
-	authority,
-	envelope,
-	references,
-)
-from kentender_procurement.procurement_planning.services.dpp_lifecycle import (
-	copy_entries,
-	_next_version_number,
-)
-from kentender_procurement.procurement_planning.services.planning_roles import (
-	ROLE_PROCUREMENT_PLANNER,
-)
+from kentender_procurement.procurement_planning.services import envelope, references
+from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.services.dpp_lifecycle import _next_version_number, copy_entries
+from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
 
 
 def _open_task(task_name: str):
 	if not task_name or not frappe.db.exists("Departmental Plan Validation Task", task_name):
-		authority.not_found()
+		authz.not_found()
 	task = frappe.get_doc("Departmental Plan Validation Task", task_name)
 	if task.status != "Open":
-		fail("PLN_REVIEW_STALE", "This task has already changed. Reload to see the current decision.")
+		fail("PLN_REVIEW_STALE")
 	return task
 
 
-def _authorise_planner(actor: str, task) -> str:
-	role = authority.require_scope(
-		actor,
-		roles=(ROLE_PROCUREMENT_PLANNER,),
-		procuring_entity=task.procuring_entity,
-	)
-	# Planner OU scope narrows only when OU rows exist (§6: assigned PE and
-	# permitted OUs); PE-wide planners hold no OU rows.
-	ous = authority.permitted_org_units(actor)
-	if ous and cstr(task.organisation_unit) not in ous:
-		authority.not_found()
-	return role
-
-
-def _maker_checker(actor: str, submission_name: str) -> None:
-	submitted_by = frappe.db.get_value(
-		"Departmental Plan Submission", submission_name, "submitted_by_user"
-	)
-	if cstr(submitted_by) == actor:
-		fail(
-			"PLN_SEGREGATION_CONFLICT",
-			"You cannot make this decision because you performed an incompatible earlier action.",
-		)
-
-
-def _decide(task, *, decision: str, actor: str, role: str, classifications=None, issues=None,
-            idempotency_key: str = "") -> Any:
-	root_scope = (task.procuring_entity, task.organisation_unit, task.financial_year)
-	version_number = frappe.db.get_value(
-		"Departmental Plan Version", task.dpp_version, "version_number"
-	)
+def _decide(task, *, decision: str, actor: str, assignment, classifications=None, issues=None, idempotency_key: str = "") -> Any:
+	version_number = frappe.db.get_value("Departmental Plan Version", task.dpp_version, "version_number")
 	dpp_reference = frappe.db.get_value(
 		"Departmental Plan",
 		frappe.db.get_value("Departmental Plan Version", task.dpp_version, "departmental_plan"),
@@ -83,38 +48,29 @@ def _decide(task, *, decision: str, actor: str, role: str, classifications=None,
 	doc = frappe.get_doc(
 		{
 			"doctype": "Departmental Plan Validation Decision",
-			"decision_reference": references.validation_decision_reference(
-				dpp_reference, version_number
-			),
+			"decision_reference": references.validation_decision_reference(dpp_reference, version_number),
 			"task": task.name,
 			"submission": task.submission,
 			"decision": decision,
 			"classifications": json.dumps(classifications) if classifications else None,
 			"issues": json.dumps(issues) if issues else None,
 			"actor": actor,
-			"authority_snapshot": authority.authority_snapshot(actor, role=role, values=root_scope),
+			"authority_snapshot": authz.authority_snapshot(assignment),
 			"decided_at": now_datetime(),
 			"command_idempotency_key": idempotency_key,
 			"fixture_namespace": cstr(task.fixture_namespace),
 		}
 	).insert(ignore_permissions=True)
 	frappe.db.set_value(
-		"Departmental Plan Validation Task", task.name,
-		{"status": "Completed", "decision": doc.name},
-		update_modified=False,
+		"Departmental Plan Validation Task", task.name, {"status": "Completed", "decision": doc.name}, update_modified=False,
 	)
 	return doc
 
 
 def return_departmental_plan(
-	*,
-	task: str,
-	issues: list[dict[str, str]] | str,
-	task_token: str,
-	idempotency_key: str,
-	user: str | None = None,
+	*, task: str, issues: list[dict[str, str]] | str, task_token: str, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
-	actor = cstr(user or frappe.session.user)
+	actor = authz.actor(user)
 	if isinstance(issues, str):
 		issues = json.loads(issues)
 	payload = {"task": task, "issues": json.dumps(issues, sort_keys=True)}
@@ -122,9 +78,9 @@ def return_departmental_plan(
 	if replay:
 		return replay
 	task_doc = _open_task(task)
-	role = _authorise_planner(actor, task_doc)
+	assignment = authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	envelope.assert_task_token(task_doc, task_token)
-	_maker_checker(actor, task_doc.submission)
+	authz.require_not_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task_doc.submission)
 	cleaned = [
 		{
 			"entry_id": cstr(row.get("entry_id")).strip(),
@@ -136,22 +92,17 @@ def return_departmental_plan(
 	if not cleaned or any(not (row["entry_id"] and row["problem"] and row["correction"]) for row in cleaned):
 		fail(
 			"PLN_ENTRY_INCOMPLETE",
-			"State at least one structured issue: the affected entry, the concise "
-			"problem and the exact correction required.",
+			"State at least one structured issue: the affected entry, the concise problem and the exact correction required.",
 		)
 
 	version = frappe.get_doc("Departmental Plan Version", task_doc.dpp_version)
 	root = envelope.locked("Departmental Plan", version.departmental_plan)
 	if version.version_status != "Submitted":
-		fail("PLN_REVIEW_STALE", "This task has already changed. Reload to see the current decision.")
+		fail("PLN_REVIEW_STALE")
 	decision = _decide(
-		task_doc, decision="Return to department", actor=actor, role=role,
-		issues=cleaned, idempotency_key=idempotency_key,
+		task_doc, decision="Return to department", actor=actor, assignment=assignment, issues=cleaned, idempotency_key=idempotency_key,
 	)
-	frappe.db.set_value(
-		"Departmental Plan Version", version.name, "version_status", "Returned",
-		update_modified=False,
-	)
+	frappe.db.set_value("Departmental Plan Version", version.name, "version_status", "Returned", update_modified=False)
 	next_number = _next_version_number(root.name)
 	correction = frappe.get_doc(
 		{
@@ -177,23 +128,17 @@ def return_departmental_plan(
 		"dpp_reference": root.dpp_reference,
 	}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="ReturnDepartmentalPlan", payload=payload,
-		result=result, document_type="Departmental Plan Validation Decision",
-		document_name=decision.name, actor=actor,
+		idempotency_key=idempotency_key, command="ReturnDepartmentalPlan", payload=payload, result=result,
+		document_type="Departmental Plan Validation Decision", document_name=decision.name, actor=actor,
 		fixture_namespace=cstr(task_doc.fixture_namespace),
 	)
 	return result
 
 
 def accept_departmental_plan(
-	*,
-	task: str,
-	classifications: dict[str, str] | str,
-	task_token: str,
-	idempotency_key: str,
-	user: str | None = None,
+	*, task: str, classifications: dict[str, str] | str, task_token: str, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
-	actor = cstr(user or frappe.session.user)
+	actor = authz.actor(user)
 	if isinstance(classifications, str):
 		classifications = json.loads(classifications)
 	payload = {"task": task, "classifications": json.dumps(classifications, sort_keys=True)}
@@ -201,72 +146,41 @@ def accept_departmental_plan(
 	if replay:
 		return replay
 	task_doc = _open_task(task)
-	role = _authorise_planner(actor, task_doc)
+	assignment = authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	envelope.assert_task_token(task_doc, task_token)
-	_maker_checker(actor, task_doc.submission)
+	authz.require_not_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task_doc.submission)
 
 	version = frappe.get_doc("Departmental Plan Version", task_doc.dpp_version)
 	root = envelope.locked("Departmental Plan", version.departmental_plan)
 	if version.version_status != "Submitted":
-		fail("PLN_REVIEW_STALE", "This task has already changed. Reload to see the current decision.")
+		fail("PLN_REVIEW_STALE")
 
-	snapshots = json.loads(
-		frappe.db.get_value("Departmental Plan Submission", task_doc.submission, "entry_snapshots")
-	)
-	active_types = set(
-		frappe.get_all("Requirement Type", filters={"status": "Active"}, pluck="name")
-	)
-	unclassified = [
-		row["entry_id"]
-		for row in snapshots
-		if cstr(classifications.get(row["entry_id"])) not in active_types
-	]
+	snapshots = json.loads(frappe.db.get_value("Departmental Plan Submission", task_doc.submission, "entry_snapshots"))
+	active_types = set(frappe.get_all("Requirement Type", filters={"status": "Active"}, pluck="name"))
+	proceeding = [row for row in snapshots if not cstr(row.get("not_proceeding_reason")).strip()]
+	unclassified = [row["entry_id"] for row in proceeding if cstr(classifications.get(row["entry_id"])) not in active_types]
 	if unclassified:
-		fail(
-			"PLN_CLASSIFICATION_INCOMPLETE",
-			"Classify every submitted requirement before accepting the plan: "
-			f"{', '.join(unclassified)}.",
-		)
-	# source currency: every Need-origin snapshot must still be the current
-	# accepted version (§12.6), read through the published contract (D5)
+		fail("PLN_CLASSIFICATION_INCOMPLETE", f"Classify every submitted requirement before accepting the plan: {', '.join(unclassified)}.")
 	from kentender_procurement.procurement_planning.services import needs_intake
 
 	for row in snapshots:
 		if row.get("need"):
-			current = needs_intake.current_accepted_version_of(
-				row["need"], task_doc.financial_year
-			)
+			current = needs_intake.current_accepted_version_of(row["need"], task_doc.fiscal_year)
 			if current != cstr(row.get("need_version")):
-				fail(
-					"PLN_SOURCE_UNAVAILABLE",
-					"One or more selected departmental entries are no longer "
-					"available for Plan Item formation.",
-				)
+				fail("PLN_SOURCE_UNAVAILABLE")
 
 	decision = _decide(
-		task_doc, decision="Accept departmental plan", actor=actor, role=role,
-		classifications=classifications, idempotency_key=idempotency_key,
+		task_doc, decision="Accept departmental plan", actor=actor, assignment=assignment,
+		classifications={k: v for k, v in classifications.items() if k in {r["entry_id"] for r in proceeding}},
+		idempotency_key=idempotency_key,
 	)
 	prior_accepted = cstr(root.current_accepted_version)
-	frappe.db.set_value(
-		"Departmental Plan Version", version.name, "version_status", "Accepted",
-		update_modified=False,
-	)
+	frappe.db.set_value("Departmental Plan Version", version.name, "version_status", "Accepted", update_modified=False)
 	if prior_accepted and prior_accepted != version.name:
-		frappe.db.set_value(
-			"Departmental Plan Version", prior_accepted, "version_status", "Superseded",
-			update_modified=False,
-		)
-	envelope.bump(
-		root, current_state="Accepted",
-		current_version=version.name, current_accepted_version=version.name,
-	)
-	plan = ensure_annual_plan(
-		procuring_entity=task_doc.procuring_entity,
-		financial_year=task_doc.financial_year,
-		pe_fy_context=cstr(root.pe_fy_context),
-		fixture_namespace=cstr(root.fixture_namespace),
-	)
+		frappe.db.set_value("Departmental Plan Version", prior_accepted, "version_status", "Superseded", update_modified=False)
+	envelope.bump(root, current_state="Accepted", current_version=version.name, current_accepted_version=version.name)
+	plan = ensure_annual_plan(fiscal_year=task_doc.fiscal_year, fixture_namespace=cstr(root.fixture_namespace))
+	_publish_not_proceeding(snapshots, decision.name)
 	result = {
 		"ok": True,
 		"idempotent": False,
@@ -277,69 +191,61 @@ def accept_departmental_plan(
 		"annual_plan_version": plan["version_reference"],
 	}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="AcceptDepartmentalPlan", payload=payload,
-		result=result, document_type="Departmental Plan Validation Decision",
-		document_name=decision.name, actor=actor,
+		idempotency_key=idempotency_key, command="AcceptDepartmentalPlan", payload=payload, result=result,
+		document_type="Departmental Plan Validation Decision", document_name=decision.name, actor=actor,
 		fixture_namespace=cstr(task_doc.fixture_namespace),
 	)
 	return result
 
 
-def ensure_annual_plan(
-	*,
-	procuring_entity: str,
-	financial_year: str,
-	pe_fy_context: str,
-	fixture_namespace: str = "",
-) -> dict[str, str]:
-	"""Create or reuse the one Annual Plan root + Draft Version 1 (invariant 24).
+def _publish_not_proceeding(snapshots: list[dict[str, Any]], decision_name: str) -> None:
+	"""§4.4 / PLN-AC-092 — the outcome reaches Departmental Needs through its
+	own published usage contract (D12), never a table write."""
+	from kentender_procurement.departmental_needs.services import usage as needs_usage
+
+	for row in snapshots:
+		reason = cstr(row.get("not_proceeding_reason")).strip()
+		if not row.get("need") or not reason:
+			continue
+		needs_usage.project_planning_usage(
+			departmental_need=row["need"],
+			accepted_version=row["need_version"],
+			usage="Not proceeding",
+			not_proceeding_reason=reason,
+			source_event_id=f"{decision_name}:{row['need_version']}:not-proceeding",
+			source_event_time=now_datetime(),
+			user="Administrator",
+		)
+
+
+def ensure_annual_plan(*, fiscal_year: str, fixture_namespace: str = "") -> dict[str, str]:
+	"""Create or reuse the one Annual Plan root + Draft Version 1 (invariant 28).
 
 	The insert races only against another first acceptance; the DB unique on
-	`pe_fy_context` guarantees one winner, and the loser reloads it."""
+	`fiscal_year` guarantees one winner, and the loser reloads it."""
 	existing = frappe.db.get_value(
-		"Annual Plan", {"pe_fy_context": pe_fy_context},
-		["name", "plan_reference", "open_successor_version", "active_version"],
-		as_dict=True,
+		"Annual Plan", {"fiscal_year": fiscal_year},
+		["name", "plan_reference", "open_successor_version", "active_version"], as_dict=True,
 	)
 	if existing:
 		open_version = cstr(existing.open_successor_version)
-		version_reference = (
-			cstr(frappe.db.get_value("Annual Plan Version", open_version, "version_reference"))
-			if open_version
-			else ""
-		)
+		version_reference = cstr(frappe.db.get_value("Annual Plan Version", open_version, "version_reference")) if open_version else ""
 		return {"plan_reference": existing.plan_reference, "version_reference": version_reference}
 
-	pe_label = cstr(
-		frappe.db.get_value("Procuring Entity", procuring_entity, "legal_name")
-		or frappe.db.get_value("Procuring Entity", procuring_entity, "entity_name")
-		or procuring_entity
-	)
-	fy_label = cstr(
-		frappe.db.get_value("Financial Year", financial_year, "label") or financial_year
-	)
-	fy_period = fy_label.removeprefix("FY").strip()
+	pe_name = cstr(frappe.db.get_single_value("Site Procuring Entity", "pe_name"))
 	try:
 		plan = frappe.get_doc(
 			{
 				"doctype": "Annual Plan",
-				"plan_reference": references.plan_reference(procuring_entity, financial_year),
-				"title": f"{pe_label} Annual Procurement Plan {fy_period}",
-				"pe_fy_context": pe_fy_context,
-				"procuring_entity": procuring_entity,
-				"financial_year": financial_year,
+				"plan_reference": references.plan_reference(fiscal_year),
+				"title": f"{pe_name} Annual Procurement Plan {references.fy_period_label(fiscal_year)}",
+				"fiscal_year": fiscal_year,
 				"record_version": 0,
 				"fixture_namespace": fixture_namespace,
 			}
 		).insert(ignore_permissions=True)
 	except frappe.UniqueValidationError:
-		# a concurrent first acceptance won the insert — reuse the winner
-		return ensure_annual_plan(
-			procuring_entity=procuring_entity,
-			financial_year=financial_year,
-			pe_fy_context=pe_fy_context,
-			fixture_namespace=fixture_namespace,
-		)
+		return ensure_annual_plan(fiscal_year=fiscal_year, fixture_namespace=fixture_namespace)
 	version = frappe.get_doc(
 		{
 			"doctype": "Annual Plan Version",
@@ -347,12 +253,10 @@ def ensure_annual_plan(
 			"annual_plan": plan.name,
 			"version_number": 1,
 			"version_status": "Draft",
+			"funding_state": "Not requested",
 			"record_version": 0,
 			"fixture_namespace": fixture_namespace,
 		}
 	).insert(ignore_permissions=True)
-	frappe.db.set_value(
-		"Annual Plan", plan.name, "open_successor_version", version.name,
-		update_modified=False,
-	)
+	frappe.db.set_value("Annual Plan", plan.name, "open_successor_version", version.name, update_modified=False)
 	return {"plan_reference": plan.plan_reference, "version_reference": version.version_reference}

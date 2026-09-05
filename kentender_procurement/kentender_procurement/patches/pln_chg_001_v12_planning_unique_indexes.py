@@ -13,8 +13,9 @@ from __future__ import annotations
 import frappe
 
 INDEXES = (
-	# invariant 2: one DPP root per PE/FY context + OU
-	("tabDepartmental Plan", "pln_uniq_dpp_root", ("pe_fy_context", "organisation_unit")),
+	# invariant 2: one DPP root per Fiscal Year + OU (rekeyed from the retired
+	# PE/FY context by PLN-CHG-001 v1.12, tracker D7)
+	("tabDepartmental Plan", "pln_uniq_dpp_root", ("fiscal_year", "organisation_unit")),
 	# monotonic version sequences cannot collide
 	("tabDepartmental Plan Version", "pln_uniq_dpp_version", ("departmental_plan", "version_number")),
 	# stable entry ids are unique within one DPP Version; successor copies reuse them

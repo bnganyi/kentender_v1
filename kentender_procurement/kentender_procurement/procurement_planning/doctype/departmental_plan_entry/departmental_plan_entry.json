@@ -19,6 +19,7 @@
   "required_by_date",
   "budget_line",
   "indicative_amount",
+  "not_proceeding_reason",
   "fixture_namespace"
  ],
  "fields": [
@@ -29,7 +30,7 @@
    "read_only": 1,
    "reqd": 1,
    "in_list_view": 1,
-   "description": "Stable entry reference (DPPE-…) preserved when a successor DPP Version copies the entry; unique within one DPP Version (DB composite unique). It is the stable source_line_id for a direct entry (§4.4/§6 lineage).",
+   "description": "Stable entry reference (DPPE-\u2026) preserved when a successor DPP Version copies the entry; unique within one DPP Version (DB composite unique). It is the stable source_line_id for a direct entry (\u00a74.4/\u00a76 lineage).",
    "search_index": 1
   },
   {
@@ -49,7 +50,7 @@
    "read_only": 1,
    "reqd": 1,
    "in_list_view": 1,
-   "description": "Required and immutable after creation (§4.4)."
+   "description": "Required and immutable after creation (\u00a74.4)."
   },
   {
    "fieldname": "need",
@@ -101,7 +102,7 @@
    "fieldname": "unit",
    "fieldtype": "Link",
    "label": "Unit",
-   "options": "Unit Of Measure",
+   "options": "UOM",
    "reqd": 1
   },
   {
@@ -124,6 +125,12 @@
    "fieldtype": "Currency",
    "label": "Indicative Amount",
    "description": "Planning-owned entry value. Required before submission and greater than zero. Currency is read from the Budget Line."
+  },
+  {
+   "fieldname": "not_proceeding_reason",
+   "fieldtype": "Small Text",
+   "label": "Not Proceeding Reason",
+   "description": "PLN-CHG-001 v1.12 \u00a74.4 \u2014 set only on a Need-origin entry the department is not pursuing this financial year; 20\u2013500 characters. Retained for audit, funds nothing, forms no Plan Item."
   },
   {
    "fieldname": "fixture_namespace",
@@ -170,7 +177,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

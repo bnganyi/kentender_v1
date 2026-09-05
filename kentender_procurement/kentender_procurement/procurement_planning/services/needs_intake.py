@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §7.1 — accepted-Need intake from Departmental Needs.
+"""PLN-CHG-001 v1.12 §7.1 — accepted-Need intake from Departmental Needs.
 
 Planning consumes Needs only through the published contract (decision D5):
 `DepartmentalNeedAccepted.v2` and its replay reads in
@@ -113,11 +113,10 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	root = frappe.db.get_value(
 		"Departmental Plan",
 		version_doc.departmental_plan,
-		["procuring_entity", "organisation_unit", "financial_year", "dpp_reference",
-		 "fixture_namespace"],
+		["organisation_unit", "fiscal_year", "dpp_reference", "fixture_namespace"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.financial_year, root.organisation_unit)
+	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
 	by_need = {cstr(payload["need_id"]): payload for payload in sources}
 	existing = frappe.get_all(
 		"Departmental Plan Entry",
@@ -167,10 +166,10 @@ def coverage_gaps(version_doc) -> list[str]:
 	root = frappe.db.get_value(
 		"Departmental Plan",
 		version_doc.departmental_plan,
-		["procuring_entity", "organisation_unit", "financial_year"],
+		["organisation_unit", "fiscal_year"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.financial_year, root.organisation_unit)
+	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
 	rows = frappe.get_all(
 		"Departmental Plan Entry",
 		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},

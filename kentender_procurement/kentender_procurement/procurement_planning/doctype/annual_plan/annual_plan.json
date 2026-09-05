@@ -8,9 +8,7 @@
  "field_order": [
   "plan_reference",
   "title",
-  "pe_fy_context",
-  "procuring_entity",
-  "financial_year",
+  "fiscal_year",
   "active_version",
   "open_successor_version",
   "record_version",
@@ -37,33 +35,16 @@
    "description": "System-generated as {Procuring Entity} Annual Procurement Plan {FY period}."
   },
   {
-   "fieldname": "pe_fy_context",
+   "fieldname": "fiscal_year",
    "fieldtype": "Link",
-   "label": "PE FY Context",
-   "options": "PE Fiscal Year Context",
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
    "read_only": 1,
    "reqd": 1,
-   "unique": 1,
    "search_index": 1,
-   "description": "One Annual Plan root per PE/FY context (§4.7, invariant 24 — DB unique)."
-  },
-  {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "financial_year",
-   "fieldtype": "Link",
-   "label": "Financial Year",
-   "options": "Financial Year",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
+   "in_list_view": 1,
+   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 \u00a74.2). Planning data, never a permission dimension.",
+   "unique": 1
   },
   {
    "fieldname": "active_version",
@@ -126,7 +107,7 @@
    "create": 1
   },
   {
-   "role": "Budget Officer",
+   "role": "Finance Confirmation Officer",
    "read": 1
   },
   {
@@ -138,15 +119,7 @@
    "read": 1
   },
   {
-   "role": "Departmental Author",
-   "read": 1
-  },
-  {
-   "role": "Head of User Department",
-   "read": 1
-  },
-  {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

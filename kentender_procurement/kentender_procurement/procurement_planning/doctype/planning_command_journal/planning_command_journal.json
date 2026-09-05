@@ -24,7 +24,7 @@
    "read_only": 1,
    "reqd": 1,
    "unique": 1,
-   "description": "§8.2 command idempotency: a repeated key replays the recorded result; the same key with a different fingerprint is rejected."
+   "description": "\u00a78.2 command idempotency: a repeated key replays the recorded result; the same key with a different fingerprint is rejected."
   },
   {
    "fieldname": "command",
@@ -105,7 +105,7 @@
    "create": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

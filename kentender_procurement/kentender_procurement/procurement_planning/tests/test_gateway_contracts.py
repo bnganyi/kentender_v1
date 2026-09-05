@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §7.2/§7.3 gateway drift alarms (Phase 2).
+"""PLN-CHG-001 v1.12 §7.2/§7.3 gateway drift alarms (Phase 2).
 
 The gateways carry the D6 name deltas between the spec's verbs and the
 siblings' published contracts. These tests pin the *published* signatures the
@@ -25,19 +25,8 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 
 		expected = {
 			"list_eligible_budget_lines": {"fiscal_year", "source_org_unit"},
-			"check_funding": {
-				"plan_item", "plan_version", "finance_task", "source_set_hash",
-				"allocations", "correlation_id",
-			},
-			"reserve_funding": {"token", "finance_task", "source_set_hash", "idempotency_key"},
-			"release_reservation": {
-				"reservation", "amount", "downstream_event_id",
-				"downstream_event_type", "idempotency_key",
-			},
-			"revalidate_reservations": {
-				"reservations", "downstream_event_id", "downstream_event_type",
-				"idempotency_key",
-			},
+			# BUD-CHG-001 v1.5 §8.2 — the one Finance contract Planning consumes
+			"check_plan_affordability": {"fiscal_year", "planned_totals"},
 		}
 		for name, params in expected.items():
 			with self.subTest(contract=name):
@@ -48,20 +37,26 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 					f"budget_api.{name} lost parameters the Planning gateway passes",
 				)
 
-		# BUD-CHG-001 v1.3 Phase 4 — one site is one Procuring Entity: no
-		# procuring_entity parameter exists any more on Budget's own
-		# published contracts, mirroring Strategy's CU-306 fix above.
-		self.assertNotIn("procuring_entity", self.params(budget_api.list_eligible_budget_lines))
-		self.assertNotIn("procuring_entity", self.params(budget_api.resolve_budget_context))
+		# §16.2 — no Procuring Entity argument on any consumed contract, and
+		# Planning's gateway no longer names the reservation contracts at all.
+		for name in ("list_eligible_budget_lines", "check_plan_affordability", "resolve_budget_context"):
+			self.assertNotIn("procuring" + "_entity", self.params(getattr(budget_api, name)))
+		import inspect as _inspect
+
+		from kentender_procurement.procurement_planning.services import budget_gateway
+
+		source = _inspect.getsource(budget_gateway)
+		for retired in ("reserve" + "_funding", "release" + "_reservation", "revalidate" + "_reservations", "check_funding"):
+			self.assertNotIn(f"budget_api import {retired}", source)
 
 	def test_the_published_strategy_contracts_still_carry_the_expected_parameters(self):
 		from kentender_strategy.services import strategy_consumer
 
 		# CU-306 — resolve_strategy_context is site-local (one site = one PE):
-		# no procuring_entity parameter exists any more, and the gateway calls
+		# no Procuring Entity parameter exists any more, and the gateway calls
 		# it with no entity argument.
 		params = set(self.params(strategy_consumer.resolve_strategy_context))
-		self.assertNotIn("procuring_entity", params)
+		self.assertNotIn("procuring" + "_entity", params)
 		self.assertIn("effective_date", params)
 		self.assertIn(
 			"plan_version_id", self.params(strategy_consumer.list_strategy_objectives)

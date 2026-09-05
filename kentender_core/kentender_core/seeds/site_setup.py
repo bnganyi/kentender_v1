@@ -308,10 +308,10 @@ def _seed_catalogues() -> dict[str, int]:
 	return {"created": created, "requirement_types": len(REQUIREMENT_TYPES), "procurement_methods": len(PROCUREMENT_METHODS)}
 
 
-def _seed_regulatory_reference() -> str:
+def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG) -> str:
 	from kentender_core.services import regulatory_reference as register
 
-	fiscal_year = configuration._fy_name(DPP_INTAKE["start_year"])
+	fiscal_year = fiscal_year or configuration._fy_name(DPP_INTAKE["start_year"])
 	bands = []
 	for method, goods, works, services, basis, reference in THRESHOLD_BANDS:
 		for category, amount in (("Goods", goods), ("Works", works), ("Services", services)):
@@ -339,7 +339,7 @@ def _seed_regulatory_reference() -> str:
 		exclusive_preference_goods_services_amount=REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"],
 		market_prices=[],
 		schedule_buffers=[],
-		fixture_namespace=FIXTURE_TAG,
+		fixture_namespace=fixture_namespace,
 	)
 	return f"{outcome['reference']}{'' if outcome['created'] else ' (existing)'}"
 

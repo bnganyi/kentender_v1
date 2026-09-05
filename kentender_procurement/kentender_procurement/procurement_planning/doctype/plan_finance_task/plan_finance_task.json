@@ -7,12 +7,10 @@
  "engine": "InnoDB",
  "field_order": [
   "task_reference",
-  "plan_item",
-  "plan_item_id",
   "plan_version",
-  "procuring_entity",
-  "source_set_hash",
-  "required_amount",
+  "plan_value",
+  "line_totals_hash",
+  "affordability_statement",
   "status",
   "decision",
   "task_token",
@@ -31,22 +29,6 @@
    "description": "Generated as FNT-{PE code}-{FY start}-{item}-{seq}."
   },
   {
-   "fieldname": "plan_item",
-   "fieldtype": "Link",
-   "label": "Plan Item Row",
-   "options": "Annual Plan Item",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "plan_item_id",
-   "fieldtype": "Data",
-   "label": "Plan Item ID",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
    "fieldname": "plan_version",
    "fieldtype": "Link",
    "label": "Plan Version",
@@ -55,28 +37,25 @@
    "reqd": 1
   },
   {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "source_set_hash",
-   "fieldtype": "Data",
-   "label": "Source Set Hash",
-   "read_only": 1,
-   "reqd": 1,
-   "description": "Fixes the exact source allocations and amounts the task covers."
-  },
-  {
-   "fieldname": "required_amount",
+   "fieldname": "plan_value",
    "fieldtype": "Currency",
-   "label": "Required Amount",
+   "label": "Plan Value",
    "read_only": 1,
-   "reqd": 1
+   "description": "Sum of the Version's Plan Item planned values at request time."
+  },
+  {
+   "fieldname": "line_totals_hash",
+   "fieldtype": "Data",
+   "label": "Line Totals Hash",
+   "read_only": 1,
+   "description": "Per-line planned totals at request time; the decision is Stale once these change (\u00a74.11)."
+  },
+  {
+   "fieldname": "affordability_statement",
+   "fieldtype": "JSON",
+   "label": "Affordability Statement",
+   "read_only": 1,
+   "description": "BUD v1.5 \u00a78.2 `check_plan_affordability` result as computed at request time."
   },
   {
    "fieldname": "status",
@@ -142,7 +121,7 @@
    "create": 1
   },
   {
-   "role": "Budget Officer",
+   "role": "Finance Confirmation Officer",
    "read": 1
   },
   {
@@ -150,7 +129,11 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
    "read": 1
   }
  ],

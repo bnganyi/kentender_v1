@@ -1,42 +1,46 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §6 — the native Frappe role set for Procurement Planning.
+"""PLN-CHG-001 v1.12 §6 — the business responsibilities Procurement Planning
+names, exactly as registered in `kentender_core.services.business_role_registry`.
 
-This module is the single vocabulary for Planning role names. There is no
-capability store, scope-assignment record or second permission layer (§6,
-decision D4): authorisation is native Role + User Permission, and every
-service check names these constants.
+Authority is a role-bound `User Responsibility Assignment` resolved by the
+shared AUTH-ADR-001 v1.6 resolver (services/planning_authorization.py); a
+Frappe Role is only the framework projection of an assignment. This module is
+the single vocabulary for the role labels Planning commands require.
 """
 
 from __future__ import annotations
 
-import frappe
-
 ROLE_DEPARTMENTAL_AUTHOR = "Departmental Author"
 ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"
 ROLE_PROCUREMENT_PLANNER = "Procurement Planner"
-ROLE_BUDGET_OFFICER = "Budget Officer"
+ROLE_FINANCE_CONFIRMATION_OFFICER = "Finance Confirmation Officer"
 ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
 ROLE_PLAN_STATUTORY_APPROVER = "Plan Statutory Approver"
-ROLE_PLANNING_AUDITOR = "Planning Auditor"
+ROLE_AUDITOR = "Auditor"
 
-ALL_PLANNING_ROLES = (
-	ROLE_DEPARTMENTAL_AUTHOR,
-	ROLE_HEAD_OF_USER_DEPARTMENT,
+# §6 — Organisation Unit scoped responsibilities.
+DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
+# §6 — Site-wide responsibilities.
+SITE_WIDE_ROLES = (
 	ROLE_PROCUREMENT_PLANNER,
-	ROLE_BUDGET_OFFICER,
+	ROLE_FINANCE_CONFIRMATION_OFFICER,
 	ROLE_ACCOUNTING_OFFICER,
 	ROLE_PLAN_STATUTORY_APPROVER,
-	ROLE_PLANNING_AUDITOR,
+	ROLE_AUDITOR,
+)
+ALL_PLANNING_ROLES = DEPARTMENTAL_ROLES + SITE_WIDE_ROLES
+
+# PLN-DES-16 Forbidden copy names them in this order.
+FORBIDDEN_RESPONSIBILITIES = (
+	"Procurement Planner, Finance Confirmation Officer, Accounting Officer, the entity's "
+	"statutory approver, Head of User Department, Departmental Author or Auditor"
 )
 
 
 def ensure_planning_roles() -> None:
-	"""Idempotently create the §6 role set (also run by the v1.2 patch)."""
-	for role in ALL_PLANNING_ROLES:
-		if frappe.db.exists("Role", role):
-			continue
-		frappe.get_doc(
-			{"doctype": "Role", "role_name": role, "desk_access": 1}
-		).insert(ignore_permissions=True)
+	"""The Frappe Role projections are owned by the registry (AUTH §5.7)."""
+	from kentender_core.services.business_role_registry import ensure_roles
+
+	ensure_roles()

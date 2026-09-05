@@ -7,10 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "dpp_reference",
-  "pe_fy_context",
-  "procuring_entity",
   "organisation_unit",
-  "financial_year",
+  "fiscal_year",
   "current_state",
   "current_version",
   "current_accepted_version",
@@ -29,25 +27,6 @@
    "description": "Generated as DPP-{PE code}-{OU code}-{FY start}-{3 digits}."
   },
   {
-   "fieldname": "pe_fy_context",
-   "fieldtype": "Link",
-   "label": "PE FY Context",
-   "options": "PE Fiscal Year Context",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1,
-   "description": "Fixes the PE/FY scope. Required and immutable."
-  },
-  {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "read_only": 1,
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "organisation_unit",
    "fieldtype": "Link",
    "label": "Organisation Unit",
@@ -57,13 +36,15 @@
    "search_index": 1
   },
   {
-   "fieldname": "financial_year",
+   "fieldname": "fiscal_year",
    "fieldtype": "Link",
-   "label": "Financial Year",
-   "options": "Financial Year",
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
    "read_only": 1,
    "reqd": 1,
-   "search_index": 1
+   "search_index": 1,
+   "in_list_view": 1,
+   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 \u00a74.2). Planning data, never a permission dimension."
   },
   {
    "fieldname": "current_state",
@@ -75,7 +56,7 @@
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1,
-   "description": "Derived root display state (§4.2)."
+   "description": "Derived root display state (\u00a74.2)."
   },
   {
    "fieldname": "current_version",
@@ -149,7 +130,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

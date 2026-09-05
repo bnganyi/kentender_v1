@@ -59,14 +59,14 @@
    "fieldtype": "JSON",
    "label": "Classifications",
    "read_only": 1,
-   "description": "On acceptance: one governed requirement type per submitted entry (entry_id → Requirement Type)."
+   "description": "On acceptance: one governed requirement type per submitted entry (entry_id \u2192 Requirement Type)."
   },
   {
    "fieldname": "issues",
    "fieldtype": "JSON",
    "label": "Issues",
    "read_only": 1,
-   "description": "On return: structured issues — affected entry, concise problem, exact correction required."
+   "description": "On return: structured issues \u2014 affected entry, concise problem, exact correction required."
   },
   {
    "fieldname": "actor",
@@ -128,10 +128,6 @@
    "create": 1
   },
   {
-   "role": "Procurement Planner",
-   "read": 1
-  },
-  {
    "role": "Departmental Author",
    "read": 1
   },
@@ -140,7 +136,11 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
    "read": 1
   }
  ],

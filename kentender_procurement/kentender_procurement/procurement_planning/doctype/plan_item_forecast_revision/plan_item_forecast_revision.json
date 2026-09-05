@@ -1,0 +1,138 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Procurement Planning",
+ "name": "Plan Item Forecast Revision",
+ "owner": "Administrator",
+ "autoname": "format:PFR-{#####}",
+ "fields": [
+  {
+   "fieldname": "plan_item",
+   "fieldtype": "Link",
+   "label": "Plan Item",
+   "options": "Annual Plan Item",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item ID",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "milestone",
+   "fieldtype": "Select",
+   "label": "Milestone",
+   "options": "invitation\nbid_opening\nevaluation_completion\naward_approval\naward_notification\ncontract_signing\ndelivery_completion",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "previous_forecast_date",
+   "fieldtype": "Date",
+   "label": "Previous Forecast",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_forecast_date",
+   "fieldtype": "Date",
+   "label": "New Forecast",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cascade_id",
+   "fieldtype": "Data",
+   "label": "Cascade ID",
+   "read_only": 1,
+   "description": "Shared by every row confirmed in one cascade; null for a standalone single-milestone revision (\u00a74.9A)."
+  },
+  {
+   "fieldname": "revised_by",
+   "fieldtype": "Link",
+   "label": "Revised By",
+   "options": "User",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "revised_at",
+   "fieldtype": "Datetime",
+   "label": "Revised At",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "field_order": [
+  "plan_item",
+  "plan_item_id",
+  "milestone",
+  "previous_forecast_date",
+  "new_forecast_date",
+  "reason",
+  "cascade_id",
+  "revised_by",
+  "revised_at",
+  "fixture_namespace"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

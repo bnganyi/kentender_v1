@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §7.4/§8/§8.2 — Requisition eligibility (Slice H).
+"""PLN-CHG-001 v1.12 §7.4/§8/§8.2 — Requisition eligibility (Slice H).
 
 `GetRequisitionEligiblePlanItem.v2` is the published, read-only contract
 Procurement Requisitions calls to decide whether — and how much of — a Plan
@@ -21,7 +21,7 @@ so `record_requisition_drawdown`'s balance/state failures raise a plain
 `frappe.ValidationError` instead of forcing an unrelated §9 code onto a
 condition the contract's own author never named one for (§9's own docstring:
 "an invented code is a defect in the caller") — the same reasoning
-`authority.not_found()` already uses to sit outside that closed set.
+`authz.not_found()` already uses to sit outside that closed set.
 """
 
 from __future__ import annotations
@@ -31,26 +31,24 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, flt, now_datetime
 
-from kentender_procurement.procurement_planning.services import authority, envelope, plan_read
+from kentender_procurement.procurement_planning.services import envelope, plan_read
+from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
-	ROLE_PLANNING_AUDITOR,
+	ROLE_AUDITOR,
 	ROLE_PROCUREMENT_PLANNER,
 )
 
 
-def _authorise_planner(actor: str, procuring_entity: str) -> None:
-	authority.require_scope(
-		actor, roles=(ROLE_PROCUREMENT_PLANNER, ROLE_PLANNING_AUDITOR), procuring_entity=procuring_entity,
-	)
+def _authorise_planner(actor: str) -> None:
+	authz.require_site_read((ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR), actor)
 
 
 def _authorise_system_caller(actor: str) -> None:
 	"""No Requisitions role vocabulary exists in this repo to authorise
 	against (§2.1); a System Manager/Administrator system-principal call —
 	the same shape Planning's own budget_gateway/needs_intake calls use
-	against Budget/Needs — is the narrowest gate available today."""
-	if actor != "Administrator" and "System Manager" not in frappe.get_roles(actor):
-		authority.not_found()
+	against Budget/Needs — is the narrowest gate available today (FU-07)."""
+	authz.require_technical(actor)
 
 
 def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
@@ -68,12 +66,12 @@ def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
 
 def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.4 `GetRequisitionEligiblePlanItem.v2` — read-only (invariant 1)."""
-	actor = cstr(user or frappe.session.user)
+	actor = authz.actor(user)
 	name = plan_read.resolve_item_doc_name(plan_item_id)
 	item = frappe.get_doc("Annual Plan Item", name)
 	version = frappe.get_doc("Annual Plan Version", item.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	_authorise_planner(actor, plan.procuring_entity)
+	_authorise_planner(actor)
 
 	allocations = frappe.get_all(
 		"Plan Source Allocation",
@@ -124,22 +122,29 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		total_remaining_qty += remaining_qty
 		total_remaining_value += remaining_amount
 
-	finance_refs = frappe.get_all(
-		"Plan Reservation Reference", filters={"plan_item": item.name}, pluck="name",
+	# §7.4 — "Finance evidence remains current": the plan-level confirmation
+	# on the Version (§4.11); there is no per-item finance state or
+	# reservation (Planning holds none).
+	funding_confirmed = version.funding_state == "Confirmed"
+	confirmation = frappe.db.get_value(
+		"Plan Finance Decision",
+		{"task": ("in", frappe.get_all("Plan Finance Task", filters={"plan_version": version.name}, pluck="name") or ("",)), "decision": "Confirm plan funding"},
+		"decision_reference", order_by="decided_at desc",
 	)
 	# §7.4/invariant 18: eligibility follows the item's own current state —
 	# an open (unacknowledged) successor proposing removal never changes it;
 	# only an acknowledged one does, and that already moves this copy off
 	# "Active" (Superseded) or "Removed in successor". §7.1's Need-withdrawal
 	# clause needs no separate check here: Needs itself refuses to publish a
-	# withdrawal while an Active Plan dependency exists, so that state is
-	# already structurally unreachable.
+	# withdrawal while an Active Plan dependency exists.
 	eligible = (
 		item.item_state == "Active"
-		and item.finance_state == "Confirmed"
+		and funding_confirmed
 		and total_remaining_qty > 0
 		and total_remaining_value > 0
 	)
+	from kentender_procurement.procurement_planning.services import schedule
+
 	return {
 		"outcome": "OK",
 		"eligible": eligible,
@@ -147,23 +152,16 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"version_reference": version.name,
 		"plan_item_id": item.plan_item_id,
 		"record_version": int(item.record_version or 0),
-		"procuring_entity": plan.procuring_entity,
-		"financial_year": plan.financial_year,
+		"fiscal_year": plan.fiscal_year,
 		"requirement_type": item.requirement_type,
+		"procurement_category": cstr(item.procurement_category),
 		"procurement_method": item.procurement_method,
 		"strategic_objective": item.strategic_objective,
 		"objective_path": item.objective_path,
-		"planned_dates": {
-			"invitation_date": cstr(item.invitation_date),
-			"bid_opening_date": cstr(item.bid_opening_date),
-			"evaluation_completion_date": cstr(item.evaluation_completion_date),
-			"award_approval_date": cstr(item.award_approval_date),
-			"award_notification_date": cstr(item.award_notification_date),
-			"contract_signing_date": cstr(item.contract_signing_date),
-			"delivery_completion_date": cstr(item.delivery_completion_date),
-		},
-		"funding_confirmation_references": finance_refs,
-		"finance_state": item.finance_state,
+		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
+		"forecast_dates": {f"{m}_date": cstr(item.get(f"forecast_{m}_date")) for m in schedule.MILESTONES},
+		"funding_confirmation_references": [confirmation] if confirmation else [],
+		"funding_state": version.funding_state,
 		"total_quantity": total_qty,
 		"total_value": total_value,
 		"remaining_quantity": total_remaining_qty,
@@ -191,7 +189,7 @@ def record_requisition_drawdown(
 	means a racing second drawdown against the same item must re-read the
 	freshly-consumed balance before it can proceed, on top of the per-
 	allocation row lock below."""
-	actor = cstr(user or frappe.session.user)
+	actor = authz.actor(user)
 	payload = {
 		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
 		"requesting_org_unit": requesting_org_unit, "allocations": allocations,
@@ -208,7 +206,7 @@ def record_requisition_drawdown(
 	item_name = plan_read.resolve_item_doc_name(plan_item_id)
 	item = envelope.locked("Annual Plan Item", item_name)
 	envelope.check_record_version(item, expected_record_version)
-	if item.item_state != "Active" or item.finance_state != "Confirmed":
+	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state") != "Confirmed":
 		frappe.throw("This Plan Item is not currently eligible for a Requisition drawdown.")
 
 	# Validate every requested allocation first, and only write once the
@@ -225,7 +223,7 @@ def record_requisition_drawdown(
 			"name",
 		)
 		if not allocation_name:
-			authority.not_found()
+			authz.not_found()
 		allocation = envelope.locked("Plan Source Allocation", allocation_name)
 		if allocation.allocation_state != "Active":
 			frappe.throw(f"Source allocation {allocation.allocation_id} is not currently drawable.")
@@ -277,7 +275,7 @@ def reverse_requisition_drawdown(
 	Reversed rows); it never edits the original drawdown row's own recorded
 	quantity/amount (§5.3 invariant 20's spirit: recorded evidence is never
 	edited, only superseded by a new state)."""
-	actor = cstr(user or frappe.session.user)
+	actor = authz.actor(user)
 	payload = {"drawdown_reference": drawdown_reference}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
@@ -285,7 +283,7 @@ def reverse_requisition_drawdown(
 	_authorise_system_caller(actor)
 
 	if not drawdown_reference or not frappe.db.exists("Plan Drawdown Reference", drawdown_reference):
-		authority.not_found()
+		authz.not_found()
 	drawdown = envelope.locked("Plan Drawdown Reference", drawdown_reference)
 	envelope.check_record_version(drawdown, expected_record_version)
 	if drawdown.drawdown_state != "Active":

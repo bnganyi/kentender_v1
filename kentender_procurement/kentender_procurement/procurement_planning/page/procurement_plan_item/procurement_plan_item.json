@@ -4,22 +4,40 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-08-31 13:30:00.000000",
+ "modified": "2026-09-05 04:53:08.745501",
  "modified_by": "Administrator",
  "owner": "Administrator",
  "module": "Procurement Planning",
  "name": "procurement-plan-item",
  "page_name": "procurement-plan-item",
  "roles": [
-  {"role": "Administrator"},
-  {"role": "System Manager"},
-  {"role": "Departmental Author"},
-  {"role": "Head of User Department"},
-  {"role": "Procurement Planner"},
-  {"role": "Budget Officer"},
-  {"role": "Accounting Officer"},
-  {"role": "Plan Statutory Approver"},
-  {"role": "Planning Auditor"}
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Departmental Author"
+  },
+  {
+   "role": "Head of User Department"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Finance Confirmation Officer"
+  },
+  {
+   "role": "Accounting Officer"
+  },
+  {
+   "role": "Plan Statutory Approver"
+  },
+  {
+   "role": "Auditor"
+  }
  ],
  "script": null,
  "standard": "Yes",

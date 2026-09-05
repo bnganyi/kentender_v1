@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.2 §7.4/§8.2 Requisition eligibility tests (Phase 10,
+"""PLN-CHG-001 v1.12 §7.4/§8.2 Requisition eligibility tests (Phase 10,
 Slice H): GetRequisitionEligiblePlanItem.v2, RecordRequisitionDrawdown and
 ReverseRequisitionDrawdown — the published contract a sibling Requisitions
 module would call; this repo owns no such module (§2.1), so every test here
@@ -39,6 +39,7 @@ class RequisitionCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
 		super().setUp()
@@ -54,42 +55,28 @@ class RequisitionCase(IntegrationTestCase):
 		eligible_patch.start()
 		self.addCleanup(eligible_patch.stop)
 
-	def item_values(self, **overrides) -> dict:
-		values = {
-			"title": "Direct requirement", "description": "Assess and remediate the direct requirement.",
-			"strategic_objective": fx.STRATEGY_OBJECTIVE, "aggregation_reason": "",
-			"invitation_date": "2098-08-01", "bid_opening_date": "2098-08-15",
-			"evaluation_completion_date": "2098-09-01", "award_approval_date": "2098-09-10",
-			"award_notification_date": "2098-09-15", "contract_signing_date": "2098-10-01",
-			"delivery_completion_date": "2098-10-15",
-		}
-		values.update(overrides)
-		return values
-
 	def complete_and_confirm(self, item_id: str, **value_overrides) -> None:
+		frappe.set_user(fx.PLANNER)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		plan_workbench.save_plan_item(
-			plan_item=item_id, values=self.item_values(**value_overrides),
+			plan_item=item_id, values=fx.item_values(**value_overrides),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
-		item = plan_read.get_plan_item(plan_item_id=item_id)
-		requested = plan_finance.request_finance_confirmation(
-			plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key(),
+		plan_reference = item["plan_reference"]
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		requested = plan_finance.request_plan_funding_confirmation(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		task = frappe.get_doc("Plan Finance Task", requested["task"])
-		frappe.set_user(fx.BUDGET_OFFICER)
-		read = plan_read.get_finance_task(task=task.name)
-		plan_finance.confirm_funding(
-			task=task.name, task_token=task.task_token, check_token=read["budget_check_token"],
-			idempotency_key=key(),
-		)
+		frappe.set_user(fx.FINANCE_OFFICER)
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
 		frappe.set_user(fx.PLANNER)
 
 	def confirmed_item(self, *, indicative_amount: float = 1000000) -> tuple[dict, str]:
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"],
@@ -169,8 +156,8 @@ class TestEligibility(RequisitionCase):
 	def test_a_draft_item_never_activated_is_not_eligible(self):
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"], values=fx.direct_values(),
@@ -202,15 +189,14 @@ class TestEligibility(RequisitionCase):
 
 	def test_active_but_no_longer_current_funding_is_not_eligible(self):
 		"""§7.4's own "Finance evidence remains current" condition — proven by
-		direct DB construction, since no command in the real surface can move
-		an already-Active item's finance_state off Confirmed (Stale only ever
-		applies mid-correction, before activation): the read model's own
-		defensive check still needs proving correct."""
+		direct DB construction on the Version's plan-level funding state."""
 		accepted, item_id = self.active_item()
 		name = plan_read.resolve_item_doc_name(item_id)
-		frappe.db.set_value("Annual Plan Item", name, "finance_state", "Stale", update_modified=False)
+		version = frappe.db.get_value("Annual Plan Item", name, "plan_version")
+		frappe.db.set_value("Annual Plan Version", version, "funding_state", "Stale", update_modified=False)
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		self.assertFalse(read["eligible"])
+		frappe.db.set_value("Annual Plan Version", version, "funding_state", "Confirmed", update_modified=False)
 
 
 class TestDrawdownAndReversal(RequisitionCase):
@@ -270,8 +256,8 @@ class TestDrawdownAndReversal(RequisitionCase):
 		relying on request-level rollback no direct Python call goes through."""
 		frappe.set_user(fx.AUTHOR)
 		opened = dpp_lifecycle.open_departmental_plan(
-			procuring_entity=fx.PE, organisation_unit=fx.OU_ALPHA,
-			financial_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		added_a = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"],
@@ -312,7 +298,8 @@ class TestDrawdownAndReversal(RequisitionCase):
 		)
 		item_id = formed["created_items"][0]
 		self.complete_and_confirm(
-			item_id, aggregation_reason="Both laptop batches ship in a single combined tender lot."
+			item_id, aggregation_reason="Both laptop batches ship in a single combined tender lot.",
+			aggregation_indicator="Aggregated into this package",
 		)
 		self.activate(accepted["annual_plan"])
 

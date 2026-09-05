@@ -13,6 +13,10 @@
   "correction_of_plan_version",
   "version_status",
   "change_reason",
+  "funding_state",
+  "funding_line_totals_hash",
+  "splitting_confirmation",
+  "late_activation_reason",
   "submitted_snapshot",
   "snapshot_hash",
   "submitted_by_user",
@@ -68,7 +72,7 @@
    "fieldname": "version_status",
    "fieldtype": "Select",
    "label": "Version Status",
-   "options": "Draft\nAwaiting Accounting Officer\nAwaiting statutory approval\nReturned\nApproved — publication pending\nPublication failed\nActive\nSuperseded\nCancelled",
+   "options": "Draft\nAwaiting Accounting Officer\nAwaiting statutory approval\nReturned\nApproved \u2014 publication pending\nPublication failed\nActive\nSuperseded\nCancelled",
    "default": "Draft",
    "read_only": 1,
    "reqd": 1,
@@ -81,6 +85,37 @@
    "label": "Change Reason",
    "read_only": 1,
    "description": "Required only for a successor Version; identifies the approved-plan change proposed."
+  },
+  {
+   "fieldname": "funding_state",
+   "fieldtype": "Select",
+   "label": "Funding State",
+   "options": "Not requested\nAwaiting Finance\nConfirmed\nReturned\nStale",
+   "default": "Not requested",
+   "reqd": 1,
+   "read_only": 1,
+   "description": "PLN-CHG-001 v1.12 \u00a74.11 \u2014 funding confirmation is a property of the Plan Version: one plan-level task, no per-item state."
+  },
+  {
+   "fieldname": "funding_line_totals_hash",
+   "fieldtype": "Data",
+   "label": "Funding Line Totals Hash",
+   "read_only": 1,
+   "description": "Per-Procurement-Budget-Line planned totals as confirmed; a later change makes the confirmation Stale (\u00a74.11)."
+  },
+  {
+   "fieldname": "splitting_confirmation",
+   "fieldtype": "Small Text",
+   "label": "Splitting Advisory Confirmation",
+   "read_only": 1,
+   "description": "PLN-AC-073/074 \u2014 the Planner's recorded confirmation that the flagged items are legitimately separate (or legitimately unbundled under a preference scheme)."
+  },
+  {
+   "fieldname": "late_activation_reason",
+   "fieldtype": "Small Text",
+   "label": "Late Activation Reason",
+   "read_only": 1,
+   "description": "Invariant 27 \u2014 required when the plan is submitted after its Fiscal Year has begun; retained in audit history."
   },
   {
    "fieldname": "submitted_snapshot",
@@ -159,7 +194,7 @@
    "create": 1
   },
   {
-   "role": "Budget Officer",
+   "role": "Finance Confirmation Officer",
    "read": 1
   },
   {
@@ -171,15 +206,7 @@
    "read": 1
   },
   {
-   "role": "Departmental Author",
-   "read": 1
-  },
-  {
-   "role": "Head of User Department",
-   "read": 1
-  },
-  {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],

@@ -82,7 +82,7 @@
    "label": "Authority Snapshot",
    "read_only": 1,
    "reqd": 1,
-   "description": "Native role and User Permission used for the decision."
+   "description": "Native role and framework permission used for the decision."
   },
   {
    "fieldname": "submitted_at",
@@ -133,7 +133,7 @@
    "read": 1
   },
   {
-   "role": "Planning Auditor",
+   "role": "Auditor",
    "read": 1
   }
  ],
