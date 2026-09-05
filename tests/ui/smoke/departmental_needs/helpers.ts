@@ -99,6 +99,9 @@ export async function expectScreen(page: Page, screen: string): Promise<void> {
 	const shell = page.locator('[data-testid="nds-shell"]');
 	await expect(shell).toHaveAttribute("data-screen", screen, { timeout: 30_000 });
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+	// A revisited screen renders its last payload at once and revalidates in
+	// place; wait for that refresh too so assertions read the fresh rows.
+	await expect(shell).toHaveAttribute("data-refreshing", "false", { timeout: 30_000 });
 }
 
 /**
@@ -127,8 +130,10 @@ export async function expectScreen(page: Page, screen: string): Promise<void> {
  */
 export async function selectContext(page: Page): Promise<void> {
 	const shell = page.locator('[data-testid="nds-shell"]');
-	const settle = () =>
-		expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+	const settle = async () => {
+		await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+		await expect(shell).toHaveAttribute("data-refreshing", "false", { timeout: 30_000 });
+	};
 	await settle();
 
 	if ((await shell.getAttribute("data-screen")) !== "context-selection") return;

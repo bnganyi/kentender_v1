@@ -22,7 +22,7 @@ onMounted(async () => {
 	if (await checkAccess()) refreshAll();
 });
 
-const { state: route, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
+const { state: route, epoch, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
 
 // The registers and the summary cards above them are read once on mount, so a
 // record created or activated on the New/Detail view stayed invisible here
@@ -35,6 +35,10 @@ watch(
 		if (view === "list") refreshAll({ quiet: true });
 	}
 );
+// The page came back into view on the same route: revalidate in place.
+watch(epoch, () => {
+	if (!forbidden.value) refreshAll({ quiet: true });
+});
 
 const NEW_LABEL = { pe: "New procuring entity", fy: "New financial year", context: "New PE/FY context" };
 

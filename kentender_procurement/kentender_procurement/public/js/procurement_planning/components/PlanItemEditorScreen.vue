@@ -386,7 +386,23 @@ function hydrate() {
 	periodsOpen.value = false;
 }
 
-watch(() => props.item, hydrate, { immediate: true });
+watch(
+	() => props.item,
+	(item, previous) => {
+		// An in-place refresh that returns the same item at the same record
+		// version carries nothing new — re-hydrating would discard what the
+		// user has typed since.
+		if (
+			previous &&
+			(previous.plan_item_id ?? null) === (item?.plan_item_id ?? null) &&
+			(previous.record_version ?? null) === (item?.record_version ?? null)
+		) {
+			return;
+		}
+		hydrate();
+	},
+	{ immediate: true }
+);
 
 // --- live baseline computation (PLN-AC-115: recalculates before any save) ---
 

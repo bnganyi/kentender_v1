@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onActivated, onMounted, watch } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
@@ -47,8 +47,8 @@ const activityFilterEvent = ref("");
 const history = ref(null);
 const historyLoaded = ref(false);
 
-async function loadDetail() {
-	loading.value = true;
+async function loadDetail(opts) {
+	if (!(opts && opts.quiet === true)) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	serverError.value = false;
@@ -99,6 +99,13 @@ watch([activityFilterLine, activityFilterEvent], () => {
 onMounted(loadDetail);
 watch(budgetIdParam, (v, prev) => {
 	if (v && v !== prev) loadDetail();
+});
+// KeepAlive brings this instance back with the record still on screen:
+// revalidate in place rather than re-showing the skeleton.
+let activations = 0;
+onActivated(() => {
+	if (activations++ === 0 || !detail.value) return;
+	loadDetail({ quiet: true });
 });
 
 function switchTab(t) {

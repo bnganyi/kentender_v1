@@ -13,6 +13,7 @@
 			data-testid="nds-shell"
 			:data-screen="selectionRequired ? 'context-selection' : screen"
 			:data-loading="loading ? 'true' : 'false'"
+			:data-refreshing="refreshing ? 'true' : 'false'"
 			:data-reference="needReference || ''"
 		>
 			<ContextPicker
@@ -36,6 +37,7 @@
 				:actions="workspace.actions || []"
 				:count-label="workspace.count_label || ''"
 				:financial-years="financialYears"
+				:selected-financial-year="financialYear"
 				v-model:search="search"
 				v-model:status="status"
 				@clear-filters="clearFilters"
@@ -172,10 +174,15 @@ import WithdrawalReviewScreen from "./components/WithdrawalReviewScreen.vue";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 
 const PAGE = "departmental-needs";
-const { route, go } = useRouteState(PAGE);
+const { route, go, epoch } = useRouteState(PAGE);
+// Last payload per screen identity: a revisited screen renders from here at
+// once and refreshes in place; the skeleton is only for a screen never
+// loaded in this session.
+const cache = kentender_core.desk_page.createScreenCache();
 
 const railEl = ref(null);
 const loading = ref(true);
+const refreshing = ref(false);
 const pending = ref(false);
 const error = ref("");
 const errorSummary = ref("");
@@ -327,67 +334,101 @@ const requesterLabel = computed(
 // A monotonic token so a superseded load (the user kept typing, or navigated
 // away mid-flight) can never overwrite the newer response's state.
 let loadSeq = 0;
+let inFlightKey = "";
 
+const screenKey = computed(() => {
+	if (screen.value === "task" || screen.value === "withdrawal") return `task:${taskId.value}`;
+	if (needReference.value) return `need:${needReference.value}`;
+	return "workspace";
+});
+
+async function fetchFor(scr) {
+	if (scr === "task" || scr === "withdrawal") {
+		const loadedTask = await api.getDepartmentalReviewTask(taskId.value);
+		let loadedDependency = null;
+		if (scr === "withdrawal") {
+			const request = loadedTask.withdrawal_request || {};
+			loadedDependency = await api.checkWithdrawalDependency(
+				(loadedTask.need || {}).name,
+				request.accepted_version
+			);
+		}
+		return { task: loadedTask, dependency: loadedDependency };
+	}
+	if (needReference.value) {
+		return { detail: await api.getDepartmentalNeed(needReference.value) };
+	}
+	return {
+		workspace: await api.getNeedsWorkspace({
+			organisation_unit: contextKey.value || "",
+			financial_year: financialYear.value,
+			search: search.value,
+			status: status.value,
+		}),
+	};
+}
+
+function applyLoaded(loaded) {
+	if (loaded.task) {
+		task.value = loaded.task;
+		if (loaded.dependency) dependency.value = loaded.dependency;
+		return;
+	}
+	if (loaded.detail) {
+		detail.value = loaded.detail;
+		usage.value = { usage: detail.value.planning_usage };
+		acceptedBy.value = detail.value.accepted || {};
+		return;
+	}
+	workspace.value = loaded.workspace;
+	financialYears.value = workspace.value.financial_years || [];
+	// One eligible context loads directly (§12.1).
+	const resolved = workspace.value.context;
+	if (resolved && resolved.organisation_unit) {
+		// Mirror the server's resolution; the server is the memory.
+		contextKey.value = resolved.organisation_unit;
+		if (resolved.financial_year) financialYear.value = resolved.financial_year;
+	}
+}
+
+// The skeleton shows only for a screen with nothing to show yet. A screen
+// already loaded this session (Back, Cancel, a decision that routes) renders
+// its last payload at once and refreshes in place; `quiet` forces the
+// in-place path for filter changes and post-action refreshes.
 async function load(opts) {
-	// quiet: refresh in place. The skeleton replaces the whole screen, so
-	// flipping `loading` on a mere filter change made every keystroke flash;
-	// a quiet load keeps the current rows visible until the new ones land.
-	const quiet = !!(opts && opts.quiet === true);
+	const scr = screen.value;
+	const key = screenKey.value;
+	const cached = cache.get(key);
+	if (opts && opts.entering && cached) applyLoaded(cached);
+	const quiet = !!(opts && opts.quiet === true) || !!cached;
+	if (quiet && inFlightKey === key) return;
 	const seq = ++loadSeq;
-	if (!quiet) loading.value = true;
+	inFlightKey = key;
+	if (quiet) refreshing.value = true;
+	else loading.value = true;
 	error.value = "";
 	errorSummary.value = "";
 	try {
-		if (screen.value === "task" || screen.value === "withdrawal") {
-			const loaded = await api.getDepartmentalReviewTask(taskId.value);
+		const loaded = await fetchFor(scr);
+		if (seq !== loadSeq) return;
+		cache.set(key, loaded);
+		applyLoaded(loaded);
+		if (loaded.workspace && !quiet) {
+			// The Needs-submission flag is a site-wide read, independent of the
+			// selected department, so a quiet filter refresh keeps the one
+			// already shown.
+			submissionState.value = await api.getNeedsSubmissionState();
 			if (seq !== loadSeq) return;
-			task.value = loaded;
-			if (screen.value === "withdrawal") {
-				const request = task.value.withdrawal_request || {};
-				const dep = await api.checkWithdrawalDependency(
-					(task.value.need || {}).name,
-					request.accepted_version
-				);
-				if (seq !== loadSeq) return;
-				dependency.value = dep;
-			}
-		} else if (needReference.value) {
-			const loaded = await api.getDepartmentalNeed(needReference.value);
-			if (seq !== loadSeq) return;
-			detail.value = loaded;
-			usage.value = { usage: detail.value.planning_usage };
-			acceptedBy.value = detail.value.accepted || {};
-			if (screen.value === "editor") await loadUnits();
-		} else {
-			const loaded = await api.getNeedsWorkspace({
-				organisation_unit: contextKey.value || "",
-				financial_year: financialYear.value,
-				search: search.value,
-				status: status.value,
-			});
-			if (seq !== loadSeq) return;
-			workspace.value = loaded;
-			financialYears.value = workspace.value.financial_years || [];
-			// One eligible context loads directly (§12.1).
-			const resolved = workspace.value.context;
-			if (resolved && resolved.organisation_unit) {
-				// Mirror the server's resolution; the server is the memory.
-				contextKey.value = resolved.organisation_unit;
-				if (resolved.financial_year) financialYear.value = resolved.financial_year;
-			}
-			if (!quiet) {
-				// The Needs-submission flag is a site-wide read, independent of the
-				// selected department, so a quiet filter refresh keeps the one
-				// already shown.
-				submissionState.value = await api.getNeedsSubmissionState();
-				if (seq !== loadSeq) return;
-			}
-			if (screen.value === "editor") await loadUnits();
 		}
+		if (scr === "editor") await loadUnits();
 	} catch (e) {
 		if (seq === loadSeq) error.value = e.message;
 	} finally {
-		if (seq === loadSeq) loading.value = false;
+		if (seq === loadSeq) {
+			loading.value = false;
+			refreshing.value = false;
+			inFlightKey = "";
+		}
 	}
 }
 
@@ -415,7 +456,11 @@ watch(
 	{ immediate: true }
 );
 
-watch([screen, needReference, taskId], () => load(), { immediate: true });
+watch([screen, needReference, taskId], () => load({ entering: true }), { immediate: true });
+// The page came back into view on the same route: revalidate what is shown.
+watch(epoch, () => {
+	if (cache.has(screenKey.value)) load({ quiet: true });
+});
 
 // §12.1 filters — refresh quietly (rows stay on screen) and debounce typing,
 // so the search asks the server once per pause, not once per keystroke.

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onActivated, onMounted } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import ConfirmDialog from "../../budget_shared/components/ConfirmDialog.vue";
@@ -96,6 +96,13 @@ watch(tab, (t) => {
 onMounted(load);
 watch(versionIdParam, (v, prev) => {
 	if (v && v !== prev) load();
+});
+// KeepAlive brings this instance back with the task still on screen:
+// revalidate in place rather than re-showing the skeleton.
+let activations = 0;
+onActivated(() => {
+	if (activations++ === 0 || !task.value) return;
+	load({ quiet: true });
 });
 
 function switchTab(t) {

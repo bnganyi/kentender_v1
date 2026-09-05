@@ -4,7 +4,7 @@ import { useRouteState } from "../strategy_shared/composables/useRouteState.js";
 import { usePageRail } from "../strategy_shared/composables/usePageRail.js";
 import { fetchPortfolio, saveNewPlanDraft } from "./data/strategyPortfolioApi.js";
 
-const { route, go } = useRouteState("strategy-portfolio");
+const { route, go, epoch } = useRouteState("strategy-portfolio");
 const mode = computed(() => (route.value[1] === "new" ? "create" : "list"));
 
 const railTrail = computed(() => {
@@ -42,30 +42,37 @@ const filters = reactive({ q: "", role: "", status: "" });
 // `quiet` refreshes in place — switching PE from the rail without leaving
 // this list stayed on-screen, so flipping `loading` flashed the skeleton
 // over rows already on screen.
+let refreshSeq = 0;
 async function refresh(opts) {
 	const quiet = !!(opts && opts.quiet === true);
+	const seq = ++refreshSeq;
 	if (!quiet) loading.value = true;
 	error.value = null;
-	forbidden.value = false;
 	try {
 		const data = await fetchPortfolio();
-		if (data.forbidden) {
-			forbidden.value = true;
-		} else {
+		if (seq !== refreshSeq) return;
+		forbidden.value = !!data.forbidden;
+		if (!data.forbidden) {
 			plans.value = data.plans;
 			myWork.value = data.my_work;
 			procuringEntity.value = data.procuring_entity;
 			canCreate.value = !!data.can_create_plan;
 		}
 	} catch (e) {
-		error.value = e;
+		if (seq === refreshSeq) error.value = e;
 	} finally {
-		loading.value = false;
+		if (seq === refreshSeq) loading.value = false;
 	}
 }
+const hasList = () => forbidden.value || plans.value.length > 0 || myWork.value.length > 0;
 onMounted(refresh);
+// Back from the create form, or the page coming back into view: the rows
+// already on screen stay while the list revalidates.
 watch(mode, (m) => {
-	if (m === "list") refresh();
+	if (m === "list") refresh({ quiet: hasList() });
+});
+watch(epoch, () => {
+	if (mode.value === "list") refresh({ quiet: hasList() });
 });
 
 const roleOptions = computed(() => [...new Set(plans.value.map((p) => p.plan_role))].sort());

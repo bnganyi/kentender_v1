@@ -227,8 +227,18 @@ const form = reactive({
 
 watch(
 	() => props.editor,
-	(editor) => {
+	(editor, previous) => {
 		const row = editor?.entry || {};
+		// An in-place refresh that returns the same entry at the same record
+		// version carries nothing new — re-hydrating would discard what the
+		// user has typed since.
+		if (
+			previous &&
+			(previous.entry?.entry_id ?? null) === (row.entry_id ?? null) &&
+			(previous.record_version ?? null) === (editor?.record_version ?? null)
+		) {
+			return;
+		}
 		form.title = row.title || "";
 		form.description = row.description || "";
 		form.expected_operational_result = row.expected_operational_result || "";

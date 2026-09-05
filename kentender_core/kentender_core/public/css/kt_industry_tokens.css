@@ -521,3 +521,42 @@
 }
 .kt-industry .kt-empty h2 { font-size: 28px; }
 .kt-industry .kt-empty p { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--kt-color-text) 70%, transparent); }
+
+/* — Vue-in-Desk page runtime (kentender_core.desk_page) — */
+/* First paint of a page whose bundle is still loading: the page ground and a
+   rail-height band, so the frame before Vue mounts is not a white hole. */
+.kt-desk-page-mount {
+	min-height: 100%;
+}
+.kt-industry.kt-desk-page-placeholder {
+	min-height: 100vh;
+	background: var(--kt-color-bg);
+}
+.kt-industry .kt-rail-placeholder {
+	height: 64px;
+	background: #f2f4f6;
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+/* In-place revalidation of a screen that already has content: a 2px bar at
+   the top of the shell, no layout impact, so a refresh never masquerades as
+   a reload. */
+.kt-industry .kt-shell {
+	position: relative;
+}
+.kt-industry .kt-shell[data-refreshing="true"]::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	pointer-events: none;
+	background: linear-gradient(90deg, transparent 0%, var(--kt-color-accent) 50%, transparent 100%);
+	background-size: 50% 100%;
+	background-repeat: no-repeat;
+	animation: kt-refreshing 1.1s linear infinite;
+}
+@keyframes kt-refreshing {
+	from { background-position: -50% 0; }
+	to { background-position: 150% 0; }
+}

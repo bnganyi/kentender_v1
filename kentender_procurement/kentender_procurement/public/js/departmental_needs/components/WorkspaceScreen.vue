@@ -102,11 +102,15 @@
 				<span class="nds-filter-sep" aria-hidden="true">·</span>
 				<div class="nds-filter-field">
 					<label class="nds-filter-label" for="nds-fy-band">Financial Year</label>
+					<!-- Bound to the caller's own selection, not the server echo: Vue
+					     re-patches `value` on every render, so a control bound to the
+					     last response snaps back to the old year while the new one
+					     is still loading. -->
 					<select
 						id="nds-fy-band"
 						class="kt-input"
 						data-testid="nds-fy-band-select"
-						:value="context.financial_year || ''"
+						:value="selectedFinancialYear || context.financial_year || ''"
 						@change="$emit('select-financial-year', $event.target.value)"
 					>
 						<option v-if="!context.financial_year" value="" disabled>Select year…</option>
@@ -237,6 +241,7 @@ const props = defineProps({
 	search: { type: String, default: "" },
 	status: { type: String, default: "" },
 	financialYears: { type: Array, default: () => [] },
+	selectedFinancialYear: { type: String, default: "" },
 });
 
 defineEmits([

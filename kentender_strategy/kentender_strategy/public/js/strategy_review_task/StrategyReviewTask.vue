@@ -31,7 +31,7 @@ const railEl = ref(null);
 // Entity, so the control could only ever bounce the reviewer off their task.
 usePageRail(railEl, railTrail);
 
-const { route, go } = useRouteState("strategy-review-task");
+const { route, go, epoch } = useRouteState("strategy-review-task");
 const versionId = computed(() => route.value[1] || null);
 const tab = computed(() => route.value[2] || "overview");
 
@@ -92,6 +92,10 @@ async function loadHistory() {
 }
 
 watch(versionId, load, { immediate: true });
+// The page came back into view on the same version: revalidate in place.
+watch(epoch, () => {
+	if (overview.value) load({ quiet: true });
+});
 watch(tab, (t) => {
 	if (t === "changes") loadDiff();
 	if (t === "history") loadHistory();

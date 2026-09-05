@@ -154,11 +154,14 @@ export async function gotoDpp(page: Page, reference: string, route = ""): Promis
 	await page.goto(`/app/departmental-procurement-plan/${reference}${route}`, { waitUntil: "domcontentloaded" });
 }
 
-/** §16 — wait for the page-ready hook, never for networkidle. */
+/** §16 — wait for the page-ready hook, never for networkidle. A revisited
+ *  screen renders its last payload at once (data-loading stays "false") and
+ *  revalidates in place, so a spec must also wait for that refresh to land. */
 export async function expectReady(page: Page, screen: string): Promise<void> {
 	const shell = page.locator('[data-testid="pln-shell"]');
 	await expect(shell).toHaveAttribute("data-screen", screen, { timeout: 30_000 });
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+	await expect(shell).toHaveAttribute("data-refreshing", "false", { timeout: 30_000 });
 }
 
 /** The fixture year is the only year with intake open, so it resolves as the default. */

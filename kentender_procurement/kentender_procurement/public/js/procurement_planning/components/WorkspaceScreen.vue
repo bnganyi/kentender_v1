@@ -81,11 +81,15 @@
 			<div class="pln-filter-strip" data-testid="pln-context-strip">
 				<div class="pln-filter-field">
 					<label for="pln-fy-select">Financial Year</label>
+					<!-- Bound to the caller's own selection, not the server echo: Vue
+					     re-patches `value` on every render, so a control bound to the
+					     last response snaps back to the old year while the new one
+					     is still loading. -->
 					<select
 						id="pln-fy-select"
 						class="kt-input"
 						data-testid="pln-fy-select"
-						:value="context.financial_year || ''"
+						:value="selectedFinancialYear || context.financial_year || ''"
 						@change="$emit('select-financial-year', $event.target.value)"
 					>
 						<option
@@ -229,6 +233,7 @@ const props = defineProps({
 	error: String,
 	supportRef: String,
 	workspace: { type: Object, default: () => ({}) },
+	selectedFinancialYear: { type: String, default: "" },
 	pending: Boolean,
 });
 

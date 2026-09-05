@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onActivated, onMounted } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
@@ -23,14 +23,17 @@ const loading = ref(true);
 const forbidden = ref(null);
 const serverError = ref(false);
 const workspace = ref(null);
+let refreshSeq = 0;
 
 async function refresh(opts) {
 	const quiet = !!(opts && opts.quiet === true);
+	const seq = ++refreshSeq;
 	if (!quiet) loading.value = true;
 	forbidden.value = null;
 	serverError.value = false;
 	try {
 		const result = await getBudgetWorkspace(fyFilter.selected.value);
+		if (seq !== refreshSeq) return;
 		if (result && result.outcome === "FORBIDDEN") {
 			workspace.value = null;
 			forbidden.value = result.forbidden;
@@ -38,9 +41,9 @@ async function refresh(opts) {
 			workspace.value = result;
 		}
 	} catch (e) {
-		serverError.value = true;
+		if (seq === refreshSeq) serverError.value = true;
 	} finally {
-		loading.value = false;
+		if (seq === refreshSeq) loading.value = false;
 	}
 }
 
@@ -49,6 +52,16 @@ onMounted(async () => {
 	// first call as everything else, whether or not a Fiscal Year is already
 	// selected, so it renders before the fiscal-year selector itself.
 	await Promise.all([fyFilter.load(), refresh()]);
+});
+
+// KeepAlive brings this instance back with its rows still on screen; the
+// year may have been changed on the editor screen (shared filter), so
+// re-read it and revalidate in place. The first activation is the mount.
+let activations = 0;
+onActivated(async () => {
+	if (activations++ === 0) return;
+	await fyFilter.load();
+	refresh({ quiet: true });
 });
 
 async function onSelectFy(fy) {

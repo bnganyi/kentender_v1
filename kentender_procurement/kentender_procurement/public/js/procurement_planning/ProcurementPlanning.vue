@@ -15,6 +15,7 @@
 			data-testid="pln-shell"
 			:data-screen="screen"
 			:data-loading="loading ? 'true' : 'false'"
+			:data-refreshing="refreshing ? 'true' : 'false'"
 		>
 			<WorkspaceScreen
 				v-if="screen === 'workspace'"
@@ -22,6 +23,7 @@
 				:error="error"
 				:support-ref="supportRef"
 				:workspace="workspace"
+				:selected-financial-year="financialYear"
 				:pending="pending"
 				@reload="load"
 				@select-financial-year="onSelectFy"
@@ -261,10 +263,15 @@ const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
 const PLAN_PAGE = "annual-procurement-plan";
 const PLAN_ITEM_PAGE = "procurement-plan-item";
-const { route } = useRouteState(WORKSPACE_PAGE);
+const { route, epoch } = useRouteState(WORKSPACE_PAGE);
+// Last payload per screen identity: a revisited screen renders from here at
+// once and refreshes in place; the skeleton is only for a screen never
+// loaded in this session.
+const cache = kentender_core.desk_page.createScreenCache();
 
 const railEl = ref(null);
 const loading = ref(true);
+const refreshing = ref(false);
 const pending = ref(false);
 const error = ref("");
 const errorSummary = ref("");
@@ -351,6 +358,29 @@ const entryId = computed(() =>
 	segments.value[1] === "entry" ? segments.value[2] || "" : ""
 );
 
+const screenKey = computed(() => {
+	switch (screen.value) {
+		case "dpp":
+			return `dpp:${dppReference.value}`;
+		case "dpp-entry":
+			return `dpp-entry:${dppReference.value}:${entryId.value || "new"}`;
+		case "dpp-review":
+			return `dpp-review:${validationTaskId.value}`;
+		case "plan":
+			return `plan:${planReference.value}`;
+		case "plan-item":
+			return `plan-item:${planItemId.value}`;
+		case "finance":
+			return `finance:${financeTaskId.value}`;
+		case "governance":
+			return `governance:${governanceTaskId.value}`;
+		case "publication":
+			return `publication:${publicationId.value}`;
+		default:
+			return "workspace";
+	}
+});
+
 function go(...parts) {
 	frappe.set_route(DPP_PAGE, ...parts.filter(Boolean));
 }
@@ -364,76 +394,109 @@ function onBackToPlan() {
 }
 
 let loadSeq = 0;
+let inFlightKey = "";
 
-// `quiet` refreshes in place — the skeleton replaces the whole screen, so
-// flipping `loading` after every action made the screen flash on each
-// round-trip; a quiet load keeps the current content mounted until the new
-// data lands. Only the route-driven watch below shows the skeleton.
-async function load(opts) {
-	const quiet = !!(opts && opts.quiet === true);
-	const seq = ++loadSeq;
-	if (!quiet) loading.value = true;
-	error.value = "";
-	errorSummary.value = "";
-	try {
-		if (screen.value === "workspace") {
-			const loaded = await api.getPlanningWorkspace({
-				financial_year: financialYear.value || undefined,
-			});
-			if (seq !== loadSeq) return;
+function fetchFor(scr) {
+	switch (scr) {
+		case "workspace":
+			return api.getPlanningWorkspace({ financial_year: financialYear.value || undefined });
+		case "dpp":
+			return api.getDepartmentalPlan(dppReference.value);
+		case "dpp-entry":
+			return api.getDppEntryEditor(dppReference.value, entryId.value || undefined);
+		case "dpp-review":
+			return api.getDppValidationTask(validationTaskId.value);
+		case "plan":
+			return api.getAnnualPlan(planReference.value);
+		case "plan-item":
+			return api.getPlanItem(planItemId.value);
+		case "finance":
+			return api.getFinanceTask(financeTaskId.value);
+		case "governance":
+			return api.getPlanGovernanceTask(governanceTaskId.value);
+		case "publication":
+			return api.getPublicationTask(publicationId.value);
+		default:
+			return Promise.resolve(null);
+	}
+}
+
+function applyLoaded(scr, loaded) {
+	switch (scr) {
+		case "workspace": {
 			workspace.value = loaded;
 			const context = loaded.context || {};
 			if (context.financial_year) financialYear.value = context.financial_year;
-		} else if (screen.value === "dpp") {
-			const loaded = await api.getDepartmentalPlan(dppReference.value);
-			if (seq !== loadSeq) return;
+			break;
+		}
+		case "dpp":
 			dpp.value = loaded;
 			certified.value = false;
-		} else if (screen.value === "dpp-entry") {
-			const loaded = await api.getDppEntryEditor(
-				dppReference.value, entryId.value || undefined
-			);
-			if (seq !== loadSeq) return;
+			break;
+		case "dpp-entry":
 			editor.value = loaded;
-		} else if (screen.value === "dpp-review") {
-			const loaded = await api.getDppValidationTask(validationTaskId.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "dpp-review":
 			validation.value = loaded;
 			classifications.value = {};
 			returnDialog.value = false;
-		} else if (screen.value === "plan") {
-			const loaded = await api.getAnnualPlan(planReference.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "plan":
 			annualPlan.value = loaded;
 			formDialog.value = false;
 			splittingDialog.value = false;
 			lateActivationDialog.value = false;
 			shift.value = null;
-		} else if (screen.value === "plan-item") {
-			const loaded = await api.getPlanItem(planItemId.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "plan-item":
 			planItem.value = loaded;
-		} else if (screen.value === "finance") {
-			const loaded = await api.getFinanceTask(financeTaskId.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "finance":
 			financeTask.value = loaded;
 			financeReturnDialog.value = false;
-		} else if (screen.value === "governance") {
-			const loaded = await api.getPlanGovernanceTask(governanceTaskId.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "governance":
 			governanceTask.value = loaded;
 			governanceReturnDialog.value = false;
-		} else if (screen.value === "publication") {
-			const loaded = await api.getPublicationTask(publicationId.value);
-			if (seq !== loadSeq) return;
+			break;
+		case "publication":
 			publication.value = loaded;
-		}
+			break;
+	}
+}
+
+// The skeleton shows only for a screen with nothing to show yet. A screen
+// already loaded this session (Back, Cancel, a save that routes) renders its
+// last payload at once and refreshes in place; `quiet` forces the in-place
+// path for filter changes and post-action refreshes.
+async function load(opts) {
+	const scr = screen.value;
+	const key = screenKey.value;
+	const cached = cache.get(key);
+	if (opts && opts.entering && cached) applyLoaded(scr, cached);
+	const quiet = !!(opts && opts.quiet === true) || !!cached;
+	if (quiet && inFlightKey === key) return;
+	const seq = ++loadSeq;
+	inFlightKey = key;
+	if (quiet) refreshing.value = true;
+	else loading.value = true;
+	error.value = "";
+	errorSummary.value = "";
+	try {
+		const loaded = await fetchFor(scr);
+		if (seq !== loadSeq) return;
+		cache.set(key, loaded);
+		applyLoaded(scr, loaded);
 	} catch (e) {
 		if (seq !== loadSeq) return;
 		error.value = e.message;
 		supportRef.value = newSupportRef();
 	} finally {
-		if (seq === loadSeq) loading.value = false;
+		if (seq === loadSeq) {
+			loading.value = false;
+			refreshing.value = false;
+			inFlightKey = "";
+		}
 	}
 }
 
@@ -804,7 +867,11 @@ async function onGovernanceReturn(reason) {
 	}
 }
 
-watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
+watch([pageSlug, segments], () => load({ entering: true }), { immediate: true, deep: true });
+// The page came back into view on the same route: revalidate what is shown.
+watch(epoch, () => {
+	if (cache.has(screenKey.value)) load({ quiet: true });
+});
 
 const railTrail = computed(() => {
 	const trail = [

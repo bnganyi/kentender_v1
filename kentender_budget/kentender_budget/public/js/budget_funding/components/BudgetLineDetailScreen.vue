@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onActivated, onMounted, watch } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
@@ -26,9 +26,9 @@ const notFound = ref(false);
 const forbidden = ref(false);
 const serverError = ref(false);
 
-async function load() {
+async function load(opts) {
 	if (!lineIdParam.value) return;
-	loading.value = true;
+	if (!(opts && opts.quiet === true)) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	serverError.value = false;
@@ -46,6 +46,13 @@ async function load() {
 onMounted(load);
 watch(lineIdParam, (v, prev) => {
 	if (v && v !== prev) load();
+});
+// KeepAlive brings this instance back with the record still on screen:
+// revalidate in place rather than re-showing the skeleton.
+let activations = 0;
+onActivated(() => {
+	if (activations++ === 0 || !line.value) return;
+	load({ quiet: true });
 });
 </script>
 

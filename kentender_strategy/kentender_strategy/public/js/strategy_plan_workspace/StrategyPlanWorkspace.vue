@@ -16,7 +16,7 @@ import {
 	getIndicatorUnits,
 } from "./data/strategyPlanApi.js";
 
-const { route, go } = useRouteState("strategy-plan-workspace");
+const { route, go, epoch } = useRouteState("strategy-plan-workspace");
 const planId = computed(() => route.value[1] || null);
 const tab = computed(() => route.value[2] || "overview");
 
@@ -119,6 +119,10 @@ async function loadHistory() {
 }
 
 watch(planId, loadWorkspace, { immediate: true });
+// The page came back into view on the same plan: revalidate in place.
+watch(epoch, () => {
+	if (workspace.value) loadWorkspace({ quiet: true });
+});
 watch(tab, (t) => {
 	if (t === "history") loadHistory();
 });

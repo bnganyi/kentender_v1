@@ -207,9 +207,26 @@ const form = reactive({
 	required_by_date: "",
 });
 
+const FORM_SOURCE_FIELDS = [
+	"name",
+	"version_number",
+	"title",
+	"description",
+	"expected_operational_result",
+	"indicative_quantity",
+	"unit",
+	"required_by_date",
+];
+let hydratedFrom = null;
+
 watch(
 	() => props.version,
 	(version) => {
+		// An in-place refresh that returns the same content carries nothing
+		// new — re-hydrating would discard what the user has typed since.
+		const signature = JSON.stringify(FORM_SOURCE_FIELDS.map((field) => version?.[field] ?? null));
+		if (signature === hydratedFrom) return;
+		hydratedFrom = signature;
 		form.title = version?.title || "";
 		form.description = version?.description || "";
 		form.expected_operational_result = version?.expected_operational_result || "";
