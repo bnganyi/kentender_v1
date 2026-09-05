@@ -31,7 +31,8 @@ import {
  * browser as the live page and its ordered structural landmarks (card
  * titles, labels, table headers, buttons) must appear in order in the live
  * screen. Data values are never compared. Slice A covers PLN-DES-01, 02, 03,
- * 04, 05, 06, 16, Slice B's 07, 08, 09, 09A and Slice C's 10, 11, 12, 15.
+ * 04, 05, 06, 16, Slice B's 07, 08, 09, 09A, Slice C's 10, 11, 12, 15 and
+ * Slice D's 13, 14, 14A — every artboard of the v1.12 set.
  *
  * Known, deliberate deltas NOT asserted (stripped from the artboard list):
  *   - PLN-DES-16 is a seven-state gallery on one artboard; a live page shows
@@ -51,7 +52,7 @@ async function artboardLandmarks(browser: any, file: string): Promise<{ wanted: 
 	return { wanted: await landmarks(art, ARTBOARD_SCOPE), art };
 }
 
-type State = { dpp_reference: string; need_entry_id: string; direct_entry_id: string; task: string; plan_reference: string; plan_item_id: string };
+type State = { dpp_reference: string; need_entry_id: string; direct_entry_id: string; task: string; plan_reference: string; plan_item_id: string; publication: string };
 const DIALOG_SCOPE = ".kt-dialog";
 
 test.describe.configure({ mode: "serial", timeout: 180_000 });
@@ -270,6 +271,58 @@ test.describe("Procurement Planning — design fidelity (Slice A)", () => {
 		await page.locator('[data-testid="pgt-return"]').click();
 		await expect(page.locator('[data-testid="pgt-return-dialog"]')).toBeVisible();
 		expectLandmarkSubsequence(wantedStatutory, await landmarks(page, DIALOG_SCOPE), "PLN-DES-15 (statutory)");
+	});
+
+	test("PLN-DES-13 — Publication result", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_publication_failed_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-13 Publication Result.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page, `/publication/${state.publication}`);
+		await expectReady(page, "publication");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-13");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-14 — Active Annual Procurement Plan", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_active_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-14 Active Annual Plan.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		// the artboard's dc-runtime renders the schedule card open with its
+		// binding placeholders as the toggle text; open the live card and
+		// drop that one un-rendered placeholder landmark
+		await page.locator(`[data-testid="pln-active-schedule-${state.plan_item_id}"]`).click();
+		await expect(page.locator('[data-testid="pln-schedule-card"]')).toBeVisible();
+		// the Schedule card title embeds the fixture item's own title (a data
+		// value, not structure) — compared by prefix only
+		const wantedRendered = wanted.filter((text) => !/^\{\{/.test(text)).map((text) => (text.startsWith("Schedule — ") ? "Schedule — Digital health infrastructure package" : text));
+		expectLandmarkSubsequence(wantedRendered, await landmarks(page, LIVE_SCOPE), "PLN-DES-14");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-14A — Shift schedule from here dialog", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_active_fixture");
+		const art = await browser.newPage();
+		await openArtboard(art, `${DESIGN_DIR}/PLN-DES-14A Shift Schedule Dialog.dc.html`, ".dialog");
+		const wanted = await landmarks(art, ".dialog");
+		const artWidth = await boxWidth(art, ".dialog");
+		await art.close();
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await page.locator(`[data-testid="pln-active-schedule-${state.plan_item_id}"]`).click();
+		await page.locator('[data-testid="pln-shift-bid_opening"]').click();
+		await expect(page.locator('[data-testid="pln-shift-dialog"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-shift-row-delivery_completion"]')).toBeVisible();
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "PLN-DES-14A");
+		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 4, "dialog width (640px, §11.16A)");
+		expect(errors, "console errors").toEqual([]);
 	});
 
 	test("PLN-DES-16 — common page states, one route per reachable state", async ({ page, browser }) => {

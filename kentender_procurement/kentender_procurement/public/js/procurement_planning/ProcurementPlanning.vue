@@ -98,7 +98,48 @@
 					/>
 				</template>
 
+				<template v-else-if="screen === 'plan' && annualPlan.active_view">
+					<ActivePlanScreen
+						:plan="annualPlan"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@begin-update="onBeginUpdate"
+						@navigate="onNavigate"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@shift="onOpenShift"
+					/>
+					<ShiftScheduleDialog
+						v-if="shift"
+						:milestone-label="shift.label"
+						:new-date="shift.newDate"
+						:rows="shift.rows"
+						:pending="pending"
+						:error="errorSummary"
+						@date-change="onShiftDateChange"
+						@confirm="onConfirmShift"
+						@cancel="shift = null"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'publication'">
+					<PublicationResultScreen
+						:task="publication"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@retry="onRetryPublication"
+						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
+					/>
+				</template>
+
 				<template v-else-if="screen === 'plan'">
+					<!-- PLN-DES-16 — publication was not acknowledged; the Draft is untouched -->
+					<div v-if="annualPlan.latest_publication && annualPlan.latest_publication.result === 'Failed'" class="kt-card kt-blueprint pln-state-card" data-testid="pln-publication-failed">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+						<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<h3>Publication was not acknowledged</h3>
+						<p>The approved Plan is unchanged. Retry the same publication when the destination is available.</p>
+						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Retry publication</button>
+					</div>
 					<AnnualPlanScreen
 						:plan="annualPlan"
 						:pending="pending"
@@ -207,6 +248,9 @@ import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
+import ActivePlanScreen from "./components/ActivePlanScreen.vue";
+import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
+import PublicationResultScreen from "./components/PublicationResultScreen.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
@@ -241,6 +285,8 @@ const financeTask = ref({});
 const financeReturnDialog = ref(false);
 const governanceTask = ref({});
 const governanceReturnDialog = ref(false);
+const publication = ref({});
+const shift = ref(null);
 
 // §10/§12.1 — the Financial Year is a visible filter only; the server
 // resolves the remembered preference on a bare load.
@@ -277,6 +323,9 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "review" && segments.value[1]) {
 		return "governance";
 	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "publication" && segments.value[1]) {
+		return "publication";
+	}
 	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
 	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
 	return "workspace";
@@ -292,6 +341,10 @@ const financeTaskId = computed(() =>
 
 const governanceTaskId = computed(() =>
 	segments.value[0] === "review" ? segments.value[1] || "" : ""
+);
+
+const publicationId = computed(() =>
+	segments.value[0] === "publication" ? segments.value[1] || "" : ""
 );
 
 const entryId = computed(() =>
@@ -355,6 +408,7 @@ async function load(opts) {
 			formDialog.value = false;
 			splittingDialog.value = false;
 			lateActivationDialog.value = false;
+			shift.value = null;
 		} else if (screen.value === "plan-item") {
 			const loaded = await api.getPlanItem(planItemId.value);
 			if (seq !== loadSeq) return;
@@ -369,6 +423,10 @@ async function load(opts) {
 			if (seq !== loadSeq) return;
 			governanceTask.value = loaded;
 			governanceReturnDialog.value = false;
+		} else if (screen.value === "publication") {
+			const loaded = await api.getPublicationTask(publicationId.value);
+			if (seq !== loadSeq) return;
+			publication.value = loaded;
 		}
 	} catch (e) {
 		if (seq !== loadSeq) return;
@@ -643,6 +701,65 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 	}
 }
 
+// §12.12 — the cascade dialog: the server computes every proposal (PLN-AC-124)
+function onOpenShift({ item, milestone }) {
+	const row = (item.schedule || []).find((r) => r.milestone === milestone) || {};
+	shift.value = { item, milestone, label: row.label || milestone, newDate: row.forecast || "", rows: [] };
+	if (row.forecast) onShiftDateChange(row.forecast);
+}
+
+async function onShiftDateChange(value) {
+	if (!shift.value) return;
+	shift.value = { ...shift.value, newDate: value };
+	if (!value) return;
+	errorSummary.value = "";
+	try {
+		const preview = await api.previewForecastCascade({
+			plan_item: shift.value.item.plan_item_id,
+			milestone: shift.value.milestone,
+			new_forecast_date: value,
+		});
+		if (shift.value && shift.value.newDate === value) {
+			shift.value = { ...shift.value, rows: preview.rows || [], recordVersion: preview.record_version };
+		}
+	} catch (e) {
+		errorSummary.value = e.message;
+	}
+}
+
+async function onConfirmShift({ included_milestones, reason }) {
+	if (!shift.value) return;
+	const current = shift.value;
+	const result = await run("confirm-forecast-cascade", (key) =>
+		api.confirmForecastCascade({
+			plan_item: current.item.plan_item_id,
+			milestone: current.milestone,
+			new_forecast_date: current.newDate,
+			included_milestones: JSON.stringify(included_milestones),
+			reason,
+			expected_record_version: current.recordVersion ?? current.item.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		shift.value = null;
+		await load({ quiet: true });
+	}
+}
+
+async function onRetryPublication() {
+	const result = await run("retry-publication", (key) =>
+		api.retryPublication({ publication: publication.value.publication, idempotency_key: key })
+	);
+	if (!result) return;
+	// a retry is a new attempt record; the route follows it (§12.11)
+	if (result.publication && result.publication !== publication.value.publication) {
+		frappe.set_route(WORKSPACE_PAGE, "publication", result.publication);
+	} else {
+		await load({ quiet: true });
+	}
+}
+
 async function onBeginUpdate() {
 	const result = await run("begin-plan-update", (key) =>
 		api.beginPlanUpdate({
@@ -699,6 +816,9 @@ const railTrail = computed(() => {
 	}
 	if (screen.value === "governance") {
 		trail.push({ label: "Review" });
+	}
+	if (screen.value === "publication") {
+		trail.push({ label: "Publication" });
 	}
 	if (dppReference.value) {
 		trail.push({ label: dppReference.value, route: [DPP_PAGE, dppReference.value] });

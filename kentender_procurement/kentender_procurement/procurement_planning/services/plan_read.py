@@ -40,6 +40,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_PROCUREMENT_PLANNER,
 )
 
+PAGE = "procurement-planning"
 PLAN_READERS = (ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR, ROLE_FINANCE_CONFIRMATION_OFFICER, ROLE_ACCOUNTING_OFFICER, ROLE_PLAN_STATUTORY_APPROVER)
 
 
@@ -354,6 +355,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"can_request_funding": mutable and no_blockers and not unallocated and version.funding_state in ("Not requested", "Returned", "Stale"),
 		"can_submit": mutable and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
 		"late_activation_required": bool(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date") and frappe.utils.getdate(frappe.utils.nowdate()) >= frappe.utils.getdate(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date"))),
+		"latest_publication": _latest_publication(version.name),
 		"active_view": _active_view(version, plan) if version.version_status == "Active" else None,
 	}
 
@@ -432,8 +434,18 @@ def _active_view(version, plan) -> dict[str, Any]:
 			"statutory_approval_line": _decision_line(version.name, "Statutory approval"),
 			"publication_line": f"Acknowledged · {_eat(publication.acknowledged_at)}" if publication else "",
 			"publication": publication.name if publication else "",
+			"publication_route": [PAGE, "publication", publication.name] if publication else None,
 		},
 	}
+
+
+def _latest_publication(version_name: str) -> dict[str, Any] | None:
+	row = frappe.db.get_value(
+		"Annual Plan Publication", {"plan_version": version_name}, ["name", "result", "attempt_number"], as_dict=True, order_by="attempt_number desc",
+	)
+	if not row:
+		return None
+	return {"publication": row.name, "result": row.result, "attempt_number": row.attempt_number, "route": [PAGE, "publication", row.name]}
 
 
 def _drawn(allocations: list) -> tuple[float, float]:
@@ -753,11 +765,26 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 	destination = frappe.db.get_value("Annual Plan Publication Destination", doc.destination, ["destination_id", "title"], as_dict=True) or {}
 	from kentender_core.services.authorization import is_technical
 
+	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("in", ("Active", "Draft", "Superseded"))})
+	value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active", "Superseded"))}, fields=["indicative_amount"]))
+	badge, badge_kind = {"Acknowledged": ("Acknowledged", "live"), "Failed": ("Publication failed", "critical")}.get(doc.result, ("Publication pending", "attention"))
 	return {
 		"outcome": "OK",
 		"publication": doc.name,
 		"publication_reference": doc.publication_reference,
-		"header": {"eyebrow": "PUBLICATION RESULT", "title": plan.title, "reference_line": f"{doc.publication_reference} · {plan.plan_reference} · Version {version.version_number}", "badge": doc.result},
+		"header": {"eyebrow": "ANNUAL PLAN PUBLICATION", "title": "Publication result", "reference_line": f"{plan.plan_reference} · Version {version.version_number}", "badge": badge, "badge_kind": badge_kind},
+		"plan_reference": plan.plan_reference,
+		"plan_title": plan.title,
+		"approved_plan": {
+			"financial_year": references.fy_label(plan.fiscal_year),
+			"plan_items": items,
+			"value_display": _money(value),
+			"statutory_approval_line": _decision_line(version.name, "Statutory approval"),
+		},
+		"configuration": destination.get("destination_id", ""),
+		"result_display": {"Acknowledged": "Acknowledged", "Failed": "Not acknowledged"}.get(doc.result, "Awaiting acknowledgement"),
+		"acknowledgement_reference": cstr(doc.external_reference) or "Not received",
+		"quiet_notice": "Publication is an automatic system action after statutory approval. It runs without a business-role control.",
 		"version": {"reference": version.version_reference, "status": version.version_status, "number": version.version_number},
 		"destination": {"id": destination.get("destination_id", ""), "title": destination.get("title", "")},
 		"attempt_number": doc.attempt_number,

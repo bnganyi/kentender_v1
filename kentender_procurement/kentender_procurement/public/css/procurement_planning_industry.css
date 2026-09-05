@@ -462,6 +462,48 @@
 	margin-top: 20px;
 }
 
+/* PLN-DES-14 — the three-tier schedule table */
+.kt-pln .pln-schedule-table th,
+.kt-pln .pln-schedule-table td {
+	font-size: 13px;
+}
+.kt-pln .pln-baseline-val {
+	font-variant-numeric: tabular-nums;
+}
+.kt-pln .pln-forecast-val {
+	display: inline-block;
+	padding: 3px 8px;
+	border: 1px solid var(--color-neutral-200);
+	font-variant-numeric: tabular-nums;
+}
+.kt-pln .pln-schedule-table tr.is-behind .pln-forecast-val {
+	border-color: var(--kt-color-attention, #b26a00);
+}
+.kt-pln .pln-actual-val {
+	color: var(--color-neutral-700);
+	font-style: italic;
+}
+/* PLN-DES-14A — the 640px cascade dialog */
+.kt-pln .pln-dialog-context {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 16px;
+}
+.kt-pln .pln-shift-table th,
+.kt-pln .pln-shift-table td {
+	font-size: 13px;
+}
+.kt-pln .pln-shift-table th:first-child,
+.kt-pln .pln-shift-table td:first-child {
+	width: 40px;
+}
+/* PLN-DES-13 */
+.kt-pln .pln-quiet-notice {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin-top: 20px;
+}
+
 /* PLN-DES-06 — three-column facts grid, inline classification select,
  * a View disclosure row and the signed line */
 .kt-pln .pln-field-grid-3 {

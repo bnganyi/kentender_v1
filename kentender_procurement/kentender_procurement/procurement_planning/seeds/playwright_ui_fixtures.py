@@ -665,3 +665,56 @@ def reset_statutory_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {**state, "ao_task": state["task"], "task": adopted["statutory_task"]}
+
+
+# --- Slice D journeys (Active plan, cascade, publication) ---------------------
+
+
+def _approve(state: dict[str, Any], *, transmit=None) -> dict[str, Any]:
+	from unittest.mock import patch
+
+	from kentender_procurement.procurement_planning.services import plan_governance, plan_publication
+
+	task = frappe.get_doc("Plan Governance Task", state["task"])
+	with _as(STATUTORY):
+		if transmit is None:
+			return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
+		with patch.object(plan_publication, "_transmit", return_value=transmit):
+			return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
+
+
+def reset_active_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-14's opening state: the approved, acknowledged, Active Plan
+	with its one item's forecasts seeded from baseline."""
+	state = reset_statutory_fixture(commit=False)
+	approved = _approve(state)
+	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"], "result": "Acknowledged"}, "name")
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication_result": approved["publication_result"], "publication": publication}
+
+
+def reset_publication_failed_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-13/16: the approved Plan whose first transmission failed —
+	approval preserved, a technical retry pending."""
+	state = reset_statutory_fixture(commit=False)
+	approved = _approve(state, transmit=("Failed", ""))
+	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"]}, "name", order_by="attempt_number desc")
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication_result": approved["publication_result"], "publication": publication}
+
+
+def run_milestone_check(*, today: str = "2098-08-25", commit: bool = True) -> dict[str, Any]:
+	"""§8.3 `CheckApproachingMilestones` run for a pinned day (the fixture
+	item's invitation is 1 Sep 2098; 25 Aug is inside the 14-day window)."""
+	from kentender_procurement.procurement_planning.services import schedule
+
+	_guard()
+	frappe.set_user("Administrator")
+	first = schedule.check_approaching_milestones(today=today)
+	second = schedule.check_approaching_milestones(today=today)
+	notifications = frappe.db.count("Notification Log", {"for_user": PLANNER, "email_header": ("like", "pln:milestone:%")})
+	if commit:
+		frappe.db.commit()
+	return {"raised": [list(r) for r in first["raised"]], "raised_again": [list(r) for r in second["raised"]], "notifications": notifications}

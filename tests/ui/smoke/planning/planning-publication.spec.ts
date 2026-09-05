@@ -1,127 +1,142 @@
-import { execSync } from "node:child_process";
-import path from "node:path";
+import { expect, test } from "@playwright/test";
 
-import { expect, test, Page } from "@playwright/test";
-
-import { login } from "../../helpers/auth";
+import { login, loginAsAdministrator } from "../../helpers/auth";
+import {
+	PASSWORD,
+	PLANNER,
+	collectConsoleErrors,
+	expectReady,
+	gotoPlanning,
+	resetFixture,
+	restoreSite,
+} from "./helpers";
 
 /**
- * PLN-CHG-001 v1.2 Phase 9 (Slice G) — PLN-UI-14: the Active Plan and
- * Prepare plan update, in a real browser on the **PE-PWPB** world (its own
- * fixture entity per tracker rule 8; the fixture drives the real
- * §5.1/§5.2/§8.2 chain all the way to Active — PublishAnnualPlan runs
- * automatically inside ApproveAnnualPlan against the sandbox destination,
- * which always acknowledges).
+ * PLN-CHG-001 v1.12 Phase 6 (Slice D) — PLN-UI-13/14: the Active Plan with
+ * its three-tier schedule, the cascade reforecast dialog (PLN-DES-14A), the
+ * publication result (PLN-DES-13) with the technical retry, Prepare plan
+ * update, and the daily CheckApproachingMilestones job proven live.
  */
 
-const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
-const SITE = process.env.UI_SITE || "kentender.midas.com";
-const FIXTURES = "kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures";
+type ActiveState = { plan_reference: string; plan_item_id: string; publication: string };
 
-const PASSWORD = "Test@123";
-const PLANNER = "pwpb.planner@example.test";
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
-let PLAN_REFERENCE = "";
-let ITEM_ID = "";
-
-function bench(command: string): string {
-	try {
-		return execSync(`cd "${BENCH_ROOT}" && bench --site ${SITE} ${command}`, {
-			stdio: "pipe",
-			timeout: 300_000,
-			encoding: "utf-8",
-		});
-	} catch (error: any) {
-		const stderr = (error?.stderr || "").toString().trim();
-		const stdout = (error?.stdout || "").toString().trim();
-		throw new Error(`bench ${command} failed\n${stderr || stdout || error?.message}`);
-	}
+async function gotoPlan(page: import("@playwright/test").Page, reference: string): Promise<void> {
+	await page.setViewportSize({ width: 1440, height: 1024 });
+	await page.goto(`/app/annual-procurement-plan/${reference}`, { waitUntil: "domcontentloaded" });
+	await expectReady(page, "plan");
 }
 
-async function expectReady(page: Page, screen: string): Promise<void> {
-	const shell = page.locator('[data-testid="pln-shell"]');
-	await expect(shell).toHaveAttribute("data-screen", screen, { timeout: 30_000 });
-	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-}
+test.describe("PLN-UI-13/14 Active Plan, cascade and publication", () => {
+	test.afterAll(() => restoreSite());
 
-function pageErrors(errors: string[]): string[] {
-	return errors.filter(
-		(text) => !text.includes("socket.io") && !text.includes("Failed to load resource")
-	);
-}
-
-test.beforeEach(() => {
-	const out = bench(`execute ${FIXTURES}.reset_publication_fixture`);
-	const parsed = JSON.parse(out.trim().split("\n").pop() || "{}");
-	PLAN_REFERENCE = parsed.plan_reference;
-	ITEM_ID = parsed.item_id;
-	expect(PLAN_REFERENCE).toBeTruthy();
-	expect(ITEM_ID).toBeTruthy();
-});
-
-test.describe("PLN-UI-14 the Active Plan and Prepare plan update", () => {
-	test("the Active Plan shows PLN-DES-14, and Prepare plan update opens a mutable Draft successor", async ({
-		page,
-	}) => {
-		test.setTimeout(120_000); // two logins + the update-preparation round trip
-		const errors: string[] = [];
-		page.on("console", (m) => {
-			if (m.type() === "error") errors.push(m.text());
-		});
-
+	test("the Active Plan shows PLN-DES-14 and a cascade shift moves every later forecast with one reason", async ({ page }) => {
+		const state = resetFixture<ActiveState>("reset_active_fixture");
+		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await page.setViewportSize({ width: 1440, height: 1024 });
-		await page.goto(`/app/annual-procurement-plan/${PLAN_REFERENCE}`, {
-			waitUntil: "domcontentloaded",
-		});
-		await expectReady(page, "plan");
+		await gotoPlan(page, state.plan_reference);
 
-		// PLN-DES-14 exact composition
 		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Active");
-		await expect(page.locator('[data-testid="pln-active-summary-strip"]')).toContainText("1");
-		await expect(page.locator('[data-testid="pln-active-items"]')).toContainText(
-			"Regional laboratory equipment refresh"
-		);
-		await expect(page.locator('[data-testid="pln-active-items"]')).toContainText("KES 60,000,000");
-		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("Acknowledged");
-		await expect(page.locator(`[data-testid="pln-active-view-${ITEM_ID}"]`)).toBeVisible();
+		await expect(page.locator('[data-testid="pln-active-summary-strip"] label')).toHaveText(["Plan Items", "Approved value", "Departments", "Schedule health", "Activated"]);
+		await expect(page.locator('[data-testid="pln-active-health"]')).toHaveText("0 of 1 item behind baseline");
+		const row = page.locator(`[data-testid="pln-active-row-${state.plan_item_id}"]`);
+		await expect(row).toContainText("Digital health infrastructure package");
+		await expect(row).toContainText("1 each · KES 80,000,000");
+		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("Acknowledged ·");
 
-		// no correction is open yet, so the update-preparation control is live
-		const beginUpdate = page.locator('[data-testid="pln-begin-update"]');
-		await expect(beginUpdate).toBeVisible();
-		await beginUpdate.click();
-		await expectReady(page, "plan");
+		// the schedule card: baseline = forecast, em-dash actuals, Shift on six rows
+		await page.locator(`[data-testid="pln-active-schedule-${state.plan_item_id}"]`).click();
+		const card = page.locator('[data-testid="pln-schedule-card"]');
+		await expect(card).toBeVisible();
+		await expect(card.locator("tbody tr")).toHaveCount(7);
+		const bid = page.locator('[data-testid="pln-schedule-bid_opening"]');
+		await expect(bid.locator(".pln-baseline-val")).toHaveText("22 Sep 2098");
+		await expect(bid.locator(".pln-forecast-val")).toHaveText("22 Sep 2098");
+		await expect(bid.locator(".pln-actual-val")).toHaveText("—");
+		await expect(page.locator('[data-testid^="pln-shift-"]')).toHaveCount(6);
+		await expect(page.locator('[data-testid="pln-shift-delivery_completion"]')).toHaveCount(0);
 
-		// the same route now renders the Draft workbench for the new
-		// successor — has_open_successor flips the read model's branch
-		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Draft");
-		await expect(page.locator('[data-testid="pln-plan-items"]')).toContainText(
-			"Regional laboratory equipment refresh"
-		);
-		await expect(page.locator('[data-testid="pln-active-summary-strip"]')).toHaveCount(0);
+		// PLN-DES-14A — the server proposes every later row; one reason; confirm
+		await page.locator('[data-testid="pln-shift-bid_opening"]').click();
+		const dialog = page.locator('[data-testid="pln-shift-dialog"]');
+		await expect(dialog).toBeVisible();
+		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Shift schedule from here — Bid opening");
+		await page.locator('[data-testid="pln-shift-date"]').fill("2098-10-06");
+		await expect(page.locator('[data-testid="pln-shift-row-bid_opening"]')).toContainText("6 Oct 2098");
+		await expect(page.locator('[data-testid="pln-shift-row-evaluation_completion"]')).toContainText("5 Nov 2098");
+		await expect(dialog.locator("tbody tr")).toHaveCount(6);
+		await expect(page.locator('[data-testid="pln-shift-confirm"]')).toBeDisabled();
+		await page.locator('[data-testid="pln-shift-reason"]').fill("Tender Preparation confirmed the issue date will slip two weeks pending template release.");
+		await page.locator('[data-testid="pln-shift-confirm"]').click();
+		await expect(dialog).toHaveCount(0, { timeout: 30_000 });
 
-		expect(pageErrors(errors), errors.join("\n")).toHaveLength(0);
+		// the interactive re-render (the card stays open): forecasts moved, baseline untouched, health counts one behind
+		await expect(bid.locator(".pln-forecast-val")).toHaveText("6 Oct 2098");
+		await expect(bid.locator(".pln-baseline-val")).toHaveText("22 Sep 2098");
+		await expect(page.locator('[data-testid="pln-schedule-contract_signing"] .pln-forecast-val')).toHaveText("26 Nov 2098");
+		await expect(page.locator('[data-testid="pln-active-health"]')).toHaveText("1 of 1 item behind baseline");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the carried-over item resolves to its own mutable successor copy, not its frozen Active twin", async ({
-		page,
-	}) => {
-		// this is the direct regression proof for resolve_item_doc_name: the
-		// SAME plan_item_id now names two live documents at once (the Active
-		// predecessor's and the Draft successor's), and every read must
-		// prefer the open, mutable one.
+	test("Prepare plan update opens the sole Draft successor and the predecessor stays Active", async ({ page }) => {
+		const state = resetFixture<ActiveState>("reset_active_fixture");
 		await login(page, PLANNER, PASSWORD);
-		await page.setViewportSize({ width: 1440, height: 1024 });
-		await page.goto(`/app/annual-procurement-plan/${PLAN_REFERENCE}`, {
-			waitUntil: "domcontentloaded",
-		});
-		await expectReady(page, "plan");
+		await gotoPlan(page, state.plan_reference);
 		await page.locator('[data-testid="pln-begin-update"]').click();
-		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Draft", { timeout: 30_000 });
+		await expect(page.locator(".pln-quiet-ref")).toContainText("Version 2");
+		await expect(page.locator('[data-testid="pln-plan-items"] tbody tr')).toHaveCount(1);
+		await expect(page.locator('[data-testid="pln-begin-update"]')).toHaveCount(0);
+		// the workspace still reports the Active version's schedule health
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
+	});
 
-		await page.goto(`/app/procurement-plan-item/${ITEM_ID}`, { waitUntil: "domcontentloaded" });
-		await expectReady(page, "plan-item");
-		await expect(page.locator('[data-testid="ppi-save"]')).toBeVisible();
-		await expect(page.locator('[data-testid="ppi-dissolve"]')).toBeVisible();
+	test("the publication result reads the acknowledged attempt; a failed attempt is recovered by a technical retry", async ({ page }) => {
+		const acknowledged = resetFixture<ActiveState>("reset_active_fixture");
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page, `/publication/${acknowledged.publication}`);
+		await expectReady(page, "publication");
+		await expect(page.locator(".kt-page-title")).toHaveText("Publication result");
+		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Acknowledged");
+		await expect(page.locator('[data-testid="pub-approved-plan"]')).toContainText("FY 2098/99");
+		await expect(page.locator('[data-testid="pub-approved-plan"]')).toContainText("Cabinet Secretary");
+		await expect(page.locator('[data-testid="pub-result"]')).toHaveText("Acknowledged");
+		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pub-quiet-notice"]')).toContainText("without a business-role control");
+
+		const failed = resetFixture<ActiveState>("reset_publication_failed_fixture");
+		await gotoPlan(page, failed.plan_reference);
+		await expect(page.locator('[data-testid="pln-publication-failed"] h3')).toHaveText("Publication was not acknowledged");
+		await page.locator('[data-testid="pln-open-publication"]').click();
+		await expectReady(page, "publication");
+		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Publication failed");
+		// the Planner never sees the retry (§11.15)
+		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
+
+		await loginAsAdministrator(page);
+		await gotoPlanning(page, `/publication/${failed.publication}`);
+		await expectReady(page, "publication");
+		await page.locator('[data-testid="pub-retry"]').click();
+		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Acknowledged", { timeout: 30_000 });
+		await expect(page.locator('[data-testid="pub-result"]')).toHaveText("Acknowledged");
+		await expect(page.locator('[data-testid="pub-failed"]')).toHaveCount(0);
+	});
+
+	test("the daily CheckApproachingMilestones job raises once per milestone per day (§8.3)", async ({ page }) => {
+		resetFixture<ActiveState>("reset_active_fixture");
+		const result = resetFixture<{ raised: string[][]; raised_again: string[][]; notifications: number }>("run_milestone_check", { today: "2098-08-25" });
+		expect(result.raised.some(([, milestone]) => milestone === "invitation")).toBe(true);
+		// the second run of the same day considers the same milestone but raises
+		// no second notification (PLN-AC-130): exactly one log row for the Planner
+		expect(result.raised_again).toEqual(result.raised);
+		expect(result.notifications).toBe(1);
+		// and the job mutates nothing on the Active plan
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
 	});
 });
