@@ -320,18 +320,15 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 				frappe.db.get_value("Departmental Need Version", current, "expected_operational_result")
 			)
 
-	def test_returned_seed_need_has_a_copied_correction_draft(self):
-		"""§14.3 — Version 2 is the server-created editable copy of returned V1."""
-		current = frappe.db.get_value("Departmental Need", "NDS-MOH-2027-0003", "current_version")
-		row = frappe.db.get_value(
-			"Departmental Need Version",
-			current,
-			["version_number", "version_status", "based_on_version"],
-			as_dict=True,
-		)
-		self.assertEqual(row.version_number, 2)
-		self.assertEqual(row.version_status, VERSION_DRAFT)
-		self.assertEqual(row.based_on_version, "NDS-MOH-2027-0003-V001")
+	def test_the_harmonized_laptop_needs_are_accepted_on_their_first_version(self):
+		"""SEED-001 §3.2 — 0003/0004 (the combined item's two source Needs)
+		reach Accepted directly on V1; nothing is Returned."""
+		for reference in ("NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
+			row = frappe.db.get_value(
+				"Departmental Need", reference, ["current_state", "current_accepted_version"], as_dict=True
+			)
+			self.assertEqual(row.current_state, STATE_ACCEPTED, reference)
+			self.assertEqual(row.current_accepted_version, f"{reference}-V001", reference)
 
 	def test_accepted_seed_need_points_at_its_accepted_version(self):
 		row = frappe.db.get_value(

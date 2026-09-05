@@ -35,6 +35,26 @@ FIXTURE_NS = C.FIXTURE_NS
 FY = "2027-2028"
 FUNDING_SOURCE = "Government of Kenya"
 
+# KT-STD-001 §8.3 — resolved via her real assignment (see _unit_for below),
+# never a name lookup, since this site carries more than one Organisation
+# Unit historically named "Digital Health" (FU-11).
+GRACE = "grace.wanjiku@moh.example.test"
+
+
+def _unit_for(user: str, role: str, unit_name: str) -> str:
+	"""The Organisation Unit named `unit_name` the actor really holds `role`
+	in — the register is authoritative, never a name lookup alone. Mirrors
+	kentender_procurement.procurement_planning.seeds.kentender_mvp_v1's own
+	`_unit_for`, so both modules resolve to the same real unit."""
+	for unit in frappe.get_all(
+		"User Responsibility Assignment",
+		filters={"user": user, "business_role": role, "status": "Enabled"},
+		pluck="organisation_unit",
+	):
+		if unit and frappe.db.get_value("Organisation Unit", unit, "unit_name") == unit_name:
+			return unit
+	return ""
+
 
 def _offset_date(days_ago: int) -> str:
 	return add_days(nowdate(), -days_ago)
@@ -271,13 +291,23 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 		lines=(
 			{
 				"title": "Digital health infrastructure programme",
-				"owner_org_unit": C.OU_DIR_DHP,
+				# FU-11 (SEED-001, 2026-09-05): resolved to Grace's real granted
+				# "Digital Health" unit, not the legacy C.OU_DIR_DHP code — the
+				# code named a unit `list_eligible_budget_lines` never matched
+				# against the actor's actual assignment scope.
+				"owner_org_unit": _unit_for(GRACE, "Departmental Author", "Digital Health"),
 				"approved_amount": 100_000_000,
 				"code": C.BL_DHI_2027,
 			},
 			{
 				"title": "Digital health workforce development",
-				"owner_org_unit": C.OU_DIR_HRMD,
+				# SEED-001 §3.5/§3.6: this line is the shared combining line for
+				# PPI-MOH-2027-033's two source allocations — HRMD's Need-3 entry
+				# and Digital Health's Need-4 entry. Giving it a single
+				# department's owner_org_unit would make it ineligible for the
+				# other department's funding call (BUD-BR-007's own scoping
+				# rule); leaving it unset makes it Entity-wide, eligible for both.
+				"owner_org_unit": "",
 				"approved_amount": 60_000_000,
 				"code": C.BL_HWD_2027,
 			},

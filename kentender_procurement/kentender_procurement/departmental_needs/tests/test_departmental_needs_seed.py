@@ -17,14 +17,10 @@ from kentender_procurement.departmental_needs.constants import (
 	INTAKE_OPEN,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	STATE_ACCEPTED,
-	STATE_DRAFT,
-	STATE_RETURNED,
 	STATE_SUBMITTED,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
 	VERSION_ACCEPTED,
-	VERSION_DRAFT,
-	VERSION_RETURNED,
 	VERSION_SUBMITTED,
 	VERSION_SUPERSEDED,
 )
@@ -54,8 +50,11 @@ from kentender_procurement.departmental_needs.services.usage import planning_usa
 DEFAULT_NEEDS = {
 	"NDS-MOH-2027-0001": ("Digital Health", 1, "2027-08-31", STATE_ACCEPTED),
 	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, "2027-12-31", STATE_SUBMITTED),
-	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 200, "2027-12-31", STATE_RETURNED),
-	"NDS-MOH-2027-0004": ("Digital Health", 300, "2027-12-31", STATE_DRAFT),
+	# SEED-001 §3.2 (2026-09-05): 0003/0004 are the two source Needs the
+	# harmonized combined Plan Item PPI-MOH-2027-033 draws from, so both are
+	# now Accepted at their corrected quantities, not Returned/Draft.
+	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 100, "2027-12-31", STATE_ACCEPTED),
+	"NDS-MOH-2027-0004": ("Digital Health", 150, "2027-12-31", STATE_ACCEPTED),
 }
 
 # §14.3 exact expected operational results.
@@ -171,20 +170,6 @@ class TestDefaultNeeds(SeedCase):
 		for reference, expected in EXPECTED_RESULTS.items():
 			self.assertEqual(self.current_version(reference).expected_operational_result, expected)
 
-	def test_the_returned_need_has_a_server_created_version_two(self):
-		need = self.need("NDS-MOH-2027-0003")
-		versions = frappe.get_all(
-			"Departmental Need Version",
-			filters={"departmental_need": need.name},
-			fields=["name", "version_number", "version_status", "based_on_version"],
-			order_by="version_number asc",
-		)
-		self.assertEqual([row.version_number for row in versions], [1, 2])
-		self.assertEqual(versions[0].version_status, VERSION_RETURNED)
-		self.assertEqual(versions[1].version_status, VERSION_DRAFT)
-		self.assertEqual(versions[1].based_on_version, versions[0].name)
-		self.assertEqual(need.current_version, versions[1].name)
-
 	def test_the_accepted_need_points_at_its_accepted_version(self):
 		need = self.need("NDS-MOH-2027-0001")
 		self.assertEqual(need.current_accepted_version, need.current_version)
@@ -207,10 +192,14 @@ class TestDefaultNeeds(SeedCase):
 		self.assertEqual(owners, {AUTHOR})
 
 	def test_the_design_clock_decision_times_are_applied(self):
+		# SEED-001 §3.2 (2026-09-05): 0003/0004 accept at the harmonized
+		# chain's own instants, replacing 0003's former "Return for
+		# correction" entry.
 		expected = {
 			("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
 			("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
-			("NDS-MOH-2027-0003", "Return for correction"): "2026-11-24 13:35:00",
+			("NDS-MOH-2027-0003", "Accept for planning"): "2026-11-25 10:00:00",
+			("NDS-MOH-2027-0004", "Accept for planning"): "2026-11-25 09:30:00",
 		}
 		for (need, action), when in expected.items():
 			occurred = frappe.db.get_value(
@@ -221,10 +210,21 @@ class TestDefaultNeeds(SeedCase):
 			)
 			self.assertEqual(str(occurred), when, f"{need} {action}")
 
-	def test_the_default_profile_reports_not_included_for_every_need(self):
-		# §14.3 — the design-clock value, with no Planning usage profile loaded.
-		for reference in DEFAULT_NEEDS:
-			self.assertEqual(planning_usage(reference), USAGE_NOT_INCLUDED, reference)
+	def test_the_default_profile_reports_planning_usage_matching_the_harmonized_chain(self):
+		# SEED-001 §3.2/§3.6 (2026-09-05) — 0001, 0003 and 0004 are the three
+		# source Needs the harmonized Planning baseline (kentender_procurement.
+		# procurement_planning.seeds.kentender_mvp_v1.upsert_planning_base)
+		# fully allocates once the whole chain is seeded; 0002 is never
+		# funded into any Departmental Plan Entry, so it stays unconsumed
+		# regardless of what else has been seeded on the site.
+		expected = {
+			"NDS-MOH-2027-0001": USAGE_FULL,
+			"NDS-MOH-2027-0002": USAGE_NOT_INCLUDED,
+			"NDS-MOH-2027-0003": USAGE_FULL,
+			"NDS-MOH-2027-0004": USAGE_FULL,
+		}
+		for reference, usage in expected.items():
+			self.assertEqual(planning_usage(reference), usage, reference)
 
 	def test_reseeding_creates_nothing_new(self):
 		before = (
@@ -344,78 +344,7 @@ class TestSelectableProfiles(SeedCase):
 		)
 
 
-class TestKebsFirstSlice(SeedCase):
-	"""§14.6 / NDS-AC-045 — proved through the real Needs-origin route.
-
-	NDS-CHG-001 v1.6 §14.6 still requires this profile, but its old
-	dependency on `kentender_core.seeds.kebs_foundation` — a second,
-	fabricated Procuring Entity — is retired outright by AUTH-ADR-001 v1.6
-	§1.1 (the site is exactly one implicit Procuring Entity). Phase 6
-	rebuilt the profile onto a dedicated Organisation Unit under the site's
-	own single tree instead, with no external foundation fixture to install
-	first.
-	"""
-
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		profiles.apply_profile("kebs")
-
-	def kebs_unit(self) -> str:
-		return frappe.db.get_value("Organisation Unit", {"unit_name": profiles.KEBS_OU_NAME}, "name")
-
-	def kebs_needs(self):
-		titles = tuple(spec["title"] for spec in profiles.KEBS_NEEDS)
-		return frappe.db.sql(
-			"""
-			select n.name, n.current_state, n.organisation_unit, n.financial_year,
-			       v.title, v.indicative_quantity, v.unit, v.expected_operational_result
-			from `tabDepartmental Need` n
-			join `tabDepartmental Need Version` v on v.name = n.current_accepted_version
-			where n.fixture_namespace = %s and v.title in %s order by n.name
-			""",
-			(profiles.NS_KEBS, titles),
-			as_dict=True,
-		)
-
-	def test_all_three_source_lines_reach_accepted_through_the_real_lifecycle(self):
-		# NDS-AC-045 must not be satisfied by writing rows or by the direct
-		# Planning route: each Need is created, submitted and accepted by real
-		# actors, so the acceptance it claims actually happened.
-		rows = self.kebs_needs()
-		self.assertEqual(len(rows), 3)
-		unit = self.kebs_unit()
-		for row in rows:
-			self.assertEqual(row.current_state, STATE_ACCEPTED, row.name)
-			self.assertEqual(row.organisation_unit, unit)
-			self.assertEqual(row.financial_year, FY)
-
-	def test_the_source_facts_match_the_specified_first_slice(self):
-		by_title = {row.title: row for row in self.kebs_needs()}
-		for spec in profiles.KEBS_NEEDS:
-			row = by_title[spec["title"]]
-			self.assertEqual(int(row.indicative_quantity), spec["indicative_quantity"], spec["title"])
-			self.assertEqual(row.unit, spec["unit"], spec["title"])
-			self.assertEqual(
-				row.expected_operational_result, spec["expected_operational_result"], spec["title"]
-			)
-
-	def test_each_accepted_need_published_its_source_payload(self):
-		for row in self.kebs_needs():
-			payload = frappe.db.get_value(
-				"Departmental Need Event",
-				{"departmental_need": row.name, "event_type": "DepartmentalNeedAccepted.v2"},
-				"payload",
-			)
-			self.assertTrue(payload, row.name)
-			body = json.loads(payload)
-			self.assertEqual(body["title"], row.title)
-			self.assertEqual(body["indicative_quantity"], row.indicative_quantity)
-			self.assertEqual(body["expected_operational_result"], row.expected_operational_result)
-			self.assertNotIn("procuring_entity_id", body)
-
-	def test_the_profile_is_resettable_and_reappliable(self):
-		profiles.reset_profile("kebs")
-		self.assertEqual(frappe.db.count("Departmental Need", {"fixture_namespace": profiles.NS_KEBS}), 0)
-		profiles.apply_profile("kebs")
-		self.assertEqual(frappe.db.count("Departmental Need", {"fixture_namespace": profiles.NS_KEBS}), 3)
+# TestKebsFirstSlice (§14.6 / NDS-AC-045) is retired — SEED-001 §1.1
+# (2026-09-05) removes the fictitious second Procuring Entity `PE-KEBS`
+# outright rather than rebuilding the profile on a same-site Organisation
+# Unit; see `profiles.py`'s matching retirement note.

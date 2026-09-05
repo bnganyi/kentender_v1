@@ -56,11 +56,6 @@ class TestSeedStaticContract(IntegrationTestCase):
 			"the seed reverses the Need usage projection only through the published usage service",
 		)
 
-	def test_the_kebs_profiles_fail_loudly_by_design(self):
-		with self.assertRaises(frappe.ValidationError) as caught:
-			seed.seed_kebs_profiles()
-		self.assertIn("§14.9", str(caught.exception))
-
 
 @unittest.skipUnless(_world_available(), "the KENTENDER_MVP_V1 world is not seeded on this site (make seed-kentender-mvp-v1)")
 class TestSeedContract(IntegrationTestCase):
@@ -86,7 +81,9 @@ class TestSeedContract(IntegrationTestCase):
 			frappe.db.exists("User Responsibility Assignment", {"user": seed.NO_AUTHORITY, "status": "Enabled", "effective_to": ("is", "not set")})
 		)
 
-	def test_the_annual_plan_is_active_with_one_confirmed_item_at_80m_and_no_reservation(self):
+	def test_the_annual_plan_is_active_with_two_confirmed_items_at_130m_and_no_reservation(self):
+		"""SEED-001 §3.6 — the pre-existing single-department item (80m) plus
+		the harmonized two-department combined item (50m), no reservation."""
 		failures = [row for row in seed.validate_planning_seed() if not row["ok"]]
 		self.assertEqual(failures, [])
 

@@ -4,16 +4,17 @@ Items deliberately left open at the close of the **PLN-CHG-001 v1.2** rebuild
 (Phases 0–12, closed 31 August 2026). Each is either an owner decision the
 rebuild had no authority to make, a gap in a sibling module's own contract, or
 a defect class with no live surface in MVP-1. Nothing here blocks the module's
-acceptance contract except FU-01, whose §14.9 acceptance row (PLN-AC-046) is
-explicitly marked Open in the tracker.
+acceptance contract; FU-01's §14.9 acceptance row (PLN-AC-046) was resolved
+by retirement, not by the remediation this file originally described (see
+below).
 
-**Status:** re-annotated 5 September 2026 at the close of the v1.12 correction cycle (FU-08..FU-11 added; FU-02 and FU-06 closed by v1.12). Earlier note from the cycle start: annotated 5 September 2026 at the start of the v1.12 correction cycle (`IMPLEMENTATION_TRACKER.md`): FU-02 and FU-06 are closed by that cycle (D11 adds `reference` to the Budget contract; DES-13 now has an artboard and is built); FU-01, FU-03, FU-04, FU-05, FU-07 are carried unchanged. Reservation-related wording in FU-05/FU-06 is moot under v1.12 §7.3 (Planning holds no reservation).
+**Status:** re-annotated 5 September 2026 at the close of the SEED-001 v1.0 harmonized-fixture cutover: FU-01 is resolved by retirement (§1.1 removes the PE-KEBS fixture world outright rather than building the authoritative KEBS Budget Line/Strategic Objective this file previously called for). Earlier note at the close of the v1.12 correction cycle (FU-08..FU-11 added; FU-02 and FU-06 closed by v1.12). Earlier note from the cycle start: annotated 5 September 2026 at the start of the v1.12 correction cycle (`IMPLEMENTATION_TRACKER.md`): FU-02 and FU-06 are closed by that cycle (D11 adds `reference` to the Budget contract; DES-13 now has an artboard and is built); FU-01, FU-03, FU-04, FU-05, FU-07 are carried unchanged. Reservation-related wording in FU-05/FU-06 is moot under v1.12 §7.3 (Planning holds no reservation).
 
 ## Register
 
 | ID | Item | Severity | Owner |
 |---|---|---|---|
-| FU-01 | §14.9 KEBS seed profiles are blocked: no authoritative KEBS Budget Line or Strategic Objective exists for Planning to reference | **High** — PLN-AC-046 is Open until decided | Project Owner + `kentender_budget` / `kentender_strategy` seeds |
+| FU-01 | **Resolved by retirement (SEED-001 §1.1, 5 Sep 2026).** §14.9 KEBS seed profiles were blocked on no authoritative KEBS Budget Line or Strategic Objective; the PE-KEBS fixture world is now deleted outright rather than completed — `seed_kebs_profiles` and its static-contract test are removed | Closed | — |
 | FU-02 | Budget/Strategy published contracts expose no human business reference — screens show raw hash ids for Budget Lines | Medium | `kentender_budget` (and `kentender_strategy` for path-only labels) |
 | FU-03 | The KENTENDER_MVP_V1 full-stack validator crashes upstream of the Planning checks on the retired `Strategy Programme` doctype | Medium | `kentender_strategy` / `kentender_core` seeds |
 | FU-04 | Dormant references to retired Planning doctypes survive in tender-management and legacy seed families | Medium — latent crash-on-call, no live caller | `kentender_procurement` (tender-management), `kentender_core` legacy seeds |
@@ -28,18 +29,25 @@ explicitly marked Open in the tracker.
 
 ---
 
-### FU-01 — §14.9 KEBS profiles blocked on missing authoritative fixtures
+### FU-01 — §14.9 KEBS profiles blocked on missing authoritative fixtures (resolved by retirement)
 
-`seed_kebs_profiles` fails loudly by design: PE-KEBS exists (the
-`kebs_foundation` seed creates PE/FY/OU/context only), but a funded,
-submitted, accepted KEBS DPP — the prerequisite for forming
-`PPI-KEBS-2026-ICT-001` — requires a KEBS Budget Line and a KEBS Strategic
-Objective. §14.3 names only MOH fixtures, Budget's and Strategy's approved
-seed contracts provide nothing for PE-KEBS, and §14.1 forbids Planning
-inventing either. **Decision required:** extend the owning modules' seed
-contracts with an authoritative KEBS Budget/Strategy graph, or descope
-§14.9's Planning half (NDS's own §14.6 KEBS profile stopped at accepted
-Needs for the same underlying reason). `PLN-AC-046` stays Open until then.
+**Resolved 5 September 2026, by retirement rather than by the remediation
+originally described below.** SEED-001 v1.0 §1.1 reconciles the fictitious
+second Procuring Entity `PE-KEBS` into the real one-site Ministry of Health
+world instead of completing it: `seed_kebs_profiles` (the permanent
+by-design `frappe.throw` stub this row used to describe), its sole caller
+`test_the_kebs_profiles_fail_loudly_by_design`, `kentender_core.seeds.
+kebs_foundation`, and the KEBS content in Departmental Needs'
+`departmental_needs/seeds/profiles.py` are deleted outright, not extended.
+`PLN-AC-046` is closed on that basis — there is no longer a KEBS acceptance
+row for Planning to satisfy.
+
+Original text, kept for record: `seed_kebs_profiles` failed loudly by
+design: PE-KEBS existed (the `kebs_foundation` seed created PE/FY/OU/context
+only), but a funded, submitted, accepted KEBS DPP — the prerequisite for
+forming `PPI-KEBS-2026-ICT-001` — required a KEBS Budget Line and a KEBS
+Strategic Objective that Budget's and Strategy's approved seed contracts
+never provided, and §14.1 forbade Planning inventing either.
 
 ### FU-02 — no human business reference in the Budget/Strategy contracts
 
@@ -102,10 +110,8 @@ should adopt it.
 
 ## Verifying a fix
 
-- **FU-01:** `bench --site <site> execute kentender_procurement.procurement_planning.seeds.kentender_mvp_v1.seed_kebs_profiles`
-  stops throwing and builds `PPI-KEBS-2026-ICT-001` twice (Need-origin and
-  direct) with equivalent lineage; `test_planning_seed`'s KEBS test flips
-  from "fails loudly" to a build assertion; PLN-AC-046 → Done.
+- **FU-01:** Closed by retirement, not by a build — `seed_kebs_profiles` no
+  longer exists (SEED-001 §1.1); PLN-AC-046 → Done on that basis.
 - **FU-02:** the owning contract returns a `reference` field; DES-02/03/09
   screens display it; re-capture the affected evidence screenshots.
 - **FU-03:** `bench --site <site> execute kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1`

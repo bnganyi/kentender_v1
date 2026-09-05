@@ -124,6 +124,11 @@ ACTORS = (
 	# CU-307 extended Mercy's assignments — one canonical fixture world, not a
 	# module-owned duplicate.
 	("naomi.chebet", "Naomi Chebet"),
+	# STR-CHG-001 v1.7 §14.1 / KT-STD-001 §8.3 (2026-09-05) — Strategy's own
+	# named actors. Supersede CU-307's Mercy stand-in below, which existed
+	# only because these two did not yet exist.
+	("esther.muthoni", "Esther Muthoni"),
+	("alfred.ochieng", "Dr Alfred Ochieng"),
 )
 
 ASSIGNMENTS = (
@@ -148,15 +153,23 @@ ASSIGNMENTS = (
 		{
 			"appointment_type": "Acting",
 			"authority_reference": "MOH/HR/ACT/2026/041",
-			"effective_from": "2026-10-01 00:00:00",
-			"effective_to": "2026-11-30 23:59:59",
+			# SEED-001 §3.1 states this window as 1 Oct-30 Nov 2026, but her
+			# Need-0004 acceptance (kentender_mvp_r1.py) is authorised against
+			# real wall-clock time when the seed actually runs, with no
+			# time-travel override available on the review command — a window
+			# that narrow makes the canonical seed unable to run outside those
+			# two months. Widened deliberately (owner decision, 2026-09-05) so
+			# the seed stays reliably runnable; the design-clock stamp on her
+			# decision still reads 25 Nov 2026 regardless of real run date.
+			"effective_from": "2026-09-01 00:00:00",
+			"effective_to": "2027-06-30 23:59:59",
 		},
 	),
 	("mercy.kilonzo", "Procurement Planner", None, {}),
-	# CU-307 (owner decision 2026-09-03): an existing actor authors strategy —
-	# Mercy holds the Site-wide Strategy Author responsibility. Extends the
-	# KT-STD §8.3 register; approvers are granted through the admin UI.
-	("mercy.kilonzo", "Strategy Author", None, {}),
+	# STR-CHG-001 v1.7 §14.1 / KT-STD-001 §8.3 (2026-09-05) — Strategy's own
+	# named actors now exist; supersedes CU-307's Mercy stand-in.
+	("esther.muthoni", "Strategy Author", None, {}),
+	("alfred.ochieng", "Strategy Approver", None, {}),
 	# NDS-CHG-001 v1.6 §14.2 (2026-09-04) — Site-wide Auditor, read-only.
 	("naomi.chebet", "Auditor", None, {}),
 	(

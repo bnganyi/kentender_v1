@@ -82,26 +82,34 @@ NEEDS = (
 		"state": STATE_SUBMITTED,
 	},
 	{
+		# SEED-001 §3.2 (2026-09-05): corrected from 200/Returned — this and
+		# NDS-MOH-2027-0004 below are the two source Needs the harmonized
+		# combined Plan Item PPI-MOH-2027-033 draws from (PLN-CHG-001 v1.13
+		# §14.5), so both must reach Accepted, not sit in Returned/Draft.
 		"reference": "NDS-MOH-2027-0003",
 		"unit_name": "Human Resources Management and Development",
 		"title": "Clinical training laptops for digital health rollout",
 		"description": "Laptop computers for clinical training during the national digital health rollout.",
 		"expected_operational_result": "Provide the equipment required for staff training on the deployed digital health services.",
-		"indicative_quantity": 200,
+		"indicative_quantity": 100,
 		"unit": "Each",
 		"required_by_date": "2027-12-31",
-		"state": STATE_RETURNED,
+		"state": STATE_ACCEPTED,
 	},
 	{
+		# SEED-001 §3.2 (2026-09-05): corrected from 300/Draft. Accepted by
+		# Julia Njeri (Acting Head of User Department, Digital Health), not
+		# Peter — the same segregation the shared register already models.
 		"reference": "NDS-MOH-2027-0004",
 		"unit_name": "Digital Health",
 		"title": "Clinical deployment laptops for digital health rollout",
 		"description": "Laptop computers for deployment at priority facilities during the national digital health rollout.",
 		"expected_operational_result": "Provide endpoint equipment required to use the deployed digital health services.",
-		"indicative_quantity": 300,
+		"indicative_quantity": 150,
 		"unit": "Each",
 		"required_by_date": "2027-12-31",
-		"state": STATE_DRAFT,
+		"state": STATE_ACCEPTED,
+		"reviewer": ACTING_REVIEWER,
 	},
 )
 
@@ -111,10 +119,13 @@ RETURN_REASON = (
 )
 
 # §14.3 design-clock decision times (EAT), applied after the commands run.
+# SEED-001 §3.2 (2026-09-05): 0003/0004 accept at the harmonized chain's own
+# instants, replacing 0003's former "Return for correction" entry.
 DECISION_TIMES = {
 	("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
 	("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
-	("NDS-MOH-2027-0003", "Return for correction"): "2026-11-24 13:35:00",
+	("NDS-MOH-2027-0003", "Accept for planning"): "2026-11-25 10:00:00",
+	("NDS-MOH-2027-0004", "Accept for planning"): "2026-11-25 09:30:00",
 }
 
 
@@ -223,7 +234,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 		["name", "decision_token"],
 		as_dict=True,
 	)
-	with _as(REVIEWER):
+	with _as(spec.get("reviewer", REVIEWER)):
 		result = lifecycle.review_need(
 			need=need,
 			decision=decision,

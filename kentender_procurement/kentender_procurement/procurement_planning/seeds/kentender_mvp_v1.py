@@ -34,9 +34,8 @@ the governed 30-day ceiling (§4.9, PLN-AC-114); the seed derives its baseline
 from the governed defaults PLN-DES-09 shows (21 / 30 / 5 / 2 / 14 days from
 1 May 2027) and the deviation is recorded in FOLLOW_UPS (FU-08).
 
-§14.9 (KEBS ×2) fails loudly by design (owner default O5): no authoritative
-KEBS Budget Line or KEBS Strategic Objective exists in Budget's or Strategy's
-approved seed contracts, and §14.1 forbids inventing either.
+§14.9 (KEBS ×2) is retired, not fixed — see the note beside the deleted
+`seed_combined_profile`/`seed_kebs_profiles` functions below (SEED-001 §1.1).
 """
 
 from __future__ import annotations
@@ -60,6 +59,11 @@ DHI_NAME = "Digital Health"  # spec: OU-MOH-DHI
 HRMD_NAME = "Human Resources Management and Development"  # spec: OU-MOH-HRMD
 
 NEED = "NDS-MOH-2027-0001"
+# SEED-001 §3.2/§3.6, PLN-CHG-001 v1.13 §14.5 (2026-09-05) — the harmonized
+# combined item's two real, Need-backed sources. Both Needs are Accepted by
+# `departmental_needs.seeds.kentender_mvp_r1` before this seed runs.
+NEED_HRMD_LAPTOPS = "NDS-MOH-2027-0003"
+NEED_DHI_LAPTOPS = "NDS-MOH-2027-0004"
 BL_DHI = "MOH-BL-DHI-2027"
 BL_HWD = "MOH-BL-HWD-2027"
 OBJECTIVE_TITLE = "Strengthen interoperable national digital health services"
@@ -120,33 +124,33 @@ DIRECT_FIXTURE = {
 	"indicative_amount": 20000000,
 }
 
-# §14.8 isolated combined-source fixture (DES-09A text).
-COMBINED_A = {  # HRMD
-	"title": "Clinical training laptops for digital health rollout",
-	"description": "Laptop computers for clinical training during the national digital health rollout.",
-	"expected_operational_result": "Provide the equipment required for staff training on the deployed digital health services.",
-	"quantity": 200, "unit": "Each", "required_by_date": "2027-12-31",
-	"indicative_amount": 48000000,
-}
-COMBINED_B = {  # Digital Health
-	"title": "Clinical deployment laptops for digital health rollout",
-	"description": "Laptop computers for deployment at priority facilities during the national digital health rollout.",
-	"expected_operational_result": "Provide endpoint equipment required to use the deployed digital health services.",
-	"quantity": 300, "unit": "Each", "required_by_date": "2027-12-31",
-	"indicative_amount": 72000000,
-}
+# PLN-CHG-001 v1.13 §14.5 — the combined item's two real Need-backed
+# fundings. KES 50,000,000 combined over 250 Each with no per-line amount
+# stated in either SEED-001 or §14.5; split by quantity share at a uniform
+# per-unit price (both departments draw "one standard laptop specification"),
+# which is the only value consistent with both the stated total and the
+# stated 100/150 quantities: KES 200,000 per unit.
+COMBINED_TOTAL_AMOUNT = 50_000_000
+NEED_HRMD_LAPTOPS_AMOUNT = 20_000_000  # 100 each
+NEED_DHI_LAPTOPS_AMOUNT = 30_000_000  # 150 each
+
 COMBINED_ITEM_VALUES = {
 	**ITEM_VALUES,
 	"title": "Clinical training and deployment laptops for digital health rollout",
 	"description": (
-		"Procure one standard laptop specification and deployment service for the "
-		"national digital-health rollout across both source departments."
+		"Procure and deploy one common laptop specification for clinical training "
+		"and field digital-health deployment across two departments."
 	),
 	"aggregation_reason": (
-		"Procure one standard laptop specification and deployment service for the "
-		"same national digital-health rollout."
+		"Both departments require the same laptop specification for the same "
+		"national digital-health rollout; combining secures better unit pricing "
+		"and one delivery schedule."
 	),
 	"aggregation_indicator": "Aggregated into this package",
+	# §14.5 — "using the same governed periods as PPI-MOH-2027-021," a
+	# fortnight-later invitation date; every *_period_days field is
+	# inherited from ITEM_VALUES above unchanged.
+	"baseline_invitation_date": "2027-05-15",
 }
 
 # §14.4–14.6 design-clock instants, stored as the UTC equivalents of the
@@ -334,10 +338,18 @@ def _intake_open():
 # --- the §14.4–14.6 integrated baseline, driven through real commands --------
 
 
-def _build_accepted_dpp(prereqs: dict[str, str], *, extra_entries: list[dict[str, Any]] | None = None, amount: float = 80000000) -> dict[str, Any]:
-	"""§14.4 — the Need-only Digital Health departmental plan through the
-	real commands: Grace funds the projected Need entry, Peter submits, Mercy
-	classifies and accepts, which auto-creates the Draft Annual Plan (§5.2)."""
+def _build_accepted_dpp(
+	prereqs: dict[str, str],
+	*,
+	extra_entries: list[dict[str, Any]] | None = None,
+	extra_need_fundings: list[dict[str, Any]] | None = None,
+	amount: float = 80000000,
+) -> dict[str, Any]:
+	"""§14.4 — the Digital Health departmental plan through the real commands:
+	Grace funds the projected Need entry (plus any further accepted Needs
+	already projected for the same unit — `extra_need_fundings`), Peter
+	submits, Mercy classifies and accepts, which auto-creates the Draft
+	Annual Plan (§5.2)."""
 	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation, plan_read
 
 	with _as(AUTHOR):
@@ -360,6 +372,22 @@ def _build_accepted_dpp(prereqs: dict[str, str], *, extra_entries: list[dict[str
 			)
 			record_version = added["record_version"]
 			classifications[added["entry_id"]] = spec["classification"]
+		for index, spec in enumerate(extra_need_fundings or []):
+			need_entry_id = frappe.db.get_value(
+				"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": spec["need"]}, "entry_id"
+			)
+			if not need_entry_id:
+				frappe.throw(
+					f"The accepted Need {spec['need']} did not project into the Draft DPP — "
+					"run the Departmental Needs seed first (§14.10)."
+				)
+			need_funded = dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=need_entry_id, budget_line=spec["budget_line"],
+				indicative_amount=spec["amount"], expected_record_version=record_version,
+				idempotency_key=_key(f"fund-need-extra-{index}"),
+			)
+			record_version = need_funded["record_version"]
+			classifications[need_entry_id] = spec["classification"]
 	with _as(HOD):
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=opened["current_version"], certification_confirmed=True,
@@ -372,6 +400,90 @@ def _build_accepted_dpp(prereqs: dict[str, str], *, extra_entries: list[dict[str
 		)
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 	return {"accepted": accepted, "plan": plan, "entry_id": entry_id, "opened": opened}
+
+
+def _build_hrmd_laptops_dpp(prereqs: dict[str, str]) -> str:
+	"""PLN-CHG-001 v1.13 §14.4/SEED-001 §3.3 — a new HRMD departmental plan
+	carrying only Need-3 (`NEED_HRMD_LAPTOPS`), submitted and accepted the
+	same way as the DHI plan. Accepting a second department's DPP for the
+	same Fiscal Year attaches to the one existing Annual Plan (§5.2 is keyed
+	by Fiscal Year, not by department), the same behaviour the two-department
+	combined item always relied on."""
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation
+
+	with _as(AUTHOR):
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=prereqs["hrmd"], fiscal_year=FY, idempotency_key=_key("open-hrmd-dpp"), fixture_namespace=NS,
+		)
+		entry_id = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": NEED_HRMD_LAPTOPS}, "entry_id"
+		)
+		if not entry_id:
+			frappe.throw(
+				f"The accepted Need {NEED_HRMD_LAPTOPS} did not project into the Draft DPP — "
+				"run the Departmental Needs seed first (§14.10)."
+			)
+		funded = dpp_lifecycle.save_need_funding(
+			dpp_version=opened["current_version"], entry_id=entry_id, budget_line=prereqs["bl_hwd"],
+			indicative_amount=NEED_HRMD_LAPTOPS_AMOUNT, expected_record_version=opened["record_version"],
+			idempotency_key=_key("fund-hrmd-laptops"),
+		)
+	with _as(HOD):
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=funded["record_version"], idempotency_key=_key("submit-hrmd-dpp"),
+		)
+	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+	with _as(PLANNER):
+		dpp_validation.accept_departmental_plan(
+			task=task.name, classifications={entry_id: "Goods"}, task_token=task.task_token,
+			idempotency_key=_key("accept-hrmd-dpp"),
+		)
+	return entry_id
+
+
+def _form_each_and_combined_items(plan_reference: str, prereqs: dict[str, str]) -> tuple[str, str]:
+	"""PLN-CHG-001 v1.13 §14.5 — two Plan Items formed into the same Draft
+	Annual Plan Version before its one finance/governance/publication cycle
+	runs: Need-1's item (unchanged) and the harmonized combined item from
+	Need-3 (HRMD) + Need-4 (Digital Health). Both DHI and HRMD DPPs must
+	already be accepted (their entries are "laptops"-titled; Need-1's is
+	not) so this always selects the right entries regardless of row order."""
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
+
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		sources = plan["unallocated_sources"]
+		single_source = next(s for s in sources if "laptops" not in s["title"])
+		laptop_sources = [s["dpp_entry"] for s in sources if "laptops" in s["title"]]
+		if len(laptop_sources) != 2:
+			frappe.throw(
+				f"Expected exactly 2 unallocated laptop sources for the combined item, found {len(laptop_sources)}."
+			)
+
+		formed_each = plan_workbench.form_plan_items(
+			plan_version=plan["version_reference"], dpp_entries=[single_source["dpp_entry"]],
+			mode="each", expected_record_version=plan["record_version"], idempotency_key=_key("form-item"),
+		)
+		item_id = formed_each["created_items"][0]
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values={**ITEM_VALUES, "strategic_objective": prereqs["objective"]},
+			expected_record_version=item["record_version"], idempotency_key=_key("save-item"),
+		)
+
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		formed_combined = plan_workbench.form_plan_items(
+			plan_version=plan["version_reference"], dpp_entries=laptop_sources,
+			mode="combined", expected_record_version=plan["record_version"], idempotency_key=_key("form-combined"),
+		)
+		combined_item_id = formed_combined["created_items"][0]
+		combined_item = plan_read.get_plan_item(plan_item_id=combined_item_id)
+		plan_workbench.save_plan_item(
+			plan_item=combined_item_id, values={**COMBINED_ITEM_VALUES, "strategic_objective": prereqs["objective"]},
+			expected_record_version=combined_item["record_version"], idempotency_key=_key("save-combined"),
+		)
+	return item_id, combined_item_id
 
 
 def _form_item(plan: dict[str, Any], prereqs: dict[str, str], *, values: dict[str, Any] | None = None) -> str:
@@ -501,8 +613,28 @@ def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
 		_destination()
 
 	with _intake_open():
-		built = _build_accepted_dpp(prereqs)
-		item_id = _form_and_confirm(built["plan"], prereqs)
+		# PLN-CHG-001 v1.13 §14.4/§14.5 (SEED-001) — the DHI departmental plan
+		# carries both Need-1 (the existing single-department item) and
+		# Need-4 (Digital Health's half of the harmonized combined item) as
+		# two entries in the same DPP, submitted and accepted together.
+		built = _build_accepted_dpp(
+			prereqs,
+			extra_need_fundings=[
+				{
+					"need": NEED_DHI_LAPTOPS,
+					"budget_line": prereqs["bl_hwd"],
+					"amount": NEED_DHI_LAPTOPS_AMOUNT,
+					"classification": "Goods",
+				}
+			],
+		)
+		hrmd_entry_id = _build_hrmd_laptops_dpp(prereqs)
+		item_id, combined_item_id = _form_each_and_combined_items(built["accepted"]["annual_plan"], prereqs)
+		task = frappe.get_doc("Plan Finance Task", _request_funding(built["accepted"]["annual_plan"]))
+		with _as(FINANCE):
+			from kentender_procurement.procurement_planning.services import plan_finance
+
+			plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key("confirm-funding"))
 		approved = _govern_and_publish(built["accepted"]["annual_plan"])
 	_stamp_design_clock(built["accepted"]["annual_plan"])
 	if commit:
@@ -511,6 +643,8 @@ def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
 		"ok": True, "idempotent": False,
 		"plan_reference": built["accepted"]["annual_plan"],
 		"plan_item": item_id,
+		"combined_plan_item": combined_item_id,
+		"hrmd_entry": hrmd_entry_id,
 		"publication_result": approved["publication_result"],
 	}
 
@@ -655,50 +789,12 @@ def seed_not_affordable_profile(*, commit: bool = False) -> dict[str, Any]:
 seed_shortfall_profile = seed_not_affordable_profile  # one-cycle alias for the Make gate
 
 
-def seed_combined_profile(*, commit: bool = False) -> dict[str, Any]:
-	"""§14.8 — two Goods sources from two departments combined into one Plan
-	Item (500 each · KES 120,000,000, DES-09A's package text). Isolated
-	because its funding requirement exceeds the live baseline."""
-	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation, plan_read, plan_workbench
-
-	prereqs = _fresh_profile_world()
-	with _intake_open():
-		# Digital Health: the accepted Need must still be covered, plus the deployment laptops
-		built = _build_accepted_dpp(prereqs, extra_entries=[{"values": COMBINED_B, "classification": "Goods"}])
-		# HRMD: the training laptops
-		with _as(AUTHOR):
-			hrmd = dpp_lifecycle.open_departmental_plan(
-				organisation_unit=prereqs["hrmd"], fiscal_year=FY, idempotency_key=_key("open-hrmd-dpp"), fixture_namespace=NS,
-			)
-			added_a = dpp_lifecycle.save_direct_requirement(
-				dpp_version=hrmd["current_version"], values={**COMBINED_A, "budget_line": prereqs["bl_hwd"]},
-				expected_record_version=hrmd["record_version"], idempotency_key=_key("add-train"),
-			)
-		with _as(HOD):
-			hrmd_submitted = dpp_lifecycle.submit_departmental_plan(
-				dpp_version=hrmd["current_version"], certification_confirmed=True,
-				expected_record_version=added_a["record_version"], idempotency_key=_key("submit-hrmd"),
-			)
-		hrmd_task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": hrmd_submitted["task"]})
-		with _as(PLANNER):
-			dpp_validation.accept_departmental_plan(
-				task=hrmd_task.name, classifications={added_a["entry_id"]: "Goods"}, task_token=hrmd_task.task_token, idempotency_key=_key("accept-hrmd"),
-			)
-			plan = plan_read.get_annual_plan(plan_reference=built["accepted"]["annual_plan"])
-			laptop_entries = [row["dpp_entry"] for row in plan["unallocated_sources"] if "laptops" in row["title"]]
-			formed = plan_workbench.form_plan_items(
-				plan_version=plan["version_reference"], dpp_entries=laptop_entries, mode="combined",
-				expected_record_version=plan["record_version"], idempotency_key=_key("form-combined"),
-			)
-			item_id = formed["created_items"][0]
-			item = plan_read.get_plan_item(plan_item_id=item_id)
-			plan_workbench.save_plan_item(
-				plan_item=item_id, values={**COMBINED_ITEM_VALUES, "strategic_objective": prereqs["objective"]},
-				expected_record_version=item["record_version"], idempotency_key=_key("save-combined"),
-			)
-	if commit:
-		frappe.db.commit()
-	return {"ok": True, "profile": "combined", "plan_item": item_id}
+# seed_combined_profile (§14.8) is retired — PLN-CHG-001 v1.13 §14.8/SEED-001
+# §1.1 (2026-09-05): the combined laptops item is no longer an isolated,
+# mutually-exclusive test profile. It is corrected (one shared Budget Line,
+# reduced quantities) and folded into the live integrated baseline as
+# PPI-MOH-2027-033 — see `_build_hrmd_laptops_dpp`/`_form_each_and_combined_items`
+# above, called from `upsert_planning_base`.
 
 
 def seed_stale_profile(*, commit: bool = False) -> dict[str, Any]:
@@ -781,20 +877,11 @@ def seed_publication_failure_profile(*, commit: bool = False) -> dict[str, Any]:
 	return {"ok": True, "profile": "publication_failure", "publication": publication}
 
 
-def seed_kebs_profiles(*, commit: bool = False) -> dict[str, Any]:
-	"""§14.9 — fails loudly by design (owner default O5): no authoritative
-	KEBS Budget Line or Strategic Objective exists in the owning modules'
-	approved seed contracts, and §14.1 forbids inventing either."""
-	missing = []
-	if not frappe.get_all("Procurement Budget Line", filters={"generated_reference": ("like", "%KEBS%")}, limit=1):
-		missing.append("an authoritative KEBS Procurement Budget Line (Budget module seed)")
-	if not frappe.get_all("Strategy Node", filters={"title": ("like", "%KEBS%"), "node_type": "Strategic Objective"}, limit=1):
-		missing.append("an authoritative KEBS Strategic Objective (Strategy module seed)")
-	frappe.throw(
-		"§14.9 KEBS profiles cannot be seeded: seeds never invent a Procurement Budget Line or "
-		"Strategic Objective (§14.1), and the owning modules' approved seed contracts provide none. "
-		"Missing: " + "; ".join(missing or ["the KEBS fixture world"])
-	)
+# seed_kebs_profiles (§14.9) is retired — PLN-CHG-001 v1.13 §14.9/SEED-001
+# §1.1 (2026-09-05): the bare PPI-KEBS-2026-ICT-001 fixture, keyed to Kenya
+# Bureau of Standards, is removed outright (one-site-one-PE has no second
+# entity for it to belong to), not fixed by building an authoritative KEBS
+# Budget Line/Strategic Objective as FU-01 previously proposed.
 
 
 # --- shared plumbing ---------------------------------------------------------
@@ -862,10 +949,13 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	plan = plan_read.get_annual_plan(plan_reference=plan_row.plan_reference, user=PLANNER)
 	view = plan["active_view"]
 	check("active_view", view is not None)
-	check("active.one_item", bool(view and view["summary"]["plan_items"] == 1), str(view and view["summary"]))
-	check("active.value_80m", bool(view and "80,000,000" in view["summary"]["value_display"]))
+	# PLN-CHG-001 v1.13 §14.5/SEED-001 §3.6 — the integrated baseline now
+	# carries the pre-existing single-department item plus the harmonized
+	# two-department combined item: 2 items, KES 130,000,000 combined.
+	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2), str(view and view["summary"]))
+	check("active.value_130m", bool(view and "130,000,000" in view["summary"]["value_display"]))
 	check("active.activated_display_15_00_eat", bool(view and view["summary"]["activated_display"] == "10 Dec 2026, 15:00 EAT"), str(view and view["summary"]["activated_display"]))
-	check("active.schedule_health_0_of_1", bool(view and view["summary"]["schedule_health_display"] == "0 of 1 item behind baseline"))
+	check("active.schedule_health_0_of_2", bool(view and view["summary"]["schedule_health_display"] == "0 of 2 items behind baseline"))
 	if view and view["items"]:
 		item = view["items"][0]
 		check("item.baseline_1_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-01" for r in item["schedule"]))
@@ -874,6 +964,14 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		check("eligibility.eligible", eligibility["eligible"])
 		check("eligibility.remaining_80m", eligibility["remaining_value"] == 80000000)
 		check("eligibility.qty_1", eligibility["remaining_quantity"] == 1)
+	if view and len(view["items"]) > 1:
+		combined = view["items"][1]
+		check("combined.baseline_15_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-15" for r in combined["schedule"]))
+		check("combined.forecast_seeded", all(r["forecast"] == r["baseline"] and not r["actual"] for r in combined["schedule"]))
+		combined_eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
+		check("combined.eligibility.eligible", combined_eligibility["eligible"])
+		check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == 50000000)
+		check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == 250)
 	version = plan_row.active_version
 	finance = frappe.db.get_value(
 		"Plan Finance Decision",

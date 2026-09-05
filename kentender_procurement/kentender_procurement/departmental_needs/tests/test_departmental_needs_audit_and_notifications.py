@@ -20,9 +20,17 @@ User Department in **both** Organisation Units the fixture Needs live in
 granted **Digital Health only**. A Need raised in HRMD must therefore reach
 Peter and not the other — the cheapest available proof that recipients come
 from a real `User Responsibility Assignment` scope, never from the role name
-alone. `ACTING_REVIEWER` (Julia) is deliberately not used for this: her real
-Acting grant is effective only 1 Oct-30 Nov 2026 (§14.2), so a notification
-count that depended on it would only pass during that window.
+alone.
+
+`ACTING_REVIEWER` (Julia) is deliberately not excluded from the Digital Health
+assertion below: SEED-001 §3.1 (2026-09-05, `kentender_core.seeds.site_setup`)
+widens her Acting grant to 2026-09-01–2027-06-30 so the canonical seed stays
+runnable regardless of real calendar date (NDS-CHG-001 v1.8's literal
+1 Oct-30 Nov 2026 window would otherwise make Need-4's acceptance step fail
+outside that window — see FOLLOW_UPS). That widened window is real-time-active
+for the whole of this repository's practical test-running life, so a Digital
+Health submission now durably reaches her too — this is no longer a
+narrow-window flake, it is the new steady state.
 """
 
 from __future__ import annotations
@@ -110,11 +118,13 @@ class TestTransitionNotificationRecipients(NotificationCase):
 
 	def test_submission_reaches_the_reviewers_and_not_the_author(self):
 		# The author already knows they submitted; the point of the effect is to
-		# raise the task with whoever can act on it.
+		# raise the task with whoever can act on it. Julia (ACTING_REVIEWER)
+		# holds a real, currently-effective Digital Health grant too (see the
+		# module docstring), so she is a genuine third reviewer here.
 		second = self.ensure_second_hod()
 		submitted = self.submit(self.create_in(self.ou))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
-		self.assertEqual(told, sorted([REVIEWER, second]))
+		self.assertEqual(told, sorted([ACTING_REVIEWER, REVIEWER, second]))
 		self.assertNotIn(AUTHOR, told)
 
 	def test_a_reviewer_scoped_to_another_unit_is_never_told(self):
