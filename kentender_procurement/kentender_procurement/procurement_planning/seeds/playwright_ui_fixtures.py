@@ -496,3 +496,87 @@ def reset_accepted_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {**state, "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"], "other_dpp_reference": other["dpp_reference"]}
+
+
+# --- Slice B journeys (Annual Plan workbench, formation, the Plan Item editor) --
+
+
+def _accept(state: dict[str, Any], classifications: dict[str, str]) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import dpp_validation
+
+	task = frappe.get_doc("Departmental Plan Validation Task", state["task"])
+	with _as(PLANNER):
+		return dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=_key(), classifications=classifications,
+		)
+
+
+def _submit(dpp_version: str, record_version: int) -> str:
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle
+
+	with _as(HOD):
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=dpp_version, certification_confirmed=True, expected_record_version=record_version, idempotency_key=_key(),
+		)
+	return frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": submitted["task"]}, "name")
+
+
+def reset_workbench_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-07's exact opening state: one accepted, unallocated Need-origin
+	entry (KES 80,000,000) in the auto-created Draft Annual Plan."""
+	state = reset_dpp_fixture(funded=True, commit=False)
+	state["task"] = _submit(state["dpp_version"], state["record_version"])
+	accepted = _accept(state, {state["need_entry_id"]: "Non-consulting services"})
+	if commit:
+		frappe.db.commit()
+	return {**state, "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"]}
+
+
+def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
+
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan") and frappe.db.get_value("Annual Plan", frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan"), "plan_reference"))
+		formed = plan_workbench.form_plan_items(
+			plan_version=plan_version, dpp_entries=entries, mode=mode,
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	return formed["created_items"]
+
+
+def reset_plan_item_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need."""
+	state = reset_workbench_fixture(commit=False)
+	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": state["dpp_version"], "entry_id": state["need_entry_id"]}, "name")
+	items = _form(state["plan_version"], [entry], "each")
+	if commit:
+		frappe.db.commit()
+	return {**state, "plan_item_id": items[0]}
+
+
+def reset_combined_item_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-09A: two accepted Needs on one Procurement Budget Line, both
+	Goods, combined into one Plan Item."""
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle
+
+	world = _reset(commit=False)
+	first = _accepted_need(title="Clinical training laptops for digital health rollout", indicative_quantity=200, required_by_date="2099-04-30")
+	second = _accepted_need(title="Clinical deployment laptops for digital health rollout", indicative_quantity=300, required_by_date="2099-04-30")
+	opened = _open_dpp()
+	record_version = opened["record_version"]
+	entries = []
+	for need, amount in ((first, 48000000), (second, 72000000)):
+		entry = _need_entry(opened["current_version"], need)
+		with _as(AUTHOR):
+			saved = dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=entry.entry_id, budget_line=BUDGET_LINE, indicative_amount=amount,
+				expected_record_version=record_version, idempotency_key=_key(),
+			)
+		record_version = saved["record_version"]
+		entries.append(entry)
+	task = _submit(opened["current_version"], record_version)
+	accepted = _accept({"task": task}, {e.entry_id: "Goods" for e in entries})
+	items = _form(accepted["annual_plan_version"], [e.name for e in entries], "combined")
+	if commit:
+		frappe.db.commit()
+	return {**world, "dpp_reference": opened["dpp_reference"], "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"], "plan_item_id": items[0]}

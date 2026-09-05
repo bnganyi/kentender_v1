@@ -247,6 +247,10 @@
 .kt-pln .pln-strip-grid-3 {
 	grid-template-columns: repeat(3, 1fr);
 }
+/* PLN-DES-07 five-field plan summary strip */
+.kt-pln .pln-strip-grid-5 {
+	grid-template-columns: repeat(5, 1fr);
+}
 .kt-pln .pln-val {
 	font-family: var(--font-heading);
 	font-weight: 600;
@@ -327,6 +331,83 @@
 	max-width: 900px;
 	margin: 0 auto;
 }
+/* PLN-DES-09/09A: 1000px column */
+.kt-pln .pln-editor-wide {
+	max-width: 1000px;
+}
+.kt-pln .pln-helper-text {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin: 10px 2px 0;
+}
+.kt-pln .pln-field .pln-helper-text {
+	margin-top: 6px;
+}
+.kt-pln .kt-input[aria-invalid="true"] {
+	border-color: var(--kt-color-critical, #b3261e);
+}
+
+/* PLN-DES-09 Baseline schedule card */
+.kt-pln .pln-baseline-table td,
+.kt-pln .pln-baseline-table th {
+	font-size: 14px;
+}
+.kt-pln .pln-disclosure {
+	margin-top: 16px;
+	border-top: 1px solid var(--color-neutral-200);
+	padding-top: 14px;
+}
+.kt-pln .pln-disclosure-trigger {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: var(--font-body);
+	color: var(--color-accent-700);
+	font-weight: 600;
+	font-size: 13px;
+}
+.kt-pln .pln-chevron {
+	transition: transform 0.15s ease;
+}
+.kt-pln .pln-chevron.open {
+	transform: rotate(90deg);
+}
+.kt-pln .pln-disclosure-summary {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 8px 0 0;
+}
+.kt-pln .pln-periods-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 14px 24px;
+	margin-top: 14px;
+}
+.kt-pln .pln-periods-grid .pln-field label {
+	font-size: 12px;
+}
+.kt-pln .pln-period-note {
+	font-size: 11px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 0;
+}
+
+/* PLN-DES-07 readiness card inline confirmation + advisory list */
+.kt-pln .pln-inline-action {
+	margin-left: 8px;
+	padding: 2px 8px;
+	font-size: 12px;
+}
+.kt-pln .pln-advisory-list {
+	margin: 10px 2px 0;
+	padding-left: 18px;
+	font-size: 13px;
+	color: var(--color-neutral-700);
+}
 .kt-pln .pln-field-grid {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
@@ -390,6 +471,12 @@
 }
 .kt-pln .pln-empty-state p {
 	margin: 0;
+}
+
+/* PLN-DES-08 / PLN-DES-14A — Planning dialogs are 640px wide (the shared
+ * Industry dialog is 620px) */
+.kt-pln .kt-dialog {
+	width: min(640px, 100%);
 }
 
 /* PLN-DES-08 Form Plan Items dialog: formation choice + result preview */

@@ -107,8 +107,8 @@
 						@navigate="onNavigate"
 						@back="frappe.set_route(WORKSPACE_PAGE)"
 						@request-funding="onRequestPlanFunding"
-						@submit-consolidated="onSubmitConsolidatedPlan"
-						@begin-update="onBeginUpdate"
+						@submit-consolidated="onSubmitPlanRequested"
+						@confirm-splitting="splittingDialog = true"
 					/>
 					<FormPlanItemsDialog
 						v-if="formDialog"
@@ -117,6 +117,30 @@
 						:error="errorSummary"
 						@confirm="onFormConfirm"
 						@cancel="formDialog = false"
+					/>
+					<ReasonDialog
+						v-if="splittingDialog"
+						testid="pln-splitting-dialog"
+						title="Confirm contract splitting review"
+						intro="State why the flagged Plan Items are legitimately separate procurements (a preference-scheme unbundling counts). The advisory stays on the readiness card; nothing is aggregated for you."
+						label="Confirmation"
+						confirm-label="Record confirmation"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onConfirmSplitting"
+						@cancel="splittingDialog = false"
+					/>
+					<ReasonDialog
+						v-if="lateActivationDialog"
+						testid="pln-late-activation-dialog"
+						title="Late activation reason"
+						intro="The Financial Year has already begun. State why the Plan is being submitted for approval after the start of the year; the reason is kept with the submission."
+						label="Late activation reason"
+						confirm-label="Submit Plan"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onSubmitConsolidatedPlan"
+						@cancel="lateActivationDialog = false"
 					/>
 				</template>
 
@@ -182,6 +206,7 @@ import DppValidationScreen from "./components/DppValidationScreen.vue";
 import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
+import ReasonDialog from "./components/ReasonDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
@@ -210,6 +235,8 @@ const returnDialog = ref(false);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
+const splittingDialog = ref(false);
+const lateActivationDialog = ref(false);
 const financeTask = ref({});
 const financeReturnDialog = ref(false);
 const governanceTask = ref({});
@@ -326,6 +353,8 @@ async function load(opts) {
 			if (seq !== loadSeq) return;
 			annualPlan.value = loaded;
 			formDialog.value = false;
+			splittingDialog.value = false;
+			lateActivationDialog.value = false;
 		} else if (screen.value === "plan-item") {
 			const loaded = await api.getPlanItem(planItemId.value);
 			if (seq !== loadSeq) return;
@@ -572,6 +601,31 @@ async function onReturnFromFinance(reason) {
 	}
 }
 
+// invariant 27 (O2): once the year has begun the submission carries a reason
+function onSubmitPlanRequested() {
+	if (annualPlan.value.late_activation_required) {
+		lateActivationDialog.value = true;
+		return;
+	}
+	onSubmitConsolidatedPlan("");
+}
+
+// invariant 26 (O1)
+async function onConfirmSplitting(confirmation) {
+	const result = await run("confirm-splitting", (key) =>
+		api.confirmSplittingAdvisory({
+			plan_version: annualPlan.value.version_reference,
+			confirmation,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		splittingDialog.value = false;
+		await load({ quiet: true });
+	}
+}
+
 async function onSubmitConsolidatedPlan(lateActivationReason) {
 	const command = annualPlan.value.is_correction ? "submit-corrected" : "submit-consolidated";
 	const apiCall = annualPlan.value.is_correction ? api.submitCorrectedPlan : api.submitConsolidatedPlan;
@@ -583,7 +637,10 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 			...(lateActivationReason ? { late_activation_reason: lateActivationReason } : {}),
 		})
 	);
-	if (result) frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+	if (result) {
+		lateActivationDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+	}
 }
 
 async function onBeginUpdate() {

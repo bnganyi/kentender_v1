@@ -28,7 +28,7 @@ import {
  * browser as the live page and its ordered structural landmarks (card
  * titles, labels, table headers, buttons) must appear in order in the live
  * screen. Data values are never compared. Slice A covers PLN-DES-01, 02, 03,
- * 04, 05, 06 and 16; later slices add their artboards to this file.
+ * 04, 05, 06, 16 and Slice B's 07, 08, 09, 09A; later slices add theirs.
  *
  * Known, deliberate deltas NOT asserted (stripped from the artboard list):
  *   - PLN-DES-16 is a seven-state gallery on one artboard; a live page shows
@@ -48,7 +48,8 @@ async function artboardLandmarks(browser: any, file: string): Promise<{ wanted: 
 	return { wanted: await landmarks(art, ARTBOARD_SCOPE), art };
 }
 
-type State = { dpp_reference: string; need_entry_id: string; direct_entry_id: string; task: string };
+type State = { dpp_reference: string; need_entry_id: string; direct_entry_id: string; task: string; plan_reference: string; plan_item_id: string };
+const DIALOG_SCOPE = ".kt-dialog";
 
 test.describe.configure({ mode: "serial" });
 
@@ -132,6 +133,71 @@ test.describe("Procurement Planning — design fidelity (Slice A)", () => {
 		await gotoPlanning(page, `/dpp-review/${state.task}`);
 		await expectReady(page, "dpp-review");
 		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-06");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-07 — Draft Annual Procurement Plan", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_workbench_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-07 Draft Annual Plan.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-07");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-08 — Form Plan Items dialog", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_workbench_fixture");
+		const art = await browser.newPage();
+		await openArtboard(art, `${DESIGN_DIR}/PLN-DES-08 Form Plan Items Dialog.dc.html`, ".dialog");
+		const wanted = await landmarks(art, ".dialog");
+		const artWidth = await boxWidth(art, ".dialog");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await page.locator('[data-testid="pln-form-items"]').click();
+		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
+		// the artboard depicts the several-sources variant with its formation
+		// radios; one source shows no radio (§12.7), so the radio labels are
+		// the one documented delta stripped here
+		const wantedWithoutRadios = wanted.filter((text) => !/^Create one /.test(text));
+		expectLandmarkSubsequence(wantedWithoutRadios, await landmarks(page, DIALOG_SCOPE), "PLN-DES-08");
+		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 4, "dialog width");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-09 — Plan Item editor", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_plan_item_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-09 Plan Item Editor.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan-item");
+		// the artboard's dc-runtime <sc-if> renders BOTH disclosure states'
+		// markup statically (closed summary and the open period inputs); the
+		// live page shows one at a time, so open the disclosure for parity
+		await page.locator('[data-testid="ppi-adjust-periods"]').click();
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-09");
+		// (no 1000px column probe: the Desk page column is narrower than the
+		// artboard's free-standing content column — the DES-01 delta again)
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-09A — Combined Plan Item editor", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_combined_item_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-09A Combined Plan Item Editor.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan-item");
+		await page.locator('[data-testid="ppi-adjust-periods"]').click();
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-09A");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
