@@ -1,10 +1,11 @@
 <!-- PLN-UI-11/12 Annual Plan governance decisions (§12.10), rendering
      PLN-DES-11 (Accounting Officer adoption) and PLN-DES-12 (statutory
-     approval) from the same read model and screen: the exact immutable
-     `submitted_snapshot` Plan table, never a live query, plus the
-     stage-specific authority card and decision statement. No professional
-     review, Head of Procurement Function, editable Plan content, optional
-     comments or publication controls. -->
+     approval) v1.12 from one read model: the exact immutable ten-column
+     `submitted_snapshot` Plan table (Reservation and Funding columns), the
+     total line and the reserved-share / splitting advisory line, the
+     stage-specific authority card, decision statement and Board resolution
+     reference. No professional review, Head of Procurement Function,
+     editable Plan content, optional comments or publication controls. -->
 <template>
 	<div>
 		<p class="kt-page-kicker">{{ task.header?.eyebrow }}</p>
@@ -18,6 +19,12 @@
 			<p>{{ errorSummary }}</p>
 		</div>
 
+		<!-- invariant 27 — a late submission carries its reason into the decision -->
+		<div v-if="task.late_activation_reason" class="pln-notice" data-testid="pgt-late-activation">
+			<p class="pln-notice-title">Submitted after the start of the Financial Year</p>
+			<p>{{ task.late_activation_reason }}</p>
+		</div>
+
 		<!-- authority card (statutory stage only) -->
 		<div
 			v-if="task.authority_card"
@@ -29,7 +36,7 @@
 			<div class="pln-field-grid">
 				<div class="pln-ro-field">
 					<label>{{ task.authority_card.is_board ? "Governing body" : "Capacity" }}</label>
-					<div class="pln-val">{{ task.authority_card.capacity }}</div>
+					<div class="pln-val">{{ task.authority_card.is_board ? task.authority_card.capacity_detail || task.authority_card.capacity : task.authority_card.capacity }}</div>
 				</div>
 				<div class="pln-ro-field">
 					<label>Accounting Officer adoption</label>
@@ -48,7 +55,7 @@
 					<tr>
 						<th>Plan Item</th><th>Department</th><th>Source origin</th>
 						<th class="pln-num">Quantity</th><th>Strategic Objective</th>
-						<th>Method</th><th class="pln-num">Value</th><th>Completion</th><th>Finance</th>
+						<th>Method</th><th>Reservation</th><th class="pln-num">Value</th><th>Completion</th><th>Funding</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -59,13 +66,15 @@
 						<td class="pln-num">{{ row.quantity_display }}</td>
 						<td>{{ row.strategic_objective_label }}</td>
 						<td>{{ row.procurement_method }}</td>
+						<td>{{ row.reservation_category || "None" }}</td>
 						<td class="pln-num">{{ row.value_display }}</td>
 						<td>{{ row.delivery_completion_display }}</td>
-						<td><span class="kt-status is-live">{{ row.finance_state }}</span></td>
+						<td><span class="kt-status is-live">{{ row.funding || "Within budget" }}</span></td>
 					</tr>
 				</tbody>
 			</table>
-			<p class="pln-table-caption">{{ task.caption }}</p>
+			<p class="pln-table-caption" data-testid="pgt-caption">{{ task.caption }}</p>
+			<p class="pln-table-caption pln-table-caption-tight" data-testid="pgt-advisory-line">{{ task.advisory_line }}</p>
 		</div>
 
 		<!-- decision statement (AO stage only) -->
@@ -73,22 +82,24 @@
 			<p>{{ task.decision_statement }}</p>
 		</div>
 
-		<div v-if="task.authority_card?.is_board" class="pln-field" data-testid="pgt-resolution-field">
+		<div v-if="task.authority_card?.is_board && task.can_decide" class="pln-field pln-resolution-field" data-testid="pgt-resolution-field">
 			<label for="pgt-resolution">Resolution reference</label>
 			<input
-				id="pgt-resolution" class="kt-input" data-testid="pgt-resolution"
+				id="pgt-resolution" type="text" class="kt-input" data-testid="pgt-resolution"
 				v-model="resolutionReference"
 			/>
 		</div>
 
-		<div v-if="decidable" class="pln-footer-bar">
+		<div v-if="task.can_decide" class="pln-footer-bar">
 			<button
+				type="button"
 				class="kt-btn kt-btn-secondary" data-testid="pgt-return"
 				:disabled="pending" @click="$emit('open-return-dialog')"
 			>
 				Return for correction
 			</button>
 			<button
+				type="button"
 				class="kt-btn kt-btn-primary" data-testid="pgt-confirm"
 				:disabled="pending || (task.authority_card?.is_board && !resolutionReference.trim())"
 				@click="$emit('confirm', resolutionReference.trim())"
@@ -112,9 +123,7 @@ defineEmits(["confirm", "open-return-dialog"]);
 
 const resolutionReference = ref("");
 
-const decidable = computed(() => props.task.status === "Open");
-
 const badgeClass = computed(() =>
-	props.task.header?.badge === "Draft" ? "is-draft" : "is-pending"
+	props.task.header?.badge === "Active" ? "is-live" : "is-pending"
 );
 </script>

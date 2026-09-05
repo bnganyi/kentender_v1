@@ -580,3 +580,88 @@ def reset_combined_item_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {**world, "dpp_reference": opened["dpp_reference"], "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"], "plan_item_id": items[0]}
+
+
+# --- Slice C journeys (Finance confirmation, governance decisions) ------------
+
+ITEM_VALUES = {
+	"title": "Digital health infrastructure package",
+	"description": "Procure and implement the national digital health infrastructure upgrade as one integrated programme.",
+	"plan_horizon": "Single year",
+	"aggregation_indicator": "Not aggregated",
+	"lotting_indicator": "Single lot",
+	"reservation_category": "None",
+	"procurement_method": "Open Tender",
+	"baseline_invitation_date": "2098-09-01",
+	"tendering_period_days": 21,
+	"evaluation_period_days": 30,
+	"award_approval_buffer_days": 5,
+	"notification_buffer_days": 2,
+	"standstill_period_days": 14,
+}
+
+
+def _complete_item(plan_item_id: str, **overrides) -> None:
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench, strategy_gateway
+
+	objective = strategy_gateway.list_eligible_strategic_objectives()[0]["id"]
+	with _as(PLANNER):
+		item = plan_read.get_plan_item(plan_item_id=plan_item_id)
+		plan_workbench.save_plan_item(
+			plan_item=plan_item_id, values={**ITEM_VALUES, "strategic_objective": objective, **overrides},
+			expected_record_version=item["record_version"], idempotency_key=_key(),
+		)
+
+
+def _request_funding(plan_reference: str) -> str:
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_read
+
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		requested = plan_finance.request_plan_funding_confirmation(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	return requested["task"]
+
+
+def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-10's opening state: the one complete Plan Item, funding
+	confirmation requested — one Open Plan Finance Task for the Version."""
+	state = reset_plan_item_fixture(commit=False)
+	_complete_item(state["plan_item_id"])
+	task = _request_funding(state["plan_reference"])
+	if commit:
+		frappe.db.commit()
+	return {**state, "task": task}
+
+
+def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""Funding confirmed and the Plan submitted: PLN-DES-11's Open Accounting
+	Officer task."""
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance, plan_read
+
+	state = reset_finance_fixture(commit=False)
+	task = frappe.get_doc("Plan Finance Task", state["task"])
+	with _as(FINANCE):
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key())
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
+		submitted = plan_governance.submit_consolidated_plan(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	if commit:
+		frappe.db.commit()
+	return {**state, "finance_task": state["task"], "task": submitted["task"]}
+
+
+def reset_statutory_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""Adopted by the Accounting Officer: PLN-DES-12's Open statutory task."""
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	state = reset_governance_fixture(commit=False)
+	ao_task = frappe.get_doc("Plan Governance Task", state["task"])
+	with _as(ACCOUNTING_OFFICER):
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key())
+	if commit:
+		frappe.db.commit()
+	return {**state, "ao_task": state["task"], "task": adopted["statutory_task"]}

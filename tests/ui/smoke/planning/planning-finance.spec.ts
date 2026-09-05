@@ -1,145 +1,100 @@
-import { execSync } from "node:child_process";
-import path from "node:path";
-
-import { expect, test, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import {
+	FINANCE,
+	PASSWORD,
+	PLANNER,
+	collectConsoleErrors,
+	expectReady,
+	gotoPlanning,
+	resetFixture,
+	restoreSite,
+} from "./helpers";
 
 /**
- * PLN-CHG-001 v1.2 Phase 7 (Slice E) — PLN-UI-10: the Finance confirmation
- * task, real check→reserve funding, and the return-to-planner path, in a
- * real browser on the **PE-PWFN** world (its own fixture entity per tracker
- * rule 8; the fixture drives the real §5.1/§5.2/§8.2 commands to an Open
- * Finance task with sufficient funding — PLN-DES-10's exact opening state).
+ * PLN-CHG-001 v1.12 Phase 5 (Slice C) — PLN-UI-10: the one plan-level
+ * funding confirmation task over Budget's real `check_plan_affordability`
+ * contract, in a real browser. No reservation exists anywhere in this path.
  */
 
-const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
-const SITE = process.env.UI_SITE || "kentender.midas.com";
-const FIXTURES = "kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures";
+type FinanceState = { task: string; plan_reference: string };
 
-const PASSWORD = "Test@123";
-const BUDGET_OFFICER = "pwfn.budget@example.test";
-const PLANNER = "pwfn.planner@example.test";
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
-let TASK = "";
-let PLAN_ITEM = "";
+test.describe("PLN-UI-10 Plan funding confirmation", () => {
+	test.afterAll(() => restoreSite());
 
-function bench(command: string): string {
-	try {
-		return execSync(`cd "${BENCH_ROOT}" && bench --site ${SITE} ${command}`, {
-			stdio: "pipe",
-			timeout: 300_000,
-			encoding: "utf-8",
-		});
-	} catch (error: any) {
-		const stderr = (error?.stderr || "").toString().trim();
-		const stdout = (error?.stdout || "").toString().trim();
-		throw new Error(`bench ${command} failed\n${stderr || stdout || error?.message}`);
-	}
-}
-
-async function expectReady(page: Page, screen: string): Promise<void> {
-	const shell = page.locator('[data-testid="pln-shell"]');
-	await expect(shell).toHaveAttribute("data-screen", screen, { timeout: 30_000 });
-	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-}
-
-function pageErrors(errors: string[]): string[] {
-	return errors.filter(
-		(text) => !text.includes("socket.io") && !text.includes("Failed to load resource")
-	);
-}
-
-test.beforeEach(() => {
-	const out = bench(`execute ${FIXTURES}.reset_finance_fixture`);
-	const parsed = JSON.parse(out.trim().split("\n").pop() || "{}");
-	TASK = parsed.task;
-	PLAN_ITEM = parsed.plan_item;
-	expect(TASK).toBeTruthy();
-	expect(PLAN_ITEM).toBeTruthy();
-});
-
-test.describe("PLN-UI-10 Finance confirmation", () => {
-	test("the Budget Officer confirms funding on real Budget positions and the Plan Item shows Confirmed", async ({
-		page,
-	}) => {
-		const errors: string[] = [];
-		page.on("console", (m) => {
-			if (m.type() === "error") errors.push(m.text());
-		});
-
-		await login(page, BUDGET_OFFICER, PASSWORD);
-		await page.setViewportSize({ width: 1440, height: 1024 });
-		await page.goto(`/app/procurement-planning/finance/${TASK}`, {
-			waitUntil: "domcontentloaded",
-		});
+	test("the Finance Confirmation Officer confirms the affordability statement and the workbench reads Confirmed", async ({ page }) => {
+		const state = resetFixture<FinanceState>("reset_finance_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
 		await expectReady(page, "finance");
 
-		// PLN-DES-10 exact composition, live Budget positions
-		await expect(page.locator(".kt-page-kicker")).toHaveText("FINANCE CONFIRMATION");
+		// PLN-DES-10 exact composition on the live statement
+		await expect(page.locator(".kt-page-kicker")).toHaveText("PLAN FUNDING CONFIRMATION");
 		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Awaiting Finance");
-		await expect(page.locator('[data-testid="fnt-plan-item"]')).toContainText(
-			"National digital health infrastructure upgrade"
+		await expect(page.locator('[data-testid="fnt-summary"] label')).toHaveText(["Plan Items", "Plan value", "Procurement Budget Lines used", "Reserved share"]);
+		await expect(page.locator('[data-testid="fnt-summary"]')).toContainText("KES 80,000,000");
+		await expect(page.locator('[data-testid="fnt-as-at"]')).toContainText("Position as at");
+		await expect(page.locator('[data-testid="fnt-as-at"]')).toContainText("EAT");
+		const table = page.locator('[data-testid="fnt-affordability"] table');
+		await expect(table.locator("thead th")).toHaveText([
+			"Procurement Budget Line", "Funding source", "Approved", "Planned in this Plan", "Within approved", "Reserved", "Committed", "Currently available",
+		]);
+		await expect(page.locator('[data-testid="fnt-line-0"]')).toContainText("Digital health infrastructure programme");
+		await expect(page.locator('[data-testid="fnt-line-0"]')).toContainText("KES 100,000,000");
+		await expect(page.locator('[data-testid="fnt-line-0"]')).toContainText("Yes");
+		await expect(page.locator('[data-testid="fnt-within-approved"]')).toHaveText(
+			"The consolidated plan is within the approved budget on every Procurement Budget Line."
 		);
-		await expect(page.locator('[data-testid="fnt-position"]')).toContainText("KES 100,000,000");
-		await expect(page.locator('[data-testid="fnt-position"]')).toContainText("KES 80,000,000");
-		await expect(page.locator('[data-testid="fnt-sufficient"]')).toBeVisible();
+		await expect(page.locator('[data-testid="fnt-quiet-line"]')).toContainText("It reserves no funds");
+		await expect(page.locator("text=Available after confirmation")).toHaveCount(0);
 
 		await page.locator('[data-testid="fnt-confirm"]').click();
 		await expectReady(page, "workspace");
 
-		// the Plan Item detail is Planner/Auditor scope, not Budget Officer's
-		// (§6: Budget Officer "cannot edit Planning content" — GetPlanItem
-		// masks it as not-found) — switch persona to verify the confirmed state
+		// the Planner's workbench now reads Confirmed and offers submission
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`/app/procurement-plan-item/${PLAN_ITEM}`, {
-			waitUntil: "domcontentloaded",
-		});
-		await expectReady(page, "plan-item");
-		await expect(page.locator("text=Confirmed")).toBeVisible();
-		await expect(page.locator('[data-testid="ppi-request-finance"]')).toHaveCount(0);
-
-		expect(pageErrors(errors), errors.join("\n")).toHaveLength(0);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="pln-readiness-plan-funding-confirmed"] .kt-status')).toHaveText("Confirmed");
+		await expect(page.locator('[data-testid="pln-submit-consolidated"]')).toBeEnabled();
+		await expect(page.locator('[data-testid="pln-request-funding"]')).toBeDisabled();
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("return to planner requires a reason and creates no reservation", async ({ page }) => {
-		await login(page, BUDGET_OFFICER, PASSWORD);
-		await page.setViewportSize({ width: 1440, height: 1024 });
-		await page.goto(`/app/procurement-planning/finance/${TASK}`, {
-			waitUntil: "domcontentloaded",
-		});
+	test("return to planner requires a reason and sends the Version back", async ({ page }) => {
+		const state = resetFixture<FinanceState>("reset_finance_fixture");
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
 		await expectReady(page, "finance");
-
 		await page.locator('[data-testid="fnt-return"]').click();
 		const dialog = page.locator('[data-testid="fnt-return-dialog"]');
 		await expect(dialog).toBeVisible();
 		const confirm = page.locator('[data-testid="fnt-return-confirm"]');
 		await expect(confirm).toBeDisabled();
-		await page.locator('[data-testid="fnt-return-reason"]').fill(
-			"The indicative amount exceeds the approved Budget Line ceiling."
-		);
+		await page.locator('[data-testid="fnt-return-reason"]').fill("Reconcile the planned total against the approved line before resubmitting.");
 		await expect(confirm).toBeEnabled();
 		await confirm.click();
 		await expectReady(page, "workspace");
 
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`/app/procurement-plan-item/${PLAN_ITEM}`, {
-			waitUntil: "domcontentloaded",
-		});
-		await expectReady(page, "plan-item");
-		await expect(page.locator("text=Returned")).toBeVisible();
-		// Planner-owned fields reopen: Request Finance confirmation is offered again
-		await expect(page.locator('[data-testid="ppi-request-finance"]')).toBeVisible();
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="pln-funding-notice"]')).toContainText("Plan funding returned by Finance");
+		await expect(page.locator('[data-testid="pln-request-funding"]')).toBeEnabled();
+		await expect(page.locator('[data-testid="pln-submit-consolidated"]')).toBeDisabled();
 	});
 
-	test("a non-budget-officer deep link masks as not-found", async ({ page }) => {
+	test("the requesting Planner reads the task without decision controls; a departmental link masks", async ({ page }) => {
+		const state = resetFixture<FinanceState>("reset_finance_fixture");
 		await login(page, PLANNER, PASSWORD);
-		await page.setViewportSize({ width: 1440, height: 1024 });
-		await page.goto(`/app/procurement-planning/finance/${TASK}`, {
-			waitUntil: "domcontentloaded",
-		});
+		await gotoPlanning(page, `/finance/${state.task}`);
 		await expectReady(page, "finance");
-		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
+		await expect(page.locator('[data-testid="fnt-affordability"]')).toBeVisible();
 		await expect(page.locator('[data-testid="fnt-confirm"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="fnt-return"]')).toHaveCount(0);
 	});
 });

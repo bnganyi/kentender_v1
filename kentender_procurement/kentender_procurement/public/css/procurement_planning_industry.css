@@ -428,6 +428,40 @@
 	font-size: 15px;
 }
 
+/* PLN-DES-10 — four-field summary grid, As-at line, inline green notice */
+.kt-pln .pln-field-grid-4 {
+	grid-template-columns: repeat(4, 1fr);
+}
+.kt-pln .pln-as-at {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 0 0 10px;
+}
+.kt-pln .pln-notice.is-live {
+	border-color: var(--kt-color-live, #1f7a4d);
+	background: color-mix(in srgb, var(--kt-color-live, #1f7a4d) 8%, transparent);
+	color: var(--kt-color-live, #1f7a4d);
+}
+.kt-pln .pln-notice-inline {
+	margin-top: 16px;
+}
+.kt-pln .pln-quiet-line {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 10px 2px 0;
+}
+.kt-pln .pln-excess {
+	color: var(--kt-color-critical, #b3261e);
+}
+/* PLN-DES-11/12 — the advisory row under the Plan total; resolution field */
+.kt-pln .pln-table-caption-tight {
+	margin-top: 4px;
+}
+.kt-pln .pln-resolution-field {
+	max-width: 420px;
+	margin-top: 20px;
+}
+
 /* PLN-DES-06 — three-column facts grid, inline classification select,
  * a View disclosure row and the signed line */
 .kt-pln .pln-field-grid-3 {

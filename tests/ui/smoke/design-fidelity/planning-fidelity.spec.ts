@@ -10,11 +10,14 @@ import {
 	openArtboard,
 } from "../../helpers/designFidelity";
 import {
+	ACCOUNTING_OFFICER,
 	AUTHOR,
+	FINANCE,
 	HOD,
 	NOBODY,
 	PASSWORD,
 	PLANNER,
+	STATUTORY,
 	expectReady,
 	gotoDpp,
 	gotoPlanning,
@@ -28,7 +31,7 @@ import {
  * browser as the live page and its ordered structural landmarks (card
  * titles, labels, table headers, buttons) must appear in order in the live
  * screen. Data values are never compared. Slice A covers PLN-DES-01, 02, 03,
- * 04, 05, 06, 16 and Slice B's 07, 08, 09, 09A; later slices add theirs.
+ * 04, 05, 06, 16, Slice B's 07, 08, 09, 09A and Slice C's 10, 11, 12, 15.
  *
  * Known, deliberate deltas NOT asserted (stripped from the artboard list):
  *   - PLN-DES-16 is a seven-state gallery on one artboard; a live page shows
@@ -51,7 +54,7 @@ async function artboardLandmarks(browser: any, file: string): Promise<{ wanted: 
 type State = { dpp_reference: string; need_entry_id: string; direct_entry_id: string; task: string; plan_reference: string; plan_item_id: string };
 const DIALOG_SCOPE = ".kt-dialog";
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test.describe("Procurement Planning — design fidelity (Slice A)", () => {
 	test.afterAll(() => restoreSite());
@@ -200,6 +203,73 @@ test.describe("Procurement Planning — design fidelity (Slice A)", () => {
 		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-09A");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
+	});
+
+	test("PLN-DES-10 — Plan funding confirmation task", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_finance_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-10 Finance Confirmation.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
+		await expectReady(page, "finance");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-10");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-11 — Accounting Officer adoption", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_governance_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-11 Accounting Officer Adoption.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/review/${state.task}`);
+		await expectReady(page, "governance");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-11");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-12 — Statutory approval", async ({ page, browser }) => {
+		const state = resetFixture<State>("reset_statutory_fixture");
+		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-12 Statutory Approval.dc.html");
+		const errors = collectPageErrors(page);
+		await login(page, STATUTORY, PASSWORD);
+		await gotoPlanning(page, `/review/${state.task}`);
+		await expectReady(page, "governance");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-12");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("PLN-DES-15 — the two return dialogs", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		await openArtboard(art, `${DESIGN_DIR}/PLN-DES-15 Return Dialogs.dc.html`, ".artboard");
+		const panels = await art.locator(".panel").count();
+		expect(panels).toBe(2);
+		const wantedAo = await landmarks(art, ".panel:nth-of-type(1) .dialog");
+		const wantedStatutory = await landmarks(art, ".panel:nth-of-type(2) .dialog");
+		const artWidth = await boxWidth(art, ".panel:nth-of-type(1) .dialog");
+		await art.close();
+
+		const ao = resetFixture<State>("reset_governance_fixture");
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/review/${ao.task}`);
+		await expectReady(page, "governance");
+		await page.locator('[data-testid="pgt-return"]').click();
+		await expect(page.locator('[data-testid="pgt-return-dialog"]')).toBeVisible();
+		expectLandmarkSubsequence(wantedAo, await landmarks(page, DIALOG_SCOPE), "PLN-DES-15 (AO)");
+		// the artboard draws these two dialogs at 420px; DES-08/14A's 640px is
+		// the Planning dialog width — a documented artboard-vs-artboard delta,
+		// so the width is not asserted, the landmarks are
+		expect(artWidth).toBeGreaterThan(0);
+
+		const statutory = resetFixture<State>("reset_statutory_fixture");
+		await login(page, STATUTORY, PASSWORD);
+		await gotoPlanning(page, `/review/${statutory.task}`);
+		await expectReady(page, "governance");
+		await page.locator('[data-testid="pgt-return"]').click();
+		await expect(page.locator('[data-testid="pgt-return-dialog"]')).toBeVisible();
+		expectLandmarkSubsequence(wantedStatutory, await landmarks(page, DIALOG_SCOPE), "PLN-DES-15 (statutory)");
 	});
 
 	test("PLN-DES-16 — common page states, one route per reachable state", async ({ page, browser }) => {

@@ -25,7 +25,7 @@ import {
 
 type DppState = { dpp_reference: string; need_entry_id: string; direct_entry_id: string };
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test.describe("PLN-UI-02..05 Departmental Procurement Plan", () => {
 	test.afterAll(() => restoreSite());

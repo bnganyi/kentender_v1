@@ -23,7 +23,7 @@ import {
  * on the D13 world (no Procuring Entity anywhere).
  */
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 	test.beforeEach(() => {

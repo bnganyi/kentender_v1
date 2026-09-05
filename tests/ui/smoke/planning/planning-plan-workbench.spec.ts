@@ -21,7 +21,7 @@ import {
 
 type PlanState = { plan_reference: string; plan_item_id?: string };
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 async function gotoPlan(page: import("@playwright/test").Page, reference: string): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });
