@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -62,6 +62,7 @@ help:
 	@echo "  make ui-planning-dpp-gate — PLN-CHG-001 v1.12 Slice A: DPP authoring domain + vitest + Playwright"
 	@echo "  make ui-planning-dpp-review-gate — PLN-CHG-001 v1.12 Slice A: DPP validation + auto Annual Plan"
 	@echo "  make ui-planning-fidelity-gate — PLN-CHG-001 v1.12 D14: artboard landmark fidelity on the live screens"
+	@echo "  make ui-planning-release-evidence-gate — PLN-CHG-001 v1.12 Phase 8: every Planning browser spec + fidelity + §14 persona pass, single-worker"
 	@echo "  make ui-planning-plan-workbench-gate — PLN-CHG-001 v1.2 Slice D: Annual Plan workbench + formation + Plan Item editor"
 	@echo "  make ui-planning-finance-gate — PLN-CHG-001 v1.2 Slice E: Finance confirmation on real Budget contracts"
 	@echo "  make ui-planning-governance-gate — PLN-CHG-001 v1.2 Slice F: Annual Plan governance (adopt/approve/return)"
@@ -348,9 +349,6 @@ ui-demands-workspace-gate:
 # PLN-GATE-03 — workspace / register / empty builder (PLN-UI-01…03).
 # PLN-CHG-001 v1.2 — Planning gates are rebuilt slice by slice; each slice's
 # gate replaces its Stitch-era predecessor as its surface lands. Retired with
-# the Stitch UI (Phase 3): ui-planning-builder-gate, ui-planning-finance-gate,
-# ui-planning-approval-gate, ui-planning-scope-auth-gate, ui-planning-mvp1-gate,
-# ui-planning-a11y-gate — their v1.2 successors arrive with Phases 4-12.
 ui-planning-workspace-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_planning_workspace
@@ -384,6 +382,17 @@ ui-planning-dpp-review-gate:
 		tests/ui/smoke/planning/planning-dpp-review.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
+# PLN-CHG-001 v1.12 Phase 8 — release evidence: every Planning browser spec
+# single-worker on the D13 world, the fidelity spec, and the §14 persona pass
+# (which skips itself with the exact missing prerequisite while FU-10/FU-11
+# are open), then the intake flags restored.
+ui-planning-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning \
+		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
 # PLN-CHG-001 v1.12 decision D14 — every artboard's landmarks in order on the
 # live screen (AGENTS.md §6.6), on the D13 world.
 ui-planning-fidelity-gate:
@@ -391,45 +400,44 @@ ui-planning-fidelity-gate:
 		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.2 Slice D — Annual Plan workbench, formation and the Plan
-# Item editor (PLN-UI-07..09): domain + read + component + browser, on the
-# PE-PWPF fixture world.
+# PLN-CHG-001 v1.12 Slice B — Annual Plan workbench, formation and the Plan
+# Item editor (PLN-UI-07..09) on the D13 world.
 ui-planning-plan-workbench-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_workbench
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/planning/planning-plan-workbench.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.2 Slice E — Finance confirmation (PLN-UI-10): the real
-# check→token→reserve dance against Budget's own contracts, on the PE-PWFN
-# fixture world.
+# PLN-CHG-001 v1.12 Slice C — plan funding confirmation (PLN-UI-10) over
+# Budget's affordability contract; no reservation.
 ui-planning-finance-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_finance
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/planning/planning-finance.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.2 Slice F — Annual Plan governance (PLN-UI-11/12): Submit/
-# Adopt/Approve/Return/SubmitCorrected, on the PE-PWGV fixture world.
+# PLN-CHG-001 v1.12 Slice C — Annual Plan governance (PLN-UI-11/12).
 ui-planning-governance-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_governance
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/planning/planning-governance.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.2 Slice G — Publication, Active and successor (PLN-UI-14):
-# PublishAnnualPlan (auto, inside ApproveAnnualPlan)/RetryPublication/
-# BeginPlanUpdate/RemovePlanItemInSuccessor/CancelPlanUpdate and the
-# NeedPlanningUsageChanged.v1 publisher, on the PE-PWPB fixture world.
+# PLN-CHG-001 v1.12 Slice D — Active plan, cascade reforecast and publication
+# (PLN-UI-13/14).
 ui-planning-publication-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_publication
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/planning/planning-publication.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
 # PLN-CHG-001 v1.2 Slice H — §7.4 Requisition eligibility (API-only, no UI):
 # GetRequisitionEligiblePlanItem.v2 + drawdown/reversal consumption, incl.

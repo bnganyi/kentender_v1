@@ -186,9 +186,10 @@ PROHIBITED_TOKENS = (
 ALLOWED_MENTIONS = {
 	("tests/test_plan_finance.py", "Funding Reservation"),
 	("tests/test_plan_publication.py", "Funding Reservation"),
+	("seeds/kentender_mvp_v1.py", "Funding Reservation"),  # validate_planning_seed's "none created" check
 }
 
-SCAN_DIRS = ("doctype", "services", "tests", "page")  # seeds/ rejoins in Phase 7 (v1.12 tracker PLN-701)
+SCAN_DIRS = ("doctype", "services", "tests", "page", "seeds")
 
 UNIQUE_INDEXES = {
 	("tabDepartmental Plan", "pln_uniq_dpp_root"),

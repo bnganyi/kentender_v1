@@ -197,19 +197,91 @@ def reset_all(*, commit: bool = False) -> dict[str, Any]:
 	return {"namespace": NS_PW, "removed": removed}
 
 
-def _stamp(*rows: tuple[str, str]) -> None:
+def _stamp(*rows: tuple[str, str], namespace: str = NS_PW) -> None:
 	for doctype, name in rows:
 		if name:
-			frappe.db.set_value(doctype, name, "fixture_namespace", NS_PW, update_modified=False)
+			frappe.db.set_value(doctype, name, "fixture_namespace", namespace, update_modified=False)
 
 
-def _stamp_children(need: str) -> None:
+def _stamp_children(need: str, namespace: str = NS_PW) -> None:
 	"""Stamp everything the commands created for this Need, whatever its type."""
 	for doctype in _NAMESPACED:
 		if doctype == "Departmental Need":
 			continue
 		for name in frappe.db.get_all(doctype, filters={"departmental_need": need}, pluck="name"):
-			frappe.db.set_value(doctype, name, "fixture_namespace", NS_PW, update_modified=False)
+			frappe.db.set_value(doctype, name, "fixture_namespace", namespace, update_modified=False)
+
+
+# --- fixtures a sibling module's browser specs ask NDS for -------------------
+#
+# Procurement Planning's Playwright world needs genuine accepted Needs in its
+# own Organisation Unit and Fiscal Year (PLN-CHG-001 v1.12 D13). Planning may
+# not drive this module's commands or tables (its architecture guard, D5),
+# so NDS owns the builders: the caller names its unit, year, actors (who must
+# hold the departmental responsibilities there) and content; NDS runs the real
+# commands as those actors, stamps the rows with the caller's namespace and
+# purges them on request.
+
+
+def purge_fixture_needs(*, namespace: str, commit: bool = True) -> dict[str, Any]:
+	"""Remove every NDS row stamped with `namespace` (a sibling fixture world)."""
+	_guard()
+	if namespace == NS_PW:
+		return reset_all(commit=commit)
+	needs = frappe.db.get_all("Departmental Need", filters={"fixture_namespace": namespace}, pluck="name")
+	removed = {}
+	for doctype in _NAMESPACED:
+		names = frappe.db.get_all(doctype, filters={"fixture_namespace": namespace}, pluck="name")
+		if names:
+			frappe.db.delete(doctype, {"name": ("in", names)})
+		removed[doctype] = len(names)
+	if needs:
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
+	if commit:
+		frappe.db.commit()
+	return {"namespace": namespace, "removed": removed}
+
+
+def reset_accepted_needs_for(
+	*,
+	organisation_unit_name: str,
+	financial_year: str,
+	author: str,
+	reviewer: str,
+	needs: list[dict[str, Any]] | str,
+	namespace: str,
+	commit: bool = True,
+) -> dict[str, Any]:
+	"""Purge the namespace, then drive each requested Need to Accepted for
+	planning through the real commands as the caller's own actors."""
+	import json
+
+	_guard()
+	if isinstance(needs, str):
+		needs = json.loads(needs)
+	purge_fixture_needs(namespace=namespace, commit=False)
+	unit = frappe.db.get_value("Organisation Unit", {"unit_name": organisation_unit_name}, "name")
+	if not unit:
+		frappe.throw(f"Organisation Unit '{organisation_unit_name}' does not exist — build the caller's world first.")
+	if not frappe.db.get_value("Fiscal Year", financial_year, "kentender_needs_submission_open"):
+		frappe.throw(f"Fiscal Year {financial_year}'s Needs-submission flag is not Open — the caller's world must open it first.")
+	accepted = []
+	for content in needs:
+		with base._as(author):
+			created = lifecycle.create_need(organisation_unit=unit, financial_year=financial_year, idempotency_key=_key(), **content)
+			lifecycle.submit_need(need=created["need"], expected_version=created["record_version"], idempotency_key=_key())
+		task = _open_task(created["need"])
+		with base._as(reviewer):
+			lifecycle.review_need(
+				need=created["need"], decision="accept", task=task["name"], expected_version=_record_version(created["need"]),
+				decision_token=task["decision_token"], idempotency_key=_key(),
+			)
+		_stamp(("Departmental Need", created["need"]), namespace=namespace)
+		_stamp_children(created["need"], namespace)
+		accepted.append(created["need"])
+	if commit:
+		frappe.db.commit()
+	return {"needs": accepted, "unit": unit}
 
 
 def _submitted_need() -> str:

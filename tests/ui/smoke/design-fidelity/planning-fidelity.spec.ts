@@ -35,6 +35,9 @@ import {
  * Slice D's 13, 14, 14A — every artboard of the v1.12 set.
  *
  * Known, deliberate deltas NOT asserted (stripped from the artboard list):
+ *   - Content-column widths (DES-01 1200px, DES-03/04 900px, DES-09 1000px):
+ *     the Desk page column bounds the live width, so only dialog widths are
+ *     measured (DES-08 and DES-14A at 640px).
  *   - PLN-DES-16 is a seven-state gallery on one artboard; a live page shows
  *     one state at a time, so each reachable state is asserted on its own
  *     route below instead of as one subsequence. Its "not available" card
@@ -93,13 +96,13 @@ test.describe("Procurement Planning — design fidelity (Slice A)", () => {
 	test("PLN-DES-03 — Accepted Need funding details", async ({ page, browser }) => {
 		const state = resetFixture<State>("reset_dpp_fixture");
 		const { wanted, art } = await artboardLandmarks(browser, "PLN-DES-03 Accepted Need Funding.dc.html");
-		const artColumn = await boxWidth(art, `${ARTBOARD_SCOPE} .content`);
 		const errors = collectPageErrors(page);
 		await login(page, AUTHOR, PASSWORD);
 		await gotoDpp(page, state.dpp_reference, `/entry/${state.need_entry_id}`);
 		await expectReady(page, "dpp-entry");
 		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "PLN-DES-03");
-		expectClose(await boxWidth(page, ".pln-editor"), artColumn, 4, "editor column width");
+		// (no 900px column probe: the Desk page column, not the artboard, bounds
+		// the editor's width — the same delta documented on DES-01 and DES-09)
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});

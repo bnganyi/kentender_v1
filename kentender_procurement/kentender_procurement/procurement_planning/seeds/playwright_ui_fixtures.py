@@ -17,6 +17,12 @@ and clears the actors' server-side context preferences (CTX-CHG-001).
 Fixtures are driven through the real §8.2 commands as the fixture actors;
 instants are pinned, never `now`-relative. The Python suite (`tests/fixtures`,
 FY 2101-2102) and these specs never run concurrently on one site.
+
+Departmental Needs rows are never created, read or deleted here (D5, the
+NDS architecture guard): the browser helper asks NDS's own fixture module
+(`departmental_needs.seeds.playwright_ui_fixtures.reset_accepted_needs_for`)
+for accepted Needs in this world's unit and passes their references in as
+the `need`/`needs` arguments below.
 """
 
 from __future__ import annotations
@@ -62,15 +68,6 @@ LINE_REF = "BL-PWPL-0001"
 LINE_REF_2 = "BL-PWPL-0002"
 
 CONTEXT_PREFERENCE_KEYS = ("kt_planning_financial_year", "kt_needs_org_unit", "kt_needs_financial_year")
-
-NEED_CONTENT = {
-	"title": "National digital health infrastructure upgrade",
-	"description": "Procure and implement national digital health infrastructure across priority health facilities.",
-	"expected_operational_result": "Priority health facilities can use secure and interoperable digital health services.",
-	"indicative_quantity": 1,
-	"unit": UNIT,
-	"required_by_date": "2099-03-31",
-}
 
 DIRECT_CONTENT = {
 	"title": "Digital health platform security assessment",
@@ -344,19 +341,7 @@ def _wipe() -> None:
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 
-	# the Need-origin fixtures live in the two Playwright units only
-	units = [u for u in (OU, OUTSIDER_OU) if u] or [
-		n for n in (frappe.db.get_value("Organisation Unit", {"unit_name": OU_NAME}, "name"), frappe.db.get_value("Organisation Unit", {"unit_name": OUTSIDER_OU_NAME}, "name")) if n
-	]
-	needs = frappe.get_all("Departmental Need", filters={"organisation_unit": ("in", units or ("",)), "financial_year": FY}, pluck="name")
-	if needs:
-		versions = frappe.get_all("Departmental Need Version", filters={"departmental_need": ("in", needs)}, pluck="name")
-		frappe.db.delete("Need Planning Usage Projection", {"name": ("in", versions or ("",))})
-		for doctype in ("Departmental Need Event", "Departmental Need Decision", "Departmental Need Review Task", "Need Withdrawal Request"):
-			frappe.db.delete(doctype, {"departmental_need": ("in", needs)})
-		frappe.db.delete("Departmental Need Version", {"name": ("in", versions or ("",))})
-		frappe.db.delete("Departmental Need", {"name": ("in", needs)})
-		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
+	# Departmental Needs rows are NDS's to purge (`purge_fixture_needs`)
 
 	# §6.1 — the journal is segregation evidence; scope the wipe to this world
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
@@ -394,21 +379,14 @@ def reset_workspace_fixture(*, commit: bool = True) -> dict[str, Any]:
 # --- journeys (real §8.2 commands as the fixture actors) --------------------
 
 
-def _accepted_need(unit: str = "", author: str = AUTHOR, reviewer: str = HOD, **content) -> str:
-	from kentender_procurement.departmental_needs.services import lifecycle as need_lifecycle
-
-	values = {**NEED_CONTENT, **content}
-	with _as(author):
-		created = need_lifecycle.create_need(organisation_unit=unit or OU, financial_year=FY, idempotency_key=_key(), **values)
-		submitted = need_lifecycle.submit_need(need=created["need"], expected_version=created["record_version"], idempotency_key=_key())
-	token = frappe.db.get_value("Departmental Need Review Task", submitted["task"], "decision_token")
-	with _as(reviewer):
-		need_lifecycle.review_need(
-			need=created["need"], decision="accept", task=submitted["task"], expected_version=submitted["record_version"],
-			decision_token=token, idempotency_key=_key(),
+def _require_need(need: str) -> str:
+	"""The accepted Need the browser helper obtained from NDS's fixture module."""
+	if not need:
+		frappe.throw(
+			"This fixture needs an accepted Need: the browser helper obtains one from "
+			"kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures.reset_accepted_needs_for and passes `need=`."
 		)
-	frappe.db.set_value("Departmental Need", created["need"], "fixture_namespace", NS_PW, update_modified=False)
-	return created["need"]
+	return need
 
 
 def _open_dpp(unit: str = "", author: str = AUTHOR) -> dict[str, Any]:
@@ -427,14 +405,15 @@ def _need_entry(dpp_version: str, need: str) -> dict[str, Any]:
 	return row
 
 
-def reset_dpp_fixture(*, with_direct: bool = False, funded: bool = False, commit: bool = True) -> dict[str, Any]:
-	"""One accepted Need projected into a freshly opened Draft DPP (funding
-	incomplete). `with_direct` adds the PLN-DES-02 direct requirement;
-	`funded` completes the Need's funding so the plan reads Ready to submit."""
+def reset_dpp_fixture(*, need: str = "", with_direct: bool = False, funded: bool = False, commit: bool = True) -> dict[str, Any]:
+	"""The caller's accepted Need projected into a freshly opened Draft DPP
+	(funding incomplete). `with_direct` adds the PLN-DES-02 direct
+	requirement; `funded` completes the Need's funding so the plan reads Ready
+	to submit."""
 	from kentender_procurement.procurement_planning.services import dpp_lifecycle
 
 	world = _reset(commit=False)
-	need = _accepted_need()
+	need = _require_need(need)
 	opened = _open_dpp()
 	entry = _need_entry(opened["current_version"], need)
 	record_version = opened["record_version"]
@@ -462,12 +441,12 @@ def reset_dpp_fixture(*, with_direct: bool = False, funded: bool = False, commit
 	}
 
 
-def reset_review_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_review_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""The funded two-row plan submitted by the HoD with its Open validation
 	task — the review spec's start."""
 	from kentender_procurement.procurement_planning.services import dpp_lifecycle
 
-	state = reset_dpp_fixture(with_direct=True, funded=True, commit=False)
+	state = reset_dpp_fixture(need=need, with_direct=True, funded=True, commit=False)
 	with _as(HOD):
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=state["dpp_version"], certification_confirmed=True,
@@ -479,13 +458,13 @@ def reset_review_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return {**state, "task": task, "submission": submitted["task"]}
 
 
-def reset_accepted_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_accepted_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""The submitted plan accepted by the Planner (auto-creating the Draft
 	Annual Plan), plus a second department's Draft DPP so the register holds
 	two rows — PLN-DES-01's exact composition for the Planner."""
 	from kentender_procurement.procurement_planning.services import dpp_validation
 
-	state = reset_review_fixture(commit=False)
+	state = reset_review_fixture(need=need, commit=False)
 	task = frappe.get_doc("Departmental Plan Validation Task", state["task"])
 	with _as(PLANNER):
 		accepted = dpp_validation.accept_departmental_plan(
@@ -521,10 +500,10 @@ def _submit(dpp_version: str, record_version: int) -> str:
 	return frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": submitted["task"]}, "name")
 
 
-def reset_workbench_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_workbench_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-07's exact opening state: one accepted, unallocated Need-origin
 	entry (KES 80,000,000) in the auto-created Draft Annual Plan."""
-	state = reset_dpp_fixture(funded=True, commit=False)
+	state = reset_dpp_fixture(need=need, funded=True, commit=False)
 	state["task"] = _submit(state["dpp_version"], state["record_version"])
 	accepted = _accept(state, {state["need_entry_id"]: "Non-consulting services"})
 	if commit:
@@ -544,9 +523,9 @@ def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 	return formed["created_items"]
 
 
-def reset_plan_item_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_plan_item_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need."""
-	state = reset_workbench_fixture(commit=False)
+	state = reset_workbench_fixture(need=need, commit=False)
 	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": state["dpp_version"], "entry_id": state["need_entry_id"]}, "name")
 	items = _form(state["plan_version"], [entry], "each")
 	if commit:
@@ -554,14 +533,18 @@ def reset_plan_item_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return {**state, "plan_item_id": items[0]}
 
 
-def reset_combined_item_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""PLN-DES-09A: two accepted Needs on one Procurement Budget Line, both
-	Goods, combined into one Plan Item."""
+def reset_combined_item_fixture(*, needs: list[str] | str = "", commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-09A: two accepted Needs (the browser helper's training and
+	deployment laptops) on one Procurement Budget Line, both Goods, combined
+	into one Plan Item."""
 	from kentender_procurement.procurement_planning.services import dpp_lifecycle
 
+	if isinstance(needs, str):
+		needs = json.loads(needs) if needs else []
+	if len(needs) != 2:
+		frappe.throw("The combined fixture needs exactly two accepted Needs from NDS's fixture module (`needs=`).")
 	world = _reset(commit=False)
-	first = _accepted_need(title="Clinical training laptops for digital health rollout", indicative_quantity=200, required_by_date="2099-04-30")
-	second = _accepted_need(title="Clinical deployment laptops for digital health rollout", indicative_quantity=300, required_by_date="2099-04-30")
+	first, second = needs
 	opened = _open_dpp()
 	record_version = opened["record_version"]
 	entries = []
@@ -624,10 +607,10 @@ def _request_funding(plan_reference: str) -> str:
 	return requested["task"]
 
 
-def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_finance_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-10's opening state: the one complete Plan Item, funding
 	confirmation requested — one Open Plan Finance Task for the Version."""
-	state = reset_plan_item_fixture(commit=False)
+	state = reset_plan_item_fixture(need=need, commit=False)
 	_complete_item(state["plan_item_id"])
 	task = _request_funding(state["plan_reference"])
 	if commit:
@@ -635,12 +618,12 @@ def reset_finance_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return {**state, "task": task}
 
 
-def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_governance_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""Funding confirmed and the Plan submitted: PLN-DES-11's Open Accounting
 	Officer task."""
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance, plan_read
 
-	state = reset_finance_fixture(commit=False)
+	state = reset_finance_fixture(need=need, commit=False)
 	task = frappe.get_doc("Plan Finance Task", state["task"])
 	with _as(FINANCE):
 		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key())
@@ -654,11 +637,11 @@ def reset_governance_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return {**state, "finance_task": state["task"], "task": submitted["task"]}
 
 
-def reset_statutory_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_statutory_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""Adopted by the Accounting Officer: PLN-DES-12's Open statutory task."""
 	from kentender_procurement.procurement_planning.services import plan_governance
 
-	state = reset_governance_fixture(commit=False)
+	state = reset_governance_fixture(need=need, commit=False)
 	ao_task = frappe.get_doc("Plan Governance Task", state["task"])
 	with _as(ACCOUNTING_OFFICER):
 		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key())
@@ -683,10 +666,10 @@ def _approve(state: dict[str, Any], *, transmit=None) -> dict[str, Any]:
 			return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
 
 
-def reset_active_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-14's opening state: the approved, acknowledged, Active Plan
 	with its one item's forecasts seeded from baseline."""
-	state = reset_statutory_fixture(commit=False)
+	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state)
 	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"], "result": "Acknowledged"}, "name")
 	if commit:
@@ -694,10 +677,10 @@ def reset_active_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return {**state, "publication_result": approved["publication_result"], "publication": publication}
 
 
-def reset_publication_failed_fixture(*, commit: bool = True) -> dict[str, Any]:
+def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-13/16: the approved Plan whose first transmission failed —
 	approval preserved, a technical retry pending."""
-	state = reset_statutory_fixture(commit=False)
+	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state, transmit=("Failed", ""))
 	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"]}, "name", order_by="attempt_number desc")
 	if commit:
