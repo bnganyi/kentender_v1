@@ -14,7 +14,7 @@ from frappe.utils import add_to_date, now_datetime, set_request
 from frappe.website.serve import get_response
 from frappe.website.utils import clear_website_cache
 
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.seed.preview_fixtures import (
 	_approve,
 	_seed_bidder_facing_config,

@@ -105,7 +105,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_one_workspace_row_for_governance(self):
-		"""Configuration (incl. Governance workspace) is Disabled for deployment; STD Library remains."""
+		"""Configuration (incl. Governance workspace) is Disabled for deployment; STD Administration is retired."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		doc = frappe.get_doc("Workspace Sidebar", "Procurement")
@@ -117,15 +117,12 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			and r.link_to == "Governance & Configuration"
 		]
 		self.assertEqual(len(ws_links), 0, msg="Governance link lives under Configuration — hidden for deployment")
-		page_std_library = [
-			r
-			for r in doc.items
-			if r.type == "Link"
-			and (r.link_type or "").lower() == "page"
-			and r.link_to == "std-library"
-			and r.label == "STD Library"
-		]
-		self.assertEqual(len(page_std_library), 1)
+		# STD Administration (STD Library / STD Versions / Forms & Schemas / Import
+		# Review) was retired outright 2026-09-05, not merely hidden — no page in
+		# that family should reappear on the Procurement rail.
+		std_labels = {"STD Library", "STD Versions", "Forms & Schemas", "Import Review"}
+		page_std_links = [r for r in doc.items if r.type == "Link" and r.label in std_labels]
+		self.assertEqual(page_std_links, [])
 
 	def test_procurement_boot_sidebar_includes_strategy_alignment_and_budget_links(self):
 		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before Departmental Needs."""
@@ -164,6 +161,14 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		kentender_core.module_registry's "budget" entry, whose real
 		get_route_sidebar_keys() correctly no longer emits it); removed from
 		this expected list rather than asserting a route that no longer exists.
+
+		"form/demand" was removed on the same grounds (2026-09-05): NDS-CHG-001
+		v1.6 retired the Demand *form* route in favour of the "departmental-
+		needs" Page, and kentender_core.module_registry's "departmental_needs"
+		entry now declares only ("departmental-needs",), so
+		get_route_sidebar_keys() no longer emits a "form/demand" key. The only
+		remaining "form/demand" mapping is in workspace_permissions' fallback
+		dict, which is dead unless get_route_sidebar_keys() itself raises.
 		"""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
@@ -174,7 +179,6 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertTrue(len(proc.get("items") or []) > 0, msg="Procurement sidebar baseline required")
 		for route_key in (
 			"strategy-builder",
-			"form/demand",
 			"procurement-home",
 			"plc-procurement-journey",
 			"tender-management-v2",
@@ -212,36 +216,9 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			payload = items[route_key]
 			self.assertEqual(payload.get("items"), proc.get("items"))
 
-	def test_bootinfo_includes_std_prod_page_route_keys(self):
-		"""STD prod iframe Desk pages must keep the Procurement rail on hard refresh."""
-		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
-			self.skipTest("Procurement sidebar not on site")
-		bootinfo: dict = {"workspace_sidebar_item": {}}
-		patch_bootinfo(bootinfo)
-		items = bootinfo.get("workspace_sidebar_item") or {}
-		proc = items.get("procurement") or {}
-		self.assertTrue(len(proc.get("items") or []) > 0)
-		for route_key in (
-			"std-library",
-			"std-family-detail",
-			"std-version-detail",
-			"std-parameter-dictionary",
-			"std-price-schedule-schema",
-			"std-evaluation-schema",
-			"std-review-and-approval",
-			"std-import-package-review",
-		):
-			self.assertIn(
-				route_key,
-				items,
-				msg=f"STD prod route {route_key!r} requires boot sidebar fast-path key",
-			)
-			payload = items[route_key]
-			self.assertEqual(
-				payload.get("items"),
-				proc.get("items"),
-				msg=f"STD prod route {route_key!r} should reuse Procurement sidebar rail",
-			)
+	# test_bootinfo_includes_std_prod_page_route_keys was removed on 2026-09-05:
+	# the STD Engine module, its 23 Desk Pages and their boot sidebar fast-path
+	# route keys were retired outright, so there is nothing left to assert.
 
 	def test_bootinfo_includes_it_wizard_page_route_keys(self):
 		"""IT STD Wizard Desk pages must keep the Procurement rail on hard refresh."""

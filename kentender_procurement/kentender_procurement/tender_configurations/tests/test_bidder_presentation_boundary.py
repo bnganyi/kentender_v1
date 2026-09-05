@@ -14,7 +14,7 @@ from frappe.utils import add_to_date, cstr, now_datetime, set_request
 from frappe.website.serve import get_response
 from frappe.website.utils import clear_website_cache
 
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.seed.preview_fixtures import (
 	_approve,
 	_seed_bidder_facing_config,
@@ -55,11 +55,7 @@ from kentender_procurement.tender_configurations.services.tender_documents_adden
 
 
 def _prep_and_publish() -> tuple[str, str, str]:
-	ensure = __import__(
-		"kentender_procurement.std_engine.services.ensure_active_canonical_std",
-		fromlist=["ensure_active_canonical_ppra_it_std"],
-	).ensure_active_canonical_ppra_it_std
-	ensure(force_reimport=False)
+	# STD Engine retired 2026-09-05 — no canonical STD package to activate.
 	seed = seed_ui00_dashboard(clear=True)
 	cfg_id = seed["configurations"][0]
 	frappe.db.set_value(

@@ -65,15 +65,12 @@ def _clear_it_strategy(*, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_std_draft() -> dict[str, Any]:
-	from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+	"""No-op: the STD Engine package registry was retired on 2026-09-05.
 
-	if not frappe.db.exists("STD Version", IT_STD_VERSION_CODE):
-		return {"cleared": False, "reason": "not_imported"}
-	lifecycle = frappe.db.get_value("STD Version", IT_STD_VERSION_CODE, "lifecycle_state")
-	if lifecycle == "ACTIVE":
-		return {"cleared": False, "reason": "active_version_protected"}
-	clear_draft_package_state(IT_STD_VERSION_CODE, family_code=IT_STD_FAMILY_CODE)
-	return {"cleared": True, "package_id": IT_STD_VERSION_CODE}
+	There is no ``STD Version`` DocType left to inspect or clear, so this
+	reports "retired" rather than touching a dropped table.
+	"""
+	return {"cleared": False, "reason": "retired"}
 
 
 def clear_stable_platform_seed(

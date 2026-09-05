@@ -173,32 +173,24 @@ def _locked_unavailable_block(outline_key: str, *, detail: str = "") -> dict[str
 
 
 def _assert_active_std_package(package_id: str) -> dict[str, str] | None:
+	"""Always blocks — the STD Engine that held approved clause text is retired.
+
+	This used to verify the bound package against the ``STD Version`` DocType
+	(exists / ``lifecycle_state == "ACTIVE"`` / locked-form completeness). That
+	DocType was deleted with the STD Engine module on 2026-09-05, so those
+	lookups would now raise a missing-table error rather than degrade. Until a
+	replacement package registry exists there is no source of approved STD
+	text and therefore nothing that could legitimately pass this gate, so we
+	return the same "locked STD text unavailable" generation block the
+	verification failures always produced. Callers keep their defined blocked
+	state (``PREVIEW_EXCEPTION`` + empty ``preview_html``) instead of 500ing.
+	"""
 	if not package_id:
 		return _locked_unavailable_block("itt", detail="no STD version bound")
-	if not frappe.db.exists("STD Version", package_id):
-		return _locked_unavailable_block("itt", detail=f"{package_id} not found")
-	lifecycle = cstr(frappe.db.get_value("STD Version", package_id, "lifecycle_state"))
-	if lifecycle != "ACTIVE":
-		return _locked_unavailable_block(
-			"itt",
-			detail=f"{package_id} lifecycle is {lifecycle or 'unknown'}, required ACTIVE",
-		)
-	# Fixture sample packages are never sufficient for legal preview.
-	if package_id.upper().startswith("TCFG-FIXTURE") or "FIXTURE" in package_id.upper():
-		return _locked_unavailable_block(
-			"itt",
-			detail="fixture STD sample text is not permitted for tender preview",
-		)
-	try:
-		from kentender_procurement.std_engine.services.form_locked_text import (
-			assert_form_locked_text_complete,
-		)
-
-		if package_id == "KE-PPRA-IT-2022-04" or package_id.startswith("KE-PPRA-IT"):
-			assert_form_locked_text_complete(package_id)
-	except Exception as exc:
-		return _locked_unavailable_block("forms", detail=cstr(exc))
-	return None
+	return _locked_unavailable_block(
+		"itt",
+		detail=f"{package_id} cannot be verified — the STD Engine package registry was retired",
+	)
 
 
 def _render_locked_std_body(
@@ -207,31 +199,19 @@ def _render_locked_std_body(
 	section_suffix: str,
 	parameter_values: dict[str, str],
 ) -> tuple[str, str | None, dict[str, str] | None]:
-	"""Return (body_html, render_hash, generation_block). LOCKED_STD_TEXT only."""
+	"""Return (body_html, render_hash, generation_block). LOCKED_STD_TEXT only.
+
+	Always returns the "unavailable" block now: the STD Engine render service
+	that turned stored clauses into section HTML was deleted on 2026-09-05, and
+	no other component can produce approved locked text. Kept as a seam so a
+	replacement renderer can be dropped in here without touching callers.
+	"""
 	if not package_id:
 		return "", None, _locked_unavailable_block(outline_key)
-	try:
-		from kentender_procurement.std_engine.services.render_service import (
-			render_section_preview,
-		)
-
-		result = render_section_preview(
-			package_id,
-			section_suffix,
-			parameter_values=parameter_values,
-		)
-	except Exception as exc:
-		return "", None, _locked_unavailable_block(outline_key, detail=cstr(exc))
-	if not int(result.get("clauseCount") or 0):
-		return "", None, _locked_unavailable_block(outline_key)
-	body = cstr(result.get("html") or "")
-	# Reject known fixture sample fragments if they ever leak into official package.
-	if outline_key in ("itt", "gcc") and "tenderer shall prepare the tender in accordance" in body.lower():
-		return "", None, _locked_unavailable_block(
-			outline_key,
-			detail="fixture sample clause detected",
-		)
-	return body, cstr(result.get("renderHash") or "") or None, None
+	return "", None, _locked_unavailable_block(
+		outline_key,
+		detail="STD Engine render service retired — no approved clause text available",
+	)
 
 
 def _format_block_message(block: dict[str, Any] | str | None) -> str:

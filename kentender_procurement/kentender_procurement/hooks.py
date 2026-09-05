@@ -65,8 +65,6 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
-	# The legacy std-* "std_prod" route family's own CSS is now lazy-loaded by
-	# each of its page_js controllers alongside std_prod_engine.js (see below).
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
 	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
 	# had its own ensureCss() fallback link-injection for exactly this case.
@@ -82,8 +80,6 @@ app_include_js = [
 	# planning_builder_page.js, planning_item_editor_page.js,
 	# planning_review_page.js, planning_approved_page.js).
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
-	# std_prod_engine.js (the legacy std-* route family's shared engine, ~4900
-	# lines) is now lazy-loaded by each of its 7 page_js controllers instead.
 	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
 	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
@@ -237,9 +233,9 @@ page_js = {
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
 	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
-	# STD-CHG-001 v1.3 Phase 11 — new Vue-in-Desk STD Configuration surfaces
-	# (STD-UI-*/PCFG-*/STD-WF-*). Distinct route names from the "std-*" legacy
-	# std_engine pages below, which remain live pending Phase 12 retirement.
+	# STD-CHG-001 v1.3 Phase 11 — Vue-in-Desk STD Configuration surfaces
+	# (STD-UI-*/PCFG-*/STD-WF-*). The legacy "std-*" STD engine route family
+	# that used to sit below these was retired outright on 2026-09-05.
 	"std-cfg-documents": "public/js/std_cfg_documents_page.js",
 	# "std-cfg-package" (unsuffixed) collides with the auto-generated Desk
 	# route for the "STD Cfg Package" DocType — confirmed live: it opened the
@@ -250,29 +246,6 @@ page_js = {
 	"std-cfg-readiness": "public/js/std_cfg_readiness_page.js",
 	"std-cfg-review": "public/js/std_cfg_review_page.js",
 	"std-cfg-comparison": "public/js/std_cfg_comparison_page.js",
-	"std-library": "public/js/std_prod_std_library_page.js",
-	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
-	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",
-	"std-source-doc": "public/js/std_prod_vertical_slice_pages.js",
-	"std-section-clauses": "public/js/std_prod_vertical_slice_pages.js",
-	"std-clause-detail": "public/js/std_prod_vertical_slice_pages.js",
-	"std-validation-report": "public/js/std_prod_vertical_slice_pages.js",
-	"std-audit-log": "public/js/std_prod_vertical_slice_pages.js",
-	"std-parameter-dictionary": "public/js/std_prod_schema_pages.js",
-	"std-parameter-detail": "public/js/std_prod_schema_pages.js",
-	"std-rule-dictionary": "public/js/std_prod_schema_pages.js",
-	"std-rule-detail": "public/js/std_prod_schema_pages.js",
-	"std-form-schema-manager": "public/js/std_prod_schema_pages.js",
-	"std-form-detail-field-builder": "public/js/std_prod_schema_pages.js",
-	"std-requirement-schema-manager": "public/js/std_prod_schema_pages.js",
-	"std-price-schedule-schema": "public/js/std_prod_schema_pages.js",
-	"std-evaluation-schema": "public/js/std_prod_schema_pages.js",
-	"std-render-blocks": "public/js/std_prod_schema_pages.js",
-	"std-review-and-approval": "public/js/std_prod_governance_pages.js",
-	"std-usage-and-tender-bindings": "public/js/std_prod_governance_pages.js",
-	"std-import-package-review": "public/js/std_prod_governance_pages.js",
-	"std-version-diff-and-supersession": "public/js/std_prod_governance_pages.js",
-	"std-module-retired": "public/js/std_module_retired_page.js",
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}

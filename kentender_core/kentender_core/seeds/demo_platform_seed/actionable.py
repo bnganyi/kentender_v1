@@ -33,10 +33,12 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_DEPT_NAME,
 )
 PKG_APPROVED = "Approved"  # PP2 Package DocType retired
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-	ensure_active_canonical_ppra_it_std,
-)
+
+# Was imported from the retired STD Engine module's constants. The STD Engine
+# was removed on 2026-09-05; `Tender Configuration.std_version` is
+# now a plain Data field, so this is just the identifier string the demo rows
+# carry as a label.
+CANONICAL_PACKAGE_ID = "KE-PPRA-IT-2022-04"
 from kentender_procurement.tender_configurations.constants import (
 	STATUS_APPROVED_FOR_PREVIEW,
 	STATUS_IN_PROGRESS,
@@ -242,10 +244,11 @@ def _fill_complete_cfg_from_e1_fixture(configuration_id: str, *, target_status: 
 
 
 def _seed_cfg_matrix() -> dict[str, Any]:
-	ensure_active_canonical_ppra_it_std(force_reimport=False)
-	if not frappe.db.exists("STD Version", CANONICAL_PACKAGE_ID):
-		frappe.throw(f"Missing ACTIVE STD {CANONICAL_PACKAGE_ID}")
-
+	# Previously ensured an ACTIVE canonical STD package existed and hard-threw
+	# when it did not. The STD Engine was retired on 2026-09-05, so there is no
+	# package registry to activate or verify; the configurations below still
+	# carry CANONICAL_PACKAGE_ID as a label, and their document-preview step
+	# degrades to the defined "locked STD text unavailable" blocked state.
 	ready_pkg = _insert_package(PKG_READY_TO_CONFIGURE, "Hospital Edge Switches")
 	_insert_package(PKG_WALKABLE, "County LAN Refresh")
 	walk = _insert_config(

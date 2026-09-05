@@ -20,12 +20,13 @@ from typing import Any
 # Menu labels that are Planned (badge + coming-soon capability overview).
 PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
+		"Home",
 		"Analytics",
 		"Evaluation",
 		"Awards",
 		"Contract Management",
-		# No cross-family versions queue page yet; versions are opened from STD Library.
-		"STD Versions",
+		"Supplier Management",
+		"Tender Configurations",
 	}
 )
 

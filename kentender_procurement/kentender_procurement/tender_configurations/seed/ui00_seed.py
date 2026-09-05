@@ -17,6 +17,8 @@ from frappe.utils import nowdate
 
 PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.tender_configurations.constants import (
+	CANONICAL_PACKAGE_ID,
+	FIXTURE_STD_VERSION_ID,
 	STATUS_COMPLETED,
 	STATUS_IN_PROGRESS,
 	STATUS_NEEDS_ATTENTION,
@@ -35,7 +37,6 @@ from kentender_procurement.tender_configurations.seed.lean_qualification_criteri
 	FIXTURE_FULL,
 	merge_qualification_into_evaluation,
 )
-from kentender_procurement.tender_configurations.services.eligibility import ensure_fixture_std_version
 
 SEED_PREFIX = "TCFG-SEED"
 PACKAGE_REFS = (
@@ -397,14 +398,13 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 	if clear:
 		_clear_seed()
 
-	std_id = ensure_fixture_std_version()
-	# Preview generation rejects fixture sample ITT/GCC — bind preview-path configs to ACTIVE PPRA.
-	from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-	from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-		ensure_active_canonical_ppra_it_std,
-	)
-
-	ensure_active_canonical_ppra_it_std(force_reimport=False)
+	# `ensure_fixture_std_version()` created a fixture STD Version record and
+	# returned its id; the STD Engine DocTypes were retired on 2026-09-05, so
+	# std_version is now just a Data label and the id is used directly.
+	std_id = FIXTURE_STD_VERSION_ID
+	# Preview-path configs stay bound to the PPRA package id. Preview generation
+	# is blocked for every package now (no approved text exists to render), so
+	# this no longer distinguishes previewable from non-previewable rows.
 	preview_std_id = CANONICAL_PACKAGE_ID
 	entity = _ensure_pe()
 	entity_name = frappe.db.get_value("Procuring Entity", entity, "entity_name") or "National Treasury"

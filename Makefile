@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -111,9 +111,6 @@ help:
 	@echo "  make bw-final-submission-domain-gate SITE=$(SITE) — Final Submission domain + layout + stitch contracts"
 	@echo "  make bw-final-submission-stitch-contract-gate SITE=$(SITE) — Final Submission per-Stitch-file UI contracts (01–05)"
 	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke (modal structure)"
-	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
-	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
-	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -331,8 +328,6 @@ ui-civic-ledger-wg03-gate:
 pub-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_publication_setup_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_configuration_document_preview_api
 
 ui-publications-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
@@ -562,8 +557,6 @@ bw-fot-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_lean_fot_review_certify
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_it_std_template_fot_slice
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_lean_f0_foundation
 
 ui-bidder-fot-gate:
@@ -741,58 +734,6 @@ vue-desk-bundle-translation-binding-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core \
 		--module kentender_core.tests.test_vue_desk_bundle_translation_binding_gate
 
-std-verbatim-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && PYTHONPATH=. python3 scripts/std_extraction/verbatim/run.py
-	cd $(BENCH_ROOT)/apps/kentender_v1 && PYTHONPATH=. python3 scripts/std_extraction/build_package.py v1_1
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_verbatim_extract_clauses
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_record_mapper_verbatim_fields
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
-
-std-step1-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_12_smoke_contracts
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption
-
-# Short --test names required (FQ dotted paths match zero tests under this runner).
-# Fail the gate if any invocation reports "Ran 0 tests".
-nssf-calibration-gate:
-	@set -e; \
-	for t in \
-		test_cal_nssf_001_fixture_import_without_master_mutation \
-		test_cal_nssf_002_golden_bind \
-		test_cal_nssf_003_tds_values_validate_against_fixture \
-		test_cal_nssf_012_render_uses_official_locked_text \
-		test_cal_nssf_013_fixture_activation_blocked; do \
-		echo ">>> nssf-calibration-gate: $$t"; \
-		out=$$(cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-			--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-			--test "$$t" 2>&1); \
-		status=$$?; \
-		printf '%s\n' "$$out"; \
-		if printf '%s\n' "$$out" | grep -Eq 'Ran 0 tests?'; then \
-			echo "ERROR: nssf-calibration-gate matched zero tests for $$t" >&2; \
-			exit 1; \
-		fi; \
-		if ! printf '%s\n' "$$out" | grep -Eq 'Ran [1-9][0-9]* tests?'; then \
-			echo "ERROR: nssf-calibration-gate did not report a non-zero test run for $$t" >&2; \
-			exit 1; \
-		fi; \
-		if [ $$status -ne 0 ]; then \
-			echo "ERROR: nssf-calibration-gate failed for $$t (exit $$status)" >&2; \
-			exit $$status; \
-		fi; \
-		if ! printf '%s\n' "$$out" | grep -Eq '^OK$$'; then \
-			echo "ERROR: nssf-calibration-gate did not end OK for $$t" >&2; \
-			exit 1; \
-		fi; \
-	done
-
 e1-nssf-seed-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_fixture_mapper
@@ -801,8 +742,6 @@ e1-nssf-seed-gate:
 
 e1-nssf-poc-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_form_locked_text_activation
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_preview_presentation
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_fixture_mapper
@@ -810,8 +749,6 @@ e1-nssf-poc-gate:
 		--module kentender_procurement.tender_configurations.tests.test_schema_compiler
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_seed
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_configuration_document_preview_api
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_electronic_bid_submission
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

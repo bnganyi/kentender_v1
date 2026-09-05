@@ -12,6 +12,13 @@ PKG_RELEASED = "Released"
 
 DOCTYPE = "Tender Configuration"
 
+# Identifier of the PPRA IT standard tender document package. Previously
+# `std_engine.constants.CANONICAL_PACKAGE_ID`, backed by an ACTIVE STD Version
+# record; the STD Engine module was retired on 2026-09-05 and
+# `Tender Configuration.std_version` is now a plain Data field, so this is just
+# the label those rows carry. Nothing validates it against a package registry.
+CANONICAL_PACKAGE_ID = "KE-PPRA-IT-2022-04"
+
 # UI-00 §14 configuration status labels (exact)
 STATUS_IN_PROGRESS = "In Progress"
 STATUS_NEEDS_ATTENTION = "Needs Attention"

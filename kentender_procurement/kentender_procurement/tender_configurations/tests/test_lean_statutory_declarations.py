@@ -11,10 +11,7 @@ import unittest
 import frappe
 from frappe.utils import add_to_date, cstr, now_datetime
 
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-	ensure_active_canonical_ppra_it_std,
-)
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.seed.preview_fixtures import (
 	_approve,
 	_seed_bidder_facing_config,
@@ -118,7 +115,6 @@ def _seed_cbq(cfg_id: str, *, with_declarant_address: bool = True) -> None:
 class TestLeanStatutoryDeclarations(unittest.TestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
-		ensure_active_canonical_ppra_it_std(force_reimport=False)
 		seed = seed_ui00_dashboard(clear=True)
 		self.cfg_id = seed["configurations"][0]
 		frappe.db.set_value(
@@ -308,7 +304,6 @@ class TestLeanStatutoryDeclarations(unittest.TestCase):
 class TestLeanStatutoryWebRender(unittest.TestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
-		ensure_active_canonical_ppra_it_std(force_reimport=False)
 		seed = seed_ui00_dashboard(clear=True)
 		self.cfg_id = seed["configurations"][0]
 		frappe.db.set_value(

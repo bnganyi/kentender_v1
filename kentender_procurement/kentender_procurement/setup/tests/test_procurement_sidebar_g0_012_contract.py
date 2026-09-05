@@ -20,10 +20,18 @@ from frappe.tests import IntegrationTestCase
 # "Review tasks" was a §10 specification defect (removed 2026-08-30, to be
 # corrected in the next complete NDS successor): review decisions reach the
 # HoD through My Work and notifications, and the workspace's role-aware rows,
-# never through a work-queue sidebar entry. "Intake window" is configuration,
+# never through a work-queue sidebar entry. "System setup" is configuration,
 # so it sits as a child of "Configuration and Governance" — a URL link, since
 # it is a sub-route of the same Page. Its display_depends_on is presentation
 # only.
+#
+# "Home" and "Supplier Management" are Planned (2026-09-05): the former's
+# `kt-procurement-home` page is broken, the latter's workspace is not ready
+# for this deployment; both route to the shared coming-soon capability
+# overview until their underlying pages are fixed/finished. "STD
+# Administration" (STD Library / STD Versions / Forms & Schemas / Import
+# Review) was retired outright the same day — the feature and all of its
+# underlying code were removed, not hidden.
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Home",
 	"Analytics",
@@ -39,13 +47,8 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Awards",
 	"Contract Management",
 	"Supplier Management",
-	"STD Administration",
-	"STD Library",
-	"STD Versions",
-	"Forms & Schemas",
-	"Import Review",
 	"Configuration and Governance",
-	"Intake window",
+	"System setup",
 	"Reference Data",
 	"Standard Tender Documents",
 )
@@ -70,7 +73,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_section_groups_and_children(self):
-		"""Tender Management, STD Administration and Configuration groups."""
+		"""Tender Management and Configuration groups."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -99,8 +102,8 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 
 		section_labels = {r.get("label") for r in items if r.get("type") == "Section Break"}
 		self.assertIn("Tender Management", section_labels)
-		self.assertIn("STD Administration", section_labels)
 		self.assertNotIn("Configuration", section_labels)
+		self.assertNotIn("STD Administration", section_labels)
 
 		self.assertEqual(
 			children_of("Tender Management"),
@@ -112,38 +115,17 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 				"Awards",
 			],
 		)
-		self.assertEqual(
-			children_of("STD Administration"),
-			[
-				"STD Library",
-				"STD Versions",
-				"Forms & Schemas",
-				"Import Review",
-			],
-		)
 		# Every configuration entry lives here, including the Departmental Needs
 		# intake window. Frappe nests one level only (Sidebar.find_nested_items),
 		# so a configuration group cannot be a Section Break inside this one.
 		self.assertEqual(
 			children_of("Configuration and Governance"),
 			[
-				"Intake window",
+				"System setup",
 				"Reference Data",
 				"Standard Tender Documents",
 			],
 		)
-
-	def test_procurement_sidebar_home_routes_to_procurement_home_page(self):
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"workspace_sidebar",
-			"procurement.json",
-		)
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
-		home = next(r for r in data.get("items") or [] if r.get("label") == "Home")
-		self.assertEqual(home.get("link_type"), "Page")
-		self.assertEqual(home.get("link_to"), "kt-procurement-home")
 
 	def test_procurement_sidebar_planned_items_route_to_coming_soon(self):
 		path = os.path.join(
@@ -154,11 +136,13 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
 		planned = {
+			"Home",
 			"Analytics",
 			"Evaluation",
 			"Awards",
 			"Contract Management",
-			"STD Versions",
+			"Supplier Management",
+			"Tender Configurations",
 		}
 		for row in data.get("items") or []:
 			label = row.get("label") or ""
@@ -171,33 +155,6 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			self.assertEqual(row.get("link_type"), "Page")
 			self.assertEqual(row.get("link_to"), "coming-soon")
 			self.assertIn(label, row.get("route_options") or "")
-
-	def test_std_administration_has_no_url_hash_placeholders(self):
-		"""URL/# links always open a new tab in Frappe — STD Admin must use Page routes."""
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"workspace_sidebar",
-			"procurement.json",
-		)
-		with open(path, encoding="utf-8") as f:
-			data = json.load(f)
-		in_std = False
-		for row in data.get("items") or []:
-			if row.get("type") == "Section Break" and row.get("label") == "STD Administration":
-				in_std = True
-				continue
-			if in_std and row.get("type") == "Section Break":
-				break
-			if not in_std or int(row.get("child") or 0) != 1:
-				if in_std and row.get("type") == "Link" and int(row.get("child") or 0) != 1:
-					break
-				continue
-			self.assertEqual(
-				(row.get("link_type") or "").lower(),
-				"page",
-				msg=f"STD Administration child {row.get('label')!r} must be a Page link (not URL)",
-			)
-			self.assertNotEqual((row.get("url") or "").strip(), "#")
 
 	def test_procurement_sidebar_drops_flat_spine_duplicates(self):
 		"""Redundant / retired flat spine links must not reappear."""
@@ -221,6 +178,11 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			"Demand Intake & Approval",
 			"Publications",
 			"Import / Validation",
+			"STD Administration",
+			"STD Library",
+			"STD Versions",
+			"Forms & Schemas",
+			"Import Review",
 		):
 			self.assertNotIn(dropped, labels, msg=f"{dropped!r} should not appear in current IA")
 

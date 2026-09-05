@@ -281,22 +281,13 @@ def _purge_plc_outside_stable_registry(*, dry_run: bool) -> dict[str, Any]:
 
 
 def _purge_std_versions(*, dry_run: bool) -> list[str]:
-	from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+	"""No-op: the STD Engine package registry was retired on 2026-09-05.
 
-	removed: list[str] = []
-	for row in frappe.get_all("STD Version", fields=["name", "lifecycle_state", "family_code"]):
-		code = (row.get("name") or "").strip()
-		if code == IT_STD_VERSION_CODE:
-			continue
-		removed.append(code)
-		if dry_run:
-			continue
-		lifecycle = (row.get("lifecycle_state") or "").strip()
-		family = (row.get("family_code") or "").strip() or None
-		if lifecycle == "ACTIVE":
-			continue
-		clear_draft_package_state(code, family_code=family if family != IT_STD_FAMILY_CODE else None)
-	return removed
+	The ``STD Version`` DocType and its dependents were deleted outright, so
+	there is nothing left to purge. Returns an empty list rather than querying
+	a dropped table.
+	"""
+	return []
 
 
 def purge_non_stable_platform_seed(*, dry_run: bool = False) -> dict[str, Any]:
