@@ -240,6 +240,16 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 				site_configuration.open_needs_submission(fiscal_year=year, reason="Playwright teardown: restore the previously open year")
 				restored["needs"].append(year)
 		frappe.defaults.clear_default(PREVIOUS_FLAGS_KEY)
+	# Whatever was remembered, the site must end on the §8 seed's state: if no
+	# year holds a flag now, re-seed the flags exactly as site_setup does.
+	from kentender_core.seeds import site_setup
+
+	if not _open_years(site_configuration.DPP_FLAG_OPEN):
+		site_setup._seed_dpp_intake()
+		restored["dpp"].append("re-seeded")
+	if not _open_years(site_configuration.FLAG_OPEN):
+		site_setup._seed_intake()
+		restored["needs"].append("re-seeded")
 	if commit:
 		frappe.db.commit()
 	return restored

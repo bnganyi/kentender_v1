@@ -83,58 +83,51 @@
 			     state with its exact close instant when set. There is no PE
 			     dimension (AUTH-ADR-001 v1.6 §1.1 — the site is exactly one
 			     implicit Procuring Entity). -->
-			<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-context-grid" style="grid-template-columns: repeat(3, 1fr)">
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">
-							Department
-							<button
-								type="button"
-								class="kt-action-link"
-								data-testid="nds-change-context"
-								style="border: 0; background: none; padding: 0; margin-left: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 11.5px"
-								@click="$emit('change-context')"
-							>
-								Change
-							</button>
-						</div>
-						<div class="kt-readonly-value is-strong">
-							{{ context.organisation_unit_label || context.organisation_unit || "" }}
-						</div>
-					</div>
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">
-							<label for="nds-fy-band">Financial Year</label>
-						</div>
-						<select
-							id="nds-fy-band"
-							class="kt-input"
-							data-testid="nds-fy-band-select"
-							style="max-width: 180px; padding: 6px 8px; font-size: 13.5px"
-							:value="context.financial_year || ''"
-							@change="$emit('select-financial-year', $event.target.value)"
-						>
-							<option v-if="!context.financial_year" value="" disabled>Select year…</option>
-							<option v-for="year in financialYears" :key="year.id" :value="year.id">
-								{{ year.label }}
-							</option>
-						</select>
-					</div>
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">Needs submission</div>
-						<div class="kt-readonly-value is-strong" data-testid="nds-submission-state">
-							{{ submission.open ? "Open" : "Closed" }}
-						</div>
-						<div
-							v-if="submission.open && submission.closes_at"
-							style="font-size: 12.5px; color: var(--color-neutral-600); margin-top: 4px"
-							data-testid="nds-submission-closes-at"
-						>
-							Closes {{ formatInstant(submission.closes_at) }}
-						</div>
-					</div>
+			<!-- A plain inline filter row at text weight — the same treatment as
+			     Budget & Funding's Fiscal Year control and Procurement Planning's
+			     Financial Year filter — never a bordered, corner-marked card. -->
+			<div class="nds-filter-strip" data-testid="nds-context-strip">
+				<div class="nds-filter-field">
+					<span class="nds-filter-label">Department</span>
+					<span class="nds-filter-value">{{ context.organisation_unit_label || context.organisation_unit || "" }}</span>
+					<button
+						type="button"
+						class="kt-action-link nds-filter-link"
+						data-testid="nds-change-context"
+						@click="$emit('change-context')"
+					>
+						Change
+					</button>
+				</div>
+				<span class="nds-filter-sep" aria-hidden="true">·</span>
+				<div class="nds-filter-field">
+					<label class="nds-filter-label" for="nds-fy-band">Financial Year</label>
+					<select
+						id="nds-fy-band"
+						class="kt-input"
+						data-testid="nds-fy-band-select"
+						:value="context.financial_year || ''"
+						@change="$emit('select-financial-year', $event.target.value)"
+					>
+						<option v-if="!context.financial_year" value="" disabled>Select year…</option>
+						<option v-for="year in financialYears" :key="year.id" :value="year.id">
+							{{ year.label }}
+						</option>
+					</select>
+				</div>
+				<span class="nds-filter-sep" aria-hidden="true">·</span>
+				<div class="nds-filter-field">
+					<span class="nds-filter-label">Needs submission</span>
+					<span class="nds-filter-value" data-testid="nds-submission-state">
+						{{ submission.open ? "Open" : "Closed" }}
+					</span>
+					<span
+						v-if="submission.open && submission.closes_at"
+						class="nds-filter-quiet"
+						data-testid="nds-submission-closes-at"
+					>
+						· closes {{ formatInstant(submission.closes_at) }}
+					</span>
 				</div>
 			</div>
 

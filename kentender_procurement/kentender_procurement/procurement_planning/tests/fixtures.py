@@ -188,10 +188,18 @@ def restore_site() -> None:
 	test world moved it (the §8 seed's 2027-2028)."""
 	from kentender_core.services import site_configuration
 
+	from kentender_core.seeds import site_setup
+
 	frappe.set_user("Administrator")
 	for year in _previous_open.get("dpp", []):
 		if year != FY_OPEN and frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, site_configuration.DPP_FLAG_OPEN):
 			site_configuration.open_dpp_submission(fiscal_year=year, reason="test cleanup: restore the previously open year")
+	# the site must end on the §8 seed's state whatever was captured: with no
+	# year holding a flag, re-seed the flags exactly as site_setup does
+	if not frappe.get_all("Fiscal Year", filters={site_configuration.DPP_FLAG_OPEN: 1}, pluck="name") or frappe.get_all("Fiscal Year", filters={site_configuration.DPP_FLAG_OPEN: 1}, pluck="name") == [FY_OPEN]:
+		site_setup._seed_dpp_intake()
+	if not frappe.get_all("Fiscal Year", filters={site_configuration.FLAG_OPEN: 1}, pluck="name") or frappe.get_all("Fiscal Year", filters={site_configuration.FLAG_OPEN: 1}, pluck="name") == [FY_OPEN]:
+		site_setup._seed_intake()
 	frappe.db.commit()
 
 
