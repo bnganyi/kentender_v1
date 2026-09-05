@@ -1,10 +1,10 @@
 <!-- PLN-UI-03 (accepted-Need funding, PLN-DES-03) and PLN-UI-04 (direct
      requirement, PLN-DES-04) in one screen: the mode is the entry's source
-     origin. Need facts render read-only; Planning owns only Budget Line and
-     indicative amount on a Need-origin entry (§12.3), and exactly the eight
-     defined values on a direct one (§12.4 — the artboard omitted the
-     Expected operational result control; §11.5's table and §12.4 require it,
-     so the functional contract wins and the omission is recorded). -->
+     origin. Need facts render read-only in the artboard's exact order;
+     Planning owns only Procurement Budget Line and indicative amount on a
+     Need-origin entry (§12.3), or — PLN-AC-092 — a not-proceeding reason in
+     their place. A direct entry carries exactly the eight defined values
+     (§12.4); units come only from enabled ERPNext UOM records. -->
 <template>
 	<div class="pln-editor">
 		<template v-if="isNeed">
@@ -24,10 +24,6 @@
 						<label>Title</label>
 						<div class="pln-val">{{ entry.title }}</div>
 					</div>
-					<div class="pln-ro-field">
-						<label>Required by</label>
-						<div class="pln-val">{{ entry.required_by_display }}</div>
-					</div>
 					<div class="pln-ro-field" style="grid-column: 1 / -1">
 						<label>Description</label>
 						<div class="pln-val">{{ entry.description }}</div>
@@ -39,6 +35,14 @@
 					<div class="pln-ro-field">
 						<label>Quantity</label>
 						<div class="pln-val">{{ entry.quantity_display }}</div>
+					</div>
+					<div class="pln-ro-field">
+						<label>Unit</label>
+						<div class="pln-val">{{ entry.unit_label }}</div>
+					</div>
+					<div class="pln-ro-field">
+						<label>Required by</label>
+						<div class="pln-val">{{ entry.required_by_display }}</div>
 					</div>
 					<div class="pln-ro-field">
 						<label>Accepted Need</label>
@@ -59,10 +63,6 @@
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div class="pln-field-grid">
-					<div class="pln-ro-field">
-						<label>Procuring Entity</label>
-						<div class="pln-val">{{ context.procuring_entity }}</div>
-					</div>
 					<div class="pln-ro-field">
 						<label>Department</label>
 						<div class="pln-val">{{ context.department }}</div>
@@ -97,20 +97,9 @@
 					</div>
 					<div class="pln-field">
 						<label for="dpp-unit">Unit</label>
-						<div style="display: flex; gap: 8px; align-items: center">
-							<select id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit" style="flex: 1">
-								<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
-							</select>
-							<button
-								type="button"
-								class="kt-btn kt-btn-ghost"
-								style="white-space: nowrap"
-								data-testid="dpp-unit-new"
-								@click="createUnit"
-							>
-								+ New
-							</button>
-						</div>
+						<select id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit">
+							<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
+						</select>
 					</div>
 					<div class="pln-field">
 						<label for="dpp-required-by">Required by</label>
@@ -127,8 +116,14 @@
 			<div class="kt-card-title">{{ isNeed ? "Planning funding" : "Funding" }}</div>
 			<div class="pln-field-grid">
 				<div class="pln-field">
-					<label for="dpp-budget-line">Budget Line</label>
-					<select id="dpp-budget-line" class="kt-input" v-model="form.budget_line" data-testid="dpp-f-budget-line">
+					<label for="dpp-budget-line">Procurement Budget Line</label>
+					<select
+						id="dpp-budget-line"
+						class="kt-input"
+						v-model="form.budget_line"
+						data-testid="dpp-f-budget-line"
+						:disabled="form.not_proceeding"
+					>
 						<option v-for="line in budgetLines" :key="line.id" :value="line.id">{{ line.label }}</option>
 					</select>
 				</div>
@@ -138,7 +133,38 @@
 				</div>
 				<div class="pln-field">
 					<label for="dpp-amount">Indicative amount</label>
-					<input id="dpp-amount" type="number" min="1" class="kt-input" v-model="form.indicative_amount" data-testid="dpp-f-amount" />
+					<input
+						id="dpp-amount"
+						type="number"
+						min="1"
+						class="kt-input"
+						v-model="form.indicative_amount"
+						data-testid="dpp-f-amount"
+						:disabled="form.not_proceeding"
+					/>
+				</div>
+			</div>
+
+			<!-- PLN-AC-092 — a Need-origin entry the department will not proceed
+			     with is accounted for with a reason instead of funding (§5.1). -->
+			<div v-if="isNeed" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
+				<label class="pln-checkbox-row">
+					<input
+						type="checkbox"
+						v-model="form.not_proceeding"
+						data-testid="dpp-f-not-proceeding"
+					/>
+					This requirement will not proceed in this financial year
+				</label>
+				<div v-if="form.not_proceeding" class="pln-field">
+					<label for="dpp-not-proceeding-reason">Reason</label>
+					<textarea
+						id="dpp-not-proceeding-reason"
+						class="kt-input"
+						rows="3"
+						v-model="form.not_proceeding_reason"
+						data-testid="dpp-f-not-proceeding-reason"
+					></textarea>
 				</div>
 			</div>
 		</div>
@@ -150,8 +176,9 @@
 
 		<div class="pln-footer-bar" style="justify-content: flex-end">
 			<div class="pln-footer-actions">
-				<button class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
 				<button
+					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dpp-editor-save"
 					:disabled="pending"
@@ -166,7 +193,6 @@
 
 <script setup>
 import { computed, reactive, watch } from "vue";
-import { quickCreate } from "../../pln_shared/composables/quickCreate.js";
 
 const props = defineProps({
 	editor: { type: Object, default: () => ({}) },
@@ -174,14 +200,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save-funding", "save-direct", "cancel", "unit-created"]);
-
-async function createUnit() {
-	const doc = await quickCreate("Unit Of Measure");
-	if (!doc) return;
-	form.unit = doc.name;
-	emit("unit-created", { id: doc.name, label: doc.unit_label });
-}
+const emit = defineEmits(["save-funding", "save-direct", "cancel"]);
 
 const entry = computed(() => props.editor.entry || {});
 const context = computed(() => props.editor.context || {});
@@ -202,6 +221,8 @@ const form = reactive({
 	required_by_date: "",
 	budget_line: "",
 	indicative_amount: null,
+	not_proceeding: false,
+	not_proceeding_reason: "",
 });
 
 watch(
@@ -216,12 +237,21 @@ watch(
 		form.required_by_date = row.required_by_date || "";
 		form.budget_line = row.budget_line || "";
 		form.indicative_amount = row.indicative_amount || null;
+		form.not_proceeding_reason = row.not_proceeding_reason || "";
+		form.not_proceeding = !!row.not_proceeding_reason;
 	},
 	{ immediate: true, deep: false }
 );
 
 function save() {
 	if (isNeed.value) {
+		if (form.not_proceeding) {
+			emit("save-funding", {
+				entry_id: entry.value.entry_id,
+				not_proceeding_reason: form.not_proceeding_reason,
+			});
+			return;
+		}
 		emit("save-funding", {
 			entry_id: entry.value.entry_id,
 			budget_line: form.budget_line,

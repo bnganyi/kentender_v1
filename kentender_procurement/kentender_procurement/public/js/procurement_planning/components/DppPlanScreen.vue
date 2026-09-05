@@ -1,7 +1,7 @@
-<!-- PLN-UI-02/05 Departmental Procurement Plan (§12.2), rendering PLN-DES-02
-     (Draft with readiness notice) and PLN-DES-05 (ready + certification)
-     class-for-class, plus the returned-issue rows (§12.2) and PLN-DES-16's
-     no-plan / load-error states handled by the root. -->
+<!-- PLN-UI-02/05 Departmental Procurement Plan (§12.2/§12.5), rendering
+     PLN-DES-02 v1.12 (Draft with readiness notice, three-column context strip)
+     and PLN-DES-05 (ready + certification, Submit in the header) class-for-
+     class, plus the returned-issue rows (§12.2). No Procuring Entity field. -->
 <template>
 	<div>
 		<!-- header row -->
@@ -15,11 +15,24 @@
 				</span>
 			</div>
 			<div class="pln-header-actions">
-				<button class="kt-btn kt-btn-secondary" @click="$emit('view-accepted-needs')">
+				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('view-accepted-needs')">
 					View accepted needs
 				</button>
+				<!-- PLN-DES-05: the HoD's ready plan carries Submit in the header;
+				     PLN-DES-02: a mutable draft carries Add direct requirement. -->
 				<button
-					v-if="plan.mutable"
+					v-if="plan.certification?.show"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="dpp-submit-header"
+					:disabled="pending || !plan.can_submit || !certified"
+					@click="$emit('submit')"
+				>
+					Submit departmental plan
+				</button>
+				<button
+					v-else-if="plan.mutable"
+					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dpp-add-direct"
 					@click="$emit('add-direct')"
@@ -29,14 +42,10 @@
 			</div>
 		</div>
 
-		<!-- context strip -->
-		<div class="kt-card kt-blueprint pln-strip-grid" data-testid="dpp-context">
+		<!-- three-column context strip -->
+		<div class="kt-card kt-blueprint pln-strip-grid pln-strip-grid-3" data-testid="dpp-context">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="pln-strip-field">
-				<label>Procuring Entity</label>
-				<div class="pln-val">{{ plan.context?.procuring_entity }}</div>
-			</div>
 			<div class="pln-strip-field">
 				<label>Department</label>
 				<div class="pln-val">{{ plan.context?.department }}</div>
@@ -74,7 +83,7 @@
 						<th>Source</th>
 						<th class="pln-num">Quantity</th>
 						<th>Required by</th>
-						<th>Budget Line</th>
+						<th>Procurement Budget Line</th>
 						<th class="pln-num">Indicative amount</th>
 						<th>Status</th>
 						<th></th>
@@ -82,7 +91,7 @@
 				</thead>
 				<tbody>
 					<template v-for="row in plan.entries" :key="row.entry_id">
-						<tr>
+						<tr :data-testid="`dpp-entry-${row.entry_id}`">
 							<td>{{ row.title }}</td>
 							<td>{{ row.source_label }}</td>
 							<td class="pln-num">{{ row.quantity_display }}</td>
@@ -97,6 +106,7 @@
 							<td style="text-align: right">
 								<button
 									v-if="row.action"
+									type="button"
 									class="kt-btn kt-btn-ghost"
 									:data-testid="`dpp-entry-action-${row.entry_id}`"
 									@click="$emit('open-entry', row)"
@@ -136,10 +146,11 @@
 
 		<!-- sticky footer -->
 		<div class="pln-footer-bar">
-			<button class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
+			<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
 			<div class="pln-footer-actions">
 				<button
 					v-if="plan.mutable"
+					type="button"
 					class="kt-btn kt-btn-secondary"
 					:disabled="pending"
 					@click="$emit('save-draft')"
@@ -148,6 +159,7 @@
 				</button>
 				<button
 					v-if="plan.mutable"
+					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dpp-submit"
 					:disabled="pending || !plan.can_submit || !certified"

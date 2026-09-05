@@ -50,6 +50,13 @@ def select_planning_context(financial_year: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def reset_planning_context() -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import planning_context
+
+	return planning_context.reset_planning_context()
+
+
+@frappe.whitelist()
 def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 	"""§8.1 `GetRegulatoryReference` — read-only; Planning never writes it."""
 	from kentender_core.services.regulatory_reference import get_regulatory_reference as read

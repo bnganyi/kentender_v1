@@ -1,4 +1,4 @@
-/* Procurement Planning — PLN-CHG-001 v1.2 §11 supplementary Industry classes.
+/* Procurement Planning — PLN-CHG-001 v1.12 §11 supplementary Industry classes.
  *
  * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
  * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-skel …). The
@@ -44,7 +44,66 @@
 	margin-bottom: 24px;
 }
 
-/* PLN-DES-01 planning context row */
+/* PLN-DES-01 v1.12 inline Financial Year filter: a plain control at text
+ * weight directly beneath the description — never a bordered, corner-marked
+ * card (§11.2). */
+.kt-pln .pln-filter-strip {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	margin-top: 20px;
+}
+.kt-pln .pln-filter-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.kt-pln .pln-filter-field label {
+	font-size: 14px;
+	color: var(--color-neutral-800);
+	margin: 0;
+}
+.kt-pln .pln-filter-field select {
+	width: auto;
+}
+.kt-pln .pln-filter-reset {
+	padding: 2px 8px;
+	font-size: 13px;
+}
+.kt-pln .pln-waiting {
+	margin: 8px 0 0;
+}
+
+/* PLN-DES-01 actionable card: headline-plus-button rows */
+.kt-pln .pln-ready-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+.kt-pln .pln-ready-row + .pln-ready-row {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--color-neutral-200);
+}
+.kt-pln .pln-ready-headline {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 18px;
+}
+.kt-pln .pln-ready-sub {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin-top: 4px;
+}
+.kt-pln .pln-card-subhead {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 14px;
+}
+
+/* v1.2 planning context row (kept for the record pages' strips) */
 .kt-pln .pln-strip {
 	display: flex;
 	flex-direction: row;
@@ -176,13 +235,17 @@
 	margin: 0 0 8px;
 }
 
-/* PLN-DES-02 four-column context strip */
+/* PLN-DES-02 context strip (three columns in v1.12: Department, Financial
+ * Year, Submission window — no Procuring Entity) */
 .kt-pln .pln-strip-grid {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 24px;
 	padding: 16px 20px;
 	margin-top: 24px;
+}
+.kt-pln .pln-strip-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
 }
 .kt-pln .pln-val {
 	font-family: var(--font-heading);
@@ -284,7 +347,25 @@
 	font-size: 15px;
 }
 
-/* PLN-DES-06 — inline classification select + signed line */
+/* PLN-DES-06 — three-column facts grid, inline classification select,
+ * a View disclosure row and the signed line */
+.kt-pln .pln-field-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+.kt-pln .pln-entry-detail {
+	padding: 6px 0 4px;
+}
+
+/* PLN-AC-092 — the not-proceeding control under Planning funding */
+.kt-pln .pln-not-proceeding {
+	border-top: 1px solid var(--color-neutral-200);
+	margin-top: 16px;
+	padding-top: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
 .kt-pln .pln-seg-select {
 	min-height: 32px;
 	font-size: 13px;

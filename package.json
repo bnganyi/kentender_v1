@@ -23,6 +23,7 @@
     "test:ui:smoke:pub-1630": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-pub-1630.spec.tsx",
     "test:ui:smoke:action-1640": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-action-1640.spec.tsx",
     "test:ui:smoke:audit-1650": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-audit-1650.spec.tsx",
+    "test:ui:smoke:planning": "playwright test tests/ui/smoke/planning tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts --workers=1",
     "test:ui:smoke:nds": "playwright test tests/ui/smoke/departmental_needs --workers=1",
     "test:unit:nds": "vitest run --project departmental-needs",
     "test:unit:setup": "vitest run --project system-setup"

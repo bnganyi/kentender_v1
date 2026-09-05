@@ -140,3 +140,13 @@ def select_planning_context(*, financial_year: str, user: str | None = None) -> 
 	if context["financial_year"]:
 		select_module_fy(PLANNING_MODULE, context["financial_year"], actor, offered=[context["financial_year"]])
 	return context
+
+
+def reset_planning_context(*, user: str | None = None) -> dict[str, Any]:
+	"""§10 — the remembered Financial Year always has a visible reset: forget
+	the module preference and resolve again from the configured records."""
+	from kentender_core.services.working_context import _module_key
+
+	actor = authz.actor(user)
+	frappe.defaults.clear_user_default(_module_key(PLANNING_MODULE, "financial_year"), actor)
+	return resolve_planning_context(user=actor)

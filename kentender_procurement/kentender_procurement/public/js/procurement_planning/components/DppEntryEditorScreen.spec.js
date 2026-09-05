@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.2 §15.1(5) — DppEntryEditorScreen component tests (D9):
+// PLN-CHG-001 v1.12 §15 — DppEntryEditorScreen component tests (D14):
 // PLN-DES-03 (Need funding, six read-only facts, funding only) and
 // PLN-DES-04 (direct requirement, exactly the eight values).
 import { describe, expect, it } from "vitest";
@@ -6,7 +6,6 @@ import { mount } from "@vue/test-utils";
 import DppEntryEditorScreen from "./DppEntryEditorScreen.vue";
 
 const CONTEXT = {
-	procuring_entity: "PE-MOH — Ministry of Health",
 	department: "OU-MOH-DHI — Digital Health",
 	financial_year: "FY 2027/28",
 };
@@ -70,6 +69,12 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		expect(facts.text()).toContain("Priority health facilities can use secure");
 		expect(facts.text()).toContain("1 programme");
 		expect(facts.text()).toContain("NDS-MOH-2027-0001 · Version 1");
+		// PLN-DES-03 order: Title, Description, Expected operational result,
+		// Quantity, Unit, Required by, Accepted Need
+		expect(facts.findAll("label").map((l) => l.text())).toEqual([
+			"Title", "Description", "Expected operational result", "Quantity", "Unit", "Required by", "Accepted Need",
+		]);
+		expect(facts.text()).toContain("Programme");
 		// no editable control renders a Need fact (§12.3)
 		expect(facts.findAll("input, textarea, select")).toHaveLength(0);
 	});
@@ -80,6 +85,7 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		});
 		const funding = w.find('[data-testid="dpp-funding"]');
 		expect(funding.find(".kt-card-title").text()).toBe("Planning funding");
+		expect(funding.find('label[for="dpp-budget-line"]').text()).toBe("Procurement Budget Line");
 		expect(funding.text()).toContain("KES");
 		await w.find('[data-testid="dpp-f-budget-line"]').setValue("MOH-BL-DHI-2027");
 		await w.find('[data-testid="dpp-f-amount"]').setValue("80000000");
@@ -92,6 +98,31 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		});
 		expect(w.find('[data-testid="dpp-editor-save"]').text()).toBe("Save funding details");
 	});
+
+	it("marks a Need as not proceeding with a reason in place of funding (PLN-AC-092)", async () => {
+		const w = mount(DppEntryEditorScreen, {
+			props: { editor: NEED_EDITOR, pending: false, errorSummary: "" },
+		});
+		expect(w.find('[data-testid="dpp-f-not-proceeding-reason"]').exists()).toBe(false);
+		await w.find('[data-testid="dpp-f-not-proceeding"]').setValue(true);
+		expect(w.find('[data-testid="dpp-f-budget-line"]').attributes("disabled")).toBeDefined();
+		await w
+			.find('[data-testid="dpp-f-not-proceeding-reason"]')
+			.setValue("The department will defer this requirement to the following financial year.");
+		await w.find('[data-testid="dpp-editor-save"]').trigger("click");
+		const [payload] = w.emitted("save-funding")[0];
+		expect(payload).toEqual({
+			entry_id: "E1",
+			not_proceeding_reason: "The department will defer this requirement to the following financial year.",
+		});
+	});
+
+	it("offers the not-proceeding control only on a Need-origin entry", () => {
+		const w = mount(DppEntryEditorScreen, {
+			props: { editor: DIRECT_EDITOR, pending: false, errorSummary: "" },
+		});
+		expect(w.find('[data-testid="dpp-not-proceeding"]').exists()).toBe(false);
+	});
 });
 
 describe("DppEntryEditorScreen — PLN-DES-04 (direct requirement)", () => {
@@ -100,9 +131,12 @@ describe("DppEntryEditorScreen — PLN-DES-04 (direct requirement)", () => {
 			props: { editor: DIRECT_EDITOR, pending: false, errorSummary: "" },
 		});
 		expect(w.find(".kt-page-title").text()).toBe("Add direct requirement");
-		expect(w.find('[data-testid="dpp-editor-context"]').text()).toContain(
-			"PE-MOH — Ministry of Health"
-		);
+		const context = w.find('[data-testid="dpp-editor-context"]');
+		expect(context.findAll("label").map((l) => l.text())).toEqual(["Department", "Financial Year"]);
+		expect(context.text()).toContain("OU-MOH-DHI — Digital Health");
+		expect(w.text()).not.toContain("Procuring Entity");
+		// §12.4 — units come only from enabled UOM records: no quick-create
+		expect(w.find('[data-testid="dpp-unit-new"]').exists()).toBe(false);
 		const editable = w
 			.findAll("input, textarea, select")
 			.filter((el) => el.attributes("data-testid"));

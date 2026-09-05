@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.2 §15.1(5) — DppPlanScreen component tests (D9): PLN-DES-02
+// PLN-CHG-001 v1.12 §15 — DppPlanScreen component tests (D14): PLN-DES-02
 // and PLN-DES-05 exact fields, absent fields, dialog copy, action visibility.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
@@ -16,14 +16,13 @@ const DRAFT_PLAN = {
 		badge_kind: "attention",
 	},
 	context: {
-		procuring_entity: "PE-MOH — Ministry of Health",
 		department: "OU-MOH-DHI — Digital Health",
 		financial_year: "FY 2027/28",
 		window: { state: "Open", display: "Open until 30 Nov 2026, 23:59 EAT" },
 	},
 	readiness: {
 		title: "1 requirement needs funding details",
-		text: "Select a Budget Line and enter the indicative amount for every requirement before the plan can be submitted.",
+		text: "Select a Procurement Budget Line and enter the indicative amount for every requirement before the plan can be submitted.",
 	},
 	entries: [
 		{
@@ -76,7 +75,7 @@ const READY_PLAN = {
 	certification: {
 		show: true,
 		heading: "Departmental certification",
-		text: "I certify that this Departmental Procurement Plan contains the current procurement requirements of Digital Health for FY 2027/28, including every current accepted Departmental Need and any direct departmental requirements shown. I confirm that the quantities, required-by dates, Budget Lines and indicative amounts are ready for Procurement validation and inclusion in the Annual Procurement Plan.",
+		text: "I certify that this Departmental Procurement Plan contains the current procurement requirements of Digital Health for FY 2027/28, including every current accepted Departmental Need and any direct departmental requirements shown. I confirm that the quantities, required-by dates, Procurement Budget Lines and indicative amounts are ready for Procurement validation and inclusion in the Annual Procurement Plan.",
 		checkbox_label: "I confirm this certification",
 	},
 };
@@ -94,12 +93,16 @@ describe("DppPlanScreen — PLN-DES-02", () => {
 		expect(w.find(".kt-page-title").text()).toBe("Digital Health departmental plan");
 		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Version 1");
 		expect(w.find('[data-testid="dpp-badge"]').text()).toBe("Draft");
-		expect(w.find('[data-testid="dpp-context"]').text()).toContain(
-			"Open until 30 Nov 2026, 23:59 EAT"
-		);
+		const strip = w.find('[data-testid="dpp-context"]');
+		expect(strip.text()).toContain("Open until 30 Nov 2026, 23:59 EAT");
+		// v1.12: three columns, no Procuring Entity (§11.3)
+		expect(strip.findAll("label").map((l) => l.text())).toEqual([
+			"Department", "Financial Year", "Submission window",
+		]);
+		expect(strip.text()).not.toContain("Procuring Entity");
 		const notice = w.find('[data-testid="dpp-readiness"]');
 		expect(notice.text()).toContain("1 requirement needs funding details");
-		expect(notice.text()).toContain("Select a Budget Line and enter the indicative amount");
+		expect(notice.text()).toContain("Select a Procurement Budget Line and enter the indicative amount");
 	});
 
 	it("renders the exact table rows with Complete/Edit actions and the caption", () => {
@@ -124,7 +127,7 @@ describe("DppPlanScreen — PLN-DES-02", () => {
 		const w = make(DRAFT_PLAN);
 		const headers = w.findAll("thead th").map((th) => th.text());
 		expect(headers).toEqual([
-			"Requirement", "Source", "Quantity", "Required by", "Budget Line",
+			"Requirement", "Source", "Quantity", "Required by", "Procurement Budget Line",
 			"Indicative amount", "Status", "",
 		]);
 	});
@@ -159,6 +162,25 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		expect(w.emitted("update:certified")[0][0]).toBe(true);
 		const armed = make(READY_PLAN, { certified: true });
 		expect(armed.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeUndefined();
+	});
+
+	it("carries Submit in the header for the HoD-ready plan instead of Add direct requirement (§11.6)", () => {
+		const w = make(READY_PLAN, { certified: true });
+		expect(w.find('[data-testid="dpp-submit-header"]').exists()).toBe(true);
+		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
+		expect(w.find('[data-testid="dpp-readiness"]').exists()).toBe(false);
+		expect(make(DRAFT_PLAN).find('[data-testid="dpp-add-direct"]').exists()).toBe(true);
+	});
+
+	it("renders a not-proceeding row with its muted status and no amount", () => {
+		const plan = {
+			...DRAFT_PLAN,
+			entries: [{ ...DRAFT_PLAN.entries[0], status: "Not proceeding", status_kind: "muted", amount_display: "—", budget_line_display: "—" }],
+		};
+		const w = make(plan);
+		const row = w.find('[data-testid="dpp-entries"] tbody tr');
+		expect(row.find(".kt-status").text()).toBe("Not proceeding");
+		expect(row.find(".kt-status").classes()).toContain("is-draft");
 	});
 
 	it("ready rows read View and the totals drop the 'specified' suffix", () => {

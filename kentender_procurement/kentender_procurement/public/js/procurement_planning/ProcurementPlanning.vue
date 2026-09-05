@@ -1,8 +1,10 @@
-<!-- Procurement Planning — PLN-CHG-001 v1.2 §10.
+<!-- Procurement Planning — PLN-CHG-001 v1.12 §10.
      One bundle, several Pages: "procurement-planning" (workspace + task deep
-     links) and "departmental-procurement-plan" (PLN-UI-02..05). This root
-     reads the full route (page slug included) and picks the screen; further
-     record pages join with their slices. -->
+     links), "departmental-procurement-plan", "annual-procurement-plan" and
+     "procurement-plan-item". This root reads the full route (page slug
+     included) and picks the screen. There is no Procuring Entity anywhere:
+     the Financial Year is the one visible filter, and a direct record route
+     derives its year from the record (§10). -->
 <template>
 	<div class="kt-industry kt-pln">
 		<div ref="railEl" class="kt-rail-mount"></div>
@@ -22,13 +24,13 @@
 				:workspace="workspace"
 				:pending="pending"
 				@reload="load"
-				@select-procuring-entity="onSelectPe"
 				@select-financial-year="onSelectFy"
+				@reset-financial-year="onResetFy"
 				@open-departmental-plan="onOpenDepartmentalPlan"
 				@navigate="onNavigate"
 			/>
 
-			<template v-else-if="screen === 'dpp'">
+			<template v-else>
 				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
@@ -39,234 +41,130 @@
 						<div class="kt-skel" style="width: 44%"></div>
 					</div>
 				</div>
+				<!-- PLN-DES-16 load error — one component for every record page -->
 				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<h3>Procurement Planning could not be loaded</h3>
 					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button>
 					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
 				</div>
-				<DppPlanScreen
-					v-else
-					:plan="dpp"
-					:pending="pending"
-					:certified="certified"
-					:error-summary="errorSummary"
-					@update:certified="certified = $event"
-					@view-accepted-needs="onViewAcceptedNeeds"
-					@add-direct="go(dppReference, 'add-direct')"
-					@open-entry="onOpenEntry"
-					@back="frappe.set_route('procurement-planning')"
-					@save-draft="load"
-					@submit="onSubmit"
-				/>
-			</template>
 
-			<template v-else-if="screen === 'dpp-entry'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<DppEntryEditorScreen
-					v-else
-					:editor="editor"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@save-funding="onSaveFunding"
-					@save-direct="onSaveDirect"
-					@cancel="go(dppReference)"
-					@unit-created="(unit) => editor.units = [...(editor.units || []), unit]"
-				/>
-			</template>
+				<template v-else-if="screen === 'dpp'">
+					<DppPlanScreen
+						:plan="dpp"
+						:pending="pending"
+						:certified="certified"
+						:error-summary="errorSummary"
+						@update:certified="certified = $event"
+						@view-accepted-needs="onViewAcceptedNeeds"
+						@add-direct="go(dppReference, 'add-direct')"
+						@open-entry="onOpenEntry"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@save-draft="load({ quiet: true })"
+						@submit="onSubmit"
+					/>
+				</template>
 
-			<template v-else-if="screen === 'dpp-review'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
-				<DppValidationScreen
-					v-else
-					:detail="validation"
-					:classifications="classifications"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@classify="onClassify"
-					@accept="onAccept"
-					@open-return-dialog="returnDialog = true"
-				/>
-				<ReturnIssuesDialog
-					v-if="returnDialog"
-					:entries="validation.entries || []"
-					:pending="pending"
-					:error="errorSummary"
-					@confirm="onReturnConfirm"
-					@cancel="returnDialog = false"
-				/>
-			</template>
+				<template v-else-if="screen === 'dpp-entry'">
+					<DppEntryEditorScreen
+						:editor="editor"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@save-funding="onSaveFunding"
+						@save-direct="onSaveDirect"
+						@cancel="go(dppReference)"
+					/>
+				</template>
 
-			<template v-else-if="screen === 'plan'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
-				<AnnualPlanScreen
-					v-else
-					:plan="annualPlan"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@open-form-dialog="formDialog = true"
-					@navigate="onNavigate"
-					@back="frappe.set_route(WORKSPACE_PAGE)"
-					@submit-consolidated="onSubmitConsolidatedPlan"
-					@begin-update="onBeginUpdate"
-				/>
-				<FormPlanItemsDialog
-					v-if="formDialog"
-					:entries="annualPlan.unallocated_sources || []"
-					:pending="pending"
-					:error="errorSummary"
-					@confirm="onFormConfirm"
-					@cancel="formDialog = false"
-				/>
-			</template>
+				<template v-else-if="screen === 'dpp-review'">
+					<DppValidationScreen
+						:detail="validation"
+						:classifications="classifications"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@classify="onClassify"
+						@accept="onAccept"
+						@open-return-dialog="returnDialog = true"
+					/>
+					<ReturnIssuesDialog
+						v-if="returnDialog"
+						:entries="validation.entries || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onReturnConfirm"
+						@cancel="returnDialog = false"
+					/>
+				</template>
 
-			<template v-else-if="screen === 'plan-item'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
-				<PlanItemEditorScreen
-					v-else
-					:item="planItem"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@save="onSavePlanItem"
-					@dissolve="onDissolvePlanItem"
-					@request-finance="onRequestFinance"
-					@back="onBackToPlan"
-				/>
-			</template>
+				<template v-else-if="screen === 'plan'">
+					<AnnualPlanScreen
+						:plan="annualPlan"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@open-form-dialog="formDialog = true"
+						@navigate="onNavigate"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@request-funding="onRequestPlanFunding"
+						@submit-consolidated="onSubmitConsolidatedPlan"
+						@begin-update="onBeginUpdate"
+					/>
+					<FormPlanItemsDialog
+						v-if="formDialog"
+						:entries="annualPlan.unallocated_sources || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onFormConfirm"
+						@cancel="formDialog = false"
+					/>
+				</template>
 
-			<template v-else-if="screen === 'finance'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
-				<FinanceTaskScreen
-					v-else
-					:task="financeTask"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@confirm="onConfirmFunding"
-					@open-return-dialog="financeReturnDialog = true"
-				/>
-				<FinanceReturnDialog
-					v-if="financeReturnDialog"
-					:pending="pending"
-					:error="errorSummary"
-					@confirm="onReturnFromFinance"
-					@cancel="financeReturnDialog = false"
-				/>
-			</template>
+				<template v-else-if="screen === 'plan-item'">
+					<PlanItemEditorScreen
+						:item="planItem"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@save="onSavePlanItem"
+						@dissolve="onDissolvePlanItem"
+						@back="onBackToPlan"
+					/>
+				</template>
 
-			<template v-else-if="screen === 'governance'">
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
-				<GovernanceTaskScreen
-					v-else
-					:task="governanceTask"
-					:pending="pending"
-					:error-summary="errorSummary"
-					@confirm="onGovernanceConfirm"
-					@open-return-dialog="governanceReturnDialog = true"
-				/>
-				<GovernanceReturnDialog
-					v-if="governanceReturnDialog"
-					:dialog="governanceTask.return_dialog"
-					:pending="pending"
-					:error="errorSummary"
-					@confirm="onGovernanceReturn"
-					@cancel="governanceReturnDialog = false"
-				/>
+				<template v-else-if="screen === 'finance'">
+					<FinanceTaskScreen
+						:task="financeTask"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@confirm="onConfirmFunding"
+						@open-return-dialog="financeReturnDialog = true"
+					/>
+					<FinanceReturnDialog
+						v-if="financeReturnDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onReturnFromFinance"
+						@cancel="financeReturnDialog = false"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'governance'">
+					<GovernanceTaskScreen
+						:task="governanceTask"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@confirm="onGovernanceConfirm"
+						@open-return-dialog="governanceReturnDialog = true"
+					/>
+					<GovernanceReturnDialog
+						v-if="governanceReturnDialog"
+						:dialog="governanceTask.return_dialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onGovernanceReturn"
+						@cancel="governanceReturnDialog = false"
+					/>
+				</template>
 			</template>
 		</div>
 	</div>
@@ -317,9 +215,8 @@ const financeReturnDialog = ref(false);
 const governanceTask = ref({});
 const governanceReturnDialog = ref(false);
 
-// §10/§12.1 — explicit PE/FY are visible filters only; the server resolves
-// the remembered server-side preference on a bare load.
-const procuringEntity = ref("");
+// §10/§12.1 — the Financial Year is a visible filter only; the server
+// resolves the remembered preference on a bare load.
 const financialYear = ref("");
 
 const pageSlug = computed(() => route.value[0] || WORKSPACE_PAGE);
@@ -389,10 +286,9 @@ function onBackToPlan() {
 let loadSeq = 0;
 
 // `quiet` refreshes in place — the skeleton replaces the whole screen, so
-// flipping `loading` after every action or PE/FY change made the screen
-// flash on each round-trip; a quiet load keeps the current content mounted
-// until the new data lands. Only the route-driven watch below (a genuine
-// navigation to different content) shows the skeleton.
+// flipping `loading` after every action made the screen flash on each
+// round-trip; a quiet load keeps the current content mounted until the new
+// data lands. Only the route-driven watch below shows the skeleton.
 async function load(opts) {
 	const quiet = !!(opts && opts.quiet === true);
 	const seq = ++loadSeq;
@@ -402,13 +298,11 @@ async function load(opts) {
 	try {
 		if (screen.value === "workspace") {
 			const loaded = await api.getPlanningWorkspace({
-				procuring_entity: procuringEntity.value || undefined,
 				financial_year: financialYear.value || undefined,
 			});
 			if (seq !== loadSeq) return;
 			workspace.value = loaded;
 			const context = loaded.context || {};
-			if (context.procuring_entity) procuringEntity.value = context.procuring_entity;
 			if (context.financial_year) financialYear.value = context.financial_year;
 		} else if (screen.value === "dpp") {
 			const loaded = await api.getDepartmentalPlan(dppReference.value);
@@ -467,24 +361,25 @@ function newSupportRef() {
 
 async function persistSelection() {
 	try {
-		await api.selectPlanningContext({
-			procuring_entity: procuringEntity.value,
-			financial_year: financialYear.value,
-		});
+		await api.selectPlanningContext({ financial_year: financialYear.value });
 	} catch (e) {
 		// a refused selection simply does not persist
 	}
 }
 
-function onSelectPe(value) {
-	procuringEntity.value = value;
-	financialYear.value = "";
-	load({ quiet: true }).then(persistSelection);
-}
-
 function onSelectFy(value) {
 	financialYear.value = value;
 	load({ quiet: true }).then(persistSelection);
+}
+
+async function onResetFy() {
+	try {
+		await api.resetPlanningContext();
+	} catch (e) {
+		// nothing to forget
+	}
+	financialYear.value = "";
+	await load({ quiet: true });
 }
 
 async function run(action, fn) {
@@ -504,9 +399,8 @@ async function run(action, fn) {
 async function onOpenDepartmentalPlan(organisationUnit) {
 	const result = await run("open-dpp", (key) =>
 		api.openDepartmentalPlan({
-			procuring_entity: procuringEntity.value,
 			organisation_unit: organisationUnit,
-			financial_year: financialYear.value,
+			fiscal_year: financialYear.value || (workspace.value.context || {}).financial_year,
 			idempotency_key: key,
 		})
 	);
@@ -538,8 +432,9 @@ async function onSaveFunding(payload) {
 		api.saveNeedFunding({
 			dpp_version: editor.value.dpp_version,
 			entry_id: payload.entry_id,
-			budget_line: payload.budget_line,
-			indicative_amount: payload.indicative_amount,
+			budget_line: payload.budget_line || undefined,
+			indicative_amount: payload.indicative_amount || undefined,
+			not_proceeding_reason: payload.not_proceeding_reason || undefined,
 			expected_record_version: editor.value.record_version,
 			idempotency_key: key,
 		})
@@ -639,23 +534,23 @@ async function onDissolvePlanItem() {
 	if (result) onBackToPlan();
 }
 
-async function onRequestFinance() {
-	const result = await run("request-finance", (key) =>
-		api.requestFinanceConfirmation({
-			plan_item: planItem.value.plan_item_id,
-			expected_record_version: planItem.value.record_version,
+// §5.2 — one plan-level Finance confirmation per Version
+async function onRequestPlanFunding() {
+	const result = await run("request-plan-funding", (key) =>
+		api.requestPlanFundingConfirmation({
+			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
 		})
 	);
-	if (result) frappe.set_route(WORKSPACE_PAGE, "finance", result.task);
+	if (result) await load({ quiet: true });
 }
 
 async function onConfirmFunding() {
-	const result = await run("confirm-funding", (key) =>
-		api.confirmFunding({
+	const result = await run("confirm-plan-funding", (key) =>
+		api.confirmPlanFunding({
 			task: financeTask.value.task,
 			task_token: financeTask.value.task_token,
-			check_token: financeTask.value.budget_check_token,
 			idempotency_key: key,
 		})
 	);
@@ -677,7 +572,7 @@ async function onReturnFromFinance(reason) {
 	}
 }
 
-async function onSubmitConsolidatedPlan() {
+async function onSubmitConsolidatedPlan(lateActivationReason) {
 	const command = annualPlan.value.is_correction ? "submit-corrected" : "submit-consolidated";
 	const apiCall = annualPlan.value.is_correction ? api.submitCorrectedPlan : api.submitConsolidatedPlan;
 	const result = await run(command, (key) =>
@@ -685,6 +580,7 @@ async function onSubmitConsolidatedPlan() {
 			plan_version: annualPlan.value.version_reference,
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
+			...(lateActivationReason ? { late_activation_reason: lateActivationReason } : {}),
 		})
 	);
 	if (result) frappe.set_route(WORKSPACE_PAGE, "review", result.task);
@@ -774,13 +670,6 @@ const railTrail = computed(() => {
 	return trail;
 });
 
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => {
-		procuringEntity.value = "";
-		financialYear.value = "";
-		if (screen.value === "workspace") load({ quiet: true });
-		else frappe.set_route(WORKSPACE_PAGE);
-	},
-});
+// §10 — no Procuring Entity switcher anywhere in Planning
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 </script>

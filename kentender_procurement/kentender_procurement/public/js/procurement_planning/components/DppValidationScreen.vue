@@ -1,7 +1,8 @@
-<!-- PLN-UI-06 DPP validation task (§12.6), rendering PLN-DES-06
-     class-for-class: immutable submission context, snapshot rows with the
-     inline requirement-type select, the certification card with its signed
-     line, and the two decision controls. -->
+<!-- PLN-UI-06 DPP validation task (§12.6), rendering PLN-DES-06 v1.12
+     class-for-class: immutable submission context (six facts, three columns),
+     snapshot rows with the inline requirement-type select and a View
+     disclosure of the submitted narrative, the certification card with its
+     signed line, and the two decision controls. -->
 <template>
 	<div>
 		<p class="kt-page-kicker">{{ detail.header?.eyebrow }}</p>
@@ -15,11 +16,7 @@
 		<div class="kt-card kt-blueprint pln-card-pad" data-testid="dppv-context">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="pln-field-grid">
-				<div class="pln-ro-field">
-					<label>Procuring Entity</label>
-					<div class="pln-val">{{ detail.context?.procuring_entity }}</div>
-				</div>
+			<div class="pln-field-grid pln-field-grid-3">
 				<div class="pln-ro-field">
 					<label>Department</label>
 					<div class="pln-val">{{ detail.context?.department }}</div>
@@ -73,35 +70,70 @@
 						<th>Source</th>
 						<th class="pln-num">Quantity</th>
 						<th>Required by</th>
-						<th>Budget Line</th>
+						<th>Procurement Budget Line</th>
 						<th class="pln-num">Amount</th>
 						<th>Requirement type</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="row in detail.entries" :key="row.entry_id">
-						<td>{{ row.title }}</td>
-						<td>{{ row.source_label }}</td>
-						<td class="pln-num">{{ row.quantity_display }}</td>
-						<td>{{ row.required_by_display }}</td>
-						<td>{{ row.budget_line_display }}</td>
-						<td class="pln-num">{{ row.amount_display }}</td>
-						<td>
-							<select
-								v-if="decidable"
-								class="kt-input pln-seg-select"
-								:data-testid="`dppv-type-${row.entry_id}`"
-								:value="classifications[row.entry_id] || ''"
-								@change="$emit('classify', row.entry_id, $event.target.value)"
-							>
-								<option value="" disabled>Select…</option>
-								<option v-for="type in detail.requirement_types" :key="type" :value="type">
-									{{ type }}
-								</option>
-							</select>
-							<span v-else>{{ classifications[row.entry_id] || "—" }}</span>
-						</td>
-					</tr>
+					<template v-for="row in detail.entries" :key="row.entry_id">
+						<tr :data-testid="`dppv-entry-${row.entry_id}`">
+							<td>{{ row.title }}</td>
+							<td>{{ row.source_label }}</td>
+							<td class="pln-num">{{ row.quantity_display }}</td>
+							<td>{{ row.required_by_display }}</td>
+							<td>{{ row.budget_line_display }}</td>
+							<td class="pln-num">{{ row.amount_display }}</td>
+							<td>
+								<!-- a not-proceeding entry takes no classification (§5.1) -->
+								<span v-if="row.not_proceeding" class="kt-status is-draft">Not proceeding</span>
+								<select
+									v-else-if="decidable"
+									class="kt-input pln-seg-select"
+									:data-testid="`dppv-type-${row.entry_id}`"
+									:value="classifications[row.entry_id] || ''"
+									@change="$emit('classify', row.entry_id, $event.target.value)"
+								>
+									<option value="" disabled>Select…</option>
+									<option v-for="type in detail.requirement_types" :key="type" :value="type">
+										{{ type }}
+									</option>
+								</select>
+								<span v-else>{{ classifications[row.entry_id] || "—" }}</span>
+							</td>
+							<td style="text-align: right">
+								<button
+									type="button"
+									class="kt-btn kt-btn-ghost"
+									:data-testid="`dppv-view-${row.entry_id}`"
+									:aria-expanded="expanded[row.entry_id] ? 'true' : 'false'"
+									@click="toggle(row.entry_id)"
+								>
+									View
+								</button>
+							</td>
+						</tr>
+						<!-- the submitted narrative, read-only (§12.6 "all submitted entry details") -->
+						<tr v-if="expanded[row.entry_id]" :data-testid="`dppv-detail-${row.entry_id}`">
+							<td colspan="8">
+								<div class="pln-field-grid pln-entry-detail">
+									<div class="pln-ro-field" style="grid-column: 1 / -1">
+										<label>Description</label>
+										<div class="pln-val">{{ row.description }}</div>
+									</div>
+									<div class="pln-ro-field" style="grid-column: 1 / -1">
+										<label>Expected operational result</label>
+										<div class="pln-val">{{ row.expected_operational_result }}</div>
+									</div>
+									<div v-if="row.not_proceeding" class="pln-ro-field" style="grid-column: 1 / -1">
+										<label>Not proceeding</label>
+										<div class="pln-val">{{ row.not_proceeding_reason }}</div>
+									</div>
+								</div>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -116,6 +148,7 @@
 		<!-- decision footer -->
 		<div v-if="decidable" class="pln-footer-bar">
 			<button
+				type="button"
 				class="kt-btn kt-btn-secondary"
 				data-testid="dppv-return"
 				:disabled="pending"
@@ -124,6 +157,7 @@
 				Return to department
 			</button>
 			<button
+				type="button"
 				class="kt-btn kt-btn-primary"
 				data-testid="dppv-accept"
 				:disabled="pending || !fullyClassified"
@@ -136,7 +170,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, reactive } from "vue";
 
 const props = defineProps({
 	detail: { type: Object, default: () => ({}) },
@@ -147,12 +181,20 @@ const props = defineProps({
 
 defineEmits(["classify", "accept", "open-return-dialog"]);
 
+const expanded = reactive({});
+
+function toggle(entryId) {
+	expanded[entryId] = !expanded[entryId];
+}
+
 const decidable = computed(
 	() => props.detail.status === "Open" && !props.detail.maker_checker_blocked
 );
 
 const fullyClassified = computed(() =>
-	(props.detail.entries || []).every((row) => props.classifications[row.entry_id])
+	(props.detail.entries || [])
+		.filter((row) => !row.not_proceeding)
+		.every((row) => props.classifications[row.entry_id])
 );
 
 const badgeClass = computed(() =>

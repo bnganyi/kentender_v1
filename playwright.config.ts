@@ -10,6 +10,8 @@ export default defineConfig({
     timeout: 5_000,
   },
   fullyParallel: false,
+  /** PLN-CHG-001 v1.12 D13 — puts the Planning fixtures' intake flags back. */
+  globalTeardown: './tests/ui/globalTeardown.ts',
   /** Fewer parallel browsers reduces flaky `/login` when many tests log in as the same user. */
   workers: process.env.CI ? 2 : 2,
   retries: process.env.CI ? 2 : 1,

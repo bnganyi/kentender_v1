@@ -1,152 +1,146 @@
-import { execSync } from "node:child_process";
-import path from "node:path";
-
-import { expect, test, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import {
+	AUDITOR,
+	AUTHOR,
+	NOBODY,
+	OUTSIDER,
+	OU_NAME,
+	PASSWORD,
+	PLANNER,
+	collectConsoleErrors,
+	expectFixtureYear,
+	expectReady,
+	gotoPlanning,
+	resetFixture,
+	restoreSite,
+} from "./helpers";
 
 /**
- * PLN-CHG-001 v1.2 Phase 3 (Slice A) — PLN-UI-01 workspace, context and
- * common states, per role, in a real browser.
- *
- * Fixtures come from `procurement_planning.seeds.playwright_ui_fixtures`,
- * which owns records under **PE-PWPL** — never the §14 demo world and never
- * the Python tests' PE-PLNT (tracker rule 8: this spec file owns its fixture
- * entity, so it can run alongside other modules' files). Every reset clears
- * the actors' server-side context preferences (CTX-CHG-001).
+ * PLN-CHG-001 v1.12 Phase 3 (Slice A) — PLN-UI-01 workspace, the Financial
+ * Year filter and the PLN-DES-16 Forbidden state, per role, in a real browser
+ * on the D13 world (no Procuring Entity anywhere).
  */
 
-const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
-const SITE = process.env.UI_SITE || "kentender.midas.com";
-const FIXTURES = "kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures";
-
-const PASSWORD = "Test@123";
-const AUTHOR = "pwpl.author@example.test";
-const PLANNER = "pwpl.planner@example.test";
-const AUDITOR = "pwpl.auditor@example.test";
-const OUTSIDER = "pwpl.outsider@example.test";
-
-function bench(command: string): string {
-	try {
-		return execSync(`cd "${BENCH_ROOT}" && bench --site ${SITE} ${command}`, {
-			stdio: "pipe",
-			timeout: 300_000,
-			encoding: "utf-8",
-		});
-	} catch (error: any) {
-		const stderr = (error?.stderr || "").toString().trim();
-		const stdout = (error?.stdout || "").toString().trim();
-		throw new Error(`bench ${command} failed\n${stderr || stdout || error?.message}`);
-	}
-}
-
-async function gotoPlanning(page: Page): Promise<void> {
-	await page.setViewportSize({ width: 1440, height: 1024 });
-	await page.goto("/app/procurement-planning", { waitUntil: "domcontentloaded" });
-}
-
-async function expectReady(page: Page): Promise<void> {
-	const shell = page.locator('[data-testid="pln-shell"]');
-	await expect(shell).toHaveAttribute("data-screen", "workspace", { timeout: 30_000 });
-	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-}
-
-async function selectFinancialYear(page: Page, fy = "FY-2098-2099"): Promise<void> {
-	const select = page.locator('[data-testid="pln-fy-select"]');
-	if ((await select.inputValue()) !== fy) {
-		await select.selectOption(fy);
-		await expectReady(page);
-	}
-}
-
-function pageErrors(errors: string[]): string[] {
-	// §16.3 demands zero PAGE-SPECIFIC console errors. The dev bench's
-	// realtime (socket.io) transport flaps independently of the page under
-	// test; its polling noise is excluded, nothing else is.
-	return errors.filter(
-		(text) => !text.includes("socket.io") && !text.includes("Failed to load resource")
-	);
-}
-
-test.beforeEach(() => {
-	bench(`execute ${FIXTURES}.reset_workspace_fixture`);
-});
+test.describe.configure({ mode: "serial" });
 
 test.describe("PLN-UI-01 Procurement Planning workspace", () => {
-	test("author selects the year, opens the departmental plan and sees the live re-render", async ({
-		page,
-	}) => {
+	test.beforeEach(() => {
+		resetFixture("reset_workspace_fixture");
+	});
+	test.afterAll(() => restoreSite());
+
+	test("author is offered Open departmental plan, opens it and sees the live re-render", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
 		await login(page, AUTHOR, PASSWORD);
 		await gotoPlanning(page);
-		await expectReady(page);
+		await expectReady(page, "workspace");
 
-		// PLN-DES-01 masthead, exact copy; no header action button.
+		// PLN-DES-01 masthead, exact copy; no header action button; the FY is a
+		// plain inline filter, never a card; no Procuring Entity control.
 		await expect(page.locator(".kt-page-kicker")).toHaveText("PROCUREMENT PLANNING");
 		await expect(page.locator(".kt-page-title")).toHaveText("Annual procurement planning");
 		await expect(page.locator(".pln-masthead button")).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-context-strip"]')).not.toHaveClass(/kt-card/);
+		await expect(page.locator('[data-testid="pln-pe-select"]')).toHaveCount(0);
+		await expectFixtureYear(page);
 
-		await selectFinancialYear(page);
-
-		// The one offered action for an empty department (window open).
-		const workRow = page.locator('[data-testid="pln-your-work"] tbody tr');
-		await expect(workRow).toHaveCount(1);
-		await expect(workRow).toContainText("Open departmental plan");
-		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText(
-			"0 departmental plans"
-		);
+		// The one offered action for an empty department while intake is open.
+		const rows = page.locator('[data-testid="pln-action-row"]');
+		await expect(rows).toHaveCount(1);
+		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Open departmental plan");
+		await expect(rows.first().locator(".pln-ready-sub")).toHaveText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("0 departmental plans");
+		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveCount(0);
 
 		// A real §8.2 command from the button, then the interactive re-render.
 		await page.locator('[data-testid="pln-work-action-0"]').click();
-		await expect(workRow).toContainText("Continue departmental plan", { timeout: 30_000 });
+		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Continue departmental plan", { timeout: 30_000 });
 		const planRow = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
 		await expect(planRow).toHaveCount(1);
-		await expect(planRow).toContainText("Digital Health");
+		await expect(planRow).toContainText(OU_NAME);
 		await expect(planRow.locator(".kt-status")).toHaveText("Draft");
-		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText(
-			"1 departmental plan"
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("1 departmental plan");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("planner sees Ready to consolidate after acceptance and Open Annual Plan routes to the plan", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
+
+		const card = page.locator('[data-testid="pln-actionable"]');
+		await expect(card.locator(".kt-card-title")).toHaveText("Ready to consolidate");
+		await expect(card.locator("table")).toHaveCount(0);
+		const row = card.locator('[data-testid="pln-action-row"]');
+		await expect(row).toHaveCount(1);
+		await expect(row.locator(".pln-ready-headline")).toHaveText(
+			"2 accepted departmental entries ready to consolidate"
 		);
+		await expect(row.locator(".pln-ready-sub")).toContainText("KES 100,000,000");
+		await expect(page.locator('[data-testid="pln-plan-summary"]')).toHaveText("· Annual Plan · Draft Version 1");
+		await expect(page.locator('[data-testid="pln-departmental-plans"] .kt-card-title')).toHaveText(
+			"Departmental plans feeding this Annual Plan"
+		);
+		const planRows = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		await expect(planRows).toHaveCount(2);
+		await expect(planRows.first().locator(".kt-status")).toHaveText("Accepted");
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("2 departmental plans");
+
+		await row.locator("button").click();
+		await expectReady(page, "plan");
+		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
 	test("auditor reads the register but is offered no work at all", async ({ page }) => {
+		resetFixture("reset_accepted_fixture");
 		await login(page, AUDITOR, PASSWORD);
 		await gotoPlanning(page);
-		await expectReady(page);
-		await selectFinancialYear(page);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
 
-		// Absence assertions (the NDS lesson): nothing decidable is offered.
-		await expect(page.locator('[data-testid="pln-your-work"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-departmental-plans"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-no-scope"]')).toHaveCount(0);
+		// Absence assertions: nothing decidable is offered, rows stay readable.
+		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody button')).toHaveCount(2);
+		await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
 	});
 
-	test("an actor without a Procuring Entity permission fails closed on the exact state card", async ({
-		page,
-	}) => {
-		await login(page, OUTSIDER, PASSWORD);
+	test("a stale Frappe Role without a responsibility assignment gets the Forbidden panel and nothing else (PLN-AC-111..113)", async ({ page }) => {
+		await login(page, NOBODY, PASSWORD);
 		await gotoPlanning(page);
-		await expectReady(page);
+		await expectReady(page, "workspace");
 
-		const card = page.locator('[data-testid="pln-no-scope"]');
-		await expect(card.locator("h3")).toHaveText("Procurement Planning is not available");
+		const card = page.locator('[data-testid="pln-forbidden"]');
+		await expect(card.locator("h3")).toHaveText("You do not have access to Procurement Planning");
 		await expect(card).toContainText(
-			"You do not have an assigned Procuring Entity scope, or no configured Financial Year is available for Planning."
+			"This area needs one of these responsibilities: Procurement Planner, Finance Confirmation Officer, Accounting Officer"
 		);
-		// Nothing else renders: no strip, no tables, no work.
+		await expect(card).toContainText("Ask your KenTender administrator to assign one in System setup.");
+		await expect(card.locator("button")).toHaveCount(0);
+		// Nothing else renders: no filter, no tables, no work.
 		await expect(page.locator('[data-testid="pln-context-strip"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="pln-departmental-plans"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
 	});
 
-	test("planner sees the departmental register with zero console errors", async ({ page }) => {
-		const errors: string[] = [];
-		page.on("console", (message) => {
-			if (message.type() === "error") errors.push(message.text());
-		});
-		await login(page, PLANNER, PASSWORD);
+	test("an author from another department sees an empty register, never the other unit's plan", async ({ page }) => {
+		resetFixture("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, OUTSIDER, PASSWORD);
 		await gotoPlanning(page);
-		await expectReady(page);
-		await selectFinancialYear(page);
-		await expect(page.locator('[data-testid="pln-departmental-plans"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-your-work"]')).toHaveCount(0);
-		expect(pageErrors(errors), `page console errors: ${errors.join("\n")}`).toHaveLength(0);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
+		// their own Draft (opened by the fixture) and nothing of the other unit
+		const rows = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		await expect(rows).toHaveCount(1);
+		await expect(rows.first()).not.toContainText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 });
