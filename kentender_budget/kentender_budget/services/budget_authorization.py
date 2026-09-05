@@ -25,8 +25,14 @@ actually invoke those hooks — a raw `frappe.get_doc()` call does not.
 from __future__ import annotations
 
 import frappe
+from frappe.utils import cstr
 
-from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+from kentender_core.services.authorization import (
+	PURPOSE_COMMAND,
+	PURPOSE_READ,
+	authorise_record,
+	is_technical,
+)
 from kentender_core.services.responsibility_errors import fail
 
 CAP_CREATE = "budget.create"
@@ -42,11 +48,20 @@ ROLE_BUDGET_OFFICER = "Budget Officer"
 ROLE_BUDGET_APPROVER = "Budget Approver"
 ROLE_FINANCE_CONFIRMATION_OFFICER = "Finance Confirmation Officer"
 
+ROLE_AUDITOR = "Auditor"
+
 BUDGET_GOVERNANCE_ROLES = (
 	ROLE_BUDGET_OFFICER,
 	ROLE_BUDGET_APPROVER,
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
 )
+
+# KT-STD-001 v1.2 §3A — the page-load read gate. Distinct from the DocPerm/
+# scope-map read enforcement in `require_budget_read_scope` below (kept as
+# defence-in-depth for a direct record route): this one never raises, so a
+# page mount can resolve its Forbidden verdict as data instead of a framework
+# permission error.
+BUDGET_READ_ROLES = BUDGET_GOVERNANCE_ROLES + (ROLE_AUDITOR,)
 
 _BUSINESS_ROLE_FOR_CAPABILITY = {
 	CAP_CREATE: ROLE_BUDGET_OFFICER,
@@ -164,3 +179,18 @@ def require_budget_read_scope(doctype: str, name: str) -> None:
 
 def require_budget_version_read_scope(version) -> None:
 	require_budget_read_scope("Procurement Budget Version", _version_name(version))
+
+
+def holds_any_budget_responsibility(user: str | None = None) -> bool:
+	"""KT-STD-001 v1.2 §3A.1 — the page-level verdict resolved before anything
+	renders. Never raises: a page load with no matching responsibility is a
+	typed Forbidden result, not a permission error."""
+	principal = cstr(user or frappe.session.user)
+	if not principal or principal == "Guest":
+		return False
+	if is_technical(principal):
+		return True
+	return any(
+		authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed
+		for role in BUDGET_READ_ROLES
+	)

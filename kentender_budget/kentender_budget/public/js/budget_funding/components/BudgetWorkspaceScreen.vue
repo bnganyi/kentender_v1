@@ -20,35 +20,35 @@ usePageRail(railEl, railTrail, { showPeSwitcher: false });
 const fyFilter = useFiscalYearFilter();
 
 const loading = ref(true);
-const forbidden = ref(false);
+const forbidden = ref(null);
 const serverError = ref(false);
 const workspace = ref(null);
 
 async function refresh(opts) {
 	const quiet = !!(opts && opts.quiet === true);
 	if (!quiet) loading.value = true;
-	forbidden.value = false;
+	forbidden.value = null;
 	serverError.value = false;
 	try {
-		workspace.value = await getBudgetWorkspace(fyFilter.selected.value);
-	} catch (e) {
-		if (e.httpStatus === 403) {
-			forbidden.value = true;
+		const result = await getBudgetWorkspace(fyFilter.selected.value);
+		if (result && result.outcome === "FORBIDDEN") {
+			workspace.value = null;
+			forbidden.value = result.forbidden;
 		} else {
-			serverError.value = true;
+			workspace.value = result;
 		}
+	} catch (e) {
+		serverError.value = true;
 	} finally {
 		loading.value = false;
 	}
 }
 
 onMounted(async () => {
-	await fyFilter.load();
-	if (fyFilter.selected.value) {
-		await refresh();
-	} else {
-		loading.value = false;
-	}
+	// KT-STD-001 v1.2 §3A.1 — the Forbidden verdict is resolved from the same
+	// first call as everything else, whether or not a Fiscal Year is already
+	// selected, so it renders before the fiscal-year selector itself.
+	await Promise.all([fyFilter.load(), refresh()]);
 });
 
 async function onSelectFy(fy) {
@@ -110,14 +110,8 @@ function registerBudget() {
 				</select>
 			</div>
 
-			<!-- No fiscal year selected yet — never auto-picked (§12.1). -->
-			<div v-if="!fyFilter.loading.value && !fyFilter.selected.value" class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<h2>{{ __("Select a fiscal year to view its procurement budget.") }}</h2>
-			</div>
-
 			<!-- Loading (BUD-DES-16) -->
-			<template v-else-if="loading">
+			<template v-if="loading">
 				<div class="kt-card kt-blueprint">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div class="kt-skel" style="width: 280px; height: 20px; margin-bottom: 16px"></div>
@@ -150,13 +144,13 @@ function registerBudget() {
 			</template>
 
 			<!-- Forbidden (BUD-DES-16) -->
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty">
+			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-forbidden">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="5" y="11" width="14" height="10" rx="1" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
 				</svg>
-				<h2>{{ __("You do not have access to Budget & Funding.") }}</h2>
-				<p class="kt-muted">{{ __("Ask your KenTender administrator to review your Budget assignment.") }}</p>
+				<h2>{{ __(forbidden.heading) }}</h2>
+				<p class="kt-muted">{{ __(forbidden.text) }}</p>
 			</div>
 
 			<!-- Server error (BUD-DES-16) -->
@@ -168,6 +162,12 @@ function registerBudget() {
 				<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
 				<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
 				<button type="button" class="kt-btn kt-btn-primary" @click="refresh">{{ __("Try again") }}</button>
+			</div>
+
+			<!-- No fiscal year selected yet — never auto-picked (§12.1). -->
+			<div v-else-if="!fyFilter.selected.value" class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<h2>{{ __("Select a fiscal year to view its procurement budget.") }}</h2>
 			</div>
 
 			<!-- No baseline (BUD-DES-16) -->

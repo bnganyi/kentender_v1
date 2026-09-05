@@ -251,3 +251,29 @@ def viewing_contexts(user: str | None = None) -> list[dict[str, str]]:
 		if scope:
 			units |= scope
 	return _unit_rows(units)
+
+
+def scope_diagnostic(user: str | None = None) -> str:
+	"""Not rendered — administrator/log diagnostic only (KT-STD-001 v1.2 §7
+	default-to-omit: NDS-CHG-001 v1.8 §11.15 defines no visible state for this
+	distinction, so none is invented here).
+
+	Distinguishes, for a caller `viewing_contexts` already resolved to zero
+	rows, whether that is because they hold no relevant responsibility at all
+	("no_responsibility") or because they hold one but its Organisation Unit
+	is not Active ("unit_not_configured") — `viewing_contexts` itself cannot
+	tell these apart once `_unit_rows`'s Active-status filter has run.
+	"""
+	principal = actor(user)
+	if is_technical(principal):
+		return "no_responsibility"
+	if any(permitted_ou_scopes(principal, role) is None for role in SITE_WIDE_ROLES):
+		return "no_responsibility"
+	raw_units: set[str] = set()
+	for role in DEPARTMENTAL_ROLES:
+		scope = permitted_ou_scopes(principal, role)
+		if scope:
+			raw_units |= scope
+	if not raw_units:
+		return "no_responsibility"
+	return "unit_not_configured"

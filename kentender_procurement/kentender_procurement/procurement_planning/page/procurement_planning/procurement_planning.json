@@ -10,35 +10,7 @@
  "name": "procurement-planning",
  "owner": "Administrator",
  "page_name": "procurement-planning",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Departmental Author"
-  },
-  {
-   "role": "Head of User Department"
-  },
-  {
-   "role": "Procurement Planner"
-  },
-  {
-   "role": "Finance Confirmation Officer"
-  },
-  {
-   "role": "Accounting Officer"
-  },
-  {
-   "role": "Plan Statutory Approver"
-  },
-  {
-   "role": "Auditor"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

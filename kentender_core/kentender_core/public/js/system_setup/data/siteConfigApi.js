@@ -10,7 +10,7 @@ function newIdempotencyKey(prefix) {
 }
 
 export const siteConfigApi = {
-	getConfiguration: () => frappeCall(PREFIX + "get_site_configuration", {}),
+	getConfiguration: () => frappeCall(PREFIX + "get_system_setup_workspace", {}),
 	configure: (payload) =>
 		frappeCall(PREFIX + "configure_procuring_entity", {
 			...payload,

@@ -10,14 +10,7 @@
  "name": "system-setup",
  "owner": "Administrator",
  "page_name": "system-setup",
- "roles": [
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Administrator"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

@@ -10,26 +10,7 @@
  "name": "departmental-needs",
  "owner": "Administrator",
  "page_name": "departmental-needs",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Departmental Author"
-  },
-  {
-   "role": "Head of User Department"
-  },
-  {
-   "role": "Procurement Planner"
-  },
-  {
-   "role": "Auditor"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

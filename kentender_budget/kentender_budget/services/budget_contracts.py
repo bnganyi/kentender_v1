@@ -29,6 +29,7 @@ from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
 	CAP_EDIT,
 	has_budget_version_capability,
+	holds_any_budget_responsibility,
 	require_budget_create_capability,
 	require_budget_read_scope,
 	require_budget_version_capability,
@@ -413,6 +414,20 @@ def _version_summary(version) -> dict[str, Any]:
 	}
 
 
+
+# KT-STD-001 v1.2 §3A.4 — resolved once here, never raised, so a page load
+# with no matching responsibility renders the inline Forbidden panel instead
+# of the framework's own permission-error modal.
+FORBIDDEN = {
+	"heading": "You do not have access to Budget & Funding",
+	"text": (
+		"This area needs one of these responsibilities: Budget Officer, Budget "
+		"Approver, Finance Confirmation Officer or Auditor. Ask your KenTender "
+		"administrator to assign one in System setup."
+	),
+}
+
+
 def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	"""BUD-UI-01 — the scoped Budget and operational position for one
 	explicit Fiscal Year, or the selectable catalogue when none was given.
@@ -424,6 +439,8 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	selection_required with the full catalogue (`list_available_fiscal_years`)
 	for the client to offer, mirroring the "never a first-record or
 	Administrator fallback" principle already applied to PE scoping."""
+	if not holds_any_budget_responsibility(frappe.session.user):
+		return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN}
 	fy = (fiscal_year or "").strip()
 	if not fy:
 		return {"selection_required": True, "fiscal_years": list_available_fiscal_years()}

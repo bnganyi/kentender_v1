@@ -38,7 +38,7 @@ from kentender_strategy.services.strategy_authorization import (
 from kentender_strategy.services.strategy_readiness import get_version_readiness
 from kentender_strategy.services.strategy_transitions import available_actions
 
-UNRESTRICTED_READ_ROLES = ("System Manager", "Strategy Viewer", "Auditor")
+UNRESTRICTED_READ_ROLES = ("System Manager", "Auditor")
 
 
 def _ref(id_: str | None, name: str | None = None) -> dict | None:

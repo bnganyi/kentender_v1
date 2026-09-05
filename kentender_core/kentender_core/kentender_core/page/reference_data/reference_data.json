@@ -10,17 +10,7 @@
  "name": "reference-data",
  "owner": "Administrator",
  "page_name": "reference-data",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Reference Data Manager"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

@@ -172,6 +172,24 @@ def get_site_configuration() -> dict[str, Any]:
 	}
 
 
+# KT-STD-001 v1.2 §3A — the technical-access gate for the System setup page
+# itself. `get_site_configuration` above stays open to any authenticated
+# caller (it is also used by Departmental Needs and Strategy for cross-module
+# reads); this wrapper is the page-load verdict for the System setup surface
+# specifically, resolved as data rather than a Page-role framework denial.
+FORBIDDEN = {
+	"heading": "You do not have access to System setup",
+	"text": "This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.",
+}
+
+
+def get_system_setup_workspace() -> dict[str, Any]:
+	user = frappe.session.user
+	if user != "Administrator" and "System Manager" not in frappe.get_roles(user):
+		return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN}
+	return {"outcome": "OK", **get_site_configuration()}
+
+
 def get_dpp_submission_state(fiscal_year: str = "") -> dict[str, Any]:
 	"""CFG v0.9 §11.5 — the departmental-plan intake flag as modules read it.
 

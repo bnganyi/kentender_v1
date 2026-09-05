@@ -193,9 +193,9 @@ async function submitDraft() {
 					<div class="kt-tab" :aria-selected="activeTab === 'my-work'" @click="activeTab = 'my-work'">{{ __("My work") }} <span class="kt-count">{{ myWork.length }}</span></div>
 				</div>
 
-				<div v-if="forbidden" class="kt-card kt-empty">
+				<div v-if="forbidden" class="kt-card kt-empty" data-testid="str-forbidden">
 					<h2>{{ __("You do not have access to Strategy Alignment.") }}</h2>
-					<p>{{ __("Ask your KenTender administrator to review your Strategy assignment.") }}</p>
+					<p>{{ __("This area needs one of these responsibilities: Strategy Author, Strategy Approver or Auditor. Ask your KenTender administrator to assign one in System setup.") }}</p>
 				</div>
 
 				<div v-else-if="error" class="kt-card kt-empty">

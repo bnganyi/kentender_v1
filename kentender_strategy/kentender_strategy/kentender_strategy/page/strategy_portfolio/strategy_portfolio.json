@@ -10,23 +10,7 @@
  "name": "strategy-portfolio",
  "owner": "Administrator",
  "page_name": "strategy-portfolio",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Strategy Viewer"
-  },
-  {
-   "role": "Strategy Author"
-  },
-  {
-   "role": "Strategy Approver"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

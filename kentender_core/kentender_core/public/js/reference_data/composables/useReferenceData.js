@@ -17,7 +17,23 @@ export function useReferenceData() {
 		pe: { rows: [], count: 0, loading: false, error: null },
 		fy: { rows: [], count: 0, loading: false, error: null },
 		context: { rows: [], count: 0, loading: false, error: null },
+		// KT-STD-001 v1.2 §3A — resolved once, before any per-tab fetch, so an
+		// unauthorized actor sees the inline Forbidden panel instead of four
+		// silently-empty registers.
+		forbidden: null,
 	});
+
+	async function checkAccess() {
+		try {
+			const res = await api.getWorkspace();
+			state.forbidden = res && res.outcome === "FORBIDDEN" ? res.forbidden : null;
+		} catch (e) {
+			// A genuine transport/server failure here falls through to the
+			// existing per-tab server-error handling on the first refreshAll.
+			state.forbidden = null;
+		}
+		return !state.forbidden;
+	}
 
 	async function loadPeTypes() {
 		try {
@@ -84,5 +100,5 @@ export function useReferenceData() {
 		]);
 	}
 
-	return { ...toRefs(state), refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, classifyError };
+	return { ...toRefs(state), refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, classifyError, checkAccess };
 }

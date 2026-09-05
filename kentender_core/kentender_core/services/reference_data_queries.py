@@ -29,6 +29,24 @@ def _allowed(user: str) -> bool:
 	return perm.has_reference_data_manager_role(user)
 
 
+# KT-STD-001 v1.2 §3A — the page-load verdict for the Reference Data
+# workspace. The four list queries below already degrade gracefully for an
+# unauthorized user (empty rows, never a raise) but give no explanation for
+# it; this is the first call the page makes, so it can render the inline
+# Forbidden panel instead of four silently-empty tables.
+FORBIDDEN = {
+	"heading": "You do not have access to Reference Data",
+	"text": "This area needs Administrator, System Manager or Reference Data Manager access.",
+}
+
+
+def get_reference_data_workspace(user: str | None = None) -> dict[str, Any]:
+	principal = user or frappe.session.user
+	if not perm.has_reference_data_read_access(principal):
+		return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN}
+	return {"outcome": "OK"}
+
+
 # --- PE Type -----------------------------------------------------------------------
 
 

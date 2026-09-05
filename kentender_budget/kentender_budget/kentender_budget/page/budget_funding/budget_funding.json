@@ -10,26 +10,7 @@
  "name": "budget-funding",
  "owner": "Administrator",
  "page_name": "budget-funding",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Budget Officer"
-  },
-  {
-   "role": "Budget Approver"
-  },
-  {
-   "role": "Auditor"
-  },
-  {
-   "role": "Finance Confirmation Officer"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

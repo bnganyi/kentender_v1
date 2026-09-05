@@ -22,7 +22,7 @@ const TABS = [
 ];
 
 const loading = ref(true);
-const forbidden = ref(false);
+const forbidden = ref(null);
 const loadError = ref("");
 const site = ref(null);
 const activeTab = ref("procuring-entity");
@@ -67,16 +67,20 @@ function onHashChange() {
 async function load() {
 	loading.value = true;
 	loadError.value = "";
-	forbidden.value = false;
+	forbidden.value = null;
 	try {
-		site.value = await siteConfigApi.getConfiguration();
+		const result = await siteConfigApi.getConfiguration();
+		if (result && result.outcome === "FORBIDDEN") {
+			forbidden.value = result.forbidden;
+			return;
+		}
+		site.value = result;
 		const wanted = tabFromHash();
 		if (!configured.value) selectTab("procuring-entity", { push: false });
 		else if (wanted && !tabDisabled(wanted)) selectTab(wanted, { push: false });
 		else selectTab(activeTab.value && !tabDisabled(activeTab.value) ? activeTab.value : "procuring-entity", { push: false });
 	} catch (error) {
-		if (error.httpStatus === 403) forbidden.value = true;
-		else loadError.value = error.message;
+		loadError.value = error.message;
 	} finally {
 		loading.value = false;
 	}
@@ -130,8 +134,8 @@ onUnmounted(() => {
 			<!-- CFG-DES-07 forbidden/error/loading — never an empty success -->
 			<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-forbidden">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h2>{{ __("System setup is not available") }}</h2>
-				<p>{{ __("You do not have the technical access required to configure this site.") }}</p>
+				<h2>{{ __(forbidden.heading) }}</h2>
+				<p>{{ __(forbidden.text) }}</p>
 			</div>
 
 			<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-error">

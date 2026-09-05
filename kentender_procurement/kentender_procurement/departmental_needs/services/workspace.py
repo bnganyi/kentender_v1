@@ -36,6 +36,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	is_owner,
 	require_review_command,
 	require_view,
+	scope_diagnostic,
 	viewing_contexts,
 )
 from kentender_procurement.departmental_needs.services.usage import (
@@ -186,7 +187,7 @@ def get_workspace(
 	principal = actor(user)
 	selected, contexts = _selected_context(principal, cstr(organisation_unit).strip())
 	if not selected:
-		return {
+		result = {
 			"ok": False,
 			"outcome": "NO_AUTHORISED_CONTEXT" if not contexts else "CONTEXT_SELECTION_REQUIRED",
 			"contexts": contexts,
@@ -194,6 +195,11 @@ def get_workspace(
 			"needs": [],
 			"actions": [],
 		}
+		if not contexts:
+			# Not rendered — see `scope_diagnostic`'s own docstring for why this
+			# stays internal rather than becoming a new visible page state.
+			result["scope_diagnostic"] = scope_diagnostic(principal)
+		return result
 	_fy_rows = selectable_financial_years(principal)
 	# CTX-CHG-001 — the module's own FY memory, resolved by the core service:
 	# an explicit year is validated against this module's offer and persisted

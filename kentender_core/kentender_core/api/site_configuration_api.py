@@ -29,6 +29,13 @@ def get_site_configuration() -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def get_system_setup_workspace() -> dict[str, Any]:
+	"""KT-STD-001 v1.2 §3A — the System setup page's own load call, carrying
+	the Administrator/System Manager verdict alongside the configuration."""
+	return configuration.get_system_setup_workspace()
+
+
+@frappe.whitelist()
 def configure_procuring_entity(
 	pe_name: str,
 	pe_code: str,

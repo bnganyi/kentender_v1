@@ -569,3 +569,63 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 			with self.subTest(user=user):
 				codes = {a["code"] for a in self.digital_health(user).get("actions", [])}
 				self.assertNotIn("create", codes)
+
+
+class ScopeDiagnosticTest(DepartmentalNeedsPermissionCase):
+	"""KT-STD-001 v1.2 §3A — `get_workspace`'s internal, non-rendered
+	`scope_diagnostic` distinguishes two causes of an empty `contexts` list
+	that `viewing_contexts` itself collapses to one outcome. Not a new visible
+	page state (NDS-CHG-001 v1.8 §11.15 defines none) — this only proves the
+	underlying distinction is computed correctly for administrator/log use.
+	"""
+
+	def workspace_as(self, user: str, **selection) -> dict:
+		frappe.set_user(user)
+		return workspace.get_workspace(user=user, **selection)
+
+	def test_no_responsibility_at_all_is_diagnosed_as_such(self):
+		"""Samuel's assignment is expired (KT-STD-001 §8.3), so he resolves no
+		scope at all — the same diagnosis a never-granted user would get."""
+		self.assertEqual(permissions.scope_diagnostic(NO_GRANT_USER), "no_responsibility")
+		result = self.workspace_as(NO_GRANT_USER)
+		self.assertEqual(result["outcome"], "NO_AUTHORISED_CONTEXT")
+		self.assertEqual(result["scope_diagnostic"], "no_responsibility")
+
+	def test_a_held_responsibility_on_an_inactive_unit_is_diagnosed_separately(self):
+		"""A real Enabled assignment whose Organisation Unit is not Active
+		resolves zero contexts too — but for a different reason, and
+		`scope_diagnostic` must not conflate the two."""
+		from kentender_core.services.organisation_structure import add_organisation_unit
+
+		unit = add_organisation_unit(name=f"Inactive Test Unit {frappe.generate_hash(length=6)}")["unit"]
+		self.addCleanup(frappe.db.set_value, "Organisation Unit", unit, "status", "Active")
+		frappe.db.set_value("Organisation Unit", unit, "status", "Inactive")
+
+		email = f"nds.inactive.{frappe.generate_hash(length=6)}@test.local"
+		user_doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Inactive Unit",
+				"enabled": 1,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+				"roles": [{"role": "Desk User"}],
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(frappe.delete_doc, "User", email, force=True, ignore_permissions=True)
+		outcome = grant(
+			user=email,
+			business_role=ROLE_DEPARTMENTAL_AUTHOR,
+			organisation_unit=unit,
+			fixture_namespace="NDS_SCOPE_DIAGNOSTIC_TEST",
+			actor="Administrator",
+		)
+		self.addCleanup(
+			frappe.delete_doc, "User Responsibility Assignment", outcome["assignment"], force=True, ignore_permissions=True
+		)
+
+		self.assertEqual(permissions.scope_diagnostic(email), "unit_not_configured")
+		result = self.workspace_as(email)
+		self.assertEqual(result["outcome"], "NO_AUTHORISED_CONTEXT")
+		self.assertEqual(result["scope_diagnostic"], "unit_not_configured")
