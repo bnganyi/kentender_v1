@@ -180,6 +180,9 @@
 	/* Glyph per docs/mvp-1-r1/01_departmental_needs/NDS-UI-01.html's own sidebar spec. */
 	content: "account_tree";
 }
+.body-sidebar .sidebar-item-container[data-id="Procurement Planning"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "view_kanban";
+}
 .body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }

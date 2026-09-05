@@ -179,7 +179,10 @@ async function submitDraft() {
 					</button>
 				</header>
 
-				<div v-if="procuringEntity" class="kt-card" style="padding: 10px 16px">
+				<div
+					v-if="procuringEntity"
+					style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)"
+				>
 					<span class="kt-muted">{{ __("Procuring Entity") }}: </span>
 					<strong>{{ procuringEntity.name }}</strong>
 					<!-- CU-304: the one configured site entity — identity, not a filter -->

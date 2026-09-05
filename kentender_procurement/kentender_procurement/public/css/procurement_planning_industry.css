@@ -30,13 +30,6 @@
 	--radius-md: var(--kt-radius-md);
 }
 
-/* PLN-DES-01 page content column: 1200px, 32px vertical padding (§11.1). */
-.kt-pln .kt-shell {
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 32px 24px;
-}
-
 .kt-pln .pln-masthead {
 	display: flex;
 	align-items: flex-start;

@@ -87,7 +87,7 @@ function registerBudget() {
 			<header style="margin-bottom: 4px">
 				<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
 				<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
-				<p class="kt-muted" style="margin: 0; max-width: 70ch">
+				<p class="kt-page-lede">
 					{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}
 				</p>
 			</header>

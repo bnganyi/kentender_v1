@@ -807,7 +807,10 @@ async function onGovernanceReturn(reason) {
 watch([pageSlug, segments], () => load(), { immediate: true, deep: true });
 
 const railTrail = computed(() => {
-	const trail = [{ label: "Procurement Planning", route: [WORKSPACE_PAGE] }];
+	const trail = [
+		{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+		{ label: "Procurement Planning", route: [WORKSPACE_PAGE] },
+	];
 	if (screen.value === "dpp-review") {
 		trail.push({ label: "DPP review" });
 	}
