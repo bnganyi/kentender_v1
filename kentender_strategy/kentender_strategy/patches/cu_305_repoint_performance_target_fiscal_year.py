@@ -12,7 +12,11 @@ import frappe
 def execute():
 	frappe.reload_doc("kentender_strategy", "doctype", "performance_target")
 
-	if not frappe.db.table_exists("Financial Year"):
+	# v1.7 renamed the column to `fiscal_year` (str_chg_001_v1_7_schema_correction);
+	# on a site installed after that, or already corrected, there is nothing to remap.
+	if not frappe.db.table_exists("Financial Year") or not frappe.db.has_column(
+		"Performance Target", "financial_year_id"
+	):
 		return
 	legacy_years = frappe.get_all(
 		"Financial Year", fields=["name", "start_date", "end_date"], limit_page_length=0

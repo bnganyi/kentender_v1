@@ -165,11 +165,11 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"BUD-CHG-001 v1.5 §7 / PLN-CHG-001 v1.12 §6",
 		sod_tags=("finance_confirmation",),
 	),
-	# --- Strategy Alignment (STR-CHG-001 v1.5 §7) ------------------------
+	# --- Strategy Alignment (STR-CHG-001 v1.7 §6) ------------------------
 	# ADR v1.6 §20 binds Strategy Author and Approver to Site-wide scope; any
 	# departmental narrowing stays a record-ownership check inside Strategy.
-	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.5 §7", sod_tags=("strategy_authoring",)),
-	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.5 §7", sod_tags=("strategy_approval",)),
+	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
+	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

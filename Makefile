@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -33,9 +33,7 @@ help:
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
-	@echo "  make ui-strategy-typography-gate — Strategy typography + shared plan chrome (Espresso bleed, Manrope/Inter pins)"
-	@echo "  make ui-strategy-alignment-ui-gate — Strategy Alignment Stitch UI shell (includes typography gate + full nav)"
-	@echo "  make ui-strategy-role-gate — STR-SUP-005 wave 2 (AC matrix + role Playwright)"
+	@echo "  make ui-strategy-gate — STR-CHG-001 v1.7 §16.2 browser journeys (author, approver, access states) on the §14 seed"
 	@echo "  make ui-stitch-desk-chrome-gate — Shared Stitch Desk chrome baseline (Win98/select/Espresso) — required before Stitch Desk UI Done"
 	@echo "  make ui-industry-design-gate — Industry design system is canonical (AGENTS.md §6.6): kt-industry root class + no forked token files + computed-style parity"
 	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
@@ -198,27 +196,8 @@ ui-workspace-pattern-gate:
 	@echo "ui-workspace-pattern-gate: DIA pattern lock retired — no-op (see Demands MVP-1 teardown inventory)."
 
 # Fast gate for Strategy CSS/chrome/typography work (Desk Espresso bleed, shared plan header).
-ui-strategy-typography-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_strategy.tests.test_strategy_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		-g "strategy typography resists Desk Espresso|shared plan chrome is identical|shared plan chrome survives soft tab navigation|VC and Measurements section titles" \
-		tests/ui/smoke/strategy-alignment/strategy-alignment-nav.spec.ts
-
-# Full Strategy Alignment UI shell — typography + shared Stitch Desk chrome, then nav smoke.
-ui-strategy-alignment-ui-gate: ui-strategy-typography-gate ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/strategy-alignment/strategy-alignment-nav.spec.ts
-
-# STR-SUP-005 first wave — AC matrix domain + thin Viewer/Manager Desk evidence.
-ui-strategy-role-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_strategy.seeds.strategy_role_users.upsert_strategy_role_users
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_strategy.tests.test_strategy_mvp1_ac_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/strategy-alignment/strategy-role-matrix.spec.ts
+ui-strategy-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/strategy
 
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:

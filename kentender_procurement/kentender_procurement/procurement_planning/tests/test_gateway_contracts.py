@@ -57,7 +57,11 @@ class TestBudgetContractSignatures(IntegrationTestCase):
 		# it with no entity argument.
 		params = set(self.params(strategy_consumer.resolve_strategy_context))
 		self.assertNotIn("procuring" + "_entity", params)
-		self.assertIn("effective_date", params)
+		# v1.7 §7 — exactly one of as_of_date / fiscal_year; nothing else.
+		self.assertIn("as_of_date", params)
+		self.assertIn("fiscal_year", params)
+		self.assertIn("include_supporting", params)
+		self.assertNotIn("organisation_unit", params)
 		self.assertIn(
 			"plan_version_id", self.params(strategy_consumer.list_strategy_objectives)
 		)

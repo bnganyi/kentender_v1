@@ -175,7 +175,7 @@ class TestGovernanceEnforcement(FrappeTestCase):
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
 					# CU-305 — targets bind the canonical ERPNext Fiscal Year.
-					"financial_year_id": "2027-2028",
+					"fiscal_year": "2027-2028",
 					"comparison": "At least",
 					"target_value": 80,
 				}

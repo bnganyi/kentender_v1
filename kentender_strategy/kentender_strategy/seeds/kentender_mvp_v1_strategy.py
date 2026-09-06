@@ -3,7 +3,7 @@
 
 Rebuilt for AUTH-ADR-001 v1.6's one-site-one-PE model (2026-09-05, FU-10):
 the previous version of this file built a two-Procuring-Entity world (MOH +
-Kisumu) using the now-dropped `Strategic Plan.procuring_entity_id` field and
+Kisumu) using the now-dropped per-plan Procuring Entity link field and
 a bespoke `User Permission` grant — neither can exist on a one-PE site. This
 version drives the plan through the real governed commands
 (`save_strategy_plan_draft`, `save_strategy_structure_draft`,
@@ -154,7 +154,7 @@ def _seed_moh_plan() -> dict[str, Any]:
 		targets=[
 			{
 				"indicator_id": "$indicator",
-				"financial_year_id": FY_2027_2028,
+				"fiscal_year": FY_2027_2028,
 				"comparison": "At least",
 				"target_value": 80,
 				"fixture_namespace": FIXTURE_NS,

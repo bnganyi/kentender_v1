@@ -104,10 +104,11 @@ class TestModuleRegistry(IntegrationTestCase):
 		keys = get_route_sidebar_keys()
 		# Legacy strategy-builder removed; MVP-1 Alignment portfolio restored.
 		self.assertNotIn("strategy-builder", keys)
-		# STR-CHG-001 v1.3 Phase 8: legacy "strategy-alignment" page deleted;
-		# "strategy-portfolio" (Phase 7) is the real desk_page now.
+		# STR-CHG-001 v1.7 §10: the one "strategy" Page is the desk_page; the
+		# Phase 7 "strategy-portfolio" family is gone.
 		self.assertNotIn("strategy-alignment", keys)
-		self.assertEqual(keys.get("strategy-portfolio"), "Procurement")
+		self.assertNotIn("strategy-portfolio", keys)
+		self.assertEqual(keys.get("strategy"), "Procurement")
 		# BUD-CHG-001 v1.2 Phase 5: the one "budget-funding" Page now exists
 		# (BUD-UI-01..05) — not "budget", which collides with the existing
 		# Budget doctype's own List View route.
@@ -143,10 +144,10 @@ class TestModuleRegistry(IntegrationTestCase):
 		mod = get_module("strategy")
 		prefixes = {str(p) for p in (mod["route_prefixes"] or ())}
 		sidebar_keys = get_route_sidebar_keys()
-		# STR-CHG-001 v1.3 Phase 8: legacy "strategy-alignment"/"strategy-plan-structure"
-		# pages deleted; Phase 7's "strategy-portfolio"/"strategy-plan-workspace" are real now.
-		self.assertEqual(mod["desk_page"], "strategy-portfolio")
-		self.assertEqual(mod["builder_page"], "strategy-plan-workspace")
+		# STR-CHG-001 v1.7 §10: one "strategy" Page carries every route; there
+		# is no separate builder page any more.
+		self.assertEqual(mod["desk_page"], "strategy")
+		self.assertEqual(mod["builder_page"], "")
 		self.assertEqual(mod.get("form_doctype") or "", "")
 		for slug in _strategy_page_js_slugs():
 			self.assertIn(

@@ -38,7 +38,7 @@ def get_version_readiness(plan_version_id: str) -> dict:
 	plan = frappe.get_doc("Strategic Plan", version.plan_id)
 
 	# CU-303 — entity identity is the site's own; a plan's identity is its
-	# title and period (procuring_entity_id contract-dropped per D2).
+	# title and period (the former entity link was contract-dropped per D2).
 	identity_ready = bool(plan.title and plan.period_start and plan.period_end)
 
 	counts = _node_type_counts(plan_version_id)

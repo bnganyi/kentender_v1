@@ -122,12 +122,73 @@ def validate_strategic_plan_version(doc) -> None:
 	if effective_from and effective_to and effective_from > effective_to:
 		frappe.throw(_("Version effective start must be on or before effective end"))
 
-	if not doc.is_new():
-		prev_status = frappe.db.get_value("Strategic Plan Version", doc.name, "status")
-		if prev_status in VERSION_IMMUTABLE:
-			for f in ("plan_id", "version_number", "based_on_plan_version_id"):
-				if doc.has_value_changed(f):
-					frappe.throw(_("Approved/Active plan versions are immutable"))
+	prev_status = None if doc.is_new() else frappe.db.get_value("Strategic Plan Version", doc.name, "status")
+	if prev_status in VERSION_IMMUTABLE:
+		for f in ("plan_id", "version_number", "based_on_plan_version_id"):
+			if doc.has_value_changed(f):
+				frappe.throw(_("Approved/Active plan versions are immutable"))
+
+	# STR-BR-004 / STR-AC-013: the guard holds even when the command layer is
+	# bypassed — any save that makes this version Active is checked here,
+	# under the same row locks the approval transaction takes.
+	if doc.status == "Active" and prev_status != "Active":
+		assert_no_primary_overlap(doc)
+
+
+def _overlaps(start_a, end_a, start_b, end_b) -> bool:
+	if not start_a or not end_a or not start_b or not end_b:
+		return False
+	return (
+		frappe.utils.getdate(start_a) <= frappe.utils.getdate(end_b)
+		and frappe.utils.getdate(start_b) <= frappe.utils.getdate(end_a)
+	)
+
+
+def assert_no_primary_overlap(doc) -> None:
+	"""STR-BR-004: two Primary plans shall not be Active for overlapping
+	dates — site-wide, with no Procuring Entity or organisation-unit
+	qualifier (v1.7 §16.1; the OU-partitioned predicate is gone with the
+	column).
+
+	"Database-level partial unique index or equivalent guard": MariaDB has no
+	partial unique index and the rule is a date-range exclusion, which no
+	unique index can express. The equivalent is a locking read — every
+	Primary plan row is taken `FOR UPDATE` inside the caller's transaction,
+	so two concurrent activations serialise on the same lock set and the
+	second one reads the first one's committed Active version and fails,
+	instead of both passing a read-then-write check (STR-AC-013)."""
+	plan = frappe.db.get_value("Strategic Plan", doc.plan_id, ["name", "plan_role"], as_dict=True)
+	if not plan or plan.plan_role != PLAN_ROLE_PRIMARY:
+		return
+	other_plans = frappe.db.sql(
+		"""
+		SELECT name FROM `tabStrategic Plan`
+		WHERE plan_role = %s
+		ORDER BY name
+		FOR UPDATE
+		""",
+		(PLAN_ROLE_PRIMARY,),
+		pluck="name",
+	)
+	other_plans = [name for name in other_plans if name != plan.name]
+	if not other_plans:
+		return
+	active_versions = frappe.db.sql(
+		"""
+		SELECT name, effective_from, effective_to FROM `tabStrategic Plan Version`
+		WHERE plan_id IN %(plans)s AND status = 'Active' AND name != %(me)s
+		FOR UPDATE
+		""",
+		{"plans": tuple(other_plans), "me": doc.name or ""},
+		as_dict=True,
+	)
+	for v in active_versions:
+		if _overlaps(doc.effective_from, doc.effective_to, v.effective_from, v.effective_to):
+			frappe.throw(
+				_("Activation would create overlapping Active Primary authority"),
+				frappe.ValidationError,
+				title="STRATEGY_OVERLAP",
+			)
 
 
 def _assert_version_editable(plan_version_id: str | None) -> None:
@@ -213,16 +274,22 @@ def validate_performance_target(doc) -> None:
 		frappe.throw(_("Performance Indicator is required"))
 	_assert_version_editable(indicator.plan_version_id)
 
-	has_fy = bool(doc.financial_year_id)
+	has_fy = bool(doc.fiscal_year)
 	has_date = bool(doc.target_by_date)
 	if has_fy == has_date:
-		frappe.throw(_("A target must use exactly one of Financial Year or Target By Date"))
+		frappe.throw(_("A target must use exactly one of Fiscal Year or Target By Date"))
 
 	if doc.comparison not in TARGET_COMPARISONS:
 		frappe.throw(_("Select a valid comparison"))
 
-	if doc.target_value is None:
+	if doc.target_value is None or str(doc.target_value).strip() == "":
 		frappe.throw(_("Target Value is required"))
+	# A whitelisted call delivers the value as a string; Frappe casts Float
+	# fields only after validate, so coerce here before the range check.
+	try:
+		doc.target_value = float(doc.target_value)
+	except (TypeError, ValueError):
+		frappe.throw(_("Target Value must be a number"))
 	if (indicator.unit or "").strip().lower() == "percentage" and not (0 <= doc.target_value <= 100):
 		frappe.throw(_("Percentage target values must be between 0 and 100 inclusive"))
 
@@ -232,15 +299,23 @@ def validate_performance_target(doc) -> None:
 		target_by_date = frappe.utils.getdate(doc.target_by_date)
 		if not (period_start <= target_by_date <= period_end):
 			frappe.throw(_("Target By Date must fall within the plan period"))
+	if has_fy and period_start and period_end:
+		# STR-BR-010 / §12.3: a Fiscal Year target must fall within the plan
+		# period — the year has to overlap it, not merely exist.
+		fy = frappe.db.get_value("Fiscal Year", doc.fiscal_year, ["year_start_date", "year_end_date"], as_dict=True)
+		if not fy:
+			frappe.throw(_("Fiscal Year {0} is not configured").format(doc.fiscal_year))
+		if frappe.utils.getdate(fy.year_start_date) > period_end or frappe.utils.getdate(fy.year_end_date) < period_start:
+			frappe.throw(_("Fiscal Year {0} does not overlap the plan period").format(doc.fiscal_year))
 
 	# §12.3: "One Indicator cannot contain two Targets for the same Fiscal
 	# Year or the same target-by date." Sibling scope is the indicator, not
 	# the plan version — two different indicators may each carry their own
 	# FY 2027/28 target.
 	sibling_filters = {"indicator_id": doc.indicator_id, "name": ["!=", doc.name or ""]}
-	sibling_filters["financial_year_id" if has_fy else "target_by_date"] = (
-		doc.financial_year_id if has_fy else doc.target_by_date
+	sibling_filters["fiscal_year" if has_fy else "target_by_date"] = (
+		doc.fiscal_year if has_fy else doc.target_by_date
 	)
 	if frappe.db.exists("Performance Target", sibling_filters):
-		period_label = doc.financial_year_id if has_fy else doc.target_by_date
+		period_label = doc.fiscal_year if has_fy else doc.target_by_date
 		frappe.throw(_("This indicator already has a target for {0}").format(period_label))

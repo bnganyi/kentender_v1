@@ -15,6 +15,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import ensure_fiscal_year
+
 from kentender_strategy.services import strategy_ui_contracts as ui
 from kentender_strategy.services.strategy_authorization import (
 	ROLE_STRATEGY_APPROVER,
@@ -23,8 +25,9 @@ from kentender_strategy.services.strategy_authorization import (
 )
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 
-# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
-FY = "2027-2028"
+# STR-BR-010 — the target year must fall within the 2040–2045 fixture plan
+# period (created on demand by fixtures.ensure_fiscal_year).
+FY = "2040-2041"
 
 # Map the old profile_id fixture strings onto the v1.6 Site-wide roles.
 _PROFILE_ROLE = {
@@ -35,6 +38,7 @@ _PROFILE_ROLE = {
 
 class Phase7TestBase(FrappeTestCase):
 	def setUp(self):
+		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
@@ -154,7 +158,7 @@ class Phase7TestBase(FrappeTestCase):
 				{
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
-					"financial_year_id": FY,
+					"fiscal_year": FY,
 					"comparison": "At least",
 					"target_value": target_value,
 				}
@@ -190,10 +194,10 @@ class TestPortfolio(Phase7TestBase):
 		row = next(p for p in result["plans"] if p["id"] == plan_id)
 		self.assertEqual(row["current_version"]["status"], "Draft")
 
-	def test_portfolio_rows_carry_no_procuring_entity(self):
-		"""v1.6 replacement for the retired cross-PE visibility test: the PE
-		dimension is gone from the row contract; the payload's identity
-		banner names the one configured site entity instead."""
+	def test_portfolio_carries_no_entity_dimension(self):
+		"""v1.7 replacement for the retired cross-PE visibility test: the
+		entity dimension is gone from rows and payload alike (STR-AC-033);
+		one site is one entity and no screen renders an entity banner."""
 		self._plan_and_version()
 		user = self._user("authormoh")
 		self._assign(user, "CAP-STRATEGY-AUTHOR")
@@ -203,7 +207,8 @@ class TestPortfolio(Phase7TestBase):
 		self.assertFalse(result["forbidden"])
 		for row in result["plans"]:
 			self.assertNotIn("procuring_entity", row)
-		self.assertTrue(result["procuring_entity"]["id"])
+		self.assertNotIn("procuring_entity", result)
+		self.assertNotIn("site_entity", result)
 
 
 class TestPlanWorkspaceAndTree(Phase7TestBase):
@@ -361,8 +366,8 @@ class TestDiffStrategyVersions(Phase7TestBase):
 		result = ui.diff_strategy_versions(base_version, successor_id)
 		items = {c["item"]: c for c in result["changes"]}
 		self.assertIn("Target: Indicator A", items)
-		self.assertEqual(items["Target: Indicator A"]["active"], "At least 80.0")
-		self.assertEqual(items["Target: Indicator A"]["submitted"], "At least 85.0")
+		self.assertEqual(items["Target: Indicator A"]["active"], "At least 80")
+		self.assertEqual(items["Target: Indicator A"]["submitted"], "At least 85")
 		self.assertIn("Pillar: New Pillar", items)
 		self.assertEqual(items["Pillar: New Pillar"]["submitted"], "Added")
 		self.assertTrue(result["limitation"])

@@ -48,32 +48,6 @@ export async function loginAsAdministrator(page: Page) {
 /** Default seeded KenTender v1 password (see kentender_core.seeds.constants.TEST_PASSWORD). */
 const DEFAULT_SEED_PASSWORD = 'Test@123';
 
-export async function loginAsStrategyManager(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_USER || 'strategy.manager@moh.test',
-		process.env.UI_STRATEGY_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** STR-SUP-005 — Strategy Viewer (see strategy_role_users seed). */
-export async function loginAsStrategyViewer(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_VIEWER_USER || 'moh.viewer@example.test',
-		process.env.UI_STRATEGY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** STR-SUP-005 — Strategy Officer (MOH). */
-export async function loginAsStrategyOfficer(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_OFFICER_USER || 'moh.medicalservices.officer@example.test',
-		process.env.UI_STRATEGY_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
 /**
  * NDS-CHG-001 v1.1 §14.2 — the seeded Departmental Needs actors.
  *
@@ -206,15 +180,6 @@ export async function loginAsProcurementApprover(page: Page) {
 		page,
 		process.env.UI_PROCUREMENT_APPROVER_USER || 'moh.procurement.approver@example.test',
 		process.env.UI_PROCUREMENT_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
-export async function loginAsStrategyViewerOtherPe(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'kisumu.health.officer@example.test',
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

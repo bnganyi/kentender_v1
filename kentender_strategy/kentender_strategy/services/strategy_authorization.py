@@ -128,9 +128,10 @@ def has_plan_version_capability(user: str, capability: str, version) -> bool:
 	).allowed
 
 
-def require_plan_create_capability(user: str) -> None:
+def require_plan_create_capability(user: str):
 	"""Creating a brand-new Strategic Plan requires the Site-wide Strategy
-	Author responsibility (one site = one PE; no entity parameter exists)."""
+	Author responsibility (one site = one PE; no entity parameter exists).
+	Returns the exercised assignment for the audit trail (§13)."""
 	decision = authorise_record(
 		user=user,
 		business_role=ROLE_STRATEGY_AUTHOR,
@@ -139,12 +140,36 @@ def require_plan_create_capability(user: str) -> None:
 	)
 	if not decision.allowed:
 		fail(decision.reason_code or "AUTH_RESPONSIBILITY_REQUIRED")
+	return decision.assignment
+
+
+def business_role_for_capability(capability: str) -> str:
+	"""Public name of the capability → business-role mapping, for audit."""
+	return _business_role(capability)
+
+
+def assignment_id(assignment) -> str | None:
+	"""The `User Responsibility Assignment` name behind an authorization
+	decision, or None for a technical read that exercised no assignment."""
+	return getattr(assignment, "name", None) or None
 
 
 def has_plan_create_capability(user: str) -> bool:
 	return authorise_record(
 		user=user,
 		business_role=ROLE_STRATEGY_AUTHOR,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	).allowed
+
+
+def holds_approver_responsibility(user: str) -> bool:
+	"""An Enabled Site-wide Strategy Approver assignment, irrespective of any
+	per-version self-approval block — the §12.4 gate for opening an
+	approval task at all."""
+	return authorise_record(
+		user=user,
+		business_role=ROLE_STRATEGY_APPROVER,
 		organisation_unit="",
 		purpose=PURPOSE_COMMAND,
 	).allowed

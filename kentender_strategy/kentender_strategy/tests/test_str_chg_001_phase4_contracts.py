@@ -13,9 +13,11 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import ensure_fiscal_year
+
 from kentender_strategy.api import strategy_consumer_api as api
 from kentender_strategy.services import strategy_consumer as consumer
-from kentender_strategy.services import strategy_contracts as contracts
+from kentender_strategy.services import strategy_consumer as contracts
 from kentender_strategy.services.strategy_authorization import (
 	ROLE_STRATEGY_APPROVER,
 	ROLE_STRATEGY_AUTHOR,
@@ -27,8 +29,9 @@ from kentender_strategy.services.strategy_writes import (
 	save_strategy_structure_draft,
 )
 
-# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
-FY = "2027-2028"
+# STR-BR-010 — the target year must fall within the 2040–2045 fixture plan
+# period (created on demand by fixtures.ensure_fiscal_year).
+FY = "2040-2041"
 
 # These test fixtures kept the old profile_id strings as argument values; map
 # them onto the v1.6 Site-wide business roles.
@@ -40,6 +43,7 @@ _PROFILE_ROLE = {
 
 class Phase4TestBase(FrappeTestCase):
 	def setUp(self):
+		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
@@ -153,7 +157,7 @@ class Phase4TestBase(FrappeTestCase):
 				{
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
-					"financial_year_id": FY,
+					"fiscal_year": FY,
 					"comparison": "At least",
 					"target_value": 80,
 				}
@@ -216,7 +220,7 @@ class TestResolveStrategyContext(Phase4TestBase):
 		# An effective_date decades before this fixture's period (2040-2045)
 		# covers no primary Active plan on the site at all.
 		with self.assertRaises(frappe.DoesNotExistError):
-			consumer.resolve_strategy_context(effective_date="1999-01-01")
+			consumer.resolve_strategy_context(as_of_date="1999-01-01")
 
 	def test_multiple_covering_plans_raises_typed_ambiguous_not_first_match(self):
 		"""Simulates the anomalous state STR-BR-004's overlap guard exists
@@ -235,7 +239,7 @@ class TestResolveStrategyContext(Phase4TestBase):
 		frappe.db.set_value("Strategic Plan Version", v2, "status", "Active")
 
 		with self.assertRaises(frappe.ValidationError):
-			consumer.resolve_strategy_context(effective_date="2042-01-01")
+			consumer.resolve_strategy_context(as_of_date="2042-01-01")
 
 
 class TestCreateStrategySnapshot(Phase4TestBase):

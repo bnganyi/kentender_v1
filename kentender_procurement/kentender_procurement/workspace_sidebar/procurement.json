@@ -39,11 +39,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Strategy Alignment",
-   "link_to": "strategy-portfolio",
+   "link_to": "strategy",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/strategy-portfolio"
+   "url": "/desk/strategy"
   },
   {
    "child": 0,

@@ -17,6 +17,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import ensure_fiscal_year
+
 from kentender_core.services.responsibility_errors import ResponsibilityError
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
@@ -25,12 +27,14 @@ from kentender_strategy.services.strategy_authorization import (
 )
 from kentender_strategy.services.strategy_transitions import available_actions, transition_plan_version
 
-# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
-FY = "2027-2028"
+# STR-BR-010 — the target year must fall within the 2040–2045 fixture plan
+# period (created on demand by fixtures.ensure_fiscal_year).
+FY = "2040-2041"
 
 
 class TestPlanVersionLifecycle(FrappeTestCase):
 	def setUp(self):
+		ensure_fiscal_year(2040)
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
 
@@ -155,7 +159,7 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 				{
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
-					"financial_year_id": FY,
+					"fiscal_year": FY,
 					"comparison": "At least",
 					"target_value": 80,
 				}

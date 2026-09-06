@@ -15,16 +15,18 @@ from frappe import _
 from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_AUTHOR,
+	ROLE_STRATEGY_AUTHOR,
+	assignment_id,
 	require_plan_create_capability,
 	require_plan_version_capability,
 )
+from kentender_strategy.services.strategy_reference import resolve_plan_name, resolve_version_name
 from kentender_strategy.services.strategy_transitions import _check_expected_version, _version_payload
 
-# CU-303 — procuring_entity_id is contract-dropped (D2): never read, never
-# written; the column survives until the removal phase.
+# STR-CHG-001 v1.7 §4.1 — plan identity is title, role, parent and period.
+# The Procuring Entity and organisation-unit columns are gone (§16.1).
 PLAN_IDENTITY_FIELDS = (
 	"title",
-	"owner_org_unit_id",
 	"plan_role",
 	"parent_primary_plan_id",
 	"period_start",
@@ -36,8 +38,8 @@ VERSION_FIELDS = ("effective_from", "effective_to")
 def _plan_payload(plan) -> dict:
 	return {
 		"plan_id": plan.name,
+		"plan_reference": plan.plan_id,
 		"title": plan.title,
-		"owner_org_unit_id": plan.owner_org_unit_id,
 		"plan_role": plan.plan_role,
 		"parent_primary_plan_id": plan.parent_primary_plan_id,
 		"period_start": str(plan.period_start) if plan.period_start else None,
@@ -48,10 +50,10 @@ def _plan_payload(plan) -> dict:
 def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = None) -> dict:
 	"""Create a new Strategic Plan + its Draft v1, or update an existing
 	Draft plan's identity and version period fields."""
-	plan_id = payload.get("plan_id")
+	plan_id = resolve_plan_name(payload.get("plan_id"))
 	if plan_id:
 		plan = frappe.get_doc("Strategic Plan", plan_id)
-		version_id = payload.get("plan_version_id") or frappe.db.get_value(
+		version_id = resolve_version_name(payload.get("plan_version_id")) or frappe.db.get_value(
 			"Strategic Plan Version",
 			{"plan_id": plan_id, "status": "Draft"},
 			"name",
@@ -64,7 +66,7 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 			)
 		version = frappe.get_doc("Strategic Plan Version", version_id)
 		_check_expected_version(version, expected_version)
-		require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
+		exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
 
 		for field in PLAN_IDENTITY_FIELDS:
 			if field in payload:
@@ -80,12 +82,14 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 			entity_name=version.name,
 			event_type="Draft saved",
 			plan_version=version.name,
+			business_role=ROLE_STRATEGY_AUTHOR,
+			assignment=assignment_id(exercised),
 		)
 		return {"plan": _plan_payload(plan), "version": _version_payload(version)}
 
 	# CU-303 — one site is one Procuring Entity: no entity is supplied,
 	# validated or stamped (the physical column falls to RM per D2).
-	require_plan_create_capability(frappe.session.user)
+	exercised = require_plan_create_capability(frappe.session.user)
 
 	plan = frappe.get_doc(
 		{"doctype": "Strategic Plan", **{f: payload.get(f) for f in PLAN_IDENTITY_FIELDS}}
@@ -107,6 +111,8 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 		event_type="Draft saved",
 		plan_version=version.name,
 		summary="Plan draft created",
+		business_role=ROLE_STRATEGY_AUTHOR,
+		assignment=assignment_id(exercised),
 	)
 	return {"plan": _plan_payload(plan), "version": _version_payload(version)}
 
@@ -115,6 +121,7 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 	"""STR-CHG-001 §10.1 create_strategy_successor_version — copy the plan's
 	Active version's hierarchy/indicators/targets into a new Draft, with
 	based_on_plan_version_id as the fixed comparison baseline."""
+	plan_id = resolve_plan_name(plan_id) or plan_id
 	baseline_name = frappe.db.get_value(
 		"Strategic Plan Version",
 		{"plan_id": plan_id, "status": "Active"},
@@ -128,7 +135,7 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 			title="STRATEGY_INVALID_STATE",
 		)
 	baseline = frappe.get_doc("Strategic Plan Version", baseline_name)
-	require_plan_version_capability(frappe.session.user, CAP_AUTHOR, baseline)
+	exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, baseline)
 
 	if frappe.db.exists(
 		"Strategic Plan Version",
@@ -207,7 +214,7 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 		frappe.get_all(
 			"Performance Target",
 			filters={"indicator_id": ["in", indicator_ids]},
-			fields=["indicator_id", "financial_year_id", "target_by_date", "comparison", "target_value"],
+			fields=["indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"],
 		)
 		if indicator_ids
 		else []
@@ -216,7 +223,7 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 			{
 				"doctype": "Performance Target",
 				"indicator_id": id_map.get(tgt.indicator_id, tgt.indicator_id),
-				"financial_year_id": tgt.financial_year_id,
+				"fiscal_year": tgt.fiscal_year,
 				"target_by_date": tgt.target_by_date,
 				"comparison": tgt.comparison,
 				"target_value": tgt.target_value,
@@ -229,6 +236,8 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 		event_type="Successor Version Created",
 		plan_version=new_version.name,
 		summary=f"Created successor v{new_version.version_number} based on {baseline.name}",
+		business_role=ROLE_STRATEGY_AUTHOR,
+		assignment=assignment_id(exercised),
 	)
 	return _version_payload(new_version)
 
@@ -270,9 +279,10 @@ def save_strategy_structure_draft(
 	change set. `client_id` on a node/indicator item lets a later item in
 	the same batch reference it (as e.g. parent_node_id="$1") before it has
 	a real generated id."""
+	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
 	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
 	_check_expected_version(version, expected_version)
-	require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
+	exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
 
 	id_map: dict[str, str] = {}
 	result: dict[str, list[str]] = {"nodes": [], "indicators": [], "targets": [], "deleted": []}
@@ -347,6 +357,8 @@ def save_strategy_structure_draft(
 			f"{len(result['nodes'])} node(s), {len(result['indicators'])} indicator(s), "
 			f"{len(result['targets'])} target(s), {len(result['deleted'])} deletion(s)"
 		),
+		business_role=ROLE_STRATEGY_AUTHOR,
+		assignment=assignment_id(exercised),
 	)
 	result["expected_version"] = str(frappe.db.get_value("Strategic Plan Version", version.name, "modified"))
 	return result

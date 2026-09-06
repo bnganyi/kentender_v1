@@ -1,27 +1,22 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.3 Phase 7 — read contracts backing STR-UI-01..04.
+"""STR-CHG-001 v1.7 §10/§12 — read contracts backing STR-UI-01..04.
 
-Rebuilds the read-model surface that `strategy_contracts.py`'s
-`get_strategy_portfolio` / `get_plan_overview` / `get_strategy_tree` never
-recovered from before Phase 1 (they still reference the deleted Strategy
-Programme/Sub-programme/Strategic Objective/Strategic Outcome doctypes and
-`Strategic Plan.plan_code`/`.status` fields that moved to
-`Strategic Plan Version` in Phase 1). This module targets the CURRENT
-schema only: `Strategic Plan` (identity) / `Strategic Plan Version`
-(version + status) / `Strategy Node` (unified hierarchy) /
-`Performance Indicator` / `Performance Target`.
+Targets the current schema only: `Strategic Plan` (identity) /
+`Strategic Plan Version` (version + status) / `Strategy Node` (unified
+hierarchy) / `Performance Indicator` / `Performance Target`.
 
-Kept in a new module rather than edited in place inside
-`strategy_contracts.py`, following the Phase 4 precedent of separating a
-freshly-correct contract surface from a legacy one still holding
-not-yet-rebuilt functions (`list_strategy_value_commitments`,
-`get_strategy_usage`, `list_active_targets` — out of this phase's named
-scope, left as tracked, pre-existing gaps, not touched here).
+Every entry point that takes a plan or version id accepts either the record
+name or the generated reference (`MOH-SP-0007`, `MOH-SPV-0007`): §10 puts
+the reference in the URL, and a screen loaded from that URL must resolve
+it without a second round trip. Routes returned to the client are the §10
+route arrays for `frappe.set_route`, never a client-side status map.
+
+Page-load authorisation follows KT-STD-001 §3A: a read that the caller may
+not perform returns `{"forbidden": True}` as data so the screen renders its
+own inline Forbidden panel; it never raises the framework 403.
 """
 
 from __future__ import annotations
-
-from typing import Any
 
 import frappe
 from frappe import _
@@ -34,32 +29,28 @@ from kentender_strategy.services.strategy_authorization import (
 	ROLE_STRATEGY_AUTHOR,
 	has_plan_create_capability,
 	has_plan_version_capability,
+	holds_approver_responsibility,
 )
 from kentender_strategy.services.strategy_readiness import get_version_readiness
+from kentender_strategy.services.strategy_reference import resolve_plan_name, resolve_version_name
 from kentender_strategy.services.strategy_transitions import available_actions
 
+# §6 — read access is produced by the actor's assignments: the two Strategy
+# governance responsibilities plus the registered Auditor business role.
+# Administrator/System Manager get technical read (AUTH-ADR-001 v1.6 §8).
 UNRESTRICTED_READ_ROLES = ("System Manager", "Auditor")
-
-
-def _ref(id_: str | None, name: str | None = None) -> dict | None:
-	if not id_:
-		return None
-	return {"id": id_, "name": name or id_}
-
-
 _LIFECYCLE_ROLES = (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER)
+
+PAGE = "strategy"
 
 
 def _can_read() -> bool:
-	"""CU-303 — one site is one Procuring Entity, so read eligibility is a
-	pure role check: the unrestricted read roles (STR §7's plain-permission
-	readers) plus the two governance roles, whose Frappe Roles exist only as
-	projections of Enabled Site-wide assignments (v1.6 §5.2). No PE set, no
-	working context, no User Permission scope."""
+	"""One site is one Procuring Entity, so read eligibility is a pure
+	assignment-projection check (the Frappe Roles exist only as projections
+	of Enabled Site-wide assignments, v1.6 §5.2) — no PE set, no working
+	context, no User Permission scope."""
 	roles = frappe.get_roles()
 	return any(r in roles for r in UNRESTRICTED_READ_ROLES + _LIFECYCLE_ROLES)
-
-
 
 
 def _plan_dto(plan) -> dict:
@@ -68,11 +59,33 @@ def _plan_dto(plan) -> dict:
 		"reference": plan.plan_id,
 		"title": plan.title,
 		"plan_role": plan.plan_role,
-		"organisation_unit_id": plan.owner_org_unit_id,
+		"parent_primary_plan_id": plan.parent_primary_plan_id,
 		"period_start": str(plan.period_start) if plan.period_start else None,
 		"period_end": str(plan.period_end) if plan.period_end else None,
 		"period_label": _period_label(plan.period_start, plan.period_end),
 	}
+
+
+def _actor_name(user: str | None) -> str | None:
+	if not user:
+		return None
+	return frappe.utils.get_fullname(user) or user
+
+
+def _when_label(value) -> str | None:
+	"""Display form of an audit timestamp (site time), e.g. 24 Nov 2026, 16:20."""
+	if not value:
+		return None
+	try:
+		return frappe.utils.get_datetime(value).strftime("%d %b %Y, %H:%M")
+	except Exception:
+		return str(value)
+
+
+def _result_label(comparison: str | None, value) -> str:
+	number = frappe.utils.flt(value)
+	shown = f"{number:g}" if number == int(number) or abs(number) < 1e6 else str(number)
+	return f"{comparison} {shown}"
 
 
 def _period_label(start, end) -> str | None:
@@ -92,36 +105,49 @@ def _version_dto(version) -> dict:
 		"effective_to": str(version.effective_to) if version.effective_to else None,
 		"effective_period_label": _period_label(version.effective_from, version.effective_to),
 		"based_on_plan_version_id": version.based_on_plan_version_id,
+		"return_reason": version.return_reason or None,
+		# KT-STD-001 §11 optimistic concurrency token every command carries.
+		"expected_version": str(version.modified),
 	}
+
+
+# --------------------------------------------------------------------------
+# §10 routes — the one place the client learns where a record lives
+# --------------------------------------------------------------------------
+
+
+def plan_route(plan_reference: str, *rest: str) -> list[str]:
+	return [PAGE, "plan", plan_reference, *rest]
+
+
+def approval_route(version_reference: str, *rest: str) -> list[str]:
+	return [PAGE, "approval", version_reference, *rest]
 
 
 # --------------------------------------------------------------------------
 # STR-UI-01 Strategy Portfolio
 # --------------------------------------------------------------------------
 
-
-# STR-CHG-001 v1.5 §13.1: the Portfolio row link must follow the server-
-# returned action, not a client-side status map (AGENTS.md §6.2). Maps each
-# transitionable status (strategy_transitions.TRANSITIONS) to the label the
-# spec assigns it; a status with no matching entry (Active/Superseded, or
-# "No version") falls back to plain "View".
+# §12.1: View / Continue draft / Approve follow the server-returned
+# `available_action`; the browser never derives authority from status.
 _STATUS_ACTION_LABELS: dict[str, str] = {
 	"Draft": "Continue draft",
 	"Submitted for approval": "Approve",
 }
-_REVIEW_TASK_STATUSES = ("Submitted for approval",)
 
 
-def _row_action(plan_name: str, version_row: dict | None) -> dict:
-	"""(label, route, target_id) for a Portfolio row's action link."""
+def _row_action(plan_reference: str, version_row: dict | None) -> dict:
 	if not version_row:
-		return {"label": _("View"), "route": "strategy-plan-workspace", "target_id": plan_name}
+		return {"label": _("View"), "route": plan_route(plan_reference)}
 	status = version_row["status"]
-	route = "strategy-review-task" if status in _REVIEW_TASK_STATUSES else "strategy-plan-workspace"
-	target_id = version_row["name"] if route == "strategy-review-task" else plan_name
-	if not available_actions(version_row["name"]):
-		return {"label": _("View"), "route": route, "target_id": target_id}
-	return {"label": _(_STATUS_ACTION_LABELS.get(status, "View")), "route": route, "target_id": target_id}
+	if status == "Submitted for approval" and available_actions(version_row["name"]):
+		return {"label": _("Approve"), "route": approval_route(version_row["plan_version_id"])}
+	if status == "Draft" and available_actions(version_row["name"]):
+		return {
+			"label": _(_STATUS_ACTION_LABELS["Draft"]),
+			"route": plan_route(plan_reference, "version", str(version_row["version_number"]), "structure"),
+		}
+	return {"label": _("View"), "route": plan_route(plan_reference)}
 
 
 def _latest_version_row(plan_name: str) -> dict | None:
@@ -135,35 +161,39 @@ def _latest_version_row(plan_name: str) -> dict | None:
 	return rows[0] if rows else None
 
 
-def get_strategy_portfolio() -> dict:
-	"""STR-UI-01 payload: plan table rows + My work + the site identity.
-
-	CU-303 — one site is one Procuring Entity: no entity parameter, filter
-	or per-user PE set exists. Returns `{"forbidden": True}` rather than
-	raising when the caller holds none of the read-eligible roles — lets the
-	Vue page render its own Forbidden state (STR-DES-12) instead of a raw
-	exception."""
+def get_strategy_portfolio(
+	search: str | None = None, plan_role: str | None = None, status: str | None = None
+) -> dict:
+	"""STR-UI-01 payload: plan register rows + My work + the site identity.
+	`{"forbidden": True}` as data when the caller holds none of the
+	read-eligible assignments (KT-STD-001 §3A). §12.1: search matches plan
+	reference and title; plan role and status filters are server-side; the
+	counts use the same predicate as the rows."""
 	if not _can_read():
 		return {"forbidden": True}
 
+	filters: dict = {}
+	if plan_role:
+		filters["plan_role"] = plan_role
+	or_filters = None
+	if search:
+		needle = f"%{search.strip()}%"
+		or_filters = [["title", "like", needle], ["plan_id", "like", needle]]
 	plans = frappe.get_all(
 		"Strategic Plan",
-		fields=[
-			"name",
-			"plan_id",
-			"title",
-			"plan_role",
-			"owner_org_unit_id",
-			"period_start",
-			"period_end",
-		],
+		filters=filters,
+		or_filters=or_filters,
+		fields=["name", "plan_id", "title", "plan_role", "parent_primary_plan_id", "period_start", "period_end"],
 		order_by="modified desc",
 		limit=200,
 	)
 	rows = []
 	for p in plans:
 		latest = _latest_version_row(p.name)
-		action = _row_action(p.name, latest)
+		row_status = latest["status"] if latest else "No version"
+		if status and row_status != status:
+			continue
+		action = _row_action(p.plan_id, latest)
 		rows.append(
 			{
 				**_plan_dto(p),
@@ -177,57 +207,58 @@ def get_strategy_portfolio() -> dict:
 					if latest
 					else None
 				),
-				"status": latest["status"] if latest else "No version",
+				"status": row_status,
 				"available_action": action["label"],
 				"action_route": action["route"],
-				"action_target_id": action["target_id"],
 			}
 		)
 
-	# CU-303 — the identity banner shows the one configured site entity.
-	from kentender_core.services.site_configuration import get_site_configuration
-
-	site = get_site_configuration()
-	pe = site.get("procuring_entity") or {}
-	shown_pe = _ref(pe.get("pe_code"), pe.get("pe_name")) if site.get("configured") else None
-
 	return {
 		"forbidden": False,
-		"procuring_entity": shown_pe,
 		# Read-offer-vs-command parity: the create action is offered only
 		# when save_strategy_plan_draft's own gate would pass.
 		"can_create_plan": has_plan_create_capability(frappe.session.user),
 		"plans": rows,
 		"my_work": _my_work_versions(),
-		"counts": {"plans": len(rows)},
+		"counts": {"plans": len(rows), "my_work": 0},
 	}
 
 
 def _my_work_versions() -> list[dict]:
+	"""§12.1 — only live records on which the actor may perform the next
+	command: Submitted versions this actor may return/approve, and Draft
+	versions this actor may continue."""
 	versions = frappe.get_all(
 		"Strategic Plan Version",
-		filters={"status": "Submitted for approval"},
+		filters={"status": ["in", ("Submitted for approval", "Draft")]},
 		fields=["name", "plan_version_id", "plan_id", "version_number", "status"],
+		order_by="modified desc",
 	)
 	out = []
 	for v in versions:
-		plan = frappe.db.get_value(
-			"Strategic Plan", v.plan_id, ["plan_id", "title"], as_dict=True
-		)
+		plan = frappe.db.get_value("Strategic Plan", v.plan_id, ["plan_id", "title"], as_dict=True)
 		if not plan:
 			continue
 		actions = available_actions(v.name)
 		if not actions:
 			continue
+		route = (
+			approval_route(v.plan_version_id)
+			if v.status == "Submitted for approval"
+			else plan_route(plan.plan_id, "version", str(v.version_number), "structure")
+		)
 		out.append(
 			{
 				"plan_id": v.plan_id,
 				"plan_reference": plan.plan_id,
 				"plan_title": plan.title,
 				"version_id": v.name,
+				"version_reference": v.plan_version_id,
 				"version_number": v.version_number,
 				"status": v.status,
 				"allowed_actions": actions,
+				"action_label": _("Review") if v.status == "Submitted for approval" else _("Continue draft"),
+				"action_route": route,
 			}
 		)
 	return out
@@ -239,6 +270,7 @@ def _my_work_versions() -> list[dict]:
 
 
 def get_strategy_tree(plan_version_id: str) -> dict:
+	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
 	nodes = frappe.get_all(
 		"Strategy Node",
 		filters={"plan_version_id": plan_version_id},
@@ -255,15 +287,8 @@ def get_strategy_tree(plan_version_id: str) -> dict:
 		frappe.get_all(
 			"Performance Target",
 			filters={"indicator_id": ["in", indicator_names]},
-			fields=[
-				"name",
-				"target_id",
-				"indicator_id",
-				"financial_year_id",
-				"target_by_date",
-				"comparison",
-				"target_value",
-			],
+			fields=["name", "target_id", "indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"],
+			order_by="fiscal_year asc, target_by_date asc",
 		)
 		if indicator_names
 		else []
@@ -274,13 +299,13 @@ def get_strategy_tree(plan_version_id: str) -> dict:
 		targets_by_indicator.setdefault(t.indicator_id, []).append(t)
 
 	def target_node(t) -> dict:
-		period = t.financial_year_id or (str(t.target_by_date) if t.target_by_date else None)
+		period = t.fiscal_year or (str(t.target_by_date) if t.target_by_date else None)
 		return {
 			"id": t.name,
 			"reference": t.target_id,
 			"node_type": "Performance Target",
-			"title": f"{t.comparison} {t.target_value}",
-			"financial_year_id": t.financial_year_id,
+			"title": _result_label(t.comparison, t.target_value),
+			"fiscal_year": t.fiscal_year,
 			"target_by_date": str(t.target_by_date) if t.target_by_date else None,
 			"period_label": period,
 			"comparison": t.comparison,
@@ -329,7 +354,18 @@ def get_strategy_tree(plan_version_id: str) -> dict:
 		"performance_indicators": len(indicators),
 		"performance_targets": len(targets),
 	}
-	return {"tree": roots, "counts": counts}
+	version = frappe.db.get_value(
+		"Strategic Plan Version", plan_version_id, ["name", "plan_version_id", "status", "modified"], as_dict=True
+	)
+	return {
+		"tree": roots,
+		"counts": counts,
+		"version_id": version.name if version else plan_version_id,
+		"version_reference": version.plan_version_id if version else None,
+		"status": version.status if version else None,
+		# §12.3 — one expected version token for the whole Draft tree.
+		"expected_version": str(version.modified) if version else None,
+	}
 
 
 # --------------------------------------------------------------------------
@@ -343,16 +379,22 @@ def _authority_from_events(version_name: str, actions: tuple[str, ...]) -> dict[
 	for row in rows:  # newest first; keep the most recent occurrence of each action
 		action = row.get("action")
 		if action in out and out[action] is None:
-			out[action] = {"actor": row.get("performed_by"), "at": str(row.get("timestamp"))}
+			out[action] = {
+				"actor": row.get("performed_by"),
+				"actor_name": _actor_name(row.get("performed_by")),
+				"at": str(row.get("timestamp")),
+				"at_label": _when_label(row.get("timestamp")),
+			}
 	return out
 
 
 def get_plan_workspace(plan_id: str) -> dict:
-	if not frappe.db.exists("Strategic Plan", plan_id):
+	plan_name = resolve_plan_name(plan_id)
+	if not plan_name:
 		return {"not_found": True}
-	plan = frappe.get_doc("Strategic Plan", plan_id)
 	if not _can_read():
 		return {"forbidden": True}
+	plan = frappe.get_doc("Strategic Plan", plan_name)
 
 	versions = frappe.get_all(
 		"Strategic Plan Version",
@@ -365,40 +407,41 @@ def get_plan_workspace(plan_id: str) -> dict:
 			"effective_from",
 			"effective_to",
 			"based_on_plan_version_id",
+			"return_reason",
 		],
 		order_by="version_number desc",
 	)
 	if not versions:
-		return {"forbidden": False, "not_found": False, "plan": _plan_dto(plan), "no_version": True}
+		return {"forbidden": False, "not_found": False, "plan": _plan_dto(plan), "versions": [], "no_version": True}
 
 	by_status = {v.status: v for v in versions}
 	active = by_status.get("Active")
 	# An open (Draft/Submitted for approval) successor always takes priority
-	# over the steady-state Active version — before Create successor version
-	# existed in this UI, a plan could only ever have one non-Active version
-	# at a time, so `active or versions[0]` never had to consider Draft; now
-	# that a Draft can coexist with an Active version, that fallback chain
-	# would silently keep showing the old Active version's Overview/
-	# Structure/History forever instead of the newly created Draft (found
-	# live 2026-08-24 while verifying the successor-version fix in a
-	# browser).
+	# over the steady-state Active version: a plan can hold one Active and
+	# one open version at a time, and the open one is the one being worked.
 	open_statuses = ("Draft", "Submitted for approval")
 	open_version = next((v for v in versions if v.status in open_statuses), None)
 	current = open_version or active or versions[0]
 
 	tree = get_strategy_tree(current.name)
-	events = _authority_from_events(current.name, ("Approve", "Submit for approval"))
+	events = _authority_from_events(current.name, ("Approve", "Submit for approval", "Return"))
 
 	current_authority = {"approved_by": events["Approve"]} if active else None
-	readiness = get_version_readiness(current.name) if current.status == "Submitted for approval" else None
+	readiness = get_version_readiness(current.name) if current.status in open_statuses else None
 
-	is_editable_draft = current.status == "Draft"
+	is_editable_draft = current.status == "Draft" and has_plan_version_capability(
+		frappe.session.user, CAP_AUTHOR, current.name
+	)
 
 	open_successor_exists = any(v.status in open_statuses for v in versions)
 	can_create_successor = (
 		bool(active)
 		and not open_successor_exists
 		and has_plan_version_capability(frappe.session.user, CAP_AUTHOR, current.name)
+	)
+	# §12.2 — plan identity is editable only while its first version is Draft.
+	identity_editable = (
+		len(versions) == 1 and versions[0].status == "Draft" and is_editable_draft
 	)
 
 	return {
@@ -408,31 +451,42 @@ def get_plan_workspace(plan_id: str) -> dict:
 		"plan": _plan_dto(plan),
 		"current_version": _version_dto(frappe.get_doc("Strategic Plan Version", current.name)),
 		"active_version": _version_dto(frappe.get_doc("Strategic Plan Version", active.name)) if active else None,
+		"versions": [_version_dto(frappe.get_doc("Strategic Plan Version", v.name)) for v in versions],
 		"structure_summary": tree["counts"],
 		"current_authority": current_authority,
+		"submission_authority": {"submitted_by": events["Submit for approval"], "returned_by": events["Return"]},
 		"readiness": readiness,
 		"is_editable_draft": is_editable_draft,
-		"capabilities": {"create_successor": can_create_successor},
+		"capabilities": {
+			"create_successor": can_create_successor,
+			"edit_identity": identity_editable,
+			"submit": is_editable_draft,
+		},
+		"routes": {
+			"overview": plan_route(plan.plan_id),
+			"structure": plan_route(plan.plan_id, "version", str(current.version_number), "structure"),
+			"history": plan_route(plan.plan_id, "history"),
+			"approval": approval_route(current.plan_version_id) if current.status == "Submitted for approval" else None,
+		},
 	}
 
 
 def get_plan_history(plan_id: str) -> list[dict]:
-	if not frappe.db.exists("Strategic Plan", plan_id):
+	plan_name = resolve_plan_name(plan_id)
+	if not plan_name or not _can_read():
 		return []
-	plan = frappe.get_doc("Strategic Plan", plan_id)
-	if not _can_read():
-		return []
-	version_names = frappe.get_all(
-		"Strategic Plan Version", filters={"plan_id": plan.name}, pluck="name"
-	)
+	version_names = frappe.get_all("Strategic Plan Version", filters={"plan_id": plan_name}, pluck="name")
 	out: list[dict] = []
 	for v in version_names:
 		for row in list_events("Strategic Plan Version", v):
 			out.append(
 				{
 					"at": str(row.get("timestamp")),
+					"at_label": _when_label(row.get("timestamp")),
 					"event": row.get("action"),
 					"actor": row.get("performed_by"),
+					"actor_name": _actor_name(row.get("performed_by")),
+					"reason": (row.get("metadata") or {}).get("reason") if isinstance(row.get("metadata"), dict) else None,
 					"version_id": v,
 				}
 			)
@@ -441,46 +495,52 @@ def get_plan_history(plan_id: str) -> list[dict]:
 
 
 def get_version_history(plan_version_id: str) -> list[dict]:
-	"""STR-CHG-001 v1.3 spec: "History returns only lifecycle and draft-save
-	events for the submitted version" — unlike get_plan_history (plan-wide,
-	used by the Portfolio's implicit "all activity" reads), the Review task
-	and the Plan workspace's own-version History tab must show only this
-	one version's events, not every version of the plan merged together."""
-	if not frappe.db.exists("Strategic Plan Version", plan_version_id):
+	"""§12.2/§12.4 — chronological, append-only lifecycle and draft-save
+	events for ONE version, newest first, with the required return reason."""
+	version_name = resolve_version_name(plan_version_id)
+	if not version_name or not _can_read():
 		return []
-	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
-	plan = frappe.get_doc("Strategic Plan", version.plan_id)
-	if not _can_read():
-		return []
-	out = [
-		{
-			"at": str(row.get("timestamp")),
-			"event": row.get("action"),
-			"actor": row.get("performed_by"),
-			"version_id": plan_version_id,
-		}
-		for row in list_events("Strategic Plan Version", plan_version_id)
-	]
+	out = []
+	for row in list_events("Strategic Plan Version", version_name):
+		metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+		out.append(
+			{
+				"at": str(row.get("timestamp")),
+				"at_label": _when_label(row.get("timestamp")),
+				"event": row.get("action"),
+				"actor": row.get("performed_by"),
+				"actor_name": _actor_name(row.get("performed_by")),
+				"reason": metadata.get("reason"),
+				"version_id": version_name,
+			}
+		)
 	out.sort(key=lambda r: r["at"], reverse=True)
 	return out
 
 
 # --------------------------------------------------------------------------
-# STR-UI-04 Review task
+# STR-UI-04 Approval task
 # --------------------------------------------------------------------------
 
 
 def get_version_review_overview(plan_version_id: str) -> dict:
-	if not frappe.db.exists("Strategic Plan Version", plan_version_id):
+	version_name = resolve_version_name(plan_version_id)
+	if not version_name:
 		return {"not_found": True}
-	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
-	plan = frappe.get_doc("Strategic Plan", version.plan_id)
 	if not _can_read():
 		return {"forbidden": True}
+	version = frappe.get_doc("Strategic Plan Version", version_name)
+	plan = frappe.get_doc("Strategic Plan", version.plan_id)
 
 	user = frappe.session.user
+	# §12.4 — a direct task route requires an Active Strategy Approver
+	# assignment; a read-only user is denied rather than shown a disabled
+	# workflow form. The no-self-approval rule is a per-version command
+	# block, not an access rule: the submitter who also holds Approver may
+	# open the task and sees no decision actions on it.
+	if not holds_approver_responsibility(user):
+		return {"forbidden": True, "reason": "approver_required"}
 	is_approver = has_plan_version_capability(user, CAP_APPROVE, version)
-	role = "approver" if is_approver else None
 
 	tree = get_strategy_tree(version.name)
 	events = _authority_from_events(version.name, ("Submit for approval", "Return"))
@@ -488,7 +548,7 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 
 	active_version_row = frappe.get_all(
 		"Strategic Plan Version",
-		filters={"plan_id": plan.name, "status": "Active"},
+		filters={"plan_id": plan.name, "status": "Active", "name": ["!=", version.name]},
 		fields=["name", "plan_version_id", "version_number"],
 		limit=1,
 	)
@@ -496,26 +556,31 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 	return {
 		"forbidden": False,
 		"not_found": False,
-		"role": role,
+		"role": "approver" if is_approver else None,
 		"plan": _plan_dto(plan),
 		"version": _version_dto(version),
 		"active_version": active_version_row[0] if active_version_row else None,
 		"structure_summary": tree["counts"],
-		"submission_authority": {
-			"submitted_by": events["Submit for approval"],
-		},
+		"submission_authority": {"submitted_by": events["Submit for approval"]},
 		"readiness": readiness,
 		"allowed_actions": available_actions(version.name),
+		"expected_version": str(version.modified),
+		"routes": {
+			"plan": plan_route(plan.plan_id),
+			"overview": approval_route(version.plan_version_id),
+			"structure": approval_route(version.plan_version_id, "structure"),
+			"changes": approval_route(version.plan_version_id, "changes"),
+			"history": approval_route(version.plan_version_id, "history"),
+		},
 	}
 
 
 # --------------------------------------------------------------------------
-# STR-UI-04 Changes tab — reduced-scope version diff
+# STR-UI-04 Changes tab — server-side diff between baseline and submitted
 # --------------------------------------------------------------------------
 
 DIFF_LIMITATION_NOTE = (
-	"Reduced-scope diff (STR-CHG-001 v1.3 Phase 7 decision log): compares "
-	"Performance Target value/comparison changes and Strategy Node/"
+	"Compares Performance Target value/comparison changes and Strategy Node/"
 	"Performance Indicator additions or removals by (node type, title) "
 	"identity. Field-level changes to indicator definition/unit, node "
 	"display order, or a same-identity title rename are not reported."
@@ -534,14 +599,14 @@ def _target_rows(plan_version_id: str) -> list[dict]:
 	targets = frappe.get_all(
 		"Performance Target",
 		filters={"indicator_id": ["in", list(by_name.keys())]},
-		fields=["indicator_id", "financial_year_id", "target_by_date", "comparison", "target_value"],
+		fields=["indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"],
 	)
 	out = []
 	for t in targets:
 		out.append(
 			{
 				"indicator_name": by_name.get(t.indicator_id),
-				"financial_year_id": t.financial_year_id,
+				"fiscal_year": t.fiscal_year,
 				"target_by_date": str(t.target_by_date) if t.target_by_date else None,
 				"comparison": t.comparison,
 				"target_value": t.target_value,
@@ -551,8 +616,14 @@ def _target_rows(plan_version_id: str) -> list[dict]:
 
 
 def diff_strategy_versions(base_version_id: str | None, compare_version_id: str) -> dict:
-	"""STR-UI-04 Changes tab. `base_version_id` is None when the submitted
-	version is v1 (no prior Active version to diff against)."""
+	"""STR-UI-04 Changes tab: computed server-side between
+	`based_on_plan_version_id` and the submitted version (§12.4). When the
+	caller passes no base, the submitted version's own recorded baseline is
+	used; a first version has none and every item reads as new."""
+	compare_version_id = resolve_version_name(compare_version_id) or compare_version_id
+	base_version_id = resolve_version_name(base_version_id) if base_version_id else None
+	if not base_version_id:
+		base_version_id = frappe.db.get_value("Strategic Plan Version", compare_version_id, "based_on_plan_version_id")
 	changes: list[dict] = []
 
 	if base_version_id:
@@ -560,7 +631,7 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 		compare_targets = _target_rows(compare_version_id)
 
 		def tkey(t):
-			return (t["indicator_name"], t["financial_year_id"], t["target_by_date"])
+			return (t["indicator_name"], t["fiscal_year"], t["target_by_date"])
 
 		base_by_key = {tkey(t): t for t in base_targets}
 		compare_by_key = {tkey(t): t for t in compare_targets}
@@ -573,20 +644,20 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 					changes.append(
 						{
 							"item": label,
-							"active": f"{bt['comparison']} {bt['target_value']}",
-							"submitted": f"{ct['comparison']} {ct['target_value']}",
+							"active": _result_label(bt["comparison"], bt["target_value"]),
+							"submitted": _result_label(ct["comparison"], ct["target_value"]),
 						}
 					)
 			else:
 				changes.append(
-					{"item": label, "active": "—", "submitted": f"{ct['comparison']} {ct['target_value']} (added)"}
+					{"item": label, "active": "—", "submitted": f"{_result_label(ct['comparison'], ct['target_value'])} (added)"}
 				)
 		for key, bt in base_by_key.items():
 			if key not in compare_by_key:
 				changes.append(
 					{
 						"item": f"Target: {bt['indicator_name']}",
-						"active": f"{bt['comparison']} {bt['target_value']}",
+						"active": _result_label(bt["comparison"], bt["target_value"]),
 						"submitted": "(removed)",
 					}
 				)
@@ -607,30 +678,60 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 			changes.append({"item": f"{node_type}: {title}", "active": "—", "submitted": "Added"})
 		for node_type, title in sorted(base_nodes - compare_nodes):
 			changes.append({"item": f"{node_type}: {title}", "active": "Present", "submitted": "Removed"})
+
+		base_indicators = {
+			(n.indicator_name)
+			for n in frappe.get_all(
+				"Performance Indicator", filters={"plan_version_id": base_version_id}, fields=["indicator_name"]
+			)
+		}
+		compare_indicators = {
+			(n.indicator_name)
+			for n in frappe.get_all(
+				"Performance Indicator", filters={"plan_version_id": compare_version_id}, fields=["indicator_name"]
+			)
+		}
+		for title in sorted(compare_indicators - base_indicators):
+			changes.append({"item": f"Performance Indicator: {title}", "active": "—", "submitted": "Added"})
+		for title in sorted(base_indicators - compare_indicators):
+			changes.append({"item": f"Performance Indicator: {title}", "active": "Present", "submitted": "Removed"})
 	else:
 		for t in _target_rows(compare_version_id):
 			changes.append(
 				{
 					"item": f"Target: {t['indicator_name']}",
 					"active": "—",
-					"submitted": f"{t['comparison']} {t['target_value']} (new plan)",
+					"submitted": f"{_result_label(t['comparison'], t['target_value'])} (new plan)",
 				}
 			)
 
-	return {"changes": changes, "limitation": DIFF_LIMITATION_NOTE}
+	return {"changes": changes, "base_version_id": base_version_id, "limitation": DIFF_LIMITATION_NOTE}
 
 
-def list_available_fiscal_years() -> list[str]:
-	"""§3: 'Strategy references... reads the Fiscal Year catalogue only.' A
-	Structure editor needs the full catalogue to offer as a Performance
-	Target period — not the single currently-open year
-	`get_site_configuration()` returns, and not the Configuration
-	Administrator-gated `list_fiscal_years()` in kentender_core, which any
-	Strategy Author calling this has no reason to hold. `ignore_permissions`
-	is safe here: Fiscal Year rows carry only date ranges, no business data,
-	and Strategy has no create/write path onto the doctype regardless.
-	"""
+def list_available_fiscal_years(plan_id: str | None = None) -> list[dict]:
+	"""§12.3 — Period offers only ERPNext Fiscal Years overlapping the plan
+	period (plus the plan-period date option the client adds itself).
+	`ignore_permissions` is safe here: Fiscal Year rows carry only date
+	ranges, and Strategy has no write path onto the doctype."""
 	rows = frappe.get_all(
-		"Fiscal Year", fields=["name"], order_by="year_start_date desc", limit_page_length=0, ignore_permissions=True
+		"Fiscal Year",
+		fields=["name", "year_start_date", "year_end_date"],
+		filters={"disabled": 0},
+		order_by="year_start_date asc",
+		limit_page_length=0,
+		ignore_permissions=True,
 	)
-	return [r.name for r in rows]
+	plan_name = resolve_plan_name(plan_id) if plan_id else None
+	if plan_name:
+		period = frappe.db.get_value("Strategic Plan", plan_name, ["period_start", "period_end"], as_dict=True)
+		if period and period.period_start and period.period_end:
+			start, end = frappe.utils.getdate(period.period_start), frappe.utils.getdate(period.period_end)
+			rows = [
+				r
+				for r in rows
+				if frappe.utils.getdate(r.year_start_date) <= end and frappe.utils.getdate(r.year_end_date) >= start
+			]
+	return [
+		{"name": r.name, "start": str(r.year_start_date), "end": str(r.year_end_date)}
+		for r in rows
+	]

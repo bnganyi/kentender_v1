@@ -1,31 +1,31 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Downstream Strategy Reference helpers for Budget / Demand / Planning.
+"""Downstream Strategy contracts — STR-CHG-001 v1.7 §7/§8.
 
-This module is the STR-CHG-001 §10 integration-contract boundary: downstream
-apps call the functions here, never a Strategy DocType controller or table
-directly. The 5 canonically-named contracts are resolve_strategy_context,
-list_strategy_objectives, get_strategy_lineage, create_strategy_snapshot and
-record_verified_result (deferred stub). They sit alongside the older,
-Target-based helpers below (apply_budget_primary_strategy_reference and
-friends — kentender_budget's XMOD-STR-001 integration) — both are legitimate,
-separate parts of this same boundary, not competing layers: Procurement Plan
-Items select a Strategic Objective (§9), Budget Lines reference a
-Performance Target for funding-target linkage, a distinct relationship v1.3
-does not change.
+This module is the integration boundary: downstream apps call the functions
+here, never a Strategy DocType controller or table directly (STR-BR-020).
+The four §8 read contracts are `resolve_strategy_context`,
+`list_strategy_objectives`, `get_strategy_lineage` and
+`create_strategy_snapshot`; `record_verified_result` stays a deferred stub.
+
+The Performance-Target-based helpers below them
+(`validate_strategy_reference`, `build_strategy_reference`,
+`list_active_targets`, `apply_budget_primary_strategy_reference` and
+friends) are kentender_budget's XMOD-STR-001 linkage: a Budget Line
+references a Performance Target for funding-target lineage, a distinct
+relationship from the Plan Item → Strategic Objective selection above. They
+moved here from `strategy_contracts.py` (deleted in the v1.7 correction,
+tracker STR-501/502): that file was ~1,450 lines of pre-rebuild code naming
+deleted doctypes, of which exactly these four functions were still imported.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 import frappe
 from frappe import _
 from frappe.utils import getdate
 
-from kentender_strategy.services.strategy_contracts import (
-	_node_ancestor_path,
-	build_strategy_reference,
-	list_active_targets,
-	validate_strategy_reference,
-)
 from kentender_strategy.services.strategy_domain_guards import PLAN_ROLE_PRIMARY, PLAN_ROLE_SUPPORTING
 
 
@@ -35,97 +35,141 @@ def _covers_date(start, end, as_of) -> bool:
 	return getdate(start) <= as_of <= getdate(end)
 
 
+def _overlaps_range(start, end, range_start, range_end) -> bool:
+	if not start or not end:
+		return False
+	return getdate(start) <= range_end and range_start <= getdate(end)
+
+
+def _hierarchy_summary(plan_version_id: str) -> dict[str, int]:
+	counts = {"pillars": 0, "programmes": 0, "sub_programmes": 0, "strategic_objectives": 0}
+	key = {
+		"Pillar": "pillars",
+		"Programme": "programmes",
+		"Sub-programme": "sub_programmes",
+		"Strategic Objective": "strategic_objectives",
+	}
+	for row in frappe.get_all("Strategy Node", filters={"plan_version_id": plan_version_id}, fields=["node_type"]):
+		counts[key[row.node_type]] += 1
+	counts["performance_indicators"] = frappe.db.count("Performance Indicator", {"plan_version_id": plan_version_id})
+	return counts
+
+
+def _context_entry(plan, version) -> dict:
+	return {
+		"id": plan.name,
+		"code": plan.plan_id,
+		"name": plan.title,
+		"plan_role": plan.plan_role,
+		"period_start": str(plan.period_start) if plan.period_start else None,
+		"period_end": str(plan.period_end) if plan.period_end else None,
+		"version_id": version.name,
+		"version_reference": version.plan_version_id,
+		"version_number": version.version_number,
+		"status": version.status,
+		"start_date": str(version.effective_from) if version.effective_from else None,
+		"end_date": str(version.effective_to) if version.effective_to else None,
+		"hierarchy_summary": _hierarchy_summary(version.name),
+	}
+
+
 def resolve_strategy_context(
-	organisation_unit: str | None = None,
-	effective_date: str | None = None,
+	*,
+	as_of_date: str | None = None,
+	fiscal_year: str | None = None,
+	include_supporting: bool = False,
 ) -> dict:
-	"""STR-CHG-001 §12 — resolve_strategy_context (site-local, CU-306).
+	"""STR-CHG-001 v1.7 §7 — resolve_strategy_context.
 
-	Input: optional OU, effective date (defaults to today) — one site is one
-	Procuring Entity, so no entity parameter exists. Output: exactly one
-	primary Active plan context, or a typed error when zero or multiple
-	primary Active plans cover the site at that date — never a silent pick.
-	Supporting frameworks (Programme Strategy / Thematic Plan / Annual
-	Implementation Plan) active for the same date are returned explicitly,
-	never folded into the primary context.
+	Input is exactly one of `as_of_date` or `fiscal_year`, plus the optional
+	`include_supporting` flag. There is no Procuring Entity or
+	organisation-unit input, no scope validation step and no preference
+	rule (STR-BR-017): zero applicable Active Primary versions raise
+	`STRATEGY_CONTEXT_NOT_FOUND`, more than one raise
+	`STRATEGY_CONTEXT_AMBIGUOUS`.
 
-	`primary_plan.version_id` is the Active Strategic Plan Version's own id —
-	the value `list_strategy_objectives`/`create_strategy_snapshot` require as
-	their `plan_version_id`, per this module's own docstrings. It was computed
-	internally but never surfaced on this return value; the first real
-	downstream caller (PLN-CHG-001 v1.2 Phase 6, kentender_procurement's
-	strategy_gateway) found the gap live rather than in this module's own
-	tests, which only assert `resolve_strategy_context`'s error paths.
+	A date is covered when both the plan period and the version's effective
+	period contain it; a Fiscal Year is covered when both overlap it. The
+	result carries only IDs, titles, role, period, version, status and the
+	hierarchy summary a consumer needs — no authoring or audit internals.
 	"""
-	as_of = getdate(effective_date) if effective_date else getdate()
+	if bool(as_of_date) == bool(fiscal_year):
+		frappe.throw(
+			_("Provide exactly one of as_of_date or fiscal_year"),
+			frappe.ValidationError,
+			title="STRATEGY_CONTEXT_NOT_FOUND",
+		)
 
-	def _active_versions(plan_role: str) -> list[dict]:
-		filters = {"plan_role": plan_role}
-		if organisation_unit and plan_role == PLAN_ROLE_SUPPORTING:
-			filters["owner_org_unit_id"] = organisation_unit
-		plans = frappe.get_all("Strategic Plan", filters=filters, fields=["name", "plan_id", "title"])
+	if fiscal_year:
+		fy = frappe.db.get_value("Fiscal Year", fiscal_year, ["year_start_date", "year_end_date"], as_dict=True)
+		if not fy:
+			frappe.throw(
+				_("Fiscal Year {0} is not configured").format(fiscal_year),
+				frappe.ValidationError,
+				title="STRATEGY_CONFIG_MISSING",
+			)
+		range_start, range_end = getdate(fy.year_start_date), getdate(fy.year_end_date)
+		label = fiscal_year
+	else:
+		range_start = range_end = getdate(as_of_date)
+		label = str(range_start)
+
+	def _applicable(plan_role: str) -> list[dict]:
+		plans = frappe.get_all(
+			"Strategic Plan",
+			filters={"plan_role": plan_role},
+			fields=["name", "plan_id", "title", "plan_role", "period_start", "period_end"],
+			order_by="title asc, name asc",
+		)
 		if not plans:
 			return []
-		plan_names = [p.name for p in plans]
 		versions = frappe.get_all(
 			"Strategic Plan Version",
-			filters={"plan_id": ["in", plan_names], "status": "Active"},
-			fields=["name", "plan_id", "effective_from", "effective_to"],
+			filters={"plan_id": ["in", [p.name for p in plans]], "status": "Active"},
+			fields=["name", "plan_version_id", "plan_id", "version_number", "status", "effective_from", "effective_to"],
 		)
-		plans_by_name = {p.name: p for p in plans}
+		by_plan = {v.plan_id: v for v in versions}
 		out = []
-		for v in versions:
-			if not _covers_date(v.effective_from, v.effective_to, as_of):
+		for plan in plans:
+			version = by_plan.get(plan.name)
+			if not version:
 				continue
-			plan = plans_by_name.get(v.plan_id)
-			if not plan:
+			if not (
+				_overlaps_range(plan.period_start, plan.period_end, range_start, range_end)
+				and _overlaps_range(version.effective_from, version.effective_to, range_start, range_end)
+			):
 				continue
-			out.append(
-				{
-					"id": plan.name,
-					"code": plan.plan_id,
-					"name": plan.title,
-					"version_id": v.name,
-					"effective_from": v.effective_from,
-					"effective_to": v.effective_to,
-				}
-			)
+			out.append(_context_entry(plan, version))
 		return out
 
-	covering = _active_versions(PLAN_ROLE_PRIMARY)
-	if not covering:
+	primaries = _applicable(PLAN_ROLE_PRIMARY)
+	if not primaries:
 		frappe.throw(
-			_("No primary Active strategic plan covers {0} for this site").format(as_of),
+			_("No Active Primary strategic plan applies to {0}").format(label),
 			frappe.DoesNotExistError,
+			title="STRATEGY_CONTEXT_NOT_FOUND",
 		)
-	if len(covering) > 1:
+	if len(primaries) > 1:
 		frappe.throw(
-			_(
-				"Multiple primary Active strategic plans cover {0} for this site "
-				"— ambiguous lineage"
-			).format(as_of),
+			_("More than one Active Primary strategic plan applies to {0}").format(label),
 			frappe.ValidationError,
+			title="STRATEGY_CONTEXT_AMBIGUOUS",
 		)
-	primary = covering[0]
-	supporting = _active_versions(PLAN_ROLE_SUPPORTING)
+	primary = primaries[0]
+
+	supporting: list[dict] = []
+	if include_supporting:
+		supporting = [
+			entry
+			for entry in _applicable(PLAN_ROLE_SUPPORTING)
+			if frappe.db.get_value("Strategic Plan", entry["id"], "parent_primary_plan_id") == primary["id"]
+		]
 
 	return {
-		# Informational site-identity snapshot for consumers that record it.
-		"procuring_entity": frappe.db.get_single_value("Site Procuring Entity", "pe_code") or "",
-		"organisation_unit": organisation_unit,
-		"effective_date": str(as_of),
-		"primary_plan": {
-			"id": primary["id"],
-			"version_id": primary["version_id"],
-			"code": primary["code"],
-			"name": primary["name"],
-			"start_date": str(primary["effective_from"]),
-			"end_date": str(primary["effective_to"]),
-		},
-		"supporting_plans": [
-			{"id": s["id"], "code": s["code"], "name": s["name"], "plan_type": PLAN_ROLE_SUPPORTING}
-			for s in supporting
-		],
+		"as_of_date": str(range_start) if as_of_date else None,
+		"fiscal_year": fiscal_year or None,
+		"primary_plan": primary,
+		"supporting_plans": supporting,
 	}
 
 
@@ -137,11 +181,11 @@ def list_strategy_objectives(
 	limit_start: int = 0,
 	limit_page_length: int = 20,
 ) -> dict:
-	"""STR-CHG-001 §9/§10 — list_strategy_objectives.
+	"""STR-CHG-001 §8 — list_strategy_objectives.
 
 	Active Strategic Objectives from one resolved Active plan version, each
 	with its ordered Pillar -> Programme -> optional Sub-programme ancestor
-	path so a planner can distinguish similarly-named objectives (§13.6).
+	path so a planner can distinguish similarly-named objectives (§12.6).
 	Never returns Draft-version content — the caller supplies an already
 	Active plan_version_id (from resolve_strategy_context), and this
 	function itself re-confirms that before returning anything (STR-BR-018).
@@ -159,7 +203,7 @@ def list_strategy_objectives(
 	rows = frappe.get_all(
 		"Strategy Node",
 		filters=filters,
-		fields=["name", "title", "parent_node_id"],
+		fields=["name", "strategy_node_id", "title", "parent_node_id"],
 		order_by="display_order asc",
 		limit_start=limit_start,
 		limit_page_length=limit_page_length,
@@ -170,6 +214,7 @@ def list_strategy_objectives(
 		out.append(
 			{
 				"id": row.name,
+				"reference": row.strategy_node_id,
 				"title": row.title,
 				"path": [{"type": n["node_type"], "id": n["name"], "title": n["title"]} for n in path],
 			}
@@ -178,7 +223,7 @@ def list_strategy_objectives(
 
 
 def get_strategy_lineage(node_id: str) -> dict:
-	"""STR-CHG-001 §10 — get_strategy_lineage.
+	"""STR-CHG-001 §8 — get_strategy_lineage.
 
 	Ordered path with stable IDs, types and titles from plan to the
 	requested Strategic Objective, Performance Indicator or Performance
@@ -228,7 +273,7 @@ def get_strategy_lineage(node_id: str) -> dict:
 
 
 def create_strategy_snapshot(*, plan_version_id: str, objective_id: str, correlation_key: str) -> dict:
-	"""STR-CHG-001 §9/§10/§13.6 — create_strategy_snapshot.
+	"""STR-CHG-001 §8/§12.6 — create_strategy_snapshot.
 
 	Freezes one selected Strategic Objective's plan/version identity,
 	period and ordered Pillar->Programme->[Sub-programme]->Objective path
@@ -236,10 +281,10 @@ def create_strategy_snapshot(*, plan_version_id: str, objective_id: str, correla
 	approval). Idempotent per correlation_key — see
 	strategy_idempotency.run_idempotent, wired at the API layer, not here;
 	this function is pure/re-computable given the same inputs since source
-	data is immutable once Approved/Active.
+	data is immutable once Active.
 	"""
 	if not correlation_key:
-		frappe.throw(_("correlation_key is required"), frappe.ValidationError, title="STRATEGY_SCOPE_REQUIRED")
+		frappe.throw(_("correlation_key is required"), frappe.ValidationError, title="STRATEGY_OBJECTIVE_NOT_ELIGIBLE")
 
 	version = frappe.db.get_value(
 		"Strategic Plan Version", plan_version_id, ["plan_id", "status", "effective_from", "effective_to"], as_dict=True
@@ -292,15 +337,146 @@ def create_strategy_snapshot(*, plan_version_id: str, objective_id: str, correla
 
 
 def record_verified_result(*_args, **_kwargs):
-	"""STR-CHG-001 §12 — record_verified_result.
+	"""STR-CHG-001 §8 — record_verified_result.
 
 	Explicitly deferred until Contract Management scope activates it; this
 	contract makes no direct Strategy master-data mutation. Stub only — do
 	not wire a caller to this until that scope exists.
 	"""
 	raise NotImplementedError(
-		"record_verified_result is deferred to Contract Management scope (STR-CHG-001 §12)"
+		"record_verified_result is deferred to Contract Management scope (STR-CHG-001 §8)"
 	)
+
+
+# --------------------------------------------------------------------------
+# Lineage helpers and the Performance-Target reference contract
+# (kentender_budget's XMOD-STR-001 Budget Line linkage)
+# --------------------------------------------------------------------------
+
+# Strategy Node node_type values -> the compact, space-free path-entry "type"
+# tokens build_strategy_reference()/list_active_targets() callers expect.
+_NODE_PATH_TYPE = {
+	"Pillar": "Pillar",
+	"Programme": "Programme",
+	"Sub-programme": "SubProgramme",
+	"Strategic Objective": "StrategicObjective",
+}
+
+
+def _node_ancestor_path(node_id: str) -> list[dict]:
+	"""Root-first Strategy Node ancestor chain, self included."""
+	chain = []
+	current = frappe.db.get_value(
+		"Strategy Node", node_id, ["name", "node_type", "title", "parent_node_id"], as_dict=True
+	)
+	while current:
+		chain.append(current)
+		current = (
+			frappe.db.get_value(
+				"Strategy Node",
+				current.parent_node_id,
+				["name", "node_type", "title", "parent_node_id"],
+				as_dict=True,
+			)
+			if current.parent_node_id
+			else None
+		)
+	chain.reverse()
+	return chain
+
+
+def validate_strategy_reference(reference: dict | None = None) -> dict:
+	"""XMOD-STR-001 — validates a Performance Target reference for a
+	downstream consumer (kentender_budget's Budget Line). Eligibility is the
+	owning Strategic Plan Version's status; the reference's own generated id
+	is its code."""
+	reference = reference or {}
+	plan_version_id = reference.get("plan_version_id")
+	node_id = reference.get("node_id")
+	node_type = reference.get("node_type") or "PerformanceTarget"
+	if node_type != "PerformanceTarget":
+		return {"valid": False, "reason": f"Unsupported node_type {node_type}"}
+
+	target = frappe.db.get_value("Performance Target", node_id, "indicator_id")
+	if not target:
+		return {"valid": False, "reason": "Unknown target"}
+	indicator_plan_version_id = frappe.db.get_value("Performance Indicator", target, "plan_version_id")
+	if not indicator_plan_version_id:
+		return {"valid": False, "reason": "Unknown target"}
+	if plan_version_id and indicator_plan_version_id != plan_version_id:
+		return {"valid": False, "reason": "Target/plan version mismatch"}
+
+	version_status = frappe.db.get_value("Strategic Plan Version", indicator_plan_version_id, "status")
+	selectable = version_status == "Active"
+	dto = build_strategy_reference(indicator_plan_version_id, node_id)
+	return {"valid": True, "selectable_for_new": selectable, "historical_ok": True, "reference": dto}
+
+
+def build_strategy_reference(plan_version_id: str, target_id: str) -> dict:
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	target = frappe.get_doc("Performance Target", target_id)
+	indicator = frappe.get_doc("Performance Indicator", target.indicator_id)
+
+	path = [
+		{"type": _NODE_PATH_TYPE[n.node_type], "id": n.name, "code": n.name, "name": n.title}
+		for n in _node_ancestor_path(indicator.measures_node_id)
+	]
+	path.append(
+		{
+			"type": "PerformanceIndicator",
+			"id": indicator.name,
+			"code": indicator.name,
+			"name": indicator.indicator_name,
+		}
+	)
+	target_label = f"{target.comparison} {target.target_value}"
+	path.append({"type": "PerformanceTarget", "id": target.name, "code": target.name, "name": target_label})
+
+	snapshot = " / ".join(
+		p["name"] for p in path if p["type"] in ("Programme", "SubProgramme", "PerformanceTarget")
+	)
+	return {
+		"plan_version_id": version.name,
+		"plan_code": frappe.db.get_value("Strategic Plan", version.plan_id, "plan_id"),
+		"plan_version": version.version_number,
+		"node_type": "PerformanceTarget",
+		"node_id": target.name,
+		"node_code": target.name,
+		"node_name": target_label,
+		"path": path,
+		"snapshot_label": snapshot,
+	}
+
+
+def list_active_targets(plan_code: str | None = None) -> list[dict]:
+	"""XMOD-STR-001 read for a Budget Line "primary target" picker: every
+	Performance Target on an Active plan version, as reference DTOs. One
+	site is one entity, so no entity parameter exists (STR-AC-033)."""
+	plan_filters: dict[str, Any] = {}
+	if plan_code:
+		plan_filters["plan_id"] = plan_code
+	plans = frappe.get_all("Strategic Plan", filters=plan_filters, pluck="name")
+	if not plans:
+		return []
+	versions = frappe.get_all(
+		"Strategic Plan Version",
+		filters={"plan_id": ["in", plans], "status": "Active"},
+		pluck="name",
+	)
+	if not versions:
+		return []
+	indicators = frappe.get_all(
+		"Performance Indicator", filters={"plan_version_id": ["in", versions]}, fields=["name", "plan_version_id"]
+	)
+	if not indicators:
+		return []
+	version_by_indicator = {i.name: i.plan_version_id for i in indicators}
+	targets = frappe.get_all(
+		"Performance Target",
+		filters={"indicator_id": ["in", list(version_by_indicator)]},
+		fields=["name", "indicator_id"],
+	)
+	return [build_strategy_reference(version_by_indicator[t.indicator_id], t.name) for t in targets]
 
 
 def resolve_performance_target_id(
@@ -309,9 +485,8 @@ def resolve_performance_target_id(
 	"""Resolve a Performance Target name from its generated id.
 
 	Performance Target has no business code distinct from its generated id
-	(Phase 1 schema) — target_code is accepted only for backward
-	compatibility with callers that historically passed either
-	interchangeably, and is treated as a literal target id.
+	— target_code is accepted only for callers that historically passed
+	either interchangeably, and is treated as a literal target id.
 	"""
 	tid = (target_id or "").strip() or (target_code or "").strip()
 	if tid and frappe.db.exists("Performance Target", tid):
@@ -343,12 +518,7 @@ def target_snapshot_fields(target_id: str) -> dict | None:
 
 
 def _validated_strategy_reference(target_id: str, *, require_active: bool = True) -> dict:
-	"""Validate a Performance Target id and return the Strategy Reference dict.
-
-	CU-308 fix of a latent pre-rebuild query: `Performance Target` carries no
-	`plan_version`/`status`/`target_code`/`title` columns on the Phase 1
-	schema — the version is reached through the target's indicator, exactly
-	as `resolve_performance_target_id` above already does."""
+	"""Validate a Performance Target id and return the Strategy Reference dict."""
 	tgt = frappe.db.get_value(
 		"Performance Target", target_id, ["name", "indicator_id"], as_dict=True
 	)
@@ -443,7 +613,5 @@ def validated_supporting_target_row(
 	}
 
 
-def active_target_options(procuring_entity: str | None = None, plan_code: str | None = None) -> list[dict]:
-	# `procuring_entity` is accepted and ignored (pre-CU-4xx bridge for
-	# kentender_budget's picker): one site is one entity.
+def active_target_options(plan_code: str | None = None) -> list[dict]:
 	return list_active_targets(plan_code=plan_code)

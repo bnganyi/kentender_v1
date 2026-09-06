@@ -90,9 +90,9 @@ def _seed_actors() -> dict[str, str]:
 	return out
 
 
-def resolve_procuring_entity_moh() -> str | None:
+def resolve_site_entity_code() -> str | None:
 	"""CU-303 — the site's own configured entity code (one site = one PE);
-	None while the site is unconfigured. Name kept for cross-app imports."""
+	None while the site is unconfigured."""
 	code = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
 	return code or None
 
@@ -101,7 +101,7 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 	"""Idempotent. Returns {"ok", "plan" (Strategic Plan Version name),
 	"target" (Performance Target name), "objective" (Strategy Node name)} —
 	the exact keys kentender_budget's own test reads."""
-	pe = resolve_procuring_entity_moh()
+	pe = resolve_site_entity_code()
 	if not pe:
 		return {"ok": False, "reason": "STRATEGY_CONFIG_MISSING", "detail": "the site procuring entity is not configured"}
 

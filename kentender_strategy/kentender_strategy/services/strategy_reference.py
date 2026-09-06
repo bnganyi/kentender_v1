@@ -40,24 +40,6 @@ def site_slug() -> str:
 	return slug
 
 
-def pe_slug(procuring_entity: str | None) -> str:
-	"""Business prefix from PE entity_code (PE-MOH → MOH).
-
-	LEGACY (pre-cutover bridge): still exported for kentender_budget's
-	budget_reference, which cuts over in CU-4xx. Strategy's own allocation
-	uses `site_slug()` and never reads the legacy Procuring Entity store."""
-	if not procuring_entity:
-		frappe.throw(_("Procuring entity is required to allocate a reference"))
-	code = frappe.db.get_value("Procuring Entity", procuring_entity, "entity_code") or procuring_entity
-	code = str(code).strip().upper()
-	if code.startswith("PE-"):
-		code = code[3:]
-	slug = re.sub(r"[^A-Z0-9]", "", code)
-	if not slug:
-		frappe.throw(_("Procuring entity has no usable code for references"))
-	return slug
-
-
 def _max_seq(doctype: str, field: str, prefix: str) -> int:
 	# has_column expects the DocType name (not tab-prefixed table name).
 	if not frappe.db.has_column(doctype, field):
@@ -192,3 +174,23 @@ def validate_reference_field(doc) -> None:
 		frappe.throw(_("{0} is required").format(frappe.unscrub(field)))
 
 
+
+
+def resolve_plan_name(plan_id: str | None) -> str | None:
+	"""Accept either the record name or the generated `plan_id` reference
+	(`MOH-SP-0007`) — the reference is what STR-CHG-001 v1.7 §10 puts in the
+	URL — and return the record name, or None when neither matches."""
+	if not plan_id:
+		return None
+	if frappe.db.exists("Strategic Plan", plan_id):
+		return plan_id
+	return frappe.db.get_value("Strategic Plan", {"plan_id": plan_id}, "name")
+
+
+def resolve_version_name(plan_version_id: str | None) -> str | None:
+	"""Same as resolve_plan_name for Strategic Plan Version (`MOH-SPV-0007`)."""
+	if not plan_version_id:
+		return None
+	if frappe.db.exists("Strategic Plan Version", plan_version_id):
+		return plan_version_id
+	return frappe.db.get_value("Strategic Plan Version", {"plan_version_id": plan_version_id}, "name")

@@ -243,7 +243,7 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		data = {
 			"doctype": "Performance Target",
 			"indicator_id": indicator_id,
-			"financial_year_id": FY,
+			"fiscal_year": FY,
 			"comparison": "At least",
 			"target_value": 85,
 		}
@@ -257,10 +257,10 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		)
 		with self.assertRaises(frappe.ValidationError):
 			frappe.get_doc(
-				self._target(indicator.name, financial_year_id=FY, target_by_date="2028-06-30")
+				self._target(indicator.name, fiscal_year=FY, target_by_date="2028-06-30")
 			).insert(ignore_permissions=True)
 		with self.assertRaises(frappe.ValidationError):
-			frappe.get_doc(self._target(indicator.name, financial_year_id=None)).insert(
+			frappe.get_doc(self._target(indicator.name, fiscal_year=None)).insert(
 				ignore_permissions=True
 			)
 		target = self._track(frappe.get_doc(self._target(indicator.name)).insert(ignore_permissions=True))

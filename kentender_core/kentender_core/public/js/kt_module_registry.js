@@ -4,26 +4,21 @@ frappe.provide("kentender_core.module_registry");
 (function () {
 	const modules = {
 		strategy: {
-			// STR-CHG-001 v1.3 Phase 8 — updated to the 3 Phase 7 production
-			// routes; the 12 pre-rebuild legacy routes were deleted. Confirmed
-			// dead end-to-end for the "strategy" moduleId (kept in sync with
-			// module_registry.py for consistency only, not wired into anything
-			// live) — see IMPLEMENTATION_TRACKER.md Phase 8 decision log.
+			// STR-CHG-001 v1.7 §10 — one Desk Page ("strategy") for every
+			// canonical Strategy route. Confirmed dead end-to-end for the
+			// "strategy" moduleId (kept in sync with module_registry.py for
+			// consistency only, not wired into anything live).
 			id: "strategy",
-			workspaceRoute: ["strategy-portfolio"],
-			workspaceSlug: "strategy-portfolio",
+			workspaceRoute: ["strategy"],
+			workspaceSlug: "strategy",
 			workbenchLabel: __("Strategy Alignment"),
 			backLabel: __("Back to Strategy Alignment"),
 			sidebarWorkspaceKey: "procurement",
-			builderPage: "strategy-plan-workspace",
+			builderPage: "",
 			formDoctype: "",
 			stateKey: "kt_strategy_workbench_state",
 			selectKey: "kt_strategy_workspace_select",
-			routePrefixes: [
-				"strategy-portfolio",
-				"strategy-plan-workspace",
-				"strategy-review-task",
-			],
+			routePrefixes: ["strategy"],
 			taskLabels: {
 				builder: __("Manage Structure"),
 				form: __("Edit Plan"),

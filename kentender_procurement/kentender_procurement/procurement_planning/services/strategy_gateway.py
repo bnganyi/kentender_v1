@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.procurement_planning.errors import fail
@@ -26,7 +27,9 @@ def _active_plan_version() -> str:
 	from kentender_strategy.services.strategy_consumer import resolve_strategy_context
 
 	try:
-		context = resolve_strategy_context()
+		# STR-CHG-001 v1.7 §7: exactly one of as_of_date / fiscal_year. Planning
+		# selects Objectives for the plan being authored now, so "now" it is.
+		context = resolve_strategy_context(as_of_date=frappe.utils.today())
 	except Exception:
 		return ""
 	return cstr((context.get("primary_plan") or {}).get("version_id") or "")

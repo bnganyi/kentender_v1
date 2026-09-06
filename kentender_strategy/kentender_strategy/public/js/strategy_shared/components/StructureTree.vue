@@ -119,7 +119,14 @@ function onAddChild(node) {
 
 <template>
 	<template v-for="node in nodes" :key="node.id">
-		<div class="kt-tree-node" :class="{ selected: node.id === selectedId }" @click="$emit('select', node)">
+		<div
+			class="kt-tree-node"
+			:class="{ selected: node.id === selectedId }"
+			data-testid="str-tree-node"
+			:data-node-type="node.node_type"
+			:data-node-id="node.id"
+			@click="$emit('select', node)"
+		>
 			<div class="kt-tree-row" :style="{ gap: canCollapse(node) ? '6px' : '8px' }">
 				<button
 					v-if="canCollapse(node)"
@@ -149,7 +156,7 @@ function onAddChild(node) {
 					&middot; {{ node.node_type }}
 					<span v-if="isCollapsed(node)" class="kt-tree-hidden-count">({{ countDescendants(node) }} {{ __("hidden") }})</span>
 				</span>
-				<button v-if="canAddChild(node)" type="button" class="kt-add-child" @click.stop="onAddChild(node)">
+				<button v-if="canAddChild(node)" type="button" class="kt-add-child" data-testid="str-add-child" @click.stop="onAddChild(node)">
 					{{ addChildLabel(node) }}
 				</button>
 			</div>
