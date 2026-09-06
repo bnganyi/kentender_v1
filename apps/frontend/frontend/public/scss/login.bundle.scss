@@ -1,0 +1,345 @@
+@import "./desk/variables";
+
+// ---------------------------------------------------------------------------
+// Split-screen login theme
+//
+// The Jinja template is untouched, so the dark left "hero" panel is built
+// entirely from generated content (html::before / body::before / body::after),
+// fixed to the viewport, with the real content pushed into the right-hand
+// half via body padding. This keeps every existing class hook working.
+// ---------------------------------------------------------------------------
+
+$hero-width: 45%;
+$hero-bg: #0a1622;
+$hero-bg-end: #10263b;
+
+body {
+	background-color: #fff;
+
+	@include media-breakpoint-up(md) {
+		padding-left: $hero-width;
+	}
+
+	.page-content-wrapper {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		z-index: 1;
+	}
+
+	.web-footer,
+	.navbar {
+		display: none;
+	}
+}
+
+
+$hero-image: "/assets/frontend/kentender.svg";
+
+html::before {
+	content: "";
+	display: none;
+
+	@include media-breakpoint-up(md) {
+		display: block;
+		position: fixed;
+		inset: 0 auto 0 0;
+		width: $hero-width;
+		height: 100vh;
+		z-index: 0;
+		background-color: $hero-bg; 
+		background-image: url($hero-image);
+		border-radius: 0 24px 24px 0 ;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: cover;
+	}
+}
+
+.for-forgot,
+.for-login-with-email-link,
+.for-signup,
+.for-email-login {
+	display: none;
+}
+
+.for-login,
+.for-forgot,
+.for-login-with-email-link,
+.for-signup,
+.for-email-login {
+	position: relative;
+	z-index: 1;
+
+	.page-card {
+		padding: 0;
+		background-color: transparent;
+		max-width: 380px;
+		margin: 0 auto;
+		border: none;
+
+		form {
+			max-width: 320px;
+			margin: 0 auto;
+
+			.form-group {
+				margin-bottom: var(--margin-md);
+			}
+		}
+
+		.page-card-actions {
+			margin-top: var(--margin-lg);
+		}
+
+		.page-card-body {
+			::placeholder,
+			::-ms-input-placeholder {
+				color: var(--text-light);
+				opacity: 1;
+			}
+
+			input[type="text"],
+			input[type="email"],
+			input[type="password"] {
+				border: none;
+				color: var(--text-color);
+				@include get_textstyle("base", "regular");
+				background-color: var(--control-bg);
+				border-radius: 999px;
+				height: 38px;
+				padding: 0 18px;
+				margin-bottom: 0;
+			}
+
+			&.invalid {
+				input[type="text"],
+				input[type="email"],
+				input[type="password"] {
+					border: 1px solid var(--red-500);
+				}
+			}
+
+			// The template marks these sr-only; reveal them as real labels
+			// to match the screenshot while keeping the DOM unchanged.
+			.form-label.sr-only {
+				position: static !important;
+				width: auto !important;
+				height: auto !important;
+				margin: 0 0 8px !important;
+				padding: 0 !important;
+				overflow: visible !important;
+				clip: auto !important;
+				white-space: normal !important;
+				display: block;
+				@include get_textstyle("sm", "medium");
+				color: var(--text-color);
+			}
+
+			.forgot-password-message {
+				text-align: right;
+				line-height: 1;
+				margin-top: var(--margin-xs);
+
+				> * {
+					color: var(--text-light);
+					@include get_textstyle("sm", "regular");
+				}
+			}
+
+			// Screenshot shows clean pill fields with no leading icon
+			.field-icon {
+				display: none;
+			}
+
+			.email-field,
+			.password-field {
+				position: relative;
+
+				input {
+					padding-left: 18px;
+				}
+
+				.toggle-password {
+					right: 16px;
+					top: 50%;
+					transform: translateY(-50%);
+					position: absolute;
+					z-index: 2;
+					cursor: pointer;
+					font-size: 12px;
+					color: var(--text-light);
+				}
+			}
+
+			.btn-login-option {
+				@include get_textstyle("base", "medium");
+				color: var(--text-gray-700);
+				background: var(--gray-100);
+				box-shadow: none;
+				border: none;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 44px;
+				height: 44px;
+				border-radius: 50%;
+				padding: 0;
+				margin: 0 auto;
+
+				// icon-only circular buttons, provider label kept for a11y
+				font-size: 0;
+
+				svg,
+				img {
+					margin-right: 0;
+					width: 18px;
+					height: 18px;
+				}
+
+				&:hover {
+					border: none;
+					background: var(--gray-300);
+				}
+			}
+
+			.social-logins {
+				margin-top: var(--margin-lg);
+				@include get_textstyle("base", "regular");
+				text-align: center;
+
+				.social-login-buttons {
+					margin-top: var(--margin-md);
+					display: flex;
+					justify-content: center;
+
+					.login-button-wrapper {
+						min-width: 0;
+						width: auto;
+						padding: 0 6px;
+						margin-bottom: 0;
+					}
+				}
+			}
+
+			.login-divider {
+				position: relative;
+				margin: var(--margin-lg) 0;
+				text-align: center;
+				font-size: 0; // hide "or", replace visually below
+
+				&::before {
+					content: "";
+					position: absolute;
+					top: 50%;
+					left: 0;
+					right: 0;
+					border-top: 1px solid var(--border-color);
+				}
+
+				&::after {
+					content: "or log in with";
+					position: relative;
+					background: #fff;
+					padding: 0 12px;
+					font-size: var(--text-sm);
+					color: var(--text-light);
+				}
+			}
+		}
+
+		.page-card-actions {
+			.btn-login {
+				background: var(--blue-600, #2490ef);
+				border-color: var(--blue-600, #2490ef);
+				color: #fff;
+				border-radius: 999px;
+				height: 38px;
+				font-size: 0; // hide translated "Login", replace visually
+
+				&::after {
+					content: "Sign In  →";
+					font-size: var(--text-base);
+					font-weight: var(--weight-medium);
+				}
+
+				&:hover {
+					background: var(--blue-700, #1978c8);
+					border-color: var(--blue-700, #1978c8);
+				}
+			}
+
+			.btn-ldap-login {
+				font-size: var(--text-base); // keep LDAP button's own label
+			}
+		}
+	}
+
+	.sign-up-message {
+		margin-top: var(--margin-lg);
+		margin-bottom: 0;
+		color: var(--text-light);
+		@include get_textstyle("base", "regular");
+
+		a {
+			color: var(--blue-600, #2490ef);
+			font-weight: var(--weight-medium);
+			text-decoration: underline;
+		}
+	}
+
+	.invalid-login {
+		-webkit-animation: wiggle 0.5s linear;
+	}
+
+	@-webkit-keyframes wiggle {
+		8%,
+		41% {
+			-webkit-transform: translateX(-10px);
+		}
+		25%,
+		58% {
+			-webkit-transform: translateX(10px);
+		}
+		75% {
+			-webkit-transform: translateX(-5px);
+		}
+		92% {
+			-webkit-transform: translateX(5px);
+		}
+		0%,
+		100% {
+			-webkit-transform: translateX(0);
+		}
+	}
+}
+
+.page-card-head {
+	padding: 0 0 var(--margin-lg) 0;
+	margin: 0 auto var(--margin-md);
+	text-align: left;
+	max-width: 380px;
+
+	// Logo now lives in the dark hero panel; hide the in-card one.
+	img.app-logo {
+		display: none;
+	}
+
+	h4 {
+		margin-top: 0;
+		font-size: var(--text-3xl, 32px);
+		font-weight: var(--weight-bold, 700);
+		letter-spacing: 0;
+		color: var(--text-color);
+		font-size: 0; // hide translated "Login to {app}"
+
+		&::after {
+			content: "Sign In";
+			display: block;
+			font-size: var(--text-3xl, 32px);
+			font-weight: var(--weight-bold, 700);
+		}
+	}
+}
+
