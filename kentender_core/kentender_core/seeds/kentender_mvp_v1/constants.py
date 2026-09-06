@@ -115,9 +115,8 @@ RSV_SHORT_CODE: Final[str] = "RSV-MOH-SHORT-001"
 USER_MEDICAL: Final[str] = "moh.medicalservices.officer@example.test"
 USER_PUBLIC: Final[str] = "moh.publichealth.officer@example.test"
 USER_STR_REVIEWER: Final[str] = "moh.strategy.reviewer@example.test"
-# BUD-CHG-001 v1.2 §15.2 — Budget Reviewer + Budget Activation Authority
-# collapsed into one Budget Approver role/persona (STR-CHG-001-style merge).
-USER_BUD_APPROVER: Final[str] = "moh.budget.approver@example.test"
+# BUD-CHG-001 v1.3 §15.1 — the required named Budget Approver actor.
+USER_BUD_APPROVER: Final[str] = "beatrice.kamau@moh.example.test"
 USER_VIEWER: Final[str] = "moh.viewer@example.test"
 USER_KISUMU_OFFICER: Final[str] = "kisumu.health.officer@example.test"
 USER_KISUMU_VIEWER: Final[str] = "kisumu.viewer@example.test"
@@ -125,7 +124,10 @@ USER_BUD_DUAL: Final[str] = "moh.budget.officer.authority@example.test"
 # BUD-CHG-001 v1.2 §15.2 — dedicated Budget-only test actors (distinct from
 # the multi-module Strategy+Budget personas above).
 USER_BUD_VIEWER_MOH: Final[str] = "bud.viewer.moh@example.test"
-USER_BUD_AUDITOR: Final[str] = "bud.auditor@example.test"
+# BUD-CHG-001 v1.3 §15.1 — the required named Auditor actor (reused from
+# Strategy's own STR-CHG-001 v1.6 §14.1, which names her but has not itself
+# landed her in any seed code yet — Budget seeds her here first).
+USER_BUD_AUDITOR: Final[str] = "naomi.chebet@moh.example.test"
 USER_CGK_BUD_OFFICER: Final[str] = "cgk.budget.officer@example.test"
 USER_CGK_BUD_APPROVER: Final[str] = "cgk.budget.approver@example.test"
 USER_BUD_VIEWER_KISUMU: Final[str] = "bud.viewer.kisumu@example.test"
@@ -143,7 +145,9 @@ USER_COUNTY_PLANNER: Final[str] = "kisumu.planning.officer@example.test"
 # Demo v2.7 §4.6 — named HoD / HoP / Budget Officer login personas.
 USER_BUSINESS_APPROVER: Final[str] = "moh.business.approver@example.test"
 USER_HOP: Final[str] = "moh.procurement.authority@example.test"
-USER_BUD_OFFICER: Final[str] = "moh.budget.officer@example.test"
+# BUD-CHG-001 v1.3 §15.1 — the required named Budget Officer / Finance
+# Confirmation Officer actor.
+USER_BUD_OFFICER: Final[str] = "josphat.mwangi@moh.example.test"
 # Retired primary denial persona (kept disabled).
 USER_OTHER_ENTITY: Final[str] = "other.entity.officer@example.test"
 
@@ -188,6 +192,14 @@ RETIRED_DEMO_USERS: Final[tuple[str, ...]] = (
 	# collapsed into USER_BUD_APPROVER; these two personas are retired.
 	"moh.budget.reviewer@example.test",
 	"moh.budget.authority@example.test",
+	# BUD-CHG-001 v1.3 §15.1 — the generic-email Officer/Approver/Auditor
+	# personas are retired in favour of the required named actors (Josphat
+	# Mwangi/Beatrice Kamau/Naomi Chebet); a site seeded under the old
+	# constants disables these on the next seed run rather than leaving them
+	# live and unreferenced.
+	"moh.budget.officer@example.test",
+	"moh.budget.approver@example.test",
+	"bud.auditor@example.test",
 	USER_PLAN_APPROVER,
 	USER_OTHER_ENTITY,
 )

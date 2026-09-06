@@ -176,7 +176,7 @@ def _append_scn_fund_short_checks(checks: list[dict[str, Any]]) -> None:
 		)
 	)
 	hwd = frappe.db.get_value(
-		"Budget Line",
+		"Procurement Budget Line",
 		{"generated_reference": C.BL_HWD_2027},
 		["approved_amount", "amount_reserved", "amount_committed"],
 		as_dict=True,
@@ -315,13 +315,13 @@ def validate_kentender_mvp_v1(
 		row = frappe.db.get_value(
 			"Organisation Unit",
 			code,
-			["procuring_entity", "parent_org_unit", "unit_type"],
+			["procuring_entity", "parent_organisation_unit", "unit_type"],
 			as_dict=True,
 		)
 		checks.append(_check(f"org.unit.{code}", bool(row)))
-		if row and row.parent_org_unit:
+		if row and row.parent_organisation_unit:
 			parent_pe = frappe.db.get_value(
-				"Organisation Unit", row.parent_org_unit, "procuring_entity"
+				"Organisation Unit", row.parent_organisation_unit, "procuring_entity"
 			)
 			checks.append(
 				_check(
@@ -454,14 +454,14 @@ def validate_kentender_mvp_v1(
 		)
 	)
 
-	# --- Budget (BUD-CHG-001 v1.2 §15.3 MOH Active baseline, §15.7 CGK isolation) ---
+	# --- Budget (BUD-CHG-001 v1.3 §15.3 MOH Active baseline) ---
 	bud = frappe.db.get_value(
-		"Budget", {"generated_reference": C.BUD_ACTIVE}, ["name", "procuring_entity", "financial_year"], as_dict=True
+		"Procurement Budget", {"generated_reference": C.BUD_ACTIVE}, ["name", "fiscal_year"], as_dict=True
 	)
 	checks.append(_check("budget.exists", bool(bud)))
 	ver = (
 		frappe.db.get_value(
-			"Budget Version",
+			"Procurement Budget Version",
 			{"generated_reference": C.BUD_ACTIVE_V1},
 			["name", "status", "approval_reference", "authorised_total", "submitted_by", "decided_by"],
 			as_dict=True,
@@ -479,7 +479,7 @@ def validate_kentender_mvp_v1(
 
 	line_versions = (
 		frappe.get_all(
-			"Budget Line Version",
+			"Procurement Budget Line Version",
 			filters={"budget_version": ver.name},
 			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		)
@@ -490,7 +490,7 @@ def validate_kentender_mvp_v1(
 		{
 			r.name: r.generated_reference
 			for r in frappe.get_all(
-				"Budget Line", filters={"name": ["in", [lv.budget_line for lv in line_versions]]}, fields=["name", "generated_reference"]
+				"Procurement Budget Line", filters={"name": ["in", [lv.budget_line for lv in line_versions]]}, fields=["name", "generated_reference"]
 			)
 		}
 		if line_versions
@@ -534,35 +534,8 @@ def validate_kentender_mvp_v1(
 			if rsv:
 				checks.append(_check("budget.dhi_finance_integration_reserved", flt(rsv.remaining_amount) > 0, str(rsv)))
 
-	cgk_ver = frappe.db.get_value(
-		"Budget Version",
-		{"generated_reference": C.CGK_BUD_ACTIVE_V1},
-		["name", "status", "budget"],
-		as_dict=True,
-	)
-	checks.append(_check("budget.cgk_active", bool(cgk_ver and cgk_ver.status == "Active")))
-	cgk_lines = (
-		frappe.get_all(
-			"Budget Line Version",
-			filters={"budget_version": cgk_ver.name},
-			fields=["owner_org_unit", "approved_amount"],
-		)
-		if cgk_ver
-		else []
-	)
-	cgk_line = cgk_lines[0] if cgk_lines else None
-	checks.append(
-		_check(
-			"budget.cgk_20m_pe_wide",
-			bool(cgk_line and abs(flt(cgk_line.approved_amount) - 20_000_000) < 0.01 and not cgk_line.owner_org_unit),
-		)
-	)
-	checks.append(
-		_check(
-			"budget.moh_cgk_isolated",
-			bool(bud and cgk_ver and bud.name != cgk_ver.budget),
-		)
-	)
+	# There is no second-PE (Kisumu) Budget baseline under v1.3 (§1.1/§15.6:
+	# "one site is one Procuring Entity... removed with the multi-PE model").
 
 	if include_planning:
 		rsv = frappe.db.get_value(
@@ -1121,6 +1094,18 @@ def validate_kentender_mvp_v1(
 					),
 				)
 			)
+
+	# PLN-CHG-001 v1.2 (Phase 11): the v1.2 Planning stage validates through
+	# the module's own §14.10 validator (same domain services commands use).
+	# The Demand-era "Procurement Plan" block above is permanently inert —
+	# that doctype was dropped in the v1.2 rebuild's Phase 1.
+	if include_planning:
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+			validate_planning_seed,
+		)
+
+		for row in validate_planning_seed():
+			checks.append(_check(row["check"], row["ok"], row.get("detail", "")))
 
 	failed = [c for c in checks if not c["ok"]]
 	ok = not failed

@@ -13,9 +13,11 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import ensure_fiscal_year
+
 from kentender_strategy.api import strategy_consumer_api as api
 from kentender_strategy.services import strategy_consumer as consumer
-from kentender_strategy.services import strategy_contracts as contracts
+from kentender_strategy.services import strategy_consumer as contracts
 from kentender_strategy.services.strategy_authorization import (
 	ROLE_STRATEGY_APPROVER,
 	ROLE_STRATEGY_AUTHOR,
@@ -27,11 +29,12 @@ from kentender_strategy.services.strategy_writes import (
 	save_strategy_structure_draft,
 )
 
-PE = "PE-MOH"
-FY = "FY-2027-2028"
+# STR-BR-010 — the target year must fall within the 2040–2045 fixture plan
+# period (created on demand by fixtures.ensure_fiscal_year).
+FY = "2040-2041"
 
-# AUTH-ADR-001 — these test fixtures kept the old profile_id strings as
-# argument values; map them onto the real Roles those profiles used to grant.
+# These test fixtures kept the old profile_id strings as argument values; map
+# them onto the v1.6 Site-wide business roles.
 _PROFILE_ROLE = {
 	"CAP-STRATEGY-AUTHOR": ROLE_STRATEGY_AUTHOR,
 	"CAP-STRATEGY-APPROVAL-AUTHORITY": ROLE_STRATEGY_APPROVER,
@@ -40,6 +43,7 @@ _PROFILE_ROLE = {
 
 class Phase4TestBase(FrappeTestCase):
 	def setUp(self):
+		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
@@ -54,29 +58,41 @@ class Phase4TestBase(FrappeTestCase):
 		return doc
 
 	def _user(self, label: str) -> str:
-		email = f"str.p4.{label}.{self.suffix}@test.local"
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User", "email": email, "first_name": label, "enabled": 1, "send_welcome_email": 0}
-			).insert(ignore_permissions=True)
-		)
+		email = f"kt.test.str.p4.{label}.{self.suffix}@test.local"
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": label,
+				"enabled": 1,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+		self._track(doc)
 		return email
 
-	def _assign(self, user: str, profile_id: str, pe: str = PE) -> None:
-		frappe.get_doc("User", user).add_roles(_PROFILE_ROLE[profile_id])
-		self._track(
-			frappe.get_doc(
-				{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
-			).insert(ignore_permissions=True)
-		)
+	def _assign(self, user: str, profile_id: str) -> None:
+		"""v1.6 (CU-308) — a real Enabled Site-wide assignment through the
+		administration command; the Role projection follows automatically."""
+		from kentender_core.services import responsibility_administration as administration
 
-	def _plan_and_version(self, pe: str = PE, **version_kwargs) -> tuple[str, str]:
+		outcome = administration.grant(
+			user=user,
+			business_role=_PROFILE_ROLE[profile_id],
+			organisation_unit="",
+			fixture_namespace="STR_CU3XX_TESTS",
+			actor="Administrator",
+		)
+		self._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
+
+	def _plan_and_version(self, **version_kwargs) -> tuple[str, str]:
 		plan = self._track(
 			frappe.get_doc(
 				{
 					"doctype": "Strategic Plan",
 					"title": f"Contracts Test Plan {self.suffix}",
-					"procuring_entity_id": pe,
 					"plan_role": "Primary",
 					"period_start": "2040-07-01",
 					"period_end": "2045-06-30",
@@ -141,7 +157,7 @@ class Phase4TestBase(FrappeTestCase):
 				{
 					"doctype": "Performance Target",
 					"indicator_id": indicator.name,
-					"financial_year_id": FY,
+					"fiscal_year": FY,
 					"comparison": "At least",
 					"target_value": 80,
 				}
@@ -202,14 +218,13 @@ class TestResolveStrategyContext(Phase4TestBase):
 		frappe.db.set_value("Strategic Plan Version", version, "status", "Active")
 
 		# An effective_date decades before this fixture's period (2040-2045)
-		# and before the real seeded MOH plan's period (2023-2028) covers no
-		# primary Active plan for PE-MOH at all.
+		# covers no primary Active plan on the site at all.
 		with self.assertRaises(frappe.DoesNotExistError):
-			consumer.resolve_strategy_context(PE, effective_date="1999-01-01")
+			consumer.resolve_strategy_context(as_of_date="1999-01-01")
 
 	def test_multiple_covering_plans_raises_typed_ambiguous_not_first_match(self):
 		"""Simulates the anomalous state STR-BR-004's overlap guard exists
-		to prevent (two primary Active versions covering the same PE/date)
+		to prevent (two primary Active versions covering the same date)
 		by writing directly at the DB layer — the only way to construct
 		this state for a test, since the real write path correctly refuses
 		to create it. Confirms resolve_strategy_context still fails closed
@@ -224,7 +239,7 @@ class TestResolveStrategyContext(Phase4TestBase):
 		frappe.db.set_value("Strategic Plan Version", v2, "status", "Active")
 
 		with self.assertRaises(frappe.ValidationError):
-			consumer.resolve_strategy_context(PE, effective_date="2042-01-01")
+			consumer.resolve_strategy_context(as_of_date="2042-01-01")
 
 
 class TestCreateStrategySnapshot(Phase4TestBase):
@@ -317,7 +332,6 @@ class TestPlanDraftAndSuccessorCommands(Phase4TestBase):
 
 		created = save_strategy_plan_draft(
 			{
-				"procuring_entity_id": PE,
 				"title": f"New Draft Plan {self.suffix}",
 				"plan_role": "Primary",
 				"period_start": "2028-07-01",

@@ -48,32 +48,6 @@ export async function loginAsAdministrator(page: Page) {
 /** Default seeded KenTender v1 password (see kentender_core.seeds.constants.TEST_PASSWORD). */
 const DEFAULT_SEED_PASSWORD = 'Test@123';
 
-export async function loginAsStrategyManager(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_USER || 'strategy.manager@moh.test',
-		process.env.UI_STRATEGY_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** STR-SUP-005 — Strategy Viewer (see strategy_role_users seed). */
-export async function loginAsStrategyViewer(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_VIEWER_USER || 'moh.viewer@example.test',
-		process.env.UI_STRATEGY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** STR-SUP-005 — Strategy Officer (MOH). */
-export async function loginAsStrategyOfficer(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_OFFICER_USER || 'moh.medicalservices.officer@example.test',
-		process.env.UI_STRATEGY_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
 /**
  * NDS-CHG-001 v1.1 §14.2 — the seeded Departmental Needs actors.
  *
@@ -209,15 +183,6 @@ export async function loginAsProcurementApprover(page: Page) {
 	);
 }
 
-/** STR-SUP-005 — Strategy Viewer on OTHER PE (MOE). */
-export async function loginAsStrategyViewerOtherPe(page: Page) {
-	await login(
-		page,
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'kisumu.health.officer@example.test',
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
 export async function loginAsPlanningAuthority(page: Page) {
 	await login(
 		page,
@@ -281,96 +246,6 @@ export async function loginAsAuditor(page: Page) {
 		page,
 		process.env.UI_AUDITOR_USER || 'auditor@moh.test',
 		process.env.UI_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/**
- * BUD-CHG-001 v1.2 §15.2 — dedicated Budget-only personas (PE-MOH unless
- * noted). Reviewer/Authority are retired: v1.2 collapsed them into one
- * Budget Approver role (see kentender_core.seeds.kentender_mvp_v1.constants
- * RETIRED_DEMO_USERS and the budget-rebuild-kickoff memory).
- */
-
-/** Budget Viewer (PE-MOH, read-only). */
-export async function loginAsBudgetViewer(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_VIEWER_USER || 'bud.viewer.moh@example.test',
-		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/**
- * Holds "Budget Viewer" (so Frappe's own Page.roles gate lets them load
- * /app/budget-funding at all) but has no Procuring Entity scope — the only
- * way to reach Budget's own in-app "Forbidden" state rather than Frappe's
- * generic "Not permitted" dialog. Seeded on demand via
- * kentender_budget.seeds.playwright_ui_fixtures.ensure_scopeless_budget_viewer.
- */
-export async function loginAsBudgetScopelessViewer(page: Page) {
-	await login(page, 'bud.pw.scopeless.viewer@example.test', 'Test@123');
-}
-
-/** Budget Officer (PE-MOH) — Peter Otieno; also holds Finance Confirmation Officer. */
-export async function loginAsBudgetOfficer(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_OFFICER_USER || 'moh.budget.officer@example.test',
-		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** Budget Approver (PE-MOH) — single decide-and-activate role (v1.2 §7). */
-export async function loginAsBudgetApprover(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_APPROVER_USER || 'moh.budget.approver@example.test',
-		process.env.UI_BUDGET_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** Budget Auditor (PE-MOH) — read-only across the funding ledger. */
-export async function loginAsBudgetAuditor(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_AUDITOR_USER || 'bud.auditor@example.test',
-		process.env.UI_BUDGET_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** BUD-AC-008 — dual Officer+Approver, for self-approval-segregation checks (PE-MOH). */
-export async function loginAsBudgetOfficerApprover(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_OFFICER_APPROVER_USER || 'moh.budget.officer.authority@example.test',
-		process.env.UI_BUDGET_OFFICER_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** Kisumu (PE-CGKIS) Budget Officer — cross-PE isolation checks vs PE-MOH. */
-export async function loginAsBudgetOtherEntity(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'cgk.budget.officer@example.test',
-		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** Kisumu (PE-CGKIS) Budget Approver. */
-export async function loginAsBudgetOtherEntityApprover(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_USER || 'cgk.budget.approver@example.test',
-		process.env.UI_BUDGET_OTHER_ENTITY_APPROVER_PASSWORD || DEFAULT_SEED_PASSWORD,
-	);
-}
-
-/** Kisumu (PE-CGKIS) Budget Viewer — cross-PE read-scope denial checks. */
-export async function loginAsBudgetOtherEntityViewer(page: Page) {
-	await login(
-		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_USER || 'bud.viewer.kisumu@example.test',
-		process.env.UI_BUDGET_OTHER_ENTITY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 

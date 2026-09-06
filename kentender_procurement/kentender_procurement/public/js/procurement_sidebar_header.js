@@ -156,7 +156,7 @@
 			["/desk/kt-procurement-home", "/desk/procurement-home"],
 			["/desk/departmental-needs"],
 			["/desk/budget-hub", "/desk/budget-management"],
-			["/desk/planning-workspace", "/desk/procurement-planning", "/desk/planning-hub"],
+			["/desk/procurement-planning"],
 			["/desk/strategy-management"],
 		];
 		for (var g = 0; g < groups.length; g++) {
@@ -169,10 +169,12 @@
 			}
 		}
 		if (/^\/desk\/strategy-builder(\/|$)/.test(path)) add("/desk/strategy-management");
-		if (/^\/desk\/budget-workbench(\/|$)/.test(path) || /^\/desk\/budget-builder(\/|$)/.test(path)) {
-			add("/desk/budget-hub");
-			add("/desk/budget-management");
-		}
+		// FOLLOW_UPS.md FU-04 (closed): /desk/budget-workbench and
+		// /desk/budget-builder were both retired before this branch could ever
+		// match a real navigation — the rebuilt Budget & Funding UI (BUD-CHG-
+		// 001 v1.3) only ever routes under /desk/budget-funding. Confirmed via
+		// repo-wide grep that no live JS/Vue/Python route references either
+		// string any more before removing this dead branch.
 		// The demand-form/-review/-detail/-performance routes and the workspace
 		// they resolved to were all deleted with the Demands module
 		// (NDS-CHG-001 v1.1 Phase 8); Departmental Needs owns its own §10 routes

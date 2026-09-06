@@ -52,7 +52,7 @@ def _upsert_unit(
 		"unit_name": name,
 		"procuring_entity": pe,
 		"unit_type": unit_type,
-		"parent_org_unit": parent or "",
+		"parent_organisation_unit": parent or "",
 		"status": "Active",
 		"fixture_namespace": C.FIXTURE_NS,
 	}
@@ -65,6 +65,26 @@ def _upsert_unit(
 
 
 def upsert_org() -> dict[str, Any]:
+	"""FU-11 (SEED-001 / KT-STD-001 §10.5, 2026-09-05): this legacy stage
+	predates the governed, single-root `Organisation Unit` model
+	(`kentender_core.services.organisation_structure` /
+	`kentender_core.seeds.site_setup`) and still creates a second Procuring
+	Entity (`PE-CGKIS`) — a live one-site-one-PE violation. It is not fully
+	replaced with `site_setup.run()` here: `upsert_canonical_users()`, which
+	runs immediately after this stage in the same orchestrator, still scopes
+	several seeded users to `PE-CGKIS`/`OU-CGK-HEALTH` via a raw `User
+	Permission` grant (the pre-ADR-001-v1.6 authorization model) — removing
+	this stage's PE/unit creation would break that stage too, and rewriting
+	it is a separate, larger piece of work (tracked, not done here).
+
+	What IS fixed here, narrowly: `sdms` and `sdph` were both being inserted
+	as independent root Organisation Units (no `parent`), which trips
+	`Organisation Unit.validate()`'s single-root guard on any site whose root
+	does not already exist — the exact reproduction of FU-11's "Exactly one
+	root organisation unit exists per site" failure. `sdph` now nests under
+	`sdms`, matching the one-tree invariant the doctype itself enforces,
+	without touching the PE-CGKIS/downstream-user coupling above.
+	"""
 	pe_moh = ensure_procuring_entity(
 		C.PE_MOH, C.PE_MOH_NAME, entity_type="Ministry", short_name="MoH"
 	)
@@ -82,7 +102,7 @@ def upsert_org() -> dict[str, Any]:
 	out_cd = _upsert_unit_type(C.OUT_COUNTY_DEPT, "County Department")
 
 	sdms = _upsert_unit(code=C.OU_SDMS, name=C.OU_SDMS_NAME, pe=pe_moh, unit_type=out_sd)
-	sdph = _upsert_unit(code=C.OU_SDPHPS, name=C.OU_SDPHPS_NAME, pe=pe_moh, unit_type=out_sd)
+	sdph = _upsert_unit(code=C.OU_SDPHPS, name=C.OU_SDPHPS_NAME, pe=pe_moh, unit_type=out_sd, parent=sdms)
 	dhp = _upsert_unit(
 		code=C.OU_DIR_DHP, name=C.OU_DIR_DHP_NAME, pe=pe_moh, unit_type=out_dir, parent=sdms
 	)

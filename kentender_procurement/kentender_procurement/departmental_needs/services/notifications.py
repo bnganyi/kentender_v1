@@ -1,4 +1,4 @@
-"""Durable notification effects for Departmental Needs (NDS-CHG-001 v1.1 §8.2).
+"""Durable notification effects for Departmental Needs (NDS-CHG-001 v1.6 §8.2).
 
 Notifications are durable post-commit effects for submit, return, accept,
 decline and withdrawal decisions — not separate business records or
@@ -6,9 +6,10 @@ user-entered messages (§8.2). Follows the established kentender_strategy /
 kentender_budget facade pattern: a thin module wrapper over kentender_core's
 idempotent Notification Log writer that never raises back into the command.
 
-Recipients resolve from native roles and User Permission scope (§6). There is
-no delegation lookup: an acting HoD holds the same Head of User Department role
-with a time-bound User Permission (§1.1, NDS-AC-042).
+Recipients resolve through the AUTH-ADR-001 v1.6 resolver (§6). There is no
+delegation lookup: an acting HoD holds the same Head of User Department
+responsibility through one dated Acting `User Responsibility Assignment`
+(§1.1, NDS-AC-042).
 """
 
 from __future__ import annotations
@@ -86,7 +87,8 @@ _SUBJECT_MESSAGE = {
 
 
 def _reviewers(need) -> list[str]:
-	"""Users holding the HoD role within this Need's exact scope (§4.4)."""
+	"""Users holding an active Head of User Department assignment covering
+	this Need's exact Organisation Unit (§4.4, AUTH-ADR-001 v1.6)."""
 	holders = frappe.get_all(
 		"Has Role",
 		filters={"role": ROLE_HEAD_OF_USER_DEPARTMENT, "parenttype": "User"},
@@ -104,9 +106,8 @@ def _reviewers(need) -> list[str]:
 		for user in enabled
 		if in_scope(
 			user,
-			procuring_entity=need.procuring_entity,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
 			organisation_unit=need.organisation_unit,
-			financial_year=need.financial_year,
 		)
 	)
 
@@ -173,7 +174,10 @@ def notify_need_transition(need, *, action: str) -> list[str | None]:
 					document_type="Departmental Need",
 					document_name=need.name,
 					event_type=event_type,
-					entity_scope=cstr(need.procuring_entity),
+					# The site is one implicit Procuring Entity (AUTH-ADR-001
+					# v1.6 §1.1); the Organisation Unit is the meaningful
+					# entity-scope line for a departmental notification.
+					entity_scope=cstr(need.organisation_unit),
 					route=route,
 					correlation_key=key,
 					from_user=frappe.session.user,

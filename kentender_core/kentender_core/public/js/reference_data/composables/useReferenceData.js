@@ -17,7 +17,23 @@ export function useReferenceData() {
 		pe: { rows: [], count: 0, loading: false, error: null },
 		fy: { rows: [], count: 0, loading: false, error: null },
 		context: { rows: [], count: 0, loading: false, error: null },
+		// KT-STD-001 v1.2 §3A — resolved once, before any per-tab fetch, so an
+		// unauthorized actor sees the inline Forbidden panel instead of four
+		// silently-empty registers.
+		forbidden: null,
 	});
+
+	async function checkAccess() {
+		try {
+			const res = await api.getWorkspace();
+			state.forbidden = res && res.outcome === "FORBIDDEN" ? res.forbidden : null;
+		} catch (e) {
+			// A genuine transport/server failure here falls through to the
+			// existing per-tab server-error handling on the first refreshAll.
+			state.forbidden = null;
+		}
+		return !state.forbidden;
+	}
 
 	async function loadPeTypes() {
 		try {
@@ -29,8 +45,12 @@ export function useReferenceData() {
 		}
 	}
 
-	async function refreshPe(filters = {}) {
-		state.pe.loading = true;
+	// `quiet` refetches in place. RegisterStates swaps the whole table for a
+	// skeleton while `loading` is true, so a refresh triggered by returning to
+	// the register (rather than a genuine first load) would flash the rows away
+	// and back. Quiet keeps them mounted until the new ones land.
+	async function refreshPe(filters = {}, { quiet = false } = {}) {
+		if (!quiet) state.pe.loading = true;
 		state.pe.error = null;
 		try {
 			const res = await api.listProcuringEntities(filters);
@@ -43,8 +63,8 @@ export function useReferenceData() {
 		}
 	}
 
-	async function refreshFy(filters = {}) {
-		state.fy.loading = true;
+	async function refreshFy(filters = {}, { quiet = false } = {}) {
+		if (!quiet) state.fy.loading = true;
 		state.fy.error = null;
 		try {
 			const res = await api.listFinancialYears(filters);
@@ -57,8 +77,8 @@ export function useReferenceData() {
 		}
 	}
 
-	async function refreshContext(filters = {}) {
-		state.context.loading = true;
+	async function refreshContext(filters = {}, { quiet = false } = {}) {
+		if (!quiet) state.context.loading = true;
 		state.context.error = null;
 		try {
 			const res = await api.listPeFyContexts(filters);
@@ -71,9 +91,14 @@ export function useReferenceData() {
 		}
 	}
 
-	async function refreshAll() {
-		await Promise.all([loadPeTypes(), refreshPe(), refreshFy(), refreshContext()]);
+	async function refreshAll(opts = {}) {
+		await Promise.all([
+			loadPeTypes(),
+			refreshPe({}, opts),
+			refreshFy({}, opts),
+			refreshContext({}, opts),
+		]);
 	}
 
-	return { ...toRefs(state), refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, classifyError };
+	return { ...toRefs(state), refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, classifyError, checkAccess };
 }

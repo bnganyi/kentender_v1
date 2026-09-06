@@ -1,10 +1,11 @@
-"""Departmental Needs command layer (NDS-CHG-001 v1.1 §5, §8.2).
+"""Departmental Needs command layer (NDS-CHG-001 v1.6 §5, §8.2).
 
 Every mutating command follows one shape: replay the idempotency key, resolve
 the actor, lock the root row, check the optimistic record version, authorize
-natively (§6), guard the state, validate, mutate, then record one immutable
-decision (§4.5). Authorization uses Frappe roles and User Permissions only —
-no capability or scope-assignment store (NDS-AC-044).
+through the shared resolver (§6), guard the state, validate, mutate, then
+record one immutable decision (§4.5). Authorization is the AUTH-ADR-001 v1.6
+resolver and `User Responsibility Assignment` only — no Frappe User
+Permission, capability or scope-assignment store (§16.4).
 
 The §5.1 initial lifecycle, the §5.2 accepted-successor lifecycle and the §5.3
 withdrawal decision set are all implemented here on the version model.
@@ -75,6 +76,7 @@ from kentender_procurement.departmental_needs.constants import (
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.context import (
+	FY_DOCTYPE,
 	require_open_intake,
 	selectable_financial_year,
 )
@@ -193,6 +195,7 @@ def _record_decision(
 	result: str,
 	principal: str,
 	idempotency_key: str,
+	assignment: str = "",
 	version: str = "",
 	withdrawal_request: str = "",
 	reason: str = "",
@@ -211,8 +214,11 @@ def _record_decision(
 			"withdrawal_request": withdrawal_request or None,
 			"action": action,
 			"actor": principal,
-			"effective_assignment": _effective_assignment(principal, need),
-			"scope": f"{need.procuring_entity}/{need.organisation_unit}/{need.financial_year}",
+			# AUTH-ADR-001 v1.6 §15 — the exact User Responsibility Assignment ID
+			# that authorised this command, as returned by `require_author_command`
+			# / `require_review_command` / `require_create`.
+			"effective_assignment": cstr(assignment),
+			"scope": f"{need.organisation_unit}/{need.financial_year}",
 			"review_task": task or None,
 			"occurred_at": now_datetime(),
 			"reason": cstr(reason).strip(),
@@ -229,26 +235,6 @@ def _record_decision(
 			"request_fingerprint": fingerprint,
 		}
 	).insert(ignore_permissions=True)
-
-
-def _effective_assignment(principal: str, need) -> str:
-	"""§8.4 — the native User Permission scope that authorized this command."""
-	rows = frappe.get_all(
-		"User Permission",
-		filters={
-			"user": principal,
-			"allow": ("in", ["Procuring Entity", "Organisation Unit", "Financial Year"]),
-		},
-		fields=["allow", "for_value"],
-		limit_page_length=0,
-	)
-	relevant = {
-		f"{row.allow}:{row.for_value}"
-		for row in rows
-		if row.for_value
-		in {need.procuring_entity, need.organisation_unit, need.financial_year}
-	}
-	return ",".join(sorted(relevant))
 
 
 # --- Root and version helpers ---------------------------------------------
@@ -342,11 +328,18 @@ def _require_open_successor(need):
 	return frappe.get_doc("Departmental Need Version", successor)
 
 
-def _next_reference(pe: str, financial_year: str) -> tuple[str, str]:
+def _next_reference(financial_year: str) -> tuple[str, str]:
+	"""`NDS-{site PE code}-{FY start year}-{4 digits}` (§4.2).
+
+	The site Procuring Entity is a Frappe Single (AUTH-ADR-001 v1.6 §4.1) —
+	there is exactly one, read directly rather than through a per-record
+	`procuring_entity` field.
+	"""
 	entity_code = cstr(
-		frappe.db.get_value("Procuring Entity", pe, "entity_code") or pe
+		frappe.db.get_single_value("Site Procuring Entity", "pe_code") or "SITE"
 	).removeprefix("PE-")
-	year = cstr(frappe.db.get_value("Financial Year", financial_year, "start_year") or "")
+	start_date = frappe.db.get_value(FY_DOCTYPE, financial_year, "year_start_date")
+	year = cstr(getdate(start_date).year) if start_date else ""
 	prefix = f"NDS-{entity_code}-{year}-"
 	lock_name = f"nds:create:{entity_code}:{year}"[:64]
 	if not frappe.db.sql("select get_lock(%s, 10)", lock_name)[0][0]:
@@ -389,7 +382,6 @@ def _open_task(need, *, task_type: str, version: str = "", withdrawal_request: s
 			"need_version": version or None,
 			"withdrawal_request": withdrawal_request or None,
 			"task_type": task_type,
-			"procuring_entity": need.procuring_entity,
 			"organisation_unit": need.organisation_unit,
 			"financial_year": need.financial_year,
 			"status": TASK_OPEN,
@@ -462,7 +454,7 @@ def _validate_submission(need, version) -> None:
 		fail("NDS_FIELD_REQUIRED", "Indicative quantity must be greater than zero.")
 	if not version.unit:
 		fail("NDS_FIELD_REQUIRED", "Unit is required.")
-	if frappe.db.get_value("Unit Of Measure", version.unit, "status") != "Active":
+	if not frappe.db.get_value("UOM", version.unit, "enabled"):
 		fail("NDS_UNIT_INELIGIBLE", "The selected unit is not an active governed unit.")
 	if not version.required_by_date:
 		fail("NDS_FIELD_REQUIRED", "Required-by date is required.")
@@ -507,7 +499,6 @@ def _content_values(
 
 def create_need(
 	*,
-	procuring_entity: str,
 	organisation_unit: str,
 	financial_year: str,
 	title: str,
@@ -519,7 +510,11 @@ def create_need(
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""Save Draft Version 1 and generate the Need reference (§5.1)."""
+	"""Save Draft Version 1 and generate the Need reference (§5.1).
+
+	The site Procuring Entity is implicit (AUTH-ADR-001 v1.6 §1.1) — there is
+	no `procuring_entity` argument.
+	"""
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
@@ -527,17 +522,16 @@ def create_need(
 		return replay
 	principal = actor(user)
 	fy = selectable_financial_year(financial_year)
-	pe, ou = cstr(procuring_entity).strip(), cstr(organisation_unit).strip()
-	require_create(principal, pe, ou, fy["id"])
-	# NDS-BR-002 / NDS-AC-003 — initial creation requires an Open window.
-	require_open_intake(pe, fy["id"])
-	reference, lock_name = _next_reference(pe, fy["id"])
+	ou = cstr(organisation_unit).strip()
+	assignment = require_create(principal, ou)
+	# NDS-BR-002 / NDS-AC-003 — initial creation requires the flag Open.
+	require_open_intake(fy["id"])
+	reference, lock_name = _next_reference(fy["id"])
 	try:
 		need = frappe.get_doc(
 			{
 				"doctype": "Departmental Need",
 				"need_reference": reference,
-				"procuring_entity": pe,
 				"organisation_unit": ou,
 				"financial_year": fy["id"],
 				"current_state": STATE_DRAFT,
@@ -565,6 +559,7 @@ def create_need(
 			result=STATE_DRAFT,
 			principal=principal,
 			idempotency_key=idempotency_key,
+			assignment=assignment,
 			version=version.name,
 		)
 		return _result(need, action=ACTION_CREATE)
@@ -595,7 +590,7 @@ def update_need(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	if doc.current_state == STATE_ACCEPTED:
 		version, action = _require_open_successor(doc), ACTION_SAVE_SUCCESSOR
 	elif doc.current_state in {STATE_DRAFT, STATE_RETURNED}:
@@ -624,6 +619,7 @@ def update_need(
 		result=doc.current_state,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=version.name,
 		before_hash=before_hash,
 	)
@@ -643,7 +639,7 @@ def submit_need(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	prior = doc.current_state
 	if prior == STATE_ACCEPTED:
 		# §5.2 — the accepted version stays effective, so the root state does not
@@ -652,10 +648,10 @@ def submit_need(
 		action, target, task_type = ACTION_SUBMIT_SUCCESSOR, STATE_ACCEPTED, TASK_SUCCESSOR_ACCEPTANCE
 	elif prior in {STATE_DRAFT, STATE_RETURNED}:
 		version = _current_version(doc)
-		# NDS-BR-002/003 — the initial submission needs an Open window; a
+		# NDS-BR-002/003 — the initial submission needs the flag Open; a
 		# correction of a version submitted before close does not.
 		if prior == STATE_DRAFT:
-			require_open_intake(doc.procuring_entity, doc.financial_year)
+			require_open_intake(doc.financial_year)
 		action = ACTION_SUBMIT if prior == STATE_DRAFT else ACTION_RESUBMIT
 		target, task_type = STATE_SUBMITTED, TASK_INITIAL_ACCEPTANCE
 	else:
@@ -680,6 +676,7 @@ def submit_need(
 		result=target,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=version.name,
 		task=task.name,
 		before_hash=before_hash,
@@ -715,7 +712,7 @@ def review_need(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_review_command(doc, principal)
+	assignment = require_review_command(doc, principal)
 	# NDS-BR-006 / NDS-AC-010 — the maker of a version may never decide it. This
 	# is unconditional and rechecked on the server, never inferred from the UI.
 	if is_owner(doc, principal):
@@ -783,6 +780,7 @@ def review_need(
 		result=target,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=version.name,
 		reason=reason_text,
 		task=task,
@@ -827,7 +825,7 @@ def withdraw_need(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	if doc.current_state not in {STATE_DRAFT, STATE_RETURNED}:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -844,6 +842,7 @@ def withdraw_need(
 		result=STATE_WITHDRAWN,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=doc.current_version,
 		before_hash=before_hash,
 	)
@@ -870,13 +869,13 @@ def create_accepted_need_successor(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_version:
 		fail("NDS_STATE_CONFLICT", "Only an Accepted for planning Need may be updated.")
 	if _open_successor(doc):
 		fail("NDS_OPEN_SUCCESSOR_EXISTS", "This Departmental Need already has an open update.")
-	# NDS-BR-003 — a successor may be proposed while the PE/FY context is active;
-	# it is not gated on the intake window.
+	# NDS-BR-003 — a successor may be proposed while the FY context is active;
+	# it is not gated on the Needs-submission flag.
 	selectable_financial_year(doc.financial_year)
 	accepted = frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
 	copy = _create_version(
@@ -892,6 +891,7 @@ def create_accepted_need_successor(
 		result=STATE_ACCEPTED,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=copy.name,
 		before_hash=before_hash,
 	)
@@ -921,7 +921,7 @@ def cancel_accepted_need_successor(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	successor = _require_open_successor(doc)
 	if successor.version_status != VERSION_DRAFT:
 		fail("NDS_STATE_CONFLICT", "Only a Draft update may be cancelled.")
@@ -936,6 +936,7 @@ def cancel_accepted_need_successor(
 		result=STATE_ACCEPTED,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		version=successor.name,
 		reason=cstr(reason).strip(),
 		before_hash=before_hash,
@@ -1000,7 +1001,7 @@ def request_withdrawal(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_author_command(doc, principal)
+	assignment = require_author_command(doc, principal)
 	if doc.current_state != STATE_ACCEPTED:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -1038,6 +1039,7 @@ def request_withdrawal(
 		result=STATE_ACCEPTED,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		withdrawal_request=request.name,
 		reason=reason_text,
 		task=task.name,
@@ -1077,7 +1079,7 @@ def decide_withdrawal(
 	doc = _locked_need(need)
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
-	require_review_command(doc, principal)
+	assignment = require_review_command(doc, principal)
 	if doc.current_state != STATE_ACCEPTED:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -1150,6 +1152,7 @@ def decide_withdrawal(
 		result=target,
 		principal=principal,
 		idempotency_key=idempotency_key,
+		assignment=assignment,
 		withdrawal_request=request.name,
 		reason=reason_text,
 		task=task,

@@ -140,25 +140,16 @@ def validate_stable_platform_seed(
 	)
 
 	if expect_it_std:
-		std_exists = bool(frappe.db.exists("STD Version", IT_STD_VERSION_CODE))
-		_check("STABLE-STD-001", "IT STD version imported", std_exists)
-		if std_exists:
-			clause_count = frappe.db.count("STD Clause", {"package_id": IT_STD_VERSION_CODE})
-			param_count = frappe.db.count("STD Parameter", {"package_id": IT_STD_VERSION_CODE})
-			_check(
-				"STABLE-STD-002",
-				"IT STD clause count",
-				clause_count >= 94,
-				detail=f"clauses={clause_count}",
-			)
-			_check(
-				"STABLE-STD-003",
-				"IT STD parameter count",
-				param_count >= 155,
-				detail=f"parameters={param_count}",
-			)
-			family_ok = bool(frappe.db.exists("STD Family", IT_STD_FAMILY_CODE))
-			_check("STABLE-STD-004", "IT STD family", family_ok)
+		# STABLE-STD-001..004 checked the imported IT STD package (version,
+		# clause/parameter counts, family). The STD Engine module and all of its
+		# DocTypes were retired on 2026-09-05, so there is nothing left to
+		# assert against — reported as a skip rather than dropped silently.
+		_check(
+			"STABLE-STD-001",
+			"IT STD version imported (STD Engine retired — skip)",
+			True,
+			detail="STD_ENGINE_RETIRED",
+		)
 
 	failed = [c for c in checks if not c["ok"]]
 	return {

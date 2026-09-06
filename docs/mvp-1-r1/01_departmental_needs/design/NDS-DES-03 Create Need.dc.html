@@ -8,15 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
-  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
   <style>
-    .kt-status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 6px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; }
-    .kt-status .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-    .kt-status.is-draft { background: oklch(93% 0.03 250); color: oklch(35% 0.08 250); }
-    .kt-status.is-draft .dot { background: oklch(50% 0.13 250); }
     .kt-readonly-row + .kt-readonly-row { margin-top: 14px; }
-    textarea.input { resize: vertical; min-height: 72px; font-family: var(--font-body); }
   </style>
 </helmet>
 <div style="background: var(--color-bg); width: 1440px; min-height: 1024px; font-family: var(--font-body); color: var(--color-text); display: flex; justify-content: center;">
@@ -24,17 +19,13 @@
 
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
       <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 30px; margin: 0; letter-spacing: 0.01em;">Create need</h1>
-      <span class="kt-status is-draft"><i class="dot"></i>New</span>
+      <span class="kt-status is-draft">New</span>
     </div>
     <p style="font-size: 15px; color: var(--color-neutral-700); max-width: 640px; margin: -14px 0 24px;">Describe one requirement your department expects to include in procurement planning.</p>
 
     <div class="card blueprint" style="margin-bottom: 16px; padding: 20px 24px;">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-        <div class="kt-readonly-row">
-          <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Procuring Entity</div>
-          <div style="font-size: 14.5px; font-weight: 500;">PE-MOH — Ministry of Health</div>
-        </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
         <div class="kt-readonly-row">
           <div style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Department</div>
           <div style="font-size: 14.5px; font-weight: 500;">OU-MOH-DHI — Digital Health</div>

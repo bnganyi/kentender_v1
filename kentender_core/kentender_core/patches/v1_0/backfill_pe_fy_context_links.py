@@ -21,14 +21,19 @@ _LABEL_TARGETS = [
 	("Procurement Plan", "procuring_entity", "financial_year"),
 ]
 _DATE_RANGE_TARGETS = [
-	("Budget", "procuring_entity", "start_date", "end_date"),
+	("Procurement Budget", "procuring_entity", "start_date", "end_date"),
 	("Strategic Plan", "procuring_entity_id", "period_start", "period_end"),
 ]
 
 
 def execute() -> None:
 	for doctype, pe_field, label_field in _LABEL_TARGETS:
-		if not frappe.db.has_column(doctype, "pe_fy_context"):
+		# On a genuinely fresh install this patch's own post_model_sync slot
+		# can run before a downstream app's DocType sync has created this
+		# table at all — has_column()'s get_table_columns() raises
+		# TableMissingError rather than returning False in that case (unlike
+		# a merely-missing column), so table existence must be checked first.
+		if not frappe.db.table_exists(doctype) or not frappe.db.has_column(doctype, "pe_fy_context"):
 			continue
 		resolved = unresolved = 0
 		rows = frappe.get_all(
@@ -46,7 +51,7 @@ def execute() -> None:
 		frappe.logger("auth_migration").info(f"{doctype}: pe_fy_context backfill resolved={resolved} unresolved={unresolved}")
 
 	for doctype, pe_field, start_field, end_field in _DATE_RANGE_TARGETS:
-		if not frappe.db.has_column(doctype, "pe_fy_context"):
+		if not frappe.db.table_exists(doctype) or not frappe.db.has_column(doctype, "pe_fy_context"):
 			continue
 		resolved = unresolved = 0
 		rows = frappe.get_all(

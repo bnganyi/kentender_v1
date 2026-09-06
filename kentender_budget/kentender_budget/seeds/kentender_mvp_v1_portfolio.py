@@ -1,21 +1,23 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""KENTENDER_MVP_V1 Budget seed — BUD-CHG-001 v1.2 §15 deterministic contract.
+"""KENTENDER_MVP_V1 Budget seed — BUD-CHG-001 v1.3 §15 deterministic contract.
 
 Drives the real Budget Version lifecycle commands (save_budget_version_draft,
 save_budget_lines_draft, submit_budget_version, approve_budget_version) as
-the named role actors, not Administrator (§15.8) — this is a genuine
+the named role actors, not Administrator (§15.7) — this is a genuine
 end-to-end exercise of the same domain rules the real UI uses, not a
 raw-insert shortcut. The only post-hoc correction is the lifecycle
 timestamps: the real commands stamp `now_datetime()` and accept no caller
-override, but §15.3/§15.6/§15.7's own narrative dates read naturally as a
-short history ending before "today" — so every timestamp here is expressed
-as an offset from `nowdate()` at seed-run time (never a fixed calendar
-date), which keeps the seed valid indefinitely and satisfies
-`Budget Version.validate()`'s own "approval date cannot be in the future"
-guard (there is no fixture-clock override for Budget, unlike some other
-modules' seeds).
+override, but §15.3/§15.6's own narrative dates read naturally as a short
+history ending before "today" — so every timestamp here is expressed as an
+offset from `nowdate()` at seed-run time (never a fixed calendar date),
+which keeps the seed valid indefinitely and satisfies `Procurement Budget
+Version.validate()`'s own "approval date cannot be in the future" guard.
+
+One site is one Procuring Entity (BUD-CHG-001 v1.3 Phase 4/6): there is no
+second-PE (Kisumu) Budget baseline any more, no PE Fiscal Year Context
+dependency, and every command is keyed by Fiscal Year alone.
 """
 
 from __future__ import annotations
@@ -23,16 +25,35 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import add_days, flt, now_datetime, nowdate
+from frappe.utils import add_days, now_datetime, nowdate
 
-from kentender_budget.services.budget_authorization import CAP_APPROVE, CAP_EDIT
-from kentender_budget.services.budget_permissions import ensure_budget_roles
-from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
+from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
+from kentender_core.seeds._common import ensure_currency_kes
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
 FIXTURE_NS = C.FIXTURE_NS
-FY = "FY-2027-2028"
+FY = "2027-2028"
 FUNDING_SOURCE = "Government of Kenya"
+
+# KT-STD-001 §8.3 — resolved via her real assignment (see _unit_for below),
+# never a name lookup, since this site carries more than one Organisation
+# Unit historically named "Digital Health" (FU-11).
+GRACE = "grace.wanjiku@moh.example.test"
+
+
+def _unit_for(user: str, role: str, unit_name: str) -> str:
+	"""The Organisation Unit named `unit_name` the actor really holds `role`
+	in — the register is authoritative, never a name lookup alone. Mirrors
+	kentender_procurement.procurement_planning.seeds.kentender_mvp_v1's own
+	`_unit_for`, so both modules resolve to the same real unit."""
+	for unit in frappe.get_all(
+		"User Responsibility Assignment",
+		filters={"user": user, "business_role": role, "status": "Enabled"},
+		pluck="organisation_unit",
+	):
+		if unit and frappe.db.get_value("Organisation Unit", unit, "unit_name") == unit_name:
+			return unit
+	return ""
 
 
 def _offset_date(days_ago: int) -> str:
@@ -54,7 +75,7 @@ def _set_version_timestamps(
 	if decided_at:
 		updates["decided_at"] = decided_at
 	if updates:
-		frappe.db.set_value("Budget Version", version_name, updates, update_modified=False)
+		frappe.db.set_value("Procurement Budget Version", version_name, updates, update_modified=False)
 
 
 def _set_event_timestamps(budget_version: str, event_type: str, event_at) -> None:
@@ -73,29 +94,44 @@ def _as_user(email: str):
 	frappe.set_user(email)
 
 
-def _context_id_for(pe: str, fy: str) -> str:
-	"""The PE Fiscal Year Context docname for (pe, fy) — BUD-CHG-001 v1.2
-	Phase 8's save_budget_version_draft takes one context_id, not a raw
-	procuring_entity/financial_year pair. Every caller here already
-	guarantees an Active context exists for the pair before calling this
-	(the callee's own validate_context_for_command re-checks it), so a
-	plain lookup is safe rather than duplicating PEFiscalYearContext's own
-	autoname() convention."""
-	name = frappe.db.get_value("PE Fiscal Year Context", {"procuring_entity": pe, "financial_year": fy}, "name")
-	if not name:
-		frappe.throw(f"Budget seed: no PE Fiscal Year Context exists for {pe}/{fy}")
-	return name
-
-
 def _budget_version_active(generated_reference: str) -> str | None:
 	return frappe.db.get_value(
-		"Budget Version", {"generated_reference": generated_reference, "status": "Active"}, "name"
+		"Procurement Budget Version", {"generated_reference": generated_reference, "status": "Active"}, "name"
 	)
+
+
+def ensure_budget_actor_assignments() -> list[str]:
+	"""§15.1 — grant the 3 required named actors their real Site-wide `User
+	Responsibility Assignment`. The `User` and its Frappe Role projection
+	already exist by the time this runs (`upsert_canonical_users` seeds
+	before Budget in the orchestrator) — this grants the actual authority
+	`authorise_record()` reads, which the old `User Scope Assignment` rows
+	those personas also carry can no longer satisfy. Idempotent:
+	`responsibility_administration.grant` returns the existing assignment on
+	a repeat call (§4.7)."""
+	from kentender_core.services import responsibility_administration as administration
+
+	created: list[str] = []
+	for user, role in (
+		(C.USER_BUD_OFFICER, "Budget Officer"),
+		(C.USER_BUD_OFFICER, "Finance Confirmation Officer"),
+		(C.USER_BUD_APPROVER, "Budget Approver"),
+		(C.USER_BUD_AUDITOR, "Auditor"),
+	):
+		outcome = administration.grant(
+			user=user,
+			business_role=role,
+			organisation_unit="",
+			fixture_namespace=FIXTURE_NS,
+			actor="Administrator",
+		)
+		if outcome.get("created"):
+			created.append(f"{user}:{role}")
+	return created
 
 
 def _upsert_active_baseline(
 	*,
-	pe: str,
 	fy: str,
 	officer: str,
 	approver: str,
@@ -106,10 +142,10 @@ def _upsert_active_baseline(
 	approval_document: str,
 	lines: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
-	"""§15.3/§15.7 — one Active Budget Version with its Budget Lines, driven
+	"""§15.3 — one Active Budget Version with its Budget Lines, driven
 	through the real Officer-submit / Approver-approve commands. Idempotent:
 	if a Budget Version with this exact generated_reference is already
-	Active, the baseline is already correct and nothing is re-run (§15.8:
+	Active, the baseline is already correct and nothing is re-run (§15.7:
 	"a second seed run produces no semantic change")."""
 	from kentender_budget.services import budget_contracts as contracts
 	from kentender_budget.services import budget_line_contracts as lines_svc
@@ -117,7 +153,7 @@ def _upsert_active_baseline(
 
 	existing = _budget_version_active(version_ref)
 	if existing:
-		version = frappe.get_doc("Budget Version", existing)
+		version = frappe.get_doc("Procurement Budget Version", existing)
 		return {"budget": version.budget, "version": existing, "created": False}
 
 	prior_user = frappe.session.user
@@ -125,7 +161,7 @@ def _upsert_active_baseline(
 		_as_user(officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": _context_id_for(pe, fy),
+				"fiscal_year": fy,
 				"approval_reference": approval_reference,
 				"approval_date": _offset_date(60),
 				"authorised_total": authorised_total,
@@ -141,13 +177,13 @@ def _upsert_active_baseline(
 		# clearing Budget rows (standard Frappe series behaviour — a deleted
 		# record's number is not freed), so a reused dev site's next allocation
 		# drifts upward every seed/clear cycle instead of reproducing this
-		# exact id. §15.8 requires the exact stable identifier regardless —
-		# rename both the Budget and its Version to the deterministic §15.3/
-		# §15.7 ids directly; every subsequent call in this function chains on
-		# the real docnames (budget_name/version_name), never generated_reference,
+		# exact id. §15.7 requires the exact stable identifier regardless —
+		# rename both the Budget and its Version to the deterministic §15.3
+		# ids directly; every subsequent call in this function chains on the
+		# real docnames (budget_name/version_name), never generated_reference,
 		# so renaming here is safe at any point in the flow.
-		frappe.db.set_value("Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
-		frappe.db.set_value("Budget Version", version_name, "generated_reference", version_ref, update_modified=False)
+		frappe.db.set_value("Procurement Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
+		frappe.db.set_value("Procurement Budget Version", version_name, "generated_reference", version_ref, update_modified=False)
 
 		lines_result = lines_svc.save_budget_lines_draft(
 			{
@@ -168,17 +204,17 @@ def _upsert_active_baseline(
 
 		# Budget Line generated_reference is likewise auto-allocated (never
 		# reset by clearing) — rename each newly created line to its exact
-		# §15.3/§15.7 code, matched by title (unambiguous within one version).
+		# §15.3 code, matched by title (unambiguous within one version).
 		title_to_line = {
 			r.title: r.budget_line
-			for r in frappe.get_all("Budget Line Version", filters={"budget_version": version_name}, fields=["title", "budget_line"])
+			for r in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version_name}, fields=["title", "budget_line"])
 		}
 		for ln in lines:
 			if ln.get("code"):
 				line_name = title_to_line.get(ln["title"])
 				if not line_name:
 					frappe.throw(f"Budget seed: could not find newly created line {ln['title']!r} to rename")
-				frappe.db.set_value("Budget Line", line_name, "generated_reference", ln["code"], update_modified=False)
+				frappe.db.set_value("Procurement Budget Line", line_name, "generated_reference", ln["code"], update_modified=False)
 
 		submit_result = readiness.submit_budget_version({"budget_version": version_name})
 		if not submit_result.get("ok"):
@@ -206,7 +242,7 @@ def _upsert_active_baseline(
 def _resolve_line_ids(budget_version: str) -> dict[str, str]:
 	"""Budget Line generated_reference -> Budget Line name, for this version."""
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": budget_version},
 		fields=["budget_line"],
 	)
@@ -215,7 +251,7 @@ def _resolve_line_ids(budget_version: str) -> dict[str, str]:
 		return {}
 	return {
 		r.name: r.generated_reference
-		for r in frappe.get_all("Budget Line", filters={"name": ["in", names]}, fields=["name", "generated_reference"])
+		for r in frappe.get_all("Procurement Budget Line", filters={"name": ["in", names]}, fields=["name", "generated_reference"])
 	}
 
 
@@ -224,22 +260,26 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 
 	`include_test_edges=False` (the canonical orchestrator's own call shape,
 	see kentender_core.seeds.kentender_mvp_v1.budget.upsert_budget) seeds
-	only the MOH Active baseline (§15.3) and the Kisumu isolation baseline
-	(§15.7) — the exact deterministic default demo pack. `include_test_edges
-	=True` additionally seeds the isolated successor Version 2 (§15.6),
-	left Submitted-for-approval/undecided, and the isolated Finance/
-	commitment test profiles (§15.5) via `upsert_isolated_finance_profiles`.
+	only the Active baseline (§15.3) — the exact deterministic default demo
+	pack. `include_test_edges=True` additionally seeds the isolated successor
+	Version 2 (§15.6), left Submitted-for-approval/undecided, and the
+	isolated Finance/commitment test profiles (§15.5) via
+	`upsert_isolated_finance_profiles`.
+
+	There is no second-PE (Kisumu) baseline — one site is one Procuring
+	Entity (§1.1/§15.6: "There is no second seeded budget. The v1.2 County
+	Government of Kisumu baseline and its actors are removed with the
+	multi-PE model.").
 	"""
 	frappe.only_for(("System Manager", "Administrator"))
-	ensure_budget_roles()
+	ensure_budget_governance_roles()
+	ensure_budget_actor_assignments()
 	ensure_currency_kes()
-	pe_moh = ensure_procuring_entity(C.PE_MOH, C.PE_MOH_NAME, entity_type="Ministry", short_name="MoH")
-	pe_cgk = ensure_procuring_entity(
-		C.PE_CGKIS, C.PE_CGKIS_NAME, entity_type="County Government", short_name="Kisumu"
-	)
+
+	if not frappe.db.exists("Fiscal Year", FY):
+		frappe.throw(f"Budget seed: ERPNext Fiscal Year {FY} must already be configured (§15.2) — BUDGET_CONFIG_MISSING")
 
 	moh = _upsert_active_baseline(
-		pe=pe_moh,
 		fy=FY,
 		officer=C.USER_BUD_OFFICER,
 		approver=C.USER_BUD_APPROVER,
@@ -251,35 +291,25 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 		lines=(
 			{
 				"title": "Digital health infrastructure programme",
-				"owner_org_unit": C.OU_DIR_DHP,
+				# FU-11 (SEED-001, 2026-09-05): resolved to Grace's real granted
+				# "Digital Health" unit, not the legacy C.OU_DIR_DHP code — the
+				# code named a unit `list_eligible_budget_lines` never matched
+				# against the actor's actual assignment scope.
+				"owner_org_unit": _unit_for(GRACE, "Departmental Author", "Digital Health"),
 				"approved_amount": 100_000_000,
 				"code": C.BL_DHI_2027,
 			},
 			{
 				"title": "Digital health workforce development",
-				"owner_org_unit": C.OU_DIR_HRMD,
+				# SEED-001 §3.5/§3.6: this line is the shared combining line for
+				# PPI-MOH-2027-033's two source allocations — HRMD's Need-3 entry
+				# and Digital Health's Need-4 entry. Giving it a single
+				# department's owner_org_unit would make it ineligible for the
+				# other department's funding call (BUD-BR-007's own scoping
+				# rule); leaving it unset makes it Entity-wide, eligible for both.
+				"owner_org_unit": "",
 				"approved_amount": 60_000_000,
 				"code": C.BL_HWD_2027,
-			},
-		),
-	)
-
-	cgk = _upsert_active_baseline(
-		pe=pe_cgk,
-		fy=FY,
-		officer=C.USER_CGK_BUD_OFFICER,
-		approver=C.USER_CGK_BUD_APPROVER,
-		budget_ref=C.CGK_BUD_ACTIVE,
-		version_ref=C.CGK_BUD_ACTIVE_V1,
-		approval_reference="CGK-FIN-BUD-2027-01 (Demo)",
-		authorised_total=20_000_000,
-		approval_document="/files/kisumu-approved-procurement-budget-2027-28-demo.pdf",
-		lines=(
-			{
-				"title": "County digital services",
-				"owner_org_unit": "",  # PE-wide
-				"approved_amount": 20_000_000,
-				"code": C.CGK_BL_DIGSVC,
 			},
 		),
 	)
@@ -294,12 +324,10 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 	return {
 		"ok": True,
 		"fixture_namespace": FIXTURE_NS,
-		"procuring_entity": pe_moh,
-		"procuring_entity_cgkis": pe_cgk,
-		"budgets": [b for b in (moh.get("budget"), cgk.get("budget")) if b],
-		"codes": [C.BUD_ACTIVE, C.CGK_BUD_ACTIVE],
+		"fiscal_year": FY,
+		"budgets": [b for b in (moh.get("budget"),) if b],
+		"codes": [C.BUD_ACTIVE],
 		"moh": moh,
-		"cgk": cgk,
 		"successor": successor,
 		"include_test_edges": include_test_edges,
 	}
@@ -311,20 +339,20 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 	Left Submitted-for-approval / undecided (populates the pending Approval
 	task screens) — a *separate* isolated test copy is decided (returned or
 	approved) by the tests that need that outcome, never this canonical seed
-	(§15.8: isolated profiles are created/removed by their own tests)."""
+	(§15.7: isolated profiles are created/removed by their own tests)."""
 	from kentender_budget.services import budget_contracts as contracts
 	from kentender_budget.services import budget_line_contracts as lines_svc
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
-	existing = frappe.db.get_value("Budget Version", {"generated_reference": C.BUD_ACTIVE_V2}, "name")
+	existing = frappe.db.get_value("Procurement Budget Version", {"generated_reference": C.BUD_ACTIVE_V2}, "name")
 	if existing:
 		return {"version": existing, "created": False}
 
 	active_name = _budget_version_active(C.BUD_ACTIVE_V1)
 	if not active_name:
 		frappe.throw("Budget seed: MOH Active baseline (Version 1) must exist before seeding the successor.")
-	budget_name = frappe.db.get_value("Budget Version", active_name, "budget")
-	budget_ref = frappe.db.get_value("Budget", budget_name, "generated_reference")
+	budget_name = frappe.db.get_value("Procurement Budget Version", active_name, "budget")
+	budget_ref = frappe.db.get_value("Procurement Budget", budget_name, "generated_reference")
 
 	prior_user = frappe.session.user
 	try:
@@ -355,7 +383,7 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 		prior_identity = {
 			r.budget_line: r
 			for r in frappe.get_all(
-				"Budget Line Version",
+				"Procurement Budget Line Version",
 				filters={"budget_version": active_name},
 				fields=["budget_line", "title", "owner_org_unit", "funding_source"],
 			)
@@ -402,31 +430,23 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 # invoke exactly the one profile they need, never the whole set at once.
 
 
-def _ensure_isolated_fy(start_year: int, pe: str) -> str:
-	"""BUD-BR-001 — one Budget per (Procuring Entity, Financial Year); the
-	canonical MOH baseline already occupies PE-MOH/FY-2027-2028, so each
-	isolated profile needs its own Financial Year to get its own Budget slot
-	without colliding. Financial Year's own identifier/label/dates are
-	strictly generated from `start_year` (BR-003) — there is no custom-named
-	variant — so each profile is given a distinct, otherwise-unused future
-	start_year rather than a synthetic label. Not part of §15.1's config-
-	prerequisite set (those are real, pre-existing Configuration & Governance
-	records this seed must never create); this is scaffolding private to one
-	named isolated test profile."""
-	fy_name = f"FY-{start_year}-{start_year + 1}"
-	if not frappe.db.exists("Financial Year", fy_name):
-		frappe.get_doc({"doctype": "Financial Year", "start_year": start_year}).insert(ignore_permissions=True)
-	if not frappe.db.exists(
-		"PE Fiscal Year Context", {"procuring_entity": pe, "financial_year": fy_name, "context_status": "Active"}
-	):
+def _ensure_isolated_fy(start_year: int) -> str:
+	"""BUD-BR-002 — one Budget per Fiscal Year; the canonical MOH baseline
+	already occupies FY 2027-2028, so each isolated profile needs its own
+	Fiscal Year to get its own Budget slot without colliding. Each profile is
+	given a distinct, otherwise-unused future start_year. Not part of §15.2's
+	config-prerequisite set (those are real, pre-existing Configuration &
+	Governance records this seed must never create); this is scaffolding
+	private to one named isolated test profile, mirroring the test suite's
+	own `_fresh_fy()` pattern."""
+	fy_name = f"{start_year}-{start_year + 1}"
+	if not frappe.db.exists("Fiscal Year", fy_name):
 		frappe.get_doc(
 			{
-				"doctype": "PE Fiscal Year Context",
-				"procuring_entity": pe,
-				"financial_year": fy_name,
-				"context_status": "Active",
-				"active_from": f"{start_year}-01-01",
-				"active_to": f"{start_year + 1}-09-30",
+				"doctype": "Fiscal Year",
+				"year": fy_name,
+				"year_start_date": f"{start_year}-07-01",
+				"year_end_date": f"{start_year + 1}-06-30",
 			}
 		).insert(ignore_permissions=True)
 	return fy_name
@@ -442,14 +462,13 @@ def _isolated_line(
 	from kentender_budget.services import budget_line_contracts as lines_svc
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
-	existing_budget = frappe.db.get_value("Budget", {"generated_reference": budget_ref}, "name")
-	pe = ensure_procuring_entity(C.PE_MOH, C.PE_MOH_NAME, entity_type="Ministry", short_name="MoH")
-	isolated_fy = _ensure_isolated_fy(fy_start_year, pe)
+	existing_budget = frappe.db.get_value("Procurement Budget", {"generated_reference": budget_ref}, "name")
+	isolated_fy = _ensure_isolated_fy(fy_start_year)
 
 	if existing_budget:
 		active_version = _budget_version_active(f"{budget_ref}-V1")
 		if active_version:
-			line_name = frappe.db.get_value("Budget Line", {"generated_reference": line_ref}, "name")
+			line_name = frappe.db.get_value("Procurement Budget Line", {"generated_reference": line_ref}, "name")
 			return active_version, line_name
 
 	prior_user = frappe.session.user
@@ -457,7 +476,7 @@ def _isolated_line(
 		_as_user(C.USER_BUD_OFFICER)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": _context_id_for(pe, isolated_fy),
+				"fiscal_year": isolated_fy,
 				"approval_reference": f"{budget_ref} (Isolated test profile)",
 				"approval_date": _offset_date(30),
 				"authorised_total": approved_amount,
@@ -470,8 +489,8 @@ def _isolated_line(
 		version_name = result["version"]["id"]
 		# See _upsert_active_baseline's own comment: the allocator's naming
 		# Series is never reset by clearing rows, so force the exact stable id.
-		frappe.db.set_value("Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
-		frappe.db.set_value("Budget Version", version_name, "generated_reference", f"{budget_ref}-V1", update_modified=False)
+		frappe.db.set_value("Procurement Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
+		frappe.db.set_value("Procurement Budget Version", version_name, "generated_reference", f"{budget_ref}-V1", update_modified=False)
 
 		lines_result = lines_svc.save_budget_lines_draft(
 			{
@@ -492,8 +511,8 @@ def _isolated_line(
 		if not approve_result.get("ok"):
 			frappe.throw(f"Budget seed: could not approve isolated profile {budget_ref}: {approve_result.get('blockers')}")
 
-		line_name = frappe.db.get_value("Budget Line", {"budget": budget_name}, "name")
-		frappe.db.set_value("Budget Line", line_name, "generated_reference", line_ref, update_modified=False)
+		line_name = frappe.db.get_value("Procurement Budget Line", {"budget": budget_name}, "name")
+		frappe.db.set_value("Procurement Budget Line", line_name, "generated_reference", line_ref, update_modified=False)
 		return version_name, line_name
 	finally:
 		frappe.set_user(prior_user)
@@ -563,8 +582,6 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 		prior_user = frappe.session.user
 		try:
 			_as_user(C.USER_BUD_OFFICER)
-			budget_name = frappe.db.get_value("Budget Version", version_name, "budget")
-			pe = frappe.db.get_value("Budget", budget_name, "procuring_entity")
 			token = check_reserve.check_funding(
 				plan_item="BUD-SC-FIN-SHORT-PPI", plan_version="BUD-SC-FIN-SHORT-PLN", finance_task="BUD-SC-FIN-SHORT-FNT",
 				source_set_hash="BUD-SC-FIN-SHORT-HASH-PRECOND",

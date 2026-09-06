@@ -20,16 +20,13 @@ from typing import Any
 # Menu labels that are Planned (badge + coming-soon capability overview).
 PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
+		"Home",
 		"Analytics",
 		"Evaluation",
 		"Awards",
 		"Contract Management",
-		# No cross-family versions queue page yet; versions are opened from STD Library.
-		"STD Versions",
-		# Temporary decommission: Planning Home is broken against the deleted Demands
-		# doctypes (see docs/mvp-1-r1/01_departmental_needs tracker RBD-3xx, deferred
-		# out of scope) — routed to the same coming-soon overview until it is rebuilt.
-		"Procurement Plans",
+		"Supplier Management",
+		"Tender Configurations",
 	}
 )
 

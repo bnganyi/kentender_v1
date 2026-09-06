@@ -4,7 +4,7 @@ import { loginAsNdsFixtureAuthor, loginAsNdsFixtureReviewer } from "../../helper
 import { collectConsoleErrors, expectScreen, gotoNeeds, resetFixture, selectContext } from "./helpers";
 
 /**
- * NDS-CHG-001 v1.1 — NDS-UI-05 review task
+ * NDS-CHG-001 v1.6 — NDS-UI-05 review task
  * (`/app/departmental-needs/review/{review_task_id}`).
  *
  * The dedicated queue landing (`/review` with no task) was removed on
@@ -13,17 +13,20 @@ import { collectConsoleErrors, expectScreen, gotoNeeds, resetFixture, selectCont
  * notification deep link, or the workspace's own role-aware rows — all three
  * end on the same protected task route, which is unchanged.
  *
- * Fixture: `reset_review_task_fixture` — a Submitted Need under PE-CGKIS with
- * one Open `Initial acceptance` task, rebuilt before each test. It is not the
- * §14.3 demo data (DEBT-07), so these tests may decide the task freely.
+ * Fixture: `reset_review_task_fixture` — a Submitted Need under the dedicated
+ * Playwright Organisation Unit with one Open `Initial acceptance` task,
+ * rebuilt before each test. It is not the §14.3 demo data (DEBT-07), so these
+ * tests may decide the task freely.
  */
 
-const NEED = "NDS-CGKIS-2027-0001";
+let NEED = "";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("NDS-UI-05 review task", () => {
-	test.beforeEach(() => resetFixture("reset_review_task_fixture"));
+	test.beforeEach(() => {
+		NEED = resetFixture<{ need: string }>("reset_review_task_fixture").need;
+	});
 
 	test("reviewer opens the task from My Work and sees the full submitted version", async ({
 		page,
@@ -65,9 +68,10 @@ test.describe("NDS-UI-05 review task", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "");
-		// §12.1 — two Financial Years are selectable, so the year must be
-		// resolved before rows are listed even though this actor has one department.
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		// §12.1 — defensive no-op here: this actor holds exactly one department
+		// grant, so the workspace resolves straight to "workspace" with no
+		// picker to select (see selectContext's own doc comment in helpers.ts).
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page
 			.locator(
@@ -99,9 +103,8 @@ test.describe("NDS-UI-05 review task", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		// §12.1 — two Financial Years are selectable, so the year must be
-		// resolved before rows are listed even though this actor has one department.
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		// §12.1 — defensive no-op here: see the note above.
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 
 		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
@@ -116,7 +119,7 @@ test.describe("NDS-UI-05 review task", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, "/review");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await expect(page).toHaveURL(/\/departmental-needs$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);

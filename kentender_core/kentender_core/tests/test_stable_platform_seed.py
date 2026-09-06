@@ -12,14 +12,17 @@ from kentender_core.seeds.stable_platform_seed.clear import clear_stable_platfor
 from kentender_core.seeds.stable_platform_seed.constants import (
 	IT_DEMAND_CODE,
 	IT_PKG_CODE,
-	IT_STD_VERSION_CODE,
 	WORKS_DEMAND_CODE,
 	WORKS_PKG_CODE,
 	WORKS_PLAN_CODE,
 )
 from kentender_core.seeds.stable_platform_seed.load import load_stable_platform_seed
 from kentender_core.seeds.stable_platform_seed.validate import validate_stable_platform_seed
-from kentender_procurement.std_engine.paths import default_seed_zip_path_v1_1
+
+# The STD Engine was retired on 2026-09-05. These tests used to skip unless the
+# IT STD v1_1 package zip was on disk, and asserted the imported STD Version /
+# clause counts. The seed's STD stage is now a no-op skip, so the guards are
+# gone and the tests cover the rest of the pack unconditionally.
 
 
 class TestStablePlatformSeed(IntegrationTestCase):
@@ -27,9 +30,6 @@ class TestStablePlatformSeed(IntegrationTestCase):
 		frappe.set_user("Administrator")
 
 	def test_load_clear_reload_cycle(self) -> None:
-		if not default_seed_zip_path_v1_1().is_file():
-			self.skipTest("IT STD v1_1 zip not present in docs/std-prod-impl/data")
-
 		clear_stable_platform_seed(purge_non_master=False, skip_guard=True)
 		frappe.db.commit()
 
@@ -56,16 +56,13 @@ class TestStablePlatformSeed(IntegrationTestCase):
 			frappe.db.get_value("Demand", {"demand_id": IT_DEMAND_CODE}, "status"),
 			"Approved",
 		)
-		self.assertTrue(frappe.db.exists("STD Version", IT_STD_VERSION_CODE))
-		self.assertGreaterEqual(
-			frappe.db.count("STD Clause", {"package_id": IT_STD_VERSION_CODE}),
-			94,
+		self.assertEqual(
+			(loaded.get("stages") or {}).get("std_it", {}).get("reason"),
+			"STD_ENGINE_RETIRED",
+			loaded,
 		)
 
 	def test_reset_then_load_is_idempotent(self) -> None:
-		if not default_seed_zip_path_v1_1().is_file():
-			self.skipTest("IT STD v1_1 zip not present in docs/std-prod-impl/data")
-
 		first = load_stable_platform_seed(
 			reset=True,
 			planning_checkpoint="PACKAGE_DRAFT",
@@ -84,9 +81,6 @@ class TestStablePlatformSeed(IntegrationTestCase):
 		self.assertEqual(validation.get("failed_count"), 0, validation)
 
 	def test_clear_removes_it_supplement_rows(self) -> None:
-		if not default_seed_zip_path_v1_1().is_file():
-			self.skipTest("IT STD v1_1 zip not present in docs/std-prod-impl/data")
-
 		load_stable_platform_seed(
 			reset=True,
 			planning_checkpoint="INCLUDED_IN_PLAN",

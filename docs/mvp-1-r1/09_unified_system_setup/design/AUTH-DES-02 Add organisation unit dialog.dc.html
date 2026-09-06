@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #e4e7ec; font-family: var(--font-body); color: var(--color-text); }
+a { color: var(--color-accent-2-700); }
+a:hover { color: var(--color-accent-2-800); }
+</style>
+</helmet>
+<div style="padding:40px 20px 60px">
+
+  <div style="width:1440px;margin:0 auto 18px;padding-bottom:10px;border-bottom:1px dashed var(--color-neutral-400);display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;font-family:var(--font-heading);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">
+    <span style="color:var(--color-accent-700);font-weight:700">AUTH-DES-02 — Add organisation unit dialog</span>
+    <span>Administrator</span>
+    <span>Over AUTH-DES-01, dimmed</span>
+  </div>
+
+  <div style="position:relative;width:1440px;min-height:1024px;margin:0 auto;background:var(--color-bg);border:1px solid var(--color-divider);overflow:hidden">
+
+    <div style="filter:saturate(.55) brightness(1.02);opacity:.9">
+      <div style="max-width:1200px;margin:0 auto;padding:32px 0">
+        <div style="margin-bottom:24px">
+          <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">SYSTEM SETUP</div>
+          <h1 style="margin:0 0 8px;font-family:var(--font-heading);font-size:32px;line-height:1.1">Organisation structure</h1>
+          <p style="margin:0;font-size:14px;color:var(--color-neutral-800);max-width:70ch">Maintain the departments and organisational units used to scope KenTender responsibilities.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:38% 1fr;gap:16px;align-items:start">
+          <div class="card blueprint elev-sm" style="padding:0;gap:0;overflow:visible">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="padding:8px 0 10px">
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 16px 11px 14px"><span style="font-size:14px;font-weight:600">Ministry of Health</span><span style="flex:1"></span><span class="kt-status is-live">Active</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 16px 11px 32px;border-left:2px solid var(--color-accent);background:var(--color-accent-100)"><span style="font-size:14px;font-weight:600;color:var(--color-accent-900)">Directorate of Digital Health and Policy</span><span style="flex:1"></span><span class="kt-status is-live">Active</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 16px 11px 50px"><span style="font-size:14px">Digital Health</span><span style="flex:1"></span><span class="kt-status is-live">Active</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 16px 11px 32px"><span style="font-size:14px">Human Resources Management and Development</span><span style="flex:1"></span><span class="kt-status is-live">Active</span></div>
+            </div>
+          </div>
+          <div class="card blueprint elev-sm" style="gap:0;padding:18px 20px 20px;overflow:visible">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="kt-card-title">Selected unit</div>
+            <div style="height:180px"></div>
+            <div style="display:flex;gap:10px"><button class="btn btn-primary">Add organisation unit</button><button class="btn btn-secondary">Edit name</button><button class="btn btn-secondary">Deactivate</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:120px">
+      <div class="dialog blueprint elev-lg" style="width:520px;max-width:100%;overflow:visible;background:var(--color-surface)" data-screen-label="AUTH-DES-02">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Add organisation unit</div>
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:16px;padding-top:4px">
+
+          <div class="field">
+            <label>Parent organisation unit</label>
+            <div class="input" style="background:var(--color-surface-2);color:var(--color-neutral-800);font-size:14px">Ministry of Health › Directorate of Digital Health and Policy</div>
+          </div>
+
+          <div class="field">
+            <label>Organisation unit name</label>
+            <div class="input" style="font-size:14px">Health Information Systems</div>
+            <div style="font-size:12px;color:var(--color-neutral-700);margin-top:6px">The unit code is generated when you save.</div>
+          </div>
+
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">Add organisation unit</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

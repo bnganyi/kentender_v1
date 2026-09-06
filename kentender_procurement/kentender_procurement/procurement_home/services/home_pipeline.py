@@ -58,7 +58,7 @@ _TM_EXCLUDE_ACTIVE = frozenset(("Cancelled", "Evaluation Ready"))
 
 
 def _count_needs_awaiting_planning(pe: str) -> int:
-	"""Accepted Needs in this PE that no Active Plan yet represents.
+	"""Accepted Needs that no Active Plan yet represents.
 
 	Read through the published Departmental Needs surface, never its tables:
 	`current_accepted_events` is documented as "the published way for a consumer
@@ -66,18 +66,22 @@ def _count_needs_awaiting_planning(pe: str) -> int:
 	projection. That keeps the D1 ownership boundary real for this module too —
 	the architecture guard now covers `procurement_home`, not just Planning.
 
-	Summed across every Financial Year rather than the page's selected one,
-	because the two use different vocabularies: Procurement Home derives an
-	integer start year from Budget's `fiscal_period` (2026), while Needs key on
-	`Financial Year` records (`FY-2027-2028`). Filtering by the selected year
-	would silently reintroduce the permanent zero this stage exists to remove.
+	Summed across every Fiscal Year rather than the page's selected one — the
+	stage is a site-wide funnel count, not one scoped to a single year.
+	NDS-CHG-001 v1.6 moved Departmental Needs onto ERPNext's canonical
+	`Fiscal Year` (previously a bespoke `Financial Year` doctype in a
+	different vocabulary from Budget's own year selector, FOLLOW_UPS FU-07);
+	this reads the same doctype Needs now does. The site has one implicit
+	Procuring Entity (AUTH-ADR-001 v1.6) — `pe` is accepted for the caller's
+	own PE-alias bookkeeping elsewhere in this module but is no longer a
+	filter on the published Needs contract.
 	"""
 	if not frappe.db.exists("DocType", "Departmental Need"):
 		return 0
-	years = frappe.get_all("Financial Year", pluck="name", limit_page_length=0)
+	years = frappe.get_all("Fiscal Year", pluck="name", limit_page_length=0)
 	awaiting = 0
 	for year in years:
-		for payload in current_accepted_events(procuring_entity=pe, financial_year=year):
+		for payload in current_accepted_events(financial_year=year):
 			need = payload.get("need_id") or payload.get("need")
 			if need and planning_usage(need) != USAGE_FULL:
 				awaiting += 1

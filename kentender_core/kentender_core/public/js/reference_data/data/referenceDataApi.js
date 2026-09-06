@@ -42,6 +42,7 @@ function newIdempotencyKey() {
 }
 
 export const referenceDataApi = {
+	getWorkspace: () => call("get_reference_data_workspace", {}),
 	listPeTypes: () => call("list_pe_types", {}),
 
 	// --- Procuring Entity ---

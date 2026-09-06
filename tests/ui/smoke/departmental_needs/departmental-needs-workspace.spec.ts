@@ -11,32 +11,36 @@ import {
 } from "./helpers";
 
 /**
- * NDS-CHG-001 v1.1 — NDS-UI-01 requester workspace (`/app/departmental-needs`)
+ * NDS-CHG-001 v1.6 — NDS-UI-01 requester workspace (`/app/departmental-needs`)
  * and NDS-UI-03 need editor (`/app/departmental-needs/new`).
  *
  * Replaces the pre-v1.1 workspace/create/edit specs, which drove the retired
  * NDS-CHG-002 routes and screens (`departmental-needs-new`, the items table,
  * attachments, indicative cost) that §1.1 removed outright.
  *
- * Fixture: `reset_open_intake_fixture` — an Open intake window and one Draft
- * under PE-CGKIS, because §5.1 gates creation on an Open window and the
- * fixture entity's default window is deliberately Scheduled (the NDS-UI-08
- * spec rewrites that one).
+ * Fixture: `reset_open_intake_fixture` — one Draft under the dedicated
+ * Playwright Organisation Unit. §5.1 gates creation on the Needs-submission
+ * flag being Open; §14.1 requires it already Open on the site's one Fiscal
+ * Year before any seed runs (`kentender_core.seeds.site_setup` owns the
+ * flag), so this fixture only ever builds the Draft — it never opens or
+ * closes the flag itself (see `playwright_ui_fixtures.py`'s own docstring).
  */
 
-const NEED = "NDS-CGKIS-2027-0001";
+let NEED = "";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
-	test.beforeEach(() => resetFixture("reset_open_intake_fixture"));
+	test.beforeEach(() => {
+		NEED = resetFixture<{ need: string }>("reset_open_intake_fixture").need;
+	});
 	test.afterAll(() => clearFixtures());
 
 	test("the workspace lists the author's needs with one action each", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 
 		// §1.1 replaced four summary cards and split action/waiting sections with
@@ -65,7 +69,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 
 		await page.locator('[data-testid="nds-create-need"]').click();
@@ -96,7 +100,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 
 		await page
@@ -118,7 +122,6 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		 * "Required-by date is required." for a field that looked filled in.
 		 * The editor now refuses to emit and names the real problem.
 		 */
-		resetFixture("reset_open_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "/new");
@@ -145,11 +148,10 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		 * load quietly (rows stay mounted) and typing is debounced, so
 		 * data-loading must never flip while filtering.
 		 */
-		resetFixture("reset_open_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
 		await expect(row).toBeVisible();
@@ -197,7 +199,6 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		 * procurement_sidebar_header.js resolves route[0]'s boot alias instead;
 		 * this guards it for direct loads of record routes.
 		 */
-		resetFixture("reset_open_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${NEED}`);
@@ -214,7 +215,6 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		 * which Function.apply spread into single characters — the click was a
 		 * garbage no-op (reported live 2026-08-30).
 		 */
-		resetFixture("reset_open_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${NEED}`);

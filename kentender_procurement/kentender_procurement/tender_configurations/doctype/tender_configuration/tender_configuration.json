@@ -150,10 +150,10 @@
    "reqd": 1
   },
   {
+   "description": "Free-text STD package identifier (e.g. KE-PPRA-IT-2022-04). Was a Link to the STD Version DocType until the STD Engine module was retired on 2026-09-05; the stored values are unchanged plain strings, but nothing validates them against a package registry any more.",
    "fieldname": "std_version",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "STD Version",
-   "options": "STD Version",
    "reqd": 1
   },
   {

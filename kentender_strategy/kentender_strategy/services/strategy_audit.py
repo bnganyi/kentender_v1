@@ -27,6 +27,8 @@ def record_event(
 	summary: str | None = None,
 	correlation_id: str | None = None,
 	capability: str | None = None,
+	business_role: str | None = None,
+	assignment: str | None = None,
 ) -> str:
 	metadata: dict = {}
 	if prior_state:
@@ -48,6 +50,15 @@ def record_event(
 		# alone (the same action name, e.g. "Return", can be exercised under
 		# either the Reviewer or the Approval Authority capability).
 		metadata["capability"] = capability
+	if business_role:
+		metadata["business_role"] = business_role
+	if assignment:
+		# §13 — the exercised `User Responsibility Assignment` ID (tracker D2):
+		# the exact authority the actor held at the instant of the action, so
+		# the trail stays reconstructible after that assignment is later
+		# suspended, expired or revoked. Never a Procuring Entity or
+		# organisation-unit scope — none participates (STR-AC-034).
+		metadata["assignment"] = assignment
 
 	return log_audit_event(
 		event_type=f"strategy.{frappe.scrub(event_type)}",

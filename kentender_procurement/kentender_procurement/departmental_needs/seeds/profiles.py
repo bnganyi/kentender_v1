@@ -1,22 +1,20 @@
-"""Selectable Departmental Needs seed profiles (NDS-CHG-001 v1.1 §14).
+"""Selectable Departmental Needs seed profiles (NDS-CHG-001 v1.6 §14).
 
 §14.7 requires seeds to *call domain builders or public commands that enforce
 the same invariants as production setup*, and requires the default, Planning
 usage, successor, withdrawal and negative profiles to be independently
 selectable and resettable. This module provides both.
 
-Every profile therefore drives the real §8.2 commands rather than writing rows.
-Two consequences follow, and both are deliberate:
+Every profile therefore drives the real §8.2 commands rather than writing
+rows. The Needs-submission flag is a durable, Configuration-&-Governance-owned
+toggle now (§4.1) — unlike the old per-PE/FY `Needs Intake Window`, no profile
+here needs to open or restore it; §14.1's prerequisite is that it is already
+Open on `base.FY`, checked once by `base._require_prerequisites`.
 
-- The §14.1 intake window is `Scheduled` until 1 Sep 2026 and `Closed` after
-  25 Nov 2026, so `create_need` would be refused outside that period. Seeding
-  opens the window for the duration of the build and restores the exact §14.1
-  instants afterwards (`_intake_open`). The fixture is unchanged once seeding
-  finishes; only the commands ran against a temporarily open window.
-- Commands stamp decisions with the wall clock, so the §14.3 design-clock times
-  are applied afterwards by `_stamp`. Nothing else is rewritten: the states,
-  versions, hashes, tasks and published events are exactly what the commands
-  produced.
+Commands still stamp decisions with the wall clock, so the §14.3 design-clock
+times are applied afterwards by `_stamp`. Nothing else is rewritten: the
+states, versions, hashes, tasks and published events are exactly what the
+commands produced.
 
 Each profile owns a fixture namespace so `reset_profile` removes precisely what
 it created. Resets use `frappe.db.delete`, which bypasses the controllers that
@@ -30,12 +28,8 @@ from contextlib import contextmanager
 from typing import Any, Callable
 
 import frappe
-from frappe.utils import add_days, now_datetime
 
-from kentender_core.seeds import kebs_foundation
 from kentender_procurement.departmental_needs.constants import (
-	ROLE_DEPARTMENTAL_AUTHOR,
-	ROLE_HEAD_OF_USER_DEPARTMENT,
 	STATE_ACCEPTED,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
@@ -65,7 +59,6 @@ WITHDRAWAL_REASON = (
 NS_USAGE = f"{base.NS}_USAGE"
 NS_SUCCESSOR = f"{base.NS}_SUCCESSOR"
 NS_WITHDRAWAL = f"{base.NS}_WITHDRAWAL"
-NS_KEBS = f"{base.NS}_KEBS"
 
 
 # --- seeding helpers --------------------------------------------------------
@@ -80,28 +73,6 @@ def _as(user: str):
 		yield
 	finally:
 		frappe.set_user(previous)
-
-
-@contextmanager
-def _intake_open():
-	"""Open the §14.1 window for the build, then restore its exact instants."""
-	base._intake_window()
-	now = now_datetime()
-	frappe.db.set_value(
-		"Needs Intake Window",
-		base.INTAKE_WINDOW,
-		{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
-		update_modified=False,
-	)
-	try:
-		yield
-	finally:
-		frappe.db.set_value(
-			"Needs Intake Window",
-			base.INTAKE_WINDOW,
-			{"opens_at": base.INTAKE_OPENS_AT, "closes_at": base.INTAKE_CLOSES_AT},
-			update_modified=False,
-		)
 
 
 def key(*parts: str) -> str:
@@ -389,178 +360,11 @@ def reset_withdrawal() -> dict[str, Any]:
 	return {"profile": "withdrawal", "removed": requests}
 
 
-# --- §14.6 KEBS first slice -------------------------------------------------
-
-# Actors are Needs-owned; the PE/OU/FY/context are not (see kebs_foundation).
-KEBS_AUTHOR = "requester.kebs@example.test"
-KEBS_REVIEWER = "head.kebs@example.test"
-
-# Inside FY 2026/27, which is the canonical KEBS financial year.
-KEBS_REQUIRED_BY = "2027-03-31"
-KEBS_INTAKE_OPENS_AT = "2026-07-01 00:00:00"
-KEBS_INTAKE_CLOSES_AT = "2026-09-30 23:59:59"
-
-KEBS_NEEDS = (
-	{
-		"source_line": "SRC-KEBS-ICT-001",
-		"title": "Business laptops",
-		"description": "Business laptop computers for mobile officers in the Coast Region office.",
-		"indicative_quantity": 25,
-		"unit": "UNIT-EACH",
-		"expected_operational_result": "Mobile officers can run approved office and standards applications securely.",
-	},
-	{
-		"source_line": "SRC-KEBS-ICT-002",
-		"title": "Desktop computers with monitors",
-		"description": "Desktop computers with monitors replacing unsupported Coast Region workstations.",
-		"indicative_quantity": 15,
-		"unit": "UNIT-EACH",
-		"expected_operational_result": "Fixed workstations replace unsupported equipment at the Coast Region office.",
-	},
-	{
-		"source_line": "SRC-KEBS-ICT-003",
-		"title": "Business tablets",
-		"description": "Business tablets for field officers carrying out inspections away from the office.",
-		"indicative_quantity": 10,
-		"unit": "UNIT-EACH",
-		"expected_operational_result": "Field officers can capture and review inspection information away from the office.",
-	},
-)
-
-
-def apply_kebs() -> dict[str, Any]:
-	"""§14.6 — the KEBS first-slice, built as real Accepted Needs.
-
-	NDS-AC-045 is about the Needs-origin route preserving the same source facts,
-	so it is proved by driving three Needs through the real §5.1 lifecycle to
-	Accepted against the canonical KEBS context — never by creating the facts as
-	direct Planning entries, which would bypass the very flow the criterion
-	exists to test. The direct-entry equivalence is Procurement Planning's own
-	test under PLN-CHG-001.
-
-	The PE, OU, FY and PE Fiscal Year Context come from the shared
-	Configuration & Governance fixture and are never created here (§14.1).
-	"""
-	kebs_foundation.require_installed()
-	author = base._user(KEBS_AUTHOR, "KEBS ICT Requester", (ROLE_DEPARTMENTAL_AUTHOR,))
-	reviewer = base._user(KEBS_REVIEWER, "KEBS ICT Head", (ROLE_HEAD_OF_USER_DEPARTMENT,))
-	for user in (author, reviewer):
-		base._user_permission(user, "Procuring Entity", kebs_foundation.PE)
-		base._user_permission(user, "Organisation Unit", kebs_foundation.OU)
-		base._user_permission(user, "Financial Year", kebs_foundation.FY)
-
-	window = _kebs_window()
-	built = []
-	for spec in KEBS_NEEDS:
-		built.append(_build_kebs_need(spec))
-	frappe.db.set_value(
-		"Needs Intake Window",
-		window,
-		{"opens_at": KEBS_INTAKE_OPENS_AT, "closes_at": KEBS_INTAKE_CLOSES_AT},
-		update_modified=False,
-	)
-	return {"profile": "kebs", "needs": built, "context": kebs_foundation.CONTEXT}
-
-
-def _kebs_window() -> str:
-	"""The PE/FY intake window the KEBS Needs are created inside (§4.1)."""
-	name = f"NDS-IW-{kebs_foundation.PE}-{kebs_foundation.FY}"
-	now = now_datetime()
-	if not frappe.db.exists("Needs Intake Window", name):
-		frappe.get_doc(
-			{
-				"doctype": "Needs Intake Window",
-				"needs_intake_window_id": name,
-				"procuring_entity": kebs_foundation.PE,
-				"financial_year": kebs_foundation.FY,
-				"opens_at": add_days(now, -1),
-				"closes_at": add_days(now, 1),
-				"record_version": 1,
-				"fixture_namespace": NS_KEBS,
-			}
-		).insert(ignore_permissions=True)
-	else:
-		frappe.db.set_value(
-			"Needs Intake Window",
-			name,
-			{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
-			update_modified=False,
-		)
-	return name
-
-
-def _build_kebs_need(spec: dict[str, Any]) -> dict[str, Any]:
-	"""Drive one KEBS Need to Accepted through the real commands."""
-	title = spec["title"]
-	# Idempotent by title within the KEBS entity: the reference is generated by
-	# the command, so the source line is matched on what it produced.
-	already = frappe.db.sql(
-		"""
-		select n.name from `tabDepartmental Need` n
-		join `tabDepartmental Need Version` v on v.departmental_need = n.name
-		where n.procuring_entity = %s and v.title = %s limit 1
-		""",
-		(kebs_foundation.PE, title),
-	)
-	if already:
-		need = already[0][0]
-		return {"source_line": spec["source_line"], "need": need, "idempotent": True}
-
-	with _as(KEBS_AUTHOR):
-		created = lifecycle.create_need(
-			procuring_entity=kebs_foundation.PE,
-			organisation_unit=kebs_foundation.OU,
-			financial_year=kebs_foundation.FY,
-			title=title,
-			description=spec["description"],
-			expected_operational_result=spec["expected_operational_result"],
-			indicative_quantity=spec["indicative_quantity"],
-			unit=spec["unit"],
-			required_by_date=KEBS_REQUIRED_BY,
-			idempotency_key=key("kebs", "create", spec["source_line"]),
-		)
-		submitted = lifecycle.submit_need(
-			need=created["need"],
-			expected_version=created["record_version"],
-			idempotency_key=key("kebs", "submit", spec["source_line"], created["record_version"]),
-		)
-	task, token = _open_task(created["need"], "Initial acceptance")
-	with _as(KEBS_REVIEWER):
-		accepted = lifecycle.review_need(
-			need=created["need"],
-			decision="accept",
-			task=task,
-			expected_version=submitted["record_version"],
-			decision_token=token,
-			idempotency_key=key("kebs", "accept", spec["source_line"], submitted["record_version"]),
-		)
-	_namespace("Departmental Need", created["need"], NS_KEBS)
-	_namespace("Departmental Need Version", accepted["current_accepted_version"], NS_KEBS)
-	return {
-		"source_line": spec["source_line"],
-		"need": created["need"],
-		"accepted_version": accepted["current_accepted_version"],
-		"event_id": accepted["event_id"],
-	}
-
-
-def reset_kebs() -> dict[str, Any]:
-	needs = frappe.get_all(
-		"Departmental Need", filters={"procuring_entity": kebs_foundation.PE}, pluck="name"
-	)
-	if needs:
-		for doctype in (
-			"Departmental Need Event",
-			"Departmental Need Decision",
-			"Departmental Need Review Task",
-			"Need Withdrawal Request",
-		):
-			frappe.db.delete(doctype, {"departmental_need": ("in", needs)})
-		frappe.db.delete("Need Planning Usage Projection", {"departmental_need": ("in", needs)})
-		frappe.db.delete("Departmental Need Version", {"departmental_need": ("in", needs)})
-		frappe.db.delete("Departmental Need", {"name": ("in", needs)})
-	frappe.db.delete("Needs Intake Window", {"fixture_namespace": NS_KEBS})
-	return {"profile": "kebs", "removed": needs}
+# §14.6 KEBS first slice (NDS-AC-045) is retired — SEED-001 §1.1 (2026-09-05)
+# removes the fictitious second Procuring Entity `PE-KEBS` outright rather
+# than rebuilding the profile on a same-site Organisation Unit; see
+# `kentender_core.seeds.kebs_foundation` (deleted) and PLN-CHG-001 v1.13
+# §14.9's matching Planning-side retirement.
 
 
 # --- registry ---------------------------------------------------------------
@@ -571,7 +375,6 @@ PROFILES: dict[str, tuple[Callable[[], Any], Callable[[], Any]]] = {
 	"successor": (apply_successor, reset_successor),
 	"withdrawal_blocked": (apply_withdrawal_blocked, reset_withdrawal),
 	"withdrawal_cleared": (apply_withdrawal_cleared, reset_withdrawal),
-	"kebs": (apply_kebs, reset_kebs),
 }
 
 
@@ -587,8 +390,7 @@ def _resolve(profile: str) -> tuple[Callable[[], Any], Callable[[], Any]]:
 def apply_profile(profile: str = "default", *, commit: bool = False) -> dict[str, Any]:
 	"""§14.7 — apply one independently selectable profile."""
 	apply_fn, _ = _resolve(profile)
-	with _intake_open():
-		result = apply_fn()
+	result = apply_fn()
 	if commit:
 		frappe.db.commit()
 	return result

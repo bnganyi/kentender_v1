@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §8.3/§9.1 — later reservation/commitment lifecycle events:
+"""BUD-CHG-001 v1.3 §8.3/§9.1 — later reservation/commitment lifecycle events:
 `revalidate_reservations`, `release_reservation`, `convert_reservation`,
 `adjust_commitment`. No expenditure contract exists in MVP-1 — the previous
 `ingest_expenditure_snapshot` function and Expenditure Snapshot integration
@@ -21,7 +21,7 @@ from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_reference import allocate_commitment_reference
 
 
-def _require_service_capability(procuring_entity: str) -> None:
+def _require_service_capability() -> None:
 	"""§17.1: downstream service principals authenticate their event, not a
 	Budget Version workflow role. A System Manager / Administrator technical
 	session, or any authenticated user acting for a downstream module, may
@@ -72,7 +72,7 @@ def revalidate_reservations(
 ) -> dict[str, Any]:
 	"""§9.1 `revalidate_reservations` — Current or Needs Attention results and
 	ledger events; no new reservation is created."""
-	_require_service_capability("")
+	_require_service_capability()
 	from kentender_budget.services.budget_contracts import _line_position
 	from kentender_budget.services.budget_audit_contracts import EVENT_REVALIDATED, safe_record_event
 
@@ -111,7 +111,7 @@ def revalidate_reservations(
 def _current_line_version(budget_line: str):
 	from kentender_budget.services.budget_contracts import _active_version, _line_version_for
 
-	budget = frappe.db.get_value("Budget Line", budget_line, "budget")
+	budget = frappe.db.get_value("Procurement Budget Line", budget_line, "budget")
 	version = _active_version(budget) if budget else None
 	return _line_version_for(version.name, budget_line) if version else None
 
@@ -125,7 +125,7 @@ def release_reservation(
 ) -> dict[str, Any]:
 	"""§9.1 `release_reservation` — reduce the remaining amount or set
 	Released, and return the new line position."""
-	_require_service_capability("")
+	_require_service_capability()
 	doc = _resolve_reservation(reservation)
 	if doc.status in ("Converted", "Released"):
 		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
@@ -171,7 +171,7 @@ def convert_reservation(
 	remaining balance into one Procurement Commitment. Excess beyond the
 	remaining reservation is rejected; the unconverted remainder stays
 	reserved (BUD-BR-014)."""
-	_require_service_capability("")
+	_require_service_capability()
 	doc = _resolve_reservation(reservation)
 	contract = (contract or "").strip()
 	if not contract:
@@ -205,8 +205,8 @@ def convert_reservation(
 			title="BUDGET_CONVERSION_EXCEEDS_REMAINDER",
 		)
 
-	budget = frappe.get_doc("Budget", doc.budget)
-	ref = allocate_commitment_reference(budget.procuring_entity)
+	budget = frappe.get_doc("Procurement Budget", doc.budget)
+	ref = allocate_commitment_reference()
 	com = frappe.get_doc(
 		{
 			"doctype": "Procurement Commitment",
@@ -254,7 +254,7 @@ def adjust_commitment(
 	"""§9.1 `adjust_commitment` — apply a contract variation/cancellation to
 	an Active commitment's current amount after locked revalidation. An
 	increase must be covered by the line's current available balance."""
-	_require_service_capability("")
+	_require_service_capability()
 	doc = _resolve_commitment(commitment)
 	if doc.status != "Active":
 		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")

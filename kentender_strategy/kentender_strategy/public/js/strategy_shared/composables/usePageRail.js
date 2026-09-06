@@ -3,20 +3,28 @@
 // implementation (AGENTS.md §6.6), not a normal Vue child component. This
 // repo's shared esbuild config does not mark "vue" external, so every bundle
 // carries its own separate copy of the Vue runtime; a component object built
-// by one bundle's Vue instance loses its internal wiring (confirmed live:
-// scoped-CSS attributes silently failed to apply) when rendered as a child
-// vnode by a *different* bundle's Vue instance. Mounting it as its own
-// isolated app — kentender_core's kt_industry_page_rail.bundle.js — and only
-// exposing an imperative update()/unmount() handle avoids crossing that
-// boundary. kt_industry_page_rail.bundle.js must already be loaded (via
-// frappe.require alongside the page's own bundle in its *_page.js) before
-// this composable's onMounted() runs.
-import { onMounted, onUnmounted, watch } from "vue";
+// by one bundle's Vue instance loses its internal wiring when rendered as a
+// child vnode by a *different* bundle's Vue instance. Mounting it as its own
+// isolated app and only exposing an imperative update()/unmount() handle
+// avoids crossing that boundary.
+//
+// Inside Strategy.vue's tree the root owns the one rail and provides a trail
+// publisher; a screen calling this composable then only publishes its trail
+// (on mount, on KeepAlive re-activation and on change) — it never mounts a
+// second rail that would be torn down on the next screen switch.
+import { inject, onActivated, onMounted, onUnmounted, watch } from "vue";
+
+export const STRATEGY_RAIL = "kt-strategy-rail";
 
 export function usePageRail(elRef, trailRef, opts) {
-	// CTX-CHG-001 — opts: { showPeSwitcher, onPeChange }. Dormant by default;
-	// a page that opts in receives the global PE switcher in the rail and its
-	// onPeChange callback when the user switches entity.
+	const publisher = inject(STRATEGY_RAIL, null);
+	if (publisher) {
+		const publish = () => publisher.setTrail(trailRef.value);
+		onMounted(publish);
+		onActivated(publish);
+		watch(trailRef, publish);
+		return;
+	}
 	let handle = null;
 	onMounted(() => {
 		handle = kentender_core.industry.mountPageRail(elRef.value, {

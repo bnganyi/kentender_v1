@@ -9,18 +9,18 @@
 <x-dc>
 
 <helmet>
-  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
-  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
   <style>
     body { margin: 0; }
     .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); }
     .content { max-width: 900px; margin: 0 auto; padding: 32px 0 40px; }
     .page-title { margin: 0 0 8px; }
-    .page-desc { margin: 0 0 8px; color: color-mix(in srgb, var(--color-text) 65%, transparent); font-size: 15px; max-width: 70ch; }
+    .page-desc { margin: 0 0 8px; color: var(--color-neutral-800); font-size: 15px; max-width: 70ch; }
     .card-pad { padding: 20px; margin-top: 20px; }
     .kt-card-title { margin-bottom: 14px; }
     .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
-    .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 4px; }
+    .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
     .ro-field .val { font-size: 15px; }
     .footer-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px 0; border-top: 1px solid var(--color-divider); margin-top: 32px; }
   </style>
@@ -33,7 +33,6 @@
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="field-grid">
-        <div class="ro-field"><label>Procuring Entity</label><div class="val">PE-MOH — Ministry of Health</div></div>
         <div class="ro-field"><label>Department</label><div class="val">OU-MOH-DHI — Digital Health</div></div>
         <div class="ro-field"><label>Financial Year</label><div class="val">FY 2027/28</div></div>
       </div>
@@ -49,6 +48,10 @@
         <div class="field" style="grid-column: 1 / -1">
           <label>Description</label>
           <textarea class="input">Assess the security of the national digital health platform and provide a prioritised remediation report.</textarea>
+        </div>
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Expected operational result</label>
+          <textarea class="input">The Ministry receives a prioritised and actionable security remediation plan.</textarea>
         </div>
         <div class="field">
           <label>Quantity</label>
@@ -69,7 +72,7 @@
       <div class="kt-card-title">Funding</div>
       <div class="field-grid">
         <div class="field">
-          <label>Budget Line</label>
+          <label>Procurement Budget Line</label>
           <select class="input"><option>MOH-BL-DHI-2027 — Digital health infrastructure programme</option></select>
         </div>
         <div class="ro-field"><label>Currency</label><div class="val">KES</div></div>

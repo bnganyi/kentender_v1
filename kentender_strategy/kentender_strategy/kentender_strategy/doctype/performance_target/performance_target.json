@@ -10,7 +10,7 @@
   "target_id",
   "indicator_id",
   "col_id",
-  "financial_year_id",
+  "fiscal_year",
   "target_by_date",
   "section_value",
   "comparison",
@@ -48,11 +48,11 @@
    "label": "Col Id"
   },
   {
-   "fieldname": "financial_year_id",
+   "fieldname": "fiscal_year",
    "fieldtype": "Link",
-   "label": "Financial Year",
-   "options": "Financial Year",
-   "description": "Anchors an annual target to a configured Financial Year. Exactly one of Financial Year / Target By Date must be set."
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
+   "description": "Anchors an annual target to one ERPNext Fiscal Year overlapping the plan period. Exactly one of Fiscal Year / Target By Date must be set."
   },
   {
    "fieldname": "target_by_date",
@@ -99,7 +99,7 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-23 00:00:00.000000",
+ "modified": "2026-09-05 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Performance Target",
@@ -146,11 +146,11 @@
    "create": 0,
    "delete": 0,
    "email": 0,
-   "export": 0,
+   "export": 1,
    "print": 0,
    "read": 1,
    "report": 1,
-   "role": "Strategy Viewer",
+   "role": "Auditor",
    "share": 0,
    "write": 0
   }

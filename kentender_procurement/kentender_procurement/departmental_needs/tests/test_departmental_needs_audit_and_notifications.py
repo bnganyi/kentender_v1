@@ -1,4 +1,4 @@
-"""§8.4 audit capture and §8.2 notification effects for NDS-CHG-001 v1.1.
+"""§8.4 audit capture and §8.2 notification effects for NDS-CHG-001 v1.6.
 
 Both surfaces were written in Phase 2 and never asserted. They are grouped here
 because they share one property that makes them dangerous: **each is a durable
@@ -14,11 +14,23 @@ exactly why the recipient rules need direct tests: with the swallow in place, a
 broken scope lookup would not raise, would not fail a command, and would not
 show up anywhere except an absent row.
 
-The scope assertions use the §14.2 seed's deliberate asymmetry: the substantive
-Head of User Department is scoped to **both** organisation units, while the
-acting Head is scoped to Digital Health **only**. A Need raised in HRMD must
-therefore reach one of them and not the other — the cheapest available proof
-that recipients come from User Permission scope rather than from the role name.
+The scope assertions use a deliberate asymmetry: REVIEWER (Peter) holds Head of
+User Department in **both** Organisation Units the fixture Needs live in
+(NDS-CHG-001 v1.6 §14.2), while a second, test-local Head of User Department is
+granted **Digital Health only**. A Need raised in HRMD must therefore reach
+Peter and not the other — the cheapest available proof that recipients come
+from a real `User Responsibility Assignment` scope, never from the role name
+alone.
+
+`ACTING_REVIEWER` (Julia) is deliberately not excluded from the Digital Health
+assertion below: SEED-001 §3.1 (2026-09-05, `kentender_core.seeds.site_setup`)
+widens her Acting grant to 2026-09-01–2027-06-30 so the canonical seed stays
+runnable regardless of real calendar date (NDS-CHG-001 v1.8's literal
+1 Oct-30 Nov 2026 window would otherwise make Need-4's acceptance step fail
+outside that window — see FOLLOW_UPS). That widened window is real-time-active
+for the whole of this repository's practical test-running life, so a Digital
+Health submission now durably reaches her too — this is no longer a
+narrow-window flake, it is the new steady state.
 """
 
 from __future__ import annotations
@@ -26,21 +38,29 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.services.responsibility_administration import grant
+from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	ACTING_REVIEWER,
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
-	OU_DIGITAL_HEALTH,
-	OU_HRMD,
-	PE,
 	PLANNER,
 	REVIEWER,
+	_granted_units,
 )
 from kentender_procurement.departmental_needs.services import lifecycle, notifications
 from kentender_procurement.departmental_needs.tests.test_departmental_needs_lifecycle import (
 	REASON,
+	NS_TEST_GRANT,
 	DepartmentalNeedsCommandCase,
 )
+
+# A second Head of User Department, Digital Health only — distinct from both
+# REVIEWER (who holds it in both units) and AUTHOR (the fixture Need's owner,
+# so reusing DepartmentalNeedsCommandCase.second_reviewer() here would make
+# the author their own reviewer and defeat the "not the author" assertion).
+SECOND_HOD = "nds.test.second.hod@example.test"
 
 
 class NotificationCase(DepartmentalNeedsCommandCase):
@@ -62,32 +82,64 @@ class NotificationCase(DepartmentalNeedsCommandCase):
 	def create_in(self, unit: str):
 		frappe.set_user(AUTHOR)
 		return lifecycle.create_need(
-			procuring_entity=PE,
 			organisation_unit=unit,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(),
 		)
 
+	def ensure_second_hod(self) -> str:
+		if not frappe.db.exists("User", SECOND_HOD):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": SECOND_HOD,
+					"first_name": "Second",
+					"last_name": "Reviewer",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=SECOND_HOD,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return SECOND_HOD
+
 
 class TestTransitionNotificationRecipients(NotificationCase):
-	"""§8.2 — durable notification effects, addressed by native scope (§6)."""
+	"""§8.2 — durable notification effects, addressed by real scope (§6)."""
 
 	def test_submission_reaches_the_reviewers_and_not_the_author(self):
 		# The author already knows they submitted; the point of the effect is to
-		# raise the task with whoever can act on it.
-		submitted = self.submit(self.create_in(OU_DIGITAL_HEALTH))
+		# raise the task with whoever can act on it. Julia (ACTING_REVIEWER)
+		# holds a real, currently-effective Digital Health grant too (see the
+		# module docstring), so she is a genuine third reviewer here.
+		second = self.ensure_second_hod()
+		submitted = self.submit(self.create_in(self.ou))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
-		self.assertEqual(told, sorted([ACTING_REVIEWER, REVIEWER]))
+		self.assertEqual(told, sorted([ACTING_REVIEWER, REVIEWER, second]))
 		self.assertNotIn(AUTHOR, told)
 
 	def test_a_reviewer_scoped_to_another_unit_is_never_told(self):
-		# The disclosure case. Both users hold Head of User Department; only one
-		# holds an Organisation Unit permission for HRMD. Telling the other would
-		# leak the existence and title of another department's Need.
-		submitted = self.submit(self.create_in(OU_HRMD))
+		# The disclosure case. REVIEWER and ACTING_REVIEWER both hold Head of
+		# User Department somewhere; only REVIEWER holds it for HRMD (KT-STD-001
+		# §8.3's own Cartesian-product fixture also gives AUTHOR — the Need's
+		# own owner — Head of User Department there, independent of this
+		# submission's authorship: `_reviewers()` scans by real scope, not by
+		# excluding the owner, so she is correctly told about it too, in her
+		# reviewer capacity). Telling ACTING_REVIEWER would leak the existence
+		# and title of another department's Need.
+		ou_hrmd = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)["Human Resources Management and Development"]
+		submitted = self.submit(self.create_in(ou_hrmd))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
-		self.assertEqual(told, [REVIEWER])
+		self.assertEqual(told, sorted([AUTHOR, REVIEWER]))
 		self.assertNotIn(ACTING_REVIEWER, told)
 
 	def test_a_decision_goes_back_to_the_author_alone(self):
@@ -115,7 +167,7 @@ class TestTransitionNotificationRecipients(NotificationCase):
 	def test_replaying_a_command_does_not_notify_twice(self):
 		# The correlation key carries the state token, so a replay collapses onto
 		# the row the first call wrote rather than re-alerting every reviewer.
-		created = self.create_in(OU_DIGITAL_HEALTH)
+		created = self.create_in(self.ou)
 		key = self.key()
 		frappe.set_user(AUTHOR)
 		payload = dict(
@@ -143,7 +195,7 @@ class TestTransitionNotificationRecipients(NotificationCase):
 		# The `except Exception` swallow is deliberate (§8.2): the state change
 		# has already committed, so an alerting fault must not surface as a
 		# command failure. Proven directly rather than assumed from reading it.
-		created = self.create_in(OU_DIGITAL_HEALTH)
+		created = self.create_in(self.ou)
 		original = notifications.emit_notification_log
 
 		def explode(**kwargs):
@@ -212,29 +264,32 @@ class TestDecisionAuditCapture(DepartmentalNeedsCommandCase):
 		self.assertEqual(self.envelope(accepted["need"], "Accept for planning").actor, REVIEWER)
 		self.assertEqual(self.envelope(accepted["need"], "Submit").actor, AUTHOR)
 
-	def test_the_scope_names_the_needs_own_pe_ou_and_year(self):
+	def test_the_scope_names_the_needs_own_organisation_unit_and_year(self):
+		# AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit Procuring
+		# Entity, so the scope string carries no PE segment any more.
 		accepted = self.accepted()
 		self.assertEqual(
 			self.envelope(accepted["need"], "Accept for planning").scope,
-			f"{PE}/{OU_DIGITAL_HEALTH}/{FY}",
+			f"{self.ou}/{FY}",
 		)
 
-	def test_the_effective_assignment_names_the_user_permissions_that_authorised_it(self):
-		# NDS-AC-042 / §8.4 — the audit records *which native scope rows* carried
-		# the authority, so an acting arrangement remains reconstructable after
-		# the assignment is revoked and the User Permission rows are gone.
+	def test_the_effective_assignment_names_the_authorising_ura(self):
+		# AUTH-ADR-001 v1.6 §15 — the audit records the exact User
+		# Responsibility Assignment that authorised the decision, so an
+		# acting arrangement remains reconstructable after the assignment is
+		# later revoked.
 		accepted = self.accepted()
 		assignment = self.envelope(accepted["need"], "Accept for planning").effective_assignment
-		self.assertEqual(
-			sorted(assignment.split(",")),
-			sorted(
-				[
-					f"Financial Year:{FY}",
-					f"Organisation Unit:{OU_DIGITAL_HEALTH}",
-					f"Procuring Entity:{PE}",
-				]
-			),
+		row = frappe.db.get_value(
+			"User Responsibility Assignment",
+			assignment,
+			["user", "business_role", "organisation_unit", "status"],
+			as_dict=True,
 		)
+		self.assertEqual(row.user, REVIEWER)
+		self.assertEqual(row.business_role, ROLE_HEAD_OF_USER_DEPARTMENT)
+		self.assertEqual(row.organisation_unit, self.ou)
+		self.assertEqual(row.status, "Enabled")
 
 	def test_the_state_hashes_bracket_the_change_rather_than_repeating_it(self):
 		# before != after is the whole point: a decision that recorded the same

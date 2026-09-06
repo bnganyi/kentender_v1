@@ -25,10 +25,7 @@ from kentender_procurement.tender_configurations.services.configuration_home imp
 from kentender_procurement.tender_configurations.services.e1_nssf_fixture_mapper import (
 	map_all_cfg_blobs,
 )
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-	ensure_active_canonical_ppra_it_std,
-)
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.services.schema_compiler import (
 	compile_schema_from_mapped,
 )
@@ -375,8 +372,8 @@ def seed_e1_nssf_tender_configuration(*, clear: bool = True) -> dict[str, Any]:
 
 	mapped = map_all_cfg_blobs()
 	profile = mapped["profile"]
-	std_ensure = ensure_active_canonical_ppra_it_std(force_reimport=False)
-	std_id = cstr(std_ensure.get("packageId") or CANONICAL_PACKAGE_ID)
+	# STD Engine retired 2026-09-05 — no package to activate; std_version is a label.
+	std_id = CANONICAL_PACKAGE_ID
 	entity = _ensure_pe(profile.get("procuring_entity_name") or "NSSF Staff Pension Scheme")
 	entity_name = (
 		frappe.db.get_value("Procuring Entity", entity, "entity_name")

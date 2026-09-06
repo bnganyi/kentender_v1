@@ -114,8 +114,8 @@ _SOURCE_CONFIG: dict[str, dict[str, Any]] = {
         "code_field": "objective_code",
         "material_fields": ["objective_code"],
     },
-    "Budget Line": {
-        "doctype": "Budget Line",
+    "Procurement Budget Line": {
+        "doctype": "Procurement Budget Line",
         "code_field": "budget_line_code",
         "material_fields": ["amount_allocated", "is_active"],
     },
@@ -159,7 +159,7 @@ _STALE_MESSAGES: dict[str, tuple[str, str]] = {
         "Source Strategy Objective state changed after handoff.",
         "Review strategy alignment and regenerate the handoff.",
     ),
-    "Budget Line": (
+    "Procurement Budget Line": (
         "Source Budget Line allocation or active status changed after handoff.",
         "Regenerate Budget Funding Confirmation.",
     ),

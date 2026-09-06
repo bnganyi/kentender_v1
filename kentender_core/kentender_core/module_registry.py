@@ -9,30 +9,20 @@ from typing import Any
 # Canonical module definitions — keep in sync with public/js/kt_module_registry.js
 KT_MODULES: dict[str, dict[str, Any]] = {
 	"strategy": {
-		# MVP-1 Strategy Alignment — keep in sync with kt_module_registry.js + hooks.page_js.
-		# STR-CHG-001 v1.3 Phase 8: updated to the 3 Phase 7 production routes
-		# after the 12 pre-rebuild legacy routes were deleted. This entry (and
-		# the matching one in kt_module_registry.js) is confirmed dead code —
-		# no live caller reaches kentender_core.kt_shell/kt_state/kt_nav with
-		# moduleId "strategy" anywhere in the repo — so this update keeps the
-		# file internally consistent without wiring it into anything live.
-		# See IMPLEMENTATION_TRACKER.md Phase 8 decision log for the AGENTS.md
-		# §6.5 "zero production callers" claim: true for this "strategy"
-		# entry, but NOT true of kt_state generally — kentender_procurement's
-		# planning_register_bind.js/planning_builder_bind.js do call
-		# kentender_core.kt_state.save("procurement_planning", ...) for real.
+		# STR-CHG-001 v1.7 §10 — one Desk Page ("strategy") carries every
+		# canonical Strategy route (/app/strategy, /app/strategy/plan/{id}...,
+		# /app/strategy/approval/{id}...). This entry (and the matching one in
+		# kt_module_registry.js) is confirmed dead code — no live caller
+		# reaches kentender_core.kt_shell/kt_state/kt_nav with moduleId
+		# "strategy" (AGENTS.md §6.5) — kept internally consistent only.
 		"workspace_label": "Strategy Alignment",
 		"sidebar_workspace_key": "procurement",
-		"builder_page": "strategy-plan-workspace",
-		"desk_page": "strategy-portfolio",
+		"builder_page": "",
+		"desk_page": "strategy",
 		"form_doctype": "",
 		"state_key": "kt_strategy_workbench_state",
 		"select_key": "kt_strategy_workspace_select",
-		"route_prefixes": (
-			"strategy-portfolio",
-			"strategy-plan-workspace",
-			"strategy-review-task",
-		),
+		"route_prefixes": ("strategy",),
 		"sidebar_parent": "Procurement",
 	},
 	"budget": {
@@ -68,18 +58,20 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"sidebar_parent": "Procurement",
 	},
 	"procurement_planning": {
+		# PLN-CHG-001 v1.2 — one Vue-in-Desk page owns the workspace and its
+		# task deep links; record pages arrive with their slices.
 		"workspace_label": "Procurement Planning",
 		"sidebar_workspace_key": "procurement planning",
-		"desk_page": "planning-workspace",
-		"builder_page": "procurement-plan-builder",
-		"form_doctype": "Procurement Plan",
+		"desk_page": "procurement-planning",
+		"builder_page": "procurement-planning",
+		"form_doctype": "Annual Plan",
 		"state_key": "kt_pp_workbench_state",
 		"select_key": "kt_pp_workspace_select",
 		"route_prefixes": (
-			"planning-workspace",
-			"procurement-plan-register",
-			"procurement-plan-builder",
-			"Form/Procurement Plan",
+			"procurement-planning",
+			"departmental-procurement-plan",
+			"annual-procurement-plan",
+			"procurement-plan-item",
 		),
 		"sidebar_parent": "Procurement",
 	},

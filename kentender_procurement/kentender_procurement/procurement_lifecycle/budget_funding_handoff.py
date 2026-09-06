@@ -111,13 +111,13 @@ def _find_budget_line(budget_line_code: str) -> dict[str, Any] | None:
         "is_active",
     ]
     # Direct name lookup (fast path — name == budget_line_code in most cases)
-    if frappe.db.exists("Budget Line", budget_line_code):
-        row = frappe.db.get_value("Budget Line", budget_line_code, fields, as_dict=True)
+    if frappe.db.exists("Procurement Budget Line", budget_line_code):
+        row = frappe.db.get_value("Procurement Budget Line", budget_line_code, fields, as_dict=True)
         if row:
             return row
     # Field-based fallback for cases where naming series differs
     rows = frappe.db.get_all(
-        "Budget Line",
+        "Procurement Budget Line",
         filters={"budget_line_code": budget_line_code},
         fields=fields,
         limit=1,
@@ -175,7 +175,7 @@ def create_budget_funding_confirmation(
     budget_frappe_name: str = str(bl.get("budget") or "")
     budget_code: str = ""
     if budget_frappe_name:
-        budget_name_field = frappe.db.get_value("Budget", budget_frappe_name, "budget_name")
+        budget_name_field = frappe.db.get_value("Procurement Budget", budget_frappe_name, "budget_name")
         budget_code = str(budget_name_field or budget_frappe_name)
 
     # Resolve Strategy Objective via shared programme
@@ -210,8 +210,8 @@ def create_budget_funding_confirmation(
     bl_route = f"{_BUDGET_LINE_DESK_ROUTE_PREFIX}/{str(bl['name'])}"
     evidence_links = [
         {
-            "label": "Budget Line",
-            "object_type": "Budget Line",
+            "label": "Procurement Budget Line",
+            "object_type": "Procurement Budget Line",
             "object_code": bl_code,
             "module": "Budget",
             "route": bl_route,
@@ -232,7 +232,7 @@ def create_budget_funding_confirmation(
         "journey_code": jrn_code,
         "source_module": "Budget",
         "target_module": "Demands",
-        "source_object_type": "Budget Line",
+        "source_object_type": "Procurement Budget Line",
         "source_object_code": bl_code,
         "status": "Consumed",
         "generated_by": frappe.session.user or "system",

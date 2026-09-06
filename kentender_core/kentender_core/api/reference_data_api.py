@@ -30,6 +30,13 @@ def _obj(payload) -> dict:
 	return payload or {}
 
 
+@frappe.whitelist()
+def get_reference_data_workspace():
+	"""KT-STD-001 v1.2 §3A — the page-load Forbidden verdict, resolved as data
+	before any of the per-tab list calls below run."""
+	return queries.get_reference_data_workspace()
+
+
 # --- PE Type -------------------------------------------------------------------------
 
 

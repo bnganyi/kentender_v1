@@ -1,16 +1,21 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §5/§6/§9.2 — Budget Version lifecycle domain rules.
+"""BUD-CHG-001 v1.3 §5/§6/§9.2 — Budget Version lifecycle domain rules.
 
 Covers the core governance commands (save_budget_version_draft,
 save_budget_lines_draft, submit_budget_version, return_budget_version,
 approve_budget_version, create_budget_successor_version) and the readiness/
 identity/floor-breach rules they enforce (BUD-BR-004/007/017/019/020/022,
-BUD-AC-005-010, 022-025). Each test class gets its own disposable Financial
-Year (Budget is one-per-Procuring-Entity-per-Financial-Year, so tests can't
-share PE-MOH/FY-2027-2028 with the canonical seed or each other) and
+BUD-AC-005-010, 022-025). Each test class gets its own disposable ERPNext
+Fiscal Year (Budget is one-per-Fiscal-Year — one site is one Procuring
+Entity, so there is no PE dimension to disambiguate on any more) and
 disposable Officer/Approver users, torn down afterward.
+
+Denials surface as the closed AUTH-ADR-001 v1.6 §10 vocabulary
+(`ResponsibilityError`), not `frappe.PermissionError` — mirrors
+`kentender_strategy`'s own v1.6 test suite. `frappe.PermissionError` is
+reserved for read-scope denials (the registered `has_permission` hook).
 """
 
 from __future__ import annotations
@@ -21,72 +26,71 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
+from kentender_core.services import organisation_structure as structure
+from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.responsibility_errors import ResponsibilityError
 from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services import budget_line_contracts as lines_svc
 from kentender_budget.services import budget_readiness_contracts as readiness
-from kentender_budget.services.budget_permissions import ensure_budget_roles
+from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
 
-PE_MOH = "PE-MOH"
-OU_DHP = "MOH-DIR-DHP"
-OU_HRMD = "MOH-DIR-HRMD"
 FUNDING_SOURCE = "Government of Kenya"
 
 
 class _BudgetLifecycleTestBase(FrappeTestCase):
-	"""Shared disposable-fixture scaffolding — a fresh Financial Year (and
-	matching PE Fiscal Year Context) plus Officer/Approver users per test
-	class, all torn down in reverse creation order."""
+	"""Shared disposable-fixture scaffolding — a fresh Fiscal Year plus
+	Officer/Approver users per test class, granted through the real
+	administration command (v1.6 — never a raw Role + User Permission
+	pair), all torn down in reverse creation order."""
 
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		ensure_budget_roles()
+		ensure_budget_governance_roles()
 		frappe.set_user("Administrator")
 		cls.suffix = uuid4().hex[:6]
 		cls._cleanup: list[tuple[str, str]] = []
 		cls._fy_counter = 0
 
 		cls.fy = cls._fresh_fy()
+		cls.ou_dhp = cls._fresh_ou("DHP")
+		cls.ou_hrmd = cls._fresh_ou("HRMD")
 
 		cls.officer = cls._make_user("officer", ("Budget Officer",))
 		cls.approver = cls._make_user("approver", ("Budget Approver",))
 		cls.dual = cls._make_user("dual", ("Budget Officer", "Budget Approver"))
-		cls.viewer = cls._make_user("viewer", ("Budget Viewer",))
+
+	@classmethod
+	def _fresh_ou(cls, label: str) -> str:
+		"""Disposable Organisation Unit, resolved by name through the real
+		governed command. KT-STD-001 §8.2's mnemonic codes (`OU-MOH-DHP`) can
+		never be produced through `add_organisation_unit` — unit codes are
+		always server-generated (CFG v0.6 §4.3, see `site_setup.py`'s own
+		"conflict C4" note) — so these tests resolve identity by name, exactly
+		like `kentender_core.tests.v16_fixtures.unit()`, never a hardcoded
+		code string a real site can never produce."""
+		result = structure.add_organisation_unit(name=f"KT Budget Test {label} {cls.suffix}")
+		cls._track("Organisation Unit", result["unit"])
+		return result["unit"]
 
 	@classmethod
 	def _fresh_fy(cls) -> str:
-		"""Disposable Financial Year: BR-003 generates name/label/dates purely
-		from start_year, so use a distinct, unlikely-to-collide future year —
-		one per call, since Budget is one-per-(PE, Financial Year) and each
-		test method that builds its own Active baseline needs its own slot,
-		not just one shared per test class."""
+		"""Disposable ERPNext Fiscal Year: Budget is one-per-Fiscal-Year, so
+		each test method that builds its own Active baseline needs its own
+		slot, not just one shared per test class."""
 		cls._fy_counter += 1
 		start_year = 2100 + (int(cls.suffix, 16) + cls._fy_counter * 97) % 5000
-		fy_doc = frappe.get_doc({"doctype": "Financial Year", "start_year": start_year}).insert(ignore_permissions=True)
-		fy = fy_doc.name
-		cls._track("Financial Year", fy)
-		ctx = frappe.get_doc(
+		fy_doc = frappe.get_doc(
 			{
-				"doctype": "PE Fiscal Year Context",
-				"procuring_entity": PE_MOH,
-				"financial_year": fy,
-				"context_status": "Active",
-				"active_from": f"{start_year}-01-01",
-				"active_to": f"{start_year + 1}-09-30",
+				"doctype": "Fiscal Year",
+				"year": f"{start_year}-{start_year + 1}",
+				"year_start_date": f"{start_year}-07-01",
+				"year_end_date": f"{start_year + 1}-06-30",
 			}
 		).insert(ignore_permissions=True)
-		cls._track("PE Fiscal Year Context", ctx.name)
+		fy = fy_doc.name
+		cls._track("Fiscal Year", fy)
 		return fy
-
-	@classmethod
-	def _fresh_context(cls) -> str:
-		"""BUD-CHG-001 v1.2 Phase 8 -- save_budget_version_draft's create
-		branch now takes one context_id, not a raw procuring_entity/
-		financial_year pair; _fresh_fy() already creates the matching PE
-		Fiscal Year Context row as a side effect, so just re-derive its
-		docname rather than tracking a second return value everywhere."""
-		fy = cls._fresh_fy()
-		return frappe.db.get_value("PE Fiscal Year Context", {"procuring_entity": PE_MOH, "financial_year": fy}, "name")
 
 	@classmethod
 	def tearDownClass(cls):
@@ -108,34 +112,24 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 
 	@classmethod
 	def _make_user(cls, label: str, roles: tuple[str, ...]) -> str:
+		"""v1.6 — authority is an Enabled Site-wide assignment granted through
+		the real administration command, never a raw Role + User Permission
+		pair (mirrors `kentender_strategy`'s test `_actor()` helper)."""
 		email = f"bud.{label}.{cls.suffix}@test.local"
 		user = frappe.get_doc(
 			{"doctype": "User", "email": email, "first_name": label, "enabled": 1, "send_welcome_email": 0}
 		).insert(ignore_permissions=True)
-		user.add_roles(*roles)
+		user.add_roles("Desk User")
 		cls._track("User", email)
-		perm = frappe.get_doc(
-			{"doctype": "User Permission", "user": email, "allow": "Procuring Entity", "for_value": PE_MOH}
-		).insert(ignore_permissions=True)
-		cls._track("User Permission", perm.name)
-		# Budget Line's owner_org_unit scoping (assert_org_unit_in_scope) still
-		# runs through the older User Scope Assignment engine, not just
-		# AUTH-ADR-001 Role + User Permission — a blank organisation_unit row
-		# grants entity-wide access within the PE (org_scope_access.py's
-		# permitted_org_units: "any blank organisation_unit assignment =>
-		# entity-wide"), matching how the real seed's own personas are set up.
 		for role in roles:
-			usa = frappe.get_doc(
-				{
-					"doctype": "User Scope Assignment",
-					"user": email,
-					"role": role,
-					"procuring_entity": PE_MOH,
-					"organisation_unit": "",
-					"include_descendants": 0,
-				}
-			).insert(ignore_permissions=True)
-			cls._track("User Scope Assignment", usa.name)
+			outcome = administration.grant(
+				user=email,
+				business_role=role,
+				organisation_unit="",
+				fixture_namespace="BUD_CHG_001_TESTS",
+				actor="Administrator",
+			)
+			cls._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
 		return email
 
 	def _as(self, user: str) -> None:
@@ -143,13 +137,13 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 
 	def _create_active_baseline(self, *, dhi_amount=100_000_000, hwd_amount=60_000_000) -> tuple[str, str]:
 		"""Officer creates + submits, Approver approves. Returns (budget, version)
-		docnames. Uses its own fresh Financial Year (not the class-level
-		self.fy) so multiple test methods in the same class — each calling
-		this once — never collide on Budget's one-per-(PE, FY) rule."""
+		docnames. Uses its own fresh Fiscal Year (not the class-level self.fy)
+		so multiple test methods in the same class — each calling this once —
+		never collide on Budget's one-per-Fiscal-Year rule."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"TEST-{self.suffix}",
 				"approval_date": add_days(nowdate(), -10),
 				"authorised_total": dhi_amount + hwd_amount,
@@ -159,21 +153,21 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 		self.assertTrue(result["ok"], result.get("errors"))
 		budget = result["budget"]["id"]
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", budget)
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", budget)
 
 		lines_result = lines_svc.save_budget_lines_draft(
 			{
 				"budget_version": version,
 				"lines": [
-					{"title": "DHI test line", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": dhi_amount},
-					{"title": "HWD test line", "owner_org_unit": OU_HRMD, "funding_source": FUNDING_SOURCE, "approved_amount": hwd_amount},
+					{"title": "DHI test line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": dhi_amount},
+					{"title": "HWD test line", "owner_org_unit": self.ou_hrmd, "funding_source": FUNDING_SOURCE, "approved_amount": hwd_amount},
 				],
 			}
 		)
 		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
-		for lv in frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
-			self._track("Budget Line", lv)
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
 
 		submit_result = readiness.submit_budget_version({"budget_version": version})
 		self.assertTrue(submit_result["ok"], submit_result.get("blockers"))
@@ -191,18 +185,18 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		editable initial fields, and are mandatory."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
-			{"context_id": self._fresh_context(), "approval_reference": "", "approval_date": "", "authorised_total": 0}
+			{"fiscal_year": self._fresh_fy(), "approval_reference": "", "approval_date": "", "authorised_total": 0}
 		)
 		self.assertFalse(result["ok"])
 		self.assertIn("approval_reference", result["errors"])
 		self.assertIn("approval_date", result["errors"])
 		self.assertIn("authorised_total", result["errors"])
 
-	def test_only_one_budget_per_pe_and_financial_year(self):
-		"""BUD-BR-001."""
+	def test_only_one_budget_per_fiscal_year(self):
+		"""BUD-BR-002/BUD-BR-001."""
 		self._as(self.officer)
 		payload = {
-			"context_id": self._fresh_context(),
+			"fiscal_year": self._fresh_fy(),
 			"approval_reference": f"DUP-{self.suffix}",
 			"approval_date": add_days(nowdate(), -5),
 			"authorised_total": 1000,
@@ -210,11 +204,60 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		}
 		first = contracts.save_budget_version_draft(dict(payload))
 		self.assertTrue(first["ok"], first.get("errors"))
-		self._track("Budget Version", first["version"]["id"])
-		self._track("Budget", first["budget"]["id"])
+		self._track("Procurement Budget Version", first["version"]["id"])
+		self._track("Procurement Budget", first["budget"]["id"])
 
 		with self.assertRaises(frappe.DuplicateEntryError):
 			contracts.save_budget_version_draft(dict(payload))
+
+	def test_registering_a_budget_does_not_require_an_approval_document(self):
+		"""Approval document is not required to register/save-draft a Budget
+		Version — only before it can be submitted for review (see
+		test_submit_blocked_without_approval_document below). Regression test:
+		Procurement Budget Version.approval_document was DB `reqd: 1`, so even
+		though `_validate_draft_payload` never checked it, the very first
+		`.insert()` still raised Frappe's own generic MandatoryError before the
+		user ever reached the file upload step."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"NODOC-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 1000,
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		self._track("Procurement Budget Version", result["version"]["id"])
+		self._track("Procurement Budget", result["budget"]["id"])
+
+	def test_submit_blocked_without_approval_document(self):
+		"""Optional at draft save, still mandatory before submission
+		(BUD-BR-018-family evidence guard in `_evaluate_readiness`)."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"NODOC-SUBMIT-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 10_000_000,
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		version = result["version"]["id"]
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
+
+		lines_result = lines_svc.save_budget_lines_draft(
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+		)
+		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
+
+		submit_result = readiness.submit_budget_version({"budget_version": version})
+		self.assertFalse(submit_result["ok"])
+		self.assertTrue(any(b["code"] == "evidence.approval_document" for b in submit_result["blockers"]))
 
 
 class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
@@ -223,7 +266,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"MISMATCH-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 100_000_000,
@@ -232,15 +275,15 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		)
 		self.assertTrue(result["ok"], result.get("errors"))
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", result["budget"]["id"])
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
 
 		lines_result = lines_svc.save_budget_lines_draft(
-			{"budget_version": version, "lines": [{"title": "Under-total line", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 50_000_000}]}
+			{"budget_version": version, "lines": [{"title": "Under-total line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 50_000_000}]}
 		)
 		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
-		for lv in frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
-			self._track("Budget Line", lv)
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
 
 		submit_result = readiness.submit_budget_version({"budget_version": version})
 		self.assertFalse(submit_result["ok"])
@@ -252,7 +295,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"FIELDS-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -260,27 +303,27 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 			}
 		)
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", result["budget"]["id"])
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
 		lines_svc.save_budget_lines_draft(
-			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
 		)
-		line_name = frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
-		self._track("Budget Line", line_name)
-		meta = frappe.get_meta("Budget Line")
+		line_name = frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
+		self._track("Procurement Budget Line", line_name)
+		meta = frappe.get_meta("Procurement Budget Line")
 		for forbidden in ("classification", "funding_source_type", "organisational_owner", "primary_target_code"):
 			self.assertFalse(meta.has_field(forbidden), f"Budget Line must not carry {forbidden!r} (BUD-AC-002/029)")
 
 
 class TestSelfApprovalSegregation(_BudgetLifecycleTestBase):
 	def test_submitting_officer_cannot_approve_even_with_approver_role(self):
-		"""BUD-AC-008 — the submitting Officer cannot approve their own
+		"""BUD-AC-025 — the submitting Officer cannot approve their own
 		version, even if they also hold Budget Approver, enforced from the
 		version's own submission audit event, not a stored field."""
 		self._as(self.dual)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"SOD-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -288,17 +331,17 @@ class TestSelfApprovalSegregation(_BudgetLifecycleTestBase):
 			}
 		)
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", result["budget"]["id"])
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
 		lines_svc.save_budget_lines_draft(
-			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
 		)
-		for lv in frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
-			self._track("Budget Line", lv)
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
 		readiness.submit_budget_version({"budget_version": version})
 
 		# Still self.dual (the submitter) — approve must be blocked.
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			readiness.approve_budget_version({"budget_version": version})
 
 		# A different Approver succeeds.
@@ -313,7 +356,7 @@ class TestReturnBudgetVersion(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"RET-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -321,13 +364,13 @@ class TestReturnBudgetVersion(_BudgetLifecycleTestBase):
 			}
 		)
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", result["budget"]["id"])
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
 		lines_svc.save_budget_lines_draft(
-			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
 		)
-		for lv in frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
-			self._track("Budget Line", lv)
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
 		readiness.submit_budget_version({"budget_version": version})
 
 		self._as(self.approver)
@@ -337,7 +380,7 @@ class TestReturnBudgetVersion(_BudgetLifecycleTestBase):
 
 		result2 = readiness.return_budget_version({"budget_version": version, "return_reason": "Missing supporting evidence for this line item."})
 		self.assertTrue(result2["ok"], result2.get("errors"))
-		doc = frappe.get_doc("Budget Version", version)
+		doc = frappe.get_doc("Procurement Budget Version", version)
 		self.assertEqual(doc.status, "Draft")
 		self.assertTrue(doc.return_reason)
 		# History preserved: the original submission event is still there.
@@ -354,7 +397,7 @@ class TestActiveAndSupersededImmutability(_BudgetLifecycleTestBase):
 		"""BUD-AC-010 — Active versions reject direct mutation."""
 		budget, version = self._create_active_baseline()
 		self._as(self.officer)
-		line_name = frappe.get_all("Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
+		line_name = frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
 		with self.assertRaises(frappe.ValidationError):
 			lines_svc.save_budget_lines_draft({"budget_version": version, "lines": [{"budget_line": line_name, "approved_amount": 999}]})
 
@@ -367,19 +410,19 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		succ = contracts.create_budget_successor_version(budget, {"revision_type": "Transfer"})
 		self.assertTrue(succ["ok"], succ)
 		new_version = succ["version"]["id"]
-		self._track("Budget Version", new_version)
+		self._track("Procurement Budget Version", new_version)
 
-		dhi_line = frappe.db.get_value("Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
+		dhi_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
 		result = lines_svc.save_budget_lines_draft(
 			{
 				"budget_version": new_version,
 				"lines": [
-					{"budget_line": dhi_line, "title": "Renamed", "owner_org_unit": OU_HRMD, "funding_source": FUNDING_SOURCE, "approved_amount": 100_000_000},
+					{"budget_line": dhi_line, "title": "Renamed", "owner_org_unit": self.ou_hrmd, "funding_source": FUNDING_SOURCE, "approved_amount": 100_000_000},
 				],
 			}
 		)
 		self.assertTrue(result["ok"], result.get("errors"))
-		saved_title = frappe.db.get_value("Budget Line Version", {"budget_version": new_version, "budget_line": dhi_line}, "title")
+		saved_title = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": new_version, "budget_line": dhi_line}, "title")
 		self.assertEqual(saved_title, "DHI test line", "identity-locked title must not change even though the payload requested it")
 
 	def test_previously_active_line_cannot_be_removed(self):
@@ -390,8 +433,8 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		succ = contracts.create_budget_successor_version(budget, {"revision_type": "Transfer"})
 		new_version = succ["version"]["id"]
-		self._track("Budget Version", new_version)
-		dhi_line = frappe.db.get_value("Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
+		self._track("Procurement Budget Version", new_version)
+		dhi_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
 
 		result = lines_svc.save_budget_lines_draft({"budget_version": new_version, "lines": [{"budget_line": dhi_line, "remove": True}]})
 		self.assertFalse(result["ok"])
@@ -403,12 +446,12 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		succ = contracts.create_budget_successor_version(budget, {"revision_type": "Transfer"})
 		new_version = succ["version"]["id"]
-		self._track("Budget Version", new_version)
-		dhi_line = frappe.db.get_value("Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
+		self._track("Procurement Budget Version", new_version)
+		dhi_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
 
 		# Increase DHI by 10m without a matching decrease anywhere — unbalanced.
 		lines_svc.save_budget_lines_draft(
-			{"budget_version": new_version, "lines": [{"budget_line": dhi_line, "title": "DHI test line", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 110_000_000}]}
+			{"budget_version": new_version, "lines": [{"budget_line": dhi_line, "title": "DHI test line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 110_000_000}]}
 		)
 		submit_result = readiness.submit_budget_version({"budget_version": new_version})
 		self.assertFalse(submit_result["ok"])
@@ -421,16 +464,16 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		self._as(self.officer)
 		succ = contracts.create_budget_successor_version(budget, {"revision_type": "Transfer"})
 		new_version = succ["version"]["id"]
-		self._track("Budget Version", new_version)
-		dhi_line = frappe.db.get_value("Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
-		hwd_line = frappe.db.get_value("Budget Line Version", {"budget_version": active_version, "title": "HWD test line"}, "budget_line")
+		self._track("Procurement Budget Version", new_version)
+		dhi_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
+		hwd_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "HWD test line"}, "budget_line")
 
 		lines_svc.save_budget_lines_draft(
 			{
 				"budget_version": new_version,
 				"lines": [
-					{"budget_line": dhi_line, "title": "DHI test line", "owner_org_unit": OU_DHP, "funding_source": FUNDING_SOURCE, "approved_amount": 90_000_000},
-					{"budget_line": hwd_line, "title": "HWD test line", "owner_org_unit": OU_HRMD, "funding_source": FUNDING_SOURCE, "approved_amount": 70_000_000},
+					{"budget_line": dhi_line, "title": "DHI test line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 90_000_000},
+					{"budget_line": hwd_line, "title": "HWD test line", "owner_org_unit": self.ou_hrmd, "funding_source": FUNDING_SOURCE, "approved_amount": 70_000_000},
 				],
 			}
 		)
@@ -441,15 +484,16 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		approve_result = readiness.approve_budget_version({"budget_version": new_version})
 		self.assertTrue(approve_result["ok"], approve_result.get("blockers"))
 
-		self.assertEqual(frappe.db.get_value("Budget Version", new_version, "status"), "Active")
-		self.assertEqual(frappe.db.get_value("Budget Version", active_version, "status"), "Superseded")
+		self.assertEqual(frappe.db.get_value("Procurement Budget Version", new_version, "status"), "Active")
+		self.assertEqual(frappe.db.get_value("Procurement Budget Version", active_version, "status"), "Superseded")
 
 
 class TestScopeAndPermissions(_BudgetLifecycleTestBase):
-	def test_administrator_without_budget_role_cannot_act(self):
-		"""BUD-AC-004 — a System Administrator without a Budget assignment
-		cannot create/submit/return/approve. Uses a fresh no-role user, not
-		Administrator itself (which is always allowed everywhere by design)."""
+	def test_bare_user_without_budget_role_cannot_act(self):
+		"""BUD-AC-004 — a user without a Budget assignment cannot create/
+		submit/return/approve. Uses a fresh no-role user, not Administrator
+		itself (which is always allowed to read, but never to mutate,
+		without an assignment — §8)."""
 		bare_user = f"bud.bare.{self.suffix}@test.local"
 		if not frappe.db.exists("User", bare_user):
 			frappe.get_doc(
@@ -457,10 +501,10 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 			).insert(ignore_permissions=True)
 			self._track("User", bare_user)
 		self._as(bare_user)
-		with self.assertRaises(frappe.PermissionError):
+		with self.assertRaises(ResponsibilityError):
 			contracts.save_budget_version_draft(
 				{
-					"context_id": self._fresh_context(),
+					"fiscal_year": self._fresh_fy(),
 					"approval_reference": "X",
 					"approval_date": add_days(nowdate(), -1),
 					"authorised_total": 100,
@@ -468,14 +512,30 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 				}
 			)
 
-	def test_viewer_cannot_see_draft_or_submitted_version_by_direct_id(self):
-		"""§7 — Viewer may see Active/Superseded/Closed only; a Draft or
-		Submitted version is denied even via a direct id, not just hidden
-		from a listing (Phase 4's own 'gates direct URLs too' rule)."""
+	def test_administrator_without_assignment_cannot_mutate(self):
+		"""§8 — Administrator has full technical read but no Budget business
+		mutation without an assignment, same as any other user (AUTH-AC-018)."""
+		self._as("Administrator")
+		with self.assertRaises(ResponsibilityError):
+			contracts.save_budget_version_draft(
+				{
+					"fiscal_year": self._fresh_fy(),
+					"approval_reference": "X",
+					"approval_date": add_days(nowdate(), -1),
+					"authorised_total": 100,
+					"approval_document": "/files/x.pdf",
+				}
+			)
+
+	def test_unassigned_user_cannot_read_a_draft_version_by_direct_id(self):
+		"""§17.2 coverage item 4 — direct-route access to a Budget Version
+		excluded from the actor's register is denied, not just hidden from a
+		listing (`kentender_scope_map`'s registered `has_permission` hook,
+		not a Budget-local read-scope function)."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
-				"context_id": self._fresh_context(),
+				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"VIEW-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
@@ -483,9 +543,15 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 			}
 		)
 		version = result["version"]["id"]
-		self._track("Budget Version", version)
-		self._track("Budget", result["budget"]["id"])
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
 
-		self._as(self.viewer)
+		outsider = f"bud.outsider.{self.suffix}@test.local"
+		if not frappe.db.exists("User", outsider):
+			frappe.get_doc(
+				{"doctype": "User", "email": outsider, "first_name": "Outsider", "enabled": 1, "send_welcome_email": 0}
+			).insert(ignore_permissions=True)
+			self._track("User", outsider)
+		self._as(outsider)
 		with self.assertRaises(frappe.PermissionError):
 			contracts.get_budget_version_draft(version)

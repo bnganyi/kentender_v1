@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-2-700); text-decoration: none; }
+    a:hover { color: var(--color-accent-2-800); }
+  </style>
+</helmet>
+<div style="background: var(--color-bg); min-height: 100vh; padding: 56px 5vw 140px; font-family: var(--font-body); color: var(--color-text);">
+
+  <div style="max-width: 1320px; margin: 0 auto 48px;">
+    <a href="KenTender Admin UI Fixtures.dc.html" style="font-size: 13px; color: var(--color-neutral-700);">&larr; All fixtures</a>
+    <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-700); margin-top: 10px;">AUTH-UI-04 / 06</div>
+    <h1 style="margin: 8px 0 0; font-size: 36px;">Responsibility detail</h1>
+  </div>
+
+  <section style="max-width: 1320px; margin: 0 auto;">
+    <div class="card blueprint" style="max-width: 760px; padding: 36px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <a href="User Responsibilities Register.dc.html" style="font-size: 13px; color: var(--color-neutral-700);">&larr; User responsibilities</a>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 14px;">
+        <div>
+          <div class="kt-label">RESPONSIBILITY &middot; ORGANISATION UNIT SCOPE</div>
+          <h2 style="margin: 4px 0 0; font-size: 28px;">Departmental Author</h2>
+        </div>
+        <button type="button" class="btn btn-danger" style="flex: none;">Revoke responsibility</button>
+      </div>
+      <hr class="hr">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px;">
+        <div><div class="kt-label">USER</div><div style="font-size: 14px; margin-top: 4px;">Grace Wanjiku &middot; grace.wanjiku</div></div>
+        <div><div class="kt-label">STATUS</div><div style="margin-top: 4px;"><span class="kt-status is-live">Active</span></div></div>
+        <div><div class="kt-label">PROCURING ENTITY</div><div style="font-size: 14px; margin-top: 4px;">Ministry of Health</div></div>
+        <div><div class="kt-label">ORGANISATION UNIT</div><div style="font-size: 14px; margin-top: 4px;">Ministry of Health &rarr; Digital Health</div></div>
+        <div><div class="kt-label">INCLUDED DESCENDANTS</div><div style="font-size: 14px; margin-top: 4px;">None &mdash; leaf unit</div></div>
+        <div><div class="kt-label">APPOINTMENT</div><div style="font-size: 14px; margin-top: 4px;">Permanent</div></div>
+        <div><div class="kt-label">EFFECTIVE PERIOD</div><div style="font-size: 14px; margin-top: 4px;">From 1 Sep 2026 &middot; No scheduled end</div></div>
+        <div><div class="kt-label">AUTHORITY REFERENCE</div><div style="font-size: 14px; margin-top: 4px;">&mdash;</div></div>
+        <div><div class="kt-label">ASSIGNMENT REFERENCE</div><div style="font-size: 14px; margin-top: 4px;">URA-2026-000412</div></div>
+        <div><div class="kt-label">ASSIGNED BY / AT</div><div style="font-size: 14px; margin-top: 4px;">System Administrator &middot; 1 Sep 2026, 09:58 EAT</div></div>
+        <div><div class="kt-label">REVOKED BY / AT / REASON</div><div style="font-size: 14px; margin-top: 4px;">&mdash; not revoked</div></div>
+        <div><div class="kt-label">FRAPPE ROLE PROJECTION</div><div style="margin-top: 4px;"><span class="kt-status is-live">Synchronized</span></div></div>
+      </div>
+      <div style="margin-top: 20px;">
+        <div class="kt-label" style="margin-bottom: 8px;">ADMINISTRATIVE HISTORY</div>
+        <div style="font-size: 13px; color: var(--color-neutral-800); padding: 8px 0; border-top: 1px solid var(--color-divider);">1 Sep 2026, 09:58 EAT &mdash; Assignment created (Enabled) by System Administrator.</div>
+      </div>
+      <hr class="hr">
+      <div class="kt-card-title" style="font-size: 13px;">ACCESS DIAGNOSTICS</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span class="text-muted">Required &amp; present Frappe Role projection</span><span>Departmental Author &mdash; present</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span class="text-muted">Resolved PE/OU coverage</span><span>Ministry of Health &rarr; Digital Health (leaf, 0 descendants)</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span class="text-muted">Configuration conflicts or overlaps</span><span>None found</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span class="text-muted">Orphan Frappe Roles</span><span>None</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span class="text-muted">Obsolete records awaiting migration</span><span>None</span></div>
+        <div style="border-top: 1px solid var(--color-divider); padding-top: 10px;"><span class="text-muted">Record/action test:</span> Create Requisition in Digital Health &mdash; <strong>Allowed</strong> (matches this assignment).</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>

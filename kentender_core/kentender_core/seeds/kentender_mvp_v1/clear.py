@@ -41,8 +41,8 @@ _PLAYWRIGHT_NAMESPACES = _NAMESPACES[2:]
 _BUDGET_CHILD_DOCTYPES = (
 	"Funding Reservation",
 	"Budget Audit Event",
-	"Budget Version",
-	"Budget Line",
+	"Procurement Budget Version",
+	"Procurement Budget Line",
 )
 
 # Exact fixture budget codes (MOH + CGK + known edge codes).
@@ -84,14 +84,14 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 				frappe.delete_doc("Procurement Commitment", name, force=1, ignore_permissions=True)
 				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
 
-	if frappe.db.exists("DocType", "Budget Line Version") and frappe.db.exists("DocType", "Budget Version"):
-		version_names = frappe.get_all("Budget Version", filters={"budget": budget_name}, pluck="name")
+	if frappe.db.exists("DocType", "Procurement Budget Line Version") and frappe.db.exists("DocType", "Procurement Budget Version"):
+		version_names = frappe.get_all("Procurement Budget Version", filters={"budget": budget_name}, pluck="name")
 		if version_names:
 			for name in frappe.get_all(
-				"Budget Line Version", filters={"budget_version": ["in", version_names]}, pluck="name"
+				"Procurement Budget Line Version", filters={"budget_version": ["in", version_names]}, pluck="name"
 			):
-				frappe.delete_doc("Budget Line Version", name, force=1, ignore_permissions=True)
-				deleted["Budget Line Version"] = deleted.get("Budget Line Version", 0) + 1
+				frappe.delete_doc("Procurement Budget Line Version", name, force=1, ignore_permissions=True)
+				deleted["Procurement Budget Line Version"] = deleted.get("Procurement Budget Line Version", 0) + 1
 
 	for doctype in _BUDGET_CHILD_DOCTYPES:
 		if not frappe.db.exists("DocType", doctype):
@@ -107,16 +107,16 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 		finally:
 			if doctype == "Budget Audit Event":
 				frappe.flags.allow_budget_audit_purge = False
-	if frappe.db.exists("Budget", budget_name):
-		frappe.delete_doc("Budget", budget_name, force=1, ignore_permissions=True)
-		deleted["Budget"] = deleted.get("Budget", 0) + 1
+	if frappe.db.exists("Procurement Budget", budget_name):
+		frappe.delete_doc("Procurement Budget", budget_name, force=1, ignore_permissions=True)
+		deleted["Procurement Budget"] = deleted.get("Procurement Budget", 0) + 1
 
 
 def _collect_fixture_budgets(
 	*, include_canonical: bool = True, include_playwright: bool = True
 ) -> list[str]:
 	names: list[str] = []
-	if frappe.db.has_column("Budget", "fixture_namespace"):
+	if frappe.db.has_column("Procurement Budget", "fixture_namespace"):
 		namespaces = []
 		if include_canonical:
 			namespaces.extend((C.FIXTURE_NS, C.LEGACY_FIXTURE_NS))
@@ -125,7 +125,7 @@ def _collect_fixture_budgets(
 		if namespaces:
 			names.extend(
 				frappe.get_all(
-					"Budget",
+					"Procurement Budget",
 					filters={"fixture_namespace": ["in", namespaces]},
 					pluck="name",
 				)
@@ -134,13 +134,13 @@ def _collect_fixture_budgets(
 		list(_CANONICAL_BUDGET_CODES) if include_canonical else []
 	) + (list(_PLAYWRIGHT_BUDGET_CODES) if include_playwright else []):
 		names.extend(
-			frappe.get_all("Budget", filters={"generated_reference": code}, pluck="name")
+			frappe.get_all("Procurement Budget", filters={"generated_reference": code}, pluck="name")
 		)
 	if include_playwright:
 		# Planning Finance helpers have a reserved generated-reference prefix.
 		names.extend(
 			frappe.get_all(
-				"Budget",
+				"Procurement Budget",
 				filters={"generated_reference": ["like", "MOH-BUD-PLN-%"]},
 				pluck="name",
 			)
@@ -255,12 +255,12 @@ def clear_kentender_mvp_v1_budget(
 	)
 	for code in canonical_line_codes:
 		for name in frappe.get_all(
-			"Budget Line", filters={"generated_reference": code}, pluck="name"
+			"Procurement Budget Line", filters={"generated_reference": code}, pluck="name"
 		):
-			if not frappe.db.exists("Budget Line", name):
+			if not frappe.db.exists("Procurement Budget Line", name):
 				continue
-			frappe.delete_doc("Budget Line", name, force=1, ignore_permissions=True)
-			deleted["Budget Line"] = deleted.get("Budget Line", 0) + 1
+			frappe.delete_doc("Procurement Budget Line", name, force=1, ignore_permissions=True)
+			deleted["Procurement Budget Line"] = deleted.get("Procurement Budget Line", 0) + 1
 
 	canonical_ledger_codes = (
 		(

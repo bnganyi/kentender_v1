@@ -49,11 +49,12 @@ app_include_js = []
 
 # Never append ?v= to page_js — Frappe resolves these as disk paths.
 page_js = {
-	# STR-CHG-001 v1.3 Phase 7 — the 3 production Vue-in-Desk pages
-	# (STR-UI-01/02/04). The 13 pre-rebuild legacy strategy-* pages and the
-	# strategy-portfolio-pilot spike that used to live here were deleted in
-	# Phase 8 (see IMPLEMENTATION_TRACKER.md).
-	"strategy-portfolio": "public/js/strategy_portfolio_page.js",
-	"strategy-plan-workspace": "public/js/strategy_plan_workspace_page.js",
-	"strategy-review-task": "public/js/strategy_review_task_page.js",
+	# STR-CHG-001 v1.7 §10 — one Desk Page carries every canonical route:
+	# /app/strategy, /app/strategy/plan/{plan_id}[/history |
+	# /version/{n}/structure], /app/strategy/approval/{plan_version_id}[/tab].
+	# The three Phase 7 Pages (strategy-portfolio / strategy-plan-workspace /
+	# strategy-review-task) were replaced outright, not aliased (tracker
+	# rule 4); str_chg_001_v1_7_delete_legacy_strategy_pages removes their
+	# records from a synced site.
+	"strategy": "public/js/strategy_page.js",
 }

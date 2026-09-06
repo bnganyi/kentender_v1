@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "autoname": "field:publication_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "publication_reference",
+  "plan_version",
+  "destination",
+  "attempt_number",
+  "result",
+  "payload_hash",
+  "payload",
+  "legal_character",
+  "external_reference",
+  "attempted_at",
+  "acknowledged_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "publication_reference",
+   "fieldtype": "Data",
+   "label": "Publication Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Annual Plan Version",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "destination",
+   "fieldtype": "Link",
+   "label": "Destination",
+   "options": "Annual Plan Publication Destination",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "Attempt Number",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Supports idempotent retry of the same approved payload."
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "options": "Pending\nAcknowledged\nFailed\nIndeterminate",
+   "default": "Pending",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Payload Hash",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Digest of the exact approved payload generated from the immutable Version."
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "JSON",
+   "label": "Canonical Payload (OCDS planning stage)",
+   "read_only": 1,
+   "description": "The exact approved payload transmitted, OCDS-shaped (\u00a74.13)."
+  },
+  {
+   "fieldname": "legal_character",
+   "fieldtype": "Data",
+   "label": "Legal Character",
+   "read_only": 1,
+   "default": "Invitation to treat (section 53(12))"
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Data",
+   "label": "External Reference",
+   "read_only": 1,
+   "description": "Authoritative acknowledgement or failure reference returned by the adapter."
+  },
+  {
+   "fieldname": "attempted_at",
+   "fieldtype": "Datetime",
+   "label": "Attempted At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "acknowledged_at",
+   "fieldtype": "Datetime",
+   "label": "Acknowledged At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Annual Plan Publication",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "publication_reference"
+}

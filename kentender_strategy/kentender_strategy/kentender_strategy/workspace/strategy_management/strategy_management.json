@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"str_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Strategy Management</b></span>\",\"col\":12}},{\"id\":\"str_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Strategy Portfolio (all Strategy roles) and Approval tasks (Strategy Approver) — STR-CHG-001 v1.5.\",\"col\":12}}]",
+ "content": "[{\"id\":\"str_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Strategy Alignment</b></span>\",\"col\":12}},{\"id\":\"str_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Strategy Portfolio (all Strategy responsibilities) and Approval tasks (Strategy Approver) — STR-CHG-001 v1.7 §10.\",\"col\":12}},{\"id\":\"str_s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Strategy Portfolio\",\"col\":4}},{\"id\":\"str_s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Approval tasks\",\"col\":4}}]",
  "creation": "2026-08-02 21:16:56.771192",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "Strategy Management",
  "links": [],
- "modified": "2026-08-02 21:16:56.771192",
+ "modified": "2026-09-05 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Strategy Management",
@@ -33,9 +33,6 @@
    "role": "Strategy Approver"
   },
   {
-   "role": "Strategy Viewer"
-  },
-  {
    "role": "Auditor"
   }
  ],
@@ -48,7 +45,7 @@
    "icon": "project",
    "kanban_board": "",
    "label": "Strategy Portfolio",
-   "link_to": "strategy-portfolio",
+   "link_to": "strategy",
    "restrict_to_domain": "",
    "stats_filter": "",
    "type": "Page",
@@ -60,12 +57,12 @@
    "format": "",
    "icon": "task",
    "kanban_board": "",
-   "label": "Review tasks",
-   "link_to": "strategy-review-task",
+   "label": "Approval tasks",
+   "link_to": "",
    "restrict_to_domain": "",
    "stats_filter": "",
-   "type": "Page",
-   "url": ""
+   "type": "URL",
+   "url": "/app/strategy/my-work"
   }
  ],
  "title": "Strategy Management",

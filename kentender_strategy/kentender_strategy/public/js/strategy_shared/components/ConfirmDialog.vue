@@ -54,7 +54,7 @@ function onConfirm() {
 		@keydown="onKeydown"
 		tabindex="-1"
 	>
-		<div class="kt-dialog" style="width: 420px">
+		<div class="kt-dialog" style="width: 420px" data-testid="str-confirm">
 			<h2 class="kt-dialog-title">{{ title }}</h2>
 			<p v-if="message" class="kt-muted">{{ message }}</p>
 			<textarea
@@ -64,12 +64,13 @@ function onConfirm() {
 				class="kt-input"
 				style="width: 100%"
 				rows="3"
+				data-testid="str-confirm-reason"
 				:placeholder="reasonPlaceholder"
 				:maxlength="reasonMaxLength"
 			></textarea>
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('cancel')">{{ __("Cancel") }}</button>
-				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" @click="onConfirm">
+				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" data-testid="str-confirm-ok" @click="onConfirm">
 					{{ confirmLabel }}
 				</button>
 			</div>

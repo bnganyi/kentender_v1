@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
+import KtErrorBanner from "./KtErrorBanner.vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
-import { useWorkingContext } from "../../budget_shared/composables/useWorkingContext.js";
-import WorkingContextPicker from "../../budget_shared/components/WorkingContextPicker.vue";
+import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
 import {
 	getBudgetWorkspace,
@@ -33,19 +33,24 @@ const actingError = ref(null);
 const saving = ref(false);
 const submitting = ref(false);
 
-// --- "new" (pre-creation) state: resolve PE/FY context only, no version yet ---
-// BUD-CHG-001 v1.2 Phase 8 — same working-context resolution as the
-// Workspace screen; a fresh Budget can't be registered without one.
-const {
-	loading: contextLoading,
-	mode: contextMode,
-	contexts: workingContexts,
-	selected: workingContext,
-	selectionRequired,
-	refresh: refreshContext,
-	select: selectContext,
-} = useWorkingContext("budget");
-const newContext = ref(null); // {procuring_entity, financial_year, can_register}
+// The inline banner (rendered from actingError below) is the durable,
+// authoritative error state — it must survive a re-render and not rely on
+// the user having seen a transient toast. The toast is a supplementary
+// attention-getter (a muted inline banner alone is easy to miss when it
+// appears above the fold without any layout shift drawing the eye to it),
+// never the only signal — see AGENTS.md §6.10.
+function setActingError(message) {
+	actingError.value = message;
+	frappe.show_alert({ message, indicator: "red" }, 7);
+}
+
+// --- "new" (pre-creation) state: resolve the Fiscal Year filter only, no
+// version yet. One site is one Procuring Entity — the same local Fiscal
+// Year filter as the Workspace screen (shared localStorage key, so arriving
+// here from "Register approved budget" already carries the year picked
+// there with no query-string plumbing).
+const fyFilter = useFiscalYearFilter();
+const newContext = ref(null); // get_budget_workspace(fy) response for the selected year
 
 // --- existing version state ---
 const draft = ref(null); // get_budget_version_draft response
@@ -72,20 +77,9 @@ const railTrail = computed(() => {
 	return items;
 });
 const railEl = ref(null);
-// CTX-CHG-001 - the global PE switcher; on a record-bound draft a switch
-// returns to the workspace (the record keeps its own context, rule 6), and
-// on the pre-creation flow it re-resolves the context under the new entity.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: async () => {
-		if (!isNew.value) {
-			frappe.set_route("budget-funding");
-			return;
-		}
-		newContext.value = null;
-		await loadNewContext();
-	},
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const form = reactive({
 	approval_reference: "",
@@ -117,9 +111,8 @@ function resetFormFromDraft() {
 async function loadNewContext() {
 	loading.value = true;
 	try {
-		const requestedContext = new URLSearchParams(window.location.search).get("context") || undefined;
-		await refreshContext(requestedContext);
-		if (selectionRequired.value) return; // WorkingContextPicker renders instead of the form
+		await fyFilter.load();
+		if (!fyFilter.selected.value) return; // the fiscal-year filter renders instead of the form
 		await loadNewContextForSelected();
 	} finally {
 		loading.value = false;
@@ -128,7 +121,7 @@ async function loadNewContext() {
 
 async function loadNewContextForSelected() {
 	try {
-		const ws = await getBudgetWorkspace(workingContext.value.context_id);
+		const ws = await getBudgetWorkspace(fyFilter.selected.value);
 		if (!ws.can_register) {
 			forbidden.value = true;
 			return;
@@ -140,27 +133,32 @@ async function loadNewContextForSelected() {
 	}
 }
 
-async function onSelectNewContext(contextId) {
+async function onSelectNewFy(fy) {
+	fyFilter.select(fy);
+	if (!fy) {
+		newContext.value = null;
+		return;
+	}
 	loading.value = true;
 	try {
-		await selectContext(contextId);
 		await loadNewContextForSelected();
 	} finally {
 		loading.value = false;
 	}
 }
 
-async function loadDraft() {
+// `quiet` refreshes in place — used after Save/Submit, which redisplay the
+// same version's (now updated) draft rather than navigating away.
+async function loadDraft(opts) {
 	if (!versionKey.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	try {
 		draft.value = await getBudgetVersionDraft(versionKey.value);
 		resetFormFromDraft();
-		if (draft.value.budget?.procuring_entity?.id) {
-			orgUnits.value = (await listOrganisationUnits(draft.value.budget.procuring_entity.id)).rows || [];
-		}
+		orgUnits.value = (await listOrganisationUnits()).rows || [];
 		// A direct load landing on the Budget Lines tab must still fetch it —
 		// watch(tab) below only fires on a later client-side change.
 		if (tab.value === "lines") loadLines();
@@ -213,7 +211,7 @@ async function saveDraft() {
 	try {
 		if (isNew.value) {
 			const payload = {
-				context_id: workingContext.value.context_id,
+				fiscal_year: fyFilter.selected.value,
 				approval_reference: form.approval_reference,
 				approval_date: form.approval_date,
 				authorised_total: form.authorised_total,
@@ -221,7 +219,7 @@ async function saveDraft() {
 			};
 			const result = await saveBudgetVersionDraft(payload);
 			if (!result.ok) {
-				actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not save.");
+				setActingError(Object.values(result.errors || {}).join(" ") || __("Could not save."));
 				return;
 			}
 			frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
@@ -239,7 +237,7 @@ async function saveDraft() {
 		};
 		const result = await saveBudgetVersionDraft(payload);
 		if (!result.ok) {
-			actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not save.");
+			setActingError(Object.values(result.errors || {}).join(" ") || __("Could not save."));
 			return;
 		}
 		if (linesLoaded.value) {
@@ -247,9 +245,9 @@ async function saveDraft() {
 			if (linesResult === false) return;
 		}
 		frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
-		await loadDraft();
+		await loadDraft({ quiet: true });
 	} catch (e) {
-		actingError.value = e.message || String(e);
+		setActingError(e.message || String(e));
 	} finally {
 		saving.value = false;
 	}
@@ -273,9 +271,9 @@ async function saveLinesOnly() {
 		.concat((linesEditor.value.removed || []).map((budget_line) => ({ budget_line, remove: true })));
 	const result = await saveBudgetLinesDraft({ budget_version: versionKey.value, lines });
 	if (!result.ok) {
-		actingError.value = Object.entries(result.errors || {})
+		setActingError(Object.entries(result.errors || {})
 			.map(([, v]) => v)
-			.join(" ") || __("Could not save Budget Lines.");
+			.join(" ") || __("Could not save Budget Lines."));
 		return false;
 	}
 	linesEditor.value.removed = [];
@@ -322,13 +320,13 @@ async function submitForReview() {
 		}
 		const result = await submitBudgetVersion(versionKey.value);
 		if (!result.ok) {
-			actingError.value = (result.blockers || []).map((b) => b.message).join(" ") || __("Not ready to submit.");
+			setActingError((result.blockers || []).map((b) => b.message).join(" ") || __("Not ready to submit."));
 			return;
 		}
 		frappe.show_alert({ message: __("Submitted for review"), indicator: "green" });
-		await loadDraft();
+		await loadDraft({ quiet: true });
 	} catch (e) {
-		actingError.value = e.message || String(e);
+		setActingError(e.message || String(e));
 	} finally {
 		submitting.value = false;
 	}
@@ -354,16 +352,27 @@ function cancel() {
 
 		<!-- BUD-DES-02 — pre-creation: no tabs, footer actions -->
 		<template v-else-if="isNew">
-			<!-- Working-context selection (BUD-CHG-001 v1.2 Phase 8) — a fresh
-			     Budget can't be registered without one. -->
-			<div v-if="contextLoading || selectionRequired || contextMode === 'none'" class="kt-shell">
-				<WorkingContextPicker
-					:loading="contextLoading"
-					:mode="contextMode"
-					:contexts="workingContexts"
-					:selected="workingContext"
-					@select="onSelectNewContext"
-				/>
+			<!-- Fiscal Year filter (BUD-CHG-001 v1.3) — a fresh Budget can't be
+			     registered without a selected year; never auto-picked. -->
+			<div v-if="fyFilter.loading.value || !fyFilter.selected.value" class="kt-shell">
+				<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px">
+					<label class="kt-field-label" style="margin: 0" for="bud-new-fy">{{ __("Fiscal Year") }}</label>
+					<select
+						id="bud-new-fy"
+						class="kt-input"
+						style="width: auto; min-width: 160px"
+						:disabled="fyFilter.loading.value"
+						:value="fyFilter.selected.value"
+						@change="onSelectNewFy($event.target.value)"
+					>
+						<option value="" disabled>{{ __("Select a fiscal year") }}</option>
+						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+					</select>
+				</div>
+				<div v-if="!fyFilter.loading.value" class="kt-card kt-blueprint kt-empty">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h2>{{ __("Select a fiscal year to register its procurement budget.") }}</h2>
+				</div>
 			</div>
 			<div v-else class="kt-shell" style="padding-bottom: 96px">
 				<header style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
@@ -371,15 +380,14 @@ function cancel() {
 					<span class="kt-status is-draft">{{ __("Draft") }}</span>
 				</header>
 
-				<p v-if="actingError" style="color: oklch(0.45 0.13 28)">{{ actingError }}</p>
+				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div class="kt-card kt-blueprint">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div class="kt-card-title">{{ __("Budget context") }}</div>
-					<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
+					<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px">
 						<div><label class="kt-field-label">{{ __("Budget reference") }}</label><div class="kt-field-static">{{ __("Not assigned") }}</div></div>
-						<div><label class="kt-field-label">{{ __("Procuring Entity") }}</label><div class="kt-field-static">{{ newContext?.procuring_entity?.name || "—" }}</div></div>
-						<div><label class="kt-field-label">{{ __("Financial Year") }}</label><div class="kt-field-static">{{ newContext?.financial_year?.label || "—" }}</div></div>
+						<div><label class="kt-field-label">{{ __("Financial Year") }}</label><div class="kt-field-static">{{ newContext?.fiscal_year?.label || fyFilter.selected.value }}</div></div>
 						<div><label class="kt-field-label">{{ __("Currency") }}</label><div class="kt-field-static">KES</div></div>
 					</div>
 				</div>
@@ -437,7 +445,7 @@ function cancel() {
 					</div>
 				</div>
 
-				<p v-if="actingError" style="color: oklch(0.45 0.13 28)">{{ actingError }}</p>
+				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div class="kt-tabs">
 					<div class="kt-tab" :aria-selected="tab === 'overview'" @click="switchTab('overview')" data-testid="bud-editor-tab-overview">{{ __("Overview") }}</div>
@@ -448,10 +456,9 @@ function cancel() {
 					<div class="kt-card kt-blueprint">
 						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 						<div class="kt-card-title">{{ isSuccessor ? __("Version context") : __("Budget context") }}</div>
-						<div :style="{ display: 'grid', gridTemplateColumns: isSuccessor ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)', gap: '20px' }">
+						<div :style="{ display: 'grid', gridTemplateColumns: isSuccessor ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '20px' }">
 							<div v-if="!isSuccessor"><label class="kt-field-label">{{ __("Budget reference") }}</label><div class="kt-field-static">{{ draft.budget.code }}</div></div>
-							<div><label class="kt-field-label">{{ __("Procuring Entity") }}</label><div class="kt-field-static">{{ draft.budget.procuring_entity.name }}</div></div>
-							<div><label class="kt-field-label">{{ __("Financial Year") }}</label><div class="kt-field-static">{{ draft.budget.financial_year.label }}</div></div>
+							<div><label class="kt-field-label">{{ __("Financial Year") }}</label><div class="kt-field-static">{{ draft.budget.fiscal_year.label }}</div></div>
 							<div><label class="kt-field-label">{{ __("Currency") }}</label><div class="kt-field-static">{{ draft.budget.currency }}</div></div>
 							<template v-if="isSuccessor">
 								<div><label class="kt-field-label">{{ __("Based on") }}</label><div class="kt-field-static">{{ __("Active Version {0}", [draft.based_on.version_number]) }}</div></div>
@@ -533,10 +540,10 @@ function cancel() {
 									</td>
 									<td>
 										<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="kt-input">
-											<option value="">{{ __("PE-wide") }}</option>
+											<option value="">{{ __("Entity-wide") }}</option>
 											<option v-for="o in orgUnits" :key="o.id" :value="o.id">{{ o.label }}</option>
 										</select>
-										<span v-else>{{ row.owner_org_unit_label || __("PE-wide") }}</span>
+										<span v-else>{{ row.owner_org_unit_label || __("Entity-wide") }}</span>
 									</td>
 									<td>
 										<select v-if="canEdit && !row.identity_locked" v-model="row.funding_source" class="kt-input">
@@ -558,7 +565,7 @@ function cancel() {
 								</tr>
 							</tbody>
 						</table>
-						<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" @click="addLine" data-testid="bud-editor-add-line-btn">{{ __("Add Budget Line") }}</button>
+						<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" style="align-self: flex-start" @click="addLine" data-testid="bud-editor-add-line-btn">{{ __("Add Budget Line") }}</button>
 					</div>
 				</template>
 			</div>

@@ -1,37 +1,40 @@
 # Copyright (c) 2026, KenTender and contributors
-"""STR-CHG-001 v1.5 §7/§18.1 capability wiring, on AUTH-ADR-001's native
-Frappe Role + User Permission engine (kentender_core.services.authorization_native)
-— not kentender_core's older Operational Scope Assignment/Capability Profile
-engine, and not Strategy's older org_scope_access.py mechanism either.
+"""STR-CHG-001 v1.5 §7/§18.1 capability wiring on AUTH-ADR-001 **v1.6**
+(CU-301): one site is one Procuring Entity, and the two Strategy governance
+roles are Site-wide business responsibilities resolved through
+`kentender_core.services.authorization` — no capability strings, no
+ResourceContext, no User-Permission scope checks.
 
-v1.5 collapses the 3-role/3-capability model (Author/Reviewer/Approval
-Authority) onto 2 roles/capabilities (Author/Approver). Separation of duties
-is no longer a pairwise Separation of Duties Rule table (there is only one
-remaining pair, Author vs Approver, and the rule is version-specific, not a
-general two-hat block): "the author of a submitted version cannot approve or
-return it, even if that user also holds Strategy Approver" (§13.4/§18.1).
-That is enforced directly here via the version's own audit trail, not via
-kentender_core's general capability-pair SoD machinery.
+v1.5 collapsed the 3-role model onto 2 (Author/Approver). Separation of
+duties stays a version-specific, domain-owned rule — "the author of a
+submitted version cannot approve or return it, even if that user also holds
+Strategy Approver" (§13.4/§18.1) — enforced here via the version's own audit
+trail, never via a general capability-pair engine.
+
+v1.6 semantics callers should know:
+- Technical users (Administrator/System Manager) may READ without an
+  assignment but hold no business authority: authoring and approving require
+  an Enabled `Strategy Author` / `Strategy Approver` assignment like anyone
+  else (AUTH-AC-018). The old System-Manager-can-do-everything behaviour is
+  gone by design.
+- Both roles are Site-wide (registry §20 note): no Organisation Unit narrows
+  them; any departmental narrowing stays a record-ownership check inside
+  Strategy, not an authorization concern.
 """
 
 from __future__ import annotations
 
 import frappe
 
-from kentender_core.services.authorization_native import evaluate_role_capability, require_role_capability
-from kentender_core.services.authorization_policy import ResourceContext
+from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+from kentender_core.services.responsibility_errors import fail
 from kentender_strategy.services.strategy_audit import list_events
 
+# Retained as the module's internal action vocabulary; each maps onto one
+# registered Site-wide business role.
 CAP_AUTHOR = "strategy.plan_version.author"
 CAP_APPROVE = "strategy.plan_version.approve"
 
-# STR-CHG-001 v1.5 §7/§18.1: only 2 Strategy workflow roles remain. Strategy
-# Reviewer is removed outright (not renamed, not aliased). Strategy Approval
-# Authority is renamed to Strategy Approver — same responsibility, new name.
-# Strategy Viewer is intentionally NOT part of this governance-role tuple any
-# more: "Read access is not a third Strategy workflow role" (§7) — it stays a
-# plain Frappe Role driving ordinary DocType permissions, outside the
-# capability engine entirely.
 ROLE_STRATEGY_AUTHOR = "Strategy Author"
 ROLE_STRATEGY_APPROVER = "Strategy Approver"
 
@@ -40,16 +43,19 @@ STRATEGY_GOVERNANCE_ROLES = (
 	ROLE_STRATEGY_APPROVER,
 )
 
+_BUSINESS_ROLE_FOR_CAPABILITY = {
+	CAP_AUTHOR: ROLE_STRATEGY_AUTHOR,
+	CAP_APPROVE: ROLE_STRATEGY_APPROVER,
+}
+
 
 def ensure_strategy_governance_roles() -> dict:
-	"""Idempotent: create the 2 STR-CHG-001 v1.5 §7 Frappe Roles. No
-	Separation of Duties Rule is seeded any more — with only 2 capabilities
-	the only remaining rule is the direct same-version self-check in
-	`_blocked_by_self_approval` below, not a capability-pair rule.
+	"""Idempotent: create the 2 STR-CHG-001 v1.5 §7 Frappe Roles (the
+	registry's projections for the two business responsibilities).
 
-	Does not grant any Role to a specific user — provisioning real named
-	actors is a separate seed-contract concern, once the exact actor
-	identities exist."""
+	Does not grant any Role to a specific user — under v1.6 a grant flows
+	only through the User Responsibility Assignment administration command,
+	which projects the Frappe Role itself."""
 	created = {"roles": [], "sod_rules": []}
 
 	for role in STRATEGY_GOVERNANCE_ROLES:
@@ -62,21 +68,11 @@ def ensure_strategy_governance_roles() -> dict:
 	return created
 
 
-def resource_context_for_version(version) -> ResourceContext:
-	"""Build a ResourceContext for one Strategic Plan Version, resolving its
-	owning Strategic Plan for PE/OU scope."""
-	if isinstance(version, str):
-		version = frappe.get_doc("Strategic Plan Version", version)
-	plan = frappe.db.get_value(
-		"Strategic Plan", version.plan_id, ["procuring_entity_id", "owner_org_unit_id"], as_dict=True
-	)
-	return ResourceContext(
-		resource_type="Strategic Plan Version",
-		resource_id=version.name,
-		procuring_entity_id=(plan.procuring_entity_id if plan else "") or "",
-		organisation_unit_id=(plan.owner_org_unit_id if plan else "") or "",
-		state=version.status or "",
-	)
+def _business_role(capability: str) -> str:
+	role = _BUSINESS_ROLE_FOR_CAPABILITY.get(capability)
+	if not role:
+		fail("AUTH_CONFIGURATION_INVALID")
+	return role
 
 
 def _submitted_by(version_name: str) -> str | None:
@@ -98,39 +94,82 @@ def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> 
 	return _submitted_by(version_name) == user
 
 
+def _version_name(version) -> str:
+	return version if isinstance(version, str) else version.name
+
+
 def require_plan_version_capability(
 	user: str, capability: str, version, *, correlation_id: str = ""
 ):
-	if isinstance(version, str):
-		version_name = version
-	else:
-		version_name = version.name
-	resource = resource_context_for_version(version)
-	require_role_capability(
-		user,
-		capability,
-		resource,
-		sod_blocked=_blocked_by_self_approval(user, capability, version_name),
+	"""Raise the applicable §10 error unless `user` holds the Enabled
+	Site-wide assignment for this capability's business role — and, for
+	Approve/Return, is not the version's own submitter."""
+	if _blocked_by_self_approval(user, capability, _version_name(version)):
+		fail("AUTH_SEGREGATION_BLOCKED")
+	decision = authorise_record(
+		user=user,
+		business_role=_business_role(capability),
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
 	)
+	if not decision.allowed:
+		fail(decision.reason_code or "AUTH_RESPONSIBILITY_REQUIRED")
+	return decision.assignment
 
 
 def has_plan_version_capability(user: str, capability: str, version) -> bool:
-	if isinstance(version, str):
-		version_name = version
-	else:
-		version_name = version.name
-	if _blocked_by_self_approval(user, capability, version_name):
+	if _blocked_by_self_approval(user, capability, _version_name(version)):
 		return False
-	return evaluate_role_capability(user, capability, resource_context_for_version(version))[0]
+	return authorise_record(
+		user=user,
+		business_role=_business_role(capability),
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	).allowed
 
 
-def require_plan_create_capability(user: str, procuring_entity_id: str) -> None:
-	"""Creating a brand-new Strategic Plan needs no bootstrap workaround (unlike
-	reference_data's PE/FY Context case) — Strategy's scope granularity is
-	Procuring Entity itself, and the PE already exists at plan-creation time,
-	so a normal Role+PE-scope check applies directly."""
-	require_role_capability(
-		user,
-		CAP_AUTHOR,
-		ResourceContext(resource_type="Strategic Plan", resource_id="", procuring_entity_id=procuring_entity_id),
+def require_plan_create_capability(user: str):
+	"""Creating a brand-new Strategic Plan requires the Site-wide Strategy
+	Author responsibility (one site = one PE; no entity parameter exists).
+	Returns the exercised assignment for the audit trail (§13)."""
+	decision = authorise_record(
+		user=user,
+		business_role=ROLE_STRATEGY_AUTHOR,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
 	)
+	if not decision.allowed:
+		fail(decision.reason_code or "AUTH_RESPONSIBILITY_REQUIRED")
+	return decision.assignment
+
+
+def business_role_for_capability(capability: str) -> str:
+	"""Public name of the capability → business-role mapping, for audit."""
+	return _business_role(capability)
+
+
+def assignment_id(assignment) -> str | None:
+	"""The `User Responsibility Assignment` name behind an authorization
+	decision, or None for a technical read that exercised no assignment."""
+	return getattr(assignment, "name", None) or None
+
+
+def has_plan_create_capability(user: str) -> bool:
+	return authorise_record(
+		user=user,
+		business_role=ROLE_STRATEGY_AUTHOR,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	).allowed
+
+
+def holds_approver_responsibility(user: str) -> bool:
+	"""An Enabled Site-wide Strategy Approver assignment, irrespective of any
+	per-version self-approval block — the §12.4 gate for opening an
+	approval task at all."""
+	return authorise_record(
+		user=user,
+		business_role=ROLE_STRATEGY_APPROVER,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	).allowed

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §4.3/§4.4/§9.1/§9.2/§12.2 — Budget Line drafting and the
+"""BUD-CHG-001 v1.3 §4.3/§4.4/§9.1/§9.2/§12.2 — Budget Line drafting and the
 eligible-line read contracts. Owns `save_budget_lines_draft`,
 `list_eligible_budget_lines`, and the Budget Lines tab read models for the
 version editor (BUD-UI-02) and the Active workspace (BUD-UI-03).
@@ -22,9 +22,7 @@ from kentender_budget.services.budget_contracts import (
 	_resolve_budget_version,
 	_version_totals,
 	format_kes_full,
-	resolve_scoped_entity,
 )
-from kentender_budget.services.budget_permissions import assert_org_unit_in_scope
 from kentender_budget.services.budget_reference import allocate_budget_line_reference, allocate_budget_line_version_reference
 
 
@@ -36,7 +34,7 @@ def _lines_previously_in_active(budget_version) -> dict[str, Any]:
 	if not budget_version.based_on_budget_version:
 		return {}
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": budget_version.based_on_budget_version},
 		fields=["budget_line", "title", "owner_org_unit", "funding_source"],
 	)
@@ -55,7 +53,7 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 	if version.status != "Draft":
 		frappe.throw(_("Only a Draft version can be edited"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
-	budget = frappe.get_doc("Budget", version.budget)
+	budget = frappe.get_doc("Procurement Budget", version.budget)
 	locked = _lines_previously_in_active(version)
 	rows = payload.get("lines") or []
 	errors: dict[str, str] = {}
@@ -63,7 +61,7 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 	existing_versions = {
 		lv.budget_line: lv
 		for lv in frappe.get_all(
-			"Budget Line Version", filters={"budget_version": version.name}, fields=["name", "budget_line"]
+			"Procurement Budget Line Version", filters={"budget_version": version.name}, fields=["name", "budget_line"]
 		)
 	}
 	seen: set[str] = set()
@@ -77,7 +75,7 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 				errors[f"lines.{i}"] = _("A previously Active line cannot be removed")
 				continue
 			if budget_line_key and budget_line_key in existing_versions:
-				frappe.delete_doc("Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
+				frappe.delete_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
 			continue
 
 		title = (row.get("title") or "").strip()
@@ -91,11 +89,10 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 			errors[f"lines.{i}.funding_source"] = _("Funding source is required")
 		if approved_amount <= 0:
 			errors[f"lines.{i}.approved_amount"] = _("Approved amount must be positive")
-		if owner_org_unit:
-			try:
-				assert_org_unit_in_scope(budget.procuring_entity, owner_org_unit, require_write=False)
-			except frappe.PermissionError:
-				errors[f"lines.{i}.owner_org_unit"] = _("Organisation unit is outside this Procuring Entity")
+		# owner_org_unit is BUD-BR-007 line-eligibility data, never a user-scope
+		# or permission check (§17.1/§18) — only existence is validated here.
+		if owner_org_unit and not frappe.db.exists("Organisation Unit", owner_org_unit):
+			errors[f"lines.{i}.owner_org_unit"] = _("Organisation unit not found")
 
 		if budget_line_key and budget_line_key in locked:
 			prior = locked[budget_line_key]
@@ -111,7 +108,7 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 			continue
 
 		if budget_line_key and budget_line_key in existing_versions:
-			line_version = frappe.get_doc("Budget Line Version", existing_versions[budget_line_key].name)
+			line_version = frappe.get_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name)
 			line_version.title = title
 			line_version.owner_org_unit = owner_org_unit or None
 			line_version.funding_source = funding_source
@@ -119,21 +116,21 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 			line_version.save(ignore_permissions=True)
 		else:
 			if not budget_line_key:
-				line_ref = allocate_budget_line_reference(budget.procuring_entity)
+				line_ref = allocate_budget_line_reference()
 				budget_line = frappe.get_doc(
-					{"doctype": "Budget Line", "generated_reference": line_ref, "budget": budget.name}
+					{"doctype": "Procurement Budget Line", "generated_reference": line_ref, "budget": budget.name}
 				)
 				budget_line.insert(ignore_permissions=True)
 				budget_line_key = budget_line.name
 			else:
-				budget_line = frappe.get_doc("Budget Line", budget_line_key)
+				budget_line = frappe.get_doc("Procurement Budget Line", budget_line_key)
 				if budget_line.budget != budget.name:
 					errors[f"lines.{i}"] = _("Budget Line does not belong to this Budget")
 					continue
 
 			frappe.get_doc(
 				{
-					"doctype": "Budget Line Version",
+					"doctype": "Procurement Budget Line Version",
 					"generated_reference": allocate_budget_line_version_reference(budget_line.generated_reference, version.version_number),
 					"budget_version": version.name,
 					"budget_line": budget_line.name,
@@ -179,7 +176,7 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 	locked = _lines_previously_in_active(version)
 
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters={"budget_version": version.name},
 		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		order_by="title asc",
@@ -188,7 +185,7 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 		{
 			r.name: r.generated_reference
 			for r in frappe.get_all(
-				"Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
+				"Procurement Budget Line", filters={"name": ["in", [row.budget_line for row in rows]]}, fields=["name", "generated_reference"]
 			)
 		}
 		if rows
@@ -215,7 +212,7 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 			if is_locked:
 				active_amount = flt(
 					frappe.db.get_value(
-						"Budget Line Version",
+						"Procurement Budget Line Version",
 						{"budget_version": version.based_on_budget_version, "budget_line": r.budget_line},
 						"approved_amount",
 					)
@@ -240,7 +237,6 @@ def get_budget_lines_active(budget: str) -> dict[str, Any]:
 	from kentender_budget.services.budget_contracts import _resolve_budget
 
 	doc = _resolve_budget(budget)
-	resolve_scoped_entity(doc.procuring_entity)
 	version = _active_version(doc.name)
 	if not version:
 		frappe.throw(_("No Active Budget Version"), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
@@ -280,16 +276,15 @@ def get_budget_lines_active(budget: str) -> dict[str, Any]:
 
 
 def list_eligible_budget_lines(
-	procuring_entity: str,
-	financial_year: str,
+	fiscal_year: str,
 	source_org_unit: str | None = None,
 	funding_source: str | None = None,
 	search: str | None = None,
 ) -> list[dict[str, Any]]:
 	"""§9.1 `list_eligible_budget_lines` — Active eligible lines only
-	(BUD-BR-007: PE-wide or matching the source Need's organisation unit),
-	no Draft lines."""
-	budget_name = frappe.db.get_value("Budget", {"procuring_entity": procuring_entity, "financial_year": financial_year}, "name")
+	(BUD-BR-007: Entity-wide or matching the source Need's organisation
+	unit), no Draft lines."""
+	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name")
 	if not budget_name:
 		return []
 	version = _active_version(budget_name)
@@ -304,11 +299,12 @@ def list_eligible_budget_lines(
 		filters["title"] = ["like", f"%{search}%"]
 
 	rows = frappe.get_all(
-		"Budget Line Version",
+		"Procurement Budget Line Version",
 		filters=filters,
 		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
 		order_by="title asc",
 	)
+	references = _line_references([r.budget_line for r in rows])
 	out = []
 	for r in rows:
 		if r.owner_org_unit and source_org_unit and r.owner_org_unit != source_org_unit:
@@ -317,6 +313,9 @@ def list_eligible_budget_lines(
 		out.append(
 			{
 				"id": r.budget_line,
+				# BUD v1.5 §9.1 / PLN FU-02 — the human business reference
+				# (`MOH-BL-DHI-2027`), so consumers never display the hash id.
+				"reference": references.get(r.budget_line, ""),
 				"title": r.title,
 				"owner_org_unit": r.owner_org_unit,
 				"funding_source": r.funding_source,
@@ -327,3 +326,127 @@ def list_eligible_budget_lines(
 			}
 		)
 	return out
+
+
+def _line_references(budget_lines: list[str]) -> dict[str, str]:
+	if not budget_lines:
+		return {}
+	rows = frappe.get_all(
+		"Procurement Budget Line",
+		filters={"name": ("in", budget_lines)},
+		fields=["name", "generated_reference"],
+	)
+	return {r.name: r.generated_reference or "" for r in rows}
+
+
+def check_plan_affordability(
+	fiscal_year: str,
+	planned_totals: dict[str, float] | list[dict[str, Any]] | str | None = None,
+) -> dict[str, Any]:
+	"""BUD-CHG-001 v1.5 §8.2 / §9.1 `check_plan_affordability` — non-mutating.
+
+	Receives a Fiscal Year and the plan's per-Procurement-Budget-Line planned
+	totals; returns, for every Active line of that year's Active version, the
+	approved amount, the plan's planned total, the current positions with an
+	`as_at` instant and the two verdicts:
+
+	- **within approved amount** — planned ≤ approved (the blocking one: a plan
+	  exceeding a line's approved amount cannot lawfully be executed);
+	- **within currently available** — planned ≤ approved − reserved −
+	  committed (advisory only; planning and drawdown run on different horizons).
+
+	Locks nothing, writes nothing, creates no token, produces no ledger event
+	(BUD-BR-012). Repeating it returns a fresh statement at a new `as_at`.
+	A planned total for a line that is not Active in this year is reported
+	as `unknown_lines` and fails the blocking verdict, because nothing can be
+	executed against it.
+	"""
+	from frappe.utils import now_datetime
+
+	if isinstance(planned_totals, str):
+		planned_totals = frappe.parse_json(planned_totals)
+	totals: dict[str, float] = {}
+	if isinstance(planned_totals, dict):
+		totals = {str(k): flt(v) for k, v in planned_totals.items()}
+	else:
+		for row in planned_totals or []:
+			key = str(row.get("budget_line") or row.get("id") or "")
+			if key:
+				totals[key] = totals.get(key, 0.0) + flt(row.get("planned") if "planned" in row else row.get("amount"))
+
+	as_at = now_datetime()
+	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name")
+	version = _active_version(budget_name) if budget_name else None
+	if not version:
+		return {
+			"fiscal_year": fiscal_year,
+			"as_at": str(as_at),
+			"active_version": "",
+			"lines": [],
+			"unknown_lines": sorted(totals),
+			"within_approved": not totals,
+			"within_available": not totals,
+			"failing_lines": [],
+		}
+	require_budget_version_read_scope(version)
+
+	rows = frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
+		order_by="title asc",
+	)
+	references = _line_references([r.budget_line for r in rows])
+	currency = frappe.db.get_value("Procurement Budget", budget_name, "currency") or "KES"
+	lines = []
+	failing = []
+	seen = set()
+	all_within_approved = True
+	all_within_available = True
+	for r in rows:
+		seen.add(r.budget_line)
+		pos = _line_position(r.budget_line, r)
+		planned = flt(totals.get(r.budget_line, 0.0))
+		within_approved = planned <= pos["approved"] + 1e-9
+		within_available = planned <= pos["available"] + 1e-9
+		excess = max(0.0, planned - pos["approved"])
+		if not within_approved:
+			all_within_approved = False
+			failing.append({"budget_line": r.budget_line, "reference": references.get(r.budget_line, ""), "excess": excess})
+		if not within_available:
+			all_within_available = False
+		lines.append(
+			{
+				"budget_line": r.budget_line,
+				"reference": references.get(r.budget_line, ""),
+				"title": r.title,
+				"owner_org_unit": r.owner_org_unit,
+				"funding_source": r.funding_source,
+				"currency": currency,
+				"approved": pos["approved"],
+				"planned": planned,
+				"reserved": pos["reserved"],
+				"committed": pos["committed"],
+				"available": pos["available"],
+				"within_approved": within_approved,
+				"within_available": within_available,
+				"excess_over_approved": excess,
+			}
+		)
+	unknown = sorted(k for k in totals if k not in seen and flt(totals[k]) > 0)
+	if unknown:
+		all_within_approved = False
+		all_within_available = False
+		for key in unknown:
+			failing.append({"budget_line": key, "reference": "", "excess": flt(totals[key])})
+	return {
+		"fiscal_year": fiscal_year,
+		"as_at": str(as_at),
+		"active_version": version.name,
+		"currency": currency,
+		"lines": lines,
+		"unknown_lines": unknown,
+		"within_approved": all_within_approved,
+		"within_available": all_within_available,
+		"failing_lines": failing,
+	}

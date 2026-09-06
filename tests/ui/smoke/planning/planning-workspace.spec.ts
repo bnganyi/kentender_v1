@@ -1,331 +1,146 @@
-import { test, expect } from "@playwright/test";
-import { loginAsAdministrator } from "../../helpers/auth";
-import {
-	loginAsMohPlanningOfficer,
-	loginAsMohPlanningViewer,
-	loginAsPlanningSystemAdminNoScope,
-	preparePlanningGate03,
-	preparePlanningWorkspaceState,
-} from "../../helpers/planningRoles";
-import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
+import { expect, test } from "@playwright/test";
 
-const ROOT = '[data-testid="kt-pln-ui01-root"]';
+import { login } from "../../helpers/auth";
+import {
+	AUDITOR,
+	AUTHOR,
+	NOBODY,
+	OUTSIDER,
+	OU_NAME,
+	PASSWORD,
+	PLANNER,
+	collectConsoleErrors,
+	expectFixtureYear,
+	expectReady,
+	gotoPlanning,
+	resetFixture,
+	restoreSite,
+} from "./helpers";
+
+/**
+ * PLN-CHG-001 v1.12 Phase 3 (Slice A) — PLN-UI-01 workspace, the Financial
+ * Year filter and the PLN-DES-16 Forbidden state, per role, in a real browser
+ * on the D13 world (no Procuring Entity anywhere).
+ */
+
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test.describe("PLN-UI-01 Procurement Planning workspace", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.setViewportSize({ width: 1400, height: 900 });
+	test.beforeEach(() => {
+		resetFixture("reset_workspace_fixture");
+	});
+	test.afterAll(() => restoreSite());
+
+	test("author is offered Open departmental plan, opens it and sees the live re-render", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
+		await login(page, AUTHOR, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+
+		// PLN-DES-01 masthead, exact copy; no header action button; the FY is a
+		// plain inline filter, never a card; no Procuring Entity control.
+		await expect(page.locator(".kt-page-kicker")).toHaveText("PROCUREMENT PLANNING");
+		await expect(page.locator(".kt-page-title")).toHaveText("Annual procurement planning");
+		await expect(page.locator(".pln-masthead button")).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-context-strip"]')).not.toHaveClass(/kt-card/);
+		await expect(page.locator('[data-testid="pln-pe-select"]')).toHaveCount(0);
+		await expectFixtureYear(page);
+
+		// The one offered action for an empty department while intake is open.
+		const rows = page.locator('[data-testid="pln-action-row"]');
+		await expect(rows).toHaveCount(1);
+		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Open departmental plan");
+		await expect(rows.first().locator(".pln-ready-sub")).toHaveText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("0 departmental plans");
+		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveCount(0);
+
+		// A real §8.2 command from the button, then the interactive re-render.
+		await page.locator('[data-testid="pln-work-action-0"]').click();
+		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Continue departmental plan", { timeout: 30_000 });
+		const planRow = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		await expect(planRow).toHaveCount(1);
+		await expect(planRow).toContainText(OU_NAME);
+		await expect(planRow.locator(".kt-status")).toHaveText("Draft");
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("1 departmental plan");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("planner sees the approved Section 9.1 workspace composition", async ({ page }) => {
-		await loginAsAdministrator(page);
-		await preparePlanningWorkspaceState(page, "BASE");
-		await page.context().clearCookies();
-		await loginAsMohPlanningOfficer(page);
-		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
-		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
-			timeout: 45_000,
-		});
-		await expect(page.locator(`${ROOT}.kt-stitch-canvas`)).toBeVisible();
-		await expect(page.getByRole("heading", { name: "Procurement Planning" })).toBeVisible();
-		await expect(page.locator(ROOT)).toContainText(
-			/Turn approved needs into funded, approved Plan Items ready for tendering/i,
-		);
-		await expect(page.getByTestId("kt-pln-ui01-filters")).toBeVisible();
-		await expect(page.locator('[data-kt-pln-pe-readonly]')).toContainText(/Ministry of Health/i);
-		await expect(page.locator('[data-kt-pln-filter="procuring_entity"]')).toBeHidden();
-		await expect(page.locator('[data-kt-pln-fy-readonly]')).toHaveText("2027/28");
-		await expect(page.locator('[data-kt-pln-filter="financial_year"]')).toBeHidden();
-		await expect(page.locator('[data-kt-pln-action="change-context"]')).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).not.toContainText(/Current Plan/i);
-		await expect(page.locator('[data-kt-pln-plan-title]')).toHaveText(
-			"Ministry of Health Annual Procurement Plan 2027/28",
-		);
-		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText(/Approved/i);
-		await expect(page.getByTestId("kt-pln-ui01-work-section")).toBeVisible();
-		await expect(page.locator('[data-kt-pln-filter="work_type"]')).toBeVisible();
-		const workFilter = page.getByTestId("kt-pln-ui01-work-filter");
-		await expect(workFilter).toContainText("All work");
-		await expect(workFilter).toContainText("Approved Demands");
-		await expect(workFilter).toContainText("Plan Items");
-		await expect(workFilter).toContainText("Returned work");
-		await expect(page.getByTestId("kt-pln-ui01-work-search")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui01-primary-action")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui01-primary-action")).toContainText(
-			/View approved plan/i,
-		);
-		await expect(page.getByTestId("kt-pln-ui01-table").locator("thead th")).toHaveCount(7);
-		await expect(page.locator('[data-kt-pln-work-body]')).toContainText(/Add to plan/i);
-		const workVisual = await page.getByTestId("kt-pln-ui01-table").evaluate((table) => {
-			const title = table.querySelector('.kt-pln-work-title') as HTMLElement;
-			const reference = table.querySelector('.kt-pln-reference') as HTMLElement;
-			return {
-				minWidth: parseFloat(getComputedStyle(table).minWidth),
-				tableLayout: getComputedStyle(table).tableLayout,
-				titleFamily: getComputedStyle(title).fontFamily,
-				referenceFamily: getComputedStyle(reference).fontFamily,
-				referenceSize: getComputedStyle(reference).fontSize,
-			};
-		});
-		expect(workVisual.minWidth).toBe(1120);
-		expect(workVisual.tableLayout).toBe('fixed');
-		expect(workVisual.titleFamily).toContain('Inter');
-		expect(workVisual.referenceFamily).toContain('JetBrains Mono');
-		expect(workVisual.referenceSize).toBe('12px');
-		await expect(page.getByTestId("kt-pln-ui01-waiting-section")).toBeVisible();
-		await expect(page.getByRole("dialog", { name: /^Message$/i })).toHaveCount(0);
-		const sourceStyles = await page.locator(ROOT).evaluate((root) => {
-			const style = (selector: string) => {
-				const element = root.querySelector(selector) as HTMLElement;
-				const computed = getComputedStyle(element);
-				return {
-					family: computed.fontFamily,
-					size: computed.fontSize,
-					lineHeight: computed.lineHeight,
-					weight: computed.fontWeight,
-					fill: computed.fontVariationSettings,
-					paddingLeft: computed.paddingLeft,
-					flexDirection: computed.flexDirection,
-				};
-			};
-			return {
-				headline: style('[data-testid="kt-pln-ui01-header"] h1'),
-				body: style('[data-testid="kt-pln-ui01-header"] p'),
-				planTitle: style('[data-kt-pln-plan-title]'),
-				label: style('.kt-pln-metric .font-label-caps'),
-				data: style('.kt-pln-data-value'),
-				search: style('[data-kt-pln-work-search]'),
-				sectionIcon: style('[data-testid="kt-pln-ui01-work-section"] .kt-pln-section-title .material-symbols-outlined'),
-				versionIcon: style('.kt-pln-version-status .material-symbols-outlined'),
-				emptyIcon: style('[data-kt-pln-waiting-empty] .material-symbols-outlined'),
-				empty: style('[data-kt-pln-waiting-empty]'),
-			};
-		});
-		expect(sourceStyles.headline).toMatchObject({ size: "30px", lineHeight: "38px", weight: "700" });
-		expect(sourceStyles.headline.family).toContain("Manrope");
-		expect(sourceStyles.body).toMatchObject({ size: "16px", lineHeight: "24px", weight: "400" });
-		expect(sourceStyles.body.family).toContain("Inter");
-		expect(sourceStyles.planTitle).toMatchObject({ size: "24px", lineHeight: "32px", weight: "600" });
-		expect(sourceStyles.label).toMatchObject({ size: "12px", lineHeight: "16px", weight: "700" });
-		expect(sourceStyles.data).toMatchObject({ size: "16px", lineHeight: "24px", weight: "500" });
-		expect(sourceStyles.data.family).toContain("JetBrains Mono");
-		expect(sourceStyles.search.paddingLeft).toBe("40px");
-		expect(sourceStyles.sectionIcon.size).toBe("16px");
-		expect(sourceStyles.versionIcon).toMatchObject({ size: "12px" });
-		expect(sourceStyles.versionIcon.fill).toContain('"FILL" 1');
-		expect(sourceStyles.emptyIcon.size).toBe("36px");
-		expect(sourceStyles.empty.flexDirection).toBe("column");
-		await assertStitchDeskChrome(page, {
-			rootTestId: "kt-pln-ui01-root",
-			primaryCtaTestId: "kt-pln-ui01-primary-action",
-			primaryRadiusMin: 4,
-			selectSelector: '[data-kt-pln-filter="work_type"]',
-		});
-		await page.locator('[data-kt-pln-action="change-context"]').click();
-		const financialYear = page.locator('[data-kt-pln-filter="financial_year"]');
-		await expect(financialYear).toBeVisible();
-		await financialYear.selectOption("2027/28");
-		await expect(financialYear).toBeHidden();
+	test("planner sees Ready to consolidate after acceptance and Open Annual Plan routes to the plan", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
 
-		await page.locator('[data-kt-pln-row-action="add_to_plan"]').click();
-		await expect(page).toHaveURL(/\/desk\/procurement-plan-approved\//, {
-			timeout: 30_000,
-		});
-		await expect(page.locator('[data-testid="kt-pln-ui09-root"][data-kt-pln-live="1"]')).toBeVisible({
-			timeout: 45_000,
-		});
-		await expect(page.getByTestId("kt-pln-ui04-dialog")).toBeVisible();
-		await expect(page.locator('[data-kt-demand-select]:checked')).toHaveCount(1);
+		const card = page.locator('[data-testid="pln-actionable"]');
+		await expect(card.locator(".kt-card-title")).toHaveText("Ready to consolidate");
+		await expect(card.locator("table")).toHaveCount(0);
+		const row = card.locator('[data-testid="pln-action-row"]');
+		await expect(row).toHaveCount(1);
+		await expect(row.locator(".pln-ready-headline")).toHaveText(
+			"2 accepted departmental entries ready to consolidate"
+		);
+		await expect(row.locator(".pln-ready-sub")).toContainText("KES 100,000,000");
+		await expect(page.locator('[data-testid="pln-plan-summary"]')).toHaveText("· Annual Plan · Draft Version 1");
+		await expect(page.locator('[data-testid="pln-departmental-plans"] .kt-card-title')).toHaveText(
+			"Departmental plans feeding this Annual Plan"
+		);
+		const planRows = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		await expect(planRows).toHaveCount(2);
+		await expect(planRows.first().locator(".kt-status")).toHaveText("Accepted");
+		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("2 departmental plans");
+
+		await row.locator("button").click();
+		await expectReady(page, "plan");
+		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("search and work filters refresh without showing the initial loader or shifting the workspace", async ({
-		page,
-	}) => {
-		let delayNextWorkspaceRequest = false;
-		await page.route(
-			"**/api/method/kentender_procurement.procurement_planning.api.get_planning_workspace",
-			async (route) => {
-				if (delayNextWorkspaceRequest) {
-					delayNextWorkspaceRequest = false;
-					await new Promise((resolve) => setTimeout(resolve, 800));
-				}
-				await route.continue();
-			},
+	test("auditor reads the register but is offered no work at all", async ({ page }) => {
+		resetFixture("reset_accepted_fixture");
+		await login(page, AUDITOR, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
+
+		// Absence assertions: nothing decidable is offered, rows stay readable.
+		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody button')).toHaveCount(2);
+		await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
+	});
+
+	test("a stale Frappe Role without a responsibility assignment gets the Forbidden panel and nothing else (PLN-AC-111..113)", async ({ page }) => {
+		await login(page, NOBODY, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+
+		const card = page.locator('[data-testid="pln-forbidden"]');
+		await expect(card.locator("h3")).toHaveText("You do not have access to Procurement Planning");
+		await expect(card).toContainText(
+			"This area needs one of these responsibilities: Procurement Planner, Finance Confirmation Officer, Accounting Officer"
 		);
-		await loginAsAdministrator(page);
-		await preparePlanningWorkspaceState(page, "BASE");
-		await page.context().clearCookies();
-		await loginAsMohPlanningOfficer(page);
-		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
-
-		const root = page.getByTestId("kt-pln-ui01-root");
-		const header = page.getByTestId("kt-pln-ui01-header");
-		const loader = page.locator("[data-kt-pln-loading]");
-		await expect(root).toHaveAttribute("data-kt-pln-live", "1", { timeout: 45_000 });
-		await expect(loader).toBeHidden();
-		const initialHeaderTop = (await header.boundingBox())?.y;
-		expect(initialHeaderTop).toBeDefined();
-
-		delayNextWorkspaceRequest = true;
-		await page.getByTestId("kt-pln-ui01-work-search").fill("Digital health");
-		await expect(root).toHaveAttribute("aria-busy", "true", { timeout: 2_000 });
-		await expect(loader).toBeHidden();
-		expect((await header.boundingBox())?.y).toBe(initialHeaderTop);
-		await expect(root).toHaveAttribute("aria-busy", "false", { timeout: 5_000 });
-
-		delayNextWorkspaceRequest = true;
-		await page.getByTestId("kt-pln-ui01-work-filter").selectOption({
-			label: "Approved Demands",
-		});
-		await expect(root).toHaveAttribute("aria-busy", "true", { timeout: 2_000 });
-		await expect(loader).toBeHidden();
-		expect((await header.boundingBox())?.y).toBe(initialHeaderTop);
-		await expect(root).toHaveAttribute("aria-busy", "false", { timeout: 5_000 });
+		await expect(card).toContainText("Ask your KenTender administrator to assign one in System setup.");
+		await expect(card.locator("button")).toHaveCount(0);
+		// Nothing else renders: no filter, no tables, no work.
+		await expect(page.locator('[data-testid="pln-context-strip"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-departmental-plans"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
 	});
 
-	test("zero-scope admin sees blocked panel", async ({ page }) => {
-		await loginAsAdministrator(page);
-		await preparePlanningGate03(page);
-		await page.context().clearCookies();
-		await loginAsPlanningSystemAdminNoScope(page);
-		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
-		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
-			timeout: 45_000,
-		});
-		await expect(page.getByTestId("kt-pln-ui01-blocked")).toBeVisible();
-		await expect(page.getByTestId("kt-pln-ui01-blocked")).toContainText(
-			/authorised Procuring Entity|Planning assignment/i,
-		);
+	test("an author from another department sees an empty register, never the other unit's plan", async ({ page }) => {
+		resetFixture("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, OUTSIDER, PASSWORD);
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectFixtureYear(page);
+		// their own Draft (opened by the fixture) and nothing of the other unit
+		const rows = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		await expect(rows).toHaveCount(1);
+		await expect(rows.first()).not.toContainText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
-
-	test("Administrator support viewer must deliberately select an approved Plan", async ({ page }) => {
-		await loginAsAdministrator(page);
-		await preparePlanningGate03(page);
-		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
-		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
-			timeout: 45_000,
-		});
-		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-read-only", "1");
-		await expect(page.getByTestId("kt-pln-ui01-blocked")).toBeHidden();
-		const entitySelect = page.locator('[data-kt-pln-filter="procuring_entity"]');
-		await expect(entitySelect).toBeVisible();
-		await expect(entitySelect).not.toContainText(/All authorised entities/i);
-		await expect(entitySelect).toHaveValue("");
-		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-can-create", "0");
-		await entitySelect.selectOption("PE-MOH");
-		await expect(page.locator(ROOT)).toHaveAttribute("data-kt-pln-can-create", "0");
-		await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText(/Approved/i);
-		await expect(page.getByTestId("kt-pln-ui01-primary-action")).toContainText(
-			/View approved plan/i,
-		);
-		await expect(page.locator('[data-kt-pln-work-body] tr')).toHaveCount(0);
-		await expect(page.locator('[data-kt-pln-waiting-body] tr')).toHaveCount(0);
-	});
-
-	test("Viewer queue has no Confirm funding or Review return", async ({ page }) => {
-		await loginAsAdministrator(page);
-		await preparePlanningGate03(page);
-		await page.context().clearCookies();
-		await loginAsMohPlanningViewer(page);
-		await page.goto("/desk/planning-workspace", { waitUntil: "domcontentloaded" });
-		await expect(page.locator(`${ROOT}[data-kt-pln-live="1"]`)).toBeVisible({
-			timeout: 45_000,
-		});
-		await expect(page.locator('[data-kt-pln-queue-action="confirm_funding"]')).toHaveCount(0);
-		await expect(page.locator('[data-kt-pln-queue-action="continue_item"]')).toHaveCount(0);
-		const root = page.getByTestId("kt-pln-ui01-root");
-		await expect(root).not.toContainText("Confirm funding");
-		await expect(root).not.toContainText("Review return");
-		await expect(page.locator('[data-kt-pln-work-body] tr')).toHaveCount(0);
-		await expect(page.locator('[data-kt-pln-waiting-body] tr')).toHaveCount(0);
-	});
-
-	for (const scenario of [
-		{ fixture: "A", state: "NO_PLAN", fy: "2028/29", action: "Create annual plan" },
-		{ fixture: "B", state: "INITIAL_DRAFT_EMPTY", fy: "2028/29", action: "Continue planning" },
-		{ fixture: "C", state: "DRAFT_WITH_PLANNER_ACTION", fy: "2027/28", action: "Continue plan update" },
-		{ fixture: "D", state: "DRAFT_AWAITING_FINANCE", fy: "2027/28", action: "View plan update" },
-		{ fixture: "E", state: "VERSION_AWAITING_PROFESSIONAL_REVIEW", fy: "2027/28", action: "View approved plan" },
-		{ fixture: "F", state: "APPROVED_NO_WORK", fy: "2027/28", action: "View approved plan" },
-	] as const) {
-		test(`renders authoritative PLN-UI-01${scenario.fixture} state`, async ({ page }) => {
-			await loginAsAdministrator(page);
-			await preparePlanningWorkspaceState(page, scenario.fixture);
-			await page.context().clearCookies();
-			await loginAsMohPlanningOfficer(page);
-			await page.goto(`/desk/planning-workspace?procuring_entity=PE-MOH&financial_year=${encodeURIComponent(scenario.fy)}`, { waitUntil: "domcontentloaded" });
-			const root = page.getByTestId("kt-pln-ui01-root");
-			await expect(root).toHaveAttribute("data-kt-pln-live", "1", { timeout: 45_000 });
-			await expect(root).toHaveAttribute("data-kt-pln-state", scenario.state);
-			await expect(page.getByTestId("kt-pln-ui01-primary-action")).toHaveText(new RegExp(scenario.action, "i"));
-			await expect(page.locator("[data-kt-pln-context-helper]")).toContainText("do not change record ownership");
-
-			if (scenario.fixture === "A") {
-				await expect(page.locator("[data-kt-pln-no-plan-heading]")).toHaveText("No annual Procurement Plan");
-				await expect(root).toContainText("Create the annual Plan before adding the 2 Approved Demands ready for Planning.");
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
-				await expect(page.locator("[data-kt-pln-work-controls]")).toBeHidden();
-			}
-			if (scenario.fixture === "B") {
-				await expect(page.locator("[data-kt-pln-plan-reference]")).toHaveText("PLN-MOH-2028-001");
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(2);
-				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("DMD-MOH-2028-001");
-				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("DMD-MOH-2028-002");
-			}
-			if (scenario.fixture === "C") {
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(1);
-				await expect(page.locator("[data-kt-pln-work-body]")).toContainText("PPI-MOH-2027-022");
-				await expect(page.locator("[data-kt-pln-row-action=complete_item]")).toBeVisible();
-			}
-			if (scenario.fixture === "D") {
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
-				await expect(page.getByTestId("kt-pln-ui01-waiting-table").locator("thead th")).toHaveCount(4);
-				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Awaiting confirmation");
-				await expect(page.locator("[data-kt-pln-waiting-body] button, [data-kt-pln-waiting-body] a")).toHaveCount(0);
-			}
-			if (scenario.fixture === "E") {
-				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Professional review");
-				await expect(page.locator("[data-kt-pln-waiting-body]")).toContainText("Head of Procurement");
-				await expect(page.locator("[data-kt-pln-waiting-body] button, [data-kt-pln-waiting-body] a")).toHaveCount(0);
-				await expect(page.getByRole("button", { name: /^(Approve|Return)$/i })).toHaveCount(0);
-			}
-			if (scenario.fixture === "F") {
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(0);
-				await expect(page.locator("[data-kt-pln-waiting-body] tr")).toHaveCount(0);
-				await expect(root).not.toContainText(/Add Plan Item|Add to plan/i);
-				await expect(page.getByTestId("kt-pln-ui01-plan-panel")).toContainText("KES 535,000,000");
-			}
-		});
-	}
-
-	for (const mobile of [
-		{ fixture: "A", state: "NO_PLAN", family: "empty" },
-		{ fixture: "B", state: "INITIAL_DRAFT_EMPTY", family: "actionable" },
-		{ fixture: "D", state: "DRAFT_AWAITING_FINANCE", family: "waiting" },
-	] as const) {
-		test(`supports keyboard focus and mobile ${mobile.family} reflow`, async ({ page }) => {
-			await page.setViewportSize({ width: 390, height: 844 });
-			await loginAsAdministrator(page);
-			await preparePlanningWorkspaceState(page, mobile.fixture);
-			await page.context().clearCookies();
-			await loginAsMohPlanningOfficer(page);
-			const fy = mobile.fixture === "A" || mobile.fixture === "B" ? "2028/29" : "2027/28";
-			await page.goto(`/desk/planning-workspace?procuring_entity=PE-MOH&financial_year=${encodeURIComponent(fy)}`, { waitUntil: "domcontentloaded" });
-			const root = page.getByTestId("kt-pln-ui01-root");
-			await expect(root).toHaveAttribute("data-kt-pln-state", mobile.state, { timeout: 45_000 });
-			const primary = page.getByTestId("kt-pln-ui01-primary-action");
-			await primary.focus();
-			await expect(primary).toBeFocused();
-			const box = await root.boundingBox();
-			expect(box).not.toBeNull();
-			expect((box?.x || 0) + (box?.width || 0)).toBeLessThanOrEqual(391);
-			if (mobile.family === "actionable") {
-				await expect(page.locator("[data-kt-pln-work-body] tr")).toHaveCount(2);
-			}
-			if (mobile.family === "waiting") {
-				await expect(page.locator("[data-kt-pln-waiting-table] thead th")).toHaveCount(4);
-				await expect(page.locator("[data-kt-pln-waiting-body] button")).toHaveCount(0);
-			}
-		});
-	}
 });

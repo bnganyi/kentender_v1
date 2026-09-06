@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §9.1 `get_funding_lineage` — ordered Budget, version-at-
+"""BUD-CHG-001 v1.3 §9.1 `get_funding_lineage` — ordered Budget, version-at-
 confirmation, line, reservation, commitment and ledger identities for one
 Plan Item, source allocation, reservation, contract or commitment reference,
 within the caller's authorised scope.
@@ -15,7 +15,6 @@ import frappe
 from frappe import _
 
 from kentender_budget.services.budget_authorization import require_budget_version_read_scope
-from kentender_budget.services.budget_contracts import _active_version, resolve_scoped_entity
 
 
 def _resolve_reservations(*, plan_item: str | None, plan_source_allocation: str | None, reservation: str | None, contract: str | None, commitment: str | None) -> list[Any]:
@@ -57,14 +56,13 @@ def get_funding_lineage(
 
 	rows = []
 	for rsv in reservations:
-		budget = frappe.get_doc("Budget", rsv.budget)
-		resolve_scoped_entity(budget.procuring_entity)
-		version_at_creation = frappe.get_doc("Budget Version", rsv.budget_version_at_creation)
+		budget = frappe.get_doc("Procurement Budget", rsv.budget)
+		version_at_creation = frappe.get_doc("Procurement Budget Version", rsv.budget_version_at_creation)
 		require_budget_version_read_scope(version_at_creation)
 
-		line = frappe.get_doc("Budget Line", rsv.budget_line)
+		line = frappe.get_doc("Procurement Budget Line", rsv.budget_line)
 		line_version = frappe.db.get_value(
-			"Budget Line Version", {"budget_version": version_at_creation.name, "budget_line": line.name}, ["title"], as_dict=True
+			"Procurement Budget Line Version", {"budget_version": version_at_creation.name, "budget_line": line.name}, ["title"], as_dict=True
 		)
 		commitments = frappe.get_all(
 			"Procurement Commitment",

@@ -7,7 +7,7 @@ shared My Work queue and the notification deep link, both landing on the
 protected task route. These tests prove the projection end to end:
 
 - `my_work_provider.my_work_rows` mirrors the workspace's §12.2 eligibility
-  (HoD role, exact PE/OU/FY scope, maker-checker exclusion);
+  (HoD business role, exact Organisation Unit scope, maker-checker exclusion);
 - kentender_core's `get_my_work` merges the provider rows through the
   `kt_my_work_providers` hook even for a user with no Operational Scope
   Assignment;
@@ -22,10 +22,10 @@ from kentender_core.services.my_work import get_my_work
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	ACTING_REVIEWER,
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
-	OU_HRMD,
-	PE,
 	REVIEWER,
+	_granted_units,
 )
 from kentender_procurement.departmental_needs.services import lifecycle, notifications
 from kentender_procurement.departmental_needs.services.my_work_provider import my_work_rows
@@ -65,14 +65,16 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		self.assertEqual(self.rows_for(REVIEWER, reference), [])
 
 	def test_an_out_of_scope_reviewer_is_never_offered_the_task(self):
-		# Both hold Head of User Department; only REVIEWER holds an
-		# Organisation Unit permission for HRMD (§6). Offering the row to the
-		# other would leak the existence of another department's Need.
+		# Both hold Head of User Department somewhere; only REVIEWER holds a
+		# grant for HRMD (§6). Offering the row to the other would leak the
+		# existence of another department's Need. ACTING_REVIEWER's only
+		# grant is Digital Health (Acting), so she is out of scope for HRMD
+		# regardless of whether that Acting period is currently effective.
+		ou_hrmd = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)["Human Resources Management and Development"]
 		frappe.set_user(AUTHOR)
 		submitted = self.submit(
 			lifecycle.create_need(
-				procuring_entity=PE,
-				organisation_unit=OU_HRMD,
+				organisation_unit=ou_hrmd,
 				financial_year=FY,
 				idempotency_key=self.key(),
 				**self.content(),
@@ -86,6 +88,7 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		# NDS-AC-042 maker-checker: the reviewer who also authored this Need
 		# gets no My Work row for it, exactly as the workspace offers no action.
 		user = self.author_reviewer()
+		second = self.second_reviewer()
 		created = self.create_as(user)
 		# The shared submit() helper hard-sets the seeded AUTHOR; this Need's
 		# author is the reviewer, so submit inline as them.
@@ -97,7 +100,7 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		)
 		reference = self.reference(submitted)
 		self.assertEqual(self.rows_for(user, reference), [])
-		self.assertEqual(len(self.rows_for(ACTING_REVIEWER, reference)), 1)
+		self.assertEqual(len(self.rows_for(second, reference)), 1)
 
 	def test_a_non_reviewer_gets_no_rows_at_all(self):
 		self.submit(self.create())

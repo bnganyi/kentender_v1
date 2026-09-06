@@ -213,16 +213,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 	}
 
 
-	function crumbPlanning() {
-		return crumb(__("Procurement Planning"), ["planning-workspace"]);
-	}
-	function trailPlanning() {
-		return [crumbDashboard(), crumbPlanning()];
-	}
-	function trailPlanningLeaf(leafLabel) {
-		return [crumbDashboard(), crumbPlanning(), crumb(leafLabel)];
-	}
-
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
@@ -525,92 +515,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 		   demand-performance) no longer exist on any site, so these five entries
 		   only claimed routes that resolve to nothing. NDS-BR-020 / NDS-AC-030
 		   forbid keeping a legacy Demand route, alias or fixture. */
-		/* Procurement Planning MVP-1 — registered so the global shell router
-		   preserves native Civic Ledger chrome during client-side transitions. */
-		"PLN-UI-01": {
-			id: "PLN-UI-01",
-			label: "Procurement Planning",
-			routePrefixes: ["planning-workspace"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Procurement Planning"),
-				__("Turn approved needs into funded, approved Plan Items ready for tendering."),
-				trailPlanning(),
-				[]
-			),
-		},
-		"PLN-UI-02": {
-			id: "PLN-UI-02",
-			label: "Register Procurement Plan",
-			routePrefixes: ["procurement-plan-register"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Register procurement plan"),
-				__("Register an annual procurement plan for one Procuring Entity and financial year."),
-				trailPlanningLeaf(__("Register procurement plan")),
-				[]
-			),
-		},
-		"PLN-UI-03-05": {
-			id: "PLN-UI-03-05",
-			label: "Procurement Plan Builder",
-			routePrefixes: ["procurement-plan-builder"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Procurement plan builder"),
-				__("Build and validate the current procurement plan version."),
-				trailPlanningLeaf(__("Plan builder")),
-				[]
-			),
-		},
-		"PLN-UI-06": {
-			id: "PLN-UI-06",
-			label: "Plan Item Editor",
-			routePrefixes: ["procurement-plan-item-editor"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Plan Item editor"),
-				__("Complete the procurement facts and funding position for this Plan Item."),
-				trailPlanningLeaf(__("Plan Item")),
-				[]
-			),
-		},
-		"PLN-UI-08": {
-			id: "PLN-UI-08",
-			label: "Procurement Plan Review",
-			routePrefixes: ["procurement-plan-review"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Procurement plan review"),
-				__("Review validation evidence and decide whether the plan can proceed."),
-				trailPlanningLeaf(__("Plan review")),
-				[]
-			),
-		},
-		"PLN-UI-09": {
-			id: "PLN-UI-09",
-			label: "Approved Procurement Plan",
-			routePrefixes: ["procurement-plan-approved"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Approved procurement plan"),
-				__("Review the approved baseline and its downstream position."),
-				trailPlanningLeaf(__("Approved plan")),
-				[]
-			),
-		},
-		"PLN-UI-10": {
-			id: "PLN-UI-10",
-			label: "Procurement Plan Update",
-			routePrefixes: ["procurement-plan-update"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Procurement plan update"),
-				__("Prepare a governed update without mutating the approved baseline."),
-				trailPlanningLeaf(__("Plan update")),
-				[]
-			),
-		},
+		/* PLN-CHG-001 v1.2 — Procurement Planning intentionally has no entry
+		   here. Like Departmental Needs below, it is an Industry-design-system
+		   Vue-in-Desk page rendering its own rail; the seven Stitch-era PLN-UI-*
+		   surfaces (and their pages) were demolished in its Phase 3. */
 		// NDS-CHG-001 v1.1 — Departmental Needs intentionally has no entry here.
 		// It is an Industry-design-system page (Barlow tokens, kt_industry_tokens.css
 		// + departmental_needs_industry.css) with its own rail, mounted through

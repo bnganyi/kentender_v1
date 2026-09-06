@@ -1,20 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P1-002 / PP4 nav IA — single Planning Workbench entry contract.
+"""P1-002 / PP4 nav IA — single Planning entry contract.
 
-TEMPORARY DECOMMISSION (2026-08-19): Planning Home is broken against the
-Demands doctypes deleted by the Departmental Needs greenfield rebuild
-(RBD-3xx, deferred out of scope — see
-docs/mvp-1-r1/01_departmental_needs/06_Departmental_Needs_Greenfield_Rebuild_Tracker.md).
-Until Planning is rebuilt, the "Procurement Plans" rail entry is routed to
-the shared "coming-soon" capability overview (same mechanism as Analytics /
-Evaluation / Awards / Contract Management / STD Versions) instead of
-`planning-workspace`. This file asserts that decommissioned state. To
-restore the original contract, revert `link_to`/`route_options`/`url` back
-to `planning-workspace` / `/desk/planning-workspace` in
-`workspace_sidebar/procurement.json` and remove "Procurement Plans" from
-`PLANNED_SIDEBAR_LABELS` in `setup/sidebar_availability.py`.
+PLN-CHG-001 v1.2 Phase 3: the decommission ended. The rail's one Planning
+entry is "Procurement Planning" → the v1.2 Vue-in-Desk Page
+("procurement-planning"); §10 forbids any further Planning sidebar entry
+(work queues arrive through My Work and notifications, never the rail).
 """
 
 from __future__ import annotations
@@ -25,7 +17,7 @@ import os
 import frappe
 from frappe.tests import IntegrationTestCase
 
-_EXPECTED_PLANNING_LABEL = "Procurement Plans"
+_EXPECTED_PLANNING_LABEL = "Procurement Planning"
 
 _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	{
@@ -88,9 +80,9 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			msg="Procurement rail must expose exactly one Planning Workbench link.",
 		)
 		row = planning_rows[0]
-		self.assertEqual((row.get("link_to") or "").strip(), "coming-soon")
+		self.assertEqual((row.get("link_to") or "").strip(), "procurement-planning")
 		self.assertEqual((row.get("link_type") or "").strip(), "Page")
-		self.assertIn(_EXPECTED_PLANNING_LABEL, row.get("route_options") or "")
+		self.assertFalse(row.get("route_options"))
 		self.assertEqual(int(row.get("child") or 0), 0)
 		self.assertEqual(int(row.get("indent") or 0), 0)
 
@@ -134,15 +126,14 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			msg=f"Forbidden permanent Planning nav labels present: {sorted(forbidden)}",
 		)
 
-	def test_procurement_rail_entry_routes_to_coming_soon_while_decommissioned(self):
+	def test_procurement_rail_entry_routes_to_the_v12_page(self):
 		pp_links = [
 			row
 			for row in _load_items()
 			if row.get("type") == "Link" and row.get("label") == _EXPECTED_PLANNING_LABEL
 		]
 		self.assertEqual(len(pp_links), 1)
-		self.assertEqual((pp_links[0].get("link_to") or "").strip(), "coming-soon")
-		self.assertIn(_EXPECTED_PLANNING_LABEL, pp_links[0].get("route_options") or "")
+		self.assertEqual((pp_links[0].get("link_to") or "").strip(), "procurement-planning")
 
 	def test_pp2_planning_router_removed(self):
 		"""PP2 retirement — legacy router asset must not remain on disk."""

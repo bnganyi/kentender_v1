@@ -1,8 +1,10 @@
 """Planning usage projection (NDS-CHG-001 v1.1 §4.7, §7.2, §8.2).
 
-Usage is `Not included` or `Fully included` only. `Partially included` is
-removed by §1.1 and forbidden by §17, along with any partial Need allocation or
-Planning quantity override (NDS-AC-014, NDS-AC-015).
+Usage is `Not included`, `Fully included` or — since PLN-CHG-001 v1.12 §4.4 —
+`Not proceeding` (the department recorded in its departmental plan that it is
+not pursuing the accepted Need this financial year, with a reason).
+`Partially included` is removed by §1.1 and forbidden by §17, along with any
+partial Need allocation or Planning quantity override (NDS-AC-014, NDS-AC-015).
 
 Usage is *not* lifecycle state and changes only from an idempotent Planning
 projection event tied to an Active Plan (NDS-BR-014). Nothing here queries
@@ -22,12 +24,13 @@ from kentender_procurement.departmental_needs.constants import (
 	ROLE_PROCUREMENT_PLANNER,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
+	USAGE_NOT_PROCEEDING,
 	USAGE_VALUES,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
-	has_role,
+	in_scope,
 	is_administrative,
 )
 
@@ -38,7 +41,7 @@ def _projection(accepted_version: str) -> dict[str, Any] | None:
 	row = frappe.db.get_value(
 		"Need Planning Usage Projection",
 		cstr(accepted_version),
-		["name", "usage", "active_plan", "active_plan_item", "source_event_id", "source_event_time"],
+		["name", "usage", "active_plan", "active_plan_item", "not_proceeding_reason", "source_event_id", "source_event_time"],
 		as_dict=True,
 	)
 	return dict(row) if row else None
@@ -70,6 +73,7 @@ def planning_usage_detail(need: str, accepted_version: str = "") -> dict[str, An
 		"usage": cstr(row.get("usage") or USAGE_NOT_INCLUDED),
 		"active_plan": cstr(row.get("active_plan") or ""),
 		"active_plan_item": cstr(row.get("active_plan_item") or ""),
+		"not_proceeding_reason": cstr(row.get("not_proceeding_reason") or ""),
 		"source_event_id": cstr(row.get("source_event_id") or ""),
 	}
 
@@ -83,6 +87,7 @@ def project_planning_usage(
 	source_event_time: str | None = None,
 	active_plan: str = "",
 	active_plan_item: str = "",
+	not_proceeding_reason: str = "",
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""§8.2 `project_need_planning_usage` — accept one ordered Planning event.
@@ -92,12 +97,20 @@ def project_planning_usage(
 	newer projection (§4.7).
 	"""
 	principal = actor(user)
-	# The event is Planning's to publish; §6 gives no other role this authority.
-	if not (has_role(principal, ROLE_PROCUREMENT_PLANNER) or is_administrative(principal)):
+	# The event is Planning's to publish; §6 gives no other role this
+	# authority. Procurement Planner is Site-wide (AUTH-ADR-001 v1.6 §4.4),
+	# so the Organisation Unit passed to the scope check is immaterial.
+	if not (
+		in_scope(principal, business_role=ROLE_PROCUREMENT_PLANNER, organisation_unit="")
+		or is_administrative(principal)
+	):
 		fail("NDS_SCOPE_DENIED", "Only Procurement Planning may project Need planning usage.")
 	usage_value = cstr(usage).strip()
 	if usage_value not in USAGE_VALUES:
 		fail("NDS_FIELD_REQUIRED", f"Usage must be one of: {', '.join(sorted(USAGE_VALUES))}.")
+	reason_value = cstr(not_proceeding_reason).strip() if usage_value == USAGE_NOT_PROCEEDING else ""
+	if usage_value == USAGE_NOT_PROCEEDING and not reason_value:
+		fail("NDS_FIELD_REQUIRED", "A not-proceeding outcome carries the department's reason.")
 	event_id = cstr(source_event_id).strip()
 	if not event_id:
 		fail("NDS_FIELD_REQUIRED", "A source event identifier is required.")
@@ -123,6 +136,7 @@ def project_planning_usage(
 				"usage": usage_value,
 				"active_plan": cstr(active_plan),
 				"active_plan_item": cstr(active_plan_item),
+				"not_proceeding_reason": reason_value,
 				"source_event_id": event_id,
 				"source_event_time": occurred,
 			}
@@ -137,6 +151,7 @@ def project_planning_usage(
 				"usage": usage_value,
 				"active_plan": cstr(active_plan),
 				"active_plan_item": cstr(active_plan_item),
+				"not_proceeding_reason": reason_value,
 				"source_event_id": event_id,
 				"source_event_time": occurred,
 			}

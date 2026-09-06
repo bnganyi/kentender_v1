@@ -11,7 +11,7 @@ import unittest
 import frappe
 from frappe.utils import add_to_date, cstr, now_datetime
 
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
 	CATEGORY_EXPERIENCE,
 	CATEGORY_FINANCIAL,

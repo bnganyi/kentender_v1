@@ -1,0 +1,621 @@
+/* Procurement Planning — PLN-CHG-001 v1.12 §11 supplementary Industry classes.
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
+ * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-skel …). The
+ * PLN-DES artboards define a handful of layout classes on top of it in their
+ * <helmet><style> blocks; those are ported here, scoped under .kt-pln so no
+ * rule can collide with another module's port of similarly named artboard
+ * classes (every app_include_css file is global).
+ *
+ * Nothing here restyles a shared class; a change to .kt-card or .kt-btn
+ * belongs in kt_industry_tokens.css.
+ */
+
+/* The artboards use un-prefixed custom properties (--color-*, --font-*) while
+ * the shared system defines only --kt-* tokens; every such var() would
+ * silently resolve to nothing (the NDS lesson). Alias the family once. */
+.kt-industry.kt-pln {
+	--color-bg: var(--kt-color-bg);
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-700: var(--kt-color-accent-800);
+	--color-neutral-100: var(--kt-color-neutral-100);
+	--color-neutral-200: var(--kt-color-neutral-200);
+	--color-neutral-600: var(--kt-color-neutral-600);
+	--color-neutral-700: var(--kt-color-neutral-700);
+	--color-neutral-800: var(--kt-color-neutral-800);
+	--color-divider: var(--kt-color-divider);
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
+.kt-pln .pln-masthead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 24px;
+}
+
+/* PLN-DES-01 v1.12 inline Financial Year filter: a plain control at text
+ * weight directly beneath the description — never a bordered, corner-marked
+ * card (§11.2). */
+.kt-pln .pln-filter-strip {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	margin-top: 20px;
+}
+.kt-pln .pln-filter-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.kt-pln .pln-filter-field label {
+	font-size: 14px;
+	color: var(--color-neutral-800);
+	margin: 0;
+}
+.kt-pln .pln-filter-field select {
+	width: auto;
+}
+.kt-pln .pln-filter-reset {
+	padding: 2px 8px;
+	font-size: 13px;
+}
+.kt-pln .pln-waiting {
+	margin: 8px 0 0;
+}
+
+/* PLN-DES-01 actionable card: headline-plus-button rows */
+.kt-pln .pln-ready-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+.kt-pln .pln-ready-row + .pln-ready-row {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--color-neutral-200);
+}
+.kt-pln .pln-ready-headline {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 18px;
+}
+.kt-pln .pln-ready-sub {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin-top: 4px;
+}
+.kt-pln .pln-card-subhead {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 14px;
+}
+
+/* v1.2 planning context row (kept for the record pages' strips) */
+.kt-pln .pln-strip {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-end;
+	gap: 24px;
+	padding: 16px 20px;
+	margin-top: 24px;
+}
+.kt-pln .pln-strip-field {
+	min-width: 220px;
+}
+.kt-pln .pln-strip-field label {
+	display: block;
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 4px;
+}
+.kt-pln .pln-strip-quiet {
+	margin-left: auto;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+}
+
+.kt-pln .pln-cards-col {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-top: 16px;
+}
+.kt-pln .pln-card-pad {
+	padding: 20px;
+}
+
+/* PLN-DES table treatment (ported from the _ds .table rules) */
+.kt-pln .pln-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+.kt-pln .pln-table th {
+	text-align: left;
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 13px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-text);
+	padding: 4px 16px;
+	border-bottom: 2px solid color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.kt-pln .pln-table td {
+	padding: 8px 16px;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.kt-pln .pln-table tbody tr:hover {
+	background: var(--color-neutral-100);
+}
+.kt-pln .pln-num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-pln .pln-table-caption {
+	margin: 10px 2px 0;
+	font-size: 13px;
+}
+
+/* PLN-DES-16 state cards */
+.kt-pln .pln-state-card {
+	padding: 32px 24px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	min-height: 200px;
+	justify-content: center;
+	margin-top: 16px;
+}
+.kt-pln .pln-state-card h3 {
+	font-family: var(--font-heading);
+	margin: 0;
+	font-size: 20px;
+}
+.kt-pln .pln-state-card p {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+	max-width: 40ch;
+}
+.kt-pln .pln-support-ref {
+	font-size: 12px;
+	color: var(--color-neutral-600);
+	margin-top: 4px;
+}
+
+.kt-pln .pln-skel-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr 1fr;
+	gap: 16px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--color-neutral-200);
+}
+
+/* PLN-DES-02/05 header row + reference line */
+.kt-pln .pln-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-pln .pln-header-left {
+	flex: 1;
+	min-width: 320px;
+}
+.kt-pln .pln-header-actions,
+.kt-pln .pln-footer-actions {
+	display: flex;
+	gap: 12px;
+	flex-shrink: 0;
+	padding-top: 4px;
+}
+.kt-pln .pln-quiet-ref {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 0 0 8px;
+}
+
+/* PLN-DES-02 context strip (three columns in v1.12: Department, Financial
+ * Year, Submission window — no Procuring Entity) */
+.kt-pln .pln-strip-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 24px;
+	padding: 16px 20px;
+	margin-top: 24px;
+}
+.kt-pln .pln-strip-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+/* PLN-DES-07 five-field plan summary strip */
+.kt-pln .pln-strip-grid-5 {
+	grid-template-columns: repeat(5, 1fr);
+}
+.kt-pln .pln-val {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 16px;
+}
+
+/* PLN-DES-02 amber readiness notice (+ a critical variant for refusals) */
+.kt-pln .pln-notice {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 18px;
+	border: 1px solid var(--kt-color-attention, #b26a00);
+	background: color-mix(in srgb, var(--kt-color-attention, #b26a00) 8%, transparent);
+	color: var(--kt-color-attention, #b26a00);
+	margin-top: 20px;
+	font-size: 14px;
+}
+.kt-pln .pln-notice p {
+	margin: 0;
+}
+.kt-pln .pln-notice-title {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 15px;
+	margin: 0;
+}
+.kt-pln .pln-notice.is-critical {
+	border-color: var(--kt-color-critical, #b3261e);
+	background: color-mix(in srgb, var(--kt-color-critical, #b3261e) 8%, transparent);
+	color: var(--kt-color-critical, #b3261e);
+}
+
+/* §12.2 — a structured return issue rendered next to its entry */
+.kt-pln .pln-issue {
+	padding: 8px 12px;
+	font-size: 13.5px;
+	border-left: 3px solid var(--kt-color-critical, #b3261e);
+	background: color-mix(in srgb, var(--kt-color-critical, #b3261e) 6%, transparent);
+}
+
+/* PLN-DES-05 certification card */
+.kt-pln .pln-cert-box {
+	border: 1px solid var(--color-neutral-200);
+	padding: 16px 18px;
+	margin-top: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.kt-pln .pln-cert-box p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+.kt-pln .pln-checkbox-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+
+/* sticky page footer (§11 sticky action footer) */
+.kt-pln .pln-footer-bar {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 0;
+	border-top: 1px solid var(--color-neutral-200);
+	margin-top: 32px;
+	background: var(--color-bg);
+}
+
+/* PLN-DES-03/04 editors: 900px column, two-column field grid */
+.kt-pln .pln-editor {
+	max-width: 900px;
+	margin: 0 auto;
+}
+/* PLN-DES-09/09A: 1000px column */
+.kt-pln .pln-editor-wide {
+	max-width: 1000px;
+}
+.kt-pln .pln-helper-text {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin: 10px 2px 0;
+}
+.kt-pln .pln-field .pln-helper-text {
+	margin-top: 6px;
+}
+.kt-pln .kt-input[aria-invalid="true"] {
+	border-color: var(--kt-color-critical, #b3261e);
+}
+
+/* PLN-DES-09 Baseline schedule card */
+.kt-pln .pln-baseline-table td,
+.kt-pln .pln-baseline-table th {
+	font-size: 14px;
+}
+.kt-pln .pln-disclosure {
+	margin-top: 16px;
+	border-top: 1px solid var(--color-neutral-200);
+	padding-top: 14px;
+}
+.kt-pln .pln-disclosure-trigger {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: var(--font-body);
+	color: var(--color-accent-700);
+	font-weight: 600;
+	font-size: 13px;
+}
+.kt-pln .pln-chevron {
+	transition: transform 0.15s ease;
+}
+.kt-pln .pln-chevron.open {
+	transform: rotate(90deg);
+}
+.kt-pln .pln-disclosure-summary {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 8px 0 0;
+}
+.kt-pln .pln-periods-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 14px 24px;
+	margin-top: 14px;
+}
+.kt-pln .pln-periods-grid .pln-field label {
+	font-size: 12px;
+}
+.kt-pln .pln-period-note {
+	font-size: 11px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 0;
+}
+
+/* PLN-DES-07 readiness card inline confirmation + advisory list */
+.kt-pln .pln-inline-action {
+	margin-left: 8px;
+	padding: 2px 8px;
+	font-size: 12px;
+}
+.kt-pln .pln-advisory-list {
+	margin: 10px 2px 0;
+	padding-left: 18px;
+	font-size: 13px;
+	color: var(--color-neutral-700);
+}
+.kt-pln .pln-field-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px 24px;
+}
+.kt-pln .pln-ro-field label,
+.kt-pln .pln-field label {
+	display: block;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 4px;
+}
+.kt-pln .pln-ro-field .pln-val {
+	font-family: var(--font-body);
+	font-weight: 400;
+	font-size: 15px;
+}
+
+/* PLN-DES-10 — four-field summary grid, As-at line, inline green notice */
+.kt-pln .pln-field-grid-4 {
+	grid-template-columns: repeat(4, 1fr);
+}
+.kt-pln .pln-as-at {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 0 0 10px;
+}
+.kt-pln .pln-notice.is-live {
+	border-color: var(--kt-color-live, #1f7a4d);
+	background: color-mix(in srgb, var(--kt-color-live, #1f7a4d) 8%, transparent);
+	color: var(--kt-color-live, #1f7a4d);
+}
+.kt-pln .pln-notice-inline {
+	margin-top: 16px;
+}
+.kt-pln .pln-quiet-line {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 10px 2px 0;
+}
+.kt-pln .pln-excess {
+	color: var(--kt-color-critical, #b3261e);
+}
+/* PLN-DES-11/12 — the advisory row under the Plan total; resolution field */
+.kt-pln .pln-table-caption-tight {
+	margin-top: 4px;
+}
+.kt-pln .pln-resolution-field {
+	max-width: 420px;
+	margin-top: 20px;
+}
+
+/* PLN-DES-14 — the three-tier schedule table */
+.kt-pln .pln-schedule-table th,
+.kt-pln .pln-schedule-table td {
+	font-size: 13px;
+}
+.kt-pln .pln-baseline-val {
+	font-variant-numeric: tabular-nums;
+}
+.kt-pln .pln-forecast-val {
+	display: inline-block;
+	padding: 3px 8px;
+	border: 1px solid var(--color-neutral-200);
+	font-variant-numeric: tabular-nums;
+}
+.kt-pln .pln-schedule-table tr.is-behind .pln-forecast-val {
+	border-color: var(--kt-color-attention, #b26a00);
+}
+.kt-pln .pln-actual-val {
+	color: var(--color-neutral-700);
+	font-style: italic;
+}
+/* PLN-DES-14A — the 640px cascade dialog */
+.kt-pln .pln-dialog-context {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 16px;
+}
+.kt-pln .pln-shift-table th,
+.kt-pln .pln-shift-table td {
+	font-size: 13px;
+}
+.kt-pln .pln-shift-table th:first-child,
+.kt-pln .pln-shift-table td:first-child {
+	width: 40px;
+}
+/* PLN-DES-13 */
+.kt-pln .pln-quiet-notice {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+	margin-top: 20px;
+}
+
+/* PLN-DES-06 — three-column facts grid, inline classification select,
+ * a View disclosure row and the signed line */
+.kt-pln .pln-field-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+.kt-pln .pln-entry-detail {
+	padding: 6px 0 4px;
+}
+
+/* PLN-AC-092 — the not-proceeding control under Planning funding */
+.kt-pln .pln-not-proceeding {
+	border-top: 1px solid var(--color-neutral-200);
+	margin-top: 16px;
+	padding-top: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.kt-pln .pln-seg-select {
+	min-height: 32px;
+	font-size: 13px;
+	padding: 4px 8px;
+}
+.kt-pln .pln-signed {
+	font-size: 13px;
+	color: var(--color-neutral-700);
+}
+
+/* PLN-DES-07 Plan Items empty state */
+.kt-pln .pln-empty-state {
+	padding: 40px 20px;
+	text-align: center;
+	color: var(--color-neutral-700);
+}
+.kt-pln .pln-empty-state h3 {
+	font-family: var(--font-heading);
+	color: var(--color-text);
+	margin: 0 0 6px;
+	font-size: 18px;
+}
+.kt-pln .pln-empty-state p {
+	margin: 0;
+}
+
+/* PLN-DES-08 / PLN-DES-14A — Planning dialogs are 640px wide (the shared
+ * Industry dialog is 620px) */
+.kt-pln .kt-dialog {
+	width: min(640px, 100%);
+}
+
+/* PLN-DES-08 Form Plan Items dialog: formation choice + result preview */
+.kt-pln .pln-dialog-section {
+	border-top: 1px solid var(--color-neutral-200);
+	padding-top: 16px;
+	margin-top: 4px;
+}
+.kt-pln .pln-section-label {
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+	margin: 0 0 8px;
+}
+.kt-pln .pln-radio-group {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.kt-pln .pln-radio-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+.kt-pln .pln-summary-box {
+	border: 1px solid var(--color-neutral-200);
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.kt-pln .pln-result-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 14px;
+	padding: 4px 0;
+}
+.kt-pln .pln-result-row:not(:last-child) {
+	border-bottom: 1px solid color-mix(in srgb, var(--color-divider) 60%, transparent);
+	padding-bottom: 6px;
+}
+
+.kt-pln .pln-row-clickable {
+	cursor: pointer;
+}
+
+/* PLN-DES-09/09A Plan Item editor badges row */
+.kt-pln .pln-badges {
+	display: flex;
+	gap: 8px;
+	margin: 0 0 4px;
+}
+
+/* §12.6 return dialog */
+.kt-pln .pln-dialog-lede {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+}
+.kt-pln .pln-issue-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--color-neutral-200);
+}
+.kt-pln .pln-dialog-error {
+	margin: 0;
+	font-size: 13.5px;
+	color: var(--kt-color-critical, #b3261e);
+}

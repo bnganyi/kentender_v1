@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onActivated, onMounted } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import ConfirmDialog from "../../budget_shared/components/ConfirmDialog.vue";
@@ -27,12 +27,9 @@ const railTrail = computed(() => [
 	{ label: task.value?.budget?.code ? `${task.value.budget.code} · V${task.value.version.version_number}` : versionIdParam.value },
 ]);
 const railEl = ref(null);
-// CTX-CHG-001 - the switcher stays visible on record screens; the record
-// itself keeps its own context (rule 6), so a switch goes to the workspace.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("budget-funding"),
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -51,9 +48,12 @@ const historyLoaded = ref(false);
 const showReturnDialog = ref(false);
 const showApproveConfirm = ref(false);
 
-async function load() {
+// `quiet` refreshes in place — used after Approve/Return, which redisplay
+// the same task's (now updated) state rather than navigating away.
+async function load(opts) {
 	if (!versionIdParam.value) return;
-	loading.value = true;
+	const quiet = !!(opts && opts.quiet === true);
+	if (!quiet) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	serverError.value = false;
@@ -97,6 +97,13 @@ onMounted(load);
 watch(versionIdParam, (v, prev) => {
 	if (v && v !== prev) load();
 });
+// KeepAlive brings this instance back with the task still on screen:
+// revalidate in place rather than re-showing the skeleton.
+let activations = 0;
+onActivated(() => {
+	if (activations++ === 0 || !task.value) return;
+	load({ quiet: true });
+});
 
 function switchTab(t) {
 	go("review", versionIdParam.value, t);
@@ -113,7 +120,7 @@ async function submitReturn(reason) {
 		}
 		frappe.show_alert({ message: __("Returned"), indicator: "orange" });
 		showReturnDialog.value = false;
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -132,7 +139,7 @@ async function submitApprove() {
 			return;
 		}
 		frappe.show_alert({ message: __("Approved and activated"), indicator: "green" });
-		await load();
+		await load({ quiet: true });
 	} catch (e) {
 		actingError.value = e.message || String(e);
 	} finally {
@@ -195,8 +202,7 @@ async function submitApprove() {
 							<div class="kt-card-title">{{ __("Version identity") }}</div>
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
 								<div style="grid-column: 1 / -1"><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procurement budget") }}</div><div style="font-size: 14px; font-weight: 500">{{ task.budget.title }}</div></div>
-								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procuring Entity") }}</div><div style="font-size: 14px; font-weight: 500">{{ task.budget.procuring_entity.name }}</div></div>
-								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div><div style="font-size: 14px; font-weight: 500">{{ task.budget.financial_year.label }}</div></div>
+								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div><div style="font-size: 14px; font-weight: 500">{{ task.budget.fiscal_year.label }}</div></div>
 								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Currency") }}</div><div style="font-size: 14px; font-weight: 500">{{ task.budget.currency }}</div></div>
 								<div><div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Submitted version") }}</div><div style="font-size: 14px; font-weight: 500">{{ __("Version {0}", [task.version.version_number]) }}</div></div>
 								<template v-if="task.based_on">
@@ -259,7 +265,11 @@ async function submitApprove() {
 									<th>{{ __("Budget Line") }}</th>
 									<th>{{ __("Owner scope") }}</th>
 									<th>{{ __("Funding source") }}</th>
-									<th style="text-align: right">{{ __("Proposed amount") }}</th>
+									<!-- BUD-DES-09 (successor) says "Proposed amount"; BUD-DES-13's Budget
+									     Lines duplicate (initial baseline, no predecessor) says "Submitted
+									     amount" instead — same column, worded for whether there is a prior
+									     Active version to propose a change against. -->
+									<th style="text-align: right">{{ linesTask.is_successor ? __("Proposed amount") : __("Submitted amount") }}</th>
 									<th v-if="linesTask.is_successor" style="text-align: right">{{ __("Current floor") }}</th>
 									<th v-if="linesTask.is_successor" style="text-align: right">{{ __("Headroom") }}</th>
 								</tr>
@@ -381,6 +391,7 @@ async function submitApprove() {
 					</div>
 					<div v-else class="kt-card kt-blueprint">
 						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<div class="kt-card-title">{{ __("Version history") }}</div>
 						<table class="kt-table" data-testid="bud-task-history-table">
 							<thead>
 								<tr>

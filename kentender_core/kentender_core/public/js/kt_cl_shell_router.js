@@ -24,7 +24,21 @@ frappe.provide("kentender_core.cl_shell_router");
 			kentender_core.page_lifecycle.bindPagesWithin(document);
 		}
 
-		var surface = reg.resolveFromRoute(frappe.get_route());
+		var route = frappe.get_route();
+		// A Vue-in-Desk page registered with kentender_core.desk_page owns its
+		// own chrome (Industry rail, no Civic Ledger toolbar). This handler
+		// runs AFTER the page's on_page_show (router.route(): render() then
+		// trigger("change")), so falling through to leaveNative() here used to
+		// strip the shell body classes that on_page_show had just applied —
+		// a full layout reflow on every navigation.
+		var deskPage = kentender_core.desk_page || null;
+		if (deskPage && deskPage.ownsRoute(route)) {
+			deskPage.applyChrome(route);
+			lastSurfaceId = null;
+			return;
+		}
+
+		var surface = reg.resolveFromRoute(route);
 		if (surface) {
 			var chrome = (surface.chrome && surface.chrome.toolbar) || {};
 			sh.enterNative({

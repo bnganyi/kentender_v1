@@ -28,7 +28,6 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 )
 from kentender_core.seeds.stable_platform_seed.it_budget import upsert_it_budget_supplement
 from kentender_core.seeds.stable_platform_seed.it_strategy import upsert_it_strategy_supplement
-from kentender_core.seeds.stable_platform_seed.std_it import import_it_std_v1_1
 from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
 from kentender_procurement.procurement_lifecycle.seeds.works_master_journey_seed import (
 	upsert_works_master_journey,
@@ -146,10 +145,10 @@ def load_stable_platform_seed(
 	warnings.append("PP2 Planning retired — WORKS/IT planning seed skipped (Planning MVP-1 pending).")
 
 	if import_it_std:
-		std = import_it_std_v1_1(replace_draft=True)
-		stages["std_it"] = std
-		if not std.get("ok"):
-			return {**std, "stage_failed": "std_it", "warnings": warnings}
+		stages["std_it"] = {"ok": True, "skipped": True, "reason": "STD_ENGINE_RETIRED"}
+		warnings.append(
+			"STD Engine retired — IT STD v1.1 package import skipped (no STD package registry)."
+		)
 
 	frappe.db.commit()
 

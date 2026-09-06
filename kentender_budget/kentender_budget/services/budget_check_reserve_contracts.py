@@ -1,16 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §8.2/§9.1 — the Finance confirmation boundary. `check_funding`
+"""BUD-CHG-001 v1.3 §8.2/§9.1 — the Finance confirmation boundary. `check_funding`
 is non-mutating and returns a short-lived check token; `reserve_funding`
 re-validates every allocation under a stable-order row lock and creates one
 reservation per source allocation, atomically (all-or-none). Repeating the
 same correlation_id returns the original effective result (BUD-BR-011).
 
 Caller (Procurement Planning) authority — the assigned Finance Confirmation
-capability, task, PE/FY, source-set and amount scope — is authorised here
-directly; Budget never trusts Planning's own route visibility as authority
-(§12.6).
+Officer Site-wide responsibility, task, source-set and amount scope — is
+authorised here directly via `authorise_record()`; Budget never trusts
+Planning's own route visibility as authority (§12.6). No Procuring Entity or
+Fiscal Year scope participates (BUD-BR-001).
 """
 
 from __future__ import annotations
@@ -25,31 +26,33 @@ from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
 _CHECK_TOKEN_TTL_SECONDS = 300
-_FINANCE_CAPABILITY_ROLE = "Finance Confirmation Officer"
 
 
-def _require_finance_capability(procuring_entity: str) -> None:
-	from kentender_core.services.authorization_native import require_role_capability
-	from kentender_core.services.authorization_policy import ResourceContext
+def _require_finance_capability() -> None:
+	"""§7/§17.1 — the Finance Confirmation Officer Site-wide responsibility,
+	via `authorise_record()`. No Procuring Entity, Fiscal Year or capability
+	string participates (BUD-BR-001)."""
+	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+	from kentender_budget.services.budget_authorization import ROLE_FINANCE_CONFIRMATION_OFFICER
 
-	user = frappe.session.user
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-		return
-	if _FINANCE_CAPABILITY_ROLE not in frappe.get_roles(user):
+	decision = authorise_record(
+		user=frappe.session.user,
+		business_role=ROLE_FINANCE_CONFIRMATION_OFFICER,
+		organisation_unit="",
+		purpose=PURPOSE_COMMAND,
+	)
+	if not decision.allowed:
 		frappe.throw(_("Not permitted to confirm funding"), frappe.PermissionError, title="BUDGET_FINANCE_TASK_DENIED")
-	pe_scope = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Procuring Entity"}, pluck="for_value"))
-	if pe_scope and procuring_entity not in pe_scope:
-		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError, title="BUDGET_FINANCE_TASK_DENIED")
 
 
 def _resolve_line(budget_line: str) -> Any:
 	key = (budget_line or "").strip()
 	if not key:
 		frappe.throw(_("Budget Line is required"))
-	name = key if frappe.db.exists("Budget Line", key) else frappe.db.get_value("Budget Line", {"generated_reference": key}, "name")
+	name = key if frappe.db.exists("Procurement Budget Line", key) else frappe.db.get_value("Procurement Budget Line", {"generated_reference": key}, "name")
 	if not name:
 		frappe.throw(_("Budget Line {0} not found").format(key), frappe.DoesNotExistError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	return frappe.get_doc("Budget Line", name)
+	return frappe.get_doc("Procurement Budget Line", name)
 
 
 def _line_active_version_and_position(budget_line_doc):
@@ -61,7 +64,7 @@ def _line_active_version_and_position(budget_line_doc):
 		# Budget Version means the Budget itself is Closed (no other Active
 		# version exists for it); distinguish that from the generic "not
 		# eligible" case so callers get the specific documented error code.
-		if frappe.db.exists("Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}):
+		if frappe.db.exists("Procurement Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}):
 			frappe.throw(_("The Budget is Closed and cannot accept a new reservation"), frappe.ValidationError, title="BUDGET_CLOSED")
 		frappe.throw(_("Budget Line has no Active Budget Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
 	line_version = _line_version_for(version.name, budget_line_doc.name)
@@ -82,7 +85,7 @@ def check_funding(
 	required amounts, after-confirmation balances and a short-lived check token."""
 	allocations = allocations or []
 	if not allocations:
-		frappe.throw(_("At least one allocation is required"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
+		frappe.throw(_("At least one allocation is required"), frappe.ValidationError)
 
 	results = []
 	all_sufficient = True
@@ -90,8 +93,8 @@ def check_funding(
 	for alloc in allocations:
 		line_doc = _resolve_line(alloc.get("budget_line") or "")
 		if budget is None:
-			budget = frappe.get_doc("Budget", line_doc.budget)
-		_require_finance_capability(budget.procuring_entity)
+			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
+		_require_finance_capability()
 		version, line_version, position = _line_active_version_and_position(line_doc)
 		# BUD-BR-008 — the allocation's funding source shall equal the Budget
 		# Line's, independently of any upstream filtering (list_eligible_budget_lines
@@ -106,7 +109,7 @@ def check_funding(
 			)
 		requested = flt(alloc.get("amount"))
 		if requested <= 0:
-			frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_SCOPE_REQUIRED")
+			frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError)
 		sufficient = position["available"] >= requested
 		all_sufficient = all_sufficient and sufficient
 		results.append(
@@ -191,7 +194,7 @@ def reserve_funding(
 	# Lock all affected lines in stable ID order (§8.2 step 5) before reloading
 	# any position, to prevent concurrent oversubscription (BUD-BR-013).
 	frappe.db.sql(
-		"select name from `tabBudget Line` where name in %s order by name for update",
+		"select name from `tabProcurement Budget Line` where name in %s order by name for update",
 		(budget_lines_sorted,),
 	)
 
@@ -199,7 +202,7 @@ def reserve_funding(
 	prepared: list[dict[str, Any]] = []
 	for alloc in allocations:
 		line_doc = line_docs[alloc["budget_line"]]
-		budget = frappe.get_doc("Budget", line_doc.budget)
+		budget = frappe.get_doc("Procurement Budget", line_doc.budget)
 		version, line_version, position = _line_active_version_and_position(line_doc)
 		requested_funding_source = (alloc.get("funding_source") or "").strip()
 		if requested_funding_source and requested_funding_source != line_version.funding_source:
@@ -236,7 +239,7 @@ def reserve_funding(
 
 	created = []
 	for p in prepared:
-		ref = allocate_reservation_reference(p["budget"].procuring_entity)
+		ref = allocate_reservation_reference()
 		doc = frappe.get_doc(
 			{
 				"doctype": "Funding Reservation",

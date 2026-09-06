@@ -1,6 +1,5 @@
 Kentender Procurement
 Procurement Planning
-STD Engine
 STD Configuration
 Tender Configurations
 Departmental Needs

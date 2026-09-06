@@ -78,16 +78,10 @@ _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 # and Frappe never calls ``setup()`` — leaving a stale or empty rail.  Keep each
 # settings DocType on at most one shipped sidebar (the main ``Procurement`` rail).
 _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
-	# Keep Planning surfaces nested under the main Procurement IA shell.
+	# Keep Planning surfaces nested under the main Procurement IA shell
+	# (PLN-CHG-001 v1.2: one page; the Stitch/Demand-era keys are gone).
 	"procurement planning": "Procurement",
 	"procurement-planning": "Procurement",
-	"planning-workspace": "Procurement",
-	"planning-hub": "Procurement",
-	"procurement-planning/approved-demands": "Procurement",
-	"approved-demands": "Procurement",
-	"procurement-planning/plans": "Procurement",
-	"plans": "Procurement",
-	"procurement-planning/packages": "Procurement",
 	"packages": "Procurement",
 	"procurement-planning/releases": "Procurement",
 	"releases": "Procurement",
@@ -133,11 +127,17 @@ try:
 
 	_KT_ROUTE_TO_SIDEBAR: dict[str, str] = get_route_sidebar_keys()
 except Exception:
+	# FOLLOW_UPS.md FU-04 (closed): "budget-builder" and "form/budget" removed
+	# from this fallback — both named retired Budget routes (the old builder
+	# page, and the KenTender "Budget" DocType form, which the rebuilt BUD-
+	# CHG-001 v1.3 UI no longer uses at all; "Budget" now names ERPNext's own
+	# restored accounting doctype, which Procurement's rail has no reason to
+	# claim). This dict is exercised only when get_route_sidebar_keys() itself
+	# raises — dead in normal operation — so this was never live, but it would
+	# have silently reintroduced the stale mapping on that fallback path.
 	_KT_ROUTE_TO_SIDEBAR = {
 		"strategy-builder": "Procurement",
-		"budget-builder": "Procurement",
 		"form/strategic plan": "Procurement",
-		"form/budget": "Procurement",
 		"form/demand": "Procurement",
 		"form/procurement package": "Procurement",
 		"form/ktsm supplier profile": "Procurement",
@@ -159,43 +159,13 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		# Hub pages linked from the Procurement rail (Civic Ledger IA).
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",
-		"planning-workspace": "Procurement",
-		"planning-hub": "Procurement",
+		"procurement-planning": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",
 		"procurement-home": "Procurement",
 		"kt-procurement-home": "Procurement",
 	}
 )
-
-# STD prod iframe Desk pages — keep parent Procurement rail (not STD Engine module sidebar).
-_STD_PROD_PAGE_ROUTE_KEYS = (
-	"std-library",
-	"std-family-detail",
-	"std-version-detail",
-	"std-source-doc",
-	"std-section-clauses",
-	"std-clause-detail",
-	"std-validation-report",
-	"std-audit-log",
-	"std-parameter-dictionary",
-	"std-parameter-detail",
-	"std-rule-dictionary",
-	"std-rule-detail",
-	"std-form-schema-manager",
-	"std-form-detail-field-builder",
-	"std-requirement-schema-manager",
-	"std-price-schedule-schema",
-	"std-evaluation-schema",
-	"std-render-blocks",
-	"std-review-and-approval",
-	"std-usage-and-tender-bindings",
-	"std-import-package-review",
-	"std-version-diff-and-supersession",
-	"std-module-retired",
-)
-for _route_key in _STD_PROD_PAGE_ROUTE_KEYS:
-	_KT_ROUTE_TO_SIDEBAR[_route_key] = "Procurement"
 
 # IT STD Wizard Desk pages (A2 registry) — keep Procurement rail on hard refresh.
 # Keys match kt_cl_surface_registry routePrefixes / Frappe page names.

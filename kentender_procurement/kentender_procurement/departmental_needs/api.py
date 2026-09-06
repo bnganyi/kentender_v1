@@ -1,4 +1,4 @@
-"""Whitelisted Departmental Needs contracts (NDS-CHG-001 v1.1 §8).
+"""Whitelisted Departmental Needs contracts (NDS-CHG-001 v1.6 §8).
 
 Endpoint names are the §8.1 and §8.2 contract names exactly. No writable
 DocType endpoint bypasses a command (§16.1): every mutation below runs through
@@ -6,7 +6,11 @@ DocType endpoint bypasses a command (§16.1): every mutation below runs through
 optimistic record version, the decision token and the idempotency key.
 
 Attachment and support-lookup endpoints are gone with the concepts themselves
-(§1.1, NDS-AC-029).
+(§1.1, NDS-AC-029). `get_needs_intake_window` / `save_needs_intake_window` are
+gone with the `Needs Intake Window` doctype (§4.1, §16.4.11): Departmental
+Needs exposes no configuration route for the Needs-submission flag at all —
+`get_needs_submission_state` is a plain read of the Fiscal Year fields
+Configuration & Governance maintains through `/app/system-setup`.
 """
 
 from __future__ import annotations
@@ -17,9 +21,10 @@ import frappe
 
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.context import (
-	intake_window,
+	get_needs_submission_state as _get_needs_submission_state,
+	list_need_create_targets as _list_need_create_targets,
 	resolve_creation_context,
-	save_intake_window,
+	selectable_financial_years,
 )
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 from kentender_procurement.departmental_needs.services.workspace import (
@@ -31,11 +36,13 @@ from kentender_procurement.departmental_needs.services.workspace import (
 
 # --- §8.1 read contracts ---------------------------------------------------
 
-resolve_needs_contexts = frappe.whitelist()(resolve_creation_context)
+resolve_needs_scope = frappe.whitelist()(resolve_creation_context)
+list_needs_financial_years = frappe.whitelist()(selectable_financial_years)
+list_need_create_targets = frappe.whitelist()(_list_need_create_targets)
 get_needs_workspace = frappe.whitelist()(get_workspace)
 get_departmental_need = frappe.whitelist()(get_need)
 get_departmental_review_task = frappe.whitelist()(get_review_task)
-get_needs_intake_window = frappe.whitelist()(intake_window)
+get_needs_submission_state = frappe.whitelist()(_get_needs_submission_state)
 get_current_accepted_need = frappe.whitelist()(_get_current_accepted_need)
 check_accepted_need_withdrawal_dependency = frappe.whitelist()(lifecycle.check_withdrawal_dependency)
 
@@ -77,7 +84,6 @@ create_accepted_need_successor = frappe.whitelist()(lifecycle.create_accepted_ne
 cancel_accepted_need_successor = frappe.whitelist()(lifecycle.cancel_accepted_need_successor)
 request_accepted_need_withdrawal = frappe.whitelist()(lifecycle.request_withdrawal)
 decide_accepted_need_withdrawal = frappe.whitelist()(lifecycle.decide_withdrawal)
-save_needs_intake_window = frappe.whitelist()(save_intake_window)
 project_need_planning_usage = frappe.whitelist()(project_planning_usage)
 
 

@@ -65,16 +65,13 @@ def accepted_payload(need, version) -> dict[str, Any]:
 	currency, Strategy, requirement type, procurement method, location,
 	attachment, source reference, generic evidence and notes (NDS-AC-024).
 	"""
-	unit_label = cstr(
-		frappe.db.get_value("Unit Of Measure", version.unit, "unit_label") or version.unit or ""
-	)
+	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
 	return {
 		"need_id": need.name,
 		"need_reference": need.need_reference,
 		"accepted_version_id": version.name,
 		"version_number": int(version.version_number or 0),
 		"content_hash": cstr(version.content_hash),
-		"procuring_entity_id": need.procuring_entity,
 		"org_unit_id": need.organisation_unit,
 		"financial_year_id": need.financial_year,
 		"title": cstr(version.title),
@@ -248,18 +245,18 @@ def acknowledge(*, consumer: str, event_ids: list[str] | str) -> dict[str, Any]:
 	return {"ok": True, "acknowledged": rows}
 
 
-def current_accepted_events(*, procuring_entity: str, financial_year: str, organisation_unit: str = "") -> list[dict[str, Any]]:
+def current_accepted_events(*, financial_year: str, organisation_unit: str = "") -> list[dict[str, Any]]:
 	"""Every Need currently accepted in one context, as §7.1 payloads.
 
 	The published way for a consumer to rebuild or reconcile its projection —
 	for example a Plan being drafted after the original events were delivered.
 	It replays from the outbox rather than querying Need tables, so the caller
-	sees exactly what the event stream said.
+	sees exactly what the event stream said. The site Procuring Entity is
+	implicit (AUTH-ADR-001 v1.6 §1.1) — there is no `procuring_entity` filter.
 	"""
 	needs = frappe.get_all(
 		"Departmental Need",
 		filters={
-			"procuring_entity": cstr(procuring_entity),
 			"financial_year": cstr(financial_year),
 			**({"organisation_unit": cstr(organisation_unit)} if organisation_unit else {}),
 			"current_state": "Accepted for planning",

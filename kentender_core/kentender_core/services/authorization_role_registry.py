@@ -33,12 +33,11 @@ ROLE_CLASSIFICATIONS: dict[str, str] = {
 	# Downstream Accounting Officer (Procurement Planning's own approval Role —
 	# distinct from the retired reference-data reuse of this same Role name).
 	"Accounting Officer": "pe_fy_scoped",
-	# Budget — BUD-CHG-001 v1.2 §7/§17.1: Budget Reviewer and Budget
-	# Activation Authority merged into one Budget Approver (mirrors
-	# STR-CHG-001 v1.5's Strategy Reviewer/Approval Authority collapse).
-	"Budget Viewer": "pe_scoped",
-	"Budget Officer": "pe_scoped",
-	"Budget Approver": "pe_scoped",
+	# Budget & Funding is deliberately absent as of BUD-CHG-001 v1.3 Phase 4:
+	# it moved off this capability-string engine entirely, onto
+	# kentender_core.services.authorization.authorise_record() (Site-wide
+	# User Responsibility Assignments, no PE scope of any kind) — see
+	# kentender_budget.services.budget_authorization.
 	# Departmental Needs
 	"Departmental Need Requester": "pe_ou_scoped",
 	"Head of User Department": "pe_ou_scoped",
@@ -62,19 +61,8 @@ CAPABILITY_ROLE_MAP: dict[str, str] = {
 	# and PE/FY Context maintenance require the Reference Data Manager Role
 	# directly (reference_data_permissions.require_reference_data_manager),
 	# not a reference_data.* capability string dispatched through this map.
-	# Budget — RESOLVED (§9.3): .reserve retired to an internal service call,
-	# .revision.apply retired outright (Budget Revision object removed).
-	# BUD-CHG-001 v1.2: .review retired outright (no separate recommend step);
-	# .return and .approve both go to the single Budget Approver Role — Return
-	# and Approve are two outcomes of one decision, not two capabilities.
-	"budget.list": "Budget Viewer",
-	"budget.view": "Budget Viewer",
-	"budget.create": "Budget Officer",
-	"budget.edit": "Budget Officer",
-	"budget.submit": "Budget Officer",
-	"budget.return": "Budget Approver",
-	"budget.approve": "Budget Approver",
-	"budget.export": "Budget Approver",
+	# `budget.*` is deliberately absent as of BUD-CHG-001 v1.3 Phase 4: no
+	# capability string participates in a Budget authorization path any more.
 	# Departmental Needs — RESOLVED (§9.6): oversight_read moved off Budget
 	# Officer onto Auditor; budget responsibility does not imply Needs
 	# oversight authority.
@@ -86,7 +74,6 @@ CAPABILITY_ROLE_MAP: dict[str, str] = {
 	"departmental_needs.review": "Head of User Department",
 	"departmental_needs.read_accepted_for_planning": "Procurement Planner",
 	"departmental_needs.oversight_read": "Auditor",
-	"procurement_planning.need_allocate": "Procurement Planner",
 	# Strategy — READY (STR-CHG-001 v1.5: review capability retired)
 	"strategy.plan_version.author": "Strategy Author",
 	"strategy.plan_version.approve": "Strategy Approver",

@@ -1,0 +1,922 @@
+<!-- Procurement Planning — PLN-CHG-001 v1.12 §10.
+     One bundle, several Pages: "procurement-planning" (workspace + task deep
+     links), "departmental-procurement-plan", "annual-procurement-plan" and
+     "procurement-plan-item". This root reads the full route (page slug
+     included) and picks the screen. There is no Procuring Entity anywhere:
+     the Financial Year is the one visible filter, and a direct record route
+     derives its year from the record (§10). -->
+<template>
+	<div class="kt-industry kt-pln">
+		<div ref="railEl" class="kt-rail-mount"></div>
+		<!-- One stable page-ready hook (§16.2): specs wait for
+		     [data-testid="pln-shell"][data-loading="false"]. -->
+		<div
+			class="kt-shell"
+			data-testid="pln-shell"
+			:data-screen="screen"
+			:data-loading="loading ? 'true' : 'false'"
+			:data-refreshing="refreshing ? 'true' : 'false'"
+		>
+			<WorkspaceScreen
+				v-if="screen === 'workspace'"
+				:loading="loading"
+				:error="error"
+				:support-ref="supportRef"
+				:workspace="workspace"
+				:selected-financial-year="financialYear"
+				:pending="pending"
+				@reload="load"
+				@select-financial-year="onSelectFy"
+				@reset-financial-year="onResetFy"
+				@open-departmental-plan="onOpenDepartmentalPlan"
+				@navigate="onNavigate"
+			/>
+
+			<template v-else>
+				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-for="row in 3" :key="row" class="pln-skel-row">
+						<div class="kt-skel" style="width: 72%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 52%"></div>
+						<div class="kt-skel" style="width: 44%"></div>
+					</div>
+				</div>
+				<!-- PLN-DES-16 load error — one component for every record page -->
+				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>Procurement Planning could not be loaded</h3>
+					<p>Try again. If the problem continues, quote the support reference shown below.</p>
+					<button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button>
+					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
+				</div>
+
+				<template v-else-if="screen === 'dpp'">
+					<DppPlanScreen
+						:plan="dpp"
+						:pending="pending"
+						:certified="certified"
+						:error-summary="errorSummary"
+						@update:certified="certified = $event"
+						@view-accepted-needs="onViewAcceptedNeeds"
+						@add-direct="go(dppReference, 'add-direct')"
+						@open-entry="onOpenEntry"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@save-draft="load({ quiet: true })"
+						@submit="onSubmit"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'dpp-entry'">
+					<DppEntryEditorScreen
+						:editor="editor"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@save-funding="onSaveFunding"
+						@save-direct="onSaveDirect"
+						@cancel="go(dppReference)"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'dpp-review'">
+					<DppValidationScreen
+						:detail="validation"
+						:classifications="classifications"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@classify="onClassify"
+						@accept="onAccept"
+						@open-return-dialog="returnDialog = true"
+					/>
+					<ReturnIssuesDialog
+						v-if="returnDialog"
+						:entries="validation.entries || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onReturnConfirm"
+						@cancel="returnDialog = false"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'plan' && annualPlan.active_view">
+					<ActivePlanScreen
+						:plan="annualPlan"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@begin-update="onBeginUpdate"
+						@navigate="onNavigate"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@shift="onOpenShift"
+					/>
+					<ShiftScheduleDialog
+						v-if="shift"
+						:milestone-label="shift.label"
+						:new-date="shift.newDate"
+						:rows="shift.rows"
+						:pending="pending"
+						:error="errorSummary"
+						@date-change="onShiftDateChange"
+						@confirm="onConfirmShift"
+						@cancel="shift = null"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'publication'">
+					<PublicationResultScreen
+						:task="publication"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@retry="onRetryPublication"
+						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'plan'">
+					<!-- PLN-DES-16 — publication was not acknowledged; the Draft is untouched -->
+					<div v-if="annualPlan.latest_publication && annualPlan.latest_publication.result === 'Failed'" class="kt-card kt-blueprint pln-state-card" data-testid="pln-publication-failed">
+						<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+						<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+						<h3>Publication was not acknowledged</h3>
+						<p>The approved Plan is unchanged. Retry the same publication when the destination is available.</p>
+						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Retry publication</button>
+					</div>
+					<AnnualPlanScreen
+						:plan="annualPlan"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@open-form-dialog="formDialog = true"
+						@navigate="onNavigate"
+						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@request-funding="onRequestPlanFunding"
+						@submit-consolidated="onSubmitPlanRequested"
+						@confirm-splitting="splittingDialog = true"
+					/>
+					<FormPlanItemsDialog
+						v-if="formDialog"
+						:entries="annualPlan.unallocated_sources || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onFormConfirm"
+						@cancel="formDialog = false"
+					/>
+					<ReasonDialog
+						v-if="splittingDialog"
+						testid="pln-splitting-dialog"
+						title="Confirm contract splitting review"
+						intro="State why the flagged Plan Items are legitimately separate procurements (a preference-scheme unbundling counts). The advisory stays on the readiness card; nothing is aggregated for you."
+						label="Confirmation"
+						confirm-label="Record confirmation"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onConfirmSplitting"
+						@cancel="splittingDialog = false"
+					/>
+					<ReasonDialog
+						v-if="lateActivationDialog"
+						testid="pln-late-activation-dialog"
+						title="Late activation reason"
+						intro="The Financial Year has already begun. State why the Plan is being submitted for approval after the start of the year; the reason is kept with the submission."
+						label="Late activation reason"
+						confirm-label="Submit Plan"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onSubmitConsolidatedPlan"
+						@cancel="lateActivationDialog = false"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'plan-item'">
+					<PlanItemEditorScreen
+						:item="planItem"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@save="onSavePlanItem"
+						@dissolve="onDissolvePlanItem"
+						@back="onBackToPlan"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'finance'">
+					<FinanceTaskScreen
+						:task="financeTask"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@confirm="onConfirmFunding"
+						@open-return-dialog="financeReturnDialog = true"
+					/>
+					<FinanceReturnDialog
+						v-if="financeReturnDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onReturnFromFinance"
+						@cancel="financeReturnDialog = false"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'governance'">
+					<GovernanceTaskScreen
+						:task="governanceTask"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@confirm="onGovernanceConfirm"
+						@open-return-dialog="governanceReturnDialog = true"
+					/>
+					<GovernanceReturnDialog
+						v-if="governanceReturnDialog"
+						:dialog="governanceTask.return_dialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onGovernanceReturn"
+						@cancel="governanceReturnDialog = false"
+					/>
+				</template>
+			</template>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { computed, ref, watch } from "vue";
+import { useRouteState } from "../pln_shared/composables/useRouteState.js";
+import { usePageRail } from "../pln_shared/composables/usePageRail.js";
+import * as api from "./data/planningApi.js";
+import WorkspaceScreen from "./components/WorkspaceScreen.vue";
+import DppPlanScreen from "./components/DppPlanScreen.vue";
+import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
+import DppValidationScreen from "./components/DppValidationScreen.vue";
+import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
+import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
+import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
+import ReasonDialog from "./components/ReasonDialog.vue";
+import ActivePlanScreen from "./components/ActivePlanScreen.vue";
+import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
+import PublicationResultScreen from "./components/PublicationResultScreen.vue";
+import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
+import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
+import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
+import GovernanceTaskScreen from "./components/GovernanceTaskScreen.vue";
+import GovernanceReturnDialog from "./components/GovernanceReturnDialog.vue";
+
+const WORKSPACE_PAGE = "procurement-planning";
+const DPP_PAGE = "departmental-procurement-plan";
+const PLAN_PAGE = "annual-procurement-plan";
+const PLAN_ITEM_PAGE = "procurement-plan-item";
+const { route, epoch } = useRouteState(WORKSPACE_PAGE);
+// Last payload per screen identity: a revisited screen renders from here at
+// once and refreshes in place; the skeleton is only for a screen never
+// loaded in this session.
+const cache = kentender_core.desk_page.createScreenCache();
+
+const railEl = ref(null);
+const loading = ref(true);
+const refreshing = ref(false);
+const pending = ref(false);
+const error = ref("");
+const errorSummary = ref("");
+const supportRef = ref("");
+const workspace = ref({});
+const dpp = ref({});
+const editor = ref({});
+const certified = ref(false);
+const validation = ref({});
+const classifications = ref({});
+const returnDialog = ref(false);
+const annualPlan = ref({});
+const planItem = ref({});
+const formDialog = ref(false);
+const splittingDialog = ref(false);
+const lateActivationDialog = ref(false);
+const financeTask = ref({});
+const financeReturnDialog = ref(false);
+const governanceTask = ref({});
+const governanceReturnDialog = ref(false);
+const publication = ref({});
+const shift = ref(null);
+
+// §10/§12.1 — the Financial Year is a visible filter only; the server
+// resolves the remembered preference on a bare load.
+const financialYear = ref("");
+
+const pageSlug = computed(() => route.value[0] || WORKSPACE_PAGE);
+const segments = computed(() => route.value.slice(1).filter(Boolean));
+
+const dppReference = computed(() =>
+	pageSlug.value === DPP_PAGE ? segments.value[0] || "" : ""
+);
+
+const planReference = computed(() =>
+	pageSlug.value === PLAN_PAGE ? segments.value[0] || "" : ""
+);
+
+const planItemId = computed(() =>
+	pageSlug.value === PLAN_ITEM_PAGE ? segments.value[0] || "" : ""
+);
+
+const screen = computed(() => {
+	if (pageSlug.value === DPP_PAGE && dppReference.value) {
+		const second = segments.value[1];
+		if (second === "add-direct" || second === "entry") return "dpp-entry";
+		return "dpp";
+	}
+	// §10 task deep links live under the workspace page's own prefix.
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
+		return "dpp-review";
+	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "finance" && segments.value[1]) {
+		return "finance";
+	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "review" && segments.value[1]) {
+		return "governance";
+	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "publication" && segments.value[1]) {
+		return "publication";
+	}
+	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
+	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
+	return "workspace";
+});
+
+const validationTaskId = computed(() =>
+	segments.value[0] === "dpp-review" ? segments.value[1] || "" : ""
+);
+
+const financeTaskId = computed(() =>
+	segments.value[0] === "finance" ? segments.value[1] || "" : ""
+);
+
+const governanceTaskId = computed(() =>
+	segments.value[0] === "review" ? segments.value[1] || "" : ""
+);
+
+const publicationId = computed(() =>
+	segments.value[0] === "publication" ? segments.value[1] || "" : ""
+);
+
+const entryId = computed(() =>
+	segments.value[1] === "entry" ? segments.value[2] || "" : ""
+);
+
+const screenKey = computed(() => {
+	switch (screen.value) {
+		case "dpp":
+			return `dpp:${dppReference.value}`;
+		case "dpp-entry":
+			return `dpp-entry:${dppReference.value}:${entryId.value || "new"}`;
+		case "dpp-review":
+			return `dpp-review:${validationTaskId.value}`;
+		case "plan":
+			return `plan:${planReference.value}`;
+		case "plan-item":
+			return `plan-item:${planItemId.value}`;
+		case "finance":
+			return `finance:${financeTaskId.value}`;
+		case "governance":
+			return `governance:${governanceTaskId.value}`;
+		case "publication":
+			return `publication:${publicationId.value}`;
+		default:
+			return "workspace";
+	}
+});
+
+function go(...parts) {
+	frappe.set_route(DPP_PAGE, ...parts.filter(Boolean));
+}
+
+function onBackToPlan() {
+	if (planItem.value.plan_reference) {
+		frappe.set_route(PLAN_PAGE, planItem.value.plan_reference);
+	} else {
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
+let loadSeq = 0;
+let inFlightKey = "";
+
+function fetchFor(scr) {
+	switch (scr) {
+		case "workspace":
+			return api.getPlanningWorkspace({ financial_year: financialYear.value || undefined });
+		case "dpp":
+			return api.getDepartmentalPlan(dppReference.value);
+		case "dpp-entry":
+			return api.getDppEntryEditor(dppReference.value, entryId.value || undefined);
+		case "dpp-review":
+			return api.getDppValidationTask(validationTaskId.value);
+		case "plan":
+			return api.getAnnualPlan(planReference.value);
+		case "plan-item":
+			return api.getPlanItem(planItemId.value);
+		case "finance":
+			return api.getFinanceTask(financeTaskId.value);
+		case "governance":
+			return api.getPlanGovernanceTask(governanceTaskId.value);
+		case "publication":
+			return api.getPublicationTask(publicationId.value);
+		default:
+			return Promise.resolve(null);
+	}
+}
+
+function applyLoaded(scr, loaded) {
+	switch (scr) {
+		case "workspace": {
+			workspace.value = loaded;
+			const context = loaded.context || {};
+			if (context.financial_year) financialYear.value = context.financial_year;
+			break;
+		}
+		case "dpp":
+			dpp.value = loaded;
+			certified.value = false;
+			break;
+		case "dpp-entry":
+			editor.value = loaded;
+			break;
+		case "dpp-review":
+			validation.value = loaded;
+			classifications.value = {};
+			returnDialog.value = false;
+			break;
+		case "plan":
+			annualPlan.value = loaded;
+			formDialog.value = false;
+			splittingDialog.value = false;
+			lateActivationDialog.value = false;
+			shift.value = null;
+			break;
+		case "plan-item":
+			planItem.value = loaded;
+			break;
+		case "finance":
+			financeTask.value = loaded;
+			financeReturnDialog.value = false;
+			break;
+		case "governance":
+			governanceTask.value = loaded;
+			governanceReturnDialog.value = false;
+			break;
+		case "publication":
+			publication.value = loaded;
+			break;
+	}
+}
+
+// The skeleton shows only for a screen with nothing to show yet. A screen
+// already loaded this session (Back, Cancel, a save that routes) renders its
+// last payload at once and refreshes in place; `quiet` forces the in-place
+// path for filter changes and post-action refreshes.
+async function load(opts) {
+	const scr = screen.value;
+	const key = screenKey.value;
+	const cached = cache.get(key);
+	if (opts && opts.entering && cached) applyLoaded(scr, cached);
+	const quiet = !!(opts && opts.quiet === true) || !!cached;
+	if (quiet && inFlightKey === key) return;
+	const seq = ++loadSeq;
+	inFlightKey = key;
+	if (quiet) refreshing.value = true;
+	else loading.value = true;
+	error.value = "";
+	errorSummary.value = "";
+	try {
+		const loaded = await fetchFor(scr);
+		if (seq !== loadSeq) return;
+		cache.set(key, loaded);
+		applyLoaded(scr, loaded);
+	} catch (e) {
+		if (seq !== loadSeq) return;
+		error.value = e.message;
+		supportRef.value = newSupportRef();
+	} finally {
+		if (seq === loadSeq) {
+			loading.value = false;
+			refreshing.value = false;
+			inFlightKey = "";
+		}
+	}
+}
+
+function newSupportRef() {
+	const now = new Date();
+	const pad = (n) => String(n).padStart(2, "0");
+	return (
+		`PLN-ERR-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+		`-${pad(now.getHours())}${pad(now.getMinutes())}`
+	);
+}
+
+async function persistSelection() {
+	try {
+		await api.selectPlanningContext({ financial_year: financialYear.value });
+	} catch (e) {
+		// a refused selection simply does not persist
+	}
+}
+
+function onSelectFy(value) {
+	financialYear.value = value;
+	load({ quiet: true }).then(persistSelection);
+}
+
+async function onResetFy() {
+	try {
+		await api.resetPlanningContext();
+	} catch (e) {
+		// nothing to forget
+	}
+	financialYear.value = "";
+	await load({ quiet: true });
+}
+
+async function run(action, fn) {
+	if (pending.value) return null;
+	pending.value = true;
+	errorSummary.value = "";
+	try {
+		return await fn(api.newIdempotencyKey(action));
+	} catch (e) {
+		errorSummary.value = e.message;
+		return null;
+	} finally {
+		pending.value = false;
+	}
+}
+
+async function onOpenDepartmentalPlan(organisationUnit) {
+	const result = await run("open-dpp", (key) =>
+		api.openDepartmentalPlan({
+			organisation_unit: organisationUnit,
+			fiscal_year: financialYear.value || (workspace.value.context || {}).financial_year,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load({ quiet: true });
+}
+
+function onOpenEntry(row) {
+	go(dppReference.value, "entry", row.entry_id);
+}
+
+function onViewAcceptedNeeds() {
+	frappe.set_route("departmental-needs");
+}
+
+async function onSubmit() {
+	const result = await run("submit-dpp", (key) =>
+		api.submitDepartmentalPlan({
+			dpp_version: dpp.value.version?.name,
+			certification_confirmed: certified.value,
+			expected_record_version: dpp.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load({ quiet: true });
+}
+
+async function onSaveFunding(payload) {
+	const result = await run("save-need-funding", (key) =>
+		api.saveNeedFunding({
+			dpp_version: editor.value.dpp_version,
+			entry_id: payload.entry_id,
+			budget_line: payload.budget_line || undefined,
+			indicative_amount: payload.indicative_amount || undefined,
+			not_proceeding_reason: payload.not_proceeding_reason || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) go(dppReference.value);
+}
+
+async function onSaveDirect(payload) {
+	const result = await run("save-direct", (key) =>
+		api.saveDirectRequirement({
+			dpp_version: editor.value.dpp_version,
+			entry_values: JSON.stringify(payload.values),
+			entry_id: payload.entry_id || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) go(dppReference.value);
+}
+
+function onClassify(entryId, value) {
+	classifications.value = { ...classifications.value, [entryId]: value };
+}
+
+async function onAccept() {
+	const result = await run("accept-dpp", (key) =>
+		api.acceptDepartmentalPlan({
+			task: validation.value.task,
+			classifications: JSON.stringify(classifications.value),
+			task_token: validation.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onReturnConfirm(issues) {
+	const result = await run("return-dpp", (key) =>
+		api.returnDepartmentalPlan({
+			task: validation.value.task,
+			issues: JSON.stringify(issues),
+			task_token: validation.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		returnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
+function onNavigate(routeSegments) {
+	if (!routeSegments || !routeSegments.length) return;
+	frappe.set_route(...routeSegments);
+}
+
+async function onFormConfirm(dppEntries, mode) {
+	const result = await run("form-plan-items", (key) =>
+		api.formPlanItems({
+			plan_version: annualPlan.value.version_reference,
+			dpp_entries: JSON.stringify(dppEntries),
+			mode,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		formDialog.value = false;
+		if (result.single) {
+			frappe.set_route(PLAN_ITEM_PAGE, result.created_items[0]);
+		} else {
+			await load({ quiet: true });
+		}
+	}
+}
+
+async function onSavePlanItem(values) {
+	const result = await run("save-plan-item", (key) =>
+		api.savePlanItem({
+			plan_item: planItem.value.plan_item_id,
+			item_values: JSON.stringify(values),
+			expected_record_version: planItem.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load({ quiet: true });
+}
+
+async function onDissolvePlanItem() {
+	const result = await run("dissolve-plan-item", (key) =>
+		api.dissolvePlanItem({
+			plan_item: planItem.value.plan_item_id,
+			expected_record_version: planItem.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) onBackToPlan();
+}
+
+// §5.2 — one plan-level Finance confirmation per Version
+async function onRequestPlanFunding() {
+	const result = await run("request-plan-funding", (key) =>
+		api.requestPlanFundingConfirmation({
+			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load({ quiet: true });
+}
+
+async function onConfirmFunding() {
+	const result = await run("confirm-plan-funding", (key) =>
+		api.confirmPlanFunding({
+			task: financeTask.value.task,
+			task_token: financeTask.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onReturnFromFinance(reason) {
+	const result = await run("return-from-finance", (key) =>
+		api.returnFromFinance({
+			task: financeTask.value.task,
+			reason,
+			task_token: financeTask.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		financeReturnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
+// invariant 27 (O2): once the year has begun the submission carries a reason
+function onSubmitPlanRequested() {
+	if (annualPlan.value.late_activation_required) {
+		lateActivationDialog.value = true;
+		return;
+	}
+	onSubmitConsolidatedPlan("");
+}
+
+// invariant 26 (O1)
+async function onConfirmSplitting(confirmation) {
+	const result = await run("confirm-splitting", (key) =>
+		api.confirmSplittingAdvisory({
+			plan_version: annualPlan.value.version_reference,
+			confirmation,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		splittingDialog.value = false;
+		await load({ quiet: true });
+	}
+}
+
+async function onSubmitConsolidatedPlan(lateActivationReason) {
+	const command = annualPlan.value.is_correction ? "submit-corrected" : "submit-consolidated";
+	const apiCall = annualPlan.value.is_correction ? api.submitCorrectedPlan : api.submitConsolidatedPlan;
+	const result = await run(command, (key) =>
+		apiCall({
+			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+			...(lateActivationReason ? { late_activation_reason: lateActivationReason } : {}),
+		})
+	);
+	if (result) {
+		lateActivationDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+	}
+}
+
+// §12.12 — the cascade dialog: the server computes every proposal (PLN-AC-124)
+function onOpenShift({ item, milestone }) {
+	const row = (item.schedule || []).find((r) => r.milestone === milestone) || {};
+	shift.value = { item, milestone, label: row.label || milestone, newDate: row.forecast || "", rows: [] };
+	if (row.forecast) onShiftDateChange(row.forecast);
+}
+
+async function onShiftDateChange(value) {
+	if (!shift.value) return;
+	shift.value = { ...shift.value, newDate: value };
+	if (!value) return;
+	errorSummary.value = "";
+	try {
+		const preview = await api.previewForecastCascade({
+			plan_item: shift.value.item.plan_item_id,
+			milestone: shift.value.milestone,
+			new_forecast_date: value,
+		});
+		if (shift.value && shift.value.newDate === value) {
+			shift.value = { ...shift.value, rows: preview.rows || [], recordVersion: preview.record_version };
+		}
+	} catch (e) {
+		errorSummary.value = e.message;
+	}
+}
+
+async function onConfirmShift({ included_milestones, reason }) {
+	if (!shift.value) return;
+	const current = shift.value;
+	const result = await run("confirm-forecast-cascade", (key) =>
+		api.confirmForecastCascade({
+			plan_item: current.item.plan_item_id,
+			milestone: current.milestone,
+			new_forecast_date: current.newDate,
+			included_milestones: JSON.stringify(included_milestones),
+			reason,
+			expected_record_version: current.recordVersion ?? current.item.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		shift.value = null;
+		await load({ quiet: true });
+	}
+}
+
+async function onRetryPublication() {
+	const result = await run("retry-publication", (key) =>
+		api.retryPublication({ publication: publication.value.publication, idempotency_key: key })
+	);
+	if (!result) return;
+	// a retry is a new attempt record; the route follows it (§12.11)
+	if (result.publication && result.publication !== publication.value.publication) {
+		frappe.set_route(WORKSPACE_PAGE, "publication", result.publication);
+	} else {
+		await load({ quiet: true });
+	}
+}
+
+async function onBeginUpdate() {
+	const result = await run("begin-plan-update", (key) =>
+		api.beginPlanUpdate({
+			plan_reference: planReference.value,
+			idempotency_key: key,
+		})
+	);
+	if (result) await load({ quiet: true });
+}
+
+async function onGovernanceConfirm(resolutionReference) {
+	const command = governanceTask.value.stage === "Accounting Officer adoption" ? "adopt" : "approve";
+	const result = await run(command, (key) =>
+		command === "adopt"
+			? api.adoptAndSubmitPlan({
+					task: governanceTask.value.task,
+					task_token: governanceTask.value.task_token,
+					idempotency_key: key,
+				})
+			: api.approveAnnualPlan({
+					task: governanceTask.value.task,
+					task_token: governanceTask.value.task_token,
+					resolution_reference: resolutionReference,
+					idempotency_key: key,
+				})
+	);
+	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+async function onGovernanceReturn(reason) {
+	const result = await run("return-plan-version", (key) =>
+		api.returnPlanVersion({
+			task: governanceTask.value.task,
+			reason,
+			task_token: governanceTask.value.task_token,
+			idempotency_key: key,
+		})
+	);
+	if (result) {
+		governanceReturnDialog.value = false;
+		frappe.set_route(WORKSPACE_PAGE);
+	}
+}
+
+watch([pageSlug, segments], () => load({ entering: true }), { immediate: true, deep: true });
+// The page came back into view on the same route: revalidate what is shown.
+watch(epoch, () => {
+	if (cache.has(screenKey.value)) load({ quiet: true });
+});
+
+const railTrail = computed(() => {
+	const trail = [
+		{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+		{ label: "Procurement Planning", route: [WORKSPACE_PAGE] },
+	];
+	if (screen.value === "dpp-review") {
+		trail.push({ label: "DPP review" });
+	}
+	if (screen.value === "finance") {
+		trail.push({ label: "Finance" });
+	}
+	if (screen.value === "governance") {
+		trail.push({ label: "Review" });
+	}
+	if (screen.value === "publication") {
+		trail.push({ label: "Publication" });
+	}
+	if (dppReference.value) {
+		trail.push({ label: dppReference.value, route: [DPP_PAGE, dppReference.value] });
+		if (screen.value === "dpp-entry") {
+			trail.push({
+				label:
+					segments.value[1] === "add-direct"
+						? "Add direct requirement"
+						: (editor.value.entry || {}).need_reference_line?.split(" · ")[0] ||
+						  entryId.value,
+			});
+		}
+	}
+	if (planReference.value) {
+		trail.push({ label: planReference.value, route: [PLAN_PAGE, planReference.value] });
+	}
+	if (screen.value === "plan-item" && planItemId.value) {
+		if (!planReference.value && planItem.value.plan_reference) {
+			trail.push({
+				label: planItem.value.plan_reference,
+				route: [PLAN_PAGE, planItem.value.plan_reference],
+			});
+		}
+		trail.push({ label: planItemId.value });
+	}
+	return trail;
+});
+
+// §10 — no Procuring Entity switcher anywhere in Planning
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
+</script>

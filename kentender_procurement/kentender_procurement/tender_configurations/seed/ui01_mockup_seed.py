@@ -16,6 +16,7 @@ from frappe.utils import nowdate
 
 PKG_APPROVED = "Approved"  # PP2 Package DocType retired
 from kentender_procurement.tender_configurations.constants import (
+	FIXTURE_STD_VERSION_ID,
 	STATUS_IN_PROGRESS,
 	STATUS_NEEDS_ATTENTION,
 )
@@ -29,7 +30,6 @@ from kentender_procurement.tender_configurations.services.configuration_steps im
 	STEP_NOT_AVAILABLE,
 	STEP_NOT_STARTED,
 )
-from kentender_procurement.tender_configurations.services.eligibility import ensure_fixture_std_version
 
 MOCK_PREFIX = "TCFG-MOCK"
 
@@ -190,7 +190,9 @@ def seed_ui01_mockup_configurations(*, clear: bool = True) -> dict[str, Any]:
 	if clear:
 		_clear_mock()
 
-	std_id = ensure_fixture_std_version()
+	# Was ensure_fixture_std_version(); STD DocTypes retired 2026-09-05 so
+	# std_version is a plain Data label now.
+	std_id = FIXTURE_STD_VERSION_ID
 	entity = _ensure_pe()
 	entity_name = frappe.db.get_value("Procuring Entity", entity, "entity_name") or "National Treasury"
 

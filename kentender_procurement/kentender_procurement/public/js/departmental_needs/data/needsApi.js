@@ -1,4 +1,4 @@
-// Departmental Needs data adapter — NDS-CHG-001 v1.1 §8.
+// Departmental Needs data adapter — NDS-CHG-001 v1.6 §8.
 //
 // One function per published contract, named after it. Nothing here builds a
 // URL by hand or reads a DocType directly: §16.1 requires every mutation to go
@@ -9,7 +9,11 @@ const API = "kentender_procurement.departmental_needs.api";
 
 // --- §8.1 reads ------------------------------------------------------------
 
-export const resolveNeedsContexts = () => frappeCall(`${API}.resolve_needs_contexts`, {});
+export const resolveNeedsScope = (args) => frappeCall(`${API}.resolve_needs_scope`, args || {});
+
+export const listNeedsFinancialYears = () => frappeCall(`${API}.list_needs_financial_years`, {});
+
+export const listNeedCreateTargets = () => frappeCall(`${API}.list_need_create_targets`, {});
 
 export const getNeedsWorkspace = (args) => frappeCall(`${API}.get_needs_workspace`, args);
 
@@ -22,11 +26,7 @@ export const getDepartmentalReviewTask = (task, decisionToken) =>
 		decision_token: decisionToken || "",
 	});
 
-export const getNeedsIntakeWindow = (procuringEntity, financialYear) =>
-	frappeCall(`${API}.get_needs_intake_window`, {
-		procuring_entity: procuringEntity,
-		financial_year: financialYear,
-	});
+export const getNeedsSubmissionState = () => frappeCall(`${API}.get_needs_submission_state`, {});
 
 export const getCurrentAcceptedNeed = (args) =>
 	frappeCall(`${API}.get_current_accepted_need`, args);
@@ -58,8 +58,6 @@ export const requestAcceptedNeedWithdrawal = (args) =>
 	frappeCall(`${API}.request_accepted_need_withdrawal`, args);
 export const decideAcceptedNeedWithdrawal = (args) =>
 	frappeCall(`${API}.decide_accepted_need_withdrawal`, args);
-export const saveNeedsIntakeWindow = (args) =>
-	frappeCall(`${API}.save_needs_intake_window`, args);
 
 /**
  * A key for one user action, reused across retries of that same action.

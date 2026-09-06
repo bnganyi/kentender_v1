@@ -1,9 +1,11 @@
-"""Phase 1 domain-model tests for NDS-CHG-001 v1.1 §4.
+"""Phase 1 domain-model tests for NDS-CHG-001 v1.6 §4.
 
 Covers the reshaped schema: the thin root (§4.2), the version record and its
 field bounds and immutability (§4.3, §13), the review task and withdrawal
 request single-open guards (§4.4, §4.6), the decision record's reason contract
-(§4.5, NDS-BR-011), and the absence of every concept §1.1 removes.
+(§4.5, NDS-BR-011), and the absence of every concept §1.1/§16.4.11 removes —
+including `procuring_entity` (AUTH-ADR-001 v1.6 §1.1: the site is exactly one
+implicit Procuring Entity) and the `Needs Intake Window` doctype itself.
 """
 
 from __future__ import annotations
@@ -23,9 +25,9 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
-	OU_DIGITAL_HEALTH,
-	PE,
+	_granted_units,
 	upsert_departmental_needs,
 )
 
@@ -33,9 +35,14 @@ RETIRED_DOCTYPES = (
 	"Departmental Need Item",
 	"Departmental Need Attachment",
 	"Departmental Need Review",
+	# NDS-CHG-001 v1.6 §4.1/§16.4.11 — the windowed intake mechanism is
+	# retired outright; the Needs-submission flag lives on ERPNext `Fiscal
+	# Year` (kentender_needs_submission_open/_closes_at), owned by
+	# Configuration & Governance.
+	"Needs Intake Window",
 )
 
-# §1.1 / §17 — none of these may exist on the Need or its version.
+# §1.1 / §16.4 / §17 — none of these may exist on the Need or its version.
 PROHIBITED_FIELDS = (
 	"business_justification",
 	"delivery_or_use_location",
@@ -45,6 +52,9 @@ PROHIBITED_FIELDS = (
 	"submitted_by",
 	"pe_fy_context",
 	"revision_no",
+	# AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit Procuring
+	# Entity; no NDS doctype carries this field any more.
+	"procuring_entity",
 )
 
 
@@ -53,6 +63,13 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		# Two real, distinct Organisation Units Grace is actually granted
+		# Departmental Author over (§14.2) — used to build ad-hoc fixture
+		# records below without guessing a Procuring-Entity-scoped doc name
+		# that no longer exists.
+		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
+		cls.ou_digital_health = units["Digital Health"]
+		cls.ou_hrmd = units["Human Resources Management and Development"]
 
 	def _new_need(self, state: str = STATE_DRAFT):
 		reference = f"NDS-TEST-{uuid4().hex[:10].upper()}"
@@ -60,8 +77,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			{
 				"doctype": "Departmental Need",
 				"need_reference": reference,
-				"procuring_entity": PE,
-				"organisation_unit": OU_DIGITAL_HEALTH,
+				"organisation_unit": self.ou_digital_health,
 				"financial_year": FY,
 				"current_state": state,
 				"record_version": 1,
@@ -80,7 +96,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
-			"unit": "UNIT-EACH",
+			"unit": "Each",
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -92,7 +108,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		for doctype in RETIRED_DOCTYPES:
 			self.assertFalse(
 				frappe.db.exists("DocType", doctype),
-				msg=f"{doctype} is removed by NDS-CHG-001 v1.1 §1.1",
+				msg=f"{doctype} is removed by NDS-CHG-001 v1.6 §1.1/§16.4.11",
 			)
 
 	def test_root_carries_no_prohibited_or_content_field(self):
@@ -103,25 +119,20 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		for content in ("title", "description", "expected_operational_result", "required_by_date"):
 			self.assertNotIn(content, fields)
 
+	def test_review_task_carries_no_procuring_entity_field(self):
+		fields = {f.fieldname for f in frappe.get_meta("Departmental Need Review Task").fields}
+		self.assertNotIn("procuring_entity", fields)
+
+	def test_financial_year_links_to_the_erpnext_doctype(self):
+		"""§3/§16.2/§16.4.11 — no KenTender-owned `Financial Year` doctype."""
+		meta = frappe.get_meta("Departmental Need")
+		self.assertEqual(meta.get_field("financial_year").options, "Fiscal Year")
+
 	def test_root_scope_is_immutable(self):
 		need = self._new_need()
-		need.organisation_unit = "MOH-DIR-HRMD"
+		need.organisation_unit = self.ou_hrmd
 		with self.assertRaises(frappe.ValidationError):
 			need.save(ignore_permissions=True)
-
-	def test_organisation_unit_must_belong_to_procuring_entity(self):
-		with self.assertRaises(frappe.ValidationError):
-			frappe.get_doc(
-				{
-					"doctype": "Departmental Need",
-					"need_reference": f"NDS-TEST-{uuid4().hex[:10].upper()}",
-					"procuring_entity": "PE-CGKIS",
-					"organisation_unit": OU_DIGITAL_HEALTH,
-					"financial_year": FY,
-					"current_state": STATE_DRAFT,
-					"record_version": 1,
-				}
-			).insert(ignore_permissions=True)
 
 	def test_need_cannot_be_deleted(self):
 		# §13 retains every business record. Deletion is simply an invalid
@@ -148,8 +159,9 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		self.assertNotIn("business_justification", fields)
 
 	def test_unit_links_to_the_governed_catalogue(self):
+		"""§1.1 "New in v1.6" — ERPNext native `UOM`, not the retired custom doctype."""
 		meta = frappe.get_meta("Departmental Need Version")
-		self.assertEqual(meta.get_field("unit").options, "Unit Of Measure")
+		self.assertEqual(meta.get_field("unit").options, "UOM")
 
 	def test_title_bounds_are_enforced(self):
 		need = self._new_need()
@@ -204,7 +216,6 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 				"review_task_id": f"NDT-{uuid4().hex.upper()}",
 				"departmental_need": need.name,
 				"task_type": task_type,
-				"procuring_entity": need.procuring_entity,
 				"organisation_unit": need.organisation_unit,
 				"financial_year": need.financial_year,
 				"status": "Open",
@@ -293,44 +304,6 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		with self.assertRaises(DepartmentalNeedError):
 			self._withdrawal(need, version, reason="too short")
 
-	# --- §4.1 intake window ------------------------------------------------
-
-	def test_intake_window_requires_close_after_open(self):
-		with self.assertRaises(frappe.ValidationError):
-			frappe.get_doc(
-				{
-					"doctype": "Needs Intake Window",
-					"needs_intake_window_id": f"NIW-{uuid4().hex[:10].upper()}",
-					"procuring_entity": PE,
-					"financial_year": FY,
-					"opens_at": "2026-11-25 23:59:59",
-					"closes_at": "2026-09-01 00:00:00",
-					"record_version": 1,
-				}
-			).insert(ignore_permissions=True)
-
-	def test_only_one_intake_window_per_pe_and_financial_year(self):
-		def build():
-			return frappe.get_doc(
-				{
-					"doctype": "Needs Intake Window",
-					"needs_intake_window_id": f"NIW-{uuid4().hex[:10].upper()}",
-					"procuring_entity": PE,
-					"financial_year": FY,
-					"opens_at": "2026-09-01 00:00:00",
-					"closes_at": "2026-11-25 23:59:59",
-					"record_version": 1,
-				}
-			).insert(ignore_permissions=True)
-
-		# The §14.1 seed already owns this PE/FY window, so a second one is
-		# refused without needing to create the first here.
-		self.assertTrue(
-			frappe.db.exists("Needs Intake Window", {"procuring_entity": PE, "financial_year": FY})
-		)
-		with self.assertRaises(frappe.ValidationError):
-			build()
-
 	# --- §14.3 seed shape ---------------------------------------------------
 
 	def test_seed_creates_the_four_default_needs_with_versions(self):
@@ -347,18 +320,15 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 				frappe.db.get_value("Departmental Need Version", current, "expected_operational_result")
 			)
 
-	def test_returned_seed_need_has_a_copied_correction_draft(self):
-		"""§14.3 — Version 2 is the server-created editable copy of returned V1."""
-		current = frappe.db.get_value("Departmental Need", "NDS-MOH-2027-0003", "current_version")
-		row = frappe.db.get_value(
-			"Departmental Need Version",
-			current,
-			["version_number", "version_status", "based_on_version"],
-			as_dict=True,
-		)
-		self.assertEqual(row.version_number, 2)
-		self.assertEqual(row.version_status, VERSION_DRAFT)
-		self.assertEqual(row.based_on_version, "NDS-MOH-2027-0003-V001")
+	def test_the_harmonized_laptop_needs_are_accepted_on_their_first_version(self):
+		"""SEED-001 §3.2 — 0003/0004 (the combined item's two source Needs)
+		reach Accepted directly on V1; nothing is Returned."""
+		for reference in ("NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
+			row = frappe.db.get_value(
+				"Departmental Need", reference, ["current_state", "current_accepted_version"], as_dict=True
+			)
+			self.assertEqual(row.current_state, STATE_ACCEPTED, reference)
+			self.assertEqual(row.current_accepted_version, f"{reference}-V001", reference)
 
 	def test_accepted_seed_need_points_at_its_accepted_version(self):
 		row = frappe.db.get_value(

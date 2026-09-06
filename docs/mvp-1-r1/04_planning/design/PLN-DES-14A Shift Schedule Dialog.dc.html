@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); position: relative; }
+    .content { max-width: 1200px; margin: 0 auto; padding: 32px 0 40px; filter: blur(1px); opacity: .55; }
+    .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
+    .page-title { margin: 0 0 4px; }
+    .quiet-ref { font-size: 13px; color: var(--color-neutral-700); margin: 0 0 8px; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+    .strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; padding: 16px 20px; margin-top: 24px; }
+    .strip-field label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
+    .strip-field .val { font-family: var(--font-heading); font-weight: 600; font-size: 16px; }
+    .card-pad { padding: 20px; margin-top: 20px; }
+    .num { text-align: right; }
+    .dim-bg { position: absolute; inset: 0; background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); z-index: 5; }
+    .dialog-wrap { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 24px; }
+    .dialog { width: min(640px, 100%); }
+    .dialog-context { font-size: 13px; color: var(--color-neutral-700); margin: 4px 0 16px; }
+    .field { margin-bottom: 16px; }
+    .shift-table th, .shift-table td { font-size: 13px; }
+    .shift-table th:first-child, .shift-table td:first-child { width: 40px; }
+  </style>
+</helmet>
+<div class="artboard">
+  <div class="content">
+    <div class="header-row">
+      <div>
+        <p class="eyebrow">ANNUAL PROCUREMENT PLAN</p>
+        <h1 class="page-title">Ministry of Health Annual Procurement Plan 2027/28</h1>
+        <p class="quiet-ref">PLN-MOH-2027-001 · Version 1</p>
+        <span class="kt-status is-live">Active</span>
+      </div>
+    </div>
+    <div class="card blueprint strip"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="strip-field"><label>Plan Items</label><div class="val">1</div></div>
+      <div class="strip-field"><label>Approved value</label><div class="val">KES 80,000,000</div></div>
+      <div class="strip-field"><label>Departments</label><div class="val">1</div></div>
+      <div class="strip-field"><label>Schedule health</label><div class="val">0 of 1 item behind baseline</div></div>
+      <div class="strip-field"><label>Activated</label><div class="val">10 Dec 2026, 15:00 EAT</div></div>
+    </div>
+  </div>
+
+  <div class="dim-bg"></div>
+  <div class="dialog-wrap">
+    <div class="dialog" style="width: min(640px, 100%)">
+      <div class="dialog-title">Shift schedule from here — Bid opening</div>
+      <p class="dialog-context">Changing Bid opening recalculates every later milestone by the same number of days. Deselect any row you do not want to change.</p>
+
+      <div class="field">
+        <label>New forecast date for Bid opening</label>
+        <input type="date" class="input" value="2027-06-05">
+      </div>
+
+      <table class="table shift-table">
+        <thead><tr><th></th><th>Milestone</th><th>Current forecast</th><th>Proposed forecast</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" checked></td><td>Bid opening</td><td>22 May 2027</td><td>5 Jun 2027</td></tr>
+          <tr><td><input type="checkbox" checked></td><td>Evaluation completion</td><td>21 Jun 2027</td><td>5 Jul 2027</td></tr>
+          <tr><td><input type="checkbox" checked></td><td>Tender award approval</td><td>26 Jun 2027</td><td>10 Jul 2027</td></tr>
+          <tr><td><input type="checkbox" checked></td><td>Notification of award</td><td>28 Jun 2027</td><td>12 Jul 2027</td></tr>
+          <tr><td><input type="checkbox" checked></td><td>Contract signing</td><td>12 Jul 2027</td><td>26 Jul 2027</td></tr>
+          <tr><td><input type="checkbox" checked></td><td>Delivery or implementation completion</td><td>31 Aug 2027</td><td>14 Sep 2027</td></tr>
+        </tbody>
+      </table>
+
+      <div class="field" style="margin-top: 16px">
+        <label>Reason</label>
+        <textarea class="input">Tender Preparation confirmed the issue date will slip two weeks pending template release.</textarea>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary">Cancel</button>
+        <button type="button" class="btn btn-primary">Confirm shift</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div style="background: var(--color-bg); width: 1440px; min-height: 1024px; font-family: var(--font-body); color: var(--color-text); position: relative;">
+
+  <div style="display: flex; justify-content: center; filter: blur(1.5px); opacity: 0.5;">
+    <div style="width: 1200px; padding: 32px 0;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px;">
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--color-accent-700);">DEPARTMENTAL NEEDS</div>
+          <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; margin: 4px 0 8px; letter-spacing: 0.01em;">My needs</h1>
+          <p style="font-size: 15px; color: var(--color-neutral-700); max-width: 640px; margin: 0;">Capture and track the requirements your department expects to include in procurement planning.</p>
+        </div>
+        <button class="btn btn-primary">Create need</button>
+      </div>
+      <div class="card blueprint" style="margin-bottom: 16px; padding: 20px 24px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Department</div><div style="font-size: 14.5px; font-weight: 500;">OU-MOH-DHI — Digital Health</div></div>
+          <div><div style="font-size: 11px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 4px;">Open intake</div><div style="font-size: 14.5px; font-weight: 500;">FY 2027/28 · Open until 25 Nov 2026, 23:59 EAT</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; inset: 0; background: color-mix(in oklch, var(--color-text) 35%, transparent); display: flex; align-items: center; justify-content: center;">
+    <div class="dialog blueprint" style="width: 520px; padding: 24px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="dialog-title" style="font-family: var(--font-heading); font-size: 20px; font-weight: 600; margin-bottom: 8px;">Create need for</div>
+      <div class="dialog-body">
+        <p style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700);">Choose the department for this need.</p>
+        <div class="field" style="margin-bottom: 16px;">
+          <label>Department</label>
+          <select class="input">
+            <option>Digital Health</option>
+          </select>
+        </div>
+        <div class="field" style="margin: 0;">
+          <label>Financial Year</label>
+          <input class="input" type="text" value="FY 2027/28" readonly style="background: var(--color-neutral-100); color: var(--color-neutral-700);">
+        </div>
+      </div>
+      <div class="dialog-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

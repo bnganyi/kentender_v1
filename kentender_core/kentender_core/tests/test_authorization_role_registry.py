@@ -52,8 +52,15 @@ class TestAuthorizationRoleRegistry(IntegrationTestCase):
 		self.assertNotIn("budget.revision.apply", CAPABILITY_ROLE_MAP)
 		self.assertNotIn("budget.reserve", CAPABILITY_ROLE_MAP)
 
-	def test_budget_approve_maps_to_activation_authority(self):
-		self.assertEqual(CAPABILITY_ROLE_MAP["budget.approve"], "Budget Activation Authority")
+	def test_budget_capabilities_are_out_of_engine_scope(self):
+		"""BUD-CHG-001 v1.3 Phase 4 — Budget moved off this capability-string
+		engine entirely, onto kentender_core.services.authorization's Site-wide
+		User Responsibility Assignments (kentender_budget.services.budget_authorization).
+		No `budget.*` capability, and no Budget Role, participates here any more."""
+		for capability in CAPABILITY_ROLE_MAP:
+			self.assertFalse(capability.startswith("budget."), f"{capability} must not be mapped here any more")
+		for role in ("Budget Viewer", "Budget Officer", "Budget Approver"):
+			self.assertNotIn(role, ROLE_CLASSIFICATIONS)
 
 	def test_departmental_needs_oversight_read_maps_to_auditor_not_budget_officer(self):
 		self.assertEqual(CAPABILITY_ROLE_MAP["departmental_needs.oversight_read"], "Auditor")

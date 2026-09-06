@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.2 §4.7/§14 — the append-only Funding Ledger (Budget Audit
+"""BUD-CHG-001 v1.3 §4.7/§14 — the append-only Funding Ledger (Budget Audit
 Event doctype), plus the Funding Activity and History tab read models built
 directly from it. There is exactly one ledger; Funding Activity and History
 are two filtered projections of the same event stream, not two data sources.
@@ -224,7 +224,7 @@ def get_funding_activity(
 	from kentender_budget.services.budget_contracts import _active_version, _resolve_budget, _version_totals
 
 	doc = _resolve_budget(budget)
-	require_budget_read_scope(doc.procuring_entity or "")
+	require_budget_read_scope("Procurement Budget", doc.name)
 	filters: dict[str, Any] = {"budget": doc.name, "event_type": ["in", list(FUNDING_EVENT_TYPES)]}
 	if (budget_line or "").strip():
 		filters["budget_line"] = budget_line.strip()
@@ -243,7 +243,7 @@ def get_funding_activity(
 		{
 			r.name: r.generated_reference
 			for r in frappe.get_all(
-				"Budget Line",
+				"Procurement Budget Line",
 				filters={"name": ["in", list({row.budget_line for row in rows if row.budget_line})]},
 				fields=["name", "generated_reference"],
 			)

@@ -36,8 +36,8 @@
   {
    "fieldname": "budget",
    "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
+   "label": "Procurement Budget",
+   "options": "Procurement Budget",
    "reqd": 1,
    "read_only": 1,
    "search_index": 1
@@ -46,7 +46,7 @@
    "fieldname": "budget_version_at_creation",
    "fieldtype": "Link",
    "label": "Budget Version At Creation",
-   "options": "Budget Version",
+   "options": "Procurement Budget Version",
    "reqd": 1,
    "read_only": 1,
    "description": "Preserves the version under which the reservation was confirmed."
@@ -58,8 +58,8 @@
   {
    "fieldname": "budget_line",
    "fieldtype": "Link",
-   "label": "Budget Line",
-   "options": "Budget Line",
+   "label": "Procurement Budget Line",
+   "options": "Procurement Budget Line",
    "reqd": 1,
    "read_only": 1,
    "search_index": 1
@@ -186,18 +186,6 @@
    "read": 1,
    "report": 1,
    "role": "Budget Approver",
-   "share": 0,
-   "write": 0
-  },
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Budget Viewer",
    "share": 0,
    "write": 0
   },

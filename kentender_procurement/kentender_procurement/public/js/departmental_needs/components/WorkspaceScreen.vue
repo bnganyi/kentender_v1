@@ -78,70 +78,72 @@
 		</div>
 
 		<template v-else>
-			<!-- CTX-CHG-001 rule 4 — the band always shows the selected PE, the
-			     selected department (with Change context), a CHANGEABLE Financial
-			     Year, and the intake state with its exact opening and closing
-			     instants. -->
-			<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-context-grid" style="grid-template-columns: repeat(4, 1fr)">
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">Procuring Entity</div>
-						<div class="kt-readonly-value is-strong">
-							{{ context.procuring_entity_label || context.procuring_entity || "" }}
-						</div>
-					</div>
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">
-							Department
-							<button
-								type="button"
-								class="kt-action-link"
-								data-testid="nds-change-context"
-								style="border: 0; background: none; padding: 0; margin-left: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 11.5px"
-								@click="$emit('change-context')"
-							>
-								Change
-							</button>
-						</div>
-						<div class="kt-readonly-value is-strong">
-							{{ context.organisation_unit_label || context.organisation_unit || "" }}
-						</div>
-					</div>
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">
-							<label for="nds-fy-band">Financial Year</label>
-						</div>
-						<select
-							id="nds-fy-band"
-							class="kt-input"
-							data-testid="nds-fy-band-select"
-							style="max-width: 180px; padding: 6px 8px; font-size: 13.5px"
-							:value="context.financial_year || ''"
-							@change="$emit('select-financial-year', $event.target.value)"
-						>
-							<option v-if="!context.financial_year" value="" disabled>Select year…</option>
-							<option v-for="year in financialYears" :key="year.id" :value="year.id">
-								{{ year.label }}
-							</option>
-						</select>
-					</div>
-					<div class="kt-readonly-row">
-						<div class="kt-readonly-label">Intake window</div>
-						<div class="kt-readonly-value is-strong" data-testid="nds-intake-state">
-							{{ intakeStateLabel }}
-						</div>
-						<div
-							v-if="intake && intake.configured"
-							style="font-size: 12.5px; color: var(--color-neutral-600); margin-top: 4px"
-							data-testid="nds-intake-instants"
-						>
-							Opens {{ formatInstant(intake.opens_at) }} · Closes {{ formatInstant(intake.closes_at) }}
-						</div>
-					</div>
+			<!-- §12.1 — the band shows the selected department (with Change
+			     context), a CHANGEABLE Financial Year, and the Needs-submission
+			     state with its exact close instant when set. There is no PE
+			     dimension (AUTH-ADR-001 v1.6 §1.1 — the site is exactly one
+			     implicit Procuring Entity). -->
+			<!-- A plain inline filter row at text weight — the same treatment as
+			     Budget & Funding's Fiscal Year control and Procurement Planning's
+			     Financial Year filter — never a bordered, corner-marked card. -->
+			<div class="nds-filter-strip" data-testid="nds-context-strip">
+				<div class="nds-filter-field">
+					<span class="nds-filter-label">Department</span>
+					<span class="nds-filter-value">{{ context.organisation_unit_label || context.organisation_unit || "" }}</span>
+					<button
+						type="button"
+						class="kt-action-link nds-filter-link"
+						data-testid="nds-change-context"
+						@click="$emit('change-context')"
+					>
+						Change
+					</button>
+				</div>
+				<span class="nds-filter-sep" aria-hidden="true">·</span>
+				<div class="nds-filter-field">
+					<label class="nds-filter-label" for="nds-fy-band">Financial Year</label>
+					<!-- Bound to the caller's own selection, not the server echo: Vue
+					     re-patches `value` on every render, so a control bound to the
+					     last response snaps back to the old year while the new one
+					     is still loading. -->
+					<select
+						id="nds-fy-band"
+						class="kt-input"
+						data-testid="nds-fy-band-select"
+						:value="selectedFinancialYear || context.financial_year || ''"
+						@change="$emit('select-financial-year', $event.target.value)"
+					>
+						<option v-if="!context.financial_year" value="" disabled>Select year…</option>
+						<option v-for="year in financialYears" :key="year.id" :value="year.id">
+							{{ year.label }}
+						</option>
+					</select>
+				</div>
+				<span class="nds-filter-sep" aria-hidden="true">·</span>
+				<div class="nds-filter-field">
+					<span class="nds-filter-label">Needs submission</span>
+					<span class="nds-filter-value" data-testid="nds-submission-state">
+						{{ submission.open ? "Open" : "Closed" }}
+					</span>
+					<span
+						v-if="submission.open && submission.closes_at"
+						class="nds-filter-quiet"
+						data-testid="nds-submission-closes-at"
+					>
+						· closes {{ formatInstant(submission.closes_at) }}
+					</span>
 				</div>
 			</div>
+
+			<!-- §11.15 "No open Fiscal Year" — existing rows stay visible and
+			     readable; only the notice and the missing Create button say so. -->
+			<p
+				v-if="!submission.open && needs.length"
+				data-testid="nds-submission-closed-notice"
+				style="margin: 0 0 16px; font-size: 13.5px; color: var(--color-neutral-700)"
+			>
+				Needs submission is currently closed. You can continue viewing existing needs.
+			</p>
 
 			<!-- §12.1 — search matches title or reference; status is the only filter. -->
 			<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px">
@@ -231,13 +233,15 @@ const props = defineProps({
 	error: { type: String, default: "" },
 	outcome: { type: String, default: "" },
 	context: { type: Object, default: () => ({}) },
-	intake: { type: Object, default: () => ({}) },
+	// get_needs_submission_state() shape: { open, financial_year, label, closes_at }.
+	submission: { type: Object, default: () => ({}) },
 	needs: { type: Array, default: () => [] },
 	actions: { type: Array, default: () => [] },
 	countLabel: { type: String, default: "" },
 	search: { type: String, default: "" },
 	status: { type: String, default: "" },
 	financialYears: { type: Array, default: () => [] },
+	selectedFinancialYear: { type: String, default: "" },
 });
 
 defineEmits([
@@ -277,16 +281,9 @@ const columns = [
 const filtersActive = computed(() => !!(props.search || props.status));
 
 // §12.1 — Create need needs both: the server must offer the action (only an
-// author in this context does), and intake must be Open. The intake check
-// alone would show the button to a reviewer for as long as intake is Open.
+// author in this context does), and Needs submission must be Open. The flag
+// check alone would show the button to a reviewer for as long as it is Open.
 const canCreate = computed(
-	() =>
-		props.actions.some((action) => action.code === "create") &&
-		props.intake &&
-		props.intake.state === "Open"
+	() => props.actions.some((action) => action.code === "create") && !!props.submission.open
 );
-
-// NDS-DES-14c — a Scheduled or Closed window still shows existing records;
-// only the state, the instants and the missing Create button say so (§12.1).
-const intakeStateLabel = computed(() => (props.intake || {}).state || "Not configured");
 </script>

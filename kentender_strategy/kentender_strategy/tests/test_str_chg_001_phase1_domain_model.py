@@ -16,15 +16,14 @@ from frappe.tests.utils import FrappeTestCase
 from kentender_strategy.services.strategy_audit import list_events, record_event
 from kentender_strategy.services.strategy_reference import REF_RE
 
-PE = "PE-MOH"
-FY = "FY-2027-2028"
+# CU-305/CU-303 — canonical ERPNext Fiscal Year; the PE dimension is gone.
+FY = "2027-2028"
 
 
 def _plan(**kwargs) -> dict:
 	data = {
 		"doctype": "Strategic Plan",
 		"title": "Phase 1 Test Plan",
-		"procuring_entity_id": PE,
 		"plan_role": "Primary",
 		"period_start": "2027-07-01",
 		"period_end": "2032-06-30",
@@ -244,7 +243,7 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		data = {
 			"doctype": "Performance Target",
 			"indicator_id": indicator_id,
-			"financial_year_id": FY,
+			"fiscal_year": FY,
 			"comparison": "At least",
 			"target_value": 85,
 		}
@@ -258,10 +257,10 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		)
 		with self.assertRaises(frappe.ValidationError):
 			frappe.get_doc(
-				self._target(indicator.name, financial_year_id=FY, target_by_date="2028-06-30")
+				self._target(indicator.name, fiscal_year=FY, target_by_date="2028-06-30")
 			).insert(ignore_permissions=True)
 		with self.assertRaises(frappe.ValidationError):
-			frappe.get_doc(self._target(indicator.name, financial_year_id=None)).insert(
+			frappe.get_doc(self._target(indicator.name, fiscal_year=None)).insert(
 				ignore_permissions=True
 			)
 		target = self._track(frappe.get_doc(self._target(indicator.name)).insert(ignore_permissions=True))

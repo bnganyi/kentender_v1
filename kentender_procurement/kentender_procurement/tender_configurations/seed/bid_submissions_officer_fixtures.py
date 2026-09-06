@@ -19,10 +19,7 @@ from kentender_procurement.tender_configurations.services.bid_submissions import
 
 def ensure_pub_with_deadlines(*, past_deadline: bool = True, past_opening: bool = True):
 	"""Create a minimal Published publication + sealed bids for officer tests."""
-	from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-	from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-		ensure_active_canonical_ppra_it_std,
-	)
+	from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 	from kentender_procurement.tender_configurations.seed.preview_fixtures import (
 		_approve,
 		_seed_bidder_facing_config,
@@ -45,7 +42,7 @@ def ensure_pub_with_deadlines(*, past_deadline: bool = True, past_opening: bool 
 		persist_compiled_schema,
 	)
 
-	ensure_active_canonical_ppra_it_std(force_reimport=False)
+	# STD Engine retired 2026-09-05 — no canonical STD package to activate.
 	seed = seed_ui00_dashboard(clear=True)
 	cfg_id = seed["configurations"][0]
 	frappe.db.set_value("Tender Configuration", cfg_id, "std_version", CANONICAL_PACKAGE_ID)

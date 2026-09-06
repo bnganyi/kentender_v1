@@ -9,67 +9,77 @@
 <x-dc>
 
 <helmet>
-  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
-  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
   <style>
     body { margin: 0; }
     .artboard { width: 1440px; min-height: 1024px; background: var(--color-bg); }
     .content { max-width: 1200px; margin: 0 auto; padding: 32px 0 40px; }
     .eyebrow { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent-700); margin: 0 0 8px; }
     .page-title { margin: 0 0 4px; }
-    .quiet-ref { font-size: 13px; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 8px; }
+    .quiet-ref { font-size: 13px; color: var(--color-neutral-700); margin: 0 0 8px; }
     .card-pad { padding: 20px; margin-top: 20px; }
-    .field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
-    .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 4px; }
+    .field-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+    .ro-field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-neutral-700); margin: 0 0 4px; }
     .ro-field .val { font-size: 15px; }
     .num { text-align: right; }
-    .as-at { font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 10px; }
-    .notice { display: flex; gap: 4px; padding: 14px 18px; border: 1px solid #10b981; background: #10b9811a; color: #047857; margin-top: 16px; font-size: 14px; }
+    .as-at { font-size: 13px; color: var(--color-neutral-700); margin: 0 0 10px; }
+    .notice { display: flex; gap: 4px; padding: 14px 18px; border: 1px solid var(--status-live); background: var(--status-live-bg); color: var(--status-live); margin-top: 16px; font-size: 14px; }
+    .quiet-line { font-size: 13px; color: var(--color-neutral-700); margin: 10px 2px 0; }
     .footer-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 1px solid var(--color-divider); margin-top: 32px; }
   </style>
 </helmet>
 <div class="artboard">
   <div class="content">
-    <p class="eyebrow">FINANCE CONFIRMATION</p>
-    <h1 class="page-title">Confirm funding for Plan Item</h1>
-    <p class="quiet-ref">FNT-MOH-2027-021-001 · PPI-MOH-2027-021</p>
+    <p class="eyebrow">PLAN FUNDING CONFIRMATION</p>
+    <h1 class="page-title">Ministry of Health Annual Procurement Plan 2027/28</h1>
+    <p class="quiet-ref">FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1</p>
     <span class="kt-status is-pending">Awaiting Finance</span>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="field-grid">
-        <div class="ro-field"><label>Plan Item</label><div class="val">National digital health infrastructure upgrade</div></div>
-        <div class="ro-field"><label>Department</label><div class="val">Digital Health</div></div>
-        <div class="ro-field"><label>Requirement type</label><div class="val">Non-consulting services</div></div>
-        <div class="ro-field"><label>Planned value</label><div class="val">KES 80,000,000</div></div>
-        <div class="ro-field"><label>Procurement method</label><div class="val">Open Tender</div></div>
-        <div class="ro-field"><label>Delivery completion</label><div class="val">31 Aug 2027</div></div>
+        <div class="ro-field"><label>Plan Items</label><div class="val">1</div></div>
+        <div class="ro-field"><label>Plan value</label><div class="val">KES 80,000,000</div></div>
+        <div class="ro-field"><label>Procurement Budget Lines used</label><div class="val">1</div></div>
+        <div class="ro-field"><label>Reserved share</label><div class="val">0% of plan value · target 30%</div></div>
       </div>
     </div>
 
     <div class="card blueprint card-pad"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="kt-card-title">Funding position</div>
+      <div class="kt-card-title">Affordability</div>
       <p class="as-at">Position as at 4 Dec 2026, 09:58 EAT</p>
       <table class="table">
-        <thead><tr><th>Budget Line</th><th>Funding source</th><th class="num">Approved</th><th class="num">Reserved</th><th class="num">Committed</th><th class="num">Available</th><th class="num">Required</th><th class="num">Available after confirmation</th></tr></thead>
+        <thead><tr><th>Procurement Budget Line</th><th>Funding source</th><th class="num">Approved</th><th class="num">Planned in this Plan</th><th>Within approved</th><th class="num">Reserved</th><th class="num">Committed</th><th class="num">Currently available</th></tr></thead>
         <tbody>
           <tr>
             <td>MOH-BL-DHI-2027 — Digital health infrastructure programme</td>
             <td>Government of Kenya</td>
             <td class="num">KES 100,000,000</td>
+            <td class="num">KES 80,000,000</td>
+            <td>Yes</td>
             <td class="num">KES 0</td>
             <td class="num">KES 0</td>
             <td class="num">KES 100,000,000</td>
-            <td class="num">KES 80,000,000</td>
-            <td class="num">KES 20,000,000</td>
+          </tr>
+          <tr>
+            <td>MOH-BL-HWD-2027 — Digital health workforce development</td>
+            <td>Government of Kenya</td>
+            <td class="num">KES 60,000,000</td>
+            <td class="num">KES 0</td>
+            <td>Yes</td>
+            <td class="num">KES 0</td>
+            <td class="num">KES 0</td>
+            <td class="num">KES 60,000,000</td>
           </tr>
         </tbody>
       </table>
-      <div class="notice">Full funding is available for every source allocation.</div>
+      <div class="notice">The consolidated plan is within the approved budget on every Procurement Budget Line.</div>
+      <p class="quiet-line">Confirmation records that this plan fits the approved budget. It reserves no funds; reservation happens at requisition.</p>
     </div>
 
     <div class="footer-bar">
       <button type="button" class="btn btn-secondary">Return to planner</button>
-      <button type="button" class="btn btn-primary">Confirm funding</button>
+      <button type="button" class="btn btn-primary">Confirm plan funding</button>
     </div>
   </div>
 </div>

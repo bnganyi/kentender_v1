@@ -1,0 +1,935 @@
+/* Configuration & Governance administration surfaces — AUTH-ADR-001 v1.3 §12
+ * (Organisation structure, User responsibilities).
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared Industry system;
+ * these are the page compositions on top of it, ported from the two pages'
+ * former <style scoped> blocks. They live in a static file because this
+ * bench's esbuild pipeline discards the CSS it extracts from an SFC's
+ * <style scoped> block — no dist/css output, no assets.json entry, nothing
+ * injected at runtime — so a scoped block silently never applies (the same
+ * quiet failure class AGENTS.md §6.6 documents for top-level CSS imports).
+ * NDS and Planning ship their supplementary classes exactly this way.
+ *
+ * Every rule is scoped under .kt-industry and uses page-unique kt-ou-* /
+ * kt-ura-* / dialog class names, so nothing here can restyle a shared class
+ * or another screen. If a rule ever needs to change a .kt-card or .kt-btn,
+ * it belongs in kt_industry_tokens.css instead.
+ */
+
+/* — OrganisationStructure.vue — */
+.kt-industry .kt-ou-root {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+.kt-industry .kt-ou-shell {
+	padding-top: 36px;
+}
+.kt-industry .kt-back-link {
+	font-size: 13px;
+	color: var(--kt-color-neutral-700);
+	align-self: flex-start;
+}
+.kt-industry .kt-ou-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-industry .kt-ou-title {
+	font-size: 30px;
+	margin: 6px 0 8px;
+}
+.kt-industry .kt-ou-lede {
+	margin: 0;
+	max-width: 56ch;
+	font-size: 14px;
+	color: var(--kt-color-neutral-800);
+}
+.kt-industry .kt-pe-field {
+	width: 240px;
+	flex: none;
+	margin: 0;
+}
+.kt-industry .kt-ou-workspace {
+	display: grid;
+	grid-template-columns: 320px minmax(0, 1fr);
+	gap: 24px;
+	align-items: start;
+}
+.kt-industry .kt-ou-column {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.kt-industry .kt-tree-card {
+	padding: 8px;
+	gap: 0;
+}
+.kt-industry .kt-tree-none {
+	margin: 0;
+	padding: 12px 8px;
+	font-size: 13px;
+}
+.kt-industry .kt-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+@media (max-width: 900px) {
+	.kt-industry .kt-ou-workspace {
+			grid-template-columns: minmax(0, 1fr);
+		
+	}
+}
+
+/* — UnitTree.vue — */
+.kt-industry .kt-unit-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kt-industry .kt-unit-name.is-root {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+}
+.kt-industry .kt-unit-flag {
+	font-size: 11px;
+	padding: 1px 8px;
+}
+
+/* — UnitDetail.vue — AUTH-DES-01's "Selected unit" panel: labelled rows on
+   a 130px label column, divider-ruled, then the action row and the affected
+   link. */
+.kt-industry .kt-panel-rows {
+	margin-top: 4px;
+}
+.kt-industry .kt-panel-row {
+	display: grid;
+	grid-template-columns: 130px 1fr;
+	gap: 10px;
+	padding: 9px 0;
+	align-items: center;
+}
+.kt-industry .kt-panel-row + .kt-panel-row {
+	border-top: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-panel-rows .kt-panel-row:last-child {
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-panel-row .kt-panel-name {
+	font-size: 14.5px;
+	font-weight: 600;
+}
+.kt-industry .kt-panel-row .kt-panel-code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 13px;
+}
+.kt-industry .kt-panel-row .kt-panel-value {
+	font-size: 13.5px;
+}
+.kt-industry .kt-unit-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+	flex-wrap: wrap;
+}
+.kt-industry .kt-affected {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 16px;
+	font-size: 13px;
+	color: var(--kt-color-accent);
+	text-decoration: none;
+}
+.kt-industry .kt-affected:hover {
+	color: var(--kt-color-accent-800);
+}
+
+/* — PromptDialog.vue — */
+/* KT-STD-001 §2.2 — dialogs are 520px over the dimmed parent. */
+.kt-industry .kt-dialog.kt-narrow {
+	/* Must out-rank the tokens sheet's 620px .kt-dialog base (it is loaded
+	   twice, after this file). */
+	width: min(520px, 100%);
+}
+.kt-industry .kt-dialog-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.kt-industry .kt-inline-error {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--kt-status-critical);
+}
+
+/* — ConfirmDialog.vue — */
+.kt-industry .kt-confirm-body {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+.kt-industry .kt-inline-error {
+	margin: 0;
+	font-size: 12px;
+	color: var(--kt-status-critical);
+}
+
+/* — UserResponsibilities.vue — */
+.kt-industry .kt-ura-root {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+.kt-industry .kt-ura-shell {
+	padding-top: 36px;
+}
+.kt-industry .kt-ura-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-industry .kt-ura-title {
+	font-size: 30px;
+	margin: 6px 0 8px;
+}
+.kt-industry .kt-ura-lede {
+	margin: 0;
+	max-width: 56ch;
+	font-size: 14px;
+	color: var(--kt-color-neutral-800);
+}
+/* AUTH-DES-03 — a bordered surface panel with a label above every control. */
+.kt-industry .kt-filters {
+	display: grid;
+	grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr) auto;
+	gap: 12px;
+	align-items: end;
+	padding: 16px;
+	background: var(--kt-color-surface);
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-filters .kt-btn-ghost {
+	height: 36px;
+}
+@media (max-width: 900px) {
+	.kt-industry .kt-filters {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+.kt-industry .kt-card.kt-table-card {
+	padding: 0;
+	gap: 0;
+}
+.kt-industry .kt-table-scroll {
+	overflow-x: auto;
+}
+.kt-industry .kt-row-name {
+	font-weight: 600;
+}
+.kt-industry .kt-row-login {
+	font-size: 12px;
+}
+/* AUTH-DES-03/CFG-DES-03 — the count line sits below the table card. */
+.kt-industry .kt-count {
+	margin: 14px 0 0;
+	font-size: 13px;
+	color: var(--kt-color-neutral-800);
+}
+/* Row actions are links in the artboards, not buttons. */
+.kt-industry .kt-table a,
+.kt-industry .kt-action-link {
+	color: var(--kt-color-accent);
+	text-decoration: none;
+	font-size: 13.5px;
+	background: none;
+	border: 0;
+	padding: 0;
+	font-family: inherit;
+	cursor: pointer;
+}
+.kt-industry .kt-table a:hover,
+.kt-industry .kt-action-link:hover {
+	color: var(--kt-color-accent-800);
+	text-decoration: underline;
+}
+/* Shared with the design bundle's .kt-label / .tag vocabulary. */
+.kt-industry .kt-label {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-tag {
+	display: inline-flex;
+	align-items: center;
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	padding: 3px 10px;
+	border-radius: calc(var(--kt-radius-md) * 0.75);
+}
+.kt-industry .kt-tag-neutral {
+	background: var(--kt-color-neutral-200);
+	color: var(--kt-color-neutral-800);
+}
+.kt-industry .kt-tag-accent {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+}
+
+/* — AssignDialog.vue — */
+.kt-industry .kt-dialog.kt-assign {
+	width: min(520px, 100%);
+}
+.kt-industry .kt-assign-body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 62vh;
+	overflow-y: auto;
+}
+.kt-industry .kt-picked {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.kt-industry .kt-clear {
+	height: auto;
+	font-size: 12px;
+}
+.kt-industry .kt-matches {
+	list-style: none;
+	margin: 4px 0 0;
+	padding: 0;
+	max-height: 160px;
+	overflow-y: auto;
+	border: 1px solid var(--kt-color-divider);
+	background: var(--kt-color-surface);
+}
+.kt-industry .kt-matches button {
+	display: flex;
+	width: 100%;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 10px;
+	background: none;
+	border: 0;
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+}
+.kt-industry .kt-matches button:hover {
+	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
+}
+.kt-industry .kt-fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+.kt-industry .kt-fieldset legend {
+	font-size: 12px;
+	margin-bottom: 5px;
+	padding: 0;
+	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+}
+/* The segmented control has no shared class yet; it is the only composition
+   on these dialogs the token sheet does not already provide. */
+.kt-industry .kt-seg {
+	display: flex;
+	width: 100%;
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-seg-opt {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 10px;
+	font-size: 14px;
+	cursor: pointer;
+	margin: 0;
+}
+.kt-industry .kt-seg-opt:first-child {
+	border-right: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-seg-opt.is-selected {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+	font-weight: 600;
+}
+.kt-industry .kt-dates {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+.kt-industry .kt-dates.is-single {
+	grid-template-columns: 1fr;
+}
+/* AUTH-DES-04 — controls drawn as the artboard draws them. */
+.kt-industry .kt-select {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	font-size: 14px;
+	cursor: pointer;
+}
+.kt-industry .kt-select .kt-select-value {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+.kt-industry .kt-select .kt-select-value > span:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kt-industry .kt-select svg {
+	flex: none;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-select-placeholder {
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-select-wrap {
+	position: relative;
+}
+.kt-industry .kt-select-wrap .kt-matches {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: calc(100% + 2px);
+	z-index: 5;
+	box-shadow: 0 6px 18px rgb(22 24 26 / 12%);
+}
+.kt-industry .kt-picked-user {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	height: auto;
+	padding-top: 7px;
+	padding-bottom: 7px;
+	cursor: pointer;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+}
+.kt-industry .kt-picked-user .kt-picked-id {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.kt-industry .kt-picked-user .kt-picked-id > span:first-child {
+	font-size: 14px;
+	font-weight: 600;
+}
+.kt-industry .kt-picked-user .kt-picked-id > span:last-child {
+	font-size: 12px;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-date-field {
+	position: relative;
+	max-width: 280px;
+}
+.kt-industry .kt-date-field input {
+	width: 100%;
+}
+.kt-industry .kt-date-field.is-empty input:not(:focus) {
+	color: transparent;
+}
+.kt-industry .kt-date-field .kt-date-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	padding: 0 10px;
+	font-size: 14px;
+	color: var(--kt-color-neutral-700);
+	pointer-events: none;
+}
+.kt-industry .kt-date-field.is-empty input:focus + .kt-date-placeholder,
+.kt-industry .kt-date-field:not(.is-empty) .kt-date-placeholder {
+	display: none;
+}
+.kt-industry .kt-summary .kt-label {
+	display: block;
+	margin-bottom: 8px;
+}
+/* AUTH-DES-04's "Responsibility summary" box: bordered surface, kt-label
+   heading, 14.5px sentence with the role and scope bolded. */
+.kt-industry .kt-summary {
+	background: var(--kt-color-surface-2);
+	border: 1px solid var(--kt-color-divider);
+	padding: 14px 16px;
+	font-size: 14.5px;
+	line-height: 1.45;
+}
+.kt-industry .kt-summary p {
+	margin: 0;
+}
+.kt-industry .kt-conflict {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	background: var(--kt-status-attention-bg);
+	color: var(--kt-status-attention);
+	padding: 10px 12px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+.kt-industry .kt-conflict svg {
+	flex: none;
+	margin-top: 1px;
+}
+.kt-industry .kt-assign-actions {
+	flex-wrap: wrap;
+}
+.kt-industry .kt-blocked {
+	width: 100%;
+	font-size: 12px;
+	color: var(--kt-color-neutral-600);
+	text-align: right;
+}
+.kt-industry .kt-inline-error, .kt-industry label.is-error {
+	color: var(--kt-status-critical);
+}
+.kt-industry .kt-inline-error {
+	margin: 4px 0 0;
+	font-size: 12px;
+}
+.kt-industry .kt-input.is-error {
+	border-color: var(--kt-status-critical);
+}
+
+/* — RevokeDialog.vue — */
+.kt-industry .kt-revoke-body {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+.kt-industry .kt-textarea {
+	height: auto;
+	padding: 8px 10px;
+	resize: vertical;
+}
+.kt-industry .kt-hint {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--kt-color-neutral-600);
+}
+
+/* — ResponsibilityDetail.vue — AUTH-DES-06: eyebrow + 32px title with the
+   status badge inline, then a 16px stack of cards (Assignment, Audit, the
+   collapsed Access-diagnostics row, Administrative history) and a bottom
+   action bar carrying the destructive command. */
+.kt-industry .kt-back {
+	font-size: 13px;
+	color: var(--kt-color-neutral-700);
+	text-decoration: none;
+}
+.kt-industry .kt-detail-head {
+	margin: 14px 0 24px;
+}
+.kt-industry .kt-detail-title {
+	margin: 0;
+	font-family: var(--kt-font-heading);
+	font-size: 32px;
+	line-height: 1.1;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+}
+.kt-industry .kt-detail-title .kt-status {
+	font-size: 13px;
+}
+.kt-industry .kt-detail-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+.kt-industry .kt-detail-rows {
+	margin-top: 8px;
+}
+.kt-industry .kt-detail-row {
+	display: grid;
+	grid-template-columns: 200px 1fr;
+	gap: 10px;
+	padding: 9px 0;
+}
+.kt-industry .kt-detail-row + .kt-detail-row {
+	border-top: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-detail-rows .kt-detail-row:last-child {
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-detail-row > span:last-child {
+	font-size: 14px;
+}
+.kt-industry .kt-card.kt-diag-card {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 20px;
+	cursor: pointer;
+	background: none;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+}
+.kt-industry .kt-diag-card-title {
+	font-family: var(--kt-font-heading);
+	font-weight: 600;
+	font-size: 15px;
+}
+.kt-industry .kt-diag-card svg {
+	transition: transform 0.15s ease;
+}
+.kt-industry .kt-diag-card[aria-expanded="true"] svg {
+	transform: rotate(90deg);
+}
+.kt-industry .kt-diagnostics {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	font-size: 13px;
+}
+.kt-industry .kt-diag-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+.kt-industry .kt-card.kt-history-card {
+	padding: 0;
+	gap: 0;
+}
+.kt-industry .kt-history-card .kt-card-title {
+	margin: 18px 20px 0;
+}
+.kt-industry .kt-history-card .kt-table {
+	margin-top: 6px;
+}
+/* CFG-DES-01/AUTH-DES-06 — the page-bottom action bar. Sticky inside the
+   scrolling Desk page so it reads as the artboards' pinned bar. */
+.kt-industry .kt-action-bar {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 14px 0;
+	margin-top: 16px;
+	background: var(--kt-color-bg);
+	border-top: 1px solid var(--kt-color-divider);
+	z-index: 2;
+}
+@media (max-width: 700px) {
+	.kt-industry .kt-detail-row {
+		grid-template-columns: 1fr;
+		gap: 2px;
+	}
+}
+
+/* ==========================================================================
+   System setup — CFG-CHG-002 v0.6 §9/§10 + AUTH-ADR-001 v1.6 §13.
+   One page, shared header, four tabs, 1200px content column below the
+   standard Desk header (KT-STD-001 §2.4). Static file because this bench's
+   esbuild pipeline discards <style scoped> blocks; every rule stays under
+   .kt-industry so nothing restyles Frappe Desk (KT-STD-001 §4).
+   ========================================================================== */
+
+.kt-industry .kt-setup-shell {
+	max-width: 1200px;
+	margin: 0 auto;
+	/* KT-STD §2.4/artboards: a bare 1200px column — no invented side padding.
+	   Below the width where Desk chrome pinches the column, keep a 16px edge. */
+	padding: 32px 0;
+}
+@media (max-width: 1487px) {
+	.kt-industry .kt-setup-shell {
+		padding: 32px 16px;
+	}
+}
+
+.kt-industry .kt-setup-header { margin-bottom: 24px; }
+.kt-industry .kt-setup-title {
+	margin: 6px 0 8px;
+	font-family: var(--kt-font-heading);
+	font-size: 32px;
+	line-height: 1.1;
+}
+.kt-industry .kt-setup-lede {
+	margin: 0;
+	font-size: 14px;
+	color: var(--kt-color-neutral-800);
+	max-width: 70ch;
+}
+
+.kt-industry .kt-setup-tabs {
+	display: flex;
+	gap: 2px;
+	border-bottom: 2px solid var(--kt-color-divider);
+	margin-bottom: 24px;
+}
+.kt-industry .kt-setup-tab {
+	appearance: none;
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -2px;
+	padding: 10px 18px;
+	font-size: 14px;
+	color: var(--kt-color-neutral-800);
+	cursor: pointer;
+}
+.kt-industry .kt-setup-tab.is-active {
+	font-family: var(--kt-font-heading);
+	font-weight: 600;
+	color: var(--kt-color-accent-800);
+	background: var(--kt-color-accent-100);
+	border-bottom-color: var(--kt-color-accent);
+}
+.kt-industry .kt-setup-tab.is-disabled {
+	color: var(--kt-color-neutral-500);
+	cursor: not-allowed;
+}
+
+.kt-industry .kt-setup-section { display: flex; flex-direction: column; gap: 16px; }
+
+.kt-industry .kt-section-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 24px;
+}
+.kt-industry .kt-section-title {
+	margin: 0 0 6px;
+	font-family: var(--kt-font-heading);
+	font-size: 24px;
+	line-height: 1.1;
+}
+
+.kt-industry .kt-setup-notice {
+	border: 1px solid var(--kt-color-accent-200);
+	background: var(--kt-color-accent-100);
+	padding: 14px 18px;
+}
+.kt-industry .kt-setup-notice h2,
+.kt-industry .kt-setup-notice h3 {
+	margin: 0 0 5px;
+	font-family: var(--kt-font-heading);
+	font-size: 16px;
+	color: var(--kt-color-accent-900);
+}
+.kt-industry .kt-setup-notice p {
+	margin: 0;
+	font-size: 13.5px;
+	color: var(--kt-color-neutral-900);
+	max-width: 78ch;
+}
+
+.kt-industry .kt-card-title {
+	font-family: var(--kt-font-heading);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--kt-color-neutral-800);
+}
+.kt-industry .kt-card-lede { margin: 6px 0 0; font-size: 13.5px; max-width: 70ch; }
+
+.kt-industry .kt-setup-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px 24px;
+	max-width: 860px;
+	margin-top: 14px;
+}
+@media (max-width: 900px) {
+	.kt-industry .kt-setup-grid { grid-template-columns: 1fr; }
+}
+
+.kt-industry .kt-ro {
+	background: var(--kt-color-surface-2);
+	border: 1px solid var(--kt-color-divider);
+	color: var(--kt-color-neutral-800);
+	font-size: 14px;
+	padding: 8px 10px;
+}
+
+.kt-industry .kt-record-rows { margin-top: 10px; }
+.kt-industry .kt-record-row {
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 10px;
+	padding: 9px 0;
+	border-top: 1px solid var(--kt-color-divider);
+	font-size: 13.5px;
+}
+.kt-industry .kt-record-row:last-child { border-bottom: 1px solid var(--kt-color-divider); }
+
+/* CFG-DES-01 — "Save changes" lives in the pinned bottom bar. */
+.kt-industry .kt-setup-footer {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	justify-content: flex-end;
+	padding: 14px 0;
+	margin-top: 16px;
+	background: var(--kt-color-surface);
+	border-top: 1px solid var(--kt-color-divider);
+	z-index: 2;
+}
+.kt-industry .kt-setup-success { margin: 0; font-size: 13.5px; color: var(--kt-color-accent-800); }
+
+.kt-industry .kt-org-columns {
+	display: grid;
+	/* AUTH-DES-01 — 46% tree column. */
+	grid-template-columns: 46% minmax(0, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+@media (max-width: 900px) {
+	.kt-industry .kt-org-columns { grid-template-columns: 1fr; }
+}
+/* AUTH-DES-01 — the tree card: a card title, then 42px rows carrying the
+   unit name, a monospace code chip and a status badge. The rows are the
+   Frappe tree control's own; only their presentation is restyled here,
+   scoped under this page root. */
+.kt-industry .kt-card.kt-org-tree-card {
+	padding: 0;
+	gap: 0;
+}
+.kt-industry .kt-org-tree-card .kt-card-title {
+	margin: 16px 20px 4px;
+}
+.kt-industry .kt-org-tree-host {
+	padding-bottom: 12px;
+}
+.kt-industry .kt-org-tree-host .tree {
+	padding: 0 12px;
+}
+.kt-industry .kt-org-tree-host .tree li {
+	margin: 0;
+}
+.kt-industry .kt-org-tree-host .tree-link {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 42px;
+	padding: 0 8px;
+	white-space: nowrap;
+}
+/* AUTH-DES-01 furniture: a 12px chevron column (blank for leaves) and no
+   extra label margin — Frappe's 24px icons and margins are what forced the
+   artboard's names to truncate. */
+.kt-industry .kt-org-tree-host .tree-link .node-parent,
+.kt-industry .kt-org-tree-host .kt-tree-leaf-spacer {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 12px;
+	flex: none;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-org-tree-host .tree-link.selected .node-parent {
+	color: var(--kt-color-accent-800);
+}
+.kt-industry .kt-org-tree-host .tree-link .tree-label {
+	margin-left: 0;
+	font-size: 14px;
+	color: var(--kt-color-text);
+	text-decoration: none;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 1;
+}
+/* AUTH-DES-01 connector guides: a vertical hairline under the parent's
+   chevron with a 10px tick into each child row (half-height on the last). */
+.kt-industry .kt-org-tree-host .tree-children {
+	/* 14px puts the guide under the parent chevron's centre; 24px more gives
+	   the artboard's 38px indent step. */
+	padding-left: 24px;
+	margin: 0 0 0 14px;
+}
+.kt-industry .kt-org-tree-host .tree-children > .tree-node {
+	position: relative;
+}
+.kt-industry .kt-org-tree-host .tree-children > .tree-node::before {
+	content: "";
+	position: absolute;
+	left: -14px;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--kt-color-divider);
+}
+.kt-industry .kt-org-tree-host .tree-children > .tree-node:last-child::before {
+	bottom: auto;
+	height: 21px;
+}
+.kt-industry .kt-org-tree-host .tree-children > .tree-node::after {
+	content: "";
+	position: absolute;
+	left: -14px;
+	top: 21px;
+	width: 10px;
+	height: 1px;
+	background: var(--kt-color-divider);
+}
+.kt-industry .kt-org-tree-host .tree-link.selected {
+	box-shadow: inset 0 0 0 1px var(--kt-color-accent);
+	background: var(--kt-color-accent-100);
+}
+.kt-industry .kt-org-tree-host .tree-link.selected .tree-label {
+	font-weight: 600;
+	color: var(--kt-color-accent-900);
+}
+.kt-industry .kt-tree-meta {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+}
+.kt-industry .kt-tree-code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11px;
+	background: var(--kt-color-surface-2);
+	color: var(--kt-color-neutral-800);
+	padding: 2px 6px;
+	border-radius: var(--kt-radius-sm);
+}
+.kt-industry .kt-tree-badge { margin-left: 6px; }
+
+.kt-industry .kt-uom-link { margin-top: 10px; }
+.kt-industry .kt-uom-link a { font-size: 14px; font-weight: 600; }
+.kt-industry .kt-uom-link p { margin: 4px 0 0; font-size: 13px; }
+
+.kt-industry .kt-conflict-heading { display: block; margin-bottom: 3px; }
+
+/* Neutral state badge — the CFG-DES-03 "Closed" cell. */
+.kt-industry .kt-status.is-neutral {
+	background: var(--kt-color-surface-2);
+	color: var(--kt-color-neutral-800);
+	border-color: var(--kt-color-neutral-400);
+}

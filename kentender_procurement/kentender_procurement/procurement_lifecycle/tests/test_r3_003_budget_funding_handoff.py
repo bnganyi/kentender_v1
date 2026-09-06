@@ -108,7 +108,7 @@ class TestR3003BudgetFundingHandoff(IntegrationTestCase):
         self.assertEqual(card["handoff_title"], "Budget Funding Confirmation")
         self.assertEqual(card["source_module"], "Budget")
         self.assertEqual(card["target_module"], "Demands")
-        self.assertEqual(card["source_object_type"], "Budget Line")
+        self.assertEqual(card["source_object_type"], "Procurement Budget Line")
         self.assertEqual(card["source_object_code"], _BUDGET_LINE_CODE)
         self.assertEqual(card["status"], "Consumed")
         self.assertEqual(card["journey_code"], JOURNEY_CODE)
@@ -161,7 +161,7 @@ class TestR3003BudgetFundingHandoff(IntegrationTestCase):
         self.assertTrue(links, "evidence_links must be non-empty")
 
         bl_link = next(
-            (lk for lk in links if lk.get("object_type") == "Budget Line"), None
+            (lk for lk in links if lk.get("object_type") == "Procurement Budget Line"), None
         )
         self.assertIsNotNone(bl_link, "Must have a Budget Line evidence link")
         self.assertEqual(bl_link["object_code"], _BUDGET_LINE_CODE)

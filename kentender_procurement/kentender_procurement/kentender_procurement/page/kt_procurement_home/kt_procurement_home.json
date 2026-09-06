@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-08-26 21:18:05.389459",
+ "modified": "2026-09-04 12:48:47.387320",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "kt-procurement-home",
@@ -21,22 +21,10 @@
    "role": "Auditor"
   },
   {
-   "role": "Budget Activation Authority"
-  },
-  {
    "role": "Budget Approver"
   },
   {
-   "role": "Budget Authority"
-  },
-  {
    "role": "Budget Officer"
-  },
-  {
-   "role": "Budget Reviewer"
-  },
-  {
-   "role": "Budget Viewer"
   },
   {
    "role": "Business Approver"
@@ -142,9 +130,6 @@
   },
   {
    "role": "Strategy Author"
-  },
-  {
-   "role": "Strategy Manager"
   },
   {
    "role": "Strategy Viewer"

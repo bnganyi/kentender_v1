@@ -24,10 +24,14 @@ from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
+	assignment_id,
+	business_role_for_capability,
 	has_plan_version_capability,
 	require_plan_version_capability,
 )
+from kentender_strategy.services.strategy_domain_guards import assert_no_primary_overlap
 from kentender_strategy.services.strategy_readiness import assert_version_ready_for_submit
+from kentender_strategy.services.strategy_reference import resolve_version_name
 
 # (status, action) -> (next_status, capability). Matches the 4-row §6.1
 # table exactly: Activate/supersede-previous-Active happens inside the
@@ -66,7 +70,7 @@ def _check_expected_version(doc, expected_version: str | None) -> None:
 
 def available_actions(version, user: str | None = None) -> list[str]:
 	if isinstance(version, str):
-		version = frappe.get_doc("Strategic Plan Version", version)
+		version = frappe.get_doc("Strategic Plan Version", resolve_version_name(version) or version)
 	user = user or frappe.session.user
 	return [
 		action
@@ -86,49 +90,10 @@ def _version_payload(doc) -> dict:
 	}
 
 
-def _overlaps(start_a, end_a, start_b, end_b) -> bool:
-	if not start_a or not end_a or not start_b or not end_b:
-		return False
-	return (
-		frappe.utils.getdate(start_a) <= frappe.utils.getdate(end_b)
-		and frappe.utils.getdate(start_b) <= frappe.utils.getdate(end_a)
-	)
-
-
 def _assert_no_primary_overlap(doc) -> None:
-	"""STR-BR-004: two Primary plans for the same PE/OU shall not both be
-	Active for overlapping dates."""
-	plan = frappe.get_doc("Strategic Plan", doc.plan_id)
-	if plan.plan_role != "Primary":
-		return
-	other_plans = frappe.get_all(
-		"Strategic Plan",
-		filters={
-			"procuring_entity_id": plan.procuring_entity_id,
-			"plan_role": "Primary",
-			"name": ["!=", plan.name],
-		},
-		fields=["name", "owner_org_unit_id"],
-	)
-	for other_plan in other_plans:
-		# PE-wide (no OU) and a specific-OU plan are treated as non-overlapping
-		# scopes unless both are PE-wide or both name the same OU.
-		if (plan.owner_org_unit_id or other_plan.owner_org_unit_id) and (
-			plan.owner_org_unit_id != other_plan.owner_org_unit_id
-		):
-			continue
-		active_versions = frappe.get_all(
-			"Strategic Plan Version",
-			filters={"plan_id": other_plan.name, "status": "Active"},
-			fields=["name", "effective_from", "effective_to"],
-		)
-		for v in active_versions:
-			if _overlaps(doc.effective_from, doc.effective_to, v.effective_from, v.effective_to):
-				frappe.throw(
-					_("Activation would create overlapping Active Primary authority"),
-					frappe.ValidationError,
-					title="STRATEGY_OVERLAP",
-				)
+	"""STR-BR-004 — delegated to the domain guard so the same locking check
+	runs here (command layer) and in the doctype's own validate (bypass)."""
+	assert_no_primary_overlap(doc)
 
 
 def _activate(doc) -> None:
@@ -171,7 +136,7 @@ def transition_plan_version(
 	expected_version: str | None = None,
 	correlation_id: str | None = None,
 ) -> dict:
-	doc = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	doc = frappe.get_doc("Strategic Plan Version", resolve_version_name(plan_version_id) or plan_version_id)
 	_check_expected_version(doc, expected_version)
 
 	key = (doc.status, action)
@@ -183,7 +148,7 @@ def transition_plan_version(
 		)
 	next_status, capability = TRANSITIONS[key]
 
-	require_plan_version_capability(
+	exercised = require_plan_version_capability(
 		frappe.session.user, capability, doc, correlation_id=correlation_id or ""
 	)
 
@@ -222,5 +187,7 @@ def transition_plan_version(
 		plan_version=doc.name,
 		correlation_id=correlation_id,
 		capability=capability,
+		business_role=business_role_for_capability(capability),
+		assignment=assignment_id(exercised),
 	)
 	return _version_payload(doc)

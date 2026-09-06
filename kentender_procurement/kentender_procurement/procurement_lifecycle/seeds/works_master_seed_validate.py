@@ -104,7 +104,7 @@ def _demand_name() -> str | None:
 
 
 def _budget_line_name() -> str | None:
-	return frappe.db.get_value("Budget Line", {"budget_line_code": _CODES["budget_line"]}, "name")
+	return frappe.db.get_value("Procurement Budget Line", {"budget_line_code": _CODES["budget_line"]}, "name")
 
 
 def _package_name() -> str | None:
@@ -199,7 +199,7 @@ def run_validate(*, checkpoint: str = "TENDER_PUBLISHED") -> dict[str, Any]:
 	bl_name = _budget_line_name()
 	if bl_name:
 		bl = frappe.db.get_value(
-			"Budget Line",
+			"Procurement Budget Line",
 			bl_name,
 			["name", "program", "strategic_plan"],
 			as_dict=True,

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onActivated, onMounted, watch } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes } from "../../budget_shared/data/formatKes.js";
@@ -17,21 +17,18 @@ const railTrail = computed(() => [
 	{ label: line.value?.code || lineIdParam.value },
 ]);
 const railEl = ref(null);
-// CTX-CHG-001 - the switcher stays visible on record screens; the record
-// itself keeps its own context (rule 6), so a switch goes to the workspace.
-usePageRail(railEl, railTrail, {
-	showPeSwitcher: true,
-	onPeChange: () => frappe.set_route("budget-funding"),
-});
+// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
+// PE switcher on this rail any more.
+usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const loading = ref(true);
 const notFound = ref(false);
 const forbidden = ref(false);
 const serverError = ref(false);
 
-async function load() {
+async function load(opts) {
 	if (!lineIdParam.value) return;
-	loading.value = true;
+	if (!(opts && opts.quiet === true)) loading.value = true;
 	notFound.value = false;
 	forbidden.value = false;
 	serverError.value = false;
@@ -49,6 +46,13 @@ async function load() {
 onMounted(load);
 watch(lineIdParam, (v, prev) => {
 	if (v && v !== prev) load();
+});
+// KeepAlive brings this instance back with the record still on screen:
+// revalidate in place rather than re-showing the skeleton.
+let activations = 0;
+onActivated(() => {
+	if (activations++ === 0 || !line.value) return;
+	load({ quiet: true });
 });
 </script>
 
@@ -96,12 +100,8 @@ watch(lineIdParam, (v, prev) => {
 						<div style="font-size: 15px; font-weight: 500">{{ line.budget.code }} · {{ __("Version {0}", [line.version.version_number]) }}</div>
 					</div>
 					<div>
-						<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Procuring Entity") }}</div>
-						<div style="font-size: 15px; font-weight: 500">{{ line.budget.procuring_entity.name }}</div>
-					</div>
-					<div>
 						<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Financial Year") }}</div>
-						<div style="font-size: 15px; font-weight: 500">{{ line.budget.financial_year.label }}</div>
+						<div style="font-size: 15px; font-weight: 500">{{ line.budget.fiscal_year.label }}</div>
 					</div>
 				</div>
 

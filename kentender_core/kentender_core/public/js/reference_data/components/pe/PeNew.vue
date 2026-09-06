@@ -2,6 +2,7 @@
 import { reactive, computed, ref, watch, onMounted } from "vue";
 import { referenceDataApi as api } from "../../data/referenceDataApi.js";
 import { classifyApiError } from "../../data/apiError.js";
+import { quickCreate } from "../../composables/quickCreate.js";
 import KtErrorBanner from "../KtErrorBanner.vue";
 
 const props = defineProps({
@@ -11,7 +12,7 @@ const props = defineProps({
 	// stay editable in between rather than being a dead end.
 	editCode: { type: String, default: null },
 });
-const emit = defineEmits(["created", "cancel"]);
+const emit = defineEmits(["created", "cancel", "pe-type-created"]);
 const editMode = computed(() => !!props.editCode);
 
 const form = reactive({
@@ -59,6 +60,13 @@ function showError(err) {
 }
 
 const canSave = computed(() => form.entityCode.trim() && form.peType && form.legalName.trim());
+
+async function createPeType() {
+	const doc = await quickCreate("PE Type");
+	if (!doc) return;
+	form.peType = doc.type_code;
+	emit("pe-type-created");
+}
 
 function payload() {
 	return {
@@ -139,10 +147,20 @@ async function activateProcuringEntity() {
 				</div>
 				<div class="kt-field">
 					<label>{{ __("PE type") }}</label>
-					<select class="kt-input" v-model="form.peType">
-						<option value="" disabled>{{ __("Select PE type") }}</option>
-						<option v-for="t in peTypes" :key="t.type_code" :value="t.type_code">{{ t.label }}</option>
-					</select>
+					<div style="display:flex;gap:8px;align-items:center">
+						<select class="kt-input" v-model="form.peType" style="flex:1">
+							<option value="" disabled>{{ __("Select PE type") }}</option>
+							<option v-for="t in peTypes" :key="t.type_code" :value="t.type_code">{{ t.label }}</option>
+						</select>
+						<button
+							type="button"
+							class="kt-btn kt-btn-ghost"
+							style="white-space:nowrap"
+							@click="createPeType"
+						>
+							{{ __("+ New") }}
+						</button>
+					</div>
 				</div>
 				<div class="kt-field">
 					<label>{{ __("Legal name") }}</label>

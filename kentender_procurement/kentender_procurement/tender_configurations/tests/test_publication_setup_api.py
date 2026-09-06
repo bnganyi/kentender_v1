@@ -17,7 +17,7 @@ from kentender_procurement.tender_configurations.constants import (
 	STATUS_PUBLISHED,
 	STATUS_RETURNED_FOR_CORRECTION,
 )
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.seed.ui00_seed import seed_ui00_dashboard
 from kentender_procurement.tender_configurations.services.document_preview import (
 	confirm_document_preview,

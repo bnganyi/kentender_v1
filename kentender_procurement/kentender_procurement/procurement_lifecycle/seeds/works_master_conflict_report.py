@@ -103,7 +103,7 @@ _BUSINESS_CODE_CHECKS: Final[list[dict[str, Any]]] = [
     },
     {
         "check_id": "CC-005",
-        "doctype": "Budget Line",
+        "doctype": "Procurement Budget Line",
         "name": "BUD-MOH-INFRA-2026-001",
         "description": "Master Budget Line",
         "has_is_master_seed": False,
@@ -127,7 +127,7 @@ _LEGACY_SIBLING_CHECKS: Final[list[dict[str, Any]]] = [
     {
         "sibling_id": "SIB-001",
         "description": "Legacy budget line BL-MOH-2026-001 (G0-003: BL-* vs BUD-MOH-* namespace)",
-        "doctype": "Budget Line",
+        "doctype": "Procurement Budget Line",
         "filter_field": "budget_line_code",
         "filter_value": "BL-MOH-2026-001",
         "g0_reference": "G0-003 §4.1 BUD-MOH-INFRA-2026-001 row: 'BL-MOH-*' parallel namespace",

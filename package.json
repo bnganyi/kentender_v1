@@ -2,7 +2,7 @@
   "name": "kentender-v1-ui",
   "private": true,
   "scripts": {
-    "test:std-engine": "echo 'STD Module POC archived \u2014 see archive/std-module-poc-retired-2026-07/' && exit 1",
+    "test:std-engine": "echo 'STD Module POC archived — see archive/std-module-poc-retired-2026-07/' && exit 1",
     "test:std-engine-pack": "echo 'STD Module POC archived' && exit 1",
     "test:std-engine-unit": "echo 'STD Module POC archived' && exit 1",
     "test:ui": "playwright test",
@@ -13,7 +13,7 @@
     "test:ui:smoke:procurement-officer-doc9": "playwright test tests/ui/smoke/procurement/officer-tender-poc-off-st-desk.spec.ts",
     "test:ui:smoke:admin-console": "playwright test tests/ui/smoke/procurement/std-admin-console-step9-smoke.spec.ts",
     "test:ui:smoke:works-hardening-wh012": "playwright test tests/ui/smoke/procurement/works-hardening-desk-wh012.spec.ts",
-    "test:ui:smoke:std-config-gate": "echo 'STD config gate archived \u2014 use test:ui:smoke:std-module-retired' && exit 1",
+    "test:ui:smoke:std-config-gate": "echo 'STD config gate archived — use test:ui:smoke:std-module-retired' && exit 1",
     "test:ui:smoke:std-lib-0600": "echo 'STD library smoke archived' && exit 1",
     "test:ui:smoke:std-lib-0610": "echo 'STD library a11y archived' && exit 1",
     "test:ui:smoke:std-1600": "echo 'STD smoke archived' && exit 1",
@@ -23,8 +23,11 @@
     "test:ui:smoke:pub-1630": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-pub-1630.spec.tsx",
     "test:ui:smoke:action-1640": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-action-1640.spec.tsx",
     "test:ui:smoke:audit-1650": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-audit-1650.spec.tsx",
+    "test:ui:smoke:planning": "playwright test tests/ui/smoke/planning tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts --workers=1",
     "test:ui:smoke:nds": "playwright test tests/ui/smoke/departmental_needs --workers=1",
-    "test:unit:nds": "vitest run --project departmental-needs"
+    "test:ui:smoke:strategy": "playwright test tests/ui/smoke/strategy --workers=1",
+    "test:unit:nds": "vitest run --project departmental-needs",
+    "test:unit:setup": "vitest run --project system-setup"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
@@ -32,12 +35,15 @@
     "@testing-library/react": "^14.3.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.5.0",
     "axe-core": "^4.11.4",
     "dotenv": "^16.4.5",
     "jsdom": "^25.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.7.2",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "vue": "^3.5.42"
   }
 }

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"pcg_h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Platform Configuration & Governance</b></span>\",\"col\":12}},{\"id\":\"pcg_p\",\"type\":\"paragraph\",\"data\":{\"text\":\"Maintain the Procuring Entities, Financial Years and PE/FY Contexts that every KenTender module reads at runtime. Restricted to configuration and oversight roles.\",\"col\":12}},{\"id\":\"pcg_sc_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reference Data\",\"col\":4}}]",
+ "content": "[{\"id\": \"pcg_h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Platform Configuration & Governance</b></span>\", \"col\": 12}}, {\"id\": \"pcg_p\", \"type\": \"paragraph\", \"data\": {\"text\": \"Configure this KenTender site, its financial years, organisational structure and user responsibilities from one System setup page.\", \"col\": 12}}, {\"id\": \"pcg_sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"System setup\", \"col\": 4}}, {\"id\": \"pcg_sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Reference Data\", \"col\": 4}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -15,7 +15,27 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Reference Data",
+   "label": "System setup",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Procuring entity, fiscal years, organisation and responsibilities",
+   "link_count": 0,
+   "link_to": "system-setup",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Legacy reference data (pre-cutover)",
    "link_count": 0,
    "onboard": 0,
    "type": "Card Break"
@@ -44,13 +64,23 @@
   },
   {
    "role": "System Manager"
-  },
-  {
-   "role": "Reference Data Manager"
   }
  ],
  "sequence_id": 100.0,
  "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "format": "",
+   "icon": "settings",
+   "kanban_board": "",
+   "label": "System setup",
+   "link_to": "system-setup",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "Page",
+   "url": ""
+  },
   {
    "color": "Blue",
    "doc_view": "",

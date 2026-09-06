@@ -8,14 +8,19 @@
   "unit_code",
   "org_unit_reference",
   "unit_name",
-  "unit_type",
-  "procuring_entity",
-  "parent_org_unit",
+  "parent_organisation_unit",
   "column_break_ou",
   "status",
+  "hrms_department",
+  "fixture_namespace",
+  "section_break_ou_deprecated",
+  "procuring_entity",
+  "unit_type",
   "effective_from",
   "effective_to",
-  "fixture_namespace"
+  "lft",
+  "rgt",
+  "old_parent"
  ],
  "fields": [
   {
@@ -30,6 +35,7 @@
   {
    "fieldname": "org_unit_reference",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Organisation Unit Reference",
    "unique": 1,
    "search_index": 1
@@ -42,24 +48,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "unit_type",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Unit Type",
-   "options": "Organisation Unit Type",
-   "reqd": 1
-  },
-  {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "parent_org_unit",
+   "fieldname": "parent_organisation_unit",
    "fieldtype": "Link",
    "label": "Parent Organisation Unit",
    "options": "Organisation Unit"
@@ -77,25 +66,95 @@
    "reqd": 1
   },
   {
-   "fieldname": "effective_from",
-   "fieldtype": "Date",
-   "label": "Effective From"
-  },
-  {
-   "fieldname": "effective_to",
-   "fieldtype": "Date",
-   "label": "Effective To"
+   "description": "Optional display-only link for HR cross-reference. Never read in an authorization path (AUTH-ADR-001 v1.6 §4.2).",
+   "fieldname": "hrms_department",
+   "fieldtype": "Link",
+   "label": "HRMS Department",
+   "options": "Department"
   },
   {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Fixture Namespace",
    "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_ou_deprecated",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Deprecated"
+  },
+  {
+   "description": "Deprecated by AUTH-ADR-001 v1.6 §1.1: one site is one Procuring Entity, so every unit belongs to the site PE by construction. The column survives only for pre-cutover module readers and is dropped in the removal phase.",
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Procuring Entity (deprecated)",
+   "options": "Procuring Entity",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Deprecated: not part of the v1.6 model and not required for unit creation. Dropped in the removal phase.",
+   "fieldname": "unit_type",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Unit Type (deprecated)",
+   "options": "Organisation Unit Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Effective From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Effective To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "lft",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "rgt",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "no_copy": 1,
+   "options": "Organisation Unit",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
+ "is_tree": 1,
  "module": "Kentender Core",
  "name": "Organisation Unit",
  "naming_rule": "By fieldname",
+ "nsm_parent_field": "parent_organisation_unit",
  "owner": "Administrator",
  "permissions": [
   {
@@ -117,7 +176,7 @@
    "role": "Desk User"
   }
  ],
- "search_fields": "unit_name,unit_code,procuring_entity",
+ "search_fields": "unit_name,unit_code",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

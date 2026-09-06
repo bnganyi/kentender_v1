@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
 	test: {
@@ -15,6 +16,37 @@ export default defineConfig({
 					name: "std-engine-jsdom",
 					environment: "jsdom",
 					include: ["frontend/src/**/*.spec.tsx"],
+				},
+			},
+			{
+				// PLN-CHG-001 v1.2 §15.1(5) (decision D9) — real SFC component
+				// tests for the Procurement Planning screens: exact fields,
+				// absent fields, task detail, errors, dialog copy and action
+				// visibility, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "procurement-planning",
+					environment: "jsdom",
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/procurement_planning/**/*.spec.js",
+					],
+				},
+			},
+			{
+				// AUTH-ADR-001 v1.6 §18.2 items 22–24 — SFC component tests for the
+				// System setup tabs and dialogs: field variants per registry scope,
+				// server-decided action visibility, and state rendering, alongside
+				// (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "system-setup",
+					environment: "jsdom",
+					setupFiles: [
+						"kentender_core/kentender_core/public/js/system_setup/vitest.setup.js",
+					],
+					include: [
+						"kentender_core/kentender_core/public/js/system_setup/**/*.spec.js",
+					],
 				},
 			},
 			{

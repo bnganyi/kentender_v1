@@ -38,12 +38,16 @@ def _obj(value):
 
 @frappe.whitelist()
 def resolve_strategy_context(
-	procuring_entity: str,
-	organisation_unit: str | None = None,
-	effective_date: str | None = None,
+	as_of_date: str | None = None,
+	fiscal_year: str | None = None,
+	include_supporting: bool | str | int = False,
 ):
+	"""STR-CHG-001 v1.7 §7/§8 — exactly one of `as_of_date` or `fiscal_year`;
+	no Procuring Entity or organisation-unit input exists."""
 	return consumer.resolve_strategy_context(
-		procuring_entity, organisation_unit=organisation_unit or None, effective_date=effective_date or None
+		as_of_date=as_of_date or None,
+		fiscal_year=fiscal_year or None,
+		include_supporting=str(include_supporting).lower() in ("1", "true", "yes"),
 	)
 
 
@@ -70,13 +74,11 @@ def get_strategy_lineage(node_id: str):
 
 
 @frappe.whitelist()
-def list_active_targets(procuring_entity: str | None = None, plan_code: str | None = None):
+def list_active_targets(plan_code: str | None = None):
 	"""Relocated from the retired `strategy_api.py` (STR-CHG-001 v1.6 cleanup)
 	— the Budget Line "primary target" picker's live dropdown source
 	(`kentender_budget`'s `budget_live_bind.js::loadTargetOptions`)."""
-	return consumer.active_target_options(
-		procuring_entity=procuring_entity or None, plan_code=plan_code or None
-	)
+	return consumer.active_target_options(plan_code=plan_code or None)
 
 
 @frappe.whitelist()

@@ -65,13 +65,11 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
-	# The legacy std-* "std_prod" route family's own CSS is now lazy-loaded by
-	# each of its page_js controllers alongside std_prod_engine.js (see below).
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
 	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
 	# had its own ensureCss() fallback link-injection for exactly this case.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
-	f"/assets/kentender_procurement/css/planning_workspace.css?v={_desk_asset_v('public/css/planning_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -81,10 +79,7 @@ app_include_js = [
 	# (planning_workspace_page.js, planning_register_page.js,
 	# planning_builder_page.js, planning_item_editor_page.js,
 	# planning_review_page.js, planning_approved_page.js).
-	f"/assets/kentender_procurement/js/planning_workspace_redirect.js?v={_desk_asset_v('public/js/planning_workspace_redirect.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
-	# std_prod_engine.js (the legacy std-* route family's shared engine, ~4900
-	# lines) is now lazy-loaded by each of its 7 page_js controllers instead.
 	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
 	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
@@ -92,9 +87,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
-	# support_plan_view.js is already the page_js controller for route
-	# "support-plan-view" (Frappe lazy-loads it on navigation) — this was a
-	# pure duplicate global load with zero benefit.
 ]
 
 # include js, css files in header of web template
@@ -204,7 +196,6 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
-	"support-plan-view": "public/js/support_plan_view.js",
 	# NDS-CHG-001 v1.1 §10 — one Page for all eight NDS-UI routes; the root
 	# Vue component branches on route segments. The four legacy sub-pages
 	# (-new, -edit, -review, -detail) are removed by patch
@@ -234,19 +225,17 @@ page_js = {
 	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
 	"coming-soon": "public/js/coming_soon_page.js",
 	"publications": "public/js/publications_page.js",
-	"planning-workspace": "public/js/planning_workspace_page.js",
-	"procurement-plan-register": "public/js/planning_register_page.js",
-	"procurement-plan-builder": "public/js/planning_builder_page.js",
-	"procurement-plan-item-editor": "public/js/planning_item_editor_page.js",
-	"procurement-plan-review": "public/js/planning_review_page.js",
-	"procurement-plan-approved": "public/js/planning_approved_page.js",
+	"procurement-planning": "public/js/procurement_planning_page.js",
+	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
+	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
+	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
 	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
-	# STD-CHG-001 v1.3 Phase 11 — new Vue-in-Desk STD Configuration surfaces
-	# (STD-UI-*/PCFG-*/STD-WF-*). Distinct route names from the "std-*" legacy
-	# std_engine pages below, which remain live pending Phase 12 retirement.
+	# STD-CHG-001 v1.3 Phase 11 — Vue-in-Desk STD Configuration surfaces
+	# (STD-UI-*/PCFG-*/STD-WF-*). The legacy "std-*" STD engine route family
+	# that used to sit below these was retired outright on 2026-09-05.
 	"std-cfg-documents": "public/js/std_cfg_documents_page.js",
 	# "std-cfg-package" (unsuffixed) collides with the auto-generated Desk
 	# route for the "STD Cfg Package" DocType — confirmed live: it opened the
@@ -257,29 +246,6 @@ page_js = {
 	"std-cfg-readiness": "public/js/std_cfg_readiness_page.js",
 	"std-cfg-review": "public/js/std_cfg_review_page.js",
 	"std-cfg-comparison": "public/js/std_cfg_comparison_page.js",
-	"std-library": "public/js/std_prod_std_library_page.js",
-	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
-	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",
-	"std-source-doc": "public/js/std_prod_vertical_slice_pages.js",
-	"std-section-clauses": "public/js/std_prod_vertical_slice_pages.js",
-	"std-clause-detail": "public/js/std_prod_vertical_slice_pages.js",
-	"std-validation-report": "public/js/std_prod_vertical_slice_pages.js",
-	"std-audit-log": "public/js/std_prod_vertical_slice_pages.js",
-	"std-parameter-dictionary": "public/js/std_prod_schema_pages.js",
-	"std-parameter-detail": "public/js/std_prod_schema_pages.js",
-	"std-rule-dictionary": "public/js/std_prod_schema_pages.js",
-	"std-rule-detail": "public/js/std_prod_schema_pages.js",
-	"std-form-schema-manager": "public/js/std_prod_schema_pages.js",
-	"std-form-detail-field-builder": "public/js/std_prod_schema_pages.js",
-	"std-requirement-schema-manager": "public/js/std_prod_schema_pages.js",
-	"std-price-schedule-schema": "public/js/std_prod_schema_pages.js",
-	"std-evaluation-schema": "public/js/std_prod_schema_pages.js",
-	"std-render-blocks": "public/js/std_prod_schema_pages.js",
-	"std-review-and-approval": "public/js/std_prod_governance_pages.js",
-	"std-usage-and-tender-bindings": "public/js/std_prod_governance_pages.js",
-	"std-import-package-review": "public/js/std_prod_governance_pages.js",
-	"std-version-diff-and-supersession": "public/js/std_prod_governance_pages.js",
-	"std-module-retired": "public/js/std_module_retired_page.js",
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -358,10 +324,52 @@ page_js = {
 # -----------
 # Permissions evaluated in scripted ways
 
+# AUTH-ADR-001 v1.6 §5.3 — the declarative scope map: each app declares which
+# field carries the Organisation Unit on which of its DocTypes, registered
+# alongside both permission hooks below. `Departmental Need` and
+# `Departmental Need Review Task` carry a real `organisation_unit` field and
+# are the two DocTypes with a direct-route Desk surface of their own
+# (NDS-CHG-001 v1.6 §10) — `Departmental Need Version` / `Decision` /
+# `Need Withdrawal Request` have no OU field of their own and no direct
+# route; access to them is governed by the service layer's own checks
+# against their parent Need (`require_view`/`require_author_command`/
+# `require_review_command`), matching Budget's own `kentender_scope_map`
+# precedent (`kentender_budget/hooks.py`).
+kentender_scope_map = {
+	"Departmental Need": "organisation_unit",
+	"Departmental Need Review Task": "organisation_unit",
+	# PLN-CHG-001 v1.12 §16.4 (tracker D3): only the DPP family read by the
+	# Organisation-Unit-scoped Author/HoD is registered. The Annual Plan
+	# family has Site-wide readers only and stays unregistered (CU-302: a
+	# registered DocType with a non-registry read role resolves to 1=0).
+	"Departmental Plan": "organisation_unit",
+	"Departmental Plan Validation Task": "organisation_unit",
+}
+
+_PLN_AUTHZ = "kentender_procurement.procurement_planning.services.planning_authorization"
+
 permission_query_conditions = {
+	"Departmental Need": "kentender_core.services.authorization.permission_query_conditions",
+	"Departmental Need Review Task": "kentender_core.services.authorization.permission_query_conditions",
+	"Departmental Plan": "kentender_core.services.authorization.permission_query_conditions",
+	"Departmental Plan Validation Task": "kentender_core.services.authorization.permission_query_conditions",
+	# DPP children carry no OU column; Planning resolves through the parent
+	# chain and delegates to the core predicate (D3).
+	"Departmental Plan Version": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Entry": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Submission": f"{_PLN_AUTHZ}.permission_query_conditions",
+	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.permission_query_conditions",
 }
 
 has_permission = {
+	"Departmental Need": "kentender_core.services.authorization.has_permission",
+	"Departmental Need Review Task": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan Validation Task": "kentender_core.services.authorization.has_permission",
+	"Departmental Plan Version": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Entry": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Submission": f"{_PLN_AUTHZ}.has_permission",
+	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.has_permission",
 }
 
 # Document Events
@@ -376,6 +384,14 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
+
+# PLN-CHG-001 v1.12 §8.3 — the daily approaching-milestone nudge. Creates no
+# task, no state and no blocking condition; deduplicated per item/milestone/day.
+scheduler_events = {
+	"daily": [
+		"kentender_procurement.procurement_planning.services.schedule.check_approaching_milestones",
+	],
+}
 
 # scheduler_events = {
 # 	"all": [
@@ -496,6 +512,7 @@ boot_session = [
 # collects providers through this hook; core never imports this app).
 kt_my_work_providers = [
 	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
+	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
@@ -512,7 +529,6 @@ fixtures = [
 				[
 					"Governance & Configuration",
 					"Procurement Home",
-					"Procurement Planning",
 				],
 			]
 		],

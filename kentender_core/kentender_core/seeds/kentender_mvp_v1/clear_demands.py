@@ -147,11 +147,11 @@ def clear_kentender_mvp_v1_demands(
 				if reservation and reservation.budget_line:
 					current = flt(
 						frappe.db.get_value(
-							"Budget Line", reservation.budget_line, "amount_reserved"
+							"Procurement Budget Line", reservation.budget_line, "amount_reserved"
 						)
 					)
 					frappe.db.set_value(
-						"Budget Line",
+						"Procurement Budget Line",
 						reservation.budget_line,
 						"amount_reserved",
 						max(0, current - flt(reservation.remaining_reserved)),

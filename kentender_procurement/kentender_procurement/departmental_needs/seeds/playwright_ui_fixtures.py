@@ -3,24 +3,25 @@
 
 """Playwright-only Departmental Needs fixtures, isolated from the §14 seed.
 
-DEBT-07. The browser specs decide real tasks and overwrite the intake window,
-so pointing them at the §14.3 demo Needs left those fixtures changed and the
-Python suite red until the seed was rebuilt — twice, during Phase 9. Worse,
-re-applying the `default` profile does **not** restore a decided Need
-(`upsert_departmental_needs` is idempotent, not restorative), so "reseed
-afterwards" is not a repair.
+DEBT-07. The browser specs decide real tasks and overwrite the Needs-
+submission state, so pointing them at the §14.3 demo Needs left those
+fixtures changed and the Python suite red until the seed was rebuilt — twice,
+during Phase 9. Worse, re-applying the `default` profile does **not** restore
+a decided Need (`upsert_departmental_needs` is idempotent, not restorative),
+so "reseed afterwards" is not a repair.
 
-`kentender_budget.seeds.playwright_ui_fixtures` solved the same problem by
-giving the UI suite its own records; this is the Departmental Needs equivalent.
-
-Isolation is by **Procuring Entity**, not just by namespace. `need_reference`
-is generated per PE and financial year (`NDS-{PE code}-{FY start}-{4 digits}`),
-and the §14 seed asserts it gets exactly NDS-MOH-2027-0001..0004 when built
-from empty — so a Playwright Need created under PE-MOH would consume the next
-reference in that same sequence and break a later clean reseed. PE-CGKIS has
-its own sequence, its own intake window, and exactly one Active Organisation
-Unit, which also means these actors resolve a single context and never meet the
-§12.1 picker.
+Isolation is now by a dedicated **Organisation Unit**, not a dedicated
+Procuring Entity: AUTH-ADR-001 v1.6 §1.1 makes the site exactly one implicit
+Procuring Entity, so the old PE-CGKIS isolation trick this file used no
+longer exists as a mechanism, and — since CFG-BR-010 keeps at most one
+Fiscal Year Open at a time — these fixtures necessarily share the same open
+Fiscal Year (`kentender_mvp_r1.FY`) as the §14.3 default profile. That means
+`need_reference` numbers (`NDS-{PE code}-{FY start}-####`) are no longer
+generated in a separate sequence: a Playwright run and the default profile
+now draw from the *same* counter. Every fixture below therefore only ever
+depends on the reference its own command returns, never on a hardcoded
+number — see FU-16 in `FOLLOW_UPS.md` for the full note and why the default
+profile must seed before any Playwright spec touches this Fiscal Year.
 
 Every row is stamped with NS_PW and `reset_all()` removes exactly those, so a
 failed run cannot leave a half-built fixture behind — the failure mode §14.7
@@ -36,43 +37,33 @@ from uuid import uuid4
 
 import frappe
 
-from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
+from kentender_core.seeds.constants import TEST_PASSWORD
+from kentender_core.services import organisation_structure as structure
+from kentender_core.services import responsibility_administration as administration
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_DEPARTMENTAL_AUTHOR,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_PLANNER,
 	TASK_OPEN,
-	USAGE_FULL,
-	USAGE_NOT_INCLUDED,
 )
 from kentender_procurement.departmental_needs.seeds import kentender_mvp_r1 as base
-from kentender_procurement.departmental_needs.seeds.profiles import _as
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
 NS_PW = "KENTENDER_NDS_PLAYWRIGHT"
 
-PE = "PE-CGKIS"
-OU = "CGK-DEPT-HEALTH"
-FY = "FY-2027-2028"
-WINDOW = f"NDS-IW-{PE}-{FY}"
+OU_NAME = "Playwright — Departmental Needs"
+FY = base.FY
+
 # A stable withdrawal reference: NDS-UI-07 prints it in the record kicker, so a
 # generated (deliberately unguessable) id would make the visual baseline differ
 # on every rebuild. The §14.5 profile renames its own fixture for the same
 # reason.
-WITHDRAWAL_REQUEST_ID = "NDS-WDR-CGKIS-PW-0001"
+WITHDRAWAL_REQUEST_ID = "NDS-WDR-PW-0001"
 
 AUTHOR = "nds.pw.author@example.test"
 REVIEWER = "nds.pw.reviewer@example.test"
 PLANNER = "nds.pw.planner@example.test"
-
-# The intake spec rewrites these freely; nothing else reads them.
-# Far-future instants so the derived state ("Scheduled") and every rendered
-# date stay identical run after run — the NDS-908 baselines capture them
-# literally, so instants near *now* make the visual suite rot on a calendar
-# boundary (the previous 2026-09-01 open would have flipped the DES-10 chip
-# to "Open" on that day).
-WINDOW_OPENS = "2097-07-01 00:00:00"
-WINDOW_CLOSES = "2098-06-30 23:59:59"
 
 CONTENT = {
 	"title": "County health records digitisation",
@@ -81,7 +72,7 @@ CONTENT = {
 		"County facilities can retrieve a patient record without a paper search."
 	),
 	"indicative_quantity": 12,
-	"unit": "UNIT-EACH",
+	"unit": "Each",
 	"required_by_date": "2028-03-31",
 }
 
@@ -110,40 +101,57 @@ def _guard() -> None:
 	)
 
 
-def _actor(email: str, full_name: str, roles: tuple[str, ...], *, unit: bool) -> None:
-	"""Create the actor once, then leave it alone.
+def _ensure_user(email: str, full_name: str) -> None:
+	if not frappe.db.exists("User", email):
+		first, _, last = full_name.partition(" ")
+		doc = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": first,
+				"last_name": last,
+				"send_welcome_email": 0,
+				"user_type": "System User",
+				"enabled": 1,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		doc.add_roles("Desk User")
+	# Every reset must leave the actor able to log in with the standard test
+	# password, whether the User row is brand new or already existed — a plain
+	# insert() sets no password at all, which silently made every NDS
+	# Playwright actor unable to authenticate (found live: "Invalid Login" for
+	# an actor `ensure_actors()` had already created). Matches
+	# kentender_core.seeds._common.upsert_seed_user's own unconditional
+	# `update_password(...)` call.
+	from frappe.utils.password import update_password
 
-	`base._user` saves the User twice (add_roles, then update_password), so
-	re-running it for an actor that is already correct raises
-	TimestampMismatchError on the second fixture build in the same request —
-	every fixture calls `ensure_actors`, so that is the normal path, not an
-	edge case.
-	"""
-	wanted_scope = [("Procuring Entity", PE), ("Financial Year", FY)]
-	if unit:
+	update_password(email, TEST_PASSWORD)
+
+
+def _fixture_unit() -> str:
+	existing = frappe.db.get_value("Organisation Unit", {"unit_name": OU_NAME}, "name")
+	if existing:
+		return existing
+	outcome = structure.add_organisation_unit(parent_id=structure._root(), name=OU_NAME)
+	return outcome["unit"]
+
+
+def _actor(email: str, full_name: str, business_role: str, *, scoped: bool) -> None:
+	"""Create the actor once and grant it its one responsibility, idempotently."""
+	_ensure_user(email, full_name)
+	administration.grant(
+		user=email,
+		business_role=business_role,
 		# §6/NDS-BR-001 — a departmental role must name its department, or this
 		# module denies access rather than falling back to unrestricted.
-		wanted_scope.append(("Organisation Unit", OU))
-
-	if frappe.db.exists("User", email):
-		held = {row.role for row in frappe.get_doc("User", email).roles}
-		scoped = all(
-			frappe.db.exists("User Permission", {"user": email, "allow": d, "for_value": v})
-			for d, v in wanted_scope
-		)
-		if set(roles).issubset(held) and scoped:
-			return
-
-	base._user(email, full_name, roles)
-	for doctype, value in wanted_scope:
-		base._user_permission(email, doctype, value)
+		organisation_unit=_fixture_unit() if scoped else "",
+		fixture_namespace=NS_PW,
+		actor="Administrator",
+	)
 
 
-CONTEXT_PREFERENCE_KEYS = (
-	"kt_working_procuring_entity",
-	"kt_needs_org_unit",
-	"kt_needs_financial_year",
-)
+CONTEXT_PREFERENCE_KEYS = ("kt_needs_org_unit", "kt_needs_financial_year")
 
 
 def _clear_context_preferences(*users: str) -> None:
@@ -159,89 +167,129 @@ def _clear_context_preferences(*users: str) -> None:
 def ensure_actors() -> dict[str, str]:
 	"""Three single-context actors, one per §6 role the specs log in as."""
 	_guard()
-	_actor(AUTHOR, "Playwright Author", (ROLE_DEPARTMENTAL_AUTHOR,), unit=True)
-	_actor(REVIEWER, "Playwright Reviewer", (ROLE_HEAD_OF_USER_DEPARTMENT,), unit=True)
-	# §14.2 — the Planner is scoped by PE and FY only; requiring a department
-	# of them would deny the read access §6 grants.
-	_actor(PLANNER, "Playwright Planner", (ROLE_PROCUREMENT_PLANNER,), unit=False)
+	_actor(AUTHOR, "Playwright Author", ROLE_DEPARTMENTAL_AUTHOR, scoped=True)
+	_actor(REVIEWER, "Playwright Reviewer", ROLE_HEAD_OF_USER_DEPARTMENT, scoped=True)
+	# §14.2 — the Planner is Site-wide; requiring a department of them would
+	# deny the read access §6 grants.
+	_actor(PLANNER, "Playwright Planner", ROLE_PROCUREMENT_PLANNER, scoped=False)
 	_clear_context_preferences()
 	return {"author": AUTHOR, "reviewer": REVIEWER, "planner": PLANNER}
-
-
-def ensure_window(opens_at: str = WINDOW_OPENS, closes_at: str = WINDOW_CLOSES) -> str:
-	"""The fixture PE/FY's own intake window, free for the specs to rewrite."""
-	if frappe.db.exists("Needs Intake Window", WINDOW):
-		frappe.db.set_value(
-			"Needs Intake Window",
-			WINDOW,
-			{"opens_at": opens_at, "closes_at": closes_at},
-			update_modified=False,
-		)
-		return WINDOW
-	frappe.get_doc(
-		{
-			"doctype": "Needs Intake Window",
-			"needs_intake_window_id": WINDOW,
-			"procuring_entity": PE,
-			"financial_year": FY,
-			"opens_at": opens_at,
-			"closes_at": closes_at,
-			"record_version": 0,
-			"fixture_namespace": NS_PW,
-		}
-	).insert(ignore_permissions=True)
-	return WINDOW
 
 
 def reset_all(*, commit: bool = False) -> dict[str, Any]:
 	"""Remove every Playwright-owned row, leaving the §14 seed untouched."""
 	_guard()
+	needs = frappe.db.get_all("Departmental Need", filters={"fixture_namespace": NS_PW}, pluck="name")
 	removed = {}
 	for doctype in _NAMESPACED:
 		names = frappe.db.get_all(doctype, filters={"fixture_namespace": NS_PW}, pluck="name")
 		if names:
 			frappe.db.delete(doctype, {"name": ("in", names)})
 		removed[doctype] = len(names)
+	# A deleted Need's reference is free for the next command to reuse (§14.7's
+	# reference counter only sees what currently exists), so a stray
+	# Notification Log row addressed to the old `document_name` would
+	# otherwise leak into whatever Need is next assigned that same reference.
+	if needs:
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
 	if commit:
 		frappe.db.commit()
 	return {"namespace": NS_PW, "removed": removed}
 
 
-def _stamp(*rows: tuple[str, str]) -> None:
+def _stamp(*rows: tuple[str, str], namespace: str = NS_PW) -> None:
 	for doctype, name in rows:
 		if name:
-			frappe.db.set_value(doctype, name, "fixture_namespace", NS_PW, update_modified=False)
+			frappe.db.set_value(doctype, name, "fixture_namespace", namespace, update_modified=False)
 
 
-def _stamp_children(need: str) -> None:
+def _stamp_children(need: str, namespace: str = NS_PW) -> None:
 	"""Stamp everything the commands created for this Need, whatever its type."""
 	for doctype in _NAMESPACED:
 		if doctype == "Departmental Need":
 			continue
 		for name in frappe.db.get_all(doctype, filters={"departmental_need": need}, pluck="name"):
-			frappe.db.set_value(doctype, name, "fixture_namespace", NS_PW, update_modified=False)
+			frappe.db.set_value(doctype, name, "fixture_namespace", namespace, update_modified=False)
 
 
-def _open_window_now() -> None:
-	"""§5.1 gates creation and initial submission on an Open window.
+# --- fixtures a sibling module's browser specs ask NDS for -------------------
+#
+# Procurement Planning's Playwright world needs genuine accepted Needs in its
+# own Organisation Unit and Fiscal Year (PLN-CHG-001 v1.12 D13). Planning may
+# not drive this module's commands or tables (its architecture guard, D5),
+# so NDS owns the builders: the caller names its unit, year, actors (who must
+# hold the departmental responsibilities there) and content; NDS runs the real
+# commands as those actors, stamps the rows with the caller's namespace and
+# purges them on request.
 
-	The instants are fixed, not derived from *now*: the workspace chip renders
-	the literal close instant ("Open until 30 Aug 2026, 10:59 AM EAT"), so a
-	rolling ``now + 1 day`` close bakes the capture minute into the NDS-908
-	visual baselines — they could only ever match again on the day (and near
-	the minute) they were recorded. A close far in the future keeps the state
-	Open for every run and the rendered text identical.
-	"""
-	ensure_window("2026-07-01 00:00:00", "2098-06-30 23:59:59")
+
+def purge_fixture_needs(*, namespace: str, commit: bool = True) -> dict[str, Any]:
+	"""Remove every NDS row stamped with `namespace` (a sibling fixture world)."""
+	_guard()
+	if namespace == NS_PW:
+		return reset_all(commit=commit)
+	needs = frappe.db.get_all("Departmental Need", filters={"fixture_namespace": namespace}, pluck="name")
+	removed = {}
+	for doctype in _NAMESPACED:
+		names = frappe.db.get_all(doctype, filters={"fixture_namespace": namespace}, pluck="name")
+		if names:
+			frappe.db.delete(doctype, {"name": ("in", names)})
+		removed[doctype] = len(names)
+	if needs:
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
+	if commit:
+		frappe.db.commit()
+	return {"namespace": namespace, "removed": removed}
+
+
+def reset_accepted_needs_for(
+	*,
+	organisation_unit_name: str,
+	financial_year: str,
+	author: str,
+	reviewer: str,
+	needs: list[dict[str, Any]] | str,
+	namespace: str,
+	commit: bool = True,
+) -> dict[str, Any]:
+	"""Purge the namespace, then drive each requested Need to Accepted for
+	planning through the real commands as the caller's own actors."""
+	import json
+
+	_guard()
+	if isinstance(needs, str):
+		needs = json.loads(needs)
+	purge_fixture_needs(namespace=namespace, commit=False)
+	unit = frappe.db.get_value("Organisation Unit", {"unit_name": organisation_unit_name}, "name")
+	if not unit:
+		frappe.throw(f"Organisation Unit '{organisation_unit_name}' does not exist — build the caller's world first.")
+	if not frappe.db.get_value("Fiscal Year", financial_year, "kentender_needs_submission_open"):
+		frappe.throw(f"Fiscal Year {financial_year}'s Needs-submission flag is not Open — the caller's world must open it first.")
+	accepted = []
+	for content in needs:
+		with base._as(author):
+			created = lifecycle.create_need(organisation_unit=unit, financial_year=financial_year, idempotency_key=_key(), **content)
+			lifecycle.submit_need(need=created["need"], expected_version=created["record_version"], idempotency_key=_key())
+		task = _open_task(created["need"])
+		with base._as(reviewer):
+			lifecycle.review_need(
+				need=created["need"], decision="accept", task=task["name"], expected_version=_record_version(created["need"]),
+				decision_token=task["decision_token"], idempotency_key=_key(),
+			)
+		_stamp(("Departmental Need", created["need"]), namespace=namespace)
+		_stamp_children(created["need"], namespace)
+		accepted.append(created["need"])
+	if commit:
+		frappe.db.commit()
+	return {"needs": accepted, "unit": unit}
 
 
 def _submitted_need() -> str:
 	"""A Need driven to Submitted with one Open Initial acceptance task."""
-	_open_window_now()
-	with _as(AUTHOR):
+	unit = _fixture_unit()
+	with base._as(AUTHOR):
 		created = lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU,
+			organisation_unit=unit,
 			financial_year=FY,
 			idempotency_key=_key(),
 			**CONTENT,
@@ -272,7 +320,7 @@ def _record_version(need: str) -> int:
 def _accepted_need() -> str:
 	need = _submitted_need()
 	task = _open_task(need)
-	with _as(REVIEWER):
+	with base._as(REVIEWER):
 		lifecycle.review_need(
 			need=need,
 			decision="accept",
@@ -311,7 +359,7 @@ def reset_accepted_source_fixture(*, commit: bool = True) -> dict[str, Any]:
 	ensure_actors()
 	need = _accepted_need()
 	superseded = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
-	with _as(AUTHOR):
+	with base._as(AUTHOR):
 		opened = lifecycle.create_accepted_need_successor(
 			need=need, expected_version=_record_version(need), idempotency_key=_key()
 		)
@@ -325,7 +373,7 @@ def reset_accepted_source_fixture(*, commit: bool = True) -> dict[str, Any]:
 			need=need, expected_version=saved["record_version"], idempotency_key=_key()
 		)
 	task = _open_task(need)
-	with _as(REVIEWER):
+	with base._as(REVIEWER):
 		lifecycle.review_need(
 			need=need,
 			decision="accept",
@@ -356,16 +404,16 @@ def _withdrawal_fixture(*, cleared: bool) -> dict[str, Any]:
 	# §5.3 — only an Effective allocation on the exact accepted version blocks
 	# the decision, and Needs learns it from the §4.7 projection, never from
 	# Planning's tables (firm D1 boundary). So report it the way Planning does.
-	with _as(PLANNER):
+	with base._as(PLANNER):
 		project_planning_usage(
 			departmental_need=need,
 			accepted_version=accepted_version,
-			usage=USAGE_NOT_INCLUDED if cleared else USAGE_FULL,
+			usage="Not included" if cleared else "Fully included",
 			source_event_id=_key(),
 			active_plan="" if cleared else "PLN-NDS-PW-0001",
 			active_plan_item="" if cleared else "PPI-NDS-PW-0001",
 		)
-	with _as(AUTHOR):
+	with base._as(AUTHOR):
 		requested = lifecycle.request_withdrawal(
 			need=need,
 			expected_version=_record_version(need),
@@ -407,21 +455,20 @@ def reset_withdrawal_cleared_fixture() -> dict[str, Any]:
 
 
 def reset_open_intake_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""NDS-UI-01/03 — an Open window plus one Draft, so the editor is reachable.
+	"""NDS-UI-01/03 — one Draft, so the editor is reachable.
 
-	§5.1 gates creation and initial submission on an Open window, and the
-	fixture PE's default window is Scheduled (it exists to be rewritten by the
-	NDS-UI-08 spec). This one is opened around *now* so the author can actually
-	create and submit.
+	§5.1 gates creation and initial submission on the Needs-submission flag
+	being Open; §14.1 requires it already Open on `FY` before any seed runs
+	(kentender_core.seeds.site_setup owns it), so this fixture only builds
+	the Draft — it never opens or closes the flag itself.
 	"""
 	_guard()
 	reset_all()
 	ensure_actors()
-	_open_window_now()
-	with _as(AUTHOR):
+	unit = _fixture_unit()
+	with base._as(AUTHOR):
 		created = lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU,
+			organisation_unit=unit,
 			financial_year=FY,
 			idempotency_key=_key(),
 			**CONTENT,
@@ -431,73 +478,3 @@ def reset_open_intake_fixture(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {"need": created["need"], "state": "Draft"}
-
-
-SCHEDULED_FY = "FY-2098-2099"
-SCHEDULED_WINDOW = f"NDS-IW-{PE}-{SCHEDULED_FY}"
-
-
-def reset_scheduled_window_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""CTX-CHG-001 rule 4 — a second selectable year whose intake is Scheduled.
-
-	The author may pick FY 2098/99 in the band, sees the Scheduled state with
-	its exact instants, cannot create, and is never trapped: the band offers
-	the way back to the Open year. Instants far future so the derived state
-	and the rendered text never roll (the NDS-908 lesson).
-	"""
-	_guard()
-	reset_open_intake_fixture(commit=False)
-	if not frappe.db.exists("Financial Year", SCHEDULED_FY):
-		doc = frappe.get_doc(
-			{
-				"doctype": "Financial Year",
-				"start_year": 2098,
-				"label": "2098/99",
-				"start_date": "2098-07-01",
-				"end_date": "2099-06-30",
-				"record_status": "Available",
-			}
-		)
-		doc.name = SCHEDULED_FY
-		doc.insert(ignore_permissions=True)
-	for user in (AUTHOR, REVIEWER, PLANNER):
-		if not frappe.db.exists(
-			"User Permission", {"user": user, "allow": "Financial Year", "for_value": SCHEDULED_FY}
-		):
-			frappe.get_doc(
-				{
-					"doctype": "User Permission",
-					"user": user,
-					"allow": "Financial Year",
-					"for_value": SCHEDULED_FY,
-				}
-			).insert(ignore_permissions=True)
-		frappe.clear_cache(user=user)
-	if not frappe.db.exists("Needs Intake Window", SCHEDULED_WINDOW):
-		frappe.get_doc(
-			{
-				"doctype": "Needs Intake Window",
-				"needs_intake_window_id": SCHEDULED_WINDOW,
-				"procuring_entity": PE,
-				"financial_year": SCHEDULED_FY,
-				"opens_at": "2098-07-01 00:00:00",
-				"closes_at": "2098-09-30 23:59:59",
-				"record_version": 0,
-				"fixture_namespace": NS_PW,
-			}
-		).insert(ignore_permissions=True)
-	if commit:
-		frappe.db.commit()
-	return {"financial_year": SCHEDULED_FY, "window": SCHEDULED_WINDOW, "state": "Scheduled"}
-
-
-def reset_intake_window_fixture() -> dict[str, Any]:
-	"""NDS-UI-08 — the fixture PE/FY window at known instants.
-
-	Separate from the §14.1 MoH window precisely so the spec can save over it.
-	"""
-	_guard()
-	ensure_actors()
-	window = ensure_window()
-	frappe.db.commit()
-	return {"window": window, "opens_at": WINDOW_OPENS, "closes_at": WINDOW_CLOSES}

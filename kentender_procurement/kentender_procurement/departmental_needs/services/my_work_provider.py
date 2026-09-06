@@ -2,18 +2,16 @@
 
 The reviewer's open decisions (§4.4 review tasks) reach them through the
 established My Work queue and notification mechanism, not through a module
-sidebar entry: the "Review tasks" menu item that NDS-CHG-001 v1.1 §10
-specified was a specification defect (recorded 2026-08-30; to be corrected in
-the next complete NDS successor). The protected review-task record, its
-permissions and the decision screens are unchanged — this module only
-*projects* the open tasks into My Work via kentender_core's
-`kt_my_work_providers` hook, which is the sanctioned direction (core collects,
-this app publishes; core never imports this app).
+sidebar entry (§10). The protected review-task record, its permissions and
+the decision screens are unchanged — this module only *projects* the open
+tasks into My Work via kentender_core's `kt_my_work_providers` hook, which is
+the sanctioned direction (core collects, this app publishes; core never
+imports this app).
 
 Eligibility mirrors the workspace's row actions exactly (§12.2 via
-`workspace._actions`): the caller holds the Head of User Department role, is
-in the task's exact PE/OU/FY scope, and is not the Need's own author
-(maker-checker, NDS-AC-042).
+`workspace._actions`): the caller holds an active Head of User Department
+responsibility assignment (AUTH-ADR-001 v1.6) covering the task's exact
+Organisation Unit, and is not the Need's own author (maker-checker, NDS-AC-042).
 """
 
 from __future__ import annotations
@@ -49,7 +47,6 @@ def _row(task: Any, need: Any) -> dict[str, Any]:
 		"reference": cstr(need.need_reference),
 		"module": "Departmental Needs",
 		"stage": _("Withdrawal review") if withdrawal else _("Departmental review"),
-		"procuring_entity": cstr(task.procuring_entity),
 		"financial_year": cstr(task.financial_year),
 		"organisation_unit": cstr(task.organisation_unit or ""),
 		"assignment": _(ROLE_HEAD_OF_USER_DEPARTMENT),
@@ -85,7 +82,6 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 			"departmental_need",
 			"need_version",
 			"task_type",
-			"procuring_entity",
 			"organisation_unit",
 			"financial_year",
 			"decision_token",
@@ -97,9 +93,8 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	for task in tasks:
 		if not in_scope(
 			user,
-			procuring_entity=task.procuring_entity,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
 			organisation_unit=task.organisation_unit,
-			financial_year=task.financial_year,
 		):
 			continue
 		need = frappe.db.get_value(

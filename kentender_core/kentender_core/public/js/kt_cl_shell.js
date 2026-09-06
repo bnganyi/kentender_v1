@@ -165,7 +165,16 @@ frappe.provide("kentender_core.cl_shell");
 		 */
 		enterNative: function (opts) {
 			opts = opts || {};
-			var hydrationGate = opts.hydrationGate !== false;
+			// Only the first genuine entry into native mode needs to hide-then-
+			// reveal the raw Frappe chrome (navbar/page-head/chrome host) while
+			// the custom UI hydrates. `enterNative()` is called again on every
+			// in-page route change within an already-native page (e.g. a save
+			// replacing /new with /{reference}/edit via frappe.set_route(),
+			// which re-fires on_page_show — see AGENTS.md §6.1) — chrome is
+			// already hidden/replaced by then, so re-running the hide/reveal
+			// cycle only repaints it and reads as a visible flash on every save.
+			// Same fix already applied to the sidebar rail below (ensureNativeSidebar).
+			var hydrationGate = opts.hydrationGate !== false && !nativeActive;
 			var token = ++routeToken;
 
 			/* Tear down full-replacement custom sidenav if present. */

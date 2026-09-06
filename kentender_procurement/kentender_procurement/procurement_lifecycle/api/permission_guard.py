@@ -27,8 +27,12 @@ boundary against the G0-006 threat model and G0-011 role matrix.
 ## Internal roles (G0-011 matrix, all hold ``read`` on both DocTypes)
 
 Requisitioner, Planning Authority, Procurement Planner, Procurement Officer,
-Finance Reviewer, Department Approver, Strategy Manager, Auditor,
-Administrator, System Manager.
+Finance Reviewer, Department Approver, Auditor, Administrator, System Manager.
+
+("Strategy Manager" was removed here with the Role itself — see
+`kentender_strategy/patches/str_chg_001_v1_7_delete_strategy_manager_role.py`.
+It named Strategy authority it had not carried since the STR-CHG-001 rebuild,
+and survived only as this cross-app read grant.)
 
 ## Non-internal actors
 
@@ -51,7 +55,6 @@ JOURNEY_READ_ROLES: frozenset[str] = frozenset(
     {
         "System Manager",
         "Administrator",
-        "Strategy Manager",
         "Planning Authority",
         "Requisitioner",
         "Procurement Planner",

@@ -18,7 +18,7 @@ import { loginAsAdministrator } from "../../helpers/auth";
  * add a page here only once it is off that allowlist.
  */
 
-const PAGES = ["/desk/reference-data", "/desk/strategy-portfolio"];
+const PAGES = ["/desk/reference-data", "/desk/strategy"];
 
 test.describe("Industry design gate — computed style parity", () => {
 	test("every Industry page renders the same accent, button and card tokens", async ({ page }) => {

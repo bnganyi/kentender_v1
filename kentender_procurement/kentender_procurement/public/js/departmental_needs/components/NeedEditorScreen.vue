@@ -89,12 +89,23 @@
 				<div class="kt-field" style="margin: 0">
 					<label for="nds-unit">Unit</label>
 					<!-- §12.3 — options come from the governed active catalogue. -->
-					<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit">
-						<option value="">Select a unit</option>
-						<option v-for="unit in units" :key="unit.name" :value="unit.name">
-							{{ unit.unit_label }}
-						</option>
-					</select>
+					<div style="display: flex; gap: 8px; align-items: center">
+						<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit" style="flex: 1">
+							<option value="">Select a unit</option>
+							<option v-for="unit in units" :key="unit.name" :value="unit.name">
+								{{ unit.unit_label }}
+							</option>
+						</select>
+						<button
+							type="button"
+							class="kt-btn kt-btn-ghost"
+							style="white-space: nowrap"
+							data-testid="nds-unit-new"
+							@click="createUnit"
+						>
+							+ New
+						</button>
+					</div>
 				</div>
 			</div>
 			<div class="kt-field" style="margin: 0; max-width: 340px">
@@ -134,6 +145,7 @@
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import ContextCard from "./ContextCard.vue";
 import StatusPill from "./StatusPill.vue";
+import { quickCreate } from "../../nds_shared/composables/quickCreate.js";
 
 const props = defineProps({
 	mode: { type: String, default: "create" }, // create | correct | successor
@@ -145,7 +157,14 @@ const props = defineProps({
 	fieldErrors: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-const emit = defineEmits(["save", "submit", "cancel"]);
+const emit = defineEmits(["save", "submit", "cancel", "unit-created"]);
+
+async function createUnit() {
+	const doc = await quickCreate("UOM");
+	if (!doc) return;
+	form.unit = doc.name;
+	emit("unit-created", { name: doc.name, unit_label: doc.uom_name });
+}
 
 const errorEl = ref(null);
 const titleEl = ref(null);
@@ -188,9 +207,26 @@ const form = reactive({
 	required_by_date: "",
 });
 
+const FORM_SOURCE_FIELDS = [
+	"name",
+	"version_number",
+	"title",
+	"description",
+	"expected_operational_result",
+	"indicative_quantity",
+	"unit",
+	"required_by_date",
+];
+let hydratedFrom = null;
+
 watch(
 	() => props.version,
 	(version) => {
+		// An in-place refresh that returns the same content carries nothing
+		// new — re-hydrating would discard what the user has typed since.
+		const signature = JSON.stringify(FORM_SOURCE_FIELDS.map((field) => version?.[field] ?? null));
+		if (signature === hydratedFrom) return;
+		hydratedFrom = signature;
 		form.title = version?.title || "";
 		form.description = version?.description || "";
 		form.expected_operational_result = version?.expected_operational_result || "";
@@ -239,7 +275,6 @@ const submitLabel = computed(() =>
 const cancelLabel = computed(() => (props.mode === "successor" ? "Cancel update" : "Cancel"));
 
 const contextItems = computed(() => [
-	{ label: "Procuring Entity", value: props.context.procuring_entity_label || props.context.procuring_entity || "" },
 	{ label: "Department", value: props.context.organisation_unit_label || props.context.organisation_unit || "" },
 	{ label: "Financial Year", value: props.context.financial_year_label || props.context.financial_year || "" },
 ]);

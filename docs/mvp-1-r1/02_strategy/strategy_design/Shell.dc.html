@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);display:flex;flex-direction:column;font-family:var(--font-body);color:var(--color-text)">
+  <nav class="nav" style="border-bottom:1px solid var(--color-divider);background:var(--color-surface)">
+    <a href="./index.dc.html" class="nav-brand" style="text-decoration:none;color:inherit">KenTender</a>
+    <a href="./STR-DES-01.dc.html">Strategy Portfolio</a>
+    <a href="./STR-DES-06.dc.html">Approval tasks</a>
+  </nav>
+  <div style="padding:10px 40px;border-bottom:1px solid var(--color-divider);background:var(--color-surface-2);font-size:12px;color:var(--color-neutral-700);display:flex;gap:6px;align-items:center">
+    <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="2">
+      <span>{{ c.text }}</span>
+      <sc-if value="{{ c.notLast }}" hint-placeholder-val="{{ false }}"><span style="opacity:.5">&nbsp;&rsaquo;</span></sc-if>
+    </sc-for>
+  </div>
+  <main style="flex:1">{{ children }}</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const parts = (this.props.breadcrumb || '').split(' > ').filter(Boolean);
+    const crumbs = parts.map((text, i) => ({ text, notLast: i < parts.length - 1 }));
+    return { crumbs, children: this.props.children };
+  }
+}
+</script>
+</body>
+</html>

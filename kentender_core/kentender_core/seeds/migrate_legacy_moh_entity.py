@@ -43,8 +43,8 @@ def run() -> dict[str, Any]:
 	counts: dict[str, int] = {
 		"demands": _update_link_field("Demand", "procuring_entity"),
 		"departments": _update_link_field("Procuring Department", "procuring_entity"),
-		"budgets": _update_link_field("Budget", "procuring_entity"),
-		"budget_lines": _update_link_field("Budget Line", "procuring_entity"),
+		"budgets": _update_link_field("Procurement Budget", "procuring_entity"),
+		"budget_lines": _update_link_field("Procurement Budget Line", "procuring_entity"),
 	}
 
 	if frappe.db.has_column("User", "kt_procuring_entity"):

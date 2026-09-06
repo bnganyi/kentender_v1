@@ -11,9 +11,24 @@
 // boundary. kt_industry_page_rail.bundle.js must already be loaded (via
 // frappe.require alongside the page's own bundle in its *_page.js) before
 // this composable's onMounted() runs.
-import { onMounted, onUnmounted, watch } from "vue";
+//
+// Inside Budget.vue's tree the root owns the one rail and provides a trail
+// publisher; a screen calling this composable then only publishes its trail
+// (on mount, on KeepAlive re-activation and on change) — it never mounts a
+// second rail that would be torn down on the next screen switch.
+import { inject, onActivated, onMounted, onUnmounted, watch } from "vue";
+
+export const BUDGET_RAIL = "kt-budget-rail";
 
 export function usePageRail(elRef, trailRef, opts) {
+	const publisher = inject(BUDGET_RAIL, null);
+	if (publisher) {
+		const publish = () => publisher.setTrail(trailRef.value);
+		onMounted(publish);
+		onActivated(publish);
+		watch(trailRef, publish);
+		return;
+	}
 	// CTX-CHG-001 — opts: { showPeSwitcher, onPeChange }. Dormant by default;
 	// a page that opts in receives the global PE switcher in the rail and its
 	// onPeChange callback when the user switches entity.

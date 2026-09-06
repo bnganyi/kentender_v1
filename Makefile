@@ -6,8 +6,8 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-strategy-role-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-budget-funding-performance-gate ui-budget-funding-check-reserve-gate ui-budget-role-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-scope-auth-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
-.PHONY: ui-planning-builder-gate ui-planning-finance-gate ui-planning-approval-gate ui-planning-mvp1-gate ui-planning-a11y-gate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY:
 
 help:
 	@echo "Targets:"
@@ -33,24 +33,11 @@ help:
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
-	@echo "  make ui-strategy-typography-gate — Strategy typography + shared plan chrome (Espresso bleed, Manrope/Inter pins)"
-	@echo "  make ui-strategy-alignment-ui-gate — Strategy Alignment Stitch UI shell (includes typography gate + full nav)"
-	@echo "  make ui-strategy-role-gate — STR-SUP-005 wave 2 (AC matrix + role Playwright)"
+	@echo "  make ui-strategy-gate — STR-CHG-001 v1.7 §16.2 browser journeys (author, approver, access states) on the §14 seed"
 	@echo "  make ui-stitch-desk-chrome-gate — Shared Stitch Desk chrome baseline (Win98/select/Espresso) — required before Stitch Desk UI Done"
 	@echo "  make ui-industry-design-gate — Industry design system is canonical (AGENTS.md §6.6): kt-industry root class + no forked token files + computed-style parity"
-	@echo "  make ui-budget-funding-portfolio-gate — Budget & Funding portfolio (BUD-UI-01) chrome + layout + Playwright"
-	@echo "  make ui-budget-funding-register-gate — Register approved budget (Prompt 2) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-overview-gate — Budget Overview workspace (BUD-UI-03) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-lines-gate — Budget Lines + Line Editor (BUD-UI-04/05) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-activity-gate — Funding Activity (BUD-UI-07) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-revisions-gate — Budget Revisions (BUD-UI-08) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-revision-review-gate — Budget Revision Review (BUD-UI-09) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-downstream-gate — Budget Downstream Usage (BUD-UI-10) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-review-gate — Budget Readiness/Review (BUD-UI-11) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-audit-gate — Budget Audit History (BUD-UI-12) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-performance-gate — Funding Performance (BUD-UI-02) chrome + domain + Playwright"
-	@echo "  make ui-budget-funding-check-reserve-gate — Check and Reserve (BUD-UI-06) chrome + domain + Playwright"
-	@echo "  make ui-budget-role-gate — BUD-SUP-002 role matrix (API + Playwright capability gating)"
+	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
+	@echo "  make ui-budget-fidelity-gate — Budget & Funding screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
 	@echo "  make ui-create-demand-strategy-gate — (retired) DIA create-demand gate; no-op until Demands MVP-1"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
 	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
@@ -68,14 +55,19 @@ help:
 	@echo "  make ui-civic-ledger-wg03-gate — WG-03 Document Preview (document artifact path) gate"
 	@echo "  make pub-domain-gate SITE=$(SITE) — Tender Publications domain API tests"
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
-	@echo "  make ui-demands-workspace-gate ui-planning-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
-	@echo "  make ui-planning-workspace-gate — Planning Gate 03 (PLN-UI-01…03) chrome + API + Playwright"
-	@echo "  make ui-planning-builder-gate — Planning Gate 04 (PLN-UI-04…06) chrome + API + Playwright"
-	@echo "  make ui-planning-finance-gate — PLN-UI-07/07A Finance confirm (SVC-007/008) domain + Playwright"
-	@echo "  make ui-planning-approval-gate — Planning Gate 05 (PLN-UI-08 review/approval + C02 absence)"
-	@echo "  make ui-planning-scope-auth-gate — PLN-GATE-C01 scope + task authority + route denial"
-	@echo "  make ui-planning-mvp1-gate — PLN-GATE-C07 seed/SCN + one chrome pass + Planning Playwright"
-	@echo "  make ui-planning-a11y-gate — PLN-NFR-004 labels / keyboard / focus / error association"
+	@echo "  make ui-demands-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
+	@echo "  make ui-planning-workspace-gate — PLN-CHG-001 v1.12 Slice A: workspace domain + vitest + Playwright (D13 world)"
+	@echo "  make ui-planning-dpp-gate — PLN-CHG-001 v1.12 Slice A: DPP authoring domain + vitest + Playwright"
+	@echo "  make ui-planning-dpp-review-gate — PLN-CHG-001 v1.12 Slice A: DPP validation + auto Annual Plan"
+	@echo "  make ui-planning-fidelity-gate — PLN-CHG-001 v1.12 D14: artboard landmark fidelity on the live screens"
+	@echo "  make ui-planning-release-evidence-gate — PLN-CHG-001 v1.12 Phase 8: every Planning browser spec + fidelity + §14 persona pass, single-worker"
+	@echo "  make ui-planning-plan-workbench-gate — PLN-CHG-001 v1.2 Slice D: Annual Plan workbench + formation + Plan Item editor"
+	@echo "  make ui-planning-finance-gate — PLN-CHG-001 v1.2 Slice E: Finance confirmation on real Budget contracts"
+	@echo "  make ui-planning-governance-gate — PLN-CHG-001 v1.2 Slice F: Annual Plan governance (adopt/approve/return)"
+	@echo "  make ui-planning-publication-gate — PLN-CHG-001 v1.2 Slice G: Publication, Active and successor (BeginPlanUpdate/RemovePlanItemInSuccessor/CancelPlanUpdate)"
+	@echo "  make planning-requisition-gate — PLN-CHG-001 v1.2 Slice H: §7.4 Requisition eligibility + drawdown consumption (API-only)"
+	@echo "  make planning-seed-gate — PLN-CHG-001 v1.2 §14: deterministic seed contract (baseline + profiles + boundary guard)"
+	@echo "  make — PLN-GATE-C01 scope + task authority + route denial"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
 	@echo "  make ui-demands-review-gate ui-demands-detail-gate — Demand review chrome gate + DEM-UI-04…08 API + Playwright"
 	@echo "  make ui-demands-detail-gate — Approved Demand detail (DEM-UI-09…09D) API + Playwright"
@@ -117,9 +109,6 @@ help:
 	@echo "  make bw-final-submission-domain-gate SITE=$(SITE) — Final Submission domain + layout + stitch contracts"
 	@echo "  make bw-final-submission-stitch-contract-gate SITE=$(SITE) — Final Submission per-Stitch-file UI contracts (01–05)"
 	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke (modal structure)"
-	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
-	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
-	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -207,27 +196,8 @@ ui-workspace-pattern-gate:
 	@echo "ui-workspace-pattern-gate: DIA pattern lock retired — no-op (see Demands MVP-1 teardown inventory)."
 
 # Fast gate for Strategy CSS/chrome/typography work (Desk Espresso bleed, shared plan header).
-ui-strategy-typography-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_strategy.tests.test_strategy_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		-g "strategy typography resists Desk Espresso|shared plan chrome is identical|shared plan chrome survives soft tab navigation|VC and Measurements section titles" \
-		tests/ui/smoke/strategy-alignment/strategy-alignment-nav.spec.ts
-
-# Full Strategy Alignment UI shell — typography + shared Stitch Desk chrome, then nav smoke.
-ui-strategy-alignment-ui-gate: ui-strategy-typography-gate ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/strategy-alignment/strategy-alignment-nav.spec.ts
-
-# STR-SUP-005 first wave — AC matrix domain + thin Viewer/Manager Desk evidence.
-ui-strategy-role-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_strategy.seeds.strategy_role_users.upsert_strategy_role_users
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_strategy.tests.test_strategy_mvp1_ac_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/strategy-alignment/strategy-role-matrix.spec.ts
+ui-strategy-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/strategy
 
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:
@@ -246,137 +216,29 @@ ui-industry-design-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/industry-design/industry-design-gate.spec.ts
 
-# BUD-UI-01 Budget & Funding portfolio — chrome baseline + layout guard + Playwright smoke.
-ui-budget-funding-portfolio-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+# Design fidelity (AGENTS.md §6.6 enforcement) — every System setup screen is
+# diffed against its .dc.html artboard rendered in the same browser: the
+# artboard's ordered structural landmarks must appear in order in the live
+# page, and geometry measured off the artboard (column ratios, row heights,
+# 520px dialogs, grid label columns, truncation of named fixture text) must
+# match within tolerance. Seeds the KT-STD §8 world first (idempotent).
+ui-system-setup-fidelity-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-portfolio.spec.ts
+		tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts
 
-# Register approved budget (Prompt 2) — chrome + layout + Playwright create/cancel.
-ui-budget-funding-register-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_register
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+# BUD-CHG-001 v1.3 Phase 8 (BUD-802) — Budget & Funding screens match their
+# .dc.html artboards. Seeds via a piped `exec(open(...).read())` rather than
+# raw stdin: budget_fidelity_seed.py lives under tests/ui/smoke/design-
+# fidelity/ (not inside any installed app's Python package, so `bench
+# execute <dotted.path>` cannot import it), and plain `bench console < file`
+# silently mishandles multi-statement scripts with blank lines inside
+# indented blocks (IPython's own stdin cell-splitting) — see that file's own
+# top comment.
+ui-budget-fidelity-gate:
+	cd $(BENCH_ROOT) && echo 'exec(open("$(BENCH_ROOT)/apps/kentender_v1/tests/ui/smoke/design-fidelity/budget_fidelity_seed.py").read())' | bench --site $(SITE) console
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-register.spec.ts
-
-# BUD-UI-03 Budget Overview workspace — domain + layout/chrome + Playwright.
-ui-budget-funding-overview-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_overview
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-overview.spec.ts
-
-# BUD-UI-04 / BUD-UI-05 Budget Lines + Line Editor — domain + layout/chrome + Playwright.
-ui-budget-funding-lines-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_lines
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-lines.spec.ts \
-		tests/ui/smoke/budget-funding/budget-funding-line-strategy-xmod-str-001.spec.ts
-
-# BUD-UI-07 Funding Activity — domain + layout/chrome + Playwright.
-ui-budget-funding-activity-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_funding_activity
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-activity.spec.ts
-
-# BUD-UI-08 Budget Revisions — domain + layout/chrome + Playwright.
-ui-budget-funding-revisions-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_revisions
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-revisions.spec.ts
-
-# BUD-UI-09 Budget Revision Review — domain + layout/chrome + Playwright.
-ui-budget-funding-revision-review-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_revision_review
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-revision-review.spec.ts
-
-# BUD-UI-10 Downstream Usage — domain + layout/chrome + Playwright.
-ui-budget-funding-downstream-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_downstream_usage
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-downstream.spec.ts
-
-# BUD-UI-11 Readiness and Review — domain + layout/chrome + Playwright.
-ui-budget-funding-review-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_readiness
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-review.spec.ts
-
-# BUD-UI-12 Audit History — domain + layout/chrome + Playwright.
-ui-budget-funding-audit-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_audit
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-audit.spec.ts
-
-# BUD-UI-02 Funding Performance — domain + layout/chrome + Playwright.
-ui-budget-funding-performance-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_funding_performance
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-performance.spec.ts
-
-# BUD-UI-06 Check and Reserve — domain + layout/chrome + Playwright.
-ui-budget-funding-check-reserve-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_check_reserve
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-check-reserve.spec.ts
-
-# BUD-SUP-002 — role matrix API + Playwright (Admin chrome smokes unchanged).
-ui-budget-role-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.budget_role_users.upsert_budget_role_users
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_budget.tests.test_budget_role_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_budget.seeds.budget_role_matrix_ui_prep.prepare_budget_role_matrix_ui
-	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/budget-funding/budget-funding-role-matrix.spec.ts
-
+		tests/ui/smoke/design-fidelity/budget-fidelity.spec.ts
 
 # XMOD-STR-002 / 003 — create-demand Strategy target + PVC Review E2E.
 # Retired with DIA preparatory teardown; Demands MVP-1 will restore a successor gate.
@@ -445,8 +307,6 @@ ui-civic-ledger-wg03-gate:
 pub-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_publication_setup_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_configuration_document_preview_api
 
 ui-publications-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
@@ -461,99 +321,116 @@ ui-demands-workspace-gate:
 		tests/ui/smoke/demands/demands-workspace.spec.ts
 
 # PLN-GATE-03 — workspace / register / empty builder (PLN-UI-01…03).
-ui-planning-workspace-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_workspace_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_register_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+# PLN-CHG-001 v1.2 — Planning gates are rebuilt slice by slice; each slice's
+# gate replaces its Stitch-era predecessor as its surface lands. Retired with
+ui-planning-workspace-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_workspace
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_api_requests
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-workspace.spec.ts \
-		tests/ui/smoke/planning/planning-register.spec.ts \
-		tests/ui/smoke/planning/planning-builder.spec.ts
+		tests/ui/smoke/planning/planning-workspace.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-GATE-04 — Demand modal / populated builder / Plan Item editor (PLN-UI-04…06).
-ui-planning-builder-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_list_eligible_demands
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_add_demand_to_plan_gate04
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_update_plan_item
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_remove_plan_item
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_aggregate_plan_allocations
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_validate_plan
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+# PLN-CHG-001 v1.12 Slice A — DPP authoring (PLN-UI-02..05) on the D13 world
+# (FY 2098-2099, a genuine accepted Need, the live Budget contract).
+ui-planning-dpp-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_dpp_lifecycle
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_dpp_read
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-builder.spec.ts \
-		tests/ui/smoke/planning/planning-add-demand.spec.ts \
-		tests/ui/smoke/planning/planning-plan-item-editor.spec.ts \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
+		tests/ui/smoke/planning/planning-dpp.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-UI-07 / SVC-007 — Finance confirmation (sufficient) + 07A drawer/API reject.
-ui-planning-finance-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_fund_short_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_plan_item_finance
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+# PLN-CHG-001 v1.12 Slice A — DPP validation → auto Annual Plan (PLN-UI-06).
+ui-planning-dpp-review-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_dpp_validation
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_dpp_read
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-finance-confirm.spec.ts
+		tests/ui/smoke/planning/planning-dpp-review.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-GATE-05 — Consolidated review/approval (PLN-UI-08 / PLN-SVC-009…011).
-# Contribution gate removed in PLN-GATE-C02 (use test_planning_contribution_absent).
-ui-planning-approval-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_contribution_absent
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_submit_plan_for_review
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_record_plan_decision
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_approve_plan_version_gate05
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_ui_stitch_layout_guard
+# PLN-CHG-001 v1.12 Phase 8 — release evidence: every Planning browser spec
+# single-worker on the D13 world, the fidelity spec, and the §14 persona pass
+# (which skips itself with the exact missing prerequisite while FU-10/FU-11
+# are open), then the intake flags restored.
+ui-planning-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-plan-review.spec.ts
+		tests/ui/smoke/planning \
+		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-GATE-C01 — Scope + task authority (record vs task vs mutation; route denial).
-ui-planning-scope-auth-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_task_capability
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_permissions_matrix
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_pe_scope_selection
+# PLN-CHG-001 v1.12 decision D14 — every artboard's landmarks in order on the
+# live screen (AGENTS.md §6.6), on the D13 world.
+ui-planning-fidelity-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-task-route-denial.spec.ts
+		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-GATE-C07 — canonical seed / SCN-ADD close-out. Chrome once; do not nest leaf chrome.
-ui-planning-mvp1-gate: ui-stitch-desk-chrome-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_add_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_mvp_seed_contract
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_remove_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_scn_pln_fund_short_001
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_procurement.procurement_planning.tests.test_planning_rem009_absent
+# PLN-CHG-001 v1.12 Slice B — Annual Plan workbench, formation and the Plan
+# Item editor (PLN-UI-07..09) on the D13 world.
+ui-planning-plan-workbench-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_workbench
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-plan-approved.spec.ts \
-		tests/ui/smoke/planning/planning-plan-update.spec.ts \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
+		tests/ui/smoke/planning/planning-plan-workbench.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-NFR-004 — labels, keyboard, visible focus, error association (not WCAG AA).
-ui-planning-a11y-gate:
+# PLN-CHG-001 v1.12 Slice C — plan funding confirmation (PLN-UI-10) over
+# Budget's affordability contract; no reservation.
+ui-planning-finance-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_finance
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-a11y.spec.ts
+		tests/ui/smoke/planning/planning-finance.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# PLN-CHG-001 v1.12 Slice C — Annual Plan governance (PLN-UI-11/12).
+ui-planning-governance-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_governance
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning/planning-governance.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# PLN-CHG-001 v1.12 Slice D — Active plan, cascade reforecast and publication
+# (PLN-UI-13/14).
+ui-planning-publication-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_publication
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning/planning-publication.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# PLN-CHG-001 v1.2 Slice H — §7.4 Requisition eligibility (API-only, no UI):
+# GetRequisitionEligiblePlanItem.v2 + drawdown/reversal consumption, incl.
+# the request-shaped journey; contract tests only per the tracker.
+planning-requisition-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_requisition
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_v12_schema
+
+# PLN-CHG-001 v1.2 §14 (Phase 11) — the deterministic Planning seed:
+# prerequisites, actors, the integrated baseline through real commands,
+# isolated profiles, idempotent rerun, and the boundary guard that keeps the
+# seed itself on the published Needs contracts.
+planning-seed-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_planning_seed
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.departmental_needs.tests.test_departmental_needs_architecture
 
 ui-demands-form-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
@@ -658,8 +535,6 @@ ui-bidder-s300-cbq-gate:
 bw-fot-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_lean_fot_review_certify
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_it_std_template_fot_slice
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_lean_f0_foundation
 
@@ -838,58 +713,6 @@ vue-desk-bundle-translation-binding-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core \
 		--module kentender_core.tests.test_vue_desk_bundle_translation_binding_gate
 
-std-verbatim-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && PYTHONPATH=. python3 scripts/std_extraction/verbatim/run.py
-	cd $(BENCH_ROOT)/apps/kentender_v1 && PYTHONPATH=. python3 scripts/std_extraction/build_package.py v1_1
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_verbatim_extract_clauses
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_record_mapper_verbatim_fields
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
-
-std-step1-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_12_smoke_contracts
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption
-
-# Short --test names required (FQ dotted paths match zero tests under this runner).
-# Fail the gate if any invocation reports "Ran 0 tests".
-nssf-calibration-gate:
-	@set -e; \
-	for t in \
-		test_cal_nssf_001_fixture_import_without_master_mutation \
-		test_cal_nssf_002_golden_bind \
-		test_cal_nssf_003_tds_values_validate_against_fixture \
-		test_cal_nssf_012_render_uses_official_locked_text \
-		test_cal_nssf_013_fixture_activation_blocked; do \
-		echo ">>> nssf-calibration-gate: $$t"; \
-		out=$$(cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-			--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-			--test "$$t" 2>&1); \
-		status=$$?; \
-		printf '%s\n' "$$out"; \
-		if printf '%s\n' "$$out" | grep -Eq 'Ran 0 tests?'; then \
-			echo "ERROR: nssf-calibration-gate matched zero tests for $$t" >&2; \
-			exit 1; \
-		fi; \
-		if ! printf '%s\n' "$$out" | grep -Eq 'Ran [1-9][0-9]* tests?'; then \
-			echo "ERROR: nssf-calibration-gate did not report a non-zero test run for $$t" >&2; \
-			exit 1; \
-		fi; \
-		if [ $$status -ne 0 ]; then \
-			echo "ERROR: nssf-calibration-gate failed for $$t (exit $$status)" >&2; \
-			exit $$status; \
-		fi; \
-		if ! printf '%s\n' "$$out" | grep -Eq '^OK$$'; then \
-			echo "ERROR: nssf-calibration-gate did not end OK for $$t" >&2; \
-			exit 1; \
-		fi; \
-	done
-
 e1-nssf-seed-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_fixture_mapper
@@ -898,8 +721,6 @@ e1-nssf-seed-gate:
 
 e1-nssf-poc-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_form_locked_text_activation
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_preview_presentation
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_fixture_mapper
@@ -907,8 +728,6 @@ e1-nssf-poc-gate:
 		--module kentender_procurement.tender_configurations.tests.test_schema_compiler
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_seed
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_configuration_document_preview_api
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_electronic_bid_submission
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

@@ -13,9 +13,9 @@ from kentender_core.services.workflow_tasks import claim_task
 NO_ACTIVE_OPERATIONAL_ASSIGNMENT = "NO_ACTIVE_OPERATIONAL_ASSIGNMENT"
 
 _PRESENTATION = {
-	"plan.finance.confirm": ("Finance confirmation", "Confirm funding", "procurement-plan-item-editor"),
-	"plan.review": ("Planning review", "Review Plan", "procurement-plan-review"),
-	"plan.approve": ("Planning approval", "Approve Plan", "procurement-plan-review"),
+	# PLN-CHG-001 v1.2: Planning left the Workflow Task queue for module-local
+	# task doctypes projected through kt_my_work_providers — no "plan.*"
+	# entries here any more (their legacy tasks were cancelled by patch).
 	# BUD-CHG-001 v1.2: Budget Version governance (submit/return/approve) moved
 	# off the Workflow Task queue entirely onto AUTH-ADR-001's native Role
 	# engine, mirroring Strategy — no "budget.*" entries here any more. Finance

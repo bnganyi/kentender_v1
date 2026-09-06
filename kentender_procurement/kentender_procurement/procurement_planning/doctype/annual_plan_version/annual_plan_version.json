@@ -1,0 +1,219 @@
+{
+ "actions": [],
+ "autoname": "field:version_reference",
+ "creation": "2026-08-30 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "version_reference",
+  "annual_plan",
+  "version_number",
+  "based_on_version",
+  "correction_of_plan_version",
+  "version_status",
+  "change_reason",
+  "funding_state",
+  "funding_line_totals_hash",
+  "splitting_confirmation",
+  "late_activation_reason",
+  "submitted_snapshot",
+  "snapshot_hash",
+  "submitted_by_user",
+  "submitted_at",
+  "activated_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "version_reference",
+   "fieldtype": "Data",
+   "label": "Version Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Generated as {plan_reference}-V{version_number}."
+  },
+  {
+   "fieldname": "annual_plan",
+   "fieldtype": "Link",
+   "label": "Annual Plan",
+   "options": "Annual Plan",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "Annual Plan Version",
+   "read_only": 1,
+   "description": "Active predecessor. Empty for Version 1."
+  },
+  {
+   "fieldname": "correction_of_plan_version",
+   "fieldtype": "Link",
+   "label": "Correction Of Plan Version",
+   "options": "Annual Plan Version",
+   "read_only": 1,
+   "description": "Immutable submitted Version returned by a governance actor. Empty unless this Draft is a correction."
+  },
+  {
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "label": "Version Status",
+   "options": "Draft\nAwaiting Accounting Officer\nAwaiting statutory approval\nReturned\nApproved \u2014 publication pending\nPublication failed\nActive\nSuperseded\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "change_reason",
+   "fieldtype": "Small Text",
+   "label": "Change Reason",
+   "read_only": 1,
+   "description": "Required only for a successor Version; identifies the approved-plan change proposed."
+  },
+  {
+   "fieldname": "funding_state",
+   "fieldtype": "Select",
+   "label": "Funding State",
+   "options": "Not requested\nAwaiting Finance\nConfirmed\nReturned\nStale",
+   "default": "Not requested",
+   "reqd": 1,
+   "read_only": 1,
+   "description": "PLN-CHG-001 v1.12 \u00a74.11 \u2014 funding confirmation is a property of the Plan Version: one plan-level task, no per-item state."
+  },
+  {
+   "fieldname": "funding_line_totals_hash",
+   "fieldtype": "Data",
+   "label": "Funding Line Totals Hash",
+   "read_only": 1,
+   "description": "Per-Procurement-Budget-Line planned totals as confirmed; a later change makes the confirmation Stale (\u00a74.11)."
+  },
+  {
+   "fieldname": "splitting_confirmation",
+   "fieldtype": "Small Text",
+   "label": "Splitting Advisory Confirmation",
+   "read_only": 1,
+   "description": "PLN-AC-073/074 \u2014 the Planner's recorded confirmation that the flagged items are legitimately separate (or legitimately unbundled under a preference scheme)."
+  },
+  {
+   "fieldname": "late_activation_reason",
+   "fieldtype": "Small Text",
+   "label": "Late Activation Reason",
+   "read_only": 1,
+   "description": "Invariant 27 \u2014 required when the plan is submitted after its Fiscal Year has begun; retained in audit history."
+  },
+  {
+   "fieldname": "submitted_snapshot",
+   "fieldtype": "JSON",
+   "label": "Submitted Snapshot",
+   "read_only": 1,
+   "description": "Immutable consolidated snapshot locked at submission; the exact record governance actors decide."
+  },
+  {
+   "fieldname": "snapshot_hash",
+   "fieldtype": "Data",
+   "label": "Snapshot Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by_user",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "activated_at",
+   "fieldtype": "Datetime",
+   "label": "Activated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Monotonic optimistic-concurrency token checked by every mutating command."
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-08-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Annual Plan Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "version_reference"
+}

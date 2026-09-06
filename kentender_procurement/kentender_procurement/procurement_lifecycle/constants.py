@@ -49,7 +49,7 @@ JOURNEY_STEP_CONFIG: Final[tuple[JourneyStepConfig, ...]] = (
 		step_key="budget",
 		label="Funding Available",
 		owner_module="Budget",
-		source_object_type="Budget Line",
+		source_object_type="Procurement Budget Line",
 		handoff_title="Budget Funding Confirmation",
 		standard_status_category=ProcurementJourneyStatusCategory.COMPLETED,
 	),

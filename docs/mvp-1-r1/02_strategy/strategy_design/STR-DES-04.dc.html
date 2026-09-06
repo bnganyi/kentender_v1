@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+.tree-kids{border-left:1px solid var(--color-divider);margin-left:9px;padding-left:11px}
+.tree-type{font-size:11px;color:var(--color-neutral-700);white-space:nowrap}
+.add-child{font-size:12px;padding:3px 8px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text);cursor:pointer;font-family:var(--font-heading);white-space:nowrap;flex:none}
+.add-child:hover{border-color:var(--color-accent);color:var(--color-accent-700)}
+.btn-danger-outline{border:1px solid var(--status-critical);color:var(--status-critical);background:transparent}
+.btn-danger-outline:hover{background:var(--status-critical-bg)}
+</style>
+</helmet>
+<dc-import name="Shell" breadcrumb="Home > Strategy Alignment > STR-MOH-2023-001 > Version 2 > Structure" hint-size="100%,900px">
+<div data-screen-label="STR-DES-04" style="max-width:1320px;margin:0 auto;padding:var(--space-8) var(--space-6)">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">STR-MOH-2023-001 &middot; VERSION 2</div>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <h1 style="font-size:28px;margin:0">Strategy structure</h1>
+        <span class="kt-status is-draft">Draft</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--space-2)">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Submit for approval</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:var(--space-6);border-bottom:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+    <button type="button" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--color-neutral-700);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">Overview</button>
+    <button type="button" style="background:none;border:none;border-bottom:2px solid var(--color-accent);color:var(--color-text);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">Structure</button>
+    <button type="button" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--color-neutral-700);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">History</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:42% 58%;gap:var(--space-6);align-items:start">
+    <div class="card blueprint" style="padding:var(--space-6)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="kt-card-title" style="margin:0;padding-bottom:0;border-bottom:none">Plan hierarchy</div>
+        <button type="button" class="add-child">Add pillar</button>
+      </div>
+      <div style="padding:7px 8px;border:1px solid transparent">
+        <div style="display:flex;align-items:flex-start;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.5;margin-top:3px"><path d="m6 9 6 6 6-6"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-draft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="16"/></svg><strong style="font-weight:600;line-height:1.3">Digital health systems</strong></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-left:33px"><span class="tree-type">&middot; Pillar</span><button type="button" class="add-child">Add programme</button></div>
+      </div>
+      <div class="tree-kids" style="margin-top:6px">
+        <div style="padding:7px 8px;border:1px solid transparent">
+          <div style="display:flex;align-items:flex-start;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.5;margin-top:3px"><path d="m6 9 6 6 6-6"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-draft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><path d="m12.83 2.18 8.58 3.9a1 1 0 0 1 0 1.83l-8.58 3.9a2 2 0 0 1-1.66 0L2.6 7.91a1 1 0 0 1 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg><strong style="font-weight:600;line-height:1.3">Health policy, standards and regulation</strong></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-left:33px"><span class="tree-type">&middot; Programme</span><button type="button" class="add-child">Add sub-programme</button></div>
+        </div>
+        <div class="tree-kids" style="margin-top:6px">
+          <div style="padding:7px 8px;border:1px solid transparent">
+            <div style="display:flex;align-items:flex-start;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.5;margin-top:3px"><path d="m6 9 6 6 6-6"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-draft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg><strong style="font-weight:600;line-height:1.3">Digital health governance</strong></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-left:33px"><span class="tree-type">&middot; Sub-programme</span><button type="button" class="add-child">Add objective</button></div>
+          </div>
+          <div class="tree-kids" style="margin-top:6px">
+            <div style="padding:7px 8px;background:var(--color-accent-100);border:1px solid var(--color-accent)">
+              <div style="display:flex;align-items:flex-start;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.5;margin-top:3px"><path d="m6 9 6 6 6-6"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><strong style="font-weight:600;line-height:1.3">Strengthen interoperable national digital health services</strong></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-left:33px"><span class="tree-type">&middot; Strategic Objective</span><button type="button" class="add-child">Add indicator</button></div>
+            </div>
+            <div class="tree-kids" style="margin-top:6px">
+              <div style="padding:7px 8px;border:1px solid transparent">
+                <div style="display:flex;align-items:flex-start;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><strong style="font-weight:600;line-height:1.3">Percentage of priority facilities using interoperable digital health services</strong></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-left:23px"><span class="tree-type">&middot; Performance Indicator</span><button type="button" class="add-child">Add target</button></div>
+              </div>
+              <div class="tree-kids" style="margin-top:6px">
+                <div style="padding:7px 8px;border:1px solid transparent">
+                  <div style="display:flex;align-items:flex-start;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg><strong style="font-weight:600;line-height:1.3">At least 85% &middot; FY 2027/28</strong></div>
+                  <div style="margin-top:3px;padding-left:23px"><span class="tree-type">&middot; Performance Target</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card blueprint" style="padding:var(--space-6)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="kt-card-title" style="margin-bottom:4px">Strategic Objective</div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-bottom:var(--space-4)">Pillar / Programme / Sub-programme / Strategic Objective</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+        <div class="field" style="grid-column:1 / -1"><label>Title</label><input class="input" value="Strengthen interoperable national digital health services" /></div>
+        <div class="field"><label>Display order</label><input class="input" type="number" value="1" /></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:var(--space-3);margin-top:var(--space-6)">
+        <button type="button" class="btn btn-danger-outline">Delete node</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+</dc-import>
+</x-dc>
+</body>
+</html>

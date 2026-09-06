@@ -10,9 +10,6 @@
   "plan_id",
   "title",
   "col_id",
-  "procuring_entity_id",
-  "pe_fy_context",
-  "owner_org_unit_id",
   "section_role",
   "plan_role",
   "parent_primary_plan_id",
@@ -48,30 +45,6 @@
    "fieldname": "col_id",
    "fieldtype": "Column Break",
    "label": "Col Id"
-  },
-  {
-   "fieldname": "procuring_entity_id",
-   "fieldtype": "Link",
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "description": "Defines the owning PE and is used in permission and context resolution.",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "pe_fy_context",
-   "fieldtype": "Link",
-   "label": "PE Fiscal Year Context",
-   "options": "PE Fiscal Year Context",
-   "insert_after": "procuring_entity_id"
-  },
-  {
-   "fieldname": "owner_org_unit_id",
-   "fieldtype": "Link",
-   "label": "Owner Organisation Unit",
-   "options": "Organisation Unit",
-   "description": "Narrows applicability to one configured organisation unit when the plan is not PE-wide. Empty means PE-wide.",
-   "search_index": 1
   },
   {
    "fieldname": "section_role",
@@ -129,7 +102,7 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-23 00:00:00.000000",
+ "modified": "2026-09-05 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Strategic Plan",
@@ -176,11 +149,11 @@
    "create": 0,
    "delete": 0,
    "email": 0,
-   "export": 0,
+   "export": 1,
    "print": 0,
    "read": 1,
    "report": 1,
-   "role": "Strategy Viewer",
+   "role": "Auditor",
    "share": 0,
    "write": 0
   }

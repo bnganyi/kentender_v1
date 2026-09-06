@@ -11,7 +11,7 @@ import {
 } from "./helpers";
 
 /**
- * NDS-CHG-001 v1.1 — NDS-UI-06 accepted source detail
+ * NDS-CHG-001 v1.6 — NDS-UI-06 accepted source detail
  * (`/app/departmental-needs/{need_reference}/accepted/{version_number}`).
  *
  * The last of DEBT-06's four screens. It is the deep link Procurement Planning
@@ -22,11 +22,12 @@ import {
  * route to the newer version, or Planning's lineage would read as though it
  * had always pointed at the successor.
  *
- * Fixture: `reset_accepted_source_fixture` — Version 1 accepted then superseded
- * by an accepted Version 2, under PE-CGKIS (DEBT-07).
+ * Fixture: `reset_accepted_source_fixture` — Version 1 accepted then
+ * superseded by an accepted Version 2, under the dedicated Playwright
+ * Organisation Unit (DEBT-07).
  */
 
-const NEED = "NDS-CGKIS-2027-0001";
+let NEED = "";
 
 test.describe.configure({ mode: "serial" });
 
@@ -34,7 +35,9 @@ test.describe("NDS-UI-06 accepted source detail", () => {
 	// beforeEach, not beforeAll: a sibling spec file's afterAll clears the
 	// shared fixture entity, so a suite-order change would otherwise leave these
 	// tests running against nothing.
-	test.beforeEach(() => resetFixture("reset_accepted_source_fixture"));
+	test.beforeEach(() => {
+		NEED = resetFixture<{ need: string }>("reset_accepted_source_fixture").need;
+	});
 	test.afterAll(() => clearFixtures());
 
 	test("a superseded version stays readable at the route that asked for it", async ({ page }) => {
@@ -67,7 +70,7 @@ test.describe("NDS-UI-06 accepted source detail", () => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");
-		await selectContext(page, "CGK-DEPT-HEALTH");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 
 		// Reaching the detail the way a user does — from the row — rather than by

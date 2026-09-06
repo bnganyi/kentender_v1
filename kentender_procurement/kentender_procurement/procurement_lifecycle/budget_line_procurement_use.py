@@ -118,7 +118,7 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 		}
 
 	bl_row = frappe.db.get_value(
-		"Budget Line",
+		"Procurement Budget Line",
 		nm,
 		["generated_reference", "budget"],
 		as_dict=True,
@@ -147,17 +147,17 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 	amount_available = 0.0
 	if bl_row.get("budget"):
 		budget_row = frappe.db.get_value(
-			"Budget", bl_row["budget"], ["title", "financial_year", "currency"], as_dict=True
+			"Procurement Budget", bl_row["budget"], ["title", "fiscal_year", "currency"], as_dict=True
 		)
 		if budget_row:
 			budget_meta = dict(budget_row)
 		version_row = frappe.db.get_value(
-			"Budget Version", {"budget": bl_row["budget"], "status": "Active"}, ["name", "status"], as_dict=True
+			"Procurement Budget Version", {"budget": bl_row["budget"], "status": "Active"}, ["name", "status"], as_dict=True
 		)
 		if version_row:
 			budget_meta["status"] = version_row.status
 			line_version_row = frappe.db.get_value(
-				"Budget Line Version",
+				"Procurement Budget Line Version",
 				{"budget_version": version_row.name, "budget_line": nm},
 				["title", "approved_amount"],
 				as_dict=True,
@@ -235,7 +235,7 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 		# Funding confirmation
 		"budget_doc_name": bl_row.get("budget") or "",
 		"budget_name": budget_meta.get("title") or "",
-		"fiscal_year": budget_meta.get("financial_year"),
+		"fiscal_year": budget_meta.get("fiscal_year"),
 		"budget_status": budget_meta.get("status") or "",
 		"currency": budget_meta.get("currency") or "",
 		"amount_allocated": amount_allocated,

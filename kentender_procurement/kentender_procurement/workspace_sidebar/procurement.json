@@ -13,8 +13,9 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Home",
-   "link_to": "kt-procurement-home",
+   "link_to": "coming-soon",
    "link_type": "Page",
+   "route_options": "{\"feature\": \"Home\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -38,11 +39,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Strategy Alignment",
-   "link_to": "strategy-portfolio",
+   "link_to": "strategy",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/strategy-portfolio"
+   "url": "/desk/strategy"
   },
   {
    "child": 0,
@@ -73,13 +74,12 @@
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "kanban",
+   "icon": "clipboard-list",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Procurement Plans",
-   "link_to": "coming-soon",
+   "label": "Procurement Planning",
+   "link_to": "procurement-planning",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Procurement Plans\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -100,8 +100,9 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Tender Configurations",
-   "link_to": "it-tender-configuration-dashboard",
+   "link_to": "coming-soon",
    "link_type": "Page",
+   "route_options": "{\"feature\": \"Tender Configurations\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -171,64 +172,9 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Supplier Management",
-   "link_to": "KTSM Supplier Registry",
-   "link_type": "Workspace",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 1,
-   "icon": "book",
-   "indent": 0,
-   "keep_closed": 1,
-   "label": "STD Administration",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Section Break"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "STD Library",
-   "link_to": "std-library",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "STD Versions",
    "link_to": "coming-soon",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"STD Versions\"}",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Forms & Schemas",
-   "link_to": "std-form-schema-manager",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Import Review",
-   "link_to": "std-import-package-review",
-   "link_type": "Page",
+   "route_options": "{\"feature\": \"Supplier Management\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -246,14 +192,14 @@
   {
    "child": 1,
    "collapsible": 0,
-   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"Procurement Planner\")",
+   "display_depends_on": "eval: (frappe.user_roles || []).includes(\"System Manager\")",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Intake window",
-   "link_type": "URL",
+   "label": "System setup",
+   "link_to": "system-setup",
+   "link_type": "Page",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/departmental-needs/intake-window"
+   "type": "Link"
   },
   {
    "child": 1,
@@ -280,7 +226,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-03 11:03:37.871079",
+ "modified": "2026-09-05 17:27:13.326952",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

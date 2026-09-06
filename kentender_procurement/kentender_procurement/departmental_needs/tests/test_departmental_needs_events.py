@@ -12,22 +12,22 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, now_datetime
 
 from kentender_procurement.departmental_needs.constants import STATE_WITHDRAWN
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	AUTHOR,
+	DEPARTMENTAL_AUTHOR,
 	FY,
-	INTAKE_WINDOW,
-	OU_DIGITAL_HEALTH,
-	PE,
 	REVIEWER,
+	_granted_units,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle
 
-# §7.1 — the exact `DepartmentalNeedAccepted.v2` field set, plus event identity.
+# §7.1 — the exact `DepartmentalNeedAccepted.v2` field set, plus event
+# identity. AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit
+# Procuring Entity, so the payload carries no `procuring_entity_id`.
 ACCEPTED_FIELDS = {
 	"event_id",
 	"event_type",
@@ -37,7 +37,6 @@ ACCEPTED_FIELDS = {
 	"accepted_version_id",
 	"version_number",
 	"content_hash",
-	"procuring_entity_id",
 	"org_unit_id",
 	"financial_year_id",
 	"title",
@@ -75,17 +74,11 @@ class EventCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		cls.ou = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)["Digital Health"]
 
 	def setUp(self):
 		super().setUp()
 		self.addCleanup(frappe.set_user, "Administrator")
-		now = now_datetime()
-		frappe.db.set_value(
-			"Needs Intake Window",
-			INTAKE_WINDOW,
-			{"opens_at": add_days(now, -1), "closes_at": add_days(now, 1)},
-			update_modified=False,
-		)
 
 	def key(self) -> str:
 		return f"nds-event-{uuid4().hex}"
@@ -96,7 +89,7 @@ class EventCase(IntegrationTestCase):
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
-			"unit": "UNIT-EACH",
+			"unit": "Each",
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -106,8 +99,7 @@ class EventCase(IntegrationTestCase):
 		"""Drive a Need through §5.1 to Accepted for planning."""
 		frappe.set_user(AUTHOR)
 		created = lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(**overrides),
@@ -173,8 +165,7 @@ class TestAcceptedEvent(EventCase):
 	def test_a_returned_or_declined_version_publishes_nothing(self):
 		frappe.set_user(AUTHOR)
 		created = lifecycle.create_need(
-			procuring_entity=PE,
-			organisation_unit=OU_DIGITAL_HEALTH,
+			organisation_unit=self.ou,
 			financial_year=FY,
 			idempotency_key=self.key(),
 			**self.content(),
@@ -399,7 +390,7 @@ class TestOutboxDelivery(EventCase):
 
 	def test_current_accepted_events_replays_the_context(self):
 		accepted = self.accepted()
-		payloads = events.current_accepted_events(procuring_entity=PE, financial_year=FY)
+		payloads = events.current_accepted_events(financial_year=FY)
 		by_need = {row["need_id"]: row for row in payloads}
 		self.assertIn(accepted["need"], by_need)
 		self.assertEqual(

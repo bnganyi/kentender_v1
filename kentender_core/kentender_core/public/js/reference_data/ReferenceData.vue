@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import PageRail from "../kt_industry/components/PageRail.vue";
 import SummaryCards from "./components/SummaryCards.vue";
 import TabStrip from "./components/TabStrip.vue";
@@ -15,10 +15,30 @@ import ContextNew from "./components/context/ContextNew.vue";
 import { useReferenceData } from "./composables/useReferenceData.js";
 import { useRouteState } from "./composables/useRouteState.js";
 
-const { pe, fy, context, peTypes, refreshPe, refreshFy, refreshContext, refreshAll } = useReferenceData();
-onMounted(refreshAll);
+const { pe, fy, context, peTypes, forbidden, refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, checkAccess } =
+	useReferenceData();
+onMounted(async () => {
+	// KT-STD-001 v1.2 §3A.1 — resolve the verdict before anything else loads.
+	if (await checkAccess()) refreshAll();
+});
 
-const { state: route, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
+const { state: route, epoch, goToTab, openRecord, openNew, openEdit, closeToList } = useRouteState();
+
+// The registers and the summary cards above them are read once on mount, so a
+// record created or activated on the New/Detail view stayed invisible here
+// until the user reloaded the browser. Refetch whenever a register comes back
+// into view; quiet, so the rows already on screen are not flashed away and
+// back on every return.
+watch(
+	() => route.value.view,
+	(view) => {
+		if (view === "list") refreshAll({ quiet: true });
+	}
+);
+// The page came back into view on the same route: revalidate in place.
+watch(epoch, () => {
+	if (!forbidden.value) refreshAll({ quiet: true });
+});
 
 const NEW_LABEL = { pe: "New procuring entity", fy: "New financial year", context: "New PE/FY context" };
 
@@ -62,7 +82,14 @@ const availableFyOptionsForContext = computed(() =>
 <template>
 	<div class="kt-industry" style="min-height:100vh;display:flex;flex-direction:column">
 		<PageRail :trail="railTrail" />
-		<template v-if="route.view === 'list'">
+
+		<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="rd-forbidden" style="margin:36px 48px">
+			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+			<h2>{{ __(forbidden.heading) }}</h2>
+			<p>{{ __(forbidden.text) }}</p>
+		</div>
+
+		<template v-else-if="route.view === 'list'">
 			<div style="padding:36px 48px 0;display:flex;align-items:flex-start;gap:32px">
 				<div style="flex:1">
 					<h1 style="margin:0;font-size:38px;line-height:1.05;letter-spacing:.005em">{{ __("Reference data") }}</h1>
@@ -94,7 +121,7 @@ const availableFyOptionsForContext = computed(() =>
 		</template>
 
 		<template v-else-if="route.view === 'new'">
-			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" @created="(code) => openRecord('pe', code)" @cancel="closeToList('pe')" />
+			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" @created="(code) => openRecord('pe', code)" @cancel="closeToList('pe')" @pe-type-created="loadPeTypes" />
 			<FyNew v-else-if="route.tab === 'fy'" @created="(code) => openRecord('fy', code)" @cancel="closeToList('fy')" />
 			<ContextNew
 				v-else
@@ -106,7 +133,7 @@ const availableFyOptionsForContext = computed(() =>
 		</template>
 
 		<template v-else-if="route.view === 'edit'">
-			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" :edit-code="route.code" @created="(code) => openRecord('pe', code)" @cancel="openRecord('pe', route.code)" />
+			<PeNew v-if="route.tab === 'pe'" :pe-types="activePeTypes" :edit-code="route.code" @created="(code) => openRecord('pe', code)" @cancel="openRecord('pe', route.code)" @pe-type-created="loadPeTypes" />
 		</template>
 
 		<template v-else-if="route.view === 'detail'">

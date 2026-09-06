@@ -74,14 +74,27 @@ NEEDS_DOCTYPES = frozenset(
 
 PLANNING_DOCTYPES = frozenset(
 	{
-		"Procurement Plan",
-		"Procurement Plan Version",
-		"Procurement Plan Item",
-		"Procurement Plan Item Version",
-		"Plan Need Allocation",
-		"Plan Decision",
-		"Plan Validation Result",
-		"Planning Handoff Snapshot",
+		# PLN-CHG-001 v1.2 model (the Demand-era doctypes were dropped in its
+		# Phase 1); Needs still consumes nothing of Planning's directly.
+		"Departmental Plan",
+		"Departmental Plan Version",
+		"Departmental Plan Entry",
+		"Departmental Plan Submission",
+		"Departmental Plan Submission Window",
+		"Departmental Plan Validation Task",
+		"Departmental Plan Validation Decision",
+		"Annual Plan",
+		"Annual Plan Version",
+		"Annual Plan Item",
+		"Plan Source Allocation",
+		"Plan Finance Task",
+		"Plan Finance Decision",
+		"Plan Reservation Reference",
+		"Plan Governance Task",
+		"Plan Governance Decision",
+		"Annual Plan Publication",
+		"Plan Drawdown Reference",
+		"Planning Command Journal",
 	}
 )
 
@@ -92,6 +105,19 @@ PUBLISHED_TO_PLANNING = frozenset(
 	{
 		f"kentender_procurement.{NEEDS}.services.events",
 		f"kentender_procurement.{NEEDS}.services.workspace",
+		# The typed error the published reads raise (NDS_NOT_ACCEPTED,
+		# NDS_SOURCE_STALE, …): a consumer cannot catch a contract's refusal
+		# without its exception type, so the errors module is part of the
+		# published surface (added for PLN-CHG-001 v1.2 Phase 2).
+		f"kentender_procurement.{NEEDS}.errors",
+		# The outbound half of the same handoff (§7.1/§4.7): Planning
+		# publishes NeedPlanningUsageChanged.v1 by calling
+		# `usage.project_planning_usage` directly (its own module docstring,
+		# and the PUBLISHED_TO_NEEDS comment below, already describe this as
+		# the intended direction) — added when Phase 9 built the first real
+		# publisher, closing a gap this guard's own allow-list had left open
+		# since Phase 2 only wired the read side.
+		f"kentender_procurement.{NEEDS}.services.usage",
 	}
 )
 

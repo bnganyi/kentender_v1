@@ -14,7 +14,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 	PE_MOH,
-	resolve_procuring_entity_moh,
+	resolve_site_entity_code,
 	upsert_works_master_strategy_hierarchy,
 )
 from kentender_strategy.services.strategy_consumer import (
@@ -22,12 +22,12 @@ from kentender_strategy.services.strategy_consumer import (
 	get_strategy_lineage,
 	target_snapshot_fields,
 )
-from kentender_strategy.services.strategy_contracts import list_active_targets
+from kentender_strategy.services.strategy_consumer import list_active_targets
 
 
 class TestWorksMasterFixtureRebuilt(FrappeTestCase):
-	def test_resolve_procuring_entity_moh_no_fallback(self):
-		self.assertEqual(resolve_procuring_entity_moh(), PE_MOH)
+	def test_resolve_site_entity_code_no_fallback(self):
+		self.assertEqual(resolve_site_entity_code(), PE_MOH)
 
 	def test_seed_idempotent_and_produces_real_active_data(self):
 		first = upsert_works_master_strategy_hierarchy()
@@ -86,7 +86,7 @@ class TestWorksMasterFixtureRebuilt(FrappeTestCase):
 		`budget_live_bind.js::loadTargetOptions` calls via
 		`kentender_strategy.api.strategy_api.list_active_targets` to
 		populate the Budget Line "primary target" dropdown — still filtered
-		on `Strategic Plan.status`/`procuring_entity`/`plan_code` and
+		on `Strategic Plan.status`/`plan_code` and
 		`Performance Target.plan_version`/`target_code`/`title`/`status`,
 		none of which exist post-Phase-1 (status moved to `Strategic Plan
 		Version`; `Performance Target` links only via `indicator_id`).
@@ -97,7 +97,7 @@ class TestWorksMasterFixtureRebuilt(FrappeTestCase):
 		(`validate_strategy_reference`/`build_strategy_reference`)."""
 		out = upsert_works_master_strategy_hierarchy()
 
-		refs = list_active_targets(procuring_entity=PE_MOH)
+		refs = list_active_targets()
 
 		self.assertTrue(any(r["node_id"] == out["target"] for r in refs))
 		matched = next(r for r in refs if r["node_id"] == out["target"])

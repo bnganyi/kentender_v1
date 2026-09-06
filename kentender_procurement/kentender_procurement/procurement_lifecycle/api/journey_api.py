@@ -60,9 +60,6 @@ from kentender_procurement.procurement_lifecycle.strategy_node_journeys import (
 from kentender_procurement.procurement_lifecycle.budget_line_procurement_use import (
     build_procurement_use_payload,
 )
-from kentender_procurement.procurement_lifecycle.demand_planning_status import (
-    build_demand_planning_status_payload,
-)
 from kentender_procurement.procurement_lifecycle.api.permission_guard import (
     require_journey_read,
 )
@@ -413,19 +410,18 @@ def get_procurement_use_for_budget_line(
 def get_demand_planning_status(
     demand_name: str | None = None,
 ) -> dict[str, Any]:
-    """Return planning status and Demand→Planning handoff artefacts for a Demand.
+    """Retired with the Demands module. The module-level import of the deleted
+    ``demand_planning_status`` helper had left this whole API module (and every
+    test importing it) unimportable; honest retirement per the house pattern.
 
-    Read-only aggregate for the Demand desk panel (R5-004 / LV-R5-004-02).
-
-    :param demand_name: Frappe ``name`` (primary key) of the ``Demand`` document.
-    :raises frappe.PermissionError: If the user cannot read Procurement Journey.
-    :raises frappe.ValidationError: If ``demand_name`` is blank.
+    :raises frappe.ValidationError: Always — the Demand model no longer exists.
     """
     _require_journey_read_permission()
-    nm = cstr(demand_name or "").strip()
-    if not nm:
-        frappe.throw("demand_name is required.", frappe.ValidationError)
-    return build_demand_planning_status_payload(nm)
+    frappe.throw(
+        "JOURNEY_DEMANDS_RETIRED: the Demand model was retired; "
+        "planning status now derives from PLN-CHG-001 v1.2 records.",
+        frappe.ValidationError,
+    )
 
 
 # ---------------------------------------------------------------------------

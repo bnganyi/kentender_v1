@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #e4e7ec; font-family: var(--font-body); color: var(--color-text); }
+a { color: var(--color-accent-2-700); }
+a:hover { color: var(--color-accent-2-800); }
+</style>
+</helmet>
+<div style="padding:40px 20px 60px">
+
+  <div style="width:1440px;margin:0 auto 18px;padding-bottom:10px;border-bottom:1px dashed var(--color-neutral-400);display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;font-family:var(--font-heading);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">
+    <span style="color:var(--color-accent-700);font-weight:700">AUTH-DES-03 — Users and responsibilities register</span>
+    <span>Administrator · administrator@moh.example.test</span>
+    <span>Ministry of Health</span>
+    <span>1 Sep 2026, 10:10 EAT</span>
+    <span>Home &gt; Configuration and Governance &gt; System setup</span>
+  </div>
+
+  <div style="width:1440px;min-height:1024px;margin:0 auto;background:var(--color-bg);border:1px solid var(--color-divider)" data-screen-label="AUTH-DES-03">
+    <div style="max-width:1200px;margin:0 auto;padding:32px 0">
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:24px">
+        <div>
+          <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">SYSTEM SETUP</div>
+          <h1 style="margin:0 0 8px;font-family:var(--font-heading);font-size:32px;line-height:1.1">Users and responsibilities</h1>
+          <p style="margin:0;font-size:14px;color:var(--color-neutral-800);max-width:70ch">Assign each user a business responsibility in its exact organisational scope.</p>
+        </div>
+        <button class="btn btn-primary" style="flex:none">Assign responsibility</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) auto;gap:12px;align-items:end;padding:16px;background:var(--color-surface);border:1px solid var(--color-divider);margin-bottom:16px">
+        <div class="field">
+          <label>Search user or responsibility</label>
+          <div class="input" style="display:flex;align-items:center;gap:8px;color:var(--color-neutral-600)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <span style="font-size:14px">Search user or responsibility</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Organisation Unit</label>
+          <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px"><span>All organisation units</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+        </div>
+        <div class="field">
+          <label>Responsibility</label>
+          <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px"><span>All responsibilities</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px"><span>All statuses</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+        </div>
+        <button class="btn btn-ghost" style="height:36px">Clear filters</button>
+      </div>
+
+      <div class="card blueprint elev-sm" style="padding:0;gap:0;overflow:visible">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="overflow-x:auto">
+          <table class="table" style="min-width:1160px">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Responsibility</th>
+                <th>Scope</th>
+                <th>Coverage</th>
+                <th>Appointment</th>
+                <th>Effective period</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="font-weight:600">Grace Wanjiku</div><div style="font-size:12px;color:var(--color-neutral-700)">grace.wanjiku@moh.example.test</div></td>
+                <td>Departmental Author</td>
+                <td>Digital Health</td>
+                <td>This unit only</td>
+                <td>Permanent</td>
+                <td>From now · No scheduled end</td>
+                <td><span class="kt-status is-live">Active</span></td>
+                <td><a href="#detail">View</a></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Dr Peter Kimani</div><div style="font-size:12px;color:var(--color-neutral-700)">peter.kimani@moh.example.test</div></td>
+                <td>Head of User Department</td>
+                <td>Human Resources Management and Development</td>
+                <td>This unit only</td>
+                <td>Permanent</td>
+                <td>From now · No scheduled end</td>
+                <td><span class="kt-status is-live">Active</span></td>
+                <td><a href="#detail">View</a></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Julia Njeri</div><div style="font-size:12px;color:var(--color-neutral-700)">julia.njeri@moh.example.test</div></td>
+                <td>Head of User Department</td>
+                <td>Digital Health</td>
+                <td>This unit only</td>
+                <td>Acting</td>
+                <td>1 Oct 2026 – 30 Nov 2026</td>
+                <td><span class="kt-status is-draft">Scheduled</span></td>
+                <td><a href="#detail">View</a></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Mercy Kilonzo</div><div style="font-size:12px;color:var(--color-neutral-700)">mercy.kilonzo@moh.example.test</div></td>
+                <td>Procurement Planner</td>
+                <td>Site-wide</td>
+                <td>Entire entity</td>
+                <td>Permanent</td>
+                <td>From now · No scheduled end</td>
+                <td><span class="kt-status is-live">Active</span></td>
+                <td><a href="#detail">View</a></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Samuel Otieno</div><div style="font-size:12px;color:var(--color-neutral-700)">samuel.otieno@moh.example.test</div></td>
+                <td>Head of User Department</td>
+                <td>Directorate of Digital Health and Policy</td>
+                <td>This unit and 1 descendant</td>
+                <td>Permanent</td>
+                <td>From 1 Jan 2026 · Until 31 Aug 2026</td>
+                <td><span class="kt-status is-pending">Expired</span></td>
+                <td><a href="#detail">View</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;font-size:13px;color:var(--color-neutral-800)">5 responsibilities</div>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -16,10 +16,7 @@ def _pp2_pkg_available() -> bool:
 from frappe.utils import add_to_date, cstr, now_datetime, nowdate
 
 PKG_APPROVED = "Approved"  # PP2 Package DocType retired
-from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
-from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
-	ensure_active_canonical_ppra_it_std,
-)
+from kentender_procurement.tender_configurations.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.tender_configurations.constants import STATUS_APPROVED_FOR_PREVIEW
 from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
 	lean_preliminary_criteria_rows,
@@ -88,7 +85,7 @@ def seed_lean_synthetic_it_published(*, clear: bool = True) -> dict[str, Any]:
 	if clear:
 		_clear()
 
-	ensure_active_canonical_ppra_it_std(force_reimport=False)
+	# STD Engine retired 2026-09-05 — no canonical STD package to activate.
 	if not frappe.db.exists("Procuring Entity", PE_CODE):
 		frappe.get_doc(
 			{

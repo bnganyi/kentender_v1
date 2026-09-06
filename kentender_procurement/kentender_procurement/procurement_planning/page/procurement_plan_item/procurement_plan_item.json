@@ -1,0 +1,47 @@
+{
+ "content": null,
+ "creation": "2026-08-31 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-09-05 04:53:08.745501",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "module": "Procurement Planning",
+ "name": "procurement-plan-item",
+ "page_name": "procurement-plan-item",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Departmental Author"
+  },
+  {
+   "role": "Head of User Department"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Finance Confirmation Officer"
+  },
+  {
+   "role": "Accounting Officer"
+  },
+  {
+   "role": "Plan Statutory Approver"
+  },
+  {
+   "role": "Auditor"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Procurement Plan Item"
+}

@@ -24,7 +24,7 @@ class TestDemSeed004OrchestratorDemands(IntegrationTestCase):
 	def test_upsert_clear_and_demands_validate(self) -> None:
 		self.assertTrue(
 			frappe.db.get_value(
-				"Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
+				"Procurement Budget Line", {"generated_reference": C.BL_DHI_2027}, "name"
 			),
 			"Budget portfolio must provide MOH-BL-DHI-2027 before Demands stage",
 		)

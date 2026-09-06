@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated } from "vue";
 
 const PAGE_SLUG = "reference-data";
 const TABS = ["pe", "fy", "context"];
@@ -9,8 +9,7 @@ const DEFAULT_TAB = "pe";
 // route: ["reference-data", "fy", "new"] -> {tab: "fy", view: "new"}
 // route: ["reference-data", "fy", "FY-2027-2028"] -> {tab: "fy", view: "detail", code: "FY-2027-2028"}
 // route: ["reference-data", "pe", "PE-HIGH", "edit"] -> {tab: "pe", view: "edit", code: "PE-HIGH"}
-function readRoute() {
-	const route = frappe.get_route() || [];
+function readRoute(route) {
 	const tab = TABS.includes(route[1]) ? route[1] : DEFAULT_TAB;
 	const second = route.length > 2 ? String(route[2]).trim() : "";
 	const third = route.length > 3 ? String(route[3]).trim() : "";
@@ -21,7 +20,14 @@ function readRoute() {
 }
 
 export function useRouteState() {
-	const state = ref(readRoute());
+	// Route listening lives in kentender_core.desk_page (one listener per app,
+	// paused while the page is hidden, re-synced on resume); this composable
+	// only maps the raw segments onto the tab/view/code shape the screens read.
+	const { route, epoch } = kentender_core.desk_page.useRoute(
+		{ ref, onMounted, onUnmounted, onActivated, onDeactivated },
+		PAGE_SLUG
+	);
+	const state = computed(() => readRoute(route.value));
 
 	function goToTab(tab) {
 		if (!TABS.includes(tab)) return;
@@ -40,20 +46,5 @@ export function useRouteState() {
 		frappe.set_route(PAGE_SLUG, tab || state.value.tab);
 	}
 
-	// frappe.router.off() is a confirmed no-op (see AGENTS.md §6.4 / the pilot's
-	// useRouteState.js for the full source-level explanation) — an active-flag
-	// guard neutralizes the stale listener instead of trying to remove it.
-	let active = true;
-	function onRouteChange() {
-		if (!active) return;
-		state.value = readRoute();
-	}
-
-	onMounted(() => frappe.router.on("change", onRouteChange));
-	onUnmounted(() => {
-		active = false;
-		frappe.router.off("change", onRouteChange);
-	});
-
-	return { state, goToTab, openRecord, openNew, openEdit, closeToList };
+	return { state, epoch, goToTab, openRecord, openNew, openEdit, closeToList };
 }

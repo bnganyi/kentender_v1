@@ -24,10 +24,10 @@
 	--color-text: var(--kt-color-text);
 	--color-accent: var(--kt-color-accent);
 	--color-accent-700: var(--kt-color-accent-800);
-	--color-neutral-100: var(--kt-color-surface);
-	--color-neutral-200: var(--kt-color-divider);
-	--color-neutral-600: #5b5e61;
-	--color-neutral-700: #44474a;
+	--color-neutral-100: var(--kt-color-neutral-100);
+	--color-neutral-200: var(--kt-color-neutral-200);
+	--color-neutral-600: var(--kt-color-neutral-600);
+	--color-neutral-700: var(--kt-color-neutral-700);
 	--font-heading: var(--kt-font-heading);
 	--font-body: var(--kt-font-body);
 	--radius-md: var(--kt-radius-md);
@@ -212,7 +212,7 @@
 .kt-industry .kt-page-lede {
 	font-size: 15px;
 	color: var(--color-neutral-700);
-	max-width: 640px;
+	max-width: 720px;
 	margin: 0;
 }
 .kt-industry .kt-context-grid {
@@ -250,4 +250,49 @@
 	color: oklch(45% 0.16 25);
 	font-size: 12.5px;
 	margin-top: 6px;
+}
+
+/* NDS-DES-01 context row (harmonised 2026-09-05 with Budget & Funding's
+ * Fiscal Year control and Procurement Planning's Financial Year filter): a
+ * plain inline row at text weight beneath the page description, not a
+ * bordered card. */
+.kt-industry .nds-filter-strip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 20px 0 16px;
+	font-size: 14px;
+}
+.kt-industry .nds-filter-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.kt-industry .nds-filter-label {
+	color: var(--color-neutral-700);
+	margin: 0;
+}
+.kt-industry .nds-filter-value {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	color: var(--color-text);
+}
+.kt-industry .nds-filter-strip .kt-input {
+	width: auto;
+	min-width: 150px;
+	padding: 6px 28px 6px 8px;
+	font-size: 13.5px;
+}
+.kt-industry .nds-filter-link {
+	border: 0;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	font-size: 13px;
+}
+.kt-industry .nds-filter-quiet,
+.kt-industry .nds-filter-sep {
+	color: var(--color-neutral-600);
+	font-size: 13px;
 }
