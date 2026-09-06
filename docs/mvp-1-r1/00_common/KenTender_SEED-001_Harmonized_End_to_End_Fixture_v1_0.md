@@ -66,7 +66,7 @@ Every node below cites the document and section where it is — or, for REQ/TPR,
 
 ### 3.1 Site, actors, Organisation Units — no change
 
-All from KT-STD-001 §8.3: Grace Wanjiku (Departmental Author, `OU-MOH-DHI`), Dr Peter Kimani (Head of User Department, `OU-MOH-HRMD` permanently, `OU-MOH-DHI` from 1 Dec 2026), Julia Njeri (Acting Head of User Department, `OU-MOH-DHI`, 1 Oct–30 Nov 2026), Mercy Kilonzo (Procurement Planner, site-wide), Josphat Mwangi (Budget Officer and Finance Confirmation Officer, site-wide), Charles Mutiso (Head of Procurement Function, site-wide — see §6 on this title), Naomi Chebet (Auditor, site-wide).
+All from KT-STD-001 §8.3: Grace Wanjiku (Departmental Author, `OU-MOH-DHI`), Dr Peter Kimani (Head of User Department, `OU-MOH-HRMD` permanently, `OU-MOH-DHI` from 1 Dec 2026), Julia Njeri (Acting Head of User Department, `OU-MOH-DHI`, 1 Oct–30 Nov 2026), Mercy Kilonzo (Procurement Planner, site-wide), Josphat Mwangi (Budget Officer and Finance Confirmation Officer, site-wide), Charles Mutiso (Head of Procurement Function, site-wide — see §6 on this title), Brian Wafula (Procurement Officer, site-wide — Tender Preparation only, added by TPR-CHG-001 v0.5), Naomi Chebet (Auditor, site-wide).
 
 ### 3.2 Needs — NDS-CHG-001 §14.3, §14.4
 
@@ -203,8 +203,10 @@ These are the same dates already committed as `PPI-MOH-2027-033`'s baseline in P
 
 | Step | Actor | Date |
 |---|---|---|
-| Tender preparation begins | Charles Mutiso | 20 Mar 2027 |
-| Approved for publication | Charles Mutiso | 20 Apr 2027 |
+| Tender preparation begins | Brian Wafula, Procurement Officer | 20 Mar 2027 |
+| Approved for publication | Charles Mutiso, Head of Procurement Function | 20 Apr 2027 |
+
+Two different people, deliberately: TPR-CHG-001 §10.3 forbids the Procurement Officer who prepared a Version from approving it. An earlier draft of this section had Charles Mutiso doing both, which the same document's own segregation rule prohibits — corrected here.
 | Published | System | 15 May 2027 |
 
 ---
