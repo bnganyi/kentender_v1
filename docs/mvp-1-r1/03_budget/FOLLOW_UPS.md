@@ -7,9 +7,13 @@ change that tripped over them.
 
 **Found:** 2026-08-29, while running the `kentender_procurement` setup/sidebar
 suites during NDS-CHG-001 v1.1 Phase 8.
-**Status (2026-09-04):** FU-01, FU-02 and FU-04 closed by BUD-CHG-001 v1.3
-Phase 8 (BUD-803) — see each item's own "Resolved" note for the fix and
-evidence. FU-03 (Strategy's own) and FU-05 remain open. None of the original
+**Status (2026-09-06):** FU-06..FU-10 added by the BUD-CHG-001 v1.6
+end-to-end verification pass (see `IMPLEMENTATION_TRACKER.md`, "2026-09-06
+end-to-end verification"); none is a Budget defect — each is a spec
+conflict, a sibling-module or site-owner item, or legacy data owned by the
+AUTH-ADR-001 removal phase. Earlier: FU-01, FU-02 and FU-04 closed by
+BUD-CHG-001 v1.3 Phase 8 (BUD-803) — see each item's own "Resolved" note for
+the fix and evidence. FU-03 (Strategy's own) and FU-05 remain open. None of the original
 five was introduced by Phase 8 — each was already failing before it, and none
 was caused by the Departmental Needs rebuild.
 
@@ -28,6 +32,11 @@ latent rather than harmless, and it fails a **fresh install**, not this one.
 | FU-03 | Requisitioner cannot load the `Strategy Management` Workspace shell | Medium | `kentender_strategy` | Open |
 | FU-04 | Retired `budget-builder` / `budget-workbench` routes still referenced in three places | Low | `kentender_procurement` | **Closed (2026-09-04)** |
 | FU-05 | Live `Funding Source` DocType schema does not match CFG-CHG-002 v0.8 §4.4's newly-designed governed catalogue | Medium | `kentender_core` (owner TBD — see below) | Open |
+| FU-06 | BUD-AC-039 ("no header, filter … painted" on Forbidden) contradicts §11.16 (every workspace-state variant "contains the BUD-DES-01 page content header and filter row") | Low — spec-internal conflict, live page follows §11.16 and the fidelity gate | BUD-CHG-001 owner | Open (2026-09-06) |
+| FU-07 | ERPNext's own `_Test Fiscal Year 2011…2025` fixture rows appear in Budget's Fiscal Year filter on the dev site | Low — dev-site clutter, ERPNext-owned records KT-STD-001 §10 forbids deleting | Site owner | Open (2026-09-06) |
+| FU-08 | Pre-cutover legacy reference data still on the dev site (`Procuring Entity` PE-MOH/PE-MOE, `Financial Year`, `PE Fiscal Year Context`, `Procuring Department`, `PE Type`, `User Permission` on PE) — not canonical, but KT-STD-001 §10 says legacy records go with the RM-1xx removal phase, not a module cleanup | Low | AUTH-ADR-001 RM-1xx | Open (2026-09-06) |
+| FU-09 | The shared My Work page renders every provider's `received_at` raw (`2026-09-06 18:05:21.955670`); Budget's new provider follows the NDS/Planning precedent rather than formatting locally | Low — cosmetic, one fix in the shared page | `kentender_procurement` (`page/my_work`) | Open (2026-09-06) |
+| FU-10 | Planning's live seed allocates `PPI-MOH-2027-001`/`-002` while SEED-001 §3.6 and BUD-CHG-001 §15.4 cite `PPI-MOH-2027-021`/`-033`; the Budget-side lineage is correct (both source allocations resolve to `MOH-BL-HWD-2027`), only the human plan-item references differ | Low | `kentender_procurement` (Planning seed) | Open (2026-09-06) |
 
 ---
 

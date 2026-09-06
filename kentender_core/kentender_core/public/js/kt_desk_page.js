@@ -195,12 +195,20 @@ frappe.provide("kentender_core.desk_page");
 		function onRouteChange() {
 			// A KeepAlive-kept screen hears the outgoing route before its root
 			// re-renders and deactivates it; applying that route would clobber
-			// the screen's own record id, and the next activation would then
-			// read as a new record and cold-load it. Its root (bound first)
-			// syncs synchronously and queues Vue's flush — deferring behind that
-			// flush lets a screen that just got deactivated ignore the change.
+			// the screen's own record id (a Budget detail screen would fetch
+			// "review" as a budget id, and Frappe's 404 handler then pops a
+			// "Not found" modal), and the next activation would read as a new
+			// record and cold-load it. The root syncs synchronously and queues
+			// Vue's flush; deferring behind that flush lets a screen that just
+			// got deactivated ignore the change. A microtask is not enough:
+			// children mount before their parent, so the screen a page was
+			// opened on binds its listener *before* the root and its microtask
+			// ran ahead of the root's flush (confirmed live 2026-09-06 — direct
+			// load on a record screen, then navigate to a sibling screen). A
+			// macrotask always runs after every pending microtask, including
+			// the flush that deactivates this screen, whatever the bind order.
 			if (keptAlive) {
-				Promise.resolve().then(applyRouteChange);
+				setTimeout(applyRouteChange, 0);
 			} else {
 				applyRouteChange();
 			}

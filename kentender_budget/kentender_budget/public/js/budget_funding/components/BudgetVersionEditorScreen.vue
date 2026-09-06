@@ -156,7 +156,19 @@ async function loadDraft(opts) {
 	notFound.value = false;
 	forbidden.value = false;
 	try {
-		draft.value = await getBudgetVersionDraft(versionKey.value);
+		const data = await getBudgetVersionDraft(versionKey.value);
+		// KT-STD-001 §3A.2 — verdicts arrive as data, never as an HTTP error.
+		if (data && data.outcome === "FORBIDDEN") {
+			draft.value = null;
+			forbidden.value = true;
+			return;
+		}
+		if (data && data.outcome === "NOT_FOUND") {
+			draft.value = null;
+			notFound.value = true;
+			return;
+		}
+		draft.value = data;
 		resetFormFromDraft();
 		orgUnits.value = (await listOrganisationUnits()).rows || [];
 		// A direct load landing on the Budget Lines tab must still fetch it —
@@ -446,6 +458,15 @@ function cancel() {
 				</div>
 
 				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
+
+				<!-- §6 Return — the Approver's required reason, shown to the
+				     Officer on the returned Draft until it is resubmitted. -->
+				<div v-if="draft.returned" class="kt-card kt-blueprint" style="margin-bottom: 16px" role="status" data-testid="bud-editor-returned">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div class="kt-card-title">{{ __("Returned for correction") }}</div>
+					<p style="margin: 0 0 6px 0; font-size: 14px">{{ draft.returned.reason }}</p>
+					<div class="kt-muted" style="font-size: 13px">{{ __("Returned by {0}, {1}", [draft.returned.by, draft.returned.at]) }}</div>
+				</div>
 
 				<div class="kt-tabs">
 					<div class="kt-tab" :aria-selected="tab === 'overview'" @click="switchTab('overview')" data-testid="bud-editor-tab-overview">{{ __("Overview") }}</div>

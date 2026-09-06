@@ -181,6 +181,20 @@ def require_budget_version_read_scope(version) -> None:
 	require_budget_read_scope("Procurement Budget Version", _version_name(version))
 
 
+def holds_budget_approver_assignment(user: str | None = None) -> bool:
+	"""§12.5 — "Direct task routes require an Active Budget Approver
+	assignment. A read-only user is denied rather than shown disabled
+	workflow controls." Technical users keep their §7 technical read."""
+	principal = cstr(user or frappe.session.user)
+	if not principal or principal == "Guest":
+		return False
+	if is_technical(principal):
+		return True
+	return authorise_record(
+		user=principal, business_role=ROLE_BUDGET_APPROVER, organisation_unit="", purpose=PURPOSE_READ
+	).allowed
+
+
 def holds_any_budget_responsibility(user: str | None = None) -> bool:
 	"""KT-STD-001 v1.2 §3A.1 — the page-level verdict resolved before anything
 	renders. Never raises: a page load with no matching responsibility is a

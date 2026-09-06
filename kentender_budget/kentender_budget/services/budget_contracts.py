@@ -30,6 +30,7 @@ from kentender_budget.services.budget_authorization import (
 	CAP_EDIT,
 	has_budget_version_capability,
 	holds_any_budget_responsibility,
+	holds_budget_approver_assignment,
 	require_budget_create_capability,
 	require_budget_read_scope,
 	require_budget_version_capability,
@@ -88,11 +89,16 @@ def _user_label(user: str | None) -> str:
 
 
 def _display_datetime(value) -> str:
+	"""KT-STD-001 §8 fixture instants read "3 Oct 2026, 11:15 EAT" on every
+	Budget artboard — the same rendering Procurement Planning's read models
+	use, not the System Settings dd-mm-yyyy default. Budget Version lifecycle
+	timestamps are stored by `now_datetime()` in the site timezone
+	(Africa/Nairobi), so they are formatted as-is, without a UTC conversion."""
 	from frappe.utils import format_datetime, get_datetime
 
 	if not value:
 		return ""
-	return format_datetime(get_datetime(value))
+	return f"{format_datetime(get_datetime(value), 'd MMM yyyy, HH:mm')} EAT"
 
 
 def _display_date(value) -> str:
@@ -277,7 +283,14 @@ def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
 def get_budget_line_position(budget_line: str, *, as_at_version: str | None = None) -> dict[str, Any]:
 	"""§9.1 `get_budget_line_position` — authorised line identity, active-version
 	amount and current positions. No mutation. BUD-UI-05 Budget Line detail."""
-	line = _resolve_budget_line(budget_line)
+	verdict = forbidden_verdict()
+	if verdict:
+		return verdict
+	try:
+		line = _resolve_budget_line(budget_line)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	require_budget_read_scope("Procurement Budget Line", line.name)
 	owning_version = _line_owning_version(line.name, as_at_version)
 	budget = frappe.get_doc("Procurement Budget", line.budget)
@@ -325,6 +338,10 @@ def _version_totals(budget_version_name: str) -> dict[str, float]:
 		"Procurement Budget Line Version",
 		filters={"budget_version": budget_version_name},
 		fields=["budget_line", "approved_amount", "title", "owner_org_unit", "funding_source", "currency"],
+		# Deterministic display order (BUD-DES-01/05 list lines by title) —
+		# the same `title asc` every other Budget Lines read model uses;
+		# without it MariaDB returned the rows in insertion-dependent order.
+		order_by="title asc",
 	)
 	approved = reserved = committed = available = 0.0
 	lines: list[dict[str, Any]] = []
@@ -427,6 +444,35 @@ FORBIDDEN = {
 	),
 }
 
+# §12.5 — the approval task opens only for a Budget Approver; a read-only
+# actor is denied rather than shown the task with its controls removed.
+FORBIDDEN_TASK = {
+	"heading": "You do not have access to this approval task",
+	"text": (
+		"Approval tasks open only for a Budget Approver. Ask your KenTender "
+		"administrator to assign that responsibility in System setup."
+	),
+}
+
+NOT_FOUND = {"outcome": "NOT_FOUND"}
+
+
+def forbidden_verdict(user: str | None = None) -> dict[str, Any] | None:
+	"""KT-STD-001 v1.2 §3A.2 — a page-load denial is never a modal. Every
+	direct-route read (BUD-UI-02..05) resolves this first and returns it as
+	data; raising `frappe.PermissionError` would answer HTTP 403, which
+	Frappe's own request handler turns into a "Not permitted" dialog on top
+	of the screen's inline Forbidden panel (confirmed live, 2026-09-06)."""
+	if holds_any_budget_responsibility(user):
+		return None
+	return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN}
+
+
+def forbidden_task_verdict(user: str | None = None) -> dict[str, Any] | None:
+	if holds_budget_approver_assignment(user):
+		return None
+	return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN_TASK}
+
 
 def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	"""BUD-UI-01 — the scoped Budget and operational position for one
@@ -472,35 +518,15 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	version = _active_version(budget_name)
 	result["has_budget"] = True
 	result["budget"] = _budget_summary(budget)
+	pending = _pending_version_summary(budget_name, frappe.session.user)
+	if pending:
+		result["pending_version"] = pending
 	if not version:
 		# A Budget row exists (an Officer saved a Draft) but nothing has been
 		# Activated yet — no artboard covers this directly (BUD-DES-16 "No
-		# baseline" only covers "no Budget row at all"); reuse that empty-state
-		# shell with a status-appropriate action instead of inventing a new
-		# visual. `action` is server-decided per AGENTS.md §6.2 — the client
-		# never derives it from status itself.
-		pending = _draft_version(budget_name)
-		if pending:
-			action = None
-			if has_budget_version_capability(frappe.session.user, CAP_EDIT, pending):
-				action = "open_draft"
-			elif pending.status == "Submitted for approval" and has_budget_version_capability(
-				frappe.session.user, CAP_APPROVE, pending
-			):
-				action = "open_task"
-			# A reader with no edit/approve capability on it gets no disclosure
-			# that a Draft/Submitted version exists at all — falls back to the
-			# plain "No baseline" treatment client-side, matching the
-			# no-disclosure principle already applied to Forbidden/failure
-			# states (§12.1).
-			if action:
-				result["pending_version"] = {
-					"id": pending.name,
-					"code": pending.generated_reference,
-					"version_number": pending.version_number,
-					"status": pending.status,
-					"action": action,
-				}
+		# baseline" only covers "no Budget row at all"); the client reuses
+		# that empty-state shell with the server-decided `pending_version`
+		# action (AGENTS.md §6.2 — never derived from status client-side).
 		return result
 
 	totals = _version_totals(version.name)
@@ -514,6 +540,46 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	result["can_create_revision"] = has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 	result["lines_preview"] = [_line_preview_row(row) for row in totals["lines"][:5]]
 	return result
+
+
+def _pending_version_summary(budget_name: str, user: str) -> dict[str, Any] | None:
+	"""The one open (Draft or Submitted for approval) version on this Budget
+	— an unactivated baseline or a successor revision — with the action the
+	caller may take on it, decided here (AGENTS.md §6.2), never from status
+	client-side:
+
+	- `open_draft`      the Budget Officer continues an editable Draft;
+	- `open_task`       the Budget Approver decides a Submitted version
+	                    (BUD-DES-08..13) — without this the approver had no
+	                    in-app route to a successor's task at all, only a
+	                    hand-typed URL;
+	- `view_submission` the submitting Officer sees the read-only submitted
+	                    version while it awaits a decision.
+
+	A reader holding none of those capabilities gets no disclosure that an
+	open version exists (§12.1's no-disclosure principle)."""
+	pending = _draft_version(budget_name)
+	if not pending:
+		return None
+	action = None
+	if pending.status == "Draft":
+		if has_budget_version_capability(user, CAP_EDIT, pending):
+			action = "open_draft"
+	elif pending.status == "Submitted for approval":
+		if has_budget_version_capability(user, CAP_APPROVE, pending):
+			action = "open_task"
+		elif has_budget_version_capability(user, CAP_EDIT, pending):
+			action = "view_submission"
+	if not action:
+		return None
+	return {
+		"id": pending.name,
+		"code": pending.generated_reference,
+		"version_number": pending.version_number,
+		"status": pending.status,
+		"is_successor": bool(pending.based_on_budget_version),
+		"action": action,
+	}
 
 
 def _line_preview_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -533,7 +599,14 @@ def _line_preview_row(row: dict[str, Any]) -> dict[str, Any]:
 def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
 	"""BUD-UI-02 Overview tab — the Draft (or Submitted) version's own field
 	values, for the version editor form."""
-	version = _resolve_budget_version(budget_version)
+	verdict = forbidden_verdict()
+	if verdict:
+		return verdict
+	try:
+		version = _resolve_budget_version(budget_version)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 	budget = frappe.get_doc("Procurement Budget", version.budget)
 	return {
@@ -545,15 +618,34 @@ def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
 		"revision_type": version.revision_type or "",
 		"approval_document": version.approval_document or "",
 		"can_edit": version.status == "Draft" and has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+		# §6 — a Return carries a required reason; the Officer correcting the
+		# Draft needs to see it on the editor, not only in the History tab.
+		# `submit_budget_version` clears it again on resubmission.
+		"returned": (
+			{
+				"reason": version.return_reason,
+				"by": _user_label(version.decided_by),
+				"at": _display_datetime(version.decided_at),
+			}
+			if version.status == "Draft" and (version.return_reason or "").strip()
+			else None
+		),
 	}
 
 
 def get_budget_detail(budget: str) -> dict[str, Any]:
 	"""BUD-UI-03 Overview tab — Active/read-only funding position + context."""
-	doc = _resolve_budget(budget)
+	verdict = forbidden_verdict()
+	if verdict:
+		return verdict
+	try:
+		doc = _resolve_budget(budget)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	version = _active_version(doc.name)
 	if not version:
-		frappe.throw(_("No Active Budget Version"), frappe.DoesNotExistError, title="BUDGET_CONTEXT_NOT_FOUND")
+		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 	totals = _version_totals(version.name)
 	return {
@@ -573,6 +665,9 @@ def get_budget_detail(budget: str) -> dict[str, Any]:
 			"decided_at": _display_datetime(version.decided_at),
 		},
 		"can_create_revision": has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+		# §6: at most one open successor per Budget — when one exists the
+		# header offers it (open/decide) instead of "Create revision".
+		"pending_version": _pending_version_summary(doc.name, frappe.session.user),
 	}
 
 

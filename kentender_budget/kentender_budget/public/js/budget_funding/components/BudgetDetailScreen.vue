@@ -56,7 +56,20 @@ async function loadDetail(opts) {
 	activityLoaded.value = false;
 	historyLoaded.value = false;
 	try {
-		detail.value = await getBudgetDetail(budgetIdParam.value);
+		const data = await getBudgetDetail(budgetIdParam.value);
+		// KT-STD-001 §3A.2 — the verdict arrives as data, never as an HTTP
+		// error the framework would also answer with its own modal.
+		if (data && data.outcome === "FORBIDDEN") {
+			detail.value = null;
+			forbidden.value = true;
+			return;
+		}
+		if (data && data.outcome === "NOT_FOUND") {
+			detail.value = null;
+			notFound.value = true;
+			return;
+		}
+		detail.value = data;
 		if (tab.value === "lines") await loadLines();
 		else if (tab.value === "activity") await loadActivity();
 		else if (tab.value === "history") await loadHistory();
@@ -96,6 +109,11 @@ watch([activityFilterLine, activityFilterEvent], () => {
 	if (tab.value === "activity") loadActivity();
 });
 
+function clearActivityFilters() {
+	activityFilterLine.value = "";
+	activityFilterEvent.value = "";
+}
+
 onMounted(loadDetail);
 watch(budgetIdParam, (v, prev) => {
 	if (v && v !== prev) loadDetail();
@@ -118,6 +136,24 @@ function approvalDocumentName(url) {
 
 function openLine(line) {
 	go("line", line.code);
+}
+
+// §6: at most one open successor per Budget. When one exists the header
+// offers it — the Officer continues the Draft, the Approver opens the
+// task — instead of "Create revision", which would only hand back the
+// same open version. Action and status come from the server (AGENTS.md §6.2).
+const pendingAction = computed(() => {
+	const pending = detail.value?.pending_version;
+	if (!pending) return null;
+	if (pending.action === "open_task") return { label: __("Open approval task"), pending };
+	if (pending.action === "view_submission") return { label: __("View submitted revision"), pending };
+	return { label: __("Continue draft revision"), pending };
+});
+
+function openPending() {
+	const pending = pendingAction.value.pending;
+	if (pending.action === "open_task") go("review", pending.id);
+	else go(budgetIdParam.value, "version", pending.version_number, "edit");
 }
 
 async function createRevision() {
@@ -176,7 +212,17 @@ async function createRevision() {
 						</div>
 					</div>
 					<button
-						v-if="detail.can_create_revision"
+						v-if="pendingAction"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						style="flex: none; margin-top: 4px"
+						@click="openPending"
+						data-testid="budget-detail-pending-action-btn"
+					>
+						{{ pendingAction.label }}
+					</button>
+					<button
+						v-else-if="detail.can_create_revision"
 						type="button"
 						class="kt-btn kt-btn-primary"
 						style="flex: none; margin-top: 4px"
@@ -329,7 +375,12 @@ async function createRevision() {
 					</div>
 					<div v-else-if="!activity.rows.length" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-activity-empty">
 						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<h2>{{ __("No funding activity has been recorded for this budget.") }}</h2>
+						<!-- §12.7: no events at all vs. a filter that matches none -->
+						<template v-if="activityFilterLine || activityFilterEvent">
+							<h2>{{ __("No funding events match these filters.") }}</h2>
+							<button type="button" class="kt-btn kt-btn-secondary" @click="clearActivityFilters" data-testid="budget-detail-activity-clear-filters">{{ __("Clear filters") }}</button>
+						</template>
+						<h2 v-else>{{ __("No funding activity has been recorded for this budget.") }}</h2>
 					</div>
 					<div v-else class="kt-card kt-blueprint">
 						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>

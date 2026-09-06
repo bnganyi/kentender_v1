@@ -197,7 +197,19 @@ export function collectPageErrors(page: Page): string[] {
 	page.on("console", (msg) => {
 		if (msg.type() !== "error") return;
 		const text = msg.text();
-		if (text.includes("socket.io") || text.includes("ERR_CONNECTION_REFUSED")) return;
+		// A failed resource load reports only "Failed to load resource: … 404"
+		// in its text — the URL lives in location().url. The dev server's
+		// socket.io long-poll (a bench without the socketio proxy) is the one
+		// such noise source; nothing else is filtered.
+		const url = (msg.location() && msg.location().url) || "";
+		if (text.includes("socket.io") || url.includes("socket.io") || text.includes("ERR_CONNECTION_REFUSED")) return;
+		// Frappe's own app switcher (frappe/public/js/frappe/ui/sidebar/
+		// sidebar_header.js, add_app_item) renders its divider rows through the
+		// same template as app rows, so each `{ is_divider: true }` entry emits
+		// `<img src="undefined">` — one 404 for "<page>/undefined" on every Desk
+		// page load in developer mode. Framework code, read-only for this repo
+		// (AGENTS.md §2); nothing in a KenTender page can cause or fix it.
+		if (/\/undefined$/.test(url)) return;
 		errors.push(text);
 	});
 	return errors;
