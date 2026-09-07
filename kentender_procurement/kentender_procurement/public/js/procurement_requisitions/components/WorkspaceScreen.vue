@@ -3,9 +3,11 @@
      PROCUREMENT REQUISITIONS eyebrow, per §13.1), the headline-plus-button
      "Ready to prepare" card (absent when nothing is eligible, one row per
      eligible Plan Item under a single count headline — never a table), and
-     the one connected "Your Requisitions" list (retitled from the earlier
-     "My Drafts"/"Tasks"/"Recent Requisitions" split — see §13.3's own
-     rationale). No Procuring Entity selector, value dashboard or STD
+     the one connected "Requisitions" list (originally retitled from the
+     earlier "My Drafts"/"Tasks"/"Recent Requisitions" split per §13.3's own
+     rationale; relabelled again from "Your Requisitions" to drop possessive
+     framing for cross-module title consistency — product decision, not a
+     §13.3 correction). No Procuring Entity selector, value dashboard or STD
      Library link exists anywhere on this screen. -->
 <template>
 	<div>
@@ -72,8 +74,8 @@
 				</div>
 			</div>
 
-			<!-- REQ-DES-01 "Your Requisitions" — one connected list. -->
-			<h2 class="req-section-title">Your Requisitions</h2>
+			<!-- REQ-DES-01 "Requisitions" — one connected list. -->
+			<h2 class="req-section-title">Requisitions</h2>
 			<table class="kt-table" data-testid="req-your-requisitions">
 				<thead>
 					<tr>

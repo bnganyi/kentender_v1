@@ -82,9 +82,9 @@ describe("WorkspaceScreen — REQ-DES-01", () => {
 		expect(w.findAll('[data-testid="req-ready-to-prepare"]')).toHaveLength(1);
 	});
 
-	it("renders Your Requisitions as one connected table with the exact headers, rows and count", async () => {
+	it("renders Requisitions as one connected table with the exact headers, rows and count", async () => {
 		const w = make();
-		expect(w.find(".req-section-title").text()).toBe("Your Requisitions");
+		expect(w.find(".req-section-title").text()).toBe("Requisitions");
 		const table = w.find('[data-testid="req-your-requisitions"]');
 		expect(table.findAll("thead th").map((th) => th.text())).toEqual(["Requisition", "Plan Item", "Status", "Action"]);
 		const row = table.find("tbody tr");

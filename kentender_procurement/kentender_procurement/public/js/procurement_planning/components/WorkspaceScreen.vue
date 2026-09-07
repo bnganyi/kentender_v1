@@ -253,13 +253,15 @@ const annualPlanSummary = computed(
 	() => (props.workspace.annual_plan || {}).summary || ""
 );
 
-// PLN-DES-01 names the card after its one row; with mixed work it reads as
-// the actor's work. The card never renders empty.
+// PLN-DES-01 names the card after its one row; with mixed work it falls back
+// to a neutral "Actions" title (relabelled from "Your work" to drop
+// possessive framing for cross-module title consistency — product decision,
+// not a PLN-DES-01 correction). The card never renders empty.
 const actionableTitle = computed(() =>
 	actionable.value.length &&
 	actionable.value.every((row) => /ready to consolidate$/.test(row.headline || ""))
 		? "Ready to consolidate"
-		: "Your work"
+		: "Actions"
 );
 
 const scheduleHealth = computed(() => {

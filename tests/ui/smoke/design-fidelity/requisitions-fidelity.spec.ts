@@ -51,6 +51,19 @@ function stripCounts(list: string[]): string[] {
 	return list.map((text) => text.replace(/— \d+ (confirmed rows?|rows?|items?)/, "— N $1"));
 }
 
+/**
+ * The artboard's own workspace section title reads "Your Requisitions" (its
+ * original §13.3 retitle from "My Drafts"/"Tasks"/"Recent Requisitions").
+ * The live app has since relabelled it to "Requisitions" as a deliberate,
+ * cross-module product decision to drop possessive framing everywhere
+ * (Departmental Needs, Procurement Planning and Strategy landing titles were
+ * relabelled the same way) — not a §13.3 correction. Normalise the artboard's
+ * wanted landmark so this known, approved delta never fails the gate.
+ */
+function stripPossessiveWorkspaceTitle(list: string[]): string[] {
+	return list.map((text) => (text === "Your Requisitions" ? "Requisitions" : text));
+}
+
 async function artboardLandmarks(browser: any, id: string): Promise<{ wanted: string[]; art: Page }> {
 	const art = await browser.newPage();
 	await openArtboard(art, ARTBOARD_FILE, artboardScope(id));
@@ -69,7 +82,7 @@ test.describe("Procurement Requisitions — design fidelity", () => {
 		await login(page, AUTHOR, PASSWORD);
 		await gotoRequisitions(page);
 		await expectReady(page, "workspace");
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "REQ-DES-01");
+		expectLandmarkSubsequence(stripPossessiveWorkspaceTitle(wanted), await landmarks(page, LIVE_SCOPE), "REQ-DES-01");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});

@@ -128,7 +128,7 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 		expect(w.emitted("navigate")[0][0]).toEqual(["annual-procurement-plan", "PLN-MOH-2027"]);
 	});
 
-	it("titles mixed work as Your work and keeps every row in one card", () => {
+	it("titles mixed work as Actions and keeps every row in one card", () => {
 		const w = make({
 			workspace: {
 				...WORKSPACE,
@@ -139,7 +139,7 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 			},
 		});
 		const card = w.find('[data-testid="pln-actionable"]');
-		expect(card.find(".kt-card-title").text()).toBe("Your work");
+		expect(card.find(".kt-card-title").text()).toBe("Actions");
 		expect(w.findAll('[data-testid="pln-action-row"]')).toHaveLength(2);
 		expect(w.findAll('[data-testid="pln-actionable"]')).toHaveLength(1);
 	});
@@ -147,7 +147,7 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 	it("omits the actionable card entirely when nothing is actionable", () => {
 		const w = make({ workspace: { ...WORKSPACE, actionable: [] } });
 		expect(w.find('[data-testid="pln-actionable"]').exists()).toBe(false);
-		expect(w.text()).not.toContain("Your work");
+		expect(w.text()).not.toContain("Actions");
 	});
 
 	it("renders the amber not-included notice with the exact copy", () => {

@@ -86,6 +86,28 @@ high-volume and were left out pending a decision on audit retention.
 
 ---
 
+## FU-07 — Portfolio tab relabelled from "My work" to "Actions" (2026-09-07)
+
+**Status:** Closed (2026-09-07) — no fix owed, decision recorded for context.
+**What:** `PortfolioScreen.vue`'s second tab (`data-testid="str-tab-my-work"`,
+route `/app/strategy/my-work`) displayed as "My work" alongside the
+neutral "Plans" tab. The Project Owner flagged inconsistent possessive
+framing across every module's landing-page queue titles (NDS "My needs",
+Requisitions "Your Requisitions", Planning "Your work", this tab's "My
+work") and asked for one neutral convention. The tab's displayed label is
+now "Actions", pairing cleanly with "Plans". The route slug (`my-work`) and
+the underlying shared `kentender_core.services.my_work` /
+`kt_my_work_providers` aggregator — a distinct, documented cross-module
+feature name — were deliberately left untouched; only this screen's
+on-screen label changed.
+**Why it matters:** cosmetic only. No test in this repo asserted the literal
+"My work" tab text (confirmed by repo-wide grep before the edit); the two
+hits that did exist were code comments, updated for accuracy alongside the
+label.
+**Path:** none outstanding.
+
+---
+
 ## Verifying a fix
 
 When a follow-up above is later addressed, do not delete the entry — mark it
