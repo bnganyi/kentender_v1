@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -67,6 +67,15 @@ help:
 	@echo "  make ui-planning-publication-gate — PLN-CHG-001 v1.2 Slice G: Publication, Active and successor (BeginPlanUpdate/RemovePlanItemInSuccessor/CancelPlanUpdate)"
 	@echo "  make planning-requisition-gate — PLN-CHG-001 v1.2 Slice H: §7.4 Requisition eligibility + drawdown consumption (API-only)"
 	@echo "  make planning-seed-gate — PLN-CHG-001 v1.2 §14: deterministic seed contract (baseline + profiles + boundary guard)"
+	@echo "  make ui-req-workspace-gate — REQ-CHG-001 v1.6 Slice 3a: Requisitions workspace (REQ-DES-01) + Playwright (REQ-402 world)"
+	@echo "  make ui-req-start-gate — REQ-CHG-001 v1.6 Slice 3b: Start Requisition (REQ-DES-02)"
+	@echo "  make ui-req-editor-a-gate — REQ-CHG-001 v1.6 Slice 3c-i: Editor steps 1-2 (REQ-DES-03/04)"
+	@echo "  make ui-req-editor-b-gate — REQ-CHG-001 v1.6 Slice 3c-ii: Editor steps 3-5 (REQ-DES-05/06/07)"
+	@echo "  make ui-req-department-gate — REQ-CHG-001 v1.6 Slice 3d: Department approval task (REQ-DES-08)"
+	@echo "  make ui-req-procurement-gate — REQ-CHG-001 v1.6 Slice 3e: Procurement authorisation task (REQ-DES-09)"
+	@echo "  make ui-req-authorised-gate — REQ-CHG-001 v1.6 Slice 3f: Authorised Requisition + revoke (REQ-DES-10)"
+	@echo "  make ui-req-fidelity-gate — REQ-CHG-001 v1.6: artboard landmark fidelity on the live screens"
+	@echo "  make ui-req-release-evidence-gate — REQ-CHG-001 v1.6 Phase 5: every Requisitions browser spec + fidelity + §16 persona pass, single-worker"
 	@echo "  make — PLN-GATE-C01 scope + task authority + route denial"
 	@echo "  make ui-demands-form-gate — Demand form (DEM-UI-02/03) API + Playwright"
 	@echo "  make ui-demands-review-gate ui-demands-detail-gate — Demand review chrome gate + DEM-UI-04…08 API + Playwright"
@@ -434,6 +443,71 @@ planning-seed-gate:
 		--module kentender_procurement.procurement_planning.tests.test_planning_seed
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.departmental_needs.tests.test_departmental_needs_architecture
+
+# REQ-CHG-001 v1.6 — Procurement Requisitions slice gates (tracker rule 6).
+# Each gate runs the shared vitest project (component tests aren't split per
+# screen), the slice's own Playwright spec on the REQ-402 world, and restores
+# the site's DPP intake flag afterward. The Python service suite (REQ-G02) is
+# proven once, module by module, not repeated per UI slice.
+ui-req-workspace-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-workspace.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-start-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-start.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-editor-a-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-editor-drawdown-items.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-editor-b-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-editor-review.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-department-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-department-task.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-procurement-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-procurement-task.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+ui-req-authorised-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions/requisitions-authorised.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+# REQ-CHG-001 v1.6 — every artboard's landmarks in order on the live screen
+# (AGENTS.md §6.6), on the REQ-402 world.
+ui-req-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity/requisitions-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
+
+# REQ-CHG-001 v1.6 Phase 5 — release evidence: every Requisitions browser
+# spec single-worker on the REQ-402 world, the fidelity spec, and the §16
+# persona pass (skips itself with the exact missing prerequisite if the
+# canonical MOH seed is not built), then the intake flag restored.
+ui-req-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/requisitions \
+		tests/ui/smoke/design-fidelity/requisitions-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
 
 ui-demands-form-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \

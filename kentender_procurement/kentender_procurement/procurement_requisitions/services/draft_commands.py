@@ -504,12 +504,38 @@ def confirm_proposed_requirement(*, requisition: str, technical_requirement_id: 
 # --- Warranty and support (package-level fields, not a row) ---
 
 
+_SERVICE_LOCATION_OPTIONS = ("None", "Within Kenya", "At delivery location")
+
+
+def _validate_warranty_and_support(values: dict[str, Any]) -> None:
+	"""§5.5 — the package-level warranty/support fields' own ranges and
+	conditional visibility, enforced server-side (never trusted from the
+	client alone)."""
+	if "minimum_warranty_months" in values:
+		months = values["minimum_warranty_months"]
+		if not isinstance(months, int) or isinstance(months, bool) or not (1 <= months <= 120):
+			fail("REQ_CONTROL_INVALID", "Minimum warranty must be a whole number of months from 1 to 120.")
+	onsite = values.get("onsite_support_required")
+	if "maximum_support_response_hours" in values:
+		hours = values["maximum_support_response_hours"]
+		if onsite:
+			if not isinstance(hours, int) or isinstance(hours, bool) or not (1 <= hours <= 168):
+				fail("REQ_CONTROL_INVALID", "Maximum support response must be a whole number of hours from 1 to 168 when on-site support is required.")
+		elif hours not in (None, "", 0):
+			fail("REQ_CONTROL_INVALID", "Maximum support response only applies when on-site support is required.")
+	if "service_location_constraint" in values and values["service_location_constraint"] not in _SERVICE_LOCATION_OPTIONS:
+		fail("REQ_CONTROL_INVALID", f"Service location constraint must be one of {_SERVICE_LOCATION_OPTIONS}.")
+	if "support_description" in values and len(cstr(values["support_description"])) > 500:
+		fail("REQ_CONTROL_INVALID", "Support description must be 500 characters or fewer.")
+
+
 def save_warranty_and_support(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "values": values}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
+	_validate_warranty_and_support(values)
 	root, version, package_version = _load_for_row_command(requisition, actor)
 	envelope.check_record_version(package_version, expected_record_version)
 	for field_name in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description"):

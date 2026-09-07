@@ -64,13 +64,13 @@
 				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<div class="kt-card-title">Planning source</div>
 				<div class="req-source-grid">
-					<div><span class="kt-eyebrow">Plan Item</span><div>{{ projection.plan_item_id }} — {{ projection.title }}</div></div>
-					<div><span class="kt-eyebrow">Contributing departments</span><div>{{ detail.contributing_departments_label }}</div></div>
-					<div><span class="kt-eyebrow">Procurement method</span><div>{{ projection.procurement_method }}</div></div>
-					<div><span class="kt-eyebrow">Planned completion</span><div>{{ plannedCompletion }}</div></div>
-					<div><span class="kt-eyebrow">Planned value</span><div>{{ plannedValue }}</div></div>
+					<div><div class="kt-label">Plan Item</div><div>{{ projection.plan_item_id }} — {{ projection.title }}</div></div>
+					<div><div class="kt-label">Contributing departments</div><div>{{ detail.contributing_departments_label }}</div></div>
+					<div><div class="kt-label">Procurement method</div><div>{{ projection.procurement_method }}</div></div>
+					<div><div class="kt-label">Planned completion</div><div>{{ plannedCompletion }}</div></div>
+					<div><div class="kt-label">Planned value</div><div>{{ plannedValue }}</div></div>
 					<div>
-						<span class="kt-eyebrow">Plan horizon</span>
+						<div class="kt-label">Plan horizon</div>
 						<div data-testid="req-plan-horizon">{{ planHorizonLine }}</div>
 						<p v-if="projection.plan_horizon !== 'Single year'" class="req-source-note">
 							The value above is this Plan Item's full multi-year allocation, not one year's worth.
@@ -78,13 +78,13 @@
 					</div>
 				</div>
 				<div class="req-source-section">
-					<span class="kt-eyebrow">Strategic Objective</span>
+					<div class="kt-label">Strategic Objective</div>
 					<div class="req-objective-id">{{ objectiveTitle ? `${projection.strategic_objective} — ${objectiveTitle}` : projection.strategic_objective }}</div>
 					<div class="req-objective-path kt-muted">{{ projection.objective_path }}</div>
 				</div>
 				<div class="req-source-section req-source-grid">
-					<div><span class="kt-eyebrow">Business need</span><div>{{ detail.business_need }}</div></div>
-					<div><span class="kt-eyebrow">Expected operational result</span><div>{{ detail.expected_operational_result }}</div></div>
+					<div><div class="kt-label">Business need</div><div>{{ detail.business_need }}</div></div>
+					<div><div class="kt-label">Expected operational result</div><div>{{ detail.expected_operational_result }}</div></div>
 				</div>
 			</div>
 

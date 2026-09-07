@@ -51,8 +51,8 @@
 		<div class="kt-card-title">Warranty and support</div>
 		<div class="req-field-grid-3">
 			<div class="kt-field">
-				<label for="tech-warranty">Minimum warranty (months)</label>
-				<input id="tech-warranty" type="number" min="0" step="1" class="kt-input" :value="fields.minimum_warranty_months" @input="fields.minimum_warranty_months = Number($event.target.value)" />
+				<label for="tech-warranty">Minimum warranty</label>
+				<input id="tech-warranty" type="number" min="0" step="1" class="kt-input" :value="fields.minimum_warranty_months" @input="fields.minimum_warranty_months = Number($event.target.value)" /> <span class="kt-muted">months</span>
 			</div>
 			<div class="kt-field">
 				<label id="tech-onsite-lbl">On-site support required</label>
@@ -62,8 +62,8 @@
 				</div>
 			</div>
 			<div class="kt-field">
-				<label for="tech-response">Maximum support response (hours)</label>
-				<input id="tech-response" type="number" min="0" step="1" class="kt-input" :value="fields.maximum_support_response_hours" @input="fields.maximum_support_response_hours = Number($event.target.value)" />
+				<label for="tech-response">Maximum support response</label>
+				<input id="tech-response" type="number" min="0" step="1" class="kt-input" :value="fields.maximum_support_response_hours" @input="fields.maximum_support_response_hours = Number($event.target.value)" /> <span class="kt-muted">hours</span>
 			</div>
 			<div class="kt-field">
 				<label id="tech-mfr-lbl">Manufacturer support required</label>

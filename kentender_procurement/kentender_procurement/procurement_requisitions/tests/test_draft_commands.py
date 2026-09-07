@@ -272,6 +272,54 @@ class TestWarrantyServiceAcceptance(RequisitionDraftCase):
 		package_version.reload()
 		self.assertEqual(package_version.minimum_warranty_months, 36)
 
+	def test_save_warranty_and_support_rejects_an_out_of_range_warranty(self):
+		prepared = self.prepare()
+		frappe.set_user(fx.AUTHOR)
+		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_warranty_and_support(
+				requisition=prepared["requisition"],
+				values={"minimum_warranty_months": 121},
+				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
+			)
+		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+
+	def test_save_warranty_and_support_requires_support_response_hours_only_when_onsite_is_yes(self):
+		prepared = self.prepare()
+		frappe.set_user(fx.AUTHOR)
+		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_warranty_and_support(
+				requisition=prepared["requisition"],
+				values={"onsite_support_required": 0, "maximum_support_response_hours": 8},
+				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
+			)
+		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+
+	def test_save_warranty_and_support_rejects_an_out_of_range_support_response(self):
+		prepared = self.prepare()
+		frappe.set_user(fx.AUTHOR)
+		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_warranty_and_support(
+				requisition=prepared["requisition"],
+				values={"onsite_support_required": 1, "maximum_support_response_hours": 169},
+				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
+			)
+		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+
+	def test_save_warranty_and_support_rejects_an_unknown_service_location(self):
+		prepared = self.prepare()
+		frappe.set_user(fx.AUTHOR)
+		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_warranty_and_support(
+				requisition=prepared["requisition"],
+				values={"service_location_constraint": "Overseas"},
+				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
+			)
+		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+
 	def test_add_acceptance_requirement(self):
 		prepared = self.prepare()
 		frappe.set_user(fx.AUTHOR)

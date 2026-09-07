@@ -44,6 +44,19 @@ def _date(value) -> str:
 	return formatdate(value, "d MMM yyyy") if value else ""
 
 
+def _eat(value) -> str:
+	"""A UTC instant rendered as EAT (mirrors Planning's own `plan_read._eat`,
+	§12.13's convention) — found live via REQ-402's own evidence-capture
+	screenshot showing the raw stored UTC string instead of the artboard's
+	"15 Mar 2027, 10:00 EAT" form."""
+	if not value:
+		return ""
+	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
+
+	local = convert_utc_to_timezone(get_datetime(value), "Africa/Nairobi")
+	return f"{format_datetime(local, 'd MMM yyyy, HH:mm')} EAT"
+
+
 def _ou_label(ou: str) -> str:
 	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou) if ou else ""
 
@@ -512,7 +525,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 	)
 	submitted_by = {}
 	if submitted:
-		submitted_by = {"name": cstr(frappe.db.get_value("User", submitted[0].actor, "full_name") or submitted[0].actor), "decided_at": cstr(submitted[0].decided_at)}
+		submitted_by = {"name": cstr(frappe.db.get_value("User", submitted[0].actor, "full_name") or submitted[0].actor), "decided_at": _eat(submitted[0].decided_at)}
 
 	return {
 		"outcome": "OK", "task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version, "task_token": task_doc.task_token},
@@ -571,7 +584,7 @@ def get_authorised_requisition_handoff(*, requisition: str, user: str | None = N
 		if decision_doc:
 			authorised_by = {
 				"name": cstr(frappe.db.get_value("User", decision_doc.actor, "full_name") or decision_doc.actor),
-				"role": decisions[0].get("capacity", ""), "decided_at": cstr(decision_doc.decided_at),
+				"role": decisions[0].get("capacity", ""), "decided_at": _eat(decision_doc.decided_at),
 			}
 
 	return {
