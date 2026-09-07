@@ -104,6 +104,25 @@ def sync_coming_soon_page() -> None:
 		import_file_by_path(path, force=True)
 
 
+def sync_procurement_requisitions_page() -> None:
+	"""Ensure the Procurement Requisitions Desk Page exists before the sidebar
+	reconcile below validates its ``Link To`` row against it. On a fresh
+	server's very first migrate, Frappe's own module doctype sync has not
+	always landed this brand-new Page by the time ``after_migrate`` hooks
+	run (REQ-CHG-001 v1.6, observed 2026-09-07); every sibling sidebar target
+	page is older and already exists in a restored/incremental site, so only
+	this one needs an explicit, idempotent import."""
+	path = os.path.join(
+		frappe.get_app_path("kentender_procurement"),
+		"procurement_requisitions",
+		"page",
+		"procurement_requisitions",
+		"procurement_requisitions.json",
+	)
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+
+
 def sync_procurement_home_page() -> None:
 	"""Ensure functional Procurement Home Desk Page exists (unique slug)."""
 	path = os.path.join(
@@ -150,6 +169,7 @@ def run() -> None:
 	if frappe.db.exists("DocType", "Page"):
 		sync_coming_soon_page()
 		sync_procurement_home_page()
+		sync_procurement_requisitions_page()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):
