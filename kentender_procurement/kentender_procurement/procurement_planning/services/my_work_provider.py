@@ -134,12 +134,51 @@ def _governance_rows(user: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _correction_request_rows(user: str) -> list[dict[str, Any]]:
+	"""REQ-CHG-001 v1.6 §7.4A step 3 — every Open Plan Item Correction
+	Request is a Procurement Planner task; no segregation check applies
+	(the request names a Requisition-side actor, never a Planner)."""
+	if not authz.has_site_role(ROLE_PROCUREMENT_PLANNER, user):
+		return []
+	rows = []
+	for row in frappe.get_all(
+		"Plan Item Correction Request",
+		filters={"status": "Open"},
+		fields=["name", "plan_item_id", "requisition_reference", "record_version", "creation"],
+		order_by="creation asc",
+		limit_page_length=0,
+	):
+		rows.append(
+			{
+				"task_id": row.name,
+				"task_type": "planning.plan_item_correction",
+				"title": _("Review correction request — {0}").format(row.plan_item_id),
+				"reference": cstr(row.requisition_reference),
+				"module": "Procurement Planning",
+				"stage": _("Plan Item correction request"),
+				"fiscal_year": "",
+				"organisation_unit": "",
+				"assignment": _(ROLE_PROCUREMENT_PLANNER),
+				"status": _("Assigned"),
+				"received_at": cstr(row.creation),
+				"due_at": "",
+				"action_label": _("Review correction request"),
+				"route": ["procurement-planning", "correction-request", row.name],
+				"route_options": {},
+				"concurrency_token": cstr(row.record_version),
+				"can_claim": False,
+				"can_open": True,
+			}
+		)
+	return rows
+
+
 def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	"""`kt_my_work_providers` entry: the caller's open Planning decisions."""
 	if not user or user == "Guest":
 		return {"assigned": [], "claimable": [], "waiting": []}
 	return {
-		"assigned": _validation_rows(user) + _finance_rows(user) + _governance_rows(user),
+		"assigned": _validation_rows(user) + _finance_rows(user) + _governance_rows(user) + _correction_request_rows(user),
 		"claimable": [],
 		"waiting": [],
 	}

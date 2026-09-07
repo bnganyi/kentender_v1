@@ -31,6 +31,25 @@ DOCTYPE = "Regulatory Reference"
 
 PROCUREMENT_CATEGORIES: tuple[str, ...] = ("Goods", "Works", "Services")
 
+# REQ-CHG-001 v1.6 §5A / STD-TPL-001 v0.4 §6.1 — the one reservation-category
+# list a Requisition's compatibility test and Tender Preparation's own
+# rendering both check against. A strict, ordered subset of the site's
+# governed `RESERVATION_CATEGORIES` register (kentender_core.seeds.
+# site_setup) — the other five categories (MSME, three regional bands, the
+# national-citizen-contractor band) have no rendering rule in STD-TPL-001
+# v0.4 and are therefore incompatible with the first released Tender
+# template. A Requisition or Tender screen imports this tuple rather than
+# maintaining a second, independently-drifting copy (REQ-CHG-001 v1.6 §5A;
+# closes the divergent `tender_configurations.services.tds.RESERVATION_CATEGORIES`
+# vocabulary for any new caller — that legacy list is untouched).
+TENDER_RENDERABLE_RESERVATION_CATEGORIES: tuple[str, ...] = (
+	"None",
+	"Youth",
+	"Women",
+	"Persons with disabilities",
+	"Other disadvantaged group",
+)
+
 # CFG v0.9 §4.4A / Second Schedule — how a band's maximum is applied.
 BASIS_PER_REQUEST = "Per request"
 BASIS_PER_ITEM_PER_YEAR = "Per item per financial year"

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+  a { color: var(--color-accent-2-700); text-decoration: none; }
+  a:hover { color: var(--color-accent-2-800); }
+</style>
+</helmet>
+<div style="display:flex;min-height:100vh;background:var(--color-neutral-200);font-family:var(--font-body)">
+  <nav style="width:250px;flex:none;background:var(--color-surface);border-right:1px solid var(--color-divider);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:16px;margin-bottom:2px">REQ-CHG-001</div>
+    <div style="font-size:11px;color:var(--color-neutral-700);margin-bottom:22px">Procurement Requisitions · Artboards</div>
+
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:0 0 6px 10px">Workspace</div>
+    <button type="button" onclick="{{ go.des01 }}" style="{{ nav.des01 }}">01 · Workspace</button>
+    <button type="button" onclick="{{ go.des02 }}" style="{{ nav.des02 }}">02 · Start Requisition</button>
+
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:16px 0 6px 10px">Editor — five steps</div>
+    <button type="button" onclick="{{ go.des03 }}" style="{{ nav.des03 }}">03 · Request &amp; drawdown</button>
+    <button type="button" onclick="{{ go.des04 }}" style="{{ nav.des04 }}">04 · Equipment items</button>
+    <button type="button" onclick="{{ go.des05 }}" style="{{ nav.des05 }}">05 · Technical &amp; support</button>
+    <button type="button" onclick="{{ go.des06 }}" style="{{ nav.des06 }}">06 · Services &amp; acceptance</button>
+    <button type="button" onclick="{{ go.des07 }}" style="{{ nav.des07 }}">07 · Review &amp; submit</button>
+
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:16px 0 6px 10px">Decisions</div>
+    <button type="button" onclick="{{ go.des08 }}" style="{{ nav.des08 }}">08 · Department task</button>
+    <button type="button" onclick="{{ go.des09 }}" style="{{ nav.des09 }}">09 · Procurement task</button>
+
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:16px 0 6px 10px">Outcome</div>
+    <button type="button" onclick="{{ go.des10 }}" style="{{ nav.des10 }}">10 · Authorised</button>
+
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:16px 0 6px 10px">Reference</div>
+    <button type="button" onclick="{{ go.dialogs }}" style="{{ nav.dialogs }}">Dialogs &amp; common states</button>
+  </nav>
+
+  <div style="flex:1;overflow:auto;padding:40px 40px 80px">
+
+  <sc-if value="{{ is.des01 }}" hint-placeholder-val="{{ true }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md)">
+    <nav class="nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 32px">
+      <span class="nav-brand">KenTender</span>
+      <a href="#" aria-current="page">Procurement Requisitions</a>
+    </nav>
+    <div style="padding:40px 48px">
+      <h1 style="font-size:30px;margin-bottom:4px">Procurement Requisitions</h1>
+      <p style="color:var(--color-neutral-700);font-size:15px;margin-bottom:32px">Prepare precise departmental requests from approved Plan Items.</p>
+
+      <div class="card blueprint elev-sm" style="padding:24px;display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:40px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin-bottom:6px">1 Plan Item ready to prepare</div>
+          <div style="font-size:14px;color:var(--color-neutral-800)">Clinical training and deployment laptops for digital health rollout · Digital Health, HR Management and Development · KES 50,000,000.00</div>
+        </div>
+        <button type="button" class="btn btn-primary">Prepare Requisition</button>
+      </div>
+
+      <h2 style="font-size:18px;margin-bottom:16px">Your Requisitions</h2>
+      <table class="table">
+        <thead><tr><th>Requisition</th><th>Plan Item</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>REQ-MOH-2027-033-001</td>
+            <td>Clinical training and deployment laptops for digital health rollout</td>
+            <td><span class="kt-status is-draft">Draft</span></td>
+            <td><a href="#">Continue</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:10px">1 Requisition</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des02 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md)">
+    <nav class="nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 32px">
+      <span class="nav-brand">KenTender</span>
+      <a href="#">Procurement Requisitions</a>
+    </nav>
+    <div style="padding:40px 48px;max-width:1040px">
+      <h1 style="font-size:26px;margin-bottom:24px">Prepare Requisition from approved Plan Item</h1>
+
+      <div class="card blueprint elev-sm" style="padding:24px;margin-bottom:20px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Planning source</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 32px;font-size:14px">
+          <div><div class="kt-label">Plan Item</div><div>PPI-MOH-2027-033 — Clinical training and deployment laptops for digital health rollout</div></div>
+          <div><div class="kt-label">Contributing departments</div><div>Digital Health · Human Resources Management and Development</div></div>
+          <div><div class="kt-label">Procurement method</div><div>Open Tender</div></div>
+          <div><div class="kt-label">Planned completion</div><div>30 September 2027</div></div>
+          <div><div class="kt-label">Planned value</div><div>KES 50,000,000.00</div></div>
+          <div><div class="kt-label">Plan horizon</div><div>Single year</div></div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-divider)">
+          <div class="kt-label">Strategic Objective</div>
+          <div style="font-size:14px;margin:2px 0 4px">OBJ-MOH-2023-001 — Strengthen interoperable national digital health services</div>
+          <div style="font-size:12px;color:var(--color-neutral-700)">Digital health systems › Health policy, standards and regulation › Digital health governance</div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-divider);display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div><div class="kt-label">Business need</div><div style="font-size:14px">Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.</div></div>
+          <div><div class="kt-label">Expected operational result</div><div style="font-size:14px">Staff can use secure, supported equipment for training and field digital-health work.</div></div>
+        </div>
+      </div>
+
+      <div class="card blueprint elev-sm" style="padding:16px 24px;margin-bottom:20px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <table class="table">
+          <thead><tr><th>Contributing department</th><th>Source requirement</th><th class="is-num">Remaining quantity</th><th class="is-num">Remaining value</th></tr></thead>
+          <tbody>
+            <tr><td>Human Resources Management and Development</td><td>Business laptops</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td></tr>
+            <tr><td>Digital Health</td><td>Business laptops</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card blueprint elev-sm" style="padding:24px;margin-bottom:20px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="kt-card-title">Requirement product</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">IT Equipment</div>
+        <p style="font-size:13px;color:var(--color-neutral-700);margin:0">This release supports straightforward off-the-shelf IT equipment. Complex software, integration or migration is not supported.</p>
+      </div>
+
+      <div style="background:var(--color-accent-100);border:1px solid var(--color-accent-300);padding:16px 20px;font-size:13px;color:var(--color-accent-900);margin-bottom:28px">
+        This Requisition draws from two departments because Planning combined their Needs into one Plan Item. Digital Health, as the larger contributor, certifies the departmental submission.
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px">
+        <button type="button" class="btn btn-secondary">Cancel</button>
+        <button type="button" class="btn btn-primary">Prepare Requisition</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des03 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column">
+    <div style="padding:24px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+        <h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1>
+        <span class="kt-status is-draft">Draft</span>
+      </div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+    </div>
+    <div style="display:flex;flex:1">
+      <aside style="width:260px;flex:none;border-right:1px solid var(--color-divider);background:var(--color-surface);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 10px;background:var(--color-accent-100);border-left:3px solid var(--color-accent)">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-accent);background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600">1</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Request and drawdown</div><div style="font-size:11px;color:var(--color-accent)">In progress</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">2</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Equipment items</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">3</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Technical and support</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">4</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Services and acceptance</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">5</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Review and submit</div><div style="font-size:11px;color:var(--status-critical)">8 blockers</div></div>
+        </div>
+      </aside>
+      <main style="flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:24px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">From approved Procurement Plan</div><div class="card-title" style="font-size:14px">Business need</div><p class="card-body" style="font-size:12px">Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.</p></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">From approved Procurement Plan</div><div class="card-title" style="font-size:14px">Expected operational result</div><p class="card-body" style="font-size:12px">Staff can use secure, supported equipment for training and field digital-health work.</p></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">From approved Procurement Plan</div><div class="card-title" style="font-size:14px">Method</div><p class="card-body" style="font-size:12px">Open Tender</p></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">From approved Procurement Plan</div><div class="card-title" style="font-size:14px">Planned completion</div><p class="card-body" style="font-size:12px">30 September 2027</p></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="field"><label>Requirement title</label><input class="input" value="Clinical training and deployment laptops for digital health rollout" /></div>
+          <div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" /></div>
+          <div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></div></div>
+          <div class="field"><label id="rel-svc-lbl">Related services required</label>
+            <div class="seg" role="radiogroup" aria-labelledby="rel-svc-lbl">
+              <label class="seg-opt"><input type="radio" name="relsvc" checked="checked" />No</label>
+              <label class="seg-opt"><input type="radio" name="relsvc" />Yes</label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Drawdown</div>
+          <table class="table">
+            <thead><tr><th>Contributing department</th><th>Source requirement</th><th class="is-num">Remaining</th><th class="is-num">Requested quantity</th><th class="is-num">Remaining value</th><th class="is-num">Requested value</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Human Resources Management and Development</td><td>Business laptops</td><td class="is-num">100 Each</td><td class="is-num"><input class="input" style="width:80px;text-align:right" value="100" /></td><td class="is-num">KES 20,000,000.00</td><td class="is-num"><input class="input" style="width:140px;text-align:right" value="20,000,000.00" /></td><td><a href="#" style="font-size:12px">Request full balance</a></td></tr>
+              <tr><td>Digital Health</td><td>Business laptops</td><td class="is-num">150 Each</td><td class="is-num"><input class="input" style="width:80px;text-align:right" value="150" /></td><td class="is-num">KES 30,000,000.00</td><td class="is-num"><input class="input" style="width:140px;text-align:right" value="30,000,000.00" /></td><td><a href="#" style="font-size:12px">Request full balance</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <div style="background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 32px;display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Continue to equipment items<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des04 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column">
+    <div style="padding:24px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-draft">Draft</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+    </div>
+    <div style="display:flex;flex:1">
+      <aside style="width:260px;flex:none;border-right:1px solid var(--color-divider);background:var(--color-surface);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">1</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Request and drawdown</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 10px;background:var(--color-accent-100);border-left:3px solid var(--color-accent)">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-accent);background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600">2</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Equipment items</div><div style="font-size:11px;color:var(--color-accent)">In progress</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">3</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Technical and support</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">4</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Services and acceptance</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px">
+          <div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">5</div>
+          <div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Review and submit</div><div style="font-size:11px;color:var(--status-critical)">6 blockers</div></div>
+        </div>
+      </aside>
+      <main style="flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="kt-card-title" style="margin-bottom:0">Equipment items</div>
+          <button type="button" class="btn btn-secondary">Add equipment item</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>Item</th><th>Planning source</th><th>Category</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Business laptops</td><td>SRC-MOH-033-001</td><td>Laptop</td><td class="is-num">100 Each</td><td>Clinical training for Human Resources Management and Development staff</td><td>Nairobi · 30 Sep 2027</td><td><a href="#" style="font-size:12px">Edit</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+            <tr><td>Business laptops</td><td>SRC-MOH-033-002</td><td>Laptop</td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td><td>Nairobi · 30 Sep 2027</td><td><a href="#" style="font-size:12px">Edit</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+          </tbody>
+        </table>
+
+        <div class="card blueprint" style="padding:14px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:13px;margin-bottom:10px"><strong>3 baseline characteristics proposed</strong> for Business laptops (SRC-MOH-033-001).</div>
+          <table class="table">
+            <thead><tr><th>Characteristic</th><th>Comparison</th><th>Proposed value</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Electrical compatibility</td><td>Required</td><td>Yes</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+              <tr><td>New and unused equipment</td><td>Required</td><td>Yes</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+              <tr><td>Storage type</td><td>One of</td><td>NVMe SSD</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card blueprint" style="padding:14px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:13px;margin-bottom:10px"><strong>3 baseline characteristics proposed</strong> for Business laptops (SRC-MOH-033-002).</div>
+          <table class="table">
+            <thead><tr><th>Characteristic</th><th>Comparison</th><th>Proposed value</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Electrical compatibility</td><td>Required</td><td>Yes</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+              <tr><td>New and unused equipment</td><td>Required</td><td>Yes</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+              <tr><td>Storage type</td><td>One of</td><td>NVMe SSD</td><td><span class="kt-status is-attention">Proposed</span> <a href="#" style="font-size:12px;margin-left:8px">Confirm</a> · <a href="#" style="font-size:12px">Remove</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <div style="background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 32px;display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Continue to technical and support<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des05 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column">
+    <div style="padding:24px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-draft">Draft</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+    </div>
+    <div style="display:flex;flex:1">
+      <aside style="width:260px;flex:none;border-right:1px solid var(--color-divider);background:var(--color-surface);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">1</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Request and drawdown</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">2</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Equipment items</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 10px;background:var(--color-accent-100);border-left:3px solid var(--color-accent)"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-accent);background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600">3</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Technical and support</div><div style="font-size:11px;color:var(--color-accent)">In progress</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">4</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Services and acceptance</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">5</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Review and submit</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div></div>
+      </aside>
+      <main style="flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+        <div class="seg" role="tablist" style="width:fit-content">
+          <label class="seg-opt"><input type="radio" name="itemtab" checked="checked" />All items</label>
+          <label class="seg-opt"><input type="radio" name="itemtab" />Business laptops</label>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="kt-card-title" style="margin-bottom:0">Technical characteristics</div>
+          <button type="button" class="btn btn-secondary">Add characteristic</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>Characteristic</th><th>Comparison</th><th>Required value</th><th>Unit</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Electrical compatibility</td><td>Required</td><td>Yes — suitable for Kenyan mains supply</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>New and unused equipment</td><td>Required</td><td>Yes</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Memory</td><td>Minimum</td><td>16</td><td>GB</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Storage capacity</td><td>Minimum</td><td>512</td><td>GB</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Storage type</td><td>One of</td><td>NVMe SSD</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Display size</td><td>Minimum</td><td>14.0</td><td>inches</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Battery runtime</td><td>Minimum</td><td>8</td><td>hours</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Processor requirement</td><td>Minimum</td><td>64-bit business-class processor, minimum 10 cores or equivalent benchmark</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Operating-system compatibility</td><td>Required</td><td>Approved organisational Windows environment</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Network connectivity</td><td>One of</td><td>Wi-Fi 6, Bluetooth 5 or later</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+            <tr><td>Required ports</td><td>Required</td><td>USB-C ×2, USB-A ×2, HDMI ×1</td><td>—</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+          </tbody>
+        </table>
+
+        <div class="kt-card-title">Warranty and support</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div class="field"><label>Minimum warranty</label><input class="input" value="36 months" /></div>
+          <div class="field"><label id="onsite-lbl">On-site support required</label><div class="seg" role="radiogroup" aria-labelledby="onsite-lbl"><label class="seg-opt"><input type="radio" name="onsite" checked="checked" />Yes</label><label class="seg-opt"><input type="radio" name="onsite" />No</label></div></div>
+          <div class="field"><label>Maximum support response</label><input class="input" value="8 hours" /></div>
+          <div class="field"><label id="mfr-lbl">Manufacturer support required</label><div class="seg" role="radiogroup" aria-labelledby="mfr-lbl"><label class="seg-opt"><input type="radio" name="mfr" checked="checked" />Yes</label><label class="seg-opt"><input type="radio" name="mfr" />No</label></div></div>
+          <div class="field"><label>Service location constraint</label>
+            <select class="input">
+              <option>None</option>
+              <option selected="selected">Within Kenya</option>
+              <option>At delivery location</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Support description</label><textarea class="input" rows="2">Supplier to provide escalation and warranty-contact details.</textarea></div>
+      </main>
+    </div>
+    <div style="background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 32px;display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Continue to services and acceptance<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des06 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column">
+    <div style="padding:24px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-draft">Draft</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+    </div>
+    <div style="display:flex;flex:1">
+      <aside style="width:260px;flex:none;border-right:1px solid var(--color-divider);background:var(--color-surface);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">1</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Request and drawdown</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">2</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Equipment items</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">3</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Technical and support</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 10px;background:var(--color-accent-100);border-left:3px solid var(--color-accent)"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-accent);background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600">4</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Services and acceptance</div><div style="font-size:11px;color:var(--color-accent)">In progress</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-neutral-500)">5</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Review and submit</div><div style="font-size:11px;color:var(--color-neutral-500)">Not started</div></div></div>
+      </aside>
+      <main style="flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:24px">
+        <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);padding:12px 18px;font-size:13px;color:var(--color-neutral-800)">Related services required: <strong>No</strong> — no related-service rows apply to this Requisition.</div>
+
+        <div>
+          <div class="kt-card-title">Acceptance checks</div>
+          <table class="table">
+            <thead><tr><th>Check</th><th>Applies to</th><th>Pass condition</th><th>Evidence</th></tr></thead>
+            <tbody>
+              <tr><td>Quantity</td><td>All items</td><td>Delivered quantities equal the authorised schedule</td><td>Inspection record</td></tr>
+              <tr><td>Physical condition</td><td>All items</td><td>No visible damage and all listed accessories are present</td><td>Inspection record</td></tr>
+              <tr><td>Required specification</td><td>All items</td><td>Every delivered unit complies with all mandatory technical rows</td><td>Inspection record</td></tr>
+              <tr><td>Functional test</td><td>All items</td><td>Each device powers on and completes the agreed basic functional test</td><td>Test result</td></tr>
+              <tr><td>Documents received</td><td>All items</td><td>Warranty and delivery documents are received and verified</td><td>Certificate</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="kt-card-title" style="margin-bottom:0">Supporting materials</div>
+          <button type="button" class="btn btn-secondary">Add supporting material</button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700)">No supporting materials added.</div>
+      </main>
+    </div>
+    <div style="background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 32px;display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Continue to review<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des07 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column">
+    <div style="padding:24px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT REQUISITIONS</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-draft">Draft</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+    </div>
+    <div style="display:flex;flex:1">
+      <aside style="width:260px;flex:none;border-right:1px solid var(--color-divider);background:var(--color-surface);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">1</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Request and drawdown</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">2</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Equipment items</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">3</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Technical and support</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 13px"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600;color:var(--color-accent-800)">4</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Services and acceptance</div><div style="font-size:11px;color:var(--color-accent-800)">Complete</div></div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 10px;background:var(--color-accent-100);border-left:3px solid var(--color-accent)"><div style="width:22px;height:22px;flex:none;border:1px solid var(--color-accent);background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-weight:600">5</div><div><div style="font-family:var(--font-heading);font-weight:600;font-size:13px">Review and submit</div><div style="font-size:11px;color:var(--color-accent)">In progress</div></div></div>
+      </aside>
+      <main style="flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+        <div style="background:var(--status-live-bg);border:1px solid var(--status-live);padding:16px 24px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:var(--status-live)">Ready for departmental submission</div>
+          <div style="font-size:13px;color:var(--color-neutral-800)">0 Blocking · 1 Warning</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Planning drawdown</div><div class="card-title" style="font-size:15px">2 source lines · 250 Each</div><p class="card-body" style="font-size:12px">KES 50,000,000.00</p></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Equipment</div><div class="card-title" style="font-size:15px">2 items</div></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Technical requirements</div><div class="card-title" style="font-size:15px">11 confirmed rows</div></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Related services</div><div class="card-title" style="font-size:15px">0 rows</div></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Acceptance</div><div class="card-title" style="font-size:15px">5 rows</div></div>
+          <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Supporting materials</div><div class="card-title" style="font-size:15px">0 files</div></div>
+        </div>
+
+        <div style="background:var(--status-attention-bg);border:1px solid var(--status-attention);padding:12px 20px;font-size:13px;color:var(--status-attention)">Delivery date is the same as the latest approved Plan completion date.</div>
+
+        <div class="card blueprint" style="padding:20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="kt-card-title">Requisition preview</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:13px">
+            <div style="display:grid;gap:10px">
+              <div><div class="kt-label">Plan Item</div><div>PPI-MOH-2027-033</div></div>
+              <div><div class="kt-label">Contributing departments</div><div>Digital Health · Human Resources Management and Development</div></div>
+              <div><div class="kt-label">Business need</div><div>Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.</div></div>
+              <div><div class="kt-label">Delivery</div><div>Ministry of Health Headquarters, Afya House, Nairobi · 30 Sep 2027</div></div>
+            </div>
+            <div style="display:grid;gap:10px">
+              <div><div class="kt-label">Equipment items</div><div>Business laptops — 100 Each (HRMD) · Business laptops — 150 Each (Digital Health)</div></div>
+              <div><div class="kt-label">Technical requirements</div><div>11 confirmed rows, all applying to All items</div></div>
+              <div><div class="kt-label">Acceptance</div><div>5 objective checks</div></div>
+              <div><div class="kt-label">Supporting materials</div><div>None</div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div style="background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 32px;display:flex;justify-content:space-between;gap:12px">
+      <button type="button" class="btn btn-secondary">Back</button>
+      <div style="display:flex;gap:12px">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Send for department approval<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des08 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md)">
+    <nav class="nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 32px">
+      <span class="nav-brand">KenTender</span>
+      <a href="#">Procurement Requisitions</a>
+    </nav>
+    <div style="padding:36px 48px;max-width:1100px;margin:0 auto">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">DEPARTMENT APPROVAL</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-pending">Awaiting Department Approval</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+      <div style="font-size:13px;color:var(--color-neutral-800);margin-top:12px">Prepared by <strong>Grace Wanjiku</strong>, Departmental Author</div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0">
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Planning drawdown</div><div class="card-title" style="font-size:15px">2 source lines · 250 Each</div><p class="card-body" style="font-size:12px">KES 50,000,000.00</p></div>
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Technical requirements</div><div class="card-title" style="font-size:15px">11 confirmed rows</div></div>
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Validation</div><div class="card-title" style="font-size:15px;color:var(--status-live)">0 Blocking · 1 Warning</div></div>
+      </div>
+
+      <table class="table" style="margin-bottom:20px">
+        <thead><tr><th>Contributing department</th><th>Source requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th></tr></thead>
+        <tbody>
+          <tr><td>Human Resources Management and Development</td><td>Business laptops</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td></tr>
+          <tr><td>Digital Health</td><td>Business laptops</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td></tr>
+        </tbody>
+      </table>
+
+      <table class="table" style="margin-bottom:20px">
+        <thead><tr><th>Item</th><th>Category</th><th class="is-num">Quantity</th><th>Intended use</th></tr></thead>
+        <tbody>
+          <tr><td>Business laptops</td><td>Laptop</td><td class="is-num">100 Each</td><td>Clinical training for Human Resources Management and Development staff</td></tr>
+          <tr><td>Business laptops</td><td>Laptop</td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td></tr>
+        </tbody>
+      </table>
+
+      <div class="kt-card-title">Technical requirements — 11 confirmed rows</div>
+      <table class="table" style="margin-bottom:20px">
+        <thead><tr><th>Characteristic</th><th>Required value</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Electrical compatibility</td><td>Yes — suitable for Kenyan mains supply</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+          <tr><td>Memory</td><td>Minimum 16 GB</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+          <tr><td>Storage capacity</td><td>Minimum 512 GB</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+          <tr><td>Display size</td><td>Minimum 14.0 inches</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+          <tr><td>Required ports</td><td>USB-C ×2, USB-A ×2, HDMI ×1</td><td><span class="kt-status is-live">Confirmed</span></td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-bottom:24px">Content digest — Generated by KenTender · <span style="font-family:ui-monospace,monospace">3f9a1c7e2b04</span></div>
+
+      <div class="card blueprint" style="padding:20px;margin-bottom:24px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <p style="font-size:14px;font-style:italic;margin:0">I confirm that this Requisition states the departments' operational need and minimum requirements and may be submitted to Procurement.</p>
+      </div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-bottom:24px">Decision by <strong>Dr Peter Kimani</strong>, Head of User Department for Digital Health — certifying on behalf of both contributing departments.</div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px">
+        <button type="button" class="btn btn-secondary">Return for correction</button>
+        <button type="button" class="btn btn-primary">Submit to Procurement</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des09 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md)">
+    <nav class="nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 32px">
+      <span class="nav-brand">KenTender</span>
+      <a href="#">Procurement Requisitions</a>
+    </nav>
+    <div style="padding:36px 48px;max-width:1100px;margin:0 auto">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">PROCUREMENT AUTHORISATION</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-pending">Submitted to Procurement</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1</div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--color-neutral-800)">Lead department: <strong>Digital Health</strong>. <a href="#" style="font-size:13px">Change lead department</a></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0">
+        <div class="card blueprint" style="padding:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Fresh Planning availability</div><div class="card-title" style="font-size:15px;color:var(--status-live)">Eligible</div><p class="card-body" style="font-size:13px">KES 50,000,000.00 and 250 Each remain available</p></div>
+        <div class="card blueprint" style="padding:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Fresh Budget affordability</div><div class="card-title" style="font-size:15px">MOH-BL-HWD-2027</div><p class="card-body" style="font-size:13px">KES 50,000,000.00 requested against KES 60,000,000.00 approved and fully available</p></div>
+      </div>
+
+      <div class="kt-card-title">Product suitability — §5A compatibility test</div>
+      <table class="table" style="margin-bottom:20px">
+        <thead><tr><th>Test</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>procurement_category</td><td><span class="kt-status is-live">Goods</span></td></tr>
+          <tr><td>Requirement type</td><td><span class="kt-status is-live">Straightforward IT equipment</span></td></tr>
+          <tr><td>Reservation category</td><td><span class="kt-status is-live">None</span></td></tr>
+          <tr><td>Lotting indicator</td><td><span class="kt-status is-live">Single lot</span></td></tr>
+          <tr><td>Currency</td><td><span class="kt-status is-live">KES</span></td></tr>
+          <tr><td>Award package</td><td><span class="kt-status is-live">One</span></td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:13px;color:var(--color-neutral-800);margin-bottom:8px"><span class="kt-label">Policy justification</span><br />OBJ-MOH-2023-001 — Strengthen interoperable national digital health services</div>
+      <div style="font-size:13px;color:var(--status-live);margin-bottom:8px">Validation: 0 Blocking · 1 Warning</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);margin-bottom:24px">Submitted by Dr Peter Kimani · 8 Mar 2027, 09:00 EAT</div>
+
+      <div class="card blueprint" style="padding:20px;margin-bottom:24px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <p style="font-size:14px;font-style:italic;margin:0">I authorise this complete Requisition for Tender Preparation and commit its stated Planning drawdown and Budget reservation.</p>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px">
+        <button type="button" class="btn btn-secondary">Return to department</button>
+        <button type="button" class="btn btn-primary">Authorise for Tender Preparation</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.des10 }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md)">
+    <nav class="nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 32px">
+      <span class="nav-brand">KenTender</span>
+      <a href="#">Procurement Requisitions</a>
+      <button type="button" class="btn btn-primary">Open Tender Preparation</button>
+    </nav>
+    <div style="padding:36px 48px;max-width:1100px;margin:0 auto">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent);font-weight:600">AUTHORISED REQUISITION</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-live">Authorised for Tender Preparation</span></div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-family:ui-monospace,monospace">REQ-MOH-2027-033-001 · PPI-MOH-2027-033 · Version 1 · Handoff HND-MOH-2027-033-001</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0">
+        <div class="card blueprint" style="padding:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Planning drawdown</div><div class="card-title" style="font-size:15px">DRW-MOH-2027-033</div><p class="card-body" style="font-size:13px">SRC-MOH-033-001 · SRC-MOH-033-002</p></div>
+        <div class="card blueprint" style="padding:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Tender status</div><div class="card-title" style="font-size:15px"><span class="kt-status is-pending">Not yet consumed</span></div></div>
+      </div>
+
+      <div class="kt-card-title">Budget reservations</div>
+      <table class="table" style="margin-bottom:20px">
+        <thead><tr><th>Reservation</th><th>Drawdown line</th><th class="is-num">Value</th><th>Budget Line</th></tr></thead>
+        <tbody>
+          <tr><td>RSV-MOH-2027-033-001</td><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000.00</td><td>MOH-BL-HWD-2027</td></tr>
+          <tr><td>RSV-MOH-2027-033-002</td><td>Digital Health</td><td class="is-num">KES 30,000,000.00</td><td>MOH-BL-HWD-2027</td></tr>
+        </tbody>
+      </table>
+
+      <div class="kt-card-title">Complete structured package</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Equipment</div><div class="card-title" style="font-size:15px">2 items</div></div>
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Technical requirements</div><div class="card-title" style="font-size:15px">11 rows</div></div>
+        <div class="card blueprint" style="padding:14px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Acceptance</div><div class="card-title" style="font-size:15px">5 rows</div></div>
+      </div>
+
+      <div style="font-size:13px;color:var(--color-neutral-700);margin-bottom:8px">Authorised by <strong>Charles Mutiso</strong>, Head of Procurement Function · 15 Mar 2027, 10:00 EAT</div>
+      <div style="font-size:12px;color:var(--color-neutral-700)">Authorised version digest — Generated by KenTender · <span style="font-family:ui-monospace,monospace">a71e0c4d9f2b</span></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.dialogs }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1440px;min-height:1024px;background:var(--color-bg);margin:0 auto;box-shadow:var(--shadow-md);padding:40px 48px">
+    <h1 style="font-size:24px;margin-bottom:24px">Decision dialogs &amp; common states</h1>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-bottom:32px">
+      <div class="dialog blueprint" style="position:static;width:auto"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Return Requisition for correction?</div>
+        <div class="field"><label>Correction required</label><textarea class="input" rows="3" placeholder="20–1,000 characters"></textarea></div>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Return</button></div>
+      </div>
+
+      <div class="dialog blueprint" style="position:static;width:auto"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Authorise Requisition?</div>
+        <div class="dialog-body">250 Each · KES 50,000,000.00<br />This commits the Planning drawdown, reserves the requested value against MOH-BL-HWD-2027, and creates the immutable Tender Preparation handoff.</div>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Authorise</button></div>
+      </div>
+
+      <div class="dialog blueprint" style="position:static;width:auto"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Revoke unconsumed authorisation?</div>
+        <div class="field"><label>Reason</label><textarea class="input" rows="3" placeholder="20–1,000 characters"></textarea></div>
+        <div class="dialog-body">The Planning drawdown and both Budget reservations will be reversed. The authorised Version remains in history.</div>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-danger">Revoke authorisation</button></div>
+      </div>
+
+      <div class="dialog blueprint" style="position:static;width:auto"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="dialog-title">Request upstream correction?</div>
+        <div class="field"><label>Reason</label><textarea class="input" rows="3">The Plan Item's authorised warranty period does not match what the department actually needs; this must be corrected in Planning.</textarea></div>
+        <div class="dialog-body">Requisitions cannot edit an approved Planning fact. This Requisition Version will be preserved.</div>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Request correction</button></div>
+      </div>
+    </div>
+
+    <h2 style="font-size:18px;margin-bottom:16px">Common states</h2>
+    <table class="table">
+      <thead><tr><th>State</th><th>Message</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>No eligible Plan Items</td><td>No Active Plan Items are ready for Requisition.</td><td>None</td></tr>
+        <tr><td>Product unsupported</td><td>This Plan Item is not supported by the IT-equipment Requisition pattern.</td><td>Return to workspace</td></tr>
+        <tr><td>Open Requisition exists</td><td>This Plan Item already has an open Requisition.</td><td>Open it, if authorised</td></tr>
+        <tr><td>Forbidden</td><td>You do not have access to Procurement Requisitions. This area needs one of these responsibilities: Departmental Author, Head of User Department, Head of Procurement Function or Auditor. Ask your KenTender administrator to assign one in System setup.</td><td>None</td></tr>
+        <tr><td>Stale write</td><td>Another user changed this Requisition. Reload before continuing.</td><td>Reload</td></tr>
+        <tr><td>Load failure</td><td>Procurement Requisitions could not be loaded.</td><td>Try again</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'des01' };
+  screens = ['des01','des02','des03','des04','des05','des06','des07','des08','des09','des10','dialogs'];
+
+  navStyle(active) {
+    return 'display:block;width:100%;text-align:left;padding:9px 10px;cursor:pointer;border:none;background:' +
+      (active ? 'var(--color-accent)' : 'transparent') + ';color:' + (active ? '#fff' : 'var(--color-text)') +
+      ';font-family:var(--font-body);font-weight:' + (active ? 600 : 400) + ';font-size:13px;border-radius:2px;margin-bottom:2px;';
+  }
+
+  renderVals() {
+    const s = this.state.screen;
+    const nav = {}, go = {}, is = {};
+    this.screens.forEach((id) => {
+      nav[id] = this.navStyle(s === id);
+      go[id] = () => this.setState({ screen: id });
+      is[id] = s === id;
+    });
+    return { nav, go, is };
+  }
+}
+</script>
+</body>
+</html>

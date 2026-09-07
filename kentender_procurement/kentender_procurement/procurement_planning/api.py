@@ -376,3 +376,27 @@ def reverse_requisition_drawdown(drawdown_reference: str, expected_record_versio
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
 	return plan_requisition.reverse_requisition_drawdown(drawdown_reference=drawdown_reference, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def receive_plan_item_correction_request(
+	plan_item_id: str, requisition_reference: str, requisition_version: str, reason: str, idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.receive_plan_item_correction_request(
+		plan_item_id=plan_item_id, requisition_reference=requisition_reference, requisition_version=requisition_version,
+		reason=reason, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def resolve_plan_item_correction_request(
+	correction_request: str, resolution_note: str, expected_record_version, idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.resolve_plan_item_correction_request(
+		correction_request=correction_request, resolution_note=resolution_note,
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)

@@ -33,6 +33,19 @@ export default defineConfig({
 				},
 			},
 			{
+				// REQ-CHG-001 v1.6 §18.1 — real SFC component tests for the
+				// Procurement Requisitions screens, alongside (never instead of)
+				// the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "procurement-requisitions",
+					environment: "jsdom",
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/procurement_requisitions/**/*.spec.js",
+					],
+				},
+			},
+			{
 				// AUTH-ADR-001 v1.6 §18.2 items 22–24 — SFC component tests for the
 				// System setup tabs and dialogs: field variants per registry scope,
 				// server-decided action visibility, and state rendering, alongside

@@ -191,6 +191,8 @@ def check_funding(
 	source_set_hash: str | None = None,
 	allocations: list | str | None = None,
 	correlation_id: str | None = None,
+	calling_module: str | None = None,
+	caller_reference: str | None = None,
 ):
 	from kentender_budget.services import budget_check_reserve_contracts as cr
 
@@ -199,10 +201,12 @@ def check_funding(
 	return cr.check_funding(
 		plan_item=plan_item or "",
 		plan_version=plan_version or "",
-		finance_task=finance_task or "",
 		source_set_hash=source_set_hash or "",
 		allocations=allocations or [],
 		correlation_id=correlation_id or "",
+		finance_task=finance_task or None,
+		calling_module=calling_module or "Procurement Planning",
+		caller_reference=caller_reference or "",
 	)
 
 
@@ -217,9 +221,9 @@ def reserve_funding(
 
 	return cr.reserve_funding(
 		token=token or "",
-		finance_task=finance_task or "",
 		source_set_hash=source_set_hash or "",
 		idempotency_key=idempotency_key or "",
+		finance_task=finance_task or None,
 	)
 
 

@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "supporting_material_id",
+  "title",
+  "document_type",
+  "other_document_type",
+  "purpose",
+  "file",
+  "file_digest",
+  "file_check_result",
+  "treatment",
+  "linked_requirement_ids_json",
+  "document_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "supporting_material_id",
+   "fieldtype": "Data",
+   "label": "Supporting Material Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "length": 160
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Select",
+   "label": "Document Type",
+   "options": "Drawing\nPhotograph\nRoom layout\nNetwork diagram\nStandards extract\nSite report\nEnvironment information\nOther supporting material",
+   "reqd": 1
+  },
+  {
+   "fieldname": "other_document_type",
+   "fieldtype": "Data",
+   "label": "Other Document Type"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "reqd": 1,
+   "length": 300
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_digest",
+   "fieldtype": "Data",
+   "label": "File Digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_check_result",
+   "fieldtype": "Data",
+   "label": "File Check Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "treatment",
+   "fieldtype": "Select",
+   "label": "Treatment",
+   "options": "Informational\nForms part of requirement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "linked_requirement_ids_json",
+   "fieldtype": "Small Text",
+   "label": "Linked Requirement Ids Json"
+  },
+  {
+   "fieldname": "document_version",
+   "fieldtype": "Data",
+   "label": "Document Version",
+   "length": 40
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Requisition Supporting Material",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

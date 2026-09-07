@@ -2,7 +2,31 @@
 
 Implements [docs/data/seed-data-spec-v1.md](../../docs/data/seed-data-spec-v1.md) and [docs/data/users-roles-permissions-spec-v1.md](../../docs/data/users-roles-permissions-spec-v1.md).
 
-## Entry points (`bench execute`)
+## Canonical world (KT-STD-001 §8 + SEED-001) — the current entry point
+
+```bash
+bench --site <site> execute kentender_core.seeds.canonical.run --kwargs '{"through": "budget"}'
+bench --site <site> execute kentender_core.seeds.canonical.dry_run
+bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{"through": "budget"}'
+```
+
+`run` first removes every row that is not part of the canonical world
+(test/Playwright budgets, needs, plans, users on fixture e-mail domains,
+duplicate organisation units, isolation fiscal years, legacy demo journeys —
+see `canonical.py`'s `collect_non_canonical`), then reseeds progressively:
+`site` (site PE, units, fiscal years, catalogues, funding source, regulatory
+reference, actors and assignments — `site_setup.run`) → `strategy`
+(`kentender_strategy.seeds.kentender_mvp_v1_strategy`) → `budget`
+(`kentender_budget.seeds.kentender_mvp_v1_portfolio`, Active baseline only).
+Later module stages are appended to `canonical.STAGES` as they land. Pass
+`"rebuild": True` to also drop the canonical module rows first (Strategy,
+Budget and any downstream Needs/Planning rows, which reference Budget lines)
+and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
+legacy reference doctypes alone (KT-STD-001 §10).
+
+`make seed-canonical SITE=<site> THROUGH=budget` wraps `run`. The maintained runbook — options, what is removed and kept, validation, how to add the next module stage — is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md`.
+
+## Legacy entry points (`bench execute`)
 
 Run as **Administrator** or **System Manager** on the target site.
 

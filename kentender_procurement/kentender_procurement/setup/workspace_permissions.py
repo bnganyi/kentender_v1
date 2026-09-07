@@ -82,6 +82,8 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	# (PLN-CHG-001 v1.2: one page; the Stitch/Demand-era keys are gone).
 	"procurement planning": "Procurement",
 	"procurement-planning": "Procurement",
+	"procurement requisitions": "Procurement",
+	"procurement-requisitions": "Procurement",
 	"packages": "Procurement",
 	"procurement-planning/releases": "Procurement",
 	"releases": "Procurement",
@@ -160,6 +162,7 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",
 		"procurement-planning": "Procurement",
+		"procurement-requisitions": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",
 		"procurement-home": "Procurement",

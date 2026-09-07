@@ -1,0 +1,270 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:PRQ-{#####}",
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "requisition_reference",
+  "plan_id",
+  "plan_version_id",
+  "plan_item_id",
+  "strategic_objective",
+  "strategic_objective_path",
+  "procurement_category",
+  "plan_horizon",
+  "multi_year_justification",
+  "col_a",
+  "contributing_org_units",
+  "lead_org_unit",
+  "current_version",
+  "authorised_version",
+  "current_state",
+  "section_handoff",
+  "planning_drawdown_reference",
+  "handoff",
+  "handoff_consumed_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition Reference",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_id",
+   "fieldtype": "Data",
+   "label": "Plan Id",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_version_id",
+   "fieldtype": "Data",
+   "label": "Plan Version Id",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item Id",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "strategic_objective",
+   "fieldtype": "Data",
+   "label": "Strategic Objective",
+   "read_only": 1
+  },
+  {
+   "fieldname": "strategic_objective_path",
+   "fieldtype": "Small Text",
+   "label": "Strategic Objective Path",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Data",
+   "label": "Procurement Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_horizon",
+   "fieldtype": "Data",
+   "label": "Plan Horizon",
+   "read_only": 1
+  },
+  {
+   "fieldname": "multi_year_justification",
+   "fieldtype": "Small Text",
+   "label": "Multi Year Justification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": "Col A"
+  },
+  {
+   "fieldname": "contributing_org_units",
+   "fieldtype": "Table",
+   "label": "Contributing Org Units",
+   "options": "Requisition Contributing Unit"
+  },
+  {
+   "fieldname": "lead_org_unit",
+   "fieldtype": "Link",
+   "label": "Lead Org Unit",
+   "options": "Organisation Unit",
+   "read_only": 1,
+   "description": "REQ-CHG-001 v1.6 \u00a75.1 \u2014 the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (\u00a713.11)."
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "label": "Current Version",
+   "options": "Requisition Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorised_version",
+   "fieldtype": "Link",
+   "label": "Authorised Version",
+   "options": "Requisition Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_state",
+   "fieldtype": "Select",
+   "label": "Current State",
+   "options": "Draft\nAwaiting Department Approval\nSubmitted to Procurement\nReturned\nAuthorised\nWithdrawn\nRevoked\nUpstream correction required\nSuperseded",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_handoff",
+   "fieldtype": "Section Break",
+   "label": "Handoff"
+  },
+  {
+   "fieldname": "planning_drawdown_reference",
+   "fieldtype": "Small Text",
+   "label": "Planning Drawdown Reference",
+   "read_only": 1,
+   "description": "Comma-separated Plan Drawdown Reference names \u2014 one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
+  },
+  {
+   "fieldname": "handoff",
+   "fieldtype": "Link",
+   "label": "Handoff",
+   "options": "Authorised Requisition Handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "handoff_consumed_at",
+   "fieldtype": "Datetime",
+   "label": "Handoff Consumed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Procurement Requisition",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Departmental Author",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "search_fields": "requisition_reference,plan_item_id",
+ "title_field": "requisition_reference"
+}

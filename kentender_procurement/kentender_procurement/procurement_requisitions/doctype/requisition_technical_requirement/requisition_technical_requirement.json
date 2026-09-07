@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "technical_requirement_id",
+  "applies_to_scope",
+  "applies_to_id",
+  "characteristic_key",
+  "comparison",
+  "required_value_json",
+  "required_value_display",
+  "unit",
+  "other_value",
+  "mandatory",
+  "reason",
+  "row_status",
+  "proposed_by_rule",
+  "row_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "technical_requirement_id",
+   "fieldtype": "Data",
+   "label": "Technical Requirement Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applies_to_scope",
+   "fieldtype": "Select",
+   "label": "Applies To Scope",
+   "options": "Item\nAll items",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applies_to_id",
+   "fieldtype": "Data",
+   "label": "Applies To Id"
+  },
+  {
+   "fieldname": "characteristic_key",
+   "fieldtype": "Data",
+   "label": "Characteristic Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "comparison",
+   "fieldtype": "Data",
+   "label": "Comparison",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_value_json",
+   "fieldtype": "Small Text",
+   "label": "Required Value Json"
+  },
+  {
+   "fieldname": "required_value_display",
+   "fieldtype": "Data",
+   "label": "Required Value Display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "other_value",
+   "fieldtype": "Data",
+   "label": "Other Value"
+  },
+  {
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "default": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "length": 300
+  },
+  {
+   "fieldname": "row_status",
+   "fieldtype": "Select",
+   "label": "Row Status",
+   "options": "Proposed\nConfirmed",
+   "default": "Proposed"
+  },
+  {
+   "fieldname": "proposed_by_rule",
+   "fieldtype": "Data",
+   "label": "Proposed By Rule"
+  },
+  {
+   "fieldname": "row_order",
+   "fieldtype": "Int",
+   "label": "Row Order"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Requisition Technical Requirement",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

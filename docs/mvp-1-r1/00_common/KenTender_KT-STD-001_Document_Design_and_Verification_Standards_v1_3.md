@@ -298,6 +298,7 @@ Each module works in a distinct window so the fixtures compose into one coherent
 | Departmental Needs journeys | 24 Nov 2026, between 09:00 and 15:30 EAT |
 | Procurement Planning journeys | 24 Nov 2026 through 20 Dec 2026, EAT |
 | Budget journeys | 1 Oct 2026 through 16 Mar 2027, EAT — registration precedes reservation, which precedes revision |
+| Requisition and Tender Preparation journeys | 1 Mar 2027 through 15 May 2027, EAT — Requisition authorisation (15 Mar 2027) precedes Tender preparation, which precedes the baseline invitation date (SEED-001 §7) |
 | Asset Disposal journeys | 4 May 2027 through 14 Jan 2028, EAT — the FY 2027/28 disposal plan is prepared before that year begins |
 
 ### 8.5 Units of measure

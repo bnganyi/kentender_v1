@@ -212,7 +212,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 
 	def record(self, item_id: str, allocation_id: str, *, quantity: float, amount: float, ref: str = None):
 		read = self.read_as_planner(item_id)
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		return plan_requisition.record_requisition_drawdown(
 			plan_item_id=item_id, requisition_reference=ref or f"REQ-{key()[:8]}",
 			requesting_org_unit=fx.OU_ALPHA,
@@ -307,7 +307,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		self.assertEqual(len(read["sources"]), 2)
 		ids = [s["plan_source_allocation_id"] for s in read["sources"]]
 
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		with self.assertRaises(frappe.ValidationError):
 			plan_requisition.record_requisition_drawdown(
 				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
@@ -331,7 +331,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		read = self.read_as_planner(item_id)
 		self.assertFalse(read["eligible"])
 
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		reversed_result = plan_requisition.reverse_requisition_drawdown(
 			drawdown_reference=drawdown["drawdown_reference"],
 			expected_record_version=drawdown["record_version"], idempotency_key=key(),
@@ -345,7 +345,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		self.assertTrue(read["eligible"])
 		self.assertAlmostEqual(read["remaining_value"], 1000000)
 
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		with self.assertRaises(frappe.ValidationError):
 			plan_requisition.reverse_requisition_drawdown(
 				drawdown_reference=drawdown["drawdown_reference"],
@@ -356,7 +356,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		accepted, item_id = self.active_item(indicative_amount=1000000)
 		allocation_id = self.allocation_id_of(item_id)
 		read = self.read_as_planner(item_id)
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		record_key = key()
 		args = dict(
 			plan_item_id=item_id, requisition_reference="REQ-REPLAY-1", requesting_org_unit=fx.OU_ALPHA,
@@ -404,6 +404,240 @@ class TestDrawdownAndReversal(RequisitionCase):
 			)
 
 
+class TestProjectionFieldCompleteness(RequisitionCase):
+	def test_every_req_chg_001_v16_field_is_present(self):
+		"""REQ-AC-056 — every field REQ-CHG-001 v1.6 §5.1/§5A depends on is
+		explicitly enumerated in the projection; none is left to a second,
+		undocumented query back into Planning."""
+		accepted, item_id = self.active_item(indicative_amount=1000000)
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		for field in (
+			"title", "reservation_category", "lotting_indicator", "lot_count", "plan_horizon",
+			"multi_year_justification", "contributing_org_unit_ids", "strategic_objective_path",
+			"currency", "award_packages",
+		):
+			self.assertIn(field, read, f"{field} missing from the projection")
+		self.assertEqual(read["currency"], "KES")
+		self.assertEqual(read["award_packages"], 1)
+		self.assertEqual(read["contributing_org_unit_ids"], [fx.OU_ALPHA])
+		self.assertEqual(read["strategic_objective_path"], read["objective_path"])
+		for source in read["sources"]:
+			self.assertIn("plan_item_line_id", source)
+			self.assertIn("source_line_id", source)
+			self.assertEqual(source["plan_item_line_id"], source["plan_source_allocation_id"])
+			self.assertTrue(source["source_line_id"])
+
+	def test_contributing_org_unit_ids_deduplicates_across_two_allocations_in_one_unit(self):
+		"""The combined-item fixture's two sources both belong to OU_ALPHA
+		(this repo's DPP-level fixture has no second-department combine
+		recipe); the aggregate must still be a de-duplicated sorted list of
+		one, not a two-element list repeating the same unit."""
+		frappe.set_user(fx.AUTHOR)
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		added_a = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"],
+			values=fx.direct_values(title="Dedup A", budget_line=fx.BUDGET_LINE, indicative_amount=500000),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		added_b = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"],
+			values=fx.direct_values(title="Dedup B", budget_line=fx.BUDGET_LINE_2, indicative_amount=500000),
+			expected_record_version=added_a["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added_b["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		accepted = dpp_validation.accept_departmental_plan(
+			task=task.name,
+			classifications={added_a["entry_id"]: "Goods", added_b["entry_id"]: "Goods"},
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		entry_a = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": added_a["entry_id"]}, "name")
+		entry_b = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": added_b["entry_id"]}, "name")
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		item_id = formed["created_items"][0]
+		self.complete_and_confirm(item_id, aggregation_reason="Same-unit combine for the dedup test.", aggregation_indicator="Aggregated into this package")
+		self.activate(accepted["annual_plan"])
+		frappe.set_user(fx.PLANNER)
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		self.assertEqual(len(read["sources"]), 2)
+		self.assertEqual(read["contributing_org_unit_ids"], [fx.OU_ALPHA])
+
+
+class TestRequisitionCallerReadGate(RequisitionCase):
+	def test_head_of_procurement_function_may_read(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOPF)
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		self.assertTrue(read["eligible"])
+
+	def test_departmental_author_of_a_contributing_unit_may_read(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.AUTHOR)  # OU_ALPHA — the item's own contributing unit
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		self.assertTrue(read["eligible"])
+
+	def test_departmental_author_of_an_unrelated_unit_is_refused(self):
+		"""OUTSIDER holds Departmental Author on OU_BETA only — never one of
+		this item's contributing units."""
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.OUTSIDER)
+		with self.assertRaises(frappe.DoesNotExistError):
+			plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+
+
+class TestListRequisitionEligiblePlanItems(RequisitionCase):
+	"""REQ-CHG-001 v1.6 §10.1 `GetRequisitionWorkspace`'s eligible-item list."""
+
+	def test_hopf_sees_the_eligible_item_site_wide(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOPF)
+		rows = plan_requisition.list_requisition_eligible_plan_items()
+		self.assertIn(item_id, [r["plan_item_id"] for r in rows])
+		row = next(r for r in rows if r["plan_item_id"] == item_id)
+		self.assertEqual(row["contributing_org_unit_ids"], [fx.OU_ALPHA])
+		self.assertGreater(row["remaining_value"], 0)
+
+	def test_author_of_a_contributing_unit_sees_it_too(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.AUTHOR)
+		rows = plan_requisition.list_requisition_eligible_plan_items()
+		self.assertIn(item_id, [r["plan_item_id"] for r in rows])
+
+	def test_author_of_an_unrelated_unit_does_not_see_it(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.OUTSIDER)  # Departmental Author on OU_BETA only
+		rows = plan_requisition.list_requisition_eligible_plan_items()
+		self.assertNotIn(item_id, [r["plan_item_id"] for r in rows])
+
+	def test_an_item_with_no_remaining_balance_is_excluded(self):
+		accepted, item_id = self.active_item(indicative_amount=1_000_000)
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		allocation = read["sources"][0]
+		frappe.set_user(fx.HOPF)
+		plan_requisition.record_requisition_drawdown(
+			plan_item_id=item_id, requisition_reference="REQ-EXHAUST-001", requesting_org_unit=fx.OU_ALPHA,
+			allocations=[{"plan_source_allocation_id": allocation["plan_source_allocation_id"], "quantity": allocation["remaining_quantity"], "amount": allocation["remaining_amount"]}],
+			expected_record_version=read["record_version"], idempotency_key=key(),
+		)
+		rows = plan_requisition.list_requisition_eligible_plan_items()
+		self.assertNotIn(item_id, [r["plan_item_id"] for r in rows])
+
+
+class TestPlanItemCorrectionRequest(RequisitionCase):
+	"""REQ-CHG-001 v1.6 §7.4A — the inbound half of a Requisition's
+	upstream-correction route."""
+
+	def test_head_of_user_department_of_a_contributing_unit_may_request(self):
+		accepted, item_id = self.active_item()
+		item_name = plan_read.resolve_item_doc_name(item_id)
+		frappe.set_user(fx.HOD)  # OU_ALPHA — the item's own contributing unit
+		result = plan_requisition.receive_plan_item_correction_request(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-1", requisition_version="RQV-TEST-1",
+			reason="The authorised warranty period does not match the department's actual need.",
+			idempotency_key=key(),
+		)
+		self.assertTrue(result["ok"])
+		self.assertEqual(result["status"], "Open")
+		doc = frappe.get_doc("Plan Item Correction Request", result["correction_request"])
+		self.assertEqual(doc.plan_item, item_name)
+		self.assertEqual(doc.requested_role, "Head of User Department")
+		self.assertEqual(doc.status, "Open")
+
+	def test_head_of_procurement_function_may_request(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOPF)
+		result = plan_requisition.receive_plan_item_correction_request(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-2", requisition_version="RQV-TEST-2",
+			reason="The Plan Item's Strategic Objective is materially wrong for this request.",
+			idempotency_key=key(),
+		)
+		doc = frappe.get_doc("Plan Item Correction Request", result["correction_request"])
+		self.assertEqual(doc.requested_role, "Head of Procurement Function")
+
+	def test_an_unrelated_department_head_is_refused(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.OUTSIDER)  # HoD-equivalent authority does not exist for OUTSIDER at all — Author only, OU_BETA
+		with self.assertRaises(frappe.DoesNotExistError):
+			plan_requisition.receive_plan_item_correction_request(
+				plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-3", requisition_version="RQV-TEST-3",
+				reason="An unrelated actor attempting a correction request should be refused outright.",
+				idempotency_key=key(),
+			)
+
+	def test_a_short_reason_is_rejected(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOD)
+		with self.assertRaises(frappe.ValidationError):
+			plan_requisition.receive_plan_item_correction_request(
+				plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-4", requisition_version="RQV-TEST-4",
+				reason="Too short.", idempotency_key=key(),
+			)
+
+	def test_replay_returns_the_same_request(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOD)
+		idem = key()
+		args = dict(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-5", requisition_version="RQV-TEST-5",
+			reason="A repeated call with the same idempotency key must replay, not duplicate.",
+			idempotency_key=idem,
+		)
+		first = plan_requisition.receive_plan_item_correction_request(**args)
+		second = plan_requisition.receive_plan_item_correction_request(**args)
+		self.assertEqual(first["correction_request"], second["correction_request"])
+		self.assertFalse(first["idempotent"])
+		self.assertTrue(second["idempotent"])
+
+	def test_planner_resolves_and_it_reaches_my_work_only_while_open(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOD)
+		received = plan_requisition.receive_plan_item_correction_request(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-6", requisition_version="RQV-TEST-6",
+			reason="Open, then resolved — confirms the My Work row disappears once resolved.",
+			idempotency_key=key(),
+		)
+		from kentender_procurement.procurement_planning.services import my_work_provider
+
+		self.assertTrue(any(r["task_id"] == received["correction_request"] for r in my_work_provider.my_work_rows(user=fx.PLANNER)["assigned"]))
+		self.assertEqual(my_work_provider.my_work_rows(user=fx.AUTHOR)["assigned"], [])
+
+		frappe.set_user(fx.PLANNER)
+		doc = frappe.get_doc("Plan Item Correction Request", received["correction_request"])
+		resolved = plan_requisition.resolve_plan_item_correction_request(
+			correction_request=doc.name, resolution_note="Corrected via a Plan successor.",
+			expected_record_version=doc.record_version, idempotency_key=key(),
+		)
+		self.assertEqual(resolved["action"], "resolved")
+		self.assertFalse(any(r["task_id"] == received["correction_request"] for r in my_work_provider.my_work_rows(user=fx.PLANNER)["assigned"]))
+
+	def test_a_departmental_author_cannot_resolve(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.HOD)
+		received = plan_requisition.receive_plan_item_correction_request(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-7", requisition_version="RQV-TEST-7",
+			reason="Only a Procurement Planner may resolve — an Author must be refused.",
+			idempotency_key=key(),
+		)
+		frappe.set_user(fx.AUTHOR)
+		with self.assertRaises(frappe.DoesNotExistError):
+			plan_requisition.resolve_plan_item_correction_request(
+				correction_request=received["correction_request"], resolution_note="Attempted resolution.",
+				expected_record_version=0, idempotency_key=key(),
+			)
+
+
 class TestRequestShapedEndpoints(RequisitionCase):
 	"""Tracker rule 6 (the NDS-914 class): the three §7.4 endpoints driven
 	exactly the way `frappe.handler` does — form_dict carrying cmd +
@@ -437,7 +671,7 @@ class TestRequestShapedEndpoints(RequisitionCase):
 		read = self.call("get_requisition_eligible_plan_item", plan_item_id=item_id)
 		self.assertTrue(read["eligible"])
 
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		recorded = self.call(
 			"record_requisition_drawdown", plan_item_id=item_id,
 			requisition_reference="REQ-HTTP-1", requesting_org_unit=fx.OU_ALPHA,
@@ -453,7 +687,7 @@ class TestRequestShapedEndpoints(RequisitionCase):
 		read = self.call("get_requisition_eligible_plan_item", plan_item_id=item_id)
 		self.assertAlmostEqual(read["remaining_value"], 500000)
 
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
 		reversed_result = self.call(
 			"reverse_requisition_drawdown",
 			drawdown_reference=drawdown["drawdown_reference"],

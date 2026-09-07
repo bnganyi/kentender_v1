@@ -32,9 +32,9 @@ Notes on two properties:
   categorise, and grant nothing.
 
 Deliberately omitted (KT-STD-001 §7 default-to-omit): `Requisition Preparer`
-and `Head of Procurement Function` are illustrative in ADR §4.4 but no
-approved, implemented module names them yet — each is registered in the
-cutover slice of the document that owns it.
+is illustrative in ADR §4.4 but no approved module names it (REQ-CHG-001 v1.6
+uses Departmental Author). `Head of Procurement Function` was registered by
+REQ-CHG-001 v1.6's cutover slice on 2026-09-06.
 """
 
 from __future__ import annotations
@@ -168,6 +168,15 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	# --- Strategy Alignment (STR-CHG-001 v1.7 §6) ------------------------
 	# ADR v1.6 §20 binds Strategy Author and Approver to Site-wide scope; any
 	# departmental narrowing stays a record-ownership check inside Strategy.
+	# REQ-CHG-001 v1.6 §8 / §19 (2026-09-06) — the Requisitions cutover slice
+	# registers the office that authorises Requisitions and, later, approves
+	# Tenders (TPR-CHG-001). KT-STD-001 §8.3: not Procurement Planner.
+	_entry(
+		"Head of Procurement Function",
+		SCOPE_SITE,
+		"REQ-CHG-001 v1.6 §8",
+		sod_tags=("requisition_authorisation",),
+	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
 	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),
 )

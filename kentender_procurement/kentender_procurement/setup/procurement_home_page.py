@@ -48,10 +48,15 @@ LANDING_ROLES: tuple[str, ...] = (
 	# --- Framework -------------------------------------------------------
 	"Administrator",
 	"System Manager",
-	# --- Strategy Alignment (STR-CHG-001 v1.5) ---------------------------
+	# --- Strategy Alignment (STR-CHG-001 v1.7 §6 / STR-AC-031) -----------
+	# "Strategy Viewer" was hard-deleted by Strategy's own patch
+	# (str_chg_001_v1_7_delete_strategy_viewer_role) and replaced by the
+	# registered Auditor business role; this list was never updated after
+	# that retirement, which broke `reconcile()`/`bench migrate` outright
+	# the first time it ran with a strict Page role list (discovered
+	# 2026-09-07 while migrating the Procurement Requisitions module in).
 	"Strategy Author",
 	"Strategy Approver",
-	"Strategy Viewer",
 	# --- Budget & Funding (BUD-CHG-001 v1.3) -----------------------------
 	# Exactly 3 roles under v1.3 — Reviewer/Authority/Activation Authority/
 	# Viewer were collapsed or removed outright, not renamed. "Finance
@@ -75,15 +80,17 @@ LANDING_ROLES: tuple[str, ...] = (
 	"Planning Contributor",
 	"Planning Viewer",
 	"Planning Officer",
-	# --- Procurement Requisitions (REQ-CHG-001) --------------------------
-	# REQ-CHG-001 v1.2 is Proposed for approval and may rename these; they are
-	# kept as-is until it is approved, because the module and its users exist.
-	"Requisitioner",
-	"Requester",
-	"Business Approver",
-	"Department Approver",
-	"Designated Approver",
-	"Procurement Approval Authority",
+	# PLN-CHG-001 v1.12 §6 — "Plan Statutory Approver" is a live current
+	# role (Daniel Rotich, KT-STD-001 §8.3) the v1.1-era list above never
+	# picked up; found 2026-09-07 by test_no_kentender_role_holder_is_locked_out
+	# while migrating the Procurement Requisitions module in.
+	"Plan Statutory Approver",
+	# --- Procurement Requisitions (REQ-CHG-001 v1.6, 2026-09-07) ---------
+	# Departmental Author, Head of User Department, Procurement Planner and
+	# Auditor are already listed above (shared with Departmental Needs /
+	# Procurement Planning). Head of Procurement Function is the one
+	# genuinely new office this module's cutover slice registers.
+	"Head of Procurement Function",
 	# --- Tender preparation and STD administration -----------------------
 	"Procurement Officer",
 	"Tender Initiator",

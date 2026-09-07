@@ -20,6 +20,8 @@
   "remaining_amount",
   "currency",
   "correlation_id",
+  "calling_module",
+  "caller_reference",
   "fixture_namespace"
  ],
  "fields": [
@@ -95,9 +97,9 @@
    "label": "Plan Source Allocation",
    "reqd": 1,
    "read_only": 1,
-   "unique": 1,
+   "unique": 0,
    "search_index": 1,
-   "description": "Distinguishes multiple source allocations and prevents duplicate or partial confirmation."
+   "description": "Distinguishes multiple source allocations; no longer globally unique (REQ-CHG-001 v1.6 D1) \u2014 a revoked reservation's allocation, or a later unrelated Requisition drawing the remaining balance, may reserve again. Oversubscription is prevented by the locked line-level position check, not by this column."
   },
   {
    "fieldname": "col_b",
@@ -136,6 +138,21 @@
    "read_only": 1,
    "search_index": 1,
    "description": "Makes Finance retries idempotent and binds every reservation in one all-source confirmation transaction."
+  },
+  {
+   "fieldname": "calling_module",
+   "fieldtype": "Data",
+   "label": "Calling Module",
+   "read_only": 1,
+   "description": "REQ-CHG-001 v1.6 \u00a79.1A / BUD-CHG-001 v1.6 \u00a78.1 \u2014 which module's authorisation event created this reservation (e.g. \"Procurement Requisitions\"). Recorded rather than hard-coded, now that Requisitions is a live caller alongside Procurement Planning's own affordability path."
+  },
+  {
+   "fieldname": "caller_reference",
+   "fieldtype": "Data",
+   "label": "Caller Reference",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "REQ-CHG-001 v1.6 D1 \u2014 the calling module's own business reference for the authorisation event that created this reservation (e.g. a Requisition reference). Distinguishes a genuine double-authorise (same caller_reference, same allocation, different correlation \u2014 BUDGET_RESERVATION_CONFLICT) from two independent callers legitimately holding their own reservations against the same allocation."
   },
   {
    "fieldname": "fixture_namespace",
@@ -198,6 +215,18 @@
    "read": 1,
    "report": 1,
    "role": "Auditor",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
    "share": 0,
    "write": 0
   }

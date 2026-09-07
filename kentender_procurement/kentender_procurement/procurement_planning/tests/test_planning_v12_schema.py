@@ -29,6 +29,13 @@ STANDARD_FIELDS = {
 }
 
 EXPECTED_FIELDS: dict[str, set[str]] = {
+	# REQ-CHG-001 v1.6 §7.4A (2026-09-07) — the inbound half of a
+	# Requisition's upstream-correction route.
+	"Plan Item Correction Request": {
+		"plan_item", "plan_item_id", "requisition_reference", "requisition_version", "reason",
+		"requested_by", "requested_role", "requested_at", "status", "resolved_by", "resolved_at",
+		"resolution_note", "idempotency_key", "record_version", "fixture_namespace",
+	},
 	"Departmental Plan": {
 		"dpp_reference", "fiscal_year", "organisation_unit", "current_state", "current_version",
 		"current_accepted_version", "record_version", "fixture_namespace",

@@ -1,0 +1,516 @@
+/* Procurement Requisitions — REQ-CHG-001 v1.6 §13 supplementary Industry
+ * classes.
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
+ * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-table,
+ * .kt-skel …). The REQ-DES artboards define a handful of layout classes on
+ * top of it in their <helmet><style> blocks; those are ported here, scoped
+ * under .kt-req so no rule can collide with another module's port of
+ * similarly named artboard classes (every app_include_css file is global).
+ *
+ * Nothing here restyles a shared class; a change to .kt-card or .kt-btn
+ * belongs in kt_industry_tokens.css.
+ */
+
+/* The artboards use un-prefixed custom properties (--color-*, --font-*) while
+ * the shared system defines only --kt-* tokens; every such var() would
+ * silently resolve to nothing. Alias the family once (mirrors .kt-pln's own
+ * alias block in procurement_planning_industry.css). */
+.kt-industry.kt-req {
+	--color-bg: var(--kt-color-bg);
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-100: var(--kt-color-accent-100);
+	--color-accent-800: var(--kt-color-accent-800);
+	--color-neutral-100: var(--kt-color-neutral-100);
+	--color-neutral-200: var(--kt-color-neutral-200);
+	--color-neutral-500: var(--kt-color-neutral-500);
+	--color-neutral-600: var(--kt-color-neutral-600);
+	--color-neutral-700: var(--kt-color-neutral-700);
+	--color-neutral-800: var(--kt-color-neutral-800);
+	--color-divider: var(--kt-color-divider);
+	--status-critical: var(--kt-status-critical);
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
+.kt-req .req-masthead {
+	margin-bottom: 32px;
+}
+.kt-req .req-masthead p {
+	color: var(--color-neutral-700);
+	font-size: 15px;
+	margin-top: 4px;
+}
+
+.kt-req .req-card-pad {
+	padding: 24px;
+	margin-bottom: 20px;
+}
+.kt-req .req-card-pad-tight {
+	padding: 16px 24px;
+	margin-bottom: 20px;
+}
+
+/* REQ-DES-02 Start screen */
+.kt-req .req-start-title {
+	font-size: 26px;
+	margin-bottom: 24px;
+}
+.kt-req .req-source-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px 32px;
+	font-size: 14px;
+}
+.kt-req .req-source-section {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--color-divider);
+}
+.kt-req .req-source-note {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin: 4px 0 0;
+}
+.kt-req .req-objective-id {
+	font-size: 14px;
+	margin: 2px 0 4px;
+}
+.kt-req .req-objective-path {
+	font-size: 12px;
+}
+.kt-req .req-product-value {
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+.kt-req .req-product-help {
+	font-size: 13px;
+	margin: 0;
+}
+/* REQ-DES-02 cross-department certification notice — a single amber block
+ * of text, unlike the workspace/editor notices' title-plus-body shape. */
+.kt-req .req-notice {
+	background: color-mix(in srgb, var(--kt-color-attention, #b26a00) 8%, transparent);
+	border: 1px solid var(--kt-color-attention, #b26a00);
+	padding: 16px 20px;
+	font-size: 13px;
+	margin-bottom: 28px;
+}
+
+.kt-req .req-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+.kt-req .req-num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* REQ-DES-01 "Ready to prepare" card: one shared count headline, then one
+ * supporting-line + button row per eligible Plan Item. */
+.kt-req .req-ready-headline {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 19px;
+	margin-bottom: 6px;
+}
+.kt-req .req-ready-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+}
+.kt-req .req-ready-row + .req-ready-row {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--color-neutral-200);
+}
+.kt-req .req-ready-sub {
+	font-size: 14px;
+	color: var(--color-neutral-800);
+}
+
+.kt-req .req-section-title {
+	font-size: 18px;
+	margin-bottom: 16px;
+}
+
+.kt-req .req-table-caption {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin-top: 10px;
+}
+
+/* Forbidden / load-error state cards */
+.kt-req .req-state-card {
+	padding: 32px 24px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+}
+.kt-req .req-state-card h3 {
+	font-family: var(--font-heading);
+	margin: 0;
+	font-size: 20px;
+}
+.kt-req .req-state-card p {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-neutral-700);
+	max-width: 40ch;
+}
+.kt-req .req-support-ref {
+	font-size: 12px;
+	color: var(--color-neutral-600);
+	margin-top: 4px;
+}
+
+.kt-req .req-skel-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr;
+	gap: 16px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--color-neutral-200);
+}
+
+/* REQ-DES-03..07 — the shared five-step editor shell (ported class-for-
+ * class from the artboards' own header/step-nav/footer chrome). */
+.kt-req .req-editor {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+.kt-req .req-editor-header {
+	padding: 24px 0;
+	border-bottom: 1px solid var(--color-divider);
+}
+.kt-req .req-eyebrow {
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	font-weight: 600;
+}
+.kt-req .req-editor-titlebar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 6px;
+}
+.kt-req .req-editor-title {
+	font-size: 26px;
+	margin: 0;
+}
+.kt-req .req-editor-reference {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin-top: 4px;
+	font-family: ui-monospace, monospace;
+}
+.kt-req .req-editor-body {
+	display: flex;
+	flex: 1;
+	gap: 0;
+}
+.kt-req .req-step-nav {
+	width: 260px;
+	flex: none;
+	border-right: 1px solid var(--color-divider);
+	padding: 16px 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.kt-req .req-step {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 10px 13px;
+	background: none;
+	border: none;
+	border-left: 3px solid transparent;
+	text-align: left;
+	font: inherit;
+	cursor: pointer;
+	color: inherit;
+}
+.kt-req .req-step.is-active {
+	background: var(--color-accent-100);
+	border-left-color: var(--color-accent);
+}
+.kt-req .req-step.is-disabled {
+	cursor: default;
+}
+.kt-req .req-step-index {
+	width: 22px;
+	height: 22px;
+	flex: none;
+	border: 1px solid var(--color-divider);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-heading);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-neutral-500);
+}
+.kt-req .req-step.is-active .req-step-index {
+	border-color: var(--color-accent);
+	background: var(--color-accent);
+	color: #fff;
+}
+.kt-req .req-step-label {
+	display: block;
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 13px;
+}
+.kt-req .req-step-status {
+	display: block;
+	font-size: 11px;
+	color: var(--color-neutral-500);
+}
+.kt-req .req-step-status.is-active { color: var(--color-accent); }
+.kt-req .req-step-status.is-complete { color: var(--color-accent-800); }
+.kt-req .req-step-status.is-blocked { color: var(--status-critical); }
+.kt-req .req-step-main {
+	flex: 1;
+	padding: 28px 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+.kt-req .req-editor-footer {
+	background: var(--color-bg);
+	border-top: 1px solid var(--color-divider);
+	padding: 16px 32px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+/* REQ-DES-07 Step 5's footer alone is Back / Save draft+Submit spread
+ * across the row (§13.9) — every other step's footer is the simpler
+ * right-aligned Save-draft+Continue pair the container's own flex-end
+ * already produces. */
+.kt-req .req-editor-footer .req-actions {
+	margin-left: auto;
+}
+
+.kt-req .req-step-content {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+.kt-req .req-step-content-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.kt-req .req-no-margin {
+	margin-bottom: 0;
+}
+.kt-req .req-context-cards {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 16px;
+}
+.kt-req .req-context-card {
+	padding: 14px;
+}
+.kt-req .req-context-title {
+	font-size: 14px;
+	font-family: var(--font-heading);
+	font-weight: 600;
+}
+.kt-req .req-context-body {
+	font-size: 12px;
+	margin: 4px 0 0;
+}
+.kt-req .req-field-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+}
+.kt-req .req-seg {
+	display: inline-flex;
+	border: 1px solid var(--color-divider);
+}
+.kt-req .req-seg-opt {
+	padding: 8px 16px;
+	font-size: 13px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.kt-req .req-seg-opt + .req-seg-opt {
+	border-left: 1px solid var(--color-divider);
+}
+.kt-req .req-qty-input { width: 80px; text-align: right; }
+.kt-req .req-value-input { width: 140px; text-align: right; }
+.kt-req .req-quiet-link { font-size: 12px; }
+.kt-req .req-num { text-align: right; font-variant-numeric: tabular-nums; }
+.kt-req .req-baseline-intro { font-size: 13px; margin-bottom: 10px; }
+.kt-req .req-confirm-link { margin-left: 8px; }
+.kt-req .req-field-error {
+	font-size: 12px;
+	color: var(--status-critical);
+	margin: 4px 0 0;
+}
+.kt-req .req-empty-row {
+	text-align: center;
+	color: var(--color-neutral-700);
+	font-size: 13px;
+	padding: 20px 0;
+}
+
+/* REQ-DES-05 Step 3 — warranty-and-support panel's 3-column grid. */
+.kt-req .req-field-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16px;
+}
+
+/* REQ-DES-05's Add-characteristic dialog — MULTI_SELECT and PORT_LIST
+ * controls (also reused by MaterialDialog's linked-requirements list). */
+.kt-req .req-check-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.kt-req .req-check-opt {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+.kt-req .req-port-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 8px;
+}
+
+/* REQ-DES-06 Step 4 — the neutral "Related services required: No" info
+ * line (distinct from .req-notice's amber warning treatment). */
+.kt-req .req-info-banner {
+	background: var(--color-neutral-100);
+	border: 1px solid var(--color-divider);
+	padding: 12px 18px;
+	font-size: 13px;
+	color: var(--color-neutral-800);
+}
+
+/* REQ-DES-06's Add-supporting-material dialog file picker. */
+.kt-req .req-file-picker {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.kt-req .req-file-name {
+	font-size: 13px;
+	color: var(--color-neutral-800);
+}
+
+/* REQ-DES-07 Step 5 — the top result banner, summary cards and preview. */
+.kt-req .req-result-banner {
+	padding: 16px 24px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border: 1px solid;
+}
+.kt-req .req-result-banner.is-ready {
+	background: var(--kt-status-live-bg);
+	border-color: var(--kt-status-live);
+}
+.kt-req .req-result-banner.is-blocked {
+	background: var(--status-critical-bg, var(--kt-status-critical-bg));
+	border-color: var(--status-critical);
+}
+.kt-req .req-result-headline {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	font-size: 17px;
+}
+.kt-req .req-result-banner.is-ready .req-result-headline { color: var(--kt-status-live); }
+.kt-req .req-result-banner.is-blocked .req-result-headline { color: var(--status-critical); }
+.kt-req .req-result-counts {
+	font-size: 13px;
+	color: var(--color-neutral-800);
+}
+.kt-req .req-summary-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16px;
+}
+.kt-req .req-summary-title {
+	font-size: 15px;
+	font-family: var(--font-heading);
+	font-weight: 600;
+}
+.kt-req .req-preview-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	font-size: 13px;
+}
+.kt-req .req-preview-col {
+	display: grid;
+	gap: 10px;
+}
+.kt-req .kt-label {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-neutral-600);
+	margin-bottom: 2px;
+}
+
+/* The header-level "Request upstream correction" quiet trigger. */
+.kt-req .req-upstream-trigger {
+	margin-left: auto;
+}
+
+/* REQ-DES-08/09 decision-task screens. */
+.kt-req .req-prepared-by {
+	font-size: 13px;
+	color: var(--color-neutral-800);
+	margin-top: 12px;
+}
+.kt-req .req-validation-live { color: var(--kt-status-live); }
+.kt-req .req-validation-blocked { color: var(--status-critical); }
+.kt-req .req-certification-statement {
+	font-size: 14px;
+	font-style: italic;
+	margin: 0;
+}
+.kt-req .req-digest {
+	font-family: ui-monospace, monospace;
+}
+.kt-req .req-lead-line {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 14px;
+	font-size: 13px;
+	color: var(--color-neutral-800);
+}
+.kt-req .req-policy-line {
+	font-size: 13px;
+	color: var(--color-neutral-800);
+	margin-bottom: 8px;
+}
+.kt-req .req-validation-line {
+	font-size: 13px;
+	margin-bottom: 8px;
+}
+.kt-req .req-open-tender {
+	margin-left: auto;
+}
