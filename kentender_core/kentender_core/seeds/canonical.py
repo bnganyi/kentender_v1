@@ -86,6 +86,18 @@ CANONICAL_BUDGET_CODES = ("MOH-BUD-2027-001",)
 _LEGACY_DEMO_DOCTYPES = ("Procurement Handoff Card", "Procurement Journey")
 
 
+def _playwright_cleanup_allowed() -> bool:
+	"""Requisitions' and Tender Preparation's own playwright fixture
+	modules refuse to touch their rows unless developer_mode/allow_tests is
+	set (or a test is already running) — a guard this orchestrator's own
+	`force` cannot bypass, since it belongs to a sibling module. Unlike
+	Planning/Needs, their calls here are unconditional (no fixture_namespace
+	column to gate on), so on a site without that flag this must be skipped
+	rather than fail the whole run — exactly how Planning/Needs behave when
+	there is nothing of theirs to clean either."""
+	return bool(frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests"))
+
+
 # --------------------------------------------------------------------------
 # Selection — what is *not* canonical
 # --------------------------------------------------------------------------
@@ -305,10 +317,11 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	# (not the `plan` dict) decide what "canonical" means for their rows;
 	# `include_canonical=False` here only ever removes Playwright-owned
 	# residue, matching how Planning/Needs rows survive `reset`.
+	playwright_ok = _playwright_cleanup_allowed()
 	if plan.get("Prepared Tender"):
 		from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
 
-		_fold(clear_tender_fixture_rows(include_canonical=False, include_playwright=True))
+		_fold(clear_tender_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
 		for name in plan.get("Prepared Tender", []):
 			if frappe.db.exists("Prepared Tender", name):
 				frappe.delete_doc("Prepared Tender", name, force=1, ignore_permissions=True)
@@ -316,7 +329,7 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
-	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=True))
+	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
 
 	if plan.get("Annual Plan") or plan.get("Departmental Plan"):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
@@ -420,12 +433,13 @@ def clear_canonical_modules() -> dict[str, Any]:
 	Tender Preparation before Requisitions before Planning/Needs, since each
 	consumes the one before it), leaving the §8 site world."""
 	out: dict[str, Any] = {}
+	playwright_ok = _playwright_cleanup_allowed()
 	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
 
-	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=True)
+	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
-	out["requisitions"] = clear_requisition_fixture_rows(include_canonical=True, include_playwright=True)
+	out["requisitions"] = clear_requisition_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
 	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
 
 	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=True)
