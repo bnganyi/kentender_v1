@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .scrn { width: 1440px; min-height: 900px; background: var(--color-bg); border: 1px solid var(--color-divider); box-shadow: var(--shadow-md); overflow: hidden; }
+    .scrn-label { font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 10px; }
+    .app-nav { display:flex; align-items:center; gap: 28px; padding: 14px 32px; background: var(--color-surface); border-bottom: 1px solid var(--color-divider); }
+    .cap { font-family: var(--font-body); font-size: 11px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-neutral-700); }
+    .ro-val { font-size: 14px; color: var(--color-text); }
+    .ro-field { display:flex; flex-direction:column; gap:4px; }
+    .task-nav-item { display:flex; align-items:center; gap:10px; padding:10px 14px; font-size:13px; }
+    .task-num { width:20px; height:20px; flex:none; border:1px solid var(--color-divider); display:flex; align-items:center; justify-content:center; font-size:11px; font-family:var(--font-heading); }
+    .overlay-wrap { position:relative; }
+    .overlay-dim { position:absolute; inset:0; background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); display:flex; align-items:center; justify-content:center; }
+    .idx-nav { position:fixed; top:0; left:0; width:260px; height:100vh; overflow-y:auto; background:var(--color-surface); border-right:1px solid var(--color-divider); padding: 24px 0 40px; z-index:10; }
+    .idx-nav a { display:block; padding:8px 20px; font-size:12.5px; color:var(--color-text); text-decoration:none; border-left:2px solid transparent; }
+    .idx-nav a:hover { background:var(--color-accent-100); color:var(--color-accent-800); }
+    .idx-group { padding: 14px 20px 4px; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--color-neutral-700); }
+  </style>
+</helmet>
+
+<nav class="idx-nav">
+  <div class="idx-group" style="padding-top:0;">Screens</div>
+  <a href="#s-workspace">01 · Workspace</a>
+  <a href="#s-start">02 · Start Tender</a>
+  <a href="#s-task1">03 · Task 1 — Tender details</a>
+  <a href="#s-task2">03 · Task 2 — Requirements</a>
+  <a href="#s-task2-dialog">↳ Request upstream correction</a>
+  <a href="#s-task3">03 · Task 3 — Price schedule</a>
+  <a href="#s-task4">03 · Task 4 — Submission &amp; evaluation</a>
+  <a href="#s-task5">03 · Task 5 — Contract terms</a>
+  <a href="#s-review">04 · Review and readiness</a>
+  <a href="#s-approval">05 · Tender approval</a>
+  <a href="#s-approval-dialog">↳ Return for correction</a>
+  <a href="#s-approved">06 · Approved Tender</a>
+  <a href="#s-approved-dialog">↳ Reopen before publication</a>
+</nav>
+
+<div style="background:var(--color-bg); padding: 48px 0 80px 300px; display:flex; flex-direction:column; align-items:flex-start; gap:64px; font-family:var(--font-body);">
+
+  <div style="width:1440px; padding: 0 4px 8px;">
+    <div class="cap" style="color:var(--color-accent-700);">TPR-CHG-001 · v0.6 · Approved</div>
+    <h1 style="margin:6px 0 4px;">Tender Preparation — screen walkthrough</h1>
+    <p style="color:var(--color-neutral-800); max-width:900px; margin:0;">Static screens per §13, built on the Ministry of Health fixture (§13.2). Fixture values are shown filled in; nothing here is editable. Use the left index to jump to any screen.</p>
+  </div>
+
+  <!-- ============ 1. TPR-DES-01 Workspace ============ -->
+  <section id="s-workspace" data-screen-label="TPR-DES-01">
+    <div class="scrn-label">TPR-DES-01 · Tender Preparation workspace</div>
+    <div class="scrn">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 32px 40px; display:flex; flex-direction:column; gap:32px;">
+        <div>
+          <h1 style="font-size:30px; margin-bottom:4px;">Tender Preparation</h1>
+          <p style="color:var(--color-neutral-800); margin:0;">Prepare Tenders from authorised Procurement Requisitions.</p>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Ready to prepare</div>
+          <table class="table">
+            <thead><tr><th>Requisition</th><th>Method</th><th>Items</th><th>Required by</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>REQ-MOH-2027-033-001</td>
+                <td>Open Tender</td>
+                <td class="is-num">1</td>
+                <td>30 Sep 2027</td>
+                <td style="text-align:right;"><button type="button" class="btn btn-primary">Prepare Tender</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <div class="kt-card-title">My Tenders</div>
+          <table class="table">
+            <thead><tr><th>Tender</th><th>Requisition</th><th>Version</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>TND-MOH-2027-033</td>
+                <td>REQ-MOH-2027-033-001</td>
+                <td class="is-num">1</td>
+                <td><span class="kt-status is-draft">Draft</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Approval tasks</div>
+          <p class="text-muted" style="font-size:13px;">Visible only to the Head of Procurement Function. No approval tasks appear in Brian Wafula's workspace.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. TPR-DES-02 Start Tender ============ -->
+  <section id="s-start" data-screen-label="TPR-DES-02">
+    <div class="scrn-label">TPR-DES-02 · Start Tender</div>
+    <div class="scrn overlay-wrap" style="position:relative;">
+      <div style="filter:blur(1px); opacity:.9;">
+        <nav class="nav app-nav">
+          <span class="nav-brand">KenTender</span>
+          <a href="#">Requisitions</a>
+          <a href="#" aria-current="page">Tender Preparation</a>
+          <a href="#">Planning</a>
+          <a href="#">Contracts</a>
+          <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+        </nav>
+        <div style="padding: 32px 40px;">
+          <h1 style="font-size:30px; margin-bottom:4px;">Tender Preparation</h1>
+          <p style="color:var(--color-neutral-800);">Prepare Tenders from authorised Procurement Requisitions.</p>
+        </div>
+      </div>
+      <div class="overlay-dim" style="min-height:900px;">
+        <div class="dialog blueprint" style="width:560px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Prepare IT-equipment Tender</div>
+          <div class="dialog-body" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="ro-field"><span class="kt-label">Requisition</span><span class="ro-val">REQ-MOH-2027-033-001 — Authorised · Version 1</span></div>
+            <div class="ro-field"><span class="kt-label">Requirement</span><span class="ro-val">Clinical training and deployment laptops for digital health rollout</span></div>
+            <div class="ro-field"><span class="kt-label">Package</span><span class="ro-val">1 item · 0 related services · 0 acceptance requirements beyond delivery</span></div>
+            <div class="ro-field"><span class="kt-label">Method</span><span class="ro-val">Open Tender</span></div>
+            <div class="ro-field"><span class="kt-label">Template</span><span class="ro-val">IT Equipment — Open Tender · Version 1.1</span></div>
+            <div class="ro-field"><span class="kt-label">Official source</span><span class="ro-val">PPRA Standard Tender Document for Procurement of Goods</span></div>
+            <p class="text-muted" style="font-size:12px; margin:0;">This template release is fixed for this Tender. A later release will not change it.</p>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Prepare Tender</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. TPR-DES-03 Task 1 ============ -->
+  <section id="s-task1" data-screen-label="TPR-DES-03 · Task 1">
+    <div class="scrn-label">TPR-DES-03 · Five-task workspace — Task 1: Tender details</div>
+    <div class="scrn" style="display:flex; flex-direction:column;">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 24px 40px 8px; border-bottom:1px solid var(--color-divider);">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1</span>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:1;">
+        <div style="width:280px; border-right:1px solid var(--color-divider); padding: 20px 0; flex:none;">
+          <div class="task-nav-item" style="background:var(--color-accent-100); color:var(--color-accent-800); font-weight:600;"><span class="task-num">1</span><span style="flex:1;">Tender details</span><span class="tag tag-accent">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">2</span><span style="flex:1;">Goods and requirements</span><span class="tag tag-neutral">Complete · 1 item</span></div>
+          <div class="task-nav-item"><span class="task-num">3</span><span style="flex:1;">Price schedule</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">4</span><span style="flex:1;">Submission and evaluation</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">5</span><span style="flex:1;">Contract terms</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="hr" style="margin: 8px 14px;"></div>
+          <div class="task-nav-item"><span class="task-num" style="border-color:var(--color-accent);">✓</span><span style="flex:1;">Review and readiness</span><span class="tag tag-accent">Ready</span></div>
+        </div>
+        <div style="flex:1; padding: 28px 40px; display:flex; flex-direction:column; gap:28px; overflow:auto;">
+          <div>
+            <div class="kt-card-title">Read-only context</div>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px 32px;">
+              <div class="ro-field"><span class="kt-label">Plan Item and Requisition</span><span class="ro-val">PPI-MOH-2027-033 · REQ-MOH-2027-033-001</span></div>
+              <div class="ro-field"><span class="kt-label">Requirement title</span><span class="ro-val">Clinical training and deployment laptops for digital health rollout</span></div>
+              <div class="ro-field"><span class="kt-label">Procurement method</span><span class="ro-val">Open Tender</span></div>
+              <div class="ro-field"><span class="kt-label">Authorised value (internal only)</span><span class="ro-val">KES 50,000,000.00</span></div>
+              <div class="ro-field"><span class="kt-label">Latest delivery date</span><span class="ro-val">30 September 2027</span></div>
+              <div class="ro-field"><span class="kt-label">Requirement summary</span><span class="ro-val">1 item · technical rows per §13.4 · 0 services · 0 acceptance rows · 0 materials</span></div>
+              <div class="ro-field"><span class="kt-label">Template</span><span class="ro-val">IT Equipment — Open Tender · Version 1.1</span></div>
+              <div class="ro-field"><span class="kt-label">Tender reference</span><span class="ro-val">TND-MOH-2027-033</span></div>
+              <div class="ro-field"><span class="kt-label">Opening date/time</span><span class="ro-val">5 Jun 2027, 11:00 EAT</span></div>
+              <div class="ro-field"><span class="kt-label">Reservation category</span><span class="ro-val">None</span></div>
+              <div class="ro-field" style="grid-column: span 2;">
+                <span class="kt-label">Strategic Objective / plan horizon <span class="tag tag-outline" style="margin-left:6px;">Internal only — never rendered to bidders</span></span>
+                <span class="ro-val">Digital Health Infrastructure Modernisation (Health Sector Strategy → Digital Health Programme → Digital Health Infrastructure Modernisation) · Multi-year — phased laptop rollout across FY2027/28–2028/29</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="kt-card-title">Officer controls</div>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:18px 32px;">
+              <div class="field"><label>Tender title</label><input class="input" value="Supply and delivery of business laptops" /></div>
+              <div class="field"><label>Issue date</label><div class="date-field"><span>15 May 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+              <div class="field"><label>Clarification deadline</label><div class="date-field"><span>27 May 2027, 17:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+              <div class="field"><label>Submission deadline</label><div class="date-field"><span>5 Jun 2027, 11:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+              <div class="field"><label>Tender validity (days)</label><input class="input" value="120" /></div>
+              <div class="field"><label>Tender security treatment</label><input class="input" value="Tender Security" disabled /></div>
+              <div class="field"><label>Tender security currency</label><input class="input" value="KES" disabled /></div>
+              <div class="field"><label>Tender security amount</label><input class="input" value="500,000.00" /></div>
+              <div class="field"><label>Pre-tender meeting</label>
+                <div class="seg" role="radiogroup"><label class="seg-opt"><input type="radio" name="meeting" />Yes</label><label class="seg-opt"><input type="radio" name="meeting" checked />No</label></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 40px; border-top:1px solid var(--color-divider);">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. Task 2 ============ -->
+  <section id="s-task2" data-screen-label="TPR-DES-03 · Task 2">
+    <div class="scrn-label">TPR-DES-03 · Five-task workspace — Task 2: Goods and requirements</div>
+    <div class="scrn" style="display:flex; flex-direction:column;">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 24px 40px 8px; border-bottom:1px solid var(--color-divider);">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1</span>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:1;">
+        <div style="width:280px; border-right:1px solid var(--color-divider); padding: 20px 0; flex:none;">
+          <div class="task-nav-item"><span class="task-num">1</span><span style="flex:1;">Tender details</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item" style="background:var(--color-accent-100); color:var(--color-accent-800); font-weight:600;"><span class="task-num">2</span><span style="flex:1;">Goods and requirements</span><span class="tag tag-accent">Complete · 1 item</span></div>
+          <div class="task-nav-item"><span class="task-num">3</span><span style="flex:1;">Price schedule</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">4</span><span style="flex:1;">Submission and evaluation</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">5</span><span style="flex:1;">Contract terms</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="hr" style="margin: 8px 14px;"></div>
+          <div class="task-nav-item"><span class="task-num" style="border-color:var(--color-accent);">✓</span><span style="flex:1;">Review and readiness</span><span class="tag tag-accent">Ready</span></div>
+        </div>
+        <div style="flex:1; padding: 28px 40px; display:flex; flex-direction:column; gap:22px; overflow:auto;">
+          <div style="display:flex; justify-content:flex-end;">
+            <button type="button" class="btn btn-secondary">Request upstream correction</button>
+          </div>
+
+          <div>
+            <div class="kt-card-title">Goods and delivery</div>
+            <table class="table">
+              <thead><tr><th>ID</th><th>Item</th><th class="is-num">Qty</th><th>Unit</th><th>Delivery location</th><th>Latest date</th><th>Warranty</th></tr></thead>
+              <tbody><tr><td>GDS-MOH-033-001</td><td>Business laptops</td><td class="is-num">250</td><td>Each</td><td>Ministry of Health Headquarters, Afya House, Nairobi</td><td>30 Sep 2027</td><td>36 months</td></tr></tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="kt-card-title">Technical requirements — TRQ-MOH-033-001</div>
+            <table class="table">
+              <thead><tr><th>ID</th><th>Requirement</th><th>Comparison</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td>TRQ-MOH-033-001-1</td><td>Processor</td><td>Minimum</td><td>Intel Core i5 (11th Gen) or equivalent</td></tr>
+                <tr><td>TRQ-MOH-033-001-2</td><td>Memory</td><td>Minimum</td><td>16 GB RAM</td></tr>
+                <tr><td>TRQ-MOH-033-001-3</td><td>Storage</td><td>Minimum</td><td>512 GB SSD</td></tr>
+                <tr><td>TRQ-MOH-033-001-4</td><td>Display</td><td>Minimum</td><td>14-inch, Full HD</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="kt-card-title">Warranty and support</div>
+            <p class="ro-val" style="margin:0;">36 months manufacturer warranty, on-site support included.</p>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+            <div><div class="kt-card-title">Related services</div><p class="text-muted" style="font-size:13px;">No related services for this Requisition.</p></div>
+            <div><div class="kt-card-title">Acceptance requirements</div><p class="text-muted" style="font-size:13px;">No acceptance requirements beyond delivery.</p></div>
+          </div>
+
+          <div>
+            <div class="kt-card-title">Supporting materials</div>
+            <p class="text-muted" style="font-size:13px;">No supporting materials attached.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 40px; border-top:1px solid var(--color-divider);">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4b. Request upstream correction dialog ============ -->
+  <section id="s-task2-dialog" data-screen-label="Dialog · Request upstream correction">
+    <div class="scrn-label">§13.9 · Dialog — Request upstream correction (over Task 2)</div>
+    <div class="scrn overlay-wrap" style="position:relative;">
+      <div style="filter:blur(1px); opacity:.9; padding: 24px 40px;">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · Task 2 — Goods and requirements</span>
+      </div>
+      <div class="overlay-dim" style="min-height:800px;">
+        <div class="dialog blueprint" style="width:520px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Request upstream correction</div>
+          <div class="dialog-body" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="field"><label>Reason</label><textarea class="input" rows="3">The authorised technical requirement for this item's battery specification must be corrected in the Requisition.</textarea></div>
+            <p class="text-muted" style="font-size:12px; margin:0;">Tender Preparation cannot edit an authorised requirement. This Tender Version will be preserved.</p>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Request correction</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. Task 3 ============ -->
+  <section id="s-task3" data-screen-label="TPR-DES-03 · Task 3">
+    <div class="scrn-label">TPR-DES-03 · Five-task workspace — Task 3: Price schedule</div>
+    <div class="scrn" style="display:flex; flex-direction:column;">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 24px 40px 8px; border-bottom:1px solid var(--color-divider);">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1</span>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:1;">
+        <div style="width:280px; border-right:1px solid var(--color-divider); padding: 20px 0; flex:none;">
+          <div class="task-nav-item"><span class="task-num">1</span><span style="flex:1;">Tender details</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">2</span><span style="flex:1;">Goods and requirements</span><span class="tag tag-neutral">Complete · 1 item</span></div>
+          <div class="task-nav-item" style="background:var(--color-accent-100); color:var(--color-accent-800); font-weight:600;"><span class="task-num">3</span><span style="flex:1;">Price schedule</span><span class="tag tag-accent">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">4</span><span style="flex:1;">Submission and evaluation</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">5</span><span style="flex:1;">Contract terms</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="hr" style="margin: 8px 14px;"></div>
+          <div class="task-nav-item"><span class="task-num" style="border-color:var(--color-accent);">✓</span><span style="flex:1;">Review and readiness</span><span class="tag tag-accent">Ready</span></div>
+        </div>
+        <div style="flex:1; padding: 28px 40px; display:flex; flex-direction:column; gap:16px;">
+          <p class="text-muted" style="font-size:13px; margin:0;">Price currency is read-only KES. Prices are fixed for the contract period; taxes are shown separately. The authorised internal value is not copied into this schedule.</p>
+          <table class="table">
+            <thead><tr><th>Item</th><th class="is-num">Qty</th><th>Unit</th><th>Unit price</th><th>Tax</th><th>Line total</th></tr></thead>
+            <tbody>
+              <tr><td>Business laptops</td><td class="is-num">250</td><td>Each</td><td class="text-muted">Completed by Tenderer</td><td class="text-muted">Completed by Tenderer</td><td class="text-muted">Calculated from Tenderer response</td></tr>
+            </tbody>
+            <tfoot><tr><td colspan="5" style="text-align:right; font-family:var(--font-heading); font-weight:600;">Tender total</td><td class="text-muted">Calculated from Tenderer response</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 40px; border-top:1px solid var(--color-divider);">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. Task 4 ============ -->
+  <section id="s-task4" data-screen-label="TPR-DES-03 · Task 4">
+    <div class="scrn-label">TPR-DES-03 · Five-task workspace — Task 4: Submission and evaluation</div>
+    <div class="scrn" style="display:flex; flex-direction:column;">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 24px 40px 8px; border-bottom:1px solid var(--color-divider);">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1</span>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:1;">
+        <div style="width:280px; border-right:1px solid var(--color-divider); padding: 20px 0; flex:none;">
+          <div class="task-nav-item"><span class="task-num">1</span><span style="flex:1;">Tender details</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">2</span><span style="flex:1;">Goods and requirements</span><span class="tag tag-neutral">Complete · 1 item</span></div>
+          <div class="task-nav-item"><span class="task-num">3</span><span style="flex:1;">Price schedule</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item" style="background:var(--color-accent-100); color:var(--color-accent-800); font-weight:600;"><span class="task-num">4</span><span style="flex:1;">Submission and evaluation</span><span class="tag tag-accent">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">5</span><span style="flex:1;">Contract terms</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="hr" style="margin: 8px 14px;"></div>
+          <div class="task-nav-item"><span class="task-num" style="border-color:var(--color-accent);">✓</span><span style="flex:1;">Review and readiness</span><span class="tag tag-accent">Ready</span></div>
+        </div>
+        <div style="flex:1; padding: 28px 40px; display:flex; flex-direction:column; gap:26px; overflow:auto;">
+          <div>
+            <div class="kt-card-title">Officer controls</div>
+            <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:18px 32px;">
+              <div class="field"><label>Manufacturer authorisation required</label><div class="seg"><label class="seg-opt"><input type="radio" name="mfr" checked />Yes</label><label class="seg-opt"><input type="radio" name="mfr" />No</label></div></div>
+              <div class="field"><label>Product datasheets/brochures required</label><div class="seg"><label class="seg-opt"><input type="radio" name="ds" checked />Yes</label><label class="seg-opt"><input type="radio" name="ds" />No</label></div></div>
+              <div class="field"><label>Warranty confirmation required</label><input class="input" value="Yes — always required" disabled /></div>
+              <div class="field"><label>Past supply experience required</label><div class="seg"><label class="seg-opt"><input type="radio" name="exp" checked />Yes</label><label class="seg-opt"><input type="radio" name="exp" />No</label></div></div>
+              <div class="field"><label>Minimum comparable contracts</label><input class="input" value="2" /></div>
+              <div class="field"><label>Experience period</label><input class="input" value="5 years" /></div>
+              <div class="field"><label>After-sales support evidence required</label><div class="seg"><label class="seg-opt"><input type="radio" name="asr" checked />Yes</label><label class="seg-opt"><input type="radio" name="asr" />No</label></div></div>
+              <div class="field" style="grid-column: span 2;"><label>After-sales evidence</label><input class="input" value="Kenya service-centre details and escalation contacts" /></div>
+            </div>
+          </div>
+          <div>
+            <div class="kt-card-title">Generated evidence requirements</div>
+            <table class="table">
+              <thead><tr><th>Evidence</th><th>Type</th><th>Linked to</th><th>Mandatory</th><th>Source</th></tr></thead>
+              <tbody>
+                <tr><td>Manufacturer authorisation letter</td><td>Declaration</td><td>GDS-MOH-033-001</td><td>Yes</td><td class="text-muted">Fixed by template</td></tr>
+                <tr><td>Product datasheet or brochure</td><td>Datasheet or brochure</td><td>TRQ-MOH-033-001</td><td>Yes</td><td class="text-muted">Fixed by template</td></tr>
+                <tr><td>Warranty confirmation</td><td>Declaration</td><td>GDS-MOH-033-001</td><td>Yes</td><td class="text-muted">Fixed by template</td></tr>
+                <tr><td>Comparable contract evidence (×2)</td><td>Schedule or form</td><td>GDS-MOH-033-001</td><td>Yes</td><td class="text-muted">Generated by officer choice</td></tr>
+                <tr><td>Kenya service-centre details</td><td>Schedule or form</td><td>GDS-MOH-033-001</td><td>Yes</td><td class="text-muted">Generated by officer choice</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 40px; border-top:1px solid var(--color-divider);">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. Task 5 ============ -->
+  <section id="s-task5" data-screen-label="TPR-DES-03 · Task 5">
+    <div class="scrn-label">TPR-DES-03 · Five-task workspace — Task 5: Contract terms</div>
+    <div class="scrn" style="display:flex; flex-direction:column;">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 24px 40px 8px; border-bottom:1px solid var(--color-divider);">
+        <div class="cap">Tender Preparation</div>
+        <h1 style="font-size:26px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="text-muted" style="font-size:13px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1</span>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:1;">
+        <div style="width:280px; border-right:1px solid var(--color-divider); padding: 20px 0; flex:none;">
+          <div class="task-nav-item"><span class="task-num">1</span><span style="flex:1;">Tender details</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">2</span><span style="flex:1;">Goods and requirements</span><span class="tag tag-neutral">Complete · 1 item</span></div>
+          <div class="task-nav-item"><span class="task-num">3</span><span style="flex:1;">Price schedule</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item"><span class="task-num">4</span><span style="flex:1;">Submission and evaluation</span><span class="tag tag-neutral">Complete</span></div>
+          <div class="task-nav-item" style="background:var(--color-accent-100); color:var(--color-accent-800); font-weight:600;"><span class="task-num">5</span><span style="flex:1;">Contract terms</span><span class="tag tag-accent">Complete</span></div>
+          <div class="hr" style="margin: 8px 14px;"></div>
+          <div class="task-nav-item"><span class="task-num" style="border-color:var(--color-accent);">✓</span><span style="flex:1;">Review and readiness</span><span class="tag tag-accent">Ready</span></div>
+        </div>
+        <div style="flex:1; padding: 28px 40px; display:flex; flex-direction:column; gap:26px; overflow:auto;">
+          <div>
+            <div class="kt-card-title">Read-only summaries</div>
+            <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:18px;">
+              <div class="ro-field"><span class="kt-label">Delivery</span><span class="ro-val">30 Sep 2027 · Afya House, Nairobi</span></div>
+              <div class="ro-field"><span class="kt-label">Warranty</span><span class="ro-val">36 months</span></div>
+              <div class="ro-field"><span class="kt-label">Services</span><span class="ro-val">None</span></div>
+              <div class="ro-field"><span class="kt-label">Acceptance</span><span class="ro-val">Delivery only</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="kt-card-title">Officer controls</div>
+            <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:18px 32px;">
+              <div class="field" style="grid-column: span 2;"><label>Inspection and acceptance location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" /></div>
+              <div class="field"><label>Payment timing</label><input class="input" value="30 days" /></div>
+              <div class="field"><label>Performance security required</label><div class="seg"><label class="seg-opt"><input type="radio" name="ps" checked />Yes</label><label class="seg-opt"><input type="radio" name="ps" />No</label></div></div>
+              <div class="field"><label>Performance security</label><input class="input" value="10%" /></div>
+              <div class="field"><label>Delay damages per week</label><input class="input" value="0.5%" /></div>
+              <div class="field"><label>Maximum delay damages</label><input class="input" value="10%" /></div>
+              <div class="field" style="grid-column: span 2;"><label>Contract contact office</label><input class="input" value="Ministry of Health Procurement Office" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 40px; border-top:1px solid var(--color-divider);">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Review Tender</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8. TPR-DES-04 Review and readiness ============ -->
+  <section id="s-review" data-screen-label="TPR-DES-04">
+    <div class="scrn-label">TPR-DES-04 · Review and readiness</div>
+    <div class="scrn">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Brian Wafula · Procurement Officer</span>
+      </nav>
+      <div style="padding: 32px 40px; display:flex; flex-direction:column; gap:24px;">
+        <div>
+          <h1 style="font-size:28px; margin-bottom:4px;">Review Tender</h1>
+          <p style="color:var(--color-neutral-800); margin:0;">Resolve Blocking findings and review the complete Tender before submission.</p>
+        </div>
+        <div style="display:flex; gap:16px;">
+          <span class="kt-status is-live">0 Blocking</span>
+          <span class="kt-status is-attention">1 Warning</span>
+        </div>
+        <table class="table">
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Source handoff</td><td>Complete · digest verified</td></tr>
+            <tr><td>Tender details</td><td>Complete</td></tr>
+            <tr><td>Inherited requirements</td><td>Complete · 1 item</td></tr>
+            <tr><td>Reservation and lotting compatibility</td><td>Complete · None · Single lot</td></tr>
+            <tr><td>Supplier-response mappings</td><td>Complete</td></tr>
+            <tr><td>Evaluation and contract mappings</td><td>Complete</td></tr>
+            <tr><td>Price schedule</td><td>Complete · generated</td></tr>
+            <tr><td>Rendered Invitation and Tender</td><td>Complete</td></tr>
+          </tbody>
+        </table>
+        <div class="card blueprint" style="max-width:640px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="card-kicker">Warning</div>
+          <p class="card-body">Confirm that manufacturer authorisation is proportionate for this item.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-secondary">Preview Invitation</button>
+          <button type="button" class="btn btn-secondary">Preview complete Tender</button>
+          <button type="button" class="btn btn-primary">Submit for approval</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9. TPR-DES-05 Tender approval ============ -->
+  <section id="s-approval" data-screen-label="TPR-DES-05">
+    <div class="scrn-label">TPR-DES-05 · Tender approval</div>
+    <div class="scrn">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Charles Mutiso · Head of Procurement Function</span>
+      </nav>
+      <div style="padding: 32px 40px; display:flex; flex-direction:column; gap:24px;">
+        <div>
+          <div class="cap">TND-MOH-2027-033 · Version 1</div>
+          <h1 style="font-size:28px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+          <span class="kt-status is-pending">Submitted for approval</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:22px;">
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Requisition</div><div class="card-title">REQ-MOH-2027-033-001</div>
+            <p class="card-body">1 item · 0 related services · 0 acceptance rows beyond delivery. Authorised value KES 50,000,000.00 (internal only).</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Task 1 — Tender details</div><div class="card-title">Open Tender · KES 500,000 security</div>
+            <p class="card-body">Submission 5 Jun 2027, 11:00 EAT · Validity 120 days · No pre-tender meeting.</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Task 2–3 — Requirements &amp; price</div><div class="card-title">1 item · generated schedule</div>
+            <p class="card-body">Business laptops ×250, 36-month warranty. Price schedule generated, awaiting Tenderer response.</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Task 4–5 — Evaluation &amp; contract</div><div class="card-title">5 evidence requirements · 30-day payment</div>
+            <p class="card-body">Performance security 10% · Delay damages 0.5%/week, max 10% · Ministry of Health Procurement Office.</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Readiness</div>
+          <div style="display:flex; gap:16px;">
+            <span class="kt-status is-live">0 Blocking</span>
+            <span class="kt-status is-attention">1 Warning — manufacturer authorisation proportionality</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Complete renders</div>
+          <div style="display:flex; gap:12px;">
+            <span class="tag tag-outline">Invitation.pdf — digest verified</span>
+            <span class="tag tag-outline">Issued Tender.pdf — digest verified</span>
+          </div>
+        </div>
+
+        <div class="card blueprint" style="max-width:640px;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="card-kicker">Release binding</div>
+          <p class="card-body" style="font-family:ui-monospace, monospace; font-size:12px;">template 1.1 · bundle digest sha256:8f21…c40a · requisition digest sha256:1c4a…9e02</p>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-secondary">Return for correction</button>
+          <button type="button" class="btn btn-primary">Approve for publication</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9b. Return for correction dialog ============ -->
+  <section id="s-approval-dialog" data-screen-label="Dialog · Return for correction">
+    <div class="scrn-label">§13.9 · Dialog — Return for correction (over Tender approval)</div>
+    <div class="scrn overlay-wrap" style="position:relative;">
+      <div style="filter:blur(1px); opacity:.9; padding: 24px 40px;">
+        <div class="cap">TND-MOH-2027-033 · Version 1</div>
+        <h1 style="font-size:28px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <span class="kt-status is-pending">Submitted for approval</span>
+      </div>
+      <div class="overlay-dim" style="min-height:800px;">
+        <div class="dialog blueprint" style="width:520px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Return for correction</div>
+          <div class="dialog-body">
+            <div class="field"><label>Correction required</label><textarea class="input" rows="3">Confirm whether manufacturer authorisation is necessary and update the evidence requirement.</textarea></div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Return for correction</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10. TPR-DES-06 Approved Tender ============ -->
+  <section id="s-approved" data-screen-label="TPR-DES-06">
+    <div class="scrn-label">TPR-DES-06 · Approved Tender</div>
+    <div class="scrn">
+      <nav class="nav app-nav">
+        <span class="nav-brand">KenTender</span>
+        <a href="#">Requisitions</a>
+        <a href="#" aria-current="page">Tender Preparation</a>
+        <a href="#">Planning</a>
+        <a href="#">Contracts</a>
+        <span class="tag tag-neutral" style="margin-left:auto;">Charles Mutiso · Head of Procurement Function</span>
+      </nav>
+      <div style="padding: 32px 40px; display:flex; flex-direction:column; gap:24px;">
+        <div>
+          <div class="cap">TND-MOH-2027-033 · Version 2</div>
+          <h1 style="font-size:28px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+          <span class="kt-status is-live">Approved for publication</span>
+        </div>
+
+        <div class="card blueprint" style="max-width:640px;"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="card-kicker">Notice</div>
+          <p class="card-body">This Tender is approved. The publication package is ready.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:18px;">
+          <div class="ro-field"><span class="kt-label">Approved by</span><span class="ro-val">Charles Mutiso, 20 Apr 2027, 10:00 EAT</span></div>
+          <div class="ro-field"><span class="kt-label">Requisition digest</span><span class="ro-val" style="font-family:ui-monospace,monospace; font-size:12px;">sha256:1c4a…9e02</span></div>
+          <div class="ro-field"><span class="kt-label">Template digest</span><span class="ro-val" style="font-family:ui-monospace,monospace; font-size:12px;">sha256:8f21…c40a</span></div>
+          <div class="ro-field"><span class="kt-label">Package digest</span><span class="ro-val" style="font-family:ui-monospace,monospace; font-size:12px;">sha256:5b90…d117</span></div>
+          <div class="ro-field"><span class="kt-label">Publication handoff</span><span class="ro-val">Ready · not yet consumed</span></div>
+          <div class="ro-field"><span class="kt-label">Publication consumption</span><span class="kt-status is-pending">Awaiting downstream acknowledgment</span></div>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Complete renders</div>
+          <div style="display:flex; gap:12px;">
+            <span class="tag tag-outline">Invitation.pdf — digest verified</span>
+            <span class="tag tag-outline">Issued Tender.pdf — digest verified</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="kt-card-title">Structured mappings</div>
+          <div style="display:flex; gap:12px;">
+            <span class="tag tag-accent">Supplier-response schema · complete</span>
+            <span class="tag tag-accent">Evaluation contract · complete</span>
+            <span class="tag tag-accent">Contract-obligation projection · complete</span>
+          </div>
+        </div>
+
+        <div>
+          <button type="button" class="btn btn-secondary">Reopen before publication</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10b. Reopen dialog ============ -->
+  <section id="s-approved-dialog" data-screen-label="Dialog · Reopen before publication">
+    <div class="scrn-label">§13.9 · Dialog — Reopen before publication (over Approved Tender)</div>
+    <div class="scrn overlay-wrap" style="position:relative;">
+      <div style="filter:blur(1px); opacity:.9; padding: 24px 40px;">
+        <div class="cap">TND-MOH-2027-033 · Version 2</div>
+        <h1 style="font-size:28px; margin: 4px 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <span class="kt-status is-live">Approved for publication</span>
+      </div>
+      <div class="overlay-dim" style="min-height:800px;">
+        <div class="dialog blueprint" style="width:520px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="dialog-title">Reopen before publication</div>
+          <div class="dialog-body">
+            <div class="field"><label>Reason for reopening</label><textarea class="input" rows="3">The submission deadline must be corrected before publication.</textarea></div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Reopen Tender</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "finding_code",
+  "severity",
+  "task_number",
+  "field_reference",
+  "message",
+  "row_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "finding_code",
+   "fieldtype": "Data",
+   "label": "Finding code",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Blocking\nWarning",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "task_number",
+   "fieldtype": "Int",
+   "label": "Task number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "field_reference",
+   "fieldtype": "Data",
+   "label": "Field reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "row_order",
+   "fieldtype": "Int",
+   "label": "Row order",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Preparation",
+ "name": "Tender Readiness Finding",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

@@ -29,10 +29,11 @@ with its integrated baseline:
 
 - `upsert_requisitions_base()` is the one fixture `run_kentender_mvp_v1`
   builds by default, matching §16.4's exact Authorised timeline (fixture
-  4), extendable in place to the consumed handoff (fixture 6) via the
-  separate, additive `seed_consumed_handoff()` (consumption is a one-way
-  audit fact, never reversed, so this is not a "profile" in the
-  mutually-exclusive sense — it only ever adds);
+  4); the consumed handoff (fixture 6) is produced downstream by Tender
+  Preparation's own §16 seed through a real `PrepareTender` (TPR-CHG-001
+  plan D19 — the synthetic `seed_consumed_handoff()` is retired), which
+  also stamps this module's consumption instant via
+  `stamp_handoff_consumption_clock()`;
 - `seed_draft_profile()` / `seed_department_task_profile()` /
   `seed_procurement_task_profile()` / `seed_returned_profile()` /
   `seed_upstream_correction_profile()` each tear the fixture down (revoking
@@ -74,11 +75,6 @@ SINGLE_ITEM_TITLE = "National digital health infrastructure upgrade"
 COMBINED_ITEM_TITLE = "Clinical training and deployment laptops for digital health rollout"
 BL_HWD = "MOH-BL-HWD-2027"
 DELIVERY_LOCATION = "Ministry of Health Headquarters, Afya House, Nairobi"
-
-TENDER = "TND-MOH-2027-033"
-TENDER_VERSION = "TND-MOH-2027-033-V1"
-TEMPLATE_KEY = "IT Equipment — Open Tender"
-TEMPLATE_VERSION = "v1.1"
 
 # §16.4's exact fixture-4 timeline, stored as UTC equivalents of the stated
 # EAT instants (read models render EAT).
@@ -358,29 +354,31 @@ def _stamp_design_clock(requisition: str) -> None:
 		frappe.db.set_value("Authorised Requisition Handoff", handoff, "creation", CLOCK["authorised"], update_modified=False)
 
 
-def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
-	"""§16.4 fixture 6 — the same authorised handoff, additionally consumed
-	by `TND-MOH-2027-033`. Additive and idempotent (never reverses fixture
-	4's authorisation, matching `record_handoff_consumption`'s own one-way
-	semantics)."""
-	from kentender_procurement.procurement_requisitions.services import handoff as handoff_service
+def stamp_handoff_consumption_clock(requisition: str, *, when: str | None = None) -> None:
+	"""§16.4 fixture-6 instant on Requisitions' own consumption columns. The
+	consumer (Tender Preparation's §16 seed) calls this after its real
+	`PrepareTender`; it never writes these rows itself."""
+	when = when or CLOCK["consumed"]
+	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition}, "name")
+	if handoff and frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at"):
+		frappe.db.set_value("Authorised Requisition Handoff", handoff, "consumed_at", when, update_modified=False)
+		frappe.db.set_value("Procurement Requisition", requisition, "handoff_consumed_at", when, update_modified=False)
 
-	_guard()
-	base = upsert_requisitions_base(commit=False)
-	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": base["requisition"]}, "name")
-	if not handoff:
-		frappe.throw(f"{base['requisition']} has no handoff to consume.")
-	result = handoff_service.record_handoff_consumption(
-		handoff=handoff, tender=TENDER, tender_version=TENDER_VERSION, template_key=TEMPLATE_KEY,
-		template_version=TEMPLATE_VERSION, idempotency_key=_key(f"{handoff}:consume"),
+
+def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
+	"""Retired (TPR-CHG-001 v0.6 plan D19). §16.4 fixture 6 — the authorised
+	handoff consumed by a Tender — is now produced by a real `PrepareTender`
+	in `kentender_procurement.tender_preparation.seeds.kentender_mvp_v1
+	.upsert_tender_preparation`, which chains after this module in the core
+	orchestrator; a synthetic consumption by a Tender that does not exist
+	would contradict the live Tender Preparation module."""
+	frappe.throw(
+		"seed_consumed_handoff() is retired: the consumed handoff is seeded by "
+		"kentender_procurement.tender_preparation.seeds.kentender_mvp_v1.upsert_tender_preparation "
+		"(a real Tender), chained after upsert_requisitions_base in the core orchestrator.",
+		frappe.ValidationError,
 	)
-	if result.get("action") == "consumed":
-		frappe.db.set_value("Authorised Requisition Handoff", handoff, "consumed_at", CLOCK["consumed"], update_modified=False)
-		frappe.db.set_value("Procurement Requisition", base["requisition"], "handoff_consumed_at", CLOCK["consumed"], update_modified=False)
-		result["consumed_at"] = CLOCK["consumed"]
-	if commit:
-		frappe.db.commit()
-	return {"ok": True, "requisition": base["requisition"], "handoff": handoff, "consumption": result}
+	return {}  # unreachable
 
 
 # --- the combined item: mutually exclusive, on-demand profiles -------------
@@ -432,6 +430,44 @@ def _wipe_combined_item_profile() -> dict[str, int]:
 	frappe.db.delete("Requisition Command Journal", {"name": ("in", journal or ("",))})
 	deleted["Requisition Command Journal"] = len(journal)
 	return deleted
+
+
+def recover_orphaned_drawdowns(*, commit: bool = False) -> dict[str, Any]:
+	"""The "wipe after authorise" hazard's documented repair, as a named seed
+	function: a site-wide `wipe_requisition_rows()` (any Requisitions test
+	module) deletes an Authorised Requisition's rows but leaves its Planning
+	drawdown Active, so the combined item reads as having no remaining
+	quantity (REQ_PLAN_INELIGIBLE) and no fixture can be rebuilt. Reverse
+	every Active drawdown on the canonical items whose Requisition no longer
+	exists — through Planning's own published reversal, as the Head of
+	Procurement Function — and nothing else."""
+	from kentender_procurement.procurement_requisitions.services import eligibility_gateway as planning
+
+	_guard()
+	frappe.set_user("Administrator")
+	reversed_rows: list[str] = []
+	for title in (SINGLE_ITEM_TITLE, COMBINED_ITEM_TITLE):
+		plan_item_id = _plan_item_id(title)
+		if not plan_item_id:
+			continue
+		item_name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": plan_item_id, "item_state": "Active"}, "name")
+		allocations = frappe.get_all("Plan Source Allocation", filters={"plan_item": item_name}, pluck="name") if item_name else []
+		rows = frappe.get_all(
+			"Plan Drawdown Reference", filters={"allocation": ("in", allocations or ("",)), "drawdown_state": "Active"},
+			fields=["name", "record_version", "requisition_reference"],
+		)
+		for row in rows:
+			if frappe.db.exists("Procurement Requisition", {"requisition_reference": row.requisition_reference}):
+				continue  # a live Requisition still owns this drawdown
+			with _as(HOPF):
+				planning.reverse_requisition_drawdown(
+					drawdown_reference=row.name, expected_record_version=row.record_version,
+					idempotency_key=_key(f"{row.name}:orphan-reversal"),
+				)
+			reversed_rows.append(row.name)
+	if commit:
+		frappe.db.commit()
+	return {"ok": True, "reversed": reversed_rows}
 
 
 def reset_requisitions_seed(*, commit: bool = False) -> dict[str, int]:

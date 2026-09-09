@@ -123,6 +123,21 @@ def sync_procurement_requisitions_page() -> None:
 		import_file_by_path(path, force=True)
 
 
+def sync_tender_preparation_page() -> None:
+	"""Same reason as `sync_procurement_requisitions_page`: the Tender
+	Preparation Desk Page (TPR-CHG-001 v0.6 §12) is the sidebar's
+	``Link To`` target and must exist before the reconcile validates it."""
+	path = os.path.join(
+		frappe.get_app_path("kentender_procurement"),
+		"tender_preparation",
+		"page",
+		"tender_preparation",
+		"tender_preparation.json",
+	)
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+
+
 def sync_procurement_home_page() -> None:
 	"""Ensure functional Procurement Home Desk Page exists (unique slug)."""
 	path = os.path.join(
@@ -170,6 +185,7 @@ def run() -> None:
 		sync_coming_soon_page()
 		sync_procurement_home_page()
 		sync_procurement_requisitions_page()
+		sync_tender_preparation_page()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

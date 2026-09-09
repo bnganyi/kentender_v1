@@ -74,6 +74,13 @@ def get_requisition_history(requisition: str) -> dict[str, Any]:
 	return read.get_requisition_history(requisition=requisition)
 
 
+@frappe.whitelist()
+def list_eligible_handoffs() -> list[dict[str, Any]]:
+	# TPR-CHG-001 v0.6 §11.1 / plan D7 — Tender Preparation's workspace read
+	# of the unconsumed v1.3 handoffs; Requisitions owns the seam.
+	return read.list_eligible_handoffs()
+
+
 # --------------------------------------------------------------------------
 # §10.2 Commands — Draft stage
 # --------------------------------------------------------------------------
@@ -245,3 +252,10 @@ def record_handoff_consumption(handoff_name: str, tender: str, tender_version: s
 	# `handoff_name`, deliberately not `handoff`: this module's own `handoff`
 	# service module is imported at module scope under that exact name.
 	return handoff.record_handoff_consumption(handoff=handoff_name, tender=tender, tender_version=tender_version, template_key=template_key, template_version=template_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def release_handoff_consumption(handoff_name: str, tender: str, reason: str, idempotency_key: str) -> dict[str, Any]:
+	# TPR-CHG-001 v0.6 §10.4 step 3 / plan D7 — the controlled release a
+	# stopped Tender uses; `handoff_name` for the same reason as above.
+	return handoff.release_handoff_consumption(handoff=handoff_name, tender=tender, reason=reason, idempotency_key=idempotency_key)

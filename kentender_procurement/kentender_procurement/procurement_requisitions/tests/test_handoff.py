@@ -108,3 +108,100 @@ class TestRecordHandoffConsumption(RequisitionHandoffCase):
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
 			authorise.revoke_unconsumed_authorisation(requisition=requisition, reason="Testing the consumed-handoff revoke guard end to end.", expected_record_version=root.record_version, idempotency_key=fx.key())
 		self.assertEqual(ctx.exception.code, "REQ_HANDOFF_CONSUMED")
+
+
+class TestReleaseHandoffConsumption(RequisitionHandoffCase):
+	"""TPR-CHG-001 v0.6 §10.4 step 3 / plan D7 — the release half of the seam."""
+
+	def _consumed(self) -> str:
+		authorised = self._authorised()
+		frappe.set_user("Administrator")
+		handoff.record_handoff_consumption(handoff=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		return authorised["handoff"]
+
+	def test_the_consuming_tender_releases_and_the_handoff_is_eligible_again(self):
+		name = self._consumed()
+		frappe.set_user(fx.HOPF)
+		result = handoff.release_handoff_consumption(handoff=name, tender="TND-0001", reason="Upstream correction required on the technical requirement.", idempotency_key=fx.key())
+		self.assertEqual(result["action"], "released")
+		self.assertEqual(result["released_from"]["tender_version"], "TND-0001-V1")
+		doc = frappe.get_doc("Authorised Requisition Handoff", name)
+		self.assertFalse(doc.consumed_at)
+		self.assertEqual(doc.tender, "")
+		self.assertFalse(frappe.db.get_value("Procurement Requisition", doc.requisition, "handoff_consumed_at"))
+		from kentender_procurement.procurement_requisitions.services import read
+
+		self.assertIn(name, [row["handoff"] for row in read.list_eligible_handoffs(user=fx.HOPF)])
+
+	def test_release_replays_by_key(self):
+		name = self._consumed()
+		frappe.set_user(fx.HOPF)
+		key = fx.key()
+		first = handoff.release_handoff_consumption(handoff=name, tender="TND-0001", reason="Upstream correction.", idempotency_key=key)
+		second = handoff.release_handoff_consumption(handoff=name, tender="TND-0001", reason="Upstream correction.", idempotency_key=key)
+		self.assertEqual(first["action"], "released")
+		self.assertTrue(second["idempotent"])
+
+	def test_a_different_tender_cannot_release_it(self):
+		name = self._consumed()
+		frappe.set_user(fx.HOPF)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			handoff.release_handoff_consumption(handoff=name, tender="TND-0002", reason="Wrong tender.", idempotency_key=fx.key())
+		self.assertEqual(ctx.exception.code, "REQ_HANDOFF_CONSUMED")
+
+	def test_a_non_caller_role_is_refused(self):
+		name = self._consumed()
+		frappe.set_user(fx.PLANNER)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			handoff.release_handoff_consumption(handoff=name, tender="TND-0001", reason="Not my seam.", idempotency_key=fx.key())
+		self.assertEqual(ctx.exception.code, "REQ_RESPONSIBILITY_REQUIRED")
+
+	def test_a_reason_is_required(self):
+		name = self._consumed()
+		frappe.set_user(fx.HOPF)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			handoff.release_handoff_consumption(handoff=name, tender="TND-0001", reason="  ", idempotency_key=fx.key())
+		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+
+
+class TestListEligibleHandoffs(RequisitionHandoffCase):
+	"""TPR-CHG-001 v0.6 §11.1 / plan D7 — the list half of the seam."""
+
+	def test_an_authorised_unconsumed_handoff_is_listed_with_its_counts(self):
+		authorised = self._authorised()
+		from kentender_procurement.procurement_requisitions.services import read
+
+		rows = read.list_eligible_handoffs(user=fx.HOPF)
+		match = [r for r in rows if r["handoff"] == authorised["handoff"]]
+		self.assertEqual(len(match), 1)
+		row = match[0]
+		self.assertEqual(row["handoff_version"], "1.3")
+		self.assertEqual(row["product_pattern"], "IT Equipment")
+		self.assertEqual(row["item_count"], 1)
+		self.assertEqual(row["acceptance_requirement_count"], 1)
+		self.assertTrue(row["requisition_reference"])
+
+	def test_a_consumed_handoff_is_not_listed(self):
+		authorised = self._authorised()
+		handoff.record_handoff_consumption(handoff=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		from kentender_procurement.procurement_requisitions.services import read
+
+		self.assertNotIn(authorised["handoff"], [r["handoff"] for r in read.list_eligible_handoffs(user=fx.HOPF)])
+
+	def test_a_revoked_handoff_is_not_listed(self):
+		authorised = self._authorised()
+		requisition = frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "requisition")
+		root = frappe.get_doc("Procurement Requisition", requisition)
+		frappe.set_user(fx.HOPF)
+		authorise.revoke_unconsumed_authorisation(requisition=requisition, reason="Revoked before any Tender consumed it.", expected_record_version=root.record_version, idempotency_key=fx.key())
+		from kentender_procurement.procurement_requisitions.services import read
+
+		self.assertNotIn(authorised["handoff"], [r["handoff"] for r in read.list_eligible_handoffs(user=fx.HOPF)])
+
+	def test_an_auditor_reads_the_list_and_a_departmental_actor_gets_an_empty_list(self):
+		authorised = self._authorised()
+		from kentender_procurement.procurement_requisitions.services import read
+
+		self.assertIn(authorised["handoff"], [r["handoff"] for r in read.list_eligible_handoffs(user=fx.AUDITOR)])
+		self.assertEqual(read.list_eligible_handoffs(user=fx.AUTHOR), [])
+		self.assertEqual(read.list_eligible_handoffs(user=fx.OUTSIDER), [])

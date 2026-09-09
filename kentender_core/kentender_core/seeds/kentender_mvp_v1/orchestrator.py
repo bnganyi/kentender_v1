@@ -31,9 +31,12 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import (
 	upsert_requisitions_base,
 )
+from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import (
+	upsert_tender_preparation,
+)
 
 # Latest seeded module stage (extend when the next MVP module lands).
-LATEST_STAGE = "requisitions"
+LATEST_STAGE = "tender_preparation"
 
 
 def _ensure_financial_years() -> list[str]:
@@ -100,6 +103,7 @@ def run_kentender_mvp_v1(
 				include_demands=True,
 				include_planning=True,
 				include_requisitions=True,
+				include_tender_preparation=True,
 			)
 
 		result["org"] = upsert_org()
@@ -117,9 +121,11 @@ def run_kentender_mvp_v1(
 		result["demands"] = upsert_demands()
 		result["planning"] = upsert_planning()
 		result["requisitions"] = upsert_requisitions_base()
+		# TPR-CHG-001 v0.6 §16 — the real Tender on the authorised handoff.
+		result["tender_preparation"] = upsert_tender_preparation()
 
 		if validate:
-			report = _validate(include_demands=True, include_planning=True, include_requisitions=True)
+			report = _validate(include_demands=True, include_planning=True, include_requisitions=True, include_tender_preparation=True)
 			result["validate"] = report
 			result["ok"] = bool(report.get("ok"))
 			print(report.get("summary") or "")
@@ -147,6 +153,7 @@ def validate_kentender_mvp_v1(
 		include_demands=True,
 		include_planning=True,
 		include_requisitions=True,
+		include_tender_preparation=True,
 		include_scn_add=include_scn_add,
 		include_scn_fund_short=include_scn_fund_short,
 		include_scn_remove=include_scn_remove,

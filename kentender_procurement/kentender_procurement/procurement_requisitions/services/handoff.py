@@ -127,3 +127,62 @@ def record_handoff_consumption(
 	result = {"ok": True, "idempotent": False, "action": "consumed", "handoff": doc.name, "consumed_at": cstr(doc.consumed_at)}
 	envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name)
 	return result
+
+
+def release_handoff_consumption(*, handoff: str, tender: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""TPR-CHG-001 v0.6 §10.4 step 3 / plan D7 — release this handoff's
+	consumption so a stopped Tender (`Upstream correction required`) no
+	longer holds it. Only the Tender that consumed it may release it, only
+	while the Requisition is still Authorised, and only a Tender Preparation
+	caller (Procurement Officer or Head of Procurement Function, command
+	purpose) may ask. The consumption columns are cleared; the command
+	journal keeps who released it, for which Tender and why. Idempotent:
+	a repeat with the same key replays, and a handoff already released
+	(no consumer) for the same Tender is a no-op."""
+	from kentender_procurement.procurement_requisitions.services import envelope
+	from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
+	from kentender_procurement.procurement_requisitions.services.errors import fail
+	from kentender_procurement.procurement_requisitions.services.requisition_roles import TENDER_CALLER_ROLES
+
+	payload = {"handoff": handoff, "tender": tender, "reason": reason}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	principal = authz.actor(user)
+	last = None
+	for role in TENDER_CALLER_ROLES:
+		try:
+			authz.require_site_role(role, principal, masked=False)
+			last = None
+			break
+		except Exception as exc:  # noqa: BLE001 — try the next caller role
+			last = exc
+	if last is not None:
+		fail("REQ_RESPONSIBILITY_REQUIRED", "Only a Tender Preparation caller may release a handoff consumption.")
+	if not cstr(reason).strip():
+		fail("REQ_CONTROL_INVALID", "A reason is required to release a handoff consumption.")
+	if not handoff or not frappe.db.exists("Authorised Requisition Handoff", handoff):
+		frappe.throw("Handoff not found", frappe.DoesNotExistError)
+	doc = envelope.locked("Authorised Requisition Handoff", handoff)
+	root_state = cstr(frappe.db.get_value("Procurement Requisition", doc.requisition, "current_state"))
+	if root_state != "Authorised":
+		fail("REQ_STALE_VERSION", "This Requisition is no longer Authorised; its handoff cannot be released.")
+	if not doc.consumed_at:
+		result = {"ok": True, "idempotent": False, "action": "not_consumed", "handoff": doc.name}
+		envelope.record_command(idempotency_key=idempotency_key, command="ReleaseHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=principal)
+		return result
+	if doc.tender != cstr(tender):
+		fail("REQ_HANDOFF_CONSUMED", "This handoff is consumed by a different Tender and cannot be released by this one.")
+
+	released_from = {"tender": doc.tender, "tender_version": doc.tender_version, "template_key": doc.template_key, "template_version": doc.template_version, "consumed_at": cstr(doc.consumed_at)}
+	doc.tender = ""
+	doc.tender_version = ""
+	doc.template_key = ""
+	doc.template_version = ""
+	doc.consumed_at = None
+	doc.save(ignore_permissions=True)
+	frappe.db.set_value("Procurement Requisition", doc.requisition, "handoff_consumed_at", None)
+
+	result = {"ok": True, "idempotent": False, "action": "released", "handoff": doc.name, "released_from": released_from, "reason": cstr(reason).strip(), "released_by": principal}
+	envelope.record_command(idempotency_key=idempotency_key, command="ReleaseHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=principal)
+	return result

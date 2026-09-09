@@ -1,0 +1,486 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "version_number",
+  "based_on_version",
+  "version_status",
+  "section_snapshot",
+  "snapshot_json",
+  "snapshot_digest",
+  "section_task1",
+  "tender_title",
+  "issue_date",
+  "clarification_deadline",
+  "submission_deadline",
+  "tender_validity_days",
+  "tender_security_amount",
+  "col_t1",
+  "pre_tender_meeting",
+  "meeting_datetime",
+  "meeting_mode",
+  "meeting_venue",
+  "online_joining_information",
+  "section_task4",
+  "manufacturer_authorisation_required",
+  "datasheets_required",
+  "past_experience_required",
+  "minimum_comparable_contracts",
+  "experience_period_years",
+  "col_t4",
+  "after_sales_evidence_required",
+  "after_sales_evidence",
+  "evidence_requirements",
+  "section_task5",
+  "inspection_location",
+  "payment_timing_days",
+  "performance_security_required",
+  "performance_security_percent",
+  "col_t5",
+  "delay_damages_per_week_percent",
+  "maximum_delay_damages_percent",
+  "contract_contact_office",
+  "section_readiness",
+  "readiness_findings",
+  "readiness_digest",
+  "readiness_run_at",
+  "blocking_count",
+  "warning_count",
+  "section_audit",
+  "content_digest",
+  "render_context_digest",
+  "invitation_html_digest",
+  "issued_tender_html_digest",
+  "col_audit",
+  "prepared_by",
+  "prepared_at",
+  "submitted_by",
+  "submitted_at",
+  "decided_by",
+  "decided_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "options": "Prepared Tender",
+   "reqd": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based on version",
+   "options": "Tender Preparation Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "label": "Version status",
+   "options": "Draft\nSubmitted\nReturned\nApproved\nReopened\nCancelled\nUpstream correction required",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_snapshot",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Snapshot JSON",
+   "read_only": 1,
+   "description": "§7.3 InheritedRequirementSnapshot — canonical copy of the handoff payload; never edited after insert."
+  },
+  {
+   "fieldname": "snapshot_digest",
+   "fieldtype": "Data",
+   "label": "Snapshot digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_task1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "label": "Tender title",
+   "length": 160
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue date"
+  },
+  {
+   "fieldname": "clarification_deadline",
+   "fieldtype": "Datetime",
+   "label": "Clarification deadline"
+  },
+  {
+   "fieldname": "submission_deadline",
+   "fieldtype": "Datetime",
+   "label": "Submission deadline"
+  },
+  {
+   "fieldname": "tender_validity_days",
+   "fieldtype": "Int",
+   "label": "Tender validity days",
+   "default": "120"
+  },
+  {
+   "fieldname": "tender_security_amount",
+   "fieldtype": "Currency",
+   "label": "Tender security amount",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_t1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pre_tender_meeting",
+   "fieldtype": "Check",
+   "label": "Pre tender meeting",
+   "default": "0"
+  },
+  {
+   "fieldname": "meeting_datetime",
+   "fieldtype": "Datetime",
+   "label": "Meeting datetime"
+  },
+  {
+   "fieldname": "meeting_mode",
+   "fieldtype": "Select",
+   "label": "Meeting mode",
+   "options": "\nPhysical\nOnline"
+  },
+  {
+   "fieldname": "meeting_venue",
+   "fieldtype": "Link",
+   "label": "Meeting venue",
+   "options": "Delivery Location"
+  },
+  {
+   "fieldname": "online_joining_information",
+   "fieldtype": "Small Text",
+   "label": "Online joining information"
+  },
+  {
+   "fieldname": "section_task4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "manufacturer_authorisation_required",
+   "fieldtype": "Check",
+   "label": "Manufacturer authorisation required",
+   "default": "1"
+  },
+  {
+   "fieldname": "datasheets_required",
+   "fieldtype": "Check",
+   "label": "Product datasheets or brochures required",
+   "default": "1"
+  },
+  {
+   "fieldname": "past_experience_required",
+   "fieldtype": "Check",
+   "label": "Past supply experience required",
+   "default": "0"
+  },
+  {
+   "fieldname": "minimum_comparable_contracts",
+   "fieldtype": "Select",
+   "label": "Minimum comparable contracts",
+   "options": "\n1\n2\n3"
+  },
+  {
+   "fieldname": "experience_period_years",
+   "fieldtype": "Select",
+   "label": "Experience period years",
+   "options": "\n3\n5"
+  },
+  {
+   "fieldname": "col_t4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "after_sales_evidence_required",
+   "fieldtype": "Check",
+   "label": "After-sales support evidence required",
+   "default": "0"
+  },
+  {
+   "fieldname": "after_sales_evidence",
+   "fieldtype": "Select",
+   "label": "After sales evidence",
+   "options": "\nKenya service-centre details and escalation contacts\nManufacturer or authorised service-partner commitment\nBoth"
+  },
+  {
+   "fieldname": "evidence_requirements",
+   "fieldtype": "Table",
+   "label": "Evidence requirements",
+   "options": "Tender Evidence Requirement"
+  },
+  {
+   "fieldname": "section_task5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "inspection_location",
+   "fieldtype": "Link",
+   "label": "Inspection and acceptance location",
+   "options": "Delivery Location"
+  },
+  {
+   "fieldname": "payment_timing_days",
+   "fieldtype": "Select",
+   "label": "Payment timing (days)",
+   "options": "30\n45\n60",
+   "default": "30"
+  },
+  {
+   "fieldname": "performance_security_required",
+   "fieldtype": "Check",
+   "label": "Performance security required",
+   "default": "1"
+  },
+  {
+   "fieldname": "performance_security_percent",
+   "fieldtype": "Float",
+   "label": "Performance security percent",
+   "default": "10",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_t5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delay_damages_per_week_percent",
+   "fieldtype": "Float",
+   "label": "Delay damages per week (%)",
+   "default": "0.5",
+   "precision": "2"
+  },
+  {
+   "fieldname": "maximum_delay_damages_percent",
+   "fieldtype": "Int",
+   "label": "Maximum delay damages (%)",
+   "default": "10"
+  },
+  {
+   "fieldname": "contract_contact_office",
+   "fieldtype": "Link",
+   "label": "Contract contact office",
+   "options": "Contact Office"
+  },
+  {
+   "fieldname": "section_readiness",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "readiness_findings",
+   "fieldtype": "Table",
+   "label": "Readiness findings",
+   "options": "Tender Readiness Finding"
+  },
+  {
+   "fieldname": "readiness_digest",
+   "fieldtype": "Data",
+   "label": "Readiness digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "readiness_run_at",
+   "fieldtype": "Datetime",
+   "label": "Readiness run at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "blocking_count",
+   "fieldtype": "Int",
+   "label": "Blocking count",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warning count",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "render_context_digest",
+   "fieldtype": "Data",
+   "label": "Render context digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invitation_html_digest",
+   "fieldtype": "Data",
+   "label": "Invitation html digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_tender_html_digest",
+   "fieldtype": "Data",
+   "label": "Issued tender html digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_audit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Prepared at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "reqd": 1,
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "hidden": 1,
+   "search_index": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Preparation",
+ "name": "Tender Preparation Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "create": 1,
+   "delete": 1,
+   "write": 1
+  },
+  {
+   "role": "Procurement Officer",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TPV-{#####}"
+}

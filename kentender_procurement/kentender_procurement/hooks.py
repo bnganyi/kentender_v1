@@ -71,6 +71,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
+	f"/assets/kentender_procurement/css/tender_preparation_industry.css?v={_desk_asset_v('public/css/tender_preparation_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -228,6 +229,7 @@ page_js = {
 	"publications": "public/js/publications_page.js",
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"procurement-requisitions": "public/js/procurement_requisitions_page.js",
+	"tender-preparation": "public/js/tender_preparation_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
@@ -399,6 +401,19 @@ has_permission.update({
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.has_permission",
 })
 
+# TPR-CHG-001 v0.6 §5 / plan D11 — the Tender family is Site-wide with no
+# Organisation Unit column, so (as with Requisitions) it registers its own
+# predicate for both hooks rather than a `kentender_scope_map` entry; the
+# same registered predicate serves every list, count, route, preview, file
+# and command (§5).
+_TPR_AUTHZ = "kentender_procurement.tender_preparation.services.tender_authorization"
+_TPR_FAMILY = (
+	"Prepared Tender", "Tender Preparation Version", "Tender Preparation Task", "Tender Preparation Decision",
+	"Tender Publication Handoff", "Tender Preparation Event", "Tender Preparation Command Journal", "Supported Tender Template",
+)
+permission_query_conditions.update({doctype: f"{_TPR_AUTHZ}.permission_query_conditions" for doctype in _TPR_FAMILY})
+has_permission.update({doctype: f"{_TPR_AUTHZ}.has_permission" for doctype in _TPR_FAMILY})
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -529,6 +544,8 @@ scheduler_events = {
 
 after_migrate = [
 	"kentender_procurement.setup.after_migrate_navigation.run",
+	# TPR-CHG-001 v0.6 §6.3 — idempotent installer of the read-only template registry row.
+	"kentender_procurement.tender_templates.registry.after_migrate",
 ]
 
 boot_session = [
@@ -541,6 +558,7 @@ kt_my_work_providers = [
 	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_requisitions.services.my_work_provider.my_work_rows",
+	"kentender_procurement.tender_preparation.services.my_work_provider.my_work_rows",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.

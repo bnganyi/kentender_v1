@@ -1,0 +1,21 @@
+{
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_version": "1.1",
+  "display_name": "IT Equipment — Open Tender",
+  "supported_category": "Goods — IT equipment",
+  "supported_method": "Open Tender",
+  "official_std_family": "PPRA Standard Tender Document for Procurement of Goods",
+  "product": "Straightforward off-the-shelf IT equipment",
+  "evaluation": "Eligibility, pass/fail technical compliance, arithmetic/financial evaluation, lowest evaluated responsive Tender",
+  "award_packages": 1,
+  "currency": "KES",
+  "lotting_indicator": "Single lot",
+  "handoff_version": "1.3",
+  "supported_reservation_categories": ["None", "Youth", "Women", "Persons with disabilities", "Other disadvantaged group"],
+  "content_authority": "STD-TPL-001 v0.5 (approved 7 September 2026); curation workspace docs/mvp-1-r1/07_tender_templates/it_equipment_open_v1",
+  "consumer": "TPR-CHG-001 v0.6",
+  "templates": {"invitation": "templates/invitation_to_tender.html", "issued_tender": "templates/complete_tender.html", "print_css": "templates/print.css"},
+  "registers": {"coverage": "coverage_register.csv", "insertion_points": "insertion_points.csv", "forms": "forms_register.csv"},
+  "fixture": {"input": "fixtures/moh_input.json", "invitation_expected": "fixtures/moh_invitation_expected.html", "issued_tender_expected": "fixtures/moh_expected.html", "package_index": "fixtures/package_index.md"},
+  "source": {"file": "source/ppra_goods_std_official.pdf", "record": "source_record.json"}
+}

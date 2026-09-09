@@ -25,6 +25,15 @@ DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
 SITE_WIDE_ROLES = (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR)
 ALL_REQUISITION_ROLES = DEPARTMENTAL_ROLES + SITE_WIDE_ROLES
 
+# TPR-CHG-001 v0.6 §5 / plan D7 — the Tender Preparation responsibilities that
+# may consume or release this module's handoff seam (command purpose), and
+# the one that may only list it (read purpose). Registered by TPR in
+# `kentender_core.services.business_role_registry`, named here so the seam
+# gate lives with the seam.
+ROLE_PROCUREMENT_OFFICER = "Procurement Officer"
+TENDER_CALLER_ROLES = (ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+TENDER_SEAM_READER_ROLES = TENDER_CALLER_ROLES + (ROLE_AUDITOR,)
+
 # REQ-DES-16 Forbidden copy names them in this order (§13.13).
 FORBIDDEN_RESPONSIBILITIES = (
 	"Departmental Author, Head of User Department, Head of Procurement Function or Auditor"

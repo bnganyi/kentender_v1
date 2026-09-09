@@ -136,6 +136,10 @@ ACTORS = (
 	# REQ-CHG-001 v1.6 §16.1 / KT-STD-001 §8.3 (2026-09-06) — the Head of
 	# Procurement Function actor Requisitions authorisation names.
 	("charles.mutiso", "Charles Mutiso"),
+	# TPR-CHG-001 v0.6 §13.2 / KT-STD-001 §8.3 (2026-09-08) — the Procurement
+	# Officer who prepares the Tender; a different person from the Head of
+	# Procurement Function who approves it (§10.3).
+	("brian.wafula", "Brian Wafula"),
 )
 
 ASSIGNMENTS = (
@@ -188,6 +192,9 @@ ASSIGNMENTS = (
 	# REQ-CHG-001 v1.6 §16.1 — Charles authorises Requisitions and, later,
 	# approves Tenders (TPR-CHG-001). Site-wide (§8).
 	("charles.mutiso", "Head of Procurement Function", None, {}),
+	# TPR-CHG-001 v0.6 §5 — Site-wide Procurement Officer (prepares, never
+	# approves, the same Version — §10.3).
+	("brian.wafula", "Procurement Officer", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",
@@ -204,6 +211,24 @@ ASSIGNMENTS = (
 # records the pending CFG-CHG-002 v0.8 §4.4 schema reconciliation); the
 # Budget seed fails closed if this row is absent, never creates it.
 FUNDING_SOURCES = ("Government of Kenya",)
+
+# TPR-CHG-001 v0.6 §8.5 / plan D6 — the one governed contact office the
+# Ministry of Health fixture names for clarifications, notices and the
+# contract contact (§13.5). Email on the KT-STD-001 §8.1 fixture domain; no
+# telephone is invented.
+CONTACT_OFFICES = (
+	# (office name, contact email, contact phone, address)
+	("Ministry of Health Procurement Office", "procurement@moh.example.test", "", "Afya House, Cathedral Road, Nairobi"),
+)
+
+
+def contact_office_display(office_name: str) -> str:
+	"""The rendered contact string for a seeded office (mirrors
+	`ContactOffice.display()` without a document load)."""
+	for name, email, phone, _address in CONTACT_OFFICES:
+		if name == office_name:
+			return ", ".join(p for p in (name, email, phone) if p)
+	return office_name
 
 # REQ-CHG-001 v1.6 D2 — the one governed delivery/inspection location
 # the Ministry of Health fixture uses (§13.2, §16.1).
@@ -236,6 +261,7 @@ def run(*, commit: bool = True) -> dict:
 		"catalogues": _seed_catalogues(),
 		"funding_sources": _seed_funding_sources(),
 		"delivery_locations": _seed_delivery_locations(),
+		"contact_offices": _seed_contact_offices(),
 		"regulatory_reference": _seed_regulatory_reference(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
@@ -382,6 +408,31 @@ def _seed_delivery_locations() -> dict[str, int]:
 		).insert(ignore_permissions=True)
 		created += 1
 	return {"created": created, "total": len(DELIVERY_LOCATIONS)}
+
+
+def _seed_contact_offices() -> dict[str, int]:
+	created = 0
+	for office_name, contact_email, contact_phone, address in CONTACT_OFFICES:
+		if frappe.db.exists("Contact Office", office_name):
+			frappe.db.set_value(
+				"Contact Office", office_name,
+				{"contact_email": contact_email, "contact_phone": contact_phone, "address": address, "status": "Active"},
+				update_modified=False,
+			)
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Contact Office",
+				"office_name": office_name,
+				"contact_email": contact_email,
+				"contact_phone": contact_phone,
+				"address": address,
+				"status": "Active",
+				"fixture_namespace": FIXTURE_TAG,
+			}
+		).insert(ignore_permissions=True)
+		created += 1
+	return {"created": created, "total": len(CONTACT_OFFICES)}
 
 
 def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG) -> str:

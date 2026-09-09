@@ -4,7 +4,8 @@
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.3 |
-| Status | Proposed for approval |
+| Status | **Approved** |
+| Approved on | 7 September 2026 |
 | Date | 4 September 2026 |
 | Supersedes | v1.2, approved 3 September 2026 |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
@@ -354,7 +355,7 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-On approval, KT-STD-001 v1.3 becomes the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions.
+This approval makes KT-STD-001 v1.3 the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions.
 
 Where a citing document conflicts with this standard, the citing document prevails only where it states the departure explicitly and gives a reason. A silent divergence is a defect, not a decision. This standard governs form and delivery; it never overrides a domain decision in an architecture decision record or a module requirements document.
 

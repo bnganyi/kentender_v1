@@ -18,6 +18,10 @@ export default async function globalTeardown(): Promise<void> {
 	const restores = [
 		"kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site",
 		"kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site",
+		// TPR-CHG-001 v0.6 — Tender Preparation extends the Requisitions world
+		// with its own actors and Tender rows; its restore wipes those rows and
+		// then delegates to the Requisitions restore above.
+		"kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site",
 	];
 	for (const dottedPath of restores) {
 		try {

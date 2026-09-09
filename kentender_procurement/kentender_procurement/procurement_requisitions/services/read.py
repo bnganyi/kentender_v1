@@ -28,10 +28,11 @@ from kentender_procurement.procurement_requisitions.services import (
 	funding_gateway,
 	validation,
 )
+from kentender_procurement.procurement_requisitions.services import handoff as handoff_service
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
 from kentender_procurement.procurement_requisitions.services.draft_commands import _contributing_units, _load, _package_dict, _version_dict
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError, fail
-from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION
+from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION, TENDER_SEAM_READER_ROLES
 
 
 def _money(amount: float) -> str:
@@ -602,6 +603,51 @@ def get_authorised_requisition_handoff(*, requisition: str, user: str | None = N
 		# read-offer-parity discipline.
 		"can_revoke": root.current_state == "Authorised" and not root.handoff_consumed_at and _can(authz.require_hopf, actor),
 	}
+
+
+def list_eligible_handoffs(*, user: str | None = None) -> list[dict[str, Any]]:
+	"""TPR-CHG-001 v0.6 §10.2 "Eligible handoff" / §11.1 workspace / plan D7 —
+	every `AuthorisedRequisitionHandoff v1.3` that a Tender may still start
+	from: its Requisition is Authorised (never revoked, withdrawn or
+	superseded) and no Tender has consumed it. Read purpose, Site-wide: a
+	Procurement Officer, Head of Procurement Function or Auditor; anyone
+	else (including an actor with only departmental responsibilities)
+	receives an empty list, never a scope code. A read: creates nothing."""
+	principal = cstr(user or frappe.session.user)
+	if not principal or principal == "Guest":
+		return []
+	if not any(authz.can_read_site(role, principal) for role in TENDER_SEAM_READER_ROLES) and not authz.is_technical(principal):
+		return []
+	rows = frappe.get_all(
+		"Authorised Requisition Handoff",
+		filters={"consumed_at": ("is", "not set"), "handoff_version": handoff_service.HANDOFF_VERSION},
+		fields=["name", "requisition", "requisition_version", "handoff_digest", "handoff_version", "generated_at"],
+		order_by="generated_at asc",
+	)
+	out: list[dict[str, Any]] = []
+	for row in rows:
+		root = frappe.db.get_value(
+			"Procurement Requisition", row.requisition,
+			["name", "requisition_reference", "plan_item_id", "current_state", "handoff", "handoff_consumed_at"], as_dict=True,
+		)
+		if not root or root.current_state != "Authorised" or root.handoff != row.name or root.handoff_consumed_at:
+			continue
+		payload = json.loads(frappe.db.get_value("Authorised Requisition Handoff", row.name, "payload_json") or "{}")
+		out.append(
+			{
+				"handoff": row.name, "handoff_version": row.handoff_version, "handoff_digest": row.handoff_digest,
+				"generated_at": cstr(row.generated_at), "authorised_at": _eat(row.generated_at),
+				"requisition": root.name, "requisition_reference": root.requisition_reference, "requisition_version": row.requisition_version,
+				"plan_item_id": root.plan_item_id, "requirement_title": payload.get("requirement_title", ""),
+				"planned_method": payload.get("planned_method", ""), "product_pattern": payload.get("product_pattern", ""),
+				"reservation_category": payload.get("reservation_category_value", ""), "lotting_indicator": payload.get("lotting_indicator", ""),
+				"latest_delivery_date": payload.get("latest_delivery_date", ""), "latest_delivery_date_label": _date(payload.get("latest_delivery_date")),
+				"item_count": len(payload.get("items", [])), "technical_requirement_count": len(payload.get("technical_requirements", [])),
+				"related_service_count": len(payload.get("related_services", [])), "acceptance_requirement_count": len(payload.get("acceptance_requirements", [])),
+				"supporting_material_count": len(payload.get("supporting_materials", [])),
+			}
+		)
+	return out
 
 
 def get_requisition_history(*, requisition: str, user: str | None = None) -> dict[str, Any]:

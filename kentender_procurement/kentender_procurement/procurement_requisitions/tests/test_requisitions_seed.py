@@ -90,15 +90,13 @@ class TestSeedContract(IntegrationTestCase):
 		self.assertEqual(again["requisition"], self.baseline["requisition"])
 		self.assertEqual(frappe.db.count("Requisition Version", {"requisition": self.baseline["requisition"]}), before)
 
-	def test_consuming_the_handoff_is_additive_and_idempotent(self):
-		# consumption is one-way (never reversed by `reset_requisitions_seed`,
-		# by design — see the module docstring), so this intentionally does
-		# not attempt to restore an unconsumed state afterwards; the test
-		# runner's own per-test isolation is what makes that safe here.
-		consumed = seed.seed_consumed_handoff(commit=False)
-		self.assertEqual(consumed["consumption"]["action"], "consumed")
-		again = seed.seed_consumed_handoff(commit=False)
-		self.assertTrue(again["consumption"]["idempotent"])
+	def test_the_synthetic_consumption_is_retired_in_favour_of_tender_preparation(self):
+		"""TPR-CHG-001 plan D19 — fixture 6 is a real Tender's consumption,
+		seeded by Tender Preparation after this module; the old synthetic
+		consumption refuses with the pointer."""
+		with self.assertRaises(frappe.ValidationError) as caught:
+			seed.seed_consumed_handoff(commit=False)
+		self.assertIn("tender_preparation.seeds.kentender_mvp_v1.upsert_tender_preparation", str(caught.exception))
 
 
 @unittest.skipUnless(_world_available(), "the KENTENDER_MVP_V1 Requisitions world is not seeded on this site (make seed-kentender-mvp-v1)")
@@ -106,6 +104,20 @@ class TestLifecycleProfiles(IntegrationTestCase):
 	"""Each profile is mutually exclusive with the others and with the base
 	fixture (Decision D10) — this class runs them in sequence, restoring the
 	base fixture at the end for whatever runs next."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		# A consumed base handoff cannot be reset to another profile (one-way
+		# consumption, by design). Tender Preparation's §16 seed consumes it
+		# on a seeded site; release it there first, never from here.
+		plan_item_id = seed._plan_item_id(seed.COMBINED_ITEM_TITLE)
+		consumed = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised"}, "handoff_consumed_at")
+		if consumed:
+			raise unittest.SkipTest(
+				"the canonical handoff is consumed by Tender Preparation's seed — run "
+				"kentender_procurement.tender_preparation.seeds.kentender_mvp_v1.reset_tender_preparation_seed first"
+			)
 
 	@classmethod
 	def tearDownClass(cls):

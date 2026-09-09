@@ -175,7 +175,20 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"Head of Procurement Function",
 		SCOPE_SITE,
 		"REQ-CHG-001 v1.6 §8",
-		sod_tags=("requisition_authorisation",),
+		# TPR-CHG-001 v0.6 §5/§10.3 (2026-09-08): the same office is the single
+		# Tender Preparation approver — one registry entry, a second sod tag.
+		sod_tags=("requisition_authorisation", "tender_approval"),
+	),
+	# --- Tender Preparation (TPR-CHG-001 v0.6 §5) -------------------------
+	# Site-wide; prepares and submits Tender Versions and can never approve
+	# one it prepared (§10.3 — enforced from the Version's own preparation
+	# audit event, not from this registry). The identically-named legacy
+	# Frappe Role already exists on seeded sites; `ensure_roles()` reuses it.
+	_entry(
+		"Procurement Officer",
+		SCOPE_SITE,
+		"TPR-CHG-001 v0.6 §5",
+		sod_tags=("tender_preparation",),
 	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
 	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),

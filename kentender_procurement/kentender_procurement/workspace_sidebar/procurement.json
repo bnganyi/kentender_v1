@@ -111,10 +111,9 @@
    "collapsible": 0,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Tender Configurations",
-   "link_to": "coming-soon",
+   "label": "Tender Preparation",
+   "link_to": "tender-preparation",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Tender Configurations\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -238,7 +237,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-07 21:21:16.312082",
+ "modified": "2026-09-08 04:28:06.950795",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",
