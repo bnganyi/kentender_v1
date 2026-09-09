@@ -68,13 +68,13 @@ test.describe("§14 persona pass on the seeded world", () => {
 		await expectReady(page, "workspace");
 		await selectSeedYear(page);
 		await expect(page.locator('[data-testid="pln-plan-summary"]')).toHaveText("· Annual Plan · Active Version 1");
-		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
+		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 2 items behind baseline");
 		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody tr').first()).toContainText("Digital Health");
 		await page.goto(`/app/annual-procurement-plan/${PLAN}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 		await expect(page.locator(".kt-page-title")).toHaveText("Ministry of Health Annual Procurement Plan 2027/28");
 		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Active");
-		await expect(page.locator('[data-testid="pln-active-summary-strip"]')).toContainText("KES 80,000,000");
+		await expect(page.locator('[data-testid="pln-active-summary-strip"]')).toContainText("KES 130,000,000");
 		await expect(page.locator('[data-testid="pln-active-summary-strip"]')).toContainText("10 Dec 2026, 15:00 EAT");
 		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("Amina Hassan · 8 Dec 2026, 10:00 EAT");
 		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("9 Dec 2026, 11:00 EAT");

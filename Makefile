@@ -126,9 +126,9 @@ help:
 	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke (modal structure)"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=budget] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget) and validate"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tender_preparation] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tender_preparation) and validate"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
-	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=budget] — validate the canonical world only"
+	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=tender_preparation] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
@@ -888,8 +888,8 @@ e1-nssf-poc-gate:
 		tests/ui/smoke/it-std-wizard/e1-bidder-workspace.spec.ts
 
 # Canonical world (KT-STD-001 §8 + SEED-001), progressive by module stage.
-# THROUGH: site | strategy | budget (later stages are added as they land).
-THROUGH ?= budget
+# THROUGH: site | strategy | budget | needs | planning | requisitions | tender_preparation (later stages are added as they land).
+THROUGH ?= tender_preparation
 seed-canonical:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \

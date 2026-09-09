@@ -15,17 +15,20 @@ Stages (``STAGES``) are cumulative: ``site`` is the KT-STD-001 §8 world
 (site Procuring Entity, Organisation Units, ERPNext Fiscal Years, intake
 windows, catalogues, the governed funding source, the regulatory reference,
 UOMs, actors and their responsibility assignments), ``strategy`` the
-STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline.
-Departmental Needs and Procurement Planning stages are appended here as
-their own seeds are cut over to this orchestrator; until then their
-canonical rows (namespaces below) are preserved by the clear, never rebuilt.
+STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
+``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
+PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.6
+§16 Authorised Requisition on the one eligible combined Plan Item, and
+``tender_preparation`` the TPR-CHG-001 v0.6 §16 Tender approved for
+publication on that Requisition's handoff. Each stage calls the owning
+module's own canonical-shaped seed function directly — never the legacy
+multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
+through any stage never creates `PE-CGKIS` or any second Procuring Entity.
 
-Procurement Requisitions (REQ-CHG-001 v1.6) is not a stage either — Needs
-and Planning must land first — but it is the first live caller of Budget's
-reservation contract: a Funding Reservation / Procurement Commitment
-stamped `REQUISITIONS_NS` is canonical evidence of an authorised
-Requisition, not disposable test residue, even though no Requisitions
-stage exists yet to reseed it.
+A Funding Reservation / Procurement Commitment stamped `REQUISITIONS_NS` is
+canonical evidence of an authorised Requisition, not disposable test
+residue, whether or not `through="requisitions"` was actually requested on
+a given run.
 
 Every deletion is by explicit identity, namespace or fixture e-mail domain
 (KT-STD-001 §8.6: seeds never repair, alias or import legacy records).
@@ -43,15 +46,18 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tender_preparation")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
 BUDGET_ACTOR_NS = "KENTENDER_MVP_V1"  # Budget's own actor assignments (pre-2026-09-06 sites)
 NEEDS_NS = "KENTENDER_MVP_1_R1_NDS"
 PLANNING_NS = "KENTENDER_MVP_1_R1_PLN"
-REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # REQ-CHG-001 v1.6 — not a stage yet (see module docstring)
-CANONICAL_NAMESPACES = frozenset({site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS})
+REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own rows (D5 predates the column) — see clear_non_canonical
+TENDER_PREPARATION_NS = "KENTENDER_MVP_1_R1_TPR"
+CANONICAL_NAMESPACES = frozenset(
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDER_PREPARATION_NS}
+)
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
 REGISTER_LOCAL_PARTS: tuple[str, ...] = (
@@ -178,6 +184,7 @@ def collect_non_canonical() -> dict[str, list[str]]:
 		("Departmental Need", NEEDS_NS),
 		("Annual Plan", PLANNING_NS),
 		("Departmental Plan", PLANNING_NS),
+		("Prepared Tender", TENDER_PREPARATION_NS),
 		("Regulatory Reference", site_setup.FIXTURE_TAG),
 	):
 		if frappe.db.exists("DocType", doctype):
@@ -286,7 +293,31 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	plan = plan if plan is not None else collect_non_canonical()
 	deleted: dict[str, int] = {}
 
-	# Downstream first: Planning and Needs rows may reference Budget lines and units.
+	def _fold(result: dict[str, Any]) -> None:
+		for doctype, count in result.get("deleted", {}).items():
+			if isinstance(count, int) and count:
+				deleted[doctype] = deleted.get(doctype, 0) + count
+
+	# Downstream first: Tender Preparation consumes Requisitions' handoff,
+	# Requisitions consumes Planning's Plan Item, Planning and Needs
+	# reference Budget lines and units. Neither module stamps every
+	# doctype with a fixture_namespace column, so their own clear functions
+	# (not the `plan` dict) decide what "canonical" means for their rows;
+	# `include_canonical=False` here only ever removes Playwright-owned
+	# residue, matching how Planning/Needs rows survive `reset`.
+	if plan.get("Prepared Tender"):
+		from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
+
+		_fold(clear_tender_fixture_rows(include_canonical=False, include_playwright=True))
+		for name in plan.get("Prepared Tender", []):
+			if frappe.db.exists("Prepared Tender", name):
+				frappe.delete_doc("Prepared Tender", name, force=1, ignore_permissions=True)
+				deleted["Prepared Tender"] = deleted.get("Prepared Tender", 0) + 1
+
+	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
+
+	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=True))
+
 	if plan.get("Annual Plan") or plan.get("Departmental Plan"):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
 
@@ -374,14 +405,27 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			deleted["Organisation Unit"] = deleted.get("Organisation Unit", 0) + 1
 		pending = remaining
 
-	_delete_docs("Fiscal Year", [fy for fy in plan.get("Fiscal Year", []) if not _fiscal_year_referenced(fy)], deleted)
+	# Recomputed fresh, not read from `plan`: a year can go from referenced to
+	# unreferenced as a side effect of the deletions just above (its own
+	# Annual Plan, Regulatory Reference or Procurement Budget going with it),
+	# and the pre-clear `plan` snapshot would miss exactly that year.
+	site_fys = _site_fiscal_years()
+	candidate_fys = [fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name") if fy not in site_fys]
+	_delete_docs("Fiscal Year", [fy for fy in candidate_fys if not _fiscal_year_referenced(fy)], deleted)
 	return deleted
 
 
 def clear_canonical_modules() -> dict[str, Any]:
 	"""`rebuild`: drop the canonical module rows too (downstream first —
-	Planning and Needs reference Budget lines), leaving the §8 site world."""
+	Tender Preparation before Requisitions before Planning/Needs, since each
+	consumes the one before it), leaving the §8 site world."""
 	out: dict[str, Any] = {}
+	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
+
+	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=True)
+	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
+
+	out["requisitions"] = clear_requisition_fixture_rows(include_canonical=True, include_playwright=True)
 	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
 
 	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=True)
@@ -422,6 +466,39 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		# The §15.3 Active baseline only — §15.5/§15.6 profiles are created and
 		# removed by the tests that need them (§15.7).
 		report["budget"] = upsert_kentender_mvp_v1_portfolio(include_test_edges=False, commit=False)
+	if last >= STAGES.index("needs"):
+		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import upsert_departmental_needs
+
+		report["needs"] = upsert_departmental_needs(commit=False)
+	if last >= STAGES.index("planning"):
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import upsert_planning_base
+
+		report["planning"] = upsert_planning_base(commit=False)
+	if last >= STAGES.index("requisitions"):
+		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import upsert_requisitions_base
+
+		report["requisitions"] = upsert_requisitions_base(commit=False)
+		# `authorise_requisition()` — the real command — has no fixture
+		# concept, so the Budget reservation it opens carries no
+		# fixture_namespace by default; this orchestrator owns
+		# REQUISITIONS_NS and stamps it here (never the sibling Requisitions
+		# module, which must not write another app's doctype directly —
+		# KT-STD-001 cross-app rule). Runs on every seed, not just a fresh
+		# build, so a reservation opened before this stamping existed is
+		# healed on the next canonical seed too.
+		root_name = report["requisitions"].get("requisition")
+		if root_name:
+			reference = frappe.db.get_value("Procurement Requisition", root_name, "requisition_reference")
+			for reservation in frappe.get_all(
+				"Funding Reservation",
+				filters={"calling_module": "Procurement Requisitions", "caller_reference": reference, "status": "Active"},
+				pluck="name",
+			):
+				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
+	if last >= STAGES.index("tender_preparation"):
+		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import upsert_tender_preparation
+
+		report["tender_preparation"] = upsert_tender_preparation(commit=False)
 	return report
 
 
@@ -516,6 +593,49 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				if (r.fixture_namespace or "") != REQUISITIONS_NS
 			]
 			check(not stray_commitments, f"no Procurement Commitment outside {REQUISITIONS_NS!r}, found {stray_commitments}")
+
+	if last >= STAGES.index("needs"):
+		from kentender_procurement.departmental_needs.constants import STATE_ACCEPTED, STATE_SUBMITTED  # noqa: F401
+		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import NEEDS as NDS_NEEDS
+
+		by_reference = {
+			n.name: n.current_state
+			for n in frappe.get_all("Departmental Need", filters={"fixture_namespace": NEEDS_NS}, fields=["name", "current_state"])
+		}
+		check(len(by_reference) == len(NDS_NEEDS), f"{len(NDS_NEEDS)} canonical Departmental Needs, found {len(by_reference)}")
+		for spec in NDS_NEEDS:
+			check(
+				by_reference.get(spec["reference"]) == spec["state"],
+				f"{spec['reference']} state {by_reference.get(spec['reference'])!r}, expected {spec['state']!r}",
+			)
+
+	if last >= STAGES.index("planning"):
+		plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": "2027-2028"}, ["name", "active_version"], as_dict=True)
+		check(bool(plan_row and plan_row.active_version), f"canonical FY 2027-2028 Annual Plan Active, found {plan_row}")
+		if through == "planning":
+			# Only when Planning is the last stage seeded. Once Requisitions'
+			# combined item is later consumed through a real Tender Preparation
+			# build, TPR's own seed legitimately writes a real
+			# `actual_invitation_date` onto this same Plan Item (FU-16,
+			# `record_tender_milestone_actual`) — `validate_planning_seed()`
+			# was written for Planning seeded alone and would misread that
+			# real downstream progress as drift.
+			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_seed
+
+			for row in validate_planning_seed():
+				check(row["ok"], f"{row['check']}: {row['detail']}")
+
+	if last >= STAGES.index("requisitions"):
+		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import validate_requisitions_seed
+
+		for row in validate_requisitions_seed():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
+
+	if last >= STAGES.index("tender_preparation"):
+		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import validate_tender_preparation_seed
+
+		for row in validate_tender_preparation_seed():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
 
 	report = {"ok": not failures, "through": through, "failures": failures}
 	if failures:

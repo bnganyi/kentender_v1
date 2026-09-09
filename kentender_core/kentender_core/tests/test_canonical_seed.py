@@ -27,7 +27,10 @@ class TestCanonicalSelection(IntegrationTestCase):
 				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 
 	def test_stage_ladder_is_ordered_and_closed(self):
-		self.assertEqual(canonical.STAGES[:3], ("site", "strategy", "budget"))
+		self.assertEqual(
+			canonical.STAGES,
+			("site", "strategy", "budget", "needs", "planning", "requisitions", "tender_preparation"),
+		)
 		with self.assertRaises(frappe.ValidationError):
 			canonical._stage_index("tender")
 
@@ -37,6 +40,27 @@ class TestCanonicalSelection(IntegrationTestCase):
 			self.assertNotIn(email, plan.get("User", []))
 		# A non-fixture domain is never a seed's to delete, whatever its name.
 		self.assertTrue(all(canonical._fixture_email(u) for u in plan.get("User", [])))
+
+	def test_reset_removes_a_fiscal_year_only_unreferenced_by_this_same_clear(self):
+		"""Regression: the fiscal-year removal list must be recomputed after
+		the other deletions in `clear_non_canonical()`, not read from the
+		pre-clear snapshot — a year referenced only by a stray Procurement
+		Budget only becomes deletable once that budget is gone."""
+		year = 2500 + int(uuid4().hex[:2], 16)
+		fy = f"{year}-{year + 1}"
+		frappe.get_doc(
+			{"doctype": "Fiscal Year", "year": fy, "year_start_date": f"{year}-07-01", "year_end_date": f"{year + 1}-06-30"}
+		).insert(ignore_permissions=True)
+		self._cleanup.append(("Fiscal Year", fy))
+		budget = frappe.get_doc(
+			{"doctype": "Procurement Budget", "generated_reference": f"STRAY-{uuid4().hex[:6]}", "fiscal_year": fy, "currency": "KES"}
+		).insert(ignore_permissions=True)
+		self._cleanup.append(("Procurement Budget", budget.name))
+
+		self.assertTrue(canonical._fiscal_year_referenced(fy))
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("Procurement Budget", budget.name))
+		self.assertFalse(frappe.db.exists("Fiscal Year", fy), "the year must be removed once its only reference is gone")
 
 	def test_dry_run_selects_an_isolation_fiscal_year_without_deleting_it(self):
 		year = 2400 + int(uuid4().hex[:2], 16)  # far outside any real or test year
@@ -57,6 +81,21 @@ class TestCanonicalSelection(IntegrationTestCase):
 		).insert(ignore_permissions=True)
 		self._cleanup.append(("User", email))
 		self.assertIn(email, canonical.collect_non_canonical().get("User", []))
+
+	def test_a_stray_departmental_need_outside_the_namespace_is_a_stray(self):
+		need = frappe.get_doc({"doctype": "Departmental Need", "need_reference": f"STRAY-NDS-{uuid4().hex[:6]}", "current_state": "Draft"})
+		# Only the namespace stamp matters to selection; a minimal insert
+		# would fail on this doctype's own required fields, so bypass them —
+		# `collect_non_canonical()` reads the raw db row, not the full doc.
+		need.flags.ignore_mandatory = True
+		need.insert(ignore_permissions=True)
+		try:
+			self.assertIn(need.name, canonical.collect_non_canonical().get("Departmental Need", []))
+		finally:
+			# `on_trash` refuses every delete on this doctype by design (a
+			# Need is "retained and cannot be deleted") — the seed's own
+			# purge goes raw for exactly this reason; mirror it here.
+			frappe.db.delete("Departmental Need", {"name": need.name})
 
 
 class TestCanonicalSeedRun(IntegrationTestCase):
@@ -93,6 +132,26 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 				canonical.validate(through="budget")
 		finally:
 			frappe.delete_doc("Procurement Budget", stray.name, force=1, ignore_permissions=True)
+
+
+class TestCanonicalSeedFullChain(IntegrationTestCase):
+	"""The full site → strategy → budget → needs → planning → requisitions →
+	tender_preparation chain, on the real test site, `reset=False` so this
+	stays scoped to the seed's own rows (as `TestCanonicalSeedRun` already
+	does for budget)."""
+
+	def test_seed_through_tender_preparation_is_idempotent(self):
+		frappe.set_user("Administrator")
+		first = canonical.run(through="tender_preparation", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(first["ok"])
+		counts = {dt: frappe.db.count(dt) for dt in ("Departmental Need", "Annual Plan", "Procurement Requisition", "Prepared Tender")}
+
+		second = canonical.run(through="tender_preparation", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(second["ok"])
+		self.assertTrue(second["seeded"]["requisitions"]["idempotent"])
+		self.assertTrue(second["seeded"]["tender_preparation"]["idempotent"])
+		for dt, count in counts.items():
+			self.assertEqual(frappe.db.count(dt), count, dt)
 
 
 class TestCanonicalReservationNamespace(IntegrationTestCase):
