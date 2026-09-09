@@ -696,6 +696,17 @@ def run(
 	_stage_index(through)
 	frappe.set_user("Administrator")
 	result: dict[str, Any] = {"ok": True, "through": through}
+	# `force` is meant to mean "bypass every fixture-build guard this run
+	# touches," not just this orchestrator's own (§1.1) — the needs/
+	# planning/requisitions/tender_preparation module seeds each carry an
+	# independent developer_mode/allow_tests guard of their own that this
+	# function's `force` parameter cannot otherwise reach. All of them
+	# already accept `frappe.flags.in_test` as an equally valid bypass, so
+	# set it for the duration of this run rather than making the caller
+	# separately enable developer_mode on the site.
+	in_test_before = frappe.flags.in_test
+	if force:
+		frappe.flags.in_test = True
 	try:
 		if rebuild:
 			result["rebuild"] = clear_canonical_modules()
@@ -713,3 +724,5 @@ def run(
 	except Exception:
 		frappe.db.rollback()
 		raise
+	finally:
+		frappe.flags.in_test = in_test_before

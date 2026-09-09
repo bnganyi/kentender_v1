@@ -109,7 +109,7 @@ Selection is by explicit identity, namespace or fixture e-mail domain — never 
 | `reset` | `true` | Run the §3.1 clear before seeding. `false` seeds only. |
 | `rebuild` | `false` | Also drop the canonical module rows before seeding — Tender Preparation, then Requisitions, then Planning, then Needs, then Budget, then Strategy (downstream first, since each consumes the one before it) — and rebuild from scratch. Use it when a canonical record is wrong, not merely missing. Stages beyond `through` are cleared but not reseeded. |
 | `validate` | `true` | Run §5 after seeding; a failure rolls the run back. |
-| `force` | `false` | Bypass the developer-mode guard. |
+| `force` | `false` | Bypass every fixture-build guard this run touches — this orchestrator's own (§1.1) and, for the duration of the run only, each module seed's independent `developer_mode`/`allow_tests` guard (`needs`/`planning`/`requisitions`/`tender_preparation`), by setting `frappe.flags.in_test` rather than requiring `developer_mode` on the site. |
 | `commit` | `true` | Commit at the end (tests pass `false`). |
 
 ---
@@ -152,7 +152,6 @@ Everything the module seed writes must go through the same commands the UI uses,
 |---|---|
 | `make: No rule to make target 'seed-canonical'` | Run from `apps/kentender_v1/`, not the bench root. |
 | `Canonical seed refused: enable developer_mode…` | The site is not in developer mode; set `developer_mode` or `allow_canonical_seed` in `site_config.json`, or pass `"force": true` on the `bench execute` form. |
-| `Procurement Planning / Requisitions / Tender Preparation seed fixtures are test/demo data. Enable developer_mode or allow_tests…`, raised past the `budget` stage even with `"force": true` | `force` only bypasses this orchestrator's own top-level guard (§1.1) — the `planning`, `requisitions` and `tender_preparation` module seeds each carry their own independent `developer_mode`/`allow_tests` guard that `force` cannot reach, by design (they build fixture/demo data, not real records). Enable `developer_mode` (or `allow_tests`) in that site's `site_config.json`; there is no `force`-only path past `budget`. |
 | `This site is configured as PE-XXX, not PE-MOH` | The seed never overwrites a different site identity (§8.6). Reconfigure the site deliberately, or use a different site. |
 | Validation fails on "no non-canonical Fiscal Years" or "no fixture-domain users outside the register" | Something referenced the row so the clear skipped it (a year referenced by a Need, a user holding a canonical assignment). The dry run shows the plan; resolve the reference, then rerun. |
 | `BUDGET_CONFIG_MISSING` from the Budget stage | The `site` stage did not complete (fiscal year or funding source absent). The whole run rolled back; read the earlier error. |
