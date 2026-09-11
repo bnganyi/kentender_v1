@@ -14,7 +14,7 @@ def create_homepage():
     
     page = frappe.new_doc("Web Page")
     page.title = "Home"
-    page.route = "home"
+    page.route = "/"
     page.published = 1
     page.content_type = "HTML"
     page.full_width = 1
