@@ -1,0 +1,45 @@
+# Tender Preparation — outstanding follow-ups
+
+Items deliberately left open during the **TPR-CHG-001 v0.6** build (started 8 September 2026). Each is either a correction owed to another approved document, a gap in a sibling module's contract, or a capability with no provider in this bench. Nothing here blocks the module's acceptance contract unless a row says so.
+
+**Status:** opened 8 September 2026 at Phase 0; FU-15..19 added at Phase 7 (8 September 2026).
+
+## Register
+
+| ID | Item | Severity | Owner | Status |
+|---|---|---|---|---|
+| FU-01 | TPR v0.6 §13.2 / §16.1 say "1 item · 250 Each" and "0 acceptance requirements beyond delivery"; the seeded handoff carries two Requisition Items (100 + 150, same specification) and five acceptance rows (ACC-001..005, REQ §16.3). Owner ruling 8 Sep: two items internally, one rendered line externally (STD-TPL-001 §8.4(2), SEED-001 §5.2). TPR's wording should say "one rendered line", the counts panel should show 2 items, and §13.2/§16.1 should carry the five acceptance rows | Low — doc wording | TPR-CHG-001 (next revision) | Open |
+| FU-02 | TPR §5 says Head of Procurement Function is "the same registry entry that DSP-CHG-001 uses"; no DSP code or registration exists in this repo — the entry was registered by REQ-CHG-001 v1.6 | Low — doc wording | TPR-CHG-001 (next revision) | Open |
+| FU-03 | TPR §6.4 / §7.7 name `reservation_category`, §7.1 names `requisition_version_id` / `requisition_digest`; the live v1.3 payload uses `reservation_category_value`, `requisition_version`, `content_digest`, `handoff_digest`. Code binds the payload names | Low — doc/payload naming | TPR-CHG-001 or REQ-CHG-001 (next revision) | Open |
+| FU-04 | TPR §20 says "register Tender DocTypes in `kentender_scope_map`"; the map is a single-OU-column contract, and Tender doctypes are Site-wide with no OU column, so both permission hooks are registered through a bespoke resolver instead (plan D11) | Low — doc wording | TPR-CHG-001 (next revision) | Open |
+| FU-05 | `procurement_planning.services.schedule.record_tender_milestone_actual` has no never-overwrite guard; TPR pre-reads `actual_invitation_date` and refuses a different overwrite on its own side (plan D8). Planning should own the guard | Medium — contract gap | PLN-CHG-001 / `procurement_planning` | Open |
+| FU-06 | `AcknowledgeTenderPublicationConsumed` has no owning module (TPR §22); it is implemented as a Python service plus a System-Manager-only technical endpoint used by smoke only, until an Evaluation & Award / publication module exists | Medium — future module | Future publication module | Open |
+| FU-07 | TPR §5 grants Departmental Author / Head of User Department a neutral Tender-status read; this cycle serves it through REQ's Authorised screen consumption card, not through a Tender Preparation route (plan D11) | Low | TPR-CHG-001 (next revision) or a later TPR slice | Open |
+| FU-08 | TPR §7.1 makes `requisition_handoff_id` immutable and "one handoff → one Tender", while §10.4 step 5 says a corrected successor handoff creates "a new Tender Version linked to the prior stopped Version". Implemented as a new Tender with `predecessor_tender` / `predecessor_version` (plan D20) | Low — doc wording | TPR-CHG-001 (next revision) | Open |
+| FU-09 | TPR §14 "Row IDs open a read-only detail drawer" has no artboard section; not built this cycle under the artboard rule | Low — design gap | Design authority (owner) | Open |
+| FU-10 | `Contact Office` master added to `kentender_core` for the Task 5 "Contract contact office" Link (owner-confirmed 8 Sep). Record in CFG-CHG-002 / KT-STD-001 §8 as a shared master | Low — doc registration | CFG-CHG-002 / KT-STD-001 (next revision) | Open |
+| FU-11 | Artboard Start dialog is 560 px; KT-STD-001 §2.2 says dialogs are 520 px. Artboard controls the build (AGENTS §6.6); the two documents should be reconciled | Low — doc/design | KT-STD-001 or the artboard | Open |
+| FU-12 | TPR §16.2 fixture contains "one corrected Requisition successor handoff"; REQ-CHG-001 has no successor-after-upstream-correction command yet (REQ FU-07). The seed will carry the stopped Version and released consumption only, unless the command exists by Phase 6 | Medium — sibling contract | REQ-CHG-001 / PLN-CHG-001 | Open — the seed carries `seed_upstream_correction_profile` (stopped Version, handoff released); the successor handoff is still owed |
+| FU-13 | STD-TPL-001 §6 names a margin of preference (regulation 164) treatment; the handoff carries no margin data and TPR §7.7 renders the reservation clause only | Low — doc scope | STD-TPL-001 (next revision) | Open |
+| FU-14 | The legacy `kentender_mvp_v1` orchestrator cannot run end-to-end on this dev site (REQ FU-17); TPR's release-evidence specs call the module seed functions directly after `verify_prerequisites`, as REQ's do | Medium — environment | `kentender_core` seeds | Open |
+| FU-15 | §16.2 instants: the site's system time zone is Africa/Nairobi and Frappe stores naive site-local datetimes, so TPR's seed CLOCK stores EAT wall-clock values. Requisitions' own seed CLOCK stores "UTC equivalents" and therefore renders its §16.4 instants three hours early on this site (REQ FU-22). `serializer.fmt_datetime_eat` converts only when the system time zone is UTC | Low — sibling seed | REQ-CHG-001 seed | Open |
+| FU-16 | `reset_tender_preparation_seed()` never unwrites Planning's `actual_invitation_date` (§10.5 never-overwrite); a reseed offers the same 15 May 2027 and is accepted. Changing `PUBLISHED_ON` in the seed would need Planning to clear the actual first | Low — by design | PLN-CHG-001 / seed ops | Open |
+| FU-17 | D19 as built: the canonical world has no "Ready to prepare" row because the one eligible Plan Item's handoff is consumed by the seeded Tender (§16.2). The richer, isolated multi-item profile TPR §16.3 anticipates would also give the canonical world an unconsumed handoff | Low — fixture richness | TPR-CHG-001 (next revision) / seed | Open |
+| FU-18 | The static half of `make ui-industry-design-gate` (`kentender_core.tests.test_industry_design_gate`) aborts on this site with the Fiscal Year overlap error before running any assertion (same root cause as REQ FU-19); the runtime half passes with `/desk/tender-preparation` added to its page list | Medium — environment | `kentender_core` tests / site data | Open |
+| FU-19 | TPR-G01 / TPL-G07 (owner APPROVE FOR IMPLEMENTATION PACK v1.1) is still open; Phases 3–7 were built against the candidate bundle on the owner's instruction. A CORRECT AND RE-REVIEW outcome is a byte re-copy of the workspace into `tender_templates/it_equipment_open_v1/`, a `MANIFEST.sha256` re-pin, `registry.install()`, and a rerun of `make tender-templates-bundle-gate` + the renderer fixture tests; no screen or service changes | High — release gate | Project Owner | Open |
+
+## Verifying a fix
+
+- **FU-01 / FU-02 / FU-03 / FU-04 / FU-07 / FU-08 / FU-13:** the named document's next version carries the corrected text; no code change.
+- **FU-05:** `record_tender_milestone_actual` refuses a different value for an already-set `actual_*_date` with a Planning error code, pinned by a Planning test; TPR's own pre-check then becomes redundant and can be removed.
+- **FU-06:** a publication module calls `publication.acknowledge_publication_consumed` through its own published contract; the technical endpoint is deleted in the same change.
+- **FU-09:** an artboard section for the drawer exists; the drawer is built and covered by the fidelity spec.
+- **FU-10:** CFG-CHG-002 / KT-STD-001 §8 list `Contact Office` with its seed row.
+- **FU-11:** either the artboard is re-exported at 520 px or KT-STD-001 §2.2 permits 560 px for a content-heavy start dialog; the fidelity spec follows whichever document wins.
+- **FU-12:** REQ exposes a successor command; TPR's `seed_upstream_correction_profile` consumes the successor handoff and the seed validator asserts the predecessor link.
+- **FU-15:** REQ's CLOCK is restated as EAT wall-clock (or its read converts) and `requisitions-release-evidence.spec.ts` asserts the exact §16.4 EAT instants.
+- **FU-16:** Planning exposes a governed clear for a fixture-namespaced actual, or the seed documents the date as fixed.
+- **FU-17:** a second eligible Goods Plan Item exists in the canonical Planning seed and `validate_tender_preparation_seed` asserts one Ready-to-prepare row.
+- **FU-18:** `bench --site <site> run-tests --module kentender_core.tests.test_industry_design_gate` completes green on this site.
+- **FU-19:** the owner's decision is recorded in `review_record.md` and TPL-G07 / TPR-G01 read Done; on CORRECT AND RE-REVIEW, `test_loader.py` pins the new manifest and the bundle gate is green again.
+- **FU-14:** `run_kentender_mvp_v1(reset=True, validate=True)` completes on this site, or the legacy pack is retired in favour of `seed-canonical` (REQ FU-06).

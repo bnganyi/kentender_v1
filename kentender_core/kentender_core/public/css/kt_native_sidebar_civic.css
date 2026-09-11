@@ -183,6 +183,10 @@
 .body-sidebar .sidebar-item-container[data-id="Procurement Planning"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "view_kanban";
 }
+.body-sidebar .sidebar-item-container[data-id="Procurement Requisitions"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* REQ-CHG-001 v1.6: a valued, itemised request document moving through review to authorisation. */
+	content: "request_quote";
+}
 .body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }

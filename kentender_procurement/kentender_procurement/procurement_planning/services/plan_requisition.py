@@ -6,14 +6,15 @@
 `GetRequisitionEligiblePlanItem.v2` is the published, read-only contract
 Procurement Requisitions calls to decide whether — and how much of — a Plan
 Item it may draw against (invariant 1: it creates nothing). Planning owns
-the balance ledger (`Plan Drawdown Reference`) a real Requisitions module
-would post to; §2.1 excludes a Requisition, its specification and any
-purchase-request record from this repo, so nothing in this module ever
-creates one, and no such module exists here yet to call
-`record_requisition_drawdown`/`reverse_requisition_drawdown` for real. Both
-commands are still built and tested against the published contract §7.4
-actually specifies, exactly as PLN-706/`_no_downstream_use` were carried
-forward with no live caller until their consuming slice existed.
+the balance ledger (`Plan Drawdown Reference`) Requisitions posts to.
+
+REQ-CHG-001 v1.6 (2026-09-07) is that live caller: the read gate widened
+from Procurement Planner/Auditor-only to every registered Requisitions
+role (`planning_roles.REQUISITION_CALLER_ROLES`), Organisation-Unit-scoped
+roles gated to the Plan Item's own contributing departments; the two
+drawdown commands moved from a System-Manager placeholder gate (closing
+FU-07) to the Head of Procurement Function, the office REQ-CHG-001 v1.6
+§9.1A names as the sole authoriser of a Requisition's drawdown.
 
 §9's twenty-one error codes are Planning's own UI-facing vocabulary; a
 programmatic contract call from a sibling module is not a Planning screen,
@@ -34,21 +35,40 @@ from frappe.utils import cstr, flt, now_datetime
 from kentender_procurement.procurement_planning.services import envelope, plan_read
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
-	ROLE_AUDITOR,
+	DEPARTMENTAL_ROLES,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_PLANNER,
+	REQUISITION_CALLER_SITE_WIDE_ROLES,
 )
 
 
-def _authorise_planner(actor: str) -> None:
-	authz.require_site_read((ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR), actor)
+def _authorise_requisition_reader(actor: str, *, contributing_org_units: set[str]) -> None:
+	"""REQ-CHG-001 v1.6 §5A/§8 (closes part of FU-07) — every registered
+	Requisitions-caller role may read the eligibility projection: the two
+	Site-wide roles unconditionally, and the two Organisation-Unit-scoped
+	roles only when their assignment covers one of this Plan Item's own
+	contributing departments — never a department the Plan Item does not
+	name (mirrors §7.5 invariant 1 at the read boundary, not just at
+	drawdown)."""
+	if authz.is_technical(actor):
+		return
+	for role in REQUISITION_CALLER_SITE_WIDE_ROLES:
+		if authz.can_read_site(role, actor):
+			return
+	for role in DEPARTMENTAL_ROLES:
+		scope = authz.permitted_ou_scopes(actor, role)
+		if scope and scope & contributing_org_units:
+			return
+	authz.not_found()
 
 
-def _authorise_system_caller(actor: str) -> None:
-	"""No Requisitions role vocabulary exists in this repo to authorise
-	against (§2.1); a System Manager/Administrator system-principal call —
-	the same shape Planning's own budget_gateway/needs_intake calls use
-	against Budget/Needs — is the narrowest gate available today (FU-07)."""
-	authz.require_technical(actor)
+def _authorise_requisition_authoriser(actor: str) -> None:
+	"""§9.1/§9.1A — Head of Procurement Function is the sole caller of the
+	two drawdown-writing commands (closes Planning FU-07: these were
+	System-Manager-gated only because no Requisitions role vocabulary
+	existed here yet)."""
+	authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
 
 
 def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
@@ -65,13 +85,23 @@ def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
 
 
 def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
-	"""§7.4 `GetRequisitionEligiblePlanItem.v2` — read-only (invariant 1)."""
+	"""§7.4 `GetRequisitionEligiblePlanItem.v2` — read-only (invariant 1).
+
+	REQ-CHG-001 v1.6 §4.14/§5A — every field that document names is
+	enumerated here explicitly (REQ-AC-056): `reservation_category`,
+	`lotting_indicator`, `lot_count`, `plan_horizon`,
+	`multi_year_justification`, `contributing_org_unit_ids`, `currency`,
+	`award_packages`, and per source `plan_item_line_id`/`source_line_id`.
+	"""
 	actor = authz.actor(user)
 	name = plan_read.resolve_item_doc_name(plan_item_id)
 	item = frappe.get_doc("Annual Plan Item", name)
 	version = frappe.get_doc("Annual Plan Version", item.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	_authorise_planner(actor)
+	contributing_org_units = set(
+		frappe.get_all("Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": "Active"}, pluck="organisation_unit")
+	)
+	_authorise_requisition_reader(actor, contributing_org_units=contributing_org_units)
 
 	allocations = frappe.get_all(
 		"Plan Source Allocation",
@@ -100,6 +130,12 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		sources.append(
 			{
 				"plan_source_allocation_id": a.allocation_id,
+				# REQ-CHG-001 v1.6 §5.1/§5.3 — `plan_item_line_id` is this same
+				# allocation id; Planning has no separate "Plan Item Line" grain
+				# (the line IS the source allocation). `source_line_id` mirrors
+				# dpp_lifecycle.py's own submission-snapshot formula exactly.
+				"plan_item_line_id": a.allocation_id,
+				"source_line_id": cstr(a.need) or a.dpp_entry,
 				"source_origin": a.source_origin,
 				"dpp_entry": a.dpp_entry if a.source_origin == "Direct departmental requirement" else "",
 				"need": cstr(a.need) or None,
@@ -154,10 +190,24 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"record_version": int(item.record_version or 0),
 		"fiscal_year": plan.fiscal_year,
 		"requirement_type": item.requirement_type,
+		# REQ-CHG-001 v1.6 §5.2 — "requirement_title ... Initially inherited
+		# from Planning". Found missing 2026-09-07 while wiring Requisitions'
+		# own PrepareITEquipmentRequisition; adding here rather than inventing
+		# a second, independent title on the Requisitions side (§2.2).
+		"title": item.title,
 		"procurement_category": cstr(item.procurement_category),
 		"procurement_method": item.procurement_method,
 		"strategic_objective": item.strategic_objective,
 		"objective_path": item.objective_path,
+		"strategic_objective_path": item.objective_path,
+		"reservation_category": cstr(item.reservation_category),
+		"lotting_indicator": cstr(item.lotting_indicator),
+		"lot_count": int(item.lot_count or 0),
+		"plan_horizon": cstr(item.plan_horizon),
+		"multi_year_justification": cstr(item.multi_year_justification),
+		"contributing_org_unit_ids": sorted(contributing_org_units),
+		"currency": "KES",
+		"award_packages": 1,
 		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
 		"forecast_dates": {f"{m}_date": cstr(item.get(f"forecast_{m}_date")) for m in schedule.MILESTONES},
 		"funding_confirmation_references": [confirmation] if confirmation else [],
@@ -169,6 +219,101 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"sources": sources,
 		"evaluated_at": cstr(now_datetime()),
 	}
+
+
+def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dict[str, Any]]:
+	"""REQ-CHG-001 v1.6 §10.1 `GetRequisitionWorkspace` — every Plan Item
+	this actor may start a Requisition against: `item_state == "Active"`,
+	plan-level funding confirmed, and at least one Active Plan Source
+	Allocation with a positive remaining balance, restricted to the
+	actor's own readable Organisation Units for the two OU-scoped roles
+	(mirrors `_authorise_requisition_reader`'s per-item check, applied here
+	across every candidate item rather than one already-named item)."""
+	actor = authz.actor(user)
+	site_wide = False
+	if authz.is_technical(actor):
+		site_wide = True
+	else:
+		for role in REQUISITION_CALLER_SITE_WIDE_ROLES:
+			if authz.can_read_site(role, actor):
+				site_wide = True
+				break
+	scoped_units: set[str] = set()
+	if not site_wide:
+		for role in DEPARTMENTAL_ROLES:
+			scoped_units |= authz.permitted_ou_scopes(actor, role)
+		if not scoped_units:
+			return []
+
+	candidates = frappe.get_all(
+		"Annual Plan Item",
+		filters={"item_state": "Active"},
+		fields=["name", "plan_item_id", "title", "procurement_category", "plan_version", "record_version"],
+		order_by="creation asc",
+		limit_page_length=0,
+	)
+	if not candidates:
+		return []
+	versions = {
+		v.name: v
+		for v in frappe.get_all(
+			"Annual Plan Version", filters={"name": ("in", [c.plan_version for c in candidates])},
+			fields=["name", "annual_plan", "funding_state"],
+		)
+	}
+	confirmed_item_names = [c.name for c in candidates if versions.get(c.plan_version, {}).get("funding_state") == "Confirmed"]
+	if not confirmed_item_names:
+		return []
+	plans = {
+		p.name: p
+		for p in frappe.get_all(
+			"Annual Plan", filters={"name": ("in", [versions[v].annual_plan for v in {c.plan_version for c in candidates if c.name in confirmed_item_names}])},
+			fields=["name", "fiscal_year"],
+		)
+	}
+	allocations = frappe.get_all(
+		"Plan Source Allocation",
+		filters={"plan_item": ("in", confirmed_item_names), "allocation_state": "Active"},
+		fields=["name", "plan_item", "organisation_unit", "quantity", "indicative_amount"],
+	)
+	units_by_item: dict[str, set[str]] = {}
+	allocation_names_by_item: dict[str, set[str]] = {}
+	approved_by_item: dict[str, tuple[float, float]] = {}
+	for a in allocations:
+		units_by_item.setdefault(a.plan_item, set()).add(a.organisation_unit)
+		allocation_names_by_item.setdefault(a.plan_item, set()).add(a.name)
+		qty, amount = approved_by_item.get(a.plan_item, (0.0, 0.0))
+		approved_by_item[a.plan_item] = (qty + flt(a.quantity), amount + flt(a.indicative_amount))
+	all_allocation_names = {n for names in allocation_names_by_item.values() for n in names}
+	drawn = _drawn_totals(all_allocation_names)
+
+	rows: list[dict[str, Any]] = []
+	for c in candidates:
+		if c.name not in confirmed_item_names:
+			continue
+		units = units_by_item.get(c.name, set())
+		if not units:
+			continue
+		if not site_wide and not (units & scoped_units):
+			continue
+		remaining_qty = remaining_amount = 0.0
+		for a_name in allocation_names_by_item.get(c.name, set()):
+			drawn_qty, drawn_amt = drawn.get(a_name, (0.0, 0.0))
+			a = next(a for a in allocations if a.name == a_name)
+			remaining_qty += flt(a.quantity) - drawn_qty
+			remaining_amount += flt(a.indicative_amount) - drawn_amt
+		if remaining_qty <= 0 or remaining_amount <= 0:
+			continue
+		version = versions[c.plan_version]
+		plan = plans.get(version.annual_plan) or {}
+		rows.append(
+			{
+				"plan_item_id": c.plan_item_id, "title": cstr(c.title), "procurement_category": cstr(c.procurement_category),
+				"fiscal_year": cstr(plan.get("fiscal_year")), "contributing_org_unit_ids": sorted(units),
+				"remaining_quantity": remaining_qty, "remaining_value": remaining_amount, "record_version": int(c.record_version or 0),
+			}
+		)
+	return rows
 
 
 def record_requisition_drawdown(
@@ -197,7 +342,7 @@ def record_requisition_drawdown(
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
-	_authorise_system_caller(actor)
+	_authorise_requisition_authoriser(actor)
 
 	requisition_reference = cstr(requisition_reference).strip()
 	if not requisition_reference or not allocations:
@@ -280,7 +425,7 @@ def reverse_requisition_drawdown(
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
-	_authorise_system_caller(actor)
+	_authorise_requisition_authoriser(actor)
 
 	if not drawdown_reference or not frappe.db.exists("Plan Drawdown Reference", drawdown_reference):
 		authz.not_found()
@@ -296,5 +441,117 @@ def reverse_requisition_drawdown(
 		idempotency_key=idempotency_key, command="ReverseRequisitionDrawdown", payload=payload,
 		result=result, document_type="Plan Drawdown Reference", document_name=drawdown.name,
 		actor=actor, fixture_namespace=cstr(drawdown.fixture_namespace),
+	)
+	return result
+
+
+# --------------------------------------------------------------------------
+# §7.4A — the inbound half of a Requisition's upstream-correction route
+# --------------------------------------------------------------------------
+
+
+def _authorise_correction_requester(actor: str, *, contributing_org_units: set[str]) -> str:
+	"""§7.4A step 1 — Head of User Department for one of the Plan Item's own
+	contributing departments, or Head of Procurement Function (Site-wide).
+	Returns the exact role exercised, for the immutable record."""
+	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+	if authorise_record(user=actor, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, organisation_unit="", purpose=PURPOSE_COMMAND).allowed:
+		return ROLE_HEAD_OF_PROCUREMENT_FUNCTION
+	scope = authz.permitted_ou_scopes(actor, ROLE_HEAD_OF_USER_DEPARTMENT)
+	if scope and scope & contributing_org_units:
+		return ROLE_HEAD_OF_USER_DEPARTMENT
+	authz.not_found()
+	return ""
+
+
+def receive_plan_item_correction_request(
+	*,
+	plan_item_id: str,
+	requisition_reference: str,
+	requisition_version: str,
+	reason: str,
+	idempotency_key: str,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""REQ-CHG-001 v1.6 §7.4A step 2/3 — the inbound half of a Requisition's
+	upstream-correction route: preserve the exact request as one immutable
+	row and surface it to the Procurement Planner as a My Work item. This
+	command performs no correction itself; Planning's own governed
+	correction/successor mechanism (§7.4A step 4) is a separate, later act."""
+	actor = authz.actor(user)
+	payload = {
+		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
+		"requisition_version": cstr(requisition_version).strip(), "reason": cstr(reason).strip(),
+	}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+
+	reason = cstr(reason).strip()
+	if len(reason) < 20 or len(reason) > 1000:
+		frappe.throw("A correction reason of 20–1,000 characters is required.")
+	requisition_reference = cstr(requisition_reference).strip()
+	requisition_version = cstr(requisition_version).strip()
+	if not requisition_reference or not requisition_version:
+		frappe.throw("A Requisition reference and Version are required.")
+
+	item_name = plan_read.resolve_item_doc_name(plan_item_id)
+	item = frappe.get_doc("Annual Plan Item", item_name)
+	contributing_org_units = set(
+		frappe.get_all("Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": "Active"}, pluck="organisation_unit")
+	)
+	requested_role = _authorise_correction_requester(actor, contributing_org_units=contributing_org_units)
+
+	doc = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Request",
+			"plan_item": item.name, "plan_item_id": item.plan_item_id,
+			"requisition_reference": requisition_reference, "requisition_version": requisition_version,
+			"reason": reason, "requested_by": actor, "requested_role": requested_role,
+			"requested_at": now_datetime(), "status": "Open", "idempotency_key": idempotency_key,
+			"fixture_namespace": cstr(item.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	result = {"ok": True, "idempotent": False, "correction_request": doc.name, "status": doc.status}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ReceivePlanItemCorrectionRequest", payload=payload,
+		result=result, document_type="Plan Item Correction Request", document_name=doc.name,
+		actor=actor, fixture_namespace=cstr(item.fixture_namespace),
+	)
+	return result
+
+
+def resolve_plan_item_correction_request(
+	*, correction_request: str, resolution_note: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.4A step 4 — the Procurement Planner records that Planning's own
+	governed correction/successor route has been applied. This command does
+	not itself edit the Plan Item; it closes the inbound request once the
+	real correction (a Plan successor, or a correction to a still-open
+	Version) has happened through Planning's ordinary commands."""
+	actor = authz.actor(user)
+	payload = {"correction_request": correction_request, "resolution_note": cstr(resolution_note).strip()}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
+
+	if not correction_request or not frappe.db.exists("Plan Item Correction Request", correction_request):
+		authz.not_found()
+	doc = envelope.locked("Plan Item Correction Request", correction_request)
+	envelope.check_record_version(doc, expected_record_version)
+	if doc.status != "Open":
+		frappe.throw("This correction request has already been resolved.")
+	resolution_note = cstr(resolution_note).strip()
+	if len(resolution_note) < 10:
+		frappe.throw("A resolution note of at least 10 characters is required.")
+
+	envelope.bump(doc, status="Resolved", resolved_by=actor, resolved_at=now_datetime(), resolution_note=resolution_note)
+	result = {"ok": True, "idempotent": False, "action": "resolved", "correction_request": doc.name}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ResolvePlanItemCorrectionRequest", payload=payload,
+		result=result, document_type="Plan Item Correction Request", document_name=doc.name,
+		actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
 	)
 	return result

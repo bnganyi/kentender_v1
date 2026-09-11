@@ -42,6 +42,13 @@ page_js = {
 	"budget-funding": "public/js/budget_funding_page.js",
 }
 
+# BUD-CHG-001 v1.6 §10 "Approval tasks" — surfaced through the shared My
+# Work queue (kentender_core collects providers through this hook; core never
+# imports this app), never a module sidebar entry.
+kt_my_work_providers = [
+	"kentender_budget.services.budget_my_work_provider.my_work_rows",
+]
+
 after_migrate = "kentender_budget.install.after_migrate"
 before_tests = "kentender_budget.install.before_tests"
 

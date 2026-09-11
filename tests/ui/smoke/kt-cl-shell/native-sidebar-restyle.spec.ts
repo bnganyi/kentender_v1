@@ -40,7 +40,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		}
 		expect(railText).not.toContain("Procurement Journeys");
 		expect(railText).not.toContain("Tender Management Hub");
-		// Exact section — do not use substring (collides with "Tender Configurations").
+		// Exact section — do not use substring (collides with "Tender Preparation").
 		await expect(page.locator(`${NATIVE_RAIL} .section-item[data-id="Configuration"]`)).toHaveCount(0);
 		expect(railText).toContain("Planned");
 	});
@@ -205,7 +205,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 
 		expect(result.childrenCount).toBe(5);
 		expect(result.childLabels).toEqual([
-			"Tender Configurations",
+			"Tender Preparation",
 			"Tenders",
 			"Bid Submissions",
 			"Evaluation",
@@ -310,11 +310,13 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		expect(["400", "500"].includes(weightsQuiet.tm || "")).toBe(true);
 		expect(["400", "500"].includes(weightsQuiet.std || "")).toBe(true);
 
-		await page.goto("/desk/it-tender-configuration-dashboard");
+		// TPR-CHG-001 v0.6 (2026-09-08): the Tender Management child is now the
+		// Tender Preparation Desk Page, so its own route is what activates it.
+		await page.goto("/desk/tender-preparation", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 		await expect(
 			page.locator(
-				`${NATIVE_RAIL} .sidebar-item-container[data-id="Tender Configurations"] > .standard-sidebar-item`
+				`${NATIVE_RAIL} .sidebar-item-container[data-id="Tender Preparation"] > .standard-sidebar-item`
 			)
 		).toHaveClass(/active-sidebar/);
 

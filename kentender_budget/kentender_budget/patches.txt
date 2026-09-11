@@ -20,3 +20,8 @@ kentender_budget.patches.migrate_budget_working_context_defaults
 # BUD-CHG-001 v1.3 Phase 4 — BUD-BR-002 database-level guard: at most one
 # Active Procurement Budget Version per Budget.
 kentender_budget.patches.bud_chg_001_v1_3_phase4_active_version_unique_index
+
+# REQ-CHG-001 v1.6 D1 — drop the unique index on Funding Reservation.
+# plan_source_allocation (revoke-then-correct and a later Requisition on
+# the same allocation must both be able to reserve again).
+kentender_budget.patches.req_chg_001_v1_6_drop_reservation_allocation_unique

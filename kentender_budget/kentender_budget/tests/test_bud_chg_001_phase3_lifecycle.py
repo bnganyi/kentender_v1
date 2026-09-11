@@ -553,5 +553,14 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 			).insert(ignore_permissions=True)
 			self._track("User", outsider)
 		self._as(outsider)
+		# KT-STD-001 v1.2 §3A.2 (2026-09-06): the direct-route read resolves the
+		# denial as data — the screen paints its Forbidden panel and Frappe
+		# raises no "Not permitted" modal — and discloses nothing of the Draft.
+		# The registered has_permission hook still denies a raw scoped read
+		# (test_bud_chg_001_phase4_scope_map covers that layer).
+		verdict = contracts.get_budget_version_draft(version)
+		self.assertEqual(verdict.get("outcome"), "FORBIDDEN")
+		self.assertNotIn("version", verdict)
+		self.assertNotIn("budget", verdict)
 		with self.assertRaises(frappe.PermissionError):
-			contracts.get_budget_version_draft(version)
+			frappe.has_permission("Procurement Budget Version", doc=version, user=outsider, throw=True)

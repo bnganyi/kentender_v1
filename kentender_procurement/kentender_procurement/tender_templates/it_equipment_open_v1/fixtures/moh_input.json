@@ -1,0 +1,248 @@
+{
+  "procuring_entity": {
+    "name": "Ministry of Health",
+    "address": "Afya House, Cathedral Road, P.O. Box 30016-00100, Nairobi",
+    "contact_office": "Ministry of Health Procurement Office, procurement@moh.example.test"
+  },
+  "requisition": {
+    "requirement_title": "Clinical training and deployment laptops for digital health rollout",
+    "authorised_quantity": "250 Each",
+    "authorised_value": "KES 50,000,000.00",
+    "expected_delivery_date": "30 September 2027",
+    "related_services_authorized": false,
+    "reference": "REQ-MOH-2027-033-001"
+  },
+  "plan_item": {
+    "reference": "PPI-MOH-2027-033"
+  },
+  "reservation": {
+    "category": "None"
+  },
+  "tender": {
+    "reference": "TND-MOH-2027-033",
+    "title": "Supply and delivery of business laptops",
+    "procurement_method": "Open Tender",
+    "issue_date": "15 May 2027",
+    "clarification_deadline": "27 May 2027, 17:00 EAT",
+    "submission_deadline": "5 June 2027, 11:00 EAT",
+    "validity_days": "120",
+    "validity_date": "3 October 2027",
+    "opening_datetime": "5 June 2027, 11:00 EAT",
+    "currency": "KES",
+    "tender_security": {
+      "type": "Tender Security",
+      "currency": "KES",
+      "amount": "500,000.00",
+      "bank_guarantee_expiry_date": "2 November 2027",
+      "insurance_guarantee_expiry_date": "31 October 2027"
+    },
+    "pre_tender_meeting": {
+      "enabled": false,
+      "details": ""
+    },
+    "approval": {
+      "official_name": "Charles Mutiso",
+      "official_title": "Head of Procurement Function",
+      "approved_date": "20 April 2027",
+      "reference": "TND-MOH-2027-033-V2"
+    }
+  },
+  "platform": {
+    "name": "KenTender",
+    "public_url": "https://tenders.kentender.go.ke"
+  },
+  "price": {
+    "fixed_price_confirmed": true,
+    "tax_display_treatment": "Shown separately"
+  },
+  "submission": {
+    "manufacturer_authorisation_required": true,
+    "datasheet_required": true,
+    "comparable_experience": {
+      "required": true,
+      "count": "2",
+      "period_years": "5"
+    },
+    "after_sales_support_required": true,
+    "after_sales_support_evidence": "Kenya service-centre details and escalation contacts",
+    "additional_evidence": {
+      "required": false,
+      "description": "",
+      "linked_requirement": ""
+    }
+  },
+  "contract": {
+    "payment_terms": "Payment within 30 days after delivery, inspection, acceptance and receipt of a valid invoice",
+    "payment_days": "30",
+    "performance_security": {
+      "required": true,
+      "percentage": "10",
+      "form_variant": "Unconditional Demand Bank Guarantee"
+    },
+    "delay_damages": {
+      "rate_per_week": "0.5",
+      "cap_percent": "10"
+    },
+    "inspection_acceptance_office": "Ministry of Health Headquarters, Afya House, Nairobi",
+    "contact_office": "Ministry of Health Procurement Office, procurement@moh.example.test"
+  },
+  "goods": [
+    {
+      "source_item_ids": "RQI-001, RQI-002",
+      "description": "Business laptops",
+      "quantity": "250",
+      "unit": "Each",
+      "destination": "Ministry of Health Headquarters, Afya House, Nairobi",
+      "latest_delivery_date": "30 September 2027",
+      "minimum_warranty": "36 months"
+    }
+  ],
+  "related_services": [],
+  "technical_requirements": [
+    {
+      "technical_requirement_id": "TECH-001",
+      "label": "Electrical compatibility",
+      "comparison": "Required",
+      "required_value": "Yes",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-002",
+      "label": "New and unused equipment",
+      "comparison": "Required",
+      "required_value": "Yes",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-003",
+      "label": "Memory",
+      "comparison": "Minimum",
+      "required_value": "16",
+      "unit": "GB",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-004",
+      "label": "Storage capacity",
+      "comparison": "Minimum",
+      "required_value": "512",
+      "unit": "GB",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-005",
+      "label": "Storage type",
+      "comparison": "One of",
+      "required_value": "NVMe SSD",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-006",
+      "label": "Display size",
+      "comparison": "Minimum",
+      "required_value": "14.0",
+      "unit": "inches",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-007",
+      "label": "Battery runtime",
+      "comparison": "Minimum",
+      "required_value": "8.0",
+      "unit": "hours",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-008",
+      "label": "Processor requirement",
+      "comparison": "Minimum",
+      "required_value": "64-bit business-class processor, minimum 10 cores or equivalent benchmark",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-009",
+      "label": "Operating-system compatibility",
+      "comparison": "Required",
+      "required_value": "Approved organisational Windows environment",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-010",
+      "label": "Network connectivity",
+      "comparison": "Required",
+      "required_value": "Wi-Fi 6, Bluetooth 5 or later",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    },
+    {
+      "technical_requirement_id": "TECH-011",
+      "label": "Required ports",
+      "comparison": "Required",
+      "required_value": "USB-C ×2, USB-A ×2, HDMI ×1",
+      "unit": "",
+      "applies_to": "All items",
+      "evidence_required": true
+    }
+  ],
+  "warranty_support": {
+    "minimum_warranty_months": "36",
+    "onsite_support_required": true,
+    "maximum_support_response_hours": "8",
+    "manufacturer_support_required": true,
+    "service_location_constraint": "Within Kenya",
+    "support_description": "Supplier to provide escalation and warranty-contact details."
+  },
+  "acceptance_requirements": [
+    {
+      "acceptance_requirement_id": "ACC-001",
+      "check_type": "Quantity",
+      "pass_condition": "Delivered quantities equal the authorised schedule",
+      "evidence_type": "Inspection record",
+      "applies_to": "All items"
+    },
+    {
+      "acceptance_requirement_id": "ACC-002",
+      "check_type": "Physical condition",
+      "pass_condition": "No visible damage and all listed accessories are present",
+      "evidence_type": "Inspection record",
+      "applies_to": "All items"
+    },
+    {
+      "acceptance_requirement_id": "ACC-003",
+      "check_type": "Required specification",
+      "pass_condition": "Every delivered unit complies with all mandatory technical rows",
+      "evidence_type": "Inspection record",
+      "applies_to": "All items"
+    },
+    {
+      "acceptance_requirement_id": "ACC-004",
+      "check_type": "Functional test",
+      "pass_condition": "Each device powers on and completes the agreed basic functional test",
+      "evidence_type": "Test result",
+      "applies_to": "All items"
+    },
+    {
+      "acceptance_requirement_id": "ACC-005",
+      "check_type": "Documents received",
+      "pass_condition": "Warranty and delivery documents are received and verified",
+      "evidence_type": "Certificate",
+      "applies_to": "All items"
+    }
+  ],
+  "supporting_materials": []
+}

@@ -123,3 +123,22 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 		self.assertFalse(out["market_price_index"]["published"])
 		self.assertEqual(frappe.db.count("Procurement Method", {"status": "Active"}) >= 11, True)
 		self.assertTrue(frappe.db.exists("Requirement Type", "Works"))
+
+	def test_tender_renderable_reservation_categories_is_a_governed_subset(self):
+		"""REQ-CHG-001 v1.6 §5A / STD-TPL-001 v0.4 §6.1 — the one list a
+		Requisition's compatibility test and Tender Preparation's own
+		rendering both check against; every entry is a real governed
+		category, in the governed register's own order."""
+		governed_order = [name for name, _rank, _regional, _ref in site_setup.RESERVATION_CATEGORIES]
+		renderable = list(register.TENDER_RENDERABLE_RESERVATION_CATEGORIES)
+		self.assertEqual(
+			renderable,
+			[name for name in governed_order if name in renderable],
+			"renderable categories must appear in the governed register's own order",
+		)
+		self.assertEqual(
+			renderable,
+			["None", "Youth", "Women", "Persons with disabilities", "Other disadvantaged group"],
+		)
+		for name in renderable:
+			self.assertIn(name, governed_order, f"{name} is not a governed reservation category")

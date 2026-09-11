@@ -969,9 +969,17 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		check("combined.baseline_15_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-15" for r in combined["schedule"]))
 		check("combined.forecast_seeded", all(r["forecast"] == r["baseline"] and not r["actual"] for r in combined["schedule"]))
 		combined_eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
-		check("combined.eligibility.eligible", combined_eligibility["eligible"])
-		check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == 50000000)
-		check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == 250)
+		# REQ-CHG-001 v1.6 D7 chains its own seed straight after this one in
+		# `make seed-kentender-mvp-v1` and authorises a Requisition against this
+		# exact combined item — once that has run, "eligible with the full
+		# 250/50m remaining" is no longer the true position (it is legitimately
+		# fully drawn down), so these three checks only apply to a
+		# Planning-only world with no Requisition against this item yet.
+		drawn_down = bool(frappe.db.exists("Plan Drawdown Reference", {"plan_item_id": combined["plan_item_id"], "drawdown_state": "Active"}))
+		if not drawn_down:
+			check("combined.eligibility.eligible", combined_eligibility["eligible"])
+			check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == 50000000)
+			check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == 250)
 	version = plan_row.active_version
 	finance = frappe.db.get_value(
 		"Plan Finance Decision",

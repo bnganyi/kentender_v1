@@ -33,7 +33,19 @@ async function load(opts) {
 	forbidden.value = false;
 	serverError.value = false;
 	try {
-		line.value = await getBudgetLinePosition(lineIdParam.value);
+		const data = await getBudgetLinePosition(lineIdParam.value);
+		// KT-STD-001 §3A.2 — verdicts arrive as data, never as an HTTP error.
+		if (data && data.outcome === "FORBIDDEN") {
+			line.value = null;
+			forbidden.value = true;
+			return;
+		}
+		if (data && data.outcome === "NOT_FOUND") {
+			line.value = null;
+			notFound.value = true;
+			return;
+		}
+		line.value = data;
 	} catch (e) {
 		if (e.httpStatus === 403) forbidden.value = true;
 		else if (/not found/i.test(e.message || "")) notFound.value = true;

@@ -1,0 +1,287 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_reference",
+  "requisition_handoff",
+  "requisition",
+  "requisition_reference",
+  "requisition_version",
+  "requisition_content_digest",
+  "handoff_digest",
+  "handoff_version",
+  "plan_item_id",
+  "fiscal_year",
+  "requirement_title",
+  "col_a",
+  "template_key",
+  "template_version",
+  "official_source_digest",
+  "bundle_digest",
+  "current_version",
+  "approved_version",
+  "current_state",
+  "section_pub",
+  "publication_handoff",
+  "publication_consumed_at",
+  "predecessor_tender",
+  "predecessor_version",
+  "prepared_by",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender Reference",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1,
+   "read_only": 1,
+   "description": "TPR-CHG-001 v0.6 §7.1 — generated once, used in all outputs."
+  },
+  {
+   "fieldname": "requisition_handoff",
+   "fieldtype": "Link",
+   "label": "Requisition Handoff",
+   "options": "Authorised Requisition Handoff",
+   "reqd": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition",
+   "fieldtype": "Link",
+   "label": "Requisition",
+   "options": "Procurement Requisition",
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Data",
+   "label": "Requisition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_content_digest",
+   "fieldtype": "Data",
+   "label": "Requisition content digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "handoff_digest",
+   "fieldtype": "Data",
+   "label": "Handoff digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "handoff_version",
+   "fieldtype": "Data",
+   "label": "Handoff version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item ID",
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Data",
+   "label": "Fiscal year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requirement_title",
+   "fieldtype": "Data",
+   "label": "Requirement title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_key",
+   "fieldtype": "Data",
+   "label": "Template key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Data",
+   "label": "Template version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "official_source_digest",
+   "fieldtype": "Data",
+   "label": "Official source digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_digest",
+   "fieldtype": "Data",
+   "label": "Bundle digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "label": "Current version",
+   "options": "Tender Preparation Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_version",
+   "fieldtype": "Link",
+   "label": "Approved version",
+   "options": "Tender Preparation Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_state",
+   "fieldtype": "Select",
+   "label": "Current state",
+   "options": "Draft\nSubmitted for approval\nApproved for publication\nUpstream correction required",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_pub",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "publication_handoff",
+   "fieldtype": "Link",
+   "label": "Publication handoff",
+   "options": "Tender Publication Handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "publication_consumed_at",
+   "fieldtype": "Datetime",
+   "label": "Publication consumed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "predecessor_tender",
+   "fieldtype": "Link",
+   "label": "Predecessor tender",
+   "options": "Prepared Tender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "predecessor_version",
+   "fieldtype": "Link",
+   "label": "Predecessor version",
+   "options": "Tender Preparation Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "reqd": 1,
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "hidden": 1,
+   "search_index": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Preparation",
+ "name": "Prepared Tender",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "create": 1,
+   "delete": 1,
+   "write": 1
+  },
+  {
+   "role": "Procurement Officer",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TPR-{#####}",
+ "title_field": "tender_reference"
+}

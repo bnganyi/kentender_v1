@@ -129,6 +129,17 @@ ACTORS = (
 	# only because these two did not yet exist.
 	("esther.muthoni", "Esther Muthoni"),
 	("alfred.ochieng", "Dr Alfred Ochieng"),
+	# BUD-CHG-001 v1.6 §15.1 / KT-STD-001 §8.3 (2026-09-06) — Budget's own
+	# named actors, in the shared register rather than a module-owned copy.
+	("josphat.mwangi", "Josphat Mwangi"),
+	("beatrice.kamau", "Beatrice Kamau"),
+	# REQ-CHG-001 v1.6 §16.1 / KT-STD-001 §8.3 (2026-09-06) — the Head of
+	# Procurement Function actor Requisitions authorisation names.
+	("charles.mutiso", "Charles Mutiso"),
+	# TPR-CHG-001 v0.6 §13.2 / KT-STD-001 §8.3 (2026-09-08) — the Procurement
+	# Officer who prepares the Tender; a different person from the Head of
+	# Procurement Function who approves it (§10.3).
+	("brian.wafula", "Brian Wafula"),
 )
 
 ASSIGNMENTS = (
@@ -172,6 +183,18 @@ ASSIGNMENTS = (
 	("alfred.ochieng", "Strategy Approver", None, {}),
 	# NDS-CHG-001 v1.6 §14.2 (2026-09-04) — Site-wide Auditor, read-only.
 	("naomi.chebet", "Auditor", None, {}),
+	# BUD-CHG-001 v1.6 §15.1 — Josphat holds Budget Officer and, separately,
+	# Finance Confirmation Officer (the no-self-approval fixture); Beatrice
+	# is the Budget Approver. All Site-wide (§7).
+	("josphat.mwangi", "Budget Officer", None, {}),
+	("josphat.mwangi", "Finance Confirmation Officer", None, {}),
+	("beatrice.kamau", "Budget Approver", None, {}),
+	# REQ-CHG-001 v1.6 §16.1 — Charles authorises Requisitions and, later,
+	# approves Tenders (TPR-CHG-001). Site-wide (§8).
+	("charles.mutiso", "Head of Procurement Function", None, {}),
+	# TPR-CHG-001 v0.6 §5 — Site-wide Procurement Officer (prepares, never
+	# approves, the same Version — §10.3).
+	("brian.wafula", "Procurement Officer", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",
@@ -181,6 +204,36 @@ ASSIGNMENTS = (
 			"effective_to": "2026-08-31 23:59:59",
 		},
 	),
+)
+
+# BUD-CHG-001 v1.6 §15.2 — the one governed funding source every Budget
+# fixture draws on. Configuration & Governance owns the catalogue (FU-05
+# records the pending CFG-CHG-002 v0.8 §4.4 schema reconciliation); the
+# Budget seed fails closed if this row is absent, never creates it.
+FUNDING_SOURCES = ("Government of Kenya",)
+
+# TPR-CHG-001 v0.6 §8.5 / plan D6 — the one governed contact office the
+# Ministry of Health fixture names for clarifications, notices and the
+# contract contact (§13.5). Email on the KT-STD-001 §8.1 fixture domain; no
+# telephone is invented.
+CONTACT_OFFICES = (
+	# (office name, contact email, contact phone, address)
+	("Ministry of Health Procurement Office", "procurement@moh.example.test", "", "Afya House, Cathedral Road, Nairobi"),
+)
+
+
+def contact_office_display(office_name: str) -> str:
+	"""The rendered contact string for a seeded office (mirrors
+	`ContactOffice.display()` without a document load)."""
+	for name, email, phone, _address in CONTACT_OFFICES:
+		if name == office_name:
+			return ", ".join(p for p in (name, email, phone) if p)
+	return office_name
+
+# REQ-CHG-001 v1.6 D2 — the one governed delivery/inspection location
+# the Ministry of Health fixture uses (§13.2, §16.1).
+DELIVERY_LOCATIONS = (
+	("Ministry of Health Headquarters, Afya House, Nairobi", "Afya House, Cathedral Road, Nairobi"),
 )
 
 ENABLED_UOMS = (
@@ -206,6 +259,9 @@ def run(*, commit: bool = True) -> dict:
 		"intake": _seed_intake(),
 		"dpp_intake": _seed_dpp_intake(),
 		"catalogues": _seed_catalogues(),
+		"funding_sources": _seed_funding_sources(),
+		"delivery_locations": _seed_delivery_locations(),
+		"contact_offices": _seed_contact_offices(),
 		"regulatory_reference": _seed_regulatory_reference(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
@@ -321,6 +377,64 @@ def _seed_catalogues() -> dict[str, int]:
 	return {"created": created, "requirement_types": len(REQUIREMENT_TYPES), "procurement_methods": len(PROCUREMENT_METHODS)}
 
 
+def _seed_funding_sources() -> dict[str, int]:
+	created = 0
+	for label in FUNDING_SOURCES:
+		if frappe.db.exists("Funding Source", label):
+			if frappe.db.get_value("Funding Source", label, "record_status") != "Available":
+				frappe.db.set_value("Funding Source", label, "record_status", "Available", update_modified=False)
+			continue
+		frappe.get_doc({"doctype": "Funding Source", "label": label, "record_status": "Available"}).insert(
+			ignore_permissions=True
+		)
+		created += 1
+	return {"created": created, "total": len(FUNDING_SOURCES)}
+
+
+def _seed_delivery_locations() -> dict[str, int]:
+	created = 0
+	for location_name, address in DELIVERY_LOCATIONS:
+		if frappe.db.exists("Delivery Location", location_name):
+			frappe.db.set_value("Delivery Location", location_name, {"address": address, "status": "Active"}, update_modified=False)
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Delivery Location",
+				"location_name": location_name,
+				"address": address,
+				"status": "Active",
+				"fixture_namespace": FIXTURE_TAG,
+			}
+		).insert(ignore_permissions=True)
+		created += 1
+	return {"created": created, "total": len(DELIVERY_LOCATIONS)}
+
+
+def _seed_contact_offices() -> dict[str, int]:
+	created = 0
+	for office_name, contact_email, contact_phone, address in CONTACT_OFFICES:
+		if frappe.db.exists("Contact Office", office_name):
+			frappe.db.set_value(
+				"Contact Office", office_name,
+				{"contact_email": contact_email, "contact_phone": contact_phone, "address": address, "status": "Active"},
+				update_modified=False,
+			)
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Contact Office",
+				"office_name": office_name,
+				"contact_email": contact_email,
+				"contact_phone": contact_phone,
+				"address": address,
+				"status": "Active",
+				"fixture_namespace": FIXTURE_TAG,
+			}
+		).insert(ignore_permissions=True)
+		created += 1
+	return {"created": created, "total": len(CONTACT_OFFICES)}
+
+
 def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG) -> str:
 	from kentender_core.services import regulatory_reference as register
 
@@ -394,6 +508,15 @@ def _seed_users() -> list[str]:
 			)
 			doc.insert(ignore_permissions=True)
 			doc.add_roles("Desk User")
+		if frappe.conf.get("developer_mode"):
+			# Development sites only: the register's actors log in with the
+			# shared fixture password so browser journeys can be driven; a
+			# production site never receives a known password from a seed.
+			from frappe.utils.password import update_password
+
+			from kentender_core.seeds.constants import TEST_PASSWORD
+
+			update_password(email, TEST_PASSWORD)
 		out.append(email)
 	return out
 

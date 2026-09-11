@@ -8,7 +8,7 @@
 		>
 			<div>
 				<div class="kt-page-kicker">DEPARTMENTAL NEEDS</div>
-				<h1 class="kt-page-title">My needs</h1>
+				<h1 class="kt-page-title">Departmental Needs</h1>
 				<p class="kt-page-lede">
 					Capture and track the requirements your department expects to include in
 					procurement planning.

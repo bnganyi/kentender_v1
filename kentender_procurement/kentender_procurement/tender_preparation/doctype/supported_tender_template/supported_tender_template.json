@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "template_key",
+  "template_version",
+  "display_name",
+  "supported_category",
+  "supported_method",
+  "official_source_title",
+  "official_source_digest",
+  "bundle_digest",
+  "availability",
+  "installed_at",
+  "last_verified_at",
+  "verification_note",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_key",
+   "fieldtype": "Data",
+   "label": "Template key",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Data",
+   "label": "Template version",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display name",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "supported_category",
+   "fieldtype": "Data",
+   "label": "Supported category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supported_method",
+   "fieldtype": "Data",
+   "label": "Supported method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "official_source_title",
+   "fieldtype": "Data",
+   "label": "Official source title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "official_source_digest",
+   "fieldtype": "Data",
+   "label": "Official source digest",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_digest",
+   "fieldtype": "Data",
+   "label": "Bundle digest",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "availability",
+   "fieldtype": "Select",
+   "label": "Availability",
+   "options": "Available for new Tenders\nHistorical only\nUnavailable",
+   "reqd": 1,
+   "default": "Unavailable",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "installed_at",
+   "fieldtype": "Datetime",
+   "label": "Installed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_verified_at",
+   "fieldtype": "Datetime",
+   "label": "Last verified at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_note",
+   "fieldtype": "Small Text",
+   "label": "Verification note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "hidden": 1,
+   "search_index": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Preparation",
+ "name": "Supported Tender Template",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Procurement Officer",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:{template_key}-{template_version}",
+ "description": "TPR-CHG-001 v0.6 §6.3 — read-only registry row created only by tender_templates.registry.install(); no role holds write permission."
+}

@@ -1,0 +1,237 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:PKV-{#####}",
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "package",
+  "version_number",
+  "based_on_version",
+  "version_status",
+  "section_warranty",
+  "minimum_warranty_months",
+  "onsite_support_required",
+  "maximum_support_response_hours",
+  "col_a",
+  "manufacturer_support_required",
+  "service_location_constraint",
+  "support_description",
+  "section_rows",
+  "items",
+  "technical_requirements",
+  "related_services",
+  "acceptance_requirements",
+  "supporting_materials",
+  "catalogue_version",
+  "content_digest",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "package",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "IT Equipment Requirement Package",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "IT Equipment Requirement Package Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "label": "Version Status",
+   "options": "Draft\nAwaiting Department Approval\nSubmitted to Procurement\nReturned\nAuthorised\nWithdrawn\nRevoked\nUpstream correction required\nSuperseded",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_warranty",
+   "fieldtype": "Section Break",
+   "label": "Warranty and support"
+  },
+  {
+   "fieldname": "minimum_warranty_months",
+   "fieldtype": "Int",
+   "label": "Minimum Warranty Months"
+  },
+  {
+   "fieldname": "onsite_support_required",
+   "fieldtype": "Check",
+   "label": "Onsite Support Required",
+   "default": "0"
+  },
+  {
+   "fieldname": "maximum_support_response_hours",
+   "fieldtype": "Int",
+   "label": "Maximum Support Response Hours"
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break",
+   "label": "Col A"
+  },
+  {
+   "fieldname": "manufacturer_support_required",
+   "fieldtype": "Check",
+   "label": "Manufacturer Support Required",
+   "default": "0"
+  },
+  {
+   "fieldname": "service_location_constraint",
+   "fieldtype": "Select",
+   "label": "Service Location Constraint",
+   "options": "None\nWithin Kenya\nAt delivery location"
+  },
+  {
+   "fieldname": "support_description",
+   "fieldtype": "Small Text",
+   "label": "Support Description",
+   "length": 500
+  },
+  {
+   "fieldname": "section_rows",
+   "fieldtype": "Section Break",
+   "label": "Structured rows"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Requisition Item"
+  },
+  {
+   "fieldname": "technical_requirements",
+   "fieldtype": "Table",
+   "label": "Technical Requirements",
+   "options": "Requisition Technical Requirement"
+  },
+  {
+   "fieldname": "related_services",
+   "fieldtype": "Table",
+   "label": "Related Services",
+   "options": "Requisition Related Service"
+  },
+  {
+   "fieldname": "acceptance_requirements",
+   "fieldtype": "Table",
+   "label": "Acceptance Requirements",
+   "options": "Requisition Acceptance Requirement"
+  },
+  {
+   "fieldname": "supporting_materials",
+   "fieldtype": "Table",
+   "label": "Supporting Materials",
+   "options": "Requisition Supporting Material"
+  },
+  {
+   "fieldname": "catalogue_version",
+   "fieldtype": "Data",
+   "label": "Catalogue Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content Digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "IT Equipment Requirement Package Version",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

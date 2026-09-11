@@ -12,7 +12,7 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, format_datetime, getdate, now_datetime
+from frappe.utils import flt, getdate, now_datetime
 
 from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
@@ -23,8 +23,10 @@ from kentender_budget.services.budget_authorization import (
 	require_budget_version_read_scope,
 )
 from kentender_budget.services.budget_contracts import (
+	NOT_FOUND,
 	_active_version,
 	_budget_summary,
+	_display_datetime,
 	_funding_source_label,
 	_org_unit_label,
 	_resolve_budget,
@@ -32,6 +34,7 @@ from kentender_budget.services.budget_contracts import (
 	_user_label,
 	_version_summary,
 	_version_totals,
+	forbidden_task_verdict,
 )
 
 _MIN_RETURN_REASON = 10
@@ -177,7 +180,14 @@ def _readiness_checklist(version, issues: list[dict[str, str]]) -> list[dict[str
 def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
 	"""BUD-UI-04 Overview tab — §12.5: always reads the submitted version, no
 	tab substitutes the current Active version."""
-	version = _resolve_budget_version(budget_version)
+	verdict = forbidden_task_verdict()
+	if verdict:
+		return verdict
+	try:
+		version = _resolve_budget_version(budget_version)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 	budget = frappe.get_doc("Procurement Budget", version.budget)
 
@@ -195,7 +205,7 @@ def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
 		"submission": {
 			"submitted_by": _user_label(version.submitted_by),
 			"submitted_at": str(version.submitted_at) if version.submitted_at else "",
-			"submitted_at_display": format_datetime(version.submitted_at) if version.submitted_at else "",
+			"submitted_at_display": _display_datetime(version.submitted_at),
 		},
 		"capabilities": {
 			"can_return": version.status == "Submitted for approval"
@@ -209,7 +219,14 @@ def get_budget_approval_task(budget_version: str) -> dict[str, Any]:
 
 def get_budget_approval_task_lines(budget_version: str) -> dict[str, Any]:
 	"""BUD-UI-04 Budget Lines tab — submitted line set + current floors."""
-	version = _resolve_budget_version(budget_version)
+	verdict = forbidden_task_verdict()
+	if verdict:
+		return verdict
+	try:
+		version = _resolve_budget_version(budget_version)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 
 	rows = frappe.get_all(
@@ -260,7 +277,14 @@ def get_budget_approval_task_changes(budget_version: str) -> dict[str, Any]:
 	"""BUD-UI-04 Changes tab — server-calculated diff vs `based_on_budget_version`.
 	Version 1 returns the explicit initial-baseline state, never an invented
 	predecessor (§12.5)."""
-	version = _resolve_budget_version(budget_version)
+	verdict = forbidden_task_verdict()
+	if verdict:
+		return verdict
+	try:
+		version = _resolve_budget_version(budget_version)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 
 	rows = frappe.get_all(

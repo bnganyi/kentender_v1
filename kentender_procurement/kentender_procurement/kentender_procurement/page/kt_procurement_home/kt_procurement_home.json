@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-09-04 12:48:47.387320",
+ "modified": "2026-09-07 00:45:53.685414",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "kt-procurement-home",
@@ -27,28 +27,22 @@
    "role": "Budget Officer"
   },
   {
-   "role": "Business Approver"
-  },
-  {
    "role": "Central Configuration Approver"
   },
   {
    "role": "Central Reference Data Steward"
   },
   {
-   "role": "Department Approver"
-  },
-  {
    "role": "Departmental Author"
-  },
-  {
-   "role": "Designated Approver"
   },
   {
    "role": "Finance Confirmation Officer"
   },
   {
    "role": "Finance Reviewer"
+  },
+  {
+   "role": "Head of Procurement Function"
   },
   {
    "role": "Head of User Department"
@@ -61,6 +55,9 @@
   },
   {
    "role": "PE Configuration Steward"
+  },
+  {
+   "role": "Plan Statutory Approver"
   },
   {
    "role": "Planning Authority"
@@ -78,9 +75,6 @@
    "role": "Planning Viewer"
   },
   {
-   "role": "Procurement Approval Authority"
-  },
-  {
    "role": "Procurement Officer"
   },
   {
@@ -91,12 +85,6 @@
   },
   {
    "role": "Reference Data Manager"
-  },
-  {
-   "role": "Requester"
-  },
-  {
-   "role": "Requisitioner"
   },
   {
    "role": "STD Configurator"
@@ -130,9 +118,6 @@
   },
   {
    "role": "Strategy Author"
-  },
-  {
-   "role": "Strategy Viewer"
   },
   {
    "role": "System Manager"

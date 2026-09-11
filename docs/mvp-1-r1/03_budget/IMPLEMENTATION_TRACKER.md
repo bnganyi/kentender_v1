@@ -268,3 +268,53 @@ BUD-CHG-001 v1.3 §19 names KT-STD-001, CFG-CHG-002, PLN-CHG-001/PLN-FR-001 and 
 Phase 4 did touch a small number of `kentender_procurement`/`kentender_core` files, but only the minimal mechanical fix required by Budget's own schema change breaking their direct field references — never a redesign of Planning's own PE concept: `budget_gateway.py` (stopped forwarding `procuring_entity`/renamed the FY kwarg at the call boundary into Budget's contract, kept its own external signature unchanged for Planning's callers), `budget_line_procurement_use.py` (a `frappe.db.get_value` field-list literal that would otherwise raise "unknown column financial_year"), `home_context.py::list_available_fiscal_years` (closes the Phase 2 carried debt directly — its whole premise assumed a `fiscal_period` column that never existed), and `procurement_planning/tests/fixtures.py` (its own `Procurement Budget` fixture construction, now a real ERPNext Fiscal Year instead of the removed PE/`financial_year` pair — Planning's other, unrelated uses of its own legacy `Financial Year`/`FY_OPEN` left untouched).
 
 Separately, per `docs/mvp-1-r1/02_strategy/IMPLEMENTATION_TRACKER.md`'s own §14 cross-reference: STR-CHG-001 v1.6 already names BUD-CHG-001 as needing "Strategy node/target references must carry no PE/OU argument" — Strategy's own Phase 3/5 (rebuilding `resolve_strategy_context()` and `strategy_contracts.py`) directly affects Budget's consumer code, if any exists. Confirmed in this session's research: Budget stores no Strategy field and calls no Strategy service directly (§3 of the v1.3 spec: "Budget stores no Strategy field"), so this cross-reference is informational only, not a dependency this tracker needs to gate on.
+
+## 2026-09-06 end-to-end verification (BUD-CHG-001 v1.6, one-site model)
+
+**Ask:** prove a budget can be registered and used as required, fix what breaks, leave the site at the canonical seed. **Authority:** `KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_6.md` (read in full), SEED-001 v1.0, KT-STD-001 v1.3 §8, AUTH-ADR-001 v1.6.
+
+### Journeys run in a real browser (Playwright MCP, dev site, `/desk/budget-funding`)
+
+| Actor | Journey | Result |
+|---|---|---|
+| Josphat Mwangi (Budget Officer) | Workspace → FY 2027/28 canonical budget (positions 160m/0/0/160m, both lines) → View budget → Overview / Budget Lines / Funding Activity / History tabs → line detail → back/forward/reload | Pass; URL-backed tabs, no skeleton on Back |
+| Josphat | FY 2026/27 → No baseline → **Register approved budget** → empty-save inline errors (no "Message" dialog) → save → generated `MOH-BUD-2026-002` / V1 → upload approval document → two lines (one unit-scoped, one Entity-wide) → Save → mismatch submit refused inline → Submit for review | Pass |
+| Beatrice Kamau (Budget Approver) | Workspace pending action → Approval task 4 tabs (initial-baseline Changes) → reload on History → **Return** (10-char gate, reason) → Josphat resubmits → **Approve** → Active | Pass |
+| Josphat / Beatrice | **Create revision** → identity-locked lines → unbalanced Transfer refused → balanced Transfer submitted → Beatrice approves → V2 Active, V1 Superseded → V3 Correction submitted → Returned with reason → Officer sees the reason on the editor | Pass after fixes below |
+| Naomi Chebet (Auditor) | Read-only workspace/detail/line; no Register, no Create revision; approval-task route denied inline | Pass after fix |
+| Samuel Otieno (expired assignment) | Forbidden panel on workspace and on every direct record/task route, no framework modal | Pass after fix |
+| Administrator | Technical read; no Register, no Create revision | Pass |
+| Planning consumers (bench) | `list_eligible_budget_lines` honours BUD-BR-007 (HRMD unit sees HWD only; Digital Health sees both); `check_plan_affordability` verdicts correct and writes no ledger event; canonical `PSA` rows resolve to `MOH-BL-HWD-2027` (SEED-001 §3.5) | Pass |
+
+### Defects found and fixed (all with tests or browser evidence)
+
+| # | Defect | Fix | Evidence |
+|---|---|---|---|
+| 1 | Workspace direct load with a remembered year fired the data call before the filter loaded → "No approved procurement budget is registered for —." with no action (BUD-UI-01) | `BudgetWorkspaceScreen.vue` awaits the filter before the first call; `selection_required` handled | Browser: reload as Beatrice/Josphat now shows the year's budget |
+| 2 | Budget Approver had no in-app route to a **successor** approval task (spec §10 "Approval tasks"); Officer's overview still offered "Create revision" over an open successor | `_pending_version_summary()` (server-decided `open_draft` / `open_task` / `view_submission`) on `get_budget_workspace` + `get_budget_detail`; workspace notice card + detail header button; new `kt_my_work_providers` provider `budget_my_work_provider.py` | `test_bud_chg_001_v16_my_work_provider.TestBudgetMyWorkProvider` (4); My Work page shows the row; browser click-through |
+| 3 | Kept-alive screen fetched with a sibling screen's route segment after a direct load (`get_budget_detail("review")` → 404 → Frappe "Not found" modal) | Shared runtime `kentender_core.desk_page.useRoute`: kept-alive screens defer the route sync with a macrotask, independent of listener bind order | Browser: detail → task / line / rail, no modal |
+| 4 | Page-load denials answered HTTP 403 → Frappe "Not permitted" modal beside the inline panel (KT-STD-001 §3A.2); unknown ids → "Not found" modal | Direct-route reads return `{"outcome": "FORBIDDEN"|"NOT_FOUND"}` as data; screens render their panels | `TestDirectRouteVerdictsAsData` (3); browser as Samuel/Josphat, zero modals |
+| 5 | Auditor/Officer could open the approval-task route and see the task without controls (§12.5 requires denial) | `holds_budget_approver_assignment()`; task reads return `FORBIDDEN_TASK` (BUD-AC-040 copy) | same test class; browser as Naomi |
+| 6 | Return reason invisible to the Officer on the returned Draft | `get_budget_version_draft` → `returned {reason, by, at}`; editor "Returned for correction" card | `test_returned_draft_carries_the_reason_for_the_officer`; browser |
+| 7 | Lifecycle datetimes rendered in System Settings `dd-mm-yyyy HH:mm:ss`; artboards/KT-STD use "6 Sep 2026, 17:59 EAT" | `_display_datetime` shared by detail activation, task submission and both ledger projections | Browser |
+| 8 | Budget Lines order was insertion-dependent (HWD before DHI) | `_version_totals` orders by title like every other line read | Browser |
+| 9 | Funding Activity with a non-matching filter showed the "no activity" copy (§12.7 wants **Clear filters**) | Filtered empty state + Clear filters | Browser |
+| 10 | Fidelity-gate seed inserted legacy `MOH-DIR-*` units ad hoc (duplicate "Digital Health"/HRMD picklist entries) and parked a Submitted V2 plus an 80m reservation on the **canonical** budget | Seed resolves units via the shared register (`_unit_for`) and builds its own `BUD-FIDELITY-REVIEW` budget (Active V1 + reservation + Submitted V2); spec retargeted (`/review/BUD-FIDELITY-REVIEW-V2`, `/line/BUD-FIDELITY-REVIEW-DHI`, `/BUD-FIDELITY-REVIEW/activity`) | `make ui-budget-fidelity-gate` — see tally below |
+| 11 | `collectPageErrors` counted the dev server's socket.io long-poll 404s and Frappe's own sidebar divider `<img src="undefined">` 404 (both framework/environment) as page errors | Helper filters both by console-message URL, with the framework source cited | gate tally below |
+
+### Verification of record
+
+- `bench --site kentender.midas.com run-tests --app kentender_budget` → **31 tests OK** (26 prior + 5 provider/pending) and the verdict class after → **8/8** in `test_bud_chg_001_v16_my_work_provider` (the full-app rerun with all 34 is the closing figure recorded in the session report).
+- `kentender_procurement.procurement_planning.tests.test_gateway_contracts` → 3/3.
+- `make ui-budget-fidelity-gate SITE=kentender.midas.com` → **22 passed** (final run, after moving the fixtures off the canonical budget, rewriting the stale Forbidden-state test onto the real no-assignment actor and the data verdict, and filtering the two framework console 404s by URL).
+- Bundle rebuilt with `./scripts/bench-with-node.sh build --app kentender_budget` (hash changed each time; verified in the browser's script list).
+
+### Site state after the pass
+
+Only the canonical seed world remains (KT-STD-001 §8 site, units, actors, fiscal years; SEED-001 chain: Strategy plan, `MOH-BUD-2027-001` V1 Active with `MOH-BL-DHI-2027` / `MOH-BL-HWD-2027`, Needs 1–4, DPPs, `PLN-MOH-2027-001` V1). Removed: the browser-test budget `MOH-BUD-2026-002`, 6 test/fixture budgets and an orphaned line version, Playwright/`KENTENDER_TEST` Planning and Needs rows, 37 test/legacy users with their 32 assignments, 10 test/duplicate Organisation Units, 7 isolation Fiscal Years, 2 test-year Regulatory References, the legacy Works demo journey (7 handoff cards, 1 journey). Left deliberately (FOLLOW_UPS FU-07/FU-08): ERPNext `_Test Fiscal Year` rows and the pre-cutover legacy reference doctypes owned by RM-1xx.
+
+### Still open after this pass
+
+- FU-06..FU-10 in `FOLLOW_UPS.md` (spec conflict on the Forbidden filter row; dev-site clutter; legacy data; My Work date rendering; Planning seed plan-item ids).
+- The six BUD-AC coverage gaps from Phase 10 (BUD-AC-010/011/016/018/019/029) remain untested by name — behaviour unchanged, no new tests written for them here.
+- `check_funding`/`reserve_funding` are exercised by the domain suite and the fidelity seed only; no Procurement Requisition module exists yet to drive them from a screen (spec §19).

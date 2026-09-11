@@ -32,9 +32,9 @@ Notes on two properties:
   categorise, and grant nothing.
 
 Deliberately omitted (KT-STD-001 §7 default-to-omit): `Requisition Preparer`
-and `Head of Procurement Function` are illustrative in ADR §4.4 but no
-approved, implemented module names them yet — each is registered in the
-cutover slice of the document that owns it.
+is illustrative in ADR §4.4 but no approved module names it (REQ-CHG-001 v1.6
+uses Departmental Author). `Head of Procurement Function` was registered by
+REQ-CHG-001 v1.6's cutover slice on 2026-09-06.
 """
 
 from __future__ import annotations
@@ -168,6 +168,28 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	# --- Strategy Alignment (STR-CHG-001 v1.7 §6) ------------------------
 	# ADR v1.6 §20 binds Strategy Author and Approver to Site-wide scope; any
 	# departmental narrowing stays a record-ownership check inside Strategy.
+	# REQ-CHG-001 v1.6 §8 / §19 (2026-09-06) — the Requisitions cutover slice
+	# registers the office that authorises Requisitions and, later, approves
+	# Tenders (TPR-CHG-001). KT-STD-001 §8.3: not Procurement Planner.
+	_entry(
+		"Head of Procurement Function",
+		SCOPE_SITE,
+		"REQ-CHG-001 v1.6 §8",
+		# TPR-CHG-001 v0.6 §5/§10.3 (2026-09-08): the same office is the single
+		# Tender Preparation approver — one registry entry, a second sod tag.
+		sod_tags=("requisition_authorisation", "tender_approval"),
+	),
+	# --- Tender Preparation (TPR-CHG-001 v0.6 §5) -------------------------
+	# Site-wide; prepares and submits Tender Versions and can never approve
+	# one it prepared (§10.3 — enforced from the Version's own preparation
+	# audit event, not from this registry). The identically-named legacy
+	# Frappe Role already exists on seeded sites; `ensure_roles()` reuses it.
+	_entry(
+		"Procurement Officer",
+		SCOPE_SITE,
+		"TPR-CHG-001 v0.6 §5",
+		sod_tags=("tender_preparation",),
+	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
 	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),
 )

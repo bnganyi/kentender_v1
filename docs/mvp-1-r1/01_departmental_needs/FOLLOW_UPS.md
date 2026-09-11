@@ -671,3 +671,31 @@ own Project Owner-approved scope. This session made no change to
 fixture repair) needs to rewrite `tests/fixtures.py::ensure_world` onto the
 current site model before any of Planning's own acceptance criteria — NDS's
 AC-031/034–037/045 included — can be evidenced by a live, passing test again.
+
+---
+
+## FU-21 — Workspace `<h1>` relabelled from "My needs" to "Departmental Needs" (2026-09-07)
+
+**What.** NDS-UI-01's own workspace masthead literally reads "My needs" (see
+`WorkspaceScreen.vue`'s original header comment); the live screen now reads
+"Departmental Needs" instead. This is a deliberate, cross-module product
+decision — the Project Owner flagged that landing-page queue titles were
+inconsistent across modules (NDS "My needs", Requisitions "Your
+Requisitions", Planning "Your work", Strategy "My work" vs. neutral titles
+elsewhere) and asked for a single neutral convention everywhere. NDS's own
+`<h1>` now matches the module-name-as-page-title pattern already used by
+Procurement Requisitions and Planning's own headers, rather than being
+corrected against NDS-UI-01's literal copy.
+
+**Why this was not fixed here [via a spec correction].** The artboard itself
+is not wrong for what it was asked to show at the time; this is a later,
+explicit cross-module tone decision, not a defect in NDS-UI-01. The same
+session relabelled Procurement Requisitions ("Your Requisitions" →
+"Requisitions"), Procurement Planning ("Your work" → "Actions") and
+Strategy's My Work tab label ("My work" → "Actions", route slug and the
+underlying `kt_my_work_providers`/`my_work` aggregator feature name
+untouched) for the same reason — see each module's own FOLLOW_UPS.
+
+**Fix.** None outstanding. No test in this repo hardcoded the old "My needs"
+string (confirmed by repo-wide grep before the edit), so nothing else needed
+updating; NDS-UI-01's next revision should simply record the corrected copy.

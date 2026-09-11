@@ -109,7 +109,10 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-kentender-mvp-v1 SITE=<site>
+make seed-canonical SITE=<site> [THROUGH=tender_preparation]   # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tender_preparation), validate — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md
+make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
+make seed-canonical-validate SITE=<site>
+make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical
 make seed-kentender-mvp-v1-validate SITE=<site>
 make purge-kentender-playwright-data SITE=<site>
 ```

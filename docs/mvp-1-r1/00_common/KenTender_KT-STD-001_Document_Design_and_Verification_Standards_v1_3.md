@@ -4,7 +4,8 @@
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.3 |
-| Status | Proposed for approval |
+| Status | **Approved** |
+| Approved on | 7 September 2026 |
 | Date | 4 September 2026 |
 | Supersedes | v1.2, approved 3 September 2026 |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
@@ -298,6 +299,7 @@ Each module works in a distinct window so the fixtures compose into one coherent
 | Departmental Needs journeys | 24 Nov 2026, between 09:00 and 15:30 EAT |
 | Procurement Planning journeys | 24 Nov 2026 through 20 Dec 2026, EAT |
 | Budget journeys | 1 Oct 2026 through 16 Mar 2027, EAT — registration precedes reservation, which precedes revision |
+| Requisition and Tender Preparation journeys | 1 Mar 2027 through 15 May 2027, EAT — Requisition authorisation (15 Mar 2027) precedes Tender preparation, which precedes the baseline invitation date (SEED-001 §7) |
 | Asset Disposal journeys | 4 May 2027 through 14 Jan 2028, EAT — the FY 2027/28 disposal plan is prepared before that year begins |
 
 ### 8.5 Units of measure
@@ -353,7 +355,7 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-On approval, KT-STD-001 v1.3 becomes the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions.
+This approval makes KT-STD-001 v1.3 the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions.
 
 Where a citing document conflicts with this standard, the citing document prevails only where it states the departure explicitly and gives a reason. A silent divergence is a defect, not a decision. This standard governs form and delivery; it never overrides a domain decision in an architecture decision record or a module requirements document.
 

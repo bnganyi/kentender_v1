@@ -7,11 +7,21 @@ re-validates every allocation under a stable-order row lock and creates one
 reservation per source allocation, atomically (all-or-none). Repeating the
 same correlation_id returns the original effective result (BUD-BR-011).
 
-Caller (Procurement Planning) authority — the assigned Finance Confirmation
-Officer Site-wide responsibility, task, source-set and amount scope — is
-authorised here directly via `authorise_record()`; Budget never trusts
-Planning's own route visibility as authority (§12.6). No Procuring Entity or
-Fiscal Year scope participates (BUD-BR-001).
+Caller authority — the assigned Finance Confirmation Officer or Head of
+Procurement Function Site-wide responsibility, task, source-set and amount
+scope — is authorised here directly via `authorise_record()`; Budget never
+trusts a caller's own route visibility as authority (§12.6). No Procuring
+Entity or Fiscal Year scope participates (BUD-BR-001).
+
+Two callers exist as of REQ-CHG-001 v1.6 D1: Procurement Planning's own
+`check_plan_affordability` path never reaches these two functions at all
+(BUD-CHG-001 v1.6 §8.1 — Planning checks, never reserves); Procurement
+Requisitions is the first and only module that calls `check_funding` then
+`reserve_funding` for real, at `AuthoriseRequisition` (REQ-CHG-001 v1.6
+§9.1A). `calling_module` and `caller_reference` are recorded rather than
+hard-coded so the audit trail and the reservation-conflict rule both name
+the actual caller. `finance_task` is optional: Planning-era callers supply
+one, Requisitions does not (it has no Finance task at all).
 """
 
 from __future__ import annotations
@@ -28,21 +38,34 @@ from kentender_budget.services.budget_reference import allocate_reservation_refe
 _CHECK_TOKEN_TTL_SECONDS = 300
 
 
-def _require_finance_capability() -> None:
-	"""§7/§17.1 — the Finance Confirmation Officer Site-wide responsibility,
-	via `authorise_record()`. No Procuring Entity, Fiscal Year or capability
-	string participates (BUD-BR-001)."""
-	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
-	from kentender_budget.services.budget_authorization import ROLE_FINANCE_CONFIRMATION_OFFICER
+# REQ-CHG-001 v1.6 D1 — either Site-wide responsibility may call
+# check_funding/reserve_funding: Finance Confirmation Officer (the original
+# Planning-era caller) or Head of Procurement Function (Procurement
+# Requisitions' authorising office). The error title stays
+# BUDGET_FINANCE_TASK_DENIED — it is a closed vocabulary (§13) naming the
+# funding boundary's own denial, not either caller's identity.
+ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
+_CHECK_RESERVE_CALLER_ROLES = (
+	"Finance Confirmation Officer",
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+)
 
-	decision = authorise_record(
-		user=frappe.session.user,
-		business_role=ROLE_FINANCE_CONFIRMATION_OFFICER,
-		organisation_unit="",
-		purpose=PURPOSE_COMMAND,
+
+def _require_check_reserve_capability() -> None:
+	"""§7/§17.1 / REQ-CHG-001 v1.6 D1 — Finance Confirmation Officer or Head
+	of Procurement Function, via `authorise_record()`. No Procuring Entity,
+	Fiscal Year or capability string participates (BUD-BR-001)."""
+	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+	user = frappe.session.user
+	for role in _CHECK_RESERVE_CALLER_ROLES:
+		if authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_COMMAND).allowed:
+			return
+	frappe.throw(
+		_("Not permitted to confirm or reserve funding — requires Finance Confirmation Officer or Head of Procurement Function"),
+		frappe.PermissionError,
+		title="BUDGET_FINANCE_TASK_DENIED",
 	)
-	if not decision.allowed:
-		frappe.throw(_("Not permitted to confirm funding"), frappe.PermissionError, title="BUDGET_FINANCE_TASK_DENIED")
 
 
 def _resolve_line(budget_line: str) -> Any:
@@ -76,10 +99,13 @@ def _line_active_version_and_position(budget_line_doc):
 def check_funding(
 	plan_item: str,
 	plan_version: str,
-	finance_task: str,
 	source_set_hash: str,
 	allocations: list[dict[str, Any]],
 	correlation_id: str,
+	*,
+	finance_task: str | None = None,
+	calling_module: str = "Procurement Planning",
+	caller_reference: str = "",
 ) -> dict[str, Any]:
 	"""§9.1 `check_funding` — non-mutating per-allocation eligibility, positions,
 	required amounts, after-confirmation balances and a short-lived check token."""
@@ -94,7 +120,7 @@ def check_funding(
 		line_doc = _resolve_line(alloc.get("budget_line") or "")
 		if budget is None:
 			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
-		_require_finance_capability()
+		_require_check_reserve_capability()
 		version, line_version, position = _line_active_version_and_position(line_doc)
 		# BUD-BR-008 — the allocation's funding source shall equal the Budget
 		# Line's, independently of any upstream filtering (list_eligible_budget_lines
@@ -134,6 +160,8 @@ def check_funding(
 			"finance_task": finance_task,
 			"source_set_hash": source_set_hash,
 			"correlation_id": correlation_id,
+			"calling_module": calling_module,
+			"caller_reference": caller_reference,
 			"allocations": [
 				{
 					"budget_line": r["budget_line"],
@@ -154,8 +182,8 @@ def check_funding(
 		event_type=EVENT_CHECK_PERFORMED,
 		actor=frappe.session.user,
 		correlation_id=correlation_id,
-		calling_module="Procurement Planning",
-		downstream_reference=plan_item,
+		calling_module=calling_module,
+		downstream_reference=caller_reference or plan_item,
 	)
 
 	return {"token": token, "all_sufficient": all_sufficient, "allocations": results}
@@ -170,22 +198,30 @@ def _existing_reservations_for_correlation(correlation_id: str) -> list[Any] | N
 
 def reserve_funding(
 	token: str,
-	finance_task: str,
 	source_set_hash: str,
 	idempotency_key: str,
+	*,
+	finance_task: str | None = None,
 	actor: str | None = None,
 ) -> dict[str, Any]:
 	"""§9.1/§8.2 `reserve_funding` — locks all affected lines in stable ID
 	order, reloads every position, creates one reservation per source
 	allocation or none (BUD-BR-010/011/013)."""
+	_require_check_reserve_capability()
 	correlation_id = idempotency_key
 	existing = _existing_reservations_for_correlation(correlation_id)
 	if existing:
 		return {"ok": True, "reused": True, "reservations": [_reservation_result(r) for r in existing]}
 
 	cached = frappe.cache().get_value(f"budget_check_token:{token}")
+	# finance_task is optional (REQ-CHG-001 v1.6 D1): compare only when the
+	# check actually recorded one. A caller with no finance_task at check
+	# time (Requisitions) must reserve with no finance_task at reserve time
+	# either — supplying one where the check had none is itself a mismatch.
 	if not cached or cached.get("finance_task") != finance_task or cached.get("source_set_hash") != source_set_hash:
 		frappe.throw(_("The funding check has expired or no longer matches this task"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
+	calling_module = cached.get("calling_module") or "Procurement Planning"
+	caller_reference = cached.get("caller_reference") or ""
 
 	allocations = cached["allocations"]
 	line_docs = {a["budget_line"]: _resolve_line(a["budget_line"]) for a in allocations}
@@ -211,18 +247,28 @@ def reserve_funding(
 				frappe.ValidationError,
 				title="BUDGET_LINE_NOT_ELIGIBLE",
 			)
-		# `plan_source_allocation` is unique on Funding Reservation (§4.5) — a
-		# prior reservation under a *different* correlation is a genuine
-		# conflict (BUD-BR-011/§13 BUDGET_RESERVATION_CONFLICT), not something
-		# to silently insert on top of or crash on with a raw DB constraint
-		# error. The whole-correlation reuse check above already handled the
-		# same-correlation retry case.
+		# `plan_source_allocation` is no longer unique on Funding Reservation
+		# (REQ-CHG-001 v1.6 D1) — a released reservation, or a different
+		# caller's own independent reservation, may coexist against the same
+		# allocation; the locked line-level position check still stops
+		# oversubscription. Only a genuine double-authorise is a conflict: an
+		# Active/Partially Converted reservation for the *same* caller_reference
+		# under a *different* correlation (BUD-BR-011/§13
+		# BUDGET_RESERVATION_CONFLICT). The whole-correlation reuse check above
+		# already handled the same-correlation retry case.
 		clashing = frappe.db.get_value(
-			"Funding Reservation", {"plan_source_allocation": alloc["plan_source_allocation"]}, ["name", "correlation_id"], as_dict=True
+			"Funding Reservation",
+			{"plan_source_allocation": alloc["plan_source_allocation"], "status": ["in", ("Active", "Partially Converted")]},
+			["name", "correlation_id", "caller_reference"],
+			as_dict=True,
 		)
-		if clashing and clashing.correlation_id != correlation_id:
+		if (
+			clashing
+			and clashing.correlation_id != correlation_id
+			and (clashing.caller_reference or "") == (caller_reference or "")
+		):
 			frappe.throw(
-				_("This allocation already has a different effective reservation"),
+				_("This allocation already has a different effective reservation from the same caller"),
 				frappe.ValidationError,
 				title="BUDGET_RESERVATION_CONFLICT",
 			)
@@ -254,6 +300,8 @@ def reserve_funding(
 				"remaining_amount": p["requested"],
 				"currency": p["budget"].currency,
 				"correlation_id": correlation_id,
+				"calling_module": calling_module,
+				"caller_reference": caller_reference,
 			}
 		)
 		doc.insert(ignore_permissions=True)
@@ -268,8 +316,8 @@ def reserve_funding(
 			event_type=EVENT_RESERVED,
 			actor=actor_name,
 			correlation_id=correlation_id,
-			calling_module="Procurement Planning",
-			downstream_reference=f"{cached['plan_item']} · {doc.name}",
+			calling_module=calling_module,
+			downstream_reference=(caller_reference or cached["plan_item"]) + f" · {doc.name}",
 			amount=p["requested"],
 			currency=p["budget"].currency,
 		)
@@ -288,6 +336,8 @@ def _reservation_result(doc) -> dict[str, Any]:
 		"original_amount": flt(doc.original_amount),
 		"remaining_amount": flt(doc.remaining_amount),
 		"currency": doc.currency,
+		"calling_module": doc.calling_module,
+		"caller_reference": doc.caller_reference,
 	}
 
 

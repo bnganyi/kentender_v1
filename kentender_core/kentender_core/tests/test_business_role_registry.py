@@ -61,6 +61,33 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		for name, entry in registry.REGISTRY.items():
 			self.assertFalse(entry.exclusive_office, f"{name} declares an undocumented exclusive office")
 
+	def test_head_of_procurement_function_is_registered_site_wide(self):
+		"""REQ-CHG-001 v1.6 §8 (2026-09-06) — Requisitions' cutover slice
+		registers the office that authorises Requisitions and, later, approves
+		Tenders. Not Procurement Planner (KT-STD-001 §8.3)."""
+		entry = registry.REGISTRY["Head of Procurement Function"]
+		self.assertEqual(entry.scope_type, registry.SCOPE_SITE)
+		self.assertEqual(entry.owning_document, "REQ-CHG-001 v1.6 §8")
+		self.assertIn("Head of Procurement Function", registry.roles_with_scope_type(registry.SCOPE_SITE))
+
+	def test_procurement_officer_is_registered_site_wide(self):
+		"""TPR-CHG-001 v0.6 §5 — Procurement Officer is Site-wide, owned by TPR,
+		and carries the tender_preparation segregation tag; the approving
+		office carries tender_approval on the same single HoPF entry."""
+		entry = registry.REGISTRY["Procurement Officer"]
+		self.assertEqual(entry.scope_type, registry.SCOPE_SITE)
+		self.assertIn("TPR-CHG-001", entry.owning_document)
+		self.assertIn("tender_preparation", entry.sod_tags)
+		self.assertIn("Procurement Officer", registry.roles_with_sod_tag("tender_preparation"))
+		self.assertIn("Head of Procurement Function", registry.roles_with_sod_tag("tender_approval"))
+		self.assertEqual(registry.roles_with_sod_tag("tender_approval"), ("Head of Procurement Function",))
+
+	def test_requisition_preparer_remains_unregistered(self):
+		"""KT-STD-001 §7 default-to-omit — illustrative in ADR §4.4, but
+		REQ-CHG-001 v1.6 uses Departmental Author instead and never registers
+		it; no other approved module names it either."""
+		self.assertNotIn("Requisition Preparer", registry.REGISTRY)
+
 	def test_every_entry_names_the_document_that_owns_its_role_name(self):
 		"""§4.4 — the module document is the source of the exact role name."""
 		for name, entry in registry.REGISTRY.items():

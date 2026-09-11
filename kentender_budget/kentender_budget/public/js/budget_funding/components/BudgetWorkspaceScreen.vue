@@ -37,6 +37,9 @@ async function refresh(opts) {
 		if (result && result.outcome === "FORBIDDEN") {
 			workspace.value = null;
 			forbidden.value = result.forbidden;
+		} else if (result && result.selection_required) {
+			// No year was sent — the "Select a fiscal year" state renders.
+			workspace.value = null;
 		} else {
 			workspace.value = result;
 		}
@@ -48,10 +51,15 @@ async function refresh(opts) {
 }
 
 onMounted(async () => {
-	// KT-STD-001 v1.2 §3A.1 — the Forbidden verdict is resolved from the same
-	// first call as everything else, whether or not a Fiscal Year is already
-	// selected, so it renders before the fiscal-year selector itself.
-	await Promise.all([fyFilter.load(), refresh()]);
+	// The remembered Fiscal Year must be known *before* the first workspace
+	// call: running the two concurrently sent an empty year, and a direct
+	// load with a remembered year rendered "No approved procurement budget
+	// is registered for —." with no action instead of that year's budget
+	// (confirmed live, 2026-09-06). KT-STD-001 v1.2 §3A.1 still holds — the
+	// Forbidden verdict comes back from this same call whether or not a
+	// year is selected, so it renders before the year selector either way.
+	await fyFilter.load();
+	await refresh();
 });
 
 // KeepAlive brings this instance back with its rows still on screen; the
@@ -87,6 +95,36 @@ function openPending() {
 	// version's id, which belongs in the review route above instead.
 	else go(workspace.value.budget.code, "version", pending.version_number, "edit");
 }
+
+// Copy and button label follow the server-decided action (AGENTS.md §6.2):
+// a Submitted version is awaiting the Approver's decision, not "in progress".
+const pendingCopy = computed(() => {
+	const pending = workspace.value?.pending_version;
+	const fy = workspace.value?.fiscal_year?.label || "—";
+	if (!pending) return null;
+	const successor = pending.is_successor;
+	if (pending.status === "Submitted for approval") {
+		return {
+			heading: successor
+				? __("Revision Version {0} is awaiting approval for {1}.", [pending.version_number, fy])
+				: __("A budget version is awaiting approval for {0}.", [fy]),
+			body:
+				pending.action === "open_task"
+					? __("Review the submitted version, then approve or return it.")
+					: __("The submitted version is read-only until the Budget Approver decides it."),
+			label: pending.action === "open_task" ? __("Open approval task") : __("View submission"),
+		};
+	}
+	return {
+		heading: successor
+			? __("A Draft revision (Version {0}) is in progress for {1}.", [pending.version_number, fy])
+			: __("A Draft budget is in progress for {0}.", [fy]),
+		body: successor
+			? __("Continue the draft revision before it can be submitted for approval.")
+			: __("Continue the draft before it can go Active."),
+		label: __("Open draft"),
+	};
+});
 function registerBudget() {
 	go("new");
 }
@@ -184,7 +222,7 @@ function registerBudget() {
 			</div>
 
 			<!-- No baseline (BUD-DES-16) -->
-			<div v-else-if="!workspace.has_budget" class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
+			<div v-else-if="!workspace || !workspace.has_budget" class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
@@ -208,8 +246,8 @@ function registerBudget() {
 				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
 					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
 				</svg>
-				<h2>{{ __("A Draft budget is in progress for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
-				<p class="kt-muted">{{ __("Continue the draft before it can go Active.") }}</p>
+				<h2>{{ pendingCopy ? pendingCopy.heading : __("A budget version is in progress for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
+				<p class="kt-muted">{{ pendingCopy ? pendingCopy.body : __("It becomes visible here once it is Active.") }}</p>
 				<button
 					v-if="workspace.pending_version"
 					type="button"
@@ -217,12 +255,26 @@ function registerBudget() {
 					@click="openPending"
 					data-testid="budget-pending-action-btn"
 				>
-					{{ workspace.pending_version.action === "open_task" ? __("Open task") : __("Open draft") }}
+					{{ pendingCopy.label }}
 				</button>
 			</div>
 
 			<!-- Active (BUD-DES-01) -->
 			<template v-else>
+				<!-- An open successor revision (§6: at most one) — the actor's
+				     own route to it, server-decided; a reader sees nothing. -->
+				<div v-if="workspace.pending_version" class="kt-card kt-blueprint" data-testid="budget-pending-successor">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+						<div>
+							<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px">{{ pendingCopy.heading }}</div>
+							<div class="kt-muted" style="font-size: 14px; margin-top: 4px">{{ pendingCopy.body }}</div>
+						</div>
+						<button type="button" class="kt-btn kt-btn-primary" style="flex: none" @click="openPending" data-testid="budget-pending-action-btn">
+							{{ pendingCopy.label }}
+						</button>
+					</div>
+				</div>
 				<div class="kt-card kt-blueprint" data-testid="budget-summary-card">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px">

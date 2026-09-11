@@ -290,6 +290,8 @@ def validate_kentender_mvp_v1(
 	*,
 	include_demands: bool = True,
 	include_planning: bool = False,
+	include_requisitions: bool = False,
+	include_tender_preparation: bool = False,
 	include_scn_add: bool = False,
 	include_scn_fund_short: bool = False,
 	include_scn_remove: bool = False,
@@ -1105,6 +1107,22 @@ def validate_kentender_mvp_v1(
 		)
 
 		for row in validate_planning_seed():
+			checks.append(_check(row["check"], row["ok"], row.get("detail", "")))
+
+	if include_requisitions:
+		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import (
+			validate_requisitions_seed,
+		)
+
+		for row in validate_requisitions_seed():
+			checks.append(_check(row["check"], row["ok"], row.get("detail", "")))
+
+	if include_tender_preparation:
+		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import (
+			validate_tender_preparation_seed,
+		)
+
+		for row in validate_tender_preparation_seed():
 			checks.append(_check(row["check"], row["ok"], row.get("detail", "")))
 
 	failed = [c for c in checks if not c["ok"]]

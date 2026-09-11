@@ -34,6 +34,7 @@ usePageRail(railEl, railTrail, { showPeSwitcher: false });
 const loading = ref(true);
 const notFound = ref(false);
 const forbidden = ref(false);
+const forbiddenCopy = ref(null);
 const serverError = ref(false);
 const actingError = ref(null);
 const acting = ref(false);
@@ -61,7 +62,21 @@ async function load(opts) {
 	changesLoaded.value = false;
 	historyLoaded.value = false;
 	try {
-		task.value = await getBudgetApprovalTask(versionIdParam.value);
+		const data = await getBudgetApprovalTask(versionIdParam.value);
+		// KT-STD-001 §3A.2 / §12.5 — a read-only actor is denied as data
+		// (inline panel), never shown the task with its controls removed.
+		if (data && data.outcome === "FORBIDDEN") {
+			task.value = null;
+			forbidden.value = true;
+			forbiddenCopy.value = data.forbidden || null;
+			return;
+		}
+		if (data && data.outcome === "NOT_FOUND") {
+			task.value = null;
+			notFound.value = true;
+			return;
+		}
+		task.value = data;
 		if (tab.value === "lines") await loadLines();
 		else if (tab.value === "changes") await loadChanges();
 		else if (tab.value === "history") await loadHistory();
@@ -167,7 +182,8 @@ async function submitApprove() {
 
 			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-forbidden">
 				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<h2>{{ __("You do not have access to this approval task.") }}</h2>
+				<h2>{{ forbiddenCopy ? __(forbiddenCopy.heading) : __("You do not have access to this approval task.") }}</h2>
+				<p v-if="forbiddenCopy" class="kt-muted">{{ __(forbiddenCopy.text) }}</p>
 			</div>
 
 			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-server-error">

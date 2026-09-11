@@ -1,0 +1,160 @@
+/* Tender Preparation — TPR-CHG-001 v0.6 §13 supplementary Industry classes.
+ *
+ * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
+ * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-table,
+ * .kt-dialog, .kt-card-title, .kt-label, .kt-skel …). The artboard file
+ * "Tender Preparation Screens.dc.html" defines a handful of layout classes on
+ * top of it in its own helmet style block (.cap, .ro-field, .ro-val,
+ * .task-nav-item, .task-num, .overlay-*); those are ported here class-for-
+ * class under .kt-tpr so no rule can collide with another module's port.
+ *
+ * Nothing here restyles a shared class; a change to .kt-card or .kt-btn
+ * belongs in kt_industry_tokens.css. Overrides of a tokens base property
+ * chain the base class (.kt-industry .kt-dialog.tpr-start-dialog) so
+ * specificity, not load order, decides (AGENTS.md §6.6).
+ */
+
+.kt-industry.kt-tpr {
+	--color-bg: var(--kt-color-bg);
+	--color-surface: var(--kt-color-surface, var(--kt-color-bg));
+	--color-text: var(--kt-color-text);
+	--color-accent: var(--kt-color-accent);
+	--color-accent-100: var(--kt-color-accent-100);
+	--color-accent-700: var(--kt-color-accent-700, var(--kt-color-accent-800));
+	--color-accent-800: var(--kt-color-accent-800);
+	--color-neutral-200: var(--kt-color-neutral-200);
+	--color-neutral-700: var(--kt-color-neutral-700);
+	--color-neutral-800: var(--kt-color-neutral-800);
+	--color-divider: var(--kt-color-divider);
+	--status-critical: var(--kt-status-critical);
+	--font-heading: var(--kt-font-heading);
+	--font-body: var(--kt-font-body);
+	--radius-md: var(--kt-radius-md);
+}
+
+/* masthead (DES-01, DES-04) */
+.kt-tpr .tpr-masthead { margin-bottom: 32px; }
+.kt-tpr .tpr-masthead h1 { font-size: 30px; margin: 0 0 4px; }
+.kt-tpr .tpr-masthead p { color: var(--color-neutral-800); margin: 0; font-size: 15px; }
+.kt-tpr .tpr-section { margin-bottom: 32px; }
+.kt-tpr .tpr-muted { color: var(--color-neutral-700); font-size: 13px; }
+.kt-tpr .tpr-num { text-align: right; font-variant-numeric: tabular-nums; }
+.kt-tpr .tpr-actions { display: flex; gap: 10px; }
+.kt-tpr .tpr-actions-end { display: flex; justify-content: flex-end; }
+.kt-tpr .tpr-table-action { text-align: right; }
+
+/* artboard .cap — the quiet eyebrow */
+.kt-tpr .tpr-cap {
+	font-family: var(--font-body);
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-neutral-700);
+}
+
+/* artboard .ro-field / .ro-val — read-only values with a kt-label caption,
+ * never styled as inputs (§8.0) */
+.kt-tpr .tpr-ro-field { display: flex; flex-direction: column; gap: 4px; }
+.kt-tpr .tpr-ro-val { font-size: 14px; color: var(--color-text); }
+.kt-tpr .tpr-ro-val.tpr-mono { font-family: ui-monospace, monospace; font-size: 12px; }
+.kt-tpr .tpr-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 32px; }
+.kt-tpr .tpr-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 32px; }
+.kt-tpr .tpr-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.kt-tpr .tpr-span-2 { grid-column: span 2; }
+
+/* artboard .tag */
+.kt-tpr .tpr-tag {
+	display: inline-flex;
+	align-items: center;
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	padding: 3px 10px;
+	border-radius: calc(var(--radius-md) * 0.75);
+	white-space: nowrap;
+}
+.kt-tpr .tpr-tag.is-neutral { background: var(--color-neutral-200); color: var(--color-neutral-800); }
+.kt-tpr .tpr-tag.is-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.kt-tpr .tpr-tag.is-outline { border: 1px solid var(--color-divider); color: var(--color-neutral-800); background: transparent; }
+
+/* editor chrome (DES-03) */
+.kt-tpr .tpr-editor { display: flex; flex-direction: column; min-height: 720px; }
+.kt-tpr .tpr-editor-header { padding: 24px 40px 8px; border-bottom: 1px solid var(--color-divider); }
+.kt-tpr .tpr-editor-header h1 { font-size: 26px; margin: 4px 0; }
+.kt-tpr .tpr-editor-line { display: flex; align-items: center; gap: 14px; }
+.kt-tpr .tpr-editor-ref { font-size: 13px; color: var(--color-neutral-700); }
+.kt-tpr .tpr-editor-body { display: flex; flex: 1; }
+.kt-tpr .tpr-task-nav { width: 280px; border-right: 1px solid var(--color-divider); padding: 20px 0; flex: none; }
+.kt-tpr .tpr-task-nav-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	font-size: 13px;
+	width: 100%;
+	background: transparent;
+	border: 0;
+	text-align: left;
+	color: var(--color-text);
+	cursor: pointer;
+	font-family: var(--font-body);
+}
+.kt-tpr .tpr-task-nav-item.is-active { background: var(--color-accent-100); color: var(--color-accent-800); font-weight: 600; }
+.kt-tpr .tpr-task-nav-item .tpr-task-label { flex: 1; }
+.kt-tpr .tpr-task-num {
+	width: 20px;
+	height: 20px;
+	flex: none;
+	border: 1px solid var(--color-divider);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 11px;
+	font-family: var(--font-heading);
+}
+.kt-tpr .tpr-task-num.is-review { border-color: var(--color-accent); }
+.kt-tpr .tpr-task-hr { margin: 8px 14px; border-top: 1px solid var(--color-divider); }
+.kt-tpr .tpr-task-main { flex: 1; padding: 28px 40px; display: flex; flex-direction: column; gap: 28px; overflow: auto; }
+.kt-tpr .tpr-editor-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 16px 40px;
+	border-top: 1px solid var(--color-divider);
+}
+
+/* controls */
+.kt-tpr .tpr-field { display: flex; flex-direction: column; gap: 6px; }
+.kt-tpr .tpr-field > label { font-size: 12px; color: var(--color-neutral-800); }
+.kt-tpr .tpr-seg { display: inline-flex; border: 1px solid var(--color-divider); width: max-content; }
+.kt-tpr .tpr-seg-opt { padding: 8px 16px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.kt-tpr .tpr-seg-opt + .tpr-seg-opt { border-left: 1px solid var(--color-divider); }
+.kt-tpr .tpr-seg-opt.is-selected { background: var(--color-accent-100); color: var(--color-accent-800); font-weight: 600; }
+.kt-tpr .tpr-date-field { display: flex; align-items: center; gap: 8px; }
+.kt-tpr .tpr-date-field .kt-input { flex: 1; }
+.kt-tpr .tpr-field-error { font-size: 12px; color: var(--status-critical); margin: 0; }
+.kt-tpr .tpr-error-banner { font-size: 13px; color: var(--status-critical); margin: 0 0 12px; }
+
+/* blueprint cards with kicker/title/body (DES-04/05/06) */
+.kt-tpr .tpr-card-kicker { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-700); margin-bottom: 6px; }
+.kt-tpr .tpr-card-heading { font-family: var(--font-heading); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+.kt-tpr .tpr-card-body { margin: 0; font-size: 14px; }
+.kt-tpr .tpr-card-body.tpr-mono { font-family: ui-monospace, monospace; font-size: 12px; }
+.kt-tpr .kt-card.tpr-card-pad { padding: 20px 24px; }
+.kt-tpr .tpr-card-narrow { max-width: 640px; }
+.kt-tpr .tpr-tags { display: flex; gap: 12px; flex-wrap: wrap; }
+.kt-tpr .tpr-statuses { display: flex; gap: 16px; }
+
+/* state cards + skeleton */
+.kt-tpr .tpr-state-card { padding: 28px 32px; max-width: 720px; }
+.kt-tpr .tpr-state-card h3 { margin: 0 0 8px; font-size: 18px; }
+.kt-tpr .tpr-state-card p { margin: 0 0 14px; }
+.kt-tpr .tpr-support-ref { font-size: 12px; color: var(--color-neutral-700); margin: 12px 0 0; }
+.kt-tpr .tpr-skel-row { display: flex; flex-direction: column; gap: 8px; padding: 18px 24px; border-bottom: 1px solid var(--color-divider); }
+
+/* dialogs */
+.kt-industry .kt-dialog.tpr-start-dialog { width: min(560px, 100%); }
+.kt-industry .kt-dialog.tpr-dialog { width: min(520px, 100%); }
+.kt-tpr .tpr-dialog-body { display: flex; flex-direction: column; gap: 12px; }
+.kt-tpr .tpr-preview-frame { width: 100%; height: 70vh; border: 1px solid var(--color-divider); background: #fff; }
+.kt-industry .kt-dialog.tpr-preview-dialog { width: min(1100px, 96vw); }
+.kt-tpr .tpr-inline-link { font-size: 12px; }

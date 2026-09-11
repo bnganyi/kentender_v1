@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "drawdown_line_id",
+  "plan_item_line_id",
+  "source_line_id",
+  "contributing_org_unit",
+  "approved_quantity",
+  "approved_value",
+  "remaining_quantity",
+  "remaining_value",
+  "requested_quantity",
+  "requested_value",
+  "unit",
+  "reservation_id",
+  "planning_drawdown_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "drawdown_line_id",
+   "fieldtype": "Data",
+   "label": "Drawdown Line Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan_item_line_id",
+   "fieldtype": "Data",
+   "label": "Plan Item Line Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_line_id",
+   "fieldtype": "Data",
+   "label": "Source Line Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contributing_org_unit",
+   "fieldtype": "Link",
+   "label": "Contributing Org Unit",
+   "options": "Organisation Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_quantity",
+   "fieldtype": "Float",
+   "label": "Approved Quantity"
+  },
+  {
+   "fieldname": "approved_value",
+   "fieldtype": "Currency",
+   "label": "Approved Value"
+  },
+  {
+   "fieldname": "remaining_quantity",
+   "fieldtype": "Float",
+   "label": "Remaining Quantity"
+  },
+  {
+   "fieldname": "remaining_value",
+   "fieldtype": "Currency",
+   "label": "Remaining Value"
+  },
+  {
+   "fieldname": "requested_quantity",
+   "fieldtype": "Float",
+   "label": "Requested Quantity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_value",
+   "fieldtype": "Currency",
+   "label": "Requested Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit"
+  },
+  {
+   "fieldname": "reservation_id",
+   "fieldtype": "Data",
+   "label": "Reservation Id"
+  },
+  {
+   "fieldname": "planning_drawdown_reference",
+   "fieldtype": "Data",
+   "label": "Planning Drawdown Reference"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Requisition Drawdown Line",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

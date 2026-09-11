@@ -5,7 +5,8 @@
 | Document ID | STD-ST-001 |
 | Version | 0.4 |
 | Date | 4 September 2026 |
-| Status | Proposed for approval |
+| Status | **Approved** |
+| Approved on | 7 September 2026 |
 | Supersedes | v0.3, approved 27 August 2026 |
 | Decision under test | STD-ADR-002 v1.0 |
 | Comparative examples | NSSF ERP tender; KEBS laptops/desktops/iPad tender; Kenya eGP desktop-computer tender export; Adole Footbridge WORKS tender |
@@ -15,7 +16,7 @@
 
 ## Approval effect
 
-Approval of STD-ST-001 v0.3 made its comparative findings and minimal product direction binding for subsequent KenTender design, and that remains true. v0.4 changes only the §10 correction and the STD-STD-001 citation above; on its own approval, the same findings continue to bind, now stated against the current authorization model:
+Approval of STD-ST-001 v0.3 made its comparative findings and minimal product direction binding for subsequent KenTender design, and that remains true. v0.4 changed only the §10 correction and the STD-STD-001 citation above; its own approval makes the same findings continue to bind, now stated against the current authorization model:
 
 - KenTender shall not build an operational, user-configurable STD Configuration engine;
 - supported STDs shall be delivered as a small number of code-owned, versioned tender patterns;

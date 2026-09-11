@@ -13,10 +13,10 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import flt, format_datetime, get_datetime, now_datetime
+from frappe.utils import flt, get_datetime, now_datetime
 
 from kentender_budget.services.budget_authorization import require_budget_read_scope, require_budget_version_read_scope
-from kentender_budget.services.budget_contracts import _user_label
+from kentender_budget.services.budget_contracts import _display_datetime, _user_label
 
 # Must match Budget Audit Event.event_type exactly (kentender_budget/doctype/
 # budget_audit_event/budget_audit_event.json).
@@ -174,7 +174,7 @@ def _row_dto(r) -> dict[str, Any]:
 		"event_type": event_type,
 		"event_type_label": _DISPLAY_LABEL.get(event_type, event_type),
 		"event_at": str(event_at) if event_at else "",
-		"event_at_display": format_datetime(ea) if ea else "—",
+		"event_at_display": _display_datetime(ea) if ea else "—",
 		"budget_line": r.get("budget_line") or "",
 		"downstream_reference": r.get("downstream_reference") or "",
 		"amount": flt(r.get("amount")) if r.get("amount") is not None else None,

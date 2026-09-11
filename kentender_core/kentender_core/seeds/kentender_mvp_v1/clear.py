@@ -340,6 +340,8 @@ def purge_kentender_playwright_data(*, commit: bool = True) -> dict[str, Any]:
 				include_canonical=False, include_playwright=True
 			),
 			"users": purge_test_local_users(),
+			"tender_preparation": _clear_tender_preparation_playwright_rows(),
+			"requisitions": _clear_requisitions_playwright_rows(),
 		}
 		if commit:
 			frappe.db.commit()
@@ -349,16 +351,94 @@ def purge_kentender_playwright_data(*, commit: bool = True) -> dict[str, Any]:
 		raise
 
 
+def _clear_requisitions_playwright_rows() -> dict[str, Any]:
+	from kentender_procurement.procurement_requisitions.seeds.clear import (
+		clear_requisition_fixture_rows,
+	)
+
+	return clear_requisition_fixture_rows(include_canonical=False, include_playwright=True)
+
+
+def _clear_requisitions_playwright_rows_canonical() -> dict[str, Any]:
+	"""Revoke the base fixture's authorisation (through the real command, so
+	Planning's drawdown and Budget's reservations unwind cleanly) before the
+	canonical clear, matching this build's own "never wipe an Authorised
+	Requisition's rows directly" lesson."""
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import (
+		COMBINED_ITEM_TITLE,
+		_plan_item_id,
+	)
+
+	frappe.set_user("Administrator")
+	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
+	root_name = (
+		frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised"}, "name")
+		if plan_item_id
+		else None
+	)
+	if root_name:
+		root = frappe.get_doc("Procurement Requisition", root_name)
+		has_active_reservation = frappe.db.exists(
+			"Funding Reservation", {"calling_module": "Procurement Requisitions", "caller_reference": root.requisition_reference, "status": "Active"}
+		)
+		if root.handoff_consumed_at:
+			if has_active_reservation:
+				frappe.throw(f"{root_name}'s handoff is already consumed and its Budget reservation is still Active — its authorisation cannot be reset.")
+			# Consumed, but nothing Active remains to orphan (Tender Preparation
+			# or an earlier revoke already released the position) — the local
+			# rows can be cleared directly.
+		elif has_active_reservation:
+			from kentender_procurement.procurement_requisitions.services import authorise
+
+			previous_user = frappe.session.user
+			frappe.set_user("charles.mutiso@moh.example.test")
+			try:
+				authorise.revoke_unconsumed_authorisation(
+					requisition=root_name, reason="KENTENDER_MVP_V1 reseed — resetting the base fixture.",
+					expected_record_version=root.record_version, idempotency_key=f"req-seed-clear:{root_name}",
+				)
+			finally:
+				frappe.set_user(previous_user)
+
+	from kentender_procurement.procurement_requisitions.seeds.clear import (
+		clear_requisition_fixture_rows,
+	)
+
+	return clear_requisition_fixture_rows(include_canonical=True, include_playwright=False)
+
+
+def _clear_tender_preparation_canonical() -> dict[str, Any]:
+	"""TPR-CHG-001 v0.6 §16 — release the canonical handoff's consumption
+	(through Requisitions' seam) and drop the Tender rows before Requisitions'
+	own clear can revoke its authorisation."""
+	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
+
+	frappe.set_user("Administrator")
+	return clear_tender_fixture_rows(include_canonical=True, include_playwright=False)
+
+
+def _clear_tender_preparation_playwright_rows() -> dict[str, Any]:
+	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
+
+	return clear_tender_fixture_rows(include_canonical=False, include_playwright=True)
+
+
 def clear_kentender_mvp_v1(
 	*,
 	include_strategy: bool = True,
 	include_budget: bool = True,
 	include_demands: bool = True,
 	include_planning: bool = False,
+	include_requisitions: bool = False,
+	include_tender_preparation: bool = False,
 ) -> dict[str, Any]:
 	out: dict[str, Any] = {"ok": True}
 	out["scope_assignments"] = clear_kentender_mvp_v1_scope_assignments()
-	# Reverse dependency: Planning → Demands → Budget → Strategy.
+	# Reverse dependency: Tender Preparation → Requisitions → Planning → Demands → Budget → Strategy.
+	if include_tender_preparation:
+		out["tender_preparation"] = _clear_tender_preparation_canonical()
+	if include_requisitions:
+		out["requisitions"] = _clear_requisitions_playwright_rows_canonical()
 	if include_planning:
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
 			clear_planning_fixture_rows,

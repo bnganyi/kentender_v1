@@ -54,11 +54,13 @@ ACCOUNTING_OFFICER = "plnt.ao@example.test"
 STATUTORY = "plnt.statutory@example.test"
 AUDITOR = "plnt.auditor@example.test"
 OUTSIDER = "plnt.outsider@example.test"
+# REQ-CHG-001 v1.6 §9.1A — the sole authoriser of a Requisition's drawdown.
+HOPF = "plnt.hopf@example.test"
 # §6.1: role combinations are permitted — the conflict is between actions.
 HYBRID = "plnt.hybrid@example.test"
 HYBRID_FINANCE = "plnt.hybridfinance@example.test"
 HYBRID_AO = "plnt.hybridao@example.test"
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_FINANCE, HYBRID_AO)
+ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_FINANCE, HYBRID_AO, HOPF)
 
 NEED = "NEED-PLNT-0001"
 NEED_V1 = "NEED-PLNT-0001-V1"
@@ -152,6 +154,7 @@ def ensure_world() -> None:
 		(FINANCE_OFFICER, "PLNT Finance Officer"), (ACCOUNTING_OFFICER, "PLNT Accounting Officer"),
 		(STATUTORY, "PLNT Statutory Approver"), (AUDITOR, "PLNT Auditor"), (OUTSIDER, "PLNT Outsider"),
 		(HYBRID, "PLNT Hybrid"), (HYBRID_FINANCE, "PLNT Hybrid Finance"), (HYBRID_AO, "PLNT Hybrid AO"),
+		(HOPF, "PLNT Head of Procurement Function"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU_ALPHA)
@@ -171,6 +174,7 @@ def ensure_world() -> None:
 	_grant(HYBRID_AO, "Procurement Planner")
 	_grant(HYBRID_AO, "Accounting Officer")
 	_grant(HYBRID_AO, "Plan Statutory Approver")
+	_grant(HOPF, "Head of Procurement Function")
 
 	# the single-valued intake flag: move it onto the test year, remember
 	# what was open so restore_site() can put it back

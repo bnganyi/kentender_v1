@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "acceptance_requirement_id",
+  "applies_to_scope",
+  "applies_to_id",
+  "check_type",
+  "pass_condition",
+  "evidence_type",
+  "other_evidence_name",
+  "row_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "acceptance_requirement_id",
+   "fieldtype": "Data",
+   "label": "Acceptance Requirement Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applies_to_scope",
+   "fieldtype": "Select",
+   "label": "Applies To Scope",
+   "options": "Item\nService\nAll items",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applies_to_id",
+   "fieldtype": "Data",
+   "label": "Applies To Id"
+  },
+  {
+   "fieldname": "check_type",
+   "fieldtype": "Select",
+   "label": "Check Type",
+   "options": "Quantity\nPhysical condition\nRequired specification\nFunctional test\nInstallation complete\nDocuments received\nOther objective check",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pass_condition",
+   "fieldtype": "Small Text",
+   "label": "Pass Condition",
+   "reqd": 1,
+   "length": 500
+  },
+  {
+   "fieldname": "evidence_type",
+   "fieldtype": "Select",
+   "label": "Evidence Type",
+   "options": "Inspection record\nTest result\nDelivery note\nCertificate\nOther stated record",
+   "reqd": 1
+  },
+  {
+   "fieldname": "other_evidence_name",
+   "fieldtype": "Data",
+   "label": "Other Evidence Name"
+  },
+  {
+   "fieldname": "row_order",
+   "fieldtype": "Int",
+   "label": "Row Order"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Requisition Acceptance Requirement",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

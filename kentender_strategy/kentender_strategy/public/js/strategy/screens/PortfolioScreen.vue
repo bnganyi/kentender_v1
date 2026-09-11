@@ -1,7 +1,9 @@
 <script setup>
 // STR-UI-01 Strategy Portfolio (STR-DES-01/02/10). Routes:
 //   /app/strategy            Plans tab
-//   /app/strategy/my-work    My work tab
+//   /app/strategy/my-work    Actions tab (route slug kept as "my-work" —
+//                            the shared My Work aggregator's own name;
+//                            only the displayed label went neutral)
 //   /app/strategy/new        New strategic plan draft form
 import { ref, reactive, computed, onMounted, onActivated, watch } from "vue";
 import { useRouteState } from "../../strategy_shared/composables/useRouteState.js";
@@ -203,7 +205,7 @@ async function submitDraft() {
 			<template v-else>
 				<div class="kt-tabs">
 					<div class="kt-tab" data-testid="str-tab-plans" :aria-selected="activeTab === 'plans'" @click="go()">{{ __("Plans") }} <span class="kt-count">{{ plans.length }}</span></div>
-					<div class="kt-tab" data-testid="str-tab-my-work" :aria-selected="activeTab === 'my-work'" @click="go('my-work')">{{ __("My work") }} <span class="kt-count">{{ myWork.length }}</span></div>
+					<div class="kt-tab" data-testid="str-tab-my-work" :aria-selected="activeTab === 'my-work'" @click="go('my-work')">{{ __("Actions") }} <span class="kt-count">{{ myWork.length }}</span></div>
 				</div>
 
 				<p v-if="error" class="kt-muted" data-testid="str-refresh-error">{{ __("The list could not be refreshed. Showing the last loaded plans.") }}</p>

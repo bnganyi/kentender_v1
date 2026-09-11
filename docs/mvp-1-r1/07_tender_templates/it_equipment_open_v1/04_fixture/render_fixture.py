@@ -5,7 +5,7 @@ from jinja2 import Environment, StrictUndefined, select_autoescape
 
 
 ROOT = Path(__file__).resolve().parents[1]
-input_path = ROOT / "04_fixture" / "kebs_input.json"
+input_path = ROOT / "04_fixture" / "moh_input.json"
 
 environment = Environment(
     autoescape=select_autoescape(enabled_extensions=("html",)),
@@ -15,8 +15,8 @@ environment = Environment(
 context = json.loads(input_path.read_text(encoding="utf-8"))
 
 outputs = (
-    ("invitation_to_tender.html", "kebs_invitation_expected.html"),
-    ("complete_tender.html", "kebs_expected.html"),
+    ("invitation_to_tender.html", "moh_invitation_expected.html"),
+    ("complete_tender.html", "moh_expected.html"),
 )
 
 for template_name, output_name in outputs:

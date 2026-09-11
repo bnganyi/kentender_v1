@@ -115,6 +115,7 @@ const PASSWORD = "Test@123";
 const BUDGET_OFFICER = "josphat.mwangi@moh.example.test";
 const BUDGET_APPROVER = "beatrice.kamau@moh.example.test";
 const AUDITOR = "naomi.chebet@moh.example.test";
+const NO_ASSIGNMENT_ACTOR = "samuel.otieno@moh.example.test";
 
 const EMPTY_FY = "2063-2064";
 
@@ -249,18 +250,30 @@ test.describe("Budget & Funding — design fidelity", () => {
 		await openArtboard(art, `${DESIGN_DIR}/Workspace State - Forbidden.dc.html`, ARTBOARD_SCOPE);
 		const artBody = (await art.locator(`${ARTBOARD_SCOPE} .card`).innerText()).trim();
 		expect(artBody).toContain("Ask your KenTender administrator to review your Budget assignment.");
+		// The artboard still carries v1.3's copy ("…review your Budget
+		// assignment."); BUD-CHG-001 v1.6 §11.16 / BUD-AC-040 and KT-STD-001
+		// §3A.4 replaced it with the responsibility list and the System setup
+		// pointer, which is what the live page shows (FOLLOW_UPS FU-06 family:
+		// artboard text lags the governing spec section).
 
-		await loginAsBudgetOfficer(page);
-		await page.route("**/api/method/**get_budget_workspace*", async (route) => {
-			await route.fulfill({ status: 403, contentType: "application/json", body: "{}" });
-		});
+		// KT-STD-001 §3A.2 — the verdict is data, not an HTTP 403 (a 403 would
+		// also raise Frappe's own "Not permitted" modal). Samuel Otieno is the
+		// register's no-Budget-responsibility actor (§8.3: expired assignment),
+		// so the real page-load path is exercised, not a mocked response.
+		const errors = collectPageErrors(page);
+		await login(page, NO_ASSIGNMENT_ACTOR, PASSWORD);
 		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-fy-filter"]', { timeout: 30_000 });
-		await page.selectOption('[data-testid="budget-fy-filter"]', "2027-2028");
-		await page.waitForSelector("text=You do not have access to Budget & Funding.", { timeout: 20_000 });
-		await expect(page.getByText("Ask your KenTender administrator to review your Budget assignment.")).toBeVisible();
+		await page.waitForSelector('[data-testid="bud-forbidden"]', { timeout: 30_000 });
+		await expect(page.getByText("You do not have access to Budget & Funding")).toBeVisible();
+		await expect(
+			page.getByText("Budget Officer, Budget Approver, Finance Confirmation Officer or Auditor")
+		).toBeVisible();
+		await expect(page.getByText("Ask your KenTender administrator to assign one in System setup.")).toBeVisible();
+		// §3A.1 — no content, empty state or permission modal behind the panel.
+		expect(await page.locator('[data-testid="budget-summary-card"]').count()).toBe(0);
+		expect(await page.locator(".modal.show").count()).toBe(0);
+		expect(errors, "console errors").toEqual([]);
 
-		await page.unrouteAll({ behavior: "ignoreErrors" });
 		await art.close();
 	});
 
@@ -364,7 +377,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding/MOH-BUD-2027-001/activity", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/BUD-FIDELITY-REVIEW/activity", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="budget-detail-activity-table"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-07");
@@ -396,7 +409,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding/line/MOH-BL-DHI-2027", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/line/BUD-FIDELITY-REVIEW-DHI", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-line-reservations-table"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-06A");
@@ -482,7 +495,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/MOH-BUD-2027-001-V2", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-task-readiness"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-08");
@@ -496,7 +509,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/MOH-BUD-2027-001-V2/lines", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/lines", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-task-lines-table"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-09");
@@ -510,7 +523,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/MOH-BUD-2027-001-V2/changes", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/changes", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-task-changes-table"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-10");
@@ -524,7 +537,7 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/MOH-BUD-2027-001-V2/history", { waitUntil: "domcontentloaded" });
+		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/history", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-task-history-table"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-11");
