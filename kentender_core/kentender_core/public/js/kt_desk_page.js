@@ -26,6 +26,33 @@
 //                                renders instantly and refreshes in place.
 //   ownsRoute(route)           — true for a registered page: the shell router
 //                                must not tear this page's chrome down.
+//   createCommandRunner(vue, opts) — the pending-guard + try/catch/finally
+//                                shape every command handler needs, so it is
+//                                written once instead of re-copied per screen.
+//                                `opts.onStart(label)`/`opts.onError(err,
+//                                label)` keep each screen's own error-surface
+//                                convention (inline banner vs. dialog field);
+//                                `opts.mintKey(label)` keeps each screen's own
+//                                idempotency-key convention. Root cause this
+//                                fixes: `run()` correctly held `pending` across
+//                                the mutating call, but every hand-copied
+//                                version let the caller fire the post-save
+//                                reload *after* `run()` returned — outside the
+//                                pending window — so the optimistic-lock stamp
+//                                (`record_version`/`expected_version`/
+//                                `modified`) a very next command reads could
+//                                still be the pre-save value (confirmed live
+//                                2026-09-11: Departmental Needs' Save draft
+//                                followed immediately by Submit was refused as
+//                                a stale write; Budget silently reverted an
+//                                edit made in that window). The reload must be
+//                                awaited *inside* the function passed to
+//                                `run()`, before its `finally` clears pending
+//                                — see AGENTS.md §6.4.
+//   createSequenceGuard()      — the "every loader carries a sequence token"
+//                                obligation from AGENTS.md §6.4, as a
+//                                two-line utility instead of a hand-rolled
+//                                `let request = 0` counter per screen.
 frappe.provide("kentender_core.desk_page");
 
 (function () {
@@ -256,6 +283,43 @@ frappe.provide("kentender_core.desk_page");
 		return { route: route, go: go, epoch: epoch, isShown: shown };
 	}
 
+	function createCommandRunner(vue, opts) {
+		opts = opts || {};
+		var pending = vue.ref(false);
+
+		function run(fn, actionLabel) {
+			if (pending.value) return Promise.resolve(null);
+			pending.value = true;
+			if (opts.onStart) opts.onStart(actionLabel);
+			var key = opts.mintKey ? opts.mintKey(actionLabel) : undefined;
+			return Promise.resolve()
+				.then(function () {
+					return fn(key);
+				})
+				.catch(function (e) {
+					if (opts.onError) opts.onError(e, actionLabel);
+					return null;
+				})
+				.finally(function () {
+					pending.value = false;
+				});
+		}
+
+		return { pending: pending, run: run };
+	}
+
+	function createSequenceGuard() {
+		var token = 0;
+		return {
+			next: function () {
+				return ++token;
+			},
+			isCurrent: function (candidate) {
+				return candidate === token;
+			},
+		};
+	}
+
 	function createScreenCache() {
 		var store = new Map();
 		return {
@@ -294,6 +358,8 @@ frappe.provide("kentender_core.desk_page");
 		},
 		releaseChrome: releaseChrome,
 		useRoute: useRoute,
+		createCommandRunner: createCommandRunner,
+		createSequenceGuard: createSequenceGuard,
 		createScreenCache: createScreenCache,
 		isActive: function (pageSlug) {
 			var group = groupFor(pageSlug);

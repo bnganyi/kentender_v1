@@ -200,7 +200,11 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 			"budget_line": r.budget_line,
 			"budget_line_code": codes.get(r.budget_line, ""),
 			"title": r.title,
-			"owner_org_unit": r.owner_org_unit,
+			# Entity-wide is stored as NULL but travels as "" — the same value
+			# the save contract accepts and the editor's "Entity-wide" option
+			# carries. A null here left the <select> matching no option, so a
+			# reloaded Entity-wide line looked blank/unset (2026-09-11).
+			"owner_org_unit": r.owner_org_unit or "",
 			"owner_org_unit_label": _org_unit_label(r.owner_org_unit),
 			"funding_source": r.funding_source,
 			"approved_amount": flt(r.approved_amount),

@@ -364,6 +364,7 @@ from kentender_budget.services import budget_check_reserve_contracts as check_re
 
 REVIEW_REF = "BUD-FIDELITY-REVIEW"
 REVIEW_DHI_LINE_REF = f"{REVIEW_REF}-DHI"
+REVIEW_HWD_LINE_REF = f"{REVIEW_REF}-HWD"
 if not _budget_exists(REVIEW_REF):
     fy = _ensure_isolated_fy(2064)
     prior_user = frappe.session.user
@@ -401,6 +402,15 @@ if not _budget_exists(REVIEW_REF):
             "budget_line",
         )
         frappe.db.set_value("Procurement Budget Line", dhi_line, "generated_reference", REVIEW_DHI_LINE_REF, update_modified=False)
+        # The HWD line stays reservation-free: BUD-DES-06's "no reservation"
+        # target (the canonical MOH-BL-HWD-2027 carries the Requisitions
+        # canonical seed's reservations since SEED-OPS-001 stage promotion).
+        hwd_line = frappe.db.get_value(
+            "Procurement Budget Line Version",
+            {"budget_version": version_name, "title": "Digital health workforce development"},
+            "budget_line",
+        )
+        frappe.db.set_value("Procurement Budget Line", hwd_line, "generated_reference", REVIEW_HWD_LINE_REF, update_modified=False)
         submit_result = readiness.submit_budget_version({"budget_version": version_name})
         if not submit_result.get("ok"):
             frappe.throw(f"Budget fidelity seed: could not submit review baseline: {submit_result.get('blockers')}")
