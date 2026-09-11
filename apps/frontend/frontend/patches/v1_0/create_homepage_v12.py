@@ -23,16 +23,13 @@ def create_homepage():
     
     page.insert(ignore_permissions=True, ignore_if_duplicate=True)
     frappe.db.commit()
-    print("✅ Homepage created")
 
     ws = frappe.get_doc("Website Settings")
     ws.home_page = "home"
     ws.save(ignore_permissions=True)
     frappe.db.commit()
-    print("✅ Website Settings: home_page = 'home'")
 
     frappe.clear_cache()
-    print("🌐 Visit: http://localhost:8000/")
 
 
 PAGE_HTML = r"""

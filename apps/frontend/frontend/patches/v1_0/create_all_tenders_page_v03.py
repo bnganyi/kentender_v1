@@ -21,7 +21,6 @@ def create_all_tenders_page():
 
     frappe.db.commit()
     frappe.clear_cache()
-    print("✅ All Tenders page created at /tenders")
 
 
 PAGE_HTML = r"""

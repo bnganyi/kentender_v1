@@ -21,7 +21,6 @@ def create_private_industry_page():
 
     frappe.db.commit()
     frappe.clear_cache()
-    print("✅ Private Sector page created at /industry/private")
 
 
 PAGE_HTML = r"""

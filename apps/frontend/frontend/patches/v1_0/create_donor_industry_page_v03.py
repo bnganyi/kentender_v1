@@ -21,7 +21,6 @@ def create_donor_industry_page():
 
     frappe.db.commit()
     frappe.clear_cache()
-    print("✅ Donor-Funded page created at /industry/donor")
 
 
 PAGE_HTML = r"""

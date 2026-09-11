@@ -21,7 +21,6 @@ def create_about_page():
 
     frappe.db.commit()
     frappe.clear_cache()
-    print("✅ About page created at /about")
 
 
 PAGE_HTML = r"""

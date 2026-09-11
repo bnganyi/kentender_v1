@@ -21,7 +21,6 @@ def create_awarded_tenders_page():
 
     frappe.db.commit()
     frappe.clear_cache()
-    print("✅ Awarded Tenders page created at /contracts")
 
 
 PAGE_HTML = r"""
