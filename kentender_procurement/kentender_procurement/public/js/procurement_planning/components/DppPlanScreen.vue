@@ -165,6 +165,7 @@
 		<div class="pln-footer-bar">
 			<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
 			<div class="pln-footer-actions">
+				<span v-if="plan.submit_hint" class="kt-muted" data-testid="dpp-submit-hint">{{ plan.submit_hint }}</span>
 				<button
 					v-if="plan.mutable"
 					type="button"

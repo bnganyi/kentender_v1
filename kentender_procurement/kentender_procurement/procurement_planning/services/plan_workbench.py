@@ -77,8 +77,9 @@ def _entry_doc(dpp_entry: str, fiscal_year: str, plan_version: str = ""):
 	# a live allocation in the version being formed into blocks re-use; rows
 	# on a returned predecessor or the Active plan are history, not a claim
 	# (a correction/successor copies its own allocations and releases them
-	# on dissolve)
-	live = {"dpp_entry": entry.name, "allocation_state": ("in", ("Draft", "Active"))}
+	# on dissolve). An allocation pinned to an earlier DPP copy of the same
+	# unchanged source is the same claim (§7.1).
+	live = {"dpp_entry": ("in", plan_read.same_source_lineage(entry.name)), "allocation_state": ("in", ("Draft", "Active"))}
 	if plan_version:
 		live["plan_version"] = plan_version
 	if frappe.db.exists("Plan Source Allocation", live):

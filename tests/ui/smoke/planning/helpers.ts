@@ -164,7 +164,8 @@ export async function expectReady(page: Page, screen: string): Promise<void> {
 	await expect(shell).toHaveAttribute("data-refreshing", "false", { timeout: 30_000 });
 }
 
-/** The fixture year is the only year with intake open, so it resolves as the default. */
+/** The fixture pins the fixture year as each actor's remembered planning year (the
+ *  default otherwise follows the year whose Annual Plan is in force — the seed's). */
 export async function expectFixtureYear(page: Page): Promise<void> {
 	await expect(page.locator('[data-testid="pln-fy-select"]')).toHaveValue(FY);
 }

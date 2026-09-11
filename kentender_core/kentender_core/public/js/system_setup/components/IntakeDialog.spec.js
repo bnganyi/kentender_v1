@@ -39,6 +39,23 @@ describe("IntakeDialog", () => {
 		expect(wrapper.find('[data-testid="kt-fy-intake-confirm"]').classes()).toContain("kt-danger");
 	});
 
+	it("the plan purpose carries its own copy and the same controls (CFG v0.9 §4.2)", () => {
+		const open = mountDialog({ mode: "open", purpose: "plan", replaces: { fiscal_year: "2026-2027", label: "FY 2026/27" } });
+		expect(open.find('[data-testid="kt-fy-intake"]').attributes("data-purpose")).toBe("plan");
+		expect(open.find(".kt-dialog-title").text()).toBe("Open plan submission");
+		expect(open.text()).toContain("Departments will be able to submit their departmental procurement plans for FY 2027/28.");
+		expect(open.find('[data-testid="kt-fy-intake-replaces"]').text()).toContain(
+			"Plan submission can be open for one financial year at a time. Submission for FY 2026/27 will close when you continue."
+		);
+		expect(open.find('[data-testid="kt-fy-intake-confirm"]').text()).toBe("Open plan submission");
+		expect(open.text()).not.toContain("needs");
+
+		const close = mountDialog({ mode: "close", purpose: "plan" });
+		expect(close.find(".kt-dialog-title").text()).toBe("Close plan submission?");
+		expect(close.text()).toContain("returned corrections and updates to accepted plans are unaffected");
+		expect(close.find('[data-testid="kt-fy-intake-confirm"]').classes()).toContain("kt-danger");
+	});
+
 	it("confirm emits the trimmed reason, and a close instant only in open mode", async () => {
 		const wrapper = mountDialog({ mode: "close" });
 		await wrapper.find('[data-testid="kt-fy-intake-reason"]').setValue("  Needs call closed.  ");

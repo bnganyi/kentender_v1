@@ -362,6 +362,24 @@ class TestDppIntakeFlag(ConfigurationTestCase):
 		configuration.close_needs_submission(fiscal_year=y1, reason="test close")
 		self.assertFalse(configuration.get_dpp_submission_state()["open"])
 
+	def test_the_endpoints_and_the_register_expose_the_dpp_flag(self):
+		"""PLN-CHG-001 §4 — the Administrator maintains the flag in the Fiscal
+		years section of System setup: the whitelisted endpoints exist and the
+		register row carries the state the tab renders."""
+		from kentender_core.api import site_configuration_api as api
+
+		y2 = self.fy(Y2)
+		out = api.open_dpp_submission(fiscal_year=y2, closes_at="2099-05-31 20:59:59", reason="Plans called.")
+		self.assertTrue(out["open"])
+		row = next(r for r in api.list_fiscal_years()["fiscal_years"] if r["fiscal_year"] == y2)
+		self.assertTrue(row["dpp_submission_open"])
+		self.assertIn("2099", row["dpp_submission_closes_label"])
+		self.assertFalse(row["needs_submission_open"])
+		api.close_dpp_submission(fiscal_year=y2, reason="Done.", expected_version=frappe.db.get_value("Fiscal Year", y2, "modified"))
+		row = next(r for r in api.list_fiscal_years()["fiscal_years"] if r["fiscal_year"] == y2)
+		self.assertFalse(row["dpp_submission_open"])
+		self.assertEqual(row["dpp_submission_closes_label"], "")
+
 	def test_scheduled_close_reaches_the_dpp_flag(self):
 		y2 = self.fy(Y2)
 		configuration.open_dpp_submission(fiscal_year=y2, closes_at=str(now_datetime().replace(year=2099)))

@@ -81,7 +81,12 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 			limit_page_length=0,
 		)
 		status, kind = ROOT_STATUS.get(root.current_state, (root.current_state, "muted"))
-		if root.current_state in ("Draft", "Withdrawn") and not window_open:
+		# §4.3 — the root's state follows its current Version, so a Draft here
+		# is either a plan never submitted or an update open beside an
+		# accepted Version. Only the former can miss the window.
+		if root.current_state == "Draft" and root.current_accepted_version:
+			status, kind = "Accepted · update in progress", "attention"
+		elif root.current_state in ("Draft", "Withdrawn") and not window_open and not root.current_accepted_version:
 			status, kind = "Not submitted — window closed", "critical"
 		rows.append(
 			{
@@ -89,6 +94,7 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 				"department": _ou_label(root.organisation_unit),
 				"organisation_unit": root.organisation_unit,
 				"version": version_number,
+				"state": root.current_state,
 				"requirements": len(entries),
 				"value": _money(sum(flt(e.indicative_amount) for e in entries if not cstr(e.not_proceeding_reason).strip())),
 				"status": status,
@@ -115,13 +121,12 @@ def _accepted_unallocated(fiscal_year: str) -> tuple[int, float, list[str]]:
 		fields=["name", "indicative_amount", "dpp_version"],
 		limit_page_length=0,
 	)
-	allocated = set(
-		frappe.get_all(
-			"Plan Source Allocation",
-			filters={"dpp_entry": ("in", [e.name for e in entries] or ("",)), "allocation_state": ("in", ("Draft", "Active"))},
-			pluck="dpp_entry",
-		)
-	)
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	# §7.1 — an allocation pinned to an earlier copy of an unchanged entry
+	# claims the current copy too, so a DPP update does not re-offer sources
+	# the Plan already carries.
+	allocated = plan_read.allocated_current_entries(fiscal_year)
 	free = [e for e in entries if e.name not in allocated]
 	departments = sorted({_ou_label(unit_by_version[e.dpp_version]) for e in free})
 	return len(free), sum(flt(e.indicative_amount) for e in free), departments
@@ -135,13 +140,18 @@ def _not_included(fiscal_year: str, window_open: bool) -> dict[str, str] | None:
 		sources = needs_intake.current_accepted_sources(fiscal_year)
 	except Exception:
 		return None
-	covered = set(
-		frappe.get_all(
-			"Departmental Plan",
-			filters={"fiscal_year": fiscal_year, "current_state": ("in", ("Submitted", "Accepted", "Returned"))},
-			pluck="organisation_unit",
-		)
+	# A department with an accepted Version is covered whatever its current
+	# Version's state — an open update (§4.3) is not a missed window.
+	roots = frappe.get_all(
+		"Departmental Plan",
+		filters={"fiscal_year": fiscal_year},
+		fields=["organisation_unit", "current_state", "current_accepted_version"],
 	)
+	covered = {
+		r.organisation_unit
+		for r in roots
+		if r.current_state in ("Submitted", "Accepted", "Returned") or r.current_accepted_version
+	}
 	stranded = [s for s in sources if cstr(s.get("org_unit_id")) not in covered]
 	if not stranded:
 		return None
@@ -193,13 +203,20 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		row = next((r for r in dpp_rows if r["organisation_unit"] == unit["id"]), None)
 		if row is None:
 			if window_open:
-				actionable.append(_action("Open departmental plan", unit["name"], "Open departmental plan", [PAGE, "open", unit["id"]]))
+				# the §5.1 "Open departmental plan" command — labelled as what it
+				# does for the user, never as "Open" beside a navigate button
+				actionable.append(
+					_action(
+						f"No departmental plan yet for {context.get('financial_year_label') or fy}",
+						unit["name"], "Start departmental plan", [PAGE, "open", unit["id"]],
+					)
+				)
 			continue
-		if row["status"] == "Draft":
-			actionable.append(_action("Continue departmental plan", f"{row['department']} · {row['requirements']} requirements", "Open", row["route"], "attention"))
-		elif row["status"] == "Returned":
-			actionable.append(_action("Correct and resubmit departmental plan", row["department"], "Open", row["route"], "critical"))
-		elif row["status"] == "Awaiting validation":
+		if row["state"] == "Draft" and row["status_kind"] != "critical":
+			actionable.append(_action("Continue departmental plan", f"{row['department']} · {row['requirements']} requirements", "Continue", row["route"], "attention"))
+		elif row["state"] == "Returned":
+			actionable.append(_action("Correct and resubmit departmental plan", row["department"], "Correct", row["route"], "critical"))
+		elif row["state"] == "Submitted":
 			waiting.append({"item": "Departmental plan awaiting validation", "scope": row["department"]})
 
 	plan = frappe.db.get_value(

@@ -475,16 +475,22 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		)
 
 		# a DPP update, resubmitted and re-accepted, copies the entry onto a
-		# new document under the same stable entry_id (§12.7)
+		# new document under the same stable entry_id (§12.7) — and here the
+		# department changes its funding, so the allocated copy is stale
 		frappe.set_user(fx.HOD)
 		update = dpp_lifecycle.create_departmental_plan_update(
 			departmental_plan=dpp_root,
 			expected_record_version=frappe.db.get_value("Departmental Plan", dpp_root, "record_version"),
 			idempotency_key=key(),
 		)
+		changed = dpp_lifecycle.save_direct_requirement(
+			dpp_version=update["current_version"], entry_id=entry_id,
+			values=fx.direct_values(indicative_amount=2000000),
+			expected_record_version=update["record_version"], idempotency_key=key(),
+		)
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=update["current_version"], certification_confirmed=True,
-			expected_record_version=update["record_version"], idempotency_key=key(),
+			expected_record_version=changed["record_version"], idempotency_key=key(),
 		)
 		task2 = frappe.get_doc(
 			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
@@ -521,3 +527,60 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		)
 		new_item = plan_read.get_plan_item(plan_item_id=reformed["created_items"][0])
 		self.assertFalse(new_item["source_correction_required"])
+
+	def test_an_unchanged_successor_copy_is_the_same_source(self):
+		"""§7.1 — a DPP update that only *adds* a requirement copies the
+		existing entries verbatim. The allocated predecessor copy and the
+		current copy are one source: no correction flag, nothing re-offered as
+		unallocated, no duplicate item formable (agreed 2026-09-11)."""
+		accepted, item_id = self.one_item()
+		allocated_entry = frappe.get_all("Plan Source Allocation", filters={"plan_item_id": item_id}, pluck="dpp_entry")[0]
+		dpp_root = frappe.db.get_value("Departmental Plan", {"dpp_reference": accepted["dpp_reference"]})
+
+		frappe.set_user(fx.HOD)
+		update = dpp_lifecycle.create_departmental_plan_update(
+			departmental_plan=dpp_root,
+			expected_record_version=frappe.db.get_value("Departmental Plan", dpp_root, "record_version"),
+			idempotency_key=key(),
+		)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=update["current_version"], values=fx.direct_values(title="Late requirement"),
+			expected_record_version=update["record_version"], idempotency_key=key(),
+		)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=update["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task2 = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		copied_entry_id = frappe.db.get_value("Departmental Plan Entry", allocated_entry, "entry_id")
+		dpp_validation.accept_departmental_plan(
+			task=task2.name, classifications={copied_entry_id: "Goods", added["entry_id"]: "Goods"},
+			task_token=task2.task_token, idempotency_key=key(),
+		)
+		current_copy = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": update["current_version"], "entry_id": copied_entry_id}, "name",
+		)
+		self.assertNotEqual(current_copy, allocated_entry)
+
+		self.assertFalse(plan_read.get_plan_item(plan_item_id=item_id)["source_correction_required"])
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertFalse(plan["plan_items"][0]["source_correction_required"])
+		self.assertEqual(plan["summary"]["accepted_entries"], 2)
+		self.assertEqual(plan["summary"]["allocated"], 1)
+		self.assertEqual([row["entry_id"] for row in plan["unallocated_sources"]], [added["entry_id"]])
+		self.assertNotIn("PLN_SOURCE_CORRECTION_REQUIRED", [b["code"] for b in plan["blockers"]])
+
+		# the current copy cannot be formed into a second item
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.form_plan_items(
+				plan_version=accepted["annual_plan_version"], dpp_entries=[current_copy],
+				mode="each", expected_record_version=plan["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_SOURCE_UNAVAILABLE")
+
+		# the workspace offers only the genuinely new entry for consolidation
+		from kentender_procurement.procurement_planning.services import workspace
+
+		ready = [a for a in workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["actionable"] if "ready to consolidate" in a["headline"]]
+		self.assertEqual(ready[0]["headline"], "1 accepted departmental entry ready to consolidate")

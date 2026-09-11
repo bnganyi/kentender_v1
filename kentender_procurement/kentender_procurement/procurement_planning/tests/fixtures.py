@@ -195,6 +195,9 @@ def restore_site() -> None:
 	from kentender_core.seeds import site_setup
 
 	frappe.set_user("Administrator")
+	# the per-test wipe runs in setUp, so without this the last test's rows
+	# outlive the run and surface to real users as selectable years
+	wipe_planning_rows()
 	for year in _previous_open.get("dpp", []):
 		if year != FY_OPEN and frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, site_configuration.DPP_FLAG_OPEN):
 			site_configuration.open_dpp_submission(fiscal_year=year, reason="test cleanup: restore the previously open year")

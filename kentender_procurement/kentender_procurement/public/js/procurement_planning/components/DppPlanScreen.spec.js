@@ -192,6 +192,17 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		);
 	});
 
+	it("tells a non-HoD why the ready plan's Submit is disabled", () => {
+		const author = make({
+			...READY_PLAN, access: "author", can_submit: false,
+			certification: { ...READY_PLAN.certification, show: false },
+			submit_hint: "Only the Head of User Department, or an acting head, can submit this plan.",
+		});
+		expect(author.find('[data-testid="dpp-submit-hint"]').text()).toContain("Head of User Department");
+		expect(author.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeDefined();
+		expect(make(READY_PLAN).find('[data-testid="dpp-submit-hint"]').exists()).toBe(false);
+	});
+
 	it("a non-mutable plan offers no editing affordances at all", () => {
 		const submitted = {
 			...READY_PLAN,

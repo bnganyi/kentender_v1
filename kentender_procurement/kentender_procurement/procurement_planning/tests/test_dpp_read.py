@@ -103,9 +103,11 @@ class TestGetDepartmentalPlan(DppReadCase):
 		self.assertEqual(author_view["header"]["badge"], "Ready to submit")
 		self.assertIsNone(author_view["readiness"])
 		self.assertFalse(author_view["can_submit"])  # author is not the HoD
+		self.assertIn("Head of User Department", author_view["submit_hint"])
 		frappe.set_user(fx.HOD)
 		hod_view = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(hod_view["can_submit"])
+		self.assertEqual(hod_view["submit_hint"], "")
 		self.assertTrue(hod_view["certification"]["show"])
 		self.assertIn(fx.OU_ALPHA_NAME, hod_view["certification"]["text"])
 		self.assertIn("FY 2101/02", hod_view["certification"]["text"])
@@ -262,6 +264,13 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.assertFalse(after["can_create_update"])
 		self.assertIsNone(after["update_notice"])
 		self.assertTrue(after["mutable"])
+		# the window gates only a first submission (§5.1) — say so on the update
+		fx.close_test_intake()
+		self.addCleanup(fx.open_test_intake)
+		self.assertEqual(
+			dpp_read.get_departmental_plan(dpp_reference=reference)["context"]["window"]["display"],
+			"Closed · corrections and updates may still be submitted",
+		)
 		self.assertEqual(after["version"]["version_number"], 2)
 		self.assertIn("Accepted Need · NEED-PLNT-0001", [row["source_label"] for row in after["entries"]])
 		self.assertEqual(after["header"]["badge"], "Draft")

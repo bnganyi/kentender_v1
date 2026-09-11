@@ -1622,6 +1622,7 @@ Only the load-error component may display a generated support reference. Do not 
 - Where at least one Active Plan Version exists in the actor's scope, the workspace shows one schedule-health count — Plan Items currently forecast behind baseline across every Active plan visible to the actor. Absent while no Active plan exists yet, never shown as zero-of-zero.
 - The actionable-work area renders as one or more headline-plus-button rows in a single card, never as a generic multi-column table with column headers, and is entirely absent — not shown empty — when nothing is currently actionable. The departmental-plans list beneath it is supporting detail for that card, not a second unrelated dataset, and its heading states that relationship rather than leaving it implicit.
 - No role receives a separate sidebar work-queue menu. The sole **Procurement Planning** entry, shared **My Work** and notifications link to the same authorised tasks.
+- Departmental action rows name the outcome, never the verb "Open" for both creating and navigating: **No departmental plan yet for FY …** with the button **Start departmental plan** (runs the §5.1 Open departmental plan command); **Continue departmental plan** with **Continue**; **Correct and resubmit departmental plan** with **Correct**. In the departmental-plans list a department whose accepted Version has an open successor reads **Accepted · update in progress**, never as a plan that missed the window.
 - Search and counts never disclose another PE, FY, OU, task or Plan.
 
 ### 12.2 PLN-UI-02 — Departmental Plan

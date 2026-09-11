@@ -220,9 +220,9 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 				...WORKSPACE,
 				actionable: [
 					{
-						headline: "Open departmental plan",
+						headline: "No departmental plan yet for FY 2027/28",
 						supporting: "Digital Health",
-						action: "Open departmental plan",
+						action: "Start departmental plan",
 						route: ["procurement-planning", "open", "OU-0001"],
 					},
 				],

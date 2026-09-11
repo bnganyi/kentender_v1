@@ -20,7 +20,7 @@ from frappe.utils import cstr, flt, fmt_money, format_datetime, formatdate
 from kentender_core.services import site_configuration
 from kentender_procurement.procurement_planning.services import budget_gateway, needs_intake, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
-from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, entry_is_complete
+from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, _has_any_submission, entry_is_complete
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_AUDITOR, ROLE_PROCUREMENT_PLANNER
 
 NAIROBI = "Africa/Nairobi"
@@ -211,6 +211,14 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 				),
 			}
 	attestation = ATTESTATION.format(department=labels["department_name"], financial_year=labels["financial_year"])
+	# §5.1 — the window gates only a first submission; a plan that has been
+	# submitted before may still send corrections and updates after close.
+	window = _window_display(root.fiscal_year)
+	if window["state"] == "Closed" and _has_any_submission(root):
+		window = {**window, "display": "Closed · corrections and updates may still be submitted"}
+	submit_hint = ""
+	if mutable and ready and access != "hod":
+		submit_hint = "Only the Head of User Department, or an acting head, can submit this plan."
 	return {
 		"outcome": "OK",
 		"access": access,
@@ -233,9 +241,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"context": {
 			"department": labels["department"],
 			"financial_year": labels["financial_year"],
-			"window": _window_display(root.fiscal_year),
+			"window": window,
 		},
 		"readiness": readiness,
+		"submit_hint": submit_hint,
 		"entries": entries,
 		"totals_caption": totals_caption if entries else "",
 		"certification": {
