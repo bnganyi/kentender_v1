@@ -66,6 +66,7 @@
 						@back="frappe.set_route(WORKSPACE_PAGE)"
 						@save-draft="load({ quiet: true })"
 						@submit="onSubmit"
+						@create-update="onCreateUpdate"
 					/>
 				</template>
 
@@ -575,6 +576,19 @@ async function onSubmit() {
 		})
 	);
 	if (result) await load({ quiet: true });
+}
+
+async function onCreateUpdate() {
+	// The route stays on the same DPP: the reload now serves the Draft successor.
+	await run("create-dpp-update", async (key) => {
+		const r = await api.createDepartmentalPlanUpdate({
+			departmental_plan: dpp.value.dpp_reference,
+			expected_record_version: dpp.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onSaveFunding(payload) {

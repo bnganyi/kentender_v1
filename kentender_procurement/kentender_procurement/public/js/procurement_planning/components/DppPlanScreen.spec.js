@@ -207,3 +207,46 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		expect(w.findAll('[data-testid="dpp-entries"] tbody tr button')).toHaveLength(0);
 	});
 });
+
+describe("DppPlanScreen — accepted plan update (§5.1)", () => {
+	const ACCEPTED_PLAN = {
+		...READY_PLAN,
+		mutable: false,
+		can_submit: false,
+		can_create_update: true,
+		update_notice: null,
+		certification: { ...READY_PLAN.certification, show: false },
+		entries: READY_PLAN.entries.map((row) => ({ ...row, action: "" })),
+		header: { ...READY_PLAN.header, badge: "Accepted", badge_kind: "live" },
+	};
+
+	it("carries Create update in the header and emits it", async () => {
+		const w = make(ACCEPTED_PLAN);
+		const button = w.find('[data-testid="dpp-create-update"]');
+		expect(button.text()).toBe("Create update");
+		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
+		expect(w.find('[data-testid="dpp-update-notice"]').exists()).toBe(false);
+		await button.trigger("click");
+		expect(w.emitted("create-update")).toHaveLength(1);
+	});
+
+	it("names the accepted Needs the plan is missing", () => {
+		const w = make({
+			...ACCEPTED_PLAN,
+			update_notice: {
+				title: "1 accepted need is not in this plan",
+				text: "NDS-MOH-2027-0005 accepted after this plan was accepted.",
+			},
+		});
+		const notice = w.find('[data-testid="dpp-update-notice"]');
+		expect(notice.text()).toContain("1 accepted need is not in this plan");
+		expect(notice.text()).toContain("NDS-MOH-2027-0005");
+	});
+
+	it("is withheld from a planner and while the update is pending", () => {
+		const planner = make({ ...ACCEPTED_PLAN, access: "planner", can_create_update: false });
+		expect(planner.find('[data-testid="dpp-create-update"]').exists()).toBe(false);
+		const pending = make(ACCEPTED_PLAN, { pending: true });
+		expect(pending.find('[data-testid="dpp-create-update"]').attributes("disabled")).toBeDefined();
+	});
+});

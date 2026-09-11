@@ -172,6 +172,34 @@ test.describe("PLN-UI-02..05 Departmental Procurement Plan", () => {
 		await expect(page.locator('[data-testid="dpp-entries"] .kt-btn-ghost')).toHaveCount(0);
 	});
 
+	test("the department creates an update from its accepted plan and lands on the Draft successor (§5.1)", async ({ page }) => {
+		/**
+		 * The only route by which a Need accepted after the plan was accepted
+		 * reaches that plan. The command existed server-side but nothing in the
+		 * screen called it (reported live 2026-09-11).
+		 */
+		const state = resetFixture<DppState>("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, AUTHOR, PASSWORD);
+		await gotoDpp(page, state.dpp_reference);
+		await expectReady(page, "dpp");
+		await expect(page.locator('[data-testid="dpp-badge"]')).toHaveText("Accepted");
+		await expect(page.locator(".pln-quiet-ref")).toContainText("Version 1");
+		await expect(page.locator('[data-testid="dpp-add-direct"]')).toHaveCount(0);
+
+		await page.locator('[data-testid="dpp-create-update"]').click();
+
+		// same route, now serving the copied Draft successor
+		await expect(page.locator(".pln-quiet-ref")).toContainText("Version 2");
+		await expect(page.locator('[data-testid="dpp-badge"]')).toHaveText("Ready to submit");
+		await expect(page).toHaveURL(new RegExp(`/departmental-procurement-plan/${state.dpp_reference}$`));
+		await expect(page.locator('[data-testid="dpp-create-update"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="dpp-add-direct"]')).toBeVisible();
+		await expect(page.locator('[data-testid="dpp-entries"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="dpp-error"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
 	test("a direct URL to a nonexistent plan fails closed on the load-error component", async ({ page }) => {
 		await login(page, AUTHOR, PASSWORD);
 		await gotoDpp(page, "DPP-NOPE-0000-000");

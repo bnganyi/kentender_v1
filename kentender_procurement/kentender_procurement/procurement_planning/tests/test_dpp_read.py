@@ -206,6 +206,67 @@ class TestEntryEditorRead(DppReadCase):
 			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
 
 
+class TestAcceptedPlanUpdate(DppReadCase):
+	"""§5.1 'Accepted; change required → Create update' as the read model
+	offers it — the only route by which a Need accepted after the plan was
+	accepted can reach that plan."""
+
+	def accepted(self) -> str:
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={added["entry_id"]: "Consulting services"},
+		)
+		return opened["dpp_reference"]
+
+	def test_accepted_plan_offers_create_update_to_the_department_only(self):
+		reference = self.accepted()
+		frappe.set_user(fx.AUTHOR)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["header"]["badge"], "Accepted")
+		self.assertFalse(view["mutable"])
+		self.assertTrue(view["can_create_update"])
+		self.assertIsNone(view["update_notice"])
+		frappe.set_user(fx.HOD)
+		self.assertTrue(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
+		frappe.set_user(fx.PLANNER)
+		self.assertFalse(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
+
+	def test_a_need_accepted_later_is_named_and_the_update_carries_it(self):
+		reference = self.accepted()
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["update_notice"]["title"], "1 accepted need is not in this plan")
+		self.assertIn("NEED-PLNT-0001", view["update_notice"]["text"])
+
+		update = dpp_lifecycle.create_departmental_plan_update(
+			departmental_plan=reference, expected_record_version=view["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(update["action"], "update_created")
+		after = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertFalse(after["can_create_update"])
+		self.assertIsNone(after["update_notice"])
+		self.assertTrue(after["mutable"])
+		self.assertEqual(after["version"]["version_number"], 2)
+		self.assertIn("Accepted Need · NEED-PLNT-0001", [row["source_label"] for row in after["entries"]])
+		self.assertEqual(after["header"]["badge"], "Draft")
+
+
 class TestValidationTaskRead(DppReadCase):
 	def submitted_task(self):
 		opened = self.opened()
