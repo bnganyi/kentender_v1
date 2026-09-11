@@ -241,9 +241,29 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </div>
     </div>
 
-    <div class="hidden md:block">
-      <a href="/login" class="btn-primary text-sm"><i class="fas fa-rocket mr-2"></i>Start Free Trial</a>
-    </div>
+    <div class="hidden md:block" style="display:block !important;">
+  <a href="/login" 
+     class="btn-primary text-sm"
+     style="display:inline-flex !important;
+            visibility:visible !important;
+            opacity:1 !important;
+            background:linear-gradient(135deg,#0047AB,#003580) !important;
+            color:#ffffff !important;
+            padding:12px 24px !important;
+            border-radius:10px !important;
+            font-weight:600 !important;
+            font-size:14px !important;
+            text-decoration:none !important;
+            align-items:center !important;
+            gap:8px !important;
+            white-space:nowrap !important;
+            min-width:180px !important;
+            justify-content:center !important;">
+    <i class="fas fa-rocket" style="color:#ffffff !important;"></i>
+    <span style="color:#ffffff !important;">Start Free Trial</span>
+  </a>
+</div>
+
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
   </nav>
