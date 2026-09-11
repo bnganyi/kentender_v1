@@ -96,6 +96,38 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
+	test("Create need opens blank after another need was open", async ({ page }) => {
+		/**
+		 * Reported live 2026-09-11: the create editor showed the previously
+		 * opened need's title, description and result. The root fed the editor
+		 * the shared `detail` payload, which entering /new never cleared — the
+		 * create editor must have no source version at all.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page);
+		await expectScreen(page, "workspace");
+		await page
+			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.click();
+		await expectScreen(page, "editor");
+		await expect(page.locator('[data-testid="nds-title"]')).not.toHaveValue("");
+
+		await page.locator('[data-testid="nds-editor-cancel"]').click();
+		await expectScreen(page, "detail");
+		await page.locator(".kt-rail-crumb-link", { hasText: "Departmental Needs" }).click();
+		await expectScreen(page, "workspace");
+		await page.locator('[data-testid="nds-create-need"]').click();
+		await expectScreen(page, "editor");
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		for (const field of ["nds-title", "nds-description", "nds-result", "nds-quantity", "nds-required-by"]) {
+			await expect(page.locator(`[data-testid="${field}"]`)).toHaveValue("");
+		}
+		await expect(page.getByText("Returned for correction")).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
 	test("a Draft opens in the editor and saves", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);

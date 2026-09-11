@@ -51,11 +51,11 @@
 			<NeedEditorScreen
 				v-else-if="screen === 'editor'"
 				:mode="editorMode"
-				:version="detail.current_version || {}"
+				:version="editorVersion"
 				:context="editorContext"
 				:units="units"
 				@unit-created="(unit) => units.push(unit)"
-				:return-reason="detail.latest_return"
+				:return-reason="needReference ? detail.latest_return : null"
 				:error-summary="errorSummary"
 				:field-errors="fieldErrors"
 				:pending="pending"
@@ -303,6 +303,12 @@ const editorMode = computed(() => {
 	// Only a Returned Need is being *corrected*; a Draft is simply continued.
 	return state === "Returned" ? "correct" : "draft";
 });
+
+// `detail` is the last need loaded this session and /new never reloads it, so
+// the create editor must not read it — it would hydrate from that need.
+const editorVersion = computed(() =>
+	needReference.value ? detail.value.current_version || {} : {}
+);
 
 const editorContext = computed(() => {
 	// NDS-DES-15 / §12.1 — the create target's own resolved department and the
