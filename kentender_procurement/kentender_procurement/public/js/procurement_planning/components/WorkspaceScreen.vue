@@ -101,8 +101,17 @@
 						</option>
 					</select>
 				</div>
+				<!-- the Annual Plan record is always one click away, actionable or not -->
 				<span v-if="annualPlanSummary" class="pln-strip-quiet" data-testid="pln-plan-summary">
-					· {{ annualPlanSummary }}
+					·
+					<button
+						type="button"
+						class="pln-strip-link"
+						data-testid="pln-plan-link"
+						@click="$emit('navigate', ['annual-procurement-plan', annualPlanReference])"
+					>
+						{{ annualPlanSummary }}
+					</button>
 				</span>
 				<!-- §12.1 — one schedule-health count, only once an Active plan exists -->
 				<span
@@ -185,7 +194,7 @@
 						<thead>
 							<tr>
 								<th>Department</th>
-								<th class="pln-num">Version</th>
+								<th class="pln-num">Submission</th>
 								<th class="pln-num">Requirements</th>
 								<th class="pln-num">Value</th>
 								<th>Status</th>
@@ -251,6 +260,9 @@ const actionable = computed(() => props.workspace.actionable || []);
 
 const annualPlanSummary = computed(
 	() => (props.workspace.annual_plan || {}).summary || ""
+);
+const annualPlanReference = computed(
+	() => (props.workspace.annual_plan || {}).plan_reference || ""
 );
 
 // PLN-DES-01 names the card after its one row; with mixed work it falls back

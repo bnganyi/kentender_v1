@@ -59,10 +59,10 @@ READ_CONTRACTS = (
 # is gone with the `Needs Intake Window` doctype (§4.1/§16.4.11).
 COMMAND_CONTRACTS = (
 	"save_need_draft",
-	"submit_need_version",
-	"return_need_version",
-	"accept_need_version",
-	"decline_need_version",
+	"submit_need_revision",
+	"return_need_revision",
+	"accept_need_revision",
+	"decline_need_revision",
 	"withdraw_unaccepted_need",
 	"create_accepted_need_successor",
 	"cancel_accepted_need_successor",
@@ -134,7 +134,7 @@ class TestContractSurface(ContractCase):
 			self.assertIn("idempotency_key", params, f"{name} takes no idempotency key")
 
 	def test_the_delegating_endpoints_reach_the_real_commands(self):
-		for name in ("return_need_version", "accept_need_version", "decline_need_version"):
+		for name in ("return_need_revision", "accept_need_revision", "decline_need_revision"):
 			source = inspect.getsource(getattr(api, name))
 			self.assertIn("lifecycle.review_need", source)
 
@@ -236,8 +236,8 @@ class TestAcceptedSourceContract(ContractCase):
 		for field in (
 			"need",
 			"need_reference",
-			"accepted_version",
-			"version_number",
+			"accepted_revision",
+			"revision_number",
 			"content_hash",
 			"organisation_unit",
 			"financial_year",
@@ -308,7 +308,7 @@ class TestPlanningUsageProjection(ContractCase):
 		need = self.accepted_need()
 		values = {
 			"departmental_need": need.name,
-			"accepted_version": need.current_accepted_version,
+			"accepted_revision": need.current_accepted_revision,
 			"usage": USAGE_FULL,
 			"source_event_id": self.key(),
 			"active_plan": "PLN-MOH-2027-001",
@@ -352,7 +352,7 @@ class TestPlanningUsageProjection(ContractCase):
 		self.assertEqual(
 			frappe.db.count(
 				"Need Planning Usage Projection",
-				{"accepted_version": self.accepted_need().current_accepted_version},
+				{"accepted_revision": self.accepted_need().current_accepted_revision},
 			),
 			1,
 		)
@@ -379,7 +379,7 @@ class TestPlanningUsageProjection(ContractCase):
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			project_planning_usage(
 				departmental_need=need.name,
-				accepted_version=need.current_accepted_version,
+				accepted_revision=need.current_accepted_revision,
 				usage=USAGE_FULL,
 				source_event_id=self.key(),
 				active_plan_item="PPI-MOH-2027-021",
@@ -518,9 +518,9 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 
 	def test_each_acceptance_endpoint_accepts_cmd(self):
 		for endpoint, decision in (
-			(api.return_need_version, "return"),
-			(api.accept_need_version, "accept"),
-			(api.decline_need_version, "decline"),
+			(api.return_need_revision, "return"),
+			(api.accept_need_revision, "accept"),
+			(api.decline_need_revision, "decline"),
 		):
 			with self.subTest(decision=decision):
 				frappe.set_user(AUTHOR)

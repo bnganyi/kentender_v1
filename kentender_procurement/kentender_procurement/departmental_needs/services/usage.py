@@ -35,12 +35,12 @@ from kentender_procurement.departmental_needs.services.permissions import (
 )
 
 
-def _projection(accepted_version: str) -> dict[str, Any] | None:
-	if not accepted_version:
+def _projection(accepted_revision: str) -> dict[str, Any] | None:
+	if not accepted_revision:
 		return None
 	row = frappe.db.get_value(
 		"Need Planning Usage Projection",
-		cstr(accepted_version),
+		cstr(accepted_revision),
 		["name", "usage", "active_plan", "active_plan_item", "not_proceeding_reason", "source_event_id", "source_event_time"],
 		as_dict=True,
 	)
@@ -54,22 +54,22 @@ def planning_usage(need: str) -> str:
 	exactly `Not included` — the §14.3 design-clock value for all four seeded
 	Needs.
 	"""
-	accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
-	if not accepted_version:
+	accepted_revision = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
+	if not accepted_revision:
 		return USAGE_NOT_INCLUDED
-	row = _projection(accepted_version)
+	row = _projection(accepted_revision)
 	return cstr(row["usage"]) if row else USAGE_NOT_INCLUDED
 
 
-def planning_usage_detail(need: str, accepted_version: str = "") -> dict[str, Any]:
+def planning_usage_detail(need: str, accepted_revision: str = "") -> dict[str, Any]:
 	"""Usage plus the Plan references that support **View Plan Item** (§4.7)."""
-	version = cstr(accepted_version) or cstr(
-		frappe.db.get_value("Departmental Need", need, "current_accepted_version") or ""
+	version = cstr(accepted_revision) or cstr(
+		frappe.db.get_value("Departmental Need", need, "current_accepted_revision") or ""
 	)
 	row = _projection(version) or {}
 	return {
 		"need": cstr(need),
-		"accepted_version": version,
+		"accepted_revision": version,
 		"usage": cstr(row.get("usage") or USAGE_NOT_INCLUDED),
 		"active_plan": cstr(row.get("active_plan") or ""),
 		"active_plan_item": cstr(row.get("active_plan_item") or ""),
@@ -81,7 +81,7 @@ def planning_usage_detail(need: str, accepted_version: str = "") -> dict[str, An
 def project_planning_usage(
 	*,
 	departmental_need: str,
-	accepted_version: str,
+	accepted_revision: str,
 	usage: str,
 	source_event_id: str,
 	source_event_time: str | None = None,
@@ -115,7 +115,7 @@ def project_planning_usage(
 	if not event_id:
 		fail("NDS_FIELD_REQUIRED", "A source event identifier is required.")
 	need = cstr(departmental_need).strip()
-	version = cstr(accepted_version).strip()
+	version = cstr(accepted_revision).strip()
 	if not frappe.db.exists("Departmental Need", need):
 		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
 	occurred = source_event_time or now_datetime()
@@ -147,7 +147,7 @@ def project_planning_usage(
 			{
 				"doctype": "Need Planning Usage Projection",
 				"departmental_need": need,
-				"accepted_version": version,
+				"accepted_revision": version,
 				"usage": usage_value,
 				"active_plan": cstr(active_plan),
 				"active_plan_item": cstr(active_plan_item),
@@ -159,7 +159,7 @@ def project_planning_usage(
 	return {"ok": True, "idempotent": False, **planning_usage_detail(need, version)}
 
 
-def is_actively_included(accepted_version: str) -> bool:
+def is_actively_included(accepted_revision: str) -> bool:
 	"""Whether an Active Plan currently represents this exact version (NDS-BR-016)."""
-	row = _projection(accepted_version)
+	row = _projection(accepted_revision)
 	return bool(row and cstr(row["usage"]) == USAGE_FULL)

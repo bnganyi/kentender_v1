@@ -61,7 +61,7 @@ MESSAGES: dict[str, str] = {
 	"PLN_NEED_COVERAGE_INCOMPLETE": "Add every current accepted Need to this departmental plan before submitting.",
 	"PLN_ENTRY_INCOMPLETE": "Complete the highlighted requirement fields before submitting.",
 	"PLN_BUDGET_LINE_INELIGIBLE": "Select an Active Procurement Budget Line available to this department and Financial Year.",
-	"PLN_DPP_STALE": "This departmental plan changed. Reload and review the current Version.",
+	"PLN_DPP_STALE": "This departmental plan changed. Reload and review the current Submission.",
 	"PLN_CLASSIFICATION_INCOMPLETE": "Classify every submitted requirement before accepting the plan.",
 	"PLN_SOURCE_UNAVAILABLE": "One or more selected departmental entries are no longer available for Plan Item formation.",
 	"PLN_SOURCE_INCOMPATIBLE": "The selected entries cannot form one Plan Item. Create separate items.",

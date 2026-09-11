@@ -12,18 +12,18 @@ import {
 
 /**
  * NDS-CHG-001 v1.6 — NDS-UI-06 accepted source detail
- * (`/app/departmental-needs/{need_reference}/accepted/{version_number}`).
+ * (`/app/departmental-needs/{need_reference}/accepted/{revision_number}`).
  *
  * The last of DEBT-06's four screens. It is the deep link Procurement Planning
- * follows to read the exact accepted version a Plan Item was built from, so
- * the rule that matters is §12.4: when the pinned version has been superseded,
- * the page stays **historically readable** at the version that was asked for
+ * follows to read the exact accepted revision a Plan Item was built from, so
+ * the rule that matters is §12.4: when the pinned revision has been superseded,
+ * the page stays **historically readable** at the revision that was asked for
  * and names the current one — it must not redirect or silently rewrite the
- * route to the newer version, or Planning's lineage would read as though it
+ * route to the newer revision, or Planning's lineage would read as though it
  * had always pointed at the successor.
  *
- * Fixture: `reset_accepted_source_fixture` — Version 1 accepted then
- * superseded by an accepted Version 2, under the dedicated Playwright
+ * Fixture: `reset_accepted_source_fixture` — Revision 1 accepted then
+ * superseded by an accepted Revision 2, under the dedicated Playwright
  * Organisation Unit (DEBT-07).
  */
 
@@ -40,15 +40,15 @@ test.describe("NDS-UI-06 accepted source detail", () => {
 	});
 	test.afterAll(() => clearFixtures());
 
-	test("a superseded version stays readable at the route that asked for it", async ({ page }) => {
+	test("a superseded revision stays readable at the route that asked for it", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, `/${NEED}/accepted/1`);
 		await expectScreen(page, "detail");
 
-		// §12.4 — the requested version is still the one on screen. Asserting the
+		// §12.4 — the requested revision is still the one on screen. Asserting the
 		// URL is the point: a redirect to /accepted/2 would satisfy any content
-		// check that only looked for "some accepted version".
+		// check that only looked for "some accepted revision".
 		await expect(page).toHaveURL(new RegExp(`/departmental-needs/${NEED}/accepted/1$`));
 		await expect(page.locator('[data-testid="nds-shell"]')).toHaveAttribute(
 			"data-reference",
@@ -57,7 +57,7 @@ test.describe("NDS-UI-06 accepted source detail", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the current accepted version is reachable at its own route", async ({ page }) => {
+	test("the current accepted revision is reachable at its own route", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
 		await gotoNeeds(page, `/${NEED}/accepted/2`);
@@ -66,7 +66,7 @@ test.describe("NDS-UI-06 accepted source detail", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the unpinned detail route shows the Need without a pinned version", async ({ page }) => {
+	test("the unpinned detail route shows the Need without a pinned revision", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, "");

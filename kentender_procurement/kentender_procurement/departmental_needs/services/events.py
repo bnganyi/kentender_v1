@@ -66,11 +66,13 @@ def accepted_payload(need, version) -> dict[str, Any]:
 	attachment, source reference, generic evidence and notes (NDS-AC-024).
 	"""
 	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
+	# Wire keys are frozen per NDS-CHG-001 v1.10 §7.1: `accepted_version_id`,
+	# `version_number` etc. keep their names even though the doctype says Revision.
 	return {
 		"need_id": need.name,
 		"need_reference": need.need_reference,
 		"accepted_version_id": version.name,
-		"version_number": int(version.version_number or 0),
+		"version_number": int(version.revision_number or 0),
 		"content_hash": cstr(version.content_hash),
 		"org_unit_id": need.organisation_unit,
 		"financial_year_id": need.financial_year,
@@ -90,7 +92,7 @@ def _append(
 	event_type: str,
 	payload: dict[str, Any],
 	version: str = "",
-	superseded_version: str = "",
+	superseded_revision: str = "",
 ) -> str:
 	if event_type not in EVENT_TYPES:
 		raise ValueError(f"{event_type!r} is not a published Departmental Needs event contract.")
@@ -109,8 +111,8 @@ def _append(
 			"event_type": event_type,
 			"departmental_need": need.name,
 			"sequence": _next_sequence(need.name),
-			"need_version": version or None,
-			"superseded_version": superseded_version or None,
+			"need_revision": version or None,
+			"superseded_revision": superseded_revision or None,
 			"occurred_at": occurred_at,
 			"payload": json.dumps(body, sort_keys=True, indent=None),
 			"status": STATUS_PENDING,
@@ -149,7 +151,7 @@ def publish_superseded(need, *, earlier, successor) -> str:
 			"successor_accepted_payload": accepted_payload(need, successor),
 		},
 		version=successor.name,
-		superseded_version=earlier.name,
+		superseded_revision=earlier.name,
 	)
 
 
@@ -261,20 +263,20 @@ def current_accepted_events(*, financial_year: str, organisation_unit: str = "")
 			**({"organisation_unit": cstr(organisation_unit)} if organisation_unit else {}),
 			"current_state": "Accepted for planning",
 		},
-		fields=["name", "current_accepted_version"],
+		fields=["name", "current_accepted_revision"],
 		order_by="need_reference asc",
 		limit_page_length=0,
 	)
 	out = []
 	for row in needs:
-		if not row.current_accepted_version:
+		if not row.current_accepted_revision:
 			continue
 		event = frappe.db.get_value(
 			"Departmental Need Event",
 			{
 				"departmental_need": row.name,
 				"event_type": EVENT_ACCEPTED,
-				"need_version": row.current_accepted_version,
+				"need_revision": row.current_accepted_revision,
 			},
 			"payload",
 			order_by="sequence desc",

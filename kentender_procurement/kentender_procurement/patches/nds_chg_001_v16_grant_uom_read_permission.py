@@ -4,7 +4,8 @@
 """NDS-CHG-001 v1.6 D6 — the three Departmental Needs business roles need read
 access to ERPNext's native ``UOM`` doctype.
 
-D6 retargets ``Departmental Need Version.unit`` from KenTender's own retired
+D6 retargets ``Departmental Need Revision.unit`` (then named ``Departmental
+Need Version``; renamed by NDS-CHG-001 v1.9) from KenTender's own retired
 ``Unit Of Measure`` doctype to ERPNext's native ``UOM`` (NDS-504), and the need
 editor (``DepartmentalNeeds.vue::loadUnits``) reads the catalogue directly via
 ``frappe.db.get_list("UOM", ...)`` — a client-side call that enforces UOM's own

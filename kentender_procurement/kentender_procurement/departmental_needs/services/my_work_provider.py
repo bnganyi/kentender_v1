@@ -33,8 +33,8 @@ from kentender_procurement.departmental_needs.services.permissions import in_sco
 def _row(task: Any, need: Any) -> dict[str, Any]:
 	withdrawal = task.task_type == TASK_WITHDRAWAL
 	title = (
-		cstr(frappe.db.get_value("Departmental Need Version", task.need_version, "title"))
-		if task.need_version
+		cstr(frappe.db.get_value("Departmental Need Revision", task.need_revision, "title"))
+		if task.need_revision
 		else ""
 	)
 	route = ["departmental-needs", "review", task.name]
@@ -80,7 +80,7 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 		fields=[
 			"name",
 			"departmental_need",
-			"need_version",
+			"need_revision",
 			"task_type",
 			"organisation_unit",
 			"financial_year",

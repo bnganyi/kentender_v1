@@ -149,7 +149,7 @@ import { quickCreate } from "../../nds_shared/composables/quickCreate.js";
 
 const props = defineProps({
 	mode: { type: String, default: "create" }, // create | correct | successor
-	version: { type: Object, default: () => ({}) },
+	revision: { type: Object, default: () => ({}) },
 	context: { type: Object, default: () => ({}) },
 	units: { type: Array, default: () => [] },
 	returnReason: { type: Object, default: null },
@@ -209,7 +209,7 @@ const form = reactive({
 
 const FORM_SOURCE_FIELDS = [
 	"name",
-	"version_number",
+	"revision_number",
 	"title",
 	"description",
 	"expected_operational_result",
@@ -220,21 +220,21 @@ const FORM_SOURCE_FIELDS = [
 let hydratedFrom = null;
 
 watch(
-	() => props.version,
-	(version) => {
+	() => props.revision,
+	(revision) => {
 		// An in-place refresh that returns the same content carries nothing
 		// new — re-hydrating would discard what the user has typed since.
-		const signature = JSON.stringify(FORM_SOURCE_FIELDS.map((field) => version?.[field] ?? null));
+		const signature = JSON.stringify(FORM_SOURCE_FIELDS.map((field) => revision?.[field] ?? null));
 		if (signature === hydratedFrom) return;
 		hydratedFrom = signature;
-		form.title = version?.title || "";
-		form.description = version?.description || "";
-		form.expected_operational_result = version?.expected_operational_result || "";
+		form.title = revision?.title || "";
+		form.description = revision?.description || "";
+		form.expected_operational_result = revision?.expected_operational_result || "";
 		form.indicative_quantity =
-			version?.indicative_quantity == null ? "" : version.indicative_quantity;
-		form.unit = version?.unit || "";
-		form.required_by_date = version?.required_by_date
-			? String(version.required_by_date).slice(0, 10)
+			revision?.indicative_quantity == null ? "" : revision.indicative_quantity;
+		form.unit = revision?.unit || "";
+		form.required_by_date = revision?.required_by_date
+			? String(revision.required_by_date).slice(0, 10)
 			: "";
 	},
 	{ immediate: true, deep: true }
@@ -261,13 +261,13 @@ const LEDES = {
 	draft: "Describe one requirement your department expects to include in procurement planning.",
 	correct: "Correct the requirement and resubmit it for departmental review.",
 	successor:
-		"Propose an update to the accepted need. The accepted version stays current until this update is accepted.",
+		"Propose an update to the accepted need. The accepted revision stays current until this update is accepted.",
 };
 
 const heading = computed(() => HEADINGS[props.mode] || HEADINGS.create);
 const lede = computed(() => LEDES[props.mode] || LEDES.create);
 const statusLabel = computed(() =>
-	props.mode === "create" ? "New" : props.version?.version_status || "Draft"
+	props.mode === "create" ? "New" : props.revision?.revision_status || "Draft"
 );
 const submitLabel = computed(() =>
 	["create", "draft"].includes(props.mode) ? "Submit for review" : "Resubmit for review"

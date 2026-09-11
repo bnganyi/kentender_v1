@@ -18,6 +18,16 @@
 				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('view-accepted-needs')">
 					View accepted needs
 				</button>
+				<!-- FU-14: the actor who holds the open task reaches it from the record -->
+				<button
+					v-if="plan.open_task"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="dpp-open-task"
+					@click="$emit('open-task', plan.open_task.route)"
+				>
+					{{ plan.open_task.label }}
+				</button>
 				<!-- PLN-DES-05: the HoD's ready plan carries Submit in the header;
 				     PLN-DES-02: a mutable draft carries Add direct requirement. -->
 				<button
@@ -208,6 +218,7 @@ defineEmits([
 	"save-draft",
 	"submit",
 	"create-update",
+	"open-task",
 	"update:certified",
 ]);
 

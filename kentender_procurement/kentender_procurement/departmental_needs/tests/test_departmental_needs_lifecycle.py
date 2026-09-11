@@ -38,13 +38,13 @@ from kentender_procurement.departmental_needs.constants import (
 	TASK_INITIAL_ACCEPTANCE,
 	TASK_OPEN,
 	TASK_SUCCESSOR_ACCEPTANCE,
-	VERSION_ACCEPTED,
-	VERSION_DRAFT,
-	VERSION_NOT_TAKEN_FORWARD,
-	VERSION_RETURNED,
-	VERSION_SUBMITTED,
-	VERSION_SUPERSEDED,
-	VERSION_WITHDRAWN,
+	REVISION_ACCEPTED,
+	REVISION_DRAFT,
+	REVISION_NOT_TAKEN_FORWARD,
+	REVISION_RETURNED,
+	REVISION_SUBMITTED,
+	REVISION_SUPERSEDED,
+	REVISION_WITHDRAWN,
 	WITHDRAWAL_AWAITING_CLEARANCE,
 	WITHDRAWAL_AWAITING_REVIEW,
 	USAGE_FULL,
@@ -225,10 +225,10 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		return self.decide(self.submit(self.create()), "accept")
 
 	def version(self, name: str):
-		return frappe.get_doc("Departmental Need Version", name)
+		return frappe.get_doc("Departmental Need Revision", name)
 
 	def status_of(self, name: str) -> str:
-		return frappe.db.get_value("Departmental Need Version", name, "version_status")
+		return frappe.db.get_value("Departmental Need Revision", name, "revision_status")
 
 	def project_usage(self, need: str, version: str, usage: str) -> dict:
 		"""Report Planning usage the way Planning does — through the §8.2 event.
@@ -241,7 +241,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		try:
 			return project_planning_usage(
 				departmental_need=need,
-				accepted_version=version,
+				accepted_revision=version,
 				usage=usage,
 				source_event_id=self.key(),
 				active_plan="PLN-NDS-LIFECYCLE-TEST" if usage == USAGE_FULL else "",
@@ -273,12 +273,12 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 	def test_create_generates_reference_and_draft_version_one(self):
 		result = self.create()
 		need = frappe.get_doc("Departmental Need", result["need"])
-		version = self.version(need.current_version)
+		version = self.version(need.current_revision)
 		self.assertEqual(need.current_state, STATE_DRAFT)
-		self.assertEqual(version.version_number, 1)
-		self.assertEqual(version.version_status, VERSION_DRAFT)
+		self.assertEqual(version.revision_number, 1)
+		self.assertEqual(version.revision_status, REVISION_DRAFT)
 		self.assertTrue(need.need_reference.startswith("NDS-MOH-2027-"))
-		self.assertFalse(need.current_accepted_version)
+		self.assertFalse(need.current_accepted_revision)
 
 	def test_create_outside_the_intake_window_is_refused(self):
 		self.close_window()
@@ -302,7 +302,7 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		)
 		self.assertEqual(saved["action"], "Save draft")
 		self.assertEqual(
-			self.version(saved["current_version"]).title, "Revised clinical deployment laptops"
+			self.version(saved["current_revision"]).title, "Revised clinical deployment laptops"
 		)
 
 	def test_a_partial_draft_round_trips_through_its_own_saved_values(self):
@@ -322,18 +322,18 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			required_by_date=None,
 		)
 		read = workspace.get_need(need=created["need"])
-		self.assertIsNone(read["current_version"]["indicative_quantity"])
+		self.assertIsNone(read["current_revision"]["indicative_quantity"])
 		frappe.set_user(AUTHOR)
 		saved = lifecycle.update_need(
 			need=created["need"],
 			expected_version=created["record_version"],
 			idempotency_key=self.key(),
-			title=read["current_version"]["title"],
-			description=read["current_version"]["description"] or "",
-			expected_operational_result=read["current_version"]["expected_operational_result"] or "",
-			indicative_quantity=read["current_version"]["indicative_quantity"],
-			unit=read["current_version"]["unit"] or "",
-			required_by_date=read["current_version"]["required_by_date"],
+			title=read["current_revision"]["title"],
+			description=read["current_revision"]["description"] or "",
+			expected_operational_result=read["current_revision"]["expected_operational_result"] or "",
+			indicative_quantity=read["current_revision"]["indicative_quantity"],
+			unit=read["current_revision"]["unit"] or "",
+			required_by_date=read["current_revision"]["required_by_date"],
 		)
 		self.assertEqual(saved["action"], "Save draft")
 
@@ -352,9 +352,9 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_submit_locks_the_version_hashes_it_and_opens_one_task(self):
 		result = self.submit(self.create())
-		version = self.version(result["current_version"])
+		version = self.version(result["current_revision"])
 		self.assertEqual(result["current_state"], STATE_SUBMITTED)
-		self.assertEqual(version.version_status, VERSION_SUBMITTED)
+		self.assertEqual(version.revision_status, REVISION_SUBMITTED)
 		self.assertTrue(version.content_hash)
 		tasks = frappe.get_all(
 			"Departmental Need Review Task",
@@ -382,13 +382,13 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_return_preserves_the_submitted_version_and_copies_a_correction_draft(self):
 		submitted = self.submit(self.create())
-		original = submitted["current_version"]
+		original = submitted["current_revision"]
 		returned = self.decide(submitted, "return", reason=REASON)
-		copy = self.version(returned["successor_version"])
+		copy = self.version(returned["successor_revision"])
 		self.assertEqual(returned["current_state"], STATE_RETURNED)
-		self.assertEqual(self.status_of(original), VERSION_RETURNED)
-		self.assertEqual(copy.version_status, VERSION_DRAFT)
-		self.assertEqual(copy.based_on_version, original)
+		self.assertEqual(self.status_of(original), REVISION_RETURNED)
+		self.assertEqual(copy.revision_status, REVISION_DRAFT)
+		self.assertEqual(copy.based_on_revision, original)
 		self.assertEqual(copy.title, self.version(original).title)
 
 	def test_a_resubmitted_correction_keeps_the_returned_version_intact(self):
@@ -399,11 +399,11 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		# for the return would point at content that no longer matches the reason
 		# it was returned for, and the audit trail would silently rewrite itself.
 		submitted = self.submit(self.create())
-		original = submitted["current_version"]
+		original = submitted["current_revision"]
 		original_title = self.version(original).title
 		original_hash = self.version(original).content_hash
 		returned = self.decide(submitted, "return", reason=REASON)
-		correction = returned["successor_version"]
+		correction = returned["successor_revision"]
 
 		frappe.set_user(AUTHOR)
 		lifecycle.update_need(
@@ -424,13 +424,13 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		# The returned version is untouched in content, status and hash.
 		self.assertEqual(self.version(original).title, original_title)
 		self.assertEqual(self.version(original).content_hash, original_hash)
-		self.assertEqual(self.status_of(original), VERSION_RETURNED)
+		self.assertEqual(self.status_of(original), REVISION_RETURNED)
 		# The correction is a distinct, separately numbered version.
-		self.assertEqual(resubmitted["current_version"], correction)
-		self.assertEqual(self.status_of(correction), VERSION_SUBMITTED)
+		self.assertEqual(resubmitted["current_revision"], correction)
+		self.assertEqual(self.status_of(correction), REVISION_SUBMITTED)
 		self.assertNotEqual(self.version(correction).content_hash, original_hash)
 		self.assertEqual(
-			self.version(correction).version_number, self.version(original).version_number + 1
+			self.version(correction).revision_number, self.version(original).revision_number + 1
 		)
 
 	def test_return_without_a_reason_is_refused(self):
@@ -442,8 +442,8 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		accepted = self.decide(self.submit(self.create()), "accept")
 		need = frappe.get_doc("Departmental Need", accepted["need"])
 		self.assertEqual(need.current_state, STATE_ACCEPTED)
-		self.assertEqual(need.current_accepted_version, need.current_version)
-		self.assertEqual(self.status_of(need.current_accepted_version), VERSION_ACCEPTED)
+		self.assertEqual(need.current_accepted_revision, need.current_revision)
+		self.assertEqual(self.status_of(need.current_accepted_revision), REVISION_ACCEPTED)
 		decision = frappe.db.get_value(
 			"Departmental Need Decision",
 			{"departmental_need": need.name, "action": "Accept for planning"},
@@ -458,7 +458,7 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
 		declined = self.decide(submitted, "decline", reason=REASON)
 		self.assertEqual(declined["current_state"], STATE_NOT_TAKEN_FORWARD)
-		self.assertEqual(self.status_of(declined["current_version"]), VERSION_NOT_TAKEN_FORWARD)
+		self.assertEqual(self.status_of(declined["current_revision"]), REVISION_NOT_TAKEN_FORWARD)
 
 	def test_the_maker_of_a_version_cannot_decide_it(self):
 		# NDS-BR-006 / NDS-AC-010 — a Head of User Department who authored the
@@ -507,7 +507,7 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			idempotency_key=self.key(),
 		)
 		self.assertEqual(withdrawn["current_state"], STATE_WITHDRAWN)
-		self.assertEqual(self.status_of(withdrawn["current_version"]), VERSION_WITHDRAWN)
+		self.assertEqual(self.status_of(withdrawn["current_revision"]), REVISION_WITHDRAWN)
 
 	def test_an_accepted_need_cannot_use_self_service_withdrawal(self):
 		accepted = self.accepted()
@@ -580,7 +580,7 @@ class TestDraftContentBounds(ContentValidationCase):
 		# The boundary itself: bounds apply only to a supplied value, or the
 		# title-only Draft that NDS-AC-004 requires could never be saved.
 		saved = self.save_draft(description="", expected_operational_result="")
-		self.assertEqual(self.version(saved["current_version"]).description, "")
+		self.assertEqual(self.version(saved["current_revision"]).description, "")
 
 	def test_a_unit_outside_the_governed_catalogue_cannot_be_stored(self):
 		# NDS-AC-006 — §1.1 removed free-text "Other" outright. An unknown code
@@ -600,12 +600,12 @@ class TestSubmissionValidation(ContentValidationCase):
 
 	def refuses(self, code: str, **overrides):
 		draft = self.save_draft(**overrides)
-		before = self.status_of(draft["current_version"])
+		before = self.status_of(draft["current_revision"])
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.submit(draft)
 		self.assertEqual(caught.exception.code, code)
 		# §5 — a rejected submission is a pure no-op, not a partial transition.
-		self.assertEqual(self.status_of(draft["current_version"]), before)
+		self.assertEqual(self.status_of(draft["current_revision"]), before)
 		self.assertEqual(
 			frappe.db.count(
 				"Departmental Need Review Task",
@@ -666,7 +666,7 @@ class TestCommandControls(DepartmentalNeedsCommandCase):
 				**self.content(title="Should never be written"),
 			)
 		self.assertEqual(caught.exception.code, "NDS_STALE_WRITE")
-		self.assertNotEqual(self.version(result["current_version"]).title, "Should never be written")
+		self.assertNotEqual(self.version(result["current_revision"]).title, "Should never be written")
 
 	def test_a_stale_decision_token_is_refused(self):
 		submitted = self.submit(self.create())
@@ -719,7 +719,7 @@ class TestCommandControls(DepartmentalNeedsCommandCase):
 		# The replay reports the same committed state, and commits nothing new.
 		self.assertEqual(first["record_version"], second["record_version"])
 		self.assertEqual(
-			first["current_accepted_version"], second["current_accepted_version"]
+			first["current_accepted_revision"], second["current_accepted_revision"]
 		)
 		self.assertEqual(
 			frappe.db.count("Departmental Need Decision", {"idempotency_key": key}), 1
@@ -769,11 +769,11 @@ class TestCommandControls(DepartmentalNeedsCommandCase):
 		replay = lifecycle.review_need(**payload)
 		self.assertTrue(replay["idempotent"])
 		need = frappe.get_doc("Departmental Need", accepted["need"])
-		self.assertEqual(need.current_accepted_version, opened["successor_version"])
+		self.assertEqual(need.current_accepted_revision, opened["successor_revision"])
 		# The successor is accepted, not superseded by its own replay.
-		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_ACCEPTED)
+		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_ACCEPTED)
 		self.assertEqual(
-			self.status_of(accepted["current_accepted_version"]), VERSION_SUPERSEDED
+			self.status_of(accepted["current_accepted_revision"]), REVISION_SUPERSEDED
 		)
 		self.assertEqual(
 			frappe.db.count(
@@ -813,14 +813,14 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 	def test_create_update_copies_the_accepted_version_and_leaves_it_effective(self):
 		accepted, opened = self.successor()
 		need = frappe.get_doc("Departmental Need", accepted["need"])
-		copy = self.version(opened["successor_version"])
+		copy = self.version(opened["successor_revision"])
 		# NDS-AC-016 — the accepted version is untouched and still current.
 		self.assertEqual(need.current_state, STATE_ACCEPTED)
-		self.assertEqual(need.current_accepted_version, accepted["current_accepted_version"])
-		self.assertEqual(self.status_of(need.current_accepted_version), VERSION_ACCEPTED)
-		self.assertEqual(copy.version_status, VERSION_DRAFT)
-		self.assertEqual(copy.based_on_version, need.current_accepted_version)
-		self.assertEqual(need.current_version, copy.name)
+		self.assertEqual(need.current_accepted_revision, accepted["current_accepted_revision"])
+		self.assertEqual(self.status_of(need.current_accepted_revision), REVISION_ACCEPTED)
+		self.assertEqual(copy.revision_status, REVISION_DRAFT)
+		self.assertEqual(copy.based_on_revision, need.current_accepted_revision)
+		self.assertEqual(need.current_revision, copy.name)
 
 	def test_only_one_successor_may_be_open(self):
 		accepted, opened = self.successor()
@@ -844,10 +844,10 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		)
 		self.assertEqual(saved["action"], "Save successor")
 		self.assertEqual(
-			str(self.version(opened["successor_version"]).required_by_date), "2027-09-15"
+			str(self.version(opened["successor_revision"]).required_by_date), "2027-09-15"
 		)
 		self.assertEqual(
-			str(self.version(accepted["current_accepted_version"]).required_by_date), "2027-12-31"
+			str(self.version(accepted["current_accepted_revision"]).required_by_date), "2027-12-31"
 		)
 
 	def test_cancelling_an_update_withdraws_only_the_successor(self):
@@ -860,10 +860,10 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 			idempotency_key=self.key(),
 		)
 		need = frappe.get_doc("Departmental Need", accepted["need"])
-		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_WITHDRAWN)
+		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_WITHDRAWN)
 		self.assertEqual(need.current_state, STATE_ACCEPTED)
-		self.assertEqual(need.current_version, accepted["current_accepted_version"])
-		self.assertEqual(cancelled["current_accepted_version"], accepted["current_accepted_version"])
+		self.assertEqual(need.current_revision, accepted["current_accepted_revision"])
+		self.assertEqual(cancelled["current_accepted_revision"], accepted["current_accepted_revision"])
 
 	def test_submitting_an_update_opens_a_successor_task_without_moving_the_root(self):
 		accepted, opened = self.successor()
@@ -872,7 +872,7 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		# The earlier accepted version stays effective, so the root does not move.
 		self.assertEqual(submitted["current_state"], STATE_ACCEPTED)
 		self.assertEqual(
-			submitted["current_accepted_version"], accepted["current_accepted_version"]
+			submitted["current_accepted_revision"], accepted["current_accepted_revision"]
 		)
 		self.assertEqual(
 			frappe.db.get_value(
@@ -886,10 +886,10 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		submitted = self.submit(opened)
 		returned = self.decide(submitted, "return", reason=REASON)
 		need = frappe.get_doc("Departmental Need", accepted["need"])
-		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_RETURNED)
-		self.assertEqual(self.status_of(returned["successor_version"]), VERSION_DRAFT)
+		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_RETURNED)
+		self.assertEqual(self.status_of(returned["successor_revision"]), REVISION_DRAFT)
 		self.assertEqual(need.current_state, STATE_ACCEPTED)
-		self.assertEqual(need.current_accepted_version, accepted["current_accepted_version"])
+		self.assertEqual(need.current_accepted_revision, accepted["current_accepted_revision"])
 
 	def test_accepting_a_successor_atomically_supersedes_the_earlier_version(self):
 		# NDS-AC-017.
@@ -897,24 +897,24 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		result = self.decide(self.submit(opened), "accept")
 		need = frappe.get_doc("Departmental Need", accepted["need"])
 		self.assertEqual(result["action"], ACTION_ACCEPT_SUCCESSOR)
-		self.assertEqual(result["superseded_version"], accepted["current_accepted_version"])
+		self.assertEqual(result["superseded_revision"], accepted["current_accepted_revision"])
 		self.assertEqual(
-			self.status_of(accepted["current_accepted_version"]), VERSION_SUPERSEDED
+			self.status_of(accepted["current_accepted_revision"]), REVISION_SUPERSEDED
 		)
-		self.assertEqual(need.current_accepted_version, opened["successor_version"])
-		self.assertEqual(need.current_version, opened["successor_version"])
-		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_ACCEPTED)
+		self.assertEqual(need.current_accepted_revision, opened["successor_revision"])
+		self.assertEqual(need.current_revision, opened["successor_revision"])
+		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_ACCEPTED)
 
 	def test_declining_a_successor_leaves_the_earlier_version_current(self):
 		# NDS-AC-018.
 		accepted, opened = self.successor()
 		declined = self.decide(self.submit(opened), "decline", reason=REASON)
 		need = frappe.get_doc("Departmental Need", accepted["need"])
-		self.assertEqual(self.status_of(opened["successor_version"]), VERSION_NOT_TAKEN_FORWARD)
+		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_NOT_TAKEN_FORWARD)
 		self.assertEqual(need.current_state, STATE_ACCEPTED)
-		self.assertEqual(need.current_accepted_version, accepted["current_accepted_version"])
-		self.assertEqual(need.current_version, accepted["current_accepted_version"])
-		self.assertEqual(self.status_of(need.current_accepted_version), VERSION_ACCEPTED)
+		self.assertEqual(need.current_accepted_revision, accepted["current_accepted_revision"])
+		self.assertEqual(need.current_revision, accepted["current_accepted_revision"])
+		self.assertEqual(self.status_of(need.current_accepted_revision), REVISION_ACCEPTED)
 		self.assertEqual(declined["current_state"], STATE_ACCEPTED)
 
 
@@ -948,7 +948,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		accepted, requested = self.requested()
 		request = frappe.get_doc("Need Withdrawal Request", requested["withdrawal_request"])
 		self.assertEqual(request.status, WITHDRAWAL_AWAITING_REVIEW)
-		self.assertEqual(request.accepted_version, accepted["current_accepted_version"])
+		self.assertEqual(request.accepted_revision, accepted["current_accepted_revision"])
 		self.assertEqual(requested["current_state"], STATE_ACCEPTED)
 		self.assertEqual(
 			frappe.db.count(
@@ -1014,7 +1014,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(approved["current_state"], STATE_WITHDRAWN)
 		self.assertEqual(approved["withdrawal_status"], "Approved")
 		self.assertEqual(
-			self.status_of(accepted["current_accepted_version"]), VERSION_WITHDRAWN
+			self.status_of(accepted["current_accepted_revision"]), REVISION_WITHDRAWN
 		)
 		self.assertEqual(
 			frappe.db.get_value("Departmental Need Review Task", requested["task"], "status"),
@@ -1031,20 +1031,20 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		accepted, requested = self.requested()
 		self.assertFalse(
 			frappe.db.exists(
-				"Need Planning Usage Projection", accepted["current_accepted_version"]
+				"Need Planning Usage Projection", accepted["current_accepted_revision"]
 			)
 		)
 		self.assertEqual(self.decide_withdrawal(requested, "approve")["current_state"], STATE_WITHDRAWN)
 
 	def test_an_inclusion_that_planning_later_clears_stops_blocking(self):
 		accepted, requested = self.requested()
-		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
-		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
+		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		self.assertEqual(self.decide_withdrawal(requested, "approve")["current_state"], STATE_WITHDRAWN)
 
 	def test_approve_is_blocked_while_an_active_plan_dependency_exists(self):
 		accepted, requested = self.requested()
-		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.decide_withdrawal(requested, "approve")
 		self.assertEqual(caught.exception.code, "NDS_ACTIVE_PLAN_DEPENDENCY")
@@ -1055,7 +1055,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_evaluate_moves_the_request_to_awaiting_planning_clearance(self):
 		accepted, requested = self.requested()
-		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
 		self.assertEqual(evaluated["action"], ACTION_EVALUATE_WITHDRAWAL)
 		self.assertEqual(evaluated["withdrawal_status"], WITHDRAWAL_AWAITING_CLEARANCE)
@@ -1068,7 +1068,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_re_evaluating_while_still_included_changes_no_state(self):
 		accepted, requested = self.requested()
-		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
 		again = self.decide_withdrawal(evaluated, "evaluate")
 		self.assertEqual(again["action"], ACTION_REEVALUATE_WITHDRAWAL)
@@ -1077,11 +1077,11 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 
 	def test_approve_succeeds_once_planning_clears_the_inclusion(self):
 		accepted, requested = self.requested()
-		self.include_in_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		evaluated = self.decide_withdrawal(requested, "evaluate")
 		# Planning clears the inclusion through its own governed route and
 		# publishes NeedPlanningUsageChanged.v1.
-		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_version"])
+		self.clear_from_active_plan(accepted["need"], accepted["current_accepted_revision"])
 		approved = self.decide_withdrawal(evaluated, "approve")
 		self.assertEqual(approved["current_state"], STATE_WITHDRAWN)
 		self.assertEqual(approved["withdrawal_status"], "Approved")
@@ -1095,7 +1095,7 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(declined["withdrawal_status"], WITHDRAWAL_DECLINED)
 		self.assertEqual(declined["current_state"], STATE_ACCEPTED)
 		self.assertEqual(
-			self.status_of(accepted["current_accepted_version"]), VERSION_ACCEPTED
+			self.status_of(accepted["current_accepted_revision"]), REVISION_ACCEPTED
 		)
 
 

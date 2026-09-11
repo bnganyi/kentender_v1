@@ -29,7 +29,7 @@ REQUIRED_PROJECTION_FIELDS = (
 
 REQUIRED_SOURCE_FIELDS = (
 	"plan_source_allocation_id", "plan_item_line_id", "source_line_id", "source_origin", "dpp_entry",
-	"need", "need_version", "organisation_unit", "title", "description", "expected_operational_result",
+	"need", "need_revision", "organisation_unit", "title", "description", "expected_operational_result",
 	"approved_quantity", "remaining_quantity", "unit", "required_by_date", "budget_line", "allocated_amount",
 	"remaining_amount",
 )

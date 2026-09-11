@@ -46,7 +46,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"fixture_namespace",
 	},
 	"Departmental Plan Entry": {
-		"entry_id", "dpp_version", "source_origin", "need", "need_version", "title",
+		"entry_id", "dpp_version", "source_origin", "need", "need_revision", "title",
 		"description", "expected_operational_result", "quantity", "unit",
 		"required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason",
 		"fixture_namespace",
@@ -96,7 +96,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	},
 	"Plan Source Allocation": {
 		"allocation_id", "plan_item", "plan_item_id", "plan_version", "dpp_entry",
-		"source_origin", "need", "need_version", "organisation_unit", "quantity",
+		"source_origin", "need", "need_revision", "organisation_unit", "quantity",
 		"unit", "required_by_date", "budget_line", "indicative_amount",
 		"allocation_state", "fixture_namespace",
 	},

@@ -31,10 +31,10 @@ export const getNeedsSubmissionState = () => frappeCall(`${API}.get_needs_submis
 export const getCurrentAcceptedNeed = (args) =>
 	frappeCall(`${API}.get_current_accepted_need`, args);
 
-export const checkWithdrawalDependency = (need, acceptedVersion) =>
+export const checkWithdrawalDependency = (need, acceptedRevision) =>
 	frappeCall(`${API}.check_accepted_need_withdrawal_dependency`, {
 		need,
-		accepted_version: acceptedVersion,
+		accepted_revision: acceptedRevision,
 	});
 
 // --- §8.2 commands ---------------------------------------------------------
@@ -44,10 +44,10 @@ export const checkWithdrawalDependency = (need, acceptedVersion) =>
 // action (see newIdempotencyKey) rather than per request.
 
 export const saveNeedDraft = (args) => frappeCall(`${API}.save_need_draft`, args);
-export const submitNeedVersion = (args) => frappeCall(`${API}.submit_need_version`, args);
-export const returnNeedVersion = (args) => frappeCall(`${API}.return_need_version`, args);
-export const acceptNeedVersion = (args) => frappeCall(`${API}.accept_need_version`, args);
-export const declineNeedVersion = (args) => frappeCall(`${API}.decline_need_version`, args);
+export const submitNeedRevision = (args) => frappeCall(`${API}.submit_need_revision`, args);
+export const returnNeedRevision = (args) => frappeCall(`${API}.return_need_revision`, args);
+export const acceptNeedRevision = (args) => frappeCall(`${API}.accept_need_revision`, args);
+export const declineNeedRevision = (args) => frappeCall(`${API}.decline_need_revision`, args);
 export const withdrawUnacceptedNeed = (args) =>
 	frappeCall(`${API}.withdraw_unaccepted_need`, args);
 export const createAcceptedNeedSuccessor = (args) =>

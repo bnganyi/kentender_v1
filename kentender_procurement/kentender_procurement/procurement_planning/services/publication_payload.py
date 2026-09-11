@@ -53,7 +53,7 @@ def build_payload(version, plan) -> dict[str, Any]:
 		allocations = frappe.get_all(
 			"Plan Source Allocation",
 			filters={"plan_item": item.name, "allocation_state": ("in", ("Draft", "Active"))},
-			fields=["allocation_id", "budget_line", "indicative_amount", "quantity", "unit", "organisation_unit", "source_origin", "need", "need_version"],
+			fields=["allocation_id", "budget_line", "indicative_amount", "quantity", "unit", "organisation_unit", "source_origin", "need", "need_revision"],
 		)
 		value = sum(flt(a.indicative_amount) for a in allocations)
 		lines = sorted({cstr(a.budget_line) for a in allocations})
@@ -115,7 +115,8 @@ def build_payload(version, plan) -> dict[str, Any]:
 								"unit": a.unit,
 								"origin": a.source_origin,
 								"need": cstr(a.need),
-								"needVersion": cstr(a.need_version),
+								# published payload contract key — kept as-is through the PLN-CHG-001 v1.16 need_revision rename
+								"needVersion": cstr(a.need_revision),
 							}
 							for a in allocations
 						],

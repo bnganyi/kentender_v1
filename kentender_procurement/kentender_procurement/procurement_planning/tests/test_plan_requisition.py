@@ -22,6 +22,7 @@ from kentender_procurement.procurement_planning.services import (
 	needs_intake,
 	plan_finance,
 	plan_governance,
+	plan_publication,
 	plan_read,
 	plan_requisition,
 	plan_workbench,
@@ -698,3 +699,74 @@ class TestRequestShapedEndpoints(RequisitionCase):
 		frappe.set_user(fx.PLANNER)
 		read = self.call("get_requisition_eligible_plan_item", plan_item_id=item_id)
 		self.assertAlmostEqual(read["remaining_value"], 1000000)
+
+
+class TestOpenSuccessorKeepsTheActiveItemEligible(RequisitionCase):
+	"""PLN-CHG-001 v1.14 invariant 18 / §4.4 — "An Active item remains
+	eligible until an acknowledged successor changes it" and "the Active
+	predecessor remains operational until the correction or successor is
+	approved, published and acknowledged".
+
+	Reproduces the live 2026-09-11 defect: with PLN-MOH-2027-001-V2 opened as
+	a Draft successor, Grace Wanjiku's (Departmental Author, OU-MOH-00187)
+	Requisitions workspace returned `Not found` because the eligibility
+	contract resolved `PPI-MOH-2027-001` to the successor's Draft copy (no
+	Active allocation → no contributing unit → OU-scoped reader refused),
+	the Planning editor's "open successor wins" precedence."""
+
+	def active_item_with_open_successor(self) -> tuple[dict, str, str, str]:
+		accepted, item_id = self.active_item(indicative_amount=1000000)
+		active_name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id, "item_state": "Active"}, "name")
+		frappe.set_user(fx.PLANNER)
+		begun = plan_publication.begin_plan_update(plan_reference=accepted["annual_plan"], idempotency_key=key())
+		draft_name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id, "plan_version": begun["successor_version"]}, "name")
+		self.assertEqual(frappe.db.get_value("Annual Plan Item", draft_name, "item_state"), "Draft")
+		return accepted, item_id, active_name, draft_name
+
+	def test_a_contributing_departmental_author_still_reads_the_active_copy(self):
+		accepted, item_id, active_name, draft_name = self.active_item_with_open_successor()
+		frappe.set_user(fx.AUTHOR)  # OU_ALPHA — the Active copy's own contributing unit
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		self.assertTrue(read["eligible"])
+		self.assertEqual(read["version_reference"], frappe.db.get_value("Annual Plan Item", active_name, "plan_version"))
+		self.assertEqual(read["contributing_org_unit_ids"], [fx.OU_ALPHA])
+		self.assertEqual(read["remaining_value"], 1000000)
+		self.assertEqual(len(read["sources"]), 1)
+
+	def test_the_workspace_listing_and_the_detail_name_the_same_item(self):
+		accepted, item_id, active_name, draft_name = self.active_item_with_open_successor()
+		frappe.set_user(fx.AUTHOR)
+		rows = plan_requisition.list_requisition_eligible_plan_items()
+		self.assertIn(item_id, [r["plan_item_id"] for r in rows])
+		for row in rows:
+			# the exact loop Requisitions' `_ready_to_prepare_card` runs
+			plan_requisition.get_requisition_eligible_plan_item(plan_item_id=row["plan_item_id"])
+
+	def test_a_drawdown_posts_against_the_active_copy_not_the_draft_successor(self):
+		accepted, item_id, active_name, draft_name = self.active_item_with_open_successor()
+		frappe.set_user(fx.PLANNER)
+		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
+		allocation_id = read["sources"][0]["plan_source_allocation_id"]
+		frappe.set_user(fx.HOPF)
+		result = plan_requisition.record_requisition_drawdown(
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
+			expected_record_version=read["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(result["action"], "recorded")
+		drawdown = frappe.get_doc("Plan Drawdown Reference", result["drawdown_references"][0]["drawdown_reference"])
+		self.assertEqual(drawdown.plan_item, active_name)
+		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item": draft_name}), 0)
+		frappe.set_user(fx.PLANNER)
+		self.assertAlmostEqual(plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)["remaining_value"], 600000)
+
+	def test_a_correction_request_is_gated_on_the_active_copys_contributing_units(self):
+		accepted, item_id, active_name, draft_name = self.active_item_with_open_successor()
+		frappe.set_user(fx.HOD)  # OU_ALPHA
+		result = plan_requisition.receive_plan_item_correction_request(
+			plan_item_id=item_id, requisition_reference="REQ-TEST-CORR-S", requisition_version="RQV-TEST-S",
+			reason="The authorised warranty period does not match the department's actual need.",
+			idempotency_key=key(),
+		)
+		self.assertTrue(result["ok"])
+		self.assertEqual(frappe.get_doc("Plan Item Correction Request", result["correction_request"]).plan_item, active_name)

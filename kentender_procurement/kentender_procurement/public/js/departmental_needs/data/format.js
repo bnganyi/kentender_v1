@@ -32,20 +32,20 @@ export function formatInstant(value) {
 }
 
 /** `1 programme` / `300 each` — quantity beside its governed unit label. */
-export function quantityWithUnit(version) {
-	if (!version) return "";
-	const quantity = Number(version.indicative_quantity || 0);
+export function quantityWithUnit(revision) {
+	if (!revision) return "";
+	const quantity = Number(revision.indicative_quantity || 0);
 	if (!quantity) return "";
 	const rounded = Number.isInteger(quantity) ? quantity : quantity;
-	const unit = version.unit_label || version.unit || "";
+	const unit = revision.unit_label || revision.unit || "";
 	return `${rounded} ${String(unit).toLowerCase()}`.trim();
 }
 
-/** `NDS-MOH-2027-0001 · VERSION 1` — the record kicker. */
-export function versionKicker(reference, version, prefix = "") {
+/** `NDS-MOH-2027-0001 · REVISION 1` — the record kicker. */
+export function revisionKicker(reference, revision, prefix = "") {
 	const parts = [];
 	if (prefix) parts.push(prefix);
 	if (reference) parts.push(reference);
-	if (version && version.version_number) parts.push(`VERSION ${version.version_number}`);
+	if (revision && revision.revision_number) parts.push(`REVISION ${revision.revision_number}`);
 	return parts.join(" · ").toUpperCase();
 }

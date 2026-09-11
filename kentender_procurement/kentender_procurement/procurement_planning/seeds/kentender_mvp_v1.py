@@ -268,7 +268,7 @@ def verify_prerequisites() -> dict[str, str]:
 	need(f"Active Strategic Objective '{OBJECTIVE_TITLE}'", objective)
 	from kentender_procurement.procurement_planning.services import needs_intake
 
-	need(f"Departmental Need {NEED} Accepted for planning", needs_intake.current_accepted_version_of(NEED, FY))
+	need(f"Departmental Need {NEED} Accepted for planning", needs_intake.current_accepted_revision_of(NEED, FY))
 	if missing:
 		frappe.throw(
 			"PLN §14 seed prerequisites are absent or differ — seeds never invent "
@@ -663,10 +663,10 @@ def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
 
 	_guard()
 	frappe.set_user("Administrator")
-	accepted_version = needs_intake.current_accepted_version_of(NEED, FY)
-	if accepted_version and needs_usage.is_actively_included(accepted_version):
+	accepted_revision = needs_intake.current_accepted_revision_of(NEED, FY)
+	if accepted_revision and needs_usage.is_actively_included(accepted_revision):
 		needs_usage.project_planning_usage(
-			departmental_need=NEED, accepted_version=accepted_version, usage="Not included",
+			departmental_need=NEED, accepted_revision=accepted_revision, usage="Not included",
 			source_event_id=f"pln-seed-reset:{uuid4().hex}", source_event_time=now_datetime(), user="Administrator",
 		)
 	deleted = _wipe_fiscal_year(FY)
@@ -995,6 +995,6 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		check(f"governance.{stage.split()[0].lower()}_by_named_actor", who == actor, str(who))
 	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": version, "result": "Acknowledged"}, "name")
 	check("publication.acknowledged", bool(publication))
-	accepted_version = needs_intake.current_accepted_version_of(NEED, FY)
-	check("need_usage.fully_included", bool(accepted_version) and needs_usage.is_actively_included(accepted_version), str(accepted_version))
+	accepted_revision = needs_intake.current_accepted_revision_of(NEED, FY)
+	check("need_usage.fully_included", bool(accepted_revision) and needs_usage.is_actively_included(accepted_revision), str(accepted_revision))
 	return checks

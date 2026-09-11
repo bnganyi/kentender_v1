@@ -26,8 +26,8 @@ const SINGLE = {
 		{
 			requirement: "National digital health infrastructure upgrade", department: "Digital Health",
 			source_origin: "Accepted Departmental Need",
-			departmental_plan_line: "DPP-MOH-DHI-2027-001 · Version 1",
-			need_reference_line: "NDS-MOH-2027-0001 · Version 1",
+			departmental_plan_line: "DPP-MOH-DHI-2027-001 · Submission 1",
+			need_reference_line: "NDS-MOH-2027-0001 · Revision 1",
 			quantity_display: "1 programme", required_by_display: "31 Aug 2027",
 			budget_line: "BL-1", budget_line_display: "MOH-BL-DHI-2027 — Digital health infrastructure programme",
 			amount_display: "KES 80,000,000",

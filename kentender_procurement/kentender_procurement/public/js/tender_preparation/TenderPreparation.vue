@@ -164,7 +164,7 @@ function applyLoaded(scr, loaded) {
 	else if (scr === "approved") approvedView.value = loaded;
 }
 
-let loadSeq = 0;
+const loadGuard = kentender_core.desk_page.createSequenceGuard();
 let inFlightKey = "";
 async function load(opts) {
 	const scr = screen.value;
@@ -173,7 +173,7 @@ async function load(opts) {
 	if (opts && opts.entering && cached) applyLoaded(scr, cached);
 	const quiet = !!(opts && opts.quiet === true) || !!cached;
 	if (quiet && inFlightKey === key) return;
-	const seq = ++loadSeq;
+	const token = loadGuard.next();
 	inFlightKey = key;
 	if (quiet) refreshing.value = true;
 	else loading.value = true;
@@ -181,7 +181,7 @@ async function load(opts) {
 	notFound.value = false;
 	try {
 		const loaded = await fetchFor(scr);
-		if (seq !== loadSeq) return;
+		if (!loadGuard.isCurrent(token)) return;
 		if (loaded && loaded.outcome === "NOT_FOUND") {
 			notFound.value = true;
 			return;
@@ -189,7 +189,7 @@ async function load(opts) {
 		cache.set(key, loaded);
 		applyLoaded(scr, loaded);
 	} catch (e) {
-		if (seq !== loadSeq) return;
+		if (!loadGuard.isCurrent(token)) return;
 		// §11.3 TPR_NOT_FOUND — an absent or invisible record answers 404 and
 		// paints "Tender not found" inline; anything else is a load error.
 		if (e && e.httpStatus === 404) {
@@ -199,7 +199,7 @@ async function load(opts) {
 		error.value = e.message;
 		supportRef.value = newSupportRef();
 	} finally {
-		if (seq === loadSeq) {
+		if (loadGuard.isCurrent(token)) {
 			loading.value = false;
 			refreshing.value = false;
 			inFlightKey = "";
@@ -260,7 +260,11 @@ async function saveCurrentTask() {
 	const payload = currentTaskPayload();
 	if (!Object.keys(payload).length) return true;
 	const t = editor.value.tender || {};
-	const result = await run(() => api.saveTenderDraft({ tender: tenderId.value, draft_values: JSON.stringify(payload), expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("save-draft") }));
+	const result = await run(async () => {
+		const r = await api.saveTenderDraft({ tender: tenderId.value, draft_values: JSON.stringify(payload), expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("save-draft") });
+		if (r.ok !== false) await load({ quiet: true });
+		return r;
+	});
 	if (!result) return false;
 	if (result.ok === false) {
 		fieldErrors.value = result.errors || {};
@@ -268,7 +272,6 @@ async function saveCurrentTask() {
 		return false;
 	}
 	fieldErrors.value = {};
-	await load({ quiet: true });
 	return true;
 }
 
@@ -284,9 +287,12 @@ async function onSaveDraft(continueToNext) {
 async function onEnterReview() {
 	if (editable.value) {
 		const t = editor.value.tender || {};
-		const result = await run(() => api.runTenderReadiness({ tender: tenderId.value, expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("readiness") }));
+		const result = await run(async () => {
+			const r = await api.runTenderReadiness({ tender: tenderId.value, expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("readiness") });
+			await load({ quiet: true });
+			return r;
+		});
 		if (!result) return;
-		await load({ quiet: true });
 	}
 	activeTask.value = 6;
 }
@@ -317,19 +323,25 @@ async function onAddEvidence(fields) {
 	const t = editor.value.tender || {};
 	dialogError.value = "";
 	dialogFieldErrors.value = {};
-	const result = await run(() => api.addTenderEvidenceRequirement({ tender: tenderId.value, evidence_values: JSON.stringify(fields), expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("add-evidence") }), { inline: false });
+	const result = await run(async () => {
+		const r = await api.addTenderEvidenceRequirement({ tender: tenderId.value, evidence_values: JSON.stringify(fields), expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("add-evidence") });
+		if (r.ok !== false) await load({ quiet: true });
+		return r;
+	}, { inline: false });
 	if (!result) return;
 	if (result.ok === false) {
 		dialogFieldErrors.value = result.errors || {};
 		return;
 	}
 	evidenceDialog.value = false;
-	await load({ quiet: true });
 }
 async function onRemoveEvidence(row) {
 	const t = editor.value.tender || {};
-	await run(() => api.removeTenderEvidenceRequirement({ tender: tenderId.value, evidence_requirement_id: row.evidence_requirement_id, expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("remove-evidence") }));
-	await load({ quiet: true });
+	await run(async () => {
+		const r = await api.removeTenderEvidenceRequirement({ tender: tenderId.value, evidence_requirement_id: row.evidence_requirement_id, expected_record_version: t.record_version, idempotency_key: api.newIdempotencyKey("remove-evidence") });
+		await load({ quiet: true });
+		return r;
+	});
 }
 async function onUpstreamCorrection(reason) {
 	const t = editor.value.tender || {};

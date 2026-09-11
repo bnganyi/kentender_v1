@@ -137,11 +137,22 @@ test.describe("PLN-UI-07/08/09 Annual Plan workbench and Plan Item editor", () =
 		await expect(page.locator('[data-testid="ppi-aggregation"]')).toBeVisible();
 	});
 
-	test("a non-planner deep link masks as not-found", async ({ page }) => {
+	test("a non-planner deep link masks as not-found, calmly and once (reported live 2026-09-11)", async ({ page }) => {
 		const state = resetFixture<PlanState>("reset_workbench_fixture");
+		const errors = collectConsoleErrors(page);
 		await login(page, HOD, PASSWORD);
 		await gotoPlan(page, state.plan_reference);
 		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
 		await expect(page.locator('[data-testid="pln-form-items"]')).toHaveCount(0);
+		// a masked read is an expected, permanent state — never the
+		// technical-failure copy, never a fabricated support reference, and
+		// never the platform's own raw 404 dialog stacked on top of it
+		await expect(page.locator('[data-testid="pln-error"]')).not.toContainText("could not be loaded");
+		await expect(page.locator('[data-testid="pln-error"]')).not.toContainText("Support reference");
+		await expect(page.getByRole("dialog", { name: "Not found" })).toHaveCount(0);
+		await page.locator('[data-testid="pln-not-found-back"]').click();
+		await expectReady(page, "workspace");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 });

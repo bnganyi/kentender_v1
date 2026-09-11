@@ -124,7 +124,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			"Departmental Plan Entry",
 			filters={"dpp_version": version.name},
 			fields=[
-				"entry_id", "source_origin", "need", "need_version", "title", "description",
+				"entry_id", "source_origin", "need", "need_revision", "title", "description",
 				"expected_operational_result", "quantity", "unit", "required_by_date",
 				"budget_line", "indicative_amount", "not_proceeding_reason",
 			],
@@ -219,6 +219,14 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	submit_hint = ""
 	if mutable and ready and access != "hod":
 		submit_hint = "Only the Head of User Department, or an acting head, can submit this plan."
+	# FU-14 — the record route never strands the actor who holds the open task
+	open_task = None
+	if access == "planner" and version and version.version_status == "Submitted":
+		task = frappe.db.get_value(
+			"Departmental Plan Validation Task", {"dpp_version": version.name, "status": "Open"}, ["name", "submission"], as_dict=True,
+		)
+		if task and not authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task.submission):
+			open_task = {"label": "Review submission", "route": ["procurement-planning", "dpp-review", task.name]}
 	return {
 		"outcome": "OK",
 		"access": access,
@@ -234,7 +242,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		},
 		"header": {
 			"title": f"{labels['department_name']} departmental plan",
-			"reference_line": f"{root.dpp_reference} · Version {version.version_number}" if version else root.dpp_reference,
+			"reference_line": f"{root.dpp_reference} · Submission {version.version_number}" if version else root.dpp_reference,
 			"badge": badge,
 			"badge_kind": badge_kind,
 		},
@@ -245,6 +253,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		},
 		"readiness": readiness,
 		"submit_hint": submit_hint,
+		"open_task": open_task,
 		"entries": entries,
 		"totals_caption": totals_caption if entries else "",
 		"certification": {
@@ -319,7 +328,7 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 			"indicative_amount": flt(entry.indicative_amount) or None,
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 			"need_reference_line": (
-				f"{entry.need} · Version {needs_intake.need_version_number(entry.need_version)}" if entry.need else ""
+				f"{entry.need} · Revision {needs_intake.need_revision_number(entry.need_revision)}" if entry.need else ""
 			),
 		}
 	units = frappe.get_all("UOM", filters={"enabled": 1}, fields=["name", "uom_name"], order_by="uom_name asc", limit_page_length=200)
@@ -378,7 +387,7 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 		"header": {
 			"eyebrow": "DEPARTMENTAL PLAN REVIEW",
 			"title": f"Validate {labels['department_name']} departmental plan",
-			"reference_line": f"{root.dpp_reference} · Submitted Version {version.version_number}",
+			"reference_line": f"{root.dpp_reference} · Submission {version.version_number}",
 			"badge": "Awaiting validation" if task_doc.status == "Open" else "Completed",
 			"badge_kind": "pending" if task_doc.status == "Open" else "live",
 		},

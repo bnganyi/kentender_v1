@@ -1,16 +1,16 @@
 {
  "actions": [],
- "autoname": "field:need_version_id",
+ "autoname": "field:need_revision_id",
  "creation": "2026-08-29 09:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "need_version_id",
+  "need_revision_id",
   "departmental_need",
-  "version_number",
-  "based_on_version",
-  "version_status",
+  "revision_number",
+  "based_on_revision",
+  "revision_status",
   "title",
   "description",
   "expected_operational_result",
@@ -23,10 +23,10 @@
  "fields": [
   {
    "description": "Immutable reference used in review, events and Planning lineage.",
-   "fieldname": "need_version_id",
+   "fieldname": "need_revision_id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Need Version ID",
+   "label": "Need Revision ID",
    "read_only": 1,
    "reqd": 1,
    "unique": 1
@@ -43,27 +43,27 @@
   },
   {
    "description": "Generated sequence within the Need.",
-   "fieldname": "version_number",
+   "fieldname": "revision_number",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Version Number",
+   "label": "Revision Number",
    "read_only": 1,
    "reqd": 1
   },
   {
    "description": "The version copied to create this correction or accepted successor. Empty only for the first Draft.",
-   "fieldname": "based_on_version",
+   "fieldname": "based_on_revision",
    "fieldtype": "Link",
-   "label": "Based On Version",
-   "options": "Departmental Need Version",
+   "label": "Based On Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1
   },
   {
    "default": "Draft",
-   "fieldname": "version_status",
+   "fieldname": "revision_status",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Version Status",
+   "label": "Revision Status",
    "options": "Draft\nSubmitted\nReturned\nAccepted\nNot taken forward\nWithdrawn\nSuperseded",
    "read_only": 1,
    "reqd": 1,
@@ -132,7 +132,7 @@
  "modified": "2026-08-29 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Departmental Needs",
- "name": "Departmental Need Version",
+ "name": "Departmental Need Revision",
  "owner": "Administrator",
  "permissions": [
   {
@@ -169,7 +169,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "need_version_id,title",
+ "search_fields": "need_revision_id,title",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],

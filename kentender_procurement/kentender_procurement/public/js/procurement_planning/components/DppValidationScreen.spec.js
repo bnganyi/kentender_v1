@@ -14,7 +14,7 @@ const DETAIL = {
 	header: {
 		eyebrow: "DEPARTMENTAL PLAN REVIEW",
 		title: "Validate Digital Health departmental plan",
-		reference_line: "DPP-MOH-DHI-2027-001 · Submitted Version 1",
+		reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
 		badge: "Awaiting validation",
 		badge_kind: "pending",
 	},

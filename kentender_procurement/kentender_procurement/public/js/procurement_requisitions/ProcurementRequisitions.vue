@@ -502,7 +502,10 @@ function applyLoaded(scr, loaded) {
 	}
 }
 
-let loadSeq = 0;
+// RUN-CHG-001 / AGENTS.md §6.4 — a shared sequence-token utility instead of
+// a hand-rolled `let loadSeq = 0` counter, so a slower, older response can
+// never overwrite a newer one.
+const loadGuard = kentender_core.desk_page.createSequenceGuard();
 let inFlightKey = "";
 
 // The skeleton shows only for a screen with nothing to show yet. A screen
@@ -515,22 +518,22 @@ async function load(opts) {
 	if (opts && opts.entering && cached) applyLoaded(scr, cached);
 	const quiet = !!(opts && opts.quiet === true) || !!cached;
 	if (quiet && inFlightKey === key) return;
-	const seq = ++loadSeq;
+	const token = loadGuard.next();
 	inFlightKey = key;
 	if (quiet) refreshing.value = true;
 	else loading.value = true;
 	error.value = "";
 	try {
 		const loaded = await fetchFor(scr);
-		if (seq !== loadSeq) return;
+		if (!loadGuard.isCurrent(token)) return;
 		cache.set(key, loaded);
 		applyLoaded(scr, loaded);
 	} catch (e) {
-		if (seq !== loadSeq) return;
+		if (!loadGuard.isCurrent(token)) return;
 		error.value = e.message;
 		supportRef.value = newSupportRef();
 	} finally {
-		if (seq === loadSeq) {
+		if (loadGuard.isCurrent(token)) {
 			loading.value = false;
 			refreshing.value = false;
 			inFlightKey = "";
@@ -561,10 +564,13 @@ async function onPrepare(planItem) {
 }
 
 // Shared runner for every editor command: refuses re-entry while one is
-// already in flight, surfaces the server's own message inline (never a
-// default Frappe popup — AGENTS.md §6.10), and always ends by refetching
-// the editor so the screen renders from the fresh, authoritative response
-// (AGENTS.md §6.2) rather than an optimistic local mutation.
+// already in flight and surfaces the server's own message inline (never a
+// default Frappe popup — AGENTS.md §6.10). RUN-CHG-001 (AGENTS.md §6.4): the
+// post-mutation reload that refreshes each row's `record_version` must be
+// the last thing awaited *inside* the function passed to `run()`, before its
+// `finally` clears `pending` — never a separate `await load(...)` issued
+// after `run()` has already returned. Every call site below folds its reload
+// into the function it passes to `run()` for exactly this reason.
 async function run(fn) {
 	if (pending.value) return null;
 	pending.value = true;
@@ -583,29 +589,39 @@ async function onSaveDraft(continueToNext) {
 	if (activeStep.value === 1 && stepDrawdownRef.value) {
 		const version = editor.value.version || {};
 		const payload = stepDrawdownRef.value.getPayload();
-		const result = await run(() =>
-			api.saveRequisitionSummary({
+		// RUN-CHG-001 — the reload that refreshes record_version must be
+		// awaited inside the guarded function, before run()'s finally clears
+		// pending.
+		const result = await run(async () => {
+			const r = await api.saveRequisitionSummary({
 				requisition: requisitionId.value,
 				summary_values: JSON.stringify(payload),
 				expected_record_version: version.record_version,
 				idempotency_key: api.newIdempotencyKey("save-summary"),
-			})
-		);
+			});
+			await load({ quiet: true });
+			return r;
+		});
 		if (!result) return;
 	} else if (activeStep.value === 3 && stepTechnicalRef.value) {
 		const pkg = editor.value.package || {};
 		const payload = stepTechnicalRef.value.getPayload();
-		const result = await run(() =>
-			api.saveWarrantyAndSupport({
+		const result = await run(async () => {
+			const r = await api.saveWarrantyAndSupport({
 				requisition: requisitionId.value,
 				warranty_values: JSON.stringify(payload),
 				expected_record_version: pkg.record_version,
 				idempotency_key: api.newIdempotencyKey("save-warranty"),
-			})
-		);
+			});
+			await load({ quiet: true });
+			return r;
+		});
 		if (!result) return;
+	} else {
+		// Steps 2/4/5 mutate via their own dialog handlers, not this
+		// function — this reload just revalidates before advancing.
+		await load({ quiet: true });
 	}
-	await load({ quiet: true });
 	if (continueToNext && activeStep.value < 5) activeStep.value += 1;
 }
 
@@ -613,42 +629,44 @@ async function onItemDialogConfirm(fields) {
 	const pkg = editor.value.package || {};
 	itemDialogError.value = "";
 	const isEditing = !!(itemDialog.value && itemDialog.value.item);
-	const result = await run(() =>
-		isEditing
-			? api.updateRequisitionItem({
+	const result = await run(async () => {
+		const r = isEditing
+			? await api.updateRequisitionItem({
 					requisition: requisitionId.value,
 					requisition_item_id: itemDialog.value.item.requisition_item_id,
 					item_values: JSON.stringify(fields),
 					expected_record_version: pkg.record_version,
 					idempotency_key: api.newIdempotencyKey("update-item"),
 				})
-			: api.addRequisitionItem({
+			: await api.addRequisitionItem({
 					requisition: requisitionId.value,
 					item_values: JSON.stringify(fields),
 					expected_record_version: pkg.record_version,
 					idempotency_key: api.newIdempotencyKey("add-item"),
-				})
-	);
+				});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		itemDialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	itemDialog.value = null;
-	await load({ quiet: true });
 }
 
 async function onRemoveItem(item) {
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.removeRequisitionItem({
+	await run(async () => {
+		const r = await api.removeRequisitionItem({
 			requisition: requisitionId.value,
 			requisition_item_id: item.requisition_item_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("remove-item"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onConfirmRequirement(row) {
@@ -663,156 +681,165 @@ async function onConfirmRequirement(row) {
 		return;
 	}
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.confirmProposedRequirement({
+	await run(async () => {
+		const r = await api.confirmProposedRequirement({
 			requisition: requisitionId.value,
 			technical_requirement_id: row.technical_requirement_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("confirm-requirement"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onRemoveRequirement(row) {
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.removeTechnicalRequirement({
+	await run(async () => {
+		const r = await api.removeTechnicalRequirement({
 			requisition: requisitionId.value,
 			technical_requirement_id: row.technical_requirement_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("remove-requirement"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onCharacteristicDialogConfirm(fields) {
 	const pkg = editor.value.package || {};
 	const confirmingRow = characteristicDialog.value !== true ? characteristicDialog.value : null;
 	dialogError.value = "";
-	const result = await run(() =>
-		confirmingRow
-			? api.confirmProposedRequirement({
+	const result = await run(async () => {
+		const r = confirmingRow
+			? await api.confirmProposedRequirement({
 					requisition: requisitionId.value,
 					technical_requirement_id: confirmingRow.technical_requirement_id,
 					expected_record_version: pkg.record_version,
 					confirmation_values: JSON.stringify({ value: fields.value, other_value: fields.other_value }),
 					idempotency_key: api.newIdempotencyKey("confirm-requirement-with-value"),
 				})
-			: api.addTechnicalRequirement({
+			: await api.addTechnicalRequirement({
 					requisition: requisitionId.value,
 					technical_requirement_values: JSON.stringify(fields),
 					expected_record_version: pkg.record_version,
 					idempotency_key: api.newIdempotencyKey("add-technical-requirement"),
-				})
-	);
+				});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		dialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	characteristicDialog.value = false;
-	await load({ quiet: true });
 }
 
 async function onServiceDialogConfirm(fields) {
 	const pkg = editor.value.package || {};
 	dialogError.value = "";
-	const result = await run(() =>
-		api.addRelatedService({
+	const result = await run(async () => {
+		const r = await api.addRelatedService({
 			requisition: requisitionId.value,
 			service_values: JSON.stringify(fields),
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("add-service"),
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		dialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	serviceDialog.value = false;
-	await load({ quiet: true });
 }
 
 async function onRemoveService(row) {
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.removeRelatedService({
+	await run(async () => {
+		const r = await api.removeRelatedService({
 			requisition: requisitionId.value,
 			service_requirement_id: row.service_requirement_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("remove-service"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onAcceptanceDialogConfirm(fields) {
 	const pkg = editor.value.package || {};
 	dialogError.value = "";
-	const result = await run(() =>
-		api.addAcceptanceRequirement({
+	const result = await run(async () => {
+		const r = await api.addAcceptanceRequirement({
 			requisition: requisitionId.value,
 			acceptance_values: JSON.stringify(fields),
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("add-acceptance"),
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		dialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	acceptanceDialog.value = false;
-	await load({ quiet: true });
 }
 
 async function onRemoveAcceptance(row) {
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.removeAcceptanceRequirement({
+	await run(async () => {
+		const r = await api.removeAcceptanceRequirement({
 			requisition: requisitionId.value,
 			acceptance_requirement_id: row.acceptance_requirement_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("remove-acceptance"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onMaterialDialogConfirm(fields) {
 	const pkg = editor.value.package || {};
 	dialogError.value = "";
-	const result = await run(() =>
-		api.addSupportingMaterial({
+	const result = await run(async () => {
+		const r = await api.addSupportingMaterial({
 			requisition: requisitionId.value,
 			material_values: JSON.stringify(fields),
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("add-material"),
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		dialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	materialDialog.value = false;
-	await load({ quiet: true });
 }
 
 async function onRemoveMaterial(row) {
 	const pkg = editor.value.package || {};
-	await run(() =>
-		api.removeSupportingMaterial({
+	await run(async () => {
+		const r = await api.removeSupportingMaterial({
 			requisition: requisitionId.value,
 			supporting_material_id: row.supporting_material_id,
 			expected_record_version: pkg.record_version,
 			idempotency_key: api.newIdempotencyKey("remove-material"),
-		})
-	);
-	await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onUpstreamCorrectionConfirm(reason) {
@@ -921,22 +948,23 @@ async function onAuthoriseDialogConfirm() {
 async function onChangeLeadUnitDialogConfirm({ new_lead_org_unit, reason }) {
 	const root = procurementTask.value.requisition || {};
 	dialogError.value = "";
-	const result = await run(() =>
-		api.changeLeadOrganisationUnit({
+	const result = await run(async () => {
+		const r = await api.changeLeadOrganisationUnit({
 			requisition: root.requisition,
 			new_lead_org_unit,
 			reason,
 			expected_record_version: root.record_version,
 			idempotency_key: api.newIdempotencyKey("change-lead-unit"),
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (!result) {
 		dialogError.value = error.value;
 		error.value = "";
 		return;
 	}
 	changeLeadUnitDialog.value = false;
-	await load({ quiet: true });
 }
 
 // §13.12 — this action deep-links to Tender Preparation; it never creates

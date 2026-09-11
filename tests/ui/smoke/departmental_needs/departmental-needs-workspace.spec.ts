@@ -101,7 +101,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		 * Reported live 2026-09-11: the create editor showed the previously
 		 * opened need's title, description and result. The root fed the editor
 		 * the shared `detail` payload, which entering /new never cleared — the
-		 * create editor must have no source version at all.
+		 * create editor must have no source revision at all.
 		 */
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
@@ -144,6 +144,42 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await page.locator('[data-testid="nds-save-draft"]').click();
 
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("Submit for review straight after Save draft is not refused as a stale write", async ({ page }) => {
+		/**
+		 * Regression (2026-09-11): the version stamp the next command carried
+		 * came from the post-save reload, which resolves after the buttons are
+		 * re-enabled. A Save draft followed at once by Submit for review (or a
+		 * second Save) sent the pre-save stamp and the server answered "This
+		 * Departmental Need changed after it was opened" with nobody else
+		 * editing. The stamp now comes from the save response itself; this
+		 * test widens the reload window so the old behaviour cannot pass.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page);
+		await expectScreen(page, "workspace");
+		await page
+			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.click();
+		await expectScreen(page, "editor");
+
+		// Every editor reload now lands 1.5 s after the save it follows.
+		await page.route("**/api/method/*.get_departmental_need", async (route) => {
+			const response = await route.fetch();
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await route.fulfill({ response });
+		});
+
+		await page.locator('[data-testid="nds-title"]').fill("County health records digitisation v3");
+		await page.locator('[data-testid="nds-save-draft"]').click();
+		await expect(page.locator('[data-testid="nds-save-draft"]')).toBeEnabled();
+		await page.locator('[data-testid="nds-submit"]').click();
+
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		await expect(page).toHaveURL(new RegExp(`/departmental-needs/${NEED}$`), { timeout: 30_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 	test("an unparseable typed date blocks the submit with a field error", async ({ page }) => {

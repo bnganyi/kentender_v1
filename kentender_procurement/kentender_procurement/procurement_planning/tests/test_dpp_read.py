@@ -188,7 +188,7 @@ class TestEntryEditorRead(DppReadCase):
 		self.assertEqual(entry["title"], "Test requirement")
 		self.assertEqual(entry["quantity_display"], "1 each")
 		self.assertEqual(entry["required_by_display"], "31 May 2102")
-		self.assertEqual(entry["need_reference_line"], "NEED-PLNT-0001 · Version 1")
+		self.assertEqual(entry["need_reference_line"], "NEED-PLNT-0001 · Revision 1")
 		self.assertEqual(result["currency"], "KES")
 		self.assertEqual(result["budget_lines"][0]["id"], fx.BUDGET_LINE)
 		self.assertIn("approved_display", result["budget_lines"][0])
@@ -292,6 +292,18 @@ class TestValidationTaskRead(DppReadCase):
 		return frappe.get_doc(
 			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
 		), added
+
+	def test_the_record_offers_the_open_task_to_its_planner_only(self):
+		"""FU-14 — a Planner who reaches the submitted plan by its record route
+		gets the validation task from the record; the department does not."""
+		task, _ = self.submitted_task()
+		reference = frappe.db.get_value("Departmental Plan", frappe.db.get_value("Departmental Plan Version", task.dpp_version, "departmental_plan"), "dpp_reference")
+		frappe.set_user(fx.PLANNER)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["header"]["badge"], "Awaiting validation")
+		self.assertEqual(view["open_task"], {"label": "Review submission", "route": ["procurement-planning", "dpp-review", task.name]})
+		frappe.set_user(fx.HOD)
+		self.assertIsNone(dpp_read.get_departmental_plan(dpp_reference=reference)["open_task"])
 
 	def test_task_read_serves_the_immutable_snapshot_not_live_rows(self):
 		task, added = self.submitted_task()

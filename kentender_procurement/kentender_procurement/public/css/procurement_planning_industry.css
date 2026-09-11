@@ -121,6 +121,20 @@
 	font-size: 14px;
 	color: var(--color-neutral-700);
 }
+.kt-pln .pln-strip-link {
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+.kt-pln .pln-strip-link:hover,
+.kt-pln .pln-strip-link:focus-visible {
+	color: var(--color-neutral-900);
+}
 
 .kt-pln .pln-cards-col {
 	display: flex;

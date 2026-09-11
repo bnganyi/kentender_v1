@@ -23,15 +23,15 @@ from kentender_procurement.departmental_needs.errors import fail
 class NeedPlanningUsageProjection(Document):
 	def validate(self):
 		version = frappe.db.get_value(
-			"Departmental Need Version",
-			self.accepted_version,
+			"Departmental Need Revision",
+			self.accepted_revision,
 			["departmental_need"],
 			as_dict=True,
 		)
 		if not version or version.departmental_need != self.departmental_need:
 			fail(
 				"NDS_STATE_CONFLICT",
-				"The projected version does not belong to the selected Departmental Need.",
+				"The projected revision does not belong to the selected Departmental Need.",
 			)
 		if self.usage == USAGE_NOT_INCLUDED:
 			# §4.7 — Plan references are empty when the Need is not included.

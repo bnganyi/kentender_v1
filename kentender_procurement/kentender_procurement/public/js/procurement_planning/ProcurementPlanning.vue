@@ -43,6 +43,24 @@
 						<div class="kt-skel" style="width: 44%"></div>
 					</div>
 				</div>
+				<!-- §9/§11.18 — a masked "not found" (a record that exists but the
+				     actor may not read) is a calm, expected state, never the
+				     technical-failure panel below: no "Try again", no support
+				     reference (reported live 2026-09-11 as a departmental actor's
+				     direct link reading as a crash). Shares data-testid="pln-error"
+				     with the load-error panel so either state satisfies the one
+				     "this record page has an error" locator every spec already uses. -->
+				<div v-else-if="notAvailable" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
+					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<h3>This record isn't available to you</h3>
+					<p>It may not exist, or you may not have access to it.</p>
+					<button
+						type="button" class="kt-btn kt-btn-secondary"
+						data-testid="pln-not-found-back"
+						@click="frappe.set_route(WORKSPACE_PAGE)"
+					>Go to Procurement Planning</button>
+				</div>
 				<!-- PLN-DES-16 load error — one component for every record page -->
 				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
 					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
@@ -67,6 +85,7 @@
 						@save-draft="load({ quiet: true })"
 						@submit="onSubmit"
 						@create-update="onCreateUpdate"
+						@open-task="(route) => frappe.set_route(...route)"
 					/>
 				</template>
 
@@ -153,6 +172,7 @@
 						@request-funding="onRequestPlanFunding"
 						@submit-consolidated="onSubmitPlanRequested"
 						@confirm-splitting="splittingDialog = true"
+						@open-task="(route) => frappe.set_route(...route)"
 					/>
 					<FormPlanItemsDialog
 						v-if="formDialog"
@@ -275,6 +295,9 @@ const loading = ref(true);
 const refreshing = ref(false);
 const pending = ref(false);
 const error = ref("");
+// §9/§11.18 — a masked "unauthorised read" (frappe.DoesNotExistError, HTTP
+// 404) is a distinct, calm state from a real load failure; see the template.
+const notAvailable = ref(false);
 const errorSummary = ref("");
 const supportRef = ref("");
 const workspace = ref({});
@@ -394,7 +417,10 @@ function onBackToPlan() {
 	}
 }
 
-let loadSeq = 0;
+// RUN-CHG-001 §6.4 — a shared sequence-token utility instead of a
+// hand-rolled `let loadSeq = 0` counter, so a slower, older response can
+// never overwrite a newer one.
+const loadGuard = kentender_core.desk_page.createSequenceGuard();
 let inFlightKey = "";
 
 function fetchFor(scr) {
@@ -477,23 +503,28 @@ async function load(opts) {
 	if (opts && opts.entering && cached) applyLoaded(scr, cached);
 	const quiet = !!(opts && opts.quiet === true) || !!cached;
 	if (quiet && inFlightKey === key) return;
-	const seq = ++loadSeq;
+	const token = loadGuard.next();
 	inFlightKey = key;
 	if (quiet) refreshing.value = true;
 	else loading.value = true;
 	error.value = "";
+	notAvailable.value = false;
 	errorSummary.value = "";
 	try {
 		const loaded = await fetchFor(scr);
-		if (seq !== loadSeq) return;
+		if (!loadGuard.isCurrent(token)) return;
 		cache.set(key, loaded);
 		applyLoaded(scr, loaded);
 	} catch (e) {
-		if (seq !== loadSeq) return;
-		error.value = e.message;
-		supportRef.value = newSupportRef();
+		if (!loadGuard.isCurrent(token)) return;
+		if (e.httpStatus === 404) {
+			notAvailable.value = true;
+		} else {
+			error.value = e.message;
+			supportRef.value = newSupportRef();
+		}
 	} finally {
-		if (seq === loadSeq) {
+		if (loadGuard.isCurrent(token)) {
 			loading.value = false;
 			refreshing.value = false;
 			inFlightKey = "";
@@ -567,15 +598,18 @@ function onViewAcceptedNeeds() {
 }
 
 async function onSubmit() {
-	const result = await run("submit-dpp", (key) =>
-		api.submitDepartmentalPlan({
+	// RUN-CHG-001 — the reload that refreshes record_version must be awaited
+	// inside the guarded function, before `run()`'s finally clears `pending`.
+	await run("submit-dpp", async (key) => {
+		const r = await api.submitDepartmentalPlan({
 			dpp_version: dpp.value.version?.name,
 			certification_confirmed: certified.value,
 			expected_record_version: dpp.value.record_version,
 			idempotency_key: key,
-		})
-	);
-	if (result) await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onCreateUpdate() {
@@ -656,35 +690,41 @@ function onNavigate(routeSegments) {
 }
 
 async function onFormConfirm(dppEntries, mode) {
-	const result = await run("form-plan-items", (key) =>
-		api.formPlanItems({
+	// RUN-CHG-001 — only the in-place branch (multiple items formed, staying
+	// on this Plan) needs its reload inside the guarded function; the
+	// single-item branch navigates away to a different screen instead.
+	const result = await run("form-plan-items", async (key) => {
+		const r = await api.formPlanItems({
 			plan_version: annualPlan.value.version_reference,
 			dpp_entries: JSON.stringify(dppEntries),
 			mode,
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
-		})
-	);
+		});
+		if (!r.single) await load({ quiet: true });
+		return r;
+	});
 	if (result) {
 		formDialog.value = false;
 		if (result.single) {
 			frappe.set_route(PLAN_ITEM_PAGE, result.created_items[0]);
-		} else {
-			await load({ quiet: true });
 		}
 	}
 }
 
 async function onSavePlanItem(values) {
-	const result = await run("save-plan-item", (key) =>
-		api.savePlanItem({
+	// RUN-CHG-001 — reload inside the guarded function so a command fired the
+	// instant the button re-enables reads the fresh record_version.
+	await run("save-plan-item", async (key) => {
+		const r = await api.savePlanItem({
 			plan_item: planItem.value.plan_item_id,
 			item_values: JSON.stringify(values),
 			expected_record_version: planItem.value.record_version,
 			idempotency_key: key,
-		})
-	);
-	if (result) await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onDissolvePlanItem() {
@@ -700,14 +740,16 @@ async function onDissolvePlanItem() {
 
 // §5.2 — one plan-level Finance confirmation per Version
 async function onRequestPlanFunding() {
-	const result = await run("request-plan-funding", (key) =>
-		api.requestPlanFundingConfirmation({
+	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
+	await run("request-plan-funding", async (key) => {
+		const r = await api.requestPlanFundingConfirmation({
 			plan_version: annualPlan.value.version_reference,
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
-		})
-	);
-	if (result) await load({ quiet: true });
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onConfirmFunding() {
@@ -747,17 +789,19 @@ function onSubmitPlanRequested() {
 
 // invariant 26 (O1)
 async function onConfirmSplitting(confirmation) {
-	const result = await run("confirm-splitting", (key) =>
-		api.confirmSplittingAdvisory({
+	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
+	const result = await run("confirm-splitting", async (key) => {
+		const r = await api.confirmSplittingAdvisory({
 			plan_version: annualPlan.value.version_reference,
 			confirmation,
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (result) {
 		splittingDialog.value = false;
-		await load({ quiet: true });
 	}
 }
 
@@ -807,8 +851,9 @@ async function onShiftDateChange(value) {
 async function onConfirmShift({ included_milestones, reason }) {
 	if (!shift.value) return;
 	const current = shift.value;
-	const result = await run("confirm-forecast-cascade", (key) =>
-		api.confirmForecastCascade({
+	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
+	const result = await run("confirm-forecast-cascade", async (key) => {
+		const r = await api.confirmForecastCascade({
 			plan_item: current.item.plan_item_id,
 			milestone: current.milestone,
 			new_forecast_date: current.newDate,
@@ -816,11 +861,12 @@ async function onConfirmShift({ included_milestones, reason }) {
 			reason,
 			expected_record_version: current.recordVersion ?? current.item.record_version,
 			idempotency_key: key,
-		})
-	);
+		});
+		await load({ quiet: true });
+		return r;
+	});
 	if (result) {
 		shift.value = null;
-		await load({ quiet: true });
 	}
 }
 

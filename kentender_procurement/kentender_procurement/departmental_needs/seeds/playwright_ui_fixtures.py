@@ -82,7 +82,7 @@ _NAMESPACED = (
 	"Departmental Need Decision",
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
-	"Departmental Need Version",
+	"Departmental Need Revision",
 	"Departmental Need",
 )
 
@@ -348,17 +348,17 @@ def reset_review_task_fixture(*, commit: bool = True) -> dict[str, Any]:
 
 
 def reset_accepted_source_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""NDS-UI-06 — an accepted Need whose Version 1 has been superseded.
+	"""NDS-UI-06 — an accepted Need whose Revision 1 has been superseded.
 
-	The pinned-version path (`/{reference}/accepted/{n}`) only means anything
-	once a superseded version exists to pin: §12.4 requires the earlier version
+	The pinned-revision path (`/{reference}/accepted/{n}`) only means anything
+	once a superseded revision exists to pin: §12.4 requires the earlier revision
 	to stay readable and to name the current one without redirecting.
 	"""
 	_guard()
 	reset_all()
 	ensure_actors()
 	need = _accepted_need()
-	superseded = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
+	superseded = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
 	with base._as(AUTHOR):
 		opened = lifecycle.create_accepted_need_successor(
 			need=need, expected_version=_record_version(need), idempotency_key=_key()
@@ -387,9 +387,9 @@ def reset_accepted_source_fixture(*, commit: bool = True) -> dict[str, Any]:
 		frappe.db.commit()
 	return {
 		"need": need,
-		"superseded_version": superseded,
-		"current_accepted_version": frappe.db.get_value(
-			"Departmental Need", need, "current_accepted_version"
+		"superseded_revision": superseded,
+		"current_accepted_revision": frappe.db.get_value(
+			"Departmental Need", need, "current_accepted_revision"
 		),
 	}
 
@@ -399,7 +399,7 @@ def _withdrawal_fixture(*, cleared: bool) -> dict[str, Any]:
 	reset_all()
 	ensure_actors()
 	need = _accepted_need()
-	accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
+	accepted_revision = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
 
 	# §5.3 — only an Effective allocation on the exact accepted version blocks
 	# the decision, and Needs learns it from the §4.7 projection, never from
@@ -407,7 +407,7 @@ def _withdrawal_fixture(*, cleared: bool) -> dict[str, Any]:
 	with base._as(PLANNER):
 		project_planning_usage(
 			departmental_need=need,
-			accepted_version=accepted_version,
+			accepted_revision=accepted_revision,
 			usage="Not included" if cleared else "Fully included",
 			source_event_id=_key(),
 			active_plan="" if cleared else "PLN-NDS-PW-0001",
@@ -441,7 +441,7 @@ def _withdrawal_fixture(*, cleared: bool) -> dict[str, Any]:
 		)
 	_stamp_children(need)
 	frappe.db.commit()
-	return {"need": need, "accepted_version": accepted_version, "cleared": cleared}
+	return {"need": need, "accepted_revision": accepted_revision, "cleared": cleared}
 
 
 def reset_withdrawal_blocked_fixture() -> dict[str, Any]:

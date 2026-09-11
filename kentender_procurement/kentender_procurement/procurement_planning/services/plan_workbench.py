@@ -60,7 +60,7 @@ def _entry_doc(dpp_entry: str, fiscal_year: str, plan_version: str = ""):
 	entry = frappe.db.get_value(
 		"Departmental Plan Entry",
 		dpp_entry,
-		["name", "entry_id", "dpp_version", "title", "description", "source_origin", "need", "need_version",
+		["name", "entry_id", "dpp_version", "title", "description", "source_origin", "need", "need_revision",
 		 "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason"],
 		as_dict=True,
 	)
@@ -142,7 +142,7 @@ def _create_item(*, version, plan, entries: list, combined: bool, reference: dic
 				"dpp_entry": entry.name,
 				"source_origin": entry.source_origin,
 				"need": entry.need or None,
-				"need_version": entry.need_version or None,
+				"need_revision": entry.need_revision or None,
 				"organisation_unit": entry.organisation_unit,
 				"quantity": flt(entry.quantity),
 				"unit": entry.unit,

@@ -1,12 +1,12 @@
 <!-- NDS-UI-05 review task (§12.5) — NDS-DES-06. Renders the exact immutable
-     submitted version identified by the task, then the decision area. -->
+     submitted revision identified by the task, then the decision area. -->
 <template>
 	<div style="padding-bottom: 24px">
 		<div style="margin-bottom: 20px">
 			<div class="kt-page-kicker" style="letter-spacing: 0.06em">{{ kicker }}</div>
 			<div style="display: flex; align-items: center; gap: 12px; margin-top: 4px">
-				<h1 class="kt-record-title">{{ version.title }}</h1>
-				<StatusPill :label="version.version_status || 'Submitted'" />
+				<h1 class="kt-record-title">{{ revision.title }}</h1>
+				<StatusPill :label="revision.revision_status || 'Submitted'" />
 			</div>
 		</div>
 
@@ -15,7 +15,7 @@
 		</div>
 
 		<ContextCard :items="contextItems" />
-		<RequirementCard :version="version" />
+		<RequirementCard :revision="revision" />
 
 		<div class="kt-card kt-blueprint" style="padding: 20px 24px">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
@@ -29,7 +29,7 @@
 				v-if="makerCheckerBlocked"
 				style="margin: 12px 0 0; font-size: 14.5px; color: var(--color-neutral-700)"
 			>
-				You submitted this version, so it must be decided by another Head of User
+				You submitted this revision, so it must be decided by another Head of User
 				Department.
 			</p>
 		</div>
@@ -60,11 +60,11 @@ import { computed } from "vue";
 import ContextCard from "./ContextCard.vue";
 import RequirementCard from "./RequirementCard.vue";
 import StatusPill from "./StatusPill.vue";
-import { formatInstant, versionKicker } from "../data/format.js";
+import { formatInstant, revisionKicker } from "../data/format.js";
 
 const props = defineProps({
 	need: { type: Object, default: () => ({}) },
-	version: { type: Object, default: () => ({}) },
+	revision: { type: Object, default: () => ({}) },
 	scope: { type: Object, default: () => ({}) },
 	requesterLabel: { type: String, default: "" },
 	openedAt: { type: String, default: "" },
@@ -79,15 +79,15 @@ defineEmits(["return", "accept", "decline"]);
 const isSuccessor = computed(() => props.taskType === "Successor acceptance");
 
 const kicker = computed(() =>
-	versionKicker(
+	revisionKicker(
 		props.need.need_reference,
-		props.version,
+		props.revision,
 		isSuccessor.value ? "ACCEPTED NEED UPDATE" : "DEPARTMENTAL REVIEW"
 	)
 );
 
 const acceptLabel = computed(() =>
-	isSuccessor.value ? "Accept update" : "Accept for planning"
+	isSuccessor.value ? "Accept updated revision" : "Accept for planning"
 );
 
 const contextItems = computed(() => [

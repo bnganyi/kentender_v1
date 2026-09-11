@@ -27,6 +27,11 @@ below).
 | FU-12 | Three acceptance rows are Partial after v1.12 Phase 8: PLN-AC-097 (county resident-tenderer advisory exists in `plan_readiness` and the editor control but no county-entity site fixture exercises it end to end), PLN-AC-101 (`item_status` exists; an optional Project Name on the plan header is not modelled — §4 defines no field for it), PLN-AC-110 (§7.5A's seven-return field-by-field verification is asserted only through the OCDS payload / Third Schedule tests, not as its own table-driven test) | Low | `kentender_procurement` (Planning) + design authority for the Project Name field |
 | FU-09 | §14.2 names Peter Kimani's Digital Health assignment as split (ending 25 Nov 2026, successor from 1 Dec) with Julia acting 26–30 Nov; the shared KT-STD-001 §8.3 register seeded by `kentender_core.seeds.site_setup` holds Peter permanently and Julia acting 1 Oct–30 Nov, and the Planning seed verifies rather than re-grants the shared register (§14.2) | Low — a register alignment across NDS and Planning | `kentender_core` site seed + KT-STD-001 §8.3 |
 | FU-13 | **Closed (2026-09-07).** PLN-DES-01's "actionable" card defaulted its title to "Your work" for mixed-kind work (falling back to "Ready to consolidate" only when every row is that one kind). Relabelled to "Actions" — a cross-module product decision to drop possessive framing on every module's landing-page queue title (NDS "My needs"→"Departmental Needs", Requisitions "Your Requisitions"→"Requisitions", Strategy "My work" tab→"Actions"), not a PLN-DES-01 correction. `WorkspaceScreen.spec.js`'s two assertions on the string updated; PLN-DES-01's own fidelity artboard shows the unaffected "Ready to consolidate" state, so `planning-fidelity.spec.ts` needed no change | Closed — cosmetic | — |
+| FU-14 | **Closed (2026-09-11).** `dpp_read`/`plan_read` return `open_task` (label + route) to the task's authorised decider only; PLN-UI-02 and PLN-UI-07 render it in the header; §12.2/§12.7 updated; `test_dpp_read` (planner gets it, HoD does not), `DppPlanScreen.spec.js`, `AnnualPlanScreen.spec.js`, and "from the record" tests in `planning-dpp-review.spec.ts` and `planning-finance.spec.ts`; confirmed live as Mercy. Original finding: record routes were dead ends for the actor who holds the open task. A Procurement Planner who reaches a submitted DPP through the register's **View** (`/departmental-procurement-plan/{ref}`) gets a neutral read with no way to the validation task; a Finance Confirmation Officer or governance actor who opens the Annual Plan record (`/annual-procurement-plan/{ref}`) likewise cannot reach their open Finance or governance task. Only the workspace's action row reaches the task screen. Spec-derived: §10 makes task routes "authorised deep links reached from a task row or notification" and §12.2 gives the Planner a neutral read of the submitted record; no line says the record surfaces the actor's own open task. Reported live 2026-09-11 (Mercy on DPP-MOH-00187-2027-001 V2). | Medium — one click of context lost on every review, and a stranded actor after any deep link or refresh | Design authority (PLN-CHG-001 v1.15 §12.2/§12.7 + PLN-DES-02/05/07) then `kentender_procurement` (Planning) |
+| FU-15 | **Closed (2026-09-11).** `workspace.py` builds one line per row kind from the row's own snapshot (§11.2 now lists them); `test_planning_workspace` asserts the validate and continue lines exactly; confirmed live as Mercy ("Digital Health · Version 2 · 3 requirements · KES 110,100,000 · submitted 11 Sep 2026 by Dr Peter Kimani"). Original finding: action-row supporting lines carried no context. "Validate departmental plan — Digital Health", "Confirm plan funding — {plan title}", "Correct and resubmit departmental plan — {department}" give the actor nothing to judge urgency or scope by. §11.2 / PLN-DES-01 define copy only for the consolidate row ("Digital Health · KES 80,000,000") and say every other kind uses "the same headline-plus-button format" without prescribing its supporting line, so the build shipped the bare scope label. Requisitions' rows ("{title} · {departments} · {remaining value}") are the pattern to match. Reported live 2026-09-11. | Low — legibility | Design authority (PLN-CHG-001 v1.15 §11.2/§12.1) then `kentender_procurement` (Planning) |
+| FU-17 | Field-table drift between PLN-CHG-001 v1.16 §4 and the DocType JSON, recorded not corrected: `indicative_amount_minor_units` (§4.4, §4.10) is a Currency `indicative_amount`; `source_line_id` (§4.4) is never stored; `variance_baseline_days` / `variance_forecast_days` (§4.9) are computed per read in `schedule.py`, sign actual − baseline (spec says baseline − actual); `PlanGovernanceTask` has no `scope` field (§4.12) | Low — no user-facing outcome differs | Document owner: choose spec-follows-code (likely) per field in a later v1.x |
+| FU-18 | Spec'd states and controls not built: §11.18 **Finance shortfall** ("Funding is insufficient") and **No validation tasks** cards; §5.1 **Withdraw departmental submission** and §5.2 **Cancel update** have services and endpoints (`withdraw_departmental_plan_version`, `cancel_plan_update`) but no UI control (extends FU-06) | Low — no live trigger in MVP-1 | Design authority |
+| FU-16 | **Closed (2026-09-11).** `plan_requisition._requisition_item_name` resolves a `plan_item_id` to its **Active** copy first for all three Requisition-contract entry points (`get_requisition_eligible_plan_item`, `record_requisition_drawdown`, `receive_plan_item_correction_request`); `plan_read.resolve_item_doc_name`'s "open successor wins" precedence stays the editor's rule. `TestOpenSuccessorKeepsTheActiveItemEligible` (4 tests) reproduces and pins it; `test_plan_requisition` 30/30 OK; confirmed live as Grace (workspace 200, card offered, Start screen reached). Original finding: with a Draft successor open (PLN-MOH-2027-001-V2 awaiting statutory approval), Grace Wanjiku's Requisitions workspace failed with `Not found` (`REQ-ERR-20260911-2025`): the eligibility detail resolved `PPI-MOH-2027-001` to the successor's Draft copy, whose allocations are Draft, so the OU-scoped reader gate saw no contributing unit. Site-wide roles would instead have read a zero-source projection, and a drawdown would have been refused as "not eligible" — against invariant 18 ("An Active item remains eligible until an acknowledged successor changes it") and §4.4. Reported live 2026-09-11. | Medium — every OU-scoped Requisitions actor locked out of the workspace for the whole life of a plan update | `kentender_procurement` (Planning) |
 
 ---
 
@@ -128,3 +133,124 @@ should adopt it.
 - **FU-13:** already closed — `npx vitest run --project procurement-planning` for `WorkspaceScreen.spec.js` is green with the "Actions" assertions, confirmed live in a browser as Grace Wanjiku.
 - **FU-07:** the Requisitions contract names its principal; the two gates
   check that role and `test_plan_requisition`'s masking test uses it.
+
+---
+
+### FU-14 — record routes strand the task holder (raised 11 September 2026)
+
+**Observed.** Mercy Kilonzo (Procurement Planner) opened the Digital Health
+departmental plan from the register's **View** and found a read-only record:
+no **Review** control, no link to the open validation task, no hint that one
+exists. The only route to `/procurement-planning/dpp-review/{task}` is the
+workspace action row (or a notification). The same holds for the Annual Plan
+record: `plan_read.get_annual_plan` returns no route to an open Finance or
+governance task, so the Finance Confirmation Officer, Accounting Officer and
+statutory approver are stranded in exactly the same way after a **View**, a
+deep link or a browser refresh.
+
+**Where it comes from.** PLN-CHG-001 v1.14 §10: "Task routes above are
+authorised deep links reached from a task row or notification; they are not
+menu definitions." §12.2: "A successful submission routes to immutable
+submitted detail. The submitter sees neutral status while the Procurement
+Planner acts." Nothing in §12 asks the record screens (PLN-UI-02, PLN-UI-07)
+to surface the viewing actor's own open task. The build follows the text.
+
+**Contrast.** Tender Preparation's register rows route by state and its
+approval-task rows carry "Open approval task"; Departmental Needs' detail
+screen offers the reviewer's actions on the record itself. Planning is the
+outlier.
+
+**Proposed rule (cross-module, for AGENTS.md §6 and each *-CHG-001 §12).** A
+record route never strands an actor who holds an open task on that record:
+the read model returns the actor's open task(s) as actions (`review_route`,
+`finance_task_route`, …) and the screen renders them in the header, next to
+the status badge. Actors without an open task keep the neutral read.
+
+**Closure evidence.** PLN-CHG-001 v1.16 §12.2 and §12.7 (restored there after v1.15 dropped them) name the header
+action; PLN-DES-02/05 (Planner view of a submitted plan) and PLN-DES-07/14
+(Finance/governance view) show it; `dpp_read` / `plan_read` return the
+route only to the task's authorised decider; `planning-dpp-review.spec.ts`
+and `planning-finance.spec.ts` each gain a "reached from the record, not
+the workspace" test.
+
+### FU-15 — action-row supporting lines (raised 11 September 2026)
+
+**Observed.** The Planner's row reads "Validate departmental plan — Digital
+Health"; the Finance row "Confirm plan funding — {plan title}"; the
+department's "Correct and resubmit departmental plan — {department}". None
+says which version, how many requirements, what value, when it was
+submitted or by whom.
+
+**Where it comes from.** §11.2 / PLN-DES-01 prescribe the consolidate row's
+supporting line ("Digital Health · KES 80,000,000") and then: "each appears
+as its own row in the same card, same headline-plus-button format" — with no
+supporting-line copy for validation, Finance, governance, correction or
+continue rows. `workspace._action` therefore received the bare scope label.
+
+**Proposed copy (v1.16 §11.2, one line per row kind; v1.15 had dropped it).**
+
+- Validate: `{Department} · Version {n} · {k} requirements · KES {value} · submitted {d MMM yyyy} by {HoD}`
+- Continue / Correct: `{Department} · Version {n} · {k} requirements · KES {value}` (+ `returned {date}` for a correction)
+- Confirm plan funding / governance decision: `{Plan title} · Version {n} · {items} items · KES {value} · requested {date}`
+- Consolidate: unchanged.
+
+**Closure evidence.** Spec and PLN-DES-01 updated; `workspace.py` builds
+each line from the same snapshot the row's counts use; `test_planning_workspace`
+asserts one exact line per kind; `planning-workspace.spec.ts` reads one live.
+
+### FU-16 — Requisition contract resolved the open successor's Draft copy (raised and closed 11 September 2026)
+
+**Symptom.** Grace Wanjiku (Departmental Author, Digital Health) opening
+`/desk/procurement-requisitions` got the "could not be loaded" state with a
+`Not found` dialog; the server log showed
+`kentender_procurement.procurement_requisitions.api.get_requisition_workspace` → 404.
+Only reproducible once `PLN-MOH-2027-001-V2` had been begun as a Draft
+successor of the Active V1.
+
+**Cause.** `plan_read.resolve_item_doc_name` prefers the open successor's
+copy of a Plan Item — right for the Planning editor, wrong for the
+Requisition contract. The successor copy is `Draft` with `Draft` allocations,
+so `get_requisition_eligible_plan_item` derived an empty contributing-unit
+set and `_authorise_requisition_reader` refused every Organisation-Unit-scoped
+caller. Requisitions' `_ready_to_prepare_card` calls that detail once per
+listed item, so one refusal took the whole workspace down. The listing
+(`list_requisition_eligible_plan_items`) already selected the Active copy,
+so the two halves of the same contract named different documents.
+
+**Fix.** `plan_requisition._requisition_item_name`: the Active copy wins;
+with none, the editor's precedence still decides which copy answers "not
+eligible". Applied to the detail read, the drawdown command and the
+correction-request command. `reverse_requisition_drawdown` addresses the
+drawdown row directly and was never affected.
+
+**Not changed.** `_ready_to_prepare_card` still lets a per-item contract
+failure surface as the workspace's error state rather than skipping the row
+silently — a contract drift should be visible, not hidden. The Start screen
+for `PPI-MOH-2027-001` (a Services item) correctly shows "not supported by
+the IT-equipment Requisition pattern"; that is §13.4 compatibility, not this
+defect.
+
+## FU-17 — §4 field-table drift recorded during the v1.16 audit (2026-09-11)
+
+Found while checking PLN-CHG-001 v1.15 against the build before writing v1.16.
+None changes what a user sees, so v1.16 records rather than corrects them:
+`indicative_amount_minor_units` in §4.4 and §4.10 is implemented as the Currency
+field `indicative_amount`; §4.4's stable `source_line_id` is derived, never
+stored; §4.9's `variance_baseline_days` / `variance_forecast_days` are computed
+in `procurement_planning/services/schedule.py` on every read with the sign
+actual − baseline (positive = late), where the text says baseline − actual;
+§4.12's "scope" on the governance task is not a field (`capacity` is). Left
+open because each is a choice for the document owner — spec-follows-code is
+the likely answer for all four.
+
+## FU-18 — states and controls the text specifies and the build lacks (2026-09-11)
+
+§11.18's **Finance shortfall** card ("Funding is insufficient …") is not
+rendered — `FinanceTaskScreen.vue` marks the excess per line instead; **No
+validation tasks** ("No departmental plans awaiting validation") is not
+rendered — a submitted DPP awaiting another planner appears as a waiting line.
+§5.1 **Withdraw departmental submission** and §5.2 **Cancel update** are
+whitelisted (`withdraw_departmental_plan_version`, `cancel_plan_update`) and
+tested but no Vue control invokes them (FU-06 already records the latter with
+`RetryPublication`). Left open: none has a live trigger in MVP-1.
+

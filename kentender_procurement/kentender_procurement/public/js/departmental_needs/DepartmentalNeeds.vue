@@ -51,7 +51,7 @@
 			<NeedEditorScreen
 				v-else-if="screen === 'editor'"
 				:mode="editorMode"
-				:version="editorVersion"
+				:revision="editorRevision"
 				:context="editorContext"
 				:units="units"
 				@unit-created="(unit) => units.push(unit)"
@@ -68,25 +68,29 @@
 				v-else-if="screen === 'detail'"
 				:need="detail.need || {}"
 				:scope-labels="detail.scope_labels || {}"
-				:version="detail.current_version || {}"
-				:accepted-version="detail.accepted_version || {}"
-				:pinned-version="pinnedVersion"
+				:revision="detail.current_revision || {}"
+				:accepted-revision="detail.accepted_revision || {}"
+				:pinned-revision="pinnedRevision"
 				:usage="usage"
 				:author-label="detail.author_label || ''"
 				:accepted-by-label="acceptedBy.actor_label || ''"
 				:accepted-at="acceptedBy.occurred_at || ''"
 				:access-profile="detail.access_profile || ''"
+				:actions="detail.actions || []"
+				:latest-return="detail.latest_return || null"
 				:withdrawal-open="withdrawalOpen"
 				@create-update="onCreateSuccessor"
 				@request-withdrawal="openWithdrawalDialog"
 				@open-successor="go(needReference, 'edit')"
+				@edit="go(needReference, 'edit')"
+				@review="(action) => onRowAction({ reference: needReference }, action)"
 				@view-plan-item="onViewPlanItem"
 			/>
 
 			<ReviewTaskScreen
 				v-else-if="screen === 'task'"
 				:need="task.need || {}"
-				:version="task.version || {}"
+				:revision="task.revision || {}"
 				:scope="task.scope || {}"
 				:requester-label="task.requester_label || ''"
 				:opened-at="task.opened_at || ''"
@@ -103,7 +107,7 @@
 			<WithdrawalReviewScreen
 				v-else-if="screen === 'withdrawal'"
 				:request="task.withdrawal_request || {}"
-				:version="task.version || {}"
+				:revision="task.revision || {}"
 				:dependency="dependency"
 				:requester-label="requesterLabel"
 				:requested-at="task.opened_at || ''"
@@ -282,18 +286,18 @@ const needReference = computed(() => {
 
 const taskId = computed(() => (segments.value[0] === "review" ? segments.value[1] || "" : ""));
 
-// NDS-UI-06 pins the accepted version number in the route.
-const pinnedVersionNumber = computed(() =>
+// NDS-UI-06 pins the accepted revision number in the route.
+const pinnedRevisionNumber = computed(() =>
 	segments.value[1] === "accepted" ? Number(segments.value[2]) : null
 );
 
-const pinnedVersion = computed(() => {
-	if (!pinnedVersionNumber.value) return null;
-	const accepted = detail.value.accepted_version;
-	if (accepted && Number(accepted.version_number) === pinnedVersionNumber.value) return accepted;
-	// The route asked for a version that is no longer current: keep it readable
+const pinnedRevision = computed(() => {
+	if (!pinnedRevisionNumber.value) return null;
+	const accepted = detail.value.accepted_revision;
+	if (accepted && Number(accepted.revision_number) === pinnedRevisionNumber.value) return accepted;
+	// The route asked for a revision that is no longer current: keep it readable
 	// rather than redirecting (§12.4).
-	return detail.value.pinned_version || accepted || null;
+	return accepted || null;
 });
 
 const editorMode = computed(() => {
@@ -306,8 +310,8 @@ const editorMode = computed(() => {
 
 // `detail` is the last need loaded this session and /new never reloads it, so
 // the create editor must not read it — it would hydrate from that need.
-const editorVersion = computed(() =>
-	needReference.value ? detail.value.current_version || {} : {}
+const editorRevision = computed(() =>
+	needReference.value ? detail.value.current_revision || {} : {}
 );
 
 const editorContext = computed(() => {
@@ -356,7 +360,7 @@ async function fetchFor(scr) {
 			const request = loadedTask.withdrawal_request || {};
 			loadedDependency = await api.checkWithdrawalDependency(
 				(loadedTask.need || {}).name,
-				request.accepted_version
+				request.accepted_revision
 			);
 		}
 		return { task: loadedTask, dependency: loadedDependency };
@@ -519,15 +523,32 @@ function recordVersion() {
 	return (detail.value.need || {}).record_version;
 }
 
-async function onSaveDraft(form) {
-	const result = await run("save-draft", (key) =>
-		api.saveNeedDraft({
+// The version stamp the next command must carry is the one the server just
+// returned — stamped synchronously from the save response, never left to
+// the post-save reload. `run` re-enables the buttons before that reload
+// resolves, so a Save draft followed straight away by Submit for review (or a
+// second Save) used to send the pre-save stamp and be refused as a stale
+// write ("This Departmental Need changed after it was opened") with nobody
+// else editing (2026-09-11).
+function stampSavedVersion(result) {
+	if (result && detail.value && detail.value.need) detail.value.need.record_version = result.record_version;
+}
+
+async function saveDraftCommand(action, form) {
+	return run(action, async (key) => {
+		const result = await api.saveNeedDraft({
 			need: needReference.value || "",
 			...(needReference.value ? { expected_version: recordVersion() } : contextArgs()),
 			...form,
 			idempotency_key: key,
-		})
-	);
+		});
+		stampSavedVersion(result);
+		return result;
+	});
+}
+
+async function onSaveDraft(form) {
+	const result = await saveDraftCommand("save-draft", form);
 	if (!result) return;
 	// §12.3 — the first save replaces the route with the generated reference.
 	if (!needReference.value) go(result.need_reference, "edit");
@@ -535,17 +556,10 @@ async function onSaveDraft(form) {
 }
 
 async function onSubmit(form) {
-	const saved = await run("save-before-submit", (key) =>
-		api.saveNeedDraft({
-			need: needReference.value || "",
-			...(needReference.value ? { expected_version: recordVersion() } : contextArgs()),
-			...form,
-			idempotency_key: key,
-		})
-	);
+	const saved = await saveDraftCommand("save-before-submit", form);
 	if (!saved) return;
 	const result = await run("submit", (key) =>
-		api.submitNeedVersion({
+		api.submitNeedRevision({
 			need: saved.need,
 			expected_version: saved.record_version,
 			idempotency_key: key,
@@ -668,7 +682,7 @@ const REASON_DIALOGS = {
 		title: "Return for correction",
 		lede: "Explain what the requester must correct before resubmission.",
 		confirmLabel: "Return need",
-		onConfirm: () => decide(api.returnNeedVersion, "return"),
+		onConfirm: () => decide(api.returnNeedRevision, "return"),
 	},
 	// NDS-DES-13b
 	decline: {
@@ -676,7 +690,7 @@ const REASON_DIALOGS = {
 		lede: "Explain why this requirement will not be taken forward.",
 		confirmLabel: "Do not take forward",
 		destructive: true,
-		onConfirm: () => decide(api.declineNeedVersion, "decline"),
+		onConfirm: () => decide(api.declineNeedRevision, "decline"),
 	},
 	// NDS-DES-11
 	"request-withdrawal": {
@@ -698,15 +712,15 @@ const reasonDialog = computed(() => REASON_DIALOGS[dialog.value] || null);
 
 const confirmDialog = computed(() => {
 	if (dialog.value === "accept") {
-		const version = task.value.version || {};
+		const revision = task.value.revision || {};
 		return {
 			title: "Accept for planning",
-			subject: `${(task.value.need || {}).need_reference} · Version ${version.version_number}`,
+			subject: `${(task.value.need || {}).need_reference} · Revision ${revision.revision_number}`,
 			// §12.5 fixes this sentence exactly.
 			message:
-				"Acceptance makes this version available to Procurement Planning. It does not approve expenditure or create procurement authority.",
+				"Acceptance makes this revision available to Procurement Planning. It does not approve expenditure or create procurement authority.",
 			confirmLabel: "Accept for planning",
-			onConfirm: () => decide(api.acceptNeedVersion, "accept"),
+			onConfirm: () => decide(api.acceptNeedRevision, "accept"),
 		};
 	}
 	if (dialog.value === "approve-withdrawal") {
@@ -722,7 +736,7 @@ const confirmDialog = computed(() => {
 		return {
 			title: "Cancel update",
 			message:
-				"The open update will be withdrawn. The earlier accepted version stays current.",
+				"The open update will be withdrawn. The earlier accepted revision stays current.",
 			confirmLabel: "Cancel update",
 			destructive: true,
 			onConfirm: () => cancelSuccessor(),

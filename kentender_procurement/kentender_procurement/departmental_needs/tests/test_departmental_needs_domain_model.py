@@ -18,8 +18,8 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.departmental_needs.constants import (
 	STATE_ACCEPTED,
 	STATE_DRAFT,
-	VERSION_DRAFT,
-	VERSION_SUBMITTED,
+	REVISION_DRAFT,
+	REVISION_SUBMITTED,
 	WITHDRAWAL_AWAITING_REVIEW,
 )
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
@@ -87,11 +87,11 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 
 	def _new_version(self, need, **overrides):
 		values = {
-			"doctype": "Departmental Need Version",
-			"need_version_id": f"{need.need_reference}-V001",
+			"doctype": "Departmental Need Revision",
+			"need_revision_id": f"{need.need_reference}-V001",
 			"departmental_need": need.name,
-			"version_number": 1,
-			"version_status": VERSION_DRAFT,
+			"revision_number": 1,
+			"revision_status": REVISION_DRAFT,
 			"title": "Clinical deployment laptops for rollout",
 			"description": "Laptop computers for deployment at priority health facilities.",
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
@@ -146,7 +146,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 	# --- §4.3 version ------------------------------------------------------
 
 	def test_version_holds_the_six_requester_values(self):
-		fields = {f.fieldname for f in frappe.get_meta("Departmental Need Version").fields}
+		fields = {f.fieldname for f in frappe.get_meta("Departmental Need Revision").fields}
 		for value in (
 			"title",
 			"description",
@@ -160,7 +160,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 
 	def test_unit_links_to_the_governed_catalogue(self):
 		"""§1.1 "New in v1.6" — ERPNext native `UOM`, not the retired custom doctype."""
-		meta = frappe.get_meta("Departmental Need Version")
+		meta = frappe.get_meta("Departmental Need Revision")
 		self.assertEqual(meta.get_field("unit").options, "UOM")
 
 	def test_title_bounds_are_enforced(self):
@@ -187,13 +187,13 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		need = self._new_need()
 		version = self._new_version(need)
 		frappe.db.set_value(
-			"Departmental Need Version",
+			"Departmental Need Revision",
 			version.name,
-			"version_status",
-			VERSION_SUBMITTED,
+			"revision_status",
+			REVISION_SUBMITTED,
 			update_modified=False,
 		)
-		reloaded = frappe.get_doc("Departmental Need Version", version.name)
+		reloaded = frappe.get_doc("Departmental Need Revision", version.name)
 		reloaded.indicative_quantity = 999
 		with self.assertRaises(DepartmentalNeedError):
 			reloaded.save(ignore_permissions=True)
@@ -204,7 +204,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		version.indicative_quantity = 42
 		version.save(ignore_permissions=True)
 		self.assertEqual(
-			frappe.db.get_value("Departmental Need Version", version.name, "indicative_quantity"), 42
+			frappe.db.get_value("Departmental Need Revision", version.name, "indicative_quantity"), 42
 		)
 
 	# --- §4.4 review task --------------------------------------------------
@@ -282,7 +282,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			"doctype": "Need Withdrawal Request",
 			"withdrawal_request_id": f"NDS-WDR-{uuid4().hex[:12].upper()}",
 			"departmental_need": need.name,
-			"accepted_version": version.name,
+			"accepted_revision": version.name,
 			"requested_by": AUTHOR,
 			"reason": "The department no longer requires this equipment in the current year.",
 			"status": WITHDRAWAL_AWAITING_REVIEW,
@@ -314,10 +314,10 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			"NDS-MOH-2027-0004",
 		):
 			self.assertTrue(frappe.db.exists("Departmental Need", reference))
-			current = frappe.db.get_value("Departmental Need", reference, "current_version")
+			current = frappe.db.get_value("Departmental Need", reference, "current_revision")
 			self.assertTrue(current, msg=f"{reference} must point at a current version")
 			self.assertTrue(
-				frappe.db.get_value("Departmental Need Version", current, "expected_operational_result")
+				frappe.db.get_value("Departmental Need Revision", current, "expected_operational_result")
 			)
 
 	def test_the_harmonized_laptop_needs_are_accepted_on_their_first_version(self):
@@ -325,17 +325,17 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 		reach Accepted directly on V1; nothing is Returned."""
 		for reference in ("NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
 			row = frappe.db.get_value(
-				"Departmental Need", reference, ["current_state", "current_accepted_version"], as_dict=True
+				"Departmental Need", reference, ["current_state", "current_accepted_revision"], as_dict=True
 			)
 			self.assertEqual(row.current_state, STATE_ACCEPTED, reference)
-			self.assertEqual(row.current_accepted_version, f"{reference}-V001", reference)
+			self.assertEqual(row.current_accepted_revision, f"{reference}-V001", reference)
 
 	def test_accepted_seed_need_points_at_its_accepted_version(self):
 		row = frappe.db.get_value(
 			"Departmental Need",
 			"NDS-MOH-2027-0001",
-			["current_state", "current_accepted_version"],
+			["current_state", "current_accepted_revision"],
 			as_dict=True,
 		)
 		self.assertEqual(row.current_state, STATE_ACCEPTED)
-		self.assertEqual(row.current_accepted_version, "NDS-MOH-2027-0001-V001")
+		self.assertEqual(row.current_accepted_revision, "NDS-MOH-2027-0001-V001")

@@ -10,7 +10,7 @@
   "dpp_version",
   "source_origin",
   "need",
-  "need_version",
+  "need_revision",
   "title",
   "description",
   "expected_operational_result",
@@ -62,10 +62,10 @@
    "description": "Accepted Need source. Required only for Need-origin entries."
   },
   {
-   "fieldname": "need_version",
+   "fieldname": "need_revision",
    "fieldtype": "Link",
-   "label": "Need Version",
-   "options": "Departmental Need Version",
+   "label": "Need Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1
   },
   {

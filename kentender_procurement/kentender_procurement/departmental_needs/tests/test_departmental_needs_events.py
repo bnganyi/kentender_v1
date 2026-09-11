@@ -236,10 +236,10 @@ class TestSupersededEvent(EventCase):
 		accepted, opened, result = self.superseded()
 		payload = self.payload_of(result["event_id"])
 		self.assertEqual(
-			payload["earlier_accepted_version_id"], accepted["current_accepted_version"]
+			payload["earlier_accepted_version_id"], accepted["current_accepted_revision"]
 		)
 		self.assertEqual(
-			payload["successor_accepted_version_id"], opened["successor_version"]
+			payload["successor_accepted_version_id"], opened["successor_revision"]
 		)
 		self.assertTrue(payload["earlier_content_hash"])
 		self.assertTrue(payload["successor_content_hash"])
@@ -248,7 +248,7 @@ class TestSupersededEvent(EventCase):
 	def test_the_payload_embeds_the_successor_accepted_payload(self):
 		_, opened, result = self.superseded()
 		embedded = self.payload_of(result["event_id"])["successor_accepted_payload"]
-		self.assertEqual(embedded["accepted_version_id"], opened["successor_version"])
+		self.assertEqual(embedded["accepted_version_id"], opened["successor_revision"])
 		for excluded in EXCLUDED_FIELDS:
 			self.assertNotIn(excluded, embedded)
 
@@ -285,7 +285,7 @@ class TestWithdrawnEvent(EventCase):
 			[events.EVENT_ACCEPTED, events.EVENT_WITHDRAWN],
 		)
 		payload = self.payload_of(result["event_id"])
-		self.assertEqual(payload["withdrawn_version_id"], accepted["current_accepted_version"])
+		self.assertEqual(payload["withdrawn_version_id"], accepted["current_accepted_revision"])
 		self.assertEqual(payload["withdrawal_request_id"], requested["withdrawal_request"])
 		self.assertEqual(payload["decided_by"], REVIEWER)
 
@@ -395,7 +395,7 @@ class TestOutboxDelivery(EventCase):
 		self.assertIn(accepted["need"], by_need)
 		self.assertEqual(
 			by_need[accepted["need"]]["accepted_version_id"],
-			accepted["current_accepted_version"],
+			accepted["current_accepted_revision"],
 		)
 
 

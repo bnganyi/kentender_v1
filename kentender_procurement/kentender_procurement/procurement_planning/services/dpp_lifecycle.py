@@ -150,7 +150,7 @@ def copy_entries(source_version: str, target_version, fixture_namespace: str = "
 				"dpp_version": target_version.name,
 				"source_origin": entry.source_origin,
 				"need": entry.need,
-				"need_version": entry.need_version,
+				"need_revision": entry.need_revision,
 				"title": entry.title,
 				"description": entry.description,
 				"expected_operational_result": entry.expected_operational_result,
@@ -269,8 +269,8 @@ def save_need_funding(
 	entry = frappe.get_doc("Departmental Plan Entry", name)
 	if entry.source_origin != needs_intake.NEED_ORIGIN:
 		fail("PLN_ENTRY_INCOMPLETE", "Only a Need-origin entry takes funding details here.")
-	current = needs_intake.current_accepted_version_of(entry.need, root.fiscal_year)
-	if current != cstr(entry.need_version):
+	current = needs_intake.current_accepted_revision_of(entry.need, root.fiscal_year)
+	if current != cstr(entry.need_revision):
 		fail("PLN_DPP_STALE")
 	if reason:
 		if not (20 <= len(reason) <= 500):
@@ -454,7 +454,7 @@ def submit_departmental_plan(
 			"source_origin": entry.source_origin,
 			"source_line_id": cstr(entry.need) or entry.entry_id,
 			"need": cstr(entry.need),
-			"need_version": cstr(entry.need_version),
+			"need_revision": cstr(entry.need_revision),
 			"title": entry.title,
 			"description": entry.description,
 			"expected_operational_result": entry.expected_operational_result,
@@ -468,13 +468,9 @@ def submit_departmental_plan(
 		for entry in entries
 	]
 	content_hash = hashlib.sha256(json.dumps(snapshots, sort_keys=True).encode()).hexdigest()
-	submission_number = (
-		frappe.db.count(
-			"Departmental Plan Submission",
-			{"dpp_version": ["in", frappe.get_all("Departmental Plan Version", filters={"departmental_plan": root.name}, pluck="name")]},
-		)
-		+ 1
-	)
+	# §4.5 — equals the version_number of the Submission it certifies, so the
+	# number an actor reads on screen and the certified snapshot never differ.
+	submission_number = int(version.version_number)
 	submission = frappe.get_doc(
 		{
 			"doctype": "Departmental Plan Submission",
@@ -533,7 +529,7 @@ def withdraw_departmental_plan_version(
 	_require_author(actor, root, submit=True)
 	envelope.check_record_version(root, expected_record_version)
 	if version.version_status not in ("Draft", "Returned") or cstr(root.current_version) != version.name:
-		fail("PLN_DPP_STALE", "Only the current Draft or Returned Version can be withdrawn.")
+		fail("PLN_DPP_STALE", "Only the current Draft or Returned Submission can be withdrawn.")
 	frappe.db.set_value("Departmental Plan Version", version.name, "version_status", "Withdrawn", update_modified=False)
 	if root.current_accepted_version:
 		envelope.bump(root, current_state="Accepted", current_version=root.current_accepted_version)

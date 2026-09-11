@@ -71,6 +71,29 @@ def _authorise_requisition_authoriser(actor: str) -> None:
 	authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
 
 
+def _requisition_item_name(plan_item_id: str) -> str:
+	"""Invariant 18 / §4.4 — "An Active item remains eligible until an
+	acknowledged successor changes it"; "the Active predecessor remains
+	operational until the correction or successor is approved, published
+	and acknowledged". While a Draft successor is open the same
+	`plan_item_id` names two docs, and `plan_read.resolve_item_doc_name`'s
+	"open successor wins" precedence is the Planning *editor's* rule, not
+	this contract's: the successor's copy is Draft with Draft allocations, so
+	resolving to it made every OU-scoped Requisitions reader `Not found`
+	(no Active allocation → no contributing unit; live 2026-09-11, Grace
+	Wanjiku on PPI-MOH-2027-001 with PLN-MOH-2027-001-V2 awaiting statutory
+	approval) and would have posted drawdowns against the wrong copy. The
+	Active copy wins here; with none (never activated, superseded), the
+	editor's precedence still decides which Draft/historical copy answers
+	"not eligible"."""
+	active = frappe.get_all(
+		"Annual Plan Item", filters={"plan_item_id": cstr(plan_item_id), "item_state": "Active"}, pluck="name", limit_page_length=2,
+	)
+	if len(active) == 1:
+		return active[0]
+	return plan_read.resolve_item_doc_name(plan_item_id)
+
+
 def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
 	rows = frappe.get_all(
 		"Plan Drawdown Reference",
@@ -94,7 +117,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 	`award_packages`, and per source `plan_item_line_id`/`source_line_id`.
 	"""
 	actor = authz.actor(user)
-	name = plan_read.resolve_item_doc_name(plan_item_id)
+	name = _requisition_item_name(plan_item_id)
 	item = frappe.get_doc("Annual Plan Item", name)
 	version = frappe.get_doc("Annual Plan Version", item.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
@@ -107,7 +130,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"Plan Source Allocation",
 		filters={"plan_item": item.name, "allocation_state": "Active"},
 		fields=[
-			"name", "allocation_id", "dpp_entry", "source_origin", "need", "need_version",
+			"name", "allocation_id", "dpp_entry", "source_origin", "need", "need_revision",
 			"organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount",
 		],
 		order_by="creation asc",
@@ -139,7 +162,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 				"source_origin": a.source_origin,
 				"dpp_entry": a.dpp_entry if a.source_origin == "Direct departmental requirement" else "",
 				"need": cstr(a.need) or None,
-				"need_version": cstr(a.need_version) or None,
+				"need_revision": cstr(a.need_revision) or None,
 				"organisation_unit": a.organisation_unit,
 				"title": entry.get("title") or "",
 				"description": entry.get("description") or "",
@@ -348,7 +371,7 @@ def record_requisition_drawdown(
 	if not requisition_reference or not allocations:
 		frappe.throw("A Requisition reference and at least one source allocation are required.")
 
-	item_name = plan_read.resolve_item_doc_name(plan_item_id)
+	item_name = _requisition_item_name(plan_item_id)
 	item = envelope.locked("Annual Plan Item", item_name)
 	envelope.check_record_version(item, expected_record_version)
 	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state") != "Confirmed":
@@ -496,7 +519,7 @@ def receive_plan_item_correction_request(
 	if not requisition_reference or not requisition_version:
 		frappe.throw("A Requisition reference and Version are required.")
 
-	item_name = plan_read.resolve_item_doc_name(plan_item_id)
+	item_name = _requisition_item_name(plan_item_id)
 	item = frappe.get_doc("Annual Plan Item", item_name)
 	contributing_org_units = set(
 		frappe.get_all("Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": "Active"}, pluck="organisation_unit")

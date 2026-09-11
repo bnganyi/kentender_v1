@@ -11,7 +11,7 @@ const DRAFT_PLAN = {
 	can_submit: false,
 	header: {
 		title: "Digital Health departmental plan",
-		reference_line: "DPP-MOH-DHI-2027-001 · Version 1",
+		reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
 		badge: "Draft",
 		badge_kind: "attention",
 	},
@@ -91,7 +91,7 @@ describe("DppPlanScreen — PLN-DES-02", () => {
 		const w = make(DRAFT_PLAN);
 		expect(w.find(".kt-page-kicker").text()).toBe("DEPARTMENTAL PROCUREMENT PLAN");
 		expect(w.find(".kt-page-title").text()).toBe("Digital Health departmental plan");
-		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Version 1");
+		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1");
 		expect(w.find('[data-testid="dpp-badge"]').text()).toBe("Draft");
 		const strip = w.find('[data-testid="dpp-context"]');
 		expect(strip.text()).toContain("Open until 30 Nov 2026, 23:59 EAT");
@@ -190,6 +190,20 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		expect(w.find('[data-testid="dpp-totals"]').text()).toBe(
 			"2 requirements · KES 100,000,000"
 		);
+	});
+
+	it("routes the task holder to their open task from the record (FU-14)", async () => {
+		const submitted = {
+			...READY_PLAN, access: "planner", mutable: false, can_submit: false,
+			certification: { ...READY_PLAN.certification, show: false },
+			open_task: { label: "Review submission", route: ["procurement-planning", "dpp-review", "DPPV-1"] },
+		};
+		const w = make(submitted);
+		const button = w.find('[data-testid="dpp-open-task"]');
+		expect(button.text()).toBe("Review submission");
+		await button.trigger("click");
+		expect(w.emitted("open-task")[0][0]).toEqual(["procurement-planning", "dpp-review", "DPPV-1"]);
+		expect(make({ ...submitted, open_task: null }).find('[data-testid="dpp-open-task"]').exists()).toBe(false);
 	});
 
 	it("tells a non-HoD why the ready plan's Submit is disabled", () => {

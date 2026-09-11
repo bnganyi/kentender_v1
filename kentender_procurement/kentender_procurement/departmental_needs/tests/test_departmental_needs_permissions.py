@@ -52,7 +52,7 @@ EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")
 
 NDS_DOCTYPES = (
 	"Departmental Need",
-	"Departmental Need Version",
+	"Departmental Need Revision",
 	"Departmental Need Decision",
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",

@@ -81,7 +81,7 @@ _SUBJECT_MESSAGE = {
 	),
 	EVENT_WITHDRAWAL_DECLINED: (
 		_("Withdrawal declined for Departmental Need {0}"),
-		_("The withdrawal request for {0} was declined; the accepted version remains current."),
+		_("The withdrawal request for {0} was declined; the accepted revision remains current."),
 	),
 }
 
@@ -155,6 +155,11 @@ def notify_need_transition(need, *, action: str) -> list[str | None]:
 		label = need.need_reference or need.name
 		subject, message = subject_tpl.format(label), message_tpl.format(label)
 		route = f"/app/departmental-needs/{need.need_reference}"
+		if event_type == EVENT_RETURNED:
+			# §12.1 — "Correct routes to the actor's editable current version":
+			# the author's return notification lands in the correction editor
+			# (NDS-DES-04), not on a read-only detail of the returned root.
+			route = f"{route}/edit"
 		if event_type in _REVIEWER_EVENTS:
 			# The reviewer's notification lands on the exact decision screen
 			# (NDS-UI-05 / NDS-UI-07), not the record: My Work and notifications

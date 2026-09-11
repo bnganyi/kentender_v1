@@ -1,13 +1,13 @@
 {
  "actions": [],
- "autoname": "field:accepted_version",
+ "autoname": "field:accepted_revision",
  "creation": "2026-08-29 16:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "departmental_need",
-  "accepted_version",
+  "accepted_revision",
   "usage",
   "active_plan",
   "active_plan_item",
@@ -30,11 +30,11 @@
   },
   {
    "description": "Fixes the exact source version the projection represents. One projection per accepted version.",
-   "fieldname": "accepted_version",
+   "fieldname": "accepted_revision",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Accepted Version",
-   "options": "Departmental Need Version",
+   "label": "Accepted Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "reqd": 1,
    "unique": 1

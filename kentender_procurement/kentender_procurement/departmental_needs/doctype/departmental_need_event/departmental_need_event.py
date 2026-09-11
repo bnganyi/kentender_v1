@@ -19,8 +19,8 @@ IMMUTABLE_FIELDS = (
 	"event_type",
 	"departmental_need",
 	"sequence",
-	"need_version",
-	"superseded_version",
+	"need_revision",
+	"superseded_revision",
 	"occurred_at",
 	"payload",
 )

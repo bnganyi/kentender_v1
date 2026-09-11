@@ -333,7 +333,7 @@ page_js = {
 # alongside both permission hooks below. `Departmental Need` and
 # `Departmental Need Review Task` carry a real `organisation_unit` field and
 # are the two DocTypes with a direct-route Desk surface of their own
-# (NDS-CHG-001 v1.6 §10) — `Departmental Need Version` / `Decision` /
+# (NDS-CHG-001 v1.6 §10) — `Departmental Need Revision` / `Decision` /
 # `Need Withdrawal Request` have no OU field of their own and no direct
 # route; access to them is governed by the service layer's own checks
 # against their parent Need (`require_view`/`require_author_command`/

@@ -8,7 +8,7 @@
 				WITHDRAWAL REVIEW · {{ request.name }}
 			</div>
 			<div style="display: flex; align-items: center; gap: 12px; margin-top: 4px">
-				<h1 class="kt-record-title">{{ version.title }}</h1>
+				<h1 class="kt-record-title">{{ revision.title }}</h1>
 				<StatusPill :label="request.status || 'Awaiting review'" />
 			</div>
 		</div>
@@ -28,7 +28,7 @@
 			<ReadonlyRow label="Reason" :value="request.reason" style="margin-top: 0" />
 		</div>
 
-		<RequirementCard :version="version" title="Accepted Need" />
+		<RequirementCard :revision="revision" title="Accepted Need" />
 
 		<div class="kt-card kt-blueprint" style="padding: 20px 24px">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
@@ -98,7 +98,7 @@ import { formatInstant } from "../data/format.js";
 
 const props = defineProps({
 	request: { type: Object, default: () => ({}) },
-	version: { type: Object, default: () => ({}) },
+	revision: { type: Object, default: () => ({}) },
 	dependency: { type: Object, default: () => ({}) },
 	requesterLabel: { type: String, default: "" },
 	requestedAt: { type: String, default: "" },

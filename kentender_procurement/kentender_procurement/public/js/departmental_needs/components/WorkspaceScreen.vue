@@ -25,10 +25,17 @@
 			</button>
 		</div>
 
-		<!-- NDS-DES-14a loading -->
+		<!-- NDS-DES-14a loading — §11.15: the table card carries the loading
+		     text above the skeleton rows. -->
 		<div v-if="loading" class="kt-card kt-blueprint" style="padding: 0; overflow: hidden">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div
+				data-testid="nds-loading-text"
+				style="padding: 16px 20px; font-size: 14px; color: var(--color-neutral-700); border-bottom: 1px solid var(--color-neutral-200)"
+			>
+				Loading departmental needs…
+			</div>
 			<div v-for="row in 3" :key="row" class="kt-skel-row">
 				<div class="kt-skel" style="width: 78%"></div>
 				<div class="kt-skel" style="width: 56%"></div>
@@ -67,13 +74,14 @@
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 			<div style="font-family: var(--font-heading); font-size: 22px; font-weight: 600">
-				Departmental Needs is not available
+				You do not have access to Departmental Needs
 			</div>
 			<p
 				style="margin: 0; font-size: 14.5px; color: var(--color-neutral-700); max-width: 460px"
 			>
-				You do not have an active Departmental Needs assignment for a configured Procuring
-				Entity, department and Financial Year.
+				This area needs one of these responsibilities: Departmental Author, Head of User
+				Department, Procurement Planner or Auditor, assigned to an organisation unit. Ask
+				your KenTender administrator to assign one in System setup.
 			</p>
 		</div>
 
@@ -136,7 +144,13 @@
 			</div>
 
 			<!-- §11.15 "No open Fiscal Year" — existing rows stay visible and
-			     readable; only the notice and the missing Create button say so. -->
+			     readable; only the notice and the missing Create button say so.
+			     §11.15 "Needs submission closed" carries only the strip value
+			     (above) and no sentence, but get_needs_submission_state() returns
+			     the same `{ open: false, financial_year: "" }` for both cases —
+			     nothing in the payload separates "the flag on a year is closed"
+			     from "no year is open" — so the sentence is shown for both until
+			     the contract gains a flag. -->
 			<p
 				v-if="!submission.open && needs.length"
 				data-testid="nds-submission-closed-notice"
