@@ -36,6 +36,16 @@ website_context = {
 	"splash_image": "/assets/frontend/images/kentender_loader.gif",
 }
 
+fixtures = [
+    {
+        "dt": "Web Page",
+        "filters": [["route", "=", "/"]]
+    },
+    {
+        "dt": "Website Settings"
+    }
+]
+
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "frontend/public/scss/website"
 
