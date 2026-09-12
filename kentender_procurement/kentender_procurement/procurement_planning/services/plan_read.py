@@ -574,7 +574,7 @@ def _active_view(version, plan) -> dict[str, Any]:
 	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": "Active"}, fields=["indicative_amount"]))
 	health = schedule.schedule_health(version.name)
 	publication = frappe.db.get_value(
-		"Annual Plan Publication", {"plan_version": version.name, "result": "Acknowledged"}, ["name", "acknowledged_at", "external_reference"], as_dict=True, order_by="attempt_number desc",
+		"Plan Publication", {"plan_version": version.name, "publication_state": "Acknowledged"}, ["name", "acknowledged_at", "external_reference"], as_dict=True,
 	)
 	return {
 		"summary": {
@@ -596,12 +596,11 @@ def _active_view(version, plan) -> dict[str, Any]:
 
 
 def _latest_publication(version_name: str) -> dict[str, Any] | None:
-	row = frappe.db.get_value(
-		"Annual Plan Publication", {"plan_version": version_name}, ["name", "result", "attempt_number"], as_dict=True, order_by="attempt_number desc",
-	)
+	row = frappe.db.get_value("Plan Publication", {"plan_version": version_name}, ["name", "publication_state"], as_dict=True)
 	if not row:
 		return None
-	return {"publication": row.name, "result": row.result, "attempt_number": row.attempt_number, "route": [PAGE, "publication", row.name]}
+	attempt_number = frappe.db.count("Publication Attempt", {"publication": row.name})
+	return {"publication": row.name, "result": row.publication_state, "attempt_number": attempt_number, "route": [PAGE, "publication", row.name]}
 
 
 def _drawn(allocations: list) -> tuple[float, float]:
@@ -999,44 +998,57 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 
 
 def get_publication_task(*, publication: str, user: str | None = None) -> dict[str, Any]:
+	"""§10.13 — the retry/reconcile screen for one `Plan Publication`: its
+	Treasury-evidence gate, the attempt history and the current publication
+	state. The full protected review pack (source evidence, web/PDF/JSON
+	exports) is Phase 3F/3G work; this is the minimal state a technical
+	retry or an AO's Treasury-evidence check needs today."""
+	from kentender_core.services.authorization import is_technical
+
 	actor = authz.actor(user)
-	if not publication or not frappe.db.exists("Annual Plan Publication", publication):
+	if not publication or not frappe.db.exists("Plan Publication", publication):
 		authz.not_found()
-	doc = frappe.get_doc("Annual Plan Publication", publication)
+	doc = frappe.get_doc("Plan Publication", publication)
 	authz.require_site_read(PLAN_READERS, actor)
 	version = frappe.get_doc("Annual Plan Version", doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	destination = frappe.db.get_value("Annual Plan Publication Destination", doc.destination, ["destination_id", "title"], as_dict=True) or {}
-	from kentender_core.services.authorization import is_technical
-
-	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("in", ("Active", "Draft", "Superseded"))})
-	value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active", "Superseded"))}, fields=["indicative_amount"]))
-	badge, badge_kind = {"Acknowledged": ("Acknowledged", "live"), "Failed": ("Publication failed", "critical")}.get(doc.result, ("Publication pending", "attention"))
+	attempts = frappe.get_all(
+		"Publication Attempt", filters={"publication": doc.name}, fields=["name", "attempt_number", "result", "attempted_at", "completed_at", "external_reference", "failure_reason"],
+		order_by="attempt_number asc",
+	)
+	treasury = frappe.db.get_value(
+		"Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"},
+		["name", "submitted_at", "channel", "dispatch_reference", "recorded_at"], as_dict=True,
+	)
+	hold = frappe.db.get_value("Plan Publication Hold", {"plan_version": version.name, "hold_state": "Active"}, ["name", "hold_kind", "reason", "raised_at"], as_dict=True)
+	badge, badge_kind = {
+		"Acknowledged": ("Acknowledged", "live"), "Failed": ("Publication failed", "critical"),
+		"Indeterminate": ("Result unknown — reconcile", "attention"), "Held": ("On hold", "attention"),
+	}.get(doc.publication_state, ("Pending", "attention"))
 	return {
 		"outcome": "OK",
 		"publication": doc.name,
-		"publication_reference": doc.publication_reference,
+		"publication_id": doc.publication_id,
 		"header": {"eyebrow": "ANNUAL PLAN PUBLICATION", "title": "Publication result", "reference_line": f"{plan.plan_reference} · Version {version.version_number}", "badge": badge, "badge_kind": badge_kind},
 		"plan_reference": plan.plan_reference,
 		"plan_title": plan.title,
-		"approved_plan": {
-			"financial_year": references.fy_label(plan.fiscal_year),
-			"plan_items": items,
-			"value_display": _money(value),
-			"statutory_approval_line": _decision_line(version.name, "Statutory approval"),
-		},
-		"configuration": destination.get("destination_id", ""),
-		"result_display": {"Acknowledged": "Acknowledged", "Failed": "Not acknowledged"}.get(doc.result, "Awaiting acknowledgement"),
-		"acknowledgement_reference": cstr(doc.external_reference) or "Not received",
-		"quiet_notice": "Publication is an automatic system action after statutory approval. It runs without a business-role control.",
 		"version": {"reference": version.version_reference, "status": version.version_status, "number": version.version_number},
 		"destination": {"id": destination.get("destination_id", ""), "title": destination.get("title", "")},
-		"attempt_number": doc.attempt_number,
-		"result": doc.result,
+		"publication_state": doc.publication_state,
+		"package_hash": doc.package_hash,
 		"external_reference": cstr(doc.external_reference),
-		"attempted_display": _eat(doc.attempted_at),
 		"acknowledged_display": _eat(doc.acknowledged_at),
-		"legal_character": cstr(doc.legal_character),
-		"payload_hash": doc.payload_hash,
-		"can_retry": is_technical(actor) and version.version_status == "Publication failed",
+		"attempts": [
+			{"attempt_number": a.attempt_number, "result": a.result, "attempted_display": _eat(a.attempted_at), "completed_display": _eat(a.completed_at), "external_reference": cstr(a.external_reference), "failure_reason": cstr(a.failure_reason)}
+			for a in attempts
+		],
+		"treasury_evidence": (
+			{"recorded": True, "submitted_display": _eat(treasury.submitted_at), "channel": treasury.channel, "dispatch_reference": treasury.dispatch_reference}
+			if treasury else {"recorded": False}
+		),
+		"hold": {"active": bool(hold), "kind": hold.hold_kind if hold else "", "reason": cstr(hold.reason) if hold else "", "raised_display": _eat(hold.raised_at) if hold else ""},
+		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
+		"can_retry": is_technical(actor) and doc.publication_state == "Failed",
+		"can_reconcile": is_technical(actor) and doc.publication_state == "Indeterminate",
 	}

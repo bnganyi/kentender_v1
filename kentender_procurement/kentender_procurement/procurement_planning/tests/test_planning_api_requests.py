@@ -259,7 +259,15 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 		frappe.set_user(fx.STATUTORY)
 		approved = self.call("approve_annual_plan", task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
-		self.assertEqual(approved["publication_result"], "Acknowledged")
+		self.assertTrue(approved["publication"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		self.call(
+			"record_treasury_submission", plan_version=plan["version_reference"], submitted_at="2101-11-01 09:00:00", channel="Email",
+			destination="treasury@example.test", dispatch_reference="MOH/APP/2101/001", exact_document_confirmed="true", idempotency_key=key(),
+		)
+		frappe.set_user("Administrator")
+		published = self.call("publish_annual_plan", plan_version=plan["version_reference"], idempotency_key=key())
+		self.assertEqual(published["result"], "Acknowledged")
 		frappe.set_user(fx.PLANNER)
 		preview = self.call("preview_forecast_cascade", plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-25")
 		self.assertEqual(len(preview["rows"]), 6)
@@ -272,8 +280,8 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		)
 		self.assertEqual(len(confirmed["revisions"]), 2)
 		self.assertTrue(confirmed["cascade_id"])
-		publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
-		self.assertEqual(self.call("get_publication_task", publication=publication)["result"], "Acknowledged")
+		publication = frappe.db.get_value("Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
+		self.assertEqual(self.call("get_publication_task", publication=publication)["publication_state"], "Acknowledged")
 
 
 class TestNoWhitelistedEndpointTakesKwargs(IntegrationTestCase):

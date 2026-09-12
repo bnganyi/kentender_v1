@@ -511,12 +511,19 @@ def approve_annual_plan(*, task: str, task_token: str, collective_resolution_ref
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
 	envelope.bump(version, version_status="Approved — publication pending")
 
-	# §11.15/§12.11: publication is a system action, never a business-role
-	# command — it runs immediately, in the same transaction as approval.
-	from kentender_procurement.procurement_planning.services import plan_publication
+	# §5.5.2 (plan D8) — approval commits the exact immutable content and a
+	# durable publication intent; external transmission happens afterwards,
+	# never inside this transaction. Snapshot/publication/intent are
+	# get-or-created keyed by the exact Version, so a retried or duplicated
+	# ApproveAnnualPlan call after a partial failure lands on the same
+	# identifiers rather than a second approved package (deterministic retry).
+	from kentender_procurement.procurement_planning.services import publication_pipeline
 
-	published = plan_publication.publish_annual_plan(plan_version=version.name, idempotency_key=f"{idempotency_key}:publish")
-	result = {"ok": True, "idempotent": False, "action": "approved", "plan_version": version.name, "publication_result": published["result"], "publication": published["publication"]}
+	committed = publication_pipeline.commit_approved_plan(version=version, plan=plan, decision=decision, actor=actor)
+	result = {
+		"ok": True, "idempotent": False, "action": "approved", "plan_version": version.name,
+		"snapshot": committed["snapshot"], "publication": committed["publication"], "intent": committed["intent"],
+	}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ApproveAnnualPlan", payload=payload, result=result,
 		document_type="Plan Governance Decision", document_name=decision.name, actor=actor,

@@ -30,6 +30,8 @@ from kentender_procurement.procurement_planning.services import (
 	plan_governance,
 	plan_read,
 	plan_workbench,
+	publication_pipeline,
+	treasury,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as pln_fx
 
@@ -164,6 +166,8 @@ def confirmed_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]
 
 
 def activate(plan_reference: str) -> dict:
+	"""§5.5.2 (plan D8): approve only commits; Treasury evidence gates the
+	worker; the worker runs inline here (no RQ worker on this bench)."""
 	frappe.set_user(HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 	plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 	submitted = plan_governance.submit_consolidated_plan(
@@ -174,9 +178,17 @@ def activate(plan_reference: str) -> dict:
 	adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
 	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 	frappe.set_user(STATUTORY)
-	result = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
+	approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
+	version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+	frappe.set_user(ACCOUNTING_OFFICER)
+	treasury.record_treasury_submission(
+		plan_version=version_name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+		dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+	)
+	frappe.set_user("Administrator")
+	published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
 	frappe.set_user(PLANNER)
-	return result
+	return published
 
 
 def active_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]:

@@ -1,62 +1,33 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §4.13/§5.2/§7.1/§8.2 — Publication, Active and successor.
+"""PLN-CHG-001 v1.18 §5.2 / §7.1 / §7.2 — activation, successor and Active
+Plan management.
 
-`PublishAnnualPlan` is a system action, never a business-role command
-(§11.15/§12.11): it runs automatically at the end of `ApproveAnnualPlan`
-against the one `KenTender Annual Plan Publication Sandbox` adapter. The
-payload is the OCDS-shaped canonical form (§4.13), retained on the
-publication record and characterised as an invitation to treat. Only an
-acknowledged attempt activates the Version (invariant 16); activation
-supersedes the predecessor, seeds every Plan Item's seven forecast fields
-from baseline (invariant 12e) and publishes `NeedPlanningUsageChanged.v1`
-for every Need-origin source that starts or stops being represented (§7.1).
-Planning holds no reservation, so nothing is released here (invariants
-21–22).
+`_activate_version`/`_publish_usage_events` are the shared controlled
+activation `publication_pipeline.activate_plan_version` calls once its
+predicates pass: supersede the predecessor, seed every Plan Item's baseline
+into its forecast (invariant 12e), publish `NeedPlanningUsageChanged.v1` for
+every Need-origin source that starts or stops being represented (§7.1).
+Planning holds no reservation, so nothing is released here. The remaining
+commands here (`BeginPlanUpdate`, `RemovePlanItemInSuccessor`,
+`CancelPlanUpdate`) manage the Draft successor/correction chain against the
+current Active baseline; the async publication pipeline itself lives in
+`publication_pipeline.py`.
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, publication_payload, references, schedule
+from kentender_procurement.procurement_planning.services import envelope, schedule
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.plan_governance import _copy_version_content, _next_plan_version_number
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
-
-DESTINATION_ADAPTER = "KenTender Annual Plan Publication Sandbox"
-LEGAL_CHARACTER = "Invitation to treat (section 53(12))"
-
-
-def _ensure_destination() -> str:
-	existing = frappe.db.get_value("Annual Plan Publication Destination", {"adapter": DESTINATION_ADAPTER, "active": 1})
-	if existing:
-		return existing
-	doc = frappe.get_doc(
-		{
-			"doctype": "Annual Plan Publication Destination",
-			"destination_id": "MOH-APP-SANDBOX-v1",
-			"title": "KenTender Annual Plan Publication Sandbox",
-			"adapter": DESTINATION_ADAPTER,
-			"active": 1,
-		}
-	).insert(ignore_permissions=True)
-	return doc.name
-
-
-def _transmit(payload_hash: str) -> tuple[str, str]:
-	"""The sandbox adapter: always acknowledges the exact approved payload
-	immediately. Tests patch this to prove the Failed/Indeterminate retry
-	path (§12.11) without a real external destination to fail against."""
-	return "Acknowledged", f"ACK-{payload_hash[:16]}"
-
 
 def _publish_usage_events(version, plan, *, event_suffix: str) -> None:
 	"""§7.1 `NeedPlanningUsageChanged.v1` — "Fully included" for every
@@ -111,84 +82,6 @@ def _activate_version(version, plan) -> None:
 	envelope.bump(version, version_status="Active", activated_at=now_datetime())
 	frappe.db.set_value("Annual Plan", plan.name, {"active_version": version.name, "open_successor_version": ""}, update_modified=False)
 	_publish_usage_events(version, plan, event_suffix=f"activate:{version.name}")
-
-
-def _attempt(version, plan, *, destination: str, payload: dict[str, Any] | None, payload_hash: str, attempt_number: int) -> Any:
-	result, external_reference = _transmit(payload_hash)
-	publication = frappe.get_doc(
-		{
-			"doctype": "Annual Plan Publication",
-			"publication_reference": references.publication_reference(version.name, attempt_number),
-			"plan_version": version.name,
-			"destination": destination,
-			"attempt_number": attempt_number,
-			"result": result,
-			"payload_hash": payload_hash,
-			"payload": json.dumps(payload, default=str) if payload is not None else None,
-			"legal_character": LEGAL_CHARACTER,
-			"external_reference": external_reference if result == "Acknowledged" else None,
-			"attempted_at": now_datetime(),
-			"acknowledged_at": now_datetime() if result == "Acknowledged" else None,
-			"fixture_namespace": cstr(plan.fixture_namespace),
-		}
-	).insert(ignore_permissions=True)
-	if result == "Acknowledged":
-		_activate_version(version, plan)
-	else:
-		envelope.bump(version, version_status="Publication failed")
-	return publication, result
-
-
-def publish_annual_plan(*, plan_version: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
-	"""§8.2/§12.11 — a system action; called automatically at the end of
-	`ApproveAnnualPlan`, never a standalone business command."""
-	actor = cstr(user or frappe.session.user)
-	replay = envelope.replay_or_none(idempotency_key, {"plan_version": plan_version})
-	if replay:
-		return replay
-	version = envelope.locked("Annual Plan Version", plan_version)
-	if version.version_status not in ("Approved — publication pending", "Publication failed"):
-		fail("PLN_REVIEW_STALE")
-	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	destination = _ensure_destination()
-	payload = publication_payload.build_payload(version, plan)
-	payload_hash = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
-	attempt_number = frappe.db.count("Annual Plan Publication", {"plan_version": version.name}) + 1
-	publication, result = _attempt(version, plan, destination=destination, payload=payload, payload_hash=payload_hash, attempt_number=attempt_number)
-	result_dict = {"ok": True, "idempotent": False, "action": "published", "publication": publication.name, "result": result}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="PublishAnnualPlan", payload={"plan_version": plan_version},
-		result=result_dict, document_type="Annual Plan Publication", document_name=publication.name,
-		actor=actor, fixture_namespace=cstr(plan.fixture_namespace),
-	)
-	return result_dict
-
-
-def retry_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
-	"""§11.15/§12.11 — System Manager only; retries the SAME approved
-	payload, edits nothing, creates no new approval. Not a business
-	decision: no authority snapshot."""
-	actor = authz.require_technical(user)
-	replay = envelope.replay_or_none(idempotency_key, {"publication": publication})
-	if replay:
-		return replay
-	if not publication or not frappe.db.exists("Annual Plan Publication", publication):
-		authz.not_found()
-	prior = frappe.get_doc("Annual Plan Publication", publication)
-	version = envelope.locked("Annual Plan Version", prior.plan_version)
-	if version.version_status != "Publication failed":
-		fail("PLN_REVIEW_STALE")
-	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	attempt_number = frappe.db.count("Annual Plan Publication", {"plan_version": version.name}) + 1
-	payload = json.loads(prior.payload) if prior.payload else None
-	publication_doc, result = _attempt(version, plan, destination=prior.destination, payload=payload, payload_hash=prior.payload_hash, attempt_number=attempt_number)
-	result_dict = {"ok": True, "idempotent": False, "action": "retried", "publication": publication_doc.name, "result": result}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="RetryPublication", payload={"publication": publication},
-		result=result_dict, document_type="Annual Plan Publication", document_name=publication_doc.name,
-		actor=actor, fixture_namespace=cstr(plan.fixture_namespace),
-	)
-	return result_dict
 
 
 def begin_plan_update(*, plan_reference: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:

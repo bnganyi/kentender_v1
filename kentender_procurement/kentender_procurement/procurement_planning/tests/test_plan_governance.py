@@ -18,6 +18,8 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
 from kentender_procurement.procurement_planning.services import (
+	publication_pipeline,
+	treasury,
 	budget_gateway,
 	dpp_lifecycle,
 	dpp_validation,
@@ -296,13 +298,33 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertFalse(read["authority_card"]["is_board"])
 		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
 		self.assertEqual(approved["action"], "approved")
-		self.assertEqual(approved["publication_result"], "Acknowledged")
+		self.assertTrue(approved["snapshot"] and approved["publication"] and approved["intent"])
+		# §5.5.2 (plan D8): approval only commits — no external send yet, still Draft-locked
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version.name, "version_status"), "Approved — publication pending")
+		self.assertFalse(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"))
+		snapshot = frappe.get_doc("Approved Plan Snapshot", approved["snapshot"])
+		self.assertEqual(snapshot.plan_version, version.name)
+		self.assertTrue(snapshot.content_digest)
+
+		# the worker runs inline on this bench (no RQ worker); Treasury evidence
+		# gates transmission (§5.5.2.2)
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
+		treasury.record_treasury_submission(
+			plan_version=version.name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+		)
+		published = publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
+		self.assertEqual(published["result"], "Acknowledged")
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", version.name, "version_status"), "Active")
 		self.assertEqual(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"), version.name)
-		publication = frappe.get_doc("Annual Plan Publication", {"plan_version": version.name})
-		self.assertEqual(publication.result, "Acknowledged")
+		publication = frappe.get_doc("Plan Publication", {"plan_version": version.name})
+		self.assertEqual(publication.publication_state, "Acknowledged")
 		self.assertTrue(publication.external_reference)
-		self.assertIn("Invitation to treat", publication.legal_character)
+		ack = frappe.get_doc("Publication Acknowledgement", {"publication": publication.name})
+		self.assertTrue(ack.matched)
 		# PLN-AC-123: forecasts seeded from baseline on activation
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertTrue(item["is_active"])

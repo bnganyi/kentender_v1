@@ -139,14 +139,12 @@ ALLOWED_MENTIONS = {
 	("services/plan_read.py", "Awaiting Finance\""),  # §5.2.2: a Finance-task badge label, never a Plan status
 	("tests/test_plan_workbench.py", "Multi-year"),  # proves the fixed literal rejects an unsupported payload
 	("errors.py", "Multi-year"),  # the §8 message of PLN_MULTI_YEAR_UNSUPPORTED names what is rejected
+	("services/plan_json.py", "ocid"),  # the docstring names the retired OCDS concept this module never produces
+	("tests/test_plan_publication.py", "ocid"),  # proves ocid is absent from both the internal snapshot and the public payload
 }
 
 # Rule-3 tokens still present until the named Phase 2 row lands (PLN18-213 requires this empty).
 DEFERRED_MENTIONS: dict[tuple[str, str], str] = {
-	("services/publication_payload.py", "ocid"): "PLN18-209",
-	("services/publication_payload.py", "\"ocds"): "PLN18-209",
-	("tests/test_plan_publication.py", "ocid"): "PLN18-209",
-	("tests/test_plan_publication.py", "\"ocds"): "PLN18-209",
 	("seeds/kentender_mvp_v1.py", "_stamp_design_clock"): "PLN18-401",
 }
 
