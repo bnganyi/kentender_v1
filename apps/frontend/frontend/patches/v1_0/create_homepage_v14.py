@@ -14,7 +14,7 @@ def create_homepage():
     
     page = frappe.new_doc("Web Page")
     page.title = "Home"
-    page.route = "/"
+    page.route = "home"
     page.published = 1
     page.content_type = "HTML"
     page.full_width = 1
@@ -23,16 +23,19 @@ def create_homepage():
     
     page.insert(ignore_permissions=True, ignore_if_duplicate=True)
     frappe.db.commit()
+    print("✅ Homepage created")
 
     ws = frappe.get_doc("Website Settings")
     ws.home_page = "home"
     ws.save(ignore_permissions=True)
     frappe.db.commit()
+    print("✅ Website Settings: home_page = 'home'")
 
     frappe.clear_cache()
+    print("🌐 Visit: http://localhost:8000/")
 
 
-PAGE_HTML = r"""
+PAGE_HTML = r'''
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -90,7 +93,6 @@ footer.web-footer { display: none !important; }
   .dropdown:hover .dropdown-arrow { transform: rotate(180deg); }
 }
 
-/* Button - high specificity to beat Frappe defaults */
 .btn-primary, a.btn-primary, button.btn-primary {
   background: linear-gradient(135deg, #0047AB, #003580) !important;
   color: #ffffff !important;
@@ -204,28 +206,12 @@ footer.web-footer { display: none !important; }
       </div>
     </div>
 
-    <div class="hidden md:block" style="display:block !important;">
-  <a href="/login" 
-     class="btn-primary text-sm"
-     style="display:inline-flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            background:linear-gradient(135deg,#0047AB,#003580) !important;
-            color:#ffffff !important;
-            padding:12px 24px !important;
-            border-radius:10px !important;
-            font-weight:600 !important;
-            font-size:14px !important;
-            text-decoration:none !important;
-            align-items:center !important;
-            gap:8px !important;
-            white-space:nowrap !important;
-            min-width:180px !important;
-            justify-content:center !important;">
-    <i class="fas fa-rocket" style="color:#ffffff !important;"></i>
-    <span style="color:#ffffff !important;">Start Free Trial</span>
-  </a>
-</div>
+    <div id="kt-start-trial-wrap" class="hidden md:block">
+      <a href="/login" id="kt-start-trial">
+        <i class="fas fa-rocket"></i>
+        <span>Start Free Trial</span>
+      </a>
+    </div>
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl">
       <i class="fas fa-bars"></i>
@@ -246,12 +232,52 @@ footer.web-footer { display: none !important; }
   </div>
 </div>
 
-<section class="relative overflow-hidden" style="background: linear-gradient(135deg, #0b1f3b 0%, #1e3a5f 60%, #0066FF 100%); min-height: 85vh;">
+<style>
+#kt-start-trial-wrap {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex-shrink: 0 !important;
+}
+#kt-start-trial {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: linear-gradient(135deg, #0047AB, #003580) !important;
+  color: #ffffff !important;
+  padding: 12px 24px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  min-width: 180px !important;
+  font-family: 'Outfit', sans-serif !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+#kt-start-trial i,
+#kt-start-trial span,
+#kt-start-trial * { color: #ffffff !important; }
+#kt-start-trial:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 30px rgba(0,102,255,0.4) !important;
+}
+@media (max-width: 767px) {
+  #kt-start-trial-wrap { display: none !important; }
+}
+</style>
+
+<section class="relative overflow-hidden" style="background: linear-gradient(135deg, #0b1f3b 0%, #1e3a5f 60%, #0066FF 100%); min-height: 55vh;">
   <div class="absolute inset-0 pattern-dots opacity-20"></div>
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
 
-  <div class="container mx-auto px-4 pt-20 pb-20 text-center relative z-10">
+  <div class="container mx-auto px-4 pt-20 pb-6 text-center relative z-10">
     <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
       Discover Kenya's
       <span class="bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Premier Tenders</span>
@@ -276,7 +302,7 @@ footer.web-footer { display: none !important; }
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
       <div class="glass rounded-xl p-5"><div class="text-3xl font-bold text-white mono">1000+</div><div class="text-blue-300 text-sm mt-1">Active Tenders</div></div>
       <div class="glass rounded-xl p-5"><div class="text-3xl font-bold text-white mono">24/7</div><div class="text-blue-300 text-sm mt-1">Real-time Updates</div></div>
       <div class="glass rounded-xl p-5"><div class="text-3xl font-bold text-white mono">100%</div><div class="text-blue-300 text-sm mt-1">Verified Sources</div></div>
@@ -285,7 +311,7 @@ footer.web-footer { display: none !important; }
   </div>
 </section>
 
-<section class="py-20 relative bg-white">
+<section class="py-10 relative bg-white">
   <div class="absolute inset-0 pattern-grid"></div>
   <div class="container mx-auto px-4 relative z-10">
     <div class="text-center mb-14">
@@ -351,7 +377,7 @@ footer.web-footer { display: none !important; }
   </div>
 </section>
 
-<section class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+<section class="py-10 bg-gradient-to-br from-gray-50 to-blue-50">
   <div class="container mx-auto px-4">
     <div class="flex justify-between items-center mb-12 flex-wrap gap-4">
       <div>
@@ -451,7 +477,7 @@ footer.web-footer { display: none !important; }
   </div>
 </section>
 
-<section class="py-20 relative overflow-hidden">
+<section class="py-10 relative overflow-hidden">
   <div class="absolute inset-0 bg-[#0b1f3b]"></div>
   <div class="absolute inset-0 pattern-dots opacity-20"></div>
 
@@ -523,7 +549,7 @@ footer.web-footer { display: none !important; }
   </div>
 </section>
 
-<section class="py-20 bg-white">
+<section class="py-10 bg-white">
   <div class="container mx-auto px-4">
     <div class="text-center mb-16">
       <h2 class="text-4xl md:text-5xl font-bold mb-4">Powerful Features</h2>
@@ -784,4 +810,4 @@ footer.web-footer { display: none !important; }
 
 })();
 </script>
-"""
+'''
