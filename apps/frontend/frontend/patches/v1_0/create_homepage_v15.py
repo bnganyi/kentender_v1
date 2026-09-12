@@ -313,7 +313,7 @@ footer.web-footer { display: none !important; }
 
 <section class="py-10 relative bg-white">
   <div class="absolute inset-0 pattern-grid"></div>
-  <div class="container mx-auto px-4 relative z-10">
+  <div class="container mx-auto px-4 pt-16 relative z-10">
     <div class="text-center mb-14">
       <h2 class="text-4xl md:text-5xl font-bold mb-4">Browse by Industry</h2>
       <p class="text-xl text-gray-600 max-w-2xl mx-auto">Find opportunities tailored to your business sector</p>
