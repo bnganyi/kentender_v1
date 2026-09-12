@@ -4,3 +4,13 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+
+frontend.patches.v1_0.create_homepage_v12
+frontend.patches.v1_0.create_about_page_v03
+frontend.patches.v1_0.create_awarded_tenders_page_v03
+frontend.patches.v1_0.create_all_tenders_page_v03
+frontend.patches.v1_0.create_donor_industry_page_v03
+frontend.patches.v1_0.create_private_industry_page_v03
+frontend.patches.v1_0.create_public_industry_page_v03
+
+

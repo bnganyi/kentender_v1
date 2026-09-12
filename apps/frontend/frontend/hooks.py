@@ -36,6 +36,7 @@ website_context = {
 	"splash_image": "/assets/frontend/images/kentender_loader.gif",
 }
 
+
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "frontend/public/scss/website"
 
