@@ -293,7 +293,11 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 	actor = authz.actor(user)
 	root = _root(dpp_reference)
 	access = authz.require_dpp_read(root.organisation_unit, actor)
-	if access not in ("author", "hod"):
+	# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — a technical reader or Auditor
+	# (`access == "oversight"`) reads this editor read-only; every other
+	# non-author/hod profile (e.g. a Planner) keeps the existing masked
+	# denial — this never widens who may reach the editor at all.
+	if access not in ("author", "hod", "oversight"):
 		authz.not_found()
 	labels = _labels(root)
 	version = frappe.get_doc("Departmental Plan Version", root.current_version)
@@ -303,6 +307,7 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 		"record_version": int(root.record_version or 0),
 		"dpp_version": version.name,
 		"mutable": version.version_status == "Draft",
+		"can_edit": access in ("author", "hod"),
 		"context": {"department": labels["department"], "financial_year": labels["financial_year"]},
 		"budget_lines": _eligible_lines(root),
 		"currency": "KES",

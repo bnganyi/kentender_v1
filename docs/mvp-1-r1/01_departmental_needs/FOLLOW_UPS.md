@@ -724,3 +724,11 @@ Found on 2026-09-11 while auditing v1.9 against the build for v1.10; left open
 because a second-FY fixture does not exist on the canonical site yet, so the
 filter would ship untested.
 
+## FU-24 — technical read is now centralised in KT-STD-001 (2026-09-11)
+
+Technical read is now stated once in KT-STD-001 v1.5 §3A.6 (11 Sep 2026). At
+this module's next version: replace its own technical-read prose, roles-table
+row wording, Forbidden carve-out and any masking clause's silence about
+technical readers with a citation of §3A.6; update AUTH-ADR-001 citations to
+v1.8.
+

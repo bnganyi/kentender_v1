@@ -66,13 +66,25 @@
 					Close
 				</button>
 			</template>
-			<template v-else-if="!makerCheckerBlocked">
+			<template v-else-if="!makerCheckerBlocked &amp;&amp; permitted.length">
 				<span></span>
 				<div style="display: flex; gap: 12px">
-					<button class="kt-btn-destructive" data-testid="nds-withdrawal-decline" :disabled="pending" @click="$emit('decline')">
+					<button
+						v-if="permitted.includes('decline')"
+						class="kt-btn-destructive"
+						data-testid="nds-withdrawal-decline"
+						:disabled="pending"
+						@click="$emit('decline')"
+					>
 						Decline withdrawal
 					</button>
-					<button class="kt-btn kt-btn-primary" data-testid="nds-withdrawal-approve" :disabled="pending" @click="$emit('approve')">
+					<button
+						v-if="permitted.includes('approve')"
+						class="kt-btn kt-btn-primary"
+						data-testid="nds-withdrawal-approve"
+						:disabled="pending"
+						@click="$emit('approve')"
+					>
 						Approve withdrawal
 					</button>
 				</div>
@@ -102,6 +114,10 @@ const props = defineProps({
 	dependency: { type: Object, default: () => ({}) },
 	requesterLabel: { type: String, default: "" },
 	requestedAt: { type: String, default: "" },
+	// KT-STD-001 §3A.6 — an "oversight" reader (technical or Auditor) never
+	// decides: the parent passes task.permitted_decisions, empty for them,
+	// so Approve/Decline never render even while the request is open.
+	permitted: { type: Array, default: () => [] },
 	makerCheckerBlocked: Boolean,
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,

@@ -185,6 +185,37 @@ def require_review_command(need: Any, user: str) -> str:
 	return decision.assignment_id
 
 
+def require_review_read(need: Any, user: str) -> str:
+	"""§6/§8/KT-STD-001 v1.5 §3A.6 — the read-only access profile behind the
+	review task screen (NDS-UI-05/07). A technical reader or Auditor may
+	*observe* the task under decision without ever holding the decider's
+	command authority; an in-scope Head of User Department may decide it.
+
+	Returns ``"oversight"`` or ``"decider"``. Anyone else gets exactly the
+	review command's own masked denial (§9) — this function invents no
+	separate error path, so the caller's error contract stays the single one
+	`require_review_command` already defines.
+	"""
+	if is_technical(user):
+		return "oversight"
+	if authorise_record(
+		user=user, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ
+	).allowed:
+		return "oversight"
+	decision = authorise_record(
+		user=user,
+		business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+		organisation_unit=cstr(need.organisation_unit),
+		purpose=PURPOSE_COMMAND,
+	)
+	if decision.allowed:
+		return "decider"
+	_fail_from_decision(
+		decision.reason_code, "You have no departmental review permission for that context."
+	)
+	return ""  # unreachable — _fail_from_decision always raises
+
+
 # --- Organisation Unit offers (§8.1 resolve_needs_scope / list_need_create_targets) ---
 
 
@@ -206,6 +237,21 @@ def _unit_rows(units: set[str] | None) -> list[dict[str, str]]:
 def _all_active_units() -> list[dict[str, str]]:
 	rows = frappe.get_all(
 		"Organisation Unit", filters={"status": "Active"}, fields=["name", "unit_name"], order_by="unit_name asc"
+	)
+	return [
+		{"organisation_unit": row.name, "organisation_unit_label": cstr(row.unit_name or row.name)}
+		for row in rows
+	]
+
+
+def _all_units() -> list[dict[str, str]]:
+	"""Every Organisation Unit, regardless of `status` (§8). A technical
+	reader's offer must never depend on a business-configuration fact like
+	"is any unit marked Active" — a site with none would otherwise land the
+	Administrator on "You do not have access" instead of a working read-all.
+	"""
+	rows = frappe.get_all(
+		"Organisation Unit", fields=["name", "unit_name"], order_by="unit_name asc"
 	)
 	return [
 		{"organisation_unit": row.name, "organisation_unit_label": cstr(row.unit_name or row.name)}
@@ -239,7 +285,7 @@ def viewing_contexts(user: str | None = None) -> list[dict[str, str]]:
 	"""
 	principal = actor(user)
 	if is_technical(principal):
-		return _all_active_units()
+		return _all_units()
 	# `permitted_ou_scopes` returns None for a held Site-wide assignment
 	# (unrestricted) and an empty set for no assignment at all — only the
 	# former should widen the offer to every unit.

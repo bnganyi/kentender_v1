@@ -58,3 +58,15 @@ page_js = {
 	# records from a synced site.
 	"strategy": "public/js/strategy_page.js",
 }
+
+# AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
+# search page/service and the technical-read conformance gate collect a
+# module's reference resolvers and read probes through these two hooks;
+# Strategy never imports kentender_core's Technical search internals.
+kt_technical_reference_resolvers = [
+	"kentender_strategy.services.technical_read.reference_resolvers",
+]
+
+kt_technical_read_probes = [
+	"kentender_strategy.services.technical_read.read_probes",
+]

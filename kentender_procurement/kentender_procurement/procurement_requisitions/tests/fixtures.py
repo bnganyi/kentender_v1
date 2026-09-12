@@ -17,6 +17,7 @@ tests.
 
 from __future__ import annotations
 
+from unittest.mock import patch
 from uuid import uuid4
 
 import frappe
@@ -24,6 +25,7 @@ import frappe
 from kentender_procurement.procurement_planning.services import (
 	dpp_lifecycle,
 	dpp_validation,
+	needs_intake,
 	plan_finance,
 	plan_governance,
 	plan_read,
@@ -115,19 +117,37 @@ def complete_and_confirm(item_id: str, **value_overrides) -> None:
 
 
 def confirmed_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]:
-	frappe.set_user(AUTHOR)
-	opened = dpp_lifecycle.open_departmental_plan(
-		organisation_unit=_ou_alpha(), fiscal_year=pln_fx.FY_OPEN, idempotency_key=key(), fixture_namespace=NS,
-	)
-	added = dpp_lifecycle.save_direct_requirement(
-		dpp_version=opened["current_version"], values=pln_fx.direct_values(indicative_amount=indicative_amount),
-		expected_record_version=opened["record_version"], idempotency_key=key(),
-	)
-	frappe.set_user(HOD)
-	submitted = dpp_lifecycle.submit_departmental_plan(
-		dpp_version=opened["current_version"], certification_confirmed=True,
-		expected_record_version=added["record_version"], idempotency_key=key(),
-	)
+	# This is Planning's own `RequisitionCase.confirmed_item()`, copied
+	# verbatim per this module's docstring — including the one thing that
+	# copy silently dropped: Planning's own `setUp()` mocks
+	# `needs_intake.current_accepted_sources` to `[]`, because
+	# `refresh_draft_entries` (called from both `open_departmental_plan` and
+	# `submit_departmental_plan`) would otherwise auto-include a real
+	# accepted Need's entry alongside the direct one this fixture explicitly
+	# funds below. Without the mock, an accepted Need for `OU_ALPHA`/
+	# `FY_OPEN` elsewhere on the shared site — not created by this fixture,
+	# and invisible to `wipe_planning_rows()`, which only wipes Planning's
+	# own DPP/Plan rows — surfaces here as an unfunded, unrelated entry that
+	# fails `submit_departmental_plan` with `PLN_ENTRY_INCOMPLETE` (found
+	# 2026-09-12, all nine Requisitions test modules sharing this fixture
+	# were failing on it). The mock must stay active through submission,
+	# not just the open call, or the second `refresh_draft_entries` inside
+	# `submit_departmental_plan` reintroduces the exact same entry right
+	# before its own coverage check.
+	with patch.object(needs_intake, "current_accepted_sources", return_value=[]):
+		frappe.set_user(AUTHOR)
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=_ou_alpha(), fiscal_year=pln_fx.FY_OPEN, idempotency_key=key(), fixture_namespace=NS,
+		)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=pln_fx.direct_values(indicative_amount=indicative_amount),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
 	dpp_task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
 	frappe.set_user(PLANNER)
 	accepted = dpp_validation.accept_departmental_plan(

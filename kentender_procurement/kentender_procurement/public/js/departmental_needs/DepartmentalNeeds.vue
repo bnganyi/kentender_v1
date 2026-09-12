@@ -111,6 +111,7 @@
 				:dependency="dependency"
 				:requester-label="requesterLabel"
 				:requested-at="task.opened_at || ''"
+				:permitted="task.permitted_decisions || []"
 				:maker-checker-blocked="!!task.maker_checker_blocked"
 				:error-summary="errorSummary"
 				:pending="pending"

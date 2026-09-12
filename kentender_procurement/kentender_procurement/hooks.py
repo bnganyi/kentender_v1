@@ -561,6 +561,26 @@ kt_my_work_providers = [
 	"kentender_procurement.tender_preparation.services.my_work_provider.my_work_rows",
 ]
 
+# AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
+# search page/service and the technical-read conformance gate collect every
+# module's reference resolvers and read probes through these two hooks; core
+# never imports this app.
+kt_technical_reference_resolvers = [
+	"kentender_procurement.departmental_needs.services.technical_read.reference_resolvers",
+	"kentender_procurement.procurement_planning.services.technical_read.reference_resolvers",
+	"kentender_procurement.procurement_requisitions.services.technical_read.reference_resolvers",
+	"kentender_procurement.tender_preparation.services.technical_read.reference_resolvers",
+	"kentender_procurement.std_configuration.services.technical_read.reference_resolvers",
+]
+
+kt_technical_read_probes = [
+	"kentender_procurement.departmental_needs.services.technical_read.read_probes",
+	"kentender_procurement.procurement_planning.services.technical_read.read_probes",
+	"kentender_procurement.procurement_requisitions.services.technical_read.read_probes",
+	"kentender_procurement.tender_preparation.services.technical_read.read_probes",
+	"kentender_procurement.std_configuration.services.technical_read.read_probes",
+]
+
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
 # PP2 retired: release_procurement_package_to_tender removed
 

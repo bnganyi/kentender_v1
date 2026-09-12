@@ -207,6 +207,48 @@ class TestEntryEditorRead(DppReadCase):
 		with self.assertRaises(frappe.DoesNotExistError):
 			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
 
+	def test_the_author_edits(self):
+		# Business actors are unchanged by the technical read-only path below.
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(result["can_edit"])
+
+	def test_administrator_and_a_technical_reader_open_the_editor_read_only(self):
+		# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — Administrator and a
+		# System-Manager-only user read every record and task read-only,
+		# never masked and never able to mutate.
+		opened = self.opened()
+		system_manager_only = "plnt.test.system-manager-only@example.test"
+		if not frappe.db.exists("User", system_manager_only):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": system_manager_only,
+					"first_name": "System Manager Only",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+					"roles": [{"role": "System Manager"}],
+				}
+			).insert(ignore_permissions=True)
+		for reader in ("Administrator", system_manager_only):
+			with self.subTest(reader=reader):
+				frappe.set_user(reader)
+				result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+				self.assertEqual(result["outcome"], "OK")
+				self.assertFalse(result["can_edit"])
+				# source facts and current values are still present
+				self.assertEqual(result["dpp_reference"], opened["dpp_reference"])
+				self.assertIn("budget_lines", result)
+				self.assertIn("units", result)
+
+	def test_an_unrelated_business_user_is_still_masked(self):
+		opened = self.opened()
+		frappe.set_user(fx.OUTSIDER)
+		with self.assertRaises(frappe.DoesNotExistError):
+			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+
 
 class TestAcceptedPlanUpdate(DppReadCase):
 	"""§5.1 'Accepted; change required → Create update' as the read model

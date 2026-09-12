@@ -22,6 +22,7 @@ import frappe
 from frappe import _
 from frappe.utils import cstr
 
+from kentender_core.services.authorization import is_technical
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	TASK_OPEN,
@@ -71,6 +72,12 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	"""
 	empty: dict[str, list[dict[str, Any]]] = {"assigned": [], "claimable": [], "waiting": []}
 	if user in ("Guest", ""):
+		return empty
+	# §8/KT-STD-001 v1.5 §3A.6 — a technical reader (Administrator or System
+	# Manager) decides nothing, so My Work must stay empty for them even
+	# though `frappe.get_roles` projects every role onto Administrator and
+	# would otherwise let the check below pass.
+	if is_technical(user):
 		return empty
 	if ROLE_HEAD_OF_USER_DEPARTMENT not in frappe.get_roles(user):
 		return empty

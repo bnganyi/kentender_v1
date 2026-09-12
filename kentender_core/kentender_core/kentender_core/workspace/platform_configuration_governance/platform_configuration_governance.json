@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"pcg_h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Platform Configuration & Governance</b></span>\", \"col\": 12}}, {\"id\": \"pcg_p\", \"type\": \"paragraph\", \"data\": {\"text\": \"Configure this KenTender site, its financial years, organisational structure and user responsibilities from one System setup page.\", \"col\": 12}}, {\"id\": \"pcg_sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"System setup\", \"col\": 4}}, {\"id\": \"pcg_sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Reference Data\", \"col\": 4}}]",
+ "content": "[{\"id\": \"pcg_h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Platform Configuration & Governance</b></span>\", \"col\": 12}}, {\"id\": \"pcg_p\", \"type\": \"paragraph\", \"data\": {\"text\": \"Configure this KenTender site, its financial years, organisational structure and user responsibilities from one System setup page.\", \"col\": 12}}, {\"id\": \"pcg_sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"System setup\", \"col\": 4}}, {\"id\": \"pcg_sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Technical record search\", \"col\": 4}}, {\"id\": \"pcg_sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Reference Data\", \"col\": 4}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -27,6 +27,17 @@
    "label": "Procuring entity, fiscal years, organisation and responsibilities",
    "link_count": 0,
    "link_to": "system-setup",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Find any record by reference or title (technical, read-only)",
+   "link_count": 0,
+   "link_to": "technical-search",
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
@@ -76,6 +87,19 @@
    "kanban_board": "",
    "label": "System setup",
    "link_to": "system-setup",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "Page",
+   "url": ""
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "format": "",
+   "icon": "find",
+   "kanban_board": "",
+   "label": "Technical record search",
+   "link_to": "technical-search",
    "restrict_to_domain": "",
    "stats_filter": "",
    "type": "Page",

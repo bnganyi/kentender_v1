@@ -81,29 +81,35 @@
 				<div class="pln-field-grid">
 					<div class="pln-field" style="grid-column: 1 / -1">
 						<label for="dpp-title">Title</label>
-						<input id="dpp-title" type="text" class="kt-input" v-model="form.title" data-testid="dpp-f-title" />
+						<input v-if="canEdit" id="dpp-title" type="text" class="kt-input" v-model="form.title" data-testid="dpp-f-title" />
+						<div v-else class="pln-val" data-testid="dpp-f-title">{{ form.title }}</div>
 					</div>
 					<div class="pln-field" style="grid-column: 1 / -1">
 						<label for="dpp-description">Description</label>
-						<textarea id="dpp-description" class="kt-input" rows="3" v-model="form.description" data-testid="dpp-f-description"></textarea>
+						<textarea v-if="canEdit" id="dpp-description" class="kt-input" rows="3" v-model="form.description" data-testid="dpp-f-description"></textarea>
+						<div v-else class="pln-val" data-testid="dpp-f-description">{{ form.description }}</div>
 					</div>
 					<div class="pln-field" style="grid-column: 1 / -1">
 						<label for="dpp-result">Expected operational result</label>
-						<textarea id="dpp-result" class="kt-input" rows="3" v-model="form.expected_operational_result" data-testid="dpp-f-result"></textarea>
+						<textarea v-if="canEdit" id="dpp-result" class="kt-input" rows="3" v-model="form.expected_operational_result" data-testid="dpp-f-result"></textarea>
+						<div v-else class="pln-val" data-testid="dpp-f-result">{{ form.expected_operational_result }}</div>
 					</div>
 					<div class="pln-field">
 						<label for="dpp-quantity">Quantity</label>
-						<input id="dpp-quantity" type="number" min="1" step="1" class="kt-input" v-model="form.quantity" data-testid="dpp-f-quantity" />
+						<input v-if="canEdit" id="dpp-quantity" type="number" min="1" step="1" class="kt-input" v-model="form.quantity" data-testid="dpp-f-quantity" />
+						<div v-else class="pln-val" data-testid="dpp-f-quantity">{{ form.quantity }}</div>
 					</div>
 					<div class="pln-field">
 						<label for="dpp-unit">Unit</label>
-						<select id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit">
+						<select v-if="canEdit" id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit">
 							<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
 						</select>
+						<div v-else class="pln-val" data-testid="dpp-f-unit">{{ unitLabel }}</div>
 					</div>
 					<div class="pln-field">
 						<label for="dpp-required-by">Required by</label>
-						<input id="dpp-required-by" type="date" class="kt-input" v-model="form.required_by_date" data-testid="dpp-f-required-by" />
+						<input v-if="canEdit" id="dpp-required-by" type="date" class="kt-input" v-model="form.required_by_date" data-testid="dpp-f-required-by" />
+						<div v-else class="pln-val" data-testid="dpp-f-required-by">{{ form.required_by_date }}</div>
 					</div>
 				</div>
 			</div>
@@ -118,6 +124,7 @@
 				<div class="pln-field">
 					<label for="dpp-budget-line">Procurement Budget Line</label>
 					<select
+						v-if="canEdit"
 						id="dpp-budget-line"
 						class="kt-input"
 						v-model="form.budget_line"
@@ -126,6 +133,7 @@
 					>
 						<option v-for="line in budgetLines" :key="line.id" :value="line.id">{{ line.label }}</option>
 					</select>
+					<div v-else class="pln-val" data-testid="dpp-f-budget-line">{{ budgetLineLabel }}</div>
 				</div>
 				<div class="pln-ro-field">
 					<label>Currency</label>
@@ -134,6 +142,7 @@
 				<div class="pln-field">
 					<label for="dpp-amount">Indicative amount</label>
 					<input
+						v-if="canEdit"
 						id="dpp-amount"
 						type="number"
 						min="1"
@@ -142,12 +151,13 @@
 						data-testid="dpp-f-amount"
 						:disabled="form.not_proceeding"
 					/>
+					<div v-else class="pln-val" data-testid="dpp-f-amount">{{ form.indicative_amount }}</div>
 				</div>
 			</div>
 
 			<!-- PLN-AC-092 — a Need-origin entry the department will not proceed
 			     with is accounted for with a reason instead of funding (§5.1). -->
-			<div v-if="isNeed" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
+			<div v-if="isNeed && canEdit" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
 				<label class="pln-checkbox-row">
 					<input
 						type="checkbox"
@@ -167,6 +177,12 @@
 					></textarea>
 				</div>
 			</div>
+			<div v-else-if="isNeed && form.not_proceeding" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
+				<div class="pln-ro-field">
+					<label>This requirement will not proceed in this financial year</label>
+					<div class="pln-val" data-testid="dpp-f-not-proceeding-reason">{{ form.not_proceeding_reason }}</div>
+				</div>
+			</div>
 		</div>
 
 		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="dpp-editor-error">
@@ -176,8 +192,9 @@
 
 		<div class="pln-footer-bar" style="justify-content: flex-end">
 			<div class="pln-footer-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">{{ canEdit ? "Cancel" : "Back" }}</button>
 				<button
+					v-if="canEdit"
 					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dpp-editor-save"
@@ -210,6 +227,17 @@ const currency = computed(() => props.editor.currency || "KES");
 const isNew = computed(() => !props.editor.entry);
 const isNeed = computed(
 	() => entry.value.source_origin === "Accepted Departmental Need"
+);
+// KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — a technical reader or Auditor
+// opens this editor read-only (`get_dpp_entry_editor` sets `can_edit: false`
+// for them); every command control below is absent for that actor, never
+// merely disabled.
+const canEdit = computed(() => props.editor.can_edit !== false);
+const unitLabel = computed(
+	() => units.value.find((u) => u.id === form.unit)?.label || form.unit || ""
+);
+const budgetLineLabel = computed(
+	() => budgetLines.value.find((l) => l.id === form.budget_line)?.label || form.budget_line || ""
 );
 
 const form = reactive({

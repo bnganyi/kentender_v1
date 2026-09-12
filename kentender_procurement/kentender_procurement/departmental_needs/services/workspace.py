@@ -34,7 +34,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	can_view,
 	creation_contexts,
 	is_owner,
-	require_review_command,
+	require_review_read,
 	require_view,
 	scope_diagnostic,
 	viewing_contexts,
@@ -324,8 +324,11 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 	if not row:
 		fail("NDS_SCOPE_DENIED", "Review task not found.")
 	doc = frappe.get_doc("Departmental Need", row.departmental_need)
-	# §4.4 — the task is available to holders of the HoD role in the exact scope.
-	require_review_command(doc, principal)
+	# §4.4/§8 — an in-scope Head of User Department decides the task; a
+	# technical reader or Auditor only observes it (KT-STD-001 v1.5 §3A.6).
+	# The decide commands (`lifecycle.py`) still gate through
+	# `require_review_command` directly — this read model never widens them.
+	profile = require_review_read(doc, principal)
 	if decision_token and cstr(decision_token) != cstr(row.decision_token):
 		fail("NDS_STALE_WRITE", "This task was already decided. Reload and try again.")
 	version = _version_facts(row.need_revision or doc.current_revision)
@@ -358,10 +361,13 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 			"organisation_unit": doc.organisation_unit,
 			"financial_year": doc.financial_year,
 		},
-		"permitted_decisions": decisions if row.status == TASK_OPEN else [],
+		# An "oversight" reader (technical or Auditor) never decides (§8): the
+		# control set is empty for them even while the task is open.
+		"permitted_decisions": decisions if row.status == TASK_OPEN and profile == "decider" else [],
 		# A maker never decides their own version, so the label set is empty for
 		# them even when the task is open (NDS-BR-006).
 		"maker_checker_blocked": is_owner(doc, principal),
+		"access_profile": profile,
 	}
 
 

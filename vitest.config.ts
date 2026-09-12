@@ -75,6 +75,22 @@ export default defineConfig({
 				},
 			},
 			{
+				// AUTH-ADR-001 §10 — the Technical record search screen's own
+				// component test: Empty, No match, results + Open route, and
+				// Forbidden, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "technical-search",
+					environment: "jsdom",
+					setupFiles: [
+						"kentender_core/kentender_core/public/js/technical_search/vitest.setup.js",
+					],
+					include: [
+						"kentender_core/kentender_core/public/js/technical_search/**/*.spec.js",
+					],
+				},
+			},
+			{
 				// NDS-906 — the Departmental Needs presentation helpers. These are
 				// plain ES modules with no Vue or frappe dependency, so they need
 				// no component toolchain; the components that consume them are
