@@ -1,6 +1,6 @@
 # Industry design system
 
-Industry is a wireframe: steel-blue on a light technical ground, Barlow Condensed headings over Barlow, a modular grid, and cards, figures and buttons framed as blueprint objects — square-cornered, hairline-bordered, with "+" registration marks at the corners. Figures stay transparent line drawings; cards, dialogs and inputs are filled white — sheets pinned to the board — and the primary button is a solid accent fill — the filled objects on an otherwise line-drawn board, all keeping the square corners and the marks. Photography is duotoned into the steel accent and icons are thin-stroke.
+Industry is a wireframe: steel-blue on a light technical ground, Barlow Condensed headings over Barlow, a modular grid, and cards and figures framed as blueprint objects — square-cornered, hairline-bordered, with "+" registration marks at the corners. Buttons are square and hairline-bordered too, but carry no corner marks. Figures stay transparent line drawings; cards, dialogs and inputs are filled white — sheets pinned to the board — and the primary button is a solid accent fill — the filled objects on an otherwise line-drawn board, all keeping the square corners. Photography is duotoned into the steel accent and icons are thin-stroke.
 
 ## How to use this
 
@@ -11,7 +11,7 @@ Industry is a wireframe: steel-blue on a light technical ground, Barlow Condense
 
 ## Direction
 
-Modular grid layouts — content in equal-width cells, strong horizontal and vertical rhythm, visible structure. Cards, buttons and major sections are wireframe objects: square-cornered, thin-bordered, with `+` crosshair corner marks (the `.blueprint` class + four `<i class="corner tl/tr/bl/br">` children) — never soft filled rounded blocks. Images and figures get the same treatment: square, hairline-framed and marked, never rounded or clipped. Wrap hero and inline images in the `.duotone` class — they are desaturated and washed in the accent, like a screen print that re-colors with the theme.
+Modular grid layouts — content in equal-width cells, strong horizontal and vertical rhythm, visible structure. Cards, figures and major sections are wireframe objects: square-cornered, thin-bordered, with `+` crosshair corner marks (the `.blueprint` class + four `<i class="corner tl/tr/bl/br">` children) — never soft filled rounded blocks. Buttons keep the square corners and hairline border but never take corner marks — they are identified by their fill and border alone. Images and figures get the same treatment: square, hairline-framed and marked, never rounded or clipped. Wrap hero and inline images in the `.duotone` class — they are desaturated and washed in the accent, like a screen print that re-colors with the theme.
 
 ## Color
 
@@ -46,14 +46,14 @@ Interactive states are themed, never browser defaults: give every interactive el
 | `.table` (+ `.is-num` on numeric cells) | Data tables with themed header and row rules; headers stick on scroll, `.is-num` sets right-aligned tabular numerals for amounts and counts | components/table.html |
 | `.dialog-backdrop` + `.dialog` (+ `.dialog-title/-body/-actions`) | A modal at the top elevation | components/dialog.html |
 | `.hr` | A horizontal rule — present, but this system prefers whitespace; avoid it | — |
-| `.blueprint` + four `<i class="corner tl/tr/bl/br">` children | The wireframe frame every card, figure and primary button wears | components/cards.html |
+| `.blueprint` + four `<i class="corner tl/tr/bl/br">` children | The wireframe frame every card and figure wears — never buttons | components/cards.html |
 | `.duotone` | The image wrapper — every content photograph goes through it | foundations/image.html |
 
 States are built in: hovers and pressed states come from the accent ramp, keyboard focus is the 2px accent `:focus-visible` ring, `::selection` is an accent tint, and disabled controls use solid tokens (`--color-neutral-400` text on a `--color-surface-2` well) rather than opacity. Don't restyle them per page. The accent-to-ground pair is tuned to at least 3:1 — enough for icons, large text and interface chrome, not for body copy — so for paragraph-size text in the accent use a deep ramp step (`--color-accent-700` on this ground) rather than the accent itself.
 
 ## Do
 
-- Frame cards and figures as blueprint objects: the `.blueprint` class plus four `<i class="corner …">` marks.
+- Frame cards and figures as blueprint objects: the `.blueprint` class plus four `<i class="corner …">` marks. Never put corner marks on buttons.
 - Use `--color-accent-2` (violet) for links or secondary emphasis that must read as distinct from the primary action; reserve `--chart-*` strictly for data-visualization series.
 - Keep the grid visible — equal cells, strong horizontal and vertical rhythm.
 - Condense headings (Barlow Condensed) and keep body copy in Barlow.
@@ -62,7 +62,7 @@ States are built in: hovers and pressed states come from the accent ramp, keyboa
 ## Don't
 
 - Do not round cards, figures or buttons — square corners throughout. Figures (image frames) stay unfilled line drawings; cards and dialogs are filled (the primary button, cards and dialogs are the deliberate exceptions to "line drawing").
-- Do not drop the registration marks from a framed element.
+- Do not drop the registration marks from a framed card or figure — and do not add them to buttons.
 - Do not use `--chart-*` colors for UI chrome (buttons, chips, nav) or `.kt-status` hues for chart series — each palette encodes exactly one thing.
 - Do not use thick icon strokes; the set is Lucide at 1.5.
 - Do not add decorative color beyond the steel accent. The accent's own deep step (`--color-accent-900`) may carry a full field where the deck's section dividers use it — steel as ground, type reversed to paper. (The landing's numbers sit on a drawn spec-sheet plate on the paper ground instead — its own grammar, not a field.)
@@ -127,6 +127,15 @@ rose critical hue (`--status-critical`, darkening on hover/press). Destruction i
 semantics, so this sits inside the "no colour beyond steel except to encode state" rule
 rather than breaking it. Always pair it with a `.btn-secondary` cancel; never place two
 danger buttons in one row.
+
+**Figure semantics are conditional, never column labels.** Financial measures (Approved,
+Reserved, Committed, Available) are dimensions of one record, not states — do not give
+each a hue. A neutral figure carries no dot; `.kt-figure` takes `is-live` / `is-attention` /
+`is-critical` only when its *value* crosses a threshold (healthy / low / exhausted headroom),
+so the same figure changes state as the year burns down. `.is-zero` (on figures and `.is-num`
+cells) dims true zeros so real amounts pop. **`.kt-bar`** is the matching utilization bar —
+a part-to-whole of one record drawn from the steel ramp (committed deep, reserved mid,
+free as track); it is not a chart, so `--chart-*` stays out of it.
 
 ## Media hardening (KenTender extension)
 

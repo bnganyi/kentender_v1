@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .frame { width: 1440px; margin: 0 auto; }
+    .frame-inner { min-height: 1024px; padding: var(--space-8) 120px; box-sizing: border-box; background: var(--color-bg); position: relative; }
+    .caption { display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-2) 4px 0; font-size: 12px; color: var(--color-neutral-700); }
+    .fact { display: flex; flex-direction: column; gap: 2px; }
+    .fact-val { font-size: 14px; font-weight: 600; }
+    .facts-row { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+    .rhead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); }
+    .rmeta { display: flex; gap: var(--space-6); font-size: 13px; color: var(--color-neutral-800); align-items: center; margin-top: 6px; }
+    .radio2 { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  </style>
+</helmet>
+
+<div style="background: var(--color-neutral-100); padding: var(--space-8) 0 120px;">
+  <div style="width: 1200px; margin: 0 auto var(--space-8); display: flex; justify-content: space-between; align-items: baseline;">
+    <div>
+      <a href="00-Index.dc.html" style="font-size: 13px;">&larr; Index</a>
+      <h1 style="margin: var(--space-2) 0 0; font-size: 28px;">U08–U10 — Formation, package editor, Finance confirmation</h1>
+      <p style="margin: 0; color: var(--color-neutral-800); font-size: 14px;">Forming Plan Items from sources, the package editor, and Finance's affordability confirmation (§10.7–10.8).</p>
+    </div>
+    <span class="tag tag-neutral">Batch 5 of 10 · §10.13 order</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 72px;">
+
+    <!-- U08 combined formation -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">ANNUAL PLAN · PLAN ITEMS</div><h1 style="font-size: 26px; margin: 2px 0 0;">Form Plan Items</h1></div></div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th></th><th>Requirement</th><th>Department</th><th>Quantity</th><th>Unit</th><th>Budget Line</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" checked></td><td>Clinical training laptops for digital health rollout</td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td>MOH-BL-HWD-2027</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td><input type="checkbox" checked></td><td>Clinical deployment laptops for digital health rollout</td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td>MOH-BL-HWD-2027</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+        <div style="display: flex; gap: var(--space-6); margin-bottom: var(--space-3);">
+          <label class="radio2"><input type="radio" name="f"> Create one Plan Item for each selected requirement</label>
+          <label class="radio2"><input type="radio" name="f" checked> Create one combined Plan Item</label>
+        </div>
+        <div class="field"><label>Aggregation reason</label><input class="input" value="Both departments require the same laptop specification for the same national digital-health rollout; combining secures better unit pricing and one delivery schedule."></div>
+      </div>
+
+      <div class="card" style="padding: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Preview</h3>
+        <div class="facts-row">
+          <div class="fact"><span class="kt-label">Selected requirements</span><span class="fact-val">2</span></div>
+          <div class="fact"><span class="kt-label">Plan Items to create</span><span class="fact-val">1</span></div>
+          <div class="fact"><span class="kt-label">Quantity</span><span class="fact-val">250</span></div>
+          <div class="fact"><span class="kt-label">Unit</span><span class="fact-val">Each</span></div>
+          <div class="fact"><span class="kt-label">Value</span><span class="fact-val">KES 50,000,000</span></div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4);"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Create Plan Item</button></div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U08</span><span>Multi-source formation · combined choice selected</span></div>
+
+    <!-- U08 incompatible variant -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">ANNUAL PLAN · PLAN ITEMS</div><h1 style="font-size: 26px; margin: 2px 0 0;">Form Plan Items</h1></div></div>
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th></th><th>Requirement</th><th>Department</th><th>Budget Line</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" checked></td><td>Clinical training laptops for digital health rollout</td><td>Human Resources Management and Development</td><td>MOH-BL-HWD-2027</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td><input type="checkbox" checked></td><td>National digital health infrastructure upgrade</td><td>Digital Health</td><td>MOH-BL-DHI-2027</td><td class="is-num">KES 80,000,000</td></tr>
+          </tbody>
+        </table>
+        <div class="card" style="background: var(--color-surface-2); border: none; padding: var(--space-3) var(--space-4);">
+          <p class="card-body" style="margin: 0;">These requirements cannot be combined because their Procurement Budget Lines differ.</p>
+        </div>
+        <div style="display: flex; gap: var(--space-6); margin-top: var(--space-3);">
+          <label class="radio2"><input type="radio" name="fi" checked> Create one Plan Item for each selected requirement</label>
+          <label class="radio2" style="color: var(--color-neutral-500);"><input type="radio" name="fi" disabled> Create one combined Plan Item</label>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: var(--space-3);"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Create Plan Items</button></div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U08-incompatible</span><span>Incompatible Budget Lines · combined choice unavailable</span></div>
+
+    <!-- U08 single-source variant -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">ANNUAL PLAN · PLAN ITEMS</div><h1 style="font-size: 26px; margin: 2px 0 0;">Form Plan Item</h1></div></div>
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th></th><th>Requirement</th><th>Department</th><th>Quantity</th><th>Unit</th><th>Budget Line</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" checked></td><td>National digital health infrastructure upgrade</td><td>Digital Health</td><td class="is-num">1</td><td>Programme</td><td>MOH-BL-DHI-2027</td><td class="is-num">KES 80,000,000</td></tr>
+          </tbody>
+        </table>
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Preview</h3>
+        <div class="facts-row"><div class="fact"><span class="kt-label">Selected requirements</span><span class="fact-val">1</span></div><div class="fact"><span class="kt-label">Plan Items to create</span><span class="fact-val">1</span></div><div class="fact"><span class="kt-label">Quantity</span><span class="fact-val">1 Programme</span></div><div class="fact"><span class="kt-label">Value</span><span class="fact-val">KES 80,000,000</span></div></div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: var(--space-3);"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Create Plan Item</button></div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U08-single</span><span>Single-source variant · no formation-choice radio group</span></div>
+
+    <!-- U09 editor -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead">
+        <div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Clinical training and deployment laptops for digital health rollout</h1>
+          <div class="rmeta"><span><span class="kt-label">Reference</span> PPI-MOH-2027-033</span><span class="kt-status is-draft">Draft · Version 1</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Requirement and sources</h3>
+        <table class="table">
+          <thead><tr><th>Source</th><th>Department</th><th>Quantity</th><th>Unit</th><th>Amount</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>NDS-MOH-2027-0003 · Rev 2</td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td><td><a href="#">View source evidence</a></td></tr>
+            <tr><td>NDS-MOH-2027-0004 · Rev 1</td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td><td><a href="#">View source evidence</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Package details</h3>
+        <div class="field" style="margin-bottom: var(--space-3);"><label>Package title</label><input class="input" value="Clinical training and deployment laptops for digital health rollout"></div>
+        <div class="field" style="margin-bottom: var(--space-3);"><label>Package description</label><input class="input" value="Procure and deploy one common laptop specification for clinical training and field digital-health deployment across two departments."></div>
+        <div class="field" style="margin-bottom: var(--space-3); max-width: 480px;"><label>Strategic Objective</label><select class="input"><option>OBJ-MOH-2023-001 — Strengthen interoperable national digital health services</option></select><div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;">Digital health systems › Health policy, standards and regulation › Digital health governance · Strategy Version STR-MOH-2023-001-V1</div></div>
+        <div class="field" style="margin-bottom: var(--space-3);"><label>Aggregation reason</label><input class="input" value="Both departments require the same laptop specification for the same national digital-health rollout; combining secures better unit pricing and one delivery schedule."></div>
+        <div class="facts-row"><div class="fact"><span class="kt-label">Quantity</span><span class="fact-val">250 Each</span></div><div class="fact"><span class="kt-label">Value</span><span class="fact-val">KES 50,000,000</span></div></div>
+      </div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6); border-color: var(--status-attention);">
+        <h3 class="kt-card-title" style="margin: 0 0 6px;">Method and eligibility</h3>
+        <p class="card-body" style="margin: 0 0 var(--space-3);"><span class="kt-status is-attention">Procurement rules are not configured</span></p>
+        <p class="card-body" style="margin: 0;">Required configuration is missing or incomplete. Draft work can continue where permitted; the affected submission is unavailable.</p>
+      </div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Reservation and structure</h3>
+        <div class="facts-row" style="margin-bottom: var(--space-3);">
+          <div class="field" style="max-width: 200px;"><label>Planned reservation</label><select class="input"><option>None</option></select></div>
+          <div class="fact"><span class="kt-label">Mandatory restrictions</span><span class="fact-val">No additional restriction applies</span></div>
+          <div class="fact"><span class="kt-label">Plan horizon</span><span class="fact-val">Single year</span></div>
+        </div>
+        <div class="facts-row"><div class="fact"><span class="kt-label">Aggregation</span><span class="fact-val">Aggregated</span></div><div class="fact"><span class="kt-label">Lotting</span><span class="fact-val">Single lot</span></div></div>
+      </div>
+
+      <div class="card" style="padding: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Baseline schedule</h3>
+        <div class="field" style="max-width: 220px; margin-bottom: var(--space-3);"><label>Target invitation date</label><input class="input" value="15 May 2027"></div>
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th>Milestone</th><th>Baseline</th></tr></thead>
+          <tbody>
+            <tr><td>Invitation or advertisement</td><td>15 May 2027</td></tr><tr><td>Bid opening</td><td>5 Jun 2027</td></tr><tr><td>Evaluation completion</td><td>5 Jul 2027</td></tr><tr><td>Contract signing</td><td>26 Jul 2027</td></tr><tr><td>Delivery or implementation completion</td><td>31 Dec 2027</td></tr>
+          </tbody>
+        </table>
+        <div class="facts-row" style="margin-bottom: var(--space-3);">
+          <div class="fact"><span class="kt-label">Estimated delivery / implementation period</span><span class="fact-val">60 Calendar days</span></div>
+          <div class="fact"><span class="kt-label">Estimated completion</span><span class="fact-val">24 Sep 2027</span></div>
+          <div class="fact"><span class="kt-label">Required by</span><span class="fact-val">31 Dec 2027</span></div>
+          <div class="fact"><span class="kt-label">Outcome</span><span class="kt-status is-live">Within the required-by date</span></div>
+        </div>
+        <div><button class="btn btn-ghost">Adjust periods</button></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-top: var(--space-6);">
+        <div style="display: flex; gap: var(--space-3);"><button class="btn btn-secondary">Back to Annual Plan</button><button class="btn btn-secondary">Dissolve Plan Item</button></div>
+        <button class="btn btn-primary">Save draft</button>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09</span><span>Plan Item editor · CONFIG method notice · schedule disclosure collapsed</span></div>
+
+    <!-- U09 eligibility conditions positive + lots -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Method, eligibility and structure</h1></div></div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Method and eligibility</h3>
+        <div class="facts-row" style="margin-bottom: var(--space-3);"><div class="fact"><span class="kt-label">Method</span><span class="fact-val">Open Tender</span></div><div class="fact"><span class="kt-label">Procedure profile</span><span class="fact-val">Open Tender — goods, Version 1</span></div></div>
+        <h4 style="font-size: 14px; margin: 0 0 var(--space-2);">Eligibility conditions</h4>
+        <table class="table">
+          <thead><tr><th>Condition</th><th>Value</th></tr></thead>
+          <tbody><tr><td>Category</td><td>Goods</td></tr><tr><td>Value</td><td>KES 50,000,000</td></tr><tr><td>Evidence</td><td><span class="kt-status is-live">Complete</span></td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Structure — Packaged into lots</h3>
+        <div class="facts-row"><div class="fact"><span class="kt-label">Aggregation</span><span class="fact-val">Aggregated</span></div><div class="fact"><span class="kt-label">Lotting</span><span class="fact-val">Packaged into lots</span></div><div class="field" style="max-width: 120px;"><label>Lot count</label><input class="input" value="2"></div></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09-eligibility-lots</span><span>Positive eligibility example · Packaged into lots variant</span></div>
+
+    <!-- U09 schedule disclosure expanded -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Baseline schedule — periods expanded</h1></div></div>
+      <div class="card" style="padding: var(--space-6);">
+        <div class="field" style="max-width: 220px; margin-bottom: var(--space-4);"><label>Target invitation date</label><input class="input" value="15 May 2027"></div>
+        <table class="table" style="margin-bottom: var(--space-4);">
+          <thead><tr><th>Milestone</th><th>Baseline</th></tr></thead>
+          <tbody>
+            <tr><td>Invitation or advertisement</td><td>15 May 2027</td></tr><tr><td>Bid opening</td><td>5 Jun 2027</td></tr><tr><td>Evaluation completion</td><td>5 Jul 2027</td></tr><tr><td>Tender award approval</td><td>10 Jul 2027</td></tr><tr><td>Notification of award</td><td>12 Jul 2027</td></tr><tr><td>Contract signing</td><td>26 Jul 2027</td></tr><tr><td>Delivery or implementation completion</td><td>31 Dec 2027</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: var(--space-2);">Adjust periods</div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); margin-bottom: var(--space-3);">
+          <div class="field"><label>Tendering</label><input class="input" value="21"></div>
+          <div class="field"><label>Evaluation</label><input class="input" value="30"></div>
+          <div class="field"><label>Award approval buffer</label><input class="input" value="5"></div>
+          <div class="field"><label>Notification buffer</label><input class="input" value="2"></div>
+          <div class="field"><label>Standstill</label><input class="input" value="14"></div>
+        </div>
+        <div style="display: flex; gap: var(--space-3); font-size: 11px;">
+          <span class="tag tag-neutral">Award approval buffer: Planning assumption</span>
+          <span class="tag tag-neutral">Notification buffer: Planning assumption</span>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09-schedule-expanded</span><span>Period-adjustment disclosure expanded · all five periods editable</span></div>
+
+    <!-- U09 conditional-method declaration -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Method and eligibility — conditional method</h1></div></div>
+      <div class="card" style="padding: var(--space-6); max-width: 640px;">
+        <div class="facts-row" style="margin-bottom: var(--space-4);"><div class="fact"><span class="kt-label">Method</span><span class="fact-val">Direct Procurement</span></div><div class="fact"><span class="kt-label">Conditions</span><span class="kt-status is-live">Complete</span></div></div>
+        <div class="field" style="margin-bottom: var(--space-3);"><label>Circumstances supporting the selected method</label><input class="input" value="Method eligibility record"></div>
+        <div class="fact"><span class="kt-label">Required specific authorisation</span><span class="fact-val">Head of Procurement Function</span></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09-conditional-method</span><span>Conditional-method declaration · not shown for default Open Tender</span></div>
+
+    <!-- U09 feasibility failure -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Baseline schedule</h1></div></div>
+      <div class="card" style="padding: var(--space-6);">
+        <div class="facts-row" style="margin-bottom: var(--space-3);">
+          <div class="fact"><span class="kt-label">Estimated delivery / implementation period</span><span class="fact-val">160 Calendar days</span></div>
+          <div class="fact"><span class="kt-label">Estimated completion</span><span class="fact-val">2 Jan 2028</span></div>
+          <div class="fact"><span class="kt-label">Required by</span><span class="fact-val">31 Dec 2027</span></div>
+        </div>
+        <span class="kt-status is-critical">Estimated completion exceeds the required-by date</span>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09-feasibility-fail</span><span>Feasibility failure variant</span></div>
+
+    <!-- U09 locked-item variant -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">PLAN ITEM</div><h1 style="font-size: 26px; margin: 2px 0 0;">Clinical training and deployment laptops for digital health rollout</h1>
+        <div class="rmeta"><span class="kt-status is-live">Active</span></div></div></div>
+      <div class="card" style="padding: var(--space-4) var(--space-6); margin-bottom: var(--space-6); border-color: var(--status-attention);">
+        <h3 style="font-size: 16px; margin: 0 0 4px;">Procurement scope locked</h3>
+        <p class="card-body" style="margin: 0 0 var(--space-2);">This Plan Item already has an authorised Requisition. Create a separate Plan Item for the additional requirement.</p>
+        <div class="facts-row" style="margin-bottom: var(--space-2);"><div class="fact"><span class="kt-label">Requisition</span><span class="fact-val">REQ-MOH-2027-033-001</span></div><div class="fact"><span class="kt-label">Date</span><span class="fact-val">15 Mar 2027</span></div></div>
+        <a href="#">View procurement proceedings</a>
+      </div>
+      <div class="card" style="padding: var(--space-6);">
+        <table class="table"><thead><tr><th>Source</th><th>Original quantity</th><th>Original allowance</th></tr></thead>
+          <tbody><tr><td>NDS-MOH-2027-0003 · Rev 2</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000</td></tr><tr><td>NDS-MOH-2027-0004 · Rev 1</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000</td></tr></tbody>
+        </table>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U09-locked</span><span>Active-derived locked-item variant · no add-source, increase-quantity or dissolve</span></div>
+
+    <!-- U10 Finance confirmation -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">FINANCE</div><h1 style="font-size: 26px; margin: 2px 0 0;">Confirm Plan funding</h1>
+        <div class="rmeta"><span><span class="kt-label">Reference</span> PLN-MOH-2027-001</span><span><span class="kt-label">Version</span> 1</span><span class="kt-status is-draft">Draft</span><span><span class="kt-label">Funding evidence</span> <span class="kt-status is-pending" style="margin-left:4px;">Awaiting confirmation</span></span></div></div></div>
+      <div class="facts-row" style="margin-bottom: var(--space-6);"><div class="fact"><span class="kt-label">Plan Items</span><span class="fact-val">2</span></div><div class="fact"><span class="kt-label">Planned value</span><span class="fact-val">KES 130,000,000</span></div><div class="fact"><span class="kt-label">Budget Lines</span><span class="fact-val">2</span></div></div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-4);">
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th>Budget Line</th><th>Funding source</th><th>Approved amount</th><th>Planned amount</th><th>Within approved amount</th><th>Currently available</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>MOH-BL-DHI-2027</td><td>Government of Kenya</td><td class="is-num">KES 100,000,000</td><td class="is-num">KES 80,000,000</td><td><span class="kt-status is-live">Yes</span></td><td class="is-num">KES 100,000,000</td><td><a href="#">View allocations</a></td></tr>
+            <tr><td>MOH-BL-HWD-2027</td><td>Government of Kenya</td><td class="is-num">KES 60,000,000</td><td class="is-num">KES 50,000,000</td><td><span class="kt-status is-live">Yes</span></td><td class="is-num">KES 60,000,000</td><td><a href="#">View allocations</a></td></tr>
+          </tbody>
+        </table>
+        <div class="fact" style="margin-bottom: var(--space-2);"><span class="kt-label">Statement as at</span><span class="fact-val">4 Dec 2026, 09:58 EAT</span></div>
+        <span class="kt-status is-live">The Plan is within the approved amount on every Budget Line.</span>
+        <p style="font-size: 12px; color: var(--color-neutral-700); margin: var(--space-2) 0 0;">Confirmation records affordability. It reserves no funds.</p>
+      </div>
+
+      <div class="card" style="padding: var(--space-4) var(--space-6); margin-bottom: var(--space-6);">
+        <span style="font-size: 13px;">Other Plan readiness checks are reviewed before submission.</span> <a href="#">View Plan readiness</a>
+      </div>
+      <div style="display: flex; justify-content: space-between;"><button class="btn btn-secondary">Return to planner</button><button class="btn btn-primary">Confirm plan funding</button></div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U10</span><span>Josphat Mwangi, Finance Confirmation Officer · 4 Dec 2026, 09:58 EAT</span></div>
+
+    <!-- U10 low-availability / excess variants -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">FINANCE</div><h1 style="font-size: 26px; margin: 2px 0 0;">Confirm Plan funding — independent financial scenarios</h1></div></div>
+
+      <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Low-availability variant</h3>
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th>Budget Line</th><th>Approved</th><th>Planned</th><th>Within approved</th><th>Currently available</th></tr></thead>
+          <tbody><tr><td>MOH-BL-DHI-2027</td><td class="is-num">KES 100,000,000</td><td class="is-num">KES 80,000,000</td><td><span class="kt-status is-live">Yes</span></td><td class="is-num" style="color: var(--status-attention);">KES 10,000,000</td></tr></tbody>
+        </table>
+        <p class="card-body" style="margin: 0;">Confirm remains available.</p>
+      </div>
+
+      <div class="card" style="padding: var(--space-6);">
+        <h3 class="kt-card-title" style="margin: 0 0 var(--space-3);">Excess variant</h3>
+        <table class="table" style="margin-bottom: var(--space-3);">
+          <thead><tr><th>Budget Line</th><th>Approved</th><th>Planned</th><th>Excess</th><th>Within approved</th></tr></thead>
+          <tbody><tr><td>MOH-BL-DHI-2027</td><td class="is-num">KES 70,000,000</td><td class="is-num">KES 80,000,000</td><td class="is-num" style="color: var(--status-critical);">KES 10,000,000</td><td><span class="kt-status is-critical">No</span></td></tr></tbody>
+        </table>
+        <p class="card-body" style="margin: 0;">Confirm unavailable. Return available.</p>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U10-scenarios</span><span>Low-availability and excess — independent financial scenarios</span></div>
+
+    <!-- U10 history viewport -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">FINANCE</div><h1 style="font-size: 26px; margin: 2px 0 0;">Funding evidence history</h1></div></div>
+
+      <div class="facts-row" style="margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4) var(--space-6); flex: 1;"><div class="kt-label" style="margin-bottom:4px;">Funding evidence at approval</div><span class="kt-status is-live">Confirmed</span></div>
+        <div class="card" style="padding: var(--space-4) var(--space-6); flex: 1;"><div class="kt-label" style="margin-bottom:4px;">Current funding confirmation</div><span class="kt-status is-pending">Awaiting confirmation</span></div>
+      </div>
+
+      <div class="card" style="padding: var(--space-6);">
+        <table class="table">
+          <thead><tr><th>Review</th><th>Basis</th><th>Outcome</th><th>Actor</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr><td>Review 1</td><td>MOH-BUD-2027-001, Version 1</td><td><span class="kt-status is-live">Confirmed</span></td><td>Josphat Mwangi</td><td>4 Dec 2026</td></tr>
+            <tr><td>Review 2</td><td>Current revised Budget basis</td><td><span class="kt-status is-pending">Awaiting confirmation</span></td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U10-history</span><span>History viewport · Review 2 does not overwrite Review 1</span></div>
+
+    <!-- U10 Active reassessment + return dialog -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="rhead"><div><div class="card-kicker">FINANCE</div><h1 style="font-size: 26px; margin: 2px 0 0;">Reassess funding for Active Plan Version 1</h1></div></div>
+      <p class="card-body" style="margin-bottom: var(--space-6);">Plan content is read-only. There is no reapproval action here — this records current financial evidence for unchanged approved content.</p>
+
+      <div class="dialog-backdrop" style="position: absolute; z-index: 2;">
+        <div class="dialog" style="width: 520px;">
+          <div class="dialog-title">Return for correction?</div>
+          <div class="field"><label>Correction required</label><input class="input" value="Reduce the planned amount or obtain an approved Budget revision for the Digital Health line."></div>
+          <div class="dialog-actions"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Return</button></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U10-reassess-return</span><span>Active reassessment context · Finance return dialog overlaid</span></div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

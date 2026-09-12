@@ -72,6 +72,7 @@
 				:accepted-revision="detail.accepted_revision || {}"
 				:pinned-revision="pinnedRevision"
 				:usage="usage"
+				:disposition="disposition"
 				:author-label="detail.author_label || ''"
 				:accepted-by-label="acceptedBy.actor_label || ''"
 				:accepted-at="acceptedBy.occurred_at || ''"
@@ -201,6 +202,7 @@ const task = ref({});
 // get_needs_submission_state() shape: { open, financial_year, label, closes_at }.
 const submissionState = ref({ open: false, financial_year: "", label: "", closes_at: "" });
 const usage = ref({});
+const disposition = ref(null);
 const dependency = ref({});
 const units = ref([]);
 const acceptedBy = ref({});
@@ -388,6 +390,7 @@ function applyLoaded(loaded) {
 	if (loaded.detail) {
 		detail.value = loaded.detail;
 		usage.value = { usage: detail.value.planning_usage };
+		disposition.value = detail.value.planning_disposition || null;
 		acceptedBy.value = detail.value.accepted || {};
 		return;
 	}

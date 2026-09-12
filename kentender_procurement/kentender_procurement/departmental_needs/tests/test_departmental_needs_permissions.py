@@ -57,6 +57,7 @@ NDS_DOCTYPES = (
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 # A real actor who holds zero currently-Enabled NDS authority: Samuel Otieno's
 # only grant (Head of User Department, Directorate of Digital Health and
@@ -81,6 +82,7 @@ class DepartmentalNeedsPermissionCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
 		cls.ou = units["Digital Health"]
 		cls.ou_hrmd = units["Human Resources Management and Development"]

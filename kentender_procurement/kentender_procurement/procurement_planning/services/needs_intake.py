@@ -100,6 +100,25 @@ def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
+def submission_cohort(submission_name: str) -> set[str]:
+	"""§5.1.2 — the stable source keys certified by a Submission."""
+	import json
+
+	snapshots = json.loads(frappe.db.get_value("Departmental Plan Submission", submission_name, "entry_snapshots") or "[]")
+	return {cstr(row.get("source_line_id")) for row in snapshots if cstr(row.get("source_line_id"))}
+
+
+def _cohort_filter(version_doc, sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""A correction Draft (copied from a returned Submission) consumes only the
+	current accepted revisions of the Needs in that Submission's cohort; a Need
+	accepted later is pending input to a subsequent update (§5.1.2)."""
+	returned_from = cstr(version_doc.get("returned_from_submission"))
+	if not returned_from:
+		return sources
+	cohort = submission_cohort(returned_from)
+	return [payload for payload in sources if cstr(payload["need_id"]) in cohort]
+
+
 def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	"""Project every current accepted Need into a mutable Draft Version once.
 
@@ -118,7 +137,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 		["organisation_unit", "fiscal_year", "dpp_reference", "fixture_namespace"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
+	sources = _cohort_filter(version_doc, current_accepted_sources(root.fiscal_year, root.organisation_unit))
 	by_need = {cstr(payload["need_id"]): payload for payload in sources}
 	existing = frappe.get_all(
 		"Departmental Plan Entry",
@@ -172,7 +191,7 @@ def coverage_gaps(version_doc) -> list[str]:
 		["organisation_unit", "fiscal_year"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
+	sources = _cohort_filter(version_doc, current_accepted_sources(root.fiscal_year, root.organisation_unit))
 	rows = frappe.get_all(
 		"Departmental Plan Entry",
 		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},

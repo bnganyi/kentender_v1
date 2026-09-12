@@ -29,6 +29,17 @@ from kentender_core.services.site_configuration import require_configuration_adm
 
 DOCTYPE = "Regulatory Reference"
 
+# PLN-CHG-001 v1.18 §17.2 (CFG owner work) — a reference version records
+# whether its figures have been verified against primary law. Nothing seeded
+# as a display example may be labelled `Verified`; the canonical fixture uses
+# the explicit fixture label (plan D16).
+VERIFICATION_PENDING = "Production verification pending"
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+VERIFICATION_VERIFIED = "Verified"
+VERIFICATION_STATUSES: tuple[str, ...] = (VERIFICATION_PENDING, VERIFICATION_FIXTURE, VERIFICATION_VERIFIED)
+
+RULE_KINDS: tuple[str, ...] = ("threshold_matrix", "reservation", "exclusive_preference", "market_price_index", "schedule_buffers")
+
 PROCUREMENT_CATEGORIES: tuple[str, ...] = ("Goods", "Works", "Services")
 
 # REQ-CHG-001 v1.6 §5A / STD-TPL-001 v0.4 §6.1 — the one reservation-category
@@ -65,6 +76,11 @@ def _empty(fiscal_year: str) -> dict[str, Any]:
 		"reference": "",
 		"effective_from": "",
 		"gazette_reference": "",
+		"verification_status": "",
+		"applicability_basis": "",
+		"source_instrument": "",
+		"provision": "",
+		"source_document": "",
 		"threshold_matrix": [],
 		"reservation": {"published": False, "target_percent": None, "county_target_percent": None, "categories": []},
 		"exclusive_preference": {"published": False, "works_amount": None, "goods_services_amount": None},
@@ -97,7 +113,12 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 	name = _version_in_force(fiscal_year)
 	if not name:
 		return _empty(fiscal_year)
-	doc = frappe.get_cached_doc(DOCTYPE, name)
+	return _project(frappe.get_cached_doc(DOCTYPE, name))
+
+
+def _project(doc) -> dict[str, Any]:
+	"""One read-only projection of a named version (in force or superseded)."""
+	fiscal_year = doc.fiscal_year
 	bands = [
 		{
 			"procurement_category": row.procurement_category,
@@ -125,6 +146,11 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 		"reference": doc.name,
 		"effective_from": str(doc.effective_from or ""),
 		"gazette_reference": doc.gazette_reference or "",
+		"verification_status": doc.get("verification_status") or VERIFICATION_PENDING,
+		"applicability_basis": doc.get("applicability_basis") or "",
+		"source_instrument": doc.get("source_instrument") or "",
+		"provision": doc.get("provision") or "",
+		"source_document": doc.get("source_document") or "",
 		"threshold_matrix": bands,
 		"reservation": {
 			"published": bool(categories) and bool(target),
@@ -176,6 +202,11 @@ def register_regulatory_reference(
 	exclusive_preference_goods_services_amount: float | None = None,
 	market_prices: list[dict[str, Any]] | None = None,
 	schedule_buffers: list[dict[str, Any]] | None = None,
+	verification_status: str = "",
+	applicability_basis: str = "",
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
 	fixture_namespace: str = "",
 ) -> dict[str, Any]:
 	"""Register one new version for a Fiscal Year (Administrator / System
@@ -189,6 +220,9 @@ def register_regulatory_reference(
 	if not frappe.db.exists("Fiscal Year", fiscal_year):
 		fail_cfg("CFG_PE_INVALID", "That financial year does not exist.")
 	gazette = (gazette_reference or "").strip()
+	verification = (verification_status or VERIFICATION_PENDING).strip()
+	if verification not in VERIFICATION_STATUSES:
+		fail_cfg("CFG_PROFILE_INVALID", "Select a valid verification status.")
 	if gazette:
 		existing = frappe.db.get_value(
 			DOCTYPE, {"fiscal_year": fiscal_year, "gazette_reference": gazette}, "name"
@@ -207,6 +241,11 @@ def register_regulatory_reference(
 			"effective_from": getdate(effective_from),
 			"gazette_reference": gazette,
 			"status": "Active",
+			"verification_status": verification,
+			"applicability_basis": applicability_basis,
+			"source_instrument": source_instrument,
+			"provision": provision,
+			"source_document": source_document,
 			"reservation_target_percent": reservation_target_percent,
 			"county_resident_target_percent": county_resident_target_percent,
 			"exclusive_preference_works_amount": exclusive_preference_works_amount,
@@ -231,3 +270,90 @@ def purge_fixture_references(fixture_namespace: str) -> int:
 		doc.flags.kt_fixture_purge = True
 		doc.delete(ignore_permissions=True)
 	return len(names)
+
+
+def resolve_regulatory_rule(
+	*,
+	kind: str,
+	fiscal_year: str,
+	applicability_date: str = "",
+	procurement_method: str = "",
+	procurement_category: str = "",
+) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.18 §7.1 `GetRegulatoryReference` / RI-071 — one rule
+	kind resolved by its legally applicable date, not a blanket FY-only
+	lookup.
+
+	With `applicability_date`, the Version chosen is the latest whose
+	`effective_from` is on or before that date among the Fiscal Year's
+	versions (superseded ones included — a Plan approved under an earlier
+	gazette stays reproducible); without it, the Version in force for the
+	year. Returns `found = False` (never raises) when nothing applies; the
+	consumer decides what blocks. Filters the threshold matrix by method and
+	category when given.
+	"""
+	if kind not in RULE_KINDS:
+		fail_cfg("CFG_RULE_UNRESOLVED", f"Unknown rule kind {kind!r}.")
+	fiscal_year = (fiscal_year or "").strip()
+	name = ""
+	if applicability_date:
+		date = getdate(applicability_date)
+		rows = frappe.get_all(
+			DOCTYPE,
+			filters={"fiscal_year": fiscal_year},
+			fields=["name", "effective_from"],
+			order_by="effective_from desc, creation desc",
+		)
+		for row in rows:
+			if getdate(row["effective_from"]) <= date:
+				name = row["name"]
+				break
+	else:
+		name = _version_in_force(fiscal_year)
+	if not name:
+		return {"found": False, "kind": kind, "fiscal_year": fiscal_year, "applicability_date": str(applicability_date or "")}
+	full = _project(frappe.get_cached_doc(DOCTYPE, name))
+	rule: Any
+	if kind == "threshold_matrix":
+		rule = [
+			r for r in full["threshold_matrix"]
+			if (not procurement_method or r["procurement_method"] == procurement_method)
+			and (not procurement_category or r["procurement_category"] == procurement_category)
+		]
+		published = bool(full["threshold_matrix"])
+	elif kind == "reservation":
+		rule = full["reservation"]
+		published = bool(full["reservation"]["published"])
+	elif kind == "exclusive_preference":
+		rule = full["exclusive_preference"]
+		published = bool(full["exclusive_preference"]["published"])
+	elif kind == "market_price_index":
+		rule = full["market_price_index"]
+		published = bool(full["market_price_index"]["published"])
+	else:
+		rule = [
+			r for r in full["schedule_buffers"]
+			if (not procurement_method or r["procurement_method"] == procurement_method)
+			and (not procurement_category or r["procurement_category"] == procurement_category)
+		]
+		published = bool(full["schedule_buffers"])
+	return {
+		"found": published,
+		"kind": kind,
+		"fiscal_year": fiscal_year,
+		"applicability_date": str(applicability_date or ""),
+		"reference": name,
+		"effective_from": full["effective_from"],
+		"gazette_reference": full["gazette_reference"],
+		"verification_status": full["verification_status"],
+		"applicability_basis": full["applicability_basis"],
+		"source_instrument": full["source_instrument"],
+		"provision": full["provision"],
+		"rule": rule,
+	}
+
+
+def _projection(name: str) -> dict[str, Any]:
+	"""The same read as `get_regulatory_reference`, for a named (possibly
+	superseded) version."""
+	return _project(frappe.get_cached_doc(DOCTYPE, name))

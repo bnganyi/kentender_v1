@@ -159,9 +159,9 @@ function planIntakeLabel(row) {
 							<th>{{ __("Financial year") }}</th>
 							<th>{{ __("Period") }}</th>
 							<th>{{ __("Phase") }}</th>
-							<th>{{ __("Needs submission") }}</th>
-							<th>{{ __("Plan submission") }}</th>
-							<th>{{ __("Action") }}</th>
+							<th>{{ __("Needs intake") }}</th>
+							<th>{{ __("Departmental-plan intake") }}</th>
+							<th class="kt-visually-hidden-th"><span class="kt-visually-hidden">{{ __("Actions") }}</span></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -192,19 +192,17 @@ function planIntakeLabel(row) {
 										@click.prevent="openDialog('close', row)"
 									>{{ __("Close needs submission") }}</a>
 								</div>
+								<!-- PLN-CHG-001 v1.18 §10.11 C02 — one focused control per year
+								     for departmental-plan intake; opens the open or close dialog
+								     according to the row's current state -->
 								<div>
-									<a
-										v-if="!row.dpp_submission_open && !row.disabled"
-										href="#"
-										:data-testid="'kt-fy-open-plan-' + row.fiscal_year"
-										@click.prevent="openDialog('open-plan', row)"
-									>{{ __("Open plan submission") }}</a>
-									<a
-										v-else-if="row.dpp_submission_open"
-										href="#"
-										:data-testid="'kt-fy-close-plan-' + row.fiscal_year"
-										@click.prevent="openDialog('close-plan', row)"
-									>{{ __("Close plan submission") }}</a>
+									<button
+										v-if="!row.disabled"
+										type="button"
+										class="kt-btn kt-btn-secondary kt-btn-sm"
+										:data-testid="(row.dpp_submission_open ? 'kt-fy-close-plan-' : 'kt-fy-open-plan-') + row.fiscal_year"
+										@click="openDialog(row.dpp_submission_open ? 'close-plan' : 'open-plan', row)"
+									>{{ __("Manage departmental-plan intake") }}</button>
 								</div>
 							</td>
 						</tr>

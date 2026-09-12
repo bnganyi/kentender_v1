@@ -469,3 +469,206 @@ def check_plan_affordability(
 		"within_available": all_within_available,
 		"failing_lines": failing,
 	}
+
+
+
+# --------------------------------------------------------------------------
+# PLN-CHG-001 v1.18 §5.3.3 / §7.3 — the two Budget contracts Planning's
+# Finance decision and reservation calculation consume (BUD-CHG-001 v1.8 is
+# owed: Budget FOLLOW_UPS FU-14). Amounts on these contracts are decimal
+# strings in currency units (v1.18 §4.1); nothing here writes, reserves or
+# produces a ledger event.
+# --------------------------------------------------------------------------
+
+import hashlib
+import json
+from decimal import Decimal
+
+CURRENCY_PRECISION = 2  # KES; BUD-CHG-001's currency contract carries the precision
+
+
+def money(value) -> str:
+	"""Exact decimal string in currency units (never a binary float)."""
+	return str(Decimal(repr(round(flt(value), CURRENCY_PRECISION))).quantize(Decimal(1).scaleb(-CURRENCY_PRECISION)))
+
+
+def _planned_totals(planned_totals) -> dict[str, float]:
+	if isinstance(planned_totals, str):
+		planned_totals = frappe.parse_json(planned_totals)
+	totals: dict[str, float] = {}
+	if isinstance(planned_totals, dict):
+		return {str(k): flt(v) for k, v in planned_totals.items()}
+	for row in planned_totals or []:
+		key = str(row.get("budget_line") or row.get("id") or "")
+		if key:
+			totals[key] = totals.get(key, 0.0) + flt(row.get("planned") if "planned" in row else row.get("amount"))
+	return totals
+
+
+def get_annual_procurement_budget_basis(fiscal_year: str, as_of=None) -> dict[str, Any]:
+	"""v1.18 §5.5.3.1 — the complete approved annual procurement budget and
+	the exact Version it comes from: the reservation-allocation denominator.
+	Never the Plan total, never only the lines a Plan uses. The Active
+	Version of the year answers; a year with no Active Version reports
+	`available = False` and the consumer fails closed."""
+	from frappe.utils import now_datetime
+
+	fiscal_year = (fiscal_year or "").strip()
+	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name") if fiscal_year else None
+	version = _active_version(budget_name) if budget_name else None
+	if not version:
+		return {"fiscal_year": fiscal_year, "available": False, "as_of": str(as_of or now_datetime())}
+	require_budget_version_read_scope(version)
+	rows = frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["name", "budget_line", "approved_amount"],
+	)
+	lines_total = sum(flt(r.approved_amount) for r in rows)
+	annual = flt(version.authorised_total) or lines_total
+	budget = frappe.db.get_value("Procurement Budget", budget_name, ["generated_reference", "currency"], as_dict=True)
+	return {
+		"fiscal_year": fiscal_year,
+		"available": True,
+		"budget": budget_name,
+		"budget_reference": budget.generated_reference or "",
+		"budget_version": version.name,
+		"version_reference": version.generated_reference or "",
+		"version_number": int(version.version_number or 0),
+		"approval_date": str(version.approval_date or ""),
+		"currency": budget.currency or "KES",
+		"currency_precision": CURRENCY_PRECISION,
+		"annual_approved_amount": money(annual),
+		"lines_approved_total": money(lines_total),
+		"line_count": len(rows),
+		"as_of": str(as_of or now_datetime()),
+	}
+
+
+def validate_plan_affordability_for_decision(
+	fiscal_year: str,
+	planned_totals,
+	expected_revisions=None,
+	correlation: str = "",
+) -> dict[str, Any]:
+	"""v1.18 §5.3.3 — the decision-time counterpart of
+	`check_plan_affordability`. Called *inside* the Finance decision's own
+	transaction: it serialises the year's Active Budget Version and its line
+	versions (`SELECT … FOR UPDATE`), validates the line revisions the caller
+	reviewed (`expected_revisions`: `{budget_line: line_version_name}` and
+	optionally `budget_version`), and returns the comparison statement the
+	caller records verbatim. A Budget change since the review fails the
+	positive decision atomically (`BUD_BASIS_STALE`); nothing is written,
+	reserved or journaled here. `check_plan_affordability` stays the
+	non-locking display read.
+	"""
+	from frappe.utils import now_datetime
+
+	fiscal_year = (fiscal_year or "").strip()
+	totals = _planned_totals(planned_totals)
+	if isinstance(expected_revisions, str):
+		expected_revisions = frappe.parse_json(expected_revisions or "{}")
+	expected = dict(expected_revisions or {})
+	expected_version = expected.pop("budget_version", "") or ""
+
+	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name") if fiscal_year else None
+	version = _active_version(budget_name) if budget_name else None
+	if not version:
+		frappe.throw(f"No Active Procurement Budget Version exists for {fiscal_year}.", title="BUD_BASIS_UNAVAILABLE")
+	require_budget_version_read_scope(version)
+
+	# Serialise the authoritative basis for the rest of the caller's transaction.
+	frappe.db.sql("select name from `tabProcurement Budget Version` where name = %s for update", version.name)
+	frappe.db.sql("select name from `tabProcurement Budget Line Version` where budget_version = %s for update", version.name)
+	if frappe.db.get_value("Procurement Budget Version", version.name, "status") != "Active":
+		frappe.throw("The Budget basis changed while the decision was being recorded.", title="BUD_BASIS_STALE")
+	if expected_version and expected_version != version.name:
+		frappe.throw(
+			f"The reviewed Budget Version {expected_version} is no longer the Active one ({version.name}).",
+			title="BUD_BASIS_STALE",
+		)
+
+	rows = frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount", "modified"],
+		order_by="title asc",
+	)
+	line_versions = {r.budget_line: r.name for r in rows}
+	stale = sorted(line for line, reviewed in expected.items() if line_versions.get(line) != reviewed)
+	if stale:
+		frappe.throw(
+			"The reviewed Budget Line revision has changed for: " + ", ".join(stale) + ".",
+			title="BUD_BASIS_STALE",
+		)
+
+	as_at = now_datetime()
+	references = _line_references([r.budget_line for r in rows])
+	currency = frappe.db.get_value("Procurement Budget", budget_name, "currency") or "KES"
+	lines = []
+	failing = []
+	seen = set()
+	all_within_approved = True
+	all_within_available = True
+	digest_rows = []
+	for r in rows:
+		seen.add(r.budget_line)
+		pos = _line_position(r.budget_line, r)
+		planned = flt(totals.get(r.budget_line, 0.0))
+		within_approved = planned <= pos["approved"] + 1e-9
+		within_available = planned <= pos["available"] + 1e-9
+		excess = max(0.0, planned - pos["approved"])
+		if not within_approved:
+			all_within_approved = False
+			failing.append({"budget_line": r.budget_line, "reference": references.get(r.budget_line, ""), "excess": money(excess)})
+		if not within_available:
+			all_within_available = False
+		lines.append(
+			{
+				"budget_line": r.budget_line,
+				"line_version": r.name,
+				"reference": references.get(r.budget_line, ""),
+				"title": r.title,
+				"owner_org_unit": r.owner_org_unit,
+				"funding_source": r.funding_source,
+				"currency": currency,
+				"approved": money(pos["approved"]),
+				"planned": money(planned),
+				"reserved": money(pos["reserved"]),
+				"committed": money(pos["committed"]),
+				"available": money(pos["available"]),
+				"within_approved": within_approved,
+				"within_available": within_available,
+				"excess_over_approved": money(excess),
+				"eligible": True,
+			}
+		)
+		digest_rows.append([r.budget_line, r.name, money(pos["approved"]), money(planned), r.funding_source or "", currency])
+	unknown = sorted(k for k in totals if k not in seen and flt(totals[k]) > 0)
+	if unknown:
+		all_within_approved = False
+		all_within_available = False
+		for key in unknown:
+			failing.append({"budget_line": key, "reference": "", "excess": money(totals[key])})
+			digest_rows.append([key, "", "0.00", money(totals[key]), "", currency])
+	digest_rows.sort()
+	digest = hashlib.sha256(json.dumps(digest_rows, separators=(",", ":")).encode("utf-8")).hexdigest()
+	return {
+		"fiscal_year": fiscal_year,
+		"as_at": str(as_at),
+		"decision_basis": True,
+		"correlation": correlation or "",
+		"budget": budget_name,
+		"budget_version": version.name,
+		"version_reference": version.generated_reference or "",
+		"version_number": int(version.version_number or 0),
+		"currency": currency,
+		"currency_precision": CURRENCY_PRECISION,
+		"line_versions": line_versions,
+		"basis_digest": digest,
+		"lines": lines,
+		"unknown_lines": unknown,
+		"within_approved": all_within_approved,
+		"within_available": all_within_available,
+		"failing_lines": failing,
+	}

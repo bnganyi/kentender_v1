@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "creation": "2026-09-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Schedule Profile Milestone",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "milestone",
+   "fieldtype": "Select",
+   "label": "Milestone",
+   "options": "invitation\nbid_opening\nevaluation_completion\naward_approval\naward_notification\ncontract_signing\ndelivery_completion",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applies",
+   "fieldtype": "Check",
+   "label": "Applies",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "counting_rule",
+   "fieldtype": "Select",
+   "label": "Counting Rule",
+   "options": "Calendar days\nWorking days",
+   "default": "Calendar days",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "minimum_days",
+   "fieldtype": "Int",
+   "label": "Minimum (days)",
+   "description": "0 means not set: verification required."
+  },
+  {
+   "fieldname": "maximum_days",
+   "fieldtype": "Int",
+   "label": "Maximum (days)",
+   "description": "0 means not set: verification required."
+  },
+  {
+   "fieldname": "default_days",
+   "fieldtype": "Int",
+   "label": "Default (days)",
+   "description": "Period preceding this milestone; 0 means not set (a gap). Blank on the anchor and the delivery completion row."
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "options": "Statutory\nPlanning assumption\nSource-derived",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "statutory_reference",
+   "fieldtype": "Data",
+   "label": "Statutory Reference"
+  }
+ ],
+ "field_order": [
+  "milestone",
+  "label",
+  "sequence",
+  "applies",
+  "counting_rule",
+  "minimum_days",
+  "maximum_days",
+  "default_days",
+  "basis",
+  "statutory_reference"
+ ],
+ "permissions": []
+}

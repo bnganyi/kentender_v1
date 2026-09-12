@@ -413,3 +413,23 @@ class TestStatutoryApprovalRoute(ConfigurationTestCase):
 		self.assertEqual(configuration._valid_route("", "State Corporation"), "Board of Directors")
 		self.assertEqual(configuration._valid_route("", "Public University"), "Council")
 		self.assertEqual(configuration._valid_route("", "National Government Ministry"), "Cabinet Secretary")
+
+
+class TestCountyApplicability(ConfigurationTestCase):
+	"""PLN-CHG-001 v1.18 §10.11 C01-conflict / PLN18-UX-26 (CFG owner work) —
+	county applicability is stated explicitly and must agree with the entity
+	type; a mismatch is refused before anything is saved."""
+
+	def test_county_applicability_must_match_the_entity_type(self):
+		frappe.set_user("Administrator")
+		single = frappe.get_doc(configuration.SITE_PE_DOCTYPE)
+		before = (single.pe_type, single.entity_is_county, str(single.modified))
+		with self.assertRaises(ConfigurationError) as caught:
+			configuration.update_procuring_entity(payload={"pe_type": "County Government", "entity_is_county": False})
+		self.assertEqual(self.code(caught), "CFG_COUNTY_APPLICABILITY_MISMATCH")
+		with self.assertRaises(ConfigurationError) as caught:
+			configuration.update_procuring_entity(payload={"pe_type": "National Government Ministry", "entity_is_county": True})
+		self.assertEqual(self.code(caught), "CFG_COUNTY_APPLICABILITY_MISMATCH")
+		single = frappe.get_doc(configuration.SITE_PE_DOCTYPE)
+		self.assertEqual((single.pe_type, single.entity_is_county, str(single.modified)), before)
+		self.assertIn("County applicability does not match", str(caught.exception))

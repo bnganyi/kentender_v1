@@ -80,7 +80,7 @@ class TestWorkspace(WorkspaceCase):
 		result = self.load(nobody)
 		self.assertEqual(result["outcome"], "FORBIDDEN")
 		self.assertEqual(result["forbidden"]["heading"], "You do not have access to Procurement Planning")
-		self.assertIn("Procurement Planner, Finance Confirmation Officer, Accounting Officer", result["forbidden"]["text"])
+		self.assertIn("Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer", result["forbidden"]["text"])
 		self.assertIn("KenTender administrator", result["forbidden"]["text"])
 		self.assertEqual(frappe.db.count("Departmental Plan"), before)
 		# an Author elsewhere sees an OK page with nothing of Alpha's

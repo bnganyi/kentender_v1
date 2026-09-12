@@ -9,12 +9,14 @@
  "field_order": [
   "plan_item",
   "plan_item_id",
+  "plan_version",
   "requisition_reference",
   "requisition_version",
   "reason",
   "requested_by",
   "requested_role",
   "requested_at",
+  "producer_event_id",
   "col_a",
   "status",
   "resolved_by",
@@ -41,6 +43,13 @@
    "reqd": 1,
    "read_only": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Approved Plan Version",
+   "options": "Annual Plan Version",
+   "read_only": 1
   },
   {
    "fieldname": "requisition_reference",
@@ -89,6 +98,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "producer_event_id",
+   "fieldtype": "Data",
+   "label": "Producer Event ID",
+   "read_only": 1,
+   "description": "The Requisitions module's event id / key for this request."
+  },
+  {
    "fieldname": "col_a",
    "fieldtype": "Column Break"
   },
@@ -97,7 +113,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nResolved",
+   "options": "Open\nIn progress\nResolved\nClosed without change",
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
@@ -155,11 +171,66 @@
  "name": "Plan Item Correction Request",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 0, "write": 1},
-  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Procurement Planner", "share": 0, "write": 0},
-  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Head of User Department", "share": 0, "write": 0},
-  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Head of Procurement Function", "share": 0, "write": 0},
-  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Auditor", "share": 0, "write": 0}
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
  ],
  "row_format": "Dynamic",
  "sort_field": "creation",

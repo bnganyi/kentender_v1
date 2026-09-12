@@ -933,3 +933,35 @@
 	color: var(--kt-color-neutral-800);
 	border-color: var(--kt-color-neutral-400);
 }
+
+/* PLN-CHG-001 v1.18 §10.11 C01–C04 — Procurement settings tab and the C01
+   route/county controls (frames in docs/mvp-1-r1/04_planning/design/
+   C01-C04-Setup.dc.html). Chained on the base classes so specificity, not
+   stylesheet load order, decides (AGENTS.md §6.6). */
+.kt-industry .kt-setup-check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: var(--kt-space-3, 12px); }
+.kt-industry .kt-setup-check input { margin: 0; }
+.kt-industry .kt-setup-subnav { display: flex; gap: var(--kt-space-6, 24px); font-size: 13px; margin-bottom: var(--kt-space-6, 24px); }
+.kt-industry .kt-setup-subnav a { color: var(--kt-color-neutral-800, #2c3440); text-decoration: none; }
+.kt-industry .kt-setup-subnav a.is-active { font-weight: 600; color: var(--kt-color-accent-800, #1f4f7a); }
+.kt-industry .kt-procset .kt-card.kt-table-card + .kt-card.kt-table-card { margin-top: var(--kt-space-6, 24px); }
+.kt-industry .kt-procset-card-actions { margin-top: var(--kt-space-3, 12px); display: flex; gap: var(--kt-space-3, 12px); }
+.kt-industry .kt-procset-superseded { margin-left: 8px; }
+.kt-industry .kt-procset-narrow { max-width: 480px; }
+.kt-industry .kt-procset-wide { max-width: 720px; }
+.kt-industry .kt-procset-view .kt-card + .kt-card { margin-top: var(--kt-space-6, 24px); }
+.kt-industry .kt-procset-footer { display: flex; justify-content: flex-end; gap: var(--kt-space-3, 12px); margin-top: var(--kt-space-4, 16px); }
+.kt-industry .kt-facts-row { display: flex; gap: var(--kt-space-6, 24px); flex-wrap: wrap; margin-bottom: var(--kt-space-3, 12px); }
+.kt-industry .kt-fact { display: flex; flex-direction: column; gap: 2px; }
+.kt-industry .kt-fact-val { font-size: 14px; font-weight: 600; }
+.kt-industry .kt-procset-fact { margin: var(--kt-space-4, 16px) 0; }
+.kt-industry .kt-procset-meta { display: flex; gap: var(--kt-space-6, 24px); font-size: 13px; margin-top: 6px; }
+.kt-industry .kt-procset-meta .kt-label { margin-right: 4px; }
+.kt-industry .kt-card.kt-procset-attention { border-color: var(--kt-status-attention, #b7791f); padding: var(--kt-space-4, 16px) var(--kt-space-6, 24px); }
+.kt-industry .kt-procset-attention .kt-card-body { margin: 0; }
+.kt-industry .kt-procset-days { max-width: 160px; }
+.kt-industry .kt-dialog.kt-procset-dialog { width: 640px; max-height: 90vh; overflow: auto; }
+.kt-industry .kt-procset-rows { display: flex; flex-direction: column; gap: 8px; margin-top: var(--kt-space-3, 12px); }
+.kt-industry .kt-procset-row { display: grid; grid-template-columns: 1.4fr 2fr 1fr 1.4fr; gap: 8px; align-items: center; }
+.kt-industry .kt-procset-row .kt-procset-num { max-width: 110px; }
+.kt-industry .kt-visually-hidden-th { width: 1px; }
+.kt-industry .kt-btn.kt-btn-sm { padding: 4px 10px; font-size: 12px; }

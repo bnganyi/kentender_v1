@@ -9,6 +9,7 @@ tables directly. Two contracts remain after v1.7's lifecycle simplification:
 
 	ListEligibleBudgetLines   → budget_api.list_eligible_budget_lines
 	CheckPlanAffordability    → budget_api.check_plan_affordability
+	AnnualProcurementBudgetBasis (v1.18 §5.5.3.1) → budget_api.get_annual_procurement_budget_basis
 
 Planning creates no reservation at any point (§7.3, BUD-BR-009): the v1.2
 module's check/reserve/release/revalidate gateway paths are deleted, not
@@ -90,3 +91,46 @@ def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, floa
 
 	with _system_principal():
 		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)
+
+
+def annual_budget_basis(fiscal_year: str) -> dict[str, Any]:
+	"""BUD v1.8 (owed) §5.5.3.1 — the complete approved annual procurement
+	budget and its exact Version: the reservation-allocation denominator.
+	Amounts arrive as decimal strings; `available = False` fails closed."""
+	from kentender_budget.api.budget_api import get_annual_procurement_budget_basis as contract
+
+	with _system_principal():
+		return contract(fiscal_year=fiscal_year)
+
+
+class BudgetBasisStale(Exception):
+	"""Budget refused the positive decision: its authoritative basis changed
+	since the review (`BUD_BASIS_STALE`) or is unavailable (`BUD_BASIS_UNAVAILABLE`)."""
+
+	def __init__(self, code: str, message: str):
+		self.code = code
+		super().__init__(message)
+
+
+def validate_plan_affordability_for_decision(*, fiscal_year: str, planned_totals: dict[str, float], expected_revisions: dict[str, str] | None = None, correlation: str = "") -> dict[str, Any]:
+	"""BUD v1.8 (owed) §5.3.3 — the decision-time counterpart of the display
+	read: inside the caller's transaction Budget serialises its Active
+	Version and line versions, validates the reviewed revisions and returns
+	the comparison statement with the line revisions and its basis digest.
+	No reservation, ledger event or Budget record is created. A stale or
+	missing basis is raised as `BudgetBasisStale` for the caller to map."""
+	import frappe as _frappe
+
+	from kentender_budget.api.budget_api import validate_plan_affordability_for_decision as contract
+
+	before = len(_frappe.local.message_log or [])
+	with _system_principal():
+		try:
+			return contract(fiscal_year=fiscal_year, planned_totals=planned_totals, expected_revisions=expected_revisions or {}, correlation=correlation)
+		except _frappe.ValidationError as exc:
+			titles = [m.get("title") for m in (_frappe.local.message_log or [])[before:] if isinstance(m, dict)]
+			code = next((t for t in reversed(titles) if t in ("BUD_BASIS_STALE", "BUD_BASIS_UNAVAILABLE")), "")
+			if code:
+				_frappe.clear_last_message()
+				raise BudgetBasisStale(code, str(exc)) from exc
+			raise

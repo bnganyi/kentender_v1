@@ -12,11 +12,16 @@ import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
 import OrganisationStructureTab from "./tabs/OrganisationStructureTab.vue";
 import UserResponsibilitiesTab from "./tabs/UserResponsibilitiesTab.vue";
+import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import { siteConfigApi } from "./data/siteConfigApi.js";
 
 const TABS = [
 	{ key: "procuring-entity", label: __("Procuring entity") },
 	{ key: "fiscal-years", label: __("Fiscal years") },
+	// PLN-CHG-001 v1.18 §10.11 — the fifth tab houses the agreed
+	// catalogue/profile maintenance (C03/C04); a presentation addition, not a
+	// governance module.
+	{ key: "procurement-settings", label: __("Procurement settings") },
 	{ key: "organisation-structure", label: __("Organisation structure") },
 	{ key: "users-and-responsibilities", label: __("Users and responsibilities") },
 ];
@@ -42,25 +47,59 @@ function tabDisabled(key) {
 	return false;
 }
 
-function tabFromHash() {
-	const hash = (window.location.hash || "").replace(/^#/, "");
-	return TABS.some((tab) => tab.key === hash) ? hash : "";
+// The hash is `#<tab>` or `#<tab>/<sub-path>` (a detail or editor within
+// the Procurement settings tab, e.g. `#procurement-settings/rule/MPR-…`);
+// refresh, direct load and back/forward restore both (CFG-AC-024).
+const subpath = ref("");
+
+function parseHashString(hash) {
+	let raw = (hash || "").replace(/^#/, "");
+	try {
+		raw = decodeURIComponent(raw);
+	} catch (e) {
+		// see parseHash
+	}
+	return raw;
 }
 
-function selectTab(key, { push = true } = {}) {
+function parseHash() {
+	// The browser percent-encodes a sub-path with spaces (a funding source
+	// name); read it back decoded so `source/Government of Kenya` resolves.
+	let raw = (window.location.hash || "").replace(/^#/, "");
+	try {
+		raw = decodeURIComponent(raw);
+	} catch (e) {
+		// A malformed escape stays as typed; it simply matches nothing.
+	}
+	const [key, ...rest] = raw.split("/");
+	return { key: TABS.some((tab) => tab.key === key) ? key : "", sub: rest.join("/") };
+}
+
+function tabFromHash() {
+	return parseHash().key;
+}
+
+function selectTab(key, { push = true, sub = "" } = {}) {
 	if (tabDisabled(key)) return;
 	activeTab.value = key;
-	if (push && tabFromHash() !== key) {
-		window.location.hash = key;
+	subpath.value = sub;
+	const wanted = sub ? `${key}/${sub}` : key;
+	if (push && parseHashString(window.location.hash) !== wanted) {
+		window.location.hash = wanted;
 	}
+}
+
+function navigateWithin(sub) {
+	selectTab(activeTab.value, { sub });
 }
 
 let active = true;
 function onHashChange() {
 	if (!active) return;
-	const key = tabFromHash();
-	if (key && key !== activeTab.value && !tabDisabled(key)) {
+	const { key, sub } = parseHash();
+	if (key && !tabDisabled(key)) {
 		activeTab.value = key;
+		subpath.value = sub;
 	}
 }
 
@@ -75,9 +114,9 @@ async function load() {
 			return;
 		}
 		site.value = result;
-		const wanted = tabFromHash();
+		const { key: wanted, sub } = parseHash();
 		if (!configured.value) selectTab("procuring-entity", { push: false });
-		else if (wanted && !tabDisabled(wanted)) selectTab(wanted, { push: false });
+		else if (wanted && !tabDisabled(wanted)) selectTab(wanted, { push: false, sub });
 		else selectTab(activeTab.value && !tabDisabled(activeTab.value) ? activeTab.value : "procuring-entity", { push: false });
 	} catch (error) {
 		loadError.value = error.message;
@@ -178,6 +217,11 @@ onUnmounted(() => {
 					@configured="refreshSite"
 				/>
 				<FiscalYearsTab v-else-if="activeTab === 'fiscal-years'" @changed="refreshSite" />
+				<ProcurementSettingsTab
+					v-else-if="activeTab === 'procurement-settings'"
+					:subpath="subpath"
+					@navigate="navigateWithin"
+				/>
 				<OrganisationStructureTab
 					v-else-if="activeTab === 'organisation-structure'"
 					@repaired="refreshSite"

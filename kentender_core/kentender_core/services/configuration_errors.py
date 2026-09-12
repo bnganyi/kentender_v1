@@ -1,4 +1,6 @@
-"""The CFG-CHG-002 v0.6 §8 error contract for site configuration.
+"""The CFG-CHG-002 v0.9 §8 error contract for site configuration, extended
+by PLN-CHG-001 v1.18 §17.2 (procurement settings, rule resolution and
+county applicability).
 
 A closed set, mirroring `responsibility_errors`: `fail_cfg()` refuses any code
 outside the contract, and the sanctioned user-facing messages never name an
@@ -22,6 +24,10 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"CFG_INTAKE_NOT_OPEN",
 		"CFG_AUTHORITY_REQUIRED",
 		"CFG_VERSION_CONFLICT",
+		"CFG_RULE_UNRESOLVED",
+		"CFG_COUNTY_APPLICABILITY_MISMATCH",
+		"CFG_PROFILE_INVALID",
+		"CFG_CATALOGUE_IN_USE",
 	}
 )
 
@@ -37,6 +43,10 @@ DEFAULT_MESSAGES: dict[str, str] = {
 	"CFG_INTAKE_NOT_OPEN": "Needs submission is not open for this financial year.",
 	"CFG_AUTHORITY_REQUIRED": "You are not authorised to change site configuration.",
 	"CFG_VERSION_CONFLICT": "This record changed after you opened it. Refresh and review the latest version.",
+	"CFG_RULE_UNRESOLVED": "Required procurement rules are missing, ambiguous or unverified for the requested date.",
+	"CFG_COUNTY_APPLICABILITY_MISMATCH": "County applicability does not match the entity details. Review the configuration.",
+	"CFG_PROFILE_INVALID": "Complete the required profile information.",
+	"CFG_CATALOGUE_IN_USE": "This catalogue entry is referenced by existing records and cannot be renamed or removed.",
 }
 
 
@@ -49,7 +59,7 @@ class ConfigurationError(frappe.ValidationError):
 def fail_cfg(code: str, message: str = "") -> None:
 	if code not in ERROR_CODES:
 		raise ValueError(
-			f"{code!r} is not part of the CFG-CHG-002 v0.6 §8 error contract. "
+			f"{code!r} is not part of the CFG-CHG-002 v0.9 §8 error contract. "
 			f"Map the condition onto one of: {', '.join(sorted(ERROR_CODES))}."
 		)
 	message = message or DEFAULT_MESSAGES[code]

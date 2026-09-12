@@ -251,6 +251,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		self.call("confirm_plan_funding", task=finance_task.name, task_token=finance_task.task_token, idempotency_key=key())
 		frappe.set_user(fx.PLANNER)
 		plan = self.call("get_annual_plan", plan_reference=accepted["annual_plan"])
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 		submitted = self.call("submit_consolidated_plan", plan_version=plan["version_reference"], expected_record_version=str(plan["record_version"]), idempotency_key=key())
 		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
 		frappe.set_user(fx.ACCOUNTING_OFFICER)

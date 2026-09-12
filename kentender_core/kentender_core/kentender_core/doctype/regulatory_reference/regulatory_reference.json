@@ -65,14 +65,14 @@
   {
    "fieldname": "exclusive_preference_works_amount",
    "fieldtype": "Currency",
-   "label": "Exclusive Preference Threshold \u2014 Works",
+   "label": "Exclusive Preference Threshold — Works",
    "read_only": 1,
    "description": "Regulation 163: works, construction materials and other materials made in Kenya."
   },
   {
    "fieldname": "exclusive_preference_goods_services_amount",
    "fieldtype": "Currency",
-   "label": "Exclusive Preference Threshold \u2014 Goods and Services",
+   "label": "Exclusive Preference Threshold — Goods and Services",
    "read_only": 1
   },
   {
@@ -80,6 +80,46 @@
    "fieldtype": "Check",
    "label": "Market Price Index Published",
    "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_verification",
+   "fieldtype": "Section Break",
+   "label": "Source and Verification"
+  },
+  {
+   "fieldname": "verification_status",
+   "fieldtype": "Select",
+   "label": "Verification Status",
+   "options": "Production verification pending\nFixture-verified — not production law\nVerified",
+   "default": "Production verification pending",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applicability_basis",
+   "fieldtype": "Data",
+   "label": "Applicability Basis",
+   "read_only": 1,
+   "description": "The legally applicable date each rule kind resolves by; blank means the Fiscal Year alone."
+  },
+  {
+   "fieldname": "source_instrument",
+   "fieldtype": "Data",
+   "label": "Source Instrument",
+   "read_only": 1
+  },
+  {
+   "fieldname": "provision",
+   "fieldtype": "Data",
+   "label": "Provision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_document",
+   "fieldtype": "Attach",
+   "label": "Source Document",
    "read_only": 1
   },
   {
@@ -149,6 +189,12 @@
   "exclusive_preference_works_amount",
   "exclusive_preference_goods_services_amount",
   "market_price_index_published",
+  "section_verification",
+  "verification_status",
+  "applicability_basis",
+  "source_instrument",
+  "provision",
+  "source_document",
   "section_break_bands",
   "threshold_bands",
   "section_break_res",

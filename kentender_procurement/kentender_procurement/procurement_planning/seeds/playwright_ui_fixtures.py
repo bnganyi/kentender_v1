@@ -53,13 +53,14 @@ OUTSIDER_OU_NAME = "Playwright — Planning Outsider"
 AUTHOR = "pw.pln.author@example.test"
 HOD = "pw.pln.hod@example.test"
 PLANNER = "pw.pln.planner@example.test"
+HOPF = "pw.pln.hopf@example.test"  # v1.18 §6.2: signs and submits the Annual Plan
 FINANCE = "pw.pln.finance@example.test"
 ACCOUNTING_OFFICER = "pw.pln.ao@example.test"
 STATUTORY = "pw.pln.statutory@example.test"
 AUDITOR = "pw.pln.auditor@example.test"
 OUTSIDER = "pw.pln.outsider@example.test"  # Departmental Author elsewhere
 NOBODY = "pw.pln.nobody@example.test"  # a stale Frappe Role, no responsibility assignment
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY)
+ACTORS = (AUTHOR, HOD, PLANNER, HOPF, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY)
 
 PASSWORD = TEST_PASSWORD
 UNIT = "Each"
@@ -294,6 +295,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 
 	for email, name in (
 		(AUTHOR, "Playwright Planning Author"), (HOD, "Playwright Planning HoD"), (PLANNER, "Playwright Procurement Planner"),
+		(HOPF, "Playwright Head of Procurement Function"),
 		(FINANCE, "Playwright Finance Officer"), (ACCOUNTING_OFFICER, "Playwright Accounting Officer"),
 		(STATUTORY, "Playwright Statutory Approver"), (AUDITOR, "Playwright Auditor"),
 		(OUTSIDER, "Playwright Outsider Author"), (NOBODY, "Playwright Nobody"),
@@ -303,6 +305,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_grant(HOD, "Departmental Author", OU)
 	_grant(HOD, "Head of User Department", OU)
 	_grant(PLANNER, "Procurement Planner")
+	_grant(HOPF, "Head of Procurement Function")
 	_grant(FINANCE, "Finance Confirmation Officer")
 	_grant(ACCOUNTING_OFFICER, "Accounting Officer")
 	_grant(STATUTORY, "Plan Statutory Approver")
@@ -602,6 +605,10 @@ ITEM_VALUES = {
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
 	"baseline_invitation_date": "2098-09-01",
+	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery period
+	"estimate_basis": "Market survey of the current supplier panel including delivery, installation and incidental costs.",
+	"estimate_basis_reference": "MS-2027-001",
+	"estimated_delivery_period_days": 30,
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
 	"award_approval_buffer_days": 5,
@@ -653,7 +660,7 @@ def reset_governance_fixture(*, need: str = "", commit: bool = True) -> dict[str
 	task = frappe.get_doc("Plan Finance Task", state["task"])
 	with _as(FINANCE):
 		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key())
-	with _as(PLANNER):
+	with _as(HOPF):
 		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),

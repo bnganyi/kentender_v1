@@ -37,6 +37,7 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_RETURNED,
 	STATE_SUBMITTED,
 )
+from kentender_core.seeds import clock
 from kentender_procurement.departmental_needs.services import lifecycle
 
 FY = "2027-2028"
@@ -118,14 +119,26 @@ RETURN_REASON = (
 	"if the approved training cohort has changed."
 )
 
-# §14.3 design-clock decision times (EAT), applied after the commands run.
-# SEED-001 §3.2 (2026-09-05): 0003/0004 accept at the harmonized chain's own
-# instants, replacing 0003's former "Return for correction" entry.
+# §14.3 / KT-STD-001 §8.4A / PLN-CHG-001 v1.18 §13.1 — the fixture instants
+# (EAT) each command runs **at**, under the frozen seed clock
+# (kentender_core.seeds.clock, plan D19). Creation and submission fall on
+# 24 Nov 2026 inside the Needs window (09:00–15:30); decisions keep the
+# SEED-001 §3.2 harmonized instants (0004 accepted by Julia on 25 Nov 2026
+# 09:30, within her 1 Oct–30 Nov acting window; 0003 by Peter at 10:00).
+# Nothing is back-stamped after the fact.
+TIMELINE = {
+	"NDS-MOH-2027-0001": {"create": "2026-11-24 09:00:00", "submit": "2026-11-24 09:40:00", "decide": "2026-11-24 14:00:00"},
+	"NDS-MOH-2027-0002": {"create": "2026-11-24 11:30:00", "submit": "2026-11-24 12:20:00"},
+	"NDS-MOH-2027-0003": {"create": "2026-11-24 10:00:00", "submit": "2026-11-24 10:30:00", "decide": "2026-11-25 10:00:00"},
+	"NDS-MOH-2027-0004": {"create": "2026-11-24 10:15:00", "submit": "2026-11-24 10:45:00", "decide": "2026-11-25 09:30:00"},
+}
+# Kept for readers of the earlier design-clock contract: the decision instants
+# above, keyed the way the v1.6 seed keyed them.
 DECISION_TIMES = {
-	("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
-	("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
-	("NDS-MOH-2027-0003", "Accept for planning"): "2026-11-25 10:00:00",
-	("NDS-MOH-2027-0004", "Accept for planning"): "2026-11-25 09:30:00",
+	("NDS-MOH-2027-0001", "Accept for planning"): TIMELINE["NDS-MOH-2027-0001"]["decide"],
+	("NDS-MOH-2027-0002", "Submit"): TIMELINE["NDS-MOH-2027-0002"]["submit"],
+	("NDS-MOH-2027-0003", "Accept for planning"): TIMELINE["NDS-MOH-2027-0003"]["decide"],
+	("NDS-MOH-2027-0004", "Accept for planning"): TIMELINE["NDS-MOH-2027-0004"]["decide"],
 }
 
 
@@ -195,7 +208,8 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 	if frappe.db.exists("Departmental Need", reference):
 		return reference
 
-	with _as(AUTHOR):
+	when = TIMELINE.get(reference, {})
+	with _as(AUTHOR), clock.at(when.get("create", "2026-11-24 09:00:00")):
 		created = lifecycle.create_need(
 			organisation_unit=author_units[spec["unit_name"]],
 			financial_year=FY,
@@ -218,7 +232,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 	if spec["state"] == STATE_DRAFT:
 		return need
 
-	with _as(AUTHOR):
+	with _as(AUTHOR), clock.at(when.get("submit", "2026-11-24 12:00:00")):
 		submitted = lifecycle.submit_need(
 			need=need,
 			expected_version=created["record_version"],
@@ -234,7 +248,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 		["name", "decision_token"],
 		as_dict=True,
 	)
-	with _as(spec.get("reviewer", REVIEWER)):
+	with _as(spec.get("reviewer", REVIEWER)), clock.at(when.get("decide", "2026-11-24 14:00:00")):
 		result = lifecycle.review_need(
 			need=need,
 			decision=decision,
@@ -258,21 +272,6 @@ def _namespace(need: str, version: str = "") -> None:
 		)
 
 
-def _stamp_design_clock() -> None:
-	"""§14.3 fixes exact decision times; the commands stamp the wall clock."""
-	for (need, action), when in DECISION_TIMES.items():
-		name = frappe.db.get_value(
-			"Departmental Need Decision",
-			{"departmental_need": need, "action": action},
-			"name",
-			order_by="creation desc",
-		)
-		if name:
-			frappe.db.set_value(
-				"Departmental Need Decision", name, "occurred_at", when, update_modified=False
-			)
-
-
 def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:
 	"""Idempotent §14.3 default profile, built through the real commands (§14.7).
 
@@ -283,7 +282,6 @@ def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:
 	"""
 	author_units = _require_prerequisites()
 	created = [_build_need(spec, author_units) for spec in NEEDS]
-	_stamp_design_clock()
 	if commit:
 		frappe.db.commit()
 	return {"needs": created}

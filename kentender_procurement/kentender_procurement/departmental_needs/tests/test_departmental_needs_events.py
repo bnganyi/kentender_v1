@@ -67,6 +67,7 @@ EXCLUDED_FIELDS = (
 	"evidence",
 	"notes",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 
 class EventCase(IntegrationTestCase):
@@ -74,6 +75,7 @@ class EventCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		cls.ou = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)["Digital Health"]
 
 	def setUp(self):

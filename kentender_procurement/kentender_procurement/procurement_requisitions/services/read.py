@@ -124,6 +124,14 @@ def _requisition_summary(root) -> dict[str, Any]:
 		"lead_org_unit_label": _ou_label(root.lead_org_unit),
 		"contributing_org_unit_ids": sorted(_contributing_units(root)),
 		"record_version": root.record_version,
+		# PLN-CHG-001 v1.18 §5.4.5 — the neutral outcome Planning returned for
+		# an upstream correction this Requisition raised (blank until then).
+		"upstream_correction": {
+			"outcome": root.get("upstream_correction_outcome") or "",
+			"reason": root.get("upstream_correction_reason") or "",
+			"reference": root.get("upstream_correction_reference") or "",
+			"outcome_at": str(root.get("upstream_correction_outcome_at") or ""),
+		},
 	}
 
 

@@ -12,7 +12,7 @@
   "stage",
   "decision",
   "capacity",
-  "resolution_reference",
+  "collective_resolution_reference",
   "return_reason",
   "actor",
   "authority_snapshot",
@@ -72,11 +72,11 @@
    "reqd": 1
   },
   {
-   "fieldname": "resolution_reference",
+   "fieldname": "collective_resolution_reference",
    "fieldtype": "Data",
-   "label": "Resolution Reference",
+   "label": "Collective Resolution Reference",
    "read_only": 1,
-   "description": "Mandatory for a Board or similar governing body approval; records the collective resolution."
+   "description": "Required for Board and Council decisions (§6.1)."
   },
   {
    "fieldname": "return_reason",
@@ -158,6 +158,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

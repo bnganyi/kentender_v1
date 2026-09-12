@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §4.12/§5.2/§6.1/§8.2 — Annual Plan governance.
+"""PLN-CHG-001 v1.18 §5.2 / §6 / §7.2 — Annual Plan governance (see the command docstrings; v1.18: HOPF preparation signature, collective capacities, positive vs corrective predicates, correction cohort, held correction, late-activation explanation).
 
 `SubmitConsolidatedPlan`/`SubmitCorrectedPlan` freeze the exact immutable
 Plan Version (every accepted source allocated, every item passing the exact
@@ -41,6 +41,7 @@ from kentender_procurement.procurement_planning.services import (
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_ACCOUNTING_OFFICER,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_PLAN_STATUTORY_APPROVER,
 	ROLE_PROCUREMENT_PLANNER,
 )
@@ -54,7 +55,10 @@ CAPACITY_BY_ROUTE = {
 	"Board of Directors": "Board of Directors",
 	"Council": "Council",
 }
-BOARD_ROUTES = {"Board of Directors", "Council"}
+# v1.18 §6.1 — Board and Council decide collectively: their decisions carry
+# the collective resolution reference and the authorised recording actor.
+COLLECTIVE_ROUTES = {"Board of Directors", "Council"}
+CAPACITY_HOPF = "Head of Procurement Function"
 
 
 def statutory_route() -> str:
@@ -69,8 +73,8 @@ def capacity_for_site() -> str:
 	return CAPACITY_BY_ROUTE[route]
 
 
-def is_board_capacity(capacity: str) -> bool:
-	return cstr(capacity) in {CAPACITY_BY_ROUTE[r] for r in BOARD_ROUTES} or cstr(capacity) == "Governing body"
+def is_collective_capacity(capacity: str) -> bool:
+	return cstr(capacity) in {CAPACITY_BY_ROUTE[r] for r in COLLECTIVE_ROUTES} or cstr(capacity) == "Governing body"
 
 
 def _open_task(task_name: str, *, stage: str | None = None):
@@ -146,14 +150,15 @@ def _build_snapshot(version, plan) -> dict[str, Any]:
 				"item_state": item.item_state,
 			}
 		)
-	share = readiness.reserved_share(version.name)
 	reference = readiness.reference_for(plan.fiscal_year)
-	target = reference.get("reservation", {}).get("target_percent")
+	share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+	target = share["target_percent"]
 	advisories = readiness.splitting_advisory(version.name, reference)
 	return {
 		"rows": rows,
-		"reserved_share_percent": round(share["percent"], 1),
+		"reserved_share_percent": round(share["percent_of_plan"], 1),
 		"reservation_target_percent": target,
+		"reservation_allocations": share,
 		"splitting_advisory_count": len(advisories),
 		"splitting_confirmation": cstr(version.splitting_confirmation),
 	}
@@ -171,7 +176,7 @@ def _validate_ready_to_submit(version, plan) -> None:
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")}, pluck="name")
 	if not items:
 		fail("PLN_ENTRY_INCOMPLETE", "Form at least one Plan Item before submission.")
-	plan_finance.validate_plan_ready(version, plan)
+	plan_finance.validate_plan_ready(version, plan, stage="submission")
 	statement = plan_finance.affordability_statement(plan, version)
 	if not statement.get("within_approved"):
 		fail("PLN_PLAN_NOT_AFFORDABLE", detail={"failing_lines": statement.get("failing_lines", [])})
@@ -181,32 +186,134 @@ def _validate_ready_to_submit(version, plan) -> None:
 		fail("PLN_FINANCE_STALE")
 
 
-def _late_activation_reason(plan, late_activation_reason: str) -> str:
-	"""Invariant 27 — permitted, blocks nothing, requires a reason."""
-	start = frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date")
-	if start and getdate(nowdate()) >= getdate(start):
-		reason = cstr(late_activation_reason).strip()
-		if not (10 <= len(reason) <= 500):
-			fail(
-				"PLN_ENTRY_INCOMPLETE",
-				"The Fiscal Year has begun. State why the Annual Plan is being activated late (10–500 characters).",
-				{"field": "late_activation_reason"},
-			)
-		return reason
-	return ""
+def _require_correction_cohort(version) -> None:
+	"""§5.4.2 — a correction's allocations stay within the returned Version's
+	stable source cohort (current revisions of the same sources; withdrawn
+	or not-proceeding sources may be dropped)."""
+	cohort = set(json.loads(version.source_cohort or "[]"))
+	if not cohort:
+		return
+	strangers = sorted(k for k in source_cohort(version.name) if k not in cohort)
+	if strangers:
+		fail("PLN_CORRECTION_COHORT_VIOLATION", detail={"source_keys": strangers})
 
 
-def _freeze_and_task(version, plan, actor: str, *, late_activation_reason: str) -> Any:
+def record_late_activation_explanation(*, plan_version: str, reason: str, supersedes: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `RecordLateActivationExplanation` — the Accounting Officer's
+	append-only accountability for an initial Plan adopted after the
+	financial year began; never rewrites publication or activation time."""
+	actor = authz.actor(user)
+	payload = {"plan_version": plan_version, "reason": " ".join(cstr(reason).split()), "supersedes": cstr(supersedes)}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	version = envelope.locked("Annual Plan Version", plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	assignment = authz.require_site_role(ROLE_ACCOUNTING_OFFICER, actor)
+	if version.version_status in ("Draft", "Returned", "Cancelled"):
+		fail("PLN_STALE_WRITE", "A late-activation explanation belongs to an initial Plan Version under or after governance.")
+	if cstr(version.based_on_version):
+		fail("PLN_STALE_WRITE", "A late-activation explanation belongs to an initial Plan Version, not a successor.")
+	if payload["supersedes"] and not frappe.db.exists("Late Activation Explanation", {"name": payload["supersedes"], "plan_version": version.name}):
+		fail("PLN_STALE_WRITE", "The explanation being corrected does not belong to this Plan Version.")
+	explanation = _record_late_explanation(version, plan, reason=payload["reason"], actor=actor, assignment=assignment, supersedes=payload["supersedes"])
+	result = {"ok": True, "idempotent": False, "action": "late_explanation_recorded", "explanation": explanation.name}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="RecordLateActivationExplanation", payload=payload, result=result,
+		document_type="Late Activation Explanation", document_name=explanation.name, actor=actor, fixture_namespace=cstr(plan.fixture_namespace),
+	)
+	return result
+
+
+def begin_held_plan_correction(*, plan_version: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `BeginHeldPlanCorrection` — one linked Draft correction of a
+	**Published — activation held** Version: the correction origin is the
+	held Version, the Active predecessor (if any) the real one; the held
+	Version is never treated as Active. Fixed correction cohort."""
+	actor = authz.actor(user)
+	reason = " ".join(cstr(reason).split())
+	payload = {"plan_version": plan_version, "reason": reason}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	if not (20 <= len(reason) <= 1000):
+		fail("PLN_ENTRY_INCOMPLETE", "State why the held Version is being corrected (20–1,000 characters).", {"field": "reason"})
+	version = envelope.locked("Annual Plan Version", plan_version)
+	plan = envelope.locked("Annual Plan", version.annual_plan)
+	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
+	if version.version_status != "Published — activation held":
+		fail("PLN_STALE_WRITE", "Only a Published — activation held Version takes a held correction.")
+	if plan.open_successor_version and frappe.db.get_value("Annual Plan Version", plan.open_successor_version, "version_status") not in ("Active", "Superseded", "Cancelled", "Published — activation held"):
+		fail("PLN_STALE_WRITE", "An open candidate already exists for this Plan.")
+	number = _next_plan_version_number(plan.name)
+	correction = frappe.get_doc(
+		{
+			"doctype": "Annual Plan Version",
+			"version_reference": f"{plan.plan_reference}-V{number}",
+			"annual_plan": plan.name,
+			"version_number": number,
+			"based_on_version": plan.active_version or None,
+			"correction_of_plan_version": version.name,
+			"version_status": "Draft",
+			"funding_state": "Not requested",
+			"change_reason": reason,
+			"project_name": version.project_name,
+			"source_cohort": version.source_cohort or json.dumps(source_cohort(version.name)),
+			"record_version": 0,
+			"fixture_namespace": cstr(plan.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	_copy_version_content(version.name, correction, cstr(plan.fixture_namespace))
+	frappe.db.set_value("Annual Plan", plan.name, "open_successor_version", correction.name, update_modified=False)
+	result = {"ok": True, "idempotent": False, "action": "held_correction_started", "correction_version": correction.name, "active_predecessor": cstr(plan.active_version)}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="BeginHeldPlanCorrection", payload=payload, result=result,
+		document_type="Annual Plan Version", document_name=correction.name, actor=actor, fixture_namespace=cstr(plan.fixture_namespace),
+	)
+	return result
+
+
+def source_cohort(version_name: str) -> list[str]:
+	"""§4.5 — the tagged stable source keys of the Version's live allocations."""
+	keys = frappe.get_all(
+		"Plan Source Allocation", filters={"plan_version": version_name, "allocation_state": ("in", ("Draft", "Active"))}, pluck="source_key", distinct=True,
+	)
+	return sorted(cstr(k) for k in keys if cstr(k))
+
+
+def _freeze_and_task(version, plan, actor: str, assignment, *, idempotency_key: str) -> Any:
+	"""§5.2.3 **Sign and submit Annual Plan** — lock the exact content, record
+	the Head of Procurement Function's preparation signature for that exact
+	snapshot, freeze the source cohort and create the Accounting Officer task."""
 	snapshot = _build_snapshot(version, plan)
 	snapshot_json = json.dumps(snapshot, sort_keys=True, default=str)
+	snapshot_hash = hashlib.sha256(snapshot_json.encode()).hexdigest()
+	snapshot_id = f"SNAP-{version.name}-{snapshot_hash[:12]}"
+	signed_at = now_datetime()
+	signature = frappe.get_doc(
+		{
+			"doctype": "Plan Preparation Signature",
+			"plan_version": version.name,
+			"submitted_snapshot_id": snapshot_id,
+			"snapshot_hash": snapshot_hash,
+			"actor": actor,
+			"capacity": CAPACITY_HOPF,
+			"authority_snapshot": authz.authority_snapshot(assignment),
+			"signed_at": signed_at,
+			"command_idempotency_key": idempotency_key,
+			"fixture_namespace": cstr(plan.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
 	envelope.bump(
 		version,
 		version_status="Awaiting Accounting Officer",
 		submitted_snapshot=snapshot_json,
-		snapshot_hash=hashlib.sha256(snapshot_json.encode()).hexdigest(),
+		snapshot_hash=snapshot_hash,
+		submitted_snapshot_id=snapshot_id,
+		preparation_signature=signature.name,
+		source_cohort=json.dumps(source_cohort(version.name)) if not cstr(version.source_cohort) else version.source_cohort,
 		submitted_by_user=actor,
-		submitted_at=now_datetime(),
-		late_activation_reason=late_activation_reason or None,
+		submitted_at=signed_at,
 	)
 	return frappe.get_doc(
 		{
@@ -224,25 +331,25 @@ def _freeze_and_task(version, plan, actor: str, *, late_activation_reason: str) 
 	).insert(ignore_permissions=True)
 
 
-def submit_consolidated_plan(
-	*, plan_version: str, expected_record_version, idempotency_key: str, late_activation_reason: str = "", user: str | None = None,
-) -> dict[str, Any]:
+def submit_consolidated_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `SubmitConsolidatedPlan` — **Sign and submit Annual Plan** by the
+	Head of Procurement Function (§6.2, D6): preparation accountability for
+	the exact snapshot, not an added approval stage."""
 	actor = authz.actor(user)
-	payload = {"plan_version": plan_version, "late_activation_reason": cstr(late_activation_reason).strip()}
+	payload = {"plan_version": plan_version}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
 	version = envelope.locked("Annual Plan Version", plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
+	assignment = authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
 	if version.version_status != "Draft" or version.correction_of_plan_version:
 		fail("PLN_STALE_WRITE")
 	envelope.check_record_version(version, expected_record_version)
 	capacity_for_site()
-	reason = _late_activation_reason(plan, late_activation_reason)
 	_validate_ready_to_submit(version, plan)
-	task = _freeze_and_task(version, plan, actor, late_activation_reason=reason)
-	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name}
+	task = _freeze_and_task(version, plan, actor, assignment, idempotency_key=idempotency_key)
+	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="SubmitConsolidatedPlan", payload=payload, result=result,
 		document_type="Plan Governance Task", document_name=task.name, actor=actor,
@@ -261,7 +368,9 @@ def _decision(task_doc, version, *, decision: str, capacity: str, actor: str, as
 			"stage": task_doc.stage,
 			"decision": decision,
 			"capacity": capacity,
-			"resolution_reference": resolution_reference or None,
+			# PLN-CHG-001 v1.18 §6.1 / D7 — the collective resolution reference of a
+			# Board or Council decision (the command parameter is renamed in Phase 2e)
+			"collective_resolution_reference": resolution_reference or None,
 			"return_reason": return_reason or None,
 			"actor": actor,
 			"authority_snapshot": authz.authority_snapshot(assignment),
@@ -272,9 +381,59 @@ def _decision(task_doc, version, *, decision: str, capacity: str, actor: str, as
 	).insert(ignore_permissions=True)
 
 
-def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+def _require_positive_predicates(version, plan) -> None:
+	"""§6.3 — a positive adoption/approval needs current source eligibility,
+	current Strategy eligibility and current funding evidence; a return never
+	does (its predicates are the corrective ones)."""
+	from kentender_procurement.procurement_planning.services import strategy_gateway
+
+	items = frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")}, fields=["name", "plan_item_id", "strategic_objective"])
+	for item in items:
+		for allocation in readiness._allocations(item.name):
+			if plan_read.source_correction_required(allocation.dpp_entry):
+				fail("PLN_SOURCE_CORRECTION_REQUIRED", detail={"plan_item_id": item.plan_item_id})
+	eligible = {row["id"] for row in strategy_gateway.list_eligible_strategic_objectives()}
+	for item in items:
+		if cstr(item.strategic_objective) and cstr(item.strategic_objective) not in eligible:
+			fail("PLN_STRATEGY_REVIEW_CHANGED", detail={"plan_item_id": item.plan_item_id})
+	if not plan_finance.funding_is_current(version):
+		fail("PLN_FINANCE_STALE")
+
+
+def _is_initial_plan(version, plan) -> bool:
+	return not cstr(version.based_on_version) and not cstr(plan.active_version)
+
+
+def _fiscal_year_begun(plan) -> bool:
+	start = frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date")
+	return bool(start) and getdate(nowdate()) >= getdate(start)
+
+
+def _record_late_explanation(version, plan, *, reason: str, actor: str, assignment, supersedes: str = "") -> Any:
+	reason = " ".join(cstr(reason).split())
+	if not (20 <= len(reason) <= 1000):
+		fail("PLN_LATE_EXPLANATION_REQUIRED", detail={"field": "reason"})
+	return frappe.get_doc(
+		{
+			"doctype": "Late Activation Explanation",
+			"plan_version": version.name,
+			"reason": reason,
+			"actor": actor,
+			"authority_snapshot": authz.authority_snapshot(assignment),
+			"recorded_at": now_datetime(),
+			"supersedes": supersedes or None,
+			"fixture_namespace": cstr(plan.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+
+
+def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, late_activation_explanation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `AdoptAndSubmitPlan` — adopt the exact reviewed Version, recheck
+	the positive predicates and create one configured statutory task. An
+	initial Plan adopted after its financial year began records the
+	Accounting Officer's late-activation explanation (append-only)."""
 	actor = authz.actor(user)
-	payload = {"task": task}
+	payload = {"task": task, "late_activation_explanation": " ".join(cstr(late_activation_explanation).split())}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
@@ -282,10 +441,18 @@ def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, u
 	assignment = authz.require_site_role(ROLE_ACCOUNTING_OFFICER, actor)
 	envelope.assert_task_token(task_doc, task_token)
 	version = envelope.locked("Annual Plan Version", task_doc.plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	authz.require_not_segregated(actor, authz.ACTION_AO_DECIDE, plan_version=version.name)
 	if version.version_status != "Awaiting Accounting Officer":
 		fail("PLN_REVIEW_STALE")
 	capacity = capacity_for_site()
+	_require_positive_predicates(version, plan)
+	explanation = None
+	if _is_initial_plan(version, plan) and _fiscal_year_begun(plan):
+		if not payload["late_activation_explanation"] and not frappe.db.exists("Late Activation Explanation", {"plan_version": version.name}):
+			fail("PLN_LATE_EXPLANATION_REQUIRED", detail={"field": "late_activation_explanation"})
+		if payload["late_activation_explanation"]:
+			explanation = _record_late_explanation(version, plan, reason=payload["late_activation_explanation"], actor=actor, assignment=assignment)
 
 	decision = _decision(task_doc, version, decision="Adopt and submit", capacity="Accounting Officer", actor=actor, assignment=assignment, idempotency_key=idempotency_key)
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
@@ -304,7 +471,7 @@ def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, u
 			"fixture_namespace": cstr(task_doc.fixture_namespace),
 		}
 	).insert(ignore_permissions=True)
-	result = {"ok": True, "idempotent": False, "action": "adopted", "statutory_task": statutory_task.name, "capacity": capacity}
+	result = {"ok": True, "idempotent": False, "action": "adopted", "statutory_task": statutory_task.name, "capacity": capacity, "late_activation_explanation": explanation.name if explanation else ""}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="AdoptAndSubmitPlan", payload=payload, result=result,
 		document_type="Plan Governance Decision", document_name=decision.name, actor=actor,
@@ -313,10 +480,14 @@ def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, u
 	return result
 
 
-def approve_annual_plan(*, task: str, task_token: str, resolution_reference: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+def approve_annual_plan(*, task: str, task_token: str, collective_resolution_reference: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `ApproveAnnualPlan` — the configured statutory capacity's positive
+	decision; Board and Council record the collective resolution reference
+	(§6.1). Positive predicates rechecked; publication is enqueued, never
+	sent synchronously (Phase 2f completes the pipeline)."""
 	actor = authz.actor(user)
-	resolution_reference = cstr(resolution_reference).strip()
-	payload = {"task": task, "resolution_reference": resolution_reference}
+	resolution_reference = cstr(collective_resolution_reference).strip()
+	payload = {"task": task, "collective_resolution_reference": resolution_reference}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
@@ -327,8 +498,11 @@ def approve_annual_plan(*, task: str, task_token: str, resolution_reference: str
 	authz.require_not_segregated(actor, authz.ACTION_STATUTORY_DECIDE, plan_version=version.name)
 	if version.version_status != "Awaiting statutory approval":
 		fail("PLN_REVIEW_STALE")
-	if is_board_capacity(task_doc.capacity) and not resolution_reference:
-		fail("PLN_ENTRY_INCOMPLETE", "A Board or similar governing body's approval requires a resolution reference.", {"field": "resolution_reference"})
+	if is_collective_capacity(task_doc.capacity) and not resolution_reference:
+		fail("PLN_COLLECTIVE_RESOLUTION_REQUIRED", detail={"field": "collective_resolution_reference"})
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	capacity_for_site()
+	_require_positive_predicates(version, plan)
 
 	decision = _decision(
 		task_doc, version, decision="Approve Annual Procurement Plan", capacity=task_doc.capacity, actor=actor,
@@ -354,13 +528,16 @@ def approve_annual_plan(*, task: str, task_token: str, resolution_reference: str
 ITEM_COPY_FIELDS = (
 	"plan_item_id", "title", "description", "strategic_objective", "strategy_plan", "strategy_plan_version",
 	"objective_path", "requirement_type", "procurement_category", "procurement_method", "aggregation_reason",
-	"plan_horizon", "multi_year_justification", "aggregation_indicator", "lotting_indicator", "lot_count",
+	"plan_horizon", "aggregation_indicator", "lotting_indicator", "lot_count",
 	"reservation_category", "reservation_category_reason", "county_resident_reservation", "exclusive_preference",
 	"threshold_band_at_readiness", "baseline_invitation_date", *schedule.PERIOD_FIELDS, *schedule.BASELINE_FIELDS,
 	"item_status",
+	# PLN-CHG-001 v1.18 §4.6 — stable root, rule-profile evidence, method evidence, estimate basis, periods, feasibility
+	"plan_item", "method_profile_version", "schedule_profile_version", "method_condition_evidence", "mandatory_restriction_results",
+	"estimate_basis", "estimate_basis_reference", "estimated_delivery_period_days", "period_inputs", "baseline_milestones", "estimated_completion_date",
 )
 ALLOCATION_COPY_FIELDS = (
-	"allocation_id", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit",
+	"allocation_id", "dpp_entry", "source_origin", "source_key", "need", "need_revision", "organisation_unit",
 	"quantity", "unit", "required_by_date", "budget_line", "indicative_amount",
 )
 
@@ -441,6 +618,10 @@ def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_
 			"funding_state": "Confirmed" if version.funding_state == "Confirmed" else "Not requested",
 			"funding_line_totals_hash": version.funding_line_totals_hash if version.funding_state == "Confirmed" else None,
 			"splitting_confirmation": version.splitting_confirmation,
+			# §5.4.2 — the correction keeps the returned Version's stable source cohort
+			"source_cohort": version.source_cohort or json.dumps(source_cohort(version.name)),
+			"project_name": version.project_name,
+			"change_reason": version.change_reason,
 			"record_version": 0,
 			"fixture_namespace": cstr(plan.fixture_namespace),
 		}
@@ -456,28 +637,27 @@ def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_
 	return result
 
 
-def submit_corrected_plan(
-	*, plan_version: str, expected_record_version, idempotency_key: str, late_activation_reason: str = "", user: str | None = None,
-) -> dict[str, Any]:
-	"""Invariant 23: a corrected Plan always restarts at Accounting Officer
-	adoption. §5.2/PLN-AC-087: funding confirmation is repeated only when the
-	per-line totals or an approved amount changed since the confirmation."""
+def submit_corrected_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `SubmitCorrectedPlan` — the same final-submission service and
+	guards as `SubmitConsolidatedPlan` (Finance basis evaluation, new
+	preparation signature by the Head of Procurement Function); a corrected
+	Plan always restarts at Accounting Officer adoption."""
 	actor = authz.actor(user)
-	payload = {"plan_version": plan_version, "late_activation_reason": cstr(late_activation_reason).strip()}
+	payload = {"plan_version": plan_version}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
 	version = envelope.locked("Annual Plan Version", plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
+	assignment = authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
 	if version.version_status != "Draft" or not version.correction_of_plan_version:
 		fail("PLN_STALE_WRITE")
 	envelope.check_record_version(version, expected_record_version)
 	capacity_for_site()
-	reason = _late_activation_reason(plan, late_activation_reason)
 	_validate_ready_to_submit(version, plan)
-	task = _freeze_and_task(version, plan, actor, late_activation_reason=reason or cstr(version.late_activation_reason))
-	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name}
+	_require_correction_cohort(version)
+	task = _freeze_and_task(version, plan, actor, assignment, idempotency_key=idempotency_key)
+	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="SubmitCorrectedPlan", payload=payload, result=result,
 		document_type="Plan Governance Task", document_name=task.name, actor=actor,

@@ -626,17 +626,30 @@ async function onCreateUpdate() {
 }
 
 async function onSaveFunding(payload) {
-	const result = await run("save-need-funding", (key) =>
-		api.saveNeedFunding({
-			dpp_version: editor.value.dpp_version,
-			entry_id: payload.entry_id,
-			budget_line: payload.budget_line || undefined,
-			indicative_amount: payload.indicative_amount || undefined,
-			not_proceeding_reason: payload.not_proceeding_reason || undefined,
-			expected_record_version: editor.value.record_version,
-			idempotency_key: key,
-		})
-	);
+	// PLN-CHG-001 v1.18 §5.1.4 — the not-proceeding outcome is its own command
+	// (SetNeedPlanningDisposition); funding is saved separately. The U04 re-port
+	// (Phase 3B) gives Restore its own control.
+	const result = payload.not_proceeding_reason
+		? await run("set-need-disposition", (key) =>
+				api.setNeedPlanningDisposition({
+					dpp_version: editor.value.dpp_version,
+					entry_id: payload.entry_id,
+					disposition: "Do not proceed",
+					reason: payload.not_proceeding_reason,
+					expected_record_version: editor.value.record_version,
+					idempotency_key: key,
+				})
+			)
+		: await run("save-need-funding", (key) =>
+				api.saveNeedFunding({
+					dpp_version: editor.value.dpp_version,
+					entry_id: payload.entry_id,
+					budget_line: payload.budget_line || undefined,
+					indicative_amount: payload.indicative_amount || undefined,
+					expected_record_version: editor.value.record_version,
+					idempotency_key: key,
+				})
+			);
 	if (result) go(dppReference.value);
 }
 

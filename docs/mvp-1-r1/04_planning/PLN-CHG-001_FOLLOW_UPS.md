@@ -1,0 +1,46 @@
+# Procurement Planning — follow-ups (PLN-CHG-001 v1.18 cycle)
+
+Items deliberately outside the v1.18 implementation cycle opened 12 September 2026 (`PLN-CHG-001_IMPLEMENTATION_TRACKER.md`), plus the disposition of every row still open in the retired v1.12–v1.16 register (`retired/FOLLOW_UPS.md`). Each row is an owner decision this cycle has no authority to make, a sibling document amendment the owner chose to log rather than author now (plan D17), a legal-verification prerequisite (v1.18 §15.2), or a future facility named in §15.3.
+
+**Status:** opened 12 September 2026 with the plan. Nothing here blocks Phase 0–3; FU-20 (SEED-001 v1.3) and FU-21 (legal verification) are cited by Phase 4/5 rows where they bound what the seed and release evidence may claim.
+
+## Carry-forward from the retired register
+
+| Old ID | Item | Disposition under v1.18 |
+|---|---|---|
+| FU-02 | Budget/Strategy contracts expose no human business reference | **Closed** — `list_eligible_budget_lines` returns `reference` (`kentender_budget/services/budget_line_contracts.py:334-357`), consumed by the current screens; Strategy path labels come from `get_strategy_lineage`. |
+| FU-03 | KENTENDER_MVP_V1 full-stack validator crashes on the retired `Strategy Programme` doctype | **Carried as FU-28** — the legacy multi-PE orchestrator is retired by SEED-OPS-001; the canonical validator (`make seed-canonical-validate`) is the live check. Owner may delete the legacy validator. |
+| FU-04 | Dormant references to retired Planning doctypes in tender-management and legacy seed families | **Carried as FU-29** — no live caller; the tender-management rebuild owns them. Phase 2a's slug/removed-construct scans will list any that name doctypes this cycle renames (`Annual Plan Publication`). |
+| FU-05 | Successor snapshot cannot distinguish carried-over from removed items | **Closed by this cycle** — v1.18 §9.2 Changes tab and `Plan Item.item_state` `Removed in successor` in the review pack (Phase 2e/3C/3F rows). |
+| FU-06 / FU-18 | `RemovePlanItemInSuccessor`, `CancelPlanUpdate`, `RetryPublication`, `Withdraw departmental submission`, Finance-shortfall and No-validation-tasks states have no UI trigger | **Closed by this cycle** — v1.18 supplies the compositions (U21-cancel-update, U13-D retry, U02 withdraw, U10-scenarios excess, U21-empty "No departmental plans awaiting validation"); built in 3A/3B/3E/3G. |
+| FU-08 | §14.5 illustrative dates implied a 31-day evaluation period | **Closed by the spec** — v1.18 §10.1 dates (1 May → 22 May → 21 Jun → 26 Jun → 28 Jun → 12 Jul → 31 Aug 2027) derive from 21/30/5/2/14 and the profile carries the 30-day maximum; the seed uses the same calculation (RI-056). |
+| FU-09 | Peter/Julia register dates split between NDS and Planning | **Closed by this cycle** — plan D19 restores Julia 1 Oct–30 Nov 2026 acting and dates Peter's Digital Health authority from 1 Dec 2026 in `site_setup.py`; seeds run under the frozen clock so the windows are real at command time. |
+| FU-12 | Partial rows: county fixture (AC-097), Project Name (AC-101), §7.5A field walk (AC-110) | Project name **closed by this cycle** (`Annual Plan Version.project_name`, PLN18-AC-100). County end-to-end fixture **carried as FU-26**. §7.5A reporting walk **replaced** by PLN18-AC-109 / RI-046 (field-ownership map), built in Phase 2f. |
+| FU-13, FU-14, FU-15, FU-16 | Closed 7–11 September 2026 | Unchanged; their behaviours are re-expressed in v1.18 (§11.2 supporting lines, record-route task actions, Active copy for the Requisition contract) and covered by PLN18-AC-111 / RI-051 / RI-053 and `test_plan_requisition`. |
+| FU-17 | §4 field-table drift (`indicative_amount_minor_units`, stored `source_line_id`, variance sign, governance `scope`) | **Closed by the spec** — v1.18 §4.1 Money in currency units, §4.3 `source_line_id` is a projection (`P`), §5.5.1A actual − baseline (positive late) matches `schedule.py`, §4.7 task carries `capacity` (plan C13). |
+| FU-19 | Technical read stated once in KT-STD-001 v1.5 §3A.6 | **Carried as FU-27** — v1.18 §6 still carries its own Administrator/System Manager row; KT-STD v1.6 / PLN v1.19 citation clean-up. |
+
+## Register
+
+| ID | Item | Severity | Owner |
+|---|---|---|---|
+| FU-20 | **SEED-001 v1.3** — adopt v1.18 §13.1 chronology (Julia certifies DHI 25 Nov 10:30, Peter HRMD 11:00, Mercy accepts 27 Nov 14:00/14:05), the laptop Plan boundary 31 Dec 2027 (REQ keeps 30 Sep 2027 as its operational date), the `Youth` planned designation on `PPI-MOH-2027-033` with `Fixture-verified — not production law` rules (plan D16), the HOPF signature, Treasury evidence `MOH/APP/2027/001` and the 10 Dec 2026 15:00 EAT acknowledgement; §6 naming note for `Annual Plan Publication` → `Plan Publication` | High — the canonical seed diverges from the written fixture until this lands | SEED / KT-STD owner |
+| FU-21 | **Primary legal verification** (v1.18 §15.2 / §17.2) — method admissibility and thresholds, cumulative limits, schedule/counting rules, reservation eligibility/denominators/overlap, county basis, approval-route applicability, publication prerequisites and the prescribed Third Schedule layout. Until recorded, every seeded profile/rule stays `Production verification pending` (or fixture-verified in the canonical seed) and the C03/C04 screens say so | High — blocks any production-style approval claim; does not block the build | LAW / Configuration & Governance |
+| FU-22 | **CFG-CHG-002 v0.10** — fifth System setup tab, method/schedule profiles and their maintenance, funding-source commands, `Regulatory Reference` verification status/supersession/applicability-date resolver, county/type consistency, DPP intake reason, reservation target no longer "advisory" (replaces §4.4A / CFG-AC-032), close-instant clarification, historical-register completeness (v1.18 §17.2 table) | Medium — code lands in Phase 1a/1b; document lags | Configuration & Governance |
+| FU-23 | **BUD-CHG-001 v1.8** — `validate_plan_affordability_for_decision`, `get_annual_procurement_budget_basis`, decimal-string amounts and currency precision at the boundary, source-OU eligibility argument stated | Medium | Budget & Funding |
+| FU-24 | **NDS-CHG-001 v1.11** — `NeedPlanningDispositionChanged.v1` (separate from `NeedPlanningUsageChanged.v1`), disposition projection and "Planning information" display; header stays proposed until then | Medium | Departmental Needs |
+| FU-25 | **REQ-CHG-001 v1.8 / TPR-CHG-001 v0.8** — `AuthoriseRequisitionDrawdown` name, `PLN_ITEM_SCOPE_LOCKED` / `PLN_ITEM_AUTHORISATION_HELD` handling, `PlanItemCorrectionOutcome.v1` and the requester follow-up after "Closed without change", removal of REQ §7.4A "open to correction"; TPR §4.8 event envelope and Planning-side never-overwrite guard (closes TPR FU-05) | Medium | Requisitions / Tender Preparation |
+| FU-26 | **County-entity fixture** — a Playwright/Python world with `entity_is_county` set so PLN18-AC-097 / UX-24 county calculations are exercised end to end (the one-site model has no county entity) | Low | `kentender_procurement` (Planning) + fixture owner |
+| FU-27 | **KT-STD-001 v1.6 / PLN v1.19 editorial** — cite §3A.6 for technical read instead of module prose; §8.3 note that the Head of Procurement Function also signs the Annual Plan preparation; §8.4A Planning window unchanged | Low | Document owner |
+| FU-28 | Legacy `validate_kentender_mvp_v1` still crashes on `Strategy Programme` (retired FU-03); superseded by the canonical validator | Low | `kentender_core` seeds — delete or leave |
+| FU-29 | Dormant retired-doctype references in tender-management and legacy seeds (retired FU-04) | Low — latent, no caller | `kentender_procurement` (tender-management rebuild) |
+| FU-30 | **Cross-module Money precision** — BUD/NDS/REQ still compute in `flt()` with epsilons; Planning validates decimal strings at its boundary only (plan D3). Agreement "before release" per v1.18 §4.1 | Medium | Budget, Needs, Requisitions owners |
+| FU-31 | **Future facilities named in v1.18 §15.3** — multi-year procurement, full OCDS publication, automated Treasury transmission, aggregate item-level actuals, the six remaining milestone integrations, fulfilment derivation, candidate-level preference entitlement, statutory returns, scope expansion via tender amendment; plus a real (non-sandbox) publication destination and State Portal evidence | Deferred by design | Product owner |
+
+## Verifying a fix
+
+- **FU-20:** SEED-001 v1.3 exists and `validate_planning_seed` facts match its §3.3/§3.6 tables; `make seed-canonical-validate` green.
+- **FU-21:** rules and profiles carry `verification_status = Verified` with instrument/provision/document recorded; the C03/C04 screens and the review pack drop "Production verification pending"; the canonical seed may then drop the fixture-verified set.
+- **FU-22–FU-25:** the named sibling version exists and its `FOLLOW_UPS`/tracker row cites the Phase 1 evidence rows (PLN18-101..110).
+- **FU-26:** a county world drives `county_resident_reservation` in a browser spec and PLN18-AC-097 moves from `Partial` to `Done`.
+- **FU-30:** one shared precision contract test passes in each of the three sibling suites.

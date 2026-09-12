@@ -345,6 +345,9 @@ def prior_actors(chain: list[str]) -> dict[str, set[str]]:
 		# created by a governance return and its owner is not a Planner action.
 		if not v.correction_of_plan_version and v.owner and v.owner != "Administrator":
 			planner.add(cstr(v.owner))
+	# v1.18 §6.4 — signing the formal submission is an authoring-side action
+	for row in frappe.get_all("Plan Preparation Signature", filters={"plan_version": ("in", chain)}, fields=["actor"]):
+		planner.add(cstr(row.actor))
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", chain)}, pluck="name")
 	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain)}, pluck="name")
 	journal_targets = set(chain) | set(items) | set(tasks)

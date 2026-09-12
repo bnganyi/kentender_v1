@@ -5,7 +5,7 @@
 RevokeUnconsumedAuthorisation.
 
 Ordering (D6): every external call (Budget's `check_funding` then
-`reserve_funding`; Planning's `record_requisition_drawdown`, once per
+`reserve_funding`; Planning's `authorise_requisition_drawdown`, once per
 contributing Organisation Unit) happens BEFORE this module's own writes, so
 a failure in either sibling leaves nothing here to undo. This module's own
 writes (decision, lock, handoff, outbox event, task close) then happen
@@ -124,7 +124,7 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 	drawdown_refs_by_line: dict[str, str] = {}
 	all_pdr_names: list[str] = []
 	for unit, lines in lines_by_unit.items():
-		drawn = eligibility_gateway.record_requisition_drawdown(
+		drawn = eligibility_gateway.authorise_requisition_drawdown(
 			plan_item_id=root.plan_item_id, requisition_reference=root.requisition_reference, requesting_org_unit=unit,
 			allocations=[{"plan_source_allocation_id": l.plan_item_line_id, "quantity": l.requested_quantity, "amount": l.requested_value} for l in lines],
 			expected_record_version=projection["record_version"], idempotency_key=f"{idempotency_key}:planning:{unit}",

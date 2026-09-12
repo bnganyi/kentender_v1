@@ -69,7 +69,10 @@ COMMAND_CONTRACTS = (
 	"request_accepted_need_withdrawal",
 	"decide_accepted_need_withdrawal",
 	"project_need_planning_usage",
+	# PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
+	"project_need_planning_disposition",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 
 class ContractCase(IntegrationTestCase):
@@ -77,6 +80,7 @@ class ContractCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
 		cls.ou = units["Digital Health"]
 		cls.ou_hrmd = units["Human Resources Management and Development"]
@@ -122,6 +126,8 @@ class TestContractSurface(ContractCase):
 		exempt = {
 			# A usage projection is made idempotent by its own source event ID.
 			"project_need_planning_usage",
+			# PLN-CHG-001 v1.18 §7.3 — likewise keyed on the producer's event ID.
+			"project_need_planning_disposition",
 		}
 		for name in COMMAND_CONTRACTS:
 			if name in exempt:
@@ -584,3 +590,83 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 				"reach a keyword-only signature: " + ", ".join(sorted(set(offenders)))
 			),
 		)
+
+
+class TestPlanningDispositionProjection(ContractCase):
+	"""PLN-CHG-001 v1.18 §5.1.4 / §7.3 `NeedPlanningDispositionChanged.v1`
+	(tracker PLN18-108) — Planning's accepted departmental disposition is
+	projected as Planning information: Planner-only, idempotent on the event
+	id, ordered per Need on the producer sequence, reason required only when
+	not proceeding, and never a usage or lifecycle change."""
+
+	def _purge(self):
+		frappe.db.delete("Need Planning Disposition Projection", {"departmental_need": self.accepted_need().name})
+
+	def setUp(self):
+		super().setUp()
+		self._purge()
+		self.addCleanup(self._purge)
+
+	def project(self, **kwargs):
+		from kentender_procurement.departmental_needs.services.usage import project_planning_disposition
+
+		frappe.set_user(PLANNER)
+		need = self.accepted_need()
+		values = {
+			"departmental_need": need.name,
+			"need_revision": need.current_accepted_revision,
+			"dpp_submission": "DPP-MOH-DHI-2027-001-S1",
+			"disposition": "Not proceeding",
+			"reason": "The department will pursue this requirement in a later annual planning cycle.",
+			"source_event_id": self.key(),
+			"producer_sequence": 1,
+			"actor": "julia.njeri@moh.example.test",
+			"decision_at": "2026-11-27 14:00:00",
+		}
+		values.update(kwargs)
+		return project_planning_disposition(**values)
+
+	def test_only_planning_projects_and_the_disposition_is_planning_information_not_usage(self):
+		from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
+		from kentender_procurement.departmental_needs.services.usage import planning_usage
+
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(user=AUTHOR)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+		usage_before = planning_usage(self.accepted_need().name)
+		state_before = self.accepted_need().current_state
+		result = self.project()
+		self.assertFalse(result["idempotent"])
+		self.assertEqual(result["disposition"], "Not proceeding")
+		self.assertEqual(result["reason"], "The department will pursue this requirement in a later annual planning cycle.")
+		self.assertEqual(result["dpp_submission"], "DPP-MOH-DHI-2027-001-S1")
+		self.assertEqual(result["actor_label"], "Julia Njeri")
+		self.assertEqual(planning_usage(self.accepted_need().name), usage_before, "a DPP exclusion never changes usage")
+		self.assertEqual(self.accepted_need().current_state, state_before)
+		detail = workspace.get_need(need=self.accepted_need().name, user=PLANNER)
+		self.assertTrue(detail["planning_disposition"]["recorded"])
+		self.assertEqual(detail["planning_disposition"]["disposition"], "Not proceeding")
+
+	def test_idempotent_on_event_id_and_ordered_on_producer_sequence(self):
+		from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
+
+		key = self.key()
+		first = self.project(source_event_id=key, producer_sequence=3)
+		self.assertFalse(first["idempotent"])
+		replay = self.project(source_event_id=key, producer_sequence=3, disposition="Proceeding", reason="")
+		self.assertTrue(replay["idempotent"])
+		self.assertEqual(replay["disposition"], "Not proceeding")
+		late = self.project(producer_sequence=2, disposition="Proceeding", reason="")
+		self.assertTrue(late["idempotent"])
+		self.assertTrue(late.get("superseded"))
+		self.assertEqual(late["disposition"], "Not proceeding")
+		newer = self.project(producer_sequence=4, disposition="Proceeding", reason="", dpp_submission="DPP-MOH-DHI-2027-001-S2")
+		self.assertFalse(newer["idempotent"])
+		self.assertEqual(newer["disposition"], "Proceeding")
+		self.assertEqual(len(newer["history"]), 2)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(reason="too short")
+		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(disposition="Deferred")
+		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")

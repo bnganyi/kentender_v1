@@ -12,6 +12,7 @@
   "plan_version",
   "dpp_entry",
   "source_origin",
+  "source_key",
   "need",
   "need_revision",
   "organisation_unit",
@@ -76,6 +77,14 @@
    "options": "Accepted Departmental Need\nDirect departmental requirement",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "source_key",
+   "fieldtype": "Data",
+   "label": "Source Key",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "need:{need} or direct:{direct_source_id} — the stable source identity (§4.6)."
   },
   {
    "fieldname": "need",
@@ -201,6 +210,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

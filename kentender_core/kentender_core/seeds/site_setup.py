@@ -140,6 +140,11 @@ ACTORS = (
 	# Officer who prepares the Tender; a different person from the Head of
 	# Procurement Function who approves it (§10.3).
 	("brian.wafula", "Brian Wafula"),
+	# PLN-CHG-001 v1.18 §10.1 / KT-STD-001 §8.3 (2026-09-12, plan D19) —
+	# Planning's Accounting Officer and statutory approver join the shared
+	# register here instead of being created by the Planning seed.
+	("amina.hassan", "Amina Hassan"),
+	("daniel.rotich", "Daniel Rotich"),
 )
 
 ASSIGNMENTS = (
@@ -156,7 +161,11 @@ ASSIGNMENTS = (
 	# module's default Needs live in. Digital Health and HRMD share no
 	# covering parent below the site root, so §14.2's fallback applies — two
 	# exact leaf assignments rather than one parent grant.
-	("peter.kimani", "Head of User Department", "Digital Health", {}),
+	# PLN-CHG-001 v1.18 §13.1 (2026-09-12, plan D19): Peter takes Digital
+	# Health over from Julia's acting period — dated, not open-ended, so the
+	# fixture chronology (Julia certifies DHI on 25 Nov 2026, Peter may act
+	# from December) is real at command time under the frozen seed clock.
+	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": "2026-12-01 00:00:00"}),
 	(
 		"julia.njeri",
 		"Head of User Department",
@@ -164,16 +173,15 @@ ASSIGNMENTS = (
 		{
 			"appointment_type": "Acting",
 			"authority_reference": "MOH/HR/ACT/2026/041",
-			# SEED-001 §3.1 states this window as 1 Oct-30 Nov 2026, but her
-			# Need-0004 acceptance (kentender_mvp_r1.py) is authorised against
-			# real wall-clock time when the seed actually runs, with no
-			# time-travel override available on the review command — a window
-			# that narrow makes the canonical seed unable to run outside those
-			# two months. Widened deliberately (owner decision, 2026-09-05) so
-			# the seed stays reliably runnable; the design-clock stamp on her
-			# decision still reads 25 Nov 2026 regardless of real run date.
-			"effective_from": "2026-09-01 00:00:00",
-			"effective_to": "2027-06-30 23:59:59",
+			# PLN-CHG-001 v1.18 §13.1 / SEED-001 §3.1 — 1 Oct through 30 Nov
+			# 2026 inclusive. The 5 Sep 2026 stop-gap that widened this window
+			# (so a real-clock seed could act as Julia) is retired by plan D19:
+			# seeds now run each command under the frozen clock at its fixture
+			# instant (kentender_core.seeds.clock), so her 25 Nov 2026
+			# decisions are authorised for real. The retired stop-gap row is
+			# revoked by `_reconcile_superseded_fixture_assignments`.
+			"effective_from": "2026-10-01 00:00:00",
+			"effective_to": "2026-11-30 23:59:59",
 		},
 	),
 	("mercy.kilonzo", "Procurement Planner", None, {}),
@@ -195,6 +203,11 @@ ASSIGNMENTS = (
 	# TPR-CHG-001 v0.6 §5 — Site-wide Procurement Officer (prepares, never
 	# approves, the same Version — §10.3).
 	("brian.wafula", "Procurement Officer", None, {}),
+	# PLN-CHG-001 v1.18 §6 / §10.1 — Site-wide adoption and statutory
+	# capacity (the capacity itself resolves from the site's configured
+	# route at decision time).
+	("amina.hassan", "Accounting Officer", None, {}),
+	("daniel.rotich", "Plan Statutory Approver", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",
@@ -210,7 +223,9 @@ ASSIGNMENTS = (
 # fixture draws on. Configuration & Governance owns the catalogue (FU-05
 # records the pending CFG-CHG-002 v0.8 §4.4 schema reconciliation); the
 # Budget seed fails closed if this row is absent, never creates it.
-FUNDING_SOURCES = ("Government of Kenya",)
+# PLN-CHG-001 v1.18 §10.11 C03 (2026-09-12) — the three governed values the
+# Procurement settings artboard lists; Budget draws on the first.
+FUNDING_SOURCES = ("Government of Kenya", "Development partner", "Appropriation in Aid")
 
 # TPR-CHG-001 v0.6 §8.5 / plan D6 — the one governed contact office the
 # Ministry of Health fixture names for clarifications, notices and the
@@ -229,6 +244,54 @@ def contact_office_display(office_name: str) -> str:
 		if name == office_name:
 			return ", ".join(p for p in (name, email, phone) if p)
 	return office_name
+
+# PLN-CHG-001 v1.18 §5.5.1 / §10.1 / §10.11 C04 (2026-09-12) — the method
+# eligibility and procedure schedule profiles the Procurement settings tab
+# maintains. Every seeded row is `Production verification pending`: the
+# figures reproduce the §10.1 display example (21/30/5/2/14; buffers are
+# Planning assumptions) and the Second Schedule limits above, none of which
+# has been verified against primary law here (v1.18 §15.2 prerequisite;
+# plan D16 keeps the fixture-verified set in the Planning seed).
+PROFILE_EFFECTIVE = {"effective_from": "2027-07-01", "effective_until": "2028-06-30"}
+PROFILE_SOURCE = {
+	"source_instrument": "Public Procurement and Asset Disposal Regulations — source verification pending",
+	"provision": "Verification required",
+	"applicability_basis": "Planned invitation date",
+}
+# Methods whose admissibility depends on circumstances a Planner declares and
+# a separate authorisation may govern (v1.18 §5.5.3.3; LAW §2 conditions).
+DECLARATION_METHODS = {
+	"Direct Procurement": ("s.103", "Accounting Officer", "Before invitation"),
+	"Restricted Tender": ("s.102", "Accounting Officer", "Before invitation"),
+	"Competitive Negotiations": ("s.131", "Accounting Officer", "Before invitation"),
+	"Force Account": ("reg 95", "Accounting Officer", "Before commencement"),
+}
+# Open Tender schedule profiles for the three categories (§10.1 names the
+# goods and services profiles; works follows the same example periods).
+SCHEDULE_PROFILE_CATEGORIES = (("Goods", "Open Tender — goods"), ("Services", "Open Tender — services"), ("Works", "Open Tender — works"))
+SCHEDULE_MILESTONES = (
+	# (milestone, default days for the period closing at it, basis, statutory ref)
+	("invitation", None, "Statutory", "reg 42 — Third Schedule col. 9"),
+	("bid_opening", 21, "Statutory", "Verification required"),
+	("evaluation_completion", 30, "Statutory", "Third Schedule col. 11 — verification required"),
+	("award_approval", 5, "Planning assumption", ""),
+	("award_notification", 2, "Planning assumption", ""),
+	("contract_signing", 14, "Statutory", "Verification required"),
+	("delivery_completion", None, "Source-derived", "Earliest source required-by date"),
+)
+REMINDER_THRESHOLD_DAYS = 7
+
+# PLN-CHG-001 v1.18 §13.1 / plan D19 — the two stop-gap assignment rows the
+# 5 Sep 2026 seed created and this seed retires (revoked with a reason, never
+# deleted): Julia's widened acting window and Peter's undated Digital Health
+# authority. Identified exactly; nothing else is touched.
+SUPERSEDED_STOPGAP_ASSIGNMENTS = (
+	("julia.njeri", "Head of User Department", "Digital Health", "2026-09-01 00:00:00", "2027-06-30 23:59:59"),
+	("peter.kimani", "Head of User Department", "Digital Health", None, None),
+)
+STOPGAP_REVOCATION_REASON = (
+	"PLN-CHG-001 v1.18 §13.1 fixture correction (plan D19): replaced by the dated assignment the shared register now specifies."
+)
 
 # REQ-CHG-001 v1.6 D2 — the one governed delivery/inspection location
 # the Ministry of Health fixture uses (§13.2, §16.1).
@@ -263,8 +326,12 @@ def run(*, commit: bool = True) -> dict:
 		"delivery_locations": _seed_delivery_locations(),
 		"contact_offices": _seed_contact_offices(),
 		"regulatory_reference": _seed_regulatory_reference(),
+		"method_profiles": _seed_method_profiles(),
+		"schedule_profiles": _seed_schedule_profiles(),
+		"procurement_settings": _seed_procurement_settings(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
+		"retired_assignments": _reconcile_superseded_fixture_assignments(),
 		"assignments": _seed_assignments(),
 	}
 	if commit:
@@ -435,7 +502,7 @@ def _seed_contact_offices() -> dict[str, int]:
 	return {"created": created, "total": len(CONTACT_OFFICES)}
 
 
-def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG) -> str:
+def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG, *, verification_status: str = "Production verification pending", reservation_target_percent=None, county_target_percent=None) -> str:
 	from kentender_core.services import regulatory_reference as register
 
 	fiscal_year = fiscal_year or configuration._fy_name(DPP_INTAKE["start_year"])
@@ -460,15 +527,164 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 			{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}
 			for name, rank, regional, ref in RESERVATION_CATEGORIES
 		],
-		reservation_target_percent=REGULATORY_REFERENCE["reservation_target_percent"],
-		county_resident_target_percent=REGULATORY_REFERENCE["county_resident_target_percent"],
+		reservation_target_percent=REGULATORY_REFERENCE["reservation_target_percent"] if reservation_target_percent is None else reservation_target_percent,
+		county_resident_target_percent=REGULATORY_REFERENCE["county_resident_target_percent"] if county_target_percent is None else county_target_percent,
 		exclusive_preference_works_amount=REGULATORY_REFERENCE["exclusive_preference_works_amount"],
 		exclusive_preference_goods_services_amount=REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"],
 		market_prices=[],
 		schedule_buffers=[],
+		verification_status=verification_status,
+		applicability_basis="Fiscal Year",
+		source_instrument=PROFILE_SOURCE["source_instrument"],
+		provision=PROFILE_SOURCE["provision"],
 		fixture_namespace=fixture_namespace,
 	)
 	return f"{outcome['reference']}{'' if outcome['created'] else ' (existing)'}"
+
+
+def _profile_exists(doctype: str, filters: dict) -> str:
+	return frappe.db.get_value(
+		doctype, {"status": "Active", "effective_from": PROFILE_EFFECTIVE["effective_from"], **filters}, "name"
+	) or ""
+
+
+def _seed_method_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG) -> dict[str, int]:
+	"""One `Production verification pending` eligibility profile per admitted
+	method, built from the Second Schedule bands above plus a declaration
+	condition where circumstances govern admissibility. Find-or-skip on
+	(method, effective_from); a rerun creates no second Version."""
+	from kentender_core.services import procurement_settings as settings
+
+	effective = effective or PROFILE_EFFECTIVE
+	created = 0
+	for method, goods, works, services, basis, reference in THRESHOLD_BANDS:
+		if _profile_exists(settings.METHOD_PROFILE, {"procurement_method": method, "effective_from": effective["effective_from"]}):
+			continue
+		conditions = []
+		for category, amount in (("Goods", goods), ("Works", works), ("Services", services)):
+			conditions.append(
+				{
+					"condition_id": f"{category[:1]}-VALUE",
+					"kind": "Known fact",
+					"description": (
+						f"Estimated value within the Second Schedule limit for {category.lower()} (KES {amount:,.0f}, {basis.lower()})."
+						if amount
+						else f"No fixed maximum for {category.lower()}: determined by the funds allocated or the section's conditions."
+					),
+					"procurement_category": category,
+					"maximum_amount": amount,
+					"cumulative_basis": basis,
+					"mandatory": True,
+					"statutory_reference": reference,
+				}
+			)
+		if method in DECLARATION_METHODS:
+			ref, actor, stage = DECLARATION_METHODS[method]
+			conditions.append(
+				{
+					"condition_id": "CIRCUMSTANCES",
+					"kind": "Declaration",
+					"description": "Circumstances supporting the selected method.",
+					"procurement_category": "",
+					"mandatory": True,
+					"required_evidence": "Method eligibility record",
+					"authorisation_actor": actor,
+					"authorisation_stage": stage,
+					"statutory_reference": ref,
+				}
+			)
+		settings.register_method_profile_version(
+			procurement_method=method,
+			conditions=conditions,
+			verification_status=verification_status or settings.VERIFICATION_PENDING,
+			fixture_namespace=fixture_namespace,
+			**effective,
+			**PROFILE_SOURCE,
+		)
+		created += 1
+	return {"created": created, "total": len(THRESHOLD_BANDS)}
+
+
+def _seed_schedule_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG, limits: dict | None = None, estimated_delivery_default_days: int | None = None) -> dict[str, int]:
+	"""The Open Tender schedule profiles for goods, services and works at
+	`Production verification pending` (statutory minimum/maximum cells blank
+	= verification required; buffers labelled Planning assumption). The other
+	eight methods deliberately have none: catalogue membership is not
+	operational support (v1.18 §5.5.3.3)."""
+	from kentender_core.services import procurement_settings as settings
+
+	effective = effective or PROFILE_EFFECTIVE
+	limits = limits or {}  # milestone → (minimum_days, maximum_days) for a fixture-verified set
+	created = 0
+	for category, profile_name in SCHEDULE_PROFILE_CATEGORIES:
+		if _profile_exists(settings.SCHEDULE_PROFILE, {"procurement_method": "Open Tender", "procurement_category": category, "effective_from": effective["effective_from"]}):
+			continue
+		settings.register_schedule_profile_version(
+			procurement_method="Open Tender",
+			procurement_category=category,
+			profile_name=profile_name,
+			procedure="Planning example",
+			milestones=[
+				{
+					"milestone": key,
+					"label": settings.MILESTONE_LABELS[key],
+					"sequence": index + 1,
+					"applies": True,
+					"counting_rule": "Calendar days",
+					"minimum_days": limits.get(key, (None, None))[0],
+					"maximum_days": limits.get(key, (None, None))[1],
+					"default_days": default,
+					"basis": basis,
+					"statutory_reference": ref,
+				}
+				for index, (key, default, basis, ref) in enumerate(SCHEDULE_MILESTONES)
+			],
+			counting_rule="Calendar days",
+			estimated_delivery_period_default_days=estimated_delivery_default_days,
+			verification_status=verification_status or settings.VERIFICATION_PENDING,
+			fixture_namespace=fixture_namespace,
+			**effective,
+			**PROFILE_SOURCE,
+		)
+		created += 1
+	return {"created": created, "total": len(SCHEDULE_PROFILE_CATEGORIES)}
+
+
+def _seed_procurement_settings() -> dict[str, int]:
+	from kentender_core.services import procurement_settings as settings
+
+	current = frappe.db.get_single_value(settings.SETTINGS, "approaching_milestone_threshold_days")
+	if int(current or 0) == REMINDER_THRESHOLD_DAYS:
+		return {"approaching_milestone_threshold_days": REMINDER_THRESHOLD_DAYS, "changed": 0}
+	settings.set_reminder_threshold_days(days=REMINDER_THRESHOLD_DAYS)
+	return {"approaching_milestone_threshold_days": REMINDER_THRESHOLD_DAYS, "changed": 1}
+
+
+def _reconcile_superseded_fixture_assignments() -> list[str]:
+	"""Revoke, with a reason, exactly the two stop-gap rows the 5 Sep 2026
+	seed granted (§13.1 / plan D19). Matched on user, role, unit and the
+	exact period they carried; any other row is left alone."""
+	units = {
+		row["unit_name"]: row["name"]
+		for row in frappe.get_all("Organisation Unit", fields=["name", "unit_name"], limit_page_length=0)
+	}
+	revoked: list[str] = []
+	for local, role, unit_name, effective_from, effective_to in SUPERSEDED_STOPGAP_ASSIGNMENTS:
+		unit = units.get(unit_name)
+		if not unit:
+			continue
+		rows = frappe.get_all(
+			"User Responsibility Assignment",
+			filters={"user": f"{local}@moh.example.test", "business_role": role, "organisation_unit": unit, "status": "Enabled"},
+			fields=["name", "effective_from", "effective_to"],
+		)
+		for row in rows:
+			row_from = str(row["effective_from"] or "") or None
+			row_to = str(row["effective_to"] or "") or None
+			if row_from == effective_from and row_to == effective_to:
+				administration.revoke(row["name"], reason=STOPGAP_REVOCATION_REASON, actor="Administrator")
+				revoked.append(row["name"])
+	return revoked
 
 
 def _seed_uoms() -> dict[str, int]:

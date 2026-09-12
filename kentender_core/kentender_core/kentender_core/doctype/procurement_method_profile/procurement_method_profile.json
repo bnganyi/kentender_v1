@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "creation": "2026-09-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Procurement Method Profile",
+ "autoname": "field:profile_reference",
+ "naming_rule": "By fieldname",
+ "title_field": "profile_reference",
+ "fields": [
+  {"fieldname": "profile_reference", "fieldtype": "Data", "label": "Profile Reference", "reqd": 1, "unique": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "procurement_method", "fieldtype": "Link", "label": "Procurement Method", "options": "Procurement Method", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "version_number", "fieldtype": "Int", "label": "Version", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nSuperseded", "default": "Active", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From", "reqd": 1, "read_only": 1},
+  {"fieldname": "effective_until", "fieldtype": "Date", "label": "Effective Until", "read_only": 1},
+  {"fieldname": "applicability_basis", "fieldtype": "Data", "label": "Applicability Basis", "read_only": 1, "description": "The legally applicable date each consumer resolves this profile by (for example the planned invitation date)."},
+  {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Source and Verification"},
+  {"fieldname": "verification_status", "fieldtype": "Select", "label": "Verification Status", "options": "Production verification pending\nFixture-verified — not production law\nVerified", "default": "Production verification pending", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "source_instrument", "fieldtype": "Data", "label": "Source Instrument", "read_only": 1},
+  {"fieldname": "provision", "fieldtype": "Data", "label": "Provision", "read_only": 1},
+  {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document", "read_only": 1},
+  {"fieldname": "section_conditions", "fieldtype": "Section Break", "label": "Eligibility Conditions"},
+  {"fieldname": "conditions", "fieldtype": "Table", "label": "Conditions", "options": "Method Profile Condition", "read_only": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
+ ],
+ "field_order": ["profile_reference", "procurement_method", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_conditions", "conditions", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
+ ],
+ "track_changes": 1
+}

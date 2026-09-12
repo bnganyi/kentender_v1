@@ -1,20 +1,21 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §5.3 invariants 24–26 / §7.5 — Plan readiness.
+"""PLN-CHG-001 v1.18 §5.5.3 / §5.6 — Plan readiness.
 
-Readiness is an exact blocker list, never a score (§1.1). Blocking: every
-item has an Objective, a reservation category, the regulation 41 contents,
-a complete baseline that meets the governed periods and the delivery
-boundary, and a method admissible for its planned value under the threshold
-matrix in force for the plan's Fiscal Year (fail closed with
-`PLN_REFERENCE_UNAVAILABLE` when that matrix is absent). Advisory, never
-blocking: the reserved share against the statutory target, the county
-resident-tenderer share, and the contract-splitting advisory (section 54(1)),
-which the Planner confirms or resolves by aggregation.
+Readiness is an exact blocker list, never a score. Pre-Finance (§5.6.4):
+every item has an Objective, a planned designation, the contents, an
+estimate basis, an estimated delivery period and a calculable schedule
+from its resolved schedule profile. Formal submission adds: verified method
+and schedule profiles in force (no Open Tender fallback), the method's
+mandatory conditions and evidence, feasibility against the source boundary,
+and the planned reservation allocations against the **annual procurement
+budget** (§5.5.3.1). Advisory: the contract-splitting assessment, which the
+Planner confirms or resolves by aggregation.
 
-Regulator reference data is read from Configuration & Governance's
-effective-dated register for the plan's Fiscal Year — never today's (§7.5).
+Regulator reference data (reservation target, threshold matrix for the
+splitting assessment) is read from the effective-dated register for the
+plan's Fiscal Year — never today's.
 """
 
 from __future__ import annotations
@@ -30,7 +31,8 @@ from kentender_procurement.procurement_planning.services import schedule
 
 CATEGORY_BY_TYPE = {"Goods": "Goods", "Works": "Works"}
 NONE_RESERVATION = "None"
-PLAN_HORIZONS = ("Single year", "Multi-year")
+# PLN-CHG-001 v1.18 §4.6 — a fixed literal; unsupported horizons are rejected (PLN_MULTI_YEAR_UNSUPPORTED)
+PLAN_HORIZONS = ("Single year",)
 AGGREGATION_INDICATORS = ("Not aggregated", "Aggregated into this package", "Common-user item arrangement")
 LOTTING_INDICATORS = ("Single lot", "Packaged into lots")
 OPEN_TENDER = "Open Tender"
@@ -52,56 +54,42 @@ def money(amount: float) -> str:
 
 
 # --------------------------------------------------------------------------
-# Threshold matrix (invariant 25; PLN-AC-070/071/091/102/103)
+# Method eligibility (v1.18 §5.5.3.3) and the threshold matrix kept for the
+# anti-splitting assessment (§5.6.6)
 # --------------------------------------------------------------------------
 
 
-def resolve_band(reference: dict[str, Any], category: str, planned_value: float) -> dict[str, Any]:
-	"""The value band and admissible methods for one category and value.
+def method_profile_for(item, fiscal_year: str, *, method: str | None = None) -> dict[str, Any]:
+	"""Both resolved profiles for an item (its own method unless another is
+	offered) on the item's applicable date."""
+	from kentender_procurement.procurement_planning.services import profiles
 
-	A method is admissible when its band carries no fixed maximum (funds
-	allocated / section conditions) or the planned value is within it. The
-	server proposes Open Tender (section 91(1) preferred method) whenever it
-	is admissible, which under the Second Schedule is always.
-	"""
-	if not reference.get("available"):
-		return {"available": False, "band_label": "", "admissible_methods": [], "proposed_method": "", "caps": {}}
-	rows = [r for r in reference["threshold_matrix"] if r["procurement_category"] == category]
-	admissible, caps = [], {}
-	for row in rows:
-		cap = flt(row["max_amount"])
-		caps[row["procurement_method"]] = cap
-		if cap <= 0 or flt(planned_value) <= cap:
-			admissible.append(row["procurement_method"])
-	capped_below = sorted(cap for cap in caps.values() if 0 < cap < flt(planned_value))
-	capped_at_or_above = sorted(cap for cap in caps.values() if cap >= flt(planned_value) > 0)
-	if capped_below:
-		label = f"Above {money(capped_below[-1])}"
-	elif capped_at_or_above:
-		label = f"Up to {money(capped_at_or_above[0])}"
-	else:
-		label = "No fixed threshold"
-	proposed = OPEN_TENDER if OPEN_TENDER in admissible else (admissible[0] if admissible else "")
-	if proposed:
-		label = f"{label} · {proposed} admissible"
-	# Present the eleven methods in the catalogue's own order.
-	catalogue = frappe.get_all("Procurement Method", filters={"status": "Active"}, pluck="name", order_by="creation asc")
-	ordered = [m for m in catalogue if m in admissible] + [m for m in admissible if m not in catalogue]
-	return {"available": True, "band_label": label, "admissible_methods": ordered, "proposed_method": proposed, "caps": caps}
+	return profiles.resolve(
+		procurement_method=cstr(method if method is not None else item.get("procurement_method")),
+		procurement_category=cstr(item.get("procurement_category")) or "Services",
+		applicability_date=profiles.applicability_date(item.get("baseline_invitation_date"), fiscal_year),
+	)
 
 
-def require_method_admissible(reference: dict[str, Any], category: str, planned_value: float, method: str) -> dict[str, Any]:
-	band = resolve_band(reference, category, planned_value)
-	if not band["available"]:
-		fail("PLN_REFERENCE_UNAVAILABLE")
-	if cstr(method) and cstr(method) not in band["admissible_methods"]:
+def require_method_admissible(resolved: dict[str, Any], category: str, planned_value: float, method: str, evidence_rows=None) -> dict[str, Any]:
+	"""A method the Planner selects must have a profile in force whose
+	mandatory known facts hold for the package; declarations are due at
+	submission, not at every Draft save."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	if "method" in resolved.get("unresolved", []):
+		fail("PLN_REFERENCE_UNAVAILABLE", "More than one eligibility profile is in force for this method; correct the configuration.", {"field": "procurement_method"})
+	profile = resolved.get("method") or {}
+	if not profile.get("found"):
+		fail("PLN_REFERENCE_UNAVAILABLE", f"No eligibility profile is in force for {method} on the package's applicable date.", {"field": "procurement_method", "procurement_method": method})
+	outcome = profiles.method_conditions(profile, procurement_category=category, planned_value=planned_value, evidence_rows=evidence_rows)
+	if not outcome["admissible"]:
 		fail(
 			"PLN_METHOD_NOT_ADMISSIBLE",
-			f"{method} is not admissible for {money(planned_value)} ({band['band_label']}). "
-			f"Admissible: {', '.join(band['admissible_methods'])}.",
-			{"band_label": band["band_label"], "admissible_methods": band["admissible_methods"], "field": "procurement_method"},
+			f"{method} does not meet its mandatory conditions for {money(planned_value)} of {category.lower()}.",
+			{"field": "procurement_method", "failed_conditions": outcome["failed"], "results": outcome["results"]},
 		)
-	return band
+	return outcome
 
 
 def low_value_cap(reference: dict[str, Any], category: str) -> float:
@@ -119,7 +107,8 @@ def open_tender_threshold(reference: dict[str, Any], category: str) -> float:
 
 
 # --------------------------------------------------------------------------
-# Preference and reservation (invariants 24, 24aa, 24a; §4.9)
+# Planned designation (v1.18 §5.5.3.2): a governed catalogue choice, no
+# ranking, no override
 # --------------------------------------------------------------------------
 
 
@@ -127,28 +116,7 @@ def reservation_categories(reference: dict[str, Any]) -> list[dict[str, Any]]:
 	rows = reference.get("reservation", {}).get("categories", [])
 	if rows:
 		return rows
-	return [{"category": NONE_RESERVATION, "advantage_rank": 0, "is_regional": False}]
-
-
-def highest_advantage(reference: dict[str, Any]) -> str:
-	"""The server's proposal where more than one scheme could apply (section
-	156 / regulation 153): the lowest positive advantage rank."""
-	ranked = [r for r in reservation_categories(reference) if int(r.get("advantage_rank") or 0) > 0]
-	if not ranked:
-		return NONE_RESERVATION
-	return sorted(ranked, key=lambda r: (int(r["advantage_rank"]), r["category"]))[0]["category"]
-
-
-def exclusive_preference_applies(reference: dict[str, Any], category: str, planned_value: float, funding_source: str) -> bool:
-	"""Regulation 163 — derived: wholly national/county funding and value
-	below KES 1bn (works) or KES 500m (goods/services)."""
-	ex = reference.get("exclusive_preference", {})
-	if not ex.get("published"):
-		return False
-	if funding_source and "donor" in funding_source.lower():
-		return False
-	cap = ex.get("works_amount") if category == "Works" else ex.get("goods_services_amount")
-	return bool(cap) and flt(planned_value) < flt(cap)
+	return [{"category": NONE_RESERVATION, "is_regional": False}]
 
 
 # --------------------------------------------------------------------------
@@ -160,8 +128,6 @@ def contents_gaps(item) -> list[str]:
 	gaps = []
 	if cstr(item.get("plan_horizon")) not in PLAN_HORIZONS:
 		gaps.append("plan_horizon")
-	if item.get("plan_horizon") == "Multi-year" and not (20 <= len(cstr(item.get("multi_year_justification")).strip()) <= 500):
-		gaps.append("multi_year_justification")
 	if cstr(item.get("aggregation_indicator")) not in AGGREGATION_INDICATORS:
 		gaps.append("aggregation_indicator")
 	if cstr(item.get("lotting_indicator")) not in LOTTING_INDICATORS:
@@ -210,23 +176,78 @@ def line_totals_hash(totals: dict[str, float]) -> str:
 	return hashlib.sha256(json.dumps({k: f"{v:.2f}" for k, v in sorted(totals.items())}).encode()).hexdigest()[:32]
 
 
-def reserved_share(version_name: str) -> dict[str, Any]:
+def reservation_allocations(version_name: str, fiscal_year: str, reference: dict[str, Any] | None = None) -> dict[str, Any]:
+	"""§5.5.3.1 — each obligation with its own calculation. The denominator
+	is the complete approved annual procurement budget from Budget & Funding
+	(exact Version), never the Plan total or the lines the Plan uses. Money
+	is exact Decimal at the boundary; amounts are returned as decimal strings."""
+	from decimal import Decimal
+
+	from kentender_procurement.procurement_planning.services import budget_gateway, money as money_boundary, profiles
+
+	reference = reference if reference is not None else reference_for(fiscal_year)
+	rules = reference.get("reservation", {}) or {}
+	target = rules.get("target_percent")
+	county_target = rules.get("county_target_percent")
+	is_county = bool(frappe.db.get_single_value("Site Procuring Entity", "entity_is_county"))
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")},
-		fields=["name", "reservation_category", "county_resident_reservation"],
+		fields=["name", "plan_item_id", "reservation_category", "county_resident_reservation"],
 	)
-	total = reserved = county = 0.0
+	plan_total = qualifying = county_qualifying = Decimal(0)
+	qualifying_items, county_items = [], []
 	for item in items:
-		value = item_value(item.name)
-		total += value
+		value = money_boundary.sum_money(a.indicative_amount for a in _allocations(item.name))
+		plan_total += value
 		if cstr(item.reservation_category) and item.reservation_category != NONE_RESERVATION:
-			reserved += value
+			qualifying += value
+			qualifying_items.append(item.plan_item_id)
 		if item.county_resident_reservation:
-			county += value
-	pct = (reserved / total * 100.0) if total else 0.0
-	county_pct = (county / total * 100.0) if total else 0.0
-	return {"total": total, "reserved": reserved, "percent": pct, "county_percent": county_pct}
+			county_qualifying += value
+			county_items.append(item.plan_item_id)
+	basis = budget_gateway.annual_budget_basis(fiscal_year)
+	annual = money_boundary.parse_money(basis.get("annual_approved_amount"), allow_zero=True, allow_blank=True) if basis.get("available") else None
+	required = (annual * Decimal(str(target)) / Decimal(100)).quantize(Decimal("0.01")) if (annual is not None and target) else None
+	shortfall = max(Decimal(0), required - qualifying) if required is not None else None
+	county_required = (annual * Decimal(str(county_target)) / Decimal(100)).quantize(Decimal("0.01")) if (annual is not None and county_target and is_county) else None
+	county_shortfall = max(Decimal(0), county_required - county_qualifying) if county_required is not None else None
+	verified = cstr(reference.get("verification_status")) in profiles.VERIFIED_STATUSES
+	fmt = money_boundary.money_text
+	return {
+		"plan_total": fmt(plan_total),
+		"qualifying": fmt(qualifying),
+		"qualifying_items": qualifying_items,
+		"percent_of_plan": float((qualifying / plan_total * 100) if plan_total else 0),
+		"percent_of_annual": float((qualifying / annual * 100) if annual else 0),
+		"target_percent": target,
+		"required": fmt(required) if required is not None else "",
+		"shortfall": fmt(shortfall) if shortfall is not None else "",
+		"met": bool(required is not None and shortfall == 0),
+		"mandatory": bool(target),
+		"verified": verified,
+		"basis": {
+			"available": bool(basis.get("available")),
+			"annual_approved_amount": fmt(annual) if annual is not None else "",
+			"budget_reference": basis.get("budget_reference", ""),
+			"version_reference": basis.get("version_reference", ""),
+			"budget_version": basis.get("budget_version", ""),
+			"rule_version": reference.get("version", "") or reference.get("name", ""),
+			"verification_status": cstr(reference.get("verification_status")),
+		},
+		"county": {
+			"applicable": is_county,
+			"target_percent": county_target,
+			"qualifying": fmt(county_qualifying),
+			"qualifying_items": county_items,
+			"required": fmt(county_required) if county_required is not None else "",
+			"shortfall": fmt(county_shortfall) if county_shortfall is not None else "",
+			"met": bool(county_required is not None and county_shortfall == 0),
+		},
+		# retained for the transitional readers of the v1.12 share
+		"percent": float((qualifying / plan_total * 100) if plan_total else 0),
+		"county_percent": float((county_qualifying / plan_total * 100) if plan_total else 0),
+	}
 
 
 def splitting_advisory(version_name: str, reference: dict[str, Any]) -> list[dict[str, Any]]:
@@ -276,9 +297,14 @@ def splitting_advisory(version_name: str, reference: dict[str, Any]) -> list[dic
 	return advisories
 
 
-def item_blockers(item, allocations: list, reference: dict[str, Any], *, objective_eligible: bool) -> list[dict[str, str]]:
-	"""Exact per-item blockers, each bound to a field (§12.8)."""
-	blockers: list[dict[str, str]] = []
+def item_blockers(item, allocations: list, fiscal_year: str, *, objective_eligible: bool, stage: str = "pre_finance") -> list[dict[str, Any]]:
+	"""Exact per-item blockers, each bound to a field. `pre_finance` (§5.6.4):
+	package, classification, Strategy, designation, structure and a valid
+	calculable schedule. `submission` adds the verified method/schedule
+	profiles, complete method evidence and the feasibility gate."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	blockers: list[dict[str, Any]] = []
 	if not objective_eligible:
 		blockers.append({"code": "PLN_OBJECTIVE_INELIGIBLE", "field": "strategic_objective"})
 	if not cstr(item.get("reservation_category")):
@@ -287,17 +313,80 @@ def item_blockers(item, allocations: list, reference: dict[str, Any], *, objecti
 		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": gap})
 	if len(allocations) > 1 and not (20 <= len(cstr(item.get("aggregation_reason")).strip()) <= 500):
 		blockers.append({"code": "PLN_ENTRY_INCOMPLETE", "field": "aggregation_reason"})
-	if not schedule.baseline_complete(item):
-		blockers.append({"code": "PLN_SCHEDULE_INVALID", "field": "baseline_invitation_date"})
-	elif not schedule.delivery_boundary_ok({f: item.get(f) for f in schedule.BASELINE_FIELDS}):
-		blockers.append({"code": "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "field": "baseline_invitation_date"})
+	if not (20 <= len(cstr(item.get("estimate_basis")).strip()) <= 1000):
+		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": "estimate_basis"})
+	if not cstr(item.get("estimate_basis_reference")).strip():
+		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": "estimate_basis_reference"})
 	value = sum(flt(a.indicative_amount) for a in allocations)
-	band = resolve_band(reference, cstr(item.get("procurement_category")) or "Services", value)
-	if not band["available"]:
+	category = cstr(item.get("procurement_category")) or "Services"
+	resolved = method_profile_for(item, fiscal_year)
+	method_profile, schedule_profile = resolved["method"], resolved["schedule"]
+	if "method" in resolved["unresolved"] or not method_profile.get("found"):
 		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "procurement_method"})
-	elif cstr(item.get("procurement_method")) not in band["admissible_methods"]:
-		blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "field": "procurement_method"})
+	else:
+		outcome = profiles.method_conditions(method_profile, procurement_category=category, planned_value=value, evidence_rows=item_evidence(item))
+		if not outcome["admissible"]:
+			blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "field": "procurement_method"})
+		if stage == "submission":
+			if not outcome["evidence_complete"]:
+				blockers.append({"code": "PLN_METHOD_EVIDENCE_REQUIRED", "field": "method_condition_evidence"})
+			if not profiles.is_verified(method_profile):
+				blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "method_profile_version"})
+	if "schedule" in resolved["unresolved"] or not schedule_profile.get("found"):
+		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "schedule_profile_version"})
+	elif stage == "submission" and (not schedule_profile.get("complete") or not profiles.is_verified(schedule_profile)):
+		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "schedule_profile_version"})
+	delivery_days = item_delivery_days(item)
+	if delivery_days is None:
+		blockers.append({"code": "PLN_DELIVERY_PERIOD_REQUIRED", "field": "estimated_delivery_period_days"})
+	if not schedule.baseline_complete(item, schedule_profile):
+		blockers.append({"code": "PLN_SCHEDULE_INVALID", "field": "baseline_invitation_date"})
+	elif delivery_days is not None and not schedule.delivery_boundary_ok({f: item.get(f) for f in schedule.BASELINE_FIELDS}, delivery_days):
+		blockers.append({"code": "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "field": "baseline_invitation_date"})
 	return blockers
+
+
+def item_evidence(item) -> list[dict[str, Any]]:
+	import json
+
+	raw = item.get("method_condition_evidence")
+	if not raw:
+		return []
+	try:
+		rows = json.loads(raw) if isinstance(raw, str) else raw
+	except ValueError:
+		return []
+	return rows if isinstance(rows, list) else []
+
+
+def item_period_inputs(item) -> dict[str, Any]:
+	"""The entered periods: `period_inputs` (v1.18) with the five legacy
+	columns as the fallback for rows saved before it existed."""
+	import json
+
+	raw = item.get("period_inputs")
+	if raw:
+		try:
+			data = json.loads(raw) if isinstance(raw, str) else raw
+			if isinstance(data, dict):
+				return data
+		except ValueError:
+			pass
+	return {f: item.get(f) for f in schedule.PERIOD_FIELDS if item.get(f)}
+
+
+def item_delivery_days(item) -> int | None:
+	"""§5.5.1: zero is an explicit same-day estimate; a missing value is
+	missing (the Int column's 0 is not enough — the entered value lives in
+	`period_inputs`)."""
+	inputs = item_period_inputs(item)
+	value = inputs.get("estimated_delivery_period_days")
+	if value is None or value == "":
+		return None
+	try:
+		return int(value)
+	except (TypeError, ValueError):
+		return None
 
 
 def low_value_cumulative_breaches(version_name: str, reference: dict[str, Any]) -> list[str]:

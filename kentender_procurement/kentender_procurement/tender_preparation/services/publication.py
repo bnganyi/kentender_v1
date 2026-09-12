@@ -50,7 +50,7 @@ def publish_tender_milestone_actual(*, root, actual_date, correlation_id: str) -
 	existing = events.find(events.EVENT_MILESTONE_ACTUAL, correlation_id)
 	if existing:
 		return {"event": existing, "milestone_published": False}
-	planning_gateway.publish_invitation_actual(plan_item_id=root.plan_item_id, actual_date=actual_date, correlation_id=correlation_id)
+	planning_gateway.publish_invitation_actual(plan_item_id=root.plan_item_id, actual_date=actual_date, correlation_id=correlation_id, tender=root.name)
 	event = events.emit(
 		event_type=events.EVENT_MILESTONE_ACTUAL, tender=root.name, tender_version=root.approved_version,
 		payload={"plan_item_id": root.plan_item_id, "milestone": planning_gateway.MILESTONE_INVITATION, "actual_date": str(getdate(actual_date)), "correlation_id": correlation_id},

@@ -34,6 +34,10 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"REQ_FUNDING_UNAVAILABLE",
 		"REQ_DEPARTMENT_NOT_CONTRIBUTING",
 		"REQ_IDEMPOTENCY_CONFLICT",
+		# PLN-CHG-001 v1.18 §5.4.5–5.4.6 (REQ-CHG-001 v1.8 owed, FU-24) — Planning's
+		# scope lock and correction hold, mapped at the gateway boundary.
+		"REQ_PLAN_ITEM_SCOPE_LOCKED",
+		"REQ_PLAN_ITEM_HELD",
 	}
 )
 
@@ -55,6 +59,8 @@ MESSAGES: dict[str, str] = {
 	"REQ_FUNDING_UNAVAILABLE": "Budget funding is unavailable for one or more drawdown lines.",
 	"REQ_DEPARTMENT_NOT_CONTRIBUTING": "This Organisation Unit is not among the Plan Item's contributing departments.",
 	"REQ_IDEMPOTENCY_CONFLICT": "The same idempotency key was reused with a different request.",
+	"REQ_PLAN_ITEM_SCOPE_LOCKED": "This Plan Item already has an authorised Requisition. Create a separate Plan Item for the additional requirement.",
+	"REQ_PLAN_ITEM_HELD": "New Requisition authorisations for this Plan Item are on hold while correction requests remain unresolved.",
 }
 
 

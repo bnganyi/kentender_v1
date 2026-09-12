@@ -99,6 +99,30 @@ def check_plan_affordability(fiscal_year: str | None = None, planned_totals=None
 
 
 @frappe.whitelist()
+def validate_plan_affordability_for_decision(
+	fiscal_year: str | None = None, planned_totals=None, expected_revisions=None, correlation: str | None = None
+):
+	"""PLN-CHG-001 v1.18 §5.3.3 — decision-time basis validation inside the
+	caller's transaction; locks, validates, writes nothing."""
+	from kentender_budget.services import budget_line_contracts as lines
+
+	return lines.validate_plan_affordability_for_decision(
+		fiscal_year=fiscal_year or "",
+		planned_totals=planned_totals,
+		expected_revisions=expected_revisions,
+		correlation=correlation or "",
+	)
+
+
+@frappe.whitelist()
+def get_annual_procurement_budget_basis(fiscal_year: str | None = None, as_of: str | None = None):
+	"""PLN-CHG-001 v1.18 §5.5.3.1 — the complete approved annual budget and Version."""
+	from kentender_budget.services import budget_line_contracts as lines
+
+	return lines.get_annual_procurement_budget_basis(fiscal_year=fiscal_year or "", as_of=as_of)
+
+
+@frappe.whitelist()
 def get_budget_approval_task(budget_version: str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 

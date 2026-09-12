@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §4.11/§5.2/§7.3/§8.2 — one plan-level funding confirmation.
+"""PLN-CHG-001 v1.18 §5.3 — one plan-level funding confirmation on an immutable financial basis (see request/confirm docstrings).
 
 `RequestPlanFundingConfirmation` validates Plan readiness (exact blockers,
 never a score), computes the affordability statement through Budget's
@@ -26,7 +26,7 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import budget_gateway, envelope, readiness, references
+from kentender_procurement.procurement_planning.services import budget_gateway, envelope, financial_basis, readiness, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
@@ -51,11 +51,13 @@ def affordability_statement(plan, version) -> dict[str, Any]:
 	return statement
 
 
-def validate_plan_ready(version, plan) -> dict[str, Any]:
-	"""§8.2 — the exact blocker list; raises the first blocking code."""
+def validate_plan_ready(version, plan, *, stage: str = "pre_finance") -> dict[str, Any]:
+	"""§5.6.4 — the exact blocker list for the stage; raises the first
+	blocking code. `pre_finance` for the funding request, `submission` for
+	Sign and submit."""
 	from kentender_procurement.procurement_planning.services import plan_read
 
-	report = plan_read.plan_readiness(version, plan)
+	report = plan_read.plan_readiness(version, plan, stage=stage)
 	if report["blockers"]:
 		first = report["blockers"][0]
 		fail(first["code"], first.get("message") or "", {k: v for k, v in first.items() if k != "code"})
@@ -63,23 +65,21 @@ def validate_plan_ready(version, plan) -> dict[str, Any]:
 
 
 def funding_is_current(version, statement: dict[str, Any] | None = None) -> bool:
-	"""§4.11 — Confirmed, and neither the per-line totals nor any line's
-	approved amount has changed since the confirmation."""
+	"""§5.3 — Confirmed, and the Version's current financial basis (lines,
+	approved amounts, funding identity, currency, eligibility) still equals
+	the basis the affirmative decision was made on. A non-financial edit
+	never invalidates the evidence; a changed per-line amount, approved
+	amount or funding identity does."""
 	if version.funding_state != "Confirmed":
-		return False
-	totals = readiness.line_totals(version.name)
-	if readiness.line_totals_hash(totals) != cstr(version.funding_line_totals_hash):
 		return False
 	decision = _confirmed_decision(version.name)
 	if not decision:
 		return False
-	confirmed = json.loads(decision.affordability_statement or "{}")
-	current = statement or budget_gateway.check_plan_affordability(fiscal_year=frappe.db.get_value("Annual Plan", version.annual_plan, "fiscal_year"), planned_totals=totals)
-	approved_then = {row["budget_line"]: flt(row["approved"]) for row in confirmed.get("lines", [])}
-	for row in current.get("lines", []):
-		if row["budget_line"] in totals and approved_then.get(row["budget_line"]) != flt(row["approved"]):
-			return False
-	return True
+	basis = financial_basis.basis_of_decision(decision)
+	if not basis:
+		return False
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	return financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)
 
 
 def _confirmed_decision(version_name: str):
@@ -95,7 +95,29 @@ def _confirmed_decision(version_name: str):
 	return frappe.get_doc("Plan Finance Decision", name) if name else None
 
 
+def _reusable_decision(version, basis):
+	"""§5.3.2 — an earlier affirmative decision in the chain on an identical
+	basis; a source-set change that leaves every per-line amount and
+	eligibility fact unchanged does not need a second confirmation."""
+	chain = authz.evidence_chain(version.name) or [version.name]
+	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain), "status": "Completed"}, pluck="name")
+	if not tasks:
+		return None
+	for name in frappe.get_all("Plan Finance Decision", filters={"task": ("in", tasks), "decision": "Confirm plan funding"}, pluck="name", order_by="decided_at desc"):
+		decision = frappe.get_doc("Plan Finance Decision", name)
+		earlier = financial_basis.basis_of_decision(decision)
+		if earlier and cstr(earlier.basis_digest) == cstr(basis.basis_digest):
+			return decision
+	return None
+
+
 def request_plan_funding_confirmation(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§7.2 `RequestPlanFundingConfirmation` — one current plan-level review
+	against an immutable financial basis. Draft: pre-Finance readiness, then
+	either reuse an identical earlier confirmation, reuse the open review on
+	the same basis, or replace an obsolete open review (history retained).
+	Active (§5.3.4): reassessment of the exact Active content when its
+	funding evidence is stale; the approved baseline is untouched."""
 	actor = authz.actor(user)
 	payload = {"plan_version": plan_version}
 	replay = envelope.replay_or_none(idempotency_key, payload)
@@ -104,38 +126,63 @@ def request_plan_funding_confirmation(*, plan_version: str, expected_record_vers
 	version = envelope.locked("Annual Plan Version", plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
-	if version.version_status != "Draft":
-		fail("PLN_STALE_WRITE")
 	envelope.check_record_version(version, expected_record_version)
+	reassessment = version.version_status == "Active"
+	if reassessment:
+		if funding_is_current(version):
+			fail("PLN_REVIEW_STALE", "The Active Plan's funding confirmation is current; no reassessment is needed.")
+	elif version.version_status != "Draft":
+		fail("PLN_STALE_WRITE")
+	else:
+		validate_plan_ready(version, plan)
 
-	validate_plan_ready(version, plan)
-	statement = affordability_statement(plan, version)
+	basis, statement = financial_basis.capture(plan, version, correlation=idempotency_key)
 	if not statement.get("within_approved"):
 		fail("PLN_PLAN_NOT_AFFORDABLE", detail={"failing_lines": statement.get("failing_lines", [])})
+	legacy = {"line_totals_hash": readiness.line_totals_hash(readiness.line_totals(version.name)), "plan_value": float(basis.planned_total or 0), "affordability_statement": json.dumps(statement, default=str)}
 
-	existing = frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, "name")
-	if existing:
-		task = frappe.get_doc("Plan Finance Task", existing)
-		envelope.bump(task, line_totals_hash=statement["line_totals_hash"], plan_value=statement["plan_value"], affordability_statement=json.dumps(statement, default=str))
+	reused_decision = None if reassessment else _reusable_decision(version, basis)
+	if reused_decision:
+		reuse = frappe.get_doc(
+			{
+				"doctype": "Plan Finance Basis Reuse", "plan_version": version.name, "earlier_decision": reused_decision.name,
+				"financial_basis": basis.name, "validated_at": now_datetime(), "fixture_namespace": cstr(plan.fixture_namespace),
+			}
+		).insert(ignore_permissions=True)
+		for open_task in frappe.get_all("Plan Finance Task", filters={"plan_version": version.name, "status": "Open"}, pluck="name"):
+			frappe.db.set_value("Plan Finance Task", open_task, "status", "Cancelled", update_modified=False)
+		envelope.bump(version, funding_state="Confirmed", funding_line_totals_hash=legacy["line_totals_hash"])
+		result = {"ok": True, "idempotent": False, "action": "confirmation_reused", "task": "", "task_reference": "", "financial_basis": basis.name, "reuse": reuse.name, "earlier_decision": reused_decision.decision_reference}
+		envelope.record_command(
+			idempotency_key=idempotency_key, command="RequestPlanFundingConfirmation", payload=payload, result=result,
+			document_type="Plan Finance Basis Reuse", document_name=reuse.name, actor=actor, fixture_namespace=cstr(plan.fixture_namespace),
+		)
+		return result
+
+	existing = frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, ["name", "financial_basis"], as_dict=True)
+	if existing and cstr(existing.financial_basis) == basis.name:
+		task = frappe.get_doc("Plan Finance Task", existing.name)
 		action = "reused"
 	else:
+		if existing:
+			# §5.3.2 — the obsolete open review is cancelled, never edited; history stays
+			frappe.db.set_value("Plan Finance Task", existing.name, "status", "Cancelled", update_modified=False)
 		task = frappe.get_doc(
 			{
 				"doctype": "Plan Finance Task",
 				"task_reference": references.finance_task_reference(plan.plan_reference),
 				"plan_version": version.name,
-				"plan_value": statement["plan_value"],
-				"line_totals_hash": statement["line_totals_hash"],
-				"affordability_statement": json.dumps(statement, default=str),
+				"financial_basis": basis.name,
+				**legacy,
 				"status": "Open",
 				"task_token": envelope.token(),
 				"record_version": 0,
 				"fixture_namespace": cstr(plan.fixture_namespace),
 			}
 		).insert(ignore_permissions=True)
-		action = "requested"
-	envelope.bump(version, funding_state="Awaiting Finance")
-	result = {"ok": True, "idempotent": False, "action": action, "task": task.name, "task_reference": task.task_reference}
+		action = "replaced" if existing else ("reassessment_requested" if reassessment else "requested")
+	envelope.bump(version, funding_state="Awaiting confirmation")
+	result = {"ok": True, "idempotent": False, "action": action, "task": task.name, "task_reference": task.task_reference, "financial_basis": basis.name, "reassessment": reassessment}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="RequestPlanFundingConfirmation", payload=payload, result=result,
 		document_type="Plan Finance Task", document_name=task.name, actor=actor,
@@ -194,14 +241,29 @@ def confirm_plan_funding(*, task: str, task_token: str, idempotency_key: str, us
 	authz.require_not_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=task_doc.plan_version)
 	version = envelope.locked("Annual Plan Version", task_doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	if version.version_status != "Draft" or version.funding_state != "Awaiting Finance":
+	if version.version_status not in ("Draft", "Active") or version.funding_state != "Awaiting confirmation":
 		fail("PLN_REVIEW_STALE")
 
-	statement = affordability_statement(plan, version)
-	if statement["line_totals_hash"] != cstr(task_doc.line_totals_hash):
+	# §5.3.3 — Budget serialises its authoritative basis inside this
+	# transaction, validates the reviewed revisions and returns the
+	# comparison Planning records; a stale basis fails atomically
+	basis = frappe.get_doc(financial_basis.DOCTYPE, task_doc.financial_basis) if task_doc.financial_basis else None
+	if basis is None:
 		fail("PLN_FINANCE_STALE")
+	totals = readiness.line_totals(version.name)
+	try:
+		statement = budget_gateway.validate_plan_affordability_for_decision(
+			fiscal_year=plan.fiscal_year, planned_totals=totals, expected_revisions=financial_basis.expected_revisions(basis), correlation=idempotency_key,
+		)
+	except budget_gateway.BudgetBasisStale as exc:
+		fail("PLN_FINANCE_STALE", detail={"budget_code": exc.code, "basis": basis.name})
+	rows = financial_basis._rows_from_decision_statement(statement)
+	if financial_basis.digest(cstr(statement.get("budget_version")), rows) != cstr(basis.basis_digest):
+		fail("PLN_FINANCE_STALE", detail={"basis": basis.name})
 	if not statement.get("within_approved"):
 		fail("PLN_PLAN_NOT_AFFORDABLE", detail={"failing_lines": statement.get("failing_lines", [])})
+	statement["financial_basis"] = basis.name
+	statement["line_totals_hash"] = readiness.line_totals_hash(totals)
 
 	decision = _decide(task_doc, decision="Confirm plan funding", actor=actor, assignment=assignment, statement=statement, idempotency_key=idempotency_key)
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
@@ -230,12 +292,13 @@ def return_from_finance(*, task: str, reason: str, task_token: str, idempotency_
 	authz.require_not_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=task_doc.plan_version)
 	version = envelope.locked("Annual Plan Version", task_doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	if version.funding_state != "Awaiting Finance":
+	if version.funding_state != "Awaiting confirmation":
 		fail("PLN_REVIEW_STALE")
 	statement = json.loads(task_doc.affordability_statement or "{}")
+	statement["financial_basis"] = cstr(task_doc.financial_basis)
 	decision = _decide(task_doc, decision="Return to planner", actor=actor, assignment=assignment, statement=statement, return_reason=reason, idempotency_key=idempotency_key)
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
-	envelope.bump(version, funding_state="Returned")
+	envelope.bump(version, funding_state="Stale" if version.version_status == "Active" else "Returned")
 	result = {"ok": True, "idempotent": False, "action": "returned", "task": task_doc.name, "decision": decision.decision_reference}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ReturnFromFinance", payload=payload, result=result,

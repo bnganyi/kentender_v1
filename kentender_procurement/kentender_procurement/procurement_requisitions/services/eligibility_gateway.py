@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from kentender_procurement.procurement_requisitions.services.errors import fail
+
 
 def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_requisition
@@ -35,7 +37,7 @@ def list_requisition_eligible_plan_items() -> list[dict[str, Any]]:
 	return plan_requisition.list_requisition_eligible_plan_items()
 
 
-def record_requisition_drawdown(
+def authorise_requisition_drawdown(
 	*,
 	plan_item_id: str,
 	requisition_reference: str,
@@ -46,11 +48,26 @@ def record_requisition_drawdown(
 ) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
-	return plan_requisition.record_requisition_drawdown(
-		plan_item_id=plan_item_id, requisition_reference=requisition_reference,
-		requesting_org_unit=requesting_org_unit, allocations=allocations,
-		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-	)
+	try:
+		return plan_requisition.authorise_requisition_drawdown(
+			plan_item_id=plan_item_id, requisition_reference=requisition_reference,
+			requesting_org_unit=requesting_org_unit, allocations=allocations,
+			expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+		)
+	except Exception as exc:
+		# PLN-CHG-001 v1.18 §5.4.5–5.4.6 — Planning's scope lock and
+		# correction hold are Planning's own closed codes; this module reports
+		# them under its own contract (§11) without re-deriving the rule.
+		mapped = _PLANNING_TO_REQ.get(getattr(exc, "code", ""))
+		if mapped:
+			fail(mapped, detail={"planning_code": exc.code, "planning_message": str(exc), **(getattr(exc, "detail", None) or {})})
+		raise
+
+
+_PLANNING_TO_REQ = {
+	"PLN_ITEM_SCOPE_LOCKED": "REQ_PLAN_ITEM_SCOPE_LOCKED",
+	"PLN_ITEM_AUTHORISATION_HELD": "REQ_PLAN_ITEM_HELD",
+}
 
 
 def reverse_requisition_drawdown(*, drawdown_reference: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:

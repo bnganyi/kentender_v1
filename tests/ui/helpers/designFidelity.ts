@@ -223,3 +223,38 @@ export function expectClose(actual: number, expected: number, tolerance: number,
 		tolerance
 	);
 }
+
+
+/**
+ * PLN-CHG-001 v1.18 frames (docs/mvp-1-r1/04_planning/design/*.dc.html):
+ * the artboards carry no id or data-* attribute — each `.frame` is followed
+ * by a `.caption` whose `.tag.tag-accent` text is the frame id (e.g. "U01-A",
+ * "C04-eligibility-reminder"). Locate that frame and give it a stable id so
+ * the ordinary scope-based helpers can measure it. Fails loudly when the id
+ * is missing or ambiguous (a duplicated caption would otherwise measure the
+ * wrong frame silently).
+ */
+export async function frameScope(page: Page, frameId: string): Promise<string> {
+	const selector = await page.evaluate((id) => {
+		const tags = Array.from(document.querySelectorAll<HTMLElement>(".caption .tag.tag-accent")).filter(
+			(el) => (el.textContent || "").trim() === id
+		);
+		if (tags.length !== 1) return "";
+		const caption = tags[0].closest(".caption");
+		const frame = caption?.previousElementSibling as HTMLElement | null;
+		if (!frame || !frame.classList.contains("frame")) return "";
+		const domId = "kt-frame-" + id.replace(/[^A-Za-z0-9_-]/g, "-");
+		frame.id = domId;
+		return "#" + domId;
+	}, frameId);
+	if (!selector) {
+		throw new Error(`frame ${JSON.stringify(frameId)} not found exactly once in the artboard file`);
+	}
+	return selector;
+}
+
+/** Open a v1.18 artboard file and return the scope selector of one frame. */
+export async function openFrame(page: Page, relPath: string, frameId: string): Promise<string> {
+	await openArtboard(page, relPath, ".frame");
+	return frameScope(page, frameId);
+}

@@ -42,17 +42,21 @@ describe("IntakeDialog", () => {
 	it("the plan purpose carries its own copy and the same controls (CFG v0.9 §4.2)", () => {
 		const open = mountDialog({ mode: "open", purpose: "plan", replaces: { fiscal_year: "2026-2027", label: "FY 2026/27" } });
 		expect(open.find('[data-testid="kt-fy-intake"]').attributes("data-purpose")).toBe("plan");
-		expect(open.find(".kt-dialog-title").text()).toBe("Open plan submission");
-		expect(open.text()).toContain("Departments will be able to submit their departmental procurement plans for FY 2027/28.");
+		// PLN-CHG-001 v1.18 §10.11 C02 — exact copy, and the year shown read-only.
+		expect(open.find(".kt-dialog-title").text()).toBe("Open departmental-plan intake");
+		expect(open.find('[data-testid="kt-fy-intake-year"]').element.value).toBe("FY 2027/28");
 		expect(open.find('[data-testid="kt-fy-intake-replaces"]').text()).toContain(
-			"Plan submission can be open for one financial year at a time. Submission for FY 2026/27 will close when you continue."
+			"Departmental-plan intake can be open for one financial year at a time. Intake for FY 2026/27 will close when you continue."
 		);
-		expect(open.find('[data-testid="kt-fy-intake-confirm"]').text()).toBe("Open plan submission");
+		expect(open.find('[data-testid="kt-fy-intake-confirm"]').text()).toBe("Open departmental-plan intake");
 		expect(open.text()).not.toContain("needs");
 
 		const close = mountDialog({ mode: "close", purpose: "plan" });
-		expect(close.find(".kt-dialog-title").text()).toBe("Close plan submission?");
-		expect(close.text()).toContain("returned corrections and updates to accepted plans are unaffected");
+		expect(close.find(".kt-dialog-title").text()).toBe("Close departmental-plan intake");
+		expect(close.find('[data-testid="kt-fy-intake-close-note"]').text()).toBe(
+			"Existing submissions and governed updates remain available under their Planning rules."
+		);
+		expect(close.find('[data-testid="kt-fy-intake-confirm"]').text()).toBe("Close intake");
 		expect(close.find('[data-testid="kt-fy-intake-confirm"]').classes()).toContain("kt-danger");
 	});
 

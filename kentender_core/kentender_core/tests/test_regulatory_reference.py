@@ -142,3 +142,35 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 		)
 		for name in renderable:
 			self.assertIn(name, governed_order, f"{name} is not a governed reservation category")
+
+	def test_a_rule_resolves_by_its_applicability_date_and_keeps_the_superseded_version(self):
+		"""PLN-CHG-001 v1.18 §7.1 GetRegulatoryReference / RI-071 — the
+		Version resolved for an applicability date before a newer gazette's
+		effective date is the earlier one, retained; without a date the
+		Version in force answers; every version carries a verification status
+		that is never `Verified` by default."""
+		earlier = self._register("GAZ-RULE-A", low_value_goods=70_000, effective_from="2094-07-01")
+		later = self._register("GAZ-RULE-B", low_value_goods=80_000, effective_from="2094-10-01")
+		self.assertEqual(frappe.db.get_value(register.DOCTYPE, earlier["reference"], "status"), "Superseded")
+		self.assertEqual(frappe.db.get_value(register.DOCTYPE, earlier["reference"], "verification_status"), register.VERIFICATION_PENDING)
+
+		before = register.resolve_regulatory_rule(kind="threshold_matrix", fiscal_year=self.fy, applicability_date="2094-08-15", procurement_method="Low Value Procurement", procurement_category="Goods")
+		self.assertTrue(before["found"])
+		self.assertEqual(before["effective_from"], "2094-07-01")
+		self.assertEqual(before["rule"][0]["max_amount"], 70_000)
+		after = register.resolve_regulatory_rule(kind="threshold_matrix", fiscal_year=self.fy, applicability_date="2094-11-01", procurement_method="Low Value Procurement", procurement_category="Goods")
+		self.assertEqual(after["reference"], later["reference"])
+		self.assertEqual(after["rule"][0]["max_amount"], 80_000)
+		in_force = register.resolve_regulatory_rule(kind="reservation", fiscal_year=self.fy)
+		self.assertEqual(in_force["reference"], later["reference"])
+		self.assertEqual(in_force["rule"]["target_percent"], 30)
+		self.assertEqual(in_force["verification_status"], register.VERIFICATION_PENDING)
+		missing = register.resolve_regulatory_rule(kind="market_price_index", fiscal_year=self.fy, applicability_date="2094-11-01")
+		self.assertFalse(missing["found"])
+		with self.assertRaises(frappe.ValidationError):
+			register.resolve_regulatory_rule(kind="nonsense", fiscal_year=self.fy)
+		with self.assertRaises(frappe.ValidationError):
+			self._register("GAZ-RULE-C", effective_from="2094-12-01") if False else register.register_regulatory_reference(
+				fiscal_year=self.fy, effective_from="2094-12-01", gazette_reference="GAZ-RULE-C",
+				threshold_bands=[], verification_status="Made up", fixture_namespace=NS,
+			)

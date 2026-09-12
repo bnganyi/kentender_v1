@@ -26,6 +26,10 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"strategic_objective_path", "procurement_category", "plan_horizon", "multi_year_justification",
 		"contributing_org_units", "lead_org_unit", "current_version", "authorised_version", "current_state",
 		"planning_drawdown_reference", "handoff", "handoff_consumed_at", "record_version", "fixture_namespace",
+		"upstream_correction_outcome",
+		"upstream_correction_reason",
+		"upstream_correction_reference",
+		"upstream_correction_outcome_at",
 	},
 	"Requisition Contributing Unit": {"organisation_unit"},
 	"Requisition Version": {

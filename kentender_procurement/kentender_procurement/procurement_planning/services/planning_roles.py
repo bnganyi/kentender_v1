@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §6 — the business responsibilities Procurement Planning
+"""PLN-CHG-001 v1.18 §6 — the business responsibilities Procurement Planning
 names, exactly as registered in `kentender_core.services.business_role_registry`.
 
 Authority is a role-bound `User Responsibility Assignment` resolved by the
@@ -19,9 +19,10 @@ ROLE_FINANCE_CONFIRMATION_OFFICER = "Finance Confirmation Officer"
 ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
 ROLE_PLAN_STATUTORY_APPROVER = "Plan Statutory Approver"
 ROLE_AUDITOR = "Auditor"
-# REQ-CHG-001 v1.6 §8 — registered elsewhere (kentender_core's business
-# role registry), referenced here only as the vocabulary Planning's own
-# §7.4 gates check against.
+# PLN-CHG-001 v1.18 §6.2 (plan D6) — the Head of Procurement Function is a
+# Plan actor in its own right: the exact read and **Sign and submit Annual
+# Plan** capability (sod tag `plan_preparation_signature` in the registry),
+# never an implicit Procurement Planner assignment.
 ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
 
 # §6 — Organisation Unit scoped responsibilities.
@@ -29,6 +30,7 @@ DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
 # §6 — Site-wide responsibilities.
 SITE_WIDE_ROLES = (
 	ROLE_PROCUREMENT_PLANNER,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
 	ROLE_ACCOUNTING_OFFICER,
 	ROLE_PLAN_STATUTORY_APPROVER,
@@ -45,8 +47,8 @@ REQUISITION_CALLER_ROLES = DEPARTMENTAL_ROLES + REQUISITION_CALLER_SITE_WIDE_ROL
 
 # PLN-DES-16 Forbidden copy names them in this order.
 FORBIDDEN_RESPONSIBILITIES = (
-	"Procurement Planner, Finance Confirmation Officer, Accounting Officer, the entity's "
-	"statutory approver, Head of User Department, Departmental Author or Auditor"
+	"Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer, "
+	"the entity's statutory approver, Head of User Department, Departmental Author or Auditor"
 )
 
 

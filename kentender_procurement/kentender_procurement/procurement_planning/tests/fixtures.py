@@ -60,7 +60,8 @@ HOPF = "plnt.hopf@example.test"
 HYBRID = "plnt.hybrid@example.test"
 HYBRID_FINANCE = "plnt.hybridfinance@example.test"
 HYBRID_AO = "plnt.hybridao@example.test"
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_FINANCE, HYBRID_AO, HOPF)
+HYBRID_HOPF_AO = "plnt.hybridhopfao@example.test"  # v1.18 §6.4: the signer cannot adopt
+ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_HOPF_AO, HYBRID_FINANCE, HYBRID_AO, HOPF)
 
 NEED = "NEED-PLNT-0001"
 NEED_V1 = "NEED-PLNT-0001-V1"
@@ -142,7 +143,14 @@ def ensure_world() -> None:
 	_fiscal_year(FY_CLOSED_START)
 	OU_ALPHA = _unit(OU_ALPHA_NAME)
 	OU_BETA = _unit(OU_BETA_NAME)
-	site_setup._seed_regulatory_reference(fiscal_year=FY_OPEN, fixture_namespace=NS)
+	# v1.18: the test world's rules are fixture-verified (D16); the 30% annual
+	# target stays unpublished here so plan-level suites are not blocked by a
+	# reservation shortfall — the allocation calculation has its own tests
+	from kentender_core.services import regulatory_reference as regulatory_register
+
+	regulatory_register.purge_fixture_references(NS)  # the register is find-or-keep; the world always starts from this exact version
+	site_setup._seed_regulatory_reference(fiscal_year=FY_OPEN, fixture_namespace=NS, verification_status=VERIFICATION_FIXTURE, reservation_target_percent=0)
+	ensure_profiles()
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
 
@@ -155,6 +163,7 @@ def ensure_world() -> None:
 		(STATUTORY, "PLNT Statutory Approver"), (AUDITOR, "PLNT Auditor"), (OUTSIDER, "PLNT Outsider"),
 		(HYBRID, "PLNT Hybrid"), (HYBRID_FINANCE, "PLNT Hybrid Finance"), (HYBRID_AO, "PLNT Hybrid AO"),
 		(HOPF, "PLNT Head of Procurement Function"),
+		(HYBRID_HOPF_AO, "PLNT Hybrid Head of Function and AO"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU_ALPHA)
@@ -175,6 +184,8 @@ def ensure_world() -> None:
 	_grant(HYBRID_AO, "Accounting Officer")
 	_grant(HYBRID_AO, "Plan Statutory Approver")
 	_grant(HOPF, "Head of Procurement Function")
+	_grant(HYBRID_HOPF_AO, "Head of Procurement Function")
+	_grant(HYBRID_HOPF_AO, "Accounting Officer")
 
 	# the single-valued intake flag: move it onto the test year, remember
 	# what was open so restore_site() can put it back
@@ -185,6 +196,34 @@ def ensure_world() -> None:
 	elif str(frappe.db.get_value("Fiscal Year", FY_OPEN, site_configuration.DPP_FLAG_CLOSES_AT) or "") != INTAKE_CLOSES_AT:
 		frappe.db.set_value("Fiscal Year", FY_OPEN, site_configuration.DPP_FLAG_CLOSES_AT, INTAKE_CLOSES_AT, update_modified=False)
 	frappe.db.commit()
+
+
+PROFILE_WINDOW = {"effective_from": f"{FY_OPEN_START}-07-01", "effective_until": f"{FY_OPEN_START + 1}-06-30"}
+# the fixture-verified limits behind the schedule tests (v1.12 figures)
+PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+DELIVERY_DEFAULT_DAYS = 30
+
+
+def ensure_profiles() -> None:
+	"""PLN-CHG-001 v1.18 §5.5.1/§5.5.3.3 — one fixture-verified method
+	profile per governed method and the Open Tender schedule profiles for
+	the test year, registered through the same seeder the site uses."""
+	from kentender_core.seeds import site_setup
+
+	frappe.set_user("Administrator")
+	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS)
+	site_setup._seed_schedule_profiles(
+		effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS,
+		limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS,
+	)
+
+
+def purge_profiles() -> None:
+	from kentender_core.services import procurement_settings
+
+	frappe.set_user("Administrator")
+	procurement_settings.purge_fixture_profiles(NS)
 
 
 def restore_site() -> None:
@@ -198,6 +237,7 @@ def restore_site() -> None:
 	# the per-test wipe runs in setUp, so without this the last test's rows
 	# outlive the run and surface to real users as selectable years
 	wipe_planning_rows()
+	purge_profiles()
 	for year in _previous_open.get("dpp", []):
 		if year != FY_OPEN and frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, site_configuration.DPP_FLAG_OPEN):
 			site_configuration.open_dpp_submission(fiscal_year=year, reason="test cleanup: restore the previously open year")
@@ -248,11 +288,25 @@ def wipe_planning_rows() -> None:
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
+	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
+	for doctype in ("Milestone Actual Event", "Proceeding Coverage", "Milestone Notice"):
+		frappe.db.delete(doctype, {"plan_item": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
+	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item", {"name": ("in", roots or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+		frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
+	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	for doctype in ("Publication Intent", "Publication Attempt", "Publication Acknowledgement"):
+		frappe.db.delete(doctype, {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Plan Publication", {"name": ("in", publications or ("",))})
+	frappe.db.delete("Approved Plan Snapshot", {"name": ("in", snapshots or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 	# the journal is §6.1 segregation evidence — scope the wipe to this world
@@ -389,6 +443,9 @@ def item_values(**overrides) -> dict:
 		"lotting_indicator": "Single lot",
 		"reservation_category": "None",
 		"procurement_method": "Open Tender",
+		"estimate_basis": "Market survey of three suppliers in July 2101 including delivery and installation.",
+		"estimate_basis_reference": "MS-PLNT-2101-001",
+		"estimated_delivery_period_days": DELIVERY_DEFAULT_DAYS,
 		"baseline_invitation_date": "2101-09-01",
 		"tendering_period_days": 21,
 		"evaluation_period_days": 30,

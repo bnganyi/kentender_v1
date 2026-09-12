@@ -26,7 +26,7 @@ from kentender_procurement.departmental_needs.services.context import (
 	resolve_creation_context,
 	selectable_financial_years,
 )
-from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+from kentender_procurement.departmental_needs.services.usage import project_planning_usage, project_planning_disposition
 from kentender_procurement.departmental_needs.services.workspace import (
 	get_current_accepted_need as _get_current_accepted_need,
 	get_need,
@@ -85,6 +85,8 @@ cancel_accepted_need_successor = frappe.whitelist()(lifecycle.cancel_accepted_ne
 request_accepted_need_withdrawal = frappe.whitelist()(lifecycle.request_withdrawal)
 decide_accepted_need_withdrawal = frappe.whitelist()(lifecycle.decide_withdrawal)
 project_need_planning_usage = frappe.whitelist()(project_planning_usage)
+# PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
+project_need_planning_disposition = frappe.whitelist()(project_planning_disposition)
 
 
 # §8.2 names one command per acceptance outcome. They share one implementation

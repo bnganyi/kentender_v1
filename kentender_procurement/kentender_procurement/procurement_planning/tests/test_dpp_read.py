@@ -315,7 +315,12 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		)
 		self.assertEqual(after["version"]["version_number"], 2)
 		self.assertIn("Accepted Need · NEED-PLNT-0001", [row["source_label"] for row in after["entries"]])
-		self.assertEqual(after["header"]["badge"], "Draft")
+		# PLN-CHG-001 v1.18 §5.1.1 — acceptance is never replaced by the candidate's state
+		self.assertEqual(after["header"]["badge"], "Accepted — update in progress")
+		self.assertEqual(after["display_state"], "Accepted — update in progress")
+		self.assertEqual(after["current_state"], "Draft")
+		self.assertEqual(after["accepted_submission_number"], 1)
+		self.assertEqual(after["candidate_submission_number"], 2)
 
 
 class TestValidationTaskRead(DppReadCase):

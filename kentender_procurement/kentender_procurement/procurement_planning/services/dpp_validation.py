@@ -180,7 +180,7 @@ def accept_departmental_plan(
 		frappe.db.set_value("Departmental Plan Version", prior_accepted, "version_status", "Superseded", update_modified=False)
 	envelope.bump(root, current_state="Accepted", current_version=version.name, current_accepted_version=version.name)
 	plan = ensure_annual_plan(fiscal_year=task_doc.fiscal_year, fixture_namespace=cstr(root.fixture_namespace))
-	_publish_not_proceeding(snapshots, decision.name)
+	_publish_dispositions(snapshots, submission=task_doc.submission, decision_name=decision.name, actor=actor)
 	result = {
 		"ok": True,
 		"idempotent": False,
@@ -198,22 +198,30 @@ def accept_departmental_plan(
 	return result
 
 
-def _publish_not_proceeding(snapshots: list[dict[str, Any]], decision_name: str) -> None:
-	"""§4.4 / PLN-AC-092 — the outcome reaches Departmental Needs through its
-	own published usage contract (D12), never a table write."""
+def _publish_dispositions(snapshots: list[dict[str, Any]], *, submission: str, decision_name: str, actor: str) -> None:
+	"""PLN-CHG-001 v1.18 §5.1.4 / §7.3 `NeedPlanningDispositionChanged.v1` —
+	emitted after DPP acceptance only, one event per Need-origin source in the
+	accepted Submission, through Departmental Needs' published consumer (never
+	a table write). Separate from `NeedPlanningUsageChanged.v1`, which keeps
+	its Active-inclusion meaning and is never used for a DPP exclusion."""
 	from kentender_procurement.departmental_needs.services import usage as needs_usage
 
+	sequence = int(frappe.db.get_value("Departmental Plan Submission", submission, "submission_number") or 0)
+	decided_at = now_datetime()
 	for row in snapshots:
-		reason = cstr(row.get("not_proceeding_reason")).strip()
-		if not row.get("need") or not reason:
+		if not row.get("need"):
 			continue
-		needs_usage.project_planning_usage(
+		reason = cstr(row.get("not_proceeding_reason")).strip()
+		needs_usage.project_planning_disposition(
 			departmental_need=row["need"],
-			accepted_revision=row["need_revision"],
-			usage="Not proceeding",
-			not_proceeding_reason=reason,
-			source_event_id=f"{decision_name}:{row['need_revision']}:not-proceeding",
-			source_event_time=now_datetime(),
+			need_revision=row["need_revision"],
+			dpp_submission=submission,
+			disposition=needs_usage.DISPOSITION_NOT_PROCEEDING if reason else needs_usage.DISPOSITION_PROCEEDING,
+			reason=reason,
+			source_event_id=f"{decision_name}:{row['need_revision']}:disposition",
+			producer_sequence=sequence,
+			actor=actor,
+			decision_at=decided_at,
 			user="Administrator",
 		)
 

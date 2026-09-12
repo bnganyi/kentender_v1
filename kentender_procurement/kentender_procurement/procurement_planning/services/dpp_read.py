@@ -160,6 +160,8 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"status": status,
 					"status_kind": kind,
 					"not_proceeding_reason": cstr(row.not_proceeding_reason),
+					"disposition": "Not proceeding" if not_proceeding else "Proceeding",
+					"can_set_disposition": need_origin and version.version_status == "Draft" and access in ("author", "hod"),
 					"action": (
 						"" if version.version_status != "Draft" or access in ("planner", "oversight")
 						else ("Edit" if not need_origin else "Complete")
@@ -190,6 +192,12 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	badge, badge_kind = BADGES.get(version.version_status if version else root.current_state, ("Draft", "attention"))
 	if mutable and ready:
 		badge, badge_kind = "Ready to submit", "live"
+	# §5.1.1 — acceptance is never replaced by the candidate's state
+	accepted_number = int(frappe.db.get_value("Departmental Plan Version", root.current_accepted_version, "version_number") or 0) if root.current_accepted_version else None
+	update_in_progress = bool(root.current_accepted_version) and bool(version) and cstr(version.name) != cstr(root.current_accepted_version) and version.version_status in ("Draft", "Submitted", "Returned")
+	display_state = "Accepted — update in progress" if update_in_progress else root.current_state
+	if update_in_progress:
+		badge, badge_kind = display_state, "live"
 	# §5.1 "Accepted; change required → Create update": the department's own
 	# actors, on an accepted plan with no open successor. An accepted plan never
 	# re-projects Needs itself (§5.3 inv. 1), so name the ones it is missing.
@@ -233,6 +241,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"dpp_reference": root.dpp_reference,
 		"record_version": int(root.record_version or 0),
 		"current_state": root.current_state,
+		"display_state": display_state,
+		"accepted_submission_number": accepted_number,
+		"candidate_submission_number": version.version_number if (version and update_in_progress) else None,
+		"is_correction": bool(version and cstr(version.returned_from_submission)),
 		"fiscal_year": root.fiscal_year,
 		"version": {
 			"name": version.name if version else "",

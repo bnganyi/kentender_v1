@@ -59,9 +59,9 @@ class TestCapacityResolution(IntegrationTestCase):
 			with self.subTest(route=route):
 				self._with_route(route)
 				self.assertEqual(plan_governance.capacity_for_site(), capacity)
-		self.assertTrue(plan_governance.is_board_capacity("Board of Directors"))
-		self.assertTrue(plan_governance.is_board_capacity("Council"))
-		self.assertFalse(plan_governance.is_board_capacity("Responsible Cabinet Secretary"))
+		self.assertTrue(plan_governance.is_collective_capacity("Board of Directors"))
+		self.assertTrue(plan_governance.is_collective_capacity("Council"))
+		self.assertFalse(plan_governance.is_collective_capacity("Responsible Cabinet Secretary"))
 
 	def test_an_unconfigured_route_blocks_with_the_configuration_code(self):
 		with patch.object(plan_governance, "statutory_route", return_value=""):
@@ -142,7 +142,7 @@ class GovernanceCase(IntegrationTestCase):
 		return accepted, item_id
 
 	def submit(self, plan_reference: str, *, actor: str = None):
-		frappe.set_user(actor or fx.PLANNER)
+		frappe.set_user(actor or fx.HOPF)  # v1.18 §6.2: Sign and submit Annual Plan
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 		return plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
@@ -167,10 +167,11 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 		self.assertEqual(row["reservation_category"], "None")
 		self.assertEqual(row["procurement_method"], "Open Tender")
 		self.assertIn("KES 1,000,000", row["value_display"])
-		self.assertEqual(snapshot["reservation_target_percent"], 30)
+		self.assertIn(snapshot["reservation_target_percent"], (0, None))  # the v1.18 test world publishes no annual target; the value is frozen as read
 		# the frozen baseline is locked once the Version leaves Draft (invariant 12b)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertTrue(item["baseline"]["locked"])
+		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
 				plan_item=item_id, values={"baseline_invitation_date": "2101-10-01"},
@@ -191,6 +192,84 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 			with self.assertRaises(ProcurementPlanningError) as caught:
 				self.submit(accepted["annual_plan"])
 		self.assertEqual(caught.exception.code, "PLN_STATUTORY_ROUTE_UNCONFIGURED")
+
+
+class TestPreparationSignature(GovernanceCase):
+	"""PLN-CHG-001 v1.18 §6.2 / D6 — Sign and submit Annual Plan (PLN18-208)."""
+
+	def test_the_head_of_procurement_function_signs_the_exact_snapshot(self):
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.HOPF)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertTrue(plan["can_sign_and_submit"])
+		self.assertFalse(plan["mutable"])  # the signer does not edit
+		result = self.submit(accepted["annual_plan"])
+		self.assertTrue(result["preparation_signature"])
+		signature = frappe.get_doc("Plan Preparation Signature", result["preparation_signature"])
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		self.assertEqual(signature.actor, fx.HOPF)
+		self.assertEqual(signature.capacity, "Head of Procurement Function")
+		self.assertEqual(signature.snapshot_hash, version.snapshot_hash)
+		self.assertEqual(signature.submitted_snapshot_id, version.submitted_snapshot_id)
+		self.assertEqual(version.preparation_signature, signature.name)
+		self.assertIn("assignment_id", signature.authority_snapshot)
+		self.assertEqual(json.loads(version.source_cohort), [frappe.db.get_value("Plan Source Allocation", {"plan_item_id": item_id}, "source_key")])
+		self.assertEqual(version.version_status, "Awaiting Accounting Officer")  # no extra HOPF approval state
+		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(read["preparation_signature"]["actor"], fx.HOPF)
+
+	def test_the_planner_cannot_sign_and_the_planner_offer_is_gone(self):
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertFalse(plan["can_submit"])
+		self.assertFalse(plan["can_sign_and_submit"])
+		with self.assertRaises(frappe.DoesNotExistError):
+			self.submit(accepted["annual_plan"], actor=fx.PLANNER)
+
+	def test_the_signer_cannot_adopt_the_plan_they_signed(self):
+		"""§6.4 — signing the formal submission is on the incompatible-action chain."""
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"], actor=fx.HYBRID_HOPF_AO)
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.HYBRID_HOPF_AO)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_SEGREGATION_CONFLICT")
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		self.assertEqual(plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())["action"], "adopted")
+
+
+class TestLateActivationExplanation(GovernanceCase):
+	def test_an_initial_plan_adopted_after_the_year_began_needs_the_accounting_officers_explanation(self):
+		"""v1.18 §4.7 / §7.2 — AO-owned, append-only, recorded at late adoption or later."""
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		with patch.object(plan_governance, "nowdate", return_value="2101-08-01"):
+			with self.assertRaises(ProcurementPlanningError) as caught:
+				plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+			self.assertEqual(caught.exception.code, "PLN_LATE_EXPLANATION_REQUIRED")
+			adopted = plan_governance.adopt_and_submit_plan(
+				task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key(),
+				late_activation_explanation="Consolidation waited for the supplementary budget approved in July 2101.",
+			)
+		self.assertTrue(adopted["late_activation_explanation"])
+		first = frappe.get_doc("Late Activation Explanation", adopted["late_activation_explanation"])
+		self.assertEqual(first.actor, fx.ACCOUNTING_OFFICER)
+		corrected = plan_governance.record_late_activation_explanation(
+			plan_version=accepted["annual_plan_version"], reason="Consolidation waited for the supplementary budget approved on 14 July 2101.",
+			supersedes=first.name, idempotency_key=key(),
+		)
+		self.assertEqual(corrected["action"], "late_explanation_recorded")
+		self.assertEqual(frappe.db.get_value("Late Activation Explanation", corrected["explanation"], "supersedes"), first.name)
+		self.assertEqual(frappe.db.count("Late Activation Explanation", {"plan_version": accepted["annual_plan_version"]}), 2)  # append-only
+		frappe.set_user(fx.STATUTORY)
+		task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
+		read = plan_read.get_plan_governance_task(task=task.name)
+		self.assertIn("14 July 2101", read["late_activation_reason"])
+		self.assertEqual(len(read["late_activation_explanations"]), 2)
 
 
 class TestAdoptApproveChain(GovernanceCase):
@@ -254,11 +333,42 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertTrue(plan_read.get_plan_governance_task(task=statutory_task.name)["authority_card"]["is_board"])
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
-		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(caught.exception.code, "PLN_COLLECTIVE_RESOLUTION_REQUIRED")  # v1.18 §8
 		approved = plan_governance.approve_annual_plan(
-			task=statutory_task.name, task_token=statutory_task.task_token, resolution_reference="BOARD/RES/2101/07", idempotency_key=key(),
+			task=statutory_task.name, task_token=statutory_task.task_token, collective_resolution_reference="BOARD/RES/2101/07", idempotency_key=key(),
 		)
 		self.assertEqual(approved["action"], "approved")
+
+	def test_a_council_route_is_a_collective_capacity_too(self):
+		single = frappe.get_doc("Site Procuring Entity")
+		before = single.statutory_approval_route
+		single.statutory_approval_route = "Council"
+		single.save(ignore_permissions=True)
+
+		def _restore():
+			doc = frappe.get_doc("Site Procuring Entity")
+			doc.statutory_approval_route = before
+			doc.save(ignore_permissions=True)
+
+		self.addCleanup(_restore)
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
+		self.assertEqual(statutory_task.capacity, "Council")
+		self.assertTrue(plan_governance.is_collective_capacity(statutory_task.capacity))
+		frappe.set_user(fx.STATUTORY)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_COLLECTIVE_RESOLUTION_REQUIRED")
+		approved = plan_governance.approve_annual_plan(
+			task=statutory_task.name, task_token=statutory_task.task_token, collective_resolution_reference="COUNCIL/RES/2101/03", idempotency_key=key(),
+		)
+		self.assertEqual(approved["action"], "approved")
+		decision = frappe.get_all("Plan Governance Decision", filters={"task": statutory_task.name}, fields=["collective_resolution_reference"])[0]
+		self.assertEqual(decision.collective_resolution_reference, "COUNCIL/RES/2101/03")
 
 	def test_a_non_accounting_officer_is_refused(self):
 		accepted, item_id = self.confirmed_item()
@@ -269,8 +379,9 @@ class TestAdoptApproveChain(GovernanceCase):
 			plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
 
 	def test_hybrid_ao_planner_is_blocked_from_adopting_their_own_submission(self):
-		accepted, item_id = self.confirmed_item()
-		submitted = self.submit(accepted["annual_plan"], actor=fx.HYBRID_AO)
+		# the hybrid drafted and requested Finance as Planner; the HOPF signs (v1.18 §6.2)
+		accepted, item_id = self.confirmed_item(planner=fx.HYBRID_AO)
+		submitted = self.submit(accepted["annual_plan"])
 		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
 		frappe.set_user(fx.HYBRID_AO)
 		self.assertFalse(plan_read.get_plan_governance_task(task=ao_task.name)["can_decide"])
@@ -311,6 +422,34 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertEqual(caught.exception.code, "PLN_SEGREGATION_CONFLICT")
 
 
+class TestCorrectionCohort(GovernanceCase):
+	def test_a_correction_cannot_absorb_an_unrelated_later_source(self):
+		"""v1.18 §5.4.2 — the returned Version's stable source cohort is fixed."""
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		returned = plan_governance.return_plan_version(task=ao_task.name, reason="Re-scope the package before resubmission.", task_token=ao_task.task_token, idempotency_key=key())
+		correction = frappe.get_doc("Annual Plan Version", returned["correction_version"])
+		self.assertEqual(json.loads(correction.source_cohort), json.loads(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "source_cohort")))
+		# a different department's accepted requirement arrives while the correction is open
+		frappe.set_user(fx.OUTSIDER)
+		opened = dpp_lifecycle.open_departmental_plan(organisation_unit=fx.OU_BETA, fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS)
+		added = dpp_lifecycle.save_direct_requirement(dpp_version=opened["current_version"], values=fx.direct_values(title="A later unrelated requirement"), expected_record_version=opened["record_version"], idempotency_key=key())
+		frappe.set_user("Administrator")
+		fx._grant(fx.OUTSIDER, "Head of User Department", fx.OU_BETA)
+		frappe.set_user(fx.OUTSIDER)
+		later = dpp_lifecycle.submit_departmental_plan(dpp_version=opened["current_version"], certification_confirmed=True, expected_record_version=added["record_version"], idempotency_key=key())
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": later["task"]})
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(task=task.name, classifications={added["entry_id"]: "Goods"}, task_token=task.task_token, idempotency_key=key())
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		stranger = next(row["dpp_entry"] for row in plan["unallocated_sources"] if row["title"] == "A later unrelated requirement")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.form_plan_items(plan_version=correction.name, dpp_entries=[stranger], mode="each", expected_record_version=plan["record_version"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_CORRECTION_COHORT_VIOLATION")
+
+
 class TestReturnPlanVersion(GovernanceCase):
 	def test_ao_return_preserves_the_submission_and_carries_the_confirmation_forward(self):
 		accepted, item_id = self.confirmed_item()
@@ -344,7 +483,8 @@ class TestReturnPlanVersion(GovernanceCase):
 		frappe.set_user(fx.PLANNER)
 		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		self.assertTrue(read["is_correction"])
-		self.assertTrue(read["can_submit"])
+		frappe.set_user(fx.HOPF)
+		self.assertTrue(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])
 
 	def test_statutory_return_restarts_at_ao_on_resubmission(self):
 		accepted, item_id = self.confirmed_item()
@@ -361,7 +501,7 @@ class TestReturnPlanVersion(GovernanceCase):
 		correction = frappe.get_doc("Annual Plan Version", returned["correction_version"])
 		self.assertEqual(correction.version_status, "Draft")
 
-		frappe.set_user(fx.PLANNER)
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: Sign and submit Annual Plan
 		resubmitted = plan_governance.submit_corrected_plan(
 			plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key(),
 		)
@@ -391,14 +531,51 @@ class TestReturnPlanVersion(GovernanceCase):
 		)
 		self.complete(reformed["created_items"][0])
 		correction.reload()
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: Sign and submit Annual Plan
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_governance.submit_corrected_plan(
 				plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_FINANCE_STALE")
-		self.confirm_funding(accepted["annual_plan"])
+		# v1.18 §5.3.2 — the same source re-formed leaves every per-line amount
+		# unchanged: the earlier confirmation is reused, no second review
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		reused = plan_finance.request_plan_funding_confirmation(plan_version=correction.name, expected_record_version=plan["record_version"], idempotency_key=key())
+		self.assertEqual(reused["action"], "confirmation_reused")
+		frappe.set_user(fx.HOPF)
 		correction.reload()
 		resubmitted = plan_governance.submit_corrected_plan(
 			plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key(),
 		)
+		self.assertEqual(resubmitted["action"], "submitted")
+
+	def test_a_corrected_plan_whose_financial_basis_changed_needs_a_new_finance_review(self):
+		"""v1.18 §5.3.2/§5.3.4 — a changed approved amount changes the basis; the correction repeats Finance."""
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		returned = plan_governance.return_plan_version(
+			task=ao_task.name, reason="Re-scope the package before resubmission.", task_token=ao_task.task_token, idempotency_key=key(),
+		)
+		correction = frappe.get_doc("Annual Plan Version", returned["correction_version"])
+		line_version = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": fx.BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))}, "name")
+		previous = frappe.db.get_value("Procurement Budget Line Version", line_version, "approved_amount")
+		frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 90_000_000, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "Procurement Budget Line Version", line_version, "approved_amount", previous, update_modified=False)
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: Sign and submit Annual Plan
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.submit_corrected_plan(plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_FINANCE_STALE")
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		requested = plan_finance.request_plan_funding_confirmation(plan_version=correction.name, expected_record_version=plan["record_version"], idempotency_key=key())
+		self.assertEqual(requested["action"], "requested")
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+		frappe.set_user(fx.HOPF)
+		correction.reload()
+		resubmitted = plan_governance.submit_corrected_plan(plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key())
 		self.assertEqual(resubmitted["action"], "submitted")

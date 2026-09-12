@@ -139,6 +139,7 @@ class PublicationCase(IntegrationTestCase):
 	def activate(self, plan_reference: str) -> dict:
 		frappe.set_user(fx.PLANNER)
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
@@ -171,7 +172,7 @@ class TestActivationAndRetryPublication(PublicationCase):
 		self.assertEqual(len(row["schedule"]), 7)
 		self.assertTrue(all(r["forecast"] == r["baseline"] and r["actual"] == "" for r in row["schedule"]))
 		self.assertTrue(row["schedule"][0]["can_shift"])
-		self.assertFalse(row["schedule"][-1]["can_shift"])
+		self.assertTrue(row["schedule"][-1]["can_shift"])  # v1.18 §5.5.1: a final-milestone single-row change is allowed with a reason
 		self.assertIn("Acknowledged", read["active_view"]["governance_card"]["publication_line"])
 
 		publication = frappe.get_doc("Annual Plan Publication", {"plan_version": read["version_reference"]})
@@ -230,6 +231,63 @@ class TestForecastCascade(PublicationCase):
 		self.activate(accepted["annual_plan"])
 		return accepted, item_id
 
+	def test_a_held_version_takes_one_linked_correction_and_is_never_treated_as_active(self):
+		"""v1.18 §5.5.2.3 / §7.2 `BeginHeldPlanCorrection` (PLN18-208; the held state itself is produced in 2f)."""
+		accepted, item_id = self.active()
+		version_name = accepted["annual_plan_version"]
+		plan_name = frappe.db.get_value("Annual Plan Version", version_name, "annual_plan")
+		# simulate the 2f outcome: publication acknowledged, activation checks failed
+		frappe.db.set_value("Annual Plan Version", version_name, {"version_status": "Published — activation held", "activated_at": None}, update_modified=False)
+		frappe.db.set_value("Annual Plan", plan_name, {"active_version": None, "open_successor_version": None}, update_modified=False)
+		frappe.set_user(fx.PLANNER)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.begin_held_plan_correction(plan_version=version_name, reason="short", idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		started = plan_governance.begin_held_plan_correction(plan_version=version_name, reason="Activation checks found the reservation basis missing; correct and resubmit.", idempotency_key=key())
+		self.assertEqual(started["action"], "held_correction_started")
+		self.assertEqual(started["active_predecessor"], "")
+		correction = frappe.get_doc("Annual Plan Version", started["correction_version"])
+		self.assertEqual(correction.correction_of_plan_version, version_name)
+		self.assertIsNone(correction.based_on_version)
+		self.assertEqual(correction.version_status, "Draft")
+		self.assertTrue(json.loads(correction.source_cohort))
+		self.assertEqual(frappe.db.count("Annual Plan Item", {"plan_version": correction.name}), 1)
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Published — activation held")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.begin_held_plan_correction(plan_version=version_name, reason="Activation checks found the reservation basis missing; correct and resubmit again.", idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_STALE_WRITE")
+
+	def test_active_reassessment_appends_new_finance_evidence_without_touching_the_baseline(self):
+		"""v1.18 §5.3.4 — a changed approved amount on an unchanged Active Plan is reassessed, never re-approved."""
+		accepted, item_id = self.active()
+		version_name = accepted["annual_plan_version"]
+		before_evidence = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["funding_evidence"]
+		self.assertTrue(before_evidence["current"])
+		self.assertTrue(before_evidence["at_approval"])
+		line_version = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": fx.BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))}, "name")
+		previous = frappe.db.get_value("Procurement Budget Line Version", line_version, "approved_amount")
+		frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 95_000_000, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "Procurement Budget Line Version", line_version, "approved_amount", previous, update_modified=False)
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertFalse(plan["funding_evidence"]["current"])
+		self.assertEqual(plan["version_status"], "Active")
+		requested = plan_finance.request_plan_funding_confirmation(plan_version=version_name, expected_record_version=plan["record_version"], idempotency_key=key())
+		self.assertEqual(requested["action"], "reassessment_requested")
+		self.assertTrue(requested["reassessment"])
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		self.assertTrue(plan_read.get_finance_task(task=task.name)["is_reassessment"])
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+		version = frappe.get_doc("Annual Plan Version", version_name)
+		self.assertEqual(version.version_status, "Active")
+		self.assertEqual(version.funding_state, "Confirmed")
+		after = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["funding_evidence"]
+		self.assertTrue(after["current"])
+		self.assertEqual(after["at_approval"]["decision"], before_evidence["at_approval"]["decision"])
+		self.assertNotEqual(after["current_confirmation"]["decision"], after["at_approval"]["decision"])
+		self.assertEqual(frappe.db.count("Plan Finance Decision", {"decision": "Confirm plan funding", "task": ("in", frappe.get_all("Plan Finance Task", filters={"plan_version": version_name}, pluck="name"))}), 2)
+
 	def test_preview_proposes_every_later_milestone_and_confirm_writes_one_cascade(self):
 		accepted, item_id = self.active()
 		frappe.set_user(fx.PLANNER)
@@ -284,7 +342,8 @@ class TestForecastCascade(PublicationCase):
 				reason="Signing pulled forward inside the standstill period, which is not allowed.",
 				expected_record_version=preview["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_STANDSTILL_BELOW_MINIMUM")  # PLN-AC-128
+		self.assertEqual(caught.exception.code, "PLN_PROFILE_PERIOD_INVALID")  # PLN18 §8: labelled parameters
+		self.assertEqual(caught.exception.detail["period"], "standstill_period_days")
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			schedule.confirm_forecast_cascade(
 				plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06", included_milestones=None,
@@ -296,6 +355,16 @@ class TestForecastCascade(PublicationCase):
 		accepted, item_id = self.active()
 		# the only writer of an actual is the inbound projection contract (§18)
 		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1")
+		# PLN-CHG-001 v1.18 §4.8 / plan D10: same value again is a no-op; a
+		# different value never overwrites unless it supersedes the earlier event
+		again = schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1")
+		self.assertTrue(again["idempotent"])
+		with self.assertRaises(ProcurementPlanningError) as guarded:
+			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="TPR-TEST-2")
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+		with self.assertRaises(ProcurementPlanningError) as guarded:
+			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="")
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
 		frappe.set_user(fx.PLANNER)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertEqual(item["schedule"][0]["actual"], "2101-09-03")
@@ -535,9 +604,9 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			)
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
 		frappe.set_user(fx.AUTHOR)
-		marked = dpp_lifecycle.save_need_funding(
-			dpp_version=opened["current_version"], entry_id=entry_id,
-			not_proceeding_reason="The department will defer this requirement to the following financial year.",
+		marked = dpp_lifecycle.set_need_planning_disposition(
+			dpp_version=opened["current_version"], entry_id=entry_id, disposition="Do not proceed",
+			reason="The department will defer this requirement to the following financial year.",
 			expected_record_version=opened["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(marked["action"], "need_not_proceeding")
@@ -554,9 +623,18 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 		accepted = dpp_validation.accept_departmental_plan(
 			task=dpp_task.name, classifications={added["entry_id"]: "Goods"}, task_token=dpp_task.task_token, idempotency_key=key(),
 		)
-		projection = frappe.db.get_value("Need Planning Usage Projection", accepted_version, ["usage", "not_proceeding_reason"], as_dict=True)
-		self.assertEqual(projection.usage, "Not proceeding")
-		self.assertIn("defer", projection.not_proceeding_reason)
+		# v1.18 §5.1.4 — the accepted disposition reaches Needs as NeedPlanningDispositionChanged.v1;
+		# the usage projection keeps its Active-inclusion meaning and is untouched by a DPP exclusion
+		disposition = frappe.db.get_value(
+			"Need Planning Disposition Projection", {"departmental_need": need, "need_revision": accepted_version},
+			["disposition", "reason", "producer_sequence", "dpp_submission"], as_dict=True,
+		)
+		self.assertEqual(disposition.disposition, "Not proceeding")
+		self.assertIn("defer", disposition.reason)
+		self.assertEqual(int(disposition.producer_sequence), 1)
+		self.assertTrue(disposition.dpp_submission)
+		usage = frappe.db.get_value("Need Planning Usage Projection", accepted_version, "usage")
+		self.assertNotEqual(usage, "Not proceeding")
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		self.assertEqual(len(plan["unallocated_sources"]), 1)
 		self.assertEqual(plan["unallocated_sources"][0]["source_origin"], "Direct departmental requirement")

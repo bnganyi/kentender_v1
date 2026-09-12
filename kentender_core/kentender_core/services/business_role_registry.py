@@ -177,7 +177,11 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"REQ-CHG-001 v1.6 §8",
 		# TPR-CHG-001 v0.6 §5/§10.3 (2026-09-08): the same office is the single
 		# Tender Preparation approver — one registry entry, a second sod tag.
-		sod_tags=("requisition_authorisation", "tender_approval"),
+		# PLN-CHG-001 v1.18 §6.2 / D6 (2026-09-12): the same office signs and
+		# submits the consolidated Annual Procurement Plan (preparation
+		# accountability, not an added approval stage) — a third sod tag, no
+		# Planner equivalence.
+		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature"),
 	),
 	# --- Tender Preparation (TPR-CHG-001 v0.6 §5) -------------------------
 	# Site-wide; prepares and submits Tender Versions and can never approve

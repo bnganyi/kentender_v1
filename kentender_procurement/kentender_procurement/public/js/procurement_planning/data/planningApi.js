@@ -50,6 +50,10 @@ export function saveNeedFunding(args) {
 	return frappeCall(`${BASE}.save_need_funding`, args);
 }
 
+export function setNeedPlanningDisposition(args) {
+	return frappeCall(`${BASE}.set_need_planning_disposition`, args);
+}
+
 export function saveDirectRequirement(args) {
 	return frappeCall(`${BASE}.save_direct_requirement`, args);
 }

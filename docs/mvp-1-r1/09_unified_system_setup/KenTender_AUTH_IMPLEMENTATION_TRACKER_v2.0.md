@@ -11,6 +11,8 @@ closed the AUTH-ADR-001 **v1.3** build of 2026-09-01 (110 tests green, two stand
 pages browser-verified). v1.6 is an architecture change over that work — one site =
 one PE — so this tracker treats the v1.3 build as raw material, not as done rows.
 
+**Pointer (2026-09-12):** the System setup changes required by PLN-CHG-001 v1.18 §10.11 (C01 route/county controls and conflict notice, C02 departmental-plan intake dialog, the fifth tab **Procurement settings** with funding sources, method/schedule profiles, regulator reference verification status and the reminder threshold) are tracked as `[core]` rows PLN18-101..106 in `docs/mvp-1-r1/04_planning/PLN-CHG-001_IMPLEMENTATION_TRACKER.md`; the frames are `docs/mvp-1-r1/04_planning/design/C01-C04-Setup.dc.html`; the CFG-CHG-002 v0.10 amendment is Planning FU-22.
+
 **Status:** **S0–S6 complete and verified, 2026-09-02; artboard-fidelity fix pass (SU-604) verified 2026-09-03; design-fidelity gate live and green (SU-605), 2026-09-03; Strategy cutover slice CU-301..308 complete and verified, 2026-09-03 (C5 open).** The one-page
 `/app/system-setup` surface is live with all four tabs, the v1.6 authorization
 model (site-local tree, two scope types, hook-registered predicate,

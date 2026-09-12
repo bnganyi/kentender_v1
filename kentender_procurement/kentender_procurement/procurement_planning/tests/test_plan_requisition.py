@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 """PLN-CHG-001 v1.12 §7.4/§8.2 Requisition eligibility tests (Phase 10,
-Slice H): GetRequisitionEligiblePlanItem.v2, RecordRequisitionDrawdown and
+Slice H): GetRequisitionEligiblePlanItem.v2, AuthoriseRequisitionDrawdown and
 ReverseRequisitionDrawdown — the published contract a sibling Requisitions
 module would call; this repo owns no such module (§2.1), so every test here
 is that contract's only real caller today."""
@@ -110,6 +110,7 @@ class RequisitionCase(IntegrationTestCase):
 	def activate(self, plan_reference: str) -> dict:
 		frappe.set_user(fx.PLANNER)
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"],
 			idempotency_key=key(),
@@ -214,7 +215,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 	def record(self, item_id: str, allocation_id: str, *, quantity: float, amount: float, ref: str = None):
 		read = self.read_as_planner(item_id)
 		frappe.set_user(fx.HOPF)
-		return plan_requisition.record_requisition_drawdown(
+		return plan_requisition.authorise_requisition_drawdown(
 			plan_item_id=item_id, requisition_reference=ref or f"REQ-{key()[:8]}",
 			requesting_org_unit=fx.OU_ALPHA,
 			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": quantity, "amount": amount}],
@@ -310,7 +311,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 
 		frappe.set_user(fx.HOPF)
 		with self.assertRaises(frappe.ValidationError):
-			plan_requisition.record_requisition_drawdown(
+			plan_requisition.authorise_requisition_drawdown(
 				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
 				requesting_org_unit=fx.OU_ALPHA,
 				allocations=[
@@ -364,8 +365,8 @@ class TestDrawdownAndReversal(RequisitionCase):
 			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}],
 			expected_record_version=read["record_version"], idempotency_key=record_key,
 		)
-		first = plan_requisition.record_requisition_drawdown(**args)
-		second = plan_requisition.record_requisition_drawdown(**args)
+		first = plan_requisition.authorise_requisition_drawdown(**args)
+		second = plan_requisition.authorise_requisition_drawdown(**args)
 		self.assertEqual(first["drawdown_references"], second["drawdown_references"])
 		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 1)
 		self.assertFalse(first["idempotent"])
@@ -388,7 +389,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		allocation_id = self.allocation_id_of(item_id)
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(frappe.DoesNotExistError):
-			plan_requisition.record_requisition_drawdown(
+			plan_requisition.authorise_requisition_drawdown(
 				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
 				requesting_org_unit=fx.OU_ALPHA,
 				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.1, "amount": 100000}],
@@ -414,7 +415,7 @@ class TestProjectionFieldCompleteness(RequisitionCase):
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		for field in (
 			"title", "reservation_category", "lotting_indicator", "lot_count", "plan_horizon",
-			"multi_year_justification", "contributing_org_unit_ids", "strategic_objective_path",
+			"contributing_org_unit_ids", "strategic_objective_path",
 			"currency", "award_packages",
 		):
 			self.assertIn(field, read, f"{field} missing from the projection")
@@ -527,7 +528,7 @@ class TestListRequisitionEligiblePlanItems(RequisitionCase):
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		allocation = read["sources"][0]
 		frappe.set_user(fx.HOPF)
-		plan_requisition.record_requisition_drawdown(
+		plan_requisition.authorise_requisition_drawdown(
 			plan_item_id=item_id, requisition_reference="REQ-EXHAUST-001", requesting_org_unit=fx.OU_ALPHA,
 			allocations=[{"plan_source_allocation_id": allocation["plan_source_allocation_id"], "quantity": allocation["remaining_quantity"], "amount": allocation["remaining_amount"]}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
@@ -674,7 +675,7 @@ class TestRequestShapedEndpoints(RequisitionCase):
 
 		frappe.set_user(fx.HOPF)
 		recorded = self.call(
-			"record_requisition_drawdown", plan_item_id=item_id,
+			"authorise_requisition_drawdown", plan_item_id=item_id,
 			requisition_reference="REQ-HTTP-1", requesting_org_unit=fx.OU_ALPHA,
 			allocations=json.dumps(
 				[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}]
@@ -748,7 +749,7 @@ class TestOpenSuccessorKeepsTheActiveItemEligible(RequisitionCase):
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		allocation_id = read["sources"][0]["plan_source_allocation_id"]
 		frappe.set_user(fx.HOPF)
-		result = plan_requisition.record_requisition_drawdown(
+		result = plan_requisition.authorise_requisition_drawdown(
 			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
 			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
 			expected_record_version=read["record_version"], idempotency_key=key(),

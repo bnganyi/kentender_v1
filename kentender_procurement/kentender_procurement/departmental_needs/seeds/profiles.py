@@ -11,10 +11,10 @@ toggle now (§4.1) — unlike the old per-PE/FY `Needs Intake Window`, no profil
 here needs to open or restore it; §14.1's prerequisite is that it is already
 Open on `base.FY`, checked once by `base._require_prerequisites`.
 
-Commands still stamp decisions with the wall clock, so the §14.3 design-clock
-times are applied afterwards by `_stamp`. Nothing else is rewritten: the
-states, versions, hashes, tasks and published events are exactly what the
-commands produced.
+Commands stamp decisions with the wall clock, which the profiles freeze at
+their fixture instants (PLN-CHG-001 v1.18 §13.1 / plan D19) — nothing is
+back-stamped: the states, versions, hashes, tasks and published events are
+exactly what the commands produced at those instants.
 
 Each profile owns a fixture namespace so `reset_profile` removes precisely what
 it created. Resets use `frappe.db.delete`, which bypasses the controllers that
@@ -37,7 +37,17 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
+from kentender_core.seeds import clock
+
 from . import kentender_mvp_r1 as base
+
+# PLN-CHG-001 v1.18 §13.1 / plan D19 — profile commands run at fixture
+# instants: departmental work on 24 Nov 2026 inside the Needs window; the
+# successor acceptance by Dr Kimani on 2 Dec 2026, after the Digital Health
+# handover from Julia Njeri's acting period.
+PROFILE_AUTHOR_INSTANT = "2026-11-24 15:00:00"
+PROFILE_WITHDRAWAL_INSTANT = "2026-11-24 15:30:00"
+PROFILE_REVIEW_INSTANT = "2026-12-02 10:00:00"
 
 # --- §14.4 integrated Planning usage fixture --------------------------------
 ACTIVE_PLAN = "PLN-MOH-2027-001"
@@ -177,7 +187,7 @@ def apply_successor() -> dict[str, Any]:
 	if str(frappe.db.get_value("Departmental Need Revision", version_one, "required_by_date")) == SUCCESSOR_REQUIRED_BY:
 		return {"profile": "successor", "idempotent": True, "accepted_revision": version_one}
 	source = frappe.get_doc("Departmental Need Revision", version_one)
-	with _as(base.AUTHOR):
+	with _as(base.AUTHOR), clock.at(PROFILE_AUTHOR_INSTANT):
 		opened = lifecycle.create_accepted_need_successor(
 			need=need.name,
 			expected_version=_record_version(need.name),
@@ -200,7 +210,7 @@ def apply_successor() -> dict[str, Any]:
 			idempotency_key=key("successor", "submit", need.name, saved["record_version"]),
 		)
 	task, token = _open_task(need.name, "Successor acceptance")
-	with _as(base.REVIEWER):
+	with _as(base.REVIEWER), clock.at(PROFILE_REVIEW_INSTANT):
 		accepted = lifecycle.review_need(
 			need=need.name,
 			decision="accept",
@@ -285,7 +295,7 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 		"name",
 	)
 	if not existing:
-		with _as(base.AUTHOR):
+		with _as(base.AUTHOR), clock.at(PROFILE_WITHDRAWAL_INSTANT):
 			requested = lifecycle.request_withdrawal(
 				need=need.name,
 				expected_version=_record_version(need.name),

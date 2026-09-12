@@ -168,7 +168,7 @@ describe("AnnualPlanScreen — PLN-DES-07", () => {
 	});
 
 	it("states the funding state plainly while awaiting, returned or stale", () => {
-		expect(make({ ...PLAN, funding_state: "Awaiting Finance", mutable: false }).find('[data-testid="pln-funding-notice"]').text()).toContain("Awaiting Finance confirmation");
+		expect(make({ ...PLAN, funding_state: "Awaiting confirmation", mutable: false }).find('[data-testid="pln-funding-notice"]').text()).toContain("Awaiting Finance confirmation");
 		expect(make({ ...PLAN, funding_state: "Returned" }).find('[data-testid="pln-funding-notice"]').text()).toContain("returned by Finance");
 		expect(make({ ...PLAN, funding_state: "Stale" }).find('[data-testid="pln-funding-notice"]').text()).toContain("no longer current");
 		expect(make().find('[data-testid="pln-funding-notice"]').exists()).toBe(false);

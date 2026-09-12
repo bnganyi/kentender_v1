@@ -33,6 +33,7 @@ from kentender_procurement.procurement_planning.errors import MESSAGES
 from kentender_procurement.procurement_planning.services import needs_intake, readiness, references, schedule
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_ACCOUNTING_OFFICER,
 	ROLE_AUDITOR,
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
@@ -41,7 +42,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 )
 
 PAGE = "procurement-planning"
-PLAN_READERS = (ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR, ROLE_FINANCE_CONFIRMATION_OFFICER, ROLE_ACCOUNTING_OFFICER, ROLE_PLAN_STATUTORY_APPROVER)
+PLAN_READERS = (ROLE_PROCUREMENT_PLANNER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_AUDITOR, ROLE_FINANCE_CONFIRMATION_OFFICER, ROLE_ACCOUNTING_OFFICER, ROLE_PLAN_STATUTORY_APPROVER)
 
 
 def _money(amount: float) -> str:
@@ -291,37 +292,45 @@ def _item_docs(version_name: str) -> list:
 	return [frappe.get_doc("Annual Plan Item", n) for n in frappe.get_all("Annual Plan Item", filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")}, order_by="creation asc", pluck="name")]
 
 
-def plan_readiness(version, plan) -> dict[str, Any]:
-	"""The exact blocker list and the DES-07 nine-row card."""
+def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, Any]:
+	"""The exact blocker list and the readiness card. `pre_finance` (§5.6.4)
+	excludes Finance confirmation and the submission-only gates; `submission`
+	adds verified profiles, method evidence, feasibility and the planned
+	reservation allocations against the annual budget (§5.5.3.1)."""
 	from kentender_procurement.procurement_planning.services import plan_finance, strategy_gateway
 
 	reference = readiness.reference_for(plan.fiscal_year)
 	items = _item_docs(version.name)
 	eligible = {row["id"] for row in strategy_gateway.list_eligible_strategic_objectives()}
 	blockers: list[dict[str, Any]] = []
-	per_check = {"objective": [], "reservation": [], "contents": [], "schedule": [], "method": []}
+	per_check = {"objective": [], "reservation": [], "contents": [], "schedule": [], "method": [], "evidence": []}
 	for item in items:
 		allocations = readiness._allocations(item.name)
 		if any(source_correction_required(a.dpp_entry) for a in allocations):
 			blockers.append({"code": "PLN_SOURCE_CORRECTION_REQUIRED", "plan_item_id": item.plan_item_id, "message": f"{MESSAGES['PLN_SOURCE_CORRECTION_REQUIRED']} ({item.plan_item_id})"})
 		objective_ok = bool(cstr(item.strategic_objective)) and (cstr(item.strategic_objective) in eligible or version.version_status == "Active")
-		for blocker in readiness.item_blockers(item, allocations, reference, objective_eligible=objective_ok):
+		for blocker in readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_ok, stage=stage):
 			blockers.append({**blocker, "plan_item_id": item.plan_item_id, "message": f"{MESSAGES[blocker['code']]} ({item.plan_item_id})"})
 			key = {
 				"PLN_OBJECTIVE_INELIGIBLE": "objective", "PLN_RESERVATION_REQUIRED": "reservation",
 				"PLN_PLAN_CONTENTS_INCOMPLETE": "contents", "PLN_ENTRY_INCOMPLETE": "contents",
-				"PLN_SCHEDULE_INVALID": "schedule", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT": "schedule",
-				"PLN_METHOD_NOT_ADMISSIBLE": "method", "PLN_REFERENCE_UNAVAILABLE": "method",
+				"PLN_SCHEDULE_INVALID": "schedule", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT": "schedule", "PLN_DELIVERY_PERIOD_REQUIRED": "schedule",
+				"PLN_METHOD_NOT_ADMISSIBLE": "method", "PLN_REFERENCE_UNAVAILABLE": "method", "PLN_METHOD_EVIDENCE_REQUIRED": "evidence",
 			}[blocker["code"]]
 			per_check[key].append(item.plan_item_id)
 	for pid in readiness.low_value_cumulative_breaches(version.name, reference):
 		blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "plan_item_id": pid, "message": f"Low value procurement exceeds the per-item annual limit ({pid})."})
 		per_check["method"].append(pid)
 
-	share = readiness.reserved_share(version.name)
-	target = reference.get("reservation", {}).get("target_percent")
-	county_target = reference.get("reservation", {}).get("county_target_percent")
-	is_county = bool(frappe.db.get_single_value("Site Procuring Entity", "entity_is_county"))
+	share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+	target = share["target_percent"]
+	county_target = share["county"]["target_percent"]
+	is_county = share["county"]["applicable"]
+	if stage == "submission" and items and share["mandatory"]:
+		if not share["basis"]["available"] or not share["verified"]:
+			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "message": "The planned reservation allocation cannot be assessed: the annual budget basis or the verified reservation rule is missing.", "field": "reservation_category"})
+		elif not share["met"]:
+			blockers.append({"code": "PLN_RESERVATION_SHORTFALL", "message": f"{MESSAGES['PLN_RESERVATION_SHORTFALL']} Required {share['required']}, planned {share['qualifying']}, shortfall {share['shortfall']}.", "shortfall": share["shortfall"]})
 	advisories = readiness.splitting_advisory(version.name, reference)
 	affordability = None
 	if items:
@@ -344,21 +353,29 @@ def plan_readiness(version, plan) -> dict[str, Any]:
 		{"check": "Every Plan Item has a Strategic Objective", **dict(zip(("result", "kind"), _state(started, per_check["objective"])))},
 		{"check": "Every Plan Item has a reservation category", **dict(zip(("result", "kind"), _state(started, per_check["reservation"])))},
 		{"check": "Every Plan Item records plan horizon, aggregation and lotting", **dict(zip(("result", "kind"), _state(started, per_check["contents"])))},
-		{"check": "Baseline schedule meets the governed periods and delivery boundary", **dict(zip(("result", "kind"), _state(started, per_check["schedule"])))},
-		{"check": "Procurement method admissible for value", **dict(zip(("result", "kind"), _state(started, per_check["method"])))},
+		{"check": "Baseline schedule follows the resolved procedure profile and the delivery boundary", **dict(zip(("result", "kind"), _state(started, per_check["schedule"])))},
+		{"check": "Procurement method meets its conditions", **dict(zip(("result", "kind"), _state(started, per_check["method"] + per_check["evidence"])))},
 		{"check": "Plan within approved budget", "result": ("Within approved" if within_approved else ("Exceeds approved" if affordability else "Not started")) if started else "Not started", "kind": ("live" if within_approved else "critical") if (started and affordability) else "neutral"},
-		{"check": "Plan funding confirmed", "result": ("Confirmed" if funding_current else {"Awaiting Finance": "Awaiting Finance", "Returned": "Returned by Finance", "Stale": "Confirmation stale"}.get(version.funding_state, "Not started")) if started else "Not started", "kind": "live" if funding_current else ("attention" if version.funding_state in ("Awaiting Finance", "Returned", "Stale") else "neutral")},
-		{"check": "Preference and reservation target", "result": (f"{share['percent']:.0f}% of plan value reserved · target {target:.0f}%" if target else f"{share['percent']:.0f}% of plan value reserved · target not published"), "kind": "advisory"},
+		{"check": "Plan funding confirmed", "result": ("Confirmed" if funding_current else {"Awaiting confirmation": "Awaiting Finance confirmation", "Returned": "Returned by Finance", "Stale": "Confirmation stale"}.get(version.funding_state, "Not started")) if started else "Not started", "kind": "live" if funding_current else ("attention" if version.funding_state in ("Awaiting confirmation", "Returned", "Stale") else "neutral")},
+		{
+			"check": "Planned reservation allocation",
+			"result": (
+				(f"Required {share['required']} · planned {share['qualifying']} · shortfall {share['shortfall']}" if share["basis"]["available"] else "Annual budget basis not available")
+				if target else f"{share['qualifying']} planned · target not published"
+			),
+			"kind": ("live" if share["met"] else "attention") if (target and share["basis"]["available"]) else "advisory",
+		},
 		{"check": "Contract splitting review", "result": ("No advisory" if not advisories else ("Confirmed" if cstr(version.splitting_confirmation).strip() else f"{len(advisories)} advisory")), "kind": "neutral" if not advisories or cstr(version.splitting_confirmation).strip() else "advisory"},
 	]
 	if is_county:
-		checks.append({"check": "County resident-tenderer reservation", "result": f"{share['county_percent']:.0f}% of plan value · minimum {county_target or 20:.0f}%", "kind": "advisory"})
+		checks.append({"check": "County resident-tenderer reservation", "result": (f"Required {share['county']['required']} · planned {share['county']['qualifying']} · shortfall {share['county']['shortfall']}" if county_target and share["basis"]["available"] else f"{share['county']['qualifying']} planned · county target not published"), "kind": "advisory"})
 	return {
 		"checks": checks,
 		"blockers": blockers,
 		"advisories": advisories,
-		"reserved_share": share,
+		"reservation": share,
 		"reservation_target": target,
+		"stage": stage,
 		"reference_available": bool(reference.get("available")),
 		"affordability": affordability,
 		"funding_current": funding_current,
@@ -401,6 +418,15 @@ def _item_rows(plan_version: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _signature_summary(version) -> dict[str, Any] | None:
+	if not version.preparation_signature:
+		return None
+	row = frappe.db.get_value("Plan Preparation Signature", version.preparation_signature, ["actor", "capacity", "signed_at", "submitted_snapshot_id", "snapshot_hash"], as_dict=True)
+	if not row:
+		return None
+	return {"actor": row.actor, "actor_name": cstr(frappe.db.get_value("User", row.actor, "full_name") or row.actor), "capacity": row.capacity, "signed_at": cstr(row.signed_at), "signed_at_display": _eat(row.signed_at), "submitted_snapshot_id": row.submitted_snapshot_id, "snapshot_hash": row.snapshot_hash}
+
+
 def _open_task_for(actor: str, version) -> dict[str, Any] | None:
 	"""FU-14 — the viewing actor's own open task on this Version, so the record
 	route is never a dead end for its decider. Same authority as the workspace."""
@@ -428,6 +454,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	authz.require_site_read(PLAN_READERS, actor)
 	can_act = authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	version = _open_version(plan)
+	can_sign = authz.has_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor) and version.version_status == "Draft"
 
 	all_accepted = _accepted_entry_rows(plan.fiscal_year)
 	allocated_ids = _allocated_dpp_entries(version.name)
@@ -435,10 +462,10 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	items = _item_rows(version.name)
 	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active"))}, fields=["indicative_amount"]))
 	readiness_report = plan_readiness(version, plan) if version.version_status == "Draft" else None
-	mutable = version.version_status == "Draft" and can_act and version.funding_state != "Awaiting Finance"
+	mutable = version.version_status == "Draft" and can_act and version.funding_state != "Awaiting confirmation"
 	no_blockers = bool(readiness_report) and not readiness_report["blockers"]
-	share = readiness_report["reserved_share"] if readiness_report else readiness.reserved_share(version.name)
-	target = readiness_report["reservation_target"] if readiness_report else None
+	share = readiness_report["reservation"] if readiness_report else readiness.reservation_allocations(version.name, plan.fiscal_year)
+	target = share["target_percent"]
 	return {
 		"outcome": "OK",
 		"plan_reference": plan.plan_reference,
@@ -464,7 +491,8 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"allocated": len(all_accepted) - len(unallocated),
 			"plan_items": len(items),
 			"value_display": _money(item_value),
-			"reserved_share_display": f"{share['percent']:.0f}% of plan value · target {target:.0f}%" if target else f"{share['percent']:.0f}% of plan value",
+			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
+			"reservation": share,
 		},
 		"unallocated_sources": unallocated,
 		"unallocated_caption": f"{len(unallocated)} entr{'y' if len(unallocated) == 1 else 'ies'} available" if unallocated else "",
@@ -473,8 +501,15 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"blockers": readiness_report["blockers"] if readiness_report else [],
 		"splitting_advisories": readiness_report["advisories"] if readiness_report else [],
 		"splitting_confirmation": cstr(version.splitting_confirmation),
-		"can_request_funding": mutable and no_blockers and not unallocated and version.funding_state in ("Not requested", "Returned", "Stale"),
-		"can_submit": mutable and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"can_request_funding": (
+			(mutable and no_blockers and not unallocated and version.funding_state in ("Not requested", "Returned", "Stale"))
+			or (version.version_status == "Active" and can_act and version.funding_state in ("Stale", "Returned"))  # §5.3.4 reassessment
+		),
+		"funding_evidence": _funding_evidence(version),
+		# v1.18 §6.2 — **Sign and submit Annual Plan** belongs to the Head of Procurement Function
+		"can_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"can_sign_and_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"preparation_signature": _signature_summary(version),
 		"late_activation_required": bool(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date") and frappe.utils.getdate(frappe.utils.nowdate()) >= frappe.utils.getdate(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date"))),
 		"latest_publication": _latest_publication(version.name),
 		"active_view": _active_view(version, plan) if version.version_status == "Active" else None,
@@ -627,18 +662,34 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			}
 		)
 
+	from kentender_procurement.procurement_planning.services import profiles, scope_lock
+
 	objectives = strategy_gateway.list_eligible_strategic_objectives()
 	objective_eligible = (not item.strategic_objective) or any(row["id"] == item.strategic_objective for row in objectives)
-	band = readiness.resolve_band(reference, cstr(item.procurement_category) or "Services", value)
+	category = cstr(item.procurement_category) or "Services"
+	resolved = readiness.method_profile_for(item, plan.fiscal_year)
+	method_profile, schedule_profile = resolved["method"], resolved["schedule"]
+	if version.version_status != "Draft":
+		# submitted content reads its frozen rule-profile evidence
+		method_profile = profiles.method_profile_by_name(cstr(item.method_profile_version)) if item.method_profile_version else method_profile
+		schedule_profile = profiles.schedule_profile_by_name(cstr(item.schedule_profile_version)) if item.schedule_profile_version else schedule_profile
+	conditions = profiles.method_conditions(method_profile, procurement_category=category, planned_value=value, evidence_rows=readiness.item_evidence(item))
+	applicable_on = profiles.applicability_date(item.baseline_invitation_date, plan.fiscal_year)
+	admissible = profiles.admissible_methods(procurement_category=category, planned_value=value, applicability_date=applicable_on)
 	categories = readiness.reservation_categories(reference)
 	is_county = bool(frappe.db.get_single_value("Site Procuring Entity", "entity_is_county"))
-	blockers = readiness.item_blockers(item, allocations, reference, objective_eligible=objective_eligible) if version.version_status == "Draft" else []
+	blockers = readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_eligible, stage="submission") if version.version_status == "Draft" else []
 	price_index = reference.get("market_price_index", {})
 	price_rows = [r for r in price_index.get("rows", []) if r.get("procurement_category") == cstr(item.procurement_category)] if price_index.get("published") else []
-	periods = {f: int(item.get(f) or 0) for f in schedule.PERIOD_FIELDS}
-	defaults = schedule.default_periods(reference, cstr(item.procurement_category) or "Services", cstr(item.procurement_method) or readiness.OPEN_TENDER)
+	period_inputs = readiness.item_period_inputs(item)
+	periods = {f: int(period_inputs.get(f) or 0) for f in schedule.PERIOD_FIELDS}
+	rules = profiles.period_rules(schedule_profile)
+	defaults = {f: (rules[f].get("default_days") if f in rules else None) for f in schedule.PERIOD_FIELDS}
+	delivery_days = readiness.item_delivery_days(item)
+	baseline_map = {f: item.get(f) for f in schedule.BASELINE_FIELDS}
+	lock = scope_lock.status(item.plan_item_id)
 	combined = len(sources) > 1
-	mutable = item.item_state == "Draft" and version.version_status == "Draft" and can_act and version.funding_state != "Awaiting Finance"
+	mutable = item.item_state == "Draft" and version.version_status == "Draft" and can_act and version.funding_state != "Awaiting confirmation"
 	return {
 		"outcome": "OK",
 		"plan_item_id": item.plan_item_id,
@@ -665,45 +716,73 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"procurement_category": cstr(item.procurement_category),
 			"aggregation_reason": cstr(item.aggregation_reason),
 		},
+		"scope_lock": lock,
 		"classification": {
 			"strategic_objective": cstr(item.strategic_objective),
 			"objective_path": cstr(item.objective_path),
 			"objective_eligible": objective_eligible,
 			"strategic_objectives": objectives,
 			"procurement_method": cstr(item.procurement_method),
-			"admissible_methods": band["admissible_methods"],
-			"proposed_method": band["proposed_method"],
-			"value_band": band["band_label"] or ("Threshold matrix not configured for this financial year" if not band["available"] else ""),
-			"reference_available": band["available"],
+			"admissible_methods": admissible,
+			"proposed_method": readiness.OPEN_TENDER if readiness.OPEN_TENDER in admissible else (admissible[0] if admissible else ""),
+			"value_band": (
+				f"{method_profile.get('profile')} · {method_profile.get('verification_status')}" if method_profile.get("found")
+				else ("No eligibility profile in force for this method on the applicable date" if cstr(item.procurement_method) else "")
+			),
+			"reference_available": bool(method_profile.get("found")),
+			"method_profile": {
+				"found": bool(method_profile.get("found")),
+				"profile": cstr(method_profile.get("profile")),
+				"version_number": method_profile.get("version_number"),
+				"verification_status": cstr(method_profile.get("verification_status")),
+				"applicability_date": cstr(applicable_on),
+				"conditions": conditions["results"],
+				"admissible": conditions["admissible"],
+				"evidence_complete": conditions["evidence_complete"],
+				"missing_evidence": conditions["missing_evidence"],
+			},
+			"method_condition_evidence": readiness.item_evidence(item),
+			"estimate_basis": cstr(item.estimate_basis),
+			"estimate_basis_reference": cstr(item.estimate_basis_reference),
 		},
 		"preference": {
 			"reservation_category": cstr(item.reservation_category),
-			"reservation_category_reason": cstr(item.reservation_category_reason),
 			"reservation_categories": [c["category"] for c in categories],
-			"highest_advantage": readiness.highest_advantage(reference),
 			"county_resident_reservation": bool(item.county_resident_reservation),
 			"county_control_available": is_county,
-			"exclusive_preference": bool(item.exclusive_preference),
 			"plan_horizon": cstr(item.plan_horizon),
-			"multi_year_justification": cstr(item.multi_year_justification),
 			"aggregation_indicator": cstr(item.aggregation_indicator),
 			"lotting_indicator": cstr(item.lotting_indicator),
 			"lot_count": int(item.lot_count or 0),
-			"helper": "Recorded for the entity's 30% target. Choose None only where no reservation applies.",
+			"helper": "The planned designation from the governed catalogue. Choose None where no designation applies; candidate entitlement is assessed downstream.",
 		},
 		"baseline": {
 			"target_invitation_date": cstr(item.baseline_invitation_date),
 			"periods": periods,
+			"period_inputs": period_inputs,
 			"defaults": defaults,
-			"using_defaults": all(periods[f] == defaults[f] for f in schedule.PERIOD_FIELDS),
-			"defaults_line": f"Using governed defaults for {cstr(item.procurement_category) or 'Services'} · {cstr(item.procurement_method) or readiness.OPEN_TENDER}",
-			"floors": {"tendering_period_days": schedule.TENDERING_FLOOR, "standstill_period_days": schedule.STANDSTILL_FLOOR},
-			"ceilings": {"evaluation_period_days": schedule.EVALUATION_CEILING},
+			"using_defaults": all(periods[f] == (defaults[f] or 0) for f in schedule.PERIOD_FIELDS),
+			"defaults_line": (f"Profile {schedule_profile.get('profile')} · {schedule_profile.get('verification_status')}" if schedule_profile.get("found") else "No procedure schedule profile in force for this method and category — Draft only; submission is blocked"),
+			"floors": {k: r["minimum_days"] for k, r in rules.items() if r.get("minimum_days") is not None},
+			"ceilings": {k: r["maximum_days"] for k, r in rules.items() if r.get("maximum_days") is not None},
+			"profile": {
+				"found": bool(schedule_profile.get("found")),
+				"profile": cstr(schedule_profile.get("profile")),
+				"version_number": schedule_profile.get("version_number"),
+				"verification_status": cstr(schedule_profile.get("verification_status")),
+				"complete": bool(schedule_profile.get("complete")),
+				"gaps": schedule_profile.get("gaps", []),
+				"counting_rule": cstr(schedule_profile.get("counting_rule")),
+				"milestones": schedule_profile.get("milestones", []),
+			},
+			"estimated_delivery_period_days": delivery_days,
+			"estimated_completion_date": cstr(item.estimated_completion_date),
+			"estimated_completion_display": _date(item.estimated_completion_date),
 			"rows": [
-				{"milestone": m, "label": schedule.MILESTONE_LABELS[m], "date": cstr(item.get(f"baseline_{m}_date")), "date_display": _date(item.get(f"baseline_{m}_date")), "from_requisition": m == "delivery_completion"}
+				{"milestone": m, "label": schedule.MILESTONE_LABELS[m], "date": cstr(item.get(f"baseline_{m}_date")), "date_display": _date(item.get(f"baseline_{m}_date")) if item.get(f"baseline_{m}_date") else ("Not applicable" if (schedule_profile.get("found") and m not in profiles.applicable_milestones(schedule_profile)) else "—"), "applies": (not schedule_profile.get("found")) or m in profiles.applicable_milestones(schedule_profile), "from_requisition": False, "source_boundary": m == "delivery_completion"}
 				for m in schedule.MILESTONES
 			],
-			"delivery_boundary_ok": schedule.delivery_boundary_ok({f: item.get(f) for f in schedule.BASELINE_FIELDS}),
+			"delivery_boundary_ok": schedule.delivery_boundary_ok(baseline_map, delivery_days),
 			"locked": version.version_status != "Draft",
 		},
 		"schedule": schedule.schedule_rows(item) if version.version_status == "Active" else [],
@@ -721,6 +800,40 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 # --------------------------------------------------------------------------
 
 
+def _funding_evidence(version) -> dict[str, Any]:
+	"""§5.3.4 — readers distinguish **Funding evidence at approval** from
+	**Current funding confirmation**; a reassessment appends, never rewrites."""
+	from kentender_procurement.procurement_planning.services import financial_basis, plan_finance
+
+	chain = authz.evidence_chain(version.name) or [version.name]
+	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain)}, pluck="name")
+	decisions = frappe.get_all(
+		"Plan Finance Decision", filters={"task": ("in", tasks or ("",)), "decision": "Confirm plan funding"},
+		fields=["name", "decision_reference", "decided_at", "task"], order_by="decided_at asc",
+	) if tasks else []
+
+	def _row(decision):
+		if not decision:
+			return None
+		basis = financial_basis.basis_of_decision(frappe._dict(task=decision.task))
+		return {"decision": decision.decision_reference, "decided_at": cstr(decision.decided_at), "decided_at_display": _eat(decision.decided_at), "basis_digest": cstr(basis.basis_digest) if basis else "", "planned_total": financial_basis.summary(basis).get("planned_total", "") if basis else ""}
+
+	at_approval = None
+	if version.submitted_at:
+		before = [d for d in decisions if d.decided_at and d.decided_at <= version.submitted_at]
+		at_approval = _row(before[-1]) if before else None
+	current = _row(decisions[-1]) if decisions else None
+	reuse = frappe.get_all("Plan Finance Basis Reuse", filters={"plan_version": version.name}, fields=["name", "earlier_decision", "validated_at"], order_by="validated_at desc", limit=1)
+	return {
+		"state": version.funding_state,
+		"current": bool(current) and plan_finance.funding_is_current(version),
+		"at_approval": at_approval,
+		"current_confirmation": current,
+		"reuse": {"earlier_decision": frappe.db.get_value("Plan Finance Decision", reuse[0].earlier_decision, "decision_reference"), "validated_at": _eat(reuse[0].validated_at)} if reuse else None,
+		"open_review": frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, "task_reference") or "",
+	}
+
+
 def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance
 
@@ -732,16 +845,19 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	version = frappe.get_doc("Annual Plan Version", task_doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	decided = task_doc.status != "Open"
+	from kentender_procurement.procurement_planning.services import financial_basis
+
 	statement = json.loads(task_doc.affordability_statement or "{}") if decided else plan_finance.affordability_statement(plan, version)
 	if decided and task_doc.decision:
 		decision_statement = frappe.db.get_value("Plan Finance Decision", task_doc.decision, "affordability_statement")
 		if decision_statement:
 			statement = json.loads(decision_statement)
+	basis = frappe.get_doc(financial_basis.DOCTYPE, task_doc.financial_basis) if task_doc.financial_basis else None
 	totals = readiness.line_totals(version.name)
 	used = [line for line in statement.get("lines", []) if flt(line.get("planned")) > 0]
 	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
-	share = readiness.reserved_share(version.name)
-	target = readiness.reference_for(plan.fiscal_year).get("reservation", {}).get("target_percent")
+	share = readiness.reservation_allocations(version.name, plan.fiscal_year)
+	target = share["target_percent"]
 	rows = [
 		{
 			"budget_line": line["budget_line"],
@@ -781,7 +897,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 			"plan_items": items,
 			"value_display": _money(sum(totals.values())),
 			"lines_used": len(used),
-			"reserved_share_display": f"{share['percent']:.0f}% of plan value · target {target:.0f}%" if target else f"{share['percent']:.0f}% of plan value",
+			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
 		},
 		"as_at_display": _eat(statement.get("as_at")),
 		"lines": rows,
@@ -795,6 +911,11 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"advisory": None if within_available else {"kind": "advisory", "text": "The planned total exceeds the currently available amount on at least one line. Planning and drawdown run on different horizons; this blocks nothing."},
 		"quiet_line": "Confirmation records that this plan fits the approved budget. It reserves no funds; reservation happens at requisition.",
 		"failing_lines": statement.get("failing_lines", []),
+		# v1.18 §4.7 — the immutable basis this review decides on
+		"financial_basis": financial_basis.summary(basis),
+		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
+		"is_reassessment": version.version_status == "Active",
+		"version_status": version.version_status,
 	}
 
 
@@ -825,7 +946,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 			row = frappe.db.get_value("Plan Governance Decision", ao_decision, ["actor", "decided_at"], as_dict=True)
 			ao_actor = cstr(frappe.db.get_value("User", row.actor, "full_name") or row.actor) if row else ""
 			ao_decided_at = _eat(row.decided_at) if row else ""
-		is_board = plan_governance.is_board_capacity(task_doc.capacity)
+		is_board = plan_governance.is_collective_capacity(task_doc.capacity)
 		authority_card = {
 			"capacity": "Governing body" if is_board else task_doc.capacity,
 			"capacity_detail": task_doc.capacity,
@@ -860,7 +981,9 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"items": rows,
 		"caption": f"{len(rows)} Plan Item{'s' if len(rows) != 1 else ''} · {_money(total_value)}",
 		"advisory_line": advisory_line,
-		"late_activation_reason": cstr(version.late_activation_reason),
+		"late_activation_reason": cstr(frappe.db.get_value("Late Activation Explanation", {"plan_version": version.name}, "reason", order_by="recorded_at desc") or ""),
+		"late_activation_explanations": frappe.get_all("Late Activation Explanation", filters={"plan_version": version.name}, fields=["name", "reason", "actor", "recorded_at", "supersedes"], order_by="recorded_at asc"),
+		"preparation_signature": _signature_summary(version),
 		"confirm_label": "Adopt and submit" if task_doc.stage == "Accounting Officer adoption" else "Approve Annual Procurement Plan",
 		"return_dialog": (
 			{"title": "Return Plan Version for correction?", "lede": f"The submitted Version {version.version_number} remains unchanged. State the correction required."}

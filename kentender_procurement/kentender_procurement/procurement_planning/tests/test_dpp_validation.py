@@ -8,6 +8,8 @@ from __future__ import annotations
 from unittest.mock import patch
 from uuid import uuid4
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -236,6 +238,29 @@ class TestAcceptance(ValidationCase):
 		task = self.submitted_task()
 		with self.assertRaises(frappe.DoesNotExistError):
 			self.accept(task, user=fx.OUTSIDER)
+
+
+class TestDispositionEvent(ValidationCase):
+	def test_acceptance_emits_one_disposition_event_per_need_source_and_none_for_direct(self):
+		"""PLN-CHG-001 v1.18 §5.1.4 — `NeedPlanningDispositionChanged.v1` after acceptance only."""
+		from kentender_procurement.departmental_needs.services import usage as needs_usage
+
+		task = self.submitted_task()
+		with patch.object(needs_usage, "project_planning_disposition") as projected:
+			self.accept(task)
+			projected.assert_not_called()  # the only source is a direct requirement
+		# a Need-origin snapshot row (proceeding) → one Proceeding event carrying the submission sequence
+		snapshots = json.loads(frappe.db.get_value("Departmental Plan Submission", task.submission, "entry_snapshots"))
+		snapshots.append({"entry_id": "NEEDROW", "source_origin": needs_intake.NEED_ORIGIN, "need": fx.NEED, "need_revision": fx.NEED_V1, "not_proceeding_reason": ""})
+		with patch.object(needs_usage, "project_planning_disposition") as projected:
+			dpp_validation._publish_dispositions(snapshots, submission=task.submission, decision_name="DEC-TEST", actor=fx.PLANNER)
+			self.assertEqual(projected.call_count, 1)
+			kwargs = projected.call_args.kwargs
+			self.assertEqual(kwargs["disposition"], "Proceeding")
+			self.assertEqual(kwargs["departmental_need"], fx.NEED)
+			self.assertEqual(kwargs["dpp_submission"], task.submission)
+			self.assertEqual(kwargs["producer_sequence"], 1)
+			self.assertEqual(kwargs["source_event_id"], f"DEC-TEST:{fx.NEED_V1}:disposition")
 
 
 class TestReturn(ValidationCase):

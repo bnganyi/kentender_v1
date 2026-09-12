@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "creation": "2026-09-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Procedure Schedule Profile",
+ "autoname": "field:profile_reference",
+ "naming_rule": "By fieldname",
+ "title_field": "profile_name",
+ "fields": [
+  {"fieldname": "profile_reference", "fieldtype": "Data", "label": "Profile Reference", "reqd": 1, "unique": 1, "read_only": 1},
+  {"fieldname": "profile_name", "fieldtype": "Data", "label": "Profile Name", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "procurement_method", "fieldtype": "Link", "label": "Procurement Method", "options": "Procurement Method", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "procedure", "fieldtype": "Data", "label": "Procedure", "read_only": 1},
+  {"fieldname": "procurement_category", "fieldtype": "Select", "label": "Procurement Category", "options": "Goods\nWorks\nServices", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "version_number", "fieldtype": "Int", "label": "Version", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nSuperseded", "default": "Active", "reqd": 1, "read_only": 1},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From", "reqd": 1, "read_only": 1},
+  {"fieldname": "effective_until", "fieldtype": "Date", "label": "Effective Until", "read_only": 1},
+  {"fieldname": "applicability_basis", "fieldtype": "Data", "label": "Applicability Basis", "read_only": 1},
+  {"fieldname": "counting_rule", "fieldtype": "Select", "label": "Default Counting Rule", "options": "Calendar days\nWorking days", "default": "Calendar days", "reqd": 1, "read_only": 1},
+  {"fieldname": "estimated_delivery_period_default_days", "fieldtype": "Int", "label": "Estimated Delivery Period Default (days)", "read_only": 1, "description": "Blank means Not set; a Planner must enter the period."},
+  {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Source and Verification"},
+  {"fieldname": "verification_status", "fieldtype": "Select", "label": "Verification Status", "options": "Production verification pending\nFixture-verified — not production law\nVerified", "default": "Production verification pending", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "source_instrument", "fieldtype": "Data", "label": "Source Instrument", "read_only": 1},
+  {"fieldname": "provision", "fieldtype": "Data", "label": "Provision", "read_only": 1},
+  {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document", "read_only": 1},
+  {"fieldname": "section_milestones", "fieldtype": "Section Break", "label": "Milestones and Periods"},
+  {"fieldname": "milestones", "fieldtype": "Table", "label": "Milestones", "options": "Schedule Profile Milestone", "read_only": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
+ ],
+ "field_order": ["profile_reference", "profile_name", "procurement_method", "procedure", "procurement_category", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "counting_rule", "estimated_delivery_period_default_days", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_milestones", "milestones", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
+ ],
+ "track_changes": 1
+}

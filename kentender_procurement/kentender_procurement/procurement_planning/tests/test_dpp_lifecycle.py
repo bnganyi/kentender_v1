@@ -12,6 +12,8 @@ from __future__ import annotations
 from unittest.mock import patch
 from uuid import uuid4
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -20,6 +22,7 @@ from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
 	needs_intake,
+	dpp_read,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -349,11 +352,158 @@ class TestSubmission(PlanningCommandCase):
 		self.assertEqual(caught.exception.code, "PLN_WINDOW_CLOSED")
 
 
+class TestNeedPlanningDisposition(PlanningCommandCase):
+	"""PLN-CHG-001 v1.18 §5.1.4 / §7.2 `SetNeedPlanningDisposition` (PLN18-205)."""
+
+	def need_entry(self):
+		self._sources.stop()
+		self._sources = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		self._sources.start()
+		revision = patch.object(needs_intake, "current_accepted_revision_of", return_value=fx.NEED_V1)
+		revision.start()
+		self.addCleanup(revision.stop)
+		opened = self.open_alpha()
+		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED}, "entry_id")
+		self.assertTrue(entry_id)
+		return opened, entry_id
+
+	def disposition(self, opened, entry_id, disposition, *, reason="", user=fx.AUTHOR, record_version=None):
+		frappe.set_user(user)
+		return dpp_lifecycle.set_need_planning_disposition(
+			dpp_version=opened["current_version"], entry_id=entry_id, disposition=disposition, reason=reason,
+			expected_record_version=opened["record_version"] if record_version is None else record_version, idempotency_key=key(),
+		)
+
+	def test_do_not_proceed_needs_a_reason_and_clears_operative_funding(self):
+		opened, entry_id = self.need_entry()
+		frappe.set_user(fx.AUTHOR)
+		funded = dpp_lifecycle.save_need_funding(
+			dpp_version=opened["current_version"], entry_id=entry_id, budget_line=fx.BUDGET_LINE, indicative_amount=1000,
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.disposition(opened, entry_id, "Do not proceed", reason="too short", record_version=funded["record_version"])
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		marked = self.disposition(opened, entry_id, "Do not proceed", reason="The department will defer this requirement to the following financial year.", record_version=funded["record_version"])
+		self.assertEqual(marked["action"], "need_not_proceeding")
+		entry = frappe.get_doc("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": entry_id})
+		self.assertFalse(entry.budget_line)
+		self.assertEqual(int(entry.indicative_amount), 0)
+		self.assertEqual(entry.need, fx.NEED)  # identity, revision and facts preserved
+		self.assertEqual(entry.need_revision, fx.NEED_V1)
+		self.assertGreater(entry.quantity, 0)
+		# funding is refused until restored
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=entry_id, budget_line=fx.BUDGET_LINE, indicative_amount=1000,
+				expected_record_version=marked["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		# the read exposes the disposition and the Draft action
+		frappe.set_user(fx.HOD)
+		read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		row = next(r for r in read["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(row["disposition"], "Not proceeding")
+		self.assertTrue(row["can_set_disposition"])
+		self.assertEqual(read["display_state"], "Draft")
+
+	def test_restore_removes_the_disposition_and_requires_fresh_funding(self):
+		opened, entry_id = self.need_entry()
+		marked = self.disposition(opened, entry_id, "Do not proceed", reason="The department will defer this requirement to the following financial year.")
+		restored = self.disposition(opened, entry_id, "Restore", record_version=marked["record_version"])
+		self.assertEqual(restored["action"], "need_restored")
+		entry = frappe.get_doc("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": entry_id})
+		self.assertFalse(entry.not_proceeding_reason)
+		self.assertFalse(entry.budget_line)
+		self.assertFalse(dpp_lifecycle.entry_is_complete(entry))
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.disposition(opened, entry_id, "Restore", record_version=restored["record_version"])
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.disposition(opened, entry_id, "Shelve", record_version=restored["record_version"])
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(frappe.db.count("Planning Command Journal", {"command": "SetNeedPlanningDisposition"}), 2)
+
+	def test_a_direct_entry_takes_no_disposition_and_no_event_is_published_before_acceptance(self):
+		opened, entry_id = self.need_entry()
+		added = self.add_direct(opened)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.disposition(opened, added["entry_id"], "Do not proceed", reason="The department will defer this requirement to the following financial year.", record_version=added["record_version"])
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		from kentender_procurement.departmental_needs.services import usage as needs_usage
+
+		with patch.object(needs_usage, "project_planning_disposition") as projected:
+			self.disposition(opened, entry_id, "Do not proceed", reason="The department will defer this requirement to the following financial year.", record_version=added["record_version"])
+			projected.assert_not_called()
+
+
+class TestCorrectionCohort(PlanningCommandCase):
+	"""PLN-CHG-001 v1.18 §5.1.2 — a correction keeps the returned Submission's
+	fixed source cohort; later Needs wait for a subsequent update."""
+
+	def returned_correction(self):
+		opened = self.open_alpha()
+		added = self.add_direct(opened)
+		self.submit({**opened, "record_version": added["record_version"]})
+		task = frappe.get_doc("Departmental Plan Validation Task", {"dpp_version": opened["current_version"]})
+		frappe.set_user(fx.PLANNER)
+		from kentender_procurement.procurement_planning.services import dpp_validation
+
+		returned = dpp_validation.return_departmental_plan(
+			task=task.name, issues=[{"entry_id": added["entry_id"], "problem": "Amount too low", "correction": "Re-estimate the amount"}],
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		root = frappe.get_doc("Departmental Plan", opened["departmental_plan"])
+		return opened, added, root
+
+	def test_a_correction_carries_the_direct_source_id_and_refuses_an_unrelated_direct_requirement(self):
+		opened, added, root = self.returned_correction()
+		original = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": added["entry_id"]}, "direct_source_id")
+		copied = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": root.current_version, "entry_id": added["entry_id"]}, "direct_source_id")
+		self.assertTrue(original.startswith("DSR-"))
+		self.assertEqual(original, copied)
+		frappe.set_user(fx.AUTHOR)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			dpp_lifecycle.save_direct_requirement(
+				dpp_version=root.current_version, values=fx.direct_values(title="A late unrelated requirement"),
+				expected_record_version=root.record_version, idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_CORRECTION_COHORT_VIOLATION")
+		# editing the carried entry inside the cohort is fine
+		edited = dpp_lifecycle.save_direct_requirement(
+			dpp_version=root.current_version, entry_id=added["entry_id"], values=fx.direct_values(indicative_amount=2500),
+			expected_record_version=root.record_version, idempotency_key=key(),
+		)
+		self.assertEqual(edited["action"], "direct_updated")
+
+	def test_a_need_accepted_after_return_is_not_pulled_into_the_correction(self):
+		opened, added, root = self.returned_correction()
+		self._sources.stop()
+		self._sources = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		self._sources.start()
+		correction = frappe.get_doc("Departmental Plan Version", root.current_version)
+		refreshed = needs_intake.refresh_draft_entries(correction)
+		self.assertEqual(refreshed["added"], [])
+		self.assertEqual(needs_intake.coverage_gaps(correction), [])
+		frappe.set_user(fx.HOD)
+		resubmitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=root.current_version, certification_confirmed=True, expected_record_version=root.record_version, idempotency_key=key(),
+		)
+		self.assertEqual(resubmitted["action"], "submitted")
+		snapshot = frappe.get_doc("Departmental Plan Submission", {"dpp_version": root.current_version})
+		rows = json.loads(snapshot.entry_snapshots)
+		self.assertEqual([r["source_line_id"] for r in rows], [frappe.db.get_value("Departmental Plan Entry", {"dpp_version": root.current_version, "entry_id": added["entry_id"]}, "direct_source_id")])
+		# an ordinary Draft (no returned origin) admits the later Need; the correction does not
+		self.assertEqual(len(needs_intake._cohort_filter(frappe._dict(returned_from_submission=None), [fx.accepted_source()])), 1)
+		self.assertEqual(needs_intake._cohort_filter(correction, [fx.accepted_source()]), [])
+
+
 class TestWithdrawal(PlanningCommandCase):
 	def test_withdraw_then_reopen_only_while_window_open(self):
 		opened = self.open_alpha()
 		frappe.set_user(fx.HOD)
-		withdrawn = dpp_lifecycle.withdraw_departmental_plan_version(
+		withdrawn = dpp_lifecycle.withdraw_departmental_submission(
+			reason="The department will restart its plan.",
 			dpp_version=opened["current_version"],
 			expected_record_version=opened["record_version"],
 			idempotency_key=key(),
@@ -366,7 +516,8 @@ class TestWithdrawal(PlanningCommandCase):
 	def test_reopen_after_window_close_is_refused(self):
 		opened = self.open_alpha(fy=fx.FY_CLOSED)
 		frappe.set_user(fx.HOD)
-		dpp_lifecycle.withdraw_departmental_plan_version(
+		dpp_lifecycle.withdraw_departmental_submission(
+			reason="The department will restart its plan.",
 			dpp_version=opened["current_version"],
 			expected_record_version=opened["record_version"],
 			idempotency_key=key(),

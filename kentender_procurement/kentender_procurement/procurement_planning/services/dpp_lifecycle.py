@@ -149,6 +149,7 @@ def copy_entries(source_version: str, target_version, fixture_namespace: str = "
 				"entry_id": entry.entry_id,
 				"dpp_version": target_version.name,
 				"source_origin": entry.source_origin,
+				"direct_source_id": entry.direct_source_id,
 				"need": entry.need,
 				"need_revision": entry.need_revision,
 				"title": entry.title,
@@ -165,6 +166,11 @@ def copy_entries(source_version: str, target_version, fixture_namespace: str = "
 		).insert(ignore_permissions=True)
 		count += 1
 	return count
+
+
+def _stable_source_key(entry) -> str:
+	"""§4.3 `source_line_id` — the Need id, or the direct requirement's stable id."""
+	return cstr(entry.need) or cstr(entry.direct_source_id) or cstr(entry.entry_id)
 
 
 def entry_is_complete(entry) -> bool:
@@ -240,20 +246,15 @@ def save_need_funding(
 	entry_id: str,
 	budget_line: str = "",
 	indicative_amount: float | None = None,
-	not_proceeding_reason: str = "",
 	expected_record_version,
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""§8.2 `SaveNeedFunding` — Procurement Budget Line and amount on a
-	Need-origin entry; or, with `not_proceeding_reason` (20–500 characters),
-	the §4.4 not-proceeding outcome, which clears the funding specification."""
+	"""§7.2 `SaveNeedFunding` — Procurement Budget Line and amount on a
+	Need-origin entry; source facts stay protected. A not-proceeding entry
+	takes no funding until it is restored (`SetNeedPlanningDisposition`)."""
 	actor = authz.actor(user)
-	reason = cstr(not_proceeding_reason).strip()
-	payload = {
-		"dpp_version": dpp_version, "entry_id": entry_id, "budget_line": budget_line,
-		"indicative_amount": indicative_amount, "not_proceeding_reason": reason,
-	}
+	payload = {"dpp_version": dpp_version, "entry_id": entry_id, "budget_line": budget_line, "indicative_amount": indicative_amount}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
@@ -272,24 +273,86 @@ def save_need_funding(
 	current = needs_intake.current_accepted_revision_of(entry.need, root.fiscal_year)
 	if current != cstr(entry.need_revision):
 		fail("PLN_DPP_STALE")
-	if reason:
-		if not (20 <= len(reason) <= 500):
-			fail("PLN_ENTRY_INCOMPLETE", "State why the department is not proceeding (20–500 characters).")
-		entry.not_proceeding_reason = reason
+	if cstr(entry.not_proceeding_reason).strip():
+		fail("PLN_ENTRY_INCOMPLETE", "This requirement is recorded as not proceeding. Restore it to planned requirements before funding it.", {"entry_id": entry.entry_id})
+	_validate_funding(root, budget_line, indicative_amount)
+	entry.budget_line = budget_line
+	entry.indicative_amount = flt(indicative_amount)
+	entry.save(ignore_permissions=True)
+	envelope.bump(root)
+	result = _result(root, version, action="need_funding_saved")
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="SaveNeedFunding", payload=payload, result=result,
+		document_type="Departmental Plan Entry", document_name=entry.name, actor=actor,
+		fixture_namespace=cstr(root.fixture_namespace),
+	)
+	return result
+
+
+DISPOSITION_DO_NOT_PROCEED = "Do not proceed"
+DISPOSITION_RESTORE = "Restore"
+
+
+def set_need_planning_disposition(
+	*,
+	dpp_version: str,
+	entry_id: str,
+	disposition: str,
+	reason: str = "",
+	expected_record_version,
+	idempotency_key: str,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.18 §5.1.4 / §7.2 `SetNeedPlanningDisposition` — the two
+	Draft actions on a Need-origin entry: **Do not proceed this financial year**
+	(reason 20–500 characters; operative funding cleared; the Need identity,
+	revision, six facts and full quantity stay in the snapshot) and **Restore to
+	planned requirements** (disposition removed; fresh funding completion
+	required). Draft only; no accepted event is published before DPP acceptance
+	(`dpp_validation.accept_departmental_plan` emits it)."""
+	actor = authz.actor(user)
+	choice = cstr(disposition).strip()
+	reason_text = " ".join(cstr(reason).split())
+	payload = {"dpp_version": dpp_version, "entry_id": entry_id, "disposition": choice, "reason": reason_text}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	if choice not in (DISPOSITION_DO_NOT_PROCEED, DISPOSITION_RESTORE):
+		fail("PLN_ENTRY_INCOMPLETE", "The disposition is Do not proceed or Restore.", {"field": "disposition"})
+	version = _version(dpp_version)
+	root = envelope.locked("Departmental Plan", version.departmental_plan)
+	_require_author(actor, root)
+	envelope.check_record_version(root, expected_record_version)
+	_require_mutable_current(root, version)
+	name = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": version.name, "entry_id": cstr(entry_id)}, "name")
+	if not name:
+		authz.not_found()
+	entry = frappe.get_doc("Departmental Plan Entry", name)
+	if entry.source_origin != needs_intake.NEED_ORIGIN:
+		fail("PLN_ENTRY_INCOMPLETE", "Only a Need-origin requirement takes a planning disposition; remove an unsubmitted direct requirement instead.", {"entry_id": entry.entry_id})
+	current = needs_intake.current_accepted_revision_of(entry.need, root.fiscal_year)
+	if current != cstr(entry.need_revision):
+		fail("PLN_DPP_STALE")
+	if choice == DISPOSITION_DO_NOT_PROCEED:
+		if not (20 <= len(reason_text) <= 500):
+			fail("PLN_ENTRY_INCOMPLETE", "State why the department is not proceeding (20–500 characters).", {"field": "reason"})
+		entry.not_proceeding_reason = reason_text
 		entry.budget_line = None
 		entry.indicative_amount = 0
 		action = "need_not_proceeding"
 	else:
-		_validate_funding(root, budget_line, indicative_amount)
-		entry.budget_line = budget_line
-		entry.indicative_amount = flt(indicative_amount)
+		if not cstr(entry.not_proceeding_reason).strip():
+			fail("PLN_ENTRY_INCOMPLETE", "This requirement is already a planned requirement.", {"entry_id": entry.entry_id})
 		entry.not_proceeding_reason = None
-		action = "need_funding_saved"
+		entry.budget_line = None
+		entry.indicative_amount = 0
+		action = "need_restored"
 	entry.save(ignore_permissions=True)
 	envelope.bump(root)
 	result = _result(root, version, action=action)
+	result["entry_id"] = entry.entry_id
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="SaveNeedFunding", payload=payload, result=result,
+		idempotency_key=idempotency_key, command="SetNeedPlanningDisposition", payload=payload, result=result,
 		document_type="Departmental Plan Entry", document_name=entry.name, actor=actor,
 		fixture_namespace=cstr(root.fixture_namespace),
 	)
@@ -330,6 +393,9 @@ def save_direct_requirement(
 	_require_mutable_current(root, version)
 	_validate_direct_values(root, values)
 
+	if not entry_id and cstr(version.returned_from_submission):
+		# §5.1.2 — a correction keeps the returned Submission's fixed cohort
+		fail("PLN_CORRECTION_COHORT_VIOLATION", detail={"dpp_version": version.name})
 	if entry_id:
 		name = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": version.name, "entry_id": cstr(entry_id)}, "name")
 		if not name:
@@ -347,6 +413,7 @@ def save_direct_requirement(
 				"entry_id": references.entry_id(root.dpp_reference),
 				"dpp_version": version.name,
 				"source_origin": needs_intake.DIRECT_ORIGIN,
+				"direct_source_id": references.direct_source_id(),
 				"fixture_namespace": cstr(root.fixture_namespace),
 				**{field: values.get(field) for field in DIRECT_FIELDS},
 			}
@@ -439,6 +506,14 @@ def submit_departmental_plan(
 	entries = _entries(version.name)
 	if not entries:
 		fail("PLN_ENTRY_INCOMPLETE", "A departmental plan with no entries cannot be submitted.")
+	# §5.1.2 — a resubmission after return accounts for the stable sources of the
+	# returned certified Submission (current revisions, explicit exclusions kept);
+	# it cannot introduce an unrelated requirement
+	if cstr(version.returned_from_submission):
+		cohort = needs_intake.submission_cohort(version.returned_from_submission)
+		strangers = [entry.entry_id for entry in entries if _stable_source_key(entry) not in cohort]
+		if strangers:
+			fail("PLN_CORRECTION_COHORT_VIOLATION", detail={"entry_ids": strangers})
 	eligible = budget_gateway.eligible_line_ids(fiscal_year=root.fiscal_year, source_org_unit=root.organisation_unit)
 	for entry in entries:
 		if not entry_is_complete(entry):
@@ -452,7 +527,8 @@ def submit_departmental_plan(
 		{
 			"entry_id": entry.entry_id,
 			"source_origin": entry.source_origin,
-			"source_line_id": cstr(entry.need) or entry.entry_id,
+			"source_line_id": _stable_source_key(entry),
+			"direct_source_id": cstr(entry.direct_source_id),
 			"need": cstr(entry.need),
 			"need_revision": cstr(entry.need_revision),
 			"title": entry.title,
@@ -516,11 +592,17 @@ def submit_departmental_plan(
 	return result
 
 
-def withdraw_departmental_plan_version(
-	*, dpp_version: str, expected_record_version, idempotency_key: str, user: str | None = None,
+def withdraw_departmental_submission(
+	*, dpp_version: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
+	"""§7.2 `WithdrawDepartmentalSubmission` — HoD withdraws the mutable
+	candidate with a reason; the accepted predecessor stays effective and
+	submitted evidence is never reopened."""
 	actor = authz.actor(user)
-	payload = {"dpp_version": dpp_version}
+	reason_text = " ".join(cstr(reason).split())
+	if not (1 <= len(reason_text) <= 1000):
+		fail("PLN_ENTRY_INCOMPLETE", "State why the submission is being withdrawn (up to 1,000 characters).", {"field": "reason"})
+	payload = {"dpp_version": dpp_version, "reason": reason_text}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
@@ -538,8 +620,9 @@ def withdraw_departmental_plan_version(
 	root.reload()
 	version.reload()
 	result = _result(root, version, action="withdrawn")
+	result["reason"] = reason_text
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="WithdrawDepartmentalPlanVersion", payload=payload, result=result,
+		idempotency_key=idempotency_key, command="WithdrawDepartmentalSubmission", payload=payload, result=result,
 		document_type="Departmental Plan Version", document_name=version.name, actor=actor,
 		fixture_namespace=cstr(root.fixture_namespace),
 	)

@@ -56,6 +56,7 @@ PROHIBITED_FIELDS = (
 	# Entity; no NDS doctype carries this field any more.
 	"procuring_entity",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 
 class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
@@ -63,6 +64,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		# Two real, distinct Organisation Units Grace is actually granted
 		# Departmental Author over (§14.2) — used to build ad-hoc fixture
 		# records below without guessing a Procuring-Entity-scoped doc name

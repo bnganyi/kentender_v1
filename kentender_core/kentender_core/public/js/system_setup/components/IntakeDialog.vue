@@ -24,17 +24,15 @@ const field = ref(null);
 const copy = computed(() => {
 	const label = props.row.label;
 	if (props.purpose === "plan") {
+		// PLN-CHG-001 v1.18 §10.11 C02 / C02-close — exact dialog copy.
 		return {
-			openTitle: __("Open plan submission"),
-			closeTitle: __("Close plan submission?"),
-			openBody: __("Departments will be able to submit their departmental procurement plans for {0}.", [label]),
-			closeBody: __(
-				"Departments will no longer be able to make a first submission of a departmental plan for {0}. Plans already submitted, returned corrections and updates to accepted plans are unaffected.",
-				[label]
-			),
-			replaces: __("Plan submission can be open for one financial year at a time. Submission for {0} will close when you continue.", [props.replaces?.label]),
-			openButton: __("Open plan submission"),
-			closeButton: __("Close plan submission"),
+			openTitle: __("Open departmental-plan intake"),
+			closeTitle: __("Close departmental-plan intake"),
+			openBody: __("Departments will be able to make their first departmental-plan submission for {0}.", [label]),
+			closeBody: __("Existing submissions and governed updates remain available under their Planning rules."),
+			replaces: __("Departmental-plan intake can be open for one financial year at a time. Intake for {0} will close when you continue.", [props.replaces?.label]),
+			openButton: __("Open departmental-plan intake"),
+			closeButton: __("Close intake"),
 		};
 	}
 	return {
@@ -76,10 +74,15 @@ function confirm() {
 			<h2 class="kt-dialog-title">
 				{{ mode === "open" ? copy.openTitle : copy.closeTitle }}
 			</h2>
-			<p class="kt-confirm-body">
+			<p v-if="!(purpose === 'plan' && mode === 'close')" class="kt-confirm-body">
 				{{ mode === "open" ? copy.openBody : copy.closeBody }}
 			</p>
 			<div class="kt-dialog-fields">
+				<!-- C02 — the year is shown read-only on the plan-intake dialog -->
+				<div v-if="purpose === 'plan' && mode === 'open'" class="kt-field">
+					<label for="kt-intake-year">{{ __("Financial year") }}</label>
+					<input id="kt-intake-year" class="kt-input" :value="row.label" disabled data-testid="kt-fy-intake-year">
+				</div>
 				<div v-if="mode === 'open'" class="kt-field">
 					<label for="kt-intake-closes">{{ __("Close automatically on") }}</label>
 					<input
@@ -109,6 +112,8 @@ function confirm() {
 					<h3>{{ __("This will close {0}", [replaces.label]) }}</h3>
 					<p>{{ copy.replaces }}</p>
 				</div>
+				<!-- C02-close — the consequence statement follows the reason -->
+				<p v-if="purpose === 'plan' && mode === 'close'" class="kt-confirm-body" data-testid="kt-fy-intake-close-note">{{ copy.closeBody }}</p>
 				<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
 			</div>
 			<div class="kt-dialog-actions">

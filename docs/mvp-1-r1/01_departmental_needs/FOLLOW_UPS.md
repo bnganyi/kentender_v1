@@ -732,3 +732,6 @@ row wording, Forbidden carve-out and any masking clause's silence about
 technical readers with a citation of §3A.6; update AUTH-ADR-001 citations to
 v1.8.
 
+## FU-07 — PLN-CHG-001 v1.18 disposition event (opened 2026-09-12)
+
+Planning emits `NeedPlanningDispositionChanged.v1` (event_id, schema_version, producer_sequence, need_id, need_revision_id, dpp_submission_id, disposition, reason when excluded, actor, decision_at) after a departmental submission is **accepted** with a Need marked not proceeding. Departmental Needs consumes it into a `Need Planning Disposition Projection` and shows it as Planning information on the Need; it is separate from `NeedPlanningUsageChanged.v1`, whose `Fully included` / `Not included` / `Not proceeding` semantics are unchanged (a DPP exclusion never clears an existing Active dependency). Code lands under Planning tracker row PLN18-108; NDS-CHG-001 v1.11 (§4.7, §7.2) is owed. See `docs/mvp-1-r1/04_planning/PLN-CHG-001_FOLLOW_UPS.md` FU-24.

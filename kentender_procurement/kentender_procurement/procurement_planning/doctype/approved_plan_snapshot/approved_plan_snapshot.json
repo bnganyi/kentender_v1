@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "autoname": "format:APS-{#####}",
+ "creation": "2026-09-12 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_version",
+  "annual_plan",
+  "content",
+  "evidence_index",
+  "content_digest",
+  "approval_decision",
+  "strategy_approval_snapshot",
+  "approved_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Annual Plan Version",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_plan",
+   "fieldtype": "Link",
+   "label": "Annual Plan",
+   "options": "Annual Plan",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "JSON",
+   "label": "Content",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_index",
+   "fieldtype": "JSON",
+   "label": "Evidence Index",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content Digest",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "approval_decision",
+   "fieldtype": "Link",
+   "label": "Approval Decision",
+   "options": "Plan Governance Decision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "strategy_approval_snapshot",
+   "fieldtype": "Data",
+   "label": "Strategy Approval Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Approved Plan Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

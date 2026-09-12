@@ -338,6 +338,74 @@ def request_upstream_plan_correction(*, requisition: str, reason: str, expected_
 	return result
 
 
+def receive_plan_item_correction_outcome(
+	*,
+	requisition_reference: str,
+	correction_request: str,
+	outcome: str,
+	reason: str = "",
+	correcting_plan_version: str = "",
+	replacement_lineage: dict | None = None,
+	idempotency_key: str,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.18 §5.4.5 / §7.3 `PlanItemCorrectionOutcome.v1` — the
+	neutral response Planning sends when a correction request this Requisition
+	raised reaches a terminal outcome. **Resolved** names the Active corrected
+	Plan Version and the replacement lineage; a fresh Draft may then be
+	started from that eligibility. **Closed without change** carries the
+	Planner's reason. Neither revives, restarts or edits the stopped Version
+	(its status stays `Upstream correction required`); the outcome is recorded
+	on the root for the requester to act on. Inbound from Procurement
+	Planning only (REQ-CHG-001 v1.8 owed, FU-24)."""
+	from kentender_core.services.authorization import is_technical
+
+	actor = authz.actor(user)
+	if not (authz.has_site_role("Procurement Planner", actor) or is_technical(actor)):
+		fail("REQ_RESPONSIBILITY_REQUIRED")
+	outcome = cstr(outcome).strip()
+	if outcome not in ("Resolved", "Closed without change"):
+		fail("REQ_CONTROL_INVALID", "The correction outcome must be Resolved or Closed without change.")
+	reason = " ".join(cstr(reason).split())
+	if outcome == "Closed without change" and not (20 <= len(reason) <= 1000):
+		fail("REQ_CONTROL_INVALID", "A no-change closure carries the Planner's reason (20-1,000 characters).")
+	if outcome == "Resolved" and not cstr(correcting_plan_version).strip():
+		fail("REQ_CONTROL_INVALID", "A Resolved outcome names the Active corrected Plan Version.")
+	payload = {
+		"requisition_reference": requisition_reference, "correction_request": correction_request, "outcome": outcome,
+		"reason": reason, "correcting_plan_version": correcting_plan_version, "replacement_lineage": replacement_lineage or {},
+	}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	name = frappe.db.get_value("Procurement Requisition", {"requisition_reference": requisition_reference}, "name")
+	if not name:
+		authz.not_found()
+	root = envelope.locked("Procurement Requisition", name)
+	if root.current_state != "Upstream correction required":
+		fail("REQ_STALE_VERSION", "This Requisition is not awaiting an upstream correction outcome.")
+	reference = cstr(correction_request).strip()
+	if outcome == "Resolved":
+		reference = f"{reference} → {cstr(correcting_plan_version).strip()}"
+	envelope.bump(
+		root,
+		upstream_correction_outcome=outcome,
+		upstream_correction_reason=reason,
+		upstream_correction_reference=reference,
+		upstream_correction_outcome_at=now_datetime(),
+	)
+	result = {
+		"ok": True, "idempotent": False, "action": "upstream_correction_outcome_recorded", "outcome": outcome,
+		"may_start_successor": outcome == "Resolved", "correcting_plan_version": cstr(correcting_plan_version).strip(),
+		"record_version": root.record_version,
+	}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ReceivePlanItemCorrectionOutcome", payload=payload, result=result,
+		document_type="Procurement Requisition", document_name=root.name, actor=actor,
+	)
+	return result
+
+
 def change_lead_organisation_unit(*, requisition: str, new_lead_org_unit: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§5.1/§13.11 — the one place `lead_org_unit` can change: the Head of
 	Procurement Function, at authorisation review, only before the

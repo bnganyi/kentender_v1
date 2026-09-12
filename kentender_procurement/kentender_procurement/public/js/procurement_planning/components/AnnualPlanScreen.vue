@@ -187,7 +187,7 @@
 
 		<div class="pln-footer-bar">
 			<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
-			<div v-if="plan.mutable || plan.funding_state === 'Awaiting Finance'" class="pln-footer-actions">
+			<div v-if="plan.mutable || plan.funding_state === 'Awaiting confirmation'" class="pln-footer-actions">
 				<button
 					type="button"
 					class="kt-btn kt-btn-secondary"
@@ -252,7 +252,7 @@ function slug(text) {
 
 const fundingNotice = computed(() => {
 	const state = props.plan.funding_state;
-	if (state === "Awaiting Finance") {
+	if (state === "Awaiting confirmation") {
 		return { title: "Awaiting Finance confirmation", text: "The Plan is locked while the Finance Confirmation Officer confirms the affordability statement." };
 	}
 	if (state === "Returned") {

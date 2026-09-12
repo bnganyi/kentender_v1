@@ -13,6 +13,8 @@ from __future__ import annotations
 from unittest.mock import patch
 from uuid import uuid4
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -106,7 +108,7 @@ class TestRequestPlanFundingConfirmation(PlanFinanceCase):
 		self.assertEqual(task.plan_version, accepted["annual_plan_version"])
 		self.assertTrue(task.task_reference.startswith("FNT-"))
 		self.assertEqual(int(task.plan_value), 1000000)
-		self.assertEqual(frappe.db.get_value("Annual Plan Version", task.plan_version, "funding_state"), "Awaiting Finance")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", task.plan_version, "funding_state"), "Awaiting confirmation")
 		# PLN-AC-080: one task per Version, none per item
 		self.assertEqual(frappe.db.count("Plan Finance Task", {"plan_version": task.plan_version}), 1)
 		self.assertFalse(frappe.get_meta("Plan Finance Task").has_field("plan_item"))
@@ -182,8 +184,9 @@ class TestConfirmPlanFunding(PlanFinanceCase):
 		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": fx.BUDGET_LINE}), reservations_before)
 		frappe.set_user(fx.PLANNER)
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		self.assertTrue(plan["can_submit"])
 		self.assertEqual(next(c for c in plan["readiness"] if c["check"] == "Plan funding confirmed")["result"], "Confirmed")
+		frappe.set_user(fx.HOPF)
+		self.assertTrue(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])  # v1.18 §6.2
 
 	def test_the_hybrid_planner_who_requested_cannot_also_confirm(self):
 		accepted, item_id = self.ready_item()
@@ -224,6 +227,87 @@ class TestConfirmPlanFunding(PlanFinanceCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		self.assertTrue(plan["can_request_funding"])
 
+	def _line_version(self, budget_line: str) -> str:
+		return frappe.db.get_value("Procurement Budget Line Version", {"budget_line": budget_line, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))}, "name")
+
+	def _change_approved_amount(self, budget_line: str, amount: float) -> None:
+		name = self._line_version(budget_line)
+		before = frappe.db.get_value("Procurement Budget Line Version", name, "approved_amount")
+		frappe.db.set_value("Procurement Budget Line Version", name, "approved_amount", amount, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "Procurement Budget Line Version", name, "approved_amount", before, update_modified=False)
+
+	def test_a_request_captures_an_immutable_basis_and_the_review_reads_it(self):
+		"""v1.18 §4.7 / §5.3.1 — the basis Finance decides on."""
+		accepted, item_id = self.ready_item()
+		requested = self.request(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		self.assertEqual(task.financial_basis, requested["financial_basis"])
+		basis = frappe.get_doc("Plan Financial Basis", task.financial_basis)
+		self.assertEqual(basis.plan_version, accepted["annual_plan_version"])
+		self.assertEqual(basis.currency, "KES")
+		self.assertTrue(basis.basis_digest and basis.budget_basis_digest)
+		lines = {r["budget_line"]: r for r in json.loads(basis.lines)}
+		self.assertEqual(lines[fx.BUDGET_LINE]["planned"], "1000000.00")
+		self.assertEqual(lines[fx.BUDGET_LINE]["line_version"], self._line_version(fx.BUDGET_LINE))
+		frappe.set_user(fx.FINANCE_OFFICER)
+		read = plan_read.get_finance_task(task=task.name)
+		self.assertEqual(read["financial_basis"]["basis_digest"], basis.basis_digest)
+		self.assertTrue(read["basis_current"])
+		self.assertFalse(read["is_reassessment"])
+		# a second request on the same basis reuses the one open review
+		again = self.request(accepted["annual_plan"])
+		self.assertEqual(again["action"], "reused")
+		self.assertEqual(again["task"], task.name)
+
+	def test_a_changed_budget_basis_replaces_the_open_review_and_fails_a_stale_decision(self):
+		"""§5.3.2 at most one open review; §5.3.3 a stale basis fails the positive decision atomically."""
+		accepted, item_id = self.ready_item()
+		first = self.request(accepted["annual_plan"])
+		self._change_approved_amount(fx.BUDGET_LINE, 90_000_000)
+		frappe.set_user(fx.FINANCE_OFFICER)
+		self.assertFalse(plan_read.get_finance_task(task=first["task"])["basis_current"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.confirm(first["task"])
+		self.assertEqual(caught.exception.code, "PLN_FINANCE_STALE")
+		self.assertEqual(frappe.db.get_value("Plan Finance Task", first["task"], "status"), "Open")  # a failed decision changes nothing
+		replaced = self.request(accepted["annual_plan"])
+		self.assertEqual(replaced["action"], "replaced")
+		self.assertNotEqual(replaced["task"], first["task"])
+		self.assertEqual(frappe.db.get_value("Plan Finance Task", first["task"], "status"), "Cancelled")
+		self.assertEqual(frappe.db.count("Plan Finance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"}), 1)
+		confirmed = self.confirm(replaced["task"])
+		self.assertEqual(confirmed["action"], "confirmed")
+		decision = frappe.get_doc("Plan Finance Decision", {"decision_reference": confirmed["decision"]})
+		self.assertEqual(json.loads(decision.affordability_statement)["financial_basis"], replaced["financial_basis"])
+
+	def test_an_identical_basis_after_a_source_change_reuses_the_earlier_confirmation(self):
+		"""§5.3.2 — the reuse record links the current basis to the earlier decision."""
+		accepted, item_id = self.ready_item()
+		requested = self.request(accepted["annual_plan"])
+		confirmed = self.confirm(requested["task"])
+		frappe.set_user(fx.PLANNER)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key())
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "funding_state"), "Stale")
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+			mode="each", expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		new_item = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		plan_workbench.save_plan_item(plan_item=formed["created_items"][0], values=fx.item_values(), expected_record_version=new_item["record_version"], idempotency_key=key())
+		reused = self.request(accepted["annual_plan"])
+		self.assertEqual(reused["action"], "confirmation_reused")
+		self.assertEqual(reused["earlier_decision"], confirmed["decision"])
+		self.assertTrue(frappe.db.exists("Plan Finance Basis Reuse", reused["reuse"]))
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "funding_state"), "Confirmed")
+		self.assertEqual(frappe.db.count("Plan Finance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"}), 0)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertTrue(plan["funding_evidence"]["current"])
+		self.assertEqual(plan["funding_evidence"]["reuse"]["earlier_decision"], confirmed["decision"])
+		frappe.set_user(fx.HOPF)
+		self.assertTrue(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])  # v1.18 §6.2
+
 	def test_a_line_total_change_makes_the_confirmation_stale(self):
 		"""PLN-AC-024/087 — a changed per-line total, not a narrative edit,
 		invalidates the confirmation."""
@@ -241,4 +325,5 @@ class TestConfirmPlanFunding(PlanFinanceCase):
 		plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key())
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "funding_state"), "Stale")
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		self.assertFalse(plan["can_submit"])
+		frappe.set_user(fx.HOPF)
+		self.assertFalse(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])

@@ -63,6 +63,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+from kentender_procurement.departmental_needs.tests import support
 
 REASON = "The department no longer requires this equipment in the target financial year."
 
@@ -77,6 +78,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		# Grace's real, granted Digital Health Organisation Unit (§14.2) — the
 		# fixture default this file's commands build against. Resolved from
 		# her actual assignment, never a hardcoded doc name, since the site

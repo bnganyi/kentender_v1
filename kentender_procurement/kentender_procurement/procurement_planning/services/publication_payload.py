@@ -41,7 +41,7 @@ def build_payload(version, plan) -> dict[str, Any]:
 		filters={"plan_version": version.name, "item_state": ("in", ("Draft", "Active"))},
 		fields=[
 			"name", "plan_item_id", "title", "description", "requirement_type", "procurement_category",
-			"procurement_method", "threshold_band_at_readiness", "plan_horizon", "multi_year_justification",
+			"procurement_method", "threshold_band_at_readiness", "plan_horizon",
 			"aggregation_indicator", "lotting_indicator", "lot_count", "reservation_category",
 			"county_resident_reservation", "exclusive_preference", "aggregation_reason", "item_status",
 			*schedule.BASELINE_FIELDS,
@@ -95,7 +95,6 @@ def build_payload(version, plan) -> dict[str, Any]:
 						"requirementType": cstr(item.requirement_type),
 						"procurementCategory": cstr(item.procurement_category),
 						"planHorizon": cstr(item.plan_horizon),
-						"multiYearJustification": cstr(item.multi_year_justification),
 						"aggregationIndicator": cstr(item.aggregation_indicator),
 						"aggregationReason": cstr(item.aggregation_reason),
 						"lottingIndicator": cstr(item.lotting_indicator),
@@ -157,7 +156,7 @@ def build_payload(version, plan) -> dict[str, Any]:
 			"preparedBy": "Head of the Procurement Function",
 			"countersignedBy": "Accounting Officer",
 			"approvedBy": cstr(site.get("statutory_approval_route")),
-			"reservedShare": readiness.reserved_share(version.name),
+			"reservedShare": readiness.reservation_allocations(version.name, frappe.db.get_value("Annual Plan", version.annual_plan, "fiscal_year")),
 		},
 		"releases": releases,
 	}

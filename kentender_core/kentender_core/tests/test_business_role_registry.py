@@ -126,3 +126,11 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		for name in registry.REGISTRY:
 			self.assertTrue(registry.may_administer(name, {"System Manager"}))
 			self.assertFalse(registry.may_administer(name, {"Desk User"}))
+
+	def test_the_head_of_procurement_function_signs_the_annual_plan_preparation(self):
+		"""PLN-CHG-001 v1.18 §6.2 / plan D6 — Sign and submit Annual Plan is
+		the Head of Procurement Function's preparation accountability; the
+		Planner keeps consolidation and never inherits the signature tag."""
+		self.assertIn("plan_preparation_signature", registry.REGISTRY["Head of Procurement Function"].sod_tags)
+		self.assertNotIn("plan_preparation_signature", registry.REGISTRY["Procurement Planner"].sod_tags)
+		self.assertEqual(registry.REGISTRY["Head of Procurement Function"].scope_type, registry.SCOPE_SITE)

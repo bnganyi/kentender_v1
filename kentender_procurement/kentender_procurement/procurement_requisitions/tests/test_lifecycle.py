@@ -9,7 +9,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
-from kentender_procurement.procurement_requisitions.services import lifecycle
+from kentender_procurement.procurement_requisitions.services import lifecycle, read
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 
@@ -213,3 +213,66 @@ class TestUpstreamCorrection(RequisitionLifecycleCase):
 		self.assertTrue(frappe.db.exists("Plan Item Correction Request", result["correction_request"]))
 		stopped_version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
 		self.assertEqual(stopped_version.version_status, "Upstream correction required")
+
+	def _stop_on_upstream_correction(self) -> tuple[dict, str]:
+		prepared = self.prepare_complete_draft()
+		frappe.set_user(fx.HOD)
+		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		result = lifecycle.request_upstream_plan_correction(
+			requisition=prepared["requisition"], reason="The Plan Item's warranty period does not match the department's actual need.",
+			expected_record_version=root.record_version, idempotency_key=fx.key(),
+		)
+		prepared = {**prepared, "requisition_reference": root.requisition_reference, "plan_item_id": root.plan_item_id}
+		return prepared, result["correction_request"]
+
+	def test_planning_resolved_outcome_is_recorded_neutrally_and_read_back(self):
+		"""PLN-CHG-001 v1.18 §5.4.5 (REQ-CHG-001 v1.8 owed): `PlanItemCorrectionOutcome.v1`
+		Resolved names the corrected Version; the stopped Version stays stopped,
+		the root shows the outcome, and the read model exposes it."""
+		prepared, correction = self._stop_on_upstream_correction()
+		frappe.set_user(fx.PLANNER)
+		key = fx.key()
+		result = lifecycle.receive_plan_item_correction_outcome(
+			requisition_reference=prepared["requisition_reference"], correction_request=correction, outcome="Resolved",
+			correcting_plan_version="APV-TEST-0002", replacement_lineage={"replaced_plan_item": prepared["plan_item_id"]}, idempotency_key=key,
+		)
+		self.assertEqual(result["action"], "upstream_correction_outcome_recorded")
+		self.assertTrue(result["may_start_successor"])
+		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		self.assertEqual(root.current_state, "Upstream correction required")
+		self.assertEqual(root.upstream_correction_outcome, "Resolved")
+		self.assertIn("APV-TEST-0002", root.upstream_correction_reference)
+		self.assertEqual(frappe.get_doc("Requisition Version", prepared["requisition_version"]).version_status, "Upstream correction required")
+		replay = lifecycle.receive_plan_item_correction_outcome(
+			requisition_reference=prepared["requisition_reference"], correction_request=correction, outcome="Resolved",
+			correcting_plan_version="APV-TEST-0002", replacement_lineage={"replaced_plan_item": prepared["plan_item_id"]}, idempotency_key=key,
+		)
+		self.assertTrue(replay["idempotent"])
+		frappe.set_user(fx.HOD)
+		editor = read.get_requisition_editor(requisition=prepared["requisition"])
+		self.assertEqual(editor["requisition"]["upstream_correction"]["outcome"], "Resolved")
+
+	def test_planning_no_change_closure_carries_a_reason_and_only_planning_may_send_it(self):
+		prepared, correction = self._stop_on_upstream_correction()
+		frappe.set_user(fx.HOD)
+		with self.assertRaises(ProcurementRequisitionsError) as caught:
+			lifecycle.receive_plan_item_correction_outcome(
+				requisition_reference=prepared["requisition_reference"], correction_request=correction, outcome="Closed without change",
+				reason="The Plan Item already reflects the department's confirmed requirement.", idempotency_key=fx.key(),
+			)
+		self.assertEqual(caught.exception.code, "REQ_RESPONSIBILITY_REQUIRED")
+		frappe.set_user(fx.PLANNER)
+		with self.assertRaises(ProcurementRequisitionsError) as caught:
+			lifecycle.receive_plan_item_correction_outcome(
+				requisition_reference=prepared["requisition_reference"], correction_request=correction, outcome="Closed without change",
+				reason="too short", idempotency_key=fx.key(),
+			)
+		self.assertEqual(caught.exception.code, "REQ_CONTROL_INVALID")
+		result = lifecycle.receive_plan_item_correction_outcome(
+			requisition_reference=prepared["requisition_reference"], correction_request=correction, outcome="Closed without change",
+			reason="The Plan Item already reflects the department's confirmed requirement.", idempotency_key=fx.key(),
+		)
+		self.assertFalse(result["may_start_successor"])
+		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		self.assertEqual(root.upstream_correction_outcome, "Closed without change")
+		self.assertEqual(root.current_state, "Upstream correction required")

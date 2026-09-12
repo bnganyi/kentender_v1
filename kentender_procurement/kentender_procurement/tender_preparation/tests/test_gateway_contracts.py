@@ -86,6 +86,19 @@ class TestPlanningMilestoneContract(IntegrationTestCase):
 		sig = inspect.signature(schedule.record_tender_milestone_actual)
 		for name in ("plan_item_id", "milestone", "actual_date", "source_event_id"):
 			self.assertIn(name, sig.parameters)
+		# PLN-CHG-001 v1.18 §4.8 envelope (plan D10): producer, proceeding and sequence
+		for name in ("producer", "proceeding_id", "proceeding_type", "producer_sequence", "supersedes_event_id"):
+			self.assertIn(name, sig.parameters)
+			self.assertIsNot(sig.parameters[name].default, inspect.Parameter.empty)
+
+	def test_publish_invitation_actual_sends_the_proceeding_envelope(self):
+		from kentender_procurement.tender_preparation.services import planning_gateway
+
+		sig = inspect.signature(planning_gateway.publish_invitation_actual)
+		for name in ("plan_item_id", "actual_date", "correlation_id", "tender", "producer_sequence"):
+			self.assertIn(name, sig.parameters)
+		self.assertEqual(planning_gateway.PRODUCER, "tender_preparation")
+		self.assertEqual(planning_gateway.PROCEEDING_TYPE, "Prepared Tender")
 
 	def test_invitation_is_a_milestone_and_no_bid_opening_is_written_here(self):
 		self.assertIn("invitation", schedule.MILESTONES)

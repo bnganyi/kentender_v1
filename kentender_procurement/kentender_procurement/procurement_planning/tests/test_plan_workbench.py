@@ -19,6 +19,7 @@ from kentender_procurement.procurement_planning.services import (
 	needs_intake,
 	plan_read,
 	plan_workbench,
+	readiness,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -327,9 +328,9 @@ class TestSavePlanItem(PlanWorkbenchCase):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		for field, value, code in (
-			("tendering_period_days", 6, "PLN_TENDERING_PERIOD_BELOW_MINIMUM"),
-			("evaluation_period_days", 31, "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM"),
-			("standstill_period_days", 13, "PLN_STANDSTILL_BELOW_MINIMUM"),
+			("tendering_period_days", 6, "PLN_PROFILE_PERIOD_INVALID"),
+			("evaluation_period_days", 31, "PLN_PROFILE_PERIOD_INVALID"),
+			("standstill_period_days", 13, "PLN_PROFILE_PERIOD_INVALID"),
 		):
 			with self.subTest(field=field):
 				with self.assertRaises(ProcurementPlanningError) as caught:
@@ -364,7 +365,7 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_METHOD_NOT_ADMISSIBLE")
-		self.assertIn("Open Tender", caught.exception.detail["admissible_methods"])
+		self.assertEqual(caught.exception.detail["failed_conditions"], ["G-VALUE"])  # v1.18: the profile's known-fact limit
 		saved = plan_workbench.save_plan_item(
 			plan_item=item_id, values=fx.item_values(procurement_method="Request for Proposals"),
 			expected_record_version=item["record_version"], idempotency_key=key(),
@@ -381,27 +382,23 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				plan_item=item_id, values=fx.item_values(plan_horizon="Multi-year"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
+		self.assertEqual(caught.exception.code, "PLN_MULTI_YEAR_UNSUPPORTED")  # v1.18 §4.6: fixed literal
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
 				plan_item=item_id, values=fx.item_values(lotting_indicator="Packaged into lots"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
-		# a lower-advantage scheme than the proposal needs a retained reason
+		# v1.18 §5.5.3.2 — a governed designation needs no reason and has no ranking; an ungoverned one is refused
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+				plan_item=item_id, values=fx.item_values(reservation_category="Friends of the Planner"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
 		saved = plan_workbench.save_plan_item(
 			plan_item=item_id,
-			values=fx.item_values(
-				reservation_category="Micro, small and medium enterprise",
-				reservation_category_reason="The requirement suits registered MSME suppliers in this category.",
-				lotting_indicator="Packaged into lots", lot_count=3,
-			),
+			values=fx.item_values(reservation_category="Micro, small and medium enterprise", lotting_indicator="Packaged into lots", lot_count=3),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(saved["action"], "saved")
@@ -418,6 +415,195 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_OBJECTIVE_INELIGIBLE")
+
+
+class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
+	"""PLN-CHG-001 v1.18 §5.5.1 / §5.5.3.3 (PLN18-206)."""
+
+	def test_a_formed_item_carries_the_profile_defaults_and_its_stable_root(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertTrue(frappe.db.exists("Plan Item", item_id))
+		self.assertEqual(frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id}, "plan_item"), item_id)
+		self.assertTrue(item["baseline"]["profile"]["found"])
+		self.assertEqual(item["baseline"]["periods"]["tendering_period_days"], 21)
+		self.assertEqual(item["baseline"]["estimated_delivery_period_days"], fx.DELIVERY_DEFAULT_DAYS)
+		self.assertEqual(item["baseline"]["floors"], {"tendering_period_days": 7, "standstill_period_days": 14})
+		self.assertEqual(item["baseline"]["ceilings"], {"evaluation_period_days": 30})
+		self.assertTrue(item["classification"]["method_profile"]["found"])
+		self.assertIn("Open Tender", item["classification"]["admissible_methods"])
+		self.assertNotIn("Low Value Procurement", item["classification"]["admissible_methods"])
+		self.assertEqual(item["scope_lock"], {"locked": False, "since": "", "first_requisition": "", "held": False, "open_requests": 0})
+
+	def test_a_method_without_a_schedule_profile_permits_draft_work_but_blocks_submission(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method="Design Competition"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertFalse(refreshed["baseline"]["profile"]["found"])
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", [b["code"] for b in refreshed["blockers"]])
+		self.assertIsNone(frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id}, "schedule_profile_version"))
+
+	def test_a_declaration_method_needs_its_evidence_before_submission(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method="Direct Procurement"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		codes = [b["code"] for b in refreshed["blockers"]]
+		self.assertIn("PLN_METHOD_EVIDENCE_REQUIRED", codes)
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)  # Direct Procurement has no schedule profile in the fixture
+		self.assertEqual(refreshed["classification"]["method_profile"]["missing_evidence"], ["CIRCUMSTANCES"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values={"method_condition_evidence": [{"evidence_reference": "no id"}]},
+				expected_record_version=saved["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		evidenced = plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values={"method_condition_evidence": [{"condition_id": "CIRCUMSTANCES", "evidence_reference": "MER-PLNT-001", "authorisation_reference": "AO/2101/DP/1"}]},
+			expected_record_version=saved["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(evidenced["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertNotIn("PLN_METHOD_EVIDENCE_REQUIRED", [b["code"] for b in refreshed["blockers"]])
+		self.assertTrue(refreshed["classification"]["method_profile"]["evidence_complete"])
+
+	def test_estimate_basis_and_delivery_period_are_required_and_zero_is_explicit(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		values = fx.item_values(estimate_basis="", estimate_basis_reference="", estimated_delivery_period_days="")
+		saved = plan_workbench.save_plan_item(plan_item=item_id, values=values, expected_record_version=item["record_version"], idempotency_key=key())
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		fields = {(b["code"], b["field"]) for b in refreshed["blockers"]}
+		self.assertIn(("PLN_PLAN_CONTENTS_INCOMPLETE", "estimate_basis"), fields)
+		self.assertIn(("PLN_PLAN_CONTENTS_INCOMPLETE", "estimate_basis_reference"), fields)
+		self.assertIn(("PLN_DELIVERY_PERIOD_REQUIRED", "estimated_delivery_period_days"), fields)
+		self.assertIsNone(refreshed["baseline"]["estimated_delivery_period_days"])
+		zero = plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=0), expected_record_version=saved["record_version"], idempotency_key=key())
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(refreshed["baseline"]["estimated_delivery_period_days"], 0)
+		self.assertEqual(refreshed["baseline"]["estimated_completion_date"], "2101-11-12")
+		self.assertNotIn("PLN_DELIVERY_PERIOD_REQUIRED", [b["code"] for b in refreshed["blockers"]])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=-1), expected_record_version=zero["record_version"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_DELIVERY_PERIOD_REQUIRED")
+
+	def test_version_details_project_name_and_change_reason(self):
+		accepted, item_id = self.one_item()
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_version_details(
+				plan_version=accepted["annual_plan_version"], values={"project_name": "x" * 161},
+				expected_record_version=plan["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		saved = plan_workbench.save_plan_version_details(
+			plan_version=accepted["annual_plan_version"], values={"project_name": "Digital health rollout", "change_reason": ""},
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "details_saved")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "project_name"), "Digital health rollout")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_version_details(
+				plan_version=accepted["annual_plan_version"], values={"budget": "x"},
+				expected_record_version=saved["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+
+
+class TestScopeLock(PlanWorkbenchCase):
+	"""PLN-CHG-001 v1.18 §5.4.6 — the stable item's procurement-scope lock."""
+
+	def lock(self, item_id: str) -> None:
+		frappe.db.set_value("Plan Item", item_id, {"scope_locked_since": "2101-10-01 09:00:00", "first_authorised_requisition": "REQ-TEST-1"}, update_modified=False)
+
+	def test_a_locked_item_keeps_its_package_but_its_schedule_stays_editable(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(), expected_record_version=item["record_version"], idempotency_key=key())
+		self.lock(item_id)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertTrue(item["scope_lock"]["locked"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(title="A wider procurement package"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		self.assertEqual(caught.exception.detail["fields"], ["title"])
+		unchanged = {k: v for k, v in fx.item_values().items() if k not in ("title", "description")}
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values={**unchanged, "baseline_invitation_date": "2101-10-01"},
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+
+	def test_a_locked_item_cannot_be_dissolved_or_its_source_re_formed(self):
+		accepted, item_id = self.one_item()
+		self.lock(item_id)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		entry = frappe.db.get_value("Plan Source Allocation", {"plan_item_id": item_id}, "dpp_entry")
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.form_plan_items(
+				plan_version=accepted["annual_plan_version"], dpp_entries=[entry], mode="each",
+				expected_record_version=plan["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		self.assertEqual(caught.exception.detail["plan_item_ids"], [item_id])
+
+
+class TestReservationAllocations(PlanWorkbenchCase):
+	"""PLN-CHG-001 v1.18 §5.5.3.1 — the annual procurement budget is the denominator."""
+
+	def test_required_planned_and_shortfall_use_the_annual_budget_not_the_plan_total(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertTrue(share["basis"]["available"])
+		self.assertEqual(share["basis"]["annual_approved_amount"], "200000000.00")  # the test world's authorised total
+		self.assertEqual(share["required"], "60000000.00")
+		self.assertEqual(share["qualifying"], "0.00")
+		self.assertEqual(share["plan_total"], "1000000.00")
+		self.assertEqual(share["shortfall"], "60000000.00")
+		self.assertFalse(share["met"])
+		self.assertTrue(share["mandatory"] and share["verified"])
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["qualifying"], "1000000.00")
+		self.assertEqual(share["qualifying_items"], [item_id])
+		self.assertEqual(share["shortfall"], "59000000.00")
+		self.assertAlmostEqual(share["percent_of_plan"], 100.0)
+		self.assertAlmostEqual(share["percent_of_annual"], 0.5)
+		with patch.object(readiness, "reference_for", return_value=reference):
+			report = plan_read.plan_readiness(version, plan, stage="submission")
+			self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
+			self.assertNotIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in plan_read.plan_readiness(version, plan)["blockers"]])
+			pending = {**reference, "verification_status": "Production verification pending"}
+		with patch.object(readiness, "reference_for", return_value=pending):
+			codes = [b["code"] for b in plan_read.plan_readiness(version, plan, stage="submission")["blockers"]]
+			self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)
+			self.assertNotIn("PLN_RESERVATION_SHORTFALL", codes)
 
 
 class TestDissolvePlanItem(PlanWorkbenchCase):

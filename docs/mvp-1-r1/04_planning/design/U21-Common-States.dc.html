@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    .frame { width: 1440px; margin: 0 auto; }
+    .frame-inner { min-height: 1024px; padding: var(--space-8) 120px; box-sizing: border-box; background: var(--color-bg); position: relative; }
+    .caption { display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-2) 4px 0; font-size: 12px; color: var(--color-neutral-700); }
+    .stategrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+    .state-card { padding: var(--space-6); }
+    .state-card h3 { font-size: 17px; margin: 0 0 6px; }
+    .state-card p { margin: 0 0 var(--space-3); }
+  </style>
+</helmet>
+
+<div style="background: var(--color-neutral-100); padding: var(--space-8) 0 120px;">
+  <div style="width: 1200px; margin: 0 auto var(--space-8); display: flex; justify-content: space-between; align-items: baseline;">
+    <div>
+      <a href="00-Index.dc.html" style="font-size: 13px;">&larr; Index</a>
+      <h1 style="margin: var(--space-2) 0 0; font-size: 28px;">U21 — Common state artboards and supporting forms</h1>
+      <p style="margin: 0; color: var(--color-neutral-800); font-size: 14px;">Shared page states used across every screen family, plus three standalone dialogs (§10.12).</p>
+    </div>
+    <span class="tag tag-neutral">Batch 9 of 10 · §10.13 order</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 72px;">
+
+    <!-- Access & load states -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Access and load states</h2>
+      <div class="stategrid">
+        <div class="card state-card"><h3>You do not have access to Procurement Planning</h3><p>This area needs one of these responsibilities: Departmental Author, Head of User Department, Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer, the configured statutory approver or Auditor. Ask your KenTender administrator to assign one in System setup.</p></div>
+        <div class="card state-card"><h3>You do not have access to System setup</h3><p>This area needs Administrator or System Manager access.</p></div>
+        <div class="card state-card"><h3>This record isn't available to you</h3><p>It may not exist, or you may not have access to it.</p><div><button class="btn btn-secondary">Go to Procurement Planning</button></div></div>
+        <div class="card state-card"><h3>Procurement Planning could not be loaded</h3><p>Try again. If the problem continues, contact support with the reference shown.</p><div><button class="btn btn-secondary">Try again</button></div></div>
+        <div class="card state-card"><h3>Procurement rules are not configured</h3><p>Required configuration is missing or incomplete. Draft work can continue where permitted; the affected submission is unavailable.</p><div><button class="btn btn-secondary">Back to Annual Plan</button></div></div>
+        <div class="card state-card"><h3>This action is no longer available</h3><p>The record changed after you opened it. Refresh to see its current state.</p><div><button class="btn btn-secondary">Refresh</button></div></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-access</span><span>Forbidden, masked, load-error and stale-action states</span></div>
+
+    <!-- Empty & loading states -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Loading and empty states</h2>
+      <div class="stategrid">
+        <div class="card state-card"><h3>Loading Procurement Planning…</h3><p>Approved skeleton rows only.</p></div>
+        <div class="card state-card"><h3>Loading Plan review…</h3><p>Approved skeleton sections only.</p></div>
+        <div class="card state-card"><h3>No accepted departmental requirements</h3><p>Accepted requirements will appear here after Procurement validation.</p></div>
+        <div class="card state-card"><h3>No requirements match this search</h3><p>Change the search or clear the filters.</p><div><button class="btn btn-secondary">Clear filters</button></div></div>
+        <div class="card state-card"><h3>No departmental plans awaiting validation</h3><p>New submissions will appear here.</p></div>
+        <div class="card state-card"><h3>No correction requests</h3><p>No upstream correction request is recorded for this Plan Item.</p></div>
+        <div class="card state-card"><h3>Historical Plan Version</h3><p>This Version is read-only. Its reviewed evidence is preserved.</p><div><button class="btn btn-secondary">View current Active Plan</button></div></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-empty</span><span>Loading skeletons, empty lists, historical read-only state</span></div>
+
+    <!-- Late explanation dialog -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Late activation explanation</h2>
+      <div class="dialog-backdrop" style="position: absolute; z-index: 2;">
+        <div class="dialog" style="width: 520px;">
+          <div class="dialog-title">Record late activation explanation</div>
+          <div class="facts-row" style="display:flex; gap: var(--space-4); margin-bottom: var(--space-3); font-size: 13px;">
+            <div class="fact" style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Initial Plan Version</span><span style="font-weight:600;">1</span></div>
+            <div class="fact" style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Financial year started</span><span style="font-weight:600;">1 Jul 2027</span></div>
+            <div class="fact" style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Activated</span><span style="font-weight:600;">2 Jul 2027, 09:00 EAT</span></div>
+          </div>
+          <div class="field"><label>Explanation</label><input class="input" value="Publication acknowledgement was received after the financial year began."></div>
+          <div class="dialog-actions"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Record explanation</button></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-late-explanation</span><span>Late activation explanation dialog</span></div>
+
+    <!-- Historical late-explanation view -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Late activation explanation</h2>
+      <div class="card" style="padding: var(--space-6); max-width: 560px;">
+        <div class="facts-row" style="margin-bottom: var(--space-4);">
+          <div class="fact"><span class="kt-label">Initial Plan Version</span><span class="fact-val">1</span></div>
+          <div class="fact"><span class="kt-label">Financial year started</span><span class="fact-val">1 Jul 2027</span></div>
+          <div class="fact"><span class="kt-label">Activated</span><span class="fact-val">2 Jul 2027, 09:00 EAT</span></div>
+        </div>
+        <p class="card-body" style="margin: 0 0 var(--space-4);">Publication acknowledgement was received after the financial year began.</p>
+        <div class="facts-row">
+          <div class="fact"><span class="kt-label">Recorded by</span><span class="fact-val">Amina Hassan</span></div>
+          <div class="fact"><span class="kt-label">Recorded</span><span class="fact-val">2 Jul 2027, 09:05 EAT</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-late-explanation-history</span><span>Historical view · read-only, no retroactive date editor</span></div>
+
+    <!-- Cancel update dialog -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Cancel Plan update</h2>
+      <div class="dialog-backdrop" style="position: absolute; z-index: 2;">
+        <div class="dialog" style="width: 520px;">
+          <div class="dialog-title">Cancel Plan update?</div>
+          <p class="dialog-body">The open update will be cancelled. The Active Plan and existing procurement proceedings will remain unchanged.</p>
+          <div class="dialog-actions"><button class="btn btn-secondary">Keep update</button><button class="btn btn-primary">Cancel update</button></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-cancel-update</span><span>Cancel Plan update dialog</span></div>
+
+    <!-- Dissolve draft item dialog -->
+    <div class="frame"><div class="blueprint frame-inner"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2 style="font-size: 20px; margin: 0 0 var(--space-6);">Dissolve Draft item</h2>
+      <div class="dialog-backdrop" style="position: absolute; z-index: 2;">
+        <div class="dialog" style="width: 520px;">
+          <div class="dialog-title">Dissolve Plan Item?</div>
+          <p class="dialog-body">Its eligible sources will return to this Draft's unallocated requirements. This action does not release Budget funds.</p>
+          <div class="dialog-actions"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Dissolve Plan Item</button></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="tag tag-accent">U21-dissolve-item</span><span>Dissolve Draft item dialog</span></div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

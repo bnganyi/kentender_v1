@@ -24,6 +24,10 @@
   "current_state",
   "section_handoff",
   "planning_drawdown_reference",
+  "upstream_correction_outcome",
+  "upstream_correction_reason",
+  "upstream_correction_reference",
+  "upstream_correction_outcome_at",
   "handoff",
   "handoff_consumed_at",
   "record_version",
@@ -110,7 +114,7 @@
    "label": "Lead Org Unit",
    "options": "Organisation Unit",
    "read_only": 1,
-   "description": "REQ-CHG-001 v1.6 \u00a75.1 \u2014 the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (\u00a713.11)."
+   "description": "REQ-CHG-001 v1.6 §5.1 — the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (§13.11)."
   },
   {
    "fieldname": "current_version",
@@ -146,7 +150,33 @@
    "fieldtype": "Small Text",
    "label": "Planning Drawdown Reference",
    "read_only": 1,
-   "description": "Comma-separated Plan Drawdown Reference names \u2014 one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
+   "description": "Comma-separated Plan Drawdown Reference names — one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
+  },
+  {
+   "fieldname": "upstream_correction_outcome",
+   "fieldtype": "Select",
+   "label": "Upstream Correction Outcome",
+   "options": "\nResolved\nClosed without change",
+   "read_only": 1
+  },
+  {
+   "fieldname": "upstream_correction_reason",
+   "fieldtype": "Small Text",
+   "label": "Upstream Correction Outcome Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "upstream_correction_reference",
+   "fieldtype": "Data",
+   "label": "Upstream Correction Reference",
+   "read_only": 1,
+   "description": "The correction request and, when Resolved, the Active corrected Plan Version."
+  },
+  {
+   "fieldname": "upstream_correction_outcome_at",
+   "fieldtype": "Datetime",
+   "label": "Upstream Correction Outcome At",
+   "read_only": 1
   },
   {
    "fieldname": "handoff",

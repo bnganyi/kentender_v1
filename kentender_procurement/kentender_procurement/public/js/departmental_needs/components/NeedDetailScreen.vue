@@ -165,6 +165,25 @@
 					View Plan Item
 				</button>
 			</div>
+			<!-- PLN-CHG-001 v1.18 §5.1.4 — the accepted departmental disposition
+			     (NeedPlanningDispositionChanged.v1) shown as Planning information;
+			     separate from usage, it never clears an Active-plan dependency. -->
+			<div
+				v-if="disposition && disposition.recorded"
+				data-testid="nds-planning-disposition"
+				style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-divider)"
+			>
+				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px">
+					<span class="kt-label">Departmental plan disposition</span>
+					<StatusPill :label="dispositionLabel" />
+				</div>
+				<p v-if="disposition.reason" style="margin: 0 0 6px; font-size: 14.5px" data-testid="nds-planning-disposition-reason">
+					{{ disposition.reason }}
+				</p>
+				<div style="font-size: 13px; color: var(--color-neutral-700)" data-testid="nds-planning-disposition-facts">
+					Submission {{ disposition.dpp_submission }}<template v-if="disposition.actor_label"> · certified by {{ disposition.actor_label }}</template><template v-if="disposition.decision_at"> · {{ formatInstant(disposition.decision_at) }}</template>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -182,6 +201,8 @@ const props = defineProps({
 	revision: { type: Object, default: () => ({}) },
 	acceptedRevision: { type: Object, default: () => ({}) },
 	usage: { type: Object, default: () => ({}) },
+	// get_departmental_need().planning_disposition — Planning information only.
+	disposition: { type: Object, default: null },
 	authorLabel: { type: String, default: "" },
 	accessProfile: { type: String, default: "" },
 	// get_departmental_need().actions — the server's own list; `edit` is
@@ -244,6 +265,9 @@ const ownerActions = computed(() => {
 });
 
 const showPlanning = computed(() => isAccepted.value);
+const dispositionLabel = computed(() =>
+	props.disposition?.disposition === "Not proceeding" ? "Not proceeding this financial year" : "Proceeding"
+);
 
 const planningMessage = computed(() =>
 	props.usage?.usage === "Fully included"

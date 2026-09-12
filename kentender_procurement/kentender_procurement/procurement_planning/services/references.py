@@ -80,6 +80,13 @@ def entry_id(dpp_reference_value: str) -> str:
 	return _next("Departmental Plan Entry", "entry_id", prefix)
 
 
+def direct_source_id() -> str:
+	"""PLN-CHG-001 v1.18 §4.3 — the stable identity of a direct requirement,
+	generated once at creation and carried through every copy; never derived
+	from an entry id."""
+	return f"DSR-{frappe.generate_hash(length=10)}"
+
+
 def submission_reference(dpp_reference_value: str, version_number: int) -> str:
 	return f"DPPS-{cstr(dpp_reference_value).removeprefix('DPP-')}-V{int(version_number)}"
 

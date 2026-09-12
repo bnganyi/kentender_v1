@@ -59,7 +59,7 @@
    "fieldtype": "Data",
    "label": "Cascade ID",
    "read_only": 1,
-   "description": "Shared by every row confirmed in one cascade; null for a standalone single-milestone revision (\u00a74.9A)."
+   "description": "Shared by every row confirmed in one cascade; null for a standalone single-milestone revision (§4.9A)."
   },
   {
    "fieldname": "revised_by",
@@ -129,6 +129,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

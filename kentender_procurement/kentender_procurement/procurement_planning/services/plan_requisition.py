@@ -18,7 +18,7 @@ FU-07) to the Head of Procurement Function, the office REQ-CHG-001 v1.6
 
 §9's twenty-one error codes are Planning's own UI-facing vocabulary; a
 programmatic contract call from a sibling module is not a Planning screen,
-so `record_requisition_drawdown`'s balance/state failures raise a plain
+so `authorise_requisition_drawdown`'s balance/state failures raise a plain
 `frappe.ValidationError` instead of forcing an unrelated §9 code onto a
 condition the contract's own author never named one for (§9's own docstring:
 "an invented code is a defect in the caller") — the same reasoning
@@ -112,8 +112,8 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 
 	REQ-CHG-001 v1.6 §4.14/§5A — every field that document names is
 	enumerated here explicitly (REQ-AC-056): `reservation_category`,
-	`lotting_indicator`, `lot_count`, `plan_horizon`,
-	`multi_year_justification`, `contributing_org_unit_ids`, `currency`,
+	`lotting_indicator`, `lot_count`, `plan_horizon` (fixed `Single year`, v1.18 §4.6),
+	`contributing_org_unit_ids`, `currency`,
 	`award_packages`, and per source `plan_item_line_id`/`source_line_id`.
 	"""
 	actor = authz.actor(user)
@@ -227,7 +227,6 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"lotting_indicator": cstr(item.lotting_indicator),
 		"lot_count": int(item.lot_count or 0),
 		"plan_horizon": cstr(item.plan_horizon),
-		"multi_year_justification": cstr(item.multi_year_justification),
 		"contributing_org_unit_ids": sorted(contributing_org_units),
 		"currency": "KES",
 		"award_packages": 1,
@@ -339,7 +338,7 @@ def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dic
 	return rows
 
 
-def record_requisition_drawdown(
+def authorise_requisition_drawdown(
 	*,
 	plan_item_id: str,
 	requisition_reference: str,
@@ -428,7 +427,7 @@ def record_requisition_drawdown(
 
 	result = {"ok": True, "idempotent": False, "action": "recorded", "drawdown_references": created}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="RecordRequisitionDrawdown", payload=payload,
+		idempotency_key=idempotency_key, command="AuthoriseRequisitionDrawdown", payload=payload,
 		result=result, document_type="Plan Drawdown Reference", document_name=created[0]["drawdown_reference"],
 		actor=actor, fixture_namespace=cstr(item.fixture_namespace),
 	)

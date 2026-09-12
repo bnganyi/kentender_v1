@@ -11,6 +11,7 @@ import {
 	textFits,
 	collectPageErrors,
 	expectClose,
+	openFrame,
 } from "../../helpers/designFidelity";
 
 /**
@@ -36,6 +37,7 @@ import {
  */
 
 const DESIGN_DIR = "docs/mvp-1-r1/09_unified_system_setup/design";
+const PLN_DESIGN = "docs/mvp-1-r1/04_planning/design/C01-C04-Setup.dc.html";
 const LIVE_SCOPE = ".kt-setup-shell";
 const DIALOG_SCOPE = ".kt-dialog";
 
@@ -49,6 +51,11 @@ async function openSetupTab(page: Page, tab: string, readySelector: string): Pro
 	// fallback face's different metrics make truncation checks flaky.
 	await page.evaluate(() => (document as any).fonts?.ready?.catch(() => undefined));
 	return errors;
+}
+
+async function filterRegisterTo(page: Page, text: string): Promise<void> {
+	await page.fill('[data-testid="kt-ura-search"]', text);
+	await page.waitForSelector(`table.kt-table tbody tr:has-text("${text}")`, { timeout: 15_000 });
 }
 
 async function artboardLandmarks(page: Page, file: string, scope: string): Promise<string[]> {
@@ -185,7 +192,11 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
-		// Any Active assignment renders the artboard's full composition.
+		// Any Active assignment renders the artboard's full composition. The
+		// register lists newest rows first and this site's register churns
+		// (seed reconciliations, test worlds), so filter to Grace rather than
+		// assuming her rows sit on the first page.
+		await filterRegisterTo(page, "Grace Wanjiku");
 		await page.click('table.kt-table tbody tr:has-text("Grace Wanjiku") a');
 		await page.waitForSelector('[data-testid="kt-ura-history"]', { timeout: 15_000 });
 
@@ -206,6 +217,7 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
+		await filterRegisterTo(page, "Grace Wanjiku");
 		await page.click('table.kt-table tbody tr:has-text("Grace Wanjiku") a');
 		await page.waitForSelector('[data-testid="kt-ura-open-revoke"]', { timeout: 15_000 });
 		await page.click('[data-testid="kt-ura-open-revoke"]');
@@ -217,28 +229,155 @@ test.describe("System setup — design fidelity", () => {
 		await art.close();
 	});
 
-	test("CFG-DES-01 — Procuring entity tab (configured)", async ({ page, browser }) => {
+	// PLN-CHG-001 v1.18 §10.11 — the C01–C04 frames supersede CFG-DES-01/03
+	// as the fidelity source for the Procuring entity, Fiscal years and
+	// Procurement settings tabs (plan D13); CFG-DES-04/05 stay for the
+	// add-year and needs-intake dialogs.
+	test("C01-configured — Procuring entity tab with route and county flag", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(
-			art,
-			"CFG-DES-01 Procuring entity tab configured.dc.html",
-			'[data-screen-label="CFG-DES-01"]'
-		);
+		const scope = await openFrame(art, PLN_DESIGN, "C01-configured");
+		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procuring-entity", '[data-testid="kt-setup-pe-record"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "CFG-DES-01");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C01-configured");
+		expect(await page.locator('[data-testid="kt-setup-pe-route"] option').allTextContents()).toEqual([
+			"Cabinet Secretary",
+			"County Executive Committee Member",
+			"Board of Directors",
+			"Council",
+		]);
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
-	test("CFG-DES-03 — Fiscal years tab", async ({ page, browser }) => {
+	test("C01-conflict — county applicability mismatch shown inline, nothing saved", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "CFG-DES-03 Fiscal years tab.dc.html", '[data-screen-label="CFG-DES-03"]');
+		const scope = await openFrame(art, PLN_DESIGN, "C01-conflict");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procuring-entity", '[data-testid="kt-setup-pe-record"]');
+		const typeBefore = await page.locator('[data-testid="kt-setup-pe-type"]').inputValue();
+		await page.selectOption('[data-testid="kt-setup-pe-type"]', "County Government");
+		if (await page.locator('[data-testid="kt-setup-pe-county"]').isChecked()) {
+			await page.uncheck('[data-testid="kt-setup-pe-county"]');
+		}
+		await page.click('[data-testid="kt-setup-pe-submit"]');
+		await page.waitForSelector('[data-testid="kt-setup-pe-county-conflict"]');
+		expect(await page.locator('[data-testid="kt-setup-pe-county-conflict"]').textContent()).toContain(
+			"County applicability does not match the entity details. Review the configuration."
+		);
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C01-conflict");
+		// Refused before save: a reload shows the unchanged record.
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await page.waitForSelector('[data-testid="kt-setup-pe-record"]');
+		expect(await page.locator('[data-testid="kt-setup-pe-type"]').inputValue()).toBe(typeBefore);
+		// The refusal itself is the one expected console line: Frappe echoes
+		// the server's ConfigurationError traceback for the 417 response in
+		// developer mode. Nothing else may be logged.
+		expect(
+			errors.filter((e) => !e.includes("County applicability does not match") && !/status of 417/.test(e)),
+			"console errors"
+		).toEqual([]);
+		await art.close();
+	});
+
+	test("C02 — Fiscal years tab with the departmental-plan intake dialog", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C02");
+		const wanted = await landmarks(art, scope);
+		const artDialogWidth = await boxWidth(art, `${scope} .dialog`);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "CFG-DES-03");
+		// §8.4 world: 2027/28 is open for departmental-plan intake, 2026/27 is
+		// closed — managing the closed year opens the "Open" dialog, the
+		// artboard's state. Nothing is submitted.
+		await page.click('[data-testid="kt-fy-open-plan-2026-2027"]');
+		await page.waitForSelector('[data-testid="kt-fy-intake"][data-purpose="plan"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02");
+		expectClose(await boxWidth(page, DIALOG_SCOPE), artDialogWidth, 2, "dialog width");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C02-close — Close departmental-plan intake dialog", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C02-close");
+		const wanted = await landmarks(art, `${scope} .dialog`);
+		const artDialogWidth = await boxWidth(art, `${scope} .dialog`);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
+		await page.click('[data-testid="kt-fy-close-plan-2027-2028"]');
+		await page.waitForSelector('[data-testid="kt-fy-intake"][data-purpose="plan"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-close");
+		expectClose(await boxWidth(page, DIALOG_SCOPE), artDialogWidth, 2, "dialog width");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C03 — Procurement settings: funding sources and procurement rules", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C03");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-rules"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C03-source-editor — Edit funding source", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C03-source-editor");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-sources"]');
+		await page.click('[data-testid="kt-procset-source-edit-Government of Kenya"]');
+		await page.waitForSelector('[data-testid="kt-procset-source-editor"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03-source-editor");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C03-detail — a referenced rule Version, read-only", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C03-detail");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/rule/MPR-OPEN-TENDER-V1", '[data-testid="kt-procset-rule-card"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03-detail");
+		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C04 — Schedule profile", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C04");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/profile/SPR-OPEN-TENDER-GOODS-V1", '[data-testid="kt-procset-profile-table"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04");
+		expect(await page.locator('[data-testid="kt-procset-profile-table"] tbody tr').count()).toBe(7);
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C04-eligibility-reminder — reminder threshold card", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = await openFrame(art, PLN_DESIGN, "C04-eligibility-reminder");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-reminder"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-eligibility-reminder");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});

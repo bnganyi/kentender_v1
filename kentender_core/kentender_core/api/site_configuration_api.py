@@ -42,15 +42,24 @@ def configure_procuring_entity(
 	pe_type: str,
 	ppra_registration: str | None = None,
 	timezone: str | None = None,
+	statutory_approval_route: str | None = None,
+	entity_is_county=None,
 	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-	"""§7 `ConfigureProcuringEntity` — first-run: PE plus root unit, atomically."""
+	"""§7 `ConfigureProcuringEntity` — first-run: PE plus root unit, atomically.
+	PLN-CHG-001 v1.18 §10.11 C01: the mandatory route and the county flag are
+	first-run inputs (CFG v0.9 §4.1), validated in the service."""
+	county = None
+	if entity_is_county not in (None, ""):
+		county = str(entity_is_county).strip().lower() not in ("0", "false", "no") if isinstance(entity_is_county, str) else bool(entity_is_county)
 	return configuration.configure_procuring_entity(
 		pe_name=pe_name,
 		pe_code=pe_code,
 		pe_type=pe_type,
 		ppra_registration=ppra_registration or "",
 		timezone=timezone or "Africa/Nairobi",
+		statutory_approval_route=statutory_approval_route or "",
+		entity_is_county=county,
 		idempotency_key=idempotency_key or "",
 	)
 

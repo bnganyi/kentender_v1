@@ -10,6 +10,7 @@
   "title",
   "adapter",
   "active",
+  "sandbox_outcome",
   "fixture_namespace"
  ],
  "fields": [
@@ -40,6 +41,14 @@
    "fieldtype": "Check",
    "label": "Active",
    "default": "1"
+  },
+  {
+   "fieldname": "sandbox_outcome",
+   "fieldtype": "Select",
+   "label": "Sandbox Outcome",
+   "options": "Acknowledge\nFail\nIndeterminate",
+   "default": "Acknowledge",
+   "description": "Sandbox adapter only: the outcome the next attempt reports (plan D8)."
   },
   {
    "fieldname": "fixture_namespace",

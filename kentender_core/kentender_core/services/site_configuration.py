@@ -350,6 +350,7 @@ def configure_procuring_entity(
 			fail_cfg("CFG_PE_INVALID", "Select the entity type.")
 		route = _valid_route(statutory_approval_route, pe_type)
 		county = _COUNTY_PE_TYPES.__contains__(pe_type) if entity_is_county is None else bool(entity_is_county)
+		_require_county_consistency(pe_type, county)
 
 		single = frappe.get_doc(SITE_PE_DOCTYPE)
 		single.pe_name = name
@@ -439,6 +440,8 @@ def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = 
 		# A site configured before v0.9 carries no route yet; derive it once
 		# so the record never saves without one (CFG-BR-014).
 		single.statutory_approval_route = _valid_route("", single.pe_type)
+	if "pe_type" in payload or "entity_is_county" in payload:
+		_require_county_consistency(single.pe_type, bool(single.entity_is_county))
 	single.save(ignore_permissions=True)
 
 	after = {field: single.get(field) for field in before}
@@ -843,6 +846,15 @@ def _site_company() -> str:
 		return default
 	companies = frappe.get_all("Company", pluck="name", limit_page_length=2)
 	return companies[0] if len(companies) == 1 else ""
+
+
+def _require_county_consistency(pe_type: str, county: bool) -> None:
+	"""PLN-CHG-001 v1.18 §10.11 C01 (CFG owner work) — county applicability is
+	stated explicitly and must agree with the entity type; nothing derives a
+	jurisdiction silently from a label (`CFG_COUNTY_APPLICABILITY_MISMATCH`)."""
+	is_county_type = pe_type in _COUNTY_PE_TYPES
+	if is_county_type != bool(county):
+		fail_cfg("CFG_COUNTY_APPLICABILITY_MISMATCH")
 
 
 def _valid_route(route: str, pe_type: str) -> str:

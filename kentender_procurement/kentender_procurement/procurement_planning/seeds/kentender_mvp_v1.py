@@ -73,6 +73,7 @@ AUTHOR = "grace.wanjiku@moh.example.test"
 HOD = "peter.kimani@moh.example.test"
 ACTING_HOD = "julia.njeri@moh.example.test"
 PLANNER = "mercy.kilonzo@moh.example.test"
+HOPF = "charles.mutiso@moh.example.test"  # v1.18 §6.2 / §13.1: signs and submits (assigned by site_setup)
 FINANCE = "josphat.mwangi@moh.example.test"
 ACCOUNTING_OFFICER = "amina.hassan@moh.example.test"
 STATUTORY = "daniel.rotich@moh.example.test"
@@ -100,6 +101,10 @@ ITEM_VALUES = {
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
 	"baseline_invitation_date": "2027-05-01",
+	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery period
+	"estimate_basis": "Market survey of the current supplier panel including delivery, installation and incidental costs.",
+	"estimate_basis_reference": "MS-2027-001",
+	"estimated_delivery_period_days": 30,
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
 	"award_approval_buffer_days": 5,
@@ -530,7 +535,7 @@ def _form_and_confirm(plan: dict[str, Any], prereqs: dict[str, str]) -> str:
 def _submit_plan(plan_reference: str) -> Any:
 	from kentender_procurement.procurement_planning.services import plan_governance, plan_read
 
-	with _as(PLANNER):
+	with _as(HOPF):
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key("submit-plan"),

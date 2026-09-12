@@ -40,6 +40,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	viewing_contexts,
 )
 from kentender_procurement.departmental_needs.services.usage import (
+	planning_disposition_detail,
 	planning_usage,
 	planning_usage_detail,
 )
@@ -492,6 +493,9 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"latest_return": latest_return,
 		"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 		"planning_usage": planning_usage(doc.name),
+		# PLN-CHG-001 v1.18 §5.1.4 — the accepted Planning disposition, shown
+		# as Planning information; it changes neither lifecycle nor usage.
+		"planning_disposition": planning_disposition_detail(doc.name),
 		"open_task": _open_review_task(doc.name),
 		"actions": _actions(doc, principal, profile),
 		"access_profile": profile,

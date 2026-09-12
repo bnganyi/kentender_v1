@@ -78,12 +78,21 @@ def open_departmental_plan(organisation_unit: str, fiscal_year: str, idempotency
 @frappe.whitelist()
 def save_need_funding(
 	dpp_version: str, entry_id: str, expected_record_version, idempotency_key: str,
-	budget_line: str | None = None, indicative_amount=None, not_proceeding_reason: str | None = None,
+	budget_line: str | None = None, indicative_amount=None,
 ) -> dict[str, Any]:
 	return dpp_lifecycle.save_need_funding(
 		dpp_version=dpp_version, entry_id=entry_id, budget_line=budget_line or "", indicative_amount=indicative_amount,
-		not_proceeding_reason=not_proceeding_reason or "", expected_record_version=expected_record_version,
-		idempotency_key=idempotency_key,
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def set_need_planning_disposition(
+	dpp_version: str, entry_id: str, disposition: str, expected_record_version, idempotency_key: str, reason: str | None = None,
+) -> dict[str, Any]:
+	return dpp_lifecycle.set_need_planning_disposition(
+		dpp_version=dpp_version, entry_id=entry_id, disposition=disposition, reason=reason or "",
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)
 
 
@@ -112,8 +121,8 @@ def submit_departmental_plan(dpp_version: str, certification_confirmed, expected
 
 
 @frappe.whitelist()
-def withdraw_departmental_plan_version(dpp_version: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
-	return dpp_lifecycle.withdraw_departmental_plan_version(dpp_version=dpp_version, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+def withdraw_departmental_submission(dpp_version: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return dpp_lifecycle.withdraw_departmental_submission(dpp_version=dpp_version, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
@@ -225,6 +234,13 @@ def save_plan_item(plan_item: str, item_values, expected_record_version, idempot
 
 
 @frappe.whitelist()
+def save_plan_version_details(plan_version: str, detail_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return plan_workbench.save_plan_version_details(
+		plan_version=plan_version, values=_parse_json(detail_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
 def confirm_splitting_advisory(plan_version: str, confirmation: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_workbench
 
@@ -260,26 +276,47 @@ def return_from_finance(task: str, reason: str, task_token: str, idempotency_key
 
 @frappe.whitelist()
 def submit_consolidated_plan(plan_version: str, expected_record_version, idempotency_key: str, late_activation_reason: str | None = None) -> dict[str, Any]:
+	# `late_activation_reason` is still sent by the current Annual Plan screen; v1.18
+	# moves the explanation to the Accounting Officer (adoption / RecordLateActivationExplanation).
+	# The parameter is ignored until the U07 re-port (Phase 3C) stops sending it.
 	from kentender_procurement.procurement_planning.services import plan_governance
 
-	return plan_governance.submit_consolidated_plan(
-		plan_version=plan_version, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-		late_activation_reason=late_activation_reason or "",
+	return plan_governance.submit_consolidated_plan(plan_version=plan_version, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def adopt_and_submit_plan(task: str, task_token: str, idempotency_key: str, late_activation_explanation: str | None = None) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.adopt_and_submit_plan(task=task, task_token=task_token, idempotency_key=idempotency_key, late_activation_explanation=late_activation_explanation or "")
+
+
+@frappe.whitelist()
+def approve_annual_plan(task: str, task_token: str, idempotency_key: str, collective_resolution_reference: str = "", resolution_reference: str | None = None) -> dict[str, Any]:
+	# `resolution_reference` is the pre-v1.18 parameter name the live U11 screen
+	# still sends; kept as a fallback until its Phase 3 re-port switches to
+	# `collective_resolution_reference` (v1.18 §6.1 D7).
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	return plan_governance.approve_annual_plan(
+		task=task, task_token=task_token,
+		collective_resolution_reference=collective_resolution_reference or resolution_reference or "",
+		idempotency_key=idempotency_key,
 	)
 
 
 @frappe.whitelist()
-def adopt_and_submit_plan(task: str, task_token: str, idempotency_key: str) -> dict[str, Any]:
+def record_late_activation_explanation(plan_version: str, reason: str, idempotency_key: str, supersedes: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_governance
 
-	return plan_governance.adopt_and_submit_plan(task=task, task_token=task_token, idempotency_key=idempotency_key)
+	return plan_governance.record_late_activation_explanation(plan_version=plan_version, reason=reason, supersedes=supersedes or "", idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
-def approve_annual_plan(task: str, task_token: str, idempotency_key: str, resolution_reference: str = "") -> dict[str, Any]:
+def begin_held_plan_correction(plan_version: str, reason: str, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_governance
 
-	return plan_governance.approve_annual_plan(task=task, task_token=task_token, resolution_reference=resolution_reference, idempotency_key=idempotency_key)
+	return plan_governance.begin_held_plan_correction(plan_version=plan_version, reason=reason, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
@@ -293,10 +330,7 @@ def return_plan_version(task: str, reason: str, task_token: str, idempotency_key
 def submit_corrected_plan(plan_version: str, expected_record_version, idempotency_key: str, late_activation_reason: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_governance
 
-	return plan_governance.submit_corrected_plan(
-		plan_version=plan_version, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-		late_activation_reason=late_activation_reason or "",
-	)
+	return plan_governance.submit_corrected_plan(plan_version=plan_version, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
 # --- publication, Active, successor --------------------------------------------
@@ -362,10 +396,10 @@ def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def record_requisition_drawdown(plan_item_id: str, requisition_reference: str, requesting_org_unit: str, allocations, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+def authorise_requisition_drawdown(plan_item_id: str, requisition_reference: str, requesting_org_unit: str, allocations, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
-	return plan_requisition.record_requisition_drawdown(
+	return plan_requisition.authorise_requisition_drawdown(
 		plan_item_id=plan_item_id, requisition_reference=requisition_reference, requesting_org_unit=requesting_org_unit,
 		allocations=_parse_json(allocations, []), expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)

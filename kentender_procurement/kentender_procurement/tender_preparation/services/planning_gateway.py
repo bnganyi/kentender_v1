@@ -27,7 +27,16 @@ def current_actual_invitation_date(plan_item_id: str):
 	return frappe.db.get_value("Annual Plan Item", name, "actual_invitation_date")
 
 
-def publish_invitation_actual(*, plan_item_id: str, actual_date, correlation_id: str) -> dict[str, Any]:
+PRODUCER = "tender_preparation"
+PROCEEDING_TYPE = "Prepared Tender"
+
+
+def publish_invitation_actual(*, plan_item_id: str, actual_date, correlation_id: str, tender: str = "", producer_sequence: int = 1) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.18 §4.8 — the event envelope: producer, unique event id
+	(the correlation id), the proceeding this actual belongs to and its
+	producer sequence. Planning now enforces idempotency and never-overwrite
+	itself (plan D10); this module's pre-check stays as the earlier, explicit
+	refusal."""
 	existing = current_actual_invitation_date(plan_item_id)
 	if existing and getdate(existing) != getdate(actual_date):
 		fail(
@@ -36,7 +45,10 @@ def publish_invitation_actual(*, plan_item_id: str, actual_date, correlation_id:
 			{"plan_item_id": plan_item_id, "existing": str(existing), "offered": str(getdate(actual_date))},
 		)
 	try:
-		return schedule.record_tender_milestone_actual(plan_item_id=plan_item_id, milestone=MILESTONE_INVITATION, actual_date=actual_date, source_event_id=correlation_id)
+		return schedule.record_tender_milestone_actual(
+			plan_item_id=plan_item_id, milestone=MILESTONE_INVITATION, actual_date=actual_date, source_event_id=correlation_id,
+			producer=PRODUCER, proceeding_id=tender or "", proceeding_type=PROCEEDING_TYPE, producer_sequence=int(producer_sequence or 1),
+		)
 	except Exception as exc:  # Planning's own closed error set
 		fail("TPR_MILESTONE_ACTUAL_REJECTED", str(exc), {"plan_item_id": plan_item_id})
 		raise  # unreachable

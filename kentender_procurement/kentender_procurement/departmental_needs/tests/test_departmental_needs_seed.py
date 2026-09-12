@@ -39,6 +39,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 )
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
+from kentender_procurement.departmental_needs.tests import support
 
 # §14.3 — reference, department label, quantity, required-by, state. The
 # department is asserted by its real Organisation Unit *name* rather than a
@@ -71,6 +72,7 @@ class SeedCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 
 	def setUp(self):
 		super().setUp()
@@ -234,6 +236,7 @@ class TestDefaultNeeds(SeedCase):
 			frappe.db.count("Departmental Need Event"),
 		)
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant()
 		after = (
 			frappe.db.count("Departmental Need"),
 			frappe.db.count("Departmental Need Revision"),

@@ -64,11 +64,12 @@ NOBODY = "pw.req.nobody@example.test"  # a stale Frappe Role, no responsibility 
 # Planning-role actors: pure plumbing to build the one eligible Plan Item
 # this world needs — never logged into by a Requisitions spec.
 PLN_PLANNER = "pw.req.pln.planner@example.test"
+PLN_HOPF = "pw.req.pln.hopf@example.test"  # v1.18 §6.2: signs and submits the Annual Plan
 PLN_FINANCE = "pw.req.pln.finance@example.test"
 PLN_AO = "pw.req.pln.ao@example.test"
 PLN_STATUTORY = "pw.req.pln.statutory@example.test"
 
-ACTORS = (AUTHOR, HOD, HOPF, AUDITOR, OUTSIDER, NOBODY, PLN_PLANNER, PLN_FINANCE, PLN_AO, PLN_STATUTORY)
+ACTORS = (AUTHOR, HOD, HOPF, AUDITOR, OUTSIDER, NOBODY, PLN_PLANNER, PLN_HOPF, PLN_FINANCE, PLN_AO, PLN_STATUTORY)
 
 BUDGET_REF = "BUD-PWREQ-0001"
 LINE_REF = "BL-PWREQ-0001"
@@ -277,7 +278,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 		(AUTHOR, "Playwright Requisitions Author"), (HOD, "Playwright Requisitions HoD"),
 		(HOPF, "Playwright Requisitions HoPF"), (AUDITOR, "Playwright Requisitions Auditor"),
 		(OUTSIDER, "Playwright Requisitions Outsider"), (NOBODY, "Playwright Requisitions Nobody"),
-		(PLN_PLANNER, "Playwright Requisitions Planner"), (PLN_FINANCE, "Playwright Requisitions Finance"),
+		(PLN_PLANNER, "Playwright Requisitions Planner"), (PLN_HOPF, "Playwright Requisitions Planning HoPF"), (PLN_FINANCE, "Playwright Requisitions Finance"),
 		(PLN_AO, "Playwright Requisitions AO"), (PLN_STATUTORY, "Playwright Requisitions Statutory"),
 	):
 		_user(email, name)
@@ -288,6 +289,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_grant(AUDITOR, "Auditor")
 	_grant(OUTSIDER, "Departmental Author", _unit("Playwright — Requisitions Outsider"))
 	_grant(PLN_PLANNER, "Procurement Planner")
+	_grant(PLN_HOPF, "Head of Procurement Function")
 	_grant(PLN_FINANCE, "Finance Confirmation Officer")
 	_grant(PLN_AO, "Accounting Officer")
 	_grant(PLN_STATUTORY, "Plan Statutory Approver")
@@ -425,7 +427,7 @@ def _build_eligible_plan_item(*, indicative_amount: float = 40_000_000) -> tuple
 		)
 	with _as(PLN_FINANCE):
 		plan_finance.confirm_plan_funding(task=requested["task"], task_token=frappe.get_doc("Plan Finance Task", requested["task"]).task_token, idempotency_key=_key())
-	with _as(PLN_PLANNER):
+	with _as(PLN_HOPF):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		submitted_plan = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),

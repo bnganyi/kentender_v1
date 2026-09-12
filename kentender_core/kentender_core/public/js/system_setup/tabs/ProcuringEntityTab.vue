@@ -31,12 +31,18 @@ const configured = computed(() => !!props.site?.configured);
 const pe = computed(() => props.site?.procuring_entity || null);
 const peTypes = computed(() => props.site?.pe_types || []);
 
+// PLN-CHG-001 v1.18 §10.11 C01 / CFG v0.9 §4.1 — the four statutory routes
+// come from the server's offer; there is no None.
+const routes = computed(() => props.site?.statutory_approval_routes || []);
+
 const form = reactive({
 	pe_name: pe.value?.pe_name || "",
 	pe_code: pe.value?.pe_code || "",
 	pe_type: pe.value?.pe_type || "",
 	ppra_registration: pe.value?.ppra_registration || "",
 	timezone: pe.value?.timezone || "Africa/Nairobi",
+	statutory_approval_route: pe.value?.statutory_approval_route || "",
+	entity_is_county: !!pe.value?.entity_is_county,
 });
 
 watch(pe, (value) => {
@@ -45,6 +51,8 @@ watch(pe, (value) => {
 	form.pe_type = value?.pe_type || "";
 	form.ppra_registration = value?.ppra_registration || "";
 	form.timezone = value?.timezone || "Africa/Nairobi";
+	form.statutory_approval_route = value?.statutory_approval_route || "";
+	form.entity_is_county = !!value?.entity_is_county;
 });
 
 const dirty = computed(() => {
@@ -53,14 +61,20 @@ const dirty = computed(() => {
 		form.pe_name !== (pe.value?.pe_name || "") ||
 		form.pe_type !== (pe.value?.pe_type || "") ||
 		form.ppra_registration !== (pe.value?.ppra_registration || "") ||
-		form.timezone !== (pe.value?.timezone || "")
+		form.timezone !== (pe.value?.timezone || "") ||
+		form.statutory_approval_route !== (pe.value?.statutory_approval_route || "") ||
+		form.entity_is_county !== !!pe.value?.entity_is_county
 	);
 });
+
+// C01-conflict — the county/type mismatch is refused server-side before any
+// save; it is shown as the artboard's inline attention status, not a modal.
+const countyConflict = computed(() => /County applicability does not match/.test(error.value || ""));
 
 const canSubmit = computed(() => {
 	if (busy.value) return false;
 	if (!configured.value) {
-		return !!(form.pe_name.trim() && form.pe_code.trim() && form.pe_type);
+		return !!(form.pe_name.trim() && form.pe_code.trim() && form.pe_type && form.statutory_approval_route);
 	}
 	return dirty.value;
 });
@@ -74,6 +88,8 @@ function submit() {
 				pe_type: form.pe_type,
 				ppra_registration: form.ppra_registration,
 				timezone: form.timezone,
+				statutory_approval_route: form.statutory_approval_route,
+				entity_is_county: form.entity_is_county ? 1 : 0,
 			});
 			emit("configured");
 			notice.value = __("Site configured. The remaining tabs are now available.");
@@ -84,6 +100,8 @@ function submit() {
 					pe_type: form.pe_type,
 					ppra_registration: form.ppra_registration,
 					timezone: form.timezone,
+					statutory_approval_route: form.statutory_approval_route,
+					entity_is_county: form.entity_is_county,
 				},
 				pe.value?.expected_version
 			);
@@ -159,7 +177,27 @@ function fmt(value) {
 						</option>
 					</select>
 				</div>
+				<!-- C01 — statutory approval route (four values, no None) -->
+				<div class="kt-field">
+					<label for="kt-pe-route">{{ __("Statutory approval route") }}</label>
+					<select id="kt-pe-route" v-model="form.statutory_approval_route" class="kt-input" data-testid="kt-setup-pe-route">
+						<option v-if="!form.statutory_approval_route" value="">{{ __("Select the statutory approval route") }}</option>
+						<option v-for="route in routes" :key="route" :value="route">{{ route }}</option>
+					</select>
+					<p class="kt-hint">{{ __("Select the authority that approves this entity's Annual Procurement Plan.") }}</p>
+				</div>
 			</div>
+			<!-- C01 — county entity flag (regulation 40(5)) -->
+			<label class="kt-setup-check" data-testid="kt-setup-pe-county-label">
+				<input v-model="form.entity_is_county" type="checkbox" data-testid="kt-setup-pe-county">
+				{{ __("County entity") }}
+			</label>
+			<span
+				v-if="countyConflict"
+				class="kt-status is-attention"
+				role="alert"
+				data-testid="kt-setup-pe-county-conflict"
+			>{{ error }}</span>
 		</div>
 
 		<!-- CFG-DES-01 configuration record card — configured only -->
@@ -182,7 +220,7 @@ function fmt(value) {
 			</div>
 		</div>
 
-		<p v-if="error" class="kt-inline-error" role="alert" data-testid="kt-setup-pe-error">{{ error }}</p>
+		<p v-if="error && !countyConflict" class="kt-inline-error" role="alert" data-testid="kt-setup-pe-error">{{ error }}</p>
 		<p v-else-if="notice" class="kt-setup-success" data-testid="kt-setup-pe-success">{{ notice }}</p>
 
 		<div class="kt-setup-footer">

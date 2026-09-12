@@ -313,7 +313,9 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .table tbody tr:hover { background: var(--color-neutral-100); }
 /* Numeric columns in registers: right-aligned, non-jittering digits */
-.table .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* True zeros recede so real amounts pop — a young fiscal year is full of them */
+.table .is-num.is-zero, .kt-figure.is-zero { color: var(--color-neutral-500); font-weight: 400; }
 
 /* — dialog — */
 .dialog-backdrop {
@@ -437,6 +439,21 @@ textarea.input { min-height: 90px; resize: vertical; }
 .btn-danger:hover { background: #8f102f; }
 .btn-danger:active { background: #700c25; }
 .btn-danger:focus-visible { outline-color: var(--status-critical); }
+
+/* Figure semantics are CONDITIONAL, never column labels: a neutral figure
+   carries no dot; a figure takes is-live / is-attention / is-critical when
+   the VALUE crosses a threshold (e.g. Available headroom healthy / low /
+   exhausted). Thresholds are business logic, set at implementation. */
+.kt-figure.is-critical { color: var(--status-critical); }
+
+/* Utilization bar — one record's part-to-whole (committed / reserved /
+   free), drawn from the steel ramp. Not a chart: --chart-* stays out.
+   <div class="kt-bar"><i class="kt-bar-committed" style="width:0%"></i>
+   <i class="kt-bar-reserved" style="width:50%"></i></div> */
+.kt-bar { display: flex; height: 6px; background: var(--color-neutral-200); overflow: hidden; }
+.kt-bar > i { display: block; height: 100%; }
+.kt-bar-committed { background: var(--color-accent-800); }
+.kt-bar-reserved { background: var(--color-accent-400); }
 
 /* Windows High Contrast / forced colors: tinted fills collapse to one
    background, so shape must carry what tint no longer can. Text labels on

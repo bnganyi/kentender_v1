@@ -1,15 +1,16 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §4.9/§4.9A/§8.2/§8.3 — the governed baseline / forecast /
+"""PLN-CHG-001 v1.18 §5.5.1 / §5.5.1A / §5.5.1B — the baseline / forecast /
 actual schedule model.
 
-Baseline: one Planner-set anchor (`baseline_invitation_date`) plus three
-governed periods (tendering ≥ 7 days, regulation 86; evaluation ≤ 30 days,
-Third Schedule; standstill ≥ 14 days, section 135(3)) and two labelled
-planning-assumption buffers derive six of the seven baseline dates; delivery
-completion is the department's own required-by date. Locked once the Version
-leaves Draft (invariant 12b).
+Baseline: one Planner-set anchor (`baseline_invitation_date`) plus the
+periods the resolved Procedure Schedule Profile makes applicable (its
+verified limits and separately labelled planning assumptions) derive the
+applicable baseline dates; delivery completion is the source-derived
+boundary (earliest required-by). Feasibility = signing + the Planner's
+estimated delivery period on or before that boundary. Baseline and the
+resolved rule-profile evidence lock at submission.
 
 Forecast: null until activation, seeded equal to baseline in the activation
 transaction, then changed only through the cascade preview/confirm pair —
@@ -21,7 +22,6 @@ each row includable or excludable, one reason, one `cascade_id` (invariant
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
 from typing import Any
 
 import frappe
@@ -59,104 +59,49 @@ BASELINE_FIELDS = tuple(f"baseline_{m}_date" for m in MILESTONES)
 FORECAST_FIELDS = tuple(f"forecast_{m}_date" for m in MILESTONES)
 ACTUAL_FIELDS = tuple(f"actual_{m}_date" for m in MILESTONES)
 
-# Governed floors and ceilings (§4.9). The system rejects, never silently fixes.
-TENDERING_FLOOR = 7
-EVALUATION_CEILING = 30
-STANDSTILL_FLOOR = 14
-# Flat fallbacks where the CFG register holds no category/method entry (§18).
-DEFAULT_TENDERING = 21
-DEFAULT_EVALUATION = 30
-DEFAULT_AWARD_APPROVAL_BUFFER = 5
-DEFAULT_NOTIFICATION_BUFFER = 2
-DEFAULT_STANDSTILL = 14
-# Invariant 12a — the "sensible implementation allowance" between contract
-# signing and the department's required-by date. A planning assumption (no
-# statutory figure fixes it), labelled as such wherever it is shown; tracker
-# decision O7.
-MIN_IMPLEMENTATION_ALLOWANCE_DAYS = 7
-# §8.3 — days before a forecast milestone at which the daily nudge fires.
-APPROACHING_THRESHOLD_DAYS = 14
+# PLN-CHG-001 v1.18 §5.5.1 — every timing rule comes from the resolved
+# Procedure Schedule Profile (services/profiles.py); this module holds no
+# universal floor, ceiling, buffer or fallback.
 
 
-def default_periods(reference: dict[str, Any] | None, category: str, method: str) -> dict[str, int]:
-	"""§4.9 / PLN-AC-131 — buffers from the category/method-keyed register
-	where an entry exists, the flat fallbacks otherwise."""
-	award, notification = DEFAULT_AWARD_APPROVAL_BUFFER, DEFAULT_NOTIFICATION_BUFFER
-	for row in (reference or {}).get("schedule_buffers", []):
-		if row.get("procurement_category") == category and row.get("procurement_method") == method:
-			award = int(row.get("award_approval_buffer_days") or award)
-			notification = int(row.get("notification_buffer_days") or notification)
-			break
-	return {
-		"tendering_period_days": DEFAULT_TENDERING,
-		"evaluation_period_days": DEFAULT_EVALUATION,
-		"award_approval_buffer_days": award,
-		"notification_buffer_days": notification,
-		"standstill_period_days": DEFAULT_STANDSTILL,
-	}
+def validate_periods(periods: dict[str, Any], schedule_profile: dict[str, Any] | None = None) -> dict[str, int]:
+	"""The entered periods against the resolved profile (labelled
+	`PLN_PROFILE_PERIOD_INVALID` parameters); Draft values without a profile."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	return profiles.validate_period_inputs(periods, schedule_profile or dict(profiles.NOT_FOUND))
 
 
-def validate_periods(periods: dict[str, Any]) -> dict[str, int]:
-	"""PLN-AC-114 — server-side floors and ceilings, bound to their field."""
-	clean: dict[str, int] = {}
-	for field in PERIOD_FIELDS:
-		raw = periods.get(field)
-		try:
-			value = int(raw)
-		except (TypeError, ValueError):
-			fail("PLN_SCHEDULE_INVALID", f"Enter a whole number of days for {field.replace('_', ' ')}.", {"field": field})
-		if value < 0:
-			fail("PLN_SCHEDULE_INVALID", "Periods cannot be negative.", {"field": field})
-		clean[field] = value
-	if clean["tendering_period_days"] < TENDERING_FLOOR:
-		fail("PLN_TENDERING_PERIOD_BELOW_MINIMUM", detail={"field": "tendering_period_days"})
-	if clean["evaluation_period_days"] > EVALUATION_CEILING:
-		fail("PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM", detail={"field": "evaluation_period_days"})
-	if clean["standstill_period_days"] < STANDSTILL_FLOOR:
-		fail("PLN_STANDSTILL_BELOW_MINIMUM", detail={"field": "standstill_period_days"})
-	return clean
+def derive_baseline(anchor, periods: dict[str, Any], delivery_date, schedule_profile: dict[str, Any] | None = None) -> dict[str, Any]:
+	"""The applicable baseline dates from the anchor and periods in the
+	profile's milestone order; `delivery_date` is the earliest source
+	required-by date (the completion boundary). Feasibility is reported by
+	`delivery_boundary_ok` so a Draft save may keep an infeasible schedule
+	while readiness blocks."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	profile = schedule_profile or dict(profiles.NOT_FOUND)
+	clean = validate_periods(periods, profile)
+	return profiles.derive_baseline(anchor or None, clean, delivery_date, profile)
 
 
-def derive_baseline(anchor, periods: dict[str, Any], delivery_date) -> dict[str, Any]:
-	"""PLN-AC-115 — the seven baseline dates from the anchor and periods.
-	`delivery_date` is the earliest source required-by date (invariant 12).
-	Raises the field-bound §9 codes; the delivery-boundary check is reported
-	by `delivery_boundary_ok` so a Draft save may keep an incomplete
-	schedule while readiness blocks (invariant 12a)."""
-	clean = validate_periods(periods)
-	if not anchor:
-		return {field: None for field in BASELINE_FIELDS} | {"baseline_delivery_completion_date": getdate(delivery_date) if delivery_date else None}
-	start = getdate(anchor)
-	bid = add_days(start, clean["tendering_period_days"])
-	evaluation = add_days(bid, clean["evaluation_period_days"])
-	award = add_days(evaluation, clean["award_approval_buffer_days"])
-	notification = add_days(award, clean["notification_buffer_days"])
-	signing = add_days(notification, clean["standstill_period_days"])
-	return {
-		"baseline_invitation_date": start,
-		"baseline_bid_opening_date": getdate(bid),
-		"baseline_evaluation_completion_date": getdate(evaluation),
-		"baseline_award_approval_date": getdate(award),
-		"baseline_award_notification_date": getdate(notification),
-		"baseline_contract_signing_date": getdate(signing),
-		"baseline_delivery_completion_date": getdate(delivery_date) if delivery_date else None,
-	}
+def delivery_boundary_ok(baseline: dict[str, Any], estimated_delivery_period_days=None) -> bool:
+	"""§5.5.1 feasibility: baseline contract signing plus the Planner's
+	estimated delivery/implementation period on or before the source-derived
+	completion boundary. False until the inputs exist."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	return bool(profiles.feasible(baseline, estimated_delivery_period_days))
 
 
-def delivery_boundary_ok(baseline: dict[str, Any]) -> bool:
-	signing = baseline.get("baseline_contract_signing_date")
-	delivery = baseline.get("baseline_delivery_completion_date")
-	if not signing or not delivery:
-		return False
-	return date_diff(getdate(delivery), getdate(signing)) >= MIN_IMPLEMENTATION_ALLOWANCE_DAYS
+def baseline_complete(item, schedule_profile: dict[str, Any] | None = None) -> bool:
+	from kentender_procurement.procurement_planning.services import profiles
+
+	return profiles.baseline_complete(item, schedule_profile or dict(profiles.NOT_FOUND))
 
 
-def baseline_complete(item) -> bool:
-	return all(item.get(field) for field in BASELINE_FIELDS)
-
-
-def require_delivery_boundary(baseline: dict[str, Any]) -> None:
-	if not delivery_boundary_ok(baseline):
+def require_delivery_boundary(baseline: dict[str, Any], estimated_delivery_period_days=None) -> None:
+	if not delivery_boundary_ok(baseline, estimated_delivery_period_days):
 		fail("PLN_DELIVERY_BOUNDARY_INSUFFICIENT", detail={"field": "baseline_invitation_date"})
 
 
@@ -216,7 +161,7 @@ def schedule_rows(item) -> list[dict[str, Any]]:
 				"variance_baseline_days": date_diff(getdate(actual), getdate(baseline)) if actual and baseline else None,
 				"variance_forecast_days": date_diff(getdate(actual), getdate(forecast)) if actual and forecast else None,
 				"behind": bool(forecast and baseline and not actual and getdate(forecast) > getdate(baseline)),
-				"can_shift": bool(forecast) and not actual and index < len(MILESTONES) - 1,
+				"can_shift": bool(forecast) and not actual,  # §5.5.1: a final-milestone single-row change is allowed with a reason
 			}
 		)
 	return rows
@@ -281,16 +226,31 @@ def preview_forecast_cascade(*, plan_item: str, milestone: str, new_forecast_dat
 
 
 def _validate_governed_gaps(item, new_forecasts: dict[str, Any]) -> None:
-	"""Invariant 12c-iii — an included later row is re-validated against the
-	same floors/ceilings as baseline derivation, against its new predecessor."""
-	dates = {m: getdate(new_forecasts.get(m) or item.get(f"forecast_{m}_date")) for m in MILESTONES if (new_forecasts.get(m) or item.get(f"forecast_{m}_date"))}
-	if "invitation" in dates and "bid_opening" in dates and date_diff(dates["bid_opening"], dates["invitation"]) < TENDERING_FLOOR:
-		fail("PLN_TENDERING_PERIOD_BELOW_MINIMUM", detail={"field": "bid_opening"})
-	if "bid_opening" in dates and "evaluation_completion" in dates and date_diff(dates["evaluation_completion"], dates["bid_opening"]) > EVALUATION_CEILING:
-		fail("PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM", detail={"field": "evaluation_completion"})
-	if "award_notification" in dates and "contract_signing" in dates and date_diff(dates["contract_signing"], dates["award_notification"]) < STANDSTILL_FLOOR:
-		fail("PLN_STANDSTILL_BELOW_MINIMUM", detail={"field": "contract_signing"})
-	ordered = [dates[m] for m in MILESTONES if m in dates]
+	"""§5.5.1 — every affected adjacency of the resulting schedule (included
+	and excluded rows alike) is re-validated against the item's frozen
+	schedule profile, applicable milestones in profile order. An honest late
+	forecast is allowed; only a rule-breaking gap or a disordered sequence is
+	refused."""
+	from kentender_procurement.procurement_planning.services import profiles
+
+	profile = profiles.schedule_profile_by_name(cstr(item.get("schedule_profile_version")))
+	order = profiles.applicable_milestones(profile)
+	dates = {m: getdate(new_forecasts.get(m) or item.get(f"forecast_{m}_date")) for m in order if (new_forecasts.get(m) or item.get(f"forecast_{m}_date"))}
+	rules = profiles.period_rules(profile)
+	previous = None
+	for m in order:
+		if m not in dates:
+			continue
+		if previous is not None:
+			gap = date_diff(dates[m], dates[previous])
+			key = profiles.settings.PERIOD_BY_MILESTONE.get(m, "")
+			rule = rules.get(key, {})
+			if rule.get("minimum_days") is not None and gap < int(rule["minimum_days"]):
+				profiles._period_invalid(key, "minimum", int(rule["minimum_days"]), gap, field=m, reference=cstr(rule.get("statutory_reference")))
+			if rule.get("maximum_days") is not None and gap > int(rule["maximum_days"]):
+				profiles._period_invalid(key, "maximum", int(rule["maximum_days"]), gap, field=m, reference=cstr(rule.get("statutory_reference")))
+		previous = m
+	ordered = [dates[m] for m in order if m in dates]
 	if ordered != sorted(ordered):
 		fail("PLN_SCHEDULE_INVALID", detail={"field": "milestone"})
 
@@ -387,20 +347,55 @@ def confirm_forecast_cascade(
 	return result
 
 
-def record_tender_milestone_actual(*, plan_item_id: str, milestone: str, actual_date, source_event_id: str) -> dict[str, Any]:
-	"""§8.2 `RecordTenderMilestoneActual` — inbound only (§18): writes the one
-	matching actual date from an owning module's projection. No publisher
-	exists in MVP-1; the shape is fixed so TPR-CHG-001 can implement against
-	it. Never callable from a user-facing endpoint (PLN-AC-119)."""
+def record_tender_milestone_actual(
+	*,
+	plan_item_id: str,
+	milestone: str,
+	actual_date,
+	source_event_id: str,
+	producer: str = "",
+	proceeding_id: str = "",
+	proceeding_type: str = "",
+	producer_sequence: int = 0,
+	coverage: list[dict[str, Any]] | None = None,
+	supersedes_event_id: str = "",
+) -> dict[str, Any]:
+	"""§7.2 `RecordTenderMilestoneActual` — inbound only: the owning module's
+	authenticated event (PLN-CHG-001 v1.18 §4.8 envelope: producer, unique
+	event id, proceeding, producer sequence, optional correction linkage).
+	Never callable from a user-facing endpoint (PLN18-AC-120).
+
+	Guard (plan D10, closes TPR FU-05 on the Planning side): a repeated event
+	id is a no-op; an actual that already exists for this milestone is never
+	overwritten by a different value — a correction must name the event it
+	supersedes and arrives through the same producer. The per-proceeding
+	`Milestone Actual Event` store lands in Phase 2g; until then the guard
+	works on the item's recorded actual."""
 	if milestone not in MILESTONES:
 		fail("PLN_SCHEDULE_INVALID", "Unknown milestone.")
+	if not cstr(source_event_id).strip():
+		fail("PLN_ACTUAL_NOT_WRITABLE", "An actual date must arrive as an identified event from the process that recorded it.")
 	name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": plan_item_id, "item_state": "Active"}, "name")
 	if not name:
 		fail("PLN_STALE_WRITE", "No Active Plan Item carries that id.")
+	existing = frappe.db.get_value("Annual Plan Item", name, f"actual_{milestone}_date")
+	if existing:
+		if getdate(existing) == getdate(actual_date):
+			return {"ok": True, "idempotent": True, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id, "proceeding_id": proceeding_id}
+		if not cstr(supersedes_event_id).strip():
+			fail(
+				"PLN_ACTUAL_NOT_WRITABLE",
+				"Planning already carries a different actual date for this milestone; a correction must supersede the earlier event.",
+				{"plan_item_id": plan_item_id, "milestone": milestone, "existing": str(existing), "offered": str(getdate(actual_date))},
+			)
 	frappe.db.set_value("Annual Plan Item", name, f"actual_{milestone}_date", getdate(actual_date), update_modified=False)
 	status = "Completed" if milestone == "delivery_completion" else "In progress"
 	frappe.db.set_value("Annual Plan Item", name, "item_status", status, update_modified=False)
-	return {"ok": True, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id}
+	return {
+		"ok": True, "idempotent": False, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id,
+		"producer": producer, "proceeding_id": proceeding_id, "proceeding_type": proceeding_type,
+		"producer_sequence": int(producer_sequence or 0), "supersedes_event_id": supersedes_event_id,
+	}
 
 
 # --------------------------------------------------------------------------
@@ -413,7 +408,10 @@ def check_approaching_milestones(*, today=None) -> dict[str, Any]:
 	milestone per day at most (PLN-AC-130); creates no task or state."""
 	from kentender_procurement.procurement_planning.services import notifications
 
+	from kentender_core.services.procurement_settings import get_reminder_threshold_days
+
 	today = getdate(today or nowdate())
+	threshold = get_reminder_threshold_days()  # §5.5.1B: governed configuration, not a statutory period
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"item_state": "Active"},
@@ -429,7 +427,7 @@ def check_approaching_milestones(*, today=None) -> dict[str, Any]:
 			if not forecast:
 				continue
 			days = date_diff(getdate(forecast), today)
-			if 0 <= days <= APPROACHING_THRESHOLD_DAYS:
+			if 0 <= days <= threshold:
 				notifications.notify_approaching_milestone(item, m, forecast, days, today)
 				raised.append((item.plan_item_id, m))
 			break  # only the next milestone with no actual (§8.3)

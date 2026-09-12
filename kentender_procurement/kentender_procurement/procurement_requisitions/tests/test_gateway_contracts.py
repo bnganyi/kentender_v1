@@ -22,7 +22,8 @@ REQUIRED_PROJECTION_FIELDS = (
 	"outcome", "eligible", "plan_reference", "version_reference", "plan_item_id", "record_version",
 	"fiscal_year", "requirement_type", "procurement_category", "procurement_method", "strategic_objective",
 	"objective_path", "strategic_objective_path", "title", "reservation_category", "lotting_indicator", "lot_count",
-	"plan_horizon", "multi_year_justification", "contributing_org_unit_ids", "currency", "award_packages",
+	# PLN-CHG-001 v1.18 §4.6: `plan_horizon` is a fixed literal; the multi-year justification key is gone (REQ-CHG-001 v1.8 owed, FU-24)
+	"plan_horizon", "contributing_org_unit_ids", "currency", "award_packages",
 	"planned_dates", "forecast_dates", "funding_confirmation_references", "funding_state", "total_quantity",
 	"total_value", "remaining_quantity", "remaining_value", "sources", "evaluated_at",
 )
@@ -42,7 +43,7 @@ class TestPlanningProjectionContract(IntegrationTestCase):
 		self.assertIn("user", sig.parameters)
 
 	def test_drawdown_functions_exist_with_expected_shape(self):
-		sig = inspect.signature(plan_requisition.record_requisition_drawdown)
+		sig = inspect.signature(plan_requisition.authorise_requisition_drawdown)
 		for name in ("plan_item_id", "requisition_reference", "requesting_org_unit", "allocations",
 					 "expected_record_version", "idempotency_key"):
 			self.assertIn(name, sig.parameters)

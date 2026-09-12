@@ -164,7 +164,7 @@ def confirmed_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]
 
 
 def activate(plan_reference: str) -> dict:
-	frappe.set_user(PLANNER)
+	frappe.set_user(HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 	plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 	submitted = plan_governance.submit_consolidated_plan(
 		plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
